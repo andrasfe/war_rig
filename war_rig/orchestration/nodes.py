@@ -205,11 +205,30 @@ class WarRigNodes:
             logger.error(f"Challenger failed: {output.error}")
             return {"error": output.error}
 
+        # Create beads tickets for blocking questions
+        program_id = state.get("preprocessor_result", {})
+        if hasattr(program_id, "program_id"):
+            program_id = program_id.program_id
+        else:
+            program_id = state["file_name"].replace(".cbl", "").replace(".CBL", "")
+
+        output = self.challenger.create_beads_tickets(
+            output=output,
+            program_id=program_id,
+            team_id=state.get("team_id", 1),
+            enabled=self.config.beads_enabled and not state.get("use_mock", False),
+        )
+
+        # Track ticket IDs in state
+        existing_tickets = state.get("beads_ticket_ids", [])
+        new_tickets = existing_tickets + output.beads_ticket_ids
+
         return {
             "challenger_questions": output.questions,
             "current_round_questions": output.questions,
             "challenger_assessment": output.assessment,
             "tokens_used": state.get("tokens_used", 0) + output.tokens_used,
+            "beads_ticket_ids": new_tickets,
         }
 
     async def scribe_respond(self, state: WarRigState) -> dict[str, Any]:
@@ -286,11 +305,31 @@ class WarRigNodes:
         should_continue = output.decision == ImperatorDecision.CHROME
         completed_at = None if should_continue else datetime.utcnow()
 
+        # Get program ID for beads tickets
+        program_id = state.get("preprocessor_result", {})
+        if hasattr(program_id, "program_id"):
+            program_id = program_id.program_id
+        else:
+            program_id = state["file_name"].replace(".cbl", "").replace(".CBL", "")
+
+        # Create beads tickets for Chrome tickets
+        output = self.imperator.create_beads_tickets(
+            output=output,
+            program_id=program_id,
+            team_id=state.get("team_id", 1),
+            enabled=self.config.beads_enabled and not state.get("use_mock", False),
+        )
+
         updates: dict[str, Any] = {
             "decision": output.decision.value,
             "should_continue": should_continue,
             "tokens_used": state.get("tokens_used", 0) + output.tokens_used,
         }
+
+        # Track ticket IDs
+        existing_tickets = state.get("beads_ticket_ids", [])
+        new_tickets = existing_tickets + output.beads_ticket_ids
+        updates["beads_ticket_ids"] = new_tickets
 
         if output.chrome_tickets:
             updates["chrome_tickets"] = output.chrome_tickets
@@ -304,6 +343,18 @@ class WarRigNodes:
 
         if not output.success:
             updates["error"] = output.error
+
+        # Close all beads tickets when approved (WITNESSED, VALHALLA, FORCED)
+        if not should_continue and self.config.beads_enabled and not state.get("use_mock", False):
+            from war_rig.beads import get_beads_client
+            client = get_beads_client()
+            all_tickets = state.get("beads_ticket_ids", []) + output.beads_ticket_ids
+            if all_tickets:
+                closed = client.close_tickets(
+                    all_tickets,
+                    reason=f"Documentation {output.decision.value} for {program_id}",
+                )
+                logger.info(f"Closed {closed} beads tickets on {output.decision.value}")
 
         return updates
 

@@ -101,6 +101,10 @@ class ChallengerOutput(AgentOutput):
         default_factory=list,
         description="Suggested corrections with citations",
     )
+    beads_ticket_ids: list[str] = Field(
+        default_factory=list,
+        description="Beads ticket IDs created for blocking questions",
+    )
 
 
 class ChallengerAgent(BaseAgent[ChallengerInput, ChallengerOutput]):
@@ -396,3 +400,48 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
             issues_found=["[MOCK] Purpose section is too generic"],
             suggested_corrections=[],
         )
+
+    def create_beads_tickets(
+        self,
+        output: ChallengerOutput,
+        program_id: str,
+        team_id: int = 1,
+        enabled: bool = True,
+    ) -> ChallengerOutput:
+        """Create beads tickets for blocking review questions.
+
+        Args:
+            output: The Challenger output with questions.
+            program_id: ID of the program being documented.
+            team_id: Team number for multi-team setups.
+            enabled: Whether to actually create tickets.
+
+        Returns:
+            Updated ChallengerOutput with ticket IDs.
+        """
+        if not enabled or not output.success:
+            return output
+
+        from war_rig.beads import create_challenger_ticket, get_beads_client
+
+        client = get_beads_client(enabled=enabled)
+        ticket_ids = []
+
+        # Create tickets for blocking and important questions
+        for question in output.questions:
+            if question.severity.value in ("BLOCKING", "IMPORTANT"):
+                ticket_id = create_challenger_ticket(
+                    program_id=program_id,
+                    question=question.question,
+                    question_type=question.question_type.value,
+                    severity=question.severity.value,
+                    team_id=team_id,
+                    client=client,
+                )
+                if ticket_id:
+                    ticket_ids.append(ticket_id)
+                    # Store ticket ID on the question for tracking
+                    question.question_id = f"{question.question_id}:{ticket_id}"
+
+        output.beads_ticket_ids = ticket_ids
+        return output

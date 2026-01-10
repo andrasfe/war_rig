@@ -166,6 +166,16 @@ class WarRigState(TypedDict, total=False):
     """Approved documentation (set when decision is approval)."""
 
     # =========================================================================
+    # Beads Integration
+    # =========================================================================
+
+    beads_ticket_ids: Annotated[list[str], merge_lists]
+    """Beads ticket IDs created by agents (accumulated)."""
+
+    team_id: int
+    """Team number for multi-team setups (1-based)."""
+
+    # =========================================================================
     # Metadata
     # =========================================================================
 
@@ -203,6 +213,7 @@ def create_initial_state(
     rig_id: str = "ALPHA",
     max_iterations: int = 3,
     use_mock: bool = False,
+    team_id: int = 1,
 ) -> WarRigState:
     """Create initial state for a War Rig run.
 
@@ -217,6 +228,7 @@ def create_initial_state(
         rig_id: War Rig identifier.
         max_iterations: Maximum allowed iterations.
         use_mock: Whether to use mock agents.
+        team_id: Team number for multi-team setups (1-based).
 
     Returns:
         Initialized WarRigState ready for graph execution.
@@ -244,6 +256,9 @@ def create_initial_state(
         active_chrome_tickets=[],
         decision=None,
         final_template=None,
+        # Beads
+        beads_ticket_ids=[],
+        team_id=team_id,
         # Metadata
         rig_id=rig_id,
         started_at=datetime.utcnow(),

@@ -120,6 +120,10 @@ class ImperatorOutput(AgentOutput):
         default_factory=list,
         description="Notes on documentation quality",
     )
+    beads_ticket_ids: list[str] = Field(
+        default_factory=list,
+        description="Beads ticket IDs created for Chrome tickets",
+    )
 
 
 class ImperatorAgent(BaseAgent[ImperatorInput, ImperatorOutput]):
@@ -455,3 +459,51 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
             reasoning=f"[MOCK] Decision after iteration {input_data.iteration}",
             quality_notes=["[MOCK] This is mock output for testing"],
         )
+
+    def create_beads_tickets(
+        self,
+        output: ImperatorOutput,
+        program_id: str,
+        team_id: int = 1,
+        enabled: bool = True,
+    ) -> ImperatorOutput:
+        """Create beads tickets for Chrome tickets issued by Imperator.
+
+        Args:
+            output: The Imperator output with Chrome tickets.
+            program_id: ID of the program being documented.
+            team_id: Team number for multi-team setups.
+            enabled: Whether to actually create tickets.
+
+        Returns:
+            Updated ImperatorOutput with ticket IDs.
+        """
+        if not enabled or not output.success:
+            return output
+
+        # Only create beads tickets if decision is CHROME
+        if output.decision != ImperatorDecision.CHROME:
+            return output
+
+        from war_rig.beads import create_imperator_ticket, get_beads_client
+
+        client = get_beads_client(enabled=enabled)
+        ticket_ids = []
+
+        for chrome_ticket in output.chrome_tickets:
+            ticket_id = create_imperator_ticket(
+                program_id=program_id,
+                issue_type=chrome_ticket.issue_type.value,
+                description=chrome_ticket.description,
+                section=chrome_ticket.section,
+                priority=chrome_ticket.priority.value,
+                team_id=team_id,
+                client=client,
+            )
+            if ticket_id:
+                ticket_ids.append(ticket_id)
+                # Store beads ticket ID on the chrome ticket
+                chrome_ticket.ticket_id = f"{chrome_ticket.ticket_id}:{ticket_id}"
+
+        output.beads_ticket_ids = ticket_ids
+        return output

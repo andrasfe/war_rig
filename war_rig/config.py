@@ -53,8 +53,8 @@ class ModelConfig(BaseModel):
     """Configuration for an LLM model."""
 
     model: str = Field(
-        default="anthropic/claude-sonnet-4-20250514",
-        description="Model identifier for the LLM",
+        ...,
+        description="Model identifier for the LLM (required)",
     )
     temperature: float = Field(
         default=0.3,
@@ -76,7 +76,6 @@ class ScribeConfig(ModelConfig):
     Lower temperature (0.3) encourages more deterministic, factual output.
     """
 
-    model: str = Field(default="anthropic/claude-sonnet-4-20250514")
     temperature: float = Field(default=0.3)
     max_tokens: int = Field(default=4000)
 
@@ -88,7 +87,6 @@ class ChallengerConfig(ModelConfig):
     Slightly higher temperature (0.5) allows for more creative questioning.
     """
 
-    model: str = Field(default="openai/gpt-4o-2024-11-20")
     temperature: float = Field(default=0.5)
     max_tokens: int = Field(default=2000)
 
@@ -100,7 +98,6 @@ class ImperatorConfig(ModelConfig):
     Lower temperature (0.2) ensures consistent, decisive output.
     """
 
-    model: str = Field(default="anthropic/claude-sonnet-4-20250514")
     temperature: float = Field(default=0.2)
     max_tokens: int = Field(default=2000)
 
@@ -180,33 +177,38 @@ class WarRigConfig(BaseSettings):
     # War Rig identification
     rig_id: str = Field(default="ALPHA")
 
-    # API configuration (loaded from env)
+    # API configuration (REQUIRED - must be set in .env)
     api_provider: str = Field(default="openrouter")
-    openrouter_api_key: str | None = Field(default=None)
+    openrouter_api_key: str | None = Field(default=None, description="OpenRouter API key (required if using openrouter)")
     openrouter_base_url: str = Field(default="https://openrouter.ai/api/v1")
     openrouter_site_url: str | None = Field(default=None)
     openrouter_site_name: str | None = Field(default=None)
 
     # Legacy Anthropic support
-    anthropic_api_key: str | None = Field(default=None)
+    anthropic_api_key: str | None = Field(default=None, description="Anthropic API key (required if using anthropic)")
 
-    # Agent model configurations (loaded from env)
-    scribe_model: str = Field(default="anthropic/claude-sonnet-4-20250514")
+    # Agent model configurations (REQUIRED - must be set in .env)
+    scribe_model: str = Field(..., description="Model for Scribe agent (e.g., anthropic/claude-sonnet-4-20250514)")
     scribe_temperature: float = Field(default=0.3)
     scribe_max_tokens: int = Field(default=4000)
 
-    challenger_model: str = Field(default="openai/gpt-4o-2024-11-20")
+    challenger_model: str = Field(..., description="Model for Challenger agent (e.g., openai/gpt-4o-2024-11-20)")
     challenger_temperature: float = Field(default=0.5)
     challenger_max_tokens: int = Field(default=2000)
 
-    imperator_model: str = Field(default="anthropic/claude-sonnet-4-20250514")
+    imperator_model: str = Field(..., description="Model for Imperator agent (e.g., anthropic/claude-sonnet-4-20250514)")
     imperator_temperature: float = Field(default=0.2)
     imperator_max_tokens: int = Field(default=2000)
 
     # Workflow limits
+    num_teams: int = Field(default=1, ge=1, le=10)
     max_iterations: int = Field(default=3, ge=1, le=10)
     max_questions_per_round: int = Field(default=5, ge=1, le=20)
     max_chrome_tickets: int = Field(default=5, ge=1, le=20)
+
+    # Beads integration
+    beads_enabled: bool = Field(default=True)
+    beads_dry_run: bool = Field(default=False)
 
     # Paths
     input_directory: Path = Field(default=Path("./input"))
