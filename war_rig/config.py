@@ -206,6 +206,11 @@ class WarRigConfig(BaseSettings):
     max_questions_per_round: int = Field(default=5, ge=1, le=20)
     max_chrome_tickets: int = Field(default=5, ge=1, le=20)
 
+    # Parallel worker pools
+    num_scribes: int = Field(default=3, ge=1, le=10, description="Number of parallel Scribe workers")
+    num_challengers: int = Field(default=2, ge=1, le=10, description="Number of parallel Challenger workers")
+    pm_max_cycles: int = Field(default=5, ge=1, le=20, description="Max Program Manager cycles before forced completion")
+
     # Beads integration
     beads_enabled: bool = Field(default=True)
     beads_dry_run: bool = Field(default=False)

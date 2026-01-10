@@ -10,11 +10,19 @@ Tickets are created when:
 Tickets are closed when:
 - Documentation reaches WITNESSED or VALHALLA status
 - Questions are satisfactorily answered
+
+Program Manager Workflow:
+- Uses extended ticket types (DOCUMENTATION, VALIDATION, etc.)
+- Tracks ticket state through the workflow state machine
+- Supports atomic ticket claiming for parallel workers
 """
 
+import json
 import logging
+import re
 import subprocess
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from datetime import datetime
 from enum import Enum
 from typing import Any
 
@@ -39,6 +47,72 @@ class BeadsPriority(int, Enum):
     BACKLOG = 4
 
 
+class TicketType(str, Enum):
+    """Ticket types for Program Manager workflow.
+
+    These types track different work items in the parallel documentation process:
+    - DOCUMENTATION: Initial documentation task for a source file
+    - VALIDATION: Validation task for completed documentation
+    - CLARIFICATION: Question from Challenger requiring Scribe response
+    - CHROME: Issue ticket from Imperator requiring rework
+    - HOLISTIC_REVIEW: Batch review task for Imperator
+    """
+
+    DOCUMENTATION = "documentation"
+    VALIDATION = "validation"
+    CLARIFICATION = "clarification"
+    CHROME = "chrome"
+    HOLISTIC_REVIEW = "holistic_review"
+
+
+class TicketState(str, Enum):
+    """States for Program Manager workflow tickets.
+
+    State machine transitions:
+    - CREATED -> CLAIMED: Worker picks ticket
+    - CLAIMED -> IN_PROGRESS: Work begins
+    - IN_PROGRESS -> COMPLETED: Work finished successfully
+    - IN_PROGRESS -> BLOCKED: Dependency identified
+    - COMPLETED -> REWORK: Imperator issues CHROME
+    - REWORK -> CREATED: New cycle starts
+    - BLOCKED -> CREATED: Dependency resolved
+    - Any -> CANCELLED: Ticket no longer needed
+    - Any -> MERGED: Combined into another ticket
+    """
+
+    CREATED = "created"
+    CLAIMED = "claimed"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    REWORK = "rework"
+    BLOCKED = "blocked"
+    CANCELLED = "cancelled"
+    MERGED = "merged"
+
+
+# Mapping from TicketState to beads CLI status values
+# beads supports: open, in_progress, blocked, deferred, closed
+TICKET_STATE_TO_BD_STATUS: dict[TicketState, str] = {
+    TicketState.CREATED: "open",
+    TicketState.CLAIMED: "in_progress",  # Claimed is a form of in_progress
+    TicketState.IN_PROGRESS: "in_progress",
+    TicketState.COMPLETED: "closed",
+    TicketState.REWORK: "open",  # Rework returns to open for next cycle
+    TicketState.BLOCKED: "blocked",
+    TicketState.CANCELLED: "closed",
+    TicketState.MERGED: "closed",
+}
+
+# Mapping from beads status back to possible TicketStates
+# Note: This is ambiguous, so we use labels to disambiguate
+BD_STATUS_TO_TICKET_STATES: dict[str, list[TicketState]] = {
+    "open": [TicketState.CREATED, TicketState.REWORK],
+    "in_progress": [TicketState.CLAIMED, TicketState.IN_PROGRESS],
+    "blocked": [TicketState.BLOCKED],
+    "closed": [TicketState.COMPLETED, TicketState.CANCELLED, TicketState.MERGED],
+}
+
+
 @dataclass
 class BeadsTicket:
     """Represents a ticket in the beads system."""
@@ -49,6 +123,124 @@ class BeadsTicket:
     priority: BeadsPriority
     assignee: str | None = None
     labels: list[str] | None = None
+
+
+@dataclass
+class ProgramManagerTicket:
+    """Extended ticket for Program Manager workflow.
+
+    This dataclass represents a ticket used in the parallel documentation
+    workflow, with additional fields for tracking workflow state, file
+    associations, and cycle information.
+
+    Attributes:
+        ticket_id: Unique identifier for the ticket (e.g., "war_rig-abc123")
+        ticket_type: Type of work item (DOCUMENTATION, VALIDATION, etc.)
+        state: Current workflow state (CREATED, CLAIMED, IN_PROGRESS, etc.)
+        file_name: Source file being documented
+        program_id: Identifier for the program (extracted from file)
+        cycle_number: Current batch cycle (1-based)
+        worker_id: ID of worker that claimed the ticket
+        parent_ticket_id: Link to parent ticket for derived tickets
+        metadata: Additional JSON-serializable data
+    """
+
+    ticket_id: str
+    ticket_type: TicketType
+    state: TicketState
+    file_name: str
+    program_id: str | None = None
+    cycle_number: int = 1
+    worker_id: str | None = None
+    parent_ticket_id: str | None = None
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+    # Timestamps
+    created_at: datetime = field(default_factory=datetime.utcnow)
+    updated_at: datetime = field(default_factory=datetime.utcnow)
+    claimed_at: datetime | None = None
+
+    def to_labels(self) -> list[str]:
+        """Generate labels for beads ticket from this PM ticket.
+
+        Returns:
+            List of labels encoding ticket type, state, and associations.
+        """
+        labels = [
+            f"pm-type:{self.ticket_type.value}",
+            f"pm-state:{self.state.value}",
+            f"cycle:{self.cycle_number}",
+        ]
+
+        if self.file_name:
+            labels.append(f"file:{self.file_name}")
+
+        if self.program_id:
+            labels.append(f"program:{self.program_id}")
+
+        if self.worker_id:
+            labels.append(f"worker:{self.worker_id}")
+
+        if self.parent_ticket_id:
+            labels.append(f"parent:{self.parent_ticket_id}")
+
+        return labels
+
+    @classmethod
+    def from_labels(
+        cls,
+        ticket_id: str,
+        labels: list[str],
+        bd_status: str,
+    ) -> "ProgramManagerTicket | None":
+        """Reconstruct a PM ticket from beads labels.
+
+        Args:
+            ticket_id: The beads ticket ID.
+            labels: List of labels from the beads ticket.
+            bd_status: The beads status (open, in_progress, etc.)
+
+        Returns:
+            ProgramManagerTicket if labels indicate a PM ticket, None otherwise.
+        """
+        label_dict: dict[str, str] = {}
+        for label in labels:
+            if ":" in label:
+                key, value = label.split(":", 1)
+                label_dict[key] = value
+
+        # Check if this is a PM ticket
+        if "pm-type" not in label_dict:
+            return None
+
+        try:
+            ticket_type = TicketType(label_dict["pm-type"])
+        except ValueError:
+            return None
+
+        # Get state from label, falling back to inferring from bd_status
+        state_str = label_dict.get("pm-state")
+        if state_str:
+            try:
+                state = TicketState(state_str)
+            except ValueError:
+                # Fall back to inferring from bd_status
+                possible_states = BD_STATUS_TO_TICKET_STATES.get(bd_status, [])
+                state = possible_states[0] if possible_states else TicketState.CREATED
+        else:
+            possible_states = BD_STATUS_TO_TICKET_STATES.get(bd_status, [])
+            state = possible_states[0] if possible_states else TicketState.CREATED
+
+        return cls(
+            ticket_id=ticket_id,
+            ticket_type=ticket_type,
+            state=state,
+            file_name=label_dict.get("file", ""),
+            program_id=label_dict.get("program"),
+            cycle_number=int(label_dict.get("cycle", "1")),
+            worker_id=label_dict.get("worker"),
+            parent_ticket_id=label_dict.get("parent"),
+        )
 
 
 class BeadsClient:
@@ -282,7 +474,6 @@ class BeadsClient:
             return "dry-run-ticket"
 
         # Look for patterns like "war_rig-abc123" or "beads-xyz789"
-        import re
         match = re.search(r"([a-zA-Z_-]+\-[a-zA-Z0-9]+(?:\.\d+)?)", output)
         if match:
             return match.group(1)
@@ -300,6 +491,350 @@ class BeadsClient:
             List of ticket IDs that are still open.
         """
         return list(self._ticket_cache.keys())
+
+    # =========================================================================
+    # Program Manager Workflow Methods
+    # =========================================================================
+
+    def create_pm_ticket(
+        self,
+        ticket_type: TicketType,
+        file_name: str,
+        program_id: str | None = None,
+        cycle_number: int = 1,
+        parent_ticket_id: str | None = None,
+        priority: BeadsPriority = BeadsPriority.MEDIUM,
+        metadata: dict[str, Any] | None = None,
+    ) -> ProgramManagerTicket | None:
+        """Create a Program Manager workflow ticket.
+
+        Creates a ticket in beads with labels encoding the PM workflow state.
+        The ticket is created in the CREATED state, ready for a worker to claim.
+
+        Args:
+            ticket_type: Type of PM ticket (DOCUMENTATION, VALIDATION, etc.)
+            file_name: Source file being documented.
+            program_id: Identifier for the program.
+            cycle_number: Current batch cycle (1-based).
+            parent_ticket_id: Link to parent ticket for derived tickets.
+            priority: Priority level for the ticket.
+            metadata: Additional JSON-serializable data.
+
+        Returns:
+            ProgramManagerTicket if created successfully, None otherwise.
+
+        Example:
+            ticket = client.create_pm_ticket(
+                ticket_type=TicketType.DOCUMENTATION,
+                file_name="CBACT04C.cbl",
+                program_id="CBACT04C",
+                cycle_number=1,
+            )
+        """
+        pm_ticket = ProgramManagerTicket(
+            ticket_id="",  # Will be set after creation
+            ticket_type=ticket_type,
+            state=TicketState.CREATED,
+            file_name=file_name,
+            program_id=program_id,
+            cycle_number=cycle_number,
+            parent_ticket_id=parent_ticket_id,
+            metadata=metadata or {},
+        )
+
+        # Build title based on ticket type
+        type_prefix = ticket_type.value.upper()
+        if program_id:
+            title = f"[{type_prefix}] {program_id}: {file_name}"
+        else:
+            title = f"[{type_prefix}] {file_name}"
+
+        if cycle_number > 1:
+            title = f"[Cycle {cycle_number}] {title}"
+
+        # Get labels from PM ticket
+        labels = pm_ticket.to_labels()
+
+        # Create the beads ticket
+        args = [
+            "create",
+            f"--title={title}",
+            f"--type=task",
+            f"--priority={priority.value}",
+        ]
+
+        for label in labels:
+            args.append(f"--add-label={label}")
+
+        if parent_ticket_id:
+            args.append(f"--parent={parent_ticket_id}")
+
+        success, output = self._run_bd(args)
+
+        if success:
+            ticket_id = self._parse_ticket_id(output)
+            if ticket_id:
+                pm_ticket.ticket_id = ticket_id
+                logger.info(
+                    f"Created PM ticket: {ticket_id} "
+                    f"({ticket_type.value}) for {file_name}"
+                )
+                return pm_ticket
+
+        return None
+
+    def claim_ticket(
+        self,
+        ticket_id: str,
+        worker_id: str,
+    ) -> bool:
+        """Atomically claim a ticket for a worker.
+
+        Uses bd's --claim flag to atomically set the assignee and status.
+        This prevents race conditions when multiple workers try to claim
+        the same ticket.
+
+        Args:
+            ticket_id: ID of the ticket to claim.
+            worker_id: ID of the worker claiming the ticket.
+
+        Returns:
+            True if claim succeeded, False if already claimed or error.
+
+        Example:
+            if client.claim_ticket("war_rig-abc123", "scribe-1"):
+                # Process the ticket
+                pass
+            else:
+                # Ticket was claimed by another worker
+                pass
+        """
+        # Use bd update --claim for atomic claim
+        args = [
+            "update",
+            ticket_id,
+            "--claim",
+            f"--assignee={worker_id}",
+            f"--add-label=worker:{worker_id}",
+            f"--remove-label=pm-state:{TicketState.CREATED.value}",
+            f"--add-label=pm-state:{TicketState.CLAIMED.value}",
+        ]
+
+        success, output = self._run_bd(args)
+
+        if success:
+            logger.info(f"Worker {worker_id} claimed ticket {ticket_id}")
+            return True
+        else:
+            # Check if failure was due to already claimed
+            if "already claimed" in output.lower():
+                logger.debug(f"Ticket {ticket_id} already claimed")
+            else:
+                logger.warning(f"Failed to claim ticket {ticket_id}: {output}")
+            return False
+
+    def update_ticket_state(
+        self,
+        ticket_id: str,
+        new_state: TicketState,
+        reason: str | None = None,
+    ) -> bool:
+        """Transition a ticket to a new workflow state.
+
+        Updates both the beads status and the pm-state label to reflect
+        the new state.
+
+        Args:
+            ticket_id: ID of the ticket to update.
+            new_state: New workflow state.
+            reason: Optional reason for the transition.
+
+        Returns:
+            True if update succeeded, False otherwise.
+
+        Example:
+            # Mark work as in progress
+            client.update_ticket_state(
+                "war_rig-abc123",
+                TicketState.IN_PROGRESS,
+            )
+
+            # Mark as completed
+            client.update_ticket_state(
+                "war_rig-abc123",
+                TicketState.COMPLETED,
+                reason="Documentation approved",
+            )
+        """
+        bd_status = TICKET_STATE_TO_BD_STATUS[new_state]
+
+        # Build update command
+        args = [
+            "update",
+            ticket_id,
+            f"--status={bd_status}",
+        ]
+
+        # Update the state label - remove old states and add new one
+        for state in TicketState:
+            args.append(f"--remove-label=pm-state:{state.value}")
+        args.append(f"--add-label=pm-state:{new_state.value}")
+
+        success, _ = self._run_bd(args)
+
+        if success:
+            logger.info(f"Updated ticket {ticket_id} state to {new_state.value}")
+
+            # If closing, also run close command with reason
+            if new_state in (
+                TicketState.COMPLETED,
+                TicketState.CANCELLED,
+                TicketState.MERGED,
+            ):
+                close_args = ["close", ticket_id]
+                if reason:
+                    close_args.append(f"--reason={reason}")
+                self._run_bd(close_args)
+
+            return True
+
+        return False
+
+    def get_available_tickets(
+        self,
+        ticket_type: TicketType | None = None,
+        cycle_number: int | None = None,
+    ) -> list[ProgramManagerTicket]:
+        """List unclaimed tickets available for workers.
+
+        Queries beads for tickets in the CREATED state that have not been
+        claimed by any worker.
+
+        Args:
+            ticket_type: Filter by ticket type (optional).
+            cycle_number: Filter by cycle number (optional).
+
+        Returns:
+            List of ProgramManagerTicket objects available for claiming.
+
+        Example:
+            # Get all available documentation tickets
+            tickets = client.get_available_tickets(
+                ticket_type=TicketType.DOCUMENTATION,
+            )
+            for ticket in tickets:
+                if client.claim_ticket(ticket.ticket_id, worker_id):
+                    process(ticket)
+                    break
+        """
+        args = ["list", "--json", "--status=open"]
+
+        # Add label filters
+        if ticket_type:
+            args.append(f"--label=pm-type:{ticket_type.value}")
+        else:
+            # Must have pm-type label to be a PM ticket
+            args.append("--label-any=pm-type:documentation,pm-type:validation,"
+                       "pm-type:clarification,pm-type:chrome,pm-type:holistic_review")
+
+        args.append(f"--label=pm-state:{TicketState.CREATED.value}")
+
+        if cycle_number:
+            args.append(f"--label=cycle:{cycle_number}")
+
+        success, output = self._run_bd(args)
+
+        if not success:
+            logger.warning(f"Failed to list available tickets: {output}")
+            return []
+
+        return self._parse_pm_tickets_from_json(output)
+
+    def get_tickets_by_state(
+        self,
+        state: TicketState,
+        ticket_type: TicketType | None = None,
+        cycle_number: int | None = None,
+    ) -> list[ProgramManagerTicket]:
+        """Query tickets by their workflow state.
+
+        Args:
+            state: The ticket state to filter by.
+            ticket_type: Filter by ticket type (optional).
+            cycle_number: Filter by cycle number (optional).
+
+        Returns:
+            List of ProgramManagerTicket objects in the specified state.
+
+        Example:
+            # Get all in-progress tickets
+            in_progress = client.get_tickets_by_state(TicketState.IN_PROGRESS)
+
+            # Get completed documentation tickets
+            completed_docs = client.get_tickets_by_state(
+                state=TicketState.COMPLETED,
+                ticket_type=TicketType.DOCUMENTATION,
+            )
+        """
+        # Map state to bd status
+        bd_status = TICKET_STATE_TO_BD_STATUS[state]
+
+        args = ["list", "--json", f"--status={bd_status}"]
+
+        # Filter by pm-state label for precision
+        args.append(f"--label=pm-state:{state.value}")
+
+        if ticket_type:
+            args.append(f"--label=pm-type:{ticket_type.value}")
+
+        if cycle_number:
+            args.append(f"--label=cycle:{cycle_number}")
+
+        success, output = self._run_bd(args)
+
+        if not success:
+            logger.warning(f"Failed to list tickets by state: {output}")
+            return []
+
+        return self._parse_pm_tickets_from_json(output)
+
+    def _parse_pm_tickets_from_json(self, output: str) -> list[ProgramManagerTicket]:
+        """Parse PM tickets from bd list --json output.
+
+        Args:
+            output: JSON output from bd list command.
+
+        Returns:
+            List of ProgramManagerTicket objects.
+        """
+        if not output or output.strip() == "":
+            return []
+
+        try:
+            issues = json.loads(output)
+        except json.JSONDecodeError:
+            logger.warning(f"Failed to parse JSON from bd list: {output[:100]}...")
+            return []
+
+        if not isinstance(issues, list):
+            return []
+
+        tickets = []
+        for issue in issues:
+            ticket_id = issue.get("id", "")
+            labels = issue.get("labels", [])
+            bd_status = issue.get("status", "open")
+
+            pm_ticket = ProgramManagerTicket.from_labels(
+                ticket_id=ticket_id,
+                labels=labels,
+                bd_status=bd_status,
+            )
+
+            if pm_ticket:
+                tickets.append(pm_ticket)
+
+        return tickets
 
 
 # Singleton instance for convenience
