@@ -1,0 +1,39 @@
+{
+  "header": {
+    "program_id": "CBSTM03B",
+    "file_name": "CBSTM03B.cbl",
+    "file_type": "COBOL",
+    "analyzed_by": "WAR_RIG_MOCK",
+    "analyzed_at": "2026-01-10T19:17:56.687224",
+    "iteration_count": 2,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "[MOCK] This is a mock documentation for CBSTM03B.cbl",
+    "business_context": null,
+    "program_type": "BATCH",
+    "citations": [
+      1
+    ]
+  },
+  "inputs": [],
+  "outputs": [],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [],
+  "data_flow": {
+    "reads_from": [],
+    "writes_to": [],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [],
+  "error_handling": [],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": []
+}

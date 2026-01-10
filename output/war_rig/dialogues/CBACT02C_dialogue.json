@@ -1,0 +1,34 @@
+{
+  "program_id": "CBACT02C",
+  "questions": [
+    {
+      "question_id": "Q-15AF5DA2",
+      "section": "purpose",
+      "question_type": "CLARIFICATION",
+      "question": "[MOCK] Can you provide more specific details about the business process?",
+      "evidence": [
+        1,
+        2,
+        3
+      ],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-33C2DCA4",
+      "section": "purpose",
+      "question_type": "CLARIFICATION",
+      "question": "[MOCK] Can you provide more specific details about the business process?",
+      "evidence": [
+        1,
+        2,
+        3
+      ],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    }
+  ],
+  "responses": []
+}

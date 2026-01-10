@@ -1,0 +1,3 @@
+[
+  "ticket_id='CHR-56C9A747' program_id='CBSTM03B' section='purpose' issue_type=<IssueType.VAGUE: 'VAGUE'> description='[MOCK] Purpose section needs more specific business context' guidance='Add details about what business process this program supports' priority=<IssuePriority.HIGH: 'HIGH'> created_at=datetime.datetime(2026, 1, 10, 19, 17, 56, 686687) resolved=False resolution_notes=None"
+]

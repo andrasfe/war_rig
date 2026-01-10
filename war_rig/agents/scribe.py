@@ -1,0 +1,394 @@
+"""Scribe agent for documentation generation.
+
+The Scribe is the documenter War Boy. It analyzes mainframe source code
+and fills out the documentation template, citing line numbers for every
+factual claim.
+
+Responsibilities:
+- Analyze code structure and purpose
+- Fill out all template sections
+- Cite line numbers for claims
+- Mark unknowns as UNKNOWN with explanation
+- Respond to Challenger questions
+- Address Chrome tickets from Imperator
+"""
+
+import json
+import logging
+import re
+from typing import Any
+
+from pydantic import Field
+
+from war_rig.agents.base import AgentInput, AgentOutput, BaseAgent
+from war_rig.config import ScribeConfig
+from war_rig.models.assessments import ConfidenceAssessment, ConfidenceLevel
+from war_rig.models.templates import DocumentationTemplate, FileType
+from war_rig.models.tickets import ChromeTicket, ChallengerQuestion, ScribeResponse
+from war_rig.preprocessors.base import PreprocessorResult
+
+logger = logging.getLogger(__name__)
+
+
+class ScribeInput(AgentInput):
+    """Input data for the Scribe agent.
+
+    Contains all information needed to generate or update documentation.
+    """
+
+    source_code: str = Field(
+        ...,
+        description="The source code to analyze",
+    )
+    file_name: str = Field(
+        ...,
+        description="Name of the source file",
+    )
+    file_type: FileType = Field(
+        ...,
+        description="Type of source file",
+    )
+    preprocessor_result: PreprocessorResult | None = Field(
+        default=None,
+        description="Structural hints from preprocessor",
+    )
+    copybook_contents: dict[str, str] = Field(
+        default_factory=dict,
+        description="Resolved copybook contents (name -> content)",
+    )
+    previous_template: DocumentationTemplate | None = Field(
+        default=None,
+        description="Previous iteration's template (for updates)",
+    )
+    challenger_questions: list[ChallengerQuestion] = Field(
+        default_factory=list,
+        description="Questions from Challenger to address",
+    )
+    chrome_tickets: list[ChromeTicket] = Field(
+        default_factory=list,
+        description="Chrome tickets from Imperator to address",
+    )
+
+
+class ScribeOutput(AgentOutput):
+    """Output from the Scribe agent.
+
+    Contains the generated documentation and metadata.
+    """
+
+    template: DocumentationTemplate | None = Field(
+        default=None,
+        description="The completed documentation template",
+    )
+    confidence: ConfidenceAssessment | None = Field(
+        default=None,
+        description="Scribe's confidence assessment",
+    )
+    responses: list[ScribeResponse] = Field(
+        default_factory=list,
+        description="Responses to Challenger questions",
+    )
+    open_questions: list[str] = Field(
+        default_factory=list,
+        description="Questions Scribe could not resolve",
+    )
+
+
+class ScribeAgent(BaseAgent[ScribeInput, ScribeOutput]):
+    """The Scribe agent analyzes code and produces documentation.
+
+    The Scribe's role is to:
+    1. First pass: Analyze code and fill template completely
+    2. Subsequent passes: Address Chrome tickets and Challenger questions
+    3. Always cite line numbers for factual claims
+    4. Mark unknowns explicitly rather than guessing
+
+    Example:
+        config = ScribeConfig(model="claude-sonnet-4-20250514", temperature=0.3)
+        scribe = ScribeAgent(config)
+
+        output = await scribe.ainvoke(ScribeInput(
+            source_code=cobol_source,
+            file_name="PROGRAM.cbl",
+            file_type=FileType.COBOL,
+        ))
+        print(output.template.purpose.summary)
+    """
+
+    def __init__(
+        self,
+        config: ScribeConfig,
+        api_key: str | None = None,
+    ):
+        """Initialize the Scribe agent.
+
+        Args:
+            config: Scribe-specific configuration.
+            api_key: Anthropic API key.
+        """
+        super().__init__(config, api_key, name="Scribe")
+
+    def _build_system_prompt(self) -> str:
+        """Build the Scribe's system prompt.
+
+        Returns:
+            The system prompt defining Scribe's role and behavior.
+        """
+        return """You are the Scribe, a documentation specialist for mainframe code analysis.
+
+Your role is to analyze COBOL, PL/I, and JCL source code and produce comprehensive documentation following a structured template.
+
+## Core Principles
+
+1. **Accuracy over completeness**: Never invent information. If something cannot be determined from the code, mark it as UNKNOWN with an explanation.
+
+2. **Citation required**: Every factual claim must include line number citations from the source code.
+
+3. **Be specific**: Avoid generic descriptions. "Processes customer data" is bad. "Reads CUSTOMER-MASTER file, validates account status, and updates TRANSACTION-LOG" is good.
+
+4. **Address all sections**: Even if a section is not applicable, explicitly note this rather than leaving it empty.
+
+## Output Format
+
+You must respond with valid JSON matching the DocumentationTemplate schema. Key sections:
+
+- **header**: Program identification and metadata
+- **purpose**: What the program does (be specific!)
+- **inputs/outputs**: All data sources and destinations with types
+- **business_rules**: Key logic with conditions and citations
+- **called_programs**: Programs invoked via CALL/LINK/XCTL
+- **copybooks_used**: All COPY statements
+- **paragraphs**: Key paragraph purposes (not exhaustive)
+- **error_handling**: How errors are handled
+- **sql_operations**: DB2 operations (if any)
+- **cics_operations**: CICS commands (if any)
+
+## When Responding to Challenger Questions
+
+- Address each question directly
+- Provide evidence (line numbers) for your answer
+- If you were wrong, update the template and note the change
+- If you stand by your original answer, explain why with citations
+
+## When Addressing Chrome Tickets
+
+- Read the issue description and guidance carefully
+- Make the requested improvements
+- Note what changes you made
+
+Respond ONLY with valid JSON. Do not include markdown code fences or explanatory text outside the JSON."""
+
+    def _build_user_prompt(self, input_data: ScribeInput) -> str:
+        """Build the user prompt from input data.
+
+        Args:
+            input_data: The Scribe's input.
+
+        Returns:
+            The user message with code and context.
+        """
+        parts = []
+
+        # Basic context
+        parts.append(f"## Source File: {input_data.file_name}")
+        parts.append(f"File Type: {input_data.file_type.value}")
+        parts.append(f"Iteration: {input_data.iteration}")
+        parts.append("")
+
+        # Preprocessor hints if available
+        if input_data.preprocessor_result:
+            parts.append("## Preprocessor Analysis")
+            parts.append("```json")
+            parts.append(input_data.preprocessor_result.model_dump_json(indent=2))
+            parts.append("```")
+            parts.append("")
+
+        # Source code
+        parts.append("## Source Code")
+        parts.append("```")
+        # Add line numbers
+        lines = input_data.source_code.split("\n")
+        for i, line in enumerate(lines, start=1):
+            parts.append(f"{i:5d} | {line}")
+        parts.append("```")
+        parts.append("")
+
+        # Copybook contents if any
+        if input_data.copybook_contents:
+            parts.append("## Referenced Copybooks")
+            for name, content in input_data.copybook_contents.items():
+                parts.append(f"### {name}")
+                parts.append("```")
+                parts.append(content)
+                parts.append("```")
+            parts.append("")
+
+        # Previous template for subsequent iterations
+        if input_data.previous_template and input_data.iteration > 1:
+            parts.append("## Previous Documentation (to update)")
+            parts.append("```json")
+            parts.append(input_data.previous_template.model_dump_json(indent=2))
+            parts.append("```")
+            parts.append("")
+
+        # Challenger questions to address
+        if input_data.challenger_questions:
+            parts.append("## Challenger Questions to Address")
+            for q in input_data.challenger_questions:
+                parts.append(f"- [{q.question_id}] ({q.question_type.value}) {q.question}")
+                if q.evidence:
+                    parts.append(f"  Evidence: lines {q.evidence}")
+            parts.append("")
+
+        # Chrome tickets to address
+        if input_data.chrome_tickets:
+            parts.append("## Chrome Tickets to Address")
+            for t in input_data.chrome_tickets:
+                parts.append(f"- [{t.ticket_id}] {t.section}: {t.description}")
+                if t.guidance:
+                    parts.append(f"  Guidance: {t.guidance}")
+            parts.append("")
+
+        # Instructions
+        if input_data.iteration == 1:
+            parts.append("## Task")
+            parts.append("Analyze this source code and produce complete documentation.")
+            parts.append("Fill out ALL sections of the template.")
+            parts.append("Cite line numbers for every factual claim.")
+        else:
+            parts.append("## Task")
+            parts.append("Update the documentation based on feedback.")
+            parts.append("Address all Challenger questions and Chrome tickets.")
+            parts.append("Improve any sections that were marked as issues.")
+
+        parts.append("")
+        parts.append("Respond with a JSON object containing:")
+        parts.append('- "template": the DocumentationTemplate')
+        parts.append('- "confidence": your confidence assessment')
+        parts.append('- "responses": your responses to Challenger questions (if any)')
+        parts.append('- "open_questions": questions you cannot resolve')
+
+        return "\n".join(parts)
+
+    def _parse_response(self, response: str, input_data: ScribeInput) -> ScribeOutput:
+        """Parse the LLM response into ScribeOutput.
+
+        Args:
+            response: Raw text response from the LLM.
+            input_data: Original input.
+
+        Returns:
+            Parsed ScribeOutput.
+        """
+        try:
+            # Try to extract JSON from response
+            json_match = re.search(r"\{[\s\S]*\}", response)
+            if not json_match:
+                raise ValueError("No JSON object found in response")
+
+            data = json.loads(json_match.group())
+
+            # Parse template
+            template = None
+            if "template" in data:
+                template = DocumentationTemplate.model_validate(data["template"])
+
+            # Parse confidence
+            confidence = None
+            if "confidence" in data:
+                confidence = ConfidenceAssessment.model_validate(data["confidence"])
+
+            # Parse responses
+            responses = []
+            if "responses" in data:
+                for r in data["responses"]:
+                    responses.append(ScribeResponse.model_validate(r))
+
+            # Parse open questions
+            open_questions = data.get("open_questions", [])
+
+            return ScribeOutput(
+                success=True,
+                template=template,
+                confidence=confidence,
+                responses=responses,
+                open_questions=open_questions,
+            )
+
+        except Exception as e:
+            logger.error(f"Failed to parse Scribe response: {e}")
+            logger.debug(f"Response was: {response[:500]}...")
+            return ScribeOutput(
+                success=False,
+                error=f"Failed to parse response: {e}",
+            )
+
+    def _create_error_output(self, error: str, input_data: ScribeInput) -> ScribeOutput:
+        """Create an error output.
+
+        Args:
+            error: Error message.
+            input_data: Original input.
+
+        Returns:
+            ScribeOutput indicating failure.
+        """
+        return ScribeOutput(
+            success=False,
+            error=error,
+        )
+
+    def create_mock_output(self, input_data: ScribeInput) -> ScribeOutput:
+        """Create mock output for testing without LLM calls.
+
+        This method produces valid output structure with placeholder data,
+        useful for testing the orchestration without making API calls.
+
+        Args:
+            input_data: The Scribe's input.
+
+        Returns:
+            Mock ScribeOutput with valid structure.
+        """
+        from datetime import datetime
+
+        from war_rig.models.templates import (
+            HeaderSection,
+            ProgramType,
+            PurposeSection,
+        )
+
+        program_id = "UNKNOWN"
+        if input_data.preprocessor_result:
+            program_id = input_data.preprocessor_result.program_id or "UNKNOWN"
+
+        template = DocumentationTemplate(
+            header=HeaderSection(
+                program_id=program_id,
+                file_name=input_data.file_name,
+                file_type=input_data.file_type,
+                analyzed_by="WAR_RIG_MOCK",
+                analyzed_at=datetime.utcnow(),
+                iteration_count=input_data.iteration,
+            ),
+            purpose=PurposeSection(
+                summary=f"[MOCK] This is a mock documentation for {input_data.file_name}",
+                program_type=ProgramType.BATCH,
+                citations=[1],
+            ),
+        )
+
+        confidence = ConfidenceAssessment(
+            program_id=program_id,
+            iteration=input_data.iteration,
+            overall_confidence=ConfidenceLevel.LOW,
+            reasoning="Mock output - no actual analysis performed",
+        )
+
+        return ScribeOutput(
+            success=True,
+            template=template,
+            confidence=confidence,
+            responses=[],
+            open_questions=["This is mock output - no actual analysis was performed"],
+        )

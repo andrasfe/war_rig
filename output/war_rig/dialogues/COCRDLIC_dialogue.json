@@ -1,0 +1,34 @@
+{
+  "program_id": "COCRDLIC",
+  "questions": [
+    {
+      "question_id": "Q-15C96997",
+      "section": "purpose",
+      "question_type": "CLARIFICATION",
+      "question": "[MOCK] Can you provide more specific details about the business process?",
+      "evidence": [
+        1,
+        2,
+        3
+      ],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-8D19DC93",
+      "section": "purpose",
+      "question_type": "CLARIFICATION",
+      "question": "[MOCK] Can you provide more specific details about the business process?",
+      "evidence": [
+        1,
+        2,
+        3
+      ],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    }
+  ],
+  "responses": []
+}
