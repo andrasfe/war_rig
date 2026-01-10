@@ -1,39 +1,65 @@
 """Configuration management for War Rig.
 
-This module provides Pydantic Settings-based configuration with support for
-YAML file loading and environment variable overrides.
+This module provides configuration with support for .env files via python-dotenv,
+supporting OpenRouter as the API provider with per-agent model configuration.
 
 Typical usage:
-    # Load from default locations
-    config = WarRigConfig()
+    # Load from .env file automatically
+    config = load_config()
 
-    # Load from specific file
-    config = WarRigConfig.from_yaml("path/to/config.yaml")
-
-    # Access nested configuration
+    # Access agent configuration
     print(config.scribe.model)
     print(config.max_iterations)
 """
 
+import os
 from pathlib import Path
-from typing import Any
+from typing import Literal
 
-import yaml
+from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Load .env file from current directory or parent directories
+load_dotenv()
+
+
+class APIConfig(BaseModel):
+    """Configuration for the API provider."""
+
+    provider: Literal["openrouter", "anthropic"] = Field(
+        default="openrouter",
+        description="API provider to use",
+    )
+    api_key: str | None = Field(
+        default=None,
+        description="API key for the provider",
+    )
+    base_url: str = Field(
+        default="https://openrouter.ai/api/v1",
+        description="Base URL for the API",
+    )
+    site_url: str | None = Field(
+        default=None,
+        description="Site URL for OpenRouter rankings",
+    )
+    site_name: str | None = Field(
+        default=None,
+        description="Site name for OpenRouter rankings",
+    )
 
 
 class ModelConfig(BaseModel):
     """Configuration for an LLM model."""
 
     model: str = Field(
-        default="claude-sonnet-4-20250514",
+        default="anthropic/claude-sonnet-4-20250514",
         description="Model identifier for the LLM",
     )
     temperature: float = Field(
         default=0.3,
         ge=0.0,
-        le=1.0,
+        le=2.0,
         description="Sampling temperature for generation",
     )
     max_tokens: int = Field(
@@ -50,6 +76,7 @@ class ScribeConfig(ModelConfig):
     Lower temperature (0.3) encourages more deterministic, factual output.
     """
 
+    model: str = Field(default="anthropic/claude-sonnet-4-20250514")
     temperature: float = Field(default=0.3)
     max_tokens: int = Field(default=4000)
 
@@ -61,6 +88,7 @@ class ChallengerConfig(ModelConfig):
     Slightly higher temperature (0.5) allows for more creative questioning.
     """
 
+    model: str = Field(default="openai/gpt-4o-2024-11-20")
     temperature: float = Field(default=0.5)
     max_tokens: int = Field(default=2000)
 
@@ -72,6 +100,7 @@ class ImperatorConfig(ModelConfig):
     Lower temperature (0.2) ensures consistent, decisive output.
     """
 
+    model: str = Field(default="anthropic/claude-sonnet-4-20250514")
     temperature: float = Field(default=0.2)
     max_tokens: int = Field(default=2000)
 
@@ -83,55 +112,38 @@ class PreprocessingConfig(BaseModel):
     before agent analysis begins.
     """
 
-    extract_paragraphs: bool = Field(
-        default=True,
-        description="Extract COBOL paragraph definitions",
-    )
-    extract_performs: bool = Field(
-        default=True,
-        description="Extract PERFORM statements and targets",
-    )
-    extract_calls: bool = Field(
-        default=True,
-        description="Extract CALL statements and targets",
-    )
-    extract_copybooks: bool = Field(
-        default=True,
-        description="Extract COPY statements",
-    )
-    extract_sql: bool = Field(
-        default=True,
-        description="Extract embedded SQL statements",
-    )
-    extract_cics: bool = Field(
-        default=True,
-        description="Extract CICS commands",
-    )
+    extract_paragraphs: bool = Field(default=True)
+    extract_performs: bool = Field(default=True)
+    extract_calls: bool = Field(default=True)
+    extract_copybooks: bool = Field(default=True)
+    extract_sql: bool = Field(default=True)
+    extract_cics: bool = Field(default=True)
 
 
 class FileExtensionsConfig(BaseModel):
     """Configuration for recognized file extensions by type."""
 
-    cobol: list[str] = Field(
-        default=[".cbl", ".cob", ".CBL", ".COB"],
-        description="COBOL source file extensions",
-    )
-    copybook: list[str] = Field(
-        default=[".cpy", ".CPY", ".copy", ".COPY"],
-        description="Copybook file extensions",
-    )
-    jcl: list[str] = Field(
-        default=[".jcl", ".JCL"],
-        description="JCL file extensions",
-    )
-    bms: list[str] = Field(
-        default=[".bms", ".BMS"],
-        description="BMS map file extensions",
-    )
-    pli: list[str] = Field(
-        default=[".pli", ".PLI", ".pl1", ".PL1"],
-        description="PL/I source file extensions",
-    )
+    cobol: list[str] = Field(default=[".cbl", ".cob", ".CBL", ".COB"])
+    copybook: list[str] = Field(default=[".cpy", ".CPY", ".copy", ".COPY"])
+    jcl: list[str] = Field(default=[".jcl", ".JCL"])
+    bms: list[str] = Field(default=[".bms", ".BMS"])
+    pli: list[str] = Field(default=[".pli", ".PLI", ".pl1", ".PL1"])
+
+
+class LoggingConfig(BaseModel):
+    """Configuration for logging."""
+
+    level: str = Field(default="INFO")
+    log_file: Path | None = Field(default=None)
+    save_dialogues: bool = Field(default=True)
+
+
+class CheckpointConfig(BaseModel):
+    """Configuration for checkpointing."""
+
+    enabled: bool = Field(default=True)
+    frequency: str = Field(default="per_program")
+    directory: Path = Field(default=Path("./output/checkpoints"))
 
 
 class SystemConfig(BaseModel):
@@ -149,178 +161,147 @@ class SystemConfig(BaseModel):
         default="per_program",
         description="How often to save checkpoints",
     )
-    preprocessing: PreprocessingConfig = Field(
-        default_factory=PreprocessingConfig,
-        description="Preprocessing configuration",
-    )
-    file_extensions: FileExtensionsConfig = Field(
-        default_factory=FileExtensionsConfig,
-        description="File extension mappings",
-    )
+    preprocessing: PreprocessingConfig = Field(default_factory=PreprocessingConfig)
+    file_extensions: FileExtensionsConfig = Field(default_factory=FileExtensionsConfig)
 
 
 class WarRigConfig(BaseSettings):
     """Main configuration for the War Rig system.
 
-    Configuration is loaded from (in order of precedence):
-    1. Environment variables (prefixed with WAR_RIG_)
-    2. YAML configuration file
-    3. Default values
-
-    Example YAML configuration:
-        war_rig:
-          rig_id: "ALPHA"
-          max_iterations: 3
-          scribe:
-            model: "claude-sonnet-4-20250514"
-            temperature: 0.3
+    Configuration is loaded from environment variables (with .env support).
+    See .env.example for all available options.
     """
 
     model_config = SettingsConfigDict(
-        env_prefix="WAR_RIG_",
-        env_nested_delimiter="__",
+        env_prefix="",
         extra="ignore",
     )
 
     # War Rig identification
-    rig_id: str = Field(
-        default="ALPHA",
-        description="Unique identifier for this War Rig instance",
-    )
+    rig_id: str = Field(default="ALPHA")
 
-    # Agent configurations
-    scribe: ScribeConfig = Field(
-        default_factory=ScribeConfig,
-        description="Scribe agent configuration",
-    )
-    challenger: ChallengerConfig = Field(
-        default_factory=ChallengerConfig,
-        description="Challenger agent configuration",
-    )
-    imperator: ImperatorConfig = Field(
-        default_factory=ImperatorConfig,
-        description="Imperator agent configuration",
-    )
+    # API configuration (loaded from env)
+    api_provider: str = Field(default="openrouter")
+    openrouter_api_key: str | None = Field(default=None)
+    openrouter_base_url: str = Field(default="https://openrouter.ai/api/v1")
+    openrouter_site_url: str | None = Field(default=None)
+    openrouter_site_name: str | None = Field(default=None)
+
+    # Legacy Anthropic support
+    anthropic_api_key: str | None = Field(default=None)
+
+    # Agent model configurations (loaded from env)
+    scribe_model: str = Field(default="anthropic/claude-sonnet-4-20250514")
+    scribe_temperature: float = Field(default=0.3)
+    scribe_max_tokens: int = Field(default=4000)
+
+    challenger_model: str = Field(default="openai/gpt-4o-2024-11-20")
+    challenger_temperature: float = Field(default=0.5)
+    challenger_max_tokens: int = Field(default=2000)
+
+    imperator_model: str = Field(default="anthropic/claude-sonnet-4-20250514")
+    imperator_temperature: float = Field(default=0.2)
+    imperator_max_tokens: int = Field(default=2000)
 
     # Workflow limits
-    max_iterations: int = Field(
-        default=3,
-        ge=1,
-        le=10,
-        description="Maximum Scribe-Challenger iterations before forced approval",
-    )
-    max_questions_per_round: int = Field(
-        default=5,
-        ge=1,
-        le=20,
-        description="Maximum questions Challenger can ask per round",
-    )
-    max_chrome_tickets: int = Field(
-        default=5,
-        ge=1,
-        le=20,
-        description="Maximum Chrome tickets Imperator can issue per review",
-    )
+    max_iterations: int = Field(default=3, ge=1, le=10)
+    max_questions_per_round: int = Field(default=5, ge=1, le=20)
+    max_chrome_tickets: int = Field(default=5, ge=1, le=20)
 
-    # System configuration
-    system: SystemConfig = Field(
-        default_factory=SystemConfig,
-        description="System-wide settings",
-    )
+    # Paths
+    input_directory: Path = Field(default=Path("./input"))
+    output_directory: Path = Field(default=Path("./output"))
 
-    # API configuration
-    anthropic_api_key: str | None = Field(
-        default=None,
-        description="Anthropic API key (can also use ANTHROPIC_API_KEY env var)",
-    )
+    # Preprocessing flags
+    extract_paragraphs: bool = Field(default=True)
+    extract_performs: bool = Field(default=True)
+    extract_calls: bool = Field(default=True)
+    extract_copybooks: bool = Field(default=True)
+    extract_sql: bool = Field(default=True)
+    extract_cics: bool = Field(default=True)
 
-    @classmethod
-    def from_yaml(cls, yaml_path: str | Path) -> "WarRigConfig":
-        """Load configuration from a YAML file.
+    # Logging
+    log_level: str = Field(default="INFO")
+    log_file: str | None = Field(default=None)
+    save_dialogues: bool = Field(default=True)
 
-        Args:
-            yaml_path: Path to the YAML configuration file.
+    # Checkpointing
+    checkpoint_enabled: bool = Field(default=True)
+    checkpoint_frequency: str = Field(default="per_program")
+    checkpoint_directory: Path = Field(default=Path("./output/checkpoints"))
 
-        Returns:
-            Configured WarRigConfig instance.
+    @property
+    def api(self) -> APIConfig:
+        """Get API configuration."""
+        return APIConfig(
+            provider=self.api_provider,
+            api_key=self.openrouter_api_key or self.anthropic_api_key,
+            base_url=self.openrouter_base_url,
+            site_url=self.openrouter_site_url,
+            site_name=self.openrouter_site_name,
+        )
 
-        Raises:
-            FileNotFoundError: If the YAML file doesn't exist.
-            yaml.YAMLError: If the YAML file is malformed.
-        """
-        yaml_path = Path(yaml_path)
+    @property
+    def scribe(self) -> ScribeConfig:
+        """Get Scribe agent configuration."""
+        return ScribeConfig(
+            model=self.scribe_model,
+            temperature=self.scribe_temperature,
+            max_tokens=self.scribe_max_tokens,
+        )
 
-        if not yaml_path.exists():
-            raise FileNotFoundError(f"Configuration file not found: {yaml_path}")
+    @property
+    def challenger(self) -> ChallengerConfig:
+        """Get Challenger agent configuration."""
+        return ChallengerConfig(
+            model=self.challenger_model,
+            temperature=self.challenger_temperature,
+            max_tokens=self.challenger_max_tokens,
+        )
 
-        with yaml_path.open() as f:
-            data = yaml.safe_load(f)
+    @property
+    def imperator(self) -> ImperatorConfig:
+        """Get Imperator agent configuration."""
+        return ImperatorConfig(
+            model=self.imperator_model,
+            temperature=self.imperator_temperature,
+            max_tokens=self.imperator_max_tokens,
+        )
 
-        # Handle nested 'war_rig' key in YAML
-        if data and "war_rig" in data:
-            config_data = data["war_rig"]
-            # Merge system config if present at root level
-            if "system" in data:
-                config_data["system"] = data["system"]
-        else:
-            config_data = data or {}
-
-        return cls(**config_data)
-
-    @classmethod
-    def from_yaml_or_default(
-        cls,
-        yaml_path: str | Path | None = None,
-    ) -> "WarRigConfig":
-        """Load configuration from YAML if it exists, otherwise use defaults.
-
-        Searches for configuration in order:
-        1. Provided yaml_path
-        2. war_rig.yaml in current directory
-        3. ~/.war_rig/config.yaml
-        4. Default values
-
-        Args:
-            yaml_path: Optional explicit path to YAML configuration.
-
-        Returns:
-            Configured WarRigConfig instance.
-        """
-        search_paths: list[Path] = []
-
-        if yaml_path:
-            search_paths.append(Path(yaml_path))
-
-        search_paths.extend([
-            Path("war_rig.yaml"),
-            Path("war_rig.yml"),
-            Path.home() / ".war_rig" / "config.yaml",
-        ])
-
-        for path in search_paths:
-            if path.exists():
-                return cls.from_yaml(path)
-
-        return cls()
-
-    def to_yaml(self, yaml_path: str | Path) -> None:
-        """Save current configuration to a YAML file.
-
-        Args:
-            yaml_path: Path where the YAML file should be written.
-        """
-        yaml_path = Path(yaml_path)
-        yaml_path.parent.mkdir(parents=True, exist_ok=True)
-
-        data = {
-            "war_rig": self.model_dump(
-                exclude={"anthropic_api_key"},
-                exclude_none=True,
+    @property
+    def system(self) -> SystemConfig:
+        """Get system configuration."""
+        return SystemConfig(
+            input_directory=self.input_directory,
+            output_directory=self.output_directory,
+            checkpoint_frequency=self.checkpoint_frequency,
+            preprocessing=PreprocessingConfig(
+                extract_paragraphs=self.extract_paragraphs,
+                extract_performs=self.extract_performs,
+                extract_calls=self.extract_calls,
+                extract_copybooks=self.extract_copybooks,
+                extract_sql=self.extract_sql,
+                extract_cics=self.extract_cics,
             ),
-        }
+        )
 
-        with yaml_path.open("w") as f:
-            yaml.dump(data, f, default_flow_style=False, sort_keys=False)
+    @property
+    def logging(self) -> LoggingConfig:
+        """Get logging configuration."""
+        return LoggingConfig(
+            level=self.log_level,
+            log_file=Path(self.log_file) if self.log_file else None,
+            save_dialogues=self.save_dialogues,
+        )
+
+    @property
+    def checkpoint(self) -> CheckpointConfig:
+        """Get checkpoint configuration."""
+        return CheckpointConfig(
+            enabled=self.checkpoint_enabled,
+            frequency=self.checkpoint_frequency,
+            directory=self.checkpoint_directory,
+        )
 
     def get_agent_config(self, agent_name: str) -> ModelConfig:
         """Get configuration for a specific agent by name.
@@ -349,15 +330,15 @@ class WarRigConfig(BaseSettings):
         return agent_configs[agent_name]
 
 
-def load_config(config_path: str | Path | None = None) -> WarRigConfig:
-    """Convenience function to load configuration.
+def load_config() -> WarRigConfig:
+    """Load configuration from environment variables.
 
-    This is the recommended entry point for loading configuration.
-
-    Args:
-        config_path: Optional path to a YAML configuration file.
+    This function loads .env file automatically and creates
+    the configuration from environment variables.
 
     Returns:
         Configured WarRigConfig instance.
     """
-    return WarRigConfig.from_yaml_or_default(config_path)
+    # Ensure .env is loaded
+    load_dotenv()
+    return WarRigConfig()

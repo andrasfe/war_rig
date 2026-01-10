@@ -3,3 +3,7 @@ aws-mainframe-modernization-carddemo/
 __pycache__/
 *.pyc
 *.pyo
+.env
+.venv
+env/
+venv/

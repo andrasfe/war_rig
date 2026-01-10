@@ -20,7 +20,7 @@ from typing import Any
 from war_rig.agents.challenger import ChallengerAgent, ChallengerInput
 from war_rig.agents.imperator import ImperatorAgent, ImperatorDecision, ImperatorInput
 from war_rig.agents.scribe import ScribeAgent, ScribeInput
-from war_rig.config import WarRigConfig
+from war_rig.config import APIConfig, WarRigConfig
 from war_rig.models.templates import FileType
 from war_rig.orchestration.state import WarRigState
 from war_rig.preprocessors.cobol import COBOLPreprocessor
@@ -43,20 +43,20 @@ class WarRigNodes:
         imperator: Imperator agent instance
     """
 
-    def __init__(self, config: WarRigConfig, api_key: str | None = None):
+    def __init__(self, config: WarRigConfig, api_config: APIConfig | None = None):
         """Initialize the nodes with configuration.
 
         Args:
             config: War Rig configuration.
-            api_key: Anthropic API key (uses env var if None).
+            api_config: API configuration. If None, loads from environment.
         """
         self.config = config
-        self.api_key = api_key
+        self.api_config = api_config or config.api
 
-        # Initialize agents
-        self.scribe = ScribeAgent(config.scribe, api_key)
-        self.challenger = ChallengerAgent(config.challenger, api_key)
-        self.imperator = ImperatorAgent(config.imperator, api_key)
+        # Initialize agents with their respective configs
+        self.scribe = ScribeAgent(config.scribe, self.api_config)
+        self.challenger = ChallengerAgent(config.challenger, self.api_config)
+        self.imperator = ImperatorAgent(config.imperator, self.api_config)
 
         # Initialize preprocessors
         self.preprocessors = [

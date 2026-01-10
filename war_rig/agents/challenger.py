@@ -19,7 +19,7 @@ from typing import Any
 from pydantic import Field
 
 from war_rig.agents.base import AgentInput, AgentOutput, BaseAgent
-from war_rig.config import ChallengerConfig
+from war_rig.config import APIConfig, ChallengerConfig
 from war_rig.models.assessments import (
     ChallengerAssessment,
     SectionAssessment,
@@ -130,15 +130,15 @@ class ChallengerAgent(BaseAgent[ChallengerInput, ChallengerOutput]):
     def __init__(
         self,
         config: ChallengerConfig,
-        api_key: str | None = None,
+        api_config: APIConfig | None = None,
     ):
         """Initialize the Challenger agent.
 
         Args:
             config: Challenger-specific configuration.
-            api_key: Anthropic API key.
+            api_config: API configuration. If None, loads from environment.
         """
-        super().__init__(config, api_key, name="Challenger")
+        super().__init__(config, api_config, name="Challenger")
 
     def _build_system_prompt(self) -> str:
         """Build the Challenger's system prompt.

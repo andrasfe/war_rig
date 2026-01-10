@@ -20,7 +20,7 @@ from typing import Any
 from pydantic import Field
 
 from war_rig.agents.base import AgentInput, AgentOutput, BaseAgent
-from war_rig.config import ImperatorConfig
+from war_rig.config import APIConfig, ImperatorConfig
 from war_rig.models.assessments import ChallengerAssessment, ConfidenceAssessment
 from war_rig.models.templates import DocumentationTemplate, FileType, FinalStatus
 from war_rig.models.tickets import ChromeTicket, IssuePriority, IssueType, ScribeResponse
@@ -156,15 +156,15 @@ class ImperatorAgent(BaseAgent[ImperatorInput, ImperatorOutput]):
     def __init__(
         self,
         config: ImperatorConfig,
-        api_key: str | None = None,
+        api_config: APIConfig | None = None,
     ):
         """Initialize the Imperator agent.
 
         Args:
             config: Imperator-specific configuration.
-            api_key: Anthropic API key.
+            api_config: API configuration. If None, loads from environment.
         """
-        super().__init__(config, api_key, name="Imperator")
+        super().__init__(config, api_config, name="Imperator")
 
     def _build_system_prompt(self) -> str:
         """Build the Imperator's system prompt.

@@ -21,7 +21,7 @@ from typing import Any
 from pydantic import Field
 
 from war_rig.agents.base import AgentInput, AgentOutput, BaseAgent
-from war_rig.config import ScribeConfig
+from war_rig.config import APIConfig, ScribeConfig
 from war_rig.models.assessments import ConfidenceAssessment, ConfidenceLevel
 from war_rig.models.templates import DocumentationTemplate, FileType
 from war_rig.models.tickets import ChromeTicket, ChallengerQuestion, ScribeResponse
@@ -118,15 +118,15 @@ class ScribeAgent(BaseAgent[ScribeInput, ScribeOutput]):
     def __init__(
         self,
         config: ScribeConfig,
-        api_key: str | None = None,
+        api_config: APIConfig | None = None,
     ):
         """Initialize the Scribe agent.
 
         Args:
             config: Scribe-specific configuration.
-            api_key: Anthropic API key.
+            api_config: API configuration. If None, loads from environment.
         """
-        super().__init__(config, api_key, name="Scribe")
+        super().__init__(config, api_config, name="Scribe")
 
     def _build_system_prompt(self) -> str:
         """Build the Scribe's system prompt.

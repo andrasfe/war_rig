@@ -31,7 +31,7 @@ from typing import Any
 
 from langgraph.graph import END, StateGraph
 
-from war_rig.config import WarRigConfig
+from war_rig.config import APIConfig, WarRigConfig
 from war_rig.orchestration.nodes import WarRigNodes, should_continue
 from war_rig.orchestration.state import WarRigState, create_initial_state
 
@@ -57,16 +57,16 @@ class WarRigGraph:
     def __init__(
         self,
         config: WarRigConfig | None = None,
-        api_key: str | None = None,
+        api_config: APIConfig | None = None,
     ):
         """Initialize the War Rig graph.
 
         Args:
             config: War Rig configuration (uses defaults if None).
-            api_key: Anthropic API key (uses env var if None).
+            api_config: API configuration. If None, loads from environment.
         """
         self.config = config or WarRigConfig()
-        self.nodes = WarRigNodes(self.config, api_key)
+        self.nodes = WarRigNodes(self.config, api_config)
         self.graph = self._build_graph()
 
     def _build_graph(self) -> StateGraph:
@@ -202,7 +202,7 @@ class WarRigGraph:
 
 def create_war_rig_graph(
     config: WarRigConfig | None = None,
-    api_key: str | None = None,
+    api_config: APIConfig | None = None,
 ) -> WarRigGraph:
     """Create a War Rig graph instance.
 
@@ -210,7 +210,7 @@ def create_war_rig_graph(
 
     Args:
         config: War Rig configuration (uses defaults if None).
-        api_key: Anthropic API key (uses env var if None).
+        api_config: API configuration. If None, loads from environment.
 
     Returns:
         Configured WarRigGraph instance.
@@ -219,7 +219,7 @@ def create_war_rig_graph(
         graph = create_war_rig_graph()
         result = await graph.run(source_code, "PROGRAM.cbl")
     """
-    return WarRigGraph(config, api_key)
+    return WarRigGraph(config, api_config)
 
 
 async def analyze_file(

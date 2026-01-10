@@ -4,7 +4,7 @@ This module defines the abstract base class and common interfaces for all
 War Rig agents (Scribe, Challenger, Imperator). It provides:
 
 - Common configuration handling
-- LLM integration abstraction
+- LLM integration abstraction (supporting OpenRouter and Anthropic)
 - Async invocation interface
 - Logging and error handling
 
@@ -16,11 +16,11 @@ import logging
 from abc import ABC, abstractmethod
 from typing import Any, Generic, TypeVar
 
-from langchain_anthropic import ChatAnthropic
+from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
 from pydantic import BaseModel, Field
 
-from war_rig.config import ModelConfig
+from war_rig.config import APIConfig, ModelConfig, load_config
 
 logger = logging.getLogger(__name__)
 
@@ -70,8 +70,8 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
     """Abstract base class for War Rig agents.
 
     This class provides the foundation for all agents in the War Rig system.
-    It handles LLM configuration, message construction, and the basic
-    invoke/ainvoke interface.
+    It handles LLM configuration (including OpenRouter support), message
+    construction, and the basic invoke/ainvoke interface.
 
     Subclasses must implement:
     - _build_system_prompt(): Return the system prompt for the agent
@@ -80,6 +80,7 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
 
     Attributes:
         config: Model configuration for this agent
+        api_config: API configuration (provider, keys, etc.)
         llm: The LangChain LLM instance
         name: Human-readable agent name
 
@@ -98,36 +99,47 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
     def __init__(
         self,
         config: ModelConfig,
-        api_key: str | None = None,
+        api_config: APIConfig | None = None,
         name: str = "Agent",
     ):
         """Initialize the agent.
 
         Args:
             config: Model configuration specifying model, temperature, etc.
-            api_key: Anthropic API key. If None, uses ANTHROPIC_API_KEY env var.
+            api_config: API configuration. If None, loads from environment.
             name: Human-readable name for logging.
         """
         self.config = config
         self.name = name
-        self._api_key = api_key
+
+        # Load API config from environment if not provided
+        if api_config is None:
+            full_config = load_config()
+            self._api_config = full_config.api
+        else:
+            self._api_config = api_config
 
         # Initialize LLM lazily to allow for mock injection in tests
-        self._llm: ChatAnthropic | None = None
+        self._llm: BaseChatModel | None = None
 
     @property
-    def llm(self) -> ChatAnthropic:
+    def api_config(self) -> APIConfig:
+        """Get the API configuration."""
+        return self._api_config
+
+    @property
+    def llm(self) -> BaseChatModel:
         """Get the LLM instance, initializing if needed.
 
         Returns:
-            The configured ChatAnthropic instance.
+            The configured LLM instance.
         """
         if self._llm is None:
             self._llm = self._create_llm()
         return self._llm
 
     @llm.setter
-    def llm(self, value: ChatAnthropic) -> None:
+    def llm(self, value: BaseChatModel) -> None:
         """Set the LLM instance (useful for testing).
 
         Args:
@@ -135,20 +147,79 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
         """
         self._llm = value
 
-    def _create_llm(self) -> ChatAnthropic:
+    def _create_llm(self) -> BaseChatModel:
         """Create the LLM instance based on configuration.
+
+        Supports both OpenRouter (via OpenAI-compatible API) and Anthropic.
+
+        Returns:
+            Configured LLM instance.
+        """
+        provider = self._api_config.provider.lower()
+
+        if provider == "openrouter":
+            return self._create_openrouter_llm()
+        elif provider == "anthropic":
+            return self._create_anthropic_llm()
+        else:
+            raise ValueError(f"Unknown API provider: {provider}")
+
+    def _create_openrouter_llm(self) -> BaseChatModel:
+        """Create an OpenRouter LLM via OpenAI-compatible API.
+
+        Returns:
+            Configured ChatOpenAI instance for OpenRouter.
+        """
+        from langchain_openai import ChatOpenAI
+
+        # Build default headers for OpenRouter
+        default_headers: dict[str, str] = {}
+        if self._api_config.site_url:
+            default_headers["HTTP-Referer"] = self._api_config.site_url
+        if self._api_config.site_name:
+            default_headers["X-Title"] = self._api_config.site_name
+
+        kwargs: dict[str, Any] = {
+            "model": self.config.model,
+            "temperature": self.config.temperature,
+            "max_tokens": self.config.max_tokens,
+            "base_url": self._api_config.base_url,
+        }
+
+        if self._api_config.api_key:
+            kwargs["api_key"] = self._api_config.api_key
+
+        if default_headers:
+            kwargs["default_headers"] = default_headers
+
+        logger.debug(
+            f"{self.name}: Creating OpenRouter LLM with model={self.config.model}, "
+            f"temp={self.config.temperature}"
+        )
+
+        return ChatOpenAI(**kwargs)
+
+    def _create_anthropic_llm(self) -> BaseChatModel:
+        """Create an Anthropic LLM.
 
         Returns:
             Configured ChatAnthropic instance.
         """
+        from langchain_anthropic import ChatAnthropic
+
         kwargs: dict[str, Any] = {
             "model": self.config.model,
             "temperature": self.config.temperature,
             "max_tokens": self.config.max_tokens,
         }
 
-        if self._api_key:
-            kwargs["api_key"] = self._api_key
+        if self._api_config.api_key:
+            kwargs["api_key"] = self._api_config.api_key
+
+        logger.debug(
+            f"{self.name}: Creating Anthropic LLM with model={self.config.model}, "
+            f"temp={self.config.temperature}"
+        )
 
         return ChatAnthropic(**kwargs)
 
@@ -240,7 +311,7 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
             output = self._parse_response(content, input_data)
 
             # Track token usage if available
-            if hasattr(response, "usage_metadata"):
+            if hasattr(response, "usage_metadata") and response.usage_metadata:
                 output.tokens_used = (
                     response.usage_metadata.get("input_tokens", 0) +
                     response.usage_metadata.get("output_tokens", 0)
