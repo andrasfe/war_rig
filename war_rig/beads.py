@@ -563,8 +563,9 @@ class BeadsClient:
             f"--priority={priority.value}",
         ]
 
-        for label in labels:
-            args.append(f"--add-label={label}")
+        # Use --labels with comma-separated values for bd create
+        if labels:
+            args.append(f"--labels={','.join(labels)}")
 
         if parent_ticket_id:
             args.append(f"--parent={parent_ticket_id}")

@@ -38,6 +38,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
 from war_rig.agents.scribe import ScribeAgent, ScribeInput, ScribeOutput
@@ -145,6 +146,7 @@ class ScribeWorker:
         worker_id: str,
         config: WarRigConfig,
         beads_client: BeadsClient,
+        input_directory: Path | None = None,
         poll_interval: float = 2.0,
         idle_timeout: float = 30.0,
     ):
@@ -154,12 +156,14 @@ class ScribeWorker:
             worker_id: Unique identifier for this worker.
             config: War Rig configuration for agent setup.
             beads_client: Client for ticket operations.
+            input_directory: Directory containing source files to process.
             poll_interval: Seconds between polling attempts when no work available.
             idle_timeout: Seconds of no available tickets before stopping.
         """
         self.worker_id = worker_id
         self.config = config
         self.beads_client = beads_client
+        self.input_directory = input_directory or config.input_directory
         self.poll_interval = poll_interval
         self.idle_timeout = idle_timeout
 
@@ -399,16 +403,32 @@ class ScribeWorker:
         Returns:
             ScribeOutput with documentation results.
         """
-        # Load source code from metadata if available
+        # Load source code from file or metadata
         source_code = ticket.metadata.get("source_code", "")
         if not source_code:
-            logger.warning(
-                f"Worker {self.worker_id}: No source code in ticket {ticket.ticket_id}"
-            )
-            return ScribeOutput(
-                success=False,
-                error="No source code provided in ticket metadata",
-            )
+            # Read from file system
+            source_path = self.input_directory / ticket.file_name
+            if not source_path.exists():
+                logger.error(
+                    f"Worker {self.worker_id}: Source file not found: {source_path}"
+                )
+                return ScribeOutput(
+                    success=False,
+                    error=f"Source file not found: {source_path}",
+                )
+            try:
+                source_code = source_path.read_text(encoding="utf-8", errors="replace")
+                logger.debug(
+                    f"Worker {self.worker_id}: Loaded {len(source_code)} bytes from {source_path}"
+                )
+            except Exception as e:
+                logger.error(
+                    f"Worker {self.worker_id}: Failed to read {source_path}: {e}"
+                )
+                return ScribeOutput(
+                    success=False,
+                    error=f"Failed to read source file: {e}",
+                )
 
         # Determine file type from extension
         file_type = self._determine_file_type(ticket.file_name)
@@ -548,6 +568,7 @@ class ScribeWorkerPool:
         self,
         config: WarRigConfig,
         beads_client: BeadsClient,
+        input_directory: Path | None = None,
         num_workers: int | None = None,
         poll_interval: float = 2.0,
         idle_timeout: float = 30.0,
@@ -557,12 +578,14 @@ class ScribeWorkerPool:
         Args:
             config: War Rig configuration.
             beads_client: Client for ticket operations.
+            input_directory: Directory containing source files to process.
             num_workers: Number of workers. Defaults to config.num_scribes.
             poll_interval: Seconds between polls for each worker.
             idle_timeout: Seconds of no work before workers auto-stop.
         """
         self.config = config
         self.beads_client = beads_client
+        self.input_directory = input_directory or config.input_directory
         self.num_workers = num_workers or config.num_scribes
         self.poll_interval = poll_interval
         self.idle_timeout = idle_timeout
@@ -593,6 +616,7 @@ class ScribeWorkerPool:
                 worker_id=f"scribe-{i + 1}",
                 config=self.config,
                 beads_client=self.beads_client,
+                input_directory=self.input_directory,
                 poll_interval=self.poll_interval,
                 idle_timeout=self.idle_timeout,
             )

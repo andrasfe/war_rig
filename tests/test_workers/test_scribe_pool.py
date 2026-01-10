@@ -44,10 +44,11 @@ def mock_beads_client() -> MagicMock:
 
 
 @pytest.fixture
-def mock_config() -> MagicMock:
+def mock_config(tmp_path) -> MagicMock:
     """Create a mock WarRigConfig."""
     config = MagicMock(spec=WarRigConfig)
     config.num_scribes = 3
+    config.input_directory = tmp_path
     config.scribe = MagicMock()
     config.scribe.model = "claude-sonnet-4-20250514"
     config.scribe.temperature = 0.3

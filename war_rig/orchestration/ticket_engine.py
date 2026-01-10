@@ -252,6 +252,7 @@ class TicketOrchestrator:
         self._state = OrchestrationState()
         self._stop_requested = False
         self._lock = asyncio.Lock()
+        self._input_directory: Path | None = None
 
     @property
     def state(self) -> OrchestrationState:
@@ -286,6 +287,9 @@ class TicketOrchestrator:
         """
         if not input_dir.exists():
             raise ValueError(f"Input directory does not exist: {input_dir}")
+
+        # Store input directory for worker pools
+        self._input_directory = input_dir
 
         # Initialize result
         result = BatchResult(
@@ -406,6 +410,7 @@ class TicketOrchestrator:
         self._scribe_pool = ScribeWorkerPool(
             config=self.config,
             beads_client=self.beads_client,
+            input_directory=self._input_directory,
             num_workers=self.config.num_scribes,
             poll_interval=2.0,
             idle_timeout=30.0,
