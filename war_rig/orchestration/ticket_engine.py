@@ -790,6 +790,9 @@ class TicketOrchestrator:
             print(f"Cycle {status['cycle']}: {status['status']}")
             print(f"Files: {status['documented_files']}/{status['total_files']}")
         """
+        # Update progress counters from actual ticket states
+        self._update_progress()
+
         status: dict[str, Any] = {
             "batch_id": self._state.batch_id,
             "cycle": self._state.cycle,
