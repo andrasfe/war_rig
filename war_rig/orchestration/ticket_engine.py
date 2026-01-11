@@ -228,10 +228,14 @@ class TicketOrchestrator:
         # Initialize beads client with persistent ticket storage
         if beads_client is None:
             tickets_file = self.config.output_directory / ".war_rig_tickets.json"
+            # When beads is enabled, use output_directory as isolated beads_dir
+            # This keeps War Rig's beads instance separate from the project's .beads/
+            beads_dir = self.config.output_directory if self.config.beads_enabled else None
             self.beads_client = get_beads_client(
                 enabled=self.config.beads_enabled,
                 dry_run=self.config.beads_dry_run,
                 tickets_file=tickets_file,
+                beads_dir=beads_dir,
             )
         else:
             self.beads_client = beads_client

@@ -269,6 +269,7 @@ class BeadsClient:
         enabled: bool = True,
         dry_run: bool = False,
         tickets_file: Path | str | None = None,
+        beads_dir: Path | str | None = None,
     ):
         """Initialize the beads client.
 
@@ -277,6 +278,8 @@ class BeadsClient:
             dry_run: Log commands instead of executing them.
             tickets_file: Path to persist tickets for crash recovery.
                 If None, tickets are only kept in memory.
+            beads_dir: Directory to run bd commands in (for isolated beads).
+                If None, uses current working directory.
         """
         self.enabled = enabled
         self.dry_run = dry_run
@@ -291,31 +294,49 @@ class BeadsClient:
         # Persistence for crash recovery
         self._tickets_file: Path | None = Path(tickets_file) if tickets_file else None
         self._persist_lock = threading.Lock()
+        # Directory for bd commands (isolated from project's .beads/)
+        self._beads_dir: Path | None = Path(beads_dir) if beads_dir else None
         # Load existing tickets if file exists
         if self._tickets_file:
             self._load_from_disk()
 
     def _check_bd_available(self) -> bool:
-        """Check if the bd CLI is available.
+        """Check if the bd CLI is available and beads is initialized.
 
         Returns:
-            True if bd CLI is available and working.
+            True if bd CLI is available and beads is initialized in beads_dir.
         """
         if self._bd_available is not None:
             return self._bd_available
 
         try:
+            # Check if bd command exists
             result = subprocess.run(
                 ["bd", "--version"],
                 capture_output=True,
                 text=True,
                 timeout=5,
             )
-            self._bd_available = result.returncode == 0
-            if self._bd_available:
-                logger.debug(f"bd CLI available: {result.stdout.strip()}")
-            else:
+            if result.returncode != 0:
                 logger.info("bd CLI not working, using in-memory ticket tracking")
+                self._bd_available = False
+                return False
+
+            logger.debug(f"bd CLI available: {result.stdout.strip()}")
+
+            # If beads_dir is specified, check if .beads exists there
+            if self._beads_dir:
+                beads_init_path = self._beads_dir / ".beads"
+                if not beads_init_path.exists():
+                    logger.info(
+                        f"Beads not initialized in {self._beads_dir}, "
+                        "using in-memory tracking. Run scripts/init_beads_tracking.sh first."
+                    )
+                    self._bd_available = False
+                    return False
+
+            self._bd_available = True
+
         except (FileNotFoundError, subprocess.TimeoutExpired):
             logger.info("bd CLI not found, using in-memory ticket tracking")
             self._bd_available = False
@@ -467,11 +488,15 @@ class BeadsClient:
             return False, "bd not available"
 
         try:
+            # Run bd in the beads_dir if specified (isolated from project .beads/)
+            cwd = str(self._beads_dir) if self._beads_dir else None
+
             result = subprocess.run(
                 cmd,
                 capture_output=True,
                 text=True,
                 timeout=30,
+                cwd=cwd,
             )
 
             if result.returncode == 0:
@@ -1149,6 +1174,7 @@ def get_beads_client(
     enabled: bool = True,
     dry_run: bool = False,
     tickets_file: Path | str | None = None,
+    beads_dir: Path | str | None = None,
 ) -> BeadsClient:
     """Get or create the default beads client.
 
@@ -1156,6 +1182,8 @@ def get_beads_client(
         enabled: Whether to enable ticket creation.
         dry_run: Whether to log instead of execute.
         tickets_file: Path to persist tickets for crash recovery.
+        beads_dir: Directory to run bd commands in (for isolated beads).
+            If None, uses current working directory.
 
     Returns:
         BeadsClient instance.
@@ -1166,6 +1194,7 @@ def get_beads_client(
             enabled=enabled,
             dry_run=dry_run,
             tickets_file=tickets_file,
+            beads_dir=beads_dir,
         )
     return _default_client
 
