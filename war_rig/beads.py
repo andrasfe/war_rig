@@ -909,6 +909,7 @@ class BeadsClient:
         ticket_id: str,
         new_state: TicketState,
         reason: str | None = None,
+        metadata_updates: dict[str, Any] | None = None,
     ) -> bool:
         """Transition a ticket to a new workflow state.
 
@@ -921,6 +922,8 @@ class BeadsClient:
             ticket_id: ID of the ticket to update.
             new_state: New workflow state.
             reason: Optional reason for the transition.
+            metadata_updates: Optional dict of metadata fields to update.
+                These are merged into existing metadata (not replaced).
 
         Returns:
             True if update succeeded, False otherwise.
@@ -938,6 +941,13 @@ class BeadsClient:
                 TicketState.COMPLETED,
                 reason="Documentation approved",
             )
+
+            # Reset for retry with updated metadata
+            client.update_ticket_state(
+                "war_rig-abc123",
+                TicketState.CREATED,
+                metadata_updates={"retry_count": 2, "last_error": "Parse failed"},
+            )
         """
         # Memory cache mode - use lock for thread safety
         if self._use_memory_cache():
@@ -948,6 +958,9 @@ class BeadsClient:
                     return False
                 ticket.state = new_state
                 ticket.updated_at = datetime.utcnow()
+                # Update metadata if provided
+                if metadata_updates:
+                    ticket.metadata.update(metadata_updates)
             # Persist to disk for crash recovery
             self._save_to_disk()
             logger.info(f"Updated ticket {ticket_id} state to {new_state.value} (memory)")

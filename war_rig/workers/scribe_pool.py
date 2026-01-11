@@ -375,16 +375,34 @@ class ScribeWorker:
                 if ticket.ticket_type == TicketType.DOCUMENTATION and result.template:
                     self._create_validation_ticket(ticket, result)
             else:
-                self.beads_client.update_ticket_state(
-                    ticket.ticket_id,
-                    TicketState.BLOCKED,
-                    reason=f"Processing failed: {result.error}",
-                )
-                self._status.tickets_failed += 1
-                logger.warning(
-                    f"Worker {self.worker_id}: Ticket {ticket.ticket_id} "
-                    f"failed: {result.error}"
-                )
+                # Processing failed - check retry count
+                retry_count = ticket.metadata.get("retry_count", 0) + 1
+                max_retries = 3
+
+                if retry_count >= max_retries:
+                    # Max retries exceeded - mark as BLOCKED
+                    self.beads_client.update_ticket_state(
+                        ticket.ticket_id,
+                        TicketState.BLOCKED,
+                        reason=f"Failed after {retry_count} attempts: {result.error}",
+                    )
+                    self._status.tickets_failed += 1
+                    logger.error(
+                        f"Worker {self.worker_id}: Ticket {ticket.ticket_id} "
+                        f"permanently failed after {retry_count} retries: {result.error}"
+                    )
+                else:
+                    # Reset to CREATED for retry - update retry count atomically
+                    self.beads_client.update_ticket_state(
+                        ticket.ticket_id,
+                        TicketState.CREATED,
+                        reason=f"Retry {retry_count}/{max_retries}: {result.error}",
+                        metadata_updates={"retry_count": retry_count},
+                    )
+                    logger.warning(
+                        f"Worker {self.worker_id}: Ticket {ticket.ticket_id} "
+                        f"failed (retry {retry_count}/{max_retries}), resetting for retry"
+                    )
 
         except Exception as e:
             # Release ticket on error
@@ -440,12 +458,25 @@ class ScribeWorker:
     def _save_template(self, file_name: str, template: DocumentationTemplate) -> None:
         """Save the documentation template to the output directory.
 
+        Creates a backup of the existing template before overwriting to protect
+        against corruption from bad LLM responses.
+
         Args:
             file_name: Source file name.
             template: The documentation template to save.
         """
         doc_path = self._get_doc_output_path(file_name)
+        backup_path = doc_path.with_suffix(".doc.json.bak")
+
         try:
+            # Backup existing template before overwriting
+            if doc_path.exists():
+                import shutil
+                shutil.copy2(doc_path, backup_path)
+                logger.debug(
+                    f"Worker {self.worker_id}: Backed up {doc_path} to {backup_path}"
+                )
+
             with open(doc_path, "w") as f:
                 json.dump(template.model_dump(mode="json"), f, indent=2, default=str)
             logger.debug(
@@ -455,6 +486,16 @@ class ScribeWorker:
             logger.error(
                 f"Worker {self.worker_id}: Failed to save template to {doc_path}: {e}"
             )
+            # Try to restore backup if save failed
+            if backup_path.exists():
+                try:
+                    import shutil
+                    shutil.copy2(backup_path, doc_path)
+                    logger.info(
+                        f"Worker {self.worker_id}: Restored backup after save failure"
+                    )
+                except Exception:
+                    pass
 
     async def _process_documentation_ticket(
         self,
