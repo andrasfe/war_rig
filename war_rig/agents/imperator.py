@@ -892,8 +892,42 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
         parts.append(f"Files to review: {len(input_data.file_documentation)}")
         parts.append("")
 
-        # All file documentation
-        parts.append("## File Documentation")
+        # System Overview - Executive summaries for holistic understanding
+        # This allows the Imperator to grasp the overall system before diving into details
+        parts.append("## System Overview (Read This First)")
+        parts.append("")
+        parts.append("The following summaries describe each program's purpose. "
+                     "Read all summaries to understand how the system works holistically "
+                     "before reviewing detailed documentation.")
+        parts.append("")
+
+        for doc in input_data.file_documentation:
+            program_type = "UNKNOWN"
+            summary = "No summary available"
+            business_context = ""
+
+            if doc.template and doc.template.purpose:
+                if doc.template.purpose.summary:
+                    summary = doc.template.purpose.summary
+                if doc.template.purpose.program_type:
+                    program_type = doc.template.purpose.program_type
+                if doc.template.purpose.business_context:
+                    business_context = f" ({doc.template.purpose.business_context})"
+
+            parts.append(f"### {doc.program_id} [{program_type}]{business_context}")
+            parts.append(f"{summary}")
+            parts.append("")
+
+        parts.append("---")
+        parts.append("")
+
+        # All file documentation (detailed)
+        parts.append("## Detailed File Documentation")
+        parts.append("")
+        parts.append("Full documentation for each program follows. "
+                     "Use this for verifying specific details and cross-referencing.")
+        parts.append("")
+
         for doc in input_data.file_documentation:
             parts.append(f"### {doc.file_name} ({doc.program_id})")
             parts.append(f"Iterations: {doc.iteration_count}")
