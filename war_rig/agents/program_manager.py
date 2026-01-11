@@ -345,8 +345,27 @@ class ProgramManagerAgent(BaseAgent[ProgramManagerInput, ProgramManagerOutput]):
 
         logger.info(f"Discovered {len(self.discovered_files)} source files")
 
-        # Create DOCUMENTATION ticket for each file
+        # Get existing DOCUMENTATION tickets to avoid duplicates on resume
+        existing_doc_tickets = {
+            t.file_name: t
+            for t in self.beads._pm_ticket_cache.values()
+            if t.ticket_type == TicketType.DOCUMENTATION
+        }
+        skipped_count = 0
+
+        # Create DOCUMENTATION ticket for each file (skip if exists)
         for source_file in self.discovered_files:
+            # Check if ticket already exists for this file
+            if source_file.name in existing_doc_tickets:
+                existing = existing_doc_tickets[source_file.name]
+                self.created_tickets.append(existing)
+                skipped_count += 1
+                logger.debug(
+                    f"Skipping {source_file.name} - ticket {existing.ticket_id} "
+                    f"already exists ({existing.state.value})"
+                )
+                continue
+
             program_id = source_file.stem.upper()
 
             ticket = self.beads.create_pm_ticket(
@@ -367,10 +386,16 @@ class ProgramManagerAgent(BaseAgent[ProgramManagerInput, ProgramManagerOutput]):
                 self.created_tickets.append(ticket)
                 logger.debug(f"Created ticket {ticket.ticket_id} for {source_file.name}")
 
-        logger.info(
-            f"Batch {self.batch_id} initialized with {len(self.created_tickets)} "
-            f"documentation tickets"
-        )
+        if skipped_count > 0:
+            logger.info(
+                f"Batch {self.batch_id}: Resuming with {skipped_count} existing tickets, "
+                f"created {len(self.created_tickets) - skipped_count} new tickets"
+            )
+        else:
+            logger.info(
+                f"Batch {self.batch_id} initialized with {len(self.created_tickets)} "
+                f"documentation tickets"
+            )
 
         return self.created_tickets
 
