@@ -77,6 +77,10 @@ class ChallengerInput(AgentInput):
         le=20,
         description="Maximum questions to ask this round",
     )
+    formatting_strict: bool = Field(
+        default=False,
+        description="If True, add extra instructions about JSON formatting (used on retry)",
+    )
 
 
 class ChallengerOutput(AgentOutput):
@@ -272,6 +276,18 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
         parts.append("5. Provide a per-section assessment")
         parts.append("")
         parts.append("Focus on critical sections: Purpose, Inputs, Outputs, Business Rules")
+
+        # Strict formatting instructions (added on retry after parse failure)
+        if input_data.formatting_strict:
+            parts.append("")
+            parts.append("## CRITICAL: JSON Formatting Requirements")
+            parts.append("Your previous response had JSON formatting errors. Please ensure:")
+            parts.append("1. Output ONLY valid JSON - no markdown code blocks, no extra text")
+            parts.append("2. All strings must be properly escaped (use \\n for newlines, \\\\ for backslashes)")
+            parts.append("3. No trailing commas after the last element in arrays or objects")
+            parts.append("4. All property names must be in double quotes")
+            parts.append("5. No comments in JSON")
+            parts.append("6. Verify your response is parseable JSON before submitting")
 
         return "\n".join(parts)
 

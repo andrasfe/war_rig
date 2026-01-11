@@ -153,6 +153,10 @@ class ChallengerWorker:
         self._stop_event = asyncio.Event()
         self._task: asyncio.Task[None] | None = None
 
+        # Track tickets this worker has failed on (to avoid re-picking immediately)
+        # Other workers with different LLMs can still pick them up
+        self._failed_tickets: set[str] = set()
+
     async def start(self) -> None:
         """Start the worker's processing loop.
 
@@ -261,6 +265,9 @@ class ChallengerWorker:
     async def _poll_for_ticket(self) -> ProgramManagerTicket | None:
         """Poll for an available VALIDATION ticket and claim it.
 
+        Skips tickets this worker has already failed on (other workers
+        with different LLMs can still pick them up).
+
         Returns:
             Claimed ticket, or None if no tickets available.
         """
@@ -268,6 +275,12 @@ class ChallengerWorker:
         available = self.beads_client.get_available_tickets(
             ticket_type=TicketType.VALIDATION,
         )
+
+        if not available:
+            return None
+
+        # Filter out tickets this worker has already failed on
+        available = [t for t in available if t.ticket_id not in self._failed_tickets]
 
         if not available:
             return None
@@ -322,15 +335,26 @@ class ChallengerWorker:
         result = await self._validate_documentation(state, ticket)
 
         if not result.success:
-            logger.error(
-                f"Worker {self.worker_id}: Validation failed for {ticket.ticket_id}"
+            # First failure - retry with enhanced formatting
+            logger.warning(
+                f"Worker {self.worker_id}: Validation failed for {ticket.ticket_id}, "
+                f"retrying with strict formatting"
             )
-            self.beads_client.update_ticket_state(
-                ticket.ticket_id,
-                TicketState.BLOCKED,
-                reason="Validation process failed",
-            )
-            return
+            result = await self._validate_documentation(state, ticket, formatting_strict=True)
+
+            if not result.success:
+                # Second failure - reset ticket for other workers
+                self._failed_tickets.add(ticket.ticket_id)
+                self.beads_client.update_ticket_state(
+                    ticket.ticket_id,
+                    TicketState.CREATED,  # Reset for other workers
+                    reason="Validation failed twice, available for other workers",
+                )
+                logger.warning(
+                    f"Worker {self.worker_id}: Validation failed twice for {ticket.ticket_id}, "
+                    f"resetting for other workers"
+                )
+                return
 
         if result.is_valid:
             # Documentation is valid - close the ticket
@@ -444,12 +468,14 @@ class ChallengerWorker:
         self,
         state: dict[str, Any],
         ticket: ProgramManagerTicket,
+        formatting_strict: bool = False,
     ) -> ValidationResult:
         """Validate documentation using the ChallengerAgent.
 
         Args:
             state: The documentation state to validate.
             ticket: The ticket being processed.
+            formatting_strict: If True, add extra JSON formatting instructions.
 
         Returns:
             ValidationResult with validation outcome.
@@ -464,6 +490,7 @@ class ChallengerWorker:
                 preprocessor_result=state.get("preprocessor_result"),
                 iteration=state.get("iteration", 1),
                 max_questions=self.config.max_questions_per_round,
+                formatting_strict=formatting_strict,
             )
 
             # Invoke the ChallengerAgent
