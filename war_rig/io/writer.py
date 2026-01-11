@@ -207,6 +207,32 @@ class DocumentationWriter:
         logger.info(f"Wrote {len(outputs)} output files for {program_id}")
         return outputs
 
+    def _program_link(self, program_name: str) -> str:
+        """Generate a markdown link to a program's documentation.
+
+        Args:
+            program_name: Name of the program.
+
+        Returns:
+            Markdown link string.
+        """
+        # Clean the program name (remove any extension if present)
+        clean_name = program_name.upper().replace(".CBL", "").replace(".COB", "")
+        return f"[{program_name}](./{clean_name}.md)"
+
+    def _copybook_link(self, copybook_name: str) -> str:
+        """Generate a markdown link to a copybook's documentation.
+
+        Args:
+            copybook_name: Name of the copybook.
+
+        Returns:
+            Markdown link string (relative path from programs folder).
+        """
+        # Clean the copybook name (remove any extension if present)
+        clean_name = copybook_name.upper().replace(".CPY", "").replace(".COPY", "")
+        return f"[{copybook_name}](../copybooks/{clean_name}.md)"
+
     def _template_to_markdown(self, template: DocumentationTemplate) -> str:
         """Convert a documentation template to Markdown.
 
@@ -240,6 +266,25 @@ class DocumentationWriter:
             lines.append(f"**Citations:** Lines {', '.join(map(str, template.purpose.citations))}")
         lines.append("")
 
+        # Calling Context (who calls this program)
+        if template.calling_context and (
+            template.calling_context.called_by
+            or template.calling_context.entry_points
+            or template.calling_context.linkage_section
+        ):
+            lines.append("## Calling Context")
+            lines.append("")
+            if template.calling_context.called_by:
+                callers = ", ".join(
+                    self._program_link(p) for p in template.calling_context.called_by
+                )
+                lines.append(f"**Called By:** {callers}")
+            if template.calling_context.entry_points:
+                lines.append(f"**Entry Points:** {', '.join(template.calling_context.entry_points)}")
+            if template.calling_context.linkage_section:
+                lines.append(f"**Linkage Section:** {', '.join(template.calling_context.linkage_section)}")
+            lines.append("")
+
         # Inputs
         if template.inputs:
             lines.append("## Inputs")
@@ -249,7 +294,7 @@ class DocumentationWriter:
                 lines.append(f"- **Type:** {inp.io_type.value}")
                 lines.append(f"- **Description:** {inp.description}")
                 if inp.copybook:
-                    lines.append(f"- **Copybook:** {inp.copybook}")
+                    lines.append(f"- **Copybook:** {self._copybook_link(inp.copybook)}")
                 if inp.citation:
                     lines.append(f"- **Lines:** {', '.join(map(str, inp.citation))}")
                 lines.append("")
@@ -263,7 +308,7 @@ class DocumentationWriter:
                 lines.append(f"- **Type:** {out.io_type.value}")
                 lines.append(f"- **Description:** {out.description}")
                 if out.copybook:
-                    lines.append(f"- **Copybook:** {out.copybook}")
+                    lines.append(f"- **Copybook:** {self._copybook_link(out.copybook)}")
                 if out.citation:
                     lines.append(f"- **Lines:** {', '.join(map(str, out.citation))}")
                 lines.append("")
@@ -275,9 +320,10 @@ class DocumentationWriter:
             lines.append("| Program | Call Type | Purpose | Line |")
             lines.append("|---------|-----------|---------|------|")
             for prog in template.called_programs:
+                prog_link = self._program_link(prog.program_name)
                 purpose = prog.purpose or ""
                 line = str(prog.citation) if prog.citation else ""
-                lines.append(f"| {prog.program_name} | {prog.call_type.value} | {purpose} | {line} |")
+                lines.append(f"| {prog_link} | {prog.call_type.value} | {purpose} | {line} |")
             lines.append("")
 
         # Business Rules
@@ -301,10 +347,58 @@ class DocumentationWriter:
             lines.append("| Copybook | Location | Purpose | Line |")
             lines.append("|----------|----------|---------|------|")
             for cb in template.copybooks_used:
+                cb_link = self._copybook_link(cb.copybook_name)
                 purpose = cb.purpose or ""
                 line = str(cb.citation) if cb.citation else ""
-                lines.append(f"| {cb.copybook_name} | {cb.location.value} | {purpose} | {line} |")
+                lines.append(f"| {cb_link} | {cb.location.value} | {purpose} | {line} |")
             lines.append("")
+
+        # Data Flow
+        if template.data_flow and (
+            template.data_flow.reads_from
+            or template.data_flow.writes_to
+            or template.data_flow.transforms
+        ):
+            lines.append("## Data Flow")
+            lines.append("")
+            if template.data_flow.reads_from:
+                lines.append("### Reads From")
+                for read in template.data_flow.reads_from:
+                    fields = ", ".join(read.fields_used) if read.fields_used else "all fields"
+                    lines.append(f"- **{read.source}**: {fields}")
+                    if read.citation:
+                        lines.append(f"  (Lines: {', '.join(map(str, read.citation))})")
+                lines.append("")
+            if template.data_flow.writes_to:
+                lines.append("### Writes To")
+                for write in template.data_flow.writes_to:
+                    fields = ", ".join(write.fields_written) if write.fields_written else "all fields"
+                    lines.append(f"- **{write.destination}**: {fields}")
+                    if write.citation:
+                        lines.append(f"  (Lines: {', '.join(map(str, write.citation))})")
+                lines.append("")
+            if template.data_flow.transforms:
+                lines.append("### Transformations")
+                for transform in template.data_flow.transforms:
+                    lines.append(f"- **{transform.input_field}** → **{transform.output_field}**: {transform.transformation_description}")
+                    if transform.citation:
+                        lines.append(f"  (Lines: {', '.join(map(str, transform.citation))})")
+                lines.append("")
+
+        # Key Paragraphs
+        if template.paragraphs:
+            lines.append("## Key Paragraphs")
+            lines.append("")
+            for para in template.paragraphs:
+                lines.append(f"### {para.paragraph_name}")
+                lines.append(f"**Purpose:** {para.purpose}")
+                if para.called_by:
+                    lines.append(f"- Called by: {', '.join(para.called_by)}")
+                if para.calls:
+                    lines.append(f"- Calls: {', '.join(para.calls)}")
+                if para.citation:
+                    lines.append(f"- Lines: {para.citation[0]}-{para.citation[1]}")
+                lines.append("")
 
         # Error Handling
         if template.error_handling:
