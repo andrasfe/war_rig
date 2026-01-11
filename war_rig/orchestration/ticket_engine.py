@@ -401,18 +401,61 @@ class TicketOrchestrator:
             # Ensure pools are stopped
             await self._stop_pools()
 
-    async def _run_worker_cycle(self) -> None:
-        """Run one cycle of Scribe and Challenger workers.
+    def _is_documentation_in_progress(self) -> bool:
+        """Check if documentation work might still produce validation tickets.
 
-        Creates worker pools, starts them, and waits for all tickets
-        to be processed (or for no more work to be available).
+        Used by Challengers to know if they should wait for more work
+        instead of timing out. Returns True if:
+        - There are DOCUMENTATION tickets available (CREATED state)
+        - There are DOCUMENTATION tickets being processed (IN_PROGRESS state)
+        - Scribes are actively working
+
+        Returns:
+            True if documentation is still in progress.
+        """
+        # Check for available documentation tickets
+        doc_available = self.beads_client.get_available_tickets(
+            ticket_type=TicketType.DOCUMENTATION
+        )
+        if doc_available:
+            return True
+
+        # Check for in-progress documentation tickets
+        doc_in_progress = [
+            t for t in self.beads_client._pm_ticket_cache.values()
+            if t.ticket_type == TicketType.DOCUMENTATION
+            and t.state == TicketState.IN_PROGRESS
+        ]
+        if doc_in_progress:
+            return True
+
+        # Check if Scribe pool has active workers
+        if self._scribe_pool:
+            status = self._scribe_pool.get_status()
+            if status.get("active_workers", 0) > 0:
+                return True
+
+        return False
+
+    async def _run_worker_cycle(self) -> None:
+        """Run one cycle with Scribe and Challenger workers in parallel.
+
+        Creates both worker pools and starts them simultaneously, allowing
+        Challengers to validate documents as soon as Scribes create them.
+        This is more efficient than waiting for all documentation to complete
+        before starting validation.
+
+        The pipeline terminates when:
+        - All DOCUMENTATION tickets are processed (completed or failed)
+        - All VALIDATION tickets are processed (completed or failed)
+        - Both worker pools are idle
         """
         self._state.status = OrchestrationStatus.DOCUMENTING
-        self._state.status_message = "Running Scribe documentation workers..."
+        self._state.status_message = "Running documentation and validation pipeline..."
 
-        logger.info("Starting Scribe worker pool")
+        logger.info("Starting parallel Scribe and Challenger worker pools")
 
-        # Create and start Scribe pool
+        # Create Scribe pool
         self._scribe_pool = ScribeWorkerPool(
             config=self.config,
             beads_client=self.beads_client,
@@ -422,33 +465,31 @@ class TicketOrchestrator:
             idle_timeout=30.0,
         )
 
-        await self._scribe_pool.start()
-
-        # Wait for Scribes to finish initial documentation
-        logger.info("Waiting for Scribe workers to complete...")
-        await self._scribe_pool.wait()
-
-        if self._stop_requested:
-            return
-
-        # Now run Challengers for validation
-        self._state.status = OrchestrationStatus.VALIDATING
-        self._state.status_message = "Running Challenger validation workers..."
-
-        logger.info("Starting Challenger worker pool")
-
+        # Create Challenger pool with upstream check
+        # Challengers won't idle-timeout while Scribes might produce more work
         self._challenger_pool = ChallengerWorkerPool(
             num_workers=self.config.num_challengers,
             config=self.config,
             beads_client=self.beads_client,
             poll_interval=2.0,
+            upstream_active_check=self._is_documentation_in_progress,
         )
 
+        # Start both pools simultaneously
+        await self._scribe_pool.start()
         await self._challenger_pool.start()
 
-        # Wait for Challengers to finish
-        logger.info("Waiting for Challenger workers to complete...")
-        await self._challenger_pool.wait_for_completion()
+        logger.info("Both worker pools started, running pipeline...")
+
+        # Wait for both pools to complete
+        # Scribes will finish when no more DOCUMENTATION tickets
+        # Challengers will finish when no more VALIDATION tickets AND no upstream activity
+        scribe_wait = asyncio.create_task(self._scribe_pool.wait())
+        challenger_wait = asyncio.create_task(self._challenger_pool.wait_for_completion())
+
+        await asyncio.gather(scribe_wait, challenger_wait, return_exceptions=True)
+
+        logger.info("Pipeline complete, all workers finished")
 
         # Stop pools
         await self._stop_pools()

@@ -25,6 +25,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -128,6 +129,7 @@ class ChallengerWorker:
         config: WarRigConfig,
         beads_client: BeadsClient,
         poll_interval: float = 2.0,
+        upstream_active_check: Callable[[], bool] | None = None,
     ):
         """Initialize the ChallengerWorker.
 
@@ -136,11 +138,15 @@ class ChallengerWorker:
             config: War Rig configuration.
             beads_client: Client for ticket operations.
             poll_interval: Seconds between polling attempts.
+            upstream_active_check: Optional callback that returns True if upstream
+                (documentation) is still in progress. When set, workers won't
+                idle-timeout while upstream might produce more work.
         """
         self.worker_id = worker_id
         self.config = config
         self.beads_client = beads_client
         self.poll_interval = poll_interval
+        self.upstream_active_check = upstream_active_check
 
         # Create the ChallengerAgent
         self.challenger = ChallengerAgent(
@@ -209,10 +215,19 @@ class ChallengerWorker:
 
                 if ticket is None:
                     consecutive_empty_polls += 1
-                    logger.debug(
-                        f"Worker {self.worker_id}: No tickets available "
-                        f"({consecutive_empty_polls}/{max_empty_polls})"
-                    )
+
+                    # If upstream (documentation) is still active, don't count
+                    # toward idle timeout - more VALIDATION tickets may come
+                    if self.upstream_active_check and self.upstream_active_check():
+                        consecutive_empty_polls = 0
+                        logger.debug(
+                            f"Worker {self.worker_id}: No tickets but upstream active, waiting"
+                        )
+                    else:
+                        logger.debug(
+                            f"Worker {self.worker_id}: No tickets available "
+                            f"({consecutive_empty_polls}/{max_empty_polls})"
+                        )
 
                     # Stop if no tickets have been available for a while
                     if consecutive_empty_polls >= max_empty_polls:
@@ -636,6 +651,7 @@ class ChallengerWorkerPool:
         config: WarRigConfig,
         beads_client: BeadsClient,
         poll_interval: float = 2.0,
+        upstream_active_check: Callable[[], bool] | None = None,
     ):
         """Initialize the ChallengerWorkerPool.
 
@@ -644,11 +660,16 @@ class ChallengerWorkerPool:
             config: War Rig configuration.
             beads_client: Client for ticket operations.
             poll_interval: Seconds between polling attempts for workers.
+            upstream_active_check: Optional callback that returns True if upstream
+                (documentation) is still in progress. When set, workers won't
+                idle-timeout while upstream might produce more work. This enables
+                running Scribes and Challengers in parallel as a pipeline.
         """
         self.num_workers = num_workers
         self.config = config
         self.beads_client = beads_client
         self.poll_interval = poll_interval
+        self.upstream_active_check = upstream_active_check
 
         # Create workers
         self.workers: list[ChallengerWorker] = []
@@ -658,6 +679,7 @@ class ChallengerWorkerPool:
                 config=config,
                 beads_client=beads_client,
                 poll_interval=poll_interval,
+                upstream_active_check=upstream_active_check,
             )
             self.workers.append(worker)
 
