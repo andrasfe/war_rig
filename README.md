@@ -256,6 +256,68 @@ bd list --status=open
 bd stats
 ```
 
+## Failure Handling and Retry Strategy
+
+War Rig implements a resilient retry strategy designed for multi-LLM environments where different workers may use different models.
+
+### Retry Flow
+
+```
+Worker A (e.g., Claude):
+  1. Process ticket → FAIL (JSON parse error)
+  2. Retry with enhanced formatting prompt → FAIL
+  3. Reset ticket to CREATED, add to worker's failed list
+  4. Move to next ticket
+
+Worker B (e.g., GPT-4):
+  1. Picks up same ticket (fresh, no retry baggage)
+  2. Process ticket → SUCCESS
+```
+
+### Key Principles
+
+1. **One Enhanced Retry**: On first failure, retry immediately with `formatting_strict=True` which adds explicit JSON formatting instructions to the prompt
+
+2. **Per-Worker Failed Tracking**: Each worker maintains a local `_failed_tickets` set to avoid re-picking tickets it already failed on
+
+3. **Clean Ticket Reset**: Failed tickets reset to CREATED with no retry metadata - looks fresh for the next worker
+
+4. **No Permanent Blocking**: Tickets are never permanently blocked within a run - other workers (potentially with different LLMs) can always try
+
+5. **Template Backup Safety**: Before overwriting existing documentation, the previous version is backed up to `.doc.json.bak` to protect against parseable-but-garbage responses
+
+### Enhanced Formatting Prompt
+
+On retry, the following instructions are added:
+
+```
+## CRITICAL: JSON Formatting Requirements
+Your previous response had JSON formatting errors. Please ensure:
+1. Output ONLY valid JSON - no markdown code blocks, no extra text
+2. All strings must be properly escaped (use \n for newlines, \\ for backslashes)
+3. No trailing commas after the last element in arrays or objects
+4. All property names must be in double quotes
+5. No comments in JSON
+6. Verify your response is parseable JSON before submitting
+```
+
+### Multi-LLM Architecture Support
+
+This approach is designed for future multi-LLM deployments:
+
+- Different Scribe workers can use different models (Claude, GPT-4, etc.)
+- A ticket that fails on one model may succeed on another
+- No arbitrary retry limits that would block all attempts
+- Workers only skip tickets they personally failed on
+
+### What Happens to Persistently Failing Tickets
+
+If all workers fail on a ticket:
+1. Ticket remains CREATED (available)
+2. Run completes (all workers idle with no claimable tickets)
+3. On restart, ticket is still CREATED
+4. Manual investigation can determine why (bad source code, impossible task, etc.)
+
 ## Development
 
 ### Running Tests
