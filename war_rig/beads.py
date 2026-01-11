@@ -1178,6 +1178,70 @@ class BeadsClient:
 
         return tickets
 
+    def reset_orphaned_tickets(
+        self,
+        ticket_types: list[TicketType] | None = None,
+    ) -> int:
+        """Reset orphaned CLAIMED/IN_PROGRESS tickets back to CREATED.
+
+        Call this after workers have finished to recover tickets that were
+        claimed but never completed (e.g., due to worker crash or timeout).
+
+        Args:
+            ticket_types: Only reset tickets of these types. If None, resets all types.
+
+        Returns:
+            Number of tickets reset.
+
+        Example:
+            # After workers finish, recover any orphaned tickets
+            reset_count = client.reset_orphaned_tickets()
+            if reset_count > 0:
+                logger.info(f"Reset {reset_count} orphaned tickets for retry")
+        """
+        reset_count = 0
+
+        if self._use_memory_cache():
+            with self._lock:
+                for ticket in self._pm_ticket_cache.values():
+                    # Only reset CLAIMED or IN_PROGRESS tickets
+                    if ticket.state not in (TicketState.CLAIMED, TicketState.IN_PROGRESS):
+                        continue
+                    # Filter by ticket type if specified
+                    if ticket_types and ticket.ticket_type not in ticket_types:
+                        continue
+
+                    logger.info(
+                        f"Resetting orphaned ticket {ticket.ticket_id} "
+                        f"({ticket.file_name}) from {ticket.state.value} to created"
+                    )
+                    ticket.state = TicketState.CREATED
+                    ticket.worker_id = None
+                    ticket.claimed_at = None
+                    reset_count += 1
+
+            # Persist changes
+            if reset_count > 0:
+                self._save_to_disk()
+
+            return reset_count
+
+        # For bd CLI mode, query and update each ticket
+        for state in (TicketState.CLAIMED, TicketState.IN_PROGRESS):
+            tickets = self.get_tickets_by_state(state)
+            for ticket in tickets:
+                if ticket_types and ticket.ticket_type not in ticket_types:
+                    continue
+
+                logger.info(
+                    f"Resetting orphaned ticket {ticket.ticket_id} "
+                    f"({ticket.file_name}) from {state.value} to created"
+                )
+                if self.update_ticket_state(ticket.ticket_id, TicketState.CREATED):
+                    reset_count += 1
+
+        return reset_count
+
 
 # Singleton instance for convenience
 _default_client: BeadsClient | None = None

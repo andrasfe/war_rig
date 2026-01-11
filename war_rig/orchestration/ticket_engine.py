@@ -494,6 +494,17 @@ class TicketOrchestrator:
         # Stop pools
         await self._stop_pools()
 
+        # Check for orphaned tickets (CLAIMED/IN_PROGRESS that weren't completed)
+        # This handles cases where workers crashed or timed out mid-processing
+        orphaned_count = self.beads_client.reset_orphaned_tickets()
+        if orphaned_count > 0:
+            logger.info(
+                f"Found {orphaned_count} orphaned tickets, restarting workers to process them"
+            )
+            # Recursively process the orphaned tickets
+            await self._run_worker_cycle()
+            return  # Skip update_progress, the recursive call handles it
+
         # Update state with progress
         self._update_progress()
 
