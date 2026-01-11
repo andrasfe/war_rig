@@ -189,6 +189,10 @@ class ScribeWorker:
         # Track idle time for auto-stop
         self._last_work_time: datetime = datetime.utcnow()
 
+        # Track tickets this worker has failed on (to avoid re-picking immediately)
+        # Other workers with different LLMs can still pick them up
+        self._failed_tickets: set[str] = set()
+
     @property
     def scribe_agent(self) -> ScribeAgent:
         """Get the Scribe agent, creating it lazily.
@@ -298,7 +302,8 @@ class ScribeWorker:
         """Poll for and claim an available ticket.
 
         Queries the BeadsClient for DOCUMENTATION tickets in CREATED state,
-        then attempts to claim one atomically.
+        then attempts to claim one atomically. Skips tickets this worker
+        has already failed on (other workers can still pick them up).
 
         Returns:
             Claimed ProgramManagerTicket if successful, None otherwise.
@@ -308,6 +313,13 @@ class ScribeWorker:
         tickets = self.beads_client.get_available_tickets(
             ticket_type=TicketType.DOCUMENTATION,
         )
+
+        if not tickets:
+            return None
+
+        # Filter out tickets this worker has already failed on
+        # (other workers with different LLMs can still try them)
+        tickets = [t for t in tickets if t.ticket_id not in self._failed_tickets]
 
         if not tickets:
             return None
@@ -375,33 +387,51 @@ class ScribeWorker:
                 if ticket.ticket_type == TicketType.DOCUMENTATION and result.template:
                     self._create_validation_ticket(ticket, result)
             else:
-                # Processing failed - check retry count
-                retry_count = ticket.metadata.get("retry_count", 0) + 1
-                max_retries = 3
+                # First failure - retry once with enhanced formatting prompt
+                logger.warning(
+                    f"Worker {self.worker_id}: Ticket {ticket.ticket_id} failed, "
+                    f"retrying with strict formatting: {result.error}"
+                )
 
-                if retry_count >= max_retries:
-                    # Max retries exceeded - mark as BLOCKED
+                # Retry with formatting_strict=True
+                if ticket.ticket_type == TicketType.DOCUMENTATION:
+                    result = await self._process_documentation_ticket(
+                        ticket, formatting_strict=True
+                    )
+                elif ticket.ticket_type == TicketType.CLARIFICATION:
+                    result = await self._process_clarification_ticket(
+                        ticket, formatting_strict=True
+                    )
+                elif ticket.ticket_type == TicketType.CHROME:
+                    result = await self._process_chrome_ticket(
+                        ticket, formatting_strict=True
+                    )
+
+                if result.success:
+                    # Retry succeeded
                     self.beads_client.update_ticket_state(
                         ticket.ticket_id,
-                        TicketState.BLOCKED,
-                        reason=f"Failed after {retry_count} attempts: {result.error}",
+                        TicketState.COMPLETED,
+                        reason="Documentation completed on retry",
                     )
-                    self._status.tickets_failed += 1
-                    logger.error(
-                        f"Worker {self.worker_id}: Ticket {ticket.ticket_id} "
-                        f"permanently failed after {retry_count} retries: {result.error}"
+                    self._status.tickets_processed += 1
+                    logger.info(
+                        f"Worker {self.worker_id}: Completed ticket {ticket.ticket_id} on retry"
                     )
+                    if ticket.ticket_type == TicketType.DOCUMENTATION and result.template:
+                        self._create_validation_ticket(ticket, result)
                 else:
-                    # Reset to CREATED for retry - update retry count atomically
+                    # Second failure - reset ticket for other workers, move on
+                    # Add to failed set so THIS worker won't re-pick it
+                    self._failed_tickets.add(ticket.ticket_id)
                     self.beads_client.update_ticket_state(
                         ticket.ticket_id,
-                        TicketState.CREATED,
-                        reason=f"Retry {retry_count}/{max_retries}: {result.error}",
-                        metadata_updates={"retry_count": retry_count},
+                        TicketState.CREATED,  # Reset for other workers
+                        reason=f"Failed twice, available for other workers: {result.error}",
                     )
                     logger.warning(
-                        f"Worker {self.worker_id}: Ticket {ticket.ticket_id} "
-                        f"failed (retry {retry_count}/{max_retries}), resetting for retry"
+                        f"Worker {self.worker_id}: Ticket {ticket.ticket_id} failed twice, "
+                        f"resetting for other workers (different LLM may succeed)"
                     )
 
         except Exception as e:
@@ -500,6 +530,7 @@ class ScribeWorker:
     async def _process_documentation_ticket(
         self,
         ticket: ProgramManagerTicket,
+        formatting_strict: bool = False,
     ) -> ScribeOutput:
         """Process a DOCUMENTATION ticket.
 
@@ -560,6 +591,7 @@ class ScribeWorker:
             iteration=ticket.cycle_number,
             copybook_contents=ticket.metadata.get("copybook_contents", {}),
             previous_template=previous_template,
+            formatting_strict=formatting_strict,
         )
 
         # Run the Scribe agent
@@ -577,6 +609,7 @@ class ScribeWorker:
     async def _process_clarification_ticket(
         self,
         ticket: ProgramManagerTicket,
+        formatting_strict: bool = False,
     ) -> ScribeOutput:
         """Process a CLARIFICATION ticket.
 
@@ -586,6 +619,7 @@ class ScribeWorker:
 
         Args:
             ticket: The CLARIFICATION ticket to process.
+            formatting_strict: If True, add extra JSON formatting instructions.
 
         Returns:
             ScribeOutput with updated documentation addressing the questions.
@@ -653,6 +687,7 @@ class ScribeWorker:
             copybook_contents=ticket.metadata.get("copybook_contents", {}),
             previous_template=previous_template,
             challenger_questions=challenger_questions,
+            formatting_strict=formatting_strict,
         )
 
         logger.info(
@@ -670,6 +705,7 @@ class ScribeWorker:
     async def _process_chrome_ticket(
         self,
         ticket: ProgramManagerTicket,
+        formatting_strict: bool = False,
     ) -> ScribeOutput:
         """Process a CHROME ticket.
 
@@ -679,6 +715,7 @@ class ScribeWorker:
 
         Args:
             ticket: The CHROME ticket to process.
+            formatting_strict: If True, add extra JSON formatting instructions.
 
         Returns:
             ScribeOutput with updated documentation addressing the chrome issues.
@@ -748,6 +785,7 @@ class ScribeWorker:
             copybook_contents=ticket.metadata.get("copybook_contents", {}),
             previous_template=previous_template,
             chrome_tickets=chrome_tickets,
+            formatting_strict=formatting_strict,
         )
 
         logger.info(

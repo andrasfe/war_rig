@@ -68,6 +68,10 @@ class ScribeInput(AgentInput):
         default_factory=list,
         description="Chrome tickets from Imperator to address",
     )
+    formatting_strict: bool = Field(
+        default=False,
+        description="If True, add extra instructions about JSON formatting (used on retry)",
+    )
 
 
 class ScribeOutput(AgentOutput):
@@ -391,6 +395,18 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
             parts.append("Update the documentation based on feedback.")
             parts.append("Address all Challenger questions and Chrome tickets.")
             parts.append("Improve any sections that were marked as issues.")
+
+        # Strict formatting instructions (added on retry after parse failure)
+        if input_data.formatting_strict:
+            parts.append("")
+            parts.append("## CRITICAL: JSON Formatting Requirements")
+            parts.append("Your previous response had JSON formatting errors. Please ensure:")
+            parts.append("1. Output ONLY valid JSON - no markdown code blocks, no extra text")
+            parts.append("2. All strings must be properly escaped (use \\n for newlines, \\\\ for backslashes)")
+            parts.append("3. No trailing commas after the last element in arrays or objects")
+            parts.append("4. All property names must be in double quotes")
+            parts.append("5. No comments in JSON")
+            parts.append("6. Verify your response is parseable JSON before submitting")
 
         parts.append("")
         parts.append("Respond with a JSON object containing:")
