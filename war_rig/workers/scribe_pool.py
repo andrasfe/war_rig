@@ -34,6 +34,7 @@ See Also:
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -50,7 +51,8 @@ from war_rig.beads import (
     TicketType,
 )
 from war_rig.config import WarRigConfig
-from war_rig.models.templates import FileType
+from war_rig.models.templates import DocumentationTemplate, FileType
+from war_rig.models.tickets import ChallengerQuestion, ChromeTicket
 
 logger = logging.getLogger(__name__)
 
@@ -147,6 +149,7 @@ class ScribeWorker:
         config: WarRigConfig,
         beads_client: BeadsClient,
         input_directory: Path | None = None,
+        output_directory: Path | None = None,
         poll_interval: float = 2.0,
         idle_timeout: float = 30.0,
     ):
@@ -157,6 +160,7 @@ class ScribeWorker:
             config: War Rig configuration for agent setup.
             beads_client: Client for ticket operations.
             input_directory: Directory containing source files to process.
+            output_directory: Directory to store documentation outputs.
             poll_interval: Seconds between polling attempts when no work available.
             idle_timeout: Seconds of no available tickets before stopping.
         """
@@ -164,8 +168,12 @@ class ScribeWorker:
         self.config = config
         self.beads_client = beads_client
         self.input_directory = input_directory or config.input_directory
+        self.output_directory = output_directory or config.output_directory
         self.poll_interval = poll_interval
         self.idle_timeout = idle_timeout
+
+        # Ensure output directory exists
+        self.output_directory.mkdir(parents=True, exist_ok=True)
 
         # Initialize the Scribe agent
         self._scribe_agent: ScribeAgent | None = None
@@ -389,13 +397,69 @@ class ScribeWorker:
         finally:
             self._update_state(WorkerState.IDLE)
 
+    def _get_doc_output_path(self, file_name: str) -> Path:
+        """Get the output path for a documentation file.
+
+        Args:
+            file_name: Source file name.
+
+        Returns:
+            Path to the documentation JSON file.
+        """
+        base_name = Path(file_name).stem
+        return self.output_directory / f"{base_name}.doc.json"
+
+    def _load_previous_template(self, file_name: str) -> DocumentationTemplate | None:
+        """Load the previous iteration's documentation template.
+
+        Args:
+            file_name: Source file name.
+
+        Returns:
+            DocumentationTemplate if exists, None otherwise.
+        """
+        doc_path = self._get_doc_output_path(file_name)
+        if not doc_path.exists():
+            return None
+
+        try:
+            with open(doc_path) as f:
+                data = json.load(f)
+            return DocumentationTemplate.model_validate(data)
+        except Exception as e:
+            logger.warning(
+                f"Worker {self.worker_id}: Failed to load previous template "
+                f"from {doc_path}: {e}"
+            )
+            return None
+
+    def _save_template(self, file_name: str, template: DocumentationTemplate) -> None:
+        """Save the documentation template to the output directory.
+
+        Args:
+            file_name: Source file name.
+            template: The documentation template to save.
+        """
+        doc_path = self._get_doc_output_path(file_name)
+        try:
+            with open(doc_path, "w") as f:
+                json.dump(template.model_dump(mode="json"), f, indent=2, default=str)
+            logger.debug(
+                f"Worker {self.worker_id}: Saved documentation to {doc_path}"
+            )
+        except Exception as e:
+            logger.error(
+                f"Worker {self.worker_id}: Failed to save template to {doc_path}: {e}"
+            )
+
     async def _process_documentation_ticket(
         self,
         ticket: ProgramManagerTicket,
     ) -> ScribeOutput:
         """Process a DOCUMENTATION ticket.
 
-        Loads the source file and runs initial documentation through ScribeAgent.
+        Loads the source file and runs documentation through ScribeAgent.
+        If this is iteration > 1, loads the previous template for updates.
 
         Args:
             ticket: The DOCUMENTATION ticket to process.
@@ -433,6 +497,16 @@ class ScribeWorker:
         # Determine file type from extension
         file_type = self._determine_file_type(ticket.file_name)
 
+        # Load previous template if this is an update iteration
+        previous_template = None
+        if ticket.cycle_number > 1:
+            previous_template = self._load_previous_template(ticket.file_name)
+            if previous_template:
+                logger.debug(
+                    f"Worker {self.worker_id}: Loaded previous template for "
+                    f"{ticket.file_name} (iteration {ticket.cycle_number})"
+                )
+
         # Build Scribe input
         scribe_input = ScribeInput(
             source_code=source_code,
@@ -440,6 +514,7 @@ class ScribeWorker:
             file_type=file_type,
             iteration=ticket.cycle_number,
             copybook_contents=ticket.metadata.get("copybook_contents", {}),
+            previous_template=previous_template,
         )
 
         # Run the Scribe agent
@@ -447,6 +522,10 @@ class ScribeWorker:
             f"Worker {self.worker_id}: Running Scribe for {ticket.file_name}"
         )
         output = await self.scribe_agent.ainvoke(scribe_input)
+
+        # Save the template if successful
+        if output.success and output.template:
+            self._save_template(ticket.file_name, output.template)
 
         return output
 
@@ -456,23 +535,92 @@ class ScribeWorker:
     ) -> ScribeOutput:
         """Process a CLARIFICATION ticket.
 
-        Responds to a Challenger question about existing documentation.
+        Responds to Challenger questions about existing documentation by loading
+        the previous template, source code, and questions, then running the
+        Scribe agent to address the feedback.
 
         Args:
             ticket: The CLARIFICATION ticket to process.
 
         Returns:
-            ScribeOutput with response to the question.
+            ScribeOutput with updated documentation addressing the questions.
         """
-        # TODO: Implement clarification handling
-        # This requires loading the original documentation and question
+        # Load the previous template (required for clarification)
+        previous_template = self._load_previous_template(ticket.file_name)
+        if not previous_template:
+            logger.error(
+                f"Worker {self.worker_id}: No previous template found for "
+                f"clarification ticket {ticket.ticket_id}"
+            )
+            return ScribeOutput(
+                success=False,
+                error=f"No previous documentation found for {ticket.file_name}",
+            )
+
+        # Load source code
+        source_path = self.input_directory / ticket.file_name
+        if not source_path.exists():
+            return ScribeOutput(
+                success=False,
+                error=f"Source file not found: {source_path}",
+            )
+        try:
+            source_code = source_path.read_text(encoding="utf-8", errors="replace")
+        except Exception as e:
+            return ScribeOutput(
+                success=False,
+                error=f"Failed to read source file: {e}",
+            )
+
+        # Extract challenger questions from ticket metadata
+        challenger_questions: list[ChallengerQuestion] = []
+        questions_data = ticket.metadata.get("challenger_questions", [])
+        for q in questions_data:
+            if isinstance(q, dict):
+                challenger_questions.append(ChallengerQuestion.model_validate(q))
+            elif isinstance(q, ChallengerQuestion):
+                challenger_questions.append(q)
+
+        # Also check for single question in issue_description
+        if ticket.metadata.get("issue_description"):
+            challenger_questions.append(
+                ChallengerQuestion(
+                    question_id=f"CLR-{ticket.ticket_id[-8:]}",
+                    question=ticket.metadata["issue_description"],
+                    section=ticket.metadata.get("section"),
+                    context=ticket.metadata.get("guidance", ""),
+                )
+            )
+
+        if not challenger_questions:
+            logger.warning(
+                f"Worker {self.worker_id}: No questions found in clarification ticket"
+            )
+
+        file_type = self._determine_file_type(ticket.file_name)
+
+        # Build Scribe input with previous template and questions
+        scribe_input = ScribeInput(
+            source_code=source_code,
+            file_name=ticket.file_name,
+            file_type=file_type,
+            iteration=ticket.cycle_number,
+            copybook_contents=ticket.metadata.get("copybook_contents", {}),
+            previous_template=previous_template,
+            challenger_questions=challenger_questions,
+        )
+
         logger.info(
-            f"Worker {self.worker_id}: CLARIFICATION tickets not yet implemented"
+            f"Worker {self.worker_id}: Processing clarification for {ticket.file_name} "
+            f"with {len(challenger_questions)} questions"
         )
-        return ScribeOutput(
-            success=False,
-            error="CLARIFICATION tickets not yet implemented",
-        )
+        output = await self.scribe_agent.ainvoke(scribe_input)
+
+        # Save updated template if successful
+        if output.success and output.template:
+            self._save_template(ticket.file_name, output.template)
+
+        return output
 
     async def _process_chrome_ticket(
         self,
@@ -480,23 +628,94 @@ class ScribeWorker:
     ) -> ScribeOutput:
         """Process a CHROME ticket.
 
-        Addresses an Imperator-issued rework request.
+        Addresses an Imperator-issued rework request by loading the previous
+        template, source code, and chrome tickets, then running the Scribe
+        agent to address the feedback.
 
         Args:
             ticket: The CHROME ticket to process.
 
         Returns:
-            ScribeOutput with reworked documentation.
+            ScribeOutput with updated documentation addressing the chrome issues.
         """
-        # TODO: Implement chrome ticket handling
-        # This requires loading the original documentation and chrome issue
+        # Load the previous template (required for chrome updates)
+        previous_template = self._load_previous_template(ticket.file_name)
+        if not previous_template:
+            logger.error(
+                f"Worker {self.worker_id}: No previous template found for "
+                f"chrome ticket {ticket.ticket_id}"
+            )
+            return ScribeOutput(
+                success=False,
+                error=f"No previous documentation found for {ticket.file_name}",
+            )
+
+        # Load source code
+        source_path = self.input_directory / ticket.file_name
+        if not source_path.exists():
+            return ScribeOutput(
+                success=False,
+                error=f"Source file not found: {source_path}",
+            )
+        try:
+            source_code = source_path.read_text(encoding="utf-8", errors="replace")
+        except Exception as e:
+            return ScribeOutput(
+                success=False,
+                error=f"Failed to read source file: {e}",
+            )
+
+        # Extract chrome tickets from ticket metadata
+        chrome_tickets: list[ChromeTicket] = []
+        chrome_data = ticket.metadata.get("chrome_tickets", [])
+        for ct in chrome_data:
+            if isinstance(ct, dict):
+                chrome_tickets.append(ChromeTicket.model_validate(ct))
+            elif isinstance(ct, ChromeTicket):
+                chrome_tickets.append(ct)
+
+        # Also check for single issue in issue_description
+        if ticket.metadata.get("issue_description"):
+            from war_rig.models.tickets import IssuePriority
+            chrome_tickets.append(
+                ChromeTicket(
+                    ticket_id=f"CHR-{ticket.ticket_id[-8:]}",
+                    description=ticket.metadata["issue_description"],
+                    section=ticket.metadata.get("section"),
+                    priority=IssuePriority.MEDIUM,
+                    guidance=ticket.metadata.get("guidance"),
+                )
+            )
+
+        if not chrome_tickets:
+            logger.warning(
+                f"Worker {self.worker_id}: No chrome issues found in ticket"
+            )
+
+        file_type = self._determine_file_type(ticket.file_name)
+
+        # Build Scribe input with previous template and chrome tickets
+        scribe_input = ScribeInput(
+            source_code=source_code,
+            file_name=ticket.file_name,
+            file_type=file_type,
+            iteration=ticket.cycle_number,
+            copybook_contents=ticket.metadata.get("copybook_contents", {}),
+            previous_template=previous_template,
+            chrome_tickets=chrome_tickets,
+        )
+
         logger.info(
-            f"Worker {self.worker_id}: CHROME tickets not yet implemented"
+            f"Worker {self.worker_id}: Processing chrome for {ticket.file_name} "
+            f"with {len(chrome_tickets)} issues"
         )
-        return ScribeOutput(
-            success=False,
-            error="CHROME tickets not yet implemented",
-        )
+        output = await self.scribe_agent.ainvoke(scribe_input)
+
+        # Save updated template if successful
+        if output.success and output.template:
+            self._save_template(ticket.file_name, output.template)
+
+        return output
 
     def _determine_file_type(self, file_name: str) -> FileType:
         """Determine the FileType from a file name.
@@ -569,6 +788,7 @@ class ScribeWorkerPool:
         config: WarRigConfig,
         beads_client: BeadsClient,
         input_directory: Path | None = None,
+        output_directory: Path | None = None,
         num_workers: int | None = None,
         poll_interval: float = 2.0,
         idle_timeout: float = 30.0,
@@ -579,6 +799,7 @@ class ScribeWorkerPool:
             config: War Rig configuration.
             beads_client: Client for ticket operations.
             input_directory: Directory containing source files to process.
+            output_directory: Directory to store documentation outputs.
             num_workers: Number of workers. Defaults to config.num_scribes.
             poll_interval: Seconds between polls for each worker.
             idle_timeout: Seconds of no work before workers auto-stop.
@@ -586,6 +807,7 @@ class ScribeWorkerPool:
         self.config = config
         self.beads_client = beads_client
         self.input_directory = input_directory or config.input_directory
+        self.output_directory = output_directory or config.output_directory
         self.num_workers = num_workers or config.num_scribes
         self.poll_interval = poll_interval
         self.idle_timeout = idle_timeout
@@ -617,6 +839,7 @@ class ScribeWorkerPool:
                 config=self.config,
                 beads_client=self.beads_client,
                 input_directory=self.input_directory,
+                output_directory=self.output_directory,
                 poll_interval=self.poll_interval,
                 idle_timeout=self.idle_timeout,
             )
