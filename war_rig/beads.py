@@ -271,6 +271,9 @@ class BeadsClient:
         self.enabled = enabled
         self.dry_run = dry_run
         self._ticket_cache: dict[str, BeadsTicket] = {}
+        # In-memory PM ticket tracking for when beads CLI is unavailable
+        self._pm_ticket_cache: dict[str, ProgramManagerTicket] = {}
+        self._pm_ticket_counter: int = 0
 
     def _run_bd(self, args: list[str]) -> tuple[bool, str]:
         """Run a bd command.
@@ -496,6 +499,14 @@ class BeadsClient:
     # Program Manager Workflow Methods
     # =========================================================================
 
+    def _use_memory_cache(self) -> bool:
+        """Check if we should use in-memory caching instead of bd CLI.
+
+        Returns:
+            True if we should use memory cache (beads disabled or dry run).
+        """
+        return not self.enabled or self.dry_run
+
     def create_pm_ticket(
         self,
         ticket_type: TicketType,
@@ -510,6 +521,8 @@ class BeadsClient:
 
         Creates a ticket in beads with labels encoding the PM workflow state.
         The ticket is created in the CREATED state, ready for a worker to claim.
+
+        When beads is disabled, tickets are tracked in memory.
 
         Args:
             ticket_type: Type of PM ticket (DOCUMENTATION, VALIDATION, etc.)
@@ -531,8 +544,12 @@ class BeadsClient:
                 cycle_number=1,
             )
         """
+        # Generate ticket ID for in-memory tracking
+        self._pm_ticket_counter += 1
+        memory_ticket_id = f"mem-{self._pm_ticket_counter:06d}"
+
         pm_ticket = ProgramManagerTicket(
-            ticket_id="",  # Will be set after creation
+            ticket_id=memory_ticket_id,  # Set immediately for memory mode
             ticket_type=ticket_type,
             state=TicketState.CREATED,
             file_name=file_name,
@@ -541,6 +558,15 @@ class BeadsClient:
             parent_ticket_id=parent_ticket_id,
             metadata=metadata or {},
         )
+
+        # If using memory cache, store and return immediately
+        if self._use_memory_cache():
+            self._pm_ticket_cache[memory_ticket_id] = pm_ticket
+            logger.info(
+                f"Created PM ticket (memory): {memory_ticket_id} "
+                f"({ticket_type.value}) for {file_name}"
+            )
+            return pm_ticket
 
         # Build title based on ticket type
         type_prefix = ticket_type.value.upper()
@@ -576,6 +602,8 @@ class BeadsClient:
             ticket_id = self._parse_ticket_id(output)
             if ticket_id:
                 pm_ticket.ticket_id = ticket_id
+                # Also cache in memory for consistency
+                self._pm_ticket_cache[ticket_id] = pm_ticket
                 logger.info(
                     f"Created PM ticket: {ticket_id} "
                     f"({ticket_type.value}) for {file_name}"
@@ -595,6 +623,8 @@ class BeadsClient:
         This prevents race conditions when multiple workers try to claim
         the same ticket.
 
+        When using memory cache, performs simple state check and update.
+
         Args:
             ticket_id: ID of the ticket to claim.
             worker_id: ID of the worker claiming the ticket.
@@ -610,6 +640,22 @@ class BeadsClient:
                 # Ticket was claimed by another worker
                 pass
         """
+        # Memory cache mode
+        if self._use_memory_cache():
+            ticket = self._pm_ticket_cache.get(ticket_id)
+            if not ticket:
+                logger.warning(f"Ticket {ticket_id} not found in memory cache")
+                return False
+            if ticket.state != TicketState.CREATED:
+                logger.debug(f"Ticket {ticket_id} already claimed (state={ticket.state})")
+                return False
+            # Claim the ticket
+            ticket.state = TicketState.CLAIMED
+            ticket.worker_id = worker_id
+            ticket.claimed_at = datetime.utcnow()
+            logger.info(f"Worker {worker_id} claimed ticket {ticket_id} (memory)")
+            return True
+
         # Use bd update --claim for atomic claim
         args = [
             "update",
@@ -625,6 +671,10 @@ class BeadsClient:
 
         if success:
             logger.info(f"Worker {worker_id} claimed ticket {ticket_id}")
+            # Update memory cache
+            if ticket_id in self._pm_ticket_cache:
+                self._pm_ticket_cache[ticket_id].state = TicketState.CLAIMED
+                self._pm_ticket_cache[ticket_id].worker_id = worker_id
             return True
         else:
             # Check if failure was due to already claimed
@@ -644,6 +694,8 @@ class BeadsClient:
 
         Updates both the beads status and the pm-state label to reflect
         the new state.
+
+        When using memory cache, updates the in-memory ticket state.
 
         Args:
             ticket_id: ID of the ticket to update.
@@ -667,6 +719,17 @@ class BeadsClient:
                 reason="Documentation approved",
             )
         """
+        # Memory cache mode
+        if self._use_memory_cache():
+            ticket = self._pm_ticket_cache.get(ticket_id)
+            if not ticket:
+                logger.warning(f"Ticket {ticket_id} not found in memory cache")
+                return False
+            ticket.state = new_state
+            ticket.updated_at = datetime.utcnow()
+            logger.info(f"Updated ticket {ticket_id} state to {new_state.value} (memory)")
+            return True
+
         bd_status = TICKET_STATE_TO_BD_STATUS[new_state]
 
         # Build update command
@@ -685,6 +748,10 @@ class BeadsClient:
 
         if success:
             logger.info(f"Updated ticket {ticket_id} state to {new_state.value}")
+
+            # Update memory cache
+            if ticket_id in self._pm_ticket_cache:
+                self._pm_ticket_cache[ticket_id].state = new_state
 
             # If closing, also run close command with reason
             if new_state in (
@@ -711,6 +778,8 @@ class BeadsClient:
         Queries beads for tickets in the CREATED state that have not been
         claimed by any worker.
 
+        When using memory cache, filters from in-memory ticket storage.
+
         Args:
             ticket_type: Filter by ticket type (optional).
             cycle_number: Filter by cycle number (optional).
@@ -728,6 +797,22 @@ class BeadsClient:
                     process(ticket)
                     break
         """
+        # Memory cache mode
+        if self._use_memory_cache():
+            tickets = []
+            for ticket in self._pm_ticket_cache.values():
+                # Must be in CREATED state
+                if ticket.state != TicketState.CREATED:
+                    continue
+                # Filter by ticket type if specified
+                if ticket_type and ticket.ticket_type != ticket_type:
+                    continue
+                # Filter by cycle number if specified
+                if cycle_number and ticket.cycle_number != cycle_number:
+                    continue
+                tickets.append(ticket)
+            return tickets
+
         args = ["list", "--json", "--status=open"]
 
         # Add label filters
@@ -759,6 +844,8 @@ class BeadsClient:
     ) -> list[ProgramManagerTicket]:
         """Query tickets by their workflow state.
 
+        When using memory cache, filters from in-memory ticket storage.
+
         Args:
             state: The ticket state to filter by.
             ticket_type: Filter by ticket type (optional).
@@ -777,6 +864,22 @@ class BeadsClient:
                 ticket_type=TicketType.DOCUMENTATION,
             )
         """
+        # Memory cache mode
+        if self._use_memory_cache():
+            tickets = []
+            for ticket in self._pm_ticket_cache.values():
+                # Filter by state
+                if ticket.state != state:
+                    continue
+                # Filter by ticket type if specified
+                if ticket_type and ticket.ticket_type != ticket_type:
+                    continue
+                # Filter by cycle number if specified
+                if cycle_number and ticket.cycle_number != cycle_number:
+                    continue
+                tickets.append(ticket)
+            return tickets
+
         # Map state to bd status
         bd_status = TICKET_STATE_TO_BD_STATUS[state]
 
