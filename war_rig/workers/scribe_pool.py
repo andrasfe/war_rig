@@ -301,21 +301,26 @@ class ScribeWorker:
     async def _poll_for_ticket(self) -> ProgramManagerTicket | None:
         """Poll for and claim an available ticket.
 
-        Queries the BeadsClient for DOCUMENTATION tickets in CREATED state,
-        then attempts to claim one atomically. Skips tickets this worker
+        Queries the BeadsClient for tickets in CREATED state that match
+        our supported types (DOCUMENTATION, CLARIFICATION, CHROME).
+        Attempts to claim one atomically. Skips tickets this worker
         has already failed on (other workers can still pick them up).
 
         Returns:
             Claimed ProgramManagerTicket if successful, None otherwise.
         """
-        # Get available tickets for our compatible types
-        # For now, focus on DOCUMENTATION tickets
-        tickets = self.beads_client.get_available_tickets(
-            ticket_type=TicketType.DOCUMENTATION,
-        )
+        # Get available tickets for all supported types
+        all_tickets: list[ProgramManagerTicket] = []
+        for ticket_type in self.SUPPORTED_TICKET_TYPES:
+            tickets = self.beads_client.get_available_tickets(
+                ticket_type=ticket_type,
+            )
+            all_tickets.extend(tickets)
 
-        if not tickets:
+        if not all_tickets:
             return None
+
+        tickets = all_tickets
 
         # Filter out tickets this worker has already failed on
         # (other workers with different LLMs can still try them)
@@ -383,8 +388,9 @@ class ScribeWorker:
                     f"Worker {self.worker_id}: Completed ticket {ticket.ticket_id}"
                 )
 
-                # Create VALIDATION ticket for Challenger if this was a DOCUMENTATION ticket
-                if ticket.ticket_type == TicketType.DOCUMENTATION and result.template:
+                # Create VALIDATION ticket for Challenger to re-validate
+                # This applies to DOCUMENTATION, CLARIFICATION, and CHROME tickets
+                if result.template and ticket.ticket_type in self.SUPPORTED_TICKET_TYPES:
                     self._create_validation_ticket(ticket, result)
             else:
                 # First failure - retry once with enhanced formatting prompt
@@ -418,7 +424,8 @@ class ScribeWorker:
                     logger.info(
                         f"Worker {self.worker_id}: Completed ticket {ticket.ticket_id} on retry"
                     )
-                    if ticket.ticket_type == TicketType.DOCUMENTATION and result.template:
+                    # Create VALIDATION ticket for re-validation
+                    if result.template and ticket.ticket_type in self.SUPPORTED_TICKET_TYPES:
                         self._create_validation_ticket(ticket, result)
                 else:
                     # Second failure - reset ticket for other workers, move on
