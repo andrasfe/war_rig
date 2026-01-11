@@ -212,7 +212,9 @@ class WarRigConfig(BaseSettings):
     pm_max_cycles: int = Field(default=5, ge=1, le=20, description="Max Program Manager cycles before forced completion")
 
     # Beads integration
-    beads_enabled: bool = Field(default=True)
+    # Disabled by default - War Rig uses in-memory ticket tracking
+    # Enable only if you have a separate beads instance configured
+    beads_enabled: bool = Field(default=False)
     beads_dry_run: bool = Field(default=False)
 
     # Paths

@@ -274,6 +274,38 @@ class BeadsClient:
         # In-memory PM ticket tracking for when beads CLI is unavailable
         self._pm_ticket_cache: dict[str, ProgramManagerTicket] = {}
         self._pm_ticket_counter: int = 0
+        # Track if bd CLI is available (checked on first use)
+        self._bd_available: bool | None = None
+
+    def _check_bd_available(self) -> bool:
+        """Check if the bd CLI is available.
+
+        Returns:
+            True if bd CLI is available and working.
+        """
+        if self._bd_available is not None:
+            return self._bd_available
+
+        try:
+            result = subprocess.run(
+                ["bd", "--version"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+            )
+            self._bd_available = result.returncode == 0
+            if self._bd_available:
+                logger.debug(f"bd CLI available: {result.stdout.strip()}")
+            else:
+                logger.info("bd CLI not working, using in-memory ticket tracking")
+        except (FileNotFoundError, subprocess.TimeoutExpired):
+            logger.info("bd CLI not found, using in-memory ticket tracking")
+            self._bd_available = False
+        except Exception as e:
+            logger.warning(f"Error checking bd CLI: {e}, using in-memory tracking")
+            self._bd_available = False
+
+        return self._bd_available
 
     def _run_bd(self, args: list[str]) -> tuple[bool, str]:
         """Run a bd command.
@@ -294,6 +326,11 @@ class BeadsClient:
             logger.debug(f"Beads disabled, skipping: {' '.join(cmd)}")
             return True, ""
 
+        # Check if bd CLI is available
+        if not self._check_bd_available():
+            logger.debug(f"bd CLI unavailable, skipping: {' '.join(cmd)}")
+            return False, "bd not available"
+
         try:
             result = subprocess.run(
                 cmd,
@@ -313,6 +350,7 @@ class BeadsClient:
             return False, "timeout"
         except FileNotFoundError:
             logger.warning("bd command not found - beads not installed")
+            self._bd_available = False
             return False, "bd not found"
         except Exception as e:
             logger.error(f"Error running bd: {e}")
@@ -503,9 +541,13 @@ class BeadsClient:
         """Check if we should use in-memory caching instead of bd CLI.
 
         Returns:
-            True if we should use memory cache (beads disabled or dry run).
+            True if we should use memory cache (beads disabled, dry run,
+            or bd CLI unavailable).
         """
-        return not self.enabled or self.dry_run
+        if not self.enabled or self.dry_run:
+            return True
+        # Also use memory cache if bd CLI is not available
+        return not self._check_bd_available()
 
     def create_pm_ticket(
         self,
