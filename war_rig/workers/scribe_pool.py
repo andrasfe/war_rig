@@ -370,6 +370,10 @@ class ScribeWorker:
                 logger.info(
                     f"Worker {self.worker_id}: Completed ticket {ticket.ticket_id}"
                 )
+
+                # Create VALIDATION ticket for Challenger if this was a DOCUMENTATION ticket
+                if ticket.ticket_type == TicketType.DOCUMENTATION and result.template:
+                    self._create_validation_ticket(ticket, result)
             else:
                 self.beads_client.update_ticket_state(
                     ticket.ticket_id,
@@ -716,6 +720,73 @@ class ScribeWorker:
             self._save_template(ticket.file_name, output.template)
 
         return output
+
+    def _create_validation_ticket(
+        self,
+        doc_ticket: ProgramManagerTicket,
+        result: ScribeOutput,
+    ) -> ProgramManagerTicket | None:
+        """Create a VALIDATION ticket for Challenger after completing documentation.
+
+        The validation ticket contains the documentation state (template, source code)
+        in its metadata so the Challenger can validate without re-reading files.
+
+        Args:
+            doc_ticket: The completed DOCUMENTATION ticket.
+            result: The ScribeOutput containing the generated template.
+
+        Returns:
+            The created VALIDATION ticket, or None if creation failed.
+        """
+        # Build metadata with documentation state for Challenger
+        validation_metadata: dict[str, Any] = {
+            "parent_documentation_ticket": doc_ticket.ticket_id,
+            "scribe_worker": self.worker_id,
+        }
+
+        # Include template as JSON for Challenger to validate
+        if result.template:
+            validation_metadata["template"] = result.template.model_dump(mode="json")
+
+        # Include source code
+        source_path = self.input_directory / doc_ticket.file_name
+        if source_path.exists():
+            try:
+                source_code = source_path.read_text(encoding="utf-8", errors="replace")
+                validation_metadata["source_code"] = source_code
+            except Exception as e:
+                logger.warning(
+                    f"Worker {self.worker_id}: Failed to read source for validation: {e}"
+                )
+
+        # Include file type
+        validation_metadata["file_type"] = self._determine_file_type(
+            doc_ticket.file_name
+        ).value
+
+        # Create the validation ticket
+        validation_ticket = self.beads_client.create_pm_ticket(
+            ticket_type=TicketType.VALIDATION,
+            file_name=doc_ticket.file_name,
+            program_id=doc_ticket.program_id,
+            cycle_number=doc_ticket.cycle_number,
+            parent_ticket_id=doc_ticket.ticket_id,
+            priority=BeadsPriority.MEDIUM,
+            metadata=validation_metadata,
+        )
+
+        if validation_ticket:
+            logger.info(
+                f"Worker {self.worker_id}: Created validation ticket "
+                f"{validation_ticket.ticket_id} for {doc_ticket.file_name}"
+            )
+        else:
+            logger.warning(
+                f"Worker {self.worker_id}: Failed to create validation ticket "
+                f"for {doc_ticket.file_name}"
+            )
+
+        return validation_ticket
 
     def _determine_file_type(self, file_name: str) -> FileType:
         """Determine the FileType from a file name.

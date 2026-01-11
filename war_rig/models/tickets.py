@@ -123,15 +123,15 @@ class ChromeTicket(BaseModel):
         description="Target program being documented",
     )
     section: str = Field(
-        ...,
+        default="general",
         description="Which template section needs work",
     )
     issue_type: IssueType = Field(
-        ...,
+        default=IssueType.INCOMPLETE,
         description="Classification of the problem",
     )
     description: str = Field(
-        ...,
+        default="Issue identified during review",
         description="Specific description of the problem",
     )
     guidance: str | None = Field(
@@ -187,17 +187,21 @@ class ChallengerQuestion(BaseModel):
         default_factory=generate_question_id,
         description="Unique identifier for this question",
     )
-    section: str = Field(
-        ...,
+    section: str | None = Field(
+        default=None,
         description="Which template section this relates to",
     )
     question_type: QuestionType = Field(
-        ...,
+        default=QuestionType.CLARIFICATION,
         description="Classification of the question",
     )
     question: str = Field(
-        ...,
+        default="",
         description="The actual question",
+    )
+    context: str | None = Field(
+        default=None,
+        description="Additional context for the question",
     )
     evidence: list[int] = Field(
         default_factory=list,
