@@ -311,7 +311,7 @@ class ScribeWorker:
         """
         # Get available tickets for all supported types
         all_tickets: list[ProgramManagerTicket] = []
-        for ticket_type in self.SUPPORTED_TICKET_TYPES:
+        for ticket_type in self.COMPATIBLE_TICKET_TYPES:
             tickets = self.beads_client.get_available_tickets(
                 ticket_type=ticket_type,
             )
@@ -390,7 +390,7 @@ class ScribeWorker:
 
                 # Create VALIDATION ticket for Challenger to re-validate
                 # This applies to DOCUMENTATION, CLARIFICATION, and CHROME tickets
-                if result.template and ticket.ticket_type in self.SUPPORTED_TICKET_TYPES:
+                if result.template and ticket.ticket_type in self.COMPATIBLE_TICKET_TYPES:
                     self._create_validation_ticket(ticket, result)
             else:
                 # First failure - retry once with enhanced formatting prompt
@@ -425,7 +425,7 @@ class ScribeWorker:
                         f"Worker {self.worker_id}: Completed ticket {ticket.ticket_id} on retry"
                     )
                     # Create VALIDATION ticket for re-validation
-                    if result.template and ticket.ticket_type in self.SUPPORTED_TICKET_TYPES:
+                    if result.template and ticket.ticket_type in self.COMPATIBLE_TICKET_TYPES:
                         self._create_validation_ticket(ticket, result)
                 else:
                     # Second failure - reset ticket for other workers, move on
