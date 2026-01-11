@@ -453,6 +453,29 @@ class ImperatorAgent(BaseAgent[ImperatorInput, ImperatorOutput]):
         """
         super().__init__(config, api_config, name="Imperator")
 
+    async def _call_llm(self, system_prompt: str, user_prompt: str) -> str:
+        """Call the LLM with system and user prompts.
+
+        Args:
+            system_prompt: The system message.
+            user_prompt: The user message.
+
+        Returns:
+            The LLM response content as string.
+        """
+        from langchain_core.messages import HumanMessage, SystemMessage
+
+        messages = [
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=user_prompt),
+        ]
+
+        response = await self.llm.ainvoke(messages)
+        content = response.content
+        if isinstance(content, list):
+            content = "\n".join(str(c) for c in content)
+        return str(content)
+
     def _build_system_prompt(self) -> str:
         """Build the Imperator's system prompt.
 

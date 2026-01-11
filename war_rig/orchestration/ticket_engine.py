@@ -225,11 +225,13 @@ class TicketOrchestrator:
         self.config = config or load_config()
         self.use_mock = use_mock
 
-        # Initialize beads client
+        # Initialize beads client with persistent ticket storage
         if beads_client is None:
+            tickets_file = self.config.output_directory / ".war_rig_tickets.json"
             self.beads_client = get_beads_client(
                 enabled=self.config.beads_enabled,
                 dry_run=self.config.beads_dry_run,
+                tickets_file=tickets_file,
             )
         else:
             self.beads_client = beads_client

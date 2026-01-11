@@ -14,7 +14,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 
 class FileType(str, Enum):
@@ -289,6 +289,14 @@ class DataTransform(BaseModel):
         default_factory=list,
         description="Line numbers where transformation occurs",
     )
+
+    @field_validator("citation", mode="before")
+    @classmethod
+    def coerce_citation_to_list(cls, v):
+        """Accept both int and list[int] for citation."""
+        if isinstance(v, int):
+            return [v]
+        return v
 
 
 class DataFlow(BaseModel):

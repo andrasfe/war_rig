@@ -19,12 +19,14 @@ Program Manager Workflow:
 
 import json
 import logging
+import os
 import re
 import subprocess
 import threading
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -262,12 +264,19 @@ class BeadsClient:
         client.close_ticket(ticket_id, reason="Documentation updated with citation")
     """
 
-    def __init__(self, enabled: bool = True, dry_run: bool = False):
+    def __init__(
+        self,
+        enabled: bool = True,
+        dry_run: bool = False,
+        tickets_file: Path | str | None = None,
+    ):
         """Initialize the beads client.
 
         Args:
             enabled: Whether to actually create tickets (False for testing).
             dry_run: Log commands instead of executing them.
+            tickets_file: Path to persist tickets for crash recovery.
+                If None, tickets are only kept in memory.
         """
         self.enabled = enabled
         self.dry_run = dry_run
@@ -279,6 +288,12 @@ class BeadsClient:
         self._bd_available: bool | None = None
         # Lock for thread-safe access to in-memory ticket cache
         self._lock = threading.Lock()
+        # Persistence for crash recovery
+        self._tickets_file: Path | None = Path(tickets_file) if tickets_file else None
+        self._persist_lock = threading.Lock()
+        # Load existing tickets if file exists
+        if self._tickets_file:
+            self._load_from_disk()
 
     def _check_bd_available(self) -> bool:
         """Check if the bd CLI is available.
@@ -309,6 +324,123 @@ class BeadsClient:
             self._bd_available = False
 
         return self._bd_available
+
+    def _load_from_disk(self) -> None:
+        """Load tickets from disk for crash recovery.
+
+        Resets any CLAIMED or IN_PROGRESS tickets back to CREATED,
+        assuming they weren't completed before the crash.
+        """
+        if not self._tickets_file or not self._tickets_file.exists():
+            return
+
+        try:
+            with open(self._tickets_file) as f:
+                data = json.load(f)
+
+            loaded_count = 0
+            reset_count = 0
+
+            for ticket_data in data.get("tickets", []):
+                try:
+                    # Reconstruct the ticket
+                    ticket = ProgramManagerTicket(
+                        ticket_id=ticket_data["ticket_id"],
+                        ticket_type=TicketType(ticket_data["ticket_type"]),
+                        state=TicketState(ticket_data["state"]),
+                        file_name=ticket_data["file_name"],
+                        program_id=ticket_data.get("program_id"),
+                        cycle_number=ticket_data.get("cycle_number", 1),
+                        worker_id=ticket_data.get("worker_id"),
+                        parent_ticket_id=ticket_data.get("parent_ticket_id"),
+                        metadata=ticket_data.get("metadata", {}),
+                    )
+
+                    # Reset incomplete/failed tickets - assume crash interrupted them
+                    # or they need retry
+                    if ticket.state in (
+                        TicketState.CLAIMED,
+                        TicketState.IN_PROGRESS,
+                        TicketState.BLOCKED,
+                    ):
+                        ticket.state = TicketState.CREATED
+                        ticket.worker_id = None
+                        ticket.claimed_at = None
+                        reset_count += 1
+
+                    self._pm_ticket_cache[ticket.ticket_id] = ticket
+                    loaded_count += 1
+
+                    # Track highest ticket counter for new ticket IDs
+                    if ticket.ticket_id.startswith("mem-"):
+                        try:
+                            num = int(ticket.ticket_id.split("-")[1])
+                            self._pm_ticket_counter = max(self._pm_ticket_counter, num)
+                        except (IndexError, ValueError):
+                            pass
+
+                except (KeyError, ValueError) as e:
+                    logger.warning(f"Skipping invalid ticket data: {e}")
+                    continue
+
+            logger.info(
+                f"Loaded {loaded_count} tickets from disk "
+                f"({reset_count} reset to CREATED for retry)"
+            )
+
+        except json.JSONDecodeError as e:
+            logger.error(f"Failed to parse tickets file: {e}")
+        except Exception as e:
+            logger.error(f"Failed to load tickets from disk: {e}")
+
+    def _save_to_disk(self) -> None:
+        """Persist tickets to disk for crash recovery.
+
+        Uses atomic write (write to temp, then rename) to prevent corruption.
+        """
+        if not self._tickets_file:
+            return
+
+        with self._persist_lock:
+            try:
+                # Ensure directory exists
+                self._tickets_file.parent.mkdir(parents=True, exist_ok=True)
+
+                # Build ticket data
+                tickets_data = []
+                with self._lock:
+                    for ticket in self._pm_ticket_cache.values():
+                        tickets_data.append({
+                            "ticket_id": ticket.ticket_id,
+                            "ticket_type": ticket.ticket_type.value,
+                            "state": ticket.state.value,
+                            "file_name": ticket.file_name,
+                            "program_id": ticket.program_id,
+                            "cycle_number": ticket.cycle_number,
+                            "worker_id": ticket.worker_id,
+                            "parent_ticket_id": ticket.parent_ticket_id,
+                            "metadata": ticket.metadata,
+                        })
+
+                data = {
+                    "version": 1,
+                    "saved_at": datetime.utcnow().isoformat(),
+                    "ticket_count": len(tickets_data),
+                    "tickets": tickets_data,
+                }
+
+                # Atomic write: write to temp file, then rename
+                temp_file = self._tickets_file.with_suffix(".tmp")
+                with open(temp_file, "w") as f:
+                    json.dump(data, f, indent=2)
+
+                # Atomic rename (on POSIX systems)
+                os.replace(temp_file, self._tickets_file)
+
+                logger.debug(f"Saved {len(tickets_data)} tickets to disk")
+
+            except Exception as e:
+                logger.error(f"Failed to save tickets to disk: {e}")
 
     def _run_bd(self, args: list[str]) -> tuple[bool, str]:
         """Run a bd command.
@@ -605,6 +737,8 @@ class BeadsClient:
                     metadata=metadata or {},
                 )
                 self._pm_ticket_cache[memory_ticket_id] = pm_ticket
+            # Persist to disk for crash recovery
+            self._save_to_disk()
             logger.info(
                 f"Created PM ticket (memory): {memory_ticket_id} "
                 f"({ticket_type.value}) for {file_name}"
@@ -712,6 +846,8 @@ class BeadsClient:
                 ticket.state = TicketState.CLAIMED
                 ticket.worker_id = worker_id
                 ticket.claimed_at = datetime.utcnow()
+            # Persist to disk for crash recovery
+            self._save_to_disk()
             logger.info(f"Worker {worker_id} claimed ticket {ticket_id} (memory)")
             return True
 
@@ -787,6 +923,8 @@ class BeadsClient:
                     return False
                 ticket.state = new_state
                 ticket.updated_at = datetime.utcnow()
+            # Persist to disk for crash recovery
+            self._save_to_disk()
             logger.info(f"Updated ticket {ticket_id} state to {new_state.value} (memory)")
             return True
 
@@ -1007,19 +1145,28 @@ class BeadsClient:
 _default_client: BeadsClient | None = None
 
 
-def get_beads_client(enabled: bool = True, dry_run: bool = False) -> BeadsClient:
+def get_beads_client(
+    enabled: bool = True,
+    dry_run: bool = False,
+    tickets_file: Path | str | None = None,
+) -> BeadsClient:
     """Get or create the default beads client.
 
     Args:
         enabled: Whether to enable ticket creation.
         dry_run: Whether to log instead of execute.
+        tickets_file: Path to persist tickets for crash recovery.
 
     Returns:
         BeadsClient instance.
     """
     global _default_client
     if _default_client is None:
-        _default_client = BeadsClient(enabled=enabled, dry_run=dry_run)
+        _default_client = BeadsClient(
+            enabled=enabled,
+            dry_run=dry_run,
+            tickets_file=tickets_file,
+        )
     return _default_client
 
 
