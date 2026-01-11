@@ -46,11 +46,11 @@ class SectionAssessment(BaseModel):
     """
 
     section_name: str = Field(
-        ...,
+        default="general",
         description="Name of the template section assessed",
     )
     validation_level: ValidationLevel = Field(
-        ...,
+        default=ValidationLevel.SHAKY,
         description="Overall validation of this section",
     )
     issues: list[str] = Field(
@@ -93,11 +93,11 @@ class ChallengerAssessment(BaseModel):
     """
 
     program_id: str = Field(
-        ...,
+        default="UNKNOWN",
         description="The program being assessed",
     )
     iteration: int = Field(
-        ...,
+        default=1,
         ge=1,
         description="Which iteration this assessment is for",
     )
@@ -208,16 +208,16 @@ class ConfidenceAssessment(BaseModel):
     """
 
     program_id: str = Field(
-        ...,
+        default="UNKNOWN",
         description="The program being documented",
     )
     iteration: int = Field(
-        ...,
+        default=1,
         ge=1,
         description="Which iteration this assessment is for",
     )
     overall_confidence: ConfidenceLevel = Field(
-        ...,
+        default=ConfidenceLevel.MEDIUM,
         description="Overall confidence level",
     )
     section_confidence: dict[str, ConfidenceLevel] = Field(
@@ -300,7 +300,7 @@ class QualityMetrics(BaseModel):
     """
 
     program_id: str = Field(
-        ...,
+        default="UNKNOWN",
         description="The program being documented",
     )
     iterations_completed: int = Field(

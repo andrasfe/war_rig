@@ -320,6 +320,9 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
             # Parse assessment
             assessment = None
             if "assessment" in data:
+                # Ensure program_id and iteration are set from input data
+                data["assessment"]["program_id"] = input_data.template.header.program_id
+                data["assessment"]["iteration"] = input_data.iteration
                 assessment = ChallengerAssessment.model_validate(data["assessment"])
 
             # Parse issues
