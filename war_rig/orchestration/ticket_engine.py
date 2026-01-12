@@ -646,6 +646,35 @@ class TicketOrchestrator:
                     f"  - {ticket.ticket_id}: {ticket.file_name}"
                 )
 
+        # Check for pending validation tickets created by rescue
+        # These need to be processed by Challengers before holistic review
+        pending_validations = self.beads_client.get_available_tickets(
+            ticket_type=TicketType.VALIDATION
+        )
+        if pending_validations:
+            logger.info(
+                f"Running Challengers for {len(pending_validations)} validation tickets "
+                "created during Super-Scribe rescue"
+            )
+            self._state.status = OrchestrationStatus.VALIDATING
+            self._state.status_message = "Running post-rescue validation..."
+
+            # Run Challenger pool for validation
+            if self._challenger_pool is None:
+                self._challenger_pool = ChallengerWorkerPool(
+                    config=self.config,
+                    beads_client=self.beads_client,
+                    output_directory=self.config.output_directory,
+                    num_workers=self.config.num_challengers,
+                    poll_interval=2.0,
+                    idle_timeout=30.0,
+                )
+
+            await self._challenger_pool.start()
+            await self._challenger_pool.wait()
+
+            logger.info("Post-rescue validation complete")
+
     async def _run_holistic_review(self) -> HolisticReviewOutput | None:
         """Trigger and wait for Imperator holistic review.
 
