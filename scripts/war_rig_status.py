@@ -58,6 +58,9 @@ class TicketSummary:
     by_type: dict[str, dict[str, int]] = field(default_factory=dict)  # type -> state -> count
     by_state: dict[str, int] = field(default_factory=dict)  # state -> count
     stuck_tickets: list[dict[str, Any]] = field(default_factory=list)
+    active_work: list[dict[str, Any]] = field(default_factory=list)  # in_progress tickets
+    current_phase: str = "idle"
+    phase_detail: str = ""
     total: int = 0
     last_updated: datetime = field(default_factory=datetime.now)
 
@@ -102,6 +105,8 @@ def summarize_tickets(data: dict[str, Any]) -> TicketSummary:
     by_state: dict[str, int] = defaultdict(int)
     stuck_tickets: list[dict[str, Any]] = []
 
+    active_work: list[dict[str, Any]] = []
+
     for ticket in tickets:
         ticket_type = ticket.get("ticket_type", "unknown")
         state = ticket.get("state", "unknown")
@@ -119,12 +124,88 @@ def summarize_tickets(data: dict[str, Any]) -> TicketSummary:
                 "ticket_type": ticket_type,
             })
 
+        # Collect active work (in_progress only, not blocked)
+        if state in ("in_progress", "claimed"):
+            active_work.append({
+                "ticket_id": ticket.get("ticket_id", "unknown"),
+                "file_name": ticket.get("file_name", "unknown"),
+                "state": state,
+                "worker_id": ticket.get("worker_id"),
+                "ticket_type": ticket_type,
+            })
+
     # Convert defaultdicts to regular dicts
     summary.by_type = {k: dict(v) for k, v in by_type.items()}
     summary.by_state = dict(by_state)
     summary.stuck_tickets = stuck_tickets
+    summary.active_work = active_work
+
+    # Infer current phase from ticket states
+    summary.current_phase, summary.phase_detail = infer_phase(by_type, by_state, active_work)
 
     return summary
+
+
+def infer_phase(
+    by_type: dict[str, dict[str, int]],
+    by_state: dict[str, int],
+    active_work: list[dict[str, Any]],
+) -> tuple[str, str]:
+    """Infer current workflow phase from ticket states.
+
+    Returns:
+        Tuple of (phase_name, detail_string)
+    """
+    # Check what's actively being worked on
+    active_types = {w["ticket_type"] for w in active_work}
+
+    if active_work:
+        if "documentation" in active_types:
+            files = [w["file_name"] for w in active_work if w["ticket_type"] == "documentation"]
+            return "DOCUMENTING", f"Processing {len(files)} file(s): {', '.join(files[:3])}"
+
+        if "validation" in active_types:
+            files = [w["file_name"] for w in active_work if w["ticket_type"] == "validation"]
+            return "VALIDATING", f"Validating {len(files)} file(s): {', '.join(files[:3])}"
+
+        if "chrome" in active_types:
+            files = [w["file_name"] for w in active_work if w["ticket_type"] == "chrome"]
+            return "REWORKING", f"Reworking {len(files)} file(s): {', '.join(files[:3])}"
+
+        if "clarification" in active_types:
+            files = [w["file_name"] for w in active_work if w["ticket_type"] == "clarification"]
+            return "CLARIFYING", f"Clarifying {len(files)} file(s): {', '.join(files[:3])}"
+
+    # Check for blocked tickets being rescued (Super-Scribe)
+    blocked = by_state.get("blocked", 0)
+    if blocked > 0:
+        # Check if any blocked are chrome/clarification (Super-Scribe targets)
+        chrome_blocked = by_type.get("chrome", {}).get("blocked", 0)
+        clar_blocked = by_type.get("clarification", {}).get("blocked", 0)
+        if chrome_blocked + clar_blocked > 0:
+            return "SUPER-SCRIBE NEEDED", f"{chrome_blocked + clar_blocked} blocked ticket(s) awaiting rescue"
+
+    # Check for pending work
+    created = by_state.get("created", 0)
+    if created > 0:
+        # What types have created tickets?
+        pending_types = []
+        for ttype in ["documentation", "validation", "chrome", "clarification"]:
+            if by_type.get(ttype, {}).get("created", 0) > 0:
+                pending_types.append(ttype)
+        return "PENDING", f"{created} ticket(s) waiting: {', '.join(pending_types)}"
+
+    # Check completion
+    completed = by_state.get("completed", 0)
+    total = sum(by_state.values())
+    if total > 0 and completed == total:
+        return "COMPLETE", "All tickets processed"
+
+    if total > 0:
+        pct = (completed / total) * 100
+        return "IDLE", f"{pct:.0f}% complete, waiting for next phase"
+
+    return "IDLE", "No tickets"
 
 
 def build_type_table(summary: TicketSummary) -> Table:
@@ -291,6 +372,53 @@ def build_stuck_panel(summary: TicketSummary) -> Panel | None:
     )
 
 
+def build_activity_panel(summary: TicketSummary) -> Panel:
+    """Build Panel showing current workflow phase and active work.
+
+    Args:
+        summary: Ticket summary with phase information.
+
+    Returns:
+        Rich Panel with activity information.
+    """
+    # Phase styling
+    phase_styles = {
+        "DOCUMENTING": ("bold cyan", "cyan"),
+        "VALIDATING": ("bold yellow", "yellow"),
+        "REWORKING": ("bold orange1", "orange1"),
+        "CLARIFYING": ("bold magenta", "magenta"),
+        "SUPER-SCRIBE NEEDED": ("bold red", "red"),
+        "PENDING": ("bold blue", "blue"),
+        "COMPLETE": ("bold green", "green"),
+        "IDLE": ("dim", "dim"),
+    }
+
+    text_style, border_style = phase_styles.get(summary.current_phase, ("", "white"))
+
+    content = Text()
+    content.append(f"{summary.current_phase}\n", style=text_style)
+    content.append(summary.phase_detail, style="dim")
+
+    # Show active workers if any
+    if summary.active_work:
+        content.append("\n\n")
+        content.append("Active Workers:\n", style="bold")
+        for work in summary.active_work[:5]:  # Limit to 5
+            worker = work["worker_id"] or "unassigned"
+            content.append(f"  {worker}: ", style="cyan")
+            content.append(f"{work['file_name']} ", style="white")
+            content.append(f"({work['ticket_type']})\n", style="dim")
+        if len(summary.active_work) > 5:
+            content.append(f"  ... and {len(summary.active_work) - 5} more\n", style="dim")
+
+    return Panel(
+        content,
+        title="CURRENT ACTIVITY",
+        title_align="left",
+        border_style=border_style,
+    )
+
+
 def build_display(summary: TicketSummary | None, path: Path, error_msg: str | None = None) -> Group:
     """Compose full display from components.
 
@@ -315,6 +443,10 @@ def build_display(summary: TicketSummary | None, path: Path, error_msg: str | No
     if error_msg:
         components.append(Panel(Text(error_msg, style="yellow"), title="Status", border_style="yellow"))
     elif summary:
+        # Current activity panel
+        components.append(build_activity_panel(summary))
+        components.append(Text())  # Spacer
+
         # Type breakdown table
         components.append(build_type_table(summary))
         components.append(Text())  # Spacer
