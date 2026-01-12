@@ -190,15 +190,15 @@ class ClarificationRequest(BaseModel):
     """
 
     request_id: str = Field(
-        ...,
+        default="",
         description="Unique identifier for this request",
     )
     file_name: str = Field(
-        ...,
+        default="CROSS_FILE",
         description="File this request relates to (or 'CROSS_FILE' for system-level)",
     )
     question: str = Field(
-        ...,
+        default="",
         description="The clarification question",
     )
     context: str = Field(
@@ -223,11 +223,16 @@ class ConsistencyIssue(BaseModel):
     """
 
     issue_type: str = Field(
-        ...,
+        default="UNKNOWN",
         description="Type of issue: NAMING, DATA_FLOW, INTERFACE, BUSINESS_RULE, CALL_CHAIN",
     )
+    # Also accept issue_id as alias (LLM sometimes uses this)
+    issue_id: str | None = Field(
+        default=None,
+        description="Alternative identifier (mapped to issue_type if issue_type missing)",
+    )
     description: str = Field(
-        ...,
+        default="",
         description="Description of the consistency issue",
     )
     affected_files: list[str] = Field(
@@ -252,11 +257,11 @@ class SystemAssumption(BaseModel):
     """
 
     assumption_id: str = Field(
-        ...,
+        default="",
         description="Unique identifier for this assumption",
     )
     description: str = Field(
-        ...,
+        default="",
         description="The assumption being made",
     )
     basis: str = Field(
