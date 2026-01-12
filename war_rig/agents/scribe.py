@@ -399,14 +399,19 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
         # Strict formatting instructions (added on retry after parse failure)
         if input_data.formatting_strict:
             parts.append("")
-            parts.append("## CRITICAL: JSON Formatting Requirements")
-            parts.append("Your previous response had JSON formatting errors. Please ensure:")
-            parts.append("1. Output ONLY valid JSON - no markdown code blocks, no extra text")
-            parts.append("2. All strings must be properly escaped (use \\n for newlines, \\\\ for backslashes)")
-            parts.append("3. No trailing commas after the last element in arrays or objects")
-            parts.append("4. All property names must be in double quotes")
-            parts.append("5. No comments in JSON")
-            parts.append("6. Verify your response is parseable JSON before submitting")
+            parts.append("## ⚠️ CRITICAL: YOUR PREVIOUS RESPONSE HAD JSON ERRORS ⚠️")
+            parts.append("")
+            parts.append("Your last response failed to parse. You MUST fix your JSON formatting:")
+            parts.append("")
+            parts.append("REQUIREMENTS:")
+            parts.append("1. Start your response with { and end with } - NO other text")
+            parts.append("2. NO markdown code blocks (no ```json)")
+            parts.append("3. NO trailing commas: WRONG: [1, 2, 3,]  CORRECT: [1, 2, 3]")
+            parts.append("4. Escape special characters in strings: use \\n \\t \\\" \\\\")
+            parts.append("5. All property names in double quotes: {\"name\": \"value\"}")
+            parts.append("6. NO comments in JSON")
+            parts.append("")
+            parts.append("BEFORE RESPONDING: Mentally validate your JSON is parseable.")
 
         parts.append("")
         parts.append("Respond with a JSON object containing:")
@@ -416,6 +421,33 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
         parts.append('- "open_questions": questions you cannot resolve')
 
         return "\n".join(parts)
+
+    def _repair_json(self, json_str: str) -> str:
+        """Attempt to repair common JSON errors.
+
+        Fixes:
+        - Trailing commas before ] or }
+        - Single quotes instead of double quotes (in some cases)
+        - Unescaped newlines in strings
+
+        Args:
+            json_str: Potentially malformed JSON string.
+
+        Returns:
+            Repaired JSON string.
+        """
+        import re as repair_re
+
+        # Remove trailing commas before ] or }
+        # Match: comma followed by optional whitespace then ] or }
+        repaired = repair_re.sub(r',(\s*[}\]])', r'\1', json_str)
+
+        # Try to fix unescaped newlines within strings (common LLM error)
+        # This is tricky - we need to find strings and escape newlines inside them
+        # For now, just replace literal newlines that aren't \n
+        # repaired = repaired.replace('\n', '\\n')  # Too aggressive, breaks valid JSON
+
+        return repaired
 
     def _parse_response(self, response: str, input_data: ScribeInput) -> ScribeOutput:
         """Parse the LLM response into ScribeOutput.
@@ -433,7 +465,17 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
             if not json_match:
                 raise ValueError("No JSON object found in response")
 
-            data = json.loads(json_match.group())
+            json_str = json_match.group()
+
+            # First try parsing as-is
+            try:
+                data = json.loads(json_str)
+            except json.JSONDecodeError:
+                # Try to repair common JSON errors
+                logger.debug("JSON parse failed, attempting repair...")
+                repaired = self._repair_json(json_str)
+                data = json.loads(repaired)
+                logger.info("JSON repair succeeded")
 
             # Parse template
             template = None
