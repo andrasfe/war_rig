@@ -1,6 +1,6 @@
 # War Rig: Mainframe Documentation System
 
-> **Note**: This is a personal project for self-educating myself on novel vibe-coding techniques.
+> **Note**: This is a personal project for self-educating myself on novel vibe-coding techniques. It is in no way related to any work I perform with my employer.
 
 A multi-agent system for documenting legacy mainframe codebases (COBOL, PL/I, JCL) using LangGraph orchestration and parallel worker pools.
 
