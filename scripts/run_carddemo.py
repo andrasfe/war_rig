@@ -16,6 +16,11 @@ Usage:
 
     # Process specific directory
     python scripts/run_carddemo.py --input-dir /path/to/cobol/files
+
+Note: Super-Scribe rescue mode for BLOCKED tickets is now automatic.
+When tickets fail on all normal workers, the orchestrator automatically
+escalates them to an Opus-powered "Super-Scribe" for rescue attempts.
+Configure via RESCUE_MODEL and RESCUE_NUM_WORKERS in .env.
 """
 
 import argparse
@@ -329,6 +334,7 @@ async def main():
             )
             sys.exit(1)
 
+    # Run the orchestrator (Super-Scribe rescue is now automatic)
     logger.info("Starting War Rig...")
     return await run_orchestrator(
         input_dir=input_dir,

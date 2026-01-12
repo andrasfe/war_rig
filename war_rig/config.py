@@ -211,6 +211,18 @@ class WarRigConfig(BaseSettings):
     num_challengers: int = Field(default=2, ge=1, le=10, description="Number of parallel Challenger workers")
     pm_max_cycles: int = Field(default=5, ge=1, le=20, description="Max Program Manager cycles before forced completion")
 
+    # Super-Scribe configuration (stronger model for blocked tickets)
+    super_scribe_model: str = Field(
+        default="anthropic/claude-opus-4-20250514",
+        description="Model for Super-Scribe (stronger model to handle blocked tickets)",
+    )
+    num_super_scribes: int = Field(
+        default=1,
+        ge=1,
+        le=5,
+        description="Number of parallel Super-Scribe workers (typically 1 due to cost)",
+    )
+
     # Beads integration
     # Disabled by default - War Rig uses in-memory ticket tracking
     # Enable only if you have a separate beads instance configured

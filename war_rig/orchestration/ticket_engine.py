@@ -534,6 +534,118 @@ class TicketOrchestrator:
         # Update state with progress
         self._update_progress()
 
+        # Check for BLOCKED tickets and run automatic rescue with Super-Scribe
+        await self._run_super_scribe_rescue()
+
+    async def _run_super_scribe_rescue(self) -> None:
+        """Automatically rescue BLOCKED tickets using a stronger model (Super-Scribe).
+
+        After the normal worker cycle completes, this method checks for any tickets
+        that ended up in BLOCKED state (all workers failed). If found, it:
+        1. Resets them to CREATED state
+        2. Creates an Opus-powered ScribeWorkerPool with 1 worker
+        3. Runs the pool to attempt rescue
+
+        This provides automatic escalation without requiring a separate command.
+        The rescue model and worker count are configured via:
+        - config.super_scribe_model (default: anthropic/claude-opus-4-20250514)
+        - config.num_super_scribes (default: 1)
+        """
+        # Ticket types that can be rescued (not VALIDATION - that's for Challenger)
+        rescue_ticket_types = [
+            TicketType.DOCUMENTATION,
+            TicketType.CHROME,
+            TicketType.CLARIFICATION,
+        ]
+
+        # Find BLOCKED tickets
+        blocked_tickets = self.beads_client.get_tickets_by_state(TicketState.BLOCKED)
+        blocked_tickets = [
+            t for t in blocked_tickets if t.ticket_type in rescue_ticket_types
+        ]
+
+        if not blocked_tickets:
+            return  # No blocked tickets to rescue
+
+        logger.info(
+            f"Super-Scribe is rescuing {len(blocked_tickets)} blocked ticket(s)"
+        )
+        for ticket in blocked_tickets:
+            logger.info(
+                f"  - {ticket.ticket_id}: {ticket.file_name} ({ticket.ticket_type.value})"
+            )
+
+        # Reset blocked tickets to CREATED so rescue workers can pick them up
+        reset_count = 0
+        for ticket in blocked_tickets:
+            success = self.beads_client.update_ticket_state(
+                ticket.ticket_id,
+                TicketState.CREATED,
+                reason="Reset for Super-Scribe rescue",
+            )
+            if success:
+                reset_count += 1
+                logger.debug(f"Reset ticket {ticket.ticket_id} to CREATED")
+            else:
+                logger.warning(f"Failed to reset ticket {ticket.ticket_id}")
+
+        if reset_count == 0:
+            logger.warning("No tickets were reset for rescue. Skipping Super-Scribe.")
+            return
+
+        # Create a modified config with rescue model override
+        # This swaps out the scribe_model so ScribeWorkerPool uses Opus
+        config_dict = self.config.model_dump()
+        config_dict["scribe_model"] = self.config.super_scribe_model
+        config_dict["num_scribes"] = self.config.num_super_scribes
+        rescue_config = WarRigConfig(**config_dict)
+
+        logger.info(
+            f"Starting Super-Scribe rescue pool with {rescue_config.num_scribes} "
+            f"worker(s) using {rescue_config.scribe_model}"
+        )
+
+        # Create and run rescue pool
+        rescue_pool = ScribeWorkerPool(
+            config=rescue_config,
+            beads_client=self.beads_client,
+            input_directory=self._input_directory,
+            output_directory=self.config.output_directory,
+            num_workers=rescue_config.num_scribes,
+            poll_interval=2.0,
+            idle_timeout=30.0,
+        )
+
+        try:
+            await rescue_pool.start()
+            await rescue_pool.wait()
+        finally:
+            await rescue_pool.stop()
+
+        # Get rescue results
+        rescue_status = rescue_pool.get_status()
+        total_processed = rescue_status.get("total_processed", 0)
+        total_failed = rescue_status.get("total_failed", 0)
+
+        logger.info(
+            f"Super-Scribe rescue complete: {total_processed} processed, "
+            f"{total_failed} failed"
+        )
+
+        # Check if any tickets are still blocked
+        still_blocked = self.beads_client.get_tickets_by_state(TicketState.BLOCKED)
+        still_blocked = [
+            t for t in still_blocked if t.ticket_type in rescue_ticket_types
+        ]
+        if still_blocked:
+            logger.warning(
+                f"{len(still_blocked)} ticket(s) still blocked after Super-Scribe rescue:"
+            )
+            for ticket in still_blocked:
+                logger.warning(
+                    f"  - {ticket.ticket_id}: {ticket.file_name}"
+                )
+
     async def _run_holistic_review(self) -> HolisticReviewOutput | None:
         """Trigger and wait for Imperator holistic review.
 

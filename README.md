@@ -10,6 +10,7 @@ War Rig uses multiple AI agents working in parallel to document entire codebases
 - **Scribe Pool**: Multiple Scribes (default 3) analyze source code and fill documentation templates in parallel
 - **Challenger Pool**: Multiple Challengers (default 2) validate documentation and request corrections
 - **Imperator**: Reviews all documentation holistically and identifies cross-program issues
+- **Super-Scribe**: Automatic escalation using a stronger model (Opus) for tickets that fail on all normal workers
 
 ## Architecture
 
@@ -138,7 +139,11 @@ IMPERATOR_MODEL=anthropic/claude-sonnet-4-20250514
 # Parallel Worker Pools
 NUM_SCRIBES=3
 NUM_CHALLENGERS=2
+NUM_SUPER_SCRIBES=1
 NUM_TEAMS=1
+
+# Super-Scribe Model (automatic rescue for blocked tickets)
+SUPER_SCRIBE_MODEL=anthropic/claude-opus-4-20250514
 
 # Program Manager
 PM_MAX_CYCLES=5
@@ -310,13 +315,54 @@ This approach is designed for future multi-LLM deployments:
 - No arbitrary retry limits that would block all attempts
 - Workers only skip tickets they personally failed on
 
-### What Happens to Persistently Failing Tickets
+### Super-Scribe Automatic Rescue
 
-If all workers fail on a ticket:
-1. Ticket remains CREATED (available)
-2. Run completes (all workers idle with no claimable tickets)
-3. On restart, ticket is still CREATED
-4. Manual investigation can determine why (bad source code, impossible task, etc.)
+When tickets fail on all normal Scribe workers and get marked as BLOCKED, the Super-Scribe automatically kicks in:
+
+1. Detects BLOCKED tickets (DOCUMENTATION, CHROME, CLARIFICATION types)
+2. Resets them to CREATED state
+3. Processes with a stronger model (Opus by default)
+4. Logs results and any tickets still blocked after rescue
+
+This provides automatic escalation without manual intervention. Configure via:
+- `SUPER_SCRIBE_MODEL`: Model to use (default: `anthropic/claude-opus-4-20250514`)
+- `NUM_SUPER_SCRIBES`: Number of rescue workers (default: 1, typically kept low due to cost)
+
+## Utility Scripts
+
+### Real-Time Status Monitor
+
+Monitor ticket processing in real-time with an in-place updating display:
+
+```bash
+python scripts/war_rig_status.py output/.war_rig_tickets.json
+```
+
+Shows ticket counts by type/state, stuck tickets, and auto-refreshes every 2 seconds.
+
+### Generate System Overview
+
+Create a consolidated markdown summary from all documentation:
+
+```bash
+python scripts/generate_summary.py output/
+```
+
+Generates `output/SYSTEM_OVERVIEW.md` with program summaries grouped by type.
+
+### Generate Call Graph
+
+Create a visual call graph showing program dependencies:
+
+```bash
+python scripts/generate_call_graph.py output/
+```
+
+Generates `output/CALL_GRAPH.md` with:
+- Mermaid flowchart diagram
+- Entry points and leaf nodes
+- Call chains
+- External dependencies
 
 ## Development
 
