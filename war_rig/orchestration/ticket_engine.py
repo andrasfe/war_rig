@@ -505,6 +505,31 @@ class TicketOrchestrator:
             await self._run_worker_cycle()
             return  # Skip update_progress, the recursive call handles it
 
+        # Check for "universally failed" tickets - CREATED but all workers skipped them
+        # This happens when all workers failed twice on a ticket and added it to _failed_tickets
+        stuck_created = self.beads_client.get_available_tickets(
+            ticket_type=TicketType.DOCUMENTATION
+        )
+        stuck_created.extend(
+            self.beads_client.get_available_tickets(ticket_type=TicketType.CLARIFICATION)
+        )
+        stuck_created.extend(
+            self.beads_client.get_available_tickets(ticket_type=TicketType.CHROME)
+        )
+
+        if stuck_created:
+            # Mark these as BLOCKED - they failed on all workers
+            for ticket in stuck_created:
+                logger.warning(
+                    f"Ticket {ticket.ticket_id} ({ticket.file_name}) universally failed - "
+                    f"all workers skipped it. Marking as BLOCKED."
+                )
+                self.beads_client.update_ticket_state(
+                    ticket.ticket_id,
+                    TicketState.BLOCKED,
+                    reason="All workers failed to process this ticket",
+                )
+
         # Update state with progress
         self._update_progress()
 

@@ -1204,21 +1204,28 @@ class BeadsClient:
         if self._use_memory_cache():
             with self._lock:
                 for ticket in self._pm_ticket_cache.values():
-                    # Only reset CLAIMED or IN_PROGRESS tickets
-                    if ticket.state not in (TicketState.CLAIMED, TicketState.IN_PROGRESS):
-                        continue
-                    # Filter by ticket type if specified
-                    if ticket_types and ticket.ticket_type not in ticket_types:
-                        continue
+                    # Reset CLAIMED or IN_PROGRESS tickets
+                    if ticket.state in (TicketState.CLAIMED, TicketState.IN_PROGRESS):
+                        # Filter by ticket type if specified
+                        if ticket_types and ticket.ticket_type not in ticket_types:
+                            continue
 
-                    logger.info(
-                        f"Resetting orphaned ticket {ticket.ticket_id} "
-                        f"({ticket.file_name}) from {ticket.state.value} to created"
-                    )
-                    ticket.state = TicketState.CREATED
-                    ticket.worker_id = None
-                    ticket.claimed_at = None
-                    reset_count += 1
+                        logger.info(
+                            f"Resetting orphaned ticket {ticket.ticket_id} "
+                            f"({ticket.file_name}) from {ticket.state.value} to created"
+                        )
+                        ticket.state = TicketState.CREATED
+                        ticket.worker_id = None
+                        ticket.claimed_at = None
+                        reset_count += 1
+
+                    # Also clean up data inconsistency: CREATED tickets with worker_id set
+                    elif ticket.state == TicketState.CREATED and ticket.worker_id:
+                        logger.debug(
+                            f"Clearing stale worker_id from CREATED ticket {ticket.ticket_id}"
+                        )
+                        ticket.worker_id = None
+                        ticket.claimed_at = None
 
             # Persist changes
             if reset_count > 0:
