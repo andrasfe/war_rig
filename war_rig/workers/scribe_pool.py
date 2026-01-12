@@ -727,6 +727,22 @@ class ScribeWorker:
         Returns:
             ScribeOutput with updated documentation addressing the chrome issues.
         """
+        # Skip CROSS_FILE tickets - these are system-level and can't be handled
+        # by file-specific Scribes. They need holistic treatment.
+        if ticket.file_name == "CROSS_FILE":
+            logger.info(
+                f"Worker {self.worker_id}: Skipping CROSS_FILE chrome ticket "
+                f"{ticket.ticket_id} - requires holistic handling"
+            )
+            # Mark as completed since these are informational for the Imperator
+            return ScribeOutput(
+                success=True,
+                template=None,  # No template update for cross-file issues
+                open_questions=[
+                    f"Cross-file issue noted: {ticket.metadata.get('issue_description', 'See ticket details')}"
+                ],
+            )
+
         # Load the previous template (required for chrome updates)
         previous_template = self._load_previous_template(ticket.file_name)
         if not previous_template:

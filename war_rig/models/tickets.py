@@ -119,7 +119,7 @@ class ChromeTicket(BaseModel):
         description="Unique identifier for this ticket",
     )
     program_id: str = Field(
-        ...,
+        default="UNKNOWN",
         description="Target program being documented",
     )
     section: str = Field(
