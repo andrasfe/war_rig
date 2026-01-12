@@ -84,6 +84,27 @@ class TestFormatStatusLine:
         assert "5 validated" in result
         assert "(0S/2C)" in result
 
+    def test_format_status_with_rework(self) -> None:
+        """Test formatting with rework files."""
+        status = {
+            "cycle": 2,
+            "max_cycles": 5,
+            "status": "documenting",
+            "total_files": 10,
+            "documented_files": 10,
+            "validated_files": 8,
+            "rework_files": 3,
+            "scribe_pool": {"active_count": 2},
+            "challenger_pool": {"active_count": 0},
+        }
+
+        result = format_status_line(status)
+
+        assert "[Cycle 2/5]" in result
+        assert "DOCUMENTING" in result
+        assert "3 rework" in result
+        assert "8 validated" in result
+
 
 class TestPrintCycleSummary:
     """Tests for print_cycle_summary function."""

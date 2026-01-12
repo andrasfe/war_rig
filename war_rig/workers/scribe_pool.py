@@ -503,7 +503,7 @@ class ScribeWorker:
             template: The documentation template to save.
         """
         doc_path = self._get_doc_output_path(file_name)
-        backup_path = doc_path.with_suffix(".doc.json.bak")
+        backup_path = Path(str(doc_path) + ".bak")
 
         try:
             # Backup existing template before overwriting

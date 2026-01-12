@@ -60,6 +60,7 @@ def format_status_line(status: dict[str, Any]) -> str:
     total = status.get("total_files", 0)
     documented = status.get("documented_files", 0)
     validated = status.get("validated_files", 0)
+    rework = status.get("rework_files", 0)
 
     # Worker counts
     scribe_pool = status.get("scribe_pool", {})
@@ -69,9 +70,12 @@ def format_status_line(status: dict[str, Any]) -> str:
     active_challengers = challenger_pool.get("active_count", 0)
     total_workers = active_scribes + active_challengers
 
+    # Build rework suffix only if there are rework items
+    rework_str = f", {rework} rework" if rework > 0 else ""
+
     return (
         f"[Cycle {cycle}/{max_cycles}] {state.upper():<20} | "
-        f"Files: {documented}/{total} documented, {validated} validated | "
+        f"Files: {documented}/{total} documented, {validated} validated{rework_str} | "
         f"Workers: {total_workers} active ({active_scribes}S/{active_challengers}C)"
     )
 

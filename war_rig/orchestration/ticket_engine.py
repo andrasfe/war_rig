@@ -157,6 +157,7 @@ class OrchestrationState:
     total_files: int = 0
     documented_files: int = 0
     validated_files: int = 0
+    rework_files: int = 0  # Chrome/rework tickets completed
 
     # Cycle history
     clarification_history: list[ClarificationRequest] = field(default_factory=list)
@@ -794,6 +795,13 @@ class TicketOrchestrator:
         )
         self._state.validated_files = len(completed_validations)
 
+        # Count rework/chrome tickets completed
+        completed_chrome = self.beads_client.get_tickets_by_state(
+            state=TicketState.COMPLETED,
+            ticket_type=TicketType.CHROME,
+        )
+        self._state.rework_files = len(completed_chrome)
+
     def _collect_results(self, result: BatchResult) -> BatchResult:
         """Collect final results from completed tickets.
 
@@ -885,6 +893,7 @@ class TicketOrchestrator:
             "total_files": self._state.total_files,
             "documented_files": self._state.documented_files,
             "validated_files": self._state.validated_files,
+            "rework_files": self._state.rework_files,
             "started_at": (
                 self._state.started_at.isoformat() if self._state.started_at else None
             ),
