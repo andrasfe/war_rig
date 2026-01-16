@@ -31,6 +31,7 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+from war_rig.adapters import AnalysisRoute, AnalysisRouter
 from war_rig.agents.imperator import (
     FileDocumentation,
     HolisticReviewInput,
@@ -251,6 +252,9 @@ class TicketOrchestrator:
             api_config=self.config.api,
         )
 
+        # Analysis router for deciding direct vs chunked processing
+        self.router = AnalysisRouter(self.config)
+
         # Worker pools (created on demand)
         self._scribe_pool: ScribeWorkerPool | None = None
         self._challenger_pool: ChallengerWorkerPool | None = None
@@ -261,10 +265,158 @@ class TicketOrchestrator:
         self._lock = asyncio.Lock()
         self._input_directory: Path | None = None
 
+        # Track files requiring Atlas chunked processing
+        self._chunked_files: list[Path] = []
+
     @property
     def state(self) -> OrchestrationState:
         """Get the current orchestration state."""
         return self._state
+
+    async def _route_files_for_processing(
+        self,
+        input_dir: Path,
+        tickets: list[ProgramManagerTicket],
+    ) -> None:
+        """Route files to direct or chunked processing based on size.
+
+        Uses the AnalysisRouter to determine which files exceed the
+        context budget and require Atlas chunked processing.
+
+        Args:
+            input_dir: Directory containing source files.
+            tickets: List of PM tickets created for files.
+        """
+        # Get file paths from tickets
+        file_paths = []
+        for ticket in tickets:
+            file_path = input_dir / ticket.file_name
+            if file_path.exists():
+                file_paths.append(file_path)
+
+        # Route files
+        route_results = self.router.route_batch(file_paths)
+
+        # Track chunked files for Atlas processing
+        self._chunked_files = route_results[AnalysisRoute.CHUNKED]
+
+        # Log routing summary
+        summary = self.router.get_routing_summary(file_paths)
+        logger.info(
+            f"File routing: {summary['direct_count']} direct, "
+            f"{summary['chunked_count']} chunked (exceeds {summary['context_budget']} tokens)"
+        )
+
+        if self._chunked_files:
+            logger.info("Files requiring Atlas chunked processing:")
+            for f in self._chunked_files:
+                decision = self.router.route(f)
+                logger.info(f"  - {f.name}: ~{decision.estimated_tokens} tokens")
+
+    async def _process_chunked_files_with_atlas(self) -> None:
+        """Process large files using Atlas chunked orchestration.
+
+        For files that exceed the context budget, this method:
+        1. Creates Atlas adapters (ticket, artifact, worker)
+        2. Splits each file into chunks using Atlas splitters
+        3. Processes chunks through Atlas reconciliation controller
+        4. Merges results back to complete documentation
+
+        Note: This requires Atlas to be installed and configured.
+        """
+        if not self._chunked_files:
+            return
+
+        logger.info(
+            f"Processing {len(self._chunked_files)} large files with Atlas chunking"
+        )
+
+        try:
+            # Import Atlas components (fail gracefully if not available)
+            from atlas.adapters.artifact_store import ArtifactStoreAdapter
+            from atlas.adapters.ticket_system import TicketSystemAdapter
+            from atlas.splitter import get_splitter
+            from atlas.models.manifest import SplitterProfile
+
+            from war_rig.adapters import (
+                BeadsTicketAdapter,
+                FileArtifactAdapter,
+                create_scribe_worker,
+            )
+
+            # Create adapters
+            artifact_path = self.config.output_directory / "artifacts"
+            artifact_store = FileArtifactAdapter(artifact_path)
+            ticket_adapter = BeadsTicketAdapter(self.beads_client)
+
+            # Get splitter based on config
+            splitter_profile = SplitterProfile(
+                name="war_rig_chunking",
+                prefer_semantic=self.config.atlas_semantic_chunking,
+                max_chunk_tokens=self.config.atlas_max_chunk_tokens,
+                overlap_lines=10,
+            )
+
+            for file_path in self._chunked_files:
+                logger.info(f"Atlas processing: {file_path.name}")
+
+                try:
+                    # Read source
+                    source = file_path.read_text(encoding="utf-8", errors="replace")
+
+                    # Store source artifact
+                    source_artifact = await artifact_store.store_source(file_path)
+
+                    # Determine artifact type
+                    suffix = file_path.suffix.lower()
+                    if suffix in {".cbl", ".cob"}:
+                        artifact_type = "cobol"
+                    elif suffix in {".cpy"}:
+                        artifact_type = "copybook"
+                    else:
+                        artifact_type = "other"
+
+                    # Get appropriate splitter
+                    splitter = get_splitter(artifact_type)
+                    split_result = splitter.split(
+                        source, splitter_profile, file_path.name
+                    )
+
+                    logger.info(
+                        f"  Split into {len(split_result.chunks)} chunks, "
+                        f"~{split_result.total_estimated_tokens} total tokens"
+                    )
+
+                    # For now, log chunk info. Full Atlas integration would:
+                    # 1. Create DOC_CHUNK work items for each chunk
+                    # 2. Process with ScribeWorkerAdapter
+                    # 3. Create DOC_MERGE work items for aggregation
+                    # 4. Run reconciliation controller
+
+                    for chunk in split_result.chunks:
+                        logger.debug(
+                            f"    Chunk {chunk.chunk_id}: "
+                            f"lines {chunk.start_line}-{chunk.end_line}, "
+                            f"~{chunk.estimated_tokens} tokens"
+                        )
+
+                    # TODO: Full Atlas workflow integration
+                    # This is a placeholder. Full integration would:
+                    # 1. Create work items via ticket_adapter.create_work_item()
+                    # 2. Process with worker pools
+                    # 3. Merge results
+                    # For now, mark the file as processed via normal pipeline
+                    # which will use the existing ScribeWorkerPool
+
+                except Exception as e:
+                    logger.error(f"Atlas processing failed for {file_path.name}: {e}")
+                    # Continue with other files
+
+        except ImportError as e:
+            logger.warning(
+                f"Atlas not available for chunked processing: {e}. "
+                f"Falling back to normal pipeline (may exceed context)."
+            )
 
     async def run_batch(self, input_dir: Path) -> BatchResult:
         """Run the complete batch documentation workflow.
@@ -327,6 +479,10 @@ class TicketOrchestrator:
             self._state.batch_id = self.program_manager.batch_id or ""
             self._state.total_files = len(tickets)
             logger.info(f"Batch {self._state.batch_id}: {len(tickets)} files to process")
+
+            # Route files for direct vs chunked processing
+            if self.config.atlas_enabled:
+                await self._route_files_for_processing(input_dir, tickets)
 
             # Phase 2-6: Run cycles until completion
             max_cycles = self.config.pm_max_cycles

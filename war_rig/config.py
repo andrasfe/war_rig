@@ -223,6 +223,40 @@ class WarRigConfig(BaseSettings):
         description="Number of parallel Super-Scribe workers (typically 1 due to cost)",
     )
 
+    # Atlas chunking configuration (for large files exceeding context)
+    atlas_enabled: bool = Field(
+        default=True,
+        description="Enable Atlas for large file chunking",
+    )
+    atlas_context_budget: int = Field(
+        default=4000,
+        ge=100,
+        le=128000,
+        description="Token budget for context - files larger than this get chunked",
+    )
+    atlas_max_chunk_tokens: int = Field(
+        default=3500,
+        ge=100,
+        le=32000,
+        description="Maximum tokens per chunk",
+    )
+    atlas_max_merge_fan_in: int = Field(
+        default=15,
+        ge=2,
+        le=50,
+        description="Maximum inputs per merge node in DAG",
+    )
+    atlas_max_challenge_iterations: int = Field(
+        default=3,
+        ge=1,
+        le=10,
+        description="Maximum challenger loop iterations for chunked processing",
+    )
+    atlas_semantic_chunking: bool = Field(
+        default=True,
+        description="Use COBOL-aware semantic boundaries for chunking",
+    )
+
     # Beads integration
     # Disabled by default - War Rig uses in-memory ticket tracking
     # Enable only if you have a separate beads instance configured
