@@ -333,7 +333,7 @@ class TicketOrchestrator:
 
         try:
             # Import Atlas components (fail gracefully if not available)
-            from atlas.splitter import get_default_registry
+            from atlas.splitter import get_splitter
             from atlas.models.manifest import SplitterProfile
             from atlas.models.artifact import ArtifactRef
             from atlas.models.enums import WorkItemStatus, WorkItemType
@@ -342,9 +342,6 @@ class TicketOrchestrator:
                 DocChunkPayload,
                 WorkItem,
             )
-
-            # Get splitter registry
-            splitter_registry = get_default_registry()
 
             from war_rig.adapters import (
                 BeadsTicketAdapter,
@@ -395,7 +392,7 @@ class TicketOrchestrator:
                         artifact_type = "other"
 
                     # Get appropriate splitter
-                    splitter = splitter_registry.get_splitter(artifact_type)
+                    splitter = get_splitter(artifact_type)
                     split_result = splitter.split(
                         source, splitter_profile, file_path.name
                     )
