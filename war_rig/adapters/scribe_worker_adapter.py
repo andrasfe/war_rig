@@ -228,11 +228,12 @@ class ScribeWorkerAdapter(Worker):
 
         if scribe_output.success:
             if scribe_output.template:
-                result["template"] = scribe_output.template.model_dump()
+                # Use mode="json" to serialize datetime objects to ISO strings
+                result["template"] = scribe_output.template.model_dump(mode="json")
             if scribe_output.confidence:
-                result["confidence"] = scribe_output.confidence.model_dump()
+                result["confidence"] = scribe_output.confidence.model_dump(mode="json")
             result["responses"] = [
-                r.model_dump() for r in scribe_output.responses
+                r.model_dump(mode="json") for r in scribe_output.responses
             ]
             result["open_questions"] = scribe_output.open_questions
         else:
