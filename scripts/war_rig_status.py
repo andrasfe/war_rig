@@ -522,16 +522,15 @@ def build_stuck_panel(summary: TicketSummary) -> Panel | None:
     now = datetime.now()
 
     # Sort by state priority: blocked first, then in_progress, then claimed
-    # Within blocked, sort by duration (longest first)
+    # Within each state, sort by duration (longest first)
     def sort_key(t: dict) -> tuple:
         state_priority = {"blocked": 0, "in_progress": 1, "claimed": 2}
         priority = state_priority.get(t["state"], 99)
-        # For blocked tickets, sort by duration descending (negative seconds)
+        # Sort by duration descending (negative seconds)
         duration_sort = 0
-        if t["state"] == "blocked":
-            updated_at = parse_timestamp(t.get("updated_at"))
-            if updated_at:
-                duration_sort = -(now - updated_at).total_seconds()
+        updated_at = parse_timestamp(t.get("updated_at"))
+        if updated_at:
+            duration_sort = -(now - updated_at).total_seconds()
         return (priority, duration_sort, t["ticket_id"])
 
     sorted_tickets = sorted(summary.stuck_tickets, key=sort_key)
@@ -547,21 +546,21 @@ def build_stuck_panel(summary: TicketSummary) -> Panel | None:
         line.append(f"  {ticket['file_name']:20s}")
         line.append(f"  worker: {worker:12s}")
 
-        # Show duration for blocked tickets
-        if state == "blocked":
-            updated_at = parse_timestamp(ticket.get("updated_at"))
-            if updated_at:
-                duration_seconds = (now - updated_at).total_seconds()
-                duration_str = format_duration(duration_seconds)
-                # Color code based on duration
-                if duration_seconds > 3600:  # > 1 hour
-                    line.append(f"  blocked for ", style="dim")
-                    line.append(f"{duration_str}", style="bold red")
-                elif duration_seconds > 600:  # > 10 min
-                    line.append(f"  blocked for ", style="dim")
-                    line.append(f"{duration_str}", style="yellow")
-                else:
-                    line.append(f"  blocked for {duration_str}", style="dim")
+        # Show duration for all stuck tickets
+        updated_at = parse_timestamp(ticket.get("updated_at"))
+        if updated_at:
+            duration_seconds = (now - updated_at).total_seconds()
+            duration_str = format_duration(duration_seconds)
+            state_verb = "blocked" if state == "blocked" else "stuck"
+            # Color code based on duration
+            if duration_seconds > 3600:  # > 1 hour
+                line.append(f"  {state_verb} for ", style="dim")
+                line.append(f"{duration_str}", style="bold red")
+            elif duration_seconds > 600:  # > 10 min
+                line.append(f"  {state_verb} for ", style="dim")
+                line.append(f"{duration_str}", style="yellow")
+            else:
+                line.append(f"  {state_verb} for {duration_str}", style="dim")
 
         lines.append(line)
 
