@@ -77,6 +77,56 @@ def format_bytes(size_bytes: int | None) -> str:
         return f"{size_bytes / (1024 * 1024 * 1024):.2f} GB"
 
 
+def format_duration(seconds: float) -> str:
+    """Format duration as human-readable string.
+
+    Args:
+        seconds: Duration in seconds.
+
+    Returns:
+        Human-readable string like "5m", "2h 30m", "1d 3h".
+    """
+    if seconds < 60:
+        return f"{int(seconds)}s"
+    elif seconds < 3600:
+        minutes = int(seconds / 60)
+        return f"{minutes}m"
+    elif seconds < 86400:
+        hours = int(seconds / 3600)
+        minutes = int((seconds % 3600) / 60)
+        if minutes > 0:
+            return f"{hours}h {minutes}m"
+        return f"{hours}h"
+    else:
+        days = int(seconds / 86400)
+        hours = int((seconds % 86400) / 3600)
+        if hours > 0:
+            return f"{days}d {hours}h"
+        return f"{days}d"
+
+
+def parse_timestamp(ts_str: str | None) -> datetime | None:
+    """Parse ISO timestamp string to datetime.
+
+    Args:
+        ts_str: ISO format timestamp string or None.
+
+    Returns:
+        datetime object or None if parsing fails.
+    """
+    if not ts_str:
+        return None
+    try:
+        # Handle various ISO formats
+        if "T" in ts_str:
+            # Remove timezone info if present (for simplicity)
+            ts_str = ts_str.replace("Z", "").split("+")[0]
+            return datetime.fromisoformat(ts_str)
+        return datetime.fromisoformat(ts_str)
+    except (ValueError, TypeError):
+        return None
+
+
 @dataclass
 class TicketSummary:
     """Aggregated ticket statistics."""
@@ -243,6 +293,7 @@ def summarize_tickets(data: dict[str, Any]) -> TicketSummary:
                 "state": state,
                 "worker_id": worker_id,
                 "ticket_type": ticket_type,
+                "updated_at": ticket.get("updated_at"),
             })
 
         # Collect active work (in_progress only, not blocked)
@@ -468,13 +519,22 @@ def build_stuck_panel(summary: TicketSummary) -> Panel | None:
         return None
 
     lines: list[Text] = []
+    now = datetime.now()
 
     # Sort by state priority: blocked first, then in_progress, then claimed
-    state_priority = {"blocked": 0, "in_progress": 1, "claimed": 2}
-    sorted_tickets = sorted(
-        summary.stuck_tickets,
-        key=lambda t: (state_priority.get(t["state"], 99), t["ticket_id"]),
-    )
+    # Within blocked, sort by duration (longest first)
+    def sort_key(t: dict) -> tuple:
+        state_priority = {"blocked": 0, "in_progress": 1, "claimed": 2}
+        priority = state_priority.get(t["state"], 99)
+        # For blocked tickets, sort by duration descending (negative seconds)
+        duration_sort = 0
+        if t["state"] == "blocked":
+            updated_at = parse_timestamp(t.get("updated_at"))
+            if updated_at:
+                duration_sort = -(now - updated_at).total_seconds()
+        return (priority, duration_sort, t["ticket_id"])
+
+    sorted_tickets = sorted(summary.stuck_tickets, key=sort_key)
 
     for ticket in sorted_tickets:
         state = ticket["state"]
@@ -482,10 +542,27 @@ def build_stuck_panel(summary: TicketSummary) -> Panel | None:
         worker = ticket["worker_id"] or "unassigned"
 
         line = Text()
-        line.append(f"[{state}]", style=style)
+        line.append(f"[{state:11s}]", style=style)
         line.append(f"  {ticket['ticket_id']:12s}")
         line.append(f"  {ticket['file_name']:20s}")
-        line.append(f"  worker: {worker}")
+        line.append(f"  worker: {worker:12s}")
+
+        # Show duration for blocked tickets
+        if state == "blocked":
+            updated_at = parse_timestamp(ticket.get("updated_at"))
+            if updated_at:
+                duration_seconds = (now - updated_at).total_seconds()
+                duration_str = format_duration(duration_seconds)
+                # Color code based on duration
+                if duration_seconds > 3600:  # > 1 hour
+                    line.append(f"  blocked for ", style="dim")
+                    line.append(f"{duration_str}", style="bold red")
+                elif duration_seconds > 600:  # > 10 min
+                    line.append(f"  blocked for ", style="dim")
+                    line.append(f"{duration_str}", style="yellow")
+                else:
+                    line.append(f"  blocked for {duration_str}", style="dim")
+
         lines.append(line)
 
     content = Text("\n").join(lines)
