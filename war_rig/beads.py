@@ -163,6 +163,9 @@ class ProgramManagerTicket:
     updated_at: datetime = field(default_factory=datetime.utcnow)
     claimed_at: datetime | None = None
 
+    # Imperator decision (WITNESSED, VALHALLA, CHROME, FORCED) - set on completion
+    decision: str | None = None
+
     def to_labels(self) -> list[str]:
         """Generate labels for beads ticket from this PM ticket.
 
@@ -391,6 +394,7 @@ class BeadsClient:
                         metadata=ticket_data.get("metadata", {}),
                         created_at=created_at,
                         updated_at=updated_at,
+                        decision=ticket_data.get("decision"),
                     )
 
                     # Reset incomplete/failed tickets - assume crash interrupted them
@@ -459,6 +463,7 @@ class BeadsClient:
                             "metadata": ticket.metadata,
                             "created_at": ticket.created_at.isoformat() if ticket.created_at else None,
                             "updated_at": ticket.updated_at.isoformat() if ticket.updated_at else None,
+                            "decision": ticket.decision,
                         })
 
                 data = {
@@ -928,6 +933,7 @@ class BeadsClient:
         new_state: TicketState,
         reason: str | None = None,
         metadata_updates: dict[str, Any] | None = None,
+        decision: str | None = None,
     ) -> bool:
         """Transition a ticket to a new workflow state.
 
@@ -942,6 +948,8 @@ class BeadsClient:
             reason: Optional reason for the transition.
             metadata_updates: Optional dict of metadata fields to update.
                 These are merged into existing metadata (not replaced).
+            decision: Optional Imperator decision (WITNESSED, VALHALLA, CHROME, FORCED).
+                Typically set when transitioning to COMPLETED.
 
         Returns:
             True if update succeeded, False otherwise.
@@ -953,11 +961,12 @@ class BeadsClient:
                 TicketState.IN_PROGRESS,
             )
 
-            # Mark as completed
+            # Mark as completed with Imperator decision
             client.update_ticket_state(
                 "war_rig-abc123",
                 TicketState.COMPLETED,
                 reason="Documentation approved",
+                decision="WITNESSED",
             )
 
             # Reset for retry with updated metadata
@@ -979,6 +988,9 @@ class BeadsClient:
                 # Update metadata if provided
                 if metadata_updates:
                     ticket.metadata.update(metadata_updates)
+                # Store decision if provided
+                if decision:
+                    ticket.decision = decision
             # Persist to disk for crash recovery
             self._save_to_disk()
             logger.info(f"Updated ticket {ticket_id} state to {new_state.value} (memory)")

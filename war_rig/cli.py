@@ -204,6 +204,7 @@ def analyze(
                         ticket.ticket_id,
                         TicketState.COMPLETED,
                         reason=f"Documentation {decision}",
+                        decision=decision,
                     )
                     break
 
@@ -409,6 +410,7 @@ def batch(
                         ticket_id,
                         TicketState.COMPLETED,
                         reason=f"Documentation {decision}",
+                        decision=decision,
                     )
             except Exception as e:
                 errors.append((source_file.name, str(e)))

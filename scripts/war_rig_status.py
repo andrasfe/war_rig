@@ -145,6 +145,7 @@ class TicketSummary:
     last_updated: datetime = field(default_factory=datetime.now)
     max_cycle: int = 1  # Highest cycle number found in tickets
     json_saved_at: str | None = None  # Timestamp from JSON file
+    by_decision: dict[str, int] = field(default_factory=dict)  # decision -> count (WITNESSED, VALHALLA, etc.)
 
 
 def load_tickets(path: Path) -> dict[str, Any] | None:
@@ -230,6 +231,7 @@ def summarize_tickets(data: dict[str, Any]) -> TicketSummary:
     by_type: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
     by_state: dict[str, int] = defaultdict(int)
     by_file_type: dict[str, dict[str, int | float]] = defaultdict(lambda: {"count": 0, "size_bytes": 0})
+    by_decision: dict[str, int] = defaultdict(int)
     stuck_tickets: list[dict[str, Any]] = []
     active_work: list[dict[str, Any]] = []
     all_tickets: list[dict[str, Any]] = []
@@ -271,6 +273,11 @@ def summarize_tickets(data: dict[str, Any]) -> TicketSummary:
         if cycle_num and cycle_num > max_cycle:
             max_cycle = cycle_num
 
+        # Track Imperator decisions (WITNESSED, VALHALLA, CHROME, FORCED)
+        decision = ticket.get("decision")
+        if decision:
+            by_decision[decision] += 1
+
         # Build comprehensive ticket info for all_tickets list
         ticket_info = {
             "ticket_id": ticket.get("ticket_id", "unknown"),
@@ -310,6 +317,7 @@ def summarize_tickets(data: dict[str, Any]) -> TicketSummary:
     summary.by_type = {k: dict(v) for k, v in by_type.items()}
     summary.by_state = dict(by_state)
     summary.by_file_type = {k: dict(v) for k, v in by_file_type.items()}
+    summary.by_decision = dict(by_decision)
     summary.stuck_tickets = stuck_tickets
     summary.active_work = active_work
     summary.all_tickets = all_tickets
@@ -505,6 +513,69 @@ def build_state_table(summary: TicketSummary) -> Table:
             str(count),
             f"{percentage:.1f}%",
             style=style,
+        )
+
+    return table
+
+
+# Decision styles (Imperator verdicts)
+DECISION_STYLES: dict[str, str] = {
+    "WITNESSED": "green",
+    "VALHALLA": "gold1",
+    "CHROME": "yellow",
+    "FORCED": "orange1",
+}
+
+# Decision ordering for display
+DECISION_ORDER: list[str] = ["WITNESSED", "VALHALLA", "CHROME", "FORCED"]
+
+
+def build_decision_table(summary: TicketSummary) -> Table | None:
+    """Build rich Table showing counts by Imperator decision.
+
+    Columns: Decision | Count | Percentage
+
+    Returns None if no decisions recorded.
+    """
+    if not summary.by_decision:
+        return None
+
+    table = Table(title="IMPERATOR DECISIONS", title_style="bold", show_header=True, header_style="bold")
+
+    table.add_column("Decision", style="bold")
+    table.add_column("Count", justify="right")
+    table.add_column("Percentage", justify="right")
+
+    total = sum(summary.by_decision.values()) or 1  # Avoid division by zero
+
+    # Show decisions in defined order, then any others
+    shown = set()
+    for decision in DECISION_ORDER:
+        count = summary.by_decision.get(decision, 0)
+        if count == 0:
+            continue
+        shown.add(decision)
+
+        percentage = (count / total) * 100
+        style = DECISION_STYLES.get(decision, "")
+
+        table.add_row(
+            decision,
+            str(count),
+            f"{percentage:.1f}%",
+            style=style,
+        )
+
+    # Show any unknown decisions
+    for decision, count in sorted(summary.by_decision.items()):
+        if decision in shown:
+            continue
+
+        percentage = (count / total) * 100
+        table.add_row(
+            decision,
+            str(count),
+            f"{percentage:.1f}%",
         )
 
     return table
@@ -886,6 +957,12 @@ def build_display(summary: TicketSummary | None, path: Path, error_msg: str | No
         # State breakdown table
         components.append(build_state_table(summary))
         components.append(Text())  # Spacer
+
+        # Imperator decisions table (if any decisions recorded)
+        decision_table = build_decision_table(summary)
+        if decision_table:
+            components.append(decision_table)
+            components.append(Text())  # Spacer
 
         # Stuck tickets panel (highlighted separately)
         stuck_panel = build_stuck_panel(summary)
