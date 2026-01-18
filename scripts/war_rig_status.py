@@ -548,10 +548,10 @@ def build_stuck_panel(summary: TicketSummary) -> Panel | None:
 
         # Show duration for all stuck tickets
         updated_at = parse_timestamp(ticket.get("updated_at"))
+        state_verb = "blocked" if state == "blocked" else "stuck"
         if updated_at:
             duration_seconds = (now - updated_at).total_seconds()
             duration_str = format_duration(duration_seconds)
-            state_verb = "blocked" if state == "blocked" else "stuck"
             # Color code based on duration
             if duration_seconds > 3600:  # > 1 hour
                 line.append(f"  {state_verb} for ", style="dim")
@@ -561,6 +561,10 @@ def build_stuck_panel(summary: TicketSummary) -> Panel | None:
                 line.append(f"{duration_str}", style="yellow")
             else:
                 line.append(f"  {state_verb} for {duration_str}", style="dim")
+        else:
+            # No timestamp available
+            line.append(f"  {state_verb} for ", style="dim")
+            line.append("?", style="dim italic")
 
         lines.append(line)
 
