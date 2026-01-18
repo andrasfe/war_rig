@@ -169,44 +169,6 @@ def load_tickets(path: Path) -> dict[str, Any] | None:
         return None
 
 
-def get_bd_in_progress() -> dict[str, str]:
-    """Query bd CLI for in_progress tickets.
-
-    Returns:
-        Dict mapping program_id to worker_id for in_progress tickets.
-    """
-    import re
-    import subprocess
-
-    try:
-        result = subprocess.run(
-            ["bd", "list", "--status=in_progress"],
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-        if result.returncode != 0:
-            return {}
-
-        # Parse bd list output format:
-        # ◐ war_rig-7xfz [● P2] [task] @scribe-3 [cycle:1 file:CBSTM03A.CBL ... program:CBSTM03A worker:scribe-3] - ...
-        in_progress: dict[str, str] = {}
-        for line in result.stdout.strip().split("\n"):
-            if not line:
-                continue
-            # Extract program:XXX and worker:XXX from the labels section
-            program_match = re.search(r"program:(\w+)", line)
-            worker_match = re.search(r"worker:(\w+-\d+)", line)
-            if program_match:
-                program_id = program_match.group(1)
-                worker_id = worker_match.group(1) if worker_match else "unknown"
-                in_progress[program_id] = worker_id
-
-        return in_progress
-    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
-        return {}
-
-
 def summarize_tickets(data: dict[str, Any]) -> TicketSummary:
     """Aggregate ticket data into summary statistics.
 
@@ -223,10 +185,6 @@ def summarize_tickets(data: dict[str, Any]) -> TicketSummary:
 
     tickets = data.get("tickets", [])
     summary.total = len(tickets)
-
-    # Note: We no longer query bd CLI here. The tickets JSON file is the
-    # sole source of truth when using in-memory ticket tracking. The bd CLI
-    # may have stale data from previous runs that would cause confusion.
 
     # Initialize counters
     by_type: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
