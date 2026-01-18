@@ -224,8 +224,9 @@ def summarize_tickets(data: dict[str, Any]) -> TicketSummary:
     tickets = data.get("tickets", [])
     summary.total = len(tickets)
 
-    # Query bd CLI for current in_progress tickets to get real-time state
-    bd_in_progress = get_bd_in_progress()
+    # Note: We no longer query bd CLI here. The tickets JSON file is the
+    # sole source of truth when using in-memory ticket tracking. The bd CLI
+    # may have stale data from previous runs that would cause confusion.
 
     # Initialize counters
     by_type: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
@@ -244,12 +245,8 @@ def summarize_tickets(data: dict[str, Any]) -> TicketSummary:
         state = ticket.get("state", "unknown")
         metadata = ticket.get("metadata", {})
 
-        # Override state from bd CLI if this program is currently in_progress
         program_id = ticket.get("program_id")
         worker_id = ticket.get("worker_id")
-        if program_id and program_id in bd_in_progress:
-            state = "in_progress"
-            worker_id = bd_in_progress[program_id]
 
         # Extract metadata fields (with graceful fallbacks)
         file_type = metadata.get("file_type", "unknown")
