@@ -93,6 +93,8 @@ class TicketSummary:
     total_size_bytes: int = 0
     batch_id: str | None = None
     last_updated: datetime = field(default_factory=datetime.now)
+    max_cycle: int = 1  # Highest cycle number found in tickets
+    json_saved_at: str | None = None  # Timestamp from JSON file
 
 
 def load_tickets(path: Path) -> dict[str, Any] | None:
@@ -165,6 +167,9 @@ def summarize_tickets(data: dict[str, Any]) -> TicketSummary:
     """
     summary = TicketSummary(last_updated=datetime.now())
 
+    # Extract JSON metadata
+    summary.json_saved_at = data.get("saved_at")
+
     tickets = data.get("tickets", [])
     summary.total = len(tickets)
 
@@ -180,6 +185,7 @@ def summarize_tickets(data: dict[str, Any]) -> TicketSummary:
     all_tickets: list[dict[str, Any]] = []
     total_size_bytes = 0
     batch_id: str | None = None
+    max_cycle = 1
 
     for ticket in tickets:
         ticket_type = ticket.get("ticket_type", "unknown")
@@ -210,6 +216,11 @@ def summarize_tickets(data: dict[str, Any]) -> TicketSummary:
             by_file_type[file_type]["size_bytes"] += size_bytes
             total_size_bytes += size_bytes
 
+        # Track max cycle number
+        cycle_num = ticket.get("cycle_number", 1)
+        if cycle_num and cycle_num > max_cycle:
+            max_cycle = cycle_num
+
         # Build comprehensive ticket info for all_tickets list
         ticket_info = {
             "ticket_id": ticket.get("ticket_id", "unknown"),
@@ -219,7 +230,7 @@ def summarize_tickets(data: dict[str, Any]) -> TicketSummary:
             "ticket_type": ticket_type,
             "file_type": file_type,
             "size_bytes": size_bytes,
-            "cycle_number": ticket.get("cycle_number"),
+            "cycle_number": cycle_num,
             "worker_id": worker_id,
         }
         all_tickets.append(ticket_info)
@@ -253,6 +264,7 @@ def summarize_tickets(data: dict[str, Any]) -> TicketSummary:
     summary.all_tickets = all_tickets
     summary.total_size_bytes = total_size_bytes
     summary.batch_id = batch_id
+    summary.max_cycle = max_cycle
 
     # Infer current phase from ticket states
     summary.current_phase, summary.phase_detail = infer_phase(by_type, by_state, active_work)
@@ -499,12 +511,21 @@ def build_summary_header(summary: TicketSummary, path: Path) -> Panel:
     header_text = Text()
     header_text.append("WAR RIG TICKET STATUS\n", style="bold magenta")
     header_text.append(f"File: {path}\n", style="dim")
-    header_text.append(f"Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n", style="dim")
 
-    # Add batch info if available
+    # Show JSON file's saved_at timestamp for data freshness
+    if summary.json_saved_at:
+        header_text.append(f"JSON saved: {summary.json_saved_at}  ", style="dim")
+    header_text.append(f"Refreshed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n", style="dim")
+
+    # Add batch info and cycle number
     if summary.batch_id:
         header_text.append(f"\nBatch: ", style="bold")
-        header_text.append(f"{summary.batch_id}\n", style="cyan")
+        header_text.append(f"{summary.batch_id}", style="cyan")
+        header_text.append(f"  |  Cycle: ", style="bold")
+        header_text.append(f"{summary.max_cycle}\n", style="cyan")
+    else:
+        header_text.append(f"\nCycle: ", style="bold")
+        header_text.append(f"{summary.max_cycle}\n", style="cyan")
 
     # Ticket count breakdown
     header_text.append(f"Total Tickets: ", style="bold")
