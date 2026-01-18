@@ -29,6 +29,7 @@ from rich.text import Text
 
 # Constants
 REFRESH_INTERVAL = 2.0  # seconds
+MAX_TICKET_DISPLAY = 15  # Maximum tickets to show in detail list
 
 # Color scheme for ticket states
 STATE_STYLES: dict[str, str] = {
@@ -50,6 +51,31 @@ TICKET_TYPES: list[str] = ["documentation", "validation", "clarification", "chro
 # Known states for consistent ordering in display
 TICKET_STATES: list[str] = ["created", "claimed", "in_progress", "completed", "blocked", "rework", "cancelled"]
 
+# Known file types for consistent ordering
+FILE_TYPES: list[str] = ["COBOL", "JCL", "COPYBOOK", "PROC"]
+
+
+def format_bytes(size_bytes: int | None) -> str:
+    """Format bytes as human-readable string.
+
+    Args:
+        size_bytes: Number of bytes, or None.
+
+    Returns:
+        Human-readable string like "117 KB" or "-" if None.
+    """
+    if size_bytes is None:
+        return "-"
+
+    if size_bytes < 1024:
+        return f"{size_bytes} B"
+    elif size_bytes < 1024 * 1024:
+        return f"{size_bytes / 1024:.0f} KB"
+    elif size_bytes < 1024 * 1024 * 1024:
+        return f"{size_bytes / (1024 * 1024):.1f} MB"
+    else:
+        return f"{size_bytes / (1024 * 1024 * 1024):.2f} GB"
+
 
 @dataclass
 class TicketSummary:
@@ -57,11 +83,15 @@ class TicketSummary:
 
     by_type: dict[str, dict[str, int]] = field(default_factory=dict)  # type -> state -> count
     by_state: dict[str, int] = field(default_factory=dict)  # state -> count
+    by_file_type: dict[str, dict[str, int | float]] = field(default_factory=dict)  # file_type -> {count, size_bytes}
     stuck_tickets: list[dict[str, Any]] = field(default_factory=list)
     active_work: list[dict[str, Any]] = field(default_factory=list)  # in_progress tickets
+    all_tickets: list[dict[str, Any]] = field(default_factory=list)  # all tickets with details
     current_phase: str = "idle"
     phase_detail: str = ""
     total: int = 0
+    total_size_bytes: int = 0
+    batch_id: str | None = None
     last_updated: datetime = field(default_factory=datetime.now)
 
 
@@ -103,16 +133,48 @@ def summarize_tickets(data: dict[str, Any]) -> TicketSummary:
     # Initialize counters
     by_type: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
     by_state: dict[str, int] = defaultdict(int)
+    by_file_type: dict[str, dict[str, int | float]] = defaultdict(lambda: {"count": 0, "size_bytes": 0})
     stuck_tickets: list[dict[str, Any]] = []
-
     active_work: list[dict[str, Any]] = []
+    all_tickets: list[dict[str, Any]] = []
+    total_size_bytes = 0
+    batch_id: str | None = None
 
     for ticket in tickets:
         ticket_type = ticket.get("ticket_type", "unknown")
         state = ticket.get("state", "unknown")
+        metadata = ticket.get("metadata", {})
+
+        # Extract metadata fields (with graceful fallbacks)
+        file_type = metadata.get("file_type", "unknown")
+        size_bytes = metadata.get("size_bytes")
+
+        # Capture batch_id from first ticket with it
+        if batch_id is None and metadata.get("batch_id"):
+            batch_id = metadata.get("batch_id")
 
         by_type[ticket_type][state] += 1
         by_state[state] += 1
+
+        # Aggregate by file type
+        by_file_type[file_type]["count"] += 1
+        if size_bytes is not None:
+            by_file_type[file_type]["size_bytes"] += size_bytes
+            total_size_bytes += size_bytes
+
+        # Build comprehensive ticket info for all_tickets list
+        ticket_info = {
+            "ticket_id": ticket.get("ticket_id", "unknown"),
+            "program_id": ticket.get("program_id", "-"),
+            "file_name": ticket.get("file_name", "unknown"),
+            "state": state,
+            "ticket_type": ticket_type,
+            "file_type": file_type,
+            "size_bytes": size_bytes,
+            "cycle_number": ticket.get("cycle_number"),
+            "worker_id": ticket.get("worker_id"),
+        }
+        all_tickets.append(ticket_info)
 
         # Collect stuck tickets
         if state in STUCK_STATES:
@@ -137,8 +199,12 @@ def summarize_tickets(data: dict[str, Any]) -> TicketSummary:
     # Convert defaultdicts to regular dicts
     summary.by_type = {k: dict(v) for k, v in by_type.items()}
     summary.by_state = dict(by_state)
+    summary.by_file_type = {k: dict(v) for k, v in by_file_type.items()}
     summary.stuck_tickets = stuck_tickets
     summary.active_work = active_work
+    summary.all_tickets = all_tickets
+    summary.total_size_bytes = total_size_bytes
+    summary.batch_id = batch_id
 
     # Infer current phase from ticket states
     summary.current_phase, summary.phase_detail = infer_phase(by_type, by_state, active_work)
@@ -372,6 +438,202 @@ def build_stuck_panel(summary: TicketSummary) -> Panel | None:
     )
 
 
+def build_summary_header(summary: TicketSummary, path: Path) -> Panel:
+    """Build summary header panel with batch info and totals.
+
+    Args:
+        summary: Ticket summary with metadata.
+        path: Path to the tickets file.
+
+    Returns:
+        Rich Panel with batch summary.
+    """
+    header_text = Text()
+    header_text.append("WAR RIG TICKET STATUS\n", style="bold magenta")
+    header_text.append(f"File: {path}\n", style="dim")
+    header_text.append(f"Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n", style="dim")
+
+    # Add batch info if available
+    if summary.batch_id:
+        header_text.append(f"\nBatch: ", style="bold")
+        header_text.append(f"{summary.batch_id}\n", style="cyan")
+
+    # Ticket count breakdown
+    header_text.append(f"Total Tickets: ", style="bold")
+    header_text.append(f"{summary.total}", style="white")
+
+    # State breakdown inline
+    completed = summary.by_state.get("completed", 0)
+    in_progress = summary.by_state.get("in_progress", 0) + summary.by_state.get("claimed", 0)
+    blocked = summary.by_state.get("blocked", 0)
+    created = summary.by_state.get("created", 0)
+
+    header_text.append("  (", style="dim")
+    if completed:
+        header_text.append(f"{completed} completed", style="green")
+        header_text.append(", ", style="dim")
+    if in_progress:
+        header_text.append(f"{in_progress} in progress", style="yellow")
+        header_text.append(", ", style="dim")
+    if blocked:
+        header_text.append(f"{blocked} blocked", style="red")
+        header_text.append(", ", style="dim")
+    if created:
+        header_text.append(f"{created} pending", style="blue")
+    header_text.append(")\n", style="dim")
+
+    # Total size
+    if summary.total_size_bytes > 0:
+        header_text.append(f"Total Size: ", style="bold")
+        header_text.append(f"{format_bytes(summary.total_size_bytes)}\n", style="white")
+
+    return Panel(header_text, border_style="magenta")
+
+
+def build_file_type_table(summary: TicketSummary) -> Table:
+    """Build rich Table showing counts and sizes by file type.
+
+    Columns: File Type | Count | Total Size
+    """
+    table = Table(title="FILES BY TYPE", title_style="bold", show_header=True, header_style="bold")
+
+    table.add_column("File Type", style="bold")
+    table.add_column("Count", justify="right")
+    table.add_column("Total Size", justify="right")
+
+    # Determine ordering: known file types first, then any others
+    all_file_types = set(FILE_TYPES) | set(summary.by_file_type.keys())
+    ordered_types = [ft for ft in FILE_TYPES if ft in summary.by_file_type]
+    ordered_types.extend(sorted(ft for ft in summary.by_file_type if ft not in FILE_TYPES))
+
+    total_count = 0
+    total_size = 0
+
+    for file_type in ordered_types:
+        info = summary.by_file_type.get(file_type, {"count": 0, "size_bytes": 0})
+        count = int(info.get("count", 0))
+        size_bytes = int(info.get("size_bytes", 0))
+
+        if count == 0:
+            continue
+
+        total_count += count
+        total_size += size_bytes
+
+        table.add_row(
+            file_type,
+            str(count),
+            format_bytes(size_bytes) if size_bytes > 0 else "-",
+        )
+
+    # Add totals row if multiple types
+    if len(ordered_types) > 1:
+        table.add_section()
+        table.add_row(
+            "TOTAL",
+            str(total_count),
+            format_bytes(total_size) if total_size > 0 else "-",
+            style="bold",
+        )
+
+    return table
+
+
+def build_ticket_list_table(summary: TicketSummary, max_display: int = MAX_TICKET_DISPLAY) -> Table | None:
+    """Build rich Table showing detailed ticket list.
+
+    Columns: ID | Program | File | State | Type | Size | Cycle | Worker
+
+    Args:
+        summary: Ticket summary with all_tickets list.
+        max_display: Maximum number of tickets to display.
+
+    Returns:
+        Rich Table with ticket details, or None if no tickets.
+    """
+    if not summary.all_tickets:
+        return None
+
+    # Sort tickets: by state priority, then by ticket_id
+    state_priority = {
+        "in_progress": 0,
+        "claimed": 1,
+        "blocked": 2,
+        "created": 3,
+        "rework": 4,
+        "completed": 5,
+        "cancelled": 6,
+    }
+    sorted_tickets = sorted(
+        summary.all_tickets,
+        key=lambda t: (state_priority.get(t["state"], 99), t["ticket_id"]),
+    )
+
+    remaining = len(sorted_tickets) - max_display
+    display_tickets = sorted_tickets[:max_display]
+
+    title = f"TICKET DETAILS ({len(summary.all_tickets)} total)"
+    if remaining > 0:
+        title = f"TICKET DETAILS (showing {max_display} of {len(summary.all_tickets)})"
+
+    table = Table(title=title, title_style="bold", show_header=True, header_style="bold")
+
+    table.add_column("Ticket ID", style="dim")
+    table.add_column("Program", style="bold")
+    table.add_column("File", no_wrap=True)
+    table.add_column("State", justify="center")
+    table.add_column("File Type", justify="center")
+    table.add_column("Size", justify="right")
+    table.add_column("Cycle", justify="center")
+    table.add_column("Worker", style="cyan")
+
+    for ticket in display_tickets:
+        state = ticket["state"]
+        state_style = STATE_STYLES.get(state, "")
+
+        # Format state with color
+        state_text = Text(state, style=state_style)
+
+        # Format cycle number
+        cycle = ticket.get("cycle_number")
+        cycle_str = str(cycle) if cycle is not None else "-"
+
+        # Format worker
+        worker = ticket.get("worker_id") or "-"
+
+        # Format size
+        size_bytes = ticket.get("size_bytes")
+        size_str = format_bytes(size_bytes)
+
+        table.add_row(
+            ticket["ticket_id"],
+            str(ticket.get("program_id", "-")),
+            ticket["file_name"],
+            state_text,
+            ticket.get("file_type", "-"),
+            size_str,
+            cycle_str,
+            worker,
+        )
+
+    # Add "... and X more" row if truncated
+    if remaining > 0:
+        table.add_section()
+        table.add_row(
+            f"... and {remaining} more",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            "",
+            style="dim italic",
+        )
+
+    return table
+
+
 def build_activity_panel(summary: TicketSummary) -> Panel:
     """Build Panel showing current workflow phase and active work.
 
@@ -432,33 +694,52 @@ def build_display(summary: TicketSummary | None, path: Path, error_msg: str | No
     """
     components: list[Any] = []
 
-    # Header
-    header_text = Text()
-    header_text.append("WAR RIG TICKET STATUS\n", style="bold magenta")
-    header_text.append(f"File: {path}\n", style="dim")
-    header_text.append(f"Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", style="dim")
-
-    components.append(Panel(header_text, border_style="magenta"))
-
     if error_msg:
+        # Simple header when no data available
+        header_text = Text()
+        header_text.append("WAR RIG TICKET STATUS\n", style="bold magenta")
+        header_text.append(f"File: {path}\n", style="dim")
+        header_text.append(f"Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", style="dim")
+        components.append(Panel(header_text, border_style="magenta"))
         components.append(Panel(Text(error_msg, style="yellow"), title="Status", border_style="yellow"))
     elif summary:
+        # Enhanced header with batch info and totals
+        components.append(build_summary_header(summary, path))
+
         # Current activity panel
         components.append(build_activity_panel(summary))
         components.append(Text())  # Spacer
 
-        # Type breakdown table
+        # Ticket type breakdown table
         components.append(build_type_table(summary))
         components.append(Text())  # Spacer
+
+        # File type breakdown table (shows COBOL, JCL, etc. with sizes)
+        if summary.by_file_type:
+            components.append(build_file_type_table(summary))
+            components.append(Text())  # Spacer
+
+        # Comprehensive ticket list table
+        ticket_list_table = build_ticket_list_table(summary)
+        if ticket_list_table:
+            components.append(ticket_list_table)
+            components.append(Text())  # Spacer
 
         # State breakdown table
         components.append(build_state_table(summary))
         components.append(Text())  # Spacer
 
-        # Stuck tickets panel
+        # Stuck tickets panel (highlighted separately)
         stuck_panel = build_stuck_panel(summary)
         if stuck_panel:
             components.append(stuck_panel)
+    else:
+        # Fallback header when summary is None but no error
+        header_text = Text()
+        header_text.append("WAR RIG TICKET STATUS\n", style="bold magenta")
+        header_text.append(f"File: {path}\n", style="dim")
+        header_text.append(f"Last updated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", style="dim")
+        components.append(Panel(header_text, border_style="magenta"))
 
     # Footer
     footer = Text()
