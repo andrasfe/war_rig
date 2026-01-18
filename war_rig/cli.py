@@ -282,6 +282,14 @@ def batch(
             help="Use mock agents (for testing)",
         ),
     ] = False,
+    resume: Annotated[
+        bool,
+        typer.Option(
+            "--resume",
+            "-r",
+            help="Skip files that already have output in final/programs/",
+        ),
+    ] = False,
     verbose: Annotated[
         bool,
         typer.Option(
@@ -299,6 +307,7 @@ def batch(
     Example:
         $ war-rig batch path/to/source/
         $ war-rig batch path/to/source/ --type COBOL --limit 10
+        $ war-rig batch path/to/source/ --resume  # Skip already-processed files
     """
     setup_logging(verbose)
 
@@ -324,12 +333,28 @@ def batch(
             raise typer.Exit(1)
 
     files = list(reader.discover_files(directory, file_types=type_filter))
+    total_discovered = len(files)
+
+    # Filter out already-processed files if --resume is enabled
+    if resume:
+        output_dir = cfg.system.output_directory
+        programs_dir = output_dir / "final" / "programs"
+        if programs_dir.exists():
+            completed = {p.stem for p in programs_dir.glob("*.json")}
+            original_count = len(files)
+            files = [f for f in files if f.stem not in completed]
+            skipped = original_count - len(files)
+            if skipped > 0:
+                console.print(f"[cyan]Resuming: skipping {skipped} already-completed files[/cyan]")
 
     if limit:
         files = files[:limit]
 
     if not files:
-        console.print("[yellow]No files found to process[/yellow]")
+        if resume and total_discovered > 0:
+            console.print("[green]All files already processed![/green]")
+        else:
+            console.print("[yellow]No files found to process[/yellow]")
         raise typer.Exit(0)
 
     console.print(f"Found {len(files)} files to process")
