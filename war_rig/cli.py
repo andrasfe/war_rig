@@ -28,6 +28,7 @@ from rich.panel import Panel
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
+from war_rig.beads import TicketState, TicketType, get_beads_client
 from war_rig.config import WarRigConfig, load_config
 from war_rig.io.reader import SourceReader
 from war_rig.io.writer import DocumentationWriter
@@ -183,6 +184,29 @@ def analyze(
     writer = DocumentationWriter(cfg.system)
     outputs = writer.write_result(result)
 
+    # Update ticket state to COMPLETED if we have a ticket for this file
+    tickets_file = cfg.system.output_directory / ".war_rig_tickets.json"
+    if tickets_file.exists():
+        beads_client = get_beads_client(
+            enabled=cfg.beads_enabled if hasattr(cfg, 'beads_enabled') else True,
+            tickets_file=tickets_file,
+        )
+        # Find ticket by file name
+        for state in [TicketState.CREATED, TicketState.IN_PROGRESS, TicketState.CLAIMED]:
+            tickets = beads_client.get_tickets_by_state(
+                state=state,
+                ticket_type=TicketType.DOCUMENTATION,
+            )
+            for ticket in tickets:
+                if ticket.file_name == file_path.name:
+                    decision = result.get("decision", "UNKNOWN")
+                    beads_client.update_ticket_state(
+                        ticket.ticket_id,
+                        TicketState.COMPLETED,
+                        reason=f"Documentation {decision}",
+                    )
+                    break
+
     # Display results
     decision = result.get("decision", "UNKNOWN")
     color = {
@@ -314,6 +338,23 @@ def batch(
     graph = create_war_rig_graph(cfg)
     writer = DocumentationWriter(cfg.system)
 
+    # Initialize beads client for ticket state management
+    tickets_file = cfg.system.output_directory / ".war_rig_tickets.json"
+    beads_client = get_beads_client(
+        enabled=cfg.beads_enabled if hasattr(cfg, 'beads_enabled') else True,
+        tickets_file=tickets_file,
+    )
+
+    # Build file_name -> ticket_id mapping from existing tickets
+    ticket_map: dict[str, str] = {}
+    for state in [TicketState.CREATED, TicketState.IN_PROGRESS, TicketState.CLAIMED]:
+        tickets = beads_client.get_tickets_by_state(
+            state=state,
+            ticket_type=TicketType.DOCUMENTATION,
+        )
+        for ticket in tickets:
+            ticket_map[ticket.file_name] = ticket.ticket_id
+
     results = []
     errors = []
 
@@ -334,6 +375,16 @@ def batch(
                 )
                 results.append(result)
                 writer.write_result(result)
+
+                # Update ticket state to COMPLETED if we have a ticket for this file
+                if source_file.name in ticket_map:
+                    ticket_id = ticket_map[source_file.name]
+                    decision = result.get("decision", "UNKNOWN")
+                    beads_client.update_ticket_state(
+                        ticket_id,
+                        TicketState.COMPLETED,
+                        reason=f"Documentation {decision}",
+                    )
             except Exception as e:
                 errors.append((source_file.name, str(e)))
 

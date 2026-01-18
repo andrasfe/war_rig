@@ -985,9 +985,10 @@ class BeadsClient:
         if success:
             logger.info(f"Updated ticket {ticket_id} state to {new_state.value}")
 
-            # Update memory cache
+            # Update memory cache and persist to disk
             if ticket_id in self._pm_ticket_cache:
                 self._pm_ticket_cache[ticket_id].state = new_state
+                self._save_to_disk()
 
             # If closing, also run close command with reason
             if new_state in (
