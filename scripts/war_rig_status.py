@@ -314,10 +314,10 @@ def build_type_table(summary: TicketSummary) -> Table:
 
         table.add_row(
             ticket_type,
-            str(created) if created else "-",
-            str(in_progress) if in_progress else "-",
-            str(completed) if completed else "-",
-            str(blocked) if blocked else "-",
+            str(created),
+            str(in_progress),
+            str(completed),
+            str(blocked),
             str(row_total),
         )
 
@@ -341,10 +341,10 @@ def build_type_table(summary: TicketSummary) -> Table:
 
         table.add_row(
             ticket_type,
-            str(created) if created else "-",
-            str(in_progress) if in_progress else "-",
-            str(completed) if completed else "-",
-            str(blocked) if blocked else "-",
+            str(created),
+            str(in_progress),
+            str(completed),
+            str(blocked),
             str(row_total),
         )
 
@@ -352,10 +352,10 @@ def build_type_table(summary: TicketSummary) -> Table:
     table.add_section()
     table.add_row(
         "TOTAL",
-        str(totals["created"]) if totals["created"] else "-",
-        str(totals["in_progress"]) if totals["in_progress"] else "-",
-        str(totals["completed"]) if totals["completed"] else "-",
-        str(totals["blocked"]) if totals["blocked"] else "-",
+        str(totals["created"]),
+        str(totals["in_progress"]),
+        str(totals["completed"]),
+        str(totals["blocked"]),
         str(grand_total),
         style="bold",
     )
