@@ -46,7 +46,7 @@ STATE_STYLES: dict[str, str] = {
 STUCK_STATES: set[str] = {"blocked", "in_progress", "claimed"}
 
 # Known ticket types for consistent ordering
-TICKET_TYPES: list[str] = ["documentation", "validation", "clarification", "chrome"]
+TICKET_TYPES: list[str] = ["documentation", "validation", "clarification", "chrome", "system_overview"]
 
 # Known states for consistent ordering in display
 TICKET_STATES: list[str] = ["created", "claimed", "in_progress", "completed", "blocked", "rework", "cancelled"]

@@ -59,6 +59,7 @@ class TicketType(str, Enum):
     - CLARIFICATION: Question from Challenger requiring Scribe response
     - CHROME: Issue ticket from Imperator requiring rework
     - HOLISTIC_REVIEW: Batch review task for Imperator
+    - SYSTEM_OVERVIEW: Final system overview generation by Imperator
     """
 
     DOCUMENTATION = "documentation"
@@ -66,6 +67,7 @@ class TicketType(str, Enum):
     CLARIFICATION = "clarification"
     CHROME = "chrome"
     HOLISTIC_REVIEW = "holistic_review"
+    SYSTEM_OVERVIEW = "system_overview"
 
 
 class TicketState(str, Enum):

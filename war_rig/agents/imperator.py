@@ -414,6 +414,48 @@ class HolisticReviewOutput(AgentOutput):
     )
 
 
+# =============================================================================
+# System Overview Generation Models
+# =============================================================================
+
+
+class ProgramSummary(BaseModel):
+    """Summary of a single program for system overview generation."""
+
+    file_name: str = Field(..., description="Source file name")
+    program_id: str = Field(..., description="Program identifier")
+    program_type: str = Field(default="UNKNOWN", description="BATCH, CICS, UTILITY, etc.")
+    summary: str = Field(..., description="One-line summary of what the program does")
+    business_context: str = Field(default="", description="Business context/purpose")
+    calls: list[str] = Field(default_factory=list, description="Programs this one calls")
+    called_by: list[str] = Field(default_factory=list, description="Programs that call this one")
+    inputs: list[str] = Field(default_factory=list, description="Key inputs (files, parameters)")
+    outputs: list[str] = Field(default_factory=list, description="Key outputs (files, reports)")
+    json_path: str = Field(default="", description="Relative path to the .json documentation file")
+
+
+class SystemOverviewInput(BaseModel):
+    """Input for system overview generation."""
+
+    batch_id: str = Field(default="", description="Batch identifier")
+    system_name: str = Field(default="CardDemo", description="Name of the system being documented")
+    programs: list[ProgramSummary] = Field(
+        default_factory=list,
+        description="Summaries of all documented programs",
+    )
+    total_files: int = Field(default=0, description="Total number of files documented")
+
+
+class SystemOverviewOutput(BaseModel):
+    """Output from system overview generation."""
+
+    success: bool = Field(default=True, description="Whether generation succeeded")
+    error: str | None = Field(default=None, description="Error message if failed")
+    markdown: str = Field(default="", description="The generated markdown content")
+    executive_summary: str = Field(default="", description="High-level system description")
+    subsystems: list[str] = Field(default_factory=list, description="Identified subsystems/modules")
+
+
 class ImperatorAgent(BaseAgent[ImperatorInput, ImperatorOutput]):
     """The Imperator agent reviews and approves documentation.
 
@@ -1285,4 +1327,203 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
             ),
             missing_documentation=[],
             reasoning=f"[MOCK] Holistic review decision after cycle {input_data.cycle}",
+        )
+
+    # =========================================================================
+    # SYSTEM OVERVIEW GENERATION
+    # =========================================================================
+
+    def _build_system_overview_prompt(self, input_data: SystemOverviewInput) -> str:
+        """Build the prompt for system overview generation.
+
+        Args:
+            input_data: The system overview input with all program summaries.
+
+        Returns:
+            The user prompt for the LLM.
+        """
+        parts = []
+
+        parts.append(f"# System Overview Generation: {input_data.system_name}")
+        parts.append("")
+        parts.append(f"Total programs documented: {input_data.total_files}")
+        parts.append("")
+        parts.append("## Program Summaries")
+        parts.append("")
+        parts.append("Below are summaries of each program in the system. Your task is to:")
+        parts.append("1. Understand how these programs work together as a system")
+        parts.append("2. Identify logical subsystems or functional areas")
+        parts.append("3. Describe the overall business purpose")
+        parts.append("4. Write a coherent narrative that explains the system")
+        parts.append("")
+
+        # Group by program type
+        by_type: dict[str, list[ProgramSummary]] = {}
+        for prog in input_data.programs:
+            ptype = prog.program_type or "UNKNOWN"
+            if ptype not in by_type:
+                by_type[ptype] = []
+            by_type[ptype].append(prog)
+
+        for ptype, programs in sorted(by_type.items()):
+            parts.append(f"### {ptype} Programs ({len(programs)})")
+            parts.append("")
+            for prog in programs:
+                parts.append(f"**{prog.program_id}** (`{prog.file_name}`)")
+                parts.append(f"- Summary: {prog.summary}")
+                if prog.business_context:
+                    parts.append(f"- Business Context: {prog.business_context}")
+                if prog.calls:
+                    parts.append(f"- Calls: {', '.join(prog.calls)}")
+                if prog.called_by:
+                    parts.append(f"- Called by: {', '.join(prog.called_by)}")
+                if prog.inputs:
+                    parts.append(f"- Inputs: {', '.join(prog.inputs[:5])}")
+                if prog.outputs:
+                    parts.append(f"- Outputs: {', '.join(prog.outputs[:5])}")
+                parts.append(f"- Documentation: [{prog.program_id}.json]({prog.json_path})")
+                parts.append("")
+
+        parts.append("## Output Format")
+        parts.append("")
+        parts.append("Generate a markdown document with the following structure:")
+        parts.append("1. Executive Summary (2-3 paragraphs describing the system)")
+        parts.append("2. Subsystems/Modules (group related programs)")
+        parts.append("3. Data Flow (how data moves through the system)")
+        parts.append("4. Program Index (table with links to each program's documentation)")
+        parts.append("")
+        parts.append("Use relative links to the .json files like: [PROGRAM](./programs/PROGRAM.json)")
+        parts.append("")
+        parts.append("Output ONLY the markdown content, no JSON wrapper.")
+
+        return "\n".join(parts)
+
+    async def generate_system_overview(
+        self,
+        input_data: SystemOverviewInput,
+        use_mock: bool = False,
+    ) -> SystemOverviewOutput:
+        """Generate a system overview from all program documentation.
+
+        This method synthesizes individual program summaries into a coherent
+        narrative describing the overall system. It should be called after
+        all documentation is complete.
+
+        Args:
+            input_data: System overview input with all program summaries.
+            use_mock: If True, return mock output instead of calling LLM.
+
+        Returns:
+            SystemOverviewOutput with the generated markdown.
+        """
+        if use_mock:
+            return self._create_mock_system_overview(input_data)
+
+        try:
+            system_prompt = """You are a technical writer creating a system overview document.
+
+Your task is to synthesize individual program documentation summaries into a coherent
+narrative that explains what the system does as a whole.
+
+Guidelines:
+- Write for a technical audience (developers, architects)
+- Focus on business functionality, not implementation details
+- Identify logical groupings of programs (subsystems)
+- Describe data flow between components
+- Use markdown formatting with headers, lists, and tables
+- Include links to individual program documentation files
+
+Be concise but comprehensive. The reader should understand the system's purpose
+and architecture after reading your overview."""
+
+            user_prompt = self._build_system_overview_prompt(input_data)
+
+            # Call LLM
+            response = await self._call_llm(system_prompt, user_prompt)
+
+            # Extract executive summary (first few paragraphs after # header)
+            lines = response.split("\n")
+            exec_summary_lines = []
+            in_summary = False
+            for line in lines:
+                if line.startswith("# "):
+                    in_summary = True
+                    continue
+                if in_summary and line.startswith("## "):
+                    break
+                if in_summary and line.strip():
+                    exec_summary_lines.append(line)
+                if len(exec_summary_lines) >= 5:
+                    break
+
+            return SystemOverviewOutput(
+                success=True,
+                markdown=response,
+                executive_summary=" ".join(exec_summary_lines),
+            )
+
+        except Exception as e:
+            logger.error(f"System overview generation failed: {e}")
+            return SystemOverviewOutput(
+                success=False,
+                error=str(e),
+                markdown="",
+            )
+
+    def _create_mock_system_overview(
+        self,
+        input_data: SystemOverviewInput,
+    ) -> SystemOverviewOutput:
+        """Create mock system overview for testing.
+
+        Args:
+            input_data: The system overview input.
+
+        Returns:
+            Mock SystemOverviewOutput.
+        """
+        # Group programs by type
+        by_type: dict[str, list[ProgramSummary]] = {}
+        for prog in input_data.programs:
+            ptype = prog.program_type or "UNKNOWN"
+            if ptype not in by_type:
+                by_type[ptype] = []
+            by_type[ptype].append(prog)
+
+        lines = []
+        lines.append(f"# {input_data.system_name} System Overview")
+        lines.append("")
+        lines.append(f"*Generated automatically from {input_data.total_files} documented programs*")
+        lines.append("")
+        lines.append("## Executive Summary")
+        lines.append("")
+        lines.append(f"[MOCK] This is a mock system overview for {input_data.system_name}. ")
+        lines.append(f"The system consists of {len(input_data.programs)} programs ")
+        lines.append(f"organized into {len(by_type)} categories: {', '.join(sorted(by_type.keys()))}.")
+        lines.append("")
+
+        lines.append("## Subsystems")
+        lines.append("")
+        for ptype, programs in sorted(by_type.items()):
+            lines.append(f"### {ptype}")
+            lines.append("")
+            for prog in programs:
+                lines.append(f"- **{prog.program_id}**: {prog.summary}")
+            lines.append("")
+
+        lines.append("## Program Index")
+        lines.append("")
+        lines.append("| Program | Type | Description | Documentation |")
+        lines.append("|---------|------|-------------|---------------|")
+        for prog in sorted(input_data.programs, key=lambda p: p.program_id):
+            lines.append(
+                f"| {prog.program_id} | {prog.program_type} | "
+                f"{prog.summary[:50]}... | [{prog.program_id}.json]({prog.json_path}) |"
+            )
+
+        return SystemOverviewOutput(
+            success=True,
+            markdown="\n".join(lines),
+            executive_summary=f"[MOCK] {input_data.system_name} system with {len(input_data.programs)} programs",
+            subsystems=list(by_type.keys()),
         )

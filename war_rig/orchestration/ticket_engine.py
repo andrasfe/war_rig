@@ -38,6 +38,9 @@ from war_rig.agents.imperator import (
     HolisticReviewOutput,
     ImperatorAgent,
     ImperatorHolisticDecision,
+    ProgramSummary,
+    SystemOverviewInput,
+    SystemOverviewOutput,
 )
 from war_rig.agents.program_manager import (
     ClarificationRequest,
@@ -762,6 +765,18 @@ class TicketOrchestrator:
 
             # Collect final results
             result = self._collect_results(result)
+
+            # Generate system overview if documentation was successful
+            if result.completed_files and result.final_decision in (
+                "SATISFIED",
+                "FORCED_COMPLETE",
+                ImperatorHolisticDecision.SATISFIED.value,
+                ImperatorHolisticDecision.FORCED_COMPLETE.value,
+            ):
+                self._state.status_message = "Generating system overview..."
+                self._create_system_overview_ticket()
+                await self._process_system_overview()
+
             result.completed_at = datetime.utcnow()
             self._state.status = OrchestrationStatus.COMPLETED
 
@@ -1430,6 +1445,202 @@ class TicketOrchestrator:
             status["challenger_pool"] = self._challenger_pool.get_status()
 
         return status
+
+    # =========================================================================
+    # System Overview Generation
+    # =========================================================================
+
+    def _create_system_overview_ticket(self) -> ProgramManagerTicket | None:
+        """Create a SYSTEM_OVERVIEW ticket if one doesn't exist.
+
+        Called after all documentation is complete. Creates a single ticket
+        for generating the system overview markdown file.
+
+        Returns:
+            The created ticket, or None if one already exists.
+        """
+        # Check if overview ticket already exists
+        existing = [
+            t for t in self.beads_client._pm_ticket_cache.values()
+            if t.ticket_type == TicketType.SYSTEM_OVERVIEW
+        ]
+        if existing:
+            logger.debug(f"System overview ticket already exists: {existing[0].ticket_id}")
+            return existing[0]
+
+        # Create the ticket
+        from uuid import uuid4
+
+        ticket_id = f"OVW-{uuid4().hex[:8].upper()}"
+        ticket = ProgramManagerTicket(
+            ticket_id=ticket_id,
+            file_name="SYSTEM_OVERVIEW.md",
+            program_id="SYSTEM_OVERVIEW",
+            ticket_type=TicketType.SYSTEM_OVERVIEW,
+            state=TicketState.CREATED,
+            metadata={
+                "batch_id": self._state.batch_id,
+                "system_name": "CardDemo",  # TODO: Make configurable
+                "created_at": datetime.utcnow().isoformat(),
+            },
+        )
+
+        # Add to cache
+        self.beads_client._pm_ticket_cache[ticket_id] = ticket
+        self.beads_client._save_to_disk()
+
+        logger.info(f"Created SYSTEM_OVERVIEW ticket: {ticket_id}")
+        return ticket
+
+    async def _process_system_overview(self) -> SystemOverviewOutput | None:
+        """Process the SYSTEM_OVERVIEW ticket by generating the overview document.
+
+        Reads all completed documentation from the output directory,
+        builds program summaries, and calls the Imperator to generate
+        the system overview markdown.
+
+        Returns:
+            SystemOverviewOutput if successful, None otherwise.
+        """
+        import json
+
+        # Find the overview ticket
+        overview_tickets = [
+            t for t in self.beads_client._pm_ticket_cache.values()
+            if t.ticket_type == TicketType.SYSTEM_OVERVIEW
+        ]
+
+        if not overview_tickets:
+            logger.warning("No SYSTEM_OVERVIEW ticket found")
+            return None
+
+        ticket = overview_tickets[0]
+
+        # If already completed, skip
+        if ticket.state == TicketState.COMPLETED:
+            logger.info("SYSTEM_OVERVIEW ticket already completed")
+            return None
+
+        # Mark as in progress
+        self.beads_client.update_ticket_state(
+            ticket.ticket_id,
+            TicketState.IN_PROGRESS,
+            worker_id="imperator",
+            reason="Generating system overview",
+        )
+
+        logger.info("Generating system overview from completed documentation...")
+
+        # Collect program summaries from completed documentation
+        programs: list[ProgramSummary] = []
+        final_dir = self.config.output_directory / "final" / "programs"
+
+        # Also check the root final directory for backward compatibility
+        if not final_dir.exists():
+            final_dir = self.config.output_directory / "final"
+
+        if final_dir.exists():
+            for doc_file in final_dir.glob("*.doc.json"):
+                try:
+                    doc_data = json.loads(doc_file.read_text(encoding="utf-8"))
+
+                    # Extract relevant fields
+                    header = doc_data.get("header", {})
+                    purpose = doc_data.get("purpose", {})
+                    called_programs = doc_data.get("called_programs", [])
+                    inputs = doc_data.get("inputs", [])
+                    outputs = doc_data.get("outputs", [])
+
+                    # Build call lists
+                    calls = [cp.get("program_name", "") for cp in called_programs if cp.get("program_name")]
+                    input_names = [i.get("name", "") for i in inputs if i.get("name")][:5]
+                    output_names = [o.get("name", "") for o in outputs if o.get("name")][:5]
+
+                    programs.append(ProgramSummary(
+                        file_name=header.get("file_name", doc_file.stem),
+                        program_id=header.get("program_id", doc_file.stem.replace(".doc", "")),
+                        program_type=purpose.get("program_type", "UNKNOWN"),
+                        summary=purpose.get("summary", "No summary available"),
+                        business_context=purpose.get("business_context", ""),
+                        calls=calls,
+                        called_by=[],  # Would need cross-reference to populate
+                        inputs=input_names,
+                        outputs=output_names,
+                        json_path=f"./programs/{doc_file.name}",
+                    ))
+
+                except Exception as e:
+                    logger.warning(f"Failed to read documentation {doc_file}: {e}")
+
+        if not programs:
+            logger.warning("No completed documentation found for system overview")
+            self.beads_client.update_ticket_state(
+                ticket.ticket_id,
+                TicketState.BLOCKED,
+                reason="No completed documentation found",
+            )
+            return None
+
+        logger.info(f"Found {len(programs)} documented programs for overview")
+
+        # Build cross-references (called_by)
+        program_ids = {p.program_id for p in programs}
+        for prog in programs:
+            for called in prog.calls:
+                # Find the called program and add this one to its called_by
+                for other in programs:
+                    if other.program_id == called:
+                        if prog.program_id not in other.called_by:
+                            other.called_by.append(prog.program_id)
+
+        # Build input
+        system_name = ticket.metadata.get("system_name", "CardDemo")
+        input_data = SystemOverviewInput(
+            batch_id=self._state.batch_id,
+            system_name=system_name,
+            programs=programs,
+            total_files=len(programs),
+        )
+
+        # Generate overview
+        try:
+            output = await self.imperator.generate_system_overview(
+                input_data,
+                use_mock=self.use_mock,
+            )
+
+            if output.success:
+                # Write the markdown file
+                overview_path = self.config.output_directory / "SYSTEM_OVERVIEW.md"
+                overview_path.write_text(output.markdown, encoding="utf-8")
+                logger.info(f"Wrote system overview to {overview_path}")
+
+                # Mark ticket as completed
+                self.beads_client.update_ticket_state(
+                    ticket.ticket_id,
+                    TicketState.COMPLETED,
+                    reason="System overview generated",
+                    decision="WITNESSED",
+                )
+
+                return output
+            else:
+                logger.error(f"System overview generation failed: {output.error}")
+                self.beads_client.update_ticket_state(
+                    ticket.ticket_id,
+                    TicketState.BLOCKED,
+                    reason=f"Generation failed: {output.error}",
+                )
+                return None
+
+        except Exception as e:
+            logger.error(f"System overview generation failed: {e}")
+            self.beads_client.update_ticket_state(
+                ticket.ticket_id,
+                TicketState.BLOCKED,
+                reason=f"Generation error: {e}",
+            )
+            return None
 
     async def stop(self) -> None:
         """Gracefully stop the orchestrator.
