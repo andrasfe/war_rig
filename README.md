@@ -236,12 +236,25 @@ output/
 └── metrics/            # Processing metrics
 ```
 
-## Documentation Quality Levels
+## Documentation Quality Levels (Imperator Decisions)
 
-- **WITNESSED**: Documentation meets quality standards
-- **CHROME**: Issues found, needs refinement (creates tickets)
-- **VALHALLA**: Exceptional quality documentation
-- **FORCED**: Approved after max iterations despite issues
+The Imperator agent reviews documentation and issues one of four verdicts, named after *Mad Max: Fury Road* terminology:
+
+| Decision | Color | Meaning |
+|----------|-------|---------|
+| **WITNESSED** | Green | Documentation approved - meets quality standards. ("Witness me!" = recognized/approved) |
+| **VALHALLA** | Gold | Exceptional quality - above and beyond expectations. (The ultimate reward for War Boys) |
+| **CHROME** | Yellow | Issues found, needs rework. Chrome tickets are created for the Scribe to address. (War Boys spray chrome before glorious acts - shiny but needs polish) |
+| **FORCED** | Orange | Approved after max iterations despite remaining issues. A pragmatic approval when iteration limits are reached. |
+
+### Decision Flow
+
+1. Scribe creates documentation draft
+2. Challenger validates and may request corrections
+3. Imperator reviews the final draft:
+   - **WITNESSED/VALHALLA**: Documentation complete, written to `final/`
+   - **CHROME**: Scribe must address issues, then re-submit
+   - **FORCED**: After max iterations, approve with known issues
 
 ## Beads Task Tracking
 
