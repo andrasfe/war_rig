@@ -116,6 +116,44 @@ def load_tickets(path: Path) -> dict[str, Any] | None:
         return None
 
 
+def get_bd_in_progress() -> dict[str, str]:
+    """Query bd CLI for in_progress tickets.
+
+    Returns:
+        Dict mapping program_id to worker_id for in_progress tickets.
+    """
+    import re
+    import subprocess
+
+    try:
+        result = subprocess.run(
+            ["bd", "list", "--status=in_progress"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if result.returncode != 0:
+            return {}
+
+        # Parse bd list output format:
+        # ◐ war_rig-7xfz [● P2] [task] @scribe-3 [cycle:1 file:CBSTM03A.CBL ... program:CBSTM03A worker:scribe-3] - ...
+        in_progress: dict[str, str] = {}
+        for line in result.stdout.strip().split("\n"):
+            if not line:
+                continue
+            # Extract program:XXX and worker:XXX from the labels section
+            program_match = re.search(r"program:(\w+)", line)
+            worker_match = re.search(r"worker:(\w+-\d+)", line)
+            if program_match:
+                program_id = program_match.group(1)
+                worker_id = worker_match.group(1) if worker_match else "unknown"
+                in_progress[program_id] = worker_id
+
+        return in_progress
+    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+        return {}
+
+
 def summarize_tickets(data: dict[str, Any]) -> TicketSummary:
     """Aggregate ticket data into summary statistics.
 
@@ -129,6 +167,9 @@ def summarize_tickets(data: dict[str, Any]) -> TicketSummary:
 
     tickets = data.get("tickets", [])
     summary.total = len(tickets)
+
+    # Query bd CLI for current in_progress tickets to get real-time state
+    bd_in_progress = get_bd_in_progress()
 
     # Initialize counters
     by_type: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
@@ -144,6 +185,13 @@ def summarize_tickets(data: dict[str, Any]) -> TicketSummary:
         ticket_type = ticket.get("ticket_type", "unknown")
         state = ticket.get("state", "unknown")
         metadata = ticket.get("metadata", {})
+
+        # Override state from bd CLI if this program is currently in_progress
+        program_id = ticket.get("program_id")
+        worker_id = ticket.get("worker_id")
+        if program_id and program_id in bd_in_progress:
+            state = "in_progress"
+            worker_id = bd_in_progress[program_id]
 
         # Extract metadata fields (with graceful fallbacks)
         file_type = metadata.get("file_type", "unknown")
@@ -165,14 +213,14 @@ def summarize_tickets(data: dict[str, Any]) -> TicketSummary:
         # Build comprehensive ticket info for all_tickets list
         ticket_info = {
             "ticket_id": ticket.get("ticket_id", "unknown"),
-            "program_id": ticket.get("program_id", "-"),
+            "program_id": program_id or "-",
             "file_name": ticket.get("file_name", "unknown"),
             "state": state,
             "ticket_type": ticket_type,
             "file_type": file_type,
             "size_bytes": size_bytes,
             "cycle_number": ticket.get("cycle_number"),
-            "worker_id": ticket.get("worker_id"),
+            "worker_id": worker_id,
         }
         all_tickets.append(ticket_info)
 
@@ -182,7 +230,7 @@ def summarize_tickets(data: dict[str, Any]) -> TicketSummary:
                 "ticket_id": ticket.get("ticket_id", "unknown"),
                 "file_name": ticket.get("file_name", "unknown"),
                 "state": state,
-                "worker_id": ticket.get("worker_id"),
+                "worker_id": worker_id,
                 "ticket_type": ticket_type,
             })
 
@@ -192,7 +240,7 @@ def summarize_tickets(data: dict[str, Any]) -> TicketSummary:
                 "ticket_id": ticket.get("ticket_id", "unknown"),
                 "file_name": ticket.get("file_name", "unknown"),
                 "state": state,
-                "worker_id": ticket.get("worker_id"),
+                "worker_id": worker_id,
                 "ticket_type": ticket_type,
             })
 
