@@ -1,0 +1,105 @@
+{
+  "program_id": "CBIMPORT",
+  "questions": [
+    {
+      "question_id": "Q-61E8D3C7",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-89D2F75F",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-E1269C53",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "BLOCKING",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-13A996B6",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-34DB01F9",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-F95C7223",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "The data_flow.transforms lists only a single example MOVE per record type (e.g., EXP-CUST-ID to CUST-ID for customer), but each processing paragraph performs multiple field mappings (e.g., lines 293-310 for customer). Does this represent all mappings, or should it indicate direct moves for all relevant fields from the copybook?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-1A86B32C",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "The inputs description for EXPORT-INPUT does not mention the RECORD KEY IS EXPORT-SEQUENCE-NUM defined at line 40, which is used in the error log (line 431 MOVE EXPORT-SEQUENCE-NUM TO ERR-SEQUENCE). Should this be included in the inputs or data_flow?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-74B14AF8",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "In fields_used for reads_from EXPORT-INPUT, fields like 'EXP-CUST-ADDR-LINE' and 'EXP-CUST-PHONE-NUM' are listed without indices, but source uses EXP-CUST-ADDR-LINE(1), EXP-CUST-PHONE-NUM(1) etc. (lines 297-299, 303-304). Does this reflect copybook OCCURS clauses?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-A66F4500",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "The error_handling lists conditions for OPEN/READ/WRITE failures, but does not mention CLOSE operations in 4000-FINALIZE (lines 457-463). Are there status checks or error handling for CLOSE?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    }
+  ],
+  "responses": []
+}

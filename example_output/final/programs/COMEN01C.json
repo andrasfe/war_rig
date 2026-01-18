@@ -1,0 +1,490 @@
+{
+  "header": {
+    "program_id": "COMEN01C",
+    "file_name": "COMEN01C.cbl",
+    "file_type": "COBOL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-18T16:16:05.236509",
+    "iteration_count": 2,
+    "final_status": "WITNESSED"
+  },
+  "purpose": {
+    "summary": "CICS COBOL program that presents a main menu screen to regular users in the CardDemo application, receives user option selection via ENTER key, validates the option based on user type and availability, and transfers control to the selected program using XCTL. Handles PF3 to return to signon screen and invalid inputs with error messages.",
+    "business_context": "CardDemo application main menu for regular users after signon",
+    "program_type": "ONLINE_CICS",
+    "citations": [
+      2,
+      3,
+      5,
+      75,
+      93,
+      115,
+      147,
+      196
+    ]
+  },
+  "inputs": [
+    {
+      "name": "COMEN1AI",
+      "io_type": "CICS_MAP",
+      "description": "Menu screen input map containing user-selected option in OPTIONI field",
+      "copybook": "COMEN01",
+      "citation": [
+        227,
+        92
+      ]
+    },
+    {
+      "name": "DFHCOMMAREA",
+      "io_type": "CICS_COMMAREA",
+      "description": "Program communication area passed from caller, moved to CARDDEMO-COMMAREA containing user context and menu data",
+      "copybook": null,
+      "citation": [
+        86,
+        67
+      ]
+    },
+    {
+      "name": "EIBAID",
+      "io_type": "OTHER",
+      "description": "CICS attention key identifier (e.g., DFHENTER, DFHPF3) to determine user action",
+      "copybook": "DFHAID",
+      "citation": [
+        93
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "COMEN1AO",
+      "io_type": "CICS_MAP",
+      "description": "Menu screen output map populated with header info, menu options, error messages, and selected option echo",
+      "copybook": "COMEN01",
+      "citation": [
+        215,
+        213
+      ]
+    },
+    {
+      "name": "CARDDEMO-COMMAREA",
+      "io_type": "CICS_COMMAREA",
+      "description": "Updated communication area with from-program, from-tranid, context, and user data for XCTL or RETURN",
+      "copybook": null,
+      "citation": [
+        107,
+        156
+      ]
+    }
+  ],
+  "called_programs": [
+    {
+      "program_name": "CDEMO-MENU-OPT-PGMNAME(WS-OPTION)",
+      "call_type": "CICS_XCTL",
+      "purpose": "Transfer control to selected menu option program (e.g., COPAUS0C) after validation and inquire",
+      "parameters": [
+        "CARDDEMO-COMMAREA"
+      ],
+      "citation": 156
+    },
+    {
+      "program_name": "CDEMO-TO-PROGRAM",
+      "call_type": "CICS_XCTL",
+      "purpose": "Return to signon screen program (COSGN00C) on PF3 or initial call",
+      "parameters": [],
+      "citation": 202
+    }
+  ],
+  "calling_context": {
+    "called_by": [
+      "COSGN00C"
+    ],
+    "entry_points": [
+      "CM00"
+    ],
+    "linkage_section": [
+      "DFHCOMMAREA"
+    ]
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Validate entered option is numeric, non-zero, and within menu option count",
+      "logic_summary": "Trim spaces from input, inspect to replace spaces with zeros, move to numeric field, check NUMERIC, >0, <= count",
+      "conditions": [
+        "WS-OPTION IS NOT NUMERIC",
+        "WS-OPTION > CDEMO-MENU-OPT-COUNT",
+        "WS-OPTION = ZEROS"
+      ],
+      "citation": [
+        117,
+        127
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Prevent regular users from selecting admin-only menu options",
+      "logic_summary": "If user type is USER and option USRTYPE is 'A', set error flag and message",
+      "conditions": [
+        "CDEMO-USRTYP-USER",
+        "CDEMO-MENU-OPT-USRTYPE(WS-OPTION) = 'A'"
+      ],
+      "citation": [
+        136
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "Inquire program existence before XCTL for non-DUMMY options",
+      "logic_summary": "EXEC CICS INQUIRE PROGRAM NOHANDLE, check EIBRESP NORMAL before XCTL",
+      "conditions": [
+        "CDEMO-MENU-OPT-PGMNAME(WS-OPTION) NOT STARTING 'DUMMY'",
+        "CDEMO-MENU-OPT-PGMNAME(WS-OPTION) = 'COPAUS0C'"
+      ],
+      "citation": [
+        147
+      ]
+    },
+    {
+      "rule_id": "BR004",
+      "description": "Handle DUMMY menu options with 'coming soon' message",
+      "logic_summary": "If PGMNAME starts with 'DUMMY', set green message without XCTL",
+      "conditions": [
+        "CDEMO-MENU-OPT-PGMNAME(WS-OPTION)(1:5) = 'DUMMY'"
+      ],
+      "citation": [
+        169
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "COMEN1AI",
+        "fields_used": [
+          "OPTIONI"
+        ],
+        "citation": [
+          117
+        ]
+      },
+      {
+        "source": "CARDDEMO-COMMAREA",
+        "fields_used": [
+          "CDEMO-PGM-REENTER",
+          "CDEMO-USRTYP-USER",
+          "CDEMO-MENU-OPT-COUNT",
+          "CDEMO-MENU-OPT-*"
+        ],
+        "citation": [
+          86
+        ]
+      },
+      {
+        "source": "EIBAID",
+        "fields_used": [
+          "DFHENTER",
+          "DFHPF3"
+        ],
+        "citation": [
+          93
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "COMEN1AO",
+        "fields_written": [
+          "ERRMSGO",
+          "ERRMSGC",
+          "OPTIONO",
+          "OPTN001O-OPTN012O",
+          "TITLE01O",
+          "CURDATEO",
+          "CURTIMEO"
+        ],
+        "citation": [
+          213,
+          125,
+          276,
+          242
+        ]
+      },
+      {
+        "destination": "CARDDEMO-COMMAREA",
+        "fields_written": [
+          "CDEMO-FROM-TRANID",
+          "CDEMO-FROM-PROGRAM",
+          "CDEMO-PGM-CONTEXT",
+          "CDEMO-TO-PROGRAM"
+        ],
+        "citation": [
+          153
+        ]
+      }
+    ],
+    "transforms": [
+      {
+        "input_field": "OPTIONI OF COMEN1AI",
+        "output_field": "WS-OPTION / OPTIONO OF COMEN1AO",
+        "transformation_description": "Trim trailing spaces, replace spaces with zeros, convert to numeric",
+        "citation": [
+          117
+        ]
+      },
+      {
+        "input_field": "FUNCTION CURRENT-DATE",
+        "output_field": "CURDATEO / CURTIMEO OF COMEN1AO",
+        "transformation_description": "Format current date and time into MM-DD-YY and HH:MM:SS",
+        "citation": [
+          240
+        ]
+      },
+      {
+        "input_field": "CDEMO-MENU-OPT-NUM(WS-IDX) / CDEMO-MENU-OPT-NAME(WS-IDX)",
+        "output_field": "OPTN00XO OF COMEN1AO",
+        "transformation_description": "String menu number, '. ', and name into option text fields via EVALUATE",
+        "citation": [
+          269
+        ]
+      }
+    ]
+  },
+  "copybooks_used": [
+    {
+      "copybook_name": "COCOM01Y",
+      "purpose": "Common variables including CARDDEMO-COMMAREA and WS-CURDATE-DATA",
+      "location": "WORKING_STORAGE",
+      "citation": 50
+    },
+    {
+      "copybook_name": "COMEN02Y",
+      "purpose": "Menu-related data structures",
+      "location": "WORKING_STORAGE",
+      "citation": 51
+    },
+    {
+      "copybook_name": "COMEN01",
+      "purpose": "BMS map structures COMEN1AI and COMEN1AO for menu screen",
+      "location": "WORKING_STORAGE",
+      "citation": 53
+    },
+    {
+      "copybook_name": "COTTL01Y",
+      "purpose": "Title constants like CCDA-TITLE01",
+      "location": "WORKING_STORAGE",
+      "citation": 55
+    },
+    {
+      "copybook_name": "CSDAT01Y",
+      "purpose": "Date and time formatting fields (WS-CURDATE-*, WS-CURTIME-*)",
+      "location": "WORKING_STORAGE",
+      "citation": 56
+    },
+    {
+      "copybook_name": "CSMSG01Y",
+      "purpose": "Message constants like CCDA-MSG-INVALID-KEY",
+      "location": "WORKING_STORAGE",
+      "citation": 57
+    },
+    {
+      "copybook_name": "CSUSR01Y",
+      "purpose": "User security fields (e.g., SEC-USR-TYPE)",
+      "location": "WORKING_STORAGE",
+      "citation": 58
+    },
+    {
+      "copybook_name": "DFHAID",
+      "purpose": "CICS AID keys like DFHENTER, DFHPF3",
+      "location": "WORKING_STORAGE",
+      "citation": 60
+    },
+    {
+      "copybook_name": "DFHBMSCA",
+      "purpose": "BMS constants like DFHRED, DFHGREEN",
+      "location": "WORKING_STORAGE",
+      "citation": 61
+    }
+  ],
+  "paragraphs": [
+    {
+      "paragraph_name": "MAIN-PARA",
+      "purpose": "Entry point: initialize, handle first call or reenter, receive map, process AID key",
+      "called_by": [],
+      "calls": [
+        "RETURN-TO-SIGNON-SCREEN",
+        "SEND-MENU-SCREEN",
+        "RECEIVE-MENU-SCREEN",
+        "PROCESS-ENTER-KEY"
+      ],
+      "citation": [
+        75,
+        111
+      ]
+    },
+    {
+      "paragraph_name": "PROCESS-ENTER-KEY",
+      "purpose": "Parse and validate menu option, handle admin check, XCTL to selected program or error",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [
+        "SEND-MENU-SCREEN"
+      ],
+      "citation": [
+        115,
+        192
+      ]
+    },
+    {
+      "paragraph_name": "RETURN-TO-SIGNON-SCREEN",
+      "purpose": "XCTL to signon program COSGN00C",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [],
+      "citation": [
+        196,
+        204
+      ]
+    },
+    {
+      "paragraph_name": "SEND-MENU-SCREEN",
+      "purpose": "Populate header and options, send map with ERASE",
+      "called_by": [
+        "MAIN-PARA",
+        "PROCESS-ENTER-KEY"
+      ],
+      "calls": [
+        "POPULATE-HEADER-INFO",
+        "BUILD-MENU-OPTIONS"
+      ],
+      "citation": [
+        208,
+        221
+      ]
+    },
+    {
+      "paragraph_name": "RECEIVE-MENU-SCREEN",
+      "purpose": "Receive map into COMEN1AI with RESP codes",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [],
+      "citation": [
+        225,
+        234
+      ]
+    },
+    {
+      "paragraph_name": "POPULATE-HEADER-INFO",
+      "purpose": "Set titles, tranid, pgmname, current date/time formatted",
+      "called_by": [
+        "SEND-MENU-SCREEN"
+      ],
+      "calls": [],
+      "citation": [
+        238,
+        258
+      ]
+    },
+    {
+      "paragraph_name": "BUILD-MENU-OPTIONS",
+      "purpose": "Loop to build numbered option text into map fields OPTN001O-OPTN012O",
+      "called_by": [
+        "SEND-MENU-SCREEN"
+      ],
+      "calls": [],
+      "citation": [
+        262,
+        304
+      ]
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "Invalid EIBAID (OTHER)",
+      "action": "Set error flag, load invalid key message, resend screen",
+      "citation": [
+        100
+      ]
+    },
+    {
+      "condition": "Invalid option (non-numeric, zero, out of range)",
+      "action": "Set error flag, custom message, resend screen",
+      "citation": [
+        127
+      ]
+    },
+    {
+      "condition": "Admin option for regular user",
+      "action": "Set error flag, 'No access' message, resend screen",
+      "citation": [
+        136
+      ]
+    },
+    {
+      "condition": "Program not found (EIBRESP NOT NORMAL after INQUIRE)",
+      "action": "Set red message 'not installed', resend screen",
+      "citation": [
+        152
+      ]
+    },
+    {
+      "condition": "CICS RECEIVE RESP/RESP2",
+      "action": "Captured into WS-RESP-CD and WS-REAS-CD but not checked or acted upon; program continues execution, which may lead to processing invalid or no input data if RECEIVE fails",
+      "citation": [
+        231
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [
+    {
+      "command": "RETURN",
+      "resource": "TRANSID(WS-TRANID)",
+      "purpose": "Return control with transaction CM00 and updated commarea",
+      "citation": 107
+    },
+    {
+      "command": "INQUIRE",
+      "resource": "PROGRAM(CDEMO-MENU-OPT-PGMNAME(WS-OPTION))",
+      "purpose": "Check if selected program is installed before XCTL",
+      "citation": 148
+    },
+    {
+      "command": "XCTL",
+      "resource": "PROGRAM(CDEMO-MENU-OPT-PGMNAME(WS-OPTION))",
+      "purpose": "Transfer to menu-selected program with commarea",
+      "citation": 156
+    },
+    {
+      "command": "SEND",
+      "resource": "MAP('COMEN1A') MAPSET('COMEN01')",
+      "purpose": "Send menu screen with ERASE after population",
+      "citation": 215
+    },
+    {
+      "command": "RECEIVE",
+      "resource": "MAP('COMEN1A') MAPSET('COMEN01')",
+      "purpose": "Receive user input from menu screen",
+      "citation": 227
+    }
+  ],
+  "open_questions": [
+    {
+      "question": "Exact field layouts and values in copybook-defined structures like CARDDEMO-COMMAREA, CDEMO-MENU-OPT-*",
+      "context": "Copybook source not provided, inferred from usage but details UNKNOWN",
+      "suggestion": "Analyze copybooks COCOM01Y, COMEN02Y, COMEN01"
+    },
+    {
+      "question": "Full list of menu options and their programs/USRTYPE from CDEMO-MENU-OPT-*",
+      "context": "Defined in copybooks, usage shows dynamic via WS-IDX up to CDEMO-MENU-OPT-COUNT",
+      "suggestion": "Examine copybook data initialization"
+    },
+    {
+      "question": "Handling of WS-RESP-CD and WS-REAS-CD from RECEIVE",
+      "context": "Captured but no explicit use or check visible",
+      "suggestion": "Check if used elsewhere or in copybooks"
+    }
+  ]
+}

@@ -1,0 +1,105 @@
+{
+  "program_id": "CBACT03C",
+  "questions": [
+    {
+      "question_id": "Q-F52F05A6",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "Lines 78 and 96 both execute DISPLAY CARD-XREF-RECORD for successful reads ('00' status), resulting in each record being displayed twice. Does the documentation accurately reflect this duplicate output behavior in the purpose, outputs, or paragraphs sections?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-8D473FDD",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "In business_rules BR001 logic_summary, it states 'Set APPL-RESULT to 16#', but line 99 shows MOVE 16 (decimal) TO APPL-RESULT, matching the 88 APPL-EOF VALUE 16. Is '16#' a typo or intended notation?",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-50331742",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "The paragraphs section lists a 'MAIN' paragraph with citations [70,87], but there is no labeled 'MAIN' paragraph; the logic is inline starting at PROCEDURE DIVISION line 70. Should this be distinguished from performed paragraphs?",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-039197B6",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "What about documenting the initialization of APPL-RESULT before OPEN (MOVE 8 line 119) and before CLOSE (ADD 8 line 137), which are used to determine success/error paths in business_rules BR003 and BR004?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-F39C6E2B",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "Lines 78 and 96 both DISPLAY CARD-XREF-RECORD upon successful READ (status '00'), resulting in duplicate output for each record. Does the purpose summary, outputs description, or paragraphs accurately reflect this duplicate display behavior?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-4B724F5D",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "Paragraph '0-XREFFILE-GET-NEXT' cited at lines 92 and 115, but source code labels it '1000-XREFFILE-GET-NEXT' at line 92. Similarly, '0-XREFFILE-OPEN' vs '0000-XREFFILE-OPEN' at 118, and others with mismatched prefixes. Is this a documentation error?",
+      "context": null,
+      "evidence": [],
+      "severity": "BLOCKING",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-A210F264",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "The paragraphs section documents a 'MAIN' paragraph with citations [70,87] and calls to '0000-XREFFILE-OPEN', etc., but there is no labeled 'MAIN' paragraph; the logic is inline PROCEDURE DIVISION starting at line 70. Should this be removed or reclassified as inline control flow?",
+      "context": null,
+      "evidence": [],
+      "severity": "BLOCKING",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-C0AE14C2",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "Business rules BR003 and BR004 do not mention the pre-OPEN initialization MOVE 8 TO APPL-RESULT (line 119) or pre-CLOSE ADD 8 TO ZERO GIVING APPL-RESULT (line 137), which determine the APPL-AOK condition. Should these be documented in the rules or a new rule?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-6AFCD8CE",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "Inputs describe CARD-XREF-RECORD from copybook CVACT03Y, but the FD XREFFILE-FILE defines matching structure FD-XREFFILE-REC with FD-XREF-CARD-NUM PIC X(16) and FD-XREF-DATA PIC X(34) at lines 37-40. Is CARD-XREF-RECORD identical, or should FD fields be explicitly documented?",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 2,
+      "answered": false
+    }
+  ],
+  "responses": []
+}

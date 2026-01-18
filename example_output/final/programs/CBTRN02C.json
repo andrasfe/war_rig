@@ -1,0 +1,659 @@
+{
+  "header": {
+    "program_id": "CBTRN02C",
+    "file_name": "CBTRN02C.cbl",
+    "file_type": "COBOL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-18T17:05:17.993283",
+    "iteration_count": 2,
+    "final_status": "VALHALLA"
+  },
+  "purpose": {
+    "summary": "Batch COBOL program reads sequential daily transaction file (DALYTRAN-FILE), validates each transaction by looking up card number in XREF-FILE, confirming account existence/credit limit/expiration in ACCOUNT-FILE. Posts valid transactions by copying/augmenting to indexed TRANSACT-FILE, updating account current balance/cycle credit-or-debit and transaction category balances in TCATBAL-FILE; rejects invalid ones to DALYREJS-FILE with reason codes.",
+    "business_context": "CardDemo application: processes credit card daily transactions with validation against cross-ref, account limits, expiration before posting updates to balances.",
+    "program_type": "BATCH",
+    "citations": [
+      3,
+      4,
+      5,
+      202,
+      210,
+      212,
+      424
+    ]
+  },
+  "inputs": [
+    {
+      "name": "DALYTRAN-FILE",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Daily input transactions with ID (PIC X(16)), customer data (PIC X(334)) including card num, amt, type-cd, cat-cd, merchant details, orig-ts.",
+      "copybook": "CVTRA06Y",
+      "citation": [
+        29,
+        346
+      ]
+    },
+    {
+      "name": "XREF-FILE",
+      "io_type": "FILE_VSAM",
+      "description": "Indexed cross-ref from card num (PIC X(16)) to acct ID and data (PIC X(34)).",
+      "copybook": "CVACT03Y",
+      "citation": [
+        40,
+        383
+      ]
+    },
+    {
+      "name": "ACCOUNT-FILE",
+      "io_type": "FILE_VSAM",
+      "description": "Indexed account master by acct ID (PIC 9(11)), with data incl. curr-bal, curr-cyc-credit/debit, credit-limit, expiraion-date.",
+      "copybook": "CVACT01Y",
+      "citation": [
+        51,
+        395
+      ]
+    },
+    {
+      "name": "TCATBAL-FILE",
+      "io_type": "FILE_VSAM",
+      "description": "Indexed transaction category balances by composite key acct-ID/type-cd/cat-cd.",
+      "copybook": "CVTRA01Y",
+      "citation": [
+        57,
+        473
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "TRANSACT-FILE",
+      "io_type": "FILE_VSAM",
+      "description": "Posted transactions copied from input + proc-ts, indexed by trans-ID.",
+      "copybook": "CVTRA05Y",
+      "citation": [
+        34,
+        564
+      ]
+    },
+    {
+      "name": "DALYREJS-FILE",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Rejected input transactions (350 bytes reject-tran-data from DALYTRAN-RECORD) + 80-byte validation-trailer with fail-reason code/desc; inline FD layout.",
+      "copybook": null,
+      "citation": [
+        46,
+        447,
+        448
+      ]
+    },
+    {
+      "name": "ACCOUNT-FILE",
+      "io_type": "FILE_VSAM",
+      "description": "Updated via REWRITE: incremented curr-bal, conditional curr-cyc-credit/debit.",
+      "copybook": "CVACT01Y",
+      "citation": [
+        554
+      ]
+    },
+    {
+      "name": "TCATBAL-FILE",
+      "io_type": "FILE_VSAM",
+      "description": "New (WRITE) or updated (REWRITE) category balance += trans-amt.",
+      "copybook": "CVTRA01Y",
+      "citation": [
+        510,
+        528
+      ]
+    }
+  ],
+  "called_programs": [
+    {
+      "program_name": "CEE3ABD",
+      "call_type": "STATIC_CALL",
+      "purpose": "Abend program on errors with code 999.",
+      "parameters": [
+        "ABCODE",
+        "TIMING"
+      ],
+      "citation": 711
+    }
+  ],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Reject if card number invalid/not found in XREF-FILE.",
+      "logic_summary": "READ XREF-FILE INVALID KEY clause sets reason=100.",
+      "conditions": [
+        "INVALID KEY on READ XREF-FILE"
+      ],
+      "citation": [
+        384,
+        385
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Reject if account record not found in ACCOUNT-FILE.",
+      "logic_summary": "READ ACCOUNT-FILE INVALID KEY sets reason=101.",
+      "conditions": [
+        "INVALID KEY on READ ACCOUNT-FILE"
+      ],
+      "citation": [
+        396,
+        397
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "Reject if projected cycle bal exceeds credit limit.",
+      "logic_summary": "WS-TEMP-BAL = cyc-credit - cyc-debit + trans-amt > credit-limit sets reason=102.",
+      "conditions": [
+        "ACCT-CREDIT-LIMIT < WS-TEMP-BAL"
+      ],
+      "citation": [
+        403,
+        407,
+        410
+      ]
+    },
+    {
+      "rule_id": "BR004",
+      "description": "Reject if trans received after acct expiration.",
+      "logic_summary": "ACCT-EXPIRAION-DATE < DALYTRAN-ORIG-TS(1:10) sets reason=103.",
+      "conditions": [
+        "ACCT-EXPIRAION-DATE < DALYTRAN-ORIG-TS(1:10)"
+      ],
+      "citation": [
+        414,
+        417
+      ]
+    },
+    {
+      "rule_id": "BR005",
+      "description": "Increment cycle credit if trans-amt >=0 else cycle debit.",
+      "logic_summary": "Conditional ADD DALYTRAN-AMT to ACCT-CURR-CYC-CREDIT/DEBIT based on amt sign.",
+      "conditions": [
+        "DALYTRAN-AMT >= 0"
+      ],
+      "citation": [
+        548,
+        549,
+        551
+      ]
+    },
+    {
+      "rule_id": "BR006",
+      "description": "Create new TCATBAL rec if READ INVALID KEY (status '23'), else update existing.",
+      "logic_summary": "READ sets WS-CREATE-TRANCAT-REC='Y' on INVALID KEY; then conditional WRITE/REWRITE.",
+      "conditions": [
+        "TCATBALF-STATUS = '23'"
+      ],
+      "citation": [
+        473,
+        476,
+        478,
+        481
+      ]
+    },
+    {
+      "rule_id": "BR007",
+      "description": "Set cond code 4 if any rejects occurred.",
+      "logic_summary": "If WS-REJECT-COUNT > 0 MOVE 4 TO RETURN-CODE.",
+      "conditions": [
+        "WS-REJECT-COUNT > 0"
+      ],
+      "citation": [
+        229,
+        230
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "DALYTRAN-FILE",
+        "fields_used": [
+          "DALYTRAN-ID",
+          "DALYTRAN-CARD-NUM",
+          "DALYTRAN-AMT",
+          "DALYTRAN-TYPE-CD",
+          "DALYTRAN-CAT-CD",
+          "DALYTRAN-ORIG-TS",
+          "DALYTRAN-SOURCE",
+          "DALYTRAN-DESC",
+          "DALYTRAN-MERCHANT-ID",
+          "DALYTRAN-MERCHANT-NAME",
+          "DALYTRAN-MERCHANT-CITY",
+          "DALYTRAN-MERCHANT-ZIP"
+        ],
+        "citation": [
+          346,
+          381,
+          425,
+          426,
+          427,
+          436
+        ]
+      },
+      {
+        "source": "XREF-FILE",
+        "fields_used": [
+          "XREF-ACCT-ID"
+        ],
+        "citation": [
+          394
+        ]
+      },
+      {
+        "source": "ACCOUNT-FILE",
+        "fields_used": [
+          "ACCT-CREDIT-LIMIT",
+          "ACCT-CURR-CYC-CREDIT",
+          "ACCT-CURR-CYC-DEBIT",
+          "ACCT-EXPIRAION-DATE",
+          "ACCT-CURR-BAL"
+        ],
+        "citation": [
+          401,
+          403,
+          414,
+          547
+        ]
+      },
+      {
+        "source": "TCATBAL-FILE",
+        "fields_used": [
+          "TRAN-CAT-BAL"
+        ],
+        "citation": [
+          527
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "TRANSACT-FILE",
+        "fields_written": [
+          "TRAN-ID",
+          "TRAN-TYPE-CD",
+          "TRAN-CAT-CD",
+          "TRAN-AMT",
+          "TRAN-PROC-TS"
+        ],
+        "citation": [
+          425,
+          430,
+          438
+        ]
+      },
+      {
+        "destination": "DALYREJS-FILE",
+        "fields_written": [
+          "REJECT-TRAN-DATA",
+          "VALIDATION-TRAILER"
+        ],
+        "citation": [
+          447,
+          448
+        ]
+      },
+      {
+        "destination": "ACCOUNT-FILE",
+        "fields_written": [
+          "ACCT-CURR-BAL",
+          "ACCT-CURR-CYC-CREDIT or ACCT-CURR-CYC-DEBIT (amt>=0 ? credit : debit)"
+        ],
+        "citation": [
+          547,
+          549,
+          551
+        ]
+      },
+      {
+        "destination": "TCATBAL-FILE",
+        "fields_written": [
+          "TRAN-CAT-BAL",
+          "TRANCAT-ACCT-ID",
+          "TRANCAT-TYPE-CD",
+          "TRANCAT-CD"
+        ],
+        "citation": [
+          505,
+          508,
+          527
+        ]
+      }
+    ],
+    "transforms": [
+      {
+        "input_field": "DALYTRAN-ORIG-TS",
+        "output_field": "TRAN-PROC-TS",
+        "transformation_description": "Copy orig-ts; overwrite with current DB2-format ts from FUNCTION CURRENT-DATE.",
+        "citation": [
+          436,
+          437,
+          693
+        ]
+      },
+      {
+        "input_field": "DALYTRAN-AMT",
+        "output_field": "ACCT-CURR-BAL",
+        "transformation_description": "ADD to account current balance.",
+        "citation": [
+          547
+        ]
+      },
+      {
+        "input_field": "DALYTRAN-AMT",
+        "output_field": "TRAN-CAT-BAL",
+        "transformation_description": "ADD to category balance (new or existing rec).",
+        "citation": [
+          508,
+          527
+        ]
+      },
+      {
+        "input_field": "ACCT-CURR-CYC-CREDIT, ACCT-CURR-CYC-DEBIT, DALYTRAN-AMT",
+        "output_field": "WS-TEMP-BAL",
+        "transformation_description": "Compute projected bal = credit - debit + amt for limit check.",
+        "citation": [
+          403
+        ]
+      },
+      {
+        "input_field": "DALYTRAN-AMT",
+        "output_field": "ACCT-CURR-CYC-CREDIT or ACCT-CURR-CYC-DEBIT",
+        "transformation_description": "If amt >=0 ADD to cycle-credit else ADD to cycle-debit.",
+        "citation": [
+          548
+        ]
+      }
+    ]
+  },
+  "copybooks_used": [
+    {
+      "copybook_name": "CVTRA06Y",
+      "purpose": "DALYTRAN-RECORD layout for input daily trans.",
+      "location": "WORKING_STORAGE",
+      "citation": 102
+    },
+    {
+      "copybook_name": "CVTRA05Y",
+      "purpose": "TRAN-RECORD layout for output transact file.",
+      "location": "WORKING_STORAGE",
+      "citation": 107
+    },
+    {
+      "copybook_name": "CVACT03Y",
+      "purpose": "CARD-XREF-RECORD layout for XREF-FILE.",
+      "location": "WORKING_STORAGE",
+      "citation": 112
+    },
+    {
+      "copybook_name": "CVACT01Y",
+      "purpose": "ACCOUNT-RECORD layout for ACCOUNT-FILE.",
+      "location": "WORKING_STORAGE",
+      "citation": 121
+    },
+    {
+      "copybook_name": "CVTRA01Y",
+      "purpose": "TRAN-CAT-BAL-RECORD layout for TCATBAL-FILE.",
+      "location": "WORKING_STORAGE",
+      "citation": 126
+    }
+  ],
+  "paragraphs": [
+    {
+      "paragraph_name": "0000-DALYTRAN-OPEN",
+      "purpose": "OPEN INPUT DALYTRAN-FILE, check status=00 else abend.",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        236,
+        252
+      ]
+    },
+    {
+      "paragraph_name": "0100-TRANFILE-OPEN",
+      "purpose": "OPEN OUTPUT TRANSACT-FILE, check status=00 else abend.",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        254,
+        270
+      ]
+    },
+    {
+      "paragraph_name": "0200-XREFFILE-OPEN",
+      "purpose": "OPEN INPUT XREF-FILE, check status=00 else abend.",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        273,
+        289
+      ]
+    },
+    {
+      "paragraph_name": "0300-DALYREJS-OPEN",
+      "purpose": "OPEN OUTPUT DALYREJS-FILE, check status=00 else abend.",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        291,
+        307
+      ]
+    },
+    {
+      "paragraph_name": "0400-ACCTFILE-OPEN",
+      "purpose": "OPEN I-O ACCOUNT-FILE, check status=00 else abend.",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        309,
+        325
+      ]
+    },
+    {
+      "paragraph_name": "0500-TCATBALF-OPEN",
+      "purpose": "OPEN I-O TCATBAL-FILE, check status=00 else abend.",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        327,
+        343
+      ]
+    },
+    {
+      "paragraph_name": "1000-DALYTRAN-GET-NEXT",
+      "purpose": "READ NEXT DALYTRAN-FILE, set EOF on '10', error else abend.",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        345,
+        369
+      ]
+    },
+    {
+      "paragraph_name": "1500-VALIDATE-TRAN",
+      "purpose": "Chain XREF lookup then ACCT lookup/validations if prior OK.",
+      "called_by": [],
+      "calls": [
+        "1500-A-LOOKUP-XREF",
+        "1500-B-LOOKUP-ACCT"
+      ],
+      "citation": [
+        370,
+        378
+      ]
+    },
+    {
+      "paragraph_name": "2000-POST-TRANSACTION",
+      "purpose": "Populate/build output trans rec, timestamp, update TCATBAL/ACCT, write trans.",
+      "called_by": [],
+      "calls": [
+        "Z-GET-DB2-FORMAT-TIMESTAMP",
+        "2700-UPDATE-TCATBAL",
+        "2800-UPDATE-ACCOUNT-REC",
+        "2900-WRITE-TRANSACTION-FILE"
+      ],
+      "citation": [
+        424,
+        444
+      ]
+    },
+    {
+      "paragraph_name": "2500-WRITE-REJECT-REC",
+      "purpose": "WRITE reject rec w/ trailer to DALYREJS-FILE, abend on error.",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        446,
+        465
+      ]
+    },
+    {
+      "paragraph_name": "2700-UPDATE-TCATBAL",
+      "purpose": "READ TCATBAL by key, create if '23'/invalid else update bal.",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM",
+        "2700-A-CREATE-TCATBAL-REC",
+        "2700-B-UPDATE-TCATBAL-REC"
+      ],
+      "citation": [
+        467,
+        501
+      ]
+    },
+    {
+      "paragraph_name": "9999-ABEND-PROGRAM",
+      "purpose": "DISPLAY abend msg, CALL CEE3ABD(999,0).",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        707,
+        713
+      ]
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "File status <> '00' on OPEN INPUT/OUTPUT/I-O (all files)",
+      "action": "DISPLAY error msg, PERFORM 9910-DISPLAY-IO-STATUS, 9999-ABEND-PROGRAM",
+      "citation": [
+        249,
+        267,
+        286,
+        304,
+        322,
+        340
+      ]
+    },
+    {
+      "condition": "File status <> '00'/'10' on READ DALYTRAN-FILE",
+      "action": "DISPLAY error, 9910-DISPLAY-IO-STATUS, 9999-ABEND-PROGRAM",
+      "citation": [
+        365
+      ]
+    },
+    {
+      "condition": "File status <> '00' on WRITE/REWRITE TCATBAL-FILE, ACCOUNT-FILE, TRANSACT-FILE, DALYREJS-FILE",
+      "action": "DISPLAY error, 9910-DISPLAY-IO-STATUS, 9999-ABEND-PROGRAM",
+      "citation": [
+        462,
+        491,
+        522,
+        540,
+        576,
+        595,
+        613,
+        632,
+        650,
+        668,
+        687
+      ]
+    },
+    {
+      "condition": "File status <> '00' on CLOSE (all files)",
+      "action": "DISPLAY error, 9910-DISPLAY-IO-STATUS, 9999-ABEND-PROGRAM",
+      "citation": [
+        595,
+        613,
+        632,
+        650,
+        668,
+        687
+      ]
+    },
+    {
+      "condition": "TCATBALF-STATUS = '00' or '23' on READ TCATBAL-FILE",
+      "action": "OK: set create flag if '23', proceed to WRITE/REWRITE",
+      "citation": [
+        481
+      ]
+    },
+    {
+      "condition": "DALYTRAN-STATUS = '10' on READ DALYTRAN-FILE",
+      "action": "Set END-OF-FILE='Y'",
+      "citation": [
+        351
+      ]
+    },
+    {
+      "condition": "INVALID KEY on REWRITE ACCOUNT-FILE",
+      "action": "Set validation fail reason=109 (late, post-rewrite)",
+      "citation": [
+        556
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "Detailed field layouts in copybooks (e.g., exact positions of DALYTRAN-CARD-NUM, ACCT-CREDIT-LIMIT).",
+      "context": "Fields referenced but copybook contents not in source.",
+      "suggestion": "Obtain/analyze copybook sources."
+    },
+    {
+      "question": "JCL/DD statements for file assignments and calling context.",
+      "context": "Batch program; no info in source.",
+      "suggestion": "Review invoking JCL/PROC."
+    },
+    {
+      "question": "VSAM specifics (KSDS/ESDS) for indexed files.",
+      "context": "ORGANIZATION INDEXED/ACCESS RANDOM implies VSAM but unconfirmed.",
+      "suggestion": "Check IDCAMS or catalog."
+    }
+  ]
+}

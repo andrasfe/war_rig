@@ -1,0 +1,116 @@
+{
+  "program_id": "CBSTM03A",
+  "questions": [
+    {
+      "question_id": "Q-3FC9C123",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "The paragraphs section lists key paragraphs but omits the file close paragraphs (e.g., 9100-TRNXFILE-CLOSE, 9200-XREFFILE-CLOSE, 9300-CUSTFILE-CLOSE, 9400-ACCTFILE-CLOSE performed at lines 331-337). These include error handling on closes. Should they be added for completeness?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-99788539",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "What about documenting the initial TIOT/PSA processing loop at lines 266-291, which iterates over TIOT entries to display DD names and UCB status? Is this diagnostic or critical for batch execution context?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-395B19D2",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "In BR002 and table description, you note 'up to 51 cards, 10 trans each', but the load loop at lines 818-850 increments CR-CNT/TR-CNT without bounds checks against OCCURS limits at lines 226/228. Are you sure there's no overflow risk?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-36C0E1B9",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "In called_programs, CBSTM03B citation is only 351 (XREFFILE read), but calls occur extensively for opens/reads/closes, e.g., line 734 (TRNX open), 746 (first TRNX read), 860 (TRNX close). Does the single citation suffice?",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-36245A09",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "In data_flow reads_from TRNXFILE, fields include TRNX-DESC (citation 677), but table stores TRNX-REST at line 829 and moves it to TRNX-REST at 427 before using TRNX-DESC. Is TRNX-DESC part of TRNX-REST or a separate field in the copybook?",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-98A607FB",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-339155A9",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-09894B2D",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-E5A55000",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-3492BC93",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 2,
+      "answered": false
+    }
+  ],
+  "responses": []
+}

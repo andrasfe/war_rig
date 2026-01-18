@@ -1,0 +1,116 @@
+{
+  "program_id": "CORPT00C",
+  "questions": [
+    {
+      "question_id": "Q-6616459B",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "What about the copybooks COTTL01Y (line 142), CSDAT01Y (line 143), and CSMSG01Y (line 144) which are copied into WORKING-STORAGE but not listed in copybooks_used?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-53149C76",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "The paragraphs section documents MAIN-PARA, PROCESS-ENTER-KEY, SUBMIT-JOB-TO-INTRDR, WIRTE-JOBSUB-TDQ, SEND-TRNRPT-SCREEN, and RECEIVE-TRNRPT-SCREEN, but omits RETURN-TO-PREV-SCREEN (540-550), RETURN-TO-CICS (585-591), POPULATE-HEADER-INFO (609-632), and INITIALIZE-ALL-FIELDS (633-646) which are PERFORM targets (e.g., lines 174, 447, 558). Should these be included?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-5DC6CFC4",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "In error_handling, invalid confirmation handling (lines 485-493: sets WS-MESSAGE with invalid value, sets error flag, performs SEND-TRNRPT-SCREEN) is covered in BR004 but not explicitly listed here like other error conditions. Line 481 for 'N'/'n' also initializes fields and resends screen as cancel.",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-48B6795C",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "EIBCALEN is used to detect first entry (line 172: IF EIBCALEN = 0, sets CDEMO-TO-PROGRAM and XCTLs), but not mentioned in inputs alongside EIBAID/DFHCOMMAREA. Should it be documented as a CICS EIB input?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-5A98E409",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "In paragraphs for SUBMIT-JOB-TO-INTRDR, it lists calls including INITIALIZE-ALL-FIELDS (line 481 for cancel), but for confirmation 'N'/'n' it clears input fields and resends screen without submitting job, which seems like a cancel flow rather than error.",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-90950AEE",
+      "section": "paragraphs",
+      "question_type": "CLARIFICATION",
+      "question": "What about documenting the missing paragraphs RETURN-TO-PREV-SCREEN (lines 540-550, PERFORMed at 174 and 189), RETURN-TO-CICS (lines 585-591, GO TO at 580), POPULATE-HEADER-INFO (lines 609-632, PERFORM at 558), and INITIALIZE-ALL-FIELDS (lines 633-646, PERFORM at 447, 481)? These are key PERFORM targets listed in preprocessor analysis.",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-BD9A9FC3",
+      "section": "error_handling",
+      "question_type": "CLARIFICATION",
+      "question": "What about error handling for invalid confirmation values in SUBMIT-JOB-TO-INTRDR (lines 485-493: EVALUATE sets custom message echoing invalid CONFIRMI, error flag, resends screen) and the 'N'/'n' cancel flow (lines 481-483: initializes fields, sets error flag, resends without job submission)? These are referenced in BR004 but not explicitly in error_handling.",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-827D3779",
+      "section": "inputs",
+      "question_type": "CLARIFICATION",
+      "question": "What about documenting EIBCALEN as a CICS EIB input? It is checked at line 172 (IF EIBCALEN = 0 to detect first entry and XCTL to COSGN00C), critical for flow but not listed alongside EIBAID.",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-E5D380D7",
+      "section": "cics_operations",
+      "question_type": "CLARIFICATION",
+      "question": "Line 587 has a second EXEC CICS RETURN TRANSID(WS-TRANID) COMMAREA(CARDDEMO-COMMAREA) in RETURN-TO-CICS (GO TO from SEND-TRNRPT-SCREEN at 580), but cics_operations only lists one at 199. Line 199 RETURN is after main logic, 587 for screen sends. Is this duplicate or path-specific?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-1EFD0558",
+      "section": "paragraphs",
+      "question_type": "CLARIFICATION",
+      "question": "The paragraph name WIRTE-JOBSUB-TDQ (line 515) has a consistent typo ('WIRTE' instead of 'WRITE'), matching the code. Should this be noted or standardized in documentation?",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 2,
+      "answered": false
+    }
+  ],
+  "responses": []
+}

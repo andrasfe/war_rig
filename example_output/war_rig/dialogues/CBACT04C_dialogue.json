@@ -1,0 +1,116 @@
+{
+  "program_id": "CBACT04C",
+  "questions": [
+    {
+      "question_id": "Q-16168D7C",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-135A400B",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-40E040AA",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-1D2832D5",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-8BB2D648",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-94B3FA05",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "What about documenting the file closing paragraphs 9100-XREFFILE-CLOSE (541-556), 9200-DISCGRP-CLOSE (559-574), 9300-ACCTFILE-CLOSE (577-592), and 9400-TRANFILE-CLOSE (595-610), which are performed at lines 225-228 with error handling similar to opens?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-247C3FC4",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "The paragraphs section lists 1300-COMPUTE-INTEREST as calling 1300-B-WRITE-TX (performed line 468), but 1300-B-WRITE-TX (473-515) and the called Z-GET-DB2-FORMAT-TIMESTAMP (613-626, performed line 496) are not documented as separate paragraphs. Why omitted?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-E273F9F4",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "Does the documentation for TCATBAL-FILE input note that sequential processing assumes records are sorted by account ID (FD-TRANCAT-ACCT-ID) for correct grouping via change detection at line 194?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-25FF5397",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "In data_flow reads_from ACCOUNT-FILE, fields_used citation includes 352 (ADD to ACCT-CURR-BAL during update) and 210 (MOVE ACCT-GROUP-ID out); line 372 is the READ. Are these accurate for 'fields_used' from reads?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-79C223ED",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "In error_handling citations for open errors, line 281 displays 'ERROR OPENING DALY REJECTS FILE' but this is for DISCGRP-FILE open (0200-DISCGRP-OPEN). Should documentation note this code discrepancy?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    }
+  ],
+  "responses": []
+}

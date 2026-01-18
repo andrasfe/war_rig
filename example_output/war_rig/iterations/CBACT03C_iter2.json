@@ -1,0 +1,321 @@
+{
+  "header": {
+    "program_id": "CBACT03C",
+    "file_name": "CBACT03C.cbl",
+    "file_type": "COBOL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-18T16:49:35.747062",
+    "iteration_count": 2,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "Batch COBOL program that opens VSAM KSDS file XREFFILE-FILE for input, then in a PERFORM UNTIL END-OF-FILE = 'Y' loop performs 1000-XREFFILE-GET-NEXT to sequentially read records into CARD-XREF-RECORD and conditionally displays each successful read (if END-OF-FILE = 'N'), until EOF is detected. Closes the file, displays end message, and GOBACKs, abending via CEE3ABD on any I/O errors after displaying status.",
+    "business_context": "CardDemo application: Read and print account cross reference data file (line 5).",
+    "program_type": "BATCH",
+    "citations": [
+      5,
+      71,
+      72,
+      74,
+      76,
+      78,
+      83,
+      85,
+      93
+    ]
+  },
+  "inputs": [
+    {
+      "name": "XREFFILE-FILE",
+      "io_type": "FILE_VSAM",
+      "description": "VSAM KSDS (ORGANIZATION IS INDEXED, ACCESS MODE IS SEQUENTIAL, RECORD KEY FD-XREF-CARD-NUM PIC X(16)) file of account cross reference data records with data FD-XREF-DATA PIC X(34), read sequentially into CARD-XREF-RECORD",
+      "copybook": "CVACT03Y",
+      "citation": [
+        29,
+        30,
+        31,
+        32,
+        37,
+        39,
+        40,
+        93
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "CONSOLE",
+      "io_type": "REPORT",
+      "description": "Displays each CARD-XREF-RECORD after successful read if not EOF, plus execution start/end messages, error messages, and detailed file status on errors",
+      "copybook": "CVACT03Y",
+      "citation": [
+        71,
+        78,
+        85,
+        96,
+        110,
+        129,
+        147,
+        162
+      ]
+    }
+  ],
+  "called_programs": [
+    {
+      "program_name": "CEE3ABD",
+      "call_type": "STATIC_CALL",
+      "purpose": "Abends the program with user code 999 (ABCODE) and timing 0 (TIMING) on I/O errors",
+      "parameters": [
+        "ABCODE",
+        "TIMING"
+      ],
+      "citation": 158
+    }
+  ],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Treat file status '10' on READ as end-of-file",
+      "logic_summary": "Set APPL-RESULT to 16 if status '10', then if APPL-EOF move 'Y' to END-OF-FILE",
+      "conditions": [
+        "XREFFILE-STATUS = '10'"
+      ],
+      "citation": [
+        98,
+        99,
+        107,
+        108
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Abend program on READ error (status not '00' or '10')",
+      "logic_summary": "Display error message, move status to IO-STATUS, perform display IO status, perform abend",
+      "conditions": [
+        "NOT APPL-AOK",
+        "NOT APPL-EOF"
+      ],
+      "citation": [
+        104,
+        110,
+        111,
+        112,
+        113
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "Abend program on OPEN INPUT error (status not '00')",
+      "logic_summary": "Display error message, move status to IO-STATUS, perform display IO status, perform abend",
+      "conditions": [
+        "NOT APPL-AOK"
+      ],
+      "citation": [
+        121,
+        128,
+        129,
+        130,
+        131,
+        132
+      ]
+    },
+    {
+      "rule_id": "BR004",
+      "description": "Abend program on CLOSE error (status not '00')",
+      "logic_summary": "Display error message, move status to IO-STATUS, perform display IO status, perform abend",
+      "conditions": [
+        "NOT APPL-AOK"
+      ],
+      "citation": [
+        139,
+        146,
+        147,
+        148,
+        149,
+        150
+      ]
+    },
+    {
+      "rule_id": "BR005",
+      "description": "On successful READ (status '00'), set APPL-RESULT to 0 and display the record",
+      "logic_summary": "MOVE 0 TO APPL-RESULT; DISPLAY CARD-XREF-RECORD",
+      "conditions": [
+        "XREFFILE-STATUS = '00'"
+      ],
+      "citation": [
+        94,
+        95,
+        96
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "XREFFILE-FILE",
+        "fields_used": [
+          "CARD-XREF-RECORD"
+        ],
+        "citation": [
+          93
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "CONSOLE",
+        "fields_written": [
+          "CARD-XREF-RECORD",
+          "execution start/end messages",
+          "error messages",
+          "IO-STATUS formatted"
+        ],
+        "citation": [
+          71,
+          78,
+          85,
+          96,
+          110,
+          129,
+          147,
+          162
+        ]
+      }
+    ],
+    "transforms": []
+  },
+  "copybooks_used": [
+    {
+      "copybook_name": "CVACT03Y",
+      "purpose": "Defines CARD-XREF-RECORD working record area used for READ INTO and DISPLAY of cross reference data",
+      "location": "WORKING_STORAGE",
+      "citation": 45
+    }
+  ],
+  "paragraphs": [
+    {
+      "paragraph_name": "0-XREFFILE-GET-NEXT",
+      "purpose": "Sequentially reads next record from XREFFILE-FILE into CARD-XREF-RECORD, handles status '00' (continue/display), '10' (set EOF), other (error/abend)",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        92,
+        115
+      ]
+    },
+    {
+      "paragraph_name": "0-XREFFILE-OPEN",
+      "purpose": "Opens XREFFILE-FILE for INPUT, sets APPL-RESULT based on status, abends on error",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        118,
+        133
+      ]
+    },
+    {
+      "paragraph_name": "0-XREFFILE-CLOSE",
+      "purpose": "Closes XREFFILE-FILE, sets APPL-RESULT based on status, abends on error",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        136,
+        151
+      ]
+    },
+    {
+      "paragraph_name": "9-ABEND-PROGRAM",
+      "purpose": "Displays abend message and calls CEE3ABD to terminate program abnormally",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        154,
+        160
+      ]
+    },
+    {
+      "paragraph_name": "0-DISPLAY-IO-STATUS",
+      "purpose": "Formats and displays file IO-STATUS in numeric 'NNNN' format handling non-numeric cases",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        161,
+        173
+      ]
+    },
+    {
+      "paragraph_name": "MAIN",
+      "purpose": "Main control: display start, open file, loop PERFORM 1000-XREFFILE-GET-NEXT with DISPLAY until EOF='Y', close file, display end, GOBACK",
+      "called_by": [],
+      "calls": [
+        "0000-XREFFILE-OPEN",
+        "1000-XREFFILE-GET-NEXT",
+        "9000-XREFFILE-CLOSE"
+      ],
+      "citation": [
+        70,
+        87
+      ]
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "XREFFILE-STATUS NOT = '00' OR '10' AFTER READ",
+      "action": "DISPLAY 'ERROR READING XREFFILE', PERFORM 9910-DISPLAY-IO-STATUS, PERFORM 9999-ABEND-PROGRAM",
+      "citation": [
+        110,
+        111,
+        112,
+        113
+      ]
+    },
+    {
+      "condition": "XREFFILE-STATUS NOT = '00' AFTER OPEN INPUT",
+      "action": "DISPLAY 'ERROR OPENING XREFFILE', PERFORM 9910-DISPLAY-IO-STATUS, PERFORM 9999-ABEND-PROGRAM",
+      "citation": [
+        129,
+        130,
+        131,
+        132
+      ]
+    },
+    {
+      "condition": "XREFFILE-STATUS NOT = '00' AFTER CLOSE",
+      "action": "DISPLAY 'ERROR CLOSING XREFFILE', PERFORM 9910-DISPLAY-IO-STATUS, PERFORM 9999-ABEND-PROGRAM",
+      "citation": [
+        147,
+        148,
+        149,
+        150
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "Detailed field structure of CARD-XREF-RECORD",
+      "context": "Defined in unprovided copybook CVACT03Y; only used as whole record",
+      "suggestion": "Analyze COPYBOOK CVACT03Y"
+    },
+    {
+      "question": "Precise business meaning of XREFFILE cross reference data",
+      "context": "Described as 'account cross reference data file' but fields beyond key/data lengths unknown without copybook",
+      "suggestion": "Review CardDemo application documentation"
+    }
+  ]
+}

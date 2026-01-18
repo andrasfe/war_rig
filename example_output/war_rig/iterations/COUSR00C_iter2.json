@@ -1,0 +1,748 @@
+{
+  "header": {
+    "program_id": "COUSR00C",
+    "file_name": "COUSR00C.cbl",
+    "file_type": "COBOL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-18T15:50:08.435503",
+    "iteration_count": 2,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "CICS online program that displays a paginated list of 10 users from the USRSEC VSAM file, handles user search via USRIDINI to set browse starting key (or beginning if blank), supports selection for Update (U) or Delete (D) via XCTL, forward/backward paging with PF8/PF7, and Enter/PF3 keys for navigation and return.",
+    "business_context": "User administration listing in CardDemo application, allowing search, browse, select for maintenance",
+    "program_type": "ONLINE_CICS",
+    "citations": [
+      2,
+      5,
+      23,
+      98,
+      110,
+      122,
+      141,
+      218,
+      282,
+      336
+    ]
+  },
+  "inputs": [
+    {
+      "name": "USRSEC",
+      "io_type": "FILE_VSAM",
+      "description": "VSAM dataset containing user security records with fields like SEC-USR-ID, SEC-USR-FNAME, SEC-USR-LNAME, SEC-USR-TYPE",
+      "copybook": "CSUSR01Y",
+      "citation": [
+        588,
+        621,
+        655
+      ]
+    },
+    {
+      "name": "COUSR0AI",
+      "io_type": "CICS_MAP",
+      "description": "Input map fields for user selection (SEL0001I-USRID10I), search (USRIDINI), page num (PAGENUMI) from USRLST screen",
+      "copybook": "COUSR00",
+      "citation": [
+        551
+      ]
+    },
+    {
+      "name": "DFHCOMMAREA",
+      "io_type": "CICS_COMMAREA",
+      "description": "CARDDEMO-COMMAREA for passing program state including CDEMO-CU00-INFO (first/last user ID, page num, selection)",
+      "copybook": "COCOM01Y",
+      "citation": [
+        114
+      ]
+    },
+    {
+      "name": "EIBAID",
+      "io_type": "CICS_COMMAREA",
+      "description": "CICS attention key identifier (DFHENTER, DFHPF3, DFHPF7, DFHPF8)",
+      "copybook": "DFHAID",
+      "citation": [
+        122
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "COUSR0AO",
+      "io_type": "CICS_MAP",
+      "description": "Output map fields for screen display including user list (USRID01I-UTYPE10I), header (titles, date/time), error message (ERRMSGO), page num (PAGENUMI), cleared search field (USRIDINO)",
+      "copybook": "COUSR00",
+      "citation": [
+        529,
+        537
+      ]
+    },
+    {
+      "name": "CARDDEMO-COMMAREA",
+      "io_type": "CICS_COMMAREA",
+      "description": "Updated commarea with page info, selected user for return or XCTL",
+      "copybook": "COCOM01Y",
+      "citation": [
+        141,
+        198,
+        208,
+        516
+      ]
+    }
+  ],
+  "called_programs": [
+    {
+      "program_name": "COUSR02C",
+      "call_type": "CICS_XCTL",
+      "purpose": "Transfer control to user update program when 'U' selected",
+      "parameters": [
+        "CARDDEMO-COMMAREA"
+      ],
+      "citation": 197
+    },
+    {
+      "program_name": "COUSR03C",
+      "call_type": "CICS_XCTL",
+      "purpose": "Transfer control to user delete program when 'D' selected",
+      "parameters": [
+        "CARDDEMO-COMMAREA"
+      ],
+      "citation": 207
+    },
+    {
+      "program_name": "COSGN00C",
+      "call_type": "CICS_XCTL",
+      "purpose": "Return to signon screen on first entry or PF3",
+      "parameters": [
+        "CARDDEMO-COMMAREA"
+      ],
+      "citation": 112
+    },
+    {
+      "program_name": "COADM01C",
+      "call_type": "CICS_XCTL",
+      "purpose": "Return to admin menu on PF3 alternative",
+      "parameters": [
+        "CARDDEMO-COMMAREA"
+      ],
+      "citation": 126
+    }
+  ],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [
+      "CU00"
+    ],
+    "linkage_section": [
+      "DFHCOMMAREA"
+    ]
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "If user selects 'U' or 'u' in any SEL field with corresponding USRID, XCTL to COUSR02C for update",
+      "logic_summary": "EVALUATE on SEL0001I-SEL0010I, check flag and value, then EVALUATE flag=='U/u'",
+      "conditions": [
+        "SEL000XI NOT = SPACES AND LOW-VALUES",
+        "CDEMO-CU00-USR-SEL-FLG = 'U' OR 'u'"
+      ],
+      "citation": [
+        151,
+        190
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "If user selects 'D' or 'd' in any SEL field with corresponding USRID, XCTL to COUSR03C for delete",
+      "logic_summary": "Similar to BR001 but for 'D/d'",
+      "conditions": [
+        "SEL000XI NOT = SPACES AND LOW-VALUES",
+        "CDEMO-CU00-USR-SEL-FLG = 'D' OR 'd'"
+      ],
+      "citation": [
+        151,
+        200
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "Display error for invalid AID keypress",
+      "logic_summary": "EVALUATE EIBAID WHEN OTHER, set error flag and message",
+      "conditions": [
+        "EIBAID NOT IN (DFHENTER, DFHPF3, DFHPF7, DFHPF8)"
+      ],
+      "citation": [
+        132
+      ]
+    },
+    {
+      "rule_id": "BR004",
+      "description": "Page forward loads next 10 users starting from current position or low-values",
+      "logic_summary": "STARTBR >= key, readnext up to 10, set first/last, check next-page possible",
+      "conditions": [
+        "PF8 or forward logic",
+        "USER-SEC-NOT-EOF"
+      ],
+      "citation": [
+        282,
+        300
+      ]
+    },
+    {
+      "rule_id": "BR005",
+      "description": "Page backward loads previous 10 users ending at current position or high-values",
+      "logic_summary": "STARTBR <= key, readprev up to 10 from end, adjust page num",
+      "conditions": [
+        "PF7",
+        "CDEMO-CU00-PAGE-NUM > 1"
+      ],
+      "citation": [
+        336,
+        354
+      ]
+    },
+    {
+      "rule_id": "BR006",
+      "description": "Handle search input: if USRIDINI not spaces/low-values, set as SEC-USR-ID starting key for browse; else low-values (start from beginning); clear search field after use",
+      "logic_summary": "In PROCESS-ENTER-KEY, conditional MOVE to SEC-USR-ID, then MOVE -1 to USRIDINL and SPACE to USRIDINO",
+      "conditions": [
+        "USRIDINI OF COUSR0AI = SPACES OR LOW-VALUES"
+      ],
+      "citation": [
+        218,
+        224,
+        231
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "USRSEC",
+        "fields_used": [
+          "SEC-USR-ID",
+          "SEC-USR-FNAME",
+          "SEC-USR-LNAME",
+          "SEC-USR-TYPE"
+        ],
+        "citation": [
+          621,
+          655
+        ]
+      },
+      {
+        "source": "COUSR0AI",
+        "fields_used": [
+          "SEL0001I-SEL0010I",
+          "USRID01I-USRID10I",
+          "USRIDINI",
+          "PAGENUMI"
+        ],
+        "citation": [
+          551
+        ]
+      },
+      {
+        "source": "CARDDEMO-COMMAREA",
+        "fields_used": [
+          "CDEMO-CU00-USRID-FIRST",
+          "CDEMO-CU00-USRID-LAST",
+          "CDEMO-CU00-PAGE-NUM",
+          "CDEMO-CU00-USR-SEL-FLG",
+          "CDEMO-CU00-USR-SELECTED"
+        ],
+        "citation": [
+          114
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "COUSR0AO",
+        "fields_written": [
+          "USRID01I-UTYPE10I",
+          "ERRMSGO",
+          "PAGENUMI",
+          "TITLE01O",
+          "TITLE02O",
+          "TRNNAMEO",
+          "PGMNAMEO",
+          "CURDATEO",
+          "CURTIMEO",
+          "USRIDINO"
+        ],
+        "citation": [
+          231,
+          384,
+          526,
+          567
+        ]
+      },
+      {
+        "destination": "CARDDEMO-COMMAREA",
+        "fields_written": [
+          "CDEMO-CU00-USRID-FIRST",
+          "CDEMO-CU00-USRID-LAST",
+          "CDEMO-CU00-PAGE-NUM",
+          "CDEMO-CU00-NEXT-PAGE-FLG",
+          "CDEMO-TO-PROGRAM",
+          "CDEMO-FROM-TRANID",
+          "CDEMO-FROM-PROGRAM",
+          "CDEMO-PGM-CONTEXT"
+        ],
+        "citation": [
+          141,
+          310,
+          389,
+          435
+        ]
+      }
+    ],
+    "transforms": [
+      {
+        "input_field": "SEC-USR-ID",
+        "output_field": "USRIDXXI OF COUSR0AI / CDEMO-CU00-USRID-FIRST-LAST",
+        "transformation_description": "Copy file user ID to indexed map field (1-10) and track first/last for paging",
+        "citation": [
+          388,
+          434
+        ]
+      },
+      {
+        "input_field": "SEC-USR-FNAME",
+        "output_field": "FNAmEXXI OF COUSR0AI",
+        "transformation_description": "Copy file first name to indexed map field",
+        "citation": [
+          390
+        ]
+      },
+      {
+        "input_field": "SEC-USR-LNAME",
+        "output_field": "LNAmEXXI OF COUSR0AI",
+        "transformation_description": "Copy file last name to indexed map field",
+        "citation": [
+          391
+        ]
+      },
+      {
+        "input_field": "SEC-USR-TYPE",
+        "output_field": "UTYPEXXI OF COUSR0AI",
+        "transformation_description": "Copy file user type to indexed map field",
+        "citation": [
+          392
+        ]
+      },
+      {
+        "input_field": "SEL000XXI / USRIDXXI OF COUSR0AI",
+        "output_field": "CDEMO-CU00-USR-SEL-FLG / CDEMO-CU00-USR-SELECTED",
+        "transformation_description": "Capture non-space/low selection flag and user ID from map to commarea",
+        "citation": [
+          152
+        ]
+      },
+      {
+        "input_field": "USRIDINI OF COUSR0AI",
+        "output_field": "SEC-USR-ID",
+        "transformation_description": "Set browse starting key from search input if provided (not spaces/low-values), else low-values; used in STARTBR",
+        "citation": [
+          218
+        ]
+      }
+    ]
+  },
+  "copybooks_used": [
+    {
+      "copybook_name": "COCOM01Y",
+      "purpose": "Defines CARDDEMO-COMMAREA including CDEMO-CU00-INFO for paging and selection state",
+      "location": "WORKING_STORAGE",
+      "citation": 66
+    },
+    {
+      "copybook_name": "COUSR00",
+      "purpose": "Defines BMS map structures COUSR0AI (input) and COUSR0AO (output) for USRLST screen",
+      "location": "WORKING_STORAGE",
+      "citation": 76
+    },
+    {
+      "copybook_name": "COTTL01Y",
+      "purpose": "Defines titles like CCDA-TITLE01/02",
+      "location": "WORKING_STORAGE",
+      "citation": 78
+    },
+    {
+      "copybook_name": "CSDAT01Y",
+      "purpose": "Defines date/time working fields like WS-CURDATE-DATA",
+      "location": "WORKING_STORAGE",
+      "citation": 79
+    },
+    {
+      "copybook_name": "CSMSG01Y",
+      "purpose": "Defines messages like CCDA-MSG-INVALID-KEY",
+      "location": "WORKING_STORAGE",
+      "citation": 80
+    },
+    {
+      "copybook_name": "CSUSR01Y",
+      "purpose": "Defines SEC-USER-DATA record layout for USRSEC file",
+      "location": "WORKING_STORAGE",
+      "citation": 81
+    },
+    {
+      "copybook_name": "DFHAID",
+      "purpose": "Defines EIBAID for attention key",
+      "location": "WORKING_STORAGE",
+      "citation": 83
+    },
+    {
+      "copybook_name": "DFHBMSCA",
+      "purpose": "Defines BMS constants for mapset handling",
+      "location": "WORKING_STORAGE",
+      "citation": 84
+    }
+  ],
+  "paragraphs": [
+    {
+      "paragraph_name": "MAIN-PARA",
+      "purpose": "Main control logic: initialize, handle first entry vs reentry, dispatch on EIBAID to process keys and send/receive map",
+      "called_by": [],
+      "calls": [
+        "RETURN-TO-PREV-SCREEN",
+        "PROCESS-ENTER-KEY",
+        "SEND-USRLST-SCREEN",
+        "RECEIVE-USRLST-SCREEN",
+        "PROCESS-PF7-KEY",
+        "PROCESS-PF8-KEY"
+      ],
+      "citation": [
+        98,
+        143
+      ]
+    },
+    {
+      "paragraph_name": "PROCESS-ENTER-KEY",
+      "purpose": "Capture selected user from map SEL/USERID fields and process U/D to XCTL if valid; handle search USRIDINI to set SEC-USR-ID browse start key (low-values if blank), clear search fields (USRIDINL/USRIDINO), load first page forward",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [
+        "PROCESS-PAGE-FORWARD"
+      ],
+      "citation": [
+        149,
+        231
+      ]
+    },
+    {
+      "paragraph_name": "PROCESS-PF7-KEY",
+      "purpose": "Handle previous page (backward) if not first page, else message",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [
+        "PROCESS-PAGE-BACKWARD",
+        "SEND-USRLST-SCREEN"
+      ],
+      "citation": [
+        237,
+        254
+      ]
+    },
+    {
+      "paragraph_name": "PROCESS-PF8-KEY",
+      "purpose": "Handle next page (forward) if more pages, else message",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [
+        "PROCESS-PAGE-FORWARD",
+        "SEND-USRLST-SCREEN"
+      ],
+      "citation": [
+        260,
+        276
+      ]
+    },
+    {
+      "paragraph_name": "PROCESS-PAGE-FORWARD",
+      "purpose": "Browse forward: startbr/readnext 10 records from SEC-USR-ID key, initialize/populate map, check next page possible",
+      "called_by": [
+        "PROCESS-ENTER-KEY",
+        "PROCESS-PF8-KEY"
+      ],
+      "calls": [
+        "STARTBR-USER-SEC-FILE",
+        "READNEXT-USER-SEC-FILE",
+        "INITIALIZE-USER-DATA",
+        "POPULATE-USER-DATA",
+        "ENDBR-USER-SEC-FILE",
+        "SEND-USRLST-SCREEN"
+      ],
+      "citation": [
+        282,
+        330
+      ]
+    },
+    {
+      "paragraph_name": "PROCESS-PAGE-BACKWARD",
+      "purpose": "Browse backward: startbr/readprev 10 records from SEC-USR-ID key, initialize/populate map, adjust page num",
+      "called_by": [
+        "PROCESS-PF7-KEY"
+      ],
+      "calls": [
+        "STARTBR-USER-SEC-FILE",
+        "READPREV-USER-SEC-FILE",
+        "INITIALIZE-USER-DATA",
+        "POPULATE-USER-DATA",
+        "ENDBR-USER-SEC-FILE",
+        "SEND-USRLST-SCREEN"
+      ],
+      "citation": [
+        336,
+        378
+      ]
+    },
+    {
+      "paragraph_name": "POPULATE-USER-DATA",
+      "purpose": "Move current SEC-USER-DATA fields to indexed map fields 1-10, track first/last",
+      "called_by": [
+        "PROCESS-PAGE-FORWARD",
+        "PROCESS-PAGE-BACKWARD"
+      ],
+      "calls": [],
+      "citation": [
+        384,
+        440
+      ]
+    },
+    {
+      "paragraph_name": "INITIALIZE-USER-DATA",
+      "purpose": "Clear indexed map fields 1-10 to spaces",
+      "called_by": [
+        "PROCESS-PAGE-FORWARD",
+        "PROCESS-PAGE-BACKWARD"
+      ],
+      "calls": [],
+      "citation": [
+        446,
+        500
+      ]
+    },
+    {
+      "paragraph_name": "RETURN-TO-PREV-SCREEN",
+      "purpose": "XCTL to previous program (COSGN00C or set CDEMO-TO-PROGRAM) with commarea",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [],
+      "citation": [
+        506,
+        516
+      ]
+    },
+    {
+      "paragraph_name": "SEND-USRLST-SCREEN",
+      "purpose": "Populate header/date/time, send map with/without ERASE",
+      "called_by": [
+        "MAIN-PARA",
+        "PROCESS-PF7-KEY",
+        "PROCESS-PF8-KEY",
+        "PROCESS-PAGE-FORWARD",
+        "PROCESS-PAGE-BACKWARD",
+        "STARTBR-USER-SEC-FILE",
+        "READNEXT-USER-SEC-FILE",
+        "READPREV-USER-SEC-FILE"
+      ],
+      "calls": [
+        "POPULATE-HEADER-INFO"
+      ],
+      "citation": [
+        522,
+        543
+      ]
+    },
+    {
+      "paragraph_name": "RECEIVE-USRLST-SCREEN",
+      "purpose": "Receive map into COUSR0AI with resp codes",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [],
+      "citation": [
+        549,
+        556
+      ]
+    },
+    {
+      "paragraph_name": "POPULATE-HEADER-INFO",
+      "purpose": "Set screen header with titles, tranid, pgmname, current date/time",
+      "called_by": [
+        "SEND-USRLST-SCREEN"
+      ],
+      "calls": [],
+      "citation": [
+        562,
+        581
+      ]
+    },
+    {
+      "paragraph_name": "STARTBR-USER-SEC-FILE",
+      "purpose": "CICS STARTBR on USRSEC at SEC-USR-ID key, handle resp (NOTFND/OTHER errors)",
+      "called_by": [
+        "PROCESS-PAGE-FORWARD",
+        "PROCESS-PAGE-BACKWARD"
+      ],
+      "calls": [
+        "SEND-USRLST-SCREEN"
+      ],
+      "citation": [
+        586,
+        614
+      ]
+    },
+    {
+      "paragraph_name": "READNEXT-USER-SEC-FILE",
+      "purpose": "CICS READNEXT into SEC-USER-DATA, handle ENDFILE/OTHER errors",
+      "called_by": [
+        "PROCESS-PAGE-FORWARD"
+      ],
+      "calls": [
+        "SEND-USRLST-SCREEN"
+      ],
+      "citation": [
+        619,
+        648
+      ]
+    },
+    {
+      "paragraph_name": "READPREV-USER-SEC-FILE",
+      "purpose": "CICS READPREV into SEC-USER-DATA, handle ENDFILE/OTHER errors",
+      "called_by": [
+        "PROCESS-PAGE-BACKWARD"
+      ],
+      "calls": [
+        "SEND-USRLST-SCREEN"
+      ],
+      "citation": [
+        653,
+        682
+      ]
+    },
+    {
+      "paragraph_name": "ENDBR-USER-SEC-FILE",
+      "purpose": "CICS ENDBR on USRSEC",
+      "called_by": [
+        "PROCESS-PAGE-FORWARD",
+        "PROCESS-PAGE-BACKWARD"
+      ],
+      "calls": [],
+      "citation": [
+        687,
+        691
+      ]
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "WS-RESP-CD NOT = DFHRESP(NORMAL) in STARTBR",
+      "action": "NOTFND: set EOF, message 'top of page'; OTHER: set ERR-FLG, message 'Unable to lookup User', send screen",
+      "citation": [
+        597
+      ]
+    },
+    {
+      "condition": "WS-RESP-CD = DFHRESP(ENDFILE) or NOT NORMAL in READNEXT",
+      "action": "Set EOF, message 'bottom of page', send screen",
+      "citation": [
+        631
+      ]
+    },
+    {
+      "condition": "WS-RESP-CD = DFHRESP(ENDFILE) or NOT NORMAL in READPREV",
+      "action": "Set EOF, message 'top of page', send screen",
+      "citation": [
+        665
+      ]
+    },
+    {
+      "condition": "Invalid EIBAID",
+      "action": "Set WS-ERR-FLG 'Y', invalid key message, send screen",
+      "citation": [
+        133
+      ]
+    },
+    {
+      "condition": "Invalid user selection flag",
+      "action": "Set error message 'Invalid selection. Valid values are U and D'",
+      "citation": [
+        211
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [
+    {
+      "command": "RETURN",
+      "resource": "TRANSID(WS-TRANID) COMMAREA(CARDDEMO-COMMAREA)",
+      "purpose": "Return to CICS with new transaction and updated commarea",
+      "citation": 141
+    },
+    {
+      "command": "SEND",
+      "resource": "MAP('COUSR0A') MAPSET('COUSR00') FROM(COUSR0AO)",
+      "purpose": "Send user list screen with cursor, optional ERASE",
+      "citation": 529
+    },
+    {
+      "command": "RECEIVE",
+      "resource": "MAP('COUSR0A') MAPSET('COUSR00') INTO(COUSR0AI)",
+      "purpose": "Receive user input from screen",
+      "citation": 551
+    },
+    {
+      "command": "STARTBR",
+      "resource": "DATASET('USRSEC') RIDFLD(SEC-USR-ID)",
+      "purpose": "Establish browse starting at key for forward/backward",
+      "citation": 588
+    },
+    {
+      "command": "READNEXT",
+      "resource": "DATASET('USRSEC') INTO(SEC-USER-DATA) RIDFLD(SEC-USR-ID)",
+      "purpose": "Read next user record in browse",
+      "citation": 621
+    },
+    {
+      "command": "READPREV",
+      "resource": "DATASET('USRSEC') INTO(SEC-USER-DATA) RIDFLD(SEC-USR-ID)",
+      "purpose": "Read previous user record in browse",
+      "citation": 655
+    },
+    {
+      "command": "ENDBR",
+      "resource": "DATASET('USRSEC')",
+      "purpose": "End browse on USRSEC",
+      "citation": 689
+    },
+    {
+      "command": "XCTL",
+      "resource": "PROGRAM(CDEMO-TO-PROGRAM) COMMAREA(CARDDEMO-COMMAREA)",
+      "purpose": "Transfer control to selected maintenance program",
+      "citation": 197
+    }
+  ],
+  "open_questions": [
+    {
+      "question": "Exact programs that call this via XCTL or LINK",
+      "context": "Inferred from CDEMO-TO-PROGRAM usage like COSGN00C but no direct evidence in code",
+      "suggestion": "Analyze calling programs or CICS traces"
+    },
+    {
+      "question": "Precise layout and all fields of copybooks like CSUSR01Y, COUSR00",
+      "context": "Fields inferred from usage (e.g. SEC-USR-ID) but full structure unknown without copybook source",
+      "suggestion": "Provide copybook sources for next iteration"
+    },
+    {
+      "question": "Business meaning of USER-TYPE values",
+      "context": "Field copied but no validation or description in code",
+      "suggestion": "Review data dictionary or requirements"
+    }
+  ]
+}

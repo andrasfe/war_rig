@@ -1,0 +1,722 @@
+{
+  "header": {
+    "program_id": "CBTRN03C",
+    "file_name": "CBTRN03C.cbl",
+    "file_type": "COBOL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-18T17:24:01.634993",
+    "iteration_count": 1,
+    "final_status": "WITNESSED"
+  },
+  "purpose": {
+    "summary": "Batch COBOL program that reads transaction records from TRANSACT-FILE within a date range specified in DATE-PARMS-FILE, performs lookups in XREF-FILE for account details, TRANTYPE-FILE for type descriptions, and TRANCATG-FILE for category descriptions, then generates a detailed report in REPORT-FILE including transaction details, page totals, account totals, and grand totals.",
+    "business_context": "CardDemo application for printing transaction detail reports",
+    "program_type": "BATCH",
+    "citations": [
+      2,
+      3,
+      4,
+      5,
+      160,
+      170,
+      172,
+      196,
+      215
+    ]
+  },
+  "inputs": [
+    {
+      "name": "TRANSACT-FILE",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Sequential file containing transaction records including card number, type code, category code, amount, process timestamp",
+      "copybook": "CVTRA05Y",
+      "citation": [
+        29,
+        61,
+        249
+      ]
+    },
+    {
+      "name": "XREF-FILE",
+      "io_type": "FILE_VSAM",
+      "description": "Indexed VSAM file for card cross-reference mapping card number to account ID",
+      "copybook": "CVACT03Y",
+      "citation": [
+        33,
+        67,
+        485
+      ]
+    },
+    {
+      "name": "TRANTYPE-FILE",
+      "io_type": "FILE_VSAM",
+      "description": "Indexed VSAM file for transaction type descriptions keyed by type code",
+      "copybook": "CVTRA03Y",
+      "citation": [
+        39,
+        72,
+        495
+      ]
+    },
+    {
+      "name": "TRANCATG-FILE",
+      "io_type": "FILE_VSAM",
+      "description": "Indexed VSAM file for transaction category descriptions keyed by type code and category code",
+      "copybook": "CVTRA04Y",
+      "citation": [
+        45,
+        77,
+        505
+      ]
+    },
+    {
+      "name": "DATE-PARMS-FILE",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Sequential file containing start and end dates for report filtering",
+      "copybook": null,
+      "citation": [
+        55,
+        87,
+        221
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "REPORT-FILE",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Sequential print file with report headers, transaction details enriched with lookup descriptions, page totals, account totals, and grand totals",
+      "copybook": "CVTRA07Y",
+      "citation": [
+        51,
+        84,
+        345
+      ]
+    }
+  ],
+  "called_programs": [
+    {
+      "program_name": "CEE3ABD",
+      "call_type": "STATIC_CALL",
+      "purpose": "Abend the program with user code 999",
+      "parameters": [
+        "ABCODE",
+        "TIMING"
+      ],
+      "citation": 630
+    }
+  ],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Only process transactions where process timestamp is between start date and end date from parameters",
+      "logic_summary": "Compare TRAN-PROC-TS (1:10) >= WS-START-DATE AND <= WS-END-DATE",
+      "conditions": [
+        "IF TRAN-PROC-TS (1:10) >= WS-START-DATE",
+        "AND TRAN-PROC-TS (1:10) <= WS-END-DATE"
+      ],
+      "citation": [
+        173,
+        174
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Group transactions by card number and print account totals when card number changes",
+      "logic_summary": "If WS-CURR-CARD-NUM NOT= TRAN-CARD-NUM and not first time, perform WRITE-ACCOUNT-TOTALS",
+      "conditions": [
+        "IF WS-CURR-CARD-NUM NOT= TRAN-CARD-NUM",
+        "IF WS-FIRST-TIME = 'N'"
+      ],
+      "citation": [
+        181,
+        182
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "Print page totals and new headers every WS-PAGE-SIZE (20) lines",
+      "logic_summary": "If MOD(WS-LINE-COUNTER, WS-PAGE-SIZE) = 0",
+      "conditions": [
+        "FUNCTION MOD(WS-LINE-COUNTER, WS-PAGE-SIZE) = 0"
+      ],
+      "citation": [
+        282
+      ]
+    },
+    {
+      "rule_id": "BR004",
+      "description": "All lookups (XREF, TRANTYPE, TRANCATG) must succeed or abend program",
+      "logic_summary": "READ with INVALID KEY clause displays error and abends",
+      "conditions": [
+        "INVALID KEY"
+      ],
+      "citation": [
+        486,
+        496,
+        506
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "TRANSACT-FILE",
+        "fields_used": [
+          "TRAN-CARD-NUM",
+          "TRAN-TYPE-CD",
+          "TRAN-CAT-CD",
+          "TRAN-AMT",
+          "TRAN-PROC-TS",
+          "TRAN-ID",
+          "TRAN-SOURCE"
+        ],
+        "citation": [
+          172,
+          180,
+          186,
+          189,
+          193,
+          200,
+          363,
+          370
+        ]
+      },
+      {
+        "source": "XREF-FILE",
+        "fields_used": [
+          "XREF-ACCT-ID"
+        ],
+        "citation": [
+          187,
+          364
+        ]
+      },
+      {
+        "source": "TRANTYPE-FILE",
+        "fields_used": [
+          "TRAN-TYPE-DESC"
+        ],
+        "citation": [
+          190,
+          365,
+          366
+        ]
+      },
+      {
+        "source": "TRANCATG-FILE",
+        "fields_used": [
+          "TRAN-CAT-TYPE-DESC"
+        ],
+        "citation": [
+          195,
+          367,
+          368
+        ]
+      },
+      {
+        "source": "DATE-PARMS-FILE",
+        "fields_used": [
+          "WS-START-DATE",
+          "WS-END-DATE"
+        ],
+        "citation": [
+          168,
+          221,
+          173
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "REPORT-FILE",
+        "fields_written": [
+          "TRANSACTION-DETAIL-REPORT",
+          "REPORT-NAME-HEADER",
+          "TRANSACTION-HEADER-1",
+          "TRANSACTION-HEADER-2",
+          "REPORT-PAGE-TOTALS",
+          "REPORT-ACCOUNT-TOTALS",
+          "REPORT-GRAND-TOTALS"
+        ],
+        "citation": [
+          372,
+          326,
+          333,
+          337,
+          296,
+          308,
+          320
+        ]
+      }
+    ],
+    "transforms": [
+      {
+        "input_field": "TRAN-AMT",
+        "output_field": "WS-PAGE-TOTAL",
+        "transformation_description": "Add to page total accumulator",
+        "citation": [
+          287
+        ]
+      },
+      {
+        "input_field": "TRAN-AMT",
+        "output_field": "WS-ACCOUNT-TOTAL",
+        "transformation_description": "Add to account total accumulator",
+        "citation": [
+          287
+        ]
+      },
+      {
+        "input_field": "TRAN-AMT",
+        "output_field": "WS-GRAND-TOTAL",
+        "transformation_description": "Add page total to grand total after page totals written",
+        "citation": [
+          297
+        ]
+      },
+      {
+        "input_field": "TRAN-CARD-NUM",
+        "output_field": "FD-XREF-CARD-NUM",
+        "transformation_description": "Copy for XREF lookup key",
+        "citation": [
+          186
+        ]
+      },
+      {
+        "input_field": "TRAN-TYPE-CD",
+        "output_field": "FD-TRAN-TYPE",
+        "transformation_description": "Copy for TRANTYPE lookup key",
+        "citation": [
+          189
+        ]
+      },
+      {
+        "input_field": "TRAN-TYPE-CD",
+        "output_field": "FD-TRAN-TYPE-CD OF FD-TRAN-CAT-KEY",
+        "transformation_description": "Copy for TRANCATG lookup composite key",
+        "citation": [
+          191
+        ]
+      },
+      {
+        "input_field": "TRAN-CAT-CD",
+        "output_field": "FD-TRAN-CAT-CD OF FD-TRAN-CAT-KEY",
+        "transformation_description": "Copy for TRANCATG lookup composite key",
+        "citation": [
+          194
+        ]
+      }
+    ]
+  },
+  "copybooks_used": [
+    {
+      "copybook_name": "CVTRA05Y",
+      "purpose": "Defines transaction record structure TRAN-RECORD and status TRANFILE-STATUS",
+      "location": "WORKING_STORAGE",
+      "citation": 93
+    },
+    {
+      "copybook_name": "CVACT03Y",
+      "purpose": "Defines card cross-reference record CARD-XREF-RECORD and status CARDXREF-STATUS",
+      "location": "WORKING_STORAGE",
+      "citation": 98
+    },
+    {
+      "copybook_name": "CVTRA03Y",
+      "purpose": "Defines transaction type record TRAN-TYPE-RECORD and status TRANTYPE-STATUS",
+      "location": "WORKING_STORAGE",
+      "citation": 103
+    },
+    {
+      "copybook_name": "CVTRA04Y",
+      "purpose": "Defines transaction category record TRAN-CAT-RECORD and status TRANCATG-STATUS",
+      "location": "WORKING_STORAGE",
+      "citation": 108
+    },
+    {
+      "copybook_name": "CVTRA07Y",
+      "purpose": "Defines report record structures like TRANSACTION-DETAIL-REPORT, headers, totals, and status TRANREPT-STATUS",
+      "location": "WORKING_STORAGE",
+      "citation": 113
+    }
+  ],
+  "paragraphs": [
+    {
+      "paragraph_name": "0000-TRANFILE-OPEN",
+      "purpose": "Open input TRANSACT-FILE and validate status",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        376,
+        392
+      ]
+    },
+    {
+      "paragraph_name": "0100-REPTFILE-OPEN",
+      "purpose": "Open output REPORT-FILE and validate status",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        394,
+        410
+      ]
+    },
+    {
+      "paragraph_name": "0200-CARDXREF-OPEN",
+      "purpose": "Open input XREF-FILE and validate status",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        412,
+        428
+      ]
+    },
+    {
+      "paragraph_name": "0300-TRANTYPE-OPEN",
+      "purpose": "Open input TRANTYPE-FILE and validate status",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        430,
+        446
+      ]
+    },
+    {
+      "paragraph_name": "0400-TRANCATG-OPEN",
+      "purpose": "Open input TRANCATG-FILE and validate status",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        448,
+        464
+      ]
+    },
+    {
+      "paragraph_name": "0500-DATEPARM-OPEN",
+      "purpose": "Open input DATE-PARMS-FILE and validate status",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        466,
+        482
+      ]
+    },
+    {
+      "paragraph_name": "0550-DATEPARM-READ",
+      "purpose": "Read date parameters and set EOF if end of file",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        220,
+        244
+      ]
+    },
+    {
+      "paragraph_name": "1000-TRANFILE-GET-NEXT",
+      "purpose": "Sequential read next transaction record and set EOF if end",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        248,
+        272
+      ]
+    },
+    {
+      "paragraph_name": "1100-WRITE-TRANSACTION-REPORT",
+      "purpose": "Main report writing logic: headers on first time or page end, accumulate totals, write detail",
+      "called_by": [],
+      "calls": [
+        "1120-WRITE-HEADERS",
+        "1110-WRITE-PAGE-TOTALS",
+        "1120-WRITE-DETAIL"
+      ],
+      "citation": [
+        274,
+        290
+      ]
+    },
+    {
+      "paragraph_name": "1110-WRITE-PAGE-TOTALS",
+      "purpose": "Write page total line, reset page total, add to grand, write blank header line",
+      "called_by": [],
+      "calls": [
+        "1111-WRITE-REPORT-REC"
+      ],
+      "citation": [
+        293,
+        304
+      ]
+    },
+    {
+      "paragraph_name": "1120-WRITE-ACCOUNT-TOTALS",
+      "purpose": "Write account total line, reset account total, write blank header line",
+      "called_by": [],
+      "calls": [
+        "1111-WRITE-REPORT-REC"
+      ],
+      "citation": [
+        306,
+        316
+      ]
+    },
+    {
+      "paragraph_name": "1110-WRITE-GRAND-TOTALS",
+      "purpose": "Write grand total line",
+      "called_by": [],
+      "calls": [
+        "1111-WRITE-REPORT-REC"
+      ],
+      "citation": [
+        318,
+        322
+      ]
+    },
+    {
+      "paragraph_name": "1120-WRITE-HEADERS",
+      "purpose": "Write report name header, blank line, transaction headers 1 and 2",
+      "called_by": [],
+      "calls": [
+        "1111-WRITE-REPORT-REC"
+      ],
+      "citation": [
+        324,
+        341
+      ]
+    },
+    {
+      "paragraph_name": "1111-WRITE-REPORT-REC",
+      "purpose": "Write report record and validate status",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        343,
+        359
+      ]
+    },
+    {
+      "paragraph_name": "1120-WRITE-DETAIL",
+      "purpose": "Populate and write transaction detail report line with looked-up descriptions",
+      "called_by": [],
+      "calls": [
+        "1111-WRITE-REPORT-REC"
+      ],
+      "citation": [
+        361,
+        374
+      ]
+    },
+    {
+      "paragraph_name": "1500-A-LOOKUP-XREF",
+      "purpose": "Random read XREF-FILE by card number, abend on invalid key",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        484,
+        492
+      ]
+    },
+    {
+      "paragraph_name": "1500-B-LOOKUP-TRANTYPE",
+      "purpose": "Random read TRANTYPE-FILE by type code, abend on invalid key",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        494,
+        502
+      ]
+    },
+    {
+      "paragraph_name": "1500-C-LOOKUP-TRANCATG",
+      "purpose": "Random read TRANCATG-FILE by type and cat code, abend on invalid key",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        504,
+        512
+      ]
+    },
+    {
+      "paragraph_name": "9000-TRANFILE-CLOSE",
+      "purpose": "Close TRANSACT-FILE and validate status",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        514,
+        530
+      ]
+    },
+    {
+      "paragraph_name": "9100-REPTFILE-CLOSE",
+      "purpose": "Close REPORT-FILE and validate status",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        532,
+        548
+      ]
+    },
+    {
+      "paragraph_name": "9200-CARDXREF-CLOSE",
+      "purpose": "Close XREF-FILE and validate status",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        551,
+        567
+      ]
+    },
+    {
+      "paragraph_name": "9300-TRANTYPE-CLOSE",
+      "purpose": "Close TRANTYPE-FILE and validate status",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        569,
+        585
+      ]
+    },
+    {
+      "paragraph_name": "9400-TRANCATG-CLOSE",
+      "purpose": "Close TRANCATG-FILE and validate status",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        587,
+        603
+      ]
+    },
+    {
+      "paragraph_name": "9500-DATEPARM-CLOSE",
+      "purpose": "Close DATE-PARMS-FILE and validate status",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        605,
+        621
+      ]
+    },
+    {
+      "paragraph_name": "9999-ABEND-PROGRAM",
+      "purpose": "Call CEE3ABD to abend program with code 999",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        626,
+        632
+      ]
+    },
+    {
+      "paragraph_name": "9910-DISPLAY-IO-STATUS",
+      "purpose": "Display file IO status in formatted numeric form",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        633,
+        646
+      ]
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "File status not '00' on open/read/write/close",
+      "action": "Display error message, perform DISPLAY-IO-STATUS, then ABEND-PROGRAM",
+      "citation": [
+        268,
+        356,
+        389,
+        407,
+        425,
+        443,
+        461,
+        479,
+        489,
+        499,
+        509,
+        527,
+        545,
+        564,
+        582,
+        600,
+        618
+      ]
+    },
+    {
+      "condition": "INVALID KEY on VSAM READs",
+      "action": "Display invalid key message, set IO-STATUS to 23, perform DISPLAY-IO-STATUS, ABEND-PROGRAM",
+      "citation": [
+        486,
+        496,
+        506
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "Exact field layouts in copybooks CVTRA05Y, CVACT03Y, CVTRA03Y, CVTRA04Y, CVTRA07Y",
+      "context": "Copybooks not expanded in source; inferred from usage but precise PIC clauses unknown",
+      "suggestion": "Provide copybook source files"
+    }
+  ]
+}

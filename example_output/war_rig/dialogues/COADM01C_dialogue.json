@@ -1,0 +1,105 @@
+{
+  "program_id": "COADM01C",
+  "questions": [
+    {
+      "question_id": "Q-58C23FDE",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "What about the read of CDEMO-TO-PROGRAM from CARDDEMO-COMMAREA at line 165? It is missing from data_flow.reads_from for CARDDEMO-COMMAREA.",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-AFF00A31",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "What about writes to ERRMSGC of COADM1AO at lines 151 and 272? It is missing from data_flow.writes_to.fields_written for COADM1AO.",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-F4C2B980",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "The write to CDEMO-PGM-REENTER at line 92 (SET CDEMO-PGM-REENTER TO TRUE) is listed in data_flow.writes_to.fields_written for CARDDEMO-COMMAREA but the citations [142,113] do not cover it.",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-B3138819",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "What about copybooks like COADM02Y (line 51) and CSUSR01Y (line 58)? Their purposes are 'inferred' with no citations to usage in the procedure division.",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-B903DE21",
+      "section": "data_flow",
+      "question_type": "CLARIFICATION",
+      "question": "What about the read of CDEMO-TO-PROGRAM from CARDDEMO-COMMAREA at line 165 in RETURN-TO-SIGNON-SCREEN? It is missing from data_flow.reads_from for CARDDEMO-COMMAREA.",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-CF53F947",
+      "section": "data_flow",
+      "question_type": "CLARIFICATION",
+      "question": "The write to CDEMO-PGM-REENTER at line 92 (SET CDEMO-PGM-REENTER TO TRUE) is listed in data_flow.writes_to.fields_written for CARDDEMO-COMMAREA, but the citations [142,113] do not cover it.",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-D4BB0785",
+      "section": "copybooks_used",
+      "question_type": "CLARIFICATION",
+      "question": "What about the specific usage or fields from copybooks COADM02Y (line 51) and CSUSR01Y (line 58)? Purposes are inferred with no citations to actual usage in the procedure division, and WS-USRSEC-FILE (line 39) is defined but never referenced.",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-095A039E",
+      "section": "data_flow",
+      "question_type": "CLARIFICATION",
+      "question": "Line 87 moves 'COSGN00C' to CDEMO-FROM-PROGRAM on initial call (EIBCALEN=0), but this write is not listed in data_flow.writes_to.fields_written for CARDDEMO-COMMAREA.",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-4A60EA1C",
+      "section": "business_rules",
+      "question_type": "CLARIFICATION",
+      "question": "In PROCESS-ENTER-KEY, WS-OPTION-X (PIC X(02)) is inspected to replace spaces with zeros but not validated for numeric content before MOVE to WS-OPTION (PIC 9(02)) at line 128; the NUMERIC check at line 131 is on the numeric field. Does this correctly handle non-numeric input without abend?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    }
+  ],
+  "responses": []
+}

@@ -1,0 +1,50 @@
+{
+  "program_id": "COTRN02C",
+  "questions": [
+    {
+      "question_id": "Q-0BAC61BC",
+      "section": "business_rules",
+      "question_type": "CLARIFICATION",
+      "question": "What about the separate numeric validations for TTYPCDI (line 323) and TCATCDI (line 329) in VALIDATE-INPUT-DATA-FIELDS? These are not covered in any business rule, despite being required checks after the empty field validations in BR002.",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-11A60F86",
+      "section": "business_rules",
+      "question_type": "CLARIFICATION",
+      "question": "In BR004, why is CSUTLDTC-RESULT-MSG-NUM '2513' specifically ignored even if SEV-CD != '0000' (lines 400, 420)? What does this message represent in the context of date validation?",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-4D6AAB39",
+      "section": "business_rules",
+      "question_type": "CLARIFICATION",
+      "question": "Line 340 in the amount format check uses 'WHEN TRNAMTI OF COTRN2AI(1:1) NOT EQUAL \"-\" AND \"+\"', but this syntax appears ambiguous or potentially invalid for checking if the first character is neither '-' nor '+'. Does the documentation accurately reflect the code's intent for sign validation?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-FD5371CD",
+      "section": "data_flow",
+      "question_type": "CLARIFICATION",
+      "question": "The data_flow reads_from TRAN-RECORD lists fields like TRAN-AMT, TRAN-TYPE-CD etc. (citation 481), which are used in COPY-LAST-TRAN-DATA (PF5 function), but in ADD-TRANSACTION only TRAN-ID is used from the previous record (lines 444-448). Should the usage be split by context?",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 1,
+      "answered": false
+    }
+  ],
+  "responses": []
+}

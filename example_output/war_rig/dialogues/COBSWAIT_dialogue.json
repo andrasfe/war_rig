@@ -1,0 +1,94 @@
+{
+  "program_id": "COBSWAIT",
+  "questions": [
+    {
+      "question_id": "Q-BC9A7DF9",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "What business rules apply to the input parameter, such as range limits for wait time or validation requirements before the MOVE at line 37?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-82E166EB",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "Line 34 starts PROCEDURE DIVISION with no named paragraphs, but paragraphs section documents '0000-MAIN'. Is this name accurate or inferred?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-E2AC5B48",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "What about error handling for non-numeric input in PARM-VALUE? The MOVE at line 37 from PIC X(8) to PIC 9(8) COMP could cause a runtime abend if invalid.",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-0C2DCEAF",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "Inputs describe PARM-VALUE as 'PARAMETER' from SYSIN, but it's defined in WORKING-STORAGE at line 31 and ACCEPTed at 36. Should this be classified as file input (SYSIN) rather than PARAMETER?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-8493F848",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "The paragraphs section documents '0000-MAIN' citing lines 34 and 40, but line 34 is PROCEDURE DIVISION. with no paragraph name defined. Is '0000-MAIN' accurate or inferred? (Previous: Q-82E166EB)",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-159C5905",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "What about business rules for the range limits of the wait time in MVSWAIT-TIME (PIC 9(8) COMP)? No checks or limits are present in the code.",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-E1A317EE",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "Business rules BR001 imply validation on numeric conversion (conditions: exactly 8 chars, numeric), but no explicit checks exist; MOVE at line 37 abends on invalid data. Does this accurately reflect enforced rules? (Previous: Q-E2AC5B48)",
+      "context": null,
+      "evidence": [],
+      "severity": "BLOCKING",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-FB3BB245",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "Inputs list PARM-VALUE as io_type 'PARAMETER', but it is ACCEPTed from SYSIN at line 36 (file-like input). Should this be reclassified as 'FILE' or 'SYSIN'? (Previous: Q-0C2DCEAF)",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    }
+  ],
+  "responses": []
+}

@@ -1,0 +1,61 @@
+{
+  "program_id": "COCRDUPC",
+  "questions": [
+    {
+      "question_id": "Q-658FAED8",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-90381331",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-5E1FC454",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-81813F3A",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-C2D15C6E",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    }
+  ],
+  "responses": []
+}

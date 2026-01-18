@@ -1,0 +1,61 @@
+{
+  "program_id": "COSGN00C",
+  "questions": [
+    {
+      "question_id": "Q-A34C3919",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "In data_flow.writes_to for COSGN0AO, you list USERIDL and PASSWDL among fields_written with citations [149,181,198], but these lines do not reference them. Instead, lines 82, 121, 126, 244, and 250 set USERIDL/PASSWDL on COSGN0AI for cursor positioning. Should these be under a separate cursor positioning note or corrected?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-63913F05",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "What about the second XCTL to COMEN01C at line 236, the RETURN at line 171 in SEND-PLAIN-TEXT, and ASSIGN commands at lines 198 and 202? These are missing from cics_operations.",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-9D61F00D",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "In calling_context.entry_points, you list 'CC00', but CC00 is the transaction ID (WS-TRANID at line 37, RETURN TRANSID at 98). The procedure entry point is MAIN-PARA at line 73. Are you sure CC00 is an entry point?",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-BBADF8EA",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "In business_rules.BR001, logic_summary says 'set USERIDL=-1', citing [80,81,83], but line 82 sets USERIDL OF COSGN0AI (input map). Does this need clarification that it's on the input map for BMS cursor control?",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-16857631",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "In outputs for CARDDEMO-COMMAREA, it is passed on RETURN at line 98 (initial display) without explicit population (moves start at 224 on success). Should error_handling or business_rules note commarea initialization on first invocation?",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 1,
+      "answered": false
+    }
+  ],
+  "responses": []
+}

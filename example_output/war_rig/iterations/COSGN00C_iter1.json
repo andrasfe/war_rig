@@ -1,0 +1,510 @@
+{
+  "header": {
+    "program_id": "COSGN00C",
+    "file_name": "COSGN00C.cbl",
+    "file_type": "COBOL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-18T16:03:06.465226",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "CICS COBOL program that displays a signon screen for the CardDemo application, receives user ID and password via map COSGN0A, validates credentials against VSAM file USRSEC, populates commarea on success, and XCTLs to admin (COADM01C) or main menu (COMEN01C) program based on user type. On errors or invalid keys, redisplays screen with messages. Handles PF3 for exit message.",
+    "business_context": "User authentication and initial screen for CardDemo application",
+    "program_type": "ONLINE_CICS",
+    "citations": [
+      2,
+      5,
+      73,
+      80,
+      108,
+      209,
+      221
+    ]
+  },
+  "inputs": [
+    {
+      "name": "COSGN0A",
+      "io_type": "CICS_MAP",
+      "description": "Signon screen map containing USERIDI and PASSWDI fields from user input",
+      "copybook": "COSGN00",
+      "citation": [
+        110,
+        118,
+        123
+      ]
+    },
+    {
+      "name": "USRSEC",
+      "io_type": "FILE_VSAM",
+      "description": "User security VSAM file read by user ID key to validate password and retrieve user type",
+      "copybook": "CSUSR01Y",
+      "citation": [
+        211
+      ]
+    },
+    {
+      "name": "EIBAID",
+      "io_type": "PARAMETER",
+      "description": "CICS AID key from keyboard (ENTER, PF3, etc.) to determine action",
+      "copybook": "DFHAID",
+      "citation": [
+        85
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "COSGN0A",
+      "io_type": "CICS_MAP",
+      "description": "Signon screen map populated with header info, error messages, and cursor positioning for redisplay",
+      "copybook": "COSGN00",
+      "citation": [
+        151
+      ]
+    },
+    {
+      "name": "WS-MESSAGE",
+      "io_type": "REPORT",
+      "description": "Plain text error or exit message sent via SEND TEXT with FREEKB before RETURN",
+      "copybook": null,
+      "citation": [
+        164
+      ]
+    },
+    {
+      "name": "CARDDEMO-COMMAREA",
+      "io_type": "CICS_COMMAREA",
+      "description": "Populated commarea passed to XCTL programs and RETURN TRANSID",
+      "copybook": "COCOM01Y",
+      "citation": [
+        98,
+        229,
+        232,
+        238
+      ]
+    }
+  ],
+  "called_programs": [
+    {
+      "program_name": "COADM01C",
+      "call_type": "CICS_XCTL",
+      "purpose": "Transfer control to admin menu for users with admin type",
+      "parameters": [
+        "CARDDEMO-COMMAREA"
+      ],
+      "citation": 231
+    },
+    {
+      "program_name": "COMEN01C",
+      "call_type": "CICS_XCTL",
+      "purpose": "Transfer control to main menu for non-admin users",
+      "parameters": [
+        "CARDDEMO-COMMAREA"
+      ],
+      "citation": 236
+    }
+  ],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [
+      "CC00"
+    ],
+    "linkage_section": [
+      "DFHCOMMAREA"
+    ]
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "On first invocation (EIBCALEN=0), initialize and send blank signon screen",
+      "logic_summary": "MOVE LOW-VALUES TO COSGN0AO and set USERIDL=-1 then PERFORM SEND-SIGNON-SCREEN",
+      "conditions": [
+        "IF EIBCALEN = 0"
+      ],
+      "citation": [
+        80,
+        81,
+        83
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Validate USERIDI and PASSWDI not SPACES or LOW-VALUES on ENTER key",
+      "logic_summary": "EVALUATE TRUE checking each field, set error flag/message and resend screen with cursor",
+      "conditions": [
+        "WHEN USERIDI OF COSGN0AI = SPACES OR LOW-VALUES",
+        "WHEN PASSWDI OF COSGN0AI = SPACES OR LOW-VALUES"
+      ],
+      "citation": [
+        117,
+        123
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "Convert user ID and password to uppercase before validation",
+      "logic_summary": "MOVE FUNCTION UPPER-CASE to WS-USER-ID/WS-USER-PWD and CDEMO-USER-ID",
+      "conditions": [],
+      "citation": [
+        132,
+        135
+      ]
+    },
+    {
+      "rule_id": "BR004",
+      "description": "On successful read (RESP=0) and password match, populate commarea and XCTL based on SEC-USR-TYPE",
+      "logic_summary": "Set CDEMO fields then IF CDEMO-USRTYP-ADMIN XCTL COADM01C ELSE COMEN01C",
+      "conditions": [
+        "WHEN 0",
+        "IF SEC-USR-PWD = WS-USER-PWD",
+        "IF CDEMO-USRTYP-ADMIN"
+      ],
+      "citation": [
+        221,
+        223,
+        231
+      ]
+    },
+    {
+      "rule_id": "BR005",
+      "description": "Handle invalid AID keys by setting error and resending screen",
+      "logic_summary": "WHEN OTHER MOVE 'Y' TO WS-ERR-FLG and invalid key message",
+      "conditions": [
+        "WHEN OTHER"
+      ],
+      "citation": [
+        91,
+        92
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "COSGN0AI",
+        "fields_used": [
+          "USERIDI",
+          "PASSWDI"
+        ],
+        "citation": [
+          118,
+          123
+        ]
+      },
+      {
+        "source": "USRSEC",
+        "fields_used": [
+          "SEC-USR-PWD",
+          "SEC-USR-TYPE"
+        ],
+        "citation": [
+          223,
+          227
+        ]
+      },
+      {
+        "source": "EIBAID",
+        "fields_used": [
+          "DFHENTER",
+          "DFHPF3"
+        ],
+        "citation": [
+          86
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "COSGN0AO",
+        "fields_written": [
+          "ERRMSGO",
+          "TITLE01O",
+          "TITLE02O",
+          "TRNNAMEO",
+          "PGMNAMEO",
+          "CURDATEO",
+          "CURTIMEO",
+          "APPLIDO",
+          "SYSIDO",
+          "USERIDL",
+          "PASSWDL"
+        ],
+        "citation": [
+          149,
+          181,
+          198
+        ]
+      },
+      {
+        "destination": "CARDDEMO-COMMAREA",
+        "fields_written": [
+          "CDEMO-FROM-TRANID",
+          "CDEMO-FROM-PROGRAM",
+          "CDEMO-USER-ID",
+          "CDEMO-USER-TYPE",
+          "CDEMO-PGM-CONTEXT"
+        ],
+        "citation": [
+          224
+        ]
+      }
+    ],
+    "transforms": [
+      {
+        "input_field": "USERIDI OF COSGN0AI",
+        "output_field": "WS-USER-ID",
+        "transformation_description": "Convert to UPPER-CASE",
+        "citation": [
+          132
+        ]
+      },
+      {
+        "input_field": "PASSWDI OF COSGN0AI",
+        "output_field": "WS-USER-PWD",
+        "transformation_description": "Convert to UPPER-CASE",
+        "citation": [
+          135
+        ]
+      },
+      {
+        "input_field": "FUNCTION CURRENT-DATE",
+        "output_field": "CURDATEO OF COSGN0AO",
+        "transformation_description": "Format as MM-DD-YY",
+        "citation": [
+          179,
+          190
+        ]
+      }
+    ]
+  },
+  "copybooks_used": [
+    {
+      "copybook_name": "COCOM01Y",
+      "purpose": "Defines CARDDEMO-COMMAREA and related CDEMO- fields for commarea",
+      "location": "WORKING_STORAGE",
+      "citation": 48
+    },
+    {
+      "copybook_name": "COSGN00",
+      "purpose": "Defines signon map structures COSGN0AI and COSGN0AO with fields like USERIDI, PASSWDI, ERRMSGO",
+      "location": "WORKING_STORAGE",
+      "citation": 50
+    },
+    {
+      "copybook_name": "COTTL01Y",
+      "purpose": "Defines title literals like CCDA-TITLE01, CCDA-TITLE02",
+      "location": "WORKING_STORAGE",
+      "citation": 52
+    },
+    {
+      "copybook_name": "CSDAT01Y",
+      "purpose": "Defines date/time working fields like WS-CURDATE-DATA",
+      "location": "WORKING_STORAGE",
+      "citation": 53
+    },
+    {
+      "copybook_name": "CSMSG01Y",
+      "purpose": "Defines message literals like CCDA-MSG-INVALID-KEY",
+      "location": "WORKING_STORAGE",
+      "citation": 54
+    },
+    {
+      "copybook_name": "CSUSR01Y",
+      "purpose": "Defines SEC-USER-DATA with SEC-USR-PWD, SEC-USR-TYPE",
+      "location": "WORKING_STORAGE",
+      "citation": 55
+    },
+    {
+      "copybook_name": "DFHAID",
+      "purpose": "Defines EIBAID and AID constants like DFHENTER, DFHPF3",
+      "location": "WORKING_STORAGE",
+      "citation": 57
+    },
+    {
+      "copybook_name": "DFHBMSCA",
+      "purpose": "Defines BMS map control fields like USERIDL, PASSWDL",
+      "location": "WORKING_STORAGE",
+      "citation": 58
+    }
+  ],
+  "paragraphs": [
+    {
+      "paragraph_name": "MAIN-PARA",
+      "purpose": "Main entry point: initialize, handle EIBCALEN=0 or EIBAID to dispatch to process or send screens",
+      "called_by": [],
+      "calls": [
+        "SEND-SIGNON-SCREEN",
+        "PROCESS-ENTER-KEY",
+        "SEND-PLAIN-TEXT"
+      ],
+      "citation": [
+        73,
+        102
+      ]
+    },
+    {
+      "paragraph_name": "PROCESS-ENTER-KEY",
+      "purpose": "RECEIVE map, validate inputs, uppercase credentials, read security file if valid",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [
+        "SEND-SIGNON-SCREEN",
+        "READ-USER-SEC-FILE"
+      ],
+      "citation": [
+        108,
+        141
+      ]
+    },
+    {
+      "paragraph_name": "SEND-SIGNON-SCREEN",
+      "purpose": "Populate header and message then SEND MAP with ERASE and CURSOR",
+      "called_by": [
+        "MAIN-PARA",
+        "PROCESS-ENTER-KEY",
+        "READ-USER-SEC-FILE"
+      ],
+      "calls": [
+        "POPULATE-HEADER-INFO"
+      ],
+      "citation": [
+        145,
+        157
+      ]
+    },
+    {
+      "paragraph_name": "SEND-PLAIN-TEXT",
+      "purpose": "SEND TEXT message with ERASE and FREEKB then RETURN",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [],
+      "citation": [
+        162,
+        172
+      ]
+    },
+    {
+      "paragraph_name": "POPULATE-HEADER-INFO",
+      "purpose": "Set titles, tranid, pgmname, formatted date/time, applid, sysid in map",
+      "called_by": [
+        "SEND-SIGNON-SCREEN"
+      ],
+      "calls": [],
+      "citation": [
+        177,
+        204
+      ]
+    },
+    {
+      "paragraph_name": "READ-USER-SEC-FILE",
+      "purpose": "CICS READ VSAM USRSEC by user ID, evaluate RESP to validate pwd/user and XCTL or error",
+      "called_by": [
+        "PROCESS-ENTER-KEY"
+      ],
+      "calls": [
+        "SEND-SIGNON-SCREEN"
+      ],
+      "citation": [
+        209,
+        257
+      ]
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "USERIDI or PASSWDI = SPACES OR LOW-VALUES",
+      "action": "Set WS-ERR-FLG='Y', specific message, reposition cursor (-1), PERFORM SEND-SIGNON-SCREEN",
+      "citation": [
+        118,
+        123
+      ]
+    },
+    {
+      "condition": "WS-RESP-CD = 0 AND SEC-USR-PWD != WS-USER-PWD",
+      "action": "Wrong password message, reposition PASSWDL=-1, PERFORM SEND-SIGNON-SCREEN",
+      "citation": [
+        242
+      ]
+    },
+    {
+      "condition": "WS-RESP-CD = 13",
+      "action": "User not found message, set WS-ERR-FLG='Y', reposition USERIDL=-1, PERFORM SEND-SIGNON-SCREEN",
+      "citation": [
+        247
+      ]
+    },
+    {
+      "condition": "WS-RESP-CD OTHER",
+      "action": "Unable to verify message, set WS-ERR-FLG='Y', reposition USERIDL=-1, PERFORM SEND-SIGNON-SCREEN",
+      "citation": [
+        252
+      ]
+    },
+    {
+      "condition": "EIBAID = OTHER",
+      "action": "Invalid key message, set WS-ERR-FLG='Y', PERFORM SEND-SIGNON-SCREEN",
+      "citation": [
+        92
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [
+    {
+      "command": "RETURN",
+      "resource": "TRANSID(WS-TRANID)",
+      "purpose": "Return to CICS with next transaction CC00 and commarea",
+      "citation": 98
+    },
+    {
+      "command": "RECEIVE",
+      "resource": "MAP('COSGN0A') MAPSET('COSGN00')",
+      "purpose": "Receive user input from signon map",
+      "citation": 110
+    },
+    {
+      "command": "SEND",
+      "resource": "MAP('COSGN0A') MAPSET('COSGN00')",
+      "purpose": "Send signon map with ERASE and CURSOR for display or redisplay",
+      "citation": 151
+    },
+    {
+      "command": "SEND TEXT",
+      "resource": null,
+      "purpose": "Send plain text exit message with ERASE and FREEKB",
+      "citation": 164
+    },
+    {
+      "command": "READ",
+      "resource": "DATASET(WS-USRSEC-FILE)",
+      "purpose": "Read VSAM USRSEC file by RIDFLD user ID",
+      "citation": 211
+    },
+    {
+      "command": "XCTL",
+      "resource": "PROGRAM('COADM01C')",
+      "purpose": "Transfer control to admin program with commarea",
+      "citation": 231
+    }
+  ],
+  "open_questions": [
+    {
+      "question": "Exact layout and fields of CARDDEMO-COMMAREA and CDEMO- fields",
+      "context": "Defined in copybook COCOM01Y not provided in source",
+      "suggestion": "Analyze COCOM01Y copybook"
+    },
+    {
+      "question": "Definition of SEC-USER-DATA fields like SEC-USR-TYPE constants (CDEMO-USRTYP-ADMIN)",
+      "context": "Defined in CSUSR01Y copybook not provided",
+      "suggestion": "Analyze CSUSR01Y copybook"
+    },
+    {
+      "question": "Programs that XCTL or LINK to COSGN00C",
+      "context": "No static analysis info on callers",
+      "suggestion": "Trace transaction CC00 or JCL/CICS definitions"
+    }
+  ]
+}

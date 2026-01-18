@@ -1,0 +1,105 @@
+{
+  "program_id": "CBTRN01C",
+  "questions": [
+    {
+      "question_id": "Q-49580BAD",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "In business_rules BR002 logic_summary, you state 'on INVALID KEY display \"ACCOUNT not found\"' but line 246 actually displays 'INVALID ACCOUNT NUMBER FOUND'. Additionally, line 178 in MAIN-PARA displays 'ACCOUNT ' ACCT-ID ' NOT FOUND' if WS-ACCT-READ-STATUS NOT = 0. Does this constitute a factual inaccuracy in the documented message?",
+      "context": null,
+      "evidence": [],
+      "severity": "BLOCKING",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-94F7C23B",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "What about the other input files opened as INPUT but not read: CUSTOMER-FILE (SELECT at line 34, open at 271), CARD-FILE (line 46, open 307), TRANSACT-FILE (line 58, open 343)? Should they be included in the inputs section even if unused for reads?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-5A5F0611",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "In data_flow.reads_from for ACCOUNT-FILE, fields_used is empty (citation 243). What fields, if any, from ACCOUNT-RECORD are used after the read at line 243?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-AD1E51ED",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "In error_handling for CLOSE operations, you cite lines like 258,263 which are actually OPEN error handling. Moreover, line 372 in 9000-DALYTRAN-CLOSE incorrectly displays 'ERROR CLOSING CUSTOMER FILE' and moves CUSTFILE-STATUS (line 373) instead of DALYTRAN-STATUS. Is this code error documented?",
+      "context": null,
+      "evidence": [],
+      "severity": "BLOCKING",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-8E408807",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "In purpose summary, you note 'No updates or writes to output files are performed despite comment indicating posting of transactions' (line 5). Given open_questions already raise this, are there any conditional paths or copybook logic that might perform writes to TRANSACT-FILE or others?",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-B7E9E24C",
+      "section": "business_rules",
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-0B11FE4E",
+      "section": "error_handling",
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-DCDE5551",
+      "section": "inputs",
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-95F91842",
+      "section": "data_flow",
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 2,
+      "answered": false
+    }
+  ],
+  "responses": []
+}

@@ -1,0 +1,800 @@
+{
+  "header": {
+    "program_id": "COACTUPC",
+    "file_name": "COACTUPC.cbl",
+    "file_type": "COBOL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-18T15:46:52.022810",
+    "iteration_count": 1,
+    "final_status": "WITNESSED"
+  },
+  "purpose": {
+    "summary": "CICS online transaction program that displays a screen for entering or updating account and associated customer details, validates extensive input fields including numerics, alphas, dates, US phone, SSN, FICO score, state/zip combinations, fetches existing data from VSAM files (card xref, account master, customer master), compares old vs new values, and performs REWRITE updates upon PF5 confirmation if no concurrent changes detected.",
+    "business_context": "Credit card account maintenance allowing updates to account limits, status, dates, balances, cycles, and linked customer personal data (names, address, phone, SSN, DOB, FICO, etc.)",
+    "program_type": "ONLINE_CICS",
+    "citations": [
+      2,
+      4,
+      23,
+      859,
+      1040,
+      2575,
+      3608,
+      3888
+    ]
+  },
+  "inputs": [
+    {
+      "name": "CACTUPAI",
+      "io_type": "CICS_MAP",
+      "description": "Input map fields for account ID, status, limits, dates, customer names, address, phones, SSN parts, DOB, FICO, etc.",
+      "copybook": "COACTUP",
+      "citation": [
+        1040,
+        1051,
+        1065,
+        1073,
+        1144,
+        1211,
+        1224,
+        1233,
+        1256,
+        1279,
+        1288,
+        1315,
+        1357,
+        1401,
+        1419
+      ]
+    },
+    {
+      "name": "DFHCOMMAREA",
+      "io_type": "CICS_COMMAREA",
+      "description": "Program communication area containing CARDDEMO-COMMAREA and WS-THIS-PROGCOMMAREA with prior state like ACUP-OLD-DETAILS and ACUP-NEW-DETAILS",
+      "copybook": "COCOM01Y",
+      "citation": [
+        880,
+        889,
+        891
+      ]
+    },
+    {
+      "name": "CXACAIX",
+      "io_type": "FILE_VSAM",
+      "description": "Card account cross-reference file, read by account ID to get customer ID and card number",
+      "copybook": "CVACT03Y",
+      "citation": [
+        3654
+      ]
+    },
+    {
+      "name": "ACCTDAT",
+      "io_type": "FILE_VSAM",
+      "description": "Account master file, read by account ID for account details like status, balances, limits, dates",
+      "copybook": "CVACT01Y",
+      "citation": [
+        3703,
+        3894
+      ]
+    },
+    {
+      "name": "CUSTDAT",
+      "io_type": "FILE_VSAM",
+      "description": "Customer master file, read by customer ID for personal details like name, address, phone, SSN, DOB, FICO",
+      "copybook": "CVCUS01Y",
+      "citation": [
+        3753,
+        3921
+      ]
+    },
+    {
+      "name": "DFHAID",
+      "io_type": "PARAMETER",
+      "description": "CICS AID for PF keys like PF3=exit, PF5=confirm, PF12=cancel",
+      "copybook": "DFHAID",
+      "citation": [
+        898,
+        905
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "CACTUPAO",
+      "io_type": "CICS_MAP",
+      "description": "Output map populated with titles, dates, account/customer data (old or new), info/error messages, attributes for protect/color/cursor",
+      "copybook": "COACTUP",
+      "citation": [
+        3594
+      ]
+    },
+    {
+      "name": "ACCTDAT",
+      "io_type": "FILE_VSAM",
+      "description": "Rewritten account record with updated status, balances, limits, dates, group",
+      "copybook": "CVACT01Y",
+      "citation": [
+        4066
+      ]
+    },
+    {
+      "name": "CUSTDAT",
+      "io_type": "FILE_VSAM",
+      "description": "Rewritten customer record with updated names, address, phones, SSN, DOB, FICO, EFT, primary holder",
+      "copybook": "CVCUS01Y",
+      "citation": [
+        4086
+      ]
+    },
+    {
+      "name": "WS-COMMAREA",
+      "io_type": "CICS_COMMAREA",
+      "description": "Updated commarea with CARDDEMO-COMMAREA and WS-THIS-PROGCOMMAREA for state persistence across pseudo-conversations",
+      "copybook": "COCOM01Y",
+      "citation": [
+        1010,
+        1015
+      ]
+    }
+  ],
+  "called_programs": [
+    {
+      "program_name": "CDEMO-TO-PROGRAM",
+      "call_type": "CICS_XCTL",
+      "purpose": "Exit to calling program or menu on PF3",
+      "parameters": [
+        "CARDDEMO-COMMAREA"
+      ],
+      "citation": 956
+    }
+  ],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [
+      "CAUP"
+    ],
+    "linkage_section": [
+      "DFHCOMMAREA"
+    ]
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Account ID must be exactly 11-digit non-zero numeric",
+      "logic_summary": "TEST-NUMVAL-C and check != ZEROS after move to numeric",
+      "conditions": [
+        "CC-ACCT-ID IS NOT NUMERIC",
+        "CC-ACCT-ID-N EQUAL ZEROS"
+      ],
+      "citation": [
+        1802,
+        1803
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Names (first, last) must contain only alphabets and spaces, required except middle optional",
+      "logic_summary": "INSPECT CONVERTING alpha chars to spaces, check TRIM length ==0 after",
+      "conditions": [
+        "FLG-ALPHA-NOT-OK",
+        "FLG-ALPHA-BLANK"
+      ],
+      "citation": [
+        1925,
+        1930,
+        1563,
+        1579
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "US Phone: 3-digit area (valid NA code, non-zero), 3-digit prefix (non-zero), 4-digit line (non-zero), optional overall",
+      "logic_summary": "Separate NUMERIC checks per part, lookup VALID-GENERAL-PURP-CODE for area",
+      "conditions": [
+        "NOT NUMERIC",
+        "==0",
+        "NOT VALID-GENERAL-PURP-CODE"
+      ],
+      "citation": [
+        2246,
+        2316,
+        2370,
+        2296
+      ]
+    },
+    {
+      "rule_id": "BR004",
+      "description": "SSN part1 (3dig): not 000/666/900-999; parts 2/3 numeric non-blank",
+      "logic_summary": "NUM-REQD edit + INVALID-SSN-PART1 condition values",
+      "conditions": [
+        "INVALID-SSN-PART1",
+        "FLG-EDIT-US-SSN-PART1-NOT-OK"
+      ],
+      "citation": [
+        121,
+        2449,
+        2442
+      ]
+    },
+    {
+      "rule_id": "BR005",
+      "description": "FICO score 300-850",
+      "logic_summary": "NUM-REQD (3dig) then FICO-RANGE-IS-VALID 300 THRU 850",
+      "conditions": [
+        "NOT FICO-RANGE-IS-VALID"
+      ],
+      "citation": [
+        848,
+        2515
+      ]
+    },
+    {
+      "rule_id": "BR006",
+      "description": "State code valid US 2-letter, zip first2 matches state",
+      "logic_summary": "VALID-US-STATE-CODE lookup + VALID-US-STATE-ZIP-CD2-COMBO",
+      "conditions": [
+        "NOT VALID-US-STATE-CODE",
+        "NOT VALID-US-STATE-ZIP-CD2-COMBO"
+      ],
+      "citation": [
+        2494,
+        2537
+      ]
+    },
+    {
+      "rule_id": "BR007",
+      "description": "Signed numerics (limits, balances) valid NUMVAL-C",
+      "logic_summary": "TEST-NUMVAL-C ==0",
+      "conditions": [
+        "TEST-NUMVAL-C !=0"
+      ],
+      "citation": [
+        2201
+      ]
+    },
+    {
+      "rule_id": "BR008",
+      "description": "Dates valid CCYY-MM-DD format via CSUTLDWY copy",
+      "logic_summary": "EDIT-DATE-CCYYMMDD perform",
+      "conditions": [
+        "WS-EDIT-DATE-FLGS invalid"
+      ],
+      "citation": [
+        1480,
+        166
+      ]
+    },
+    {
+      "rule_id": "BR009",
+      "description": "No changes: exact field match old=new (case-insensitive strings, exact numerics/dates)",
+      "logic_summary": "1205-COMPARE-OLD-NEW full field-by-field EVALUATE",
+      "conditions": [
+        "ANY field differs"
+      ],
+      "citation": [
+        1684
+      ]
+    },
+    {
+      "rule_id": "BR010",
+      "description": "Optimistic locking: re-read for UPDATE, compare fetched vs stored old values before REWRITE",
+      "logic_summary": "9700-CHECK-CHANGE-IN-REC field compares post READ UPDATE",
+      "conditions": [
+        "DATA-WAS-CHANGED-BEFORE-UPDATE"
+      ],
+      "citation": [
+        3894,
+        3921,
+        3947
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "CXACAIX",
+        "fields_used": [
+          "XREF-CUST-ID",
+          "XREF-CARD-NUM"
+        ],
+        "citation": [
+          3654
+        ]
+      },
+      {
+        "source": "ACCTDAT",
+        "fields_used": [
+          "ACCT-ID",
+          "ACCT-ACTIVE-STATUS",
+          "ACCT-CURR-BAL",
+          "ACCT-CREDIT-LIMIT",
+          "ACCT-CASH-CREDIT-LIMIT",
+          "ACCT-OPEN-DATE",
+          "ACCT-EXPIRAION-DATE",
+          "ACCT-REISSUE-DATE",
+          "ACCT-CURR-CYC-CREDIT",
+          "ACCT-CURR-CYC-DEBIT",
+          "ACCT-GROUP-ID"
+        ],
+        "citation": [
+          3703
+        ]
+      },
+      {
+        "source": "CUSTDAT",
+        "fields_used": [
+          "CUST-ID",
+          "CUST-FIRST-NAME",
+          "CUST-MIDDLE-NAME",
+          "CUST-LAST-NAME",
+          "CUST-ADDR-LINE-1",
+          "CUST-ADDR-LINE-2",
+          "CUST-ADDR-LINE-3",
+          "CUST-ADDR-STATE-CD",
+          "CUST-ADDR-ZIP",
+          "CUST-PHONE-NUM-1",
+          "CUST-PHONE-NUM-2",
+          "CUST-SSN",
+          "CUST-DOB-YYYY-MM-DD",
+          "CUST-FICO-CREDIT-SCORE"
+        ],
+        "citation": [
+          3753
+        ]
+      },
+      {
+        "source": "CACTUPAI map",
+        "fields_used": [
+          "ACCTSIDI",
+          "ACSTTUSI",
+          "ACRDLIMI",
+          "ACSHLIMI",
+          "ACURBALI",
+          "ACRCYCRI",
+          "ACRCYDBI",
+          "OPNYEARI",
+          "EXPYEARI",
+          "RISYEARI",
+          "ACTSSN1I",
+          "ACSFNAMI",
+          "ACSLNAMI",
+          "ACSADL1I",
+          "ACSSTTEI",
+          "ACSZIPCI",
+          "ACSPH1AI"
+        ],
+        "citation": [
+          1040
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "ACCTDAT",
+        "fields_written": [
+          "ACCT-UPDATE-ID",
+          "ACCT-UPDATE-ACTIVE-STATUS",
+          "ACCT-UPDATE-CURR-BAL",
+          "ACCT-UPDATE-CREDIT-LIMIT",
+          "ACCT-UPDATE-CASH-CREDIT-LIMIT",
+          "ACCT-UPDATE-OPEN-DATE",
+          "ACCT-UPDATE-EXPIRAION-DATE",
+          "ACCT-UPDATE-REISSUE-DATE",
+          "ACCT-UPDATE-CURR-CYC-CREDIT",
+          "ACCT-UPDATE-CURR-CYC-DEBIT",
+          "ACCT-UPDATE-GROUP-ID"
+        ],
+        "citation": [
+          4066
+        ]
+      },
+      {
+        "destination": "CUSTDAT",
+        "fields_written": [
+          "CUST-UPDATE-FIRST-NAME",
+          "CUST-UPDATE-MIDDLE-NAME",
+          "CUST-UPDATE-LAST-NAME",
+          "CUST-UPDATE-ADDR-LINE-1",
+          "CUST-UPDATE-ADDR-LINE-2",
+          "CUST-UPDATE-ADDR-LINE-3",
+          "CUST-UPDATE-ADDR-STATE-CD",
+          "CUST-UPDATE-ADDR-ZIP",
+          "CUST-UPDATE-PHONE-NUM-1",
+          "CUST-UPDATE-PHONE-NUM-2",
+          "CUST-UPDATE-SSN",
+          "CUST-UPDATE-DOB-YYYY-MM-DD",
+          "CUST-UPDATE-FICO-CREDIT-SCORE"
+        ],
+        "citation": [
+          4086
+        ]
+      },
+      {
+        "destination": "CACTUPAO map",
+        "fields_written": [
+          "ACCTSIDO",
+          "ACSTTUSO",
+          "ACRDLIMO",
+          "ACURBALO",
+          "INFOMSGO",
+          "ERRMSGO"
+        ],
+        "citation": [
+          3594
+        ]
+      }
+    ],
+    "transforms": [
+      {
+        "input_field": "ACUP-NEW-OPEN-DATE (parts)",
+        "output_field": "ACCT-UPDATE-OPEN-DATE",
+        "transformation_description": "STRING year-'--'mon-'--'day DELIMITED BY SIZE",
+        "citation": [
+          3976
+        ]
+      },
+      {
+        "input_field": "Map phone parts ACSPH1AI/BI/CI",
+        "output_field": "ACUP-NEW-CUST-PHONE-NUM-1",
+        "transformation_description": "Direct move to redefines parts, later STRING to '(###)###-####'",
+        "citation": [
+          1357,
+          4033
+        ]
+      },
+      {
+        "input_field": "Fetched ACCOUNT-RECORD dates",
+        "output_field": "ACUP-OLD-*-YEAR/MON/DAY",
+        "transformation_description": "Substring moves: (1:4) year, (6:2) mon, (9:2) day",
+        "citation": [
+          3832
+        ]
+      },
+      {
+        "input_field": "ACUP-NEW-* numerics X to COMP",
+        "output_field": "ACUP-NEW-*-N",
+        "transformation_description": "NUMVAL-C if TEST-NUMVAL-C==0",
+        "citation": [
+          1079
+        ]
+      }
+    ]
+  },
+  "copybooks_used": [
+    {
+      "copybook_name": "COACTUP",
+      "purpose": "Defines input/output map CACTUPAI/CACTUPAO for account update screen fields",
+      "location": "WORKING_STORAGE",
+      "citation": 623
+    },
+    {
+      "copybook_name": "CVACT01Y",
+      "purpose": "Account master record layout ACCOUNT-RECORD",
+      "location": "WORKING_STORAGE",
+      "citation": 640
+    },
+    {
+      "copybook_name": "CVCUS01Y",
+      "purpose": "Customer master record layout CUSTOMER-RECORD",
+      "location": "WORKING_STORAGE",
+      "citation": 646
+    },
+    {
+      "copybook_name": "CVACT03Y",
+      "purpose": "Card xref record layout CARD-XREF-RECORD",
+      "location": "WORKING_STORAGE",
+      "citation": 643
+    },
+    {
+      "copybook_name": "DFHBMSCA",
+      "purpose": "CICS BMS map attribute constants like DFHBMFSE, DFHBMPRF",
+      "location": "WORKING_STORAGE",
+      "citation": 615
+    },
+    {
+      "copybook_name": "DFHAID",
+      "purpose": "CICS AID constants like CCARD-AID-PFK03",
+      "location": "WORKING_STORAGE",
+      "citation": 616
+    },
+    {
+      "copybook_name": "CSLKPCDY",
+      "purpose": "North America phone area code lookups VALID-GENERAL-PURP-CODE",
+      "location": "WORKING_STORAGE",
+      "citation": 602
+    },
+    {
+      "copybook_name": "COCOM01Y",
+      "purpose": "Common commarea CARDDEMO-COMMAREA",
+      "location": "WORKING_STORAGE",
+      "citation": 650
+    },
+    {
+      "copybook_name": "CSUTLDPY",
+      "purpose": "Date edit routines EDIT-DATE-CCYYMMDD",
+      "location": "WORKING_STORAGE",
+      "citation": 4232
+    },
+    {
+      "copybook_name": "CSSETATY",
+      "purpose": "Attribute setting logic for screen fields via replacing",
+      "location": "WORKING_STORAGE",
+      "citation": 3208
+    }
+  ],
+  "paragraphs": [
+    {
+      "paragraph_name": "0000-MAIN",
+      "purpose": "Main control: handle abend, init, process PFkey, decide action based on state/ACUP-CHANGE-ACTION/PFkeys",
+      "called_by": [],
+      "calls": [
+        "YYYY-STORE-PFKEY",
+        "1000-PROCESS-INPUTS",
+        "2000-DECIDE-ACTION",
+        "3000-SEND-MAP"
+      ],
+      "citation": [
+        859,
+        1006
+      ]
+    },
+    {
+      "paragraph_name": "COMMON-RETURN",
+      "purpose": "Set error msg, build/return commarea with transid CAUP",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1007,
+        1020
+      ]
+    },
+    {
+      "paragraph_name": "1000-PROCESS-INPUTS",
+      "purpose": "Receive map into CACTUPAI, move to ACUP-NEW-DETAILS, edit all fields",
+      "called_by": [
+        "0000-MAIN"
+      ],
+      "calls": [
+        "1100-RECEIVE-MAP",
+        "1200-EDIT-MAP-INPUTS"
+      ],
+      "citation": [
+        1025,
+        1035
+      ]
+    },
+    {
+      "paragraph_name": "1100-RECEIVE-MAP",
+      "purpose": "CICS RECEIVE MAP into CACTUPAI, move all I-fields to ACUP-NEW_* handling * blanks as LOW-VALUES",
+      "called_by": [
+        "1000-PROCESS-INPUTS"
+      ],
+      "calls": [],
+      "citation": [
+        1039,
+        1425
+      ]
+    },
+    {
+      "paragraph_name": "1200-EDIT-MAP-INPUTS",
+      "purpose": "Edit search keys if not fetched, compare old/new, invoke field-specific edits (mandatory, alpha, num, phone, SSN, etc.), set INPUT-ERROR if any fail",
+      "called_by": [
+        "1000-PROCESS-INPUTS"
+      ],
+      "calls": [
+        "1210-EDIT-ACCOUNT",
+        "1205-COMPARE-OLD-NEW",
+        "1220-EDIT-YESNO",
+        "EDIT-DATE-CCYYMMDD",
+        "1250-EDIT-SIGNED-9V2",
+        "1265-EDIT-US-SSN",
+        "1245-EDIT-NUM-REQD",
+        "1225-EDIT-ALPHA-REQD",
+        "1270-EDIT-US-STATE-CD"
+      ],
+      "citation": [
+        1429,
+        1677
+      ]
+    },
+    {
+      "paragraph_name": "2000-DECIDE-ACTION",
+      "purpose": "EVALUATE state/PFkey: fetch data, confirm changes, write, handle errors/abend",
+      "called_by": [
+        "0000-MAIN"
+      ],
+      "calls": [
+        "9000-READ-ACCT",
+        "9600-WRITE-PROCESSING",
+        "ABEND-ROUTINE"
+      ],
+      "citation": [
+        2562,
+        2642
+      ]
+    },
+    {
+      "paragraph_name": "3000-SEND-MAP",
+      "purpose": "Init screen, setup vars/old/new data, info msg, attributes/protect/unprotect/cursor/color, CICS SEND MAP",
+      "called_by": [
+        "0000-MAIN"
+      ],
+      "calls": [
+        "3100-SCREEN-INIT",
+        "3200-SETUP-SCREEN-VARS",
+        "3250-SETUP-INFOMSG",
+        "3300-SETUP-SCREEN-ATTRS",
+        "3400-SEND-SCREEN"
+      ],
+      "citation": [
+        2649,
+        2663
+      ]
+    },
+    {
+      "paragraph_name": "9000-READ-ACCT",
+      "purpose": "Chain read xref->acct->cust files into records, store to ACUP-OLD-DETAILS/CDEMO-*",
+      "called_by": [
+        "2000-DECIDE-ACTION"
+      ],
+      "calls": [
+        "9200-GETCARDXREF-BYACCT",
+        "9300-GETACCTDATA-BYACCT",
+        "9400-GETCUSTDATA-BYCUST",
+        "9500-STORE-FETCHED-DATA"
+      ],
+      "citation": [
+        3608,
+        3646
+      ]
+    },
+    {
+      "paragraph_name": "9600-WRITE-PROCESSING",
+      "purpose": "READ UPDATE acct/cust, check no changes since fetch, build/populate update records from ACUP-NEW_*, REWRITE both, SYNCPOINT ROLLBACK if fail",
+      "called_by": [
+        "2000-DECIDE-ACTION"
+      ],
+      "calls": [
+        "9700-CHECK-CHANGE-IN-REC"
+      ],
+      "citation": [
+        3888,
+        4104
+      ]
+    },
+    {
+      "paragraph_name": "ABEND-ROUTINE",
+      "purpose": "Send abend data screen, CANCEL HANDLE, ABEND ABCODE 9999",
+      "called_by": [
+        "0000-MAIN"
+      ],
+      "calls": [],
+      "citation": [
+        4203,
+        4225
+      ]
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "CICS RESP != NORMAL after READ/REWRITE",
+      "action": "Set error flags/messages like DID-NOT-FIND-*, COULD-NOT-LOCK-*, update failed; ROLLBACK if REWRITE fail",
+      "citation": [
+        3664,
+        3713,
+        3907,
+        4076,
+        4095
+      ]
+    },
+    {
+      "condition": "HANDLE ABEND",
+      "action": "Branch to ABEND-ROUTINE",
+      "citation": [
+        862
+      ]
+    },
+    {
+      "condition": "Input edit fails (blank/invalid)",
+      "action": "Set INPUT-ERROR, WS-RETURN-MSG specific like 'must be supplied', cursor to field, reprotect",
+      "citation": [
+        1431,
+        1671
+      ]
+    },
+    {
+      "condition": "Optimistic lock fail (data changed)",
+      "action": "DATA-WAS-CHANGED-BEFORE-UPDATE msg, refresh screen",
+      "citation": [
+        3947
+      ]
+    },
+    {
+      "condition": "PFK-INVALID",
+      "action": "Force ENTER",
+      "citation": [
+        905
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [
+    {
+      "command": "HANDLE ABEND",
+      "resource": "ABEND-ROUTINE",
+      "purpose": "Catch unhandled errors/abends",
+      "citation": 862
+    },
+    {
+      "command": "RECEIVE MAP",
+      "resource": "LIT-THISMAP (CACTUPA)",
+      "purpose": "Receive user input into CACTUPAI",
+      "citation": 1040
+    },
+    {
+      "command": "SEND MAP",
+      "resource": "CCARD-NEXT-MAP (CACTUPA)",
+      "purpose": "Send output screen CACTUPAO with cursor/erase/FREEKB",
+      "citation": 3594
+    },
+    {
+      "command": "READ DATASET",
+      "resource": "CXACAIX/ACCTDAT/CUSTDAT",
+      "purpose": "Fetch records by RIDFLD account/cust ID",
+      "citation": 3654
+    },
+    {
+      "command": "READ FILE UPDATE",
+      "resource": "ACCTDAT/CUSTDAT",
+      "purpose": "Lock records for REWRITE",
+      "citation": 3894
+    },
+    {
+      "command": "REWRITE FILE",
+      "resource": "ACCTDAT/CUSTDAT",
+      "purpose": "Commit updates",
+      "citation": 4066
+    },
+    {
+      "command": "RETURN TRANSID",
+      "resource": "LIT-THISTRANID (CAUP)",
+      "purpose": "Pseudo-conversational return with commarea",
+      "citation": 1015
+    },
+    {
+      "command": "XCTL PROGRAM",
+      "resource": "CDEMO-TO-PROGRAM",
+      "purpose": "Exit on PF3 to menu/caller",
+      "citation": 956
+    },
+    {
+      "command": "SYNCPOINT",
+      "resource": null,
+      "purpose": "Commit before XCTL",
+      "citation": 953
+    },
+    {
+      "command": "SYNCPOINT ROLLBACK",
+      "resource": null,
+      "purpose": "Rollback on update fail",
+      "citation": 4100
+    }
+  ],
+  "open_questions": [
+    {
+      "question": "Exact calling programs/transactions",
+      "context": "XCTL to CDEMO-TO-PROGRAM (set from prior commarea or menu), but no static callers in code",
+      "suggestion": "Trace CARDDEMO-COMMAREA usage in other progs"
+    },
+    {
+      "question": "Full copybook layouts for data fields",
+      "context": "Copies like CVACT01Y define records, but contents inferred from moves; e.g. ACCT-OPEN-DATE PIC X(10)",
+      "suggestion": "Analyze referenced copybooks"
+    },
+    {
+      "question": "VSAM file organizations/details",
+      "context": "READ DATASET RIDFLD, alternate path CXACAIX for acct index",
+      "suggestion": "JCL/IDCAMS for file defs"
+    }
+  ]
+}

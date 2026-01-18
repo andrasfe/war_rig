@@ -1,0 +1,116 @@
+{
+  "program_id": "COACTVWC",
+  "questions": [
+    {
+      "question_id": "Q-55B14E25",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "In business_rules BR003, lines 462 and 465 are cited, but line 462 sets WS-PROMPT-FOR-INPUT only for EIBCALEN=0, while line 465 handles display of ACCTSIDO for blank filter without setting the prompt flag. For re-entry with blank input, line 658 sets WS-PROMPT-FOR-ACCT (an error message 'Account number not provided') instead of the prompt. Does this accurately reflect 'prompt for account ID' on blank filter?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-34EBFD91",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "What about the sub-paragraph 2210-EDIT-ACCOUNT at line 649, which contains the core validation logic for the account ID (numeric check, non-zero, etc.) referenced in BR001? It is performed from 2200-EDIT-MAP-INPUTS at line 636 but not listed separately.",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-AEF3FAAB",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "In data_flow writes_to CACTVWAO, citation includes 495, but line 495 is a commented-out MOVE CUST-SSN TO ACSTSSNO, while the actual SSN formatting to ACSTSSNO occurs via STRING at lines 496-503. Is the citation precise?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-2A3A36F7",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "The data_flow writes_to lists only four fields (ACSTTUSO, ACURBALO, ACSTNUMO, ACSFNAMO) with citations [473,495], but many more screen fields are populated from account/customer data, e.g., ACRDLIMO (477), ACSFCOO (505), ACSADL1O (511), etc. Should additional fields be included?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-A8E1413C",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "In inputs, VSAM files (CXACAIX, ACCTDAT, CUSTDAT) are documented as inputs with io_type FILE_VSAM, but they are read-only data sources. Meanwhile, data_flow has reads_from covering them. What do you mean by classifying files as 'inputs' here?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-44012AB6",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "Are you sure VSAM files (CXACAIX, ACCTDAT, CUSTDAT) belong in the 'inputs' section with io_type FILE_VSAM? They are read-only datasets accessed via CICS READ DATASET (no FILE SECTION defined per preprocessor), while typical inputs are user map/comma (CACTVWAI, DFHCOMMAREA). These are already covered in data_flow.reads_from and cics_operations.",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-CB3975BE",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "What about error handling for RESP codes OTHER than NOTFND in file reads (e.g., lines 759, 809, 858 set generic WS-FILE-ERROR-MESSAGE with OPNAME/FILE/RESP/RESP2)? BR002 focuses only on NOTFND (citations 737,786,836); should it be expanded or a new BR added?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-ED12639E",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "In data_flow.reads_from ACCTDAT, fields_used lists many ACCT-* fields with citation [471], but line 471 is IF FOUND-ACCT-IN-MASTER (condition); actual MOVEs start at 473 (ACCT-ACTIVE-STATUS to ACSTTUSO). Similarly CUSTDAT [494] is first MOVE CUST-ID. Accurate citation?",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-E363F5CF",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "In paragraphs, 0000-MAIN calls YYYY-STORE-PFKEY (line 299 PERFORM), but it's from COPY CSSTRPFY (line 913, noted in open_questions). What does it do (e.g., remap PFkeys per comment line 296-298)? Document or cite expanded logic?",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-B648C940",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "In data_flow.writes_to CARDDEMO-COMMAREA, citations include 661/676 (MOVE ZEROES/ ZERO to CDEMO-ACCT-ID on edit errors), but success path is 679 MOVE CC-ACCT-ID, and CUST-ID/CARD-NUM from 739/740. Does this cover both paths accurately?",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 2,
+      "answered": false
+    }
+  ],
+  "responses": []
+}

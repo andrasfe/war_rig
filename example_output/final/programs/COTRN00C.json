@@ -1,0 +1,530 @@
+{
+  "header": {
+    "program_id": "COTRN00C",
+    "file_name": "COTRN00C.cbl",
+    "file_type": "COBOL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-18T16:09:32.512324",
+    "iteration_count": 1,
+    "final_status": "WITNESSED"
+  },
+  "purpose": {
+    "summary": "CICS online program that displays a paginated list of transactions from the TRANSACT VSAM file on map COTRN0A. Handles user selections to view transaction details via XCTL to COTRN01C, paging forward/backward with PF8/PF7, and returns to previous screens. Processes input from map COTRN0AI and populates output map COTRN0AO with transaction data.",
+    "business_context": "CardDemo application for listing and selecting card transactions.",
+    "program_type": "ONLINE_CICS",
+    "citations": [
+      2,
+      5,
+      95,
+      527,
+      554
+    ]
+  },
+  "inputs": [
+    {
+      "name": "COTRN0AI",
+      "io_type": "CICS_MAP",
+      "description": "Input map fields for transaction list screen including selection fields SEL0001I-SEL0010I, transaction IDs TRNID01I-TRNID10I, input transaction ID TRNIDINI, and page number PAGENUMI",
+      "copybook": "COTRN00",
+      "citation": [
+        556,
+        148,
+        206
+      ]
+    },
+    {
+      "name": "TRANSACT",
+      "io_type": "FILE_VSAM",
+      "description": "VSAM dataset containing transaction records with key TRAN-ID",
+      "copybook": "CVTRA05Y",
+      "citation": [
+        39,
+        626,
+        660
+      ]
+    },
+    {
+      "name": "DFHCOMMAREA",
+      "io_type": "CICS_COMMAREA",
+      "description": "Incoming commarea copied to CARDDEMO-COMMAREA for program context and navigation",
+      "copybook": null,
+      "citation": [
+        87,
+        111
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "COTRN0AO",
+      "io_type": "CICS_MAP",
+      "description": "Output map fields for transaction list screen including header info TITLE01O-TITLE02O, error message ERRMSGO, transaction display fields TRNID01O-TDATE10O etc., current date/time CURDATEO CURTIMEO",
+      "copybook": "COTRN00",
+      "citation": [
+        534,
+        542
+      ]
+    },
+    {
+      "name": "CARDDEMO-COMMAREA",
+      "io_type": "CICS_COMMAREA",
+      "description": "Outgoing commarea passed to XCTL programs and RETURN TRANSID",
+      "copybook": "COCOM01Y",
+      "citation": [
+        138,
+        194,
+        520
+      ]
+    }
+  ],
+  "called_programs": [
+    {
+      "program_name": "COTRN01C",
+      "call_type": "CICS_XCTL",
+      "purpose": "Display details of selected transaction",
+      "parameters": [
+        "CARDDEMO-COMMAREA"
+      ],
+      "citation": 193
+    },
+    {
+      "program_name": "COSGN00C",
+      "call_type": "CICS_XCTL",
+      "purpose": "Return to sign-on screen",
+      "parameters": [
+        "CARDDEMO-COMMAREA"
+      ],
+      "citation": 109
+    },
+    {
+      "program_name": "COMEN01C",
+      "call_type": "CICS_XCTL",
+      "purpose": "Return to main menu screen on PF3",
+      "parameters": [
+        "CARDDEMO-COMMAREA"
+      ],
+      "citation": 123
+    }
+  ],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [
+      "CT00"
+    ],
+    "linkage_section": [
+      "DFHCOMMAREA",
+      "LK-COMMAREA",
+      "CARDDEMO-COMMAREA"
+    ]
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "If user enters 'S' or 's' in any SEL000xI field with corresponding TRNIDxxI, XCTL to COTRN01C with selected transaction ID in commarea",
+      "logic_summary": "EVALUATE on SEL fields to set CDEMO-CT00-TRN-SEL-FLG and CDEMO-CT00-TRN-SELECTED, then check for 'S'/'s' and XCTL",
+      "conditions": [
+        "SEL0001I OF COTRN0AI NOT = SPACES AND LOW-VALUES",
+        "CDEMO-CT00-TRN-SEL-FLG = 'S' OR 's'"
+      ],
+      "citation": [
+        148,
+        185
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Input transaction ID TRNIDINI must be numeric or spaces/LOW-VALUES; else error message and redisplay screen",
+      "logic_summary": "Check NUMERIC on TRNIDINI, set TRAN-ID, error if not",
+      "conditions": [
+        "TRNIDINI OF COTRN0AI = SPACES OR LOW-VALUES",
+        "TRNIDINI OF COTRN0AI IS NUMERIC"
+      ],
+      "citation": [
+        206,
+        209
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "PF7 (backward) starts browse from first TRNID on screen or LOW-VALUES, reads 10 previous records",
+      "logic_summary": "Set TRAN-ID to CDEMO-CT00-TRNID-FIRST or LOW-VALUES, STARTBR, loop READPREV 10 times populating screen fields",
+      "conditions": [
+        "EIBAID = DFHPF7",
+        "CDEMO-CT00-PAGE-NUM > 1"
+      ],
+      "citation": [
+        234,
+        236,
+        333
+      ]
+    },
+    {
+      "rule_id": "BR004",
+      "description": "Display up to 10 transactions per page, track first/last TRNID and NEXT-PAGE-YES/NO for paging",
+      "logic_summary": "Loop WS-IDX 1-10, READNEXT/PREV, POPULATE-TRAN-DATA, set first/last and peek next for more pages",
+      "conditions": [
+        "TRANSACT-NOT-EOF",
+        "ERR-FLG-OFF"
+      ],
+      "citation": [
+        290,
+        297,
+        350
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "TRANSACT",
+        "fields_used": [
+          "TRAN-ID",
+          "TRAN-AMT",
+          "TRAN-ORIG-TS",
+          "TRAN-DESC"
+        ],
+        "citation": [
+          626,
+          382
+        ]
+      },
+      {
+        "source": "COTRN0AI",
+        "fields_used": [
+          "SEL0001I",
+          "TRNID01I",
+          "TRNIDINI",
+          "PAGENUMI"
+        ],
+        "citation": [
+          148,
+          206
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "COTRN0AO",
+        "fields_written": [
+          "TRNID01O",
+          "TDATE01O",
+          "TDESC01O",
+          "TAMT001O",
+          "ERRMSGO",
+          "CURDATEO",
+          "CURTIMEO"
+        ],
+        "citation": [
+          532,
+          324,
+          580
+        ]
+      },
+      {
+        "destination": "CDEMO-CT00-INFO",
+        "fields_written": [
+          "CDEMO-CT00-TRNID-FIRST",
+          "CDEMO-CT00-TRNID-LAST",
+          "CDEMO-CT00-PAGE-NUM",
+          "CDEMO-CT00-NEXT-PAGE-FLG"
+        ],
+        "citation": [
+          393,
+          438,
+          306
+        ]
+      }
+    ],
+    "transforms": [
+      {
+        "input_field": "TRAN-ORIG-TS",
+        "output_field": "WS-TRAN-DATE",
+        "transformation_description": "Extract YYYYMMDD from timestamp, format to MM/DD/YY",
+        "citation": [
+          385
+        ]
+      },
+      {
+        "input_field": "TRAN-AMT",
+        "output_field": "WS-TRAN-AMT",
+        "transformation_description": "Direct move to display format PIC +99999999.99",
+        "citation": [
+          383
+        ]
+      },
+      {
+        "input_field": "WS-CURDATE-DATA",
+        "output_field": "CURDATEO",
+        "transformation_description": "Format CURRENT-DATE to MM/DD/YY",
+        "citation": [
+          569
+        ]
+      }
+    ]
+  },
+  "copybooks_used": [
+    {
+      "copybook_name": "COCOM01Y",
+      "purpose": "Defines CARDDEMO-COMMAREA including CDEMO-CT00-INFO for paging and selection context",
+      "location": "WORKING_STORAGE",
+      "citation": 61
+    },
+    {
+      "copybook_name": "COTRN00",
+      "purpose": "Defines input/output map areas COTRN0AI and COTRN0AO for transaction list screen",
+      "location": "WORKING_STORAGE",
+      "citation": 72
+    },
+    {
+      "copybook_name": "COTTL01Y",
+      "purpose": "Defines titles CCDA-TITLE01 CCDA-TITLE02 used in header",
+      "location": "WORKING_STORAGE",
+      "citation": 74
+    },
+    {
+      "copybook_name": "CSDAT01Y",
+      "purpose": "Defines date formatting fields WS-CURDATE-* WS-CURTIME-*",
+      "location": "WORKING_STORAGE",
+      "citation": 75
+    },
+    {
+      "copybook_name": "CSMSG01Y",
+      "purpose": "Defines error messages like CCDA-MSG-INVALID-KEY",
+      "location": "WORKING_STORAGE",
+      "citation": 76
+    },
+    {
+      "copybook_name": "CVTRA05Y",
+      "purpose": "Defines TRAN-RECORD structure with TRAN-ID key, TRAN-AMT, TRAN-ORIG-TS, TRAN-DESC",
+      "location": "WORKING_STORAGE",
+      "citation": 78
+    },
+    {
+      "copybook_name": "DFHAID",
+      "purpose": "Defines EIBAID attention key values like DFHENTER DFHPF7",
+      "location": "WORKING_STORAGE",
+      "citation": 80
+    },
+    {
+      "copybook_name": "DFHBMSCA",
+      "purpose": "Defines EIBCALEN and other CICS fields",
+      "location": "WORKING_STORAGE",
+      "citation": 81
+    }
+  ],
+  "paragraphs": [
+    {
+      "paragraph_name": "MAIN-PARA",
+      "purpose": "Main control logic: initialize flags, handle first entry vs reentry, process AID keys, RETURN with TRANSID",
+      "called_by": [],
+      "calls": [
+        "RETURN-TO-PREV-SCREEN",
+        "PROCESS-ENTER-KEY",
+        "SEND-TRNLST-SCREEN",
+        "RECEIVE-TRNLST-SCREEN",
+        "PROCESS-PF7-KEY",
+        "PROCESS-PF8-KEY"
+      ],
+      "citation": [
+        95,
+        141
+      ]
+    },
+    {
+      "paragraph_name": "PROCESS-ENTER-KEY",
+      "purpose": "Process selection fields and input TRNIDINI, handle 'S' selection XCTL, load first page",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [
+        "SEND-TRNLST-SCREEN",
+        "PROCESS-PAGE-FORWARD"
+      ],
+      "citation": [
+        146,
+        229
+      ]
+    },
+    {
+      "paragraph_name": "PROCESS-PF7-KEY",
+      "purpose": "Handle backward paging from first TRNID",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [
+        "PROCESS-PAGE-BACKWARD",
+        "SEND-TRNLST-SCREEN"
+      ],
+      "citation": [
+        234,
+        252
+      ]
+    },
+    {
+      "paragraph_name": "PROCESS-PF8-KEY",
+      "purpose": "Handle forward paging from last TRNID",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [
+        "PROCESS-PAGE-FORWARD",
+        "SEND-TRNLST-SCREEN"
+      ],
+      "citation": [
+        257,
+        274
+      ]
+    },
+    {
+      "paragraph_name": "PROCESS-PAGE-FORWARD",
+      "purpose": "Browse forward: STARTBR, read up to 10 records, populate screen, check for more pages",
+      "called_by": [
+        "PROCESS-ENTER-KEY",
+        "PROCESS-PF8-KEY"
+      ],
+      "calls": [
+        "STARTBR-TRANSACT-FILE",
+        "READNEXT-TRANSACT-FILE",
+        "INITIALIZE-TRAN-DATA",
+        "POPULATE-TRAN-DATA",
+        "ENDBR-TRANSACT-FILE",
+        "SEND-TRNLST-SCREEN"
+      ],
+      "citation": [
+        279,
+        328
+      ]
+    },
+    {
+      "paragraph_name": "POPULATE-TRAN-DATA",
+      "purpose": "Move current TRAN-RECORD fields to screen fields TRNIDxxI TDATExxI etc. based on WS-IDX, set first/last",
+      "called_by": [
+        "PROCESS-PAGE-FORWARD",
+        "PROCESS-PAGE-BACKWARD"
+      ],
+      "calls": [],
+      "citation": [
+        381,
+        445
+      ]
+    },
+    {
+      "paragraph_name": "SEND-TRNLST-SCREEN",
+      "purpose": "Populate header, send map COTRN0A with/without ERASE",
+      "called_by": [
+        "MAIN-PARA",
+        "PROCESS-ENTER-KEY",
+        "PROCESS-PF7-KEY",
+        "PROCESS-PF8-KEY",
+        "PROCESS-PAGE-FORWARD",
+        "PROCESS-PAGE-BACKWARD"
+      ],
+      "calls": [
+        "POPULATE-HEADER-INFO"
+      ],
+      "citation": [
+        527,
+        549
+      ]
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "WS-RESP-CD NOT = DFHRESP(NORMAL) OR NOTFND",
+      "action": "Set WS-ERR-FLG 'Y', move error message to WS-MESSAGE, set TRNIDINL -1, PERFORM SEND-TRNLST-SCREEN",
+      "citation": [
+        602
+      ]
+    },
+    {
+      "condition": "TRNIDINI not numeric",
+      "action": "Set WS-ERR-FLG 'Y', error message, TRNIDINL -1, SEND-TRNLST-SCREEN",
+      "citation": [
+        212
+      ]
+    },
+    {
+      "condition": "Invalid EIBAID",
+      "action": "Set WS-ERR-FLG 'Y', invalid key message, SEND-TRNLST-SCREEN",
+      "citation": [
+        130
+      ]
+    },
+    {
+      "condition": "READNEXT/READPREV ENDFILE",
+      "action": "Set TRANSACT-EOF, message about end/top of file, SEND-TRNLST-SCREEN",
+      "citation": [
+        636,
+        670
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [
+    {
+      "command": "RECEIVE MAP",
+      "resource": "COTRN0A",
+      "purpose": "Receive user input into COTRN0AI",
+      "citation": 556
+    },
+    {
+      "command": "SEND MAP",
+      "resource": "COTRN0A",
+      "purpose": "Send transaction list screen from COTRN0AO with CURSOR and optional ERASE",
+      "citation": 534
+    },
+    {
+      "command": "STARTBR",
+      "resource": "TRANSACT",
+      "purpose": "Start browse on TRAN-ID key for forward/backward paging",
+      "citation": 593
+    },
+    {
+      "command": "READNEXT",
+      "resource": "TRANSACT",
+      "purpose": "Read next transaction record into TRAN-RECORD",
+      "citation": 626
+    },
+    {
+      "command": "READPREV",
+      "resource": "TRANSACT",
+      "purpose": "Read previous transaction record into TRAN-RECORD",
+      "citation": 660
+    },
+    {
+      "command": "ENDBR",
+      "resource": "TRANSACT",
+      "purpose": "End browse after paging",
+      "citation": 694
+    },
+    {
+      "command": "XCTL",
+      "resource": "COTRN01C",
+      "purpose": "Transfer control to transaction detail program",
+      "citation": 193
+    },
+    {
+      "command": "RETURN",
+      "resource": null,
+      "purpose": "Return to CICS with next TRANSID CT00 and commarea",
+      "citation": 138
+    }
+  ],
+  "open_questions": [
+    {
+      "question": "Exact structure and lengths of fields in copybooks like CVTRA05Y TRAN-RECORD, COTRN00 map fields",
+      "context": "Copybooks not provided in source; inferred from usage but details UNKNOWN",
+      "suggestion": "Analyze copybook source files"
+    },
+    {
+      "question": "Called_by programs and full navigation flow",
+      "context": "No static analysis of callers; only outgoing XCTL/RETURN visible",
+      "suggestion": "Trace transaction flow from sign-on COSGN00C"
+    },
+    {
+      "question": "VSAM file organization of TRANSACT",
+      "context": "Assumed KSDS from STARTBR RIDFLD KEYLENGTH; no FD/SELECT",
+      "suggestion": "Check CICS FCT definitions"
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "program_id": "COTRN01C",
+  "questions": [
+    {
+      "question_id": "Q-207810C7",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-16C33F83",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-7197667C",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-83E0980C",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "Line 117 shows MOVE 'COMEN01C' TO CDEMO-TO-PROGRAM for PF3 default, but called_programs lists program_name as 'COMEN00C'. Is this a factual error in the documentation?",
+      "context": null,
+      "evidence": [],
+      "severity": "BLOCKING",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-C066CA46",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "Transaction details are moved to fields in COTRN1AI (e.g., lines 178-190: MOVE TRAN-ID TO TRNIDI OF COTRN1AI), but SEND-TRNVIEW-SCREEN executes SEND FROM(COTRN1AO) (line 219). Are detail fields part of COTRN1AO, shared between maps, or is there a missing move to AO fields?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-B3ECB280",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "What about the handling of CDEMO-PGM-REENTER flag (lines 99-100)? It controls first reentry logic with prefill from commarea (line 103), but not explicitly documented in business_rules or data_flow.",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    }
+  ],
+  "responses": []
+}

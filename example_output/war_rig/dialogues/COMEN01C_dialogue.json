@@ -1,0 +1,94 @@
+{
+  "program_id": "COMEN01C",
+  "questions": [
+    {
+      "question_id": "Q-01574625",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "BLOCKING",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-DF3AB0EA",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-BA5CBD6B",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-A7305716",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-B3DB16C5",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-6AC8AD3E",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "BR003 states 'Inquire program existence before XCTL for non-DUMMY options' with conditions including 'CDEMO-MENU-OPT-PGMNAME(WS-OPTION) NOT STARTING \"DUMMY\"', but lines 147-152 show INQUIRE only within the WHEN clause for exactly 'COPAUS0C', with no check for NOT DUMMY there. Lines 169-176 handle DUMMY with message only, and lines 178-187 XCTL for OTHER without INQUIRE. Does the code inquire for all non-DUMMY or only COPAUS0C?",
+      "context": null,
+      "evidence": [],
+      "severity": "BLOCKING",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-9E07C919",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "What about error handling or checks for WS-RESP-CD and WS-REAS-CD after RECEIVE MAP at line 227? The documentation notes they are captured but not checked (line 231), leading to potential processing without valid input data (e.g., EVALUATE EIBAID at line 93 proceeds regardless). Is there implicit handling or should it be documented as a gap?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-5E694DF8",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "In RETURN-TO-SIGNON-SCREEN (lines 196-202), CDEMO-TO-PROGRAM is set if needed (199) before XCTL (202), but no COMMAREA is passed (unlike line 156). Outputs describe CARDDEMO-COMMAREA as updated 'for XCTL or RETURN' (citations 107,156), but called_programs correctly notes [] parameters for this call. Is the output description misleading regarding XCTL usage?",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 2,
+      "answered": false
+    }
+  ],
+  "responses": []
+}

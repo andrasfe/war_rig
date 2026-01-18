@@ -1,0 +1,324 @@
+{
+  "header": {
+    "program_id": "CBCUS01C",
+    "file_name": "CBCUS01C.cbl",
+    "file_type": "COBOL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-18T17:08:58.553970",
+    "iteration_count": 2,
+    "final_status": "WITNESSED"
+  },
+  "purpose": {
+    "summary": "Batch COBOL program that opens a VSAM indexed customer file (CUSTFILE-FILE) for input, reads records sequentially until end-of-file using READ NEXT INTO CUSTOMER-RECORD, displays each successful customer record via DISPLAY, and closes the file. Handles I/O errors (status not '00' or '10') by displaying error messages and status, then abending the program. Part of CardDemo application; CUSTOMER-RECORD structure defined in unprovided copybook CVCUS01Y and displayed verbatim.",
+    "business_context": "CardDemo application for processing customer data",
+    "program_type": "BATCH",
+    "citations": [
+      2,
+      3,
+      4,
+      5,
+      71,
+      85
+    ]
+  },
+  "inputs": [
+    {
+      "name": "CUSTFILE-FILE",
+      "io_type": "FILE_VSAM",
+      "description": "VSAM KSDS file with ORGANIZATION IS INDEXED, ACCESS MODE IS SEQUENTIAL, RECORD KEY FD-CUST-ID (PIC 9(09)), record layout FD-CUSTFILE-REC with FD-CUST-ID and FD-CUST-DATA (PIC X(491)); records read sequentially into CUSTOMER-RECORD",
+      "copybook": "CVCUS01Y",
+      "citation": [
+        29,
+        30,
+        31,
+        32,
+        38,
+        39,
+        40,
+        45,
+        93,
+        120
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "DISPLAY OUTPUT",
+      "io_type": "REPORT",
+      "description": "Execution start/end messages ('START OF EXECUTION...', 'END OF EXECUTION...'), successful CUSTOMER-RECORD displayed verbatim (structure from CVCUS01Y copybook), error messages ('ERROR READING/OPENING/CLOSING...'), formatted file IO-STATUS ('FILE STATUS IS: NNNN'), and abend message ('ABENDING PROGRAM')",
+      "copybook": "CVCUS01Y",
+      "citation": [
+        71,
+        78,
+        85,
+        96,
+        110,
+        129,
+        147,
+        155,
+        162,
+        168,
+        172
+      ]
+    }
+  ],
+  "called_programs": [
+    {
+      "program_name": "CEE3ABD",
+      "call_type": "STATIC_CALL",
+      "purpose": "Abends the program with user abend code in ABCODE (set to 999) and timing info (set to 0)",
+      "parameters": [
+        "ABCODE",
+        "TIMING"
+      ],
+      "citation": 158
+    }
+  ],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Treat file status '00' as successful I/O and continue processing",
+      "logic_summary": "If CUSTFILE-STATUS = '00' then MOVE 0 TO APPL-RESULT and display record if READ",
+      "conditions": [
+        "CUSTFILE-STATUS = '00'"
+      ],
+      "citation": [
+        94,
+        95,
+        96,
+        121,
+        122,
+        139,
+        140
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Treat file status '10' as end-of-file on READ",
+      "logic_summary": "If CUSTFILE-STATUS = '10' then MOVE 16 TO APPL-RESULT and set END-OF-FILE = 'Y' if APPL-EOF",
+      "conditions": [
+        "CUSTFILE-STATUS = '10'",
+        "APPL-EOF"
+      ],
+      "citation": [
+        98,
+        99,
+        107,
+        108
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "On any I/O error (status not '00' or '10'), display error message, IO status, and abend program",
+      "logic_summary": "MOVE 12 TO APPL-RESULT, DISPLAY error, PERFORM Z-DISPLAY-IO-STATUS and Z-ABEND-PROGRAM",
+      "conditions": [
+        "APPL-RESULT NOT APPL-AOK or APPL-EOF"
+      ],
+      "citation": [
+        101,
+        110,
+        111,
+        112,
+        113,
+        124,
+        129,
+        130,
+        131,
+        132,
+        142,
+        147,
+        148,
+        149,
+        150
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "CUSTFILE-FILE",
+        "fields_used": [
+          "FD-CUST-ID",
+          "FD-CUST-DATA"
+        ],
+        "citation": [
+          93
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "DISPLAY OUTPUT",
+        "fields_written": [
+          "CUSTOMER-RECORD"
+        ],
+        "citation": [
+          78,
+          96
+        ]
+      }
+    ],
+    "transforms": [
+      {
+        "input_field": "FD-CUSTFILE-REC",
+        "output_field": "CUSTOMER-RECORD",
+        "transformation_description": "Direct move via READ CUSTFILE-FILE INTO CUSTOMER-RECORD (no field-level transforms observed)",
+        "citation": [
+          93
+        ]
+      }
+    ]
+  },
+  "copybooks_used": [
+    {
+      "copybook_name": "CVCUS01Y",
+      "purpose": "Defines CUSTOMER-RECORD data structure matching file record layout, used for READ INTO and DISPLAY",
+      "location": "WORKING_STORAGE",
+      "citation": 45
+    }
+  ],
+  "paragraphs": [
+    {
+      "paragraph_name": "MAIN",
+      "purpose": "Unnamed main control flow in PROCEDURE DIVISION: displays start message, PERFORM 0000-CUSTFILE-OPEN, loop PERFORM UNTIL EOF with nested PERFORM 1000-CUSTFILE-GET-NEXT and DISPLAY CUSTOMER-RECORD, PERFORM 9000-CUSTFILE-CLOSE, display end message, GOBACK",
+      "called_by": [],
+      "calls": [
+        "0000-CUSTFILE-OPEN",
+        "1000-CUSTFILE-GET-NEXT",
+        "9000-CUSTFILE-CLOSE"
+      ],
+      "citation": [
+        70,
+        91
+      ]
+    },
+    {
+      "paragraph_name": "END-PERFORM",
+      "purpose": "Labeled END-PERFORM terminating the main UNTIL loop (lines 74-81)",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        81,
+        91
+      ]
+    },
+    {
+      "paragraph_name": "0-CUSTFILE-GET-NEXT",
+      "purpose": "Performs sequential READ CUSTFILE-FILE INTO CUSTOMER-RECORD, handles status '00' (success/display), '10' (EOF), other (error/display/abend)",
+      "called_by": [],
+      "calls": [
+        "Z-DISPLAY-IO-STATUS",
+        "Z-ABEND-PROGRAM"
+      ],
+      "citation": [
+        92,
+        115
+      ]
+    },
+    {
+      "paragraph_name": "0-CUSTFILE-OPEN",
+      "purpose": "Sets APPL-RESULT=8, OPEN INPUT CUSTFILE-FILE, checks status '00' (success) else error/display/abend",
+      "called_by": [],
+      "calls": [
+        "Z-DISPLAY-IO-STATUS",
+        "Z-ABEND-PROGRAM"
+      ],
+      "citation": [
+        118,
+        133
+      ]
+    },
+    {
+      "paragraph_name": "0-CUSTFILE-CLOSE",
+      "purpose": "Sets APPL-RESULT=8, CLOSE CUSTFILE-FILE, checks status '00' (success) else error/display/abend",
+      "called_by": [],
+      "calls": [
+        "Z-DISPLAY-IO-STATUS",
+        "Z-ABEND-PROGRAM"
+      ],
+      "citation": [
+        136,
+        151
+      ]
+    },
+    {
+      "paragraph_name": "Z-ABEND-PROGRAM",
+      "purpose": "Displays 'ABENDING PROGRAM', sets ABCODE=999, TIMING=0, static CALL 'CEE3ABD'",
+      "called_by": [
+        "0-CUSTFILE-GET-NEXT",
+        "0-CUSTFILE-OPEN",
+        "0-CUSTFILE-CLOSE"
+      ],
+      "calls": [],
+      "citation": [
+        154,
+        160
+      ]
+    },
+    {
+      "paragraph_name": "Z-DISPLAY-IO-STATUS",
+      "purpose": "Formats and DISPLAYs IO-STATUS as numeric 'NNNN' handling non-numeric or '9x' cases using redefines and binary conversion",
+      "called_by": [
+        "0-CUSTFILE-GET-NEXT",
+        "0-CUSTFILE-OPEN",
+        "0-CUSTFILE-CLOSE"
+      ],
+      "calls": [],
+      "citation": [
+        161,
+        173
+      ]
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "CUSTFILE-STATUS NOT = '00' on READ (except '10')",
+      "action": "DISPLAY 'ERROR READING CUSTOMER FILE', MOVE CUSTFILE-STATUS TO IO-STATUS, PERFORM Z-DISPLAY-IO-STATUS, PERFORM Z-ABEND-PROGRAM",
+      "citation": [
+        110,
+        111,
+        112,
+        113
+      ]
+    },
+    {
+      "condition": "CUSTFILE-STATUS NOT = '00' on OPEN",
+      "action": "DISPLAY 'ERROR OPENING CUSTFILE', MOVE CUSTFILE-STATUS TO IO-STATUS, PERFORM Z-DISPLAY-IO-STATUS, PERFORM Z-ABEND-PROGRAM",
+      "citation": [
+        129,
+        130,
+        131,
+        132
+      ]
+    },
+    {
+      "condition": "CUSTFILE-STATUS NOT = '00' on CLOSE",
+      "action": "DISPLAY 'ERROR CLOSING CUSTOMER FILE', MOVE CUSTFILE-STATUS TO IO-STATUS, PERFORM Z-DISPLAY-IO-STATUS, PERFORM Z-ABEND-PROGRAM",
+      "citation": [
+        147,
+        148,
+        149,
+        150
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "Detailed field layout of CUSTOMER-RECORD",
+      "context": "Defined in unprovided copybook CVCUS01Y at line 45",
+      "suggestion": "Obtain and analyze copybook CVCUS01Y"
+    },
+    {
+      "question": "Exact behavior of CEE3ABD with ABCODE=999 and TIMING=0",
+      "context": "LE abend routine called statically; specific effects unknown without LE docs",
+      "suggestion": "Consult IBM Language Environment documentation for CEE3ABD"
+    }
+  ]
+}

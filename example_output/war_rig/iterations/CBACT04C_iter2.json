@@ -1,0 +1,557 @@
+{
+  "header": {
+    "program_id": "CBACT04C",
+    "file_name": "CBACT04C.cbl",
+    "file_type": "COBOL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-18T15:51:54.171634",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "Batch program reads transaction category balance records sequentially from TCATBAL-FILE, groups by account ID, retrieves account details from ACCOUNT-FILE, cross-reference from XREF-FILE, and interest rates from DISCGRP-FILE. Computes and accumulates monthly interest per account using formula (balance * rate)/1200, writes interest transactions to TRANSACT-FILE using PARM-DATE, and updates account current balance via REWRITE.",
+    "business_context": "Card account interest calculation, posting interest transactions, and updating account balances in a batch process for CardDemo application.",
+    "program_type": "BATCH",
+    "citations": [
+      4,
+      5,
+      28,
+      188,
+      325,
+      464
+    ]
+  },
+  "inputs": [
+    {
+      "name": "TCATBAL-FILE",
+      "io_type": "FILE_VSAM",
+      "description": "Transaction category balance records containing account ID, type code, category code, and balance data",
+      "copybook": "CVTRA01Y",
+      "citation": [
+        28,
+        325
+      ]
+    },
+    {
+      "name": "XREF-FILE",
+      "io_type": "FILE_VSAM",
+      "description": "Cross-reference records linking card number, customer number, and account ID",
+      "copybook": "CVACT03Y",
+      "citation": [
+        34,
+        394
+      ]
+    },
+    {
+      "name": "ACCOUNT-FILE",
+      "io_type": "FILE_VSAM",
+      "description": "Account master records containing current balance and cycle credits/debits",
+      "copybook": "CVACT01Y",
+      "citation": [
+        41,
+        372
+      ]
+    },
+    {
+      "name": "DISCGRP-FILE",
+      "io_type": "FILE_VSAM",
+      "description": "Disclosure group records providing interest rates by account group, transaction type, and category",
+      "copybook": "CVTRA02Y",
+      "citation": [
+        47,
+        416
+      ]
+    },
+    {
+      "name": "EXTERNAL-PARMS",
+      "io_type": "PARAMETER",
+      "description": "Input parameters including PARM-DATE used for transaction ID generation",
+      "copybook": null,
+      "citation": [
+        176,
+        476
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "TRANSACT-FILE",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Output transaction records for interest postings including transaction ID, amount, description, timestamps",
+      "copybook": "CVTRA05Y",
+      "citation": [
+        53,
+        500
+      ]
+    },
+    {
+      "name": "ACCOUNT-FILE",
+      "io_type": "FILE_VSAM",
+      "description": "Updated account records with added total interest to current balance and reset cycle credits/debits",
+      "copybook": "CVACT01Y",
+      "citation": [
+        41,
+        356
+      ]
+    }
+  ],
+  "called_programs": [
+    {
+      "program_name": "CEE3ABD",
+      "call_type": "STATIC_CALL",
+      "purpose": "Abend the program with user code 999",
+      "parameters": [
+        "ABCODE",
+        "TIMING"
+      ],
+      "citation": 632
+    }
+  ],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": [
+      "EXTERNAL-PARMS"
+    ]
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Accumulate interest only after processing all category balances for the same account ID before updating account",
+      "logic_summary": "Tracks last account with WS-LAST-ACCT-NUM, calls UPDATE-ACCOUNT only on change or EOF",
+      "conditions": [
+        "IF TRANCAT-ACCT-ID NOT= WS-LAST-ACCT-NUM",
+        "IF WS-FIRST-TIME NOT = 'Y'"
+      ],
+      "citation": [
+        194,
+        196
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Monthly interest = (category balance * interest rate) / 1200",
+      "logic_summary": "Computes WS-MONTHLY-INT and adds to WS-TOTAL-INT if rate found",
+      "conditions": [
+        "IF DIS-INT-RATE NOT = 0"
+      ],
+      "citation": [
+        464,
+        215
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "Use default disclosure group 'DEFAULT' if specific group not found (status 23)",
+      "logic_summary": "Performs 1200-A-GET-DEFAULT-INT-RATE on INVALID KEY or status 23",
+      "conditions": [
+        "IF DISCGRP-STATUS = '23'"
+      ],
+      "citation": [
+        436,
+        438
+      ]
+    },
+    {
+      "rule_id": "BR004",
+      "description": "Transaction ID generated as PARM-DATE + sequential suffix starting from 0",
+      "logic_summary": "STRING PARM-DATE WS-TRANID-SUFFIX into TRAN-ID, increment suffix each time",
+      "conditions": [],
+      "citation": [
+        476,
+        474
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "TCATBAL-FILE",
+        "fields_used": [
+          "TRANCAT-ACCT-ID",
+          "TRANCAT-TYPE-CD",
+          "TRANCAT-CD",
+          "TRAN-CAT-BAL"
+        ],
+        "citation": [
+          194,
+          210,
+          325
+        ]
+      },
+      {
+        "source": "ACCOUNT-FILE",
+        "fields_used": [
+          "ACCT-CURR-BAL",
+          "ACCT-CURR-CYC-CREDIT",
+          "ACCT-CURR-CYC-DEBIT",
+          "ACCT-GROUP-ID"
+        ],
+        "citation": [
+          352,
+          210,
+          372
+        ]
+      },
+      {
+        "source": "XREF-FILE",
+        "fields_used": [
+          "XREF-CARD-NUM"
+        ],
+        "citation": [
+          495,
+          394
+        ]
+      },
+      {
+        "source": "DISCGRP-FILE",
+        "fields_used": [
+          "DIS-INT-RATE"
+        ],
+        "citation": [
+          215,
+          416
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "TRANSACT-FILE",
+        "fields_written": [
+          "TRAN-ID",
+          "TRAN-TYPE-CD",
+          "TRAN-CAT-CD",
+          "TRAN-AMT",
+          "TRAN-DESC",
+          "TRAN-CARD-NUM",
+          "TRAN-ORIG-TS",
+          "TRAN-PROC-TS"
+        ],
+        "citation": [
+          476,
+          500
+        ]
+      },
+      {
+        "destination": "ACCOUNT-FILE",
+        "fields_written": [
+          "ACCT-CURR-BAL",
+          "ACCT-CURR-CYC-CREDIT",
+          "ACCT-CURR-CYC-DEBIT"
+        ],
+        "citation": [
+          352,
+          356
+        ]
+      }
+    ],
+    "transforms": [
+      {
+        "input_field": "TRAN-CAT-BAL",
+        "output_field": "WS-MONTHLY-INT",
+        "transformation_description": "WS-MONTHLY-INT = (TRAN-CAT-BAL * DIS-INT-RATE) / 1200 then added to WS-TOTAL-INT",
+        "citation": [
+          464
+        ]
+      },
+      {
+        "input_field": "PARM-DATE",
+        "output_field": "TRAN-ID",
+        "transformation_description": "STRING PARM-DATE WS-TRANID-SUFFIX DELIMITED BY SIZE INTO TRAN-ID",
+        "citation": [
+          476
+        ]
+      },
+      {
+        "input_field": "WS-TOTAL-INT",
+        "output_field": "ACCT-CURR-BAL",
+        "transformation_description": "ADD WS-TOTAL-INT TO ACCT-CURR-BAL",
+        "citation": [
+          352
+        ]
+      },
+      {
+        "input_field": "COBOL-TS",
+        "output_field": "DB2-FORMAT-TS",
+        "transformation_description": "Format current date to DB2 timestamp string with dashes and dots",
+        "citation": [
+          614
+        ]
+      }
+    ]
+  },
+  "copybooks_used": [
+    {
+      "copybook_name": "CVTRA01Y",
+      "purpose": "Defines transaction category balance record structure including TRAN-CAT-BAL-RECORD",
+      "location": "WORKING_STORAGE",
+      "citation": 97
+    },
+    {
+      "copybook_name": "CVACT03Y",
+      "purpose": "Defines cross-reference record structure including CARD-XREF-RECORD",
+      "location": "WORKING_STORAGE",
+      "citation": 102
+    },
+    {
+      "copybook_name": "CVTRA02Y",
+      "purpose": "Defines disclosure group record structure including DIS-GROUP-RECORD",
+      "location": "WORKING_STORAGE",
+      "citation": 107
+    },
+    {
+      "copybook_name": "CVACT01Y",
+      "purpose": "Defines account record structure including ACCOUNT-RECORD",
+      "location": "WORKING_STORAGE",
+      "citation": 112
+    },
+    {
+      "copybook_name": "CVTRA05Y",
+      "purpose": "Defines transaction output record structure including TRAN-RECORD",
+      "location": "WORKING_STORAGE",
+      "citation": 117
+    }
+  ],
+  "paragraphs": [
+    {
+      "paragraph_name": "0000-TCATBALF-OPEN",
+      "purpose": "Opens TCATBAL-FILE for input and checks status",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        234,
+        249
+      ]
+    },
+    {
+      "paragraph_name": "0100-XREFFILE-OPEN",
+      "purpose": "Opens XREF-FILE for input and checks status",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        252,
+        267
+      ]
+    },
+    {
+      "paragraph_name": "0200-DISCGRP-OPEN",
+      "purpose": "Opens DISCGRP-FILE for input and checks status",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        270,
+        285
+      ]
+    },
+    {
+      "paragraph_name": "0300-ACCTFILE-OPEN",
+      "purpose": "Opens ACCOUNT-FILE for I-O and checks status",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        289,
+        304
+      ]
+    },
+    {
+      "paragraph_name": "0400-TRANFILE-OPEN",
+      "purpose": "Opens TRANSACT-FILE for output and checks status",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        307,
+        322
+      ]
+    },
+    {
+      "paragraph_name": "1000-TCATBALF-GET-NEXT",
+      "purpose": "Reads next sequential record from TCATBAL-FILE, sets EOF flag on status 10",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        325,
+        347
+      ]
+    },
+    {
+      "paragraph_name": "1050-UPDATE-ACCOUNT",
+      "purpose": "Adds total interest to account balance, resets cycle fields, rewrites account record",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        350,
+        369
+      ]
+    },
+    {
+      "paragraph_name": "1100-GET-ACCT-DATA",
+      "purpose": "Random read ACCOUNT-FILE by FD-ACCT-ID into ACCOUNT-RECORD",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        372,
+        390
+      ]
+    },
+    {
+      "paragraph_name": "1110-GET-XREF-DATA",
+      "purpose": "Random read XREF-FILE by FD-XREF-ACCT-ID into CARD-XREF-RECORD",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        393,
+        412
+      ]
+    },
+    {
+      "paragraph_name": "1200-GET-INTEREST-RATE",
+      "purpose": "Random read DISCGRP-FILE by key, fallback to default on status 23",
+      "called_by": [],
+      "calls": [
+        "1200-A-GET-DEFAULT-INT-RATE",
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        415,
+        439
+      ]
+    },
+    {
+      "paragraph_name": "1300-COMPUTE-INTEREST",
+      "purpose": "Computes monthly interest and accumulates total, writes transaction",
+      "called_by": [],
+      "calls": [
+        "1300-B-WRITE-TX"
+      ],
+      "citation": [
+        462,
+        469
+      ]
+    },
+    {
+      "paragraph_name": "1400-COMPUTE-FEES",
+      "purpose": "Placeholder for future fee computation (empty)",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        518,
+        519
+      ]
+    },
+    {
+      "paragraph_name": "9000-TCATBALF-CLOSE",
+      "purpose": "Closes TCATBAL-FILE and checks status",
+      "called_by": [],
+      "calls": [
+        "9910-DISPLAY-IO-STATUS",
+        "9999-ABEND-PROGRAM"
+      ],
+      "citation": [
+        522,
+        537
+      ]
+    },
+    {
+      "paragraph_name": "9999-ABEND-PROGRAM",
+      "purpose": "Calls CEE3ABD to abend program with code 999",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        628,
+        632
+      ]
+    },
+    {
+      "paragraph_name": "9910-DISPLAY-IO-STATUS",
+      "purpose": "Displays file IO-STATUS in formatted numeric message",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        635,
+        647
+      ]
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "File status not '00' on OPEN/READ/WRITE/REWRITE/CLOSE",
+      "action": "Display error message, PERFORM 9910-DISPLAY-IO-STATUS, PERFORM 9999-ABEND-PROGRAM",
+      "citation": [
+        245,
+        263,
+        281,
+        300,
+        318,
+        342,
+        365,
+        386,
+        408,
+        431,
+        455,
+        510,
+        533
+      ]
+    },
+    {
+      "condition": "TCATBALF-STATUS = '10'",
+      "action": "Set APPL-EOF and END-OF-FILE = 'Y'",
+      "citation": [
+        330
+      ]
+    },
+    {
+      "condition": "DISCGRP-STATUS = '23'",
+      "action": "Use default group and re-read",
+      "citation": [
+        436
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "Exact layout and field definitions in copybooks (e.g., TRAN-CAT-BAL, ACCT-CURR-BAL, DIS-INT-RATE)",
+      "context": "Copybooks CVTRA01Y etc. are referenced but contents not provided in source",
+      "suggestion": "Analyze copybook source files"
+    },
+    {
+      "question": "Implementation of 1400-COMPUTE-FEES",
+      "context": "Currently empty with comment 'To be implemented'",
+      "suggestion": "Check for future updates or related programs"
+    },
+    {
+      "question": "Business meaning of /1200 in interest formula",
+      "context": "Likely annual rate to monthly (rate/100 /12), but not explicitly stated",
+      "suggestion": "Review business requirements or DISCGRP-FILE rate definition"
+    }
+  ]
+}

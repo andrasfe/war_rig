@@ -1,0 +1,836 @@
+{
+  "header": {
+    "program_id": "COTRN02C",
+    "file_name": "COTRN02C.cbl",
+    "file_type": "COBOL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-18T16:59:19.911158",
+    "iteration_count": 1,
+    "final_status": "WITNESSED"
+  },
+  "purpose": {
+    "summary": "CICS online program that presents a screen (COTRN2A) for entering new transaction details including account/card, type, amount, dates, merchant info; validates inputs against rules and cross-reference files (CXACAIX, CCXREF); generates next TRAN-ID by reading previous record in TRANSACT file; writes new transaction if confirmed.",
+    "business_context": "CardDemo application for adding credit card transactions to TRANSACT VSAM file",
+    "program_type": "ONLINE_CICS",
+    "citations": [
+      2,
+      5,
+      107,
+      516,
+      539,
+      711
+    ]
+  },
+  "inputs": [
+    {
+      "name": "COTRN2AI",
+      "io_type": "CICS_MAP",
+      "description": "Input map fields for transaction add: ACTIDINI (account ID), CARDNINI (card num), TTYPCDI (type cd), TCATCDI (cat cd), TRNSRCI (source), TRNAMTI (amt), TDESCI (desc), TORIGDTI/PROCDTI (dates), MIDI/MNAMEI/MCITYI/MZIPI (merchant), CONFIRMI",
+      "copybook": "COTRN02",
+      "citation": [
+        539,
+        193,
+        235
+      ]
+    },
+    {
+      "name": "CARD-XREF-RECORD",
+      "io_type": "FILE_VSAM",
+      "description": "Cross-reference record from CXACAIX (acct to card) or CCXREF (card to acct)",
+      "copybook": "CVACT01Y",
+      "citation": [
+        578,
+        611
+      ]
+    },
+    {
+      "name": "TRAN-RECORD",
+      "io_type": "FILE_VSAM",
+      "description": "Previous transaction record from TRANSACT to get last TRAN-ID",
+      "copybook": "CVTRA05Y",
+      "citation": [
+        675
+      ]
+    },
+    {
+      "name": "DFHCOMMAREA",
+      "io_type": "CICS_COMMAREA",
+      "description": "CARDDEMO-COMMAREA passed between programs containing CDEMO-CT02-* fields and context",
+      "copybook": "COCOM01Y",
+      "citation": [
+        99,
+        119
+      ]
+    },
+    {
+      "name": "CSUTLDTC-PARM",
+      "io_type": "PARAMETER",
+      "description": "Parameters for CSUTLDTC date validation call: date string and format",
+      "copybook": null,
+      "citation": [
+        62,
+        393
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "COTRN2AO",
+      "io_type": "CICS_MAP",
+      "description": "Output map with header (titles, dates, times, pgm/tran names), error messages, and fields",
+      "copybook": "COTRN02",
+      "citation": [
+        522
+      ]
+    },
+    {
+      "name": "TRAN-RECORD",
+      "io_type": "FILE_VSAM",
+      "description": "New transaction record written to TRANSACT with generated TRAN-ID and input fields",
+      "copybook": "CVTRA05Y",
+      "citation": [
+        713
+      ]
+    },
+    {
+      "name": "CARDDEMO-COMMAREA",
+      "io_type": "CICS_COMMAREA",
+      "description": "Updated commarea returned or XCTL'd to next program",
+      "copybook": "COCOM01Y",
+      "citation": [
+        532,
+        509
+      ]
+    }
+  ],
+  "called_programs": [
+    {
+      "program_name": "CSUTLDTC",
+      "call_type": "STATIC_CALL",
+      "purpose": "Validate date format conversion YYYY-MM-DD",
+      "parameters": [
+        "CSUTLDTC-DATE",
+        "CSUTLDTC-DATE-FORMAT",
+        "CSUTLDTC-RESULT"
+      ],
+      "citation": 393
+    },
+    {
+      "program_name": "CDEMO-TO-PROGRAM",
+      "call_type": "CICS_XCTL",
+      "purpose": "Transfer control to previous screen/program (e.g., COSGN00C or COMEN01C)",
+      "parameters": [
+        "CARDDEMO-COMMAREA"
+      ],
+      "citation": 509
+    }
+  ],
+  "calling_context": {
+    "called_by": [
+      "COSGN00C",
+      "COMEN01C"
+    ],
+    "entry_points": [
+      "CT02"
+    ],
+    "linkage_section": [
+      "DFHCOMMAREA"
+    ]
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Account ID or Card Number must be entered and numeric; cross-ref other via CXACAIX/CCXREF",
+      "logic_summary": "EVALUATE TRUE on ACTIDINI/CARDNINI; NUMVAL to numeric; READ file; error if NOTFND",
+      "conditions": [
+        "ACTIDINI/CARDNINI NOT SPACES/LOW-VALUES",
+        "IS NOT NUMERIC",
+        "DFHRESP(NOTFND)"
+      ],
+      "citation": [
+        193,
+        208,
+        222
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "All data fields (type cd, cat cd, source, desc, amt, orig/proc dates, merchant id/name/city/zip) must be non-empty",
+      "logic_summary": "EVALUATE TRUE checks each = SPACES/LOW-VALUES; set error and cursor",
+      "conditions": [
+        "= SPACES OR LOW-VALUES"
+      ],
+      "citation": [
+        251,
+        252,
+        258,
+        264,
+        270,
+        276,
+        282,
+        288,
+        294,
+        300,
+        306,
+        312
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "Transaction amount in format [+/-]99999999.99",
+      "logic_summary": "Check sign, digits, decimal; NUMVAL-C to validate/edit",
+      "conditions": [
+        "(1:1) NOT '-' OR '+'",
+        "(2:8) NOT NUMERIC",
+        "(10:1) != '.'",
+        "(11:2) NOT NUMERIC"
+      ],
+      "citation": [
+        339,
+        340
+      ]
+    },
+    {
+      "rule_id": "BR004",
+      "description": "Orig/Proc dates in YYYY-MM-DD validated by CSUTLDTC (not msg 2513)",
+      "logic_summary": "Format checks + CALL CSUTLDTC; error if SEV-CD !=0000 and MSG-NUM !=2513",
+      "conditions": [
+        "NUMERIC checks on parts",
+        "CSUTLDTC-RESULT-SEV-CD != '0000'",
+        "CSUTLDTC-RESULT-MSG-NUM != '2513'"
+      ],
+      "citation": [
+        353,
+        368,
+        393,
+        413
+      ]
+    },
+    {
+      "rule_id": "BR005",
+      "description": "Merchant ID numeric",
+      "logic_summary": "IS NOT NUMERIC check",
+      "conditions": [
+        "MIDI IS NOT NUMERIC"
+      ],
+      "citation": [
+        430
+      ]
+    },
+    {
+      "rule_id": "BR006",
+      "description": "Confirm Y/N to add transaction",
+      "logic_summary": "EVALUATE CONFIRMI; Y add, else error message",
+      "conditions": [
+        "CONFIRMI = 'Y'/'y'",
+        "OTHER"
+      ],
+      "citation": [
+        169
+      ]
+    },
+    {
+      "rule_id": "BR007",
+      "description": "New TRAN-ID = previous max +1",
+      "logic_summary": "STARTBR HIGH-VALUES, READPREV, ADD 1; ZEROS if ENDFILE",
+      "conditions": [
+        "DFHRESP(ENDFILE)"
+      ],
+      "citation": [
+        444,
+        448
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "COTRN2AI",
+        "fields_used": [
+          "ACTIDINI",
+          "CARDNINI",
+          "TTYPCDI",
+          "TCATCDI",
+          "TRNSRCI",
+          "TDESCI",
+          "TRNAMTI",
+          "TORIGDTI",
+          "TPROCDTI",
+          "MIDI",
+          "MNAMEI",
+          "MCITYI",
+          "MZIPI",
+          "CONFIRMI"
+        ],
+        "citation": [
+          193,
+          235,
+          452
+        ]
+      },
+      {
+        "source": "CARD-XREF-RECORD",
+        "fields_used": [
+          "XREF-ACCT-ID",
+          "XREF-CARD-NUM"
+        ],
+        "citation": [
+          209,
+          223
+        ]
+      },
+      {
+        "source": "TRAN-RECORD",
+        "fields_used": [
+          "TRAN-ID",
+          "TRAN-AMT",
+          "TRAN-TYPE-CD",
+          "TRAN-CAT-CD",
+          "TRAN-SOURCE",
+          "TRAN-DESC",
+          "TRAN-ORIG-TS",
+          "TRAN-PROC-TS",
+          "TRAN-MERCHANT-ID",
+          "TRAN-MERCHANT-NAME",
+          "TRAN-MERCHANT-CITY",
+          "TRAN-MERCHANT-ZIP"
+        ],
+        "citation": [
+          446,
+          481
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "TRAN-RECORD",
+        "fields_written": [
+          "TRAN-ID",
+          "TRAN-TYPE-CD",
+          "TRAN-CAT-CD",
+          "TRAN-SOURCE",
+          "TRAN-DESC",
+          "TRAN-AMT",
+          "TRAN-CARD-NUM",
+          "TRAN-MERCHANT-ID",
+          "TRAN-MERCHANT-NAME",
+          "TRAN-MERCHANT-CITY",
+          "TRAN-MERCHANT-ZIP",
+          "TRAN-ORIG-TS",
+          "TRAN-PROC-TS"
+        ],
+        "citation": [
+          451,
+          452,
+          466
+        ]
+      },
+      {
+        "destination": "COTRN2AO",
+        "fields_written": [
+          "ERRMSGO",
+          "TITLE01O",
+          "TITLE02O",
+          "TRNNAMEO",
+          "PGMNAMEO",
+          "CURDATEO",
+          "CURTIMEO",
+          "ERRMSGC"
+        ],
+        "citation": [
+          520,
+          556
+        ]
+      }
+    ],
+    "transforms": [
+      {
+        "input_field": "ACTIDINI/CARDNINI",
+        "output_field": "XREF-ACCT-ID/XREF-CARD-NUM",
+        "transformation_description": "NUMVAL to numeric WS-ACCT-ID-N/WS-CARD-NUM-N then MOVE",
+        "citation": [
+          204,
+          218
+        ]
+      },
+      {
+        "input_field": "TRNAMTI",
+        "output_field": "TRAN-AMT/WS-TRAN-AMT-E",
+        "transformation_description": "NUMVAL-C to edited numeric/comp",
+        "citation": [
+          383,
+          456
+        ]
+      },
+      {
+        "input_field": "TRAN-ID (prev)",
+        "output_field": "TRAN-ID (new)",
+        "transformation_description": "ADD 1 to numeric WS-TRAN-ID-N",
+        "citation": [
+          448
+        ]
+      },
+      {
+        "input_field": "TORIGDTI/TPROCDTI",
+        "output_field": "CSUTLDTC-DATE",
+        "transformation_description": "Direct MOVE for validation",
+        "citation": [
+          389,
+          409
+        ]
+      }
+    ]
+  },
+  "copybooks_used": [
+    {
+      "copybook_name": "COCOM01Y",
+      "purpose": "Common commarea: CDEMO-CT02-INFO (tranid first/last, page, selected), CDEMO-PGM-REENTER, CDEMO-FROM/TO-PROGRAM",
+      "location": "WORKING_STORAGE",
+      "citation": 71
+    },
+    {
+      "copybook_name": "COTRN02",
+      "purpose": "BMS map structures COTRN2AI (input) / COTRN2AO (output) for transaction add screen",
+      "location": "WORKING_STORAGE",
+      "citation": 82
+    },
+    {
+      "copybook_name": "COTTL01Y",
+      "purpose": "Titles CCDA-TITLE01/02",
+      "location": "WORKING_STORAGE",
+      "citation": 84
+    },
+    {
+      "copybook_name": "CSDAT01Y",
+      "purpose": "Date/time working fields WS-CURDATE-DATA etc.",
+      "location": "WORKING_STORAGE",
+      "citation": 85
+    },
+    {
+      "copybook_name": "CSMSG01Y",
+      "purpose": "Messages CCDA-MSG-INVALID-KEY",
+      "location": "WORKING_STORAGE",
+      "citation": 86
+    },
+    {
+      "copybook_name": "CVTRA05Y",
+      "purpose": "TRAN-RECORD transaction structure: TRAN-ID, TYPE-CD, CAT-CD, SOURCE, DESC, AMT, CARD-NUM, MERCHANT-*, ORIG/PROC-TS",
+      "location": "WORKING_STORAGE",
+      "citation": 88
+    },
+    {
+      "copybook_name": "CVACT01Y",
+      "purpose": "CARD-XREF-RECORD: XREF-ACCT-ID, XREF-CARD-NUM",
+      "location": "WORKING_STORAGE",
+      "citation": 89
+    },
+    {
+      "copybook_name": "CVACT03Y",
+      "purpose": "UNKNOWN (likely related to account/card)",
+      "location": "WORKING_STORAGE",
+      "citation": 90
+    },
+    {
+      "copybook_name": "DFHAID",
+      "purpose": "CICS aid keys DFHENTER, DFHPF3 etc.",
+      "location": "WORKING_STORAGE",
+      "citation": 92
+    },
+    {
+      "copybook_name": "DFHBMSCA",
+      "purpose": "CICS BMS constants",
+      "location": "WORKING_STORAGE",
+      "citation": 93
+    }
+  ],
+  "paragraphs": [
+    {
+      "paragraph_name": "MAIN-PARA",
+      "purpose": "Main control: init flags/msg, handle first entry vs reenter, EIBAID PF/ENTER processing",
+      "called_by": [],
+      "calls": [
+        "RETURN-TO-PREV-SCREEN",
+        "PROCESS-ENTER-KEY",
+        "SEND-TRNADD-SCREEN",
+        "RECEIVE-TRNADD-SCREEN",
+        "CLEAR-CURRENT-SCREEN",
+        "COPY-LAST-TRAN-DATA"
+      ],
+      "citation": [
+        107,
+        159
+      ]
+    },
+    {
+      "paragraph_name": "PROCESS-ENTER-KEY",
+      "purpose": "Invoke key/data validation then EVALUATE CONFIRMI to add or error",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [
+        "VALIDATE-INPUT-KEY-FIELDS",
+        "VALIDATE-INPUT-DATA-FIELDS",
+        "ADD-TRANSACTION",
+        "SEND-TRNADD-SCREEN"
+      ],
+      "citation": [
+        164,
+        187
+      ]
+    },
+    {
+      "paragraph_name": "VALIDATE-INPUT-KEY-FIELDS",
+      "purpose": "Validate/lookup acct/card cross-ref",
+      "called_by": [
+        "PROCESS-ENTER-KEY"
+      ],
+      "calls": [
+        "SEND-TRNADD-SCREEN",
+        "READ-CXACAIX-FILE",
+        "READ-CCXREF-FILE"
+      ],
+      "citation": [
+        193,
+        229
+      ]
+    },
+    {
+      "paragraph_name": "VALIDATE-INPUT-DATA-FIELDS",
+      "purpose": "Validate all data fields empty/numeric/format/date via CSUTLDTC",
+      "called_by": [
+        "PROCESS-ENTER-KEY"
+      ],
+      "calls": [
+        "SEND-TRNADD-SCREEN"
+      ],
+      "citation": [
+        235,
+        437
+      ]
+    },
+    {
+      "paragraph_name": "ADD-TRANSACTION",
+      "purpose": "Generate next TRAN-ID, populate/populate TRAN-RECORD from input, WRITE",
+      "called_by": [
+        "PROCESS-ENTER-KEY"
+      ],
+      "calls": [
+        "STARTBR-TRANSACT-FILE",
+        "READPREV-TRANSACT-FILE",
+        "ENDBR-TRANSACT-FILE",
+        "WRITE-TRANSACT-FILE"
+      ],
+      "citation": [
+        442,
+        466
+      ]
+    },
+    {
+      "paragraph_name": "COPY-LAST-TRAN-DATA",
+      "purpose": "PF5: copy previous tran fields to screen (after key validate)",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [
+        "VALIDATE-INPUT-KEY-FIELDS",
+        "STARTBR-TRANSACT-FILE",
+        "READPREV-TRANSACT-FILE",
+        "ENDBR-TRANSACT-FILE",
+        "PROCESS-ENTER-KEY"
+      ],
+      "citation": [
+        471,
+        495
+      ]
+    },
+    {
+      "paragraph_name": "RETURN-TO-PREV-SCREEN",
+      "purpose": "PF3: XCTL to CDEMO-TO-PROGRAM (default COSGN00C)",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [],
+      "citation": [
+        500,
+        510
+      ]
+    },
+    {
+      "paragraph_name": "SEND-TRNADD-SCREEN",
+      "purpose": "Populate header, move msg, SEND MAP ERASE CURSOR, RETURN transid CT02",
+      "called_by": [
+        "MAIN-PARA",
+        "PROCESS-ENTER-KEY",
+        "VALIDATE-INPUT-*",
+        "ADD-TRANSACTION",
+        "WRITE-*",
+        "CLEAR-*"
+      ],
+      "calls": [
+        "POPULATE-HEADER-INFO"
+      ],
+      "citation": [
+        516,
+        534
+      ]
+    },
+    {
+      "paragraph_name": "RECEIVE-TRNADD-SCREEN",
+      "purpose": "RECEIVE MAP INTO COTRN2AI",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [],
+      "citation": [
+        539,
+        547
+      ]
+    },
+    {
+      "paragraph_name": "POPULATE-HEADER-INFO",
+      "purpose": "Set titles, tran/pgmn names, current date/time formatted",
+      "called_by": [
+        "SEND-TRNADD-SCREEN"
+      ],
+      "calls": [],
+      "citation": [
+        552,
+        571
+      ]
+    },
+    {
+      "paragraph_name": "READ-CXACAIX-FILE",
+      "purpose": "READ VSAM CXACAIX by acct for card num",
+      "called_by": [
+        "VALIDATE-INPUT-KEY-FIELDS"
+      ],
+      "calls": [
+        "SEND-TRNADD-SCREEN"
+      ],
+      "citation": [
+        576,
+        604
+      ]
+    },
+    {
+      "paragraph_name": "READ-CCXREF-FILE",
+      "purpose": "READ VSAM CCXREF by card for acct",
+      "called_by": [
+        "VALIDATE-INPUT-KEY-FIELDS"
+      ],
+      "calls": [
+        "SEND-TRNADD-SCREEN"
+      ],
+      "citation": [
+        609,
+        637
+      ]
+    },
+    {
+      "paragraph_name": "STARTBR-TRANSACT-FILE",
+      "purpose": "STARTBR TRANSACT HIGH-VALUES on TRAN-ID",
+      "called_by": [
+        "ADD-TRANSACTION",
+        "COPY-LAST-TRAN-DATA"
+      ],
+      "calls": [
+        "SEND-TRNADD-SCREEN"
+      ],
+      "citation": [
+        642,
+        672
+      ]
+    },
+    {
+      "paragraph_name": "READPREV-TRANSACT-FILE",
+      "purpose": "READPREV TRANSACT for last record",
+      "called_by": [
+        "ADD-TRANSACTION",
+        "COPY-LAST-TRAN-DATA"
+      ],
+      "calls": [
+        "SEND-TRNADD-SCREEN"
+      ],
+      "citation": [
+        673,
+        697
+      ]
+    },
+    {
+      "paragraph_name": "ENDBR-TRANSACT-FILE",
+      "purpose": "ENDBR TRANSACT",
+      "called_by": [
+        "ADD-TRANSACTION",
+        "COPY-LAST-TRAN-DATA"
+      ],
+      "calls": [],
+      "citation": [
+        702,
+        706
+      ]
+    },
+    {
+      "paragraph_name": "WRITE-TRANSACT-FILE",
+      "purpose": "WRITE new TRAN-RECORD; handle NORMAL/DUP/OTHER",
+      "called_by": [
+        "ADD-TRANSACTION"
+      ],
+      "calls": [
+        "INITIALIZE-ALL-FIELDS",
+        "SEND-TRNADD-SCREEN"
+      ],
+      "citation": [
+        711,
+        749
+      ]
+    },
+    {
+      "paragraph_name": "CLEAR-CURRENT-SCREEN",
+      "purpose": "PF4: init fields and send screen",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [
+        "INITIALIZE-ALL-FIELDS",
+        "SEND-TRNADD-SCREEN"
+      ],
+      "citation": [
+        754,
+        757
+      ]
+    },
+    {
+      "paragraph_name": "INITIALIZE-ALL-FIELDS",
+      "purpose": "MOVE SPACES/-1 to all input fields and msg",
+      "called_by": [
+        "WRITE-TRANSACT-FILE",
+        "CLEAR-CURRENT-SCREEN"
+      ],
+      "calls": [],
+      "citation": [
+        762,
+        779
+      ]
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "Input fields empty/non-numeric/invalid format",
+      "action": "SET WS-ERR-FLG 'Y', MOVE error msg to WS-MESSAGE, cursor -1 to field, PERFORM SEND-TRNADD-SCREEN",
+      "citation": [
+        199,
+        226,
+        254,
+        278,
+        384
+      ]
+    },
+    {
+      "condition": "File READ/STARTBR/READPREV RESP NOT NORMAL/NOTFND/OTHER",
+      "action": "SET WS-ERR-FLG 'Y', specific msg, cursor to input field, SEND screen; DISPLAY RESP/REAS",
+      "citation": [
+        592,
+        625,
+        655,
+        696
+      ]
+    },
+    {
+      "condition": "CSUTLDTC SEV-CD !=0000 and MSG-NUM !=2513",
+      "action": "Error msg, cursor to date field, SEND screen",
+      "citation": [
+        400,
+        420
+      ]
+    },
+    {
+      "condition": "WRITE RESP DUPKEY/DUPREC/OTHER",
+      "action": "Error msg, cursor ACTIDINL, SEND screen",
+      "citation": [
+        736,
+        743
+      ]
+    },
+    {
+      "condition": "Invalid EIBAID",
+      "action": "SET ERR-FLG, invalid key msg, SEND screen",
+      "citation": [
+        150
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [
+    {
+      "command": "RECEIVE MAP",
+      "resource": "COTRN2A (MAPSET COTRN02)",
+      "purpose": "Receive screen input into COTRN2AI",
+      "citation": 541
+    },
+    {
+      "command": "SEND MAP",
+      "resource": "COTRN2A (MAPSET COTRN02)",
+      "purpose": "Send screen output from COTRN2AO with ERASE CURSOR",
+      "citation": 522
+    },
+    {
+      "command": "READ DATASET",
+      "resource": "CXACAIX/CCXREF",
+      "purpose": "Read cross-ref records by key",
+      "citation": 578
+    },
+    {
+      "command": "STARTBR",
+      "resource": "TRANSACT",
+      "purpose": "Start browse backward from HIGH-VALUES on TRAN-ID",
+      "citation": 644
+    },
+    {
+      "command": "READPREV",
+      "resource": "TRANSACT",
+      "purpose": "Read previous (highest) transaction",
+      "citation": 675
+    },
+    {
+      "command": "ENDBR",
+      "resource": "TRANSACT",
+      "purpose": "End browse",
+      "citation": 704
+    },
+    {
+      "command": "WRITE DATASET",
+      "resource": "TRANSACT",
+      "purpose": "Write new transaction record",
+      "citation": 713
+    },
+    {
+      "command": "RETURN TRANSID",
+      "resource": "CT02 COMMAREA",
+      "purpose": "Return to CICS with commarea",
+      "citation": 156
+    },
+    {
+      "command": "XCTL PROGRAM",
+      "resource": "CDEMO-TO-PROGRAM COMMAREA",
+      "purpose": "Transfer to previous program",
+      "citation": 509
+    }
+  ],
+  "open_questions": [
+    {
+      "question": "Exact field layouts in copybooks like CVTRA05Y, CVACT01Y, COTRN02",
+      "context": "Source shows usage but not full 01-level definitions",
+      "suggestion": "Analyze copybook source files"
+    },
+    {
+      "question": "Purpose of CVACT03Y and unused WS-ACCTDAT-FILE",
+      "context": "Copied but no usage in code",
+      "suggestion": "Check if legacy or conditional"
+    },
+    {
+      "question": "Full business validation (e.g., valid type/cat codes)",
+      "context": "Only format/required/notfound checked; no code tables",
+      "suggestion": "Review external validation tables"
+    }
+  ]
+}

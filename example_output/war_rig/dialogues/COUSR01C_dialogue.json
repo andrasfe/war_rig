@@ -1,0 +1,116 @@
+{
+  "program_id": "COUSR01C",
+  "questions": [
+    {
+      "question_id": "Q-7DBCDB77",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "Lines 55 (COPY DFHAID) and 90 (EVALUATE EIBAID) show EIBAID is defined in WORKING-STORAGE as a CICS EIB field representation, but inputs documents it as 'CICS_COMMAREA' with citation 90. Line 82 handles DFHCOMMAREA separately via MOVE to CARDDEMO-COMMAREA.",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-D6A9211C",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "What about error handling for CICS RECEIVE RESP(WS-RESP-CD) and RESP2(WS-REAS-CD) at lines 207-208? After END-EXEC at line 209, there is no check before EVALUATE EIBAID at line 90.",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-69D6526B",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "What about the first invocation handling when EIBCALEN = 0 at lines 78-81, which sets CDEMO-TO-PROGRAM to 'COSGN00C' and performs RETURN-TO-PREV-SCREEN (XCTL at 176) without sending the add screen?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-38F878B2",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "In paragraphs 'WRITE-USER-SEC-FILE', you list calls to 'INITIALIZE-ALL-FIELDS' and 'SEND-USRADD-SCREEN' with citations 238,274, but INITIALIZE-ALL-FIELDS is only PERFORMed at line 252 when DFHRESP(NORMAL), while SEND is conditional on other RESP cases.",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-94016C20",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "In purpose summary, 'supports PF3/PF4 keys for navigation/clear' - line 94 sets PF3 to XCTL 'COADM01C' (admin?), line 97 PF4 to CLEAR-CURRENT-SCREEN (stay on screen). Are you sure PF3 is standard 'navigation' or specific to admin flow?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-80B5AB1D",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "Line 55 (COPY DFHAID) defines EIBAID in WORKING-STORAGE as a CICS EIB field representation, and line 90 EVALUATEs it directly; however, inputs documents it as 'CICS_COMMAREA' with copybook DFHAID and citation 90. Line 82 separately handles DFHCOMMAREA (linkage). Is EIBAID truly a COMMAREA input?",
+      "context": null,
+      "evidence": [],
+      "severity": "BLOCKING",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-E1D5286D",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "What about error handling for CICS RECEIVE RESP(WS-RESP-CD) and RESP2(WS-REAS-CD) at lines 207-208? After END-EXEC at line 209 (in RECEIVE-USRADD-SCREEN PERFORM at 89), code proceeds directly to EVALUATE EIBAID at line 90 without checking RESP.",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-EBE8E6A4",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "Purpose summary states 'presents a screen (COUSR1A)', but on first invocation (EIBCALEN = 0 at lines 78-81), it sets CDEMO-TO-PROGRAM to 'COSGN00C' and XCTLs (via PERFORM at 80 to RETURN-TO-PREV-SCREEN, XCTL at 176) without sending the map or presenting the screen.",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-C698C4C4",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "Purpose and business rules describe PF3/PF4 for 'navigation/clear'; line 94 sets PF3 to XCTL 'COADM01C' (admin screen), while PF4 clears screen (line 97). Line 79/80 uses 'COSGN00C' for first entry/PF? back. Are PF keys standard navigation or specific to admin flow?",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 2,
+      "answered": false
+    },
+    {
+      "question_id": "Q-658CE169",
+      "section": null,
+      "question_type": "CLARIFICATION",
+      "question": "In paragraphs 'WRITE-USER-SEC-FILE', documented as calling 'INITIALIZE-ALL-FIELDS' and 'SEND-USRADD-SCREEN' with citations 238,274; however, INITIALIZE-ALL-FIELDS is only PERFORMed at line 252 (NORMAL RESP), while SEND-USRADD-SCREEN is conditional in EVALUATE (250-274).",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 2,
+      "answered": false
+    }
+  ],
+  "responses": []
+}
