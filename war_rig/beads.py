@@ -273,6 +273,7 @@ class BeadsClient:
         dry_run: bool = False,
         tickets_file: Path | str | None = None,
         beads_dir: Path | str | None = None,
+        force_memory_mode: bool = True,
     ):
         """Initialize the beads client.
 
@@ -283,9 +284,12 @@ class BeadsClient:
                 If None, tickets are only kept in memory.
             beads_dir: Directory to run bd commands in (for isolated beads).
                 If None, uses current working directory.
+            force_memory_mode: Always use in-memory ticket tracking with JSON
+                persistence, ignoring bd CLI even if available. Default True.
         """
         self.enabled = enabled
         self.dry_run = dry_run
+        self._force_memory_mode = force_memory_mode
         self._ticket_cache: dict[str, BeadsTicket] = {}
         # In-memory PM ticket tracking for when beads CLI is unavailable
         self._pm_ticket_cache: dict[str, ProgramManagerTicket] = {}
@@ -725,9 +729,9 @@ class BeadsClient:
 
         Returns:
             True if we should use memory cache (beads disabled, dry run,
-            or bd CLI unavailable).
+            force_memory_mode enabled, or bd CLI unavailable).
         """
-        if not self.enabled or self.dry_run:
+        if not self.enabled or self.dry_run or self._force_memory_mode:
             return True
         # Also use memory cache if bd CLI is not available
         return not self._check_bd_available()
@@ -1290,6 +1294,7 @@ def get_beads_client(
     dry_run: bool = False,
     tickets_file: Path | str | None = None,
     beads_dir: Path | str | None = None,
+    force_memory_mode: bool = True,
 ) -> BeadsClient:
     """Get or create the default beads client.
 
@@ -1299,6 +1304,8 @@ def get_beads_client(
         tickets_file: Path to persist tickets for crash recovery.
         beads_dir: Directory to run bd commands in (for isolated beads).
             If None, uses current working directory.
+        force_memory_mode: Always use in-memory ticket tracking with JSON
+            persistence, ignoring bd CLI even if available. Default True.
 
     Returns:
         BeadsClient instance.
@@ -1310,6 +1317,7 @@ def get_beads_client(
             dry_run=dry_run,
             tickets_file=tickets_file,
             beads_dir=beads_dir,
+            force_memory_mode=force_memory_mode,
         )
     return _default_client
 
