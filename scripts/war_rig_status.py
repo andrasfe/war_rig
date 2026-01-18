@@ -617,6 +617,15 @@ def build_summary_header(summary: TicketSummary, path: Path) -> Panel:
     blocked = summary.by_state.get("blocked", 0)
     created = summary.by_state.get("created", 0)
 
+    # Calculate incomplete (pending reassignment/retry)
+    incomplete = summary.total - completed
+    if incomplete > 0 and summary.total > 0:
+        pct_complete = (completed / summary.total) * 100
+        header_text.append(f"  |  ", style="dim")
+        header_text.append(f"Progress: ", style="bold")
+        header_text.append(f"{pct_complete:.0f}%", style="green" if pct_complete > 80 else "yellow" if pct_complete > 50 else "red")
+        header_text.append(f" ({incomplete} pending)", style="dim")
+
     header_text.append("  (", style="dim")
     if completed:
         header_text.append(f"{completed} completed", style="green")
