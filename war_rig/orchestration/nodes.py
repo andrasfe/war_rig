@@ -168,6 +168,10 @@ class WarRigNodes:
         This node calls the Challenger agent to review the Scribe's
         documentation and identify issues or areas for improvement.
 
+        If the Challenger cycle limit has been reached, this node skips
+        validation and returns an empty assessment to allow the workflow
+        to proceed to approval.
+
         Args:
             state: Current graph state.
 
@@ -175,6 +179,25 @@ class WarRigNodes:
             State updates with questions and assessment.
         """
         iteration = state.get("iteration", 1)
+        challenger_cycle = state.get("challenger_cycle_count", 0)
+        max_challenger_cycles = state.get(
+            "max_challenger_cycles",
+            getattr(self.config, "max_challenger_cycles", 2)
+        )
+
+        # Check if we've exceeded the Challenger cycle limit
+        if challenger_cycle >= max_challenger_cycles:
+            logger.info(
+                f"Challenger cycle limit reached ({challenger_cycle}/{max_challenger_cycles}), "
+                f"skipping validation for {state['file_name']}"
+            )
+            return {
+                "challenger_questions": [],
+                "current_round_questions": [],
+                "challenger_assessment": None,
+                "challenger_cycle_count": challenger_cycle,
+            }
+
         logger.info(f"Challenger validating (iteration {iteration}): {state['file_name']}")
 
         template = state.get("current_template")
@@ -229,6 +252,7 @@ class WarRigNodes:
             "challenger_assessment": output.assessment,
             "tokens_used": state.get("tokens_used", 0) + output.tokens_used,
             "beads_ticket_ids": new_tickets,
+            "challenger_cycle_count": challenger_cycle + 1,
         }
 
     async def scribe_respond(self, state: WarRigState) -> dict[str, Any]:
@@ -260,7 +284,11 @@ class WarRigNodes:
         - WITNESSED: Approved
         - CHROME: Needs work (issues tickets)
         - VALHALLA: Exceptional quality
-        - FORCED: Approved despite issues (at max iterations)
+        - FORCED: Approved despite issues (at max iterations or cycle limit)
+
+        If the Imperator has issued CHROME decisions more than
+        max_imperator_cycles times, the decision is forced to WITNESSED
+        to prevent endless loops.
 
         Args:
             state: Current graph state.
@@ -269,6 +297,12 @@ class WarRigNodes:
             State updates with decision and any tickets.
         """
         iteration = state.get("iteration", 1)
+        imperator_chrome_count = state.get("imperator_chrome_count", 0)
+        max_imperator_cycles = state.get(
+            "max_imperator_cycles",
+            getattr(self.config, "max_imperator_cycles", 1)
+        )
+
         logger.info(f"Imperator reviewing (iteration {iteration}): {state['file_name']}")
 
         template = state.get("current_template")
@@ -301,6 +335,29 @@ class WarRigNodes:
         else:
             output = await self.imperator.ainvoke(imperator_input)
 
+        # Track CHROME decisions for cycle limiting
+        new_chrome_count = imperator_chrome_count
+        if output.decision == ImperatorDecision.CHROME:
+            new_chrome_count = imperator_chrome_count + 1
+
+        # Force approval if Imperator cycle limit exceeded
+        if output.decision == ImperatorDecision.CHROME and new_chrome_count > max_imperator_cycles:
+            logger.info(
+                f"Imperator cycle limit reached ({imperator_chrome_count}/{max_imperator_cycles}), "
+                f"forcing approval for {state['file_name']}"
+            )
+            output.decision = ImperatorDecision.FORCED
+            output.reasoning = (
+                f"{output.reasoning} [FORCED: Imperator cycle limit reached "
+                f"({max_imperator_cycles} CHROME decisions)]"
+            )
+            # Set final template since we're approving
+            if output.final_template is None and template is not None:
+                from war_rig.models.templates import FinalStatus
+                output.final_template = template.model_copy(deep=True)
+                output.final_template.header.iteration_count = iteration
+                output.final_template.header.final_status = FinalStatus.FORCED
+
         # Determine if we should continue
         should_continue = output.decision == ImperatorDecision.CHROME
         completed_at = None if should_continue else datetime.utcnow()
@@ -324,6 +381,7 @@ class WarRigNodes:
             "decision": output.decision.value,
             "should_continue": should_continue,
             "tokens_used": state.get("tokens_used", 0) + output.tokens_used,
+            "imperator_chrome_count": new_chrome_count,
         }
 
         # Track ticket IDs

@@ -452,6 +452,9 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
     def _parse_response(self, response: str, input_data: ScribeInput) -> ScribeOutput:
         """Parse the LLM response into ScribeOutput.
 
+        If validation fails, captures the raw response and validation errors
+        for potential recovery via FORMATTING_FIX ticket.
+
         Args:
             response: Raw text response from the LLM.
             input_data: Original input.
@@ -459,33 +462,93 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
         Returns:
             Parsed ScribeOutput.
         """
+        from pydantic import ValidationError
+
         try:
             # Try to extract JSON from response
             json_match = re.search(r"\{[\s\S]*\}", response)
             if not json_match:
-                raise ValueError("No JSON object found in response")
+                # No JSON found - not recoverable without structure
+                return ScribeOutput(
+                    success=False,
+                    error="No JSON object found in response",
+                    raw_response=response,
+                    recoverable=False,
+                )
 
             json_str = json_match.group()
 
             # First try parsing as-is
             try:
                 data = json.loads(json_str)
-            except json.JSONDecodeError:
+            except json.JSONDecodeError as e:
                 # Try to repair common JSON errors
                 logger.debug("JSON parse failed, attempting repair...")
                 repaired = self._repair_json(json_str)
-                data = json.loads(repaired)
-                logger.info("JSON repair succeeded")
+                try:
+                    data = json.loads(repaired)
+                    logger.info("JSON repair succeeded")
+                except json.JSONDecodeError:
+                    # JSON repair failed - recoverable with stronger model
+                    return ScribeOutput(
+                        success=False,
+                        error=f"JSON parse error: {e}",
+                        raw_response=response,
+                        recoverable=True,
+                    )
 
-            # Parse template
+            # Parse template - THIS IS WHERE VALIDATION ERRORS OCCUR
             template = None
             if "template" in data:
-                template = DocumentationTemplate.model_validate(data["template"])
+                try:
+                    template = DocumentationTemplate.model_validate(data["template"])
+                except ValidationError as e:
+                    # CAPTURE FOR RECOVERY - Pydantic errors are fixable
+                    validation_errors = [
+                        {
+                            "field": ".".join(str(x) for x in err["loc"]),
+                            "type": err["type"],
+                            "message": err["msg"],
+                            "input": err.get("input"),
+                        }
+                        for err in e.errors()
+                    ]
+                    logger.warning(
+                        f"Template validation failed with {e.error_count()} errors: "
+                        f"{[err['field'] for err in validation_errors]}"
+                    )
+                    return ScribeOutput(
+                        success=False,
+                        error=f"Template validation failed: {e.error_count()} errors",
+                        raw_response=response,
+                        validation_errors=validation_errors,
+                        recoverable=True,
+                    )
 
             # Parse confidence
             confidence = None
             if "confidence" in data:
-                confidence = ConfidenceAssessment.model_validate(data["confidence"])
+                try:
+                    confidence = ConfidenceAssessment.model_validate(data["confidence"])
+                except ValidationError as e:
+                    # Confidence validation errors are recoverable
+                    validation_errors = [
+                        {
+                            "field": f"confidence.{'.'.join(str(x) for x in err['loc'])}",
+                            "type": err["type"],
+                            "message": err["msg"],
+                            "input": err.get("input"),
+                        }
+                        for err in e.errors()
+                    ]
+                    logger.warning(f"Confidence validation failed: {e.error_count()} errors")
+                    return ScribeOutput(
+                        success=False,
+                        error=f"Confidence validation failed: {e.error_count()} errors",
+                        raw_response=response,
+                        validation_errors=validation_errors,
+                        recoverable=True,
+                    )
 
             # Parse responses
             responses = []
@@ -510,6 +573,8 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
             return ScribeOutput(
                 success=False,
                 error=f"Failed to parse response: {e}",
+                raw_response=response,
+                recoverable=False,  # Unknown errors not recoverable
             )
 
     def _create_error_output(self, error: str, input_data: ScribeInput) -> ScribeOutput:

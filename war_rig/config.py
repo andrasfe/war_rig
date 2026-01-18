@@ -257,6 +257,38 @@ class WarRigConfig(BaseSettings):
         description="Use COBOL-aware semantic boundaries for chunking",
     )
 
+    # Cycle limits for agents
+    max_challenger_cycles: int = Field(
+        default=2,
+        ge=1,
+        le=10,
+        description="Maximum Challenger review cycles before forcing completion",
+    )
+    max_imperator_cycles: int = Field(
+        default=1,
+        ge=1,
+        le=5,
+        description="Maximum Imperator review cycles before forcing approval",
+    )
+
+    # Formatting error recovery configuration
+    enable_formatting_recovery: bool = Field(
+        default=True,
+        description="Enable FORMATTING_FIX ticket creation for recoverable errors",
+    )
+    max_formatting_fix_attempts: int = Field(
+        default=2,
+        ge=1,
+        le=5,
+        description="Maximum attempts to fix formatting before giving up",
+    )
+    formatting_fix_timeout: int = Field(
+        default=120,
+        ge=30,
+        le=600,
+        description="Timeout in seconds for formatting fix attempts",
+    )
+
     # Beads integration
     # Disabled by default - War Rig uses in-memory ticket tracking
     # Enable only if you have a separate beads instance configured

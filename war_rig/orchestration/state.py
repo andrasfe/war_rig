@@ -204,6 +204,22 @@ class WarRigState(TypedDict, total=False):
     use_mock: bool
     """Whether to use mock agents (for testing)."""
 
+    # =========================================================================
+    # Cycle Limits (to prevent endless loops)
+    # =========================================================================
+
+    challenger_cycle_count: int
+    """Number of times Challenger has been invoked."""
+
+    imperator_chrome_count: int
+    """Number of times Imperator has issued CHROME decisions."""
+
+    max_challenger_cycles: int
+    """Maximum Challenger review cycles before forcing completion."""
+
+    max_imperator_cycles: int
+    """Maximum Imperator review cycles before forcing approval."""
+
 
 def create_initial_state(
     source_code: str,
@@ -214,6 +230,8 @@ def create_initial_state(
     max_iterations: int = 3,
     use_mock: bool = False,
     team_id: int = 1,
+    max_challenger_cycles: int = 2,
+    max_imperator_cycles: int = 1,
 ) -> WarRigState:
     """Create initial state for a War Rig run.
 
@@ -229,6 +247,8 @@ def create_initial_state(
         max_iterations: Maximum allowed iterations.
         use_mock: Whether to use mock agents.
         team_id: Team number for multi-team setups (1-based).
+        max_challenger_cycles: Maximum Challenger cycles (default 2).
+        max_imperator_cycles: Maximum Imperator CHROME cycles (default 1).
 
     Returns:
         Initialized WarRigState ready for graph execution.
@@ -268,4 +288,9 @@ def create_initial_state(
         # Control
         should_continue=True,
         use_mock=use_mock,
+        # Cycle limits
+        challenger_cycle_count=0,
+        imperator_chrome_count=0,
+        max_challenger_cycles=max_challenger_cycles,
+        max_imperator_cycles=max_imperator_cycles,
     )

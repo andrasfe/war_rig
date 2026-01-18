@@ -14,7 +14,7 @@ input/output types and prompt templates.
 
 import logging
 from abc import ABC, abstractmethod
-from typing import Any, Generic, TypeVar
+from typing import TYPE_CHECKING, Any, Generic, TypeVar
 
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -58,6 +58,20 @@ class AgentOutput(BaseModel):
         default=0,
         ge=0,
         description="Total tokens used in this invocation",
+    )
+
+    # Error recovery fields (for formatting error capture)
+    raw_response: str | None = Field(
+        default=None,
+        description="Raw LLM response when validation failed (for recovery)",
+    )
+    validation_errors: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Pydantic validation error details for recovery",
+    )
+    recoverable: bool = Field(
+        default=False,
+        description="Whether this failure can be recovered via FORMATTING_FIX",
     )
 
 
