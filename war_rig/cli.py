@@ -564,6 +564,185 @@ def init(
 
 
 @app.command()
+def overview(
+    config: Annotated[
+        Optional[Path],
+        typer.Option(
+            "--config",
+            "-c",
+            help="Path to configuration file",
+        ),
+    ] = None,
+    output: Annotated[
+        Optional[Path],
+        typer.Option(
+            "--output",
+            "-o",
+            help="Output directory (overrides config)",
+        ),
+    ] = None,
+    system_name: Annotated[
+        str,
+        typer.Option(
+            "--name",
+            "-n",
+            help="Name of the system being documented",
+        ),
+    ] = "CardDemo",
+    mock: Annotated[
+        bool,
+        typer.Option(
+            "--mock",
+            "-m",
+            help="Use mock output (for testing)",
+        ),
+    ] = False,
+    verbose: Annotated[
+        bool,
+        typer.Option(
+            "--verbose",
+            "-v",
+            help="Enable verbose logging",
+        ),
+    ] = False,
+) -> None:
+    """Generate system overview from completed documentation.
+
+    This command reads all completed documentation from output/final/programs/
+    and generates a SYSTEM_OVERVIEW.md file that synthesizes the individual
+    program documentation into a coherent narrative.
+
+    Example:
+        $ war-rig overview
+        $ war-rig overview --name "My System"
+        $ war-rig overview --output ./docs
+    """
+    import json
+
+    from war_rig.agents.imperator import (
+        ImperatorAgent,
+        ProgramSummary,
+        SystemOverviewInput,
+    )
+
+    setup_logging(verbose)
+
+    # Load configuration
+    cfg = load_config_with_fallback(config)
+    if output:
+        cfg.system.output_directory = output
+
+    console.print(Panel.fit(
+        f"[bold blue]War Rig[/bold blue] - Generating System Overview",
+        border_style="blue",
+    ))
+
+    output_dir = cfg.system.output_directory
+    programs_dir = output_dir / "final" / "programs"
+
+    if not programs_dir.exists():
+        console.print(f"[red]No documentation found at {programs_dir}[/red]")
+        raise typer.Exit(1)
+
+    # Collect program summaries
+    programs: list[ProgramSummary] = []
+
+    doc_files = list(programs_dir.glob("*.doc.json")) + list(programs_dir.glob("*.json"))
+    # Deduplicate by stem
+    seen_stems: set[str] = set()
+    unique_files = []
+    for f in doc_files:
+        stem = f.stem.replace(".doc", "")
+        if stem not in seen_stems:
+            seen_stems.add(stem)
+            unique_files.append(f)
+
+    if not unique_files:
+        console.print("[yellow]No documentation files found[/yellow]")
+        raise typer.Exit(1)
+
+    console.print(f"Found {len(unique_files)} documented programs")
+
+    for doc_file in unique_files:
+        try:
+            doc_data = json.loads(doc_file.read_text(encoding="utf-8"))
+
+            header = doc_data.get("header", {})
+            purpose = doc_data.get("purpose", {})
+            called_programs = doc_data.get("called_programs", [])
+            inputs = doc_data.get("inputs", [])
+            outputs_data = doc_data.get("outputs", [])
+
+            calls = [cp.get("program_name", "") for cp in called_programs if cp.get("program_name")]
+            input_names = [i.get("name", "") for i in inputs if i.get("name")][:5]
+            output_names = [o.get("name", "") for o in outputs_data if o.get("name")][:5]
+
+            programs.append(ProgramSummary(
+                file_name=header.get("file_name", doc_file.stem),
+                program_id=header.get("program_id", doc_file.stem.replace(".doc", "")),
+                program_type=purpose.get("program_type", "UNKNOWN"),
+                summary=purpose.get("summary", "No summary available"),
+                business_context=purpose.get("business_context", ""),
+                calls=calls,
+                called_by=[],
+                inputs=input_names,
+                outputs=output_names,
+                json_path=f"./final/programs/{doc_file.name}",
+            ))
+        except Exception as e:
+            console.print(f"[yellow]Warning: Could not parse {doc_file.name}: {e}[/yellow]")
+
+    if not programs:
+        console.print("[red]No valid documentation found[/red]")
+        raise typer.Exit(1)
+
+    # Build cross-references (called_by)
+    program_ids = {p.program_id for p in programs}
+    for prog in programs:
+        for called in prog.calls:
+            for other in programs:
+                if other.program_id == called:
+                    if prog.program_id not in other.called_by:
+                        other.called_by.append(prog.program_id)
+
+    # Create input
+    input_data = SystemOverviewInput(
+        batch_id="cli-overview",
+        system_name=system_name,
+        programs=programs,
+        total_files=len(programs),
+    )
+
+    # Generate overview
+    console.print("Generating system overview...")
+
+    imperator = ImperatorAgent(
+        config=cfg.imperator,
+        api_config=cfg.api,
+    )
+
+    try:
+        result = asyncio.run(
+            imperator.generate_system_overview(input_data, use_mock=mock)
+        )
+
+        if result.success:
+            overview_path = output_dir / "SYSTEM_OVERVIEW.md"
+            overview_path.write_text(result.markdown, encoding="utf-8")
+            console.print(f"[green]System overview written to: {overview_path}[/green]")
+
+            if result.subsystems:
+                console.print(f"\nIdentified subsystems: {', '.join(result.subsystems)}")
+        else:
+            console.print(f"[red]Failed to generate overview: {result.error}[/red]")
+            raise typer.Exit(1)
+
+    except Exception as e:
+        console.print(f"[red]Error generating overview: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command()
 def version() -> None:
     """Show War Rig version information."""
     from war_rig import __version__
