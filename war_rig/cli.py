@@ -447,6 +447,19 @@ def batch(
         for name, error in errors:
             console.print(f"  {name}: {error}")
 
+    # Generate system overview if we have completed documentation
+    # Check total completed (current run + previously completed via --resume)
+    programs_dir = cfg.system.output_directory / "final" / "programs"
+    if programs_dir.exists():
+        all_completed = list(programs_dir.glob("*.json"))
+        if all_completed:
+            console.print("\n[cyan]Generating system overview...[/cyan]")
+            try:
+                _generate_overview_internal(cfg, mock=mock)
+                console.print(f"[green]System overview written to: {cfg.system.output_directory / 'SYSTEM_OVERVIEW.md'}[/green]")
+            except Exception as e:
+                console.print(f"[yellow]Warning: Could not generate overview: {e}[/yellow]")
+
 
 @app.command()
 def status(
@@ -617,14 +630,6 @@ def overview(
         $ war-rig overview --name "My System"
         $ war-rig overview --output ./docs
     """
-    import json
-
-    from war_rig.agents.imperator import (
-        ImperatorAgent,
-        ProgramSummary,
-        SystemOverviewInput,
-    )
-
     setup_logging(verbose)
 
     # Load configuration
@@ -637,12 +642,59 @@ def overview(
         border_style="blue",
     ))
 
+    programs_dir = cfg.system.output_directory / "final" / "programs"
+    if not programs_dir.exists():
+        console.print(f"[red]No documentation found at {programs_dir}[/red]")
+        raise typer.Exit(1)
+
+    doc_count = len(list(programs_dir.glob("*.json")))
+    console.print(f"Found {doc_count} documented programs")
+    console.print("Generating system overview...")
+
+    try:
+        _generate_overview_internal(cfg, system_name=system_name, mock=mock)
+        console.print(f"[green]System overview written to: {cfg.system.output_directory / 'SYSTEM_OVERVIEW.md'}[/green]")
+    except Exception as e:
+        console.print(f"[red]Error generating overview: {e}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command()
+def version() -> None:
+    """Show War Rig version information."""
+    from war_rig import __version__
+
+    console.print(f"[bold blue]War Rig[/bold blue] version {__version__}")
+
+
+def _generate_overview_internal(
+    cfg: WarRigConfig,
+    system_name: str = "CardDemo",
+    mock: bool = False,
+) -> None:
+    """Internal helper to generate system overview.
+
+    Args:
+        cfg: War Rig configuration.
+        system_name: Name of the system being documented.
+        mock: Whether to use mock output.
+
+    Raises:
+        Exception: If overview generation fails.
+    """
+    import json
+
+    from war_rig.agents.imperator import (
+        ImperatorAgent,
+        ProgramSummary,
+        SystemOverviewInput,
+    )
+
     output_dir = cfg.system.output_directory
     programs_dir = output_dir / "final" / "programs"
 
     if not programs_dir.exists():
-        console.print(f"[red]No documentation found at {programs_dir}[/red]")
-        raise typer.Exit(1)
+        raise FileNotFoundError(f"No documentation found at {programs_dir}")
 
     # Collect program summaries
     programs: list[ProgramSummary] = []
@@ -658,10 +710,7 @@ def overview(
             unique_files.append(f)
 
     if not unique_files:
-        console.print("[yellow]No documentation files found[/yellow]")
-        raise typer.Exit(1)
-
-    console.print(f"Found {len(unique_files)} documented programs")
+        raise FileNotFoundError("No documentation files found")
 
     for doc_file in unique_files:
         try:
@@ -689,15 +738,13 @@ def overview(
                 outputs=output_names,
                 json_path=f"./final/programs/{doc_file.name}",
             ))
-        except Exception as e:
-            console.print(f"[yellow]Warning: Could not parse {doc_file.name}: {e}[/yellow]")
+        except Exception:
+            pass  # Skip unparseable files
 
     if not programs:
-        console.print("[red]No valid documentation found[/red]")
-        raise typer.Exit(1)
+        raise ValueError("No valid documentation found")
 
     # Build cross-references (called_by)
-    program_ids = {p.program_id for p in programs}
     for prog in programs:
         for called in prog.calls:
             for other in programs:
@@ -714,40 +761,20 @@ def overview(
     )
 
     # Generate overview
-    console.print("Generating system overview...")
-
     imperator = ImperatorAgent(
         config=cfg.imperator,
         api_config=cfg.api,
     )
 
-    try:
-        result = asyncio.run(
-            imperator.generate_system_overview(input_data, use_mock=mock)
-        )
+    result = asyncio.run(
+        imperator.generate_system_overview(input_data, use_mock=mock)
+    )
 
-        if result.success:
-            overview_path = output_dir / "SYSTEM_OVERVIEW.md"
-            overview_path.write_text(result.markdown, encoding="utf-8")
-            console.print(f"[green]System overview written to: {overview_path}[/green]")
-
-            if result.subsystems:
-                console.print(f"\nIdentified subsystems: {', '.join(result.subsystems)}")
-        else:
-            console.print(f"[red]Failed to generate overview: {result.error}[/red]")
-            raise typer.Exit(1)
-
-    except Exception as e:
-        console.print(f"[red]Error generating overview: {e}[/red]")
-        raise typer.Exit(1)
-
-
-@app.command()
-def version() -> None:
-    """Show War Rig version information."""
-    from war_rig import __version__
-
-    console.print(f"[bold blue]War Rig[/bold blue] version {__version__}")
+    if result.success:
+        overview_path = output_dir / "SYSTEM_OVERVIEW.md"
+        overview_path.write_text(result.markdown, encoding="utf-8")
+    else:
+        raise RuntimeError(f"Failed to generate overview: {result.error}")
 
 
 def main() -> None:
