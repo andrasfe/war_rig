@@ -364,6 +364,20 @@ class BeadsClient:
 
             for ticket_data in data.get("tickets", []):
                 try:
+                    # Parse timestamps if present
+                    created_at = datetime.utcnow()
+                    updated_at = datetime.utcnow()
+                    if ticket_data.get("created_at"):
+                        try:
+                            created_at = datetime.fromisoformat(ticket_data["created_at"])
+                        except (ValueError, TypeError):
+                            pass
+                    if ticket_data.get("updated_at"):
+                        try:
+                            updated_at = datetime.fromisoformat(ticket_data["updated_at"])
+                        except (ValueError, TypeError):
+                            pass
+
                     # Reconstruct the ticket
                     ticket = ProgramManagerTicket(
                         ticket_id=ticket_data["ticket_id"],
@@ -375,6 +389,8 @@ class BeadsClient:
                         worker_id=ticket_data.get("worker_id"),
                         parent_ticket_id=ticket_data.get("parent_ticket_id"),
                         metadata=ticket_data.get("metadata", {}),
+                        created_at=created_at,
+                        updated_at=updated_at,
                     )
 
                     # Reset incomplete/failed tickets - assume crash interrupted them
@@ -441,6 +457,8 @@ class BeadsClient:
                             "worker_id": ticket.worker_id,
                             "parent_ticket_id": ticket.parent_ticket_id,
                             "metadata": ticket.metadata,
+                            "created_at": ticket.created_at.isoformat() if ticket.created_at else None,
+                            "updated_at": ticket.updated_at.isoformat() if ticket.updated_at else None,
                         })
 
                 data = {
