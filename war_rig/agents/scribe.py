@@ -18,7 +18,7 @@ import logging
 import re
 from typing import Any
 
-from pydantic import Field
+from pydantic import Field, ValidationError
 
 from war_rig.agents.base import AgentInput, AgentOutput, BaseAgent
 from war_rig.config import APIConfig, ScribeConfig
@@ -516,8 +516,6 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
         Returns:
             Parsed ScribeOutput.
         """
-        from pydantic import ValidationError
-
         try:
             # Try to extract JSON from response
             json_match = re.search(r"\{[\s\S]*\}", response)
