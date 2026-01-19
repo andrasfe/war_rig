@@ -32,7 +32,7 @@ from typing import Any
 from langgraph.graph import END, StateGraph
 
 from war_rig.config import APIConfig, WarRigConfig
-from war_rig.orchestration.nodes import WarRigNodes, should_continue
+from war_rig.orchestration.nodes import WarRigNodes, should_continue, has_template
 from war_rig.orchestration.state import WarRigState, create_initial_state
 
 logger = logging.getLogger(__name__)
@@ -92,10 +92,17 @@ class WarRigGraph:
         # preprocess -> scribe (always)
         workflow.add_edge("preprocess", "scribe")
 
-        # scribe -> challenger (always)
-        workflow.add_edge("scribe", "challenger")
+        # scribe -> conditional (skip challenger if no template)
+        workflow.add_conditional_edges(
+            "scribe",
+            has_template,
+            {
+                "challenger": "challenger",
+                "imperator": "imperator",  # Skip challenger, go to imperator for FORCED
+            },
+        )
 
-        # challenger -> imperator (always)
+        # challenger -> imperator (always after challenger)
         workflow.add_edge("challenger", "imperator")
 
         # imperator -> conditional

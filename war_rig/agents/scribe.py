@@ -449,6 +449,60 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
 
         return repaired
 
+    def _parse_template_lenient(self, template_data: dict) -> DocumentationTemplate | None:
+        """Parse template with lenient validation.
+
+        If the JSON is valid, we accept it. Schema mismatches are logged as
+        warnings but don't cause failures. Uses model_construct() to bypass
+        Pydantic validation when strict validation fails.
+
+        Args:
+            template_data: Raw template dict from LLM response.
+
+        Returns:
+            Parsed DocumentationTemplate, or None if data is completely empty.
+        """
+        if not template_data:
+            return None
+
+        # First try strict validation
+        try:
+            return DocumentationTemplate.model_validate(template_data)
+        except ValidationError as e:
+            # Log warning but don't fail - the JSON was valid, just schema mismatch
+            error_fields = [".".join(str(x) for x in err["loc"]) for err in e.errors()]
+            logger.warning(
+                f"Template schema mismatch ({e.error_count()} fields): {error_fields}. "
+                "Accepting as-is."
+            )
+
+        # Use model_construct to bypass validation entirely
+        # This creates the object without running validators
+        try:
+            # Build nested models where possible, fall back to raw dicts
+            header = template_data.get("header", {})
+            purpose = template_data.get("purpose", {})
+
+            return DocumentationTemplate.model_construct(
+                header=header if isinstance(header, dict) else {},
+                purpose=purpose if isinstance(purpose, dict) else {},
+                inputs=template_data.get("inputs", []),
+                outputs=template_data.get("outputs", []),
+                called_programs=template_data.get("called_programs", []),
+                calling_context=template_data.get("calling_context", {}),
+                business_rules=template_data.get("business_rules", []),
+                data_flow=template_data.get("data_flow", {}),
+                copybooks_used=template_data.get("copybooks_used", []),
+                paragraphs=template_data.get("paragraphs", []),
+                error_handling=template_data.get("error_handling", []),
+                sql_operations=template_data.get("sql_operations", []),
+                cics_operations=template_data.get("cics_operations", []),
+                open_questions=template_data.get("open_questions", []),
+            )
+        except Exception as e:
+            logger.error(f"Failed to construct template: {e}")
+            return None
+
     def _parse_response(self, response: str, input_data: ScribeInput) -> ScribeOutput:
         """Parse the LLM response into ScribeOutput.
 
@@ -497,33 +551,10 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                         recoverable=True,
                     )
 
-            # Parse template - THIS IS WHERE VALIDATION ERRORS OCCUR
+            # Parse template - use lenient validation
             template = None
             if "template" in data:
-                try:
-                    template = DocumentationTemplate.model_validate(data["template"])
-                except ValidationError as e:
-                    # CAPTURE FOR RECOVERY - Pydantic errors are fixable
-                    validation_errors = [
-                        {
-                            "field": ".".join(str(x) for x in err["loc"]),
-                            "type": err["type"],
-                            "message": err["msg"],
-                            "input": err.get("input"),
-                        }
-                        for err in e.errors()
-                    ]
-                    logger.warning(
-                        f"Template validation failed with {e.error_count()} errors: "
-                        f"{[err['field'] for err in validation_errors]}"
-                    )
-                    return ScribeOutput(
-                        success=False,
-                        error=f"Template validation failed: {e.error_count()} errors",
-                        raw_response=response,
-                        validation_errors=validation_errors,
-                        recoverable=True,
-                    )
+                template = self._parse_template_lenient(data["template"])
 
             # Parse confidence
             confidence = None

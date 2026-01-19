@@ -453,3 +453,21 @@ def should_continue(state: WarRigState) -> str:
     if state.get("should_continue", False):
         return "increment"
     return "end"
+
+
+def has_template(state: WarRigState) -> str:
+    """Routing function to determine if Scribe produced a valid template.
+
+    If Scribe failed to produce a template (validation error, API error, etc.),
+    skip Challenger and go directly to Imperator for a FORCED decision.
+
+    Args:
+        state: Current graph state.
+
+    Returns:
+        "challenger" if template exists, "imperator" to skip challenger.
+    """
+    if state.get("current_template") is not None:
+        return "challenger"
+    logger.warning("No template produced, skipping Challenger")
+    return "imperator"

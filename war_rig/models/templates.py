@@ -386,9 +386,9 @@ class SQLOperation(BaseModel):
         ...,
         description="SQL operation type (SELECT, INSERT, UPDATE, DELETE, CURSOR)",
     )
-    table: str = Field(
-        ...,
-        description="Table name",
+    table: str | None = Field(
+        default=None,
+        description="Table name (may be None for complex queries or cursors)",
     )
     purpose: str | None = Field(
         default=None,
