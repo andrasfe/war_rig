@@ -91,16 +91,29 @@ Each file is processed through the Scribe-Challenger-Imperator workflow:
 
 ## Installation
 
-### Using Poetry (recommended)
+### Using pip (recommended)
+
+```bash
+# Install in development mode
+pip install -e .
+
+# Install with dev dependencies
+pip install -e ".[dev]"
+
+# Install from GitHub
+pip install git+https://github.com/andrasfe/war_rig.git
+```
+
+### Using Poetry (alternative)
 
 ```bash
 poetry install
 ```
 
-### Using pip
+### Verify Installation
 
 ```bash
-pip install -e .
+war-rig --help
 ```
 
 ## Configuration

@@ -1,6 +1,6 @@
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "war-rig"
@@ -34,7 +34,8 @@ dependencies = [
     "pyyaml>=6.0",
     "rich>=13.0.0",
     "typer>=0.12.0",
-    "atlas",  # Local chunking orchestration framework
+    "openai>=1.0.0",
+    "httpx>=0.25.0",
 ]
 
 [project.optional-dependencies]
@@ -46,42 +47,25 @@ dev = [
     "ruff>=0.3.0",
     "pre-commit>=3.6.0",
 ]
+atlas = [
+    # Install atlas separately if needed for chunking support
+    # pip install -e ../atlas
+]
 
 [project.scripts]
-war-rig = "war_rig.cli:app"
+war-rig = "war_rig.cli:main"
 
-[tool.poetry]
-name = "war-rig"
-version = "0.1.0"
-description = "Multi-agent mainframe documentation system using LangGraph"
-authors = ["War Rig Team <team@warrig.dev>"]
-readme = "README.md"
-packages = [{include = "war_rig"}]
+[project.urls]
+Homepage = "https://github.com/andrasfe/war_rig"
+Repository = "https://github.com/andrasfe/war_rig"
+Issues = "https://github.com/andrasfe/war_rig/issues"
 
-[tool.poetry.dependencies]
-python = "^3.11"
-langgraph = "^0.2.0"
-langchain-anthropic = "^0.2.0"
-langchain-openai = "^0.2.0"
-langchain-core = "^0.3.0"
-pydantic = "^2.0.0"
-pydantic-settings = "^2.0.0"
-python-dotenv = "^1.0.0"
-pyyaml = "^6.0"
-rich = "^13.0.0"
-typer = "^0.12.0"
-atlas = { path = "../atlas", develop = true }
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["war_rig*"]
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.0.0"
-pytest-asyncio = "^0.23.0"
-pytest-cov = "^4.0.0"
-mypy = "^1.8.0"
-ruff = "^0.3.0"
-pre-commit = "^3.6.0"
-
-[tool.poetry.scripts]
-war-rig = "war_rig.cli:app"
+[tool.setuptools.package-data]
+war_rig = ["py.typed"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
