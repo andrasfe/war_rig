@@ -31,6 +31,29 @@ class GenericPreprocessor(BasePreprocessor):
         ".pl1": FileType.PLI,
     }
 
+    def detect_file_type(self, source: str, file_name: str) -> bool:
+        """Determine if this preprocessor can handle the given file.
+
+        As a fallback preprocessor, this always returns True for files
+        that aren't handled by more specific preprocessors.
+
+        Args:
+            source: The source code content.
+            file_name: Name of the source file.
+
+        Returns:
+            True - this preprocessor accepts all files as a fallback.
+        """
+        return True
+
+    def get_supported_extensions(self) -> list[str]:
+        """Get the file extensions this preprocessor handles.
+
+        Returns:
+            List of extensions for listing, BMS, and PL/I files.
+        """
+        return list(self.EXTENSION_MAP.keys())
+
     def can_process(self, source_code: str, file_name: str) -> bool:
         """Check if this preprocessor can handle the file.
 
