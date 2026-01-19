@@ -25,6 +25,7 @@ from war_rig.models.templates import FileType
 from war_rig.orchestration.state import WarRigState
 from war_rig.preprocessors.cobol import COBOLPreprocessor
 from war_rig.preprocessors.copybook import CopybookPreprocessor
+from war_rig.preprocessors.generic import GenericPreprocessor
 from war_rig.preprocessors.jcl import JCLPreprocessor
 
 logger = logging.getLogger(__name__)
@@ -58,11 +59,12 @@ class WarRigNodes:
         self.challenger = ChallengerAgent(config.challenger, self.api_config)
         self.imperator = ImperatorAgent(config.imperator, self.api_config)
 
-        # Initialize preprocessors
+        # Initialize preprocessors (GenericPreprocessor is last as fallback)
         self.preprocessors = [
             COBOLPreprocessor(),
             JCLPreprocessor(),
             CopybookPreprocessor(),
+            GenericPreprocessor(),  # Fallback for any file type
         ]
 
     async def preprocess(self, state: WarRigState) -> dict[str, Any]:

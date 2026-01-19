@@ -26,6 +26,7 @@ class FileType(str, Enum):
     COPYBOOK = "COPYBOOK"
     PROC = "PROC"
     BMS = "BMS"
+    LISTING = "LISTING"
     OTHER = "OTHER"
 
 

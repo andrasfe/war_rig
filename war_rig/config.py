@@ -120,11 +120,12 @@ class PreprocessingConfig(BaseModel):
 class FileExtensionsConfig(BaseModel):
     """Configuration for recognized file extensions by type."""
 
-    cobol: list[str] = Field(default=[".cbl", ".cob", ".CBL", ".COB"])
-    copybook: list[str] = Field(default=[".cpy", ".CPY", ".copy", ".COPY"])
-    jcl: list[str] = Field(default=[".jcl", ".JCL"])
+    cobol: list[str] = Field(default=[".cbl", ".cob", ".CBL", ".COB", ".cobol", ".COBOL"])
+    copybook: list[str] = Field(default=[".cpy", ".CPY", ".copy", ".COPY", ".copybook"])
+    jcl: list[str] = Field(default=[".jcl", ".JCL", ".proc", ".PROC"])
     bms: list[str] = Field(default=[".bms", ".BMS"])
     pli: list[str] = Field(default=[".pli", ".PLI", ".pl1", ".PL1"])
+    listing: list[str] = Field(default=[".lst", ".LST", ".list", ".LIST"])
 
 
 class LoggingConfig(BaseModel):
@@ -187,16 +188,25 @@ class WarRigConfig(BaseSettings):
     # Legacy Anthropic support
     anthropic_api_key: str | None = Field(default=None, description="Anthropic API key (required if using anthropic)")
 
-    # Agent model configurations (REQUIRED - must be set in .env)
-    scribe_model: str = Field(..., description="Model for Scribe agent (e.g., anthropic/claude-sonnet-4-20250514)")
+    # Agent model configurations (defaults provided, can override in .env)
+    scribe_model: str = Field(
+        default="anthropic/claude-sonnet-4-20250514",
+        description="Model for Scribe agent",
+    )
     scribe_temperature: float = Field(default=0.3)
     scribe_max_tokens: int = Field(default=4000)
 
-    challenger_model: str = Field(..., description="Model for Challenger agent (e.g., openai/gpt-4o-2024-11-20)")
+    challenger_model: str = Field(
+        default="anthropic/claude-sonnet-4-20250514",
+        description="Model for Challenger agent",
+    )
     challenger_temperature: float = Field(default=0.5)
     challenger_max_tokens: int = Field(default=2000)
 
-    imperator_model: str = Field(..., description="Model for Imperator agent (e.g., anthropic/claude-sonnet-4-20250514)")
+    imperator_model: str = Field(
+        default="anthropic/claude-sonnet-4-20250514",
+        description="Model for Imperator agent",
+    )
     imperator_temperature: float = Field(default=0.2)
     imperator_max_tokens: int = Field(default=2000)
 

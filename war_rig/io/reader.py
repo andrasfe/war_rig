@@ -97,6 +97,11 @@ class SourceReader:
         for ext in self.extensions.pli:
             mapping[ext.lower()] = FileType.PLI
 
+        # Add listing files if configured
+        if hasattr(self.extensions, 'listing'):
+            for ext in self.extensions.listing:
+                mapping[ext.lower()] = FileType.LISTING
+
         return mapping
 
     def detect_file_type(self, path: Path) -> FileType:
