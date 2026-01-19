@@ -20,6 +20,16 @@ Factory functions:
 - create_provider: Create a provider by name with explicit configuration
 - register_provider: Register a custom provider class
 - get_provider_from_env: Create a provider from environment variables
+- get_available_providers: List all registered providers (built-in + plugins)
+
+Plugin Discovery:
+    External packages can register providers without modifying war_rig by
+    using Python entry points. Add to your pyproject.toml:
+
+        [project.entry-points."war_rig.providers"]
+        myprovider = "mypackage.provider:MyProviderClass"
+
+    The provider will be auto-discovered when war_rig loads.
 
 Example:
     from war_rig.providers import OpenRouterProvider, OpenRouterConfig, Message
@@ -48,6 +58,7 @@ from war_rig.providers.config import (
 )
 from war_rig.providers.factory import (
     create_provider,
+    get_available_providers,
     get_provider_from_env,
     register_provider,
 )
@@ -70,6 +81,7 @@ __all__ = [
     "OpenRouterProviderError",
     "ProviderConfig",
     "create_provider",
+    "get_available_providers",
     "get_provider_from_env",
     "register_provider",
 ]

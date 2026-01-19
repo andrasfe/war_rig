@@ -8,9 +8,114 @@ War Rig uses a provider abstraction layer that allows any LLM backend to be used
 
 - **Protocol-based**: No inheritance required, just implement the interface
 - **API-agnostic**: Works with any API format, not just OpenAI-compatible
+- **Plugin-friendly**: External packages auto-register via entry points (no war_rig changes needed)
 - **Configuration-driven**: Provider selection via environment variables
 
-## Quick Start
+## Quick Start (Zero Code Changes to War Rig)
+
+The easiest way to add a custom provider is via **plugin discovery**. Create a separate Python package with your provider, and War Rig will auto-discover it.
+
+### 1. Create Your Provider Package
+
+```
+my-warrig-provider/
+├── pyproject.toml
+└── my_provider/
+    ├── __init__.py
+    └── provider.py
+```
+
+### 2. Implement the LLMProvider Protocol
+
+In `my_provider/provider.py`:
+
+```python
+import os
+from war_rig.providers import Message, CompletionResponse
+
+class MyCustomProvider:
+    """Custom LLM provider - auto-configured from environment."""
+
+    def __init__(self):
+        # Read config from environment (plugin is responsible for this)
+        self._api_key = os.environ["MY_PROVIDER_API_KEY"]
+        self._endpoint = os.environ["MY_PROVIDER_ENDPOINT"]
+        self._model = os.getenv("MY_PROVIDER_MODEL", "default-model")
+
+    @property
+    def default_model(self) -> str:
+        return self._model
+
+    async def complete(
+        self,
+        messages: list[Message],
+        model: str | None = None,
+        temperature: float = 0.7,
+        **kwargs,
+    ) -> CompletionResponse:
+        """Send messages to your LLM and return a response."""
+        import httpx
+
+        formatted_messages = [
+            {"role": msg.role, "text": msg.content}
+            for msg in messages
+        ]
+
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                self._endpoint,
+                headers={"Authorization": f"Bearer {self._api_key}"},
+                json={
+                    "messages": formatted_messages,
+                    "model": model or self._model,
+                    "temperature": temperature,
+                },
+            )
+            data = response.json()
+
+        return CompletionResponse(
+            content=data["output"],
+            model=data.get("model", self._model),
+            tokens_used=data.get("usage", {}).get("total_tokens", 0),
+            raw_response=data,
+        )
+```
+
+### 3. Register via Entry Points
+
+In `pyproject.toml`:
+
+```toml
+[project]
+name = "my-warrig-provider"
+version = "0.1.0"
+dependencies = ["war_rig"]
+
+[project.entry-points."war_rig.providers"]
+myprovider = "my_provider.provider:MyCustomProvider"
+```
+
+### 4. Install and Configure
+
+```bash
+pip install my-warrig-provider
+```
+
+Set environment variables:
+
+```bash
+export LLM_PROVIDER=myprovider
+export MY_PROVIDER_API_KEY=your-api-key
+export MY_PROVIDER_ENDPOINT=https://api.example.com/v1/chat
+```
+
+That's it! War Rig will auto-discover your provider on startup.
+
+---
+
+## Alternative: Manual Registration
+
+If you don't want to create a separate package, you can register programmatically:
 
 ### 1. Implement the LLMProvider Protocol
 
@@ -71,42 +176,30 @@ class MyCustomProvider:
         )
 ```
 
-### 2. Register Your Provider
+### 2. Register Before Use
+
+Call `register_provider()` before using any war_rig agents:
 
 ```python
 from war_rig.providers import register_provider
 from my_provider import MyCustomProvider
 
+# Register at application startup
 register_provider("mycustom", MyCustomProvider)
 ```
 
 ### 3. Configure Environment
 
-Add to your `.env` file:
-
 ```bash
-LLM_PROVIDER=mycustom
-MYCUSTOM_API_KEY=your-api-key
-MYCUSTOM_ENDPOINT=https://api.example.com/v1/chat
+export LLM_PROVIDER=mycustom
+export MYCUSTOM_API_KEY=your-api-key
+export MYCUSTOM_ENDPOINT=https://api.example.com/v1/chat
 ```
 
-### 4. Update the Factory (Optional)
+Note: With manual registration, your provider's `__init__` receives kwargs
+from `create_provider()`, so you need to handle configuration explicitly.
 
-For automatic environment-based configuration, update `war_rig/providers/factory.py`:
-
-```python
-def get_provider_from_env() -> LLMProvider:
-    provider_name = os.getenv("LLM_PROVIDER", "openrouter").lower()
-
-    if provider_name == "mycustom":
-        from my_provider import MyCustomProvider
-        return MyCustomProvider(
-            api_key=os.environ["MYCUSTOM_API_KEY"],
-            endpoint=os.environ["MYCUSTOM_ENDPOINT"],
-            model=os.getenv("MYCUSTOM_MODEL", "default-model"),
-        )
-    # ... existing providers
-```
+---
 
 ## Protocol Reference
 
@@ -277,26 +370,49 @@ class TestMyProvider:
         assert response.tokens_used >= 0
 ```
 
-## File Structure
+## File Structure (Plugin Approach - Recommended)
 
-When adding a new provider, create:
+Create a separate package:
 
 ```
-war_rig/providers/
-├── __init__.py          # Add exports
-├── protocol.py          # Don't modify
-├── factory.py           # Add to registry
-├── openrouter.py        # Existing provider
-└── myprovider.py        # Your new provider
+my-warrig-provider/
+├── pyproject.toml       # Entry point registration
+├── my_provider/
+│   ├── __init__.py
+│   └── provider.py      # Your provider class
+└── tests/
+    └── test_provider.py
+```
+
+Example `pyproject.toml`:
+
+```toml
+[project]
+name = "my-warrig-provider"
+version = "0.1.0"
+dependencies = ["war_rig", "httpx"]
+
+[project.entry-points."war_rig.providers"]
+myprovider = "my_provider.provider:MyCustomProvider"
 ```
 
 ## Checklist
 
+### For Plugin Approach (No war_rig changes)
 - [ ] Implement `default_model` property
 - [ ] Implement async `complete()` method
 - [ ] Return proper `CompletionResponse` with all fields
 - [ ] Handle errors gracefully
-- [ ] Register provider with `register_provider()`
-- [ ] Add environment variable configuration
+- [ ] Read configuration from environment in `__init__` (no args)
+- [ ] Add entry point in `pyproject.toml`
 - [ ] Write tests
-- [ ] Update `.env.example` with new variables
+- [ ] `pip install` your package
+- [ ] Set `LLM_PROVIDER=yourname` environment variable
+
+### For Manual Registration
+- [ ] Implement `default_model` property
+- [ ] Implement async `complete()` method
+- [ ] Return proper `CompletionResponse` with all fields
+- [ ] Handle errors gracefully
+- [ ] Call `register_provider()` at application startup
+- [ ] Set `LLM_PROVIDER=yourname` environment variable

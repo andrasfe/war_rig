@@ -4,6 +4,15 @@ This module provides a factory pattern for creating LLM providers by name,
 along with a registry for custom provider implementations. It also supports
 environment-based configuration for easy deployment.
 
+Plugin Discovery:
+    External packages can register providers without modifying war_rig by
+    using Python entry points. Add to your pyproject.toml:
+
+        [project.entry-points."war_rig.providers"]
+        myprovider = "mypackage.provider:MyProviderClass"
+
+    The provider will be auto-discovered when war_rig loads.
+
 Example:
     from war_rig.providers.factory import create_provider, get_provider_from_env
 
@@ -18,13 +27,72 @@ Example:
     provider = get_provider_from_env()
 """
 
+import logging
+from importlib.metadata import entry_points
+
 from war_rig.providers.protocol import LLMProvider
 from war_rig.providers.openrouter import OpenRouterProvider
+
+logger = logging.getLogger(__name__)
 
 # Registry of provider classes by name
 _PROVIDERS: dict[str, type] = {
     "openrouter": OpenRouterProvider,
 }
+
+# Track if plugins have been loaded
+_PLUGINS_LOADED = False
+
+
+def _discover_plugins() -> None:
+    """Discover and register provider plugins via entry points.
+
+    Looks for entry points in the 'war_rig.providers' group.
+    Each entry point should point to a provider class.
+
+    External packages register by adding to pyproject.toml:
+        [project.entry-points."war_rig.providers"]
+        myprovider = "mypackage.provider:MyProviderClass"
+    """
+    global _PLUGINS_LOADED
+
+    if _PLUGINS_LOADED:
+        return
+
+    _PLUGINS_LOADED = True
+
+    try:
+        # Python 3.10+ style
+        eps = entry_points(group="war_rig.providers")
+    except TypeError:
+        # Python 3.9 fallback
+        all_eps = entry_points()
+        eps = all_eps.get("war_rig.providers", [])
+
+    for ep in eps:
+        try:
+            provider_class = ep.load()
+            name = ep.name.lower()
+
+            if name in _PROVIDERS:
+                logger.debug(f"Provider '{name}' already registered, skipping plugin")
+                continue
+
+            _PROVIDERS[name] = provider_class
+            logger.info(f"Discovered provider plugin: {name} -> {ep.value}")
+
+        except Exception as e:
+            logger.warning(f"Failed to load provider plugin '{ep.name}': {e}")
+
+
+def get_available_providers() -> list[str]:
+    """Get list of all registered provider names.
+
+    Returns:
+        List of provider names (includes built-in and discovered plugins).
+    """
+    _discover_plugins()
+    return list(_PROVIDERS.keys())
 
 
 def register_provider(name: str, provider_class: type) -> None:
@@ -53,6 +121,8 @@ def create_provider(
 ) -> LLMProvider:
     """Create an LLM provider by name.
 
+    Automatically discovers provider plugins on first call.
+
     Args:
         provider_name: Name of the provider (e.g., "openrouter")
         **kwargs: Provider-specific configuration
@@ -63,6 +133,8 @@ def create_provider(
     Raises:
         ValueError: If provider is not registered
     """
+    _discover_plugins()
+
     if provider_name not in _PROVIDERS:
         available = ", ".join(_PROVIDERS.keys())
         raise ValueError(f"Unknown provider '{provider_name}'. Available: {available}")
@@ -73,6 +145,8 @@ def create_provider(
 
 def get_provider_from_env() -> LLMProvider:
     """Create a provider based on environment variables.
+
+    Automatically discovers provider plugins on first call.
 
     Reads:
         - LLM_PROVIDER: Provider name (default: "openrouter")
@@ -88,8 +162,11 @@ def get_provider_from_env() -> LLMProvider:
     """
     import os
 
+    _discover_plugins()
+
     provider_name = os.getenv("LLM_PROVIDER", "openrouter").lower()
 
+    # Built-in openrouter provider with env configuration
     if provider_name == "openrouter":
         return OpenRouterProvider(
             api_key=os.environ["OPENROUTER_API_KEY"],
@@ -97,4 +174,6 @@ def get_provider_from_env() -> LLMProvider:
             default_model=os.getenv("SCRIBE_MODEL", "anthropic/claude-sonnet-4-20250514"),
         )
 
+    # For plugins, they must handle their own env configuration
+    # Pass no kwargs - plugin is responsible for reading env vars
     return create_provider(provider_name)
