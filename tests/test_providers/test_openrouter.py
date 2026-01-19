@@ -1,0 +1,541 @@
+"""Tests for the OpenRouter LLM Provider implementation.
+
+This module tests the OpenRouterProvider including:
+- Initialization and configuration
+- Protocol conformance
+- complete() method with mocked OpenAI client
+- Error handling for various failure scenarios
+"""
+
+import pytest
+from unittest.mock import AsyncMock, MagicMock, patch
+
+from openai import APIError, APIConnectionError, RateLimitError
+
+from war_rig.providers import (
+    Message,
+    CompletionResponse,
+    LLMProvider,
+    OpenRouterProvider,
+    OpenRouterProviderError,
+)
+from war_rig.providers.openrouter import DEFAULT_BASE_URL, DEFAULT_MODEL
+
+
+class TestOpenRouterProviderInitialization:
+    """Tests for OpenRouterProvider initialization."""
+
+    def test_initialization_with_api_key_only(self) -> None:
+        """Test initialization with just API key."""
+        provider = OpenRouterProvider(api_key="test-key")
+        assert provider.default_model == DEFAULT_MODEL
+        assert provider._api_key == "test-key"
+        assert provider._base_url == DEFAULT_BASE_URL
+
+    def test_initialization_with_custom_model(self) -> None:
+        """Test initialization with custom default model."""
+        provider = OpenRouterProvider(
+            api_key="test-key",
+            default_model="openai/gpt-4",
+        )
+        assert provider.default_model == "openai/gpt-4"
+
+    def test_initialization_with_custom_base_url(self) -> None:
+        """Test initialization with custom base URL."""
+        custom_url = "https://custom.openrouter.ai/api/v1"
+        provider = OpenRouterProvider(
+            api_key="test-key",
+            base_url=custom_url,
+        )
+        assert provider._base_url == custom_url
+
+    def test_initialization_with_site_info(self) -> None:
+        """Test initialization with site URL and name for OpenRouter analytics."""
+        provider = OpenRouterProvider(
+            api_key="test-key",
+            site_url="https://example.com",
+            site_name="Test App",
+        )
+        assert provider._site_url == "https://example.com"
+        assert provider._site_name == "Test App"
+
+    def test_initialization_creates_async_client(self) -> None:
+        """Test that initialization creates an AsyncOpenAI client."""
+        provider = OpenRouterProvider(api_key="test-key")
+        assert provider._client is not None
+
+
+class TestOpenRouterProviderProtocol:
+    """Tests for OpenRouterProvider protocol conformance."""
+
+    def test_implements_llm_provider_protocol(self) -> None:
+        """Test that OpenRouterProvider implements LLMProvider protocol."""
+        provider = OpenRouterProvider(api_key="test-key")
+        assert isinstance(provider, LLMProvider)
+
+    def test_default_model_property_returns_string(self) -> None:
+        """Test that default_model property returns a string."""
+        provider = OpenRouterProvider(api_key="test-key")
+        assert isinstance(provider.default_model, str)
+        assert len(provider.default_model) > 0
+
+
+class TestOpenRouterProviderComplete:
+    """Tests for the complete() method."""
+
+    @pytest.fixture
+    def mock_response(self) -> MagicMock:
+        """Create a mock OpenAI API response."""
+        response = MagicMock()
+        response.id = "chatcmpl-123"
+        response.model = "anthropic/claude-sonnet-4-20250514"
+        response.created = 1704067200
+
+        choice = MagicMock()
+        choice.index = 0
+        choice.finish_reason = "stop"
+        choice.message = MagicMock()
+        choice.message.content = "This is the assistant's response."
+        response.choices = [choice]
+
+        response.usage = MagicMock()
+        response.usage.prompt_tokens = 50
+        response.usage.completion_tokens = 100
+        response.usage.total_tokens = 150
+
+        return response
+
+    @pytest.fixture
+    def provider_with_mock_client(self) -> OpenRouterProvider:
+        """Create an OpenRouterProvider with a mocked client."""
+        provider = OpenRouterProvider(api_key="test-key")
+        provider._client = MagicMock()
+        provider._client.chat = MagicMock()
+        provider._client.chat.completions = MagicMock()
+        return provider
+
+    @pytest.mark.asyncio
+    async def test_complete_success(
+        self,
+        provider_with_mock_client: OpenRouterProvider,
+        mock_response: MagicMock,
+    ) -> None:
+        """Test successful completion call."""
+        provider_with_mock_client._client.chat.completions.create = AsyncMock(
+            return_value=mock_response
+        )
+
+        messages = [
+            Message(role="system", content="You are a helpful assistant."),
+            Message(role="user", content="Hello!"),
+        ]
+
+        response = await provider_with_mock_client.complete(messages)
+
+        assert isinstance(response, CompletionResponse)
+        assert response.content == "This is the assistant's response."
+        assert response.model == "anthropic/claude-sonnet-4-20250514"
+        assert response.tokens_used == 150
+
+    @pytest.mark.asyncio
+    async def test_complete_with_custom_model(
+        self,
+        provider_with_mock_client: OpenRouterProvider,
+        mock_response: MagicMock,
+    ) -> None:
+        """Test completion with custom model override."""
+        mock_response.model = "openai/gpt-4"
+        provider_with_mock_client._client.chat.completions.create = AsyncMock(
+            return_value=mock_response
+        )
+
+        messages = [Message(role="user", content="Hello!")]
+
+        response = await provider_with_mock_client.complete(
+            messages,
+            model="openai/gpt-4",
+        )
+
+        assert response.model == "openai/gpt-4"
+
+        # Verify the call was made with the custom model
+        call_kwargs = (
+            provider_with_mock_client._client.chat.completions.create.call_args.kwargs
+        )
+        assert call_kwargs["model"] == "openai/gpt-4"
+
+    @pytest.mark.asyncio
+    async def test_complete_with_temperature(
+        self,
+        provider_with_mock_client: OpenRouterProvider,
+        mock_response: MagicMock,
+    ) -> None:
+        """Test completion with custom temperature."""
+        provider_with_mock_client._client.chat.completions.create = AsyncMock(
+            return_value=mock_response
+        )
+
+        messages = [Message(role="user", content="Hello!")]
+
+        await provider_with_mock_client.complete(messages, temperature=0.2)
+
+        call_kwargs = (
+            provider_with_mock_client._client.chat.completions.create.call_args.kwargs
+        )
+        assert call_kwargs["temperature"] == 0.2
+
+    @pytest.mark.asyncio
+    async def test_complete_with_max_tokens(
+        self,
+        provider_with_mock_client: OpenRouterProvider,
+        mock_response: MagicMock,
+    ) -> None:
+        """Test completion with max_tokens parameter."""
+        provider_with_mock_client._client.chat.completions.create = AsyncMock(
+            return_value=mock_response
+        )
+
+        messages = [Message(role="user", content="Hello!")]
+
+        await provider_with_mock_client.complete(messages, max_tokens=500)
+
+        call_kwargs = (
+            provider_with_mock_client._client.chat.completions.create.call_args.kwargs
+        )
+        assert call_kwargs["max_tokens"] == 500
+
+    @pytest.mark.asyncio
+    async def test_complete_without_max_tokens(
+        self,
+        provider_with_mock_client: OpenRouterProvider,
+        mock_response: MagicMock,
+    ) -> None:
+        """Test completion without max_tokens (should not be in API call)."""
+        provider_with_mock_client._client.chat.completions.create = AsyncMock(
+            return_value=mock_response
+        )
+
+        messages = [Message(role="user", content="Hello!")]
+
+        await provider_with_mock_client.complete(messages)
+
+        call_kwargs = (
+            provider_with_mock_client._client.chat.completions.create.call_args.kwargs
+        )
+        assert "max_tokens" not in call_kwargs
+
+    @pytest.mark.asyncio
+    async def test_complete_with_extra_kwargs(
+        self,
+        provider_with_mock_client: OpenRouterProvider,
+        mock_response: MagicMock,
+    ) -> None:
+        """Test completion with additional kwargs passed through."""
+        provider_with_mock_client._client.chat.completions.create = AsyncMock(
+            return_value=mock_response
+        )
+
+        messages = [Message(role="user", content="Hello!")]
+
+        await provider_with_mock_client.complete(
+            messages,
+            top_p=0.9,
+            stop=["END"],
+        )
+
+        call_kwargs = (
+            provider_with_mock_client._client.chat.completions.create.call_args.kwargs
+        )
+        assert call_kwargs["top_p"] == 0.9
+        assert call_kwargs["stop"] == ["END"]
+
+    @pytest.mark.asyncio
+    async def test_complete_raw_response_included(
+        self,
+        provider_with_mock_client: OpenRouterProvider,
+        mock_response: MagicMock,
+    ) -> None:
+        """Test that raw_response is included in CompletionResponse."""
+        provider_with_mock_client._client.chat.completions.create = AsyncMock(
+            return_value=mock_response
+        )
+
+        messages = [Message(role="user", content="Hello!")]
+
+        response = await provider_with_mock_client.complete(messages)
+
+        assert response.raw_response is not None
+        assert response.raw_response["id"] == "chatcmpl-123"
+        assert response.raw_response["model"] == "anthropic/claude-sonnet-4-20250514"
+        assert "usage" in response.raw_response
+
+    @pytest.mark.asyncio
+    async def test_complete_empty_choices(
+        self,
+        provider_with_mock_client: OpenRouterProvider,
+    ) -> None:
+        """Test handling of response with empty choices."""
+        mock_response = MagicMock()
+        mock_response.id = "chatcmpl-123"
+        mock_response.model = "test-model"
+        mock_response.created = 1704067200
+        mock_response.choices = []
+        mock_response.usage = MagicMock()
+        mock_response.usage.prompt_tokens = 50
+        mock_response.usage.completion_tokens = 0
+        mock_response.usage.total_tokens = 50
+
+        provider_with_mock_client._client.chat.completions.create = AsyncMock(
+            return_value=mock_response
+        )
+
+        messages = [Message(role="user", content="Hello!")]
+
+        response = await provider_with_mock_client.complete(messages)
+
+        assert response.content == ""
+        assert response.has_content is False
+
+    @pytest.mark.asyncio
+    async def test_complete_null_message_content(
+        self,
+        provider_with_mock_client: OpenRouterProvider,
+    ) -> None:
+        """Test handling of response with null message content."""
+        mock_response = MagicMock()
+        mock_response.id = "chatcmpl-123"
+        mock_response.model = "test-model"
+        mock_response.created = 1704067200
+
+        choice = MagicMock()
+        choice.index = 0
+        choice.finish_reason = "stop"
+        choice.message = MagicMock()
+        choice.message.content = None
+        mock_response.choices = [choice]
+
+        mock_response.usage = MagicMock()
+        mock_response.usage.prompt_tokens = 50
+        mock_response.usage.completion_tokens = 0
+        mock_response.usage.total_tokens = 50
+
+        provider_with_mock_client._client.chat.completions.create = AsyncMock(
+            return_value=mock_response
+        )
+
+        messages = [Message(role="user", content="Hello!")]
+
+        response = await provider_with_mock_client.complete(messages)
+
+        assert response.content == ""
+
+
+class TestOpenRouterProviderErrorHandling:
+    """Tests for error handling in OpenRouterProvider."""
+
+    @pytest.fixture
+    def provider_with_mock_client(self) -> OpenRouterProvider:
+        """Create an OpenRouterProvider with a mocked client."""
+        provider = OpenRouterProvider(api_key="test-key")
+        provider._client = MagicMock()
+        provider._client.chat = MagicMock()
+        provider._client.chat.completions = MagicMock()
+        return provider
+
+    @pytest.mark.asyncio
+    async def test_rate_limit_error(
+        self,
+        provider_with_mock_client: OpenRouterProvider,
+    ) -> None:
+        """Test handling of rate limit errors."""
+        rate_limit_error = RateLimitError(
+            message="Rate limit exceeded",
+            response=MagicMock(status_code=429),
+            body=None,
+        )
+        provider_with_mock_client._client.chat.completions.create = AsyncMock(
+            side_effect=rate_limit_error
+        )
+
+        messages = [Message(role="user", content="Hello!")]
+
+        with pytest.raises(OpenRouterProviderError) as exc_info:
+            await provider_with_mock_client.complete(messages)
+
+        assert exc_info.value.status_code == 429
+        assert "Rate limit exceeded" in exc_info.value.message
+        assert exc_info.value.original_error is rate_limit_error
+
+    @pytest.mark.asyncio
+    async def test_connection_error(
+        self,
+        provider_with_mock_client: OpenRouterProvider,
+    ) -> None:
+        """Test handling of connection errors."""
+        connection_error = APIConnectionError(request=MagicMock())
+        provider_with_mock_client._client.chat.completions.create = AsyncMock(
+            side_effect=connection_error
+        )
+
+        messages = [Message(role="user", content="Hello!")]
+
+        with pytest.raises(OpenRouterProviderError) as exc_info:
+            await provider_with_mock_client.complete(messages)
+
+        assert "Failed to connect" in exc_info.value.message
+        assert exc_info.value.original_error is connection_error
+
+    @pytest.mark.asyncio
+    async def test_api_error(
+        self,
+        provider_with_mock_client: OpenRouterProvider,
+    ) -> None:
+        """Test handling of general API errors."""
+        api_error = APIError(
+            message="Invalid request",
+            request=MagicMock(),
+            body=None,
+        )
+        api_error.status_code = 400
+        provider_with_mock_client._client.chat.completions.create = AsyncMock(
+            side_effect=api_error
+        )
+
+        messages = [Message(role="user", content="Hello!")]
+
+        with pytest.raises(OpenRouterProviderError) as exc_info:
+            await provider_with_mock_client.complete(messages)
+
+        assert exc_info.value.status_code == 400
+        assert "OpenRouter API error" in exc_info.value.message
+        assert exc_info.value.original_error is api_error
+
+    @pytest.mark.asyncio
+    async def test_unexpected_error(
+        self,
+        provider_with_mock_client: OpenRouterProvider,
+    ) -> None:
+        """Test handling of unexpected errors."""
+        unexpected_error = RuntimeError("Unexpected failure")
+        provider_with_mock_client._client.chat.completions.create = AsyncMock(
+            side_effect=unexpected_error
+        )
+
+        messages = [Message(role="user", content="Hello!")]
+
+        with pytest.raises(OpenRouterProviderError) as exc_info:
+            await provider_with_mock_client.complete(messages)
+
+        assert "Unexpected error" in exc_info.value.message
+        assert exc_info.value.original_error is unexpected_error
+
+    @pytest.mark.asyncio
+    async def test_parse_response_error(
+        self,
+        provider_with_mock_client: OpenRouterProvider,
+    ) -> None:
+        """Test handling of response parsing errors."""
+        # Create a response that will cause parsing to fail
+        # The _parse_response accesses response.id in the raw_response dict building
+        # Making id a property that raises will trigger the parse error
+        mock_response = MagicMock()
+
+        # Use PropertyMock to make .id raise an exception when accessed
+        type(mock_response).id = property(
+            lambda self: (_ for _ in ()).throw(RuntimeError("Parse error"))
+        )
+
+        provider_with_mock_client._client.chat.completions.create = AsyncMock(
+            return_value=mock_response
+        )
+
+        messages = [Message(role="user", content="Hello!")]
+
+        with pytest.raises(OpenRouterProviderError) as exc_info:
+            await provider_with_mock_client.complete(messages)
+
+        assert "Failed to parse response" in exc_info.value.message
+
+
+class TestOpenRouterProviderError:
+    """Tests for the OpenRouterProviderError exception."""
+
+    def test_error_with_message_only(self) -> None:
+        """Test creating error with just a message."""
+        error = OpenRouterProviderError("Something went wrong")
+        assert error.message == "Something went wrong"
+        assert error.status_code is None
+        assert error.original_error is None
+        assert str(error) == "Something went wrong"
+
+    def test_error_with_status_code(self) -> None:
+        """Test creating error with status code."""
+        error = OpenRouterProviderError(
+            "Rate limited",
+            status_code=429,
+        )
+        assert error.message == "Rate limited"
+        assert error.status_code == 429
+
+    def test_error_with_original_error(self) -> None:
+        """Test creating error with original exception."""
+        original = ValueError("Original error")
+        error = OpenRouterProviderError(
+            "Wrapped error",
+            original_error=original,
+        )
+        assert error.message == "Wrapped error"
+        assert error.original_error is original
+
+    def test_error_with_all_attributes(self) -> None:
+        """Test creating error with all attributes."""
+        original = RuntimeError("Underlying issue")
+        error = OpenRouterProviderError(
+            "Full error",
+            status_code=500,
+            original_error=original,
+        )
+        assert error.message == "Full error"
+        assert error.status_code == 500
+        assert error.original_error is original
+
+
+class TestMessageConversion:
+    """Tests for message format conversion."""
+
+    def test_convert_single_message(self) -> None:
+        """Test conversion of a single message."""
+        provider = OpenRouterProvider(api_key="test-key")
+        messages = [Message(role="user", content="Hello!")]
+
+        converted = provider._convert_messages(messages)
+
+        assert len(converted) == 1
+        assert converted[0] == {"role": "user", "content": "Hello!"}
+
+    def test_convert_multiple_messages(self) -> None:
+        """Test conversion of multiple messages."""
+        provider = OpenRouterProvider(api_key="test-key")
+        messages = [
+            Message(role="system", content="You are helpful."),
+            Message(role="user", content="Hi!"),
+            Message(role="assistant", content="Hello!"),
+            Message(role="user", content="How are you?"),
+        ]
+
+        converted = provider._convert_messages(messages)
+
+        assert len(converted) == 4
+        assert converted[0] == {"role": "system", "content": "You are helpful."}
+        assert converted[1] == {"role": "user", "content": "Hi!"}
+        assert converted[2] == {"role": "assistant", "content": "Hello!"}
+        assert converted[3] == {"role": "user", "content": "How are you?"}
+
+    def test_convert_empty_messages(self) -> None:
+        """Test conversion of empty message list."""
+        provider = OpenRouterProvider(api_key="test-key")
+        messages: list[Message] = []
+
+        converted = provider._convert_messages(messages)
+
+        assert len(converted) == 0

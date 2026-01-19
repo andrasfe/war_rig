@@ -4,7 +4,7 @@ This module defines the abstract base class and common interfaces for all
 War Rig agents (Scribe, Challenger, Imperator). It provides:
 
 - Common configuration handling
-- LLM integration abstraction (supporting OpenRouter and Anthropic)
+- LLM integration abstraction (using the provider interface)
 - Async invocation interface
 - Logging and error handling
 
@@ -21,6 +21,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from pydantic import BaseModel, Field
 
 from war_rig.config import APIConfig, ModelConfig, load_config
+from war_rig.providers import LLMProvider, Message, get_provider_from_env
 
 logger = logging.getLogger(__name__)
 
@@ -115,18 +116,28 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
         config: ModelConfig,
         api_config: APIConfig | None = None,
         name: str = "Agent",
+        provider: LLMProvider | None = None,
     ):
         """Initialize the agent.
 
         Args:
             config: Model configuration specifying model, temperature, etc.
             api_config: API configuration. If None, loads from environment.
+                Deprecated: Use provider parameter instead.
             name: Human-readable name for logging.
+            provider: LLM provider instance. If None, creates one from
+                environment variables using get_provider_from_env().
         """
         self.config = config
         self.name = name
 
-        # Load API config from environment if not provided
+        # Initialize LLM provider
+        if provider is not None:
+            self._provider = provider
+        else:
+            self._provider = get_provider_from_env()
+
+        # Load API config from environment if not provided (for backward compatibility)
         if api_config is None:
             full_config = load_config()
             self._api_config = full_config.api
@@ -134,16 +145,44 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
             self._api_config = api_config
 
         # Initialize LLM lazily to allow for mock injection in tests
+        # Deprecated: kept for backward compatibility with code that sets agent.llm
         self._llm: BaseChatModel | None = None
 
     @property
+    def provider(self) -> LLMProvider:
+        """Get the LLM provider instance.
+
+        Returns:
+            The configured LLM provider.
+        """
+        return self._provider
+
+    @provider.setter
+    def provider(self, value: LLMProvider) -> None:
+        """Set the LLM provider instance (useful for testing).
+
+        Args:
+            value: The LLM provider instance to use.
+        """
+        self._provider = value
+
+    @property
     def api_config(self) -> APIConfig:
-        """Get the API configuration."""
+        """Get the API configuration.
+
+        Deprecated:
+            Use the provider property instead. This is kept for
+            backward compatibility.
+        """
         return self._api_config
 
     @property
     def llm(self) -> BaseChatModel:
         """Get the LLM instance, initializing if needed.
+
+        Deprecated:
+            Use the provider property instead. This is kept for
+            backward compatibility with code that injects LLM instances.
 
         Returns:
             The configured LLM instance.
@@ -156,6 +195,10 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
     def llm(self, value: BaseChatModel) -> None:
         """Set the LLM instance (useful for testing).
 
+        Deprecated:
+            Use the provider property instead. This is kept for
+            backward compatibility.
+
         Args:
             value: The LLM instance to use.
         """
@@ -163,6 +206,10 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
 
     def _create_llm(self) -> BaseChatModel:
         """Create the LLM instance based on configuration.
+
+        Deprecated:
+            This method is kept for backward compatibility. New code
+            should use the provider interface instead.
 
         Supports both OpenRouter (via OpenAI-compatible API) and Anthropic.
 
@@ -180,6 +227,10 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
 
     def _create_openrouter_llm(self) -> BaseChatModel:
         """Create an OpenRouter LLM via OpenAI-compatible API.
+
+        Deprecated:
+            This method is kept for backward compatibility. New code
+            should use the provider interface instead.
 
         Returns:
             Configured ChatOpenAI instance for OpenRouter.
@@ -215,6 +266,10 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
 
     def _create_anthropic_llm(self) -> BaseChatModel:
         """Create an Anthropic LLM.
+
+        Deprecated:
+            This method is kept for backward compatibility. New code
+            should use the provider interface instead.
 
         Returns:
             Configured ChatAnthropic instance.
@@ -272,7 +327,11 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
         pass
 
     def _build_messages(self, input_data: InputT) -> list[SystemMessage | HumanMessage]:
-        """Build the message list for the LLM.
+        """Build the message list for the LLM (LangChain format).
+
+        Deprecated:
+            Use _build_provider_messages() instead. This is kept for
+            backward compatibility with code that uses the llm property.
 
         Args:
             input_data: The agent's input.
@@ -285,12 +344,26 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
             HumanMessage(content=self._build_user_prompt(input_data)),
         ]
 
+    def _build_provider_messages(self, input_data: InputT) -> list[Message]:
+        """Build the message list for the LLM provider.
+
+        Args:
+            input_data: The agent's input.
+
+        Returns:
+            List of Message objects for the provider interface.
+        """
+        return [
+            Message(role="system", content=self._build_system_prompt()),
+            Message(role="user", content=self._build_user_prompt(input_data)),
+        ]
+
     async def ainvoke(self, input_data: InputT) -> OutputT:
         """Asynchronously invoke the agent.
 
         This is the primary method for running an agent. It:
         1. Builds the message list
-        2. Calls the LLM
+        2. Calls the LLM provider
         3. Parses the response
 
         Args:
@@ -305,31 +378,25 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
         logger.info(f"{self.name}: Starting invocation (iteration {input_data.iteration})")
 
         try:
-            messages = self._build_messages(input_data)
+            messages = self._build_provider_messages(input_data)
 
-            logger.debug(f"{self.name}: Calling LLM with {len(messages)} messages")
-            response = await self.llm.ainvoke(messages)
+            logger.debug(f"{self.name}: Calling LLM provider with {len(messages)} messages")
+            response = await self._provider.complete(
+                messages=messages,
+                model=self.config.model,
+                temperature=self.config.temperature,
+                max_tokens=self.config.max_tokens,
+            )
 
-            # Extract content from response
             content = response.content
-            if isinstance(content, list):
-                # Handle multi-part responses
-                content = "".join(
-                    part.get("text", "") if isinstance(part, dict) else str(part)
-                    for part in content
-                )
 
             logger.debug(f"{self.name}: Received response ({len(content)} chars)")
 
             # Parse and return
             output = self._parse_response(content, input_data)
 
-            # Track token usage if available
-            if hasattr(response, "usage_metadata") and response.usage_metadata:
-                output.tokens_used = (
-                    response.usage_metadata.get("input_tokens", 0) +
-                    response.usage_metadata.get("output_tokens", 0)
-                )
+            # Track token usage from provider response
+            output.tokens_used = response.tokens_used
 
             logger.info(f"{self.name}: Completed successfully")
             return output
