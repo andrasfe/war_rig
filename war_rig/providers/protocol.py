@@ -19,7 +19,6 @@ Example:
             messages: list[Message],
             model: str | None = None,
             temperature: float = 0.7,
-            max_tokens: int | None = None,
             **kwargs,
         ) -> CompletionResponse:
             # Implementation here
@@ -111,7 +110,6 @@ class LLMProvider(Protocol):
                 messages: list[Message],
                 model: str | None = None,
                 temperature: float = 0.7,
-                max_tokens: int | None = None,
                 **kwargs,
             ) -> CompletionResponse:
                 # Make API call and return response
@@ -133,7 +131,6 @@ class LLMProvider(Protocol):
         messages: list[Message],
         model: str | None = None,
         temperature: float = 0.7,
-        max_tokens: int | None = None,
         **kwargs: Any,
     ) -> CompletionResponse:
         """Send messages and get a completion response.
@@ -145,8 +142,6 @@ class LLMProvider(Protocol):
             model: Optional model override. If None, uses default_model.
             temperature: Sampling temperature (0.0 = deterministic,
                 1.0+ = more random). Default is 0.7.
-            max_tokens: Maximum tokens to generate. If None, provider
-                decides the limit.
             **kwargs: Provider-specific parameters (e.g., top_p, stop
                 sequences, etc.).
 

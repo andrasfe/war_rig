@@ -202,7 +202,6 @@ class TestLLMProviderProtocol:
                 messages: list[Message],
                 model: str | None = None,
                 temperature: float = 0.7,
-                max_tokens: int | None = None,
                 **kwargs: Any,
             ) -> CompletionResponse:
                 return CompletionResponse(
@@ -222,7 +221,6 @@ class TestLLMProviderProtocol:
                 messages: list[Message],
                 model: str | None = None,
                 temperature: float = 0.7,
-                max_tokens: int | None = None,
                 **kwargs: Any,
             ) -> CompletionResponse:
                 return CompletionResponse(
@@ -255,7 +253,6 @@ class TestLLMProviderProtocol:
                 messages: list[Message],
                 model: str | None = None,
                 temperature: float = 0.7,
-                max_tokens: int | None = None,
                 **kwargs: Any,
             ) -> CompletionResponse:
                 return CompletionResponse(
@@ -282,7 +279,6 @@ class TestLLMProviderProtocol:
                 messages: list[Message],
                 model: str | None = None,
                 temperature: float = 0.7,
-                max_tokens: int | None = None,
                 **kwargs: Any,
             ) -> CompletionResponse:
                 return CompletionResponse(

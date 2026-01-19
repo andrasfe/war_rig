@@ -38,7 +38,6 @@ class MyCustomProvider:
         messages: list[Message],
         model: str | None = None,
         temperature: float = 0.7,
-        max_tokens: int | None = None,
         **kwargs,
     ) -> CompletionResponse:
         """Send messages to your LLM and return a response."""
@@ -59,7 +58,6 @@ class MyCustomProvider:
                     "messages": formatted_messages,
                     "model": model or self._model,
                     "temperature": temperature,
-                    "max_tokens": max_tokens,
                 },
             )
             data = response.json()
@@ -146,7 +144,6 @@ class LLMProvider(Protocol):
         messages: list[Message],
         model: str | None = None,
         temperature: float = 0.7,
-        max_tokens: int | None = None,
         **kwargs,
     ) -> CompletionResponse:
         """Send messages and return a completion."""
@@ -225,12 +222,11 @@ class AzureOpenAIProvider:
     def default_model(self) -> str:
         return self._deployment
 
-    async def complete(self, messages, model=None, temperature=0.7, max_tokens=None, **kwargs):
+    async def complete(self, messages, model=None, temperature=0.7, **kwargs):
         response = await self._client.chat.completions.create(
             model=model or self._deployment,
             messages=[{"role": m.role, "content": m.content} for m in messages],
             temperature=temperature,
-            max_tokens=max_tokens,
         )
         return CompletionResponse(
             content=response.choices[0].message.content or "",

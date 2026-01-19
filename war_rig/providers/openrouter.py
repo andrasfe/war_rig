@@ -147,7 +147,6 @@ class OpenRouterProvider:
         messages: list[Message],
         model: str | None = None,
         temperature: float = 0.7,
-        max_tokens: int | None = None,
         **kwargs: Any,
     ) -> CompletionResponse:
         """Send messages and get a completion response.
@@ -160,8 +159,6 @@ class OpenRouterProvider:
             model: Optional model override. If None, uses default_model.
             temperature: Sampling temperature (0.0 = deterministic,
                 1.0+ = more random). Default is 0.7.
-            max_tokens: Maximum tokens to generate. If None, the model
-                decides the limit.
             **kwargs: Additional parameters passed to the OpenAI API
                 (e.g., top_p, stop, presence_penalty, frequency_penalty).
 
@@ -178,8 +175,7 @@ class OpenRouterProvider:
 
         logger.debug(
             f"Calling OpenRouter API: model={resolved_model}, "
-            f"temperature={temperature}, max_tokens={max_tokens}, "
-            f"message_count={len(messages)}"
+            f"temperature={temperature}, message_count={len(messages)}"
         )
 
         try:
@@ -189,9 +185,6 @@ class OpenRouterProvider:
                 "messages": openai_messages,
                 "temperature": temperature,
             }
-
-            if max_tokens is not None:
-                api_params["max_tokens"] = max_tokens
 
             # Add any additional kwargs (top_p, stop, etc.)
             api_params.update(kwargs)

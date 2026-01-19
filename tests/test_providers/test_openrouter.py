@@ -185,46 +185,6 @@ class TestOpenRouterProviderComplete:
         assert call_kwargs["temperature"] == 0.2
 
     @pytest.mark.asyncio
-    async def test_complete_with_max_tokens(
-        self,
-        provider_with_mock_client: OpenRouterProvider,
-        mock_response: MagicMock,
-    ) -> None:
-        """Test completion with max_tokens parameter."""
-        provider_with_mock_client._client.chat.completions.create = AsyncMock(
-            return_value=mock_response
-        )
-
-        messages = [Message(role="user", content="Hello!")]
-
-        await provider_with_mock_client.complete(messages, max_tokens=500)
-
-        call_kwargs = (
-            provider_with_mock_client._client.chat.completions.create.call_args.kwargs
-        )
-        assert call_kwargs["max_tokens"] == 500
-
-    @pytest.mark.asyncio
-    async def test_complete_without_max_tokens(
-        self,
-        provider_with_mock_client: OpenRouterProvider,
-        mock_response: MagicMock,
-    ) -> None:
-        """Test completion without max_tokens (should not be in API call)."""
-        provider_with_mock_client._client.chat.completions.create = AsyncMock(
-            return_value=mock_response
-        )
-
-        messages = [Message(role="user", content="Hello!")]
-
-        await provider_with_mock_client.complete(messages)
-
-        call_kwargs = (
-            provider_with_mock_client._client.chat.completions.create.call_args.kwargs
-        )
-        assert "max_tokens" not in call_kwargs
-
-    @pytest.mark.asyncio
     async def test_complete_with_extra_kwargs(
         self,
         provider_with_mock_client: OpenRouterProvider,

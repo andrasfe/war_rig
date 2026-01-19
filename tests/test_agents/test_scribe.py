@@ -17,7 +17,6 @@ class TestScribeAgent:
         return ScribeConfig(
             model="claude-sonnet-4-20250514",
             temperature=0.1,
-            max_tokens=1000,
         )
 
     @pytest.fixture

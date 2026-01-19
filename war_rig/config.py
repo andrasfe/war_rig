@@ -62,11 +62,6 @@ class ModelConfig(BaseModel):
         le=2.0,
         description="Sampling temperature for generation",
     )
-    max_tokens: int = Field(
-        default=4000,
-        gt=0,
-        description="Maximum tokens in response",
-    )
 
 
 class ScribeConfig(ModelConfig):
@@ -77,7 +72,6 @@ class ScribeConfig(ModelConfig):
     """
 
     temperature: float = Field(default=0.3)
-    max_tokens: int = Field(default=4000)
 
 
 class ChallengerConfig(ModelConfig):
@@ -88,7 +82,6 @@ class ChallengerConfig(ModelConfig):
     """
 
     temperature: float = Field(default=0.5)
-    max_tokens: int = Field(default=2000)
 
 
 class ImperatorConfig(ModelConfig):
@@ -99,7 +92,6 @@ class ImperatorConfig(ModelConfig):
     """
 
     temperature: float = Field(default=0.2)
-    max_tokens: int = Field(default=2000)
 
 
 class PreprocessingConfig(BaseModel):
@@ -194,21 +186,18 @@ class WarRigConfig(BaseSettings):
         description="Model for Scribe agent",
     )
     scribe_temperature: float = Field(default=0.3)
-    scribe_max_tokens: int = Field(default=4000)
 
     challenger_model: str = Field(
         default="anthropic/claude-sonnet-4-20250514",
         description="Model for Challenger agent",
     )
     challenger_temperature: float = Field(default=0.5)
-    challenger_max_tokens: int = Field(default=2000)
 
     imperator_model: str = Field(
         default="anthropic/claude-sonnet-4-20250514",
         description="Model for Imperator agent",
     )
     imperator_temperature: float = Field(default=0.2)
-    imperator_max_tokens: int = Field(default=2000)
 
     # Workflow limits
     num_teams: int = Field(default=1, ge=1, le=10)
@@ -344,7 +333,6 @@ class WarRigConfig(BaseSettings):
         return ScribeConfig(
             model=self.scribe_model,
             temperature=self.scribe_temperature,
-            max_tokens=self.scribe_max_tokens,
         )
 
     @property
@@ -353,7 +341,6 @@ class WarRigConfig(BaseSettings):
         return ChallengerConfig(
             model=self.challenger_model,
             temperature=self.challenger_temperature,
-            max_tokens=self.challenger_max_tokens,
         )
 
     @property
@@ -362,7 +349,6 @@ class WarRigConfig(BaseSettings):
         return ImperatorConfig(
             model=self.imperator_model,
             temperature=self.imperator_temperature,
-            max_tokens=self.imperator_max_tokens,
         )
 
     @property

@@ -73,7 +73,6 @@ def mock_config() -> MagicMock:
     config.challenger = MagicMock(spec=ChallengerConfig)
     config.challenger.model = "claude-sonnet-4-20250514"
     config.challenger.temperature = 0.3
-    config.challenger.max_tokens = 4000
     config.api = MagicMock()
     config.api.provider = "openrouter"
     config.api.api_key = "test-key"

@@ -72,7 +72,6 @@ def mock_config(tmp_path: Path) -> MagicMock:
     config.imperator = MagicMock()
     config.imperator.model = "test-model"
     config.imperator.temperature = 0.1
-    config.imperator.max_tokens = 1000
 
     config.api = MagicMock()
     config.api.provider = "mock"

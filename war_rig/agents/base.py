@@ -247,7 +247,6 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
         kwargs: dict[str, Any] = {
             "model": self.config.model,
             "temperature": self.config.temperature,
-            "max_tokens": self.config.max_tokens,
             "base_url": self._api_config.base_url,
         }
 
@@ -279,7 +278,6 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
         kwargs: dict[str, Any] = {
             "model": self.config.model,
             "temperature": self.config.temperature,
-            "max_tokens": self.config.max_tokens,
         }
 
         if self._api_config.api_key:
@@ -385,7 +383,6 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
                 messages=messages,
                 model=self.config.model,
                 temperature=self.config.temperature,
-                max_tokens=self.config.max_tokens,
             )
 
             content = response.content

@@ -270,17 +270,14 @@ def mock_war_rig_config(tmp_path, carddemo_path) -> MagicMock:
     config.scribe = MagicMock()
     config.scribe.model = "mock-model"
     config.scribe.temperature = 0.3
-    config.scribe.max_tokens = 4000
 
     config.challenger = MagicMock()
     config.challenger.model = "mock-model"
     config.challenger.temperature = 0.5
-    config.challenger.max_tokens = 2000
 
     config.imperator = MagicMock()
     config.imperator.model = "mock-model"
     config.imperator.temperature = 0.2
-    config.imperator.max_tokens = 2000
 
     # API config
     config.api = MagicMock()

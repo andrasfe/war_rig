@@ -71,17 +71,14 @@ def mock_config() -> WarRigConfig:
         scribe=ScribeConfig(
             model="claude-sonnet-4-20250514",
             temperature=0.1,
-            max_tokens=1000,
         ),
         challenger=ChallengerConfig(
             model="claude-sonnet-4-20250514",
             temperature=0.1,
-            max_tokens=1000,
         ),
         imperator=ImperatorConfig(
             model="claude-sonnet-4-20250514",
             temperature=0.1,
-            max_tokens=1000,
         ),
     )
 

@@ -25,7 +25,6 @@ class ProviderConfig(BaseModel):
         provider_type: Identifier for the provider (e.g., "openrouter", "anthropic").
         default_model: The model to use when not explicitly specified.
         temperature: Sampling temperature for generation (0.0 = deterministic, 2.0 = creative).
-        max_tokens: Maximum tokens in response, None for provider default.
     """
 
     provider_type: str = Field(
@@ -41,10 +40,6 @@ class ProviderConfig(BaseModel):
         ge=0.0,
         le=2.0,
         description="Sampling temperature for generation",
-    )
-    max_tokens: int | None = Field(
-        default=None,
-        description="Maximum tokens in response",
     )
 
 
