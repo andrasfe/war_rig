@@ -587,8 +587,15 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                 for r in data["responses"]:
                     responses.append(ScribeResponse.model_validate(r))
 
-            # Parse open questions
-            open_questions = data.get("open_questions", [])
+            # Parse open questions - handle both string and dict formats
+            raw_questions = data.get("open_questions", [])
+            open_questions = []
+            for q in raw_questions:
+                if isinstance(q, str):
+                    open_questions.append(q)
+                elif isinstance(q, dict):
+                    # LLM sometimes returns OpenQuestion-style dicts
+                    open_questions.append(q.get("question", str(q)))
 
             return ScribeOutput(
                 success=True,
