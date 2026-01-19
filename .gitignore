@@ -9,3 +9,4 @@ env/
 venv/
 output/
 logs/
+war_rig.egg-info/
