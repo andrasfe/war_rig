@@ -230,6 +230,16 @@ def analyze(
     for name, path in outputs.items():
         console.print(f"  {name}: {path}")
 
+    # Generate system overview if we have completed documentation
+    programs_dir = cfg.system.output_directory / "final" / "programs"
+    if programs_dir.exists() and list(programs_dir.glob("*.json")):
+        console.print("\n[cyan]Generating system overview...[/cyan]")
+        try:
+            _generate_overview_internal(cfg, mock=mock)
+            console.print(f"[green]System overview written to: {cfg.system.output_directory / 'SYSTEM_OVERVIEW.md'}[/green]")
+        except Exception as e:
+            console.print(f"[yellow]Warning: Could not generate overview: {e}[/yellow]")
+
 
 @app.command()
 def batch(
