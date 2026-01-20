@@ -27,6 +27,7 @@ from pydantic import BaseModel, Field
 
 from war_rig.agents.base import AgentInput, AgentOutput, BaseAgent
 from war_rig.config import APIConfig, ImperatorConfig
+from war_rig.providers import Message
 from war_rig.models.assessments import ChallengerAssessment, ConfidenceAssessment, ConfidenceLevel
 from war_rig.models.templates import DocumentationTemplate, FileType, FinalStatus
 from war_rig.models.tickets import ChromeTicket, IssuePriority, IssueType, ScribeResponse
@@ -503,6 +504,9 @@ class ImperatorAgent(BaseAgent[ImperatorInput, ImperatorOutput]):
     async def _call_llm(self, system_prompt: str, user_prompt: str) -> str:
         """Call the LLM with system and user prompts.
 
+        Uses the provider interface which supports all configured providers
+        (OpenRouter, Anthropic, Google, OpenAI, etc.).
+
         Args:
             system_prompt: The system message.
             user_prompt: The user message.
@@ -510,18 +514,17 @@ class ImperatorAgent(BaseAgent[ImperatorInput, ImperatorOutput]):
         Returns:
             The LLM response content as string.
         """
-        from langchain_core.messages import HumanMessage, SystemMessage
-
         messages = [
-            SystemMessage(content=system_prompt),
-            HumanMessage(content=user_prompt),
+            Message(role="system", content=system_prompt),
+            Message(role="user", content=user_prompt),
         ]
 
-        response = await self.llm.ainvoke(messages)
-        content = response.content
-        if isinstance(content, list):
-            content = "\n".join(str(c) for c in content)
-        return str(content)
+        response = await self._provider.complete(
+            messages=messages,
+            model=self.config.model,
+            temperature=self.config.temperature,
+        )
+        return response.content
 
     def _build_system_prompt(self) -> str:
         """Build the Imperator's system prompt.
