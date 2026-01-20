@@ -169,6 +169,10 @@ class ClarificationRequest:
     priority: BeadsPriority = BeadsPriority.MEDIUM
     guidance: str | None = None
     parent_ticket_id: str | None = None
+    # Optional template/source data to pass to Scribe (avoids disk lookup)
+    template_data: dict | None = None
+    source_code: str | None = None
+    file_path: str | None = None
 
 
 @dataclass
@@ -582,6 +586,21 @@ class ProgramManagerAgent(BaseAgent[ProgramManagerInput, ProgramManagerOutput]):
             # Extract program ID from file name
             program_id = Path(request.file_name).stem.upper()
 
+            # Build metadata with optional template/source data
+            metadata: dict[str, Any] = {
+                "batch_id": self.batch_id,
+                "section": request.section,
+                "issue_description": request.issue_description,
+                "guidance": request.guidance,
+            }
+            # Include template/source data if provided (avoids disk lookup in Scribe)
+            if request.template_data:
+                metadata["template"] = request.template_data
+            if request.source_code:
+                metadata["source_code"] = request.source_code
+            if request.file_path:
+                metadata["file_path"] = request.file_path
+
             ticket = self.beads.create_pm_ticket(
                 ticket_type=ticket_type,
                 file_name=request.file_name,
@@ -589,12 +608,7 @@ class ProgramManagerAgent(BaseAgent[ProgramManagerInput, ProgramManagerOutput]):
                 cycle_number=self.cycle_number,
                 parent_ticket_id=request.parent_ticket_id,
                 priority=request.priority,
-                metadata={
-                    "batch_id": self.batch_id,
-                    "section": request.section,
-                    "issue_description": request.issue_description,
-                    "guidance": request.guidance,
-                },
+                metadata=metadata,
             )
 
             if ticket:

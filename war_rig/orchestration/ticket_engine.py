@@ -955,10 +955,25 @@ class TicketOrchestrator:
         self._state.status = OrchestrationStatus.PROCESSING_FEEDBACK
         self._state.status_message = "Processing Imperator feedback..."
 
+        # Build a lookup of file data (template, source) for embedding in tickets
+        # This helps Scribes avoid disk lookups for CHROME/CLARIFICATION tickets
+        file_data_lookup: dict[str, dict] = {}
+        for ticket in self.beads_client._pm_ticket_cache.values():
+            if ticket.file_name not in file_data_lookup:
+                file_data_lookup[ticket.file_name] = {}
+            # Get template from metadata if available
+            if ticket.metadata.get("template"):
+                file_data_lookup[ticket.file_name]["template"] = ticket.metadata["template"]
+            if ticket.metadata.get("source_code"):
+                file_data_lookup[ticket.file_name]["source_code"] = ticket.metadata["source_code"]
+            if ticket.metadata.get("file_path"):
+                file_data_lookup[ticket.file_name]["file_path"] = ticket.metadata["file_path"]
+
         # Create clarification requests from review output
         clarification_requests: list[ClarificationRequest] = []
 
         for req in review_output.clarification_requests:
+            file_data = file_data_lookup.get(req.file_name, {})
             clarification_requests.append(
                 ClarificationRequest(
                     file_name=req.file_name,
@@ -966,6 +981,9 @@ class TicketOrchestrator:
                     section=None,
                     priority=BeadsPriority.MEDIUM,
                     guidance=req.context,
+                    template_data=file_data.get("template"),
+                    source_code=file_data.get("source_code"),
+                    file_path=file_data.get("file_path"),
                 )
             )
             # Add to history to avoid repetition
@@ -979,6 +997,7 @@ class TicketOrchestrator:
 
         # Create tickets from file-level feedback (Chrome tickets)
         for file_name, chrome_tickets in review_output.file_feedback.items():
+            file_data = file_data_lookup.get(file_name, {})
             for ticket in chrome_tickets:
                 clarification_requests.append(
                     ClarificationRequest(
@@ -987,6 +1006,9 @@ class TicketOrchestrator:
                         section=ticket.section,
                         priority=self._map_issue_priority(ticket.priority),
                         guidance=ticket.guidance,
+                        template_data=file_data.get("template"),
+                        source_code=file_data.get("source_code"),
+                        file_path=file_data.get("file_path"),
                     )
                 )
 
