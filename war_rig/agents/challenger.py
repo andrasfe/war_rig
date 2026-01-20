@@ -97,9 +97,9 @@ class ChallengerOutput(AgentOutput):
         default=None,
         description="Validation assessment",
     )
-    issues_found: list[str] = Field(
+    issues_found: list[str | dict[str, Any]] = Field(
         default_factory=list,
-        description="Potential issues identified",
+        description="Potential issues identified (strings or dicts with description/severity)",
     )
     suggested_corrections: list[dict[str, Any]] = Field(
         default_factory=list,
