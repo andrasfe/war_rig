@@ -436,14 +436,18 @@ class TicketOrchestrator:
         scribe_pool_active = False
         if self._scribe_pool:
             status = self._scribe_pool.get_status()
-            scribe_pool_active = status.get("active_workers", 0) > 0
+            # Pool returns active_count (processing) and idle_count (waiting for work)
+            # Both mean workers are still running and may produce validation tickets
+            scribe_pool_active = (
+                status.get("active_count", 0) > 0 or status.get("idle_count", 0) > 0
+            )
 
         # If scribe pool has no active workers, check if it's completely stopped
         if not scribe_pool_active and self._scribe_pool:
             status = self._scribe_pool.get_status()
             # If all workers are stopped, upstream is not active
             # (available tickets will be handled in next cycle)
-            if status.get("total_workers", 0) == status.get("stopped_workers", 0):
+            if status.get("num_workers", 0) == status.get("stopped_count", 0):
                 return False
 
         # Ticket types that Scribes process
