@@ -418,31 +418,39 @@ class TicketOrchestrator:
             await self._stop_pools()
 
     def _is_documentation_in_progress(self) -> bool:
-        """Check if documentation work might still produce validation tickets.
+        """Check if Scribe work might still produce validation tickets.
 
         Used by Challengers to know if they should wait for more work
         instead of timing out. Returns True if:
-        - There are DOCUMENTATION tickets available (CREATED state)
-        - There are DOCUMENTATION tickets being processed (IN_PROGRESS state)
+        - There are DOCUMENTATION, CLARIFICATION, or CHROME tickets available
+        - There are such tickets being processed (IN_PROGRESS state)
         - Scribes are actively working
 
         Returns:
-            True if documentation is still in progress.
+            True if Scribe work is still in progress.
         """
-        # Check for available documentation tickets
-        doc_available = self.beads_client.get_available_tickets(
-            ticket_type=TicketType.DOCUMENTATION
-        )
-        if doc_available:
-            return True
+        # Ticket types that Scribes process (all can produce validation tickets)
+        scribe_ticket_types = [
+            TicketType.DOCUMENTATION,
+            TicketType.CLARIFICATION,
+            TicketType.CHROME,
+        ]
 
-        # Check for in-progress documentation tickets
-        doc_in_progress = [
+        # Check for available tickets of any Scribe type
+        for ticket_type in scribe_ticket_types:
+            available = self.beads_client.get_available_tickets(
+                ticket_type=ticket_type
+            )
+            if available:
+                return True
+
+        # Check for in-progress tickets of any Scribe type
+        in_progress = [
             t for t in self.beads_client._pm_ticket_cache.values()
-            if t.ticket_type == TicketType.DOCUMENTATION
+            if t.ticket_type in scribe_ticket_types
             and t.state == TicketState.IN_PROGRESS
         ]
-        if doc_in_progress:
+        if in_progress:
             return True
 
         # Check if Scribe pool has active workers
@@ -701,27 +709,51 @@ class TicketOrchestrator:
             HolisticReviewOutput with the review decision and feedback.
         """
         # Check if there's still pending work - Imperator should wait
-        pending_doc = self.beads_client.get_tickets_by_state(
-            state=TicketState.CREATED,
-            ticket_type=TicketType.DOCUMENTATION,
-        )
-        in_progress_doc = self.beads_client.get_tickets_by_state(
-            state=TicketState.IN_PROGRESS,
-            ticket_type=TicketType.DOCUMENTATION,
-        )
-        pending_val = self.beads_client.get_tickets_by_state(
-            state=TicketState.CREATED,
-            ticket_type=TicketType.VALIDATION,
-        )
-        in_progress_val = self.beads_client.get_tickets_by_state(
-            state=TicketState.IN_PROGRESS,
-            ticket_type=TicketType.VALIDATION,
-        )
+        # Must check ALL ticket types that Scribes and Challengers process
+        scribe_types = [
+            TicketType.DOCUMENTATION,
+            TicketType.CLARIFICATION,
+            TicketType.CHROME,
+        ]
+        challenger_types = [TicketType.VALIDATION]
 
-        if pending_doc or in_progress_doc or pending_val or in_progress_val:
+        # Collect pending/in-progress counts for all relevant ticket types
+        pending_scribe = []
+        in_progress_scribe = []
+        for ticket_type in scribe_types:
+            pending_scribe.extend(
+                self.beads_client.get_tickets_by_state(
+                    state=TicketState.CREATED,
+                    ticket_type=ticket_type,
+                )
+            )
+            in_progress_scribe.extend(
+                self.beads_client.get_tickets_by_state(
+                    state=TicketState.IN_PROGRESS,
+                    ticket_type=ticket_type,
+                )
+            )
+
+        pending_val = []
+        in_progress_val = []
+        for ticket_type in challenger_types:
+            pending_val.extend(
+                self.beads_client.get_tickets_by_state(
+                    state=TicketState.CREATED,
+                    ticket_type=ticket_type,
+                )
+            )
+            in_progress_val.extend(
+                self.beads_client.get_tickets_by_state(
+                    state=TicketState.IN_PROGRESS,
+                    ticket_type=ticket_type,
+                )
+            )
+
+        if pending_scribe or in_progress_scribe or pending_val or in_progress_val:
             logger.info(
                 f"Skipping holistic review - work still pending: "
-                f"{len(pending_doc)} doc pending, {len(in_progress_doc)} doc in progress, "
+                f"{len(pending_scribe)} scribe pending, {len(in_progress_scribe)} scribe in progress, "
                 f"{len(pending_val)} val pending, {len(in_progress_val)} val in progress"
             )
             return HolisticReviewOutput(

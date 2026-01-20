@@ -377,7 +377,7 @@ class ScribeWorker:
                 result = ScribeOutput(success=False, error="Unsupported ticket type")
 
             # Update ticket state based on result
-            if result.success:
+            if result.success and not result.responses_incomplete:
                 self.beads_client.update_ticket_state(
                     ticket.ticket_id,
                     TicketState.COMPLETED,
@@ -392,6 +392,21 @@ class ScribeWorker:
                 # This applies to DOCUMENTATION, CLARIFICATION, and CHROME tickets
                 if result.template and ticket.ticket_type in self.COMPATIBLE_TICKET_TYPES:
                     self._create_validation_ticket(ticket, result)
+            elif result.success and result.responses_incomplete:
+                # Success but responses were incomplete - leave ticket for retry
+                logger.warning(
+                    f"Worker {self.worker_id}: Ticket {ticket.ticket_id} succeeded but "
+                    f"responses were incomplete, leaving for retry"
+                )
+                # Save any partial template progress
+                if result.template:
+                    self._save_template(ticket.file_name, result.template)
+                # Reset to CREATED so another worker can retry
+                self.beads_client.update_ticket_state(
+                    ticket.ticket_id,
+                    TicketState.CREATED,
+                    reason="Responses incomplete, available for retry",
+                )
             else:
                 # First failure - retry once with enhanced formatting prompt
                 logger.warning(
@@ -413,7 +428,7 @@ class ScribeWorker:
                         ticket, formatting_strict=True
                     )
 
-                if result.success:
+                if result.success and not result.responses_incomplete:
                     # Retry succeeded
                     self.beads_client.update_ticket_state(
                         ticket.ticket_id,
@@ -427,6 +442,22 @@ class ScribeWorker:
                     # Create VALIDATION ticket for re-validation
                     if result.template and ticket.ticket_type in self.COMPATIBLE_TICKET_TYPES:
                         self._create_validation_ticket(ticket, result)
+                elif result.success and result.responses_incomplete:
+                    # Retry succeeded but responses incomplete - leave for another worker
+                    logger.warning(
+                        f"Worker {self.worker_id}: Ticket {ticket.ticket_id} retry succeeded but "
+                        f"responses were incomplete, leaving for another worker"
+                    )
+                    # Save any partial template progress
+                    if result.template:
+                        self._save_template(ticket.file_name, result.template)
+                    # Add to failed set so THIS worker won't re-pick it
+                    self._failed_tickets.add(ticket.ticket_id)
+                    self.beads_client.update_ticket_state(
+                        ticket.ticket_id,
+                        TicketState.CREATED,
+                        reason="Responses incomplete on retry, available for other workers",
+                    )
                 else:
                     # Second failure - reset ticket for other workers, move on
                     # Add to failed set so THIS worker won't re-pick it

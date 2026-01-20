@@ -14,7 +14,7 @@ from datetime import datetime
 from enum import Enum
 from uuid import uuid4
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from war_rig.models.templates import LenientIntList
 
@@ -240,24 +240,29 @@ class ScribeResponse(BaseModel):
     Challenger, including what action was taken and supporting evidence.
 
     Attributes:
-        question_id: Reference to the question being answered
+        question_id: Reference to the question being answered (also accepts 'question' alias)
         response: The answer text
         action_taken: What the Scribe did (UPDATED, DEFENDED, ACKNOWLEDGED)
         updated_section: If UPDATED, which section changed
         citation: Supporting evidence (line numbers)
         iteration: Which iteration this response was provided in
+        parsing_incomplete: Flag indicating lenient parsing was used due to missing fields
     """
 
+    # Enable alias support for lenient LLM response parsing
+    model_config = ConfigDict(populate_by_name=True)
+
     question_id: str = Field(
-        ...,
+        default="UNKNOWN",
+        validation_alias="question",
         description="Reference to the question being answered",
     )
     response: str = Field(
-        ...,
+        default="",
         description="The answer",
     )
     action_taken: ActionTaken = Field(
-        ...,
+        default=ActionTaken.ACKNOWLEDGED,
         description="What the Scribe did in response",
     )
     updated_section: str | None = Field(
@@ -272,6 +277,10 @@ class ScribeResponse(BaseModel):
         default=1,
         ge=1,
         description="Which iteration this response was provided in",
+    )
+    parsing_incomplete: bool = Field(
+        default=False,
+        description="Flag indicating lenient parsing was used due to missing/invalid fields",
     )
 
 

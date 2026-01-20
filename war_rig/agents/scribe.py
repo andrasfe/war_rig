@@ -96,6 +96,11 @@ class ScribeOutput(AgentOutput):
         default_factory=list,
         description="Questions Scribe could not resolve",
     )
+    responses_incomplete: bool = Field(
+        default=False,
+        description="True if any ScribeResponse had parsing errors and used lenient fallback. "
+        "When True, the ticket should NOT be marked as complete to allow retry.",
+    )
 
 
 class ScribeAgent(BaseAgent[ScribeInput, ScribeOutput]):
@@ -579,11 +584,32 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                         recoverable=True,
                     )
 
-            # Parse responses
+            # Parse responses with lenient fallback
             responses = []
+            responses_had_errors = False
             if "responses" in data:
                 for r in data["responses"]:
-                    responses.append(ScribeResponse.model_validate(r))
+                    try:
+                        responses.append(ScribeResponse.model_validate(r))
+                    except ValidationError as e:
+                        # Log warning but try lenient parsing
+                        error_fields = [".".join(str(x) for x in err["loc"]) for err in e.errors()]
+                        logger.warning(
+                            f"ScribeResponse validation failed ({e.error_count()} fields): {error_fields}. "
+                            "Using lenient parsing."
+                        )
+                        responses_had_errors = True
+                        # Use model_construct to bypass validation, mark as incomplete
+                        response_obj = ScribeResponse.model_construct(
+                            question_id=r.get("question_id", r.get("question", "UNKNOWN")),
+                            response=r.get("response", ""),
+                            action_taken=r.get("action_taken", "ACKNOWLEDGED"),
+                            updated_section=r.get("updated_section"),
+                            citation=r.get("citation", []),
+                            iteration=r.get("iteration", 1),
+                            parsing_incomplete=True,
+                        )
+                        responses.append(response_obj)
 
             # Parse open questions - handle both string and dict formats
             raw_questions = data.get("open_questions", [])
@@ -601,6 +627,7 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                 confidence=confidence,
                 responses=responses,
                 open_questions=open_questions,
+                responses_incomplete=responses_had_errors,
             )
 
         except Exception as e:
