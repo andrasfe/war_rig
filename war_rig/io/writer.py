@@ -53,6 +53,25 @@ class DocumentationWriter:
         self.config = config
         self._ensure_directories()
 
+    def _get_header_attr(self, template, attr: str, default=None):
+        """Get an attribute from template header, handling both object and dict.
+
+        When templates are created via lenient model_construct(), the header
+        may be a dict instead of a HeaderSection object.
+
+        Args:
+            template: The DocumentationTemplate.
+            attr: The attribute name to get from header.
+            default: Default value if attribute not found.
+
+        Returns:
+            The attribute value or default.
+        """
+        header = template.header
+        if isinstance(header, dict):
+            return header.get(attr, default)
+        return getattr(header, attr, default)
+
     def _ensure_directories(self) -> None:
         """Ensure output directory structure exists."""
         base = self.config.output_directory
@@ -153,7 +172,7 @@ class DocumentationWriter:
         file_type = state.get("file_type", FileType.OTHER)
 
         if state.get("final_template"):
-            program_id = state["final_template"].header.program_id
+            program_id = self._get_header_attr(state["final_template"], "program_id", "UNKNOWN")
         elif state.get("preprocessor_result"):
             program_id = state["preprocessor_result"].program_id or program_id
 
@@ -244,14 +263,23 @@ class DocumentationWriter:
         """
         lines: list[str] = []
 
-        # Header
-        lines.append(f"# {template.header.program_id}")
+        # Header - handle both object and dict (from lenient model_construct)
+        program_id = self._get_header_attr(template, "program_id", "UNKNOWN")
+        file_name = self._get_header_attr(template, "file_name", "")
+        file_type = self._get_header_attr(template, "file_type", "OTHER")
+        # file_type could be enum or string
+        file_type_str = file_type.value if hasattr(file_type, "value") else str(file_type)
+        final_status = self._get_header_attr(template, "final_status", None)
+        iteration_count = self._get_header_attr(template, "iteration_count", 0)
+        analyzed_at = self._get_header_attr(template, "analyzed_at", "")
+
+        lines.append(f"# {program_id}")
         lines.append("")
-        lines.append(f"**File:** {template.header.file_name}")
-        lines.append(f"**Type:** {template.header.file_type.value}")
-        lines.append(f"**Status:** {template.header.final_status or 'In Progress'}")
-        lines.append(f"**Iterations:** {template.header.iteration_count}")
-        lines.append(f"**Analyzed:** {template.header.analyzed_at}")
+        lines.append(f"**File:** {file_name}")
+        lines.append(f"**Type:** {file_type_str}")
+        lines.append(f"**Status:** {final_status or 'In Progress'}")
+        lines.append(f"**Iterations:** {iteration_count}")
+        lines.append(f"**Analyzed:** {analyzed_at}")
         lines.append("")
 
         # Purpose
@@ -508,7 +536,7 @@ class DocumentationWriter:
         for result in results:
             program_id = "UNKNOWN"
             if result.get("final_template"):
-                program_id = result["final_template"].header.program_id
+                program_id = self._get_header_attr(result["final_template"], "program_id", "UNKNOWN")
 
             decision = result.get("decision", "UNKNOWN")
 

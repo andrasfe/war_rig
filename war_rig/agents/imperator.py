@@ -501,6 +501,39 @@ class ImperatorAgent(BaseAgent[ImperatorInput, ImperatorOutput]):
         """
         super().__init__(config, api_config, name="Imperator")
 
+    def _get_header_attr(self, template, attr: str, default=None):
+        """Get an attribute from template header, handling both object and dict.
+
+        When templates are created via lenient model_construct(), the header
+        may be a dict instead of a HeaderSection object.
+
+        Args:
+            template: The DocumentationTemplate.
+            attr: The attribute name to get from header.
+            default: Default value if attribute not found.
+
+        Returns:
+            The attribute value or default.
+        """
+        header = template.header
+        if isinstance(header, dict):
+            return header.get(attr, default)
+        return getattr(header, attr, default)
+
+    def _set_header_attr(self, template, attr: str, value):
+        """Set an attribute on template header, handling both object and dict.
+
+        Args:
+            template: The DocumentationTemplate.
+            attr: The attribute name to set on header.
+            value: The value to set.
+        """
+        header = template.header
+        if isinstance(header, dict):
+            header[attr] = value
+        else:
+            setattr(header, attr, value)
+
     async def _call_llm(self, system_prompt: str, user_prompt: str) -> str:
         """Call the LLM with system and user prompts.
 
@@ -703,7 +736,7 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
             chrome_tickets = []
             if "chrome_tickets" in data:
                 for t in data["chrome_tickets"]:
-                    t["program_id"] = input_data.template.header.program_id
+                    t["program_id"] = self._get_header_attr(input_data.template, "program_id", "UNKNOWN")
                     chrome_tickets.append(ChromeTicket.model_validate(t))
 
             # Get reasoning
@@ -716,8 +749,8 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
             final_template = None
             if decision in (ImperatorDecision.WITNESSED, ImperatorDecision.VALHALLA, ImperatorDecision.FORCED):
                 final_template = input_data.template.model_copy(deep=True)
-                final_template.header.iteration_count = input_data.iteration
-                final_template.header.final_status = FinalStatus(decision.value)
+                self._set_header_attr(final_template, "iteration_count", input_data.iteration)
+                self._set_header_attr(final_template, "final_status", FinalStatus(decision.value))
 
             return ImperatorOutput(
                 success=True,
@@ -793,7 +826,7 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
         chrome_tickets = []
         if decision == ImperatorDecision.CHROME:
             chrome_tickets.append(ChromeTicket(
-                program_id=input_data.template.header.program_id,
+                program_id=self._get_header_attr(input_data.template, "program_id", "UNKNOWN"),
                 section="purpose",
                 issue_type=IssueType.VAGUE,
                 description="[MOCK] Purpose section needs more specific business context",
@@ -804,8 +837,8 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
         final_template = None
         if decision in (ImperatorDecision.WITNESSED, ImperatorDecision.VALHALLA):
             final_template = input_data.template.model_copy(deep=True)
-            final_template.header.iteration_count = input_data.iteration
-            final_template.header.final_status = FinalStatus(decision.value)
+            self._set_header_attr(final_template, "iteration_count", input_data.iteration)
+            self._set_header_attr(final_template, "final_status", FinalStatus(decision.value))
 
         return ImperatorOutput(
             success=True,
