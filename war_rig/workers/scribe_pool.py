@@ -692,8 +692,33 @@ class ScribeWorker:
         Returns:
             ScribeOutput with updated documentation addressing the questions.
         """
-        # Load the previous template (required for clarification)
-        previous_template = self._load_previous_template(ticket.file_name)
+        # Load the previous template - prefer metadata (passed from Challenger),
+        # fall back to disk if not present
+        previous_template = None
+        template_data = ticket.metadata.get("template")
+        if template_data:
+            try:
+                previous_template = DocumentationTemplate.model_validate(template_data)
+                logger.debug(
+                    f"Worker {self.worker_id}: Loaded template from ticket metadata"
+                )
+            except Exception as e:
+                logger.warning(
+                    f"Worker {self.worker_id}: Failed to parse template from metadata: {e}"
+                )
+                # Try lenient parsing
+                try:
+                    previous_template = DocumentationTemplate.model_construct(**template_data)
+                    logger.debug(
+                        f"Worker {self.worker_id}: Loaded template via lenient parsing"
+                    )
+                except Exception:
+                    pass
+
+        # Fall back to disk if not in metadata
+        if not previous_template:
+            previous_template = self._load_previous_template(ticket.file_name)
+
         if not previous_template:
             logger.error(
                 f"Worker {self.worker_id}: No previous template found for "
@@ -704,25 +729,27 @@ class ScribeWorker:
                 error=f"No previous documentation found for {ticket.file_name}",
             )
 
-        # Load source code - use file_path from metadata if available
-        metadata_path = ticket.metadata.get("file_path")
-        if metadata_path:
-            source_path = Path(metadata_path)
-        else:
-            source_path = self.input_directory / ticket.file_name
+        # Load source code - prefer metadata (passed from Challenger), fall back to disk
+        source_code = ticket.metadata.get("source_code")
+        if not source_code:
+            metadata_path = ticket.metadata.get("file_path")
+            if metadata_path:
+                source_path = Path(metadata_path)
+            else:
+                source_path = self.input_directory / ticket.file_name
 
-        if not source_path.exists():
-            return ScribeOutput(
-                success=False,
-                error=f"Source file not found: {source_path}",
-            )
-        try:
-            source_code = source_path.read_text(encoding="utf-8", errors="replace")
-        except Exception as e:
-            return ScribeOutput(
-                success=False,
-                error=f"Failed to read source file: {e}",
-            )
+            if not source_path.exists():
+                return ScribeOutput(
+                    success=False,
+                    error=f"Source file not found: {source_path}",
+                )
+            try:
+                source_code = source_path.read_text(encoding="utf-8", errors="replace")
+            except Exception as e:
+                return ScribeOutput(
+                    success=False,
+                    error=f"Failed to read source file: {e}",
+                )
 
         # Extract challenger questions from ticket metadata
         challenger_questions: list[ChallengerQuestion] = []
