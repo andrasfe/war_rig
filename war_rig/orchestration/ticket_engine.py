@@ -694,11 +694,42 @@ class TicketOrchestrator:
         """Trigger and wait for Imperator holistic review.
 
         Collects all completed documentation and submits it to the
-        Imperator for batch-level review.
+        Imperator for batch-level review. Only runs when all Scribe
+        and Challenger work is complete.
 
         Returns:
             HolisticReviewOutput with the review decision and feedback.
         """
+        # Check if there's still pending work - Imperator should wait
+        pending_doc = self.beads_client.get_tickets_by_state(
+            state=TicketState.CREATED,
+            ticket_type=TicketType.DOCUMENTATION,
+        )
+        in_progress_doc = self.beads_client.get_tickets_by_state(
+            state=TicketState.IN_PROGRESS,
+            ticket_type=TicketType.DOCUMENTATION,
+        )
+        pending_val = self.beads_client.get_tickets_by_state(
+            state=TicketState.CREATED,
+            ticket_type=TicketType.VALIDATION,
+        )
+        in_progress_val = self.beads_client.get_tickets_by_state(
+            state=TicketState.IN_PROGRESS,
+            ticket_type=TicketType.VALIDATION,
+        )
+
+        if pending_doc or in_progress_doc or pending_val or in_progress_val:
+            logger.info(
+                f"Skipping holistic review - work still pending: "
+                f"{len(pending_doc)} doc pending, {len(in_progress_doc)} doc in progress, "
+                f"{len(pending_val)} val pending, {len(in_progress_val)} val in progress"
+            )
+            return HolisticReviewOutput(
+                success=True,
+                decision=ImperatorHolisticDecision.NEEDS_CLARIFICATION,
+                quality_notes="Work still in progress, review deferred",
+            )
+
         self._state.status = OrchestrationStatus.REVIEWING
         self._state.status_message = "Running Imperator holistic review..."
 
