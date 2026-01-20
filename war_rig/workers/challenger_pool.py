@@ -595,11 +595,12 @@ class ChallengerWorker:
             priority = BeadsPriority.LOW
 
         # Create the rework ticket
+        # Use same cycle number - cycle only increments when orchestrator starts new cycle
         rework_ticket = self.beads_client.create_pm_ticket(
             ticket_type=TicketType.CLARIFICATION,  # CLARIFICATION for Scribe to address
             file_name=validation_ticket.file_name,
             program_id=validation_ticket.program_id,
-            cycle_number=validation_ticket.cycle_number + 1,
+            cycle_number=validation_ticket.cycle_number,
             parent_ticket_id=validation_ticket.ticket_id,
             priority=priority,
             metadata=rework_metadata,
