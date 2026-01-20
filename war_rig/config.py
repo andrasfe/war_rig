@@ -14,8 +14,6 @@ Typical usage:
 
 import os
 from pathlib import Path
-from typing import Literal
-
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -27,9 +25,9 @@ load_dotenv()
 class APIConfig(BaseModel):
     """Configuration for the API provider."""
 
-    provider: Literal["openrouter", "anthropic"] = Field(
+    provider: str = Field(
         default="openrouter",
-        description="API provider to use",
+        description="API provider to use (openrouter, anthropic, or custom plugin)",
     )
     api_key: str | None = Field(
         default=None,
