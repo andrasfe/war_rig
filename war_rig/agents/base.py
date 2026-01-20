@@ -22,6 +22,7 @@ from pydantic import BaseModel, Field
 
 from war_rig.config import APIConfig, ModelConfig, load_config
 from war_rig.providers import LLMProvider, Message, get_provider_from_env
+from war_rig.utils import log_error
 
 logger = logging.getLogger(__name__)
 
@@ -375,6 +376,10 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
         """
         logger.info(f"{self.name}: Starting invocation (iteration {input_data.iteration})")
 
+        # Initialize for error logging scope
+        messages: list[Message] | None = None
+        content: str | None = None
+
         try:
             messages = self._build_provider_messages(input_data)
 
@@ -400,6 +405,23 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
 
         except Exception as e:
             logger.error(f"{self.name}: Error during invocation: {e}")
+            # Log with full context - messages/response captured for debugging
+            log_error(
+                e,
+                request={
+                    "agent": self.name,
+                    "model": self.config.model,
+                    "messages": [
+                        {"role": m.role, "content": m.content[:1000] + "..." if len(m.content) > 1000 else m.content}
+                        for m in messages
+                    ] if messages else None,
+                },
+                response={"content": content[:2000] + "..." if content and len(content) > 2000 else content} if content else None,
+                context={
+                    "iteration": input_data.iteration,
+                    "file_name": getattr(input_data, "file_name", None),
+                },
+            )
             return self._create_error_output(str(e), input_data)
 
     def invoke(self, input_data: InputT) -> OutputT:

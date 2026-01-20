@@ -43,6 +43,7 @@ from war_rig.config import WarRigConfig
 from war_rig.models.templates import DocumentationTemplate, FileType
 from war_rig.models.tickets import QuestionSeverity
 from war_rig.preprocessors.base import PreprocessorResult
+from war_rig.utils import log_error
 
 logger = logging.getLogger(__name__)
 
@@ -254,6 +255,15 @@ class ChallengerWorker:
                     logger.error(
                         f"Worker {self.worker_id}: Error processing ticket "
                         f"{ticket.ticket_id}: {e}"
+                    )
+                    log_error(
+                        e,
+                        ticket_id=ticket.ticket_id,
+                        context={
+                            "worker_id": self.worker_id,
+                            "file_name": ticket.file_name,
+                            "ticket_type": ticket.ticket_type.value,
+                        },
                     )
                     self.status.error_count += 1
 
@@ -573,6 +583,15 @@ class ChallengerWorker:
 
         except Exception as e:
             logger.error(f"Validation error: {e}")
+            log_error(
+                e,
+                ticket_id=ticket.ticket_id,
+                context={
+                    "worker_id": self.worker_id,
+                    "file_name": ticket.file_name,
+                    "operation": "_validate_documentation",
+                },
+            )
             return ValidationResult(
                 success=False,
                 is_valid=False,
@@ -594,10 +613,11 @@ class ChallengerWorker:
             The created rework ticket, or None if creation failed.
         """
         # Build metadata for the rework ticket
+        # Use "challenger_questions" key - this is what Scribe looks for
         rework_metadata: dict[str, Any] = {
             "parent_validation_ticket": validation_ticket.ticket_id,
             "issues_found": result.issues_found,
-            "blocking_questions": result.blocking_questions,
+            "challenger_questions": result.blocking_questions,  # Scribe expects this key
             "challenger_worker": self.worker_id,
         }
 

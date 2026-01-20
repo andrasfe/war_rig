@@ -53,6 +53,7 @@ from war_rig.beads import (
 from war_rig.config import WarRigConfig
 from war_rig.models.templates import DocumentationTemplate, FileType
 from war_rig.models.tickets import ChallengerQuestion, ChromeTicket
+from war_rig.utils import log_error
 
 logger = logging.getLogger(__name__)
 
@@ -277,6 +278,14 @@ class ScribeWorker:
 
         except Exception as e:
             logger.error(f"Worker {self.worker_id}: Fatal error: {e}")
+            log_error(
+                e,
+                context={
+                    "worker_id": self.worker_id,
+                    "last_ticket": self._status.current_ticket_id,
+                    "state": self._status.state.value if self._status.state else None,
+                },
+            )
             self._status.state = WorkerState.ERROR
             self._status.error_message = str(e)
             raise
@@ -720,7 +729,28 @@ class ScribeWorker:
         questions_data = ticket.metadata.get("challenger_questions", [])
         for q in questions_data:
             if isinstance(q, dict):
-                challenger_questions.append(ChallengerQuestion.model_validate(q))
+                try:
+                    challenger_questions.append(ChallengerQuestion.model_validate(q))
+                except Exception as e:
+                    # Log validation error and try lenient parsing
+                    logger.warning(
+                        f"Worker {self.worker_id}: Failed to validate question in ticket "
+                        f"{ticket.ticket_id}: {e}. Question data: {q}"
+                    )
+                    # Create question with just the essential fields
+                    try:
+                        challenger_questions.append(
+                            ChallengerQuestion(
+                                question_id=q.get("question_id", f"Q-{len(challenger_questions)}"),
+                                question=q.get("question", str(q)),
+                                section=q.get("section"),
+                                context=q.get("context", q.get("evidence", "")),
+                            )
+                        )
+                    except Exception as e2:
+                        logger.error(
+                            f"Worker {self.worker_id}: Lenient question parsing also failed: {e2}"
+                        )
             elif isinstance(q, ChallengerQuestion):
                 challenger_questions.append(q)
 
