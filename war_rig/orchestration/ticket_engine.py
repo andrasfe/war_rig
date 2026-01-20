@@ -698,12 +698,10 @@ class TicketOrchestrator:
             # Run Challenger pool for validation
             if self._challenger_pool is None:
                 self._challenger_pool = ChallengerWorkerPool(
+                    num_workers=self.config.num_challengers,
                     config=self.config,
                     beads_client=self.beads_client,
-                    output_directory=self.config.output_directory,
-                    num_workers=self.config.num_challengers,
                     poll_interval=2.0,
-                    idle_timeout=30.0,
                 )
 
             await self._challenger_pool.start()
