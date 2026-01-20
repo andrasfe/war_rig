@@ -34,6 +34,7 @@ from war_rig.io.reader import SourceReader
 from war_rig.io.writer import DocumentationWriter
 from war_rig.models.templates import FileType
 from war_rig.orchestration.graph import create_war_rig_graph
+from war_rig.orchestration.ticket_engine import TicketOrchestrator
 
 # Set up Typer app
 app = typer.Typer(
@@ -370,92 +371,44 @@ def batch(
 
     console.print(f"Found {len(files)} files to process")
 
-    # Create graph
-    graph = create_war_rig_graph(cfg)
-    writer = DocumentationWriter(cfg.system)
-
-    # Initialize beads client for ticket state management
-    tickets_file = cfg.system.output_directory / ".war_rig_tickets.json"
-    beads_client = get_beads_client(
-        enabled=cfg.beads_enabled if hasattr(cfg, 'beads_enabled') else True,
-        tickets_file=tickets_file,
+    # Use TicketOrchestrator for batch processing
+    # This ensures Imperator only reviews after all Scribe/Challenger work is done
+    orchestrator = TicketOrchestrator(
+        config=cfg,
+        use_mock=mock,
     )
 
-    # Build file_name -> ticket_id mapping from existing tickets
-    ticket_map: dict[str, str] = {}
-    for state in [TicketState.CREATED, TicketState.IN_PROGRESS, TicketState.CLAIMED]:
-        tickets = beads_client.get_tickets_by_state(
-            state=state,
-            ticket_type=TicketType.DOCUMENTATION,
-        )
-        for ticket in tickets:
-            ticket_map[ticket.file_name] = ticket.ticket_id
+    console.print("\n[cyan]Starting batch processing with parallel workers...[/cyan]")
+    console.print("[dim]Scribes document, Challengers validate, then Imperator reviews holistically[/dim]\n")
 
-    results = []
-    errors = []
+    try:
+        batch_result = asyncio.run(orchestrator.run_batch(directory))
 
-    with Progress(console=console) as progress:
-        task = progress.add_task("Processing...", total=len(files))
+        # Display summary
+        console.print()
 
-        for source_file in files:
-            progress.update(task, description=f"Processing {source_file.name}...")
+        table = Table(title="Processing Summary")
+        table.add_column("Status", style="bold")
+        table.add_column("Count", justify="right")
 
-            try:
-                source_code = reader.read_source_file(source_file)
-                result = asyncio.run(
-                    graph.ainvoke(
-                        source_code=source_code,
-                        file_name=source_file.name,
-                        use_mock=mock,
-                    )
-                )
-                results.append(result)
-                writer.write_result(result)
+        table.add_row("[green]Completed[/green]", str(len(batch_result.completed_files)))
+        table.add_row("[red]Failed[/red]", str(len(batch_result.failed_files)))
+        table.add_row("[cyan]Total Cycles[/cyan]", str(batch_result.total_cycles))
+        table.add_row("[blue]Final Decision[/blue]", batch_result.final_decision or "N/A")
 
-                # Update ticket state to COMPLETED if we have a ticket for this file
-                if source_file.name in ticket_map:
-                    ticket_id = ticket_map[source_file.name]
-                    decision = result.get("decision", "UNKNOWN")
-                    beads_client.update_ticket_state(
-                        ticket_id,
-                        TicketState.COMPLETED,
-                        reason=f"Documentation {decision}",
-                        decision=decision,
-                    )
-            except Exception as e:
-                errors.append((source_file.name, str(e)))
+        console.print(table)
 
-            progress.advance(task)
+        if batch_result.failed_files:
+            console.print("\n[red]Failed files:[/red]")
+            for file_name, error in batch_result.failed_files.items():
+                console.print(f"  {file_name}: {error}")
 
-    # Write index
-    if results:
-        index_path = writer.write_index(results)
-        console.print(f"\nIndex written to: {index_path}")
+        if batch_result.quality_notes:
+            console.print(f"\n[cyan]Quality Notes:[/cyan] {batch_result.quality_notes}")
 
-    # Display summary
-    console.print()
-
-    table = Table(title="Processing Summary")
-    table.add_column("Status", style="bold")
-    table.add_column("Count", justify="right")
-
-    witnessed = sum(1 for r in results if r.get("decision") == "WITNESSED")
-    valhalla = sum(1 for r in results if r.get("decision") == "VALHALLA")
-    forced = sum(1 for r in results if r.get("decision") == "FORCED")
-    chrome = sum(1 for r in results if r.get("decision") == "CHROME")
-
-    table.add_row("[green]Witnessed[/green]", str(witnessed))
-    table.add_row("[gold1]Valhalla[/gold1]", str(valhalla))
-    table.add_row("[orange1]Forced[/orange1]", str(forced))
-    table.add_row("[yellow]Chrome (incomplete)[/yellow]", str(chrome))
-    table.add_row("[red]Errors[/red]", str(len(errors)))
-
-    console.print(table)
-
-    if errors:
-        console.print("\n[red]Errors:[/red]")
-        for name, error in errors:
-            console.print(f"  {name}: {error}")
+    except Exception as e:
+        console.print(f"\n[red]Batch processing failed: {e}[/red]")
+        raise typer.Exit(1)
 
     # Generate system overview if we have completed documentation
     # Check total completed (current run + previously completed via --resume)
