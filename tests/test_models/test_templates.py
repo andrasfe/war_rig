@@ -221,3 +221,94 @@ class TestDocumentationTemplate:
 
         assert restored.header.program_id == sample_template.header.program_id
         assert restored.purpose.summary == sample_template.purpose.summary
+
+
+class TestLenientCoercion:
+    """Tests for lenient type coercion from LLM responses."""
+
+    def test_citation_from_string_with_numbers(self):
+        """Test that citation accepts a string and extracts numbers."""
+        io = InputOutput(
+            name="TEST",
+            io_type=IOType.FILE_SEQUENTIAL,
+            description="Test",
+            citation="Line 42 shows the read statement",
+        )
+        assert io.citation == [42]
+
+    def test_citation_from_string_multiple_numbers(self):
+        """Test extracting multiple numbers from a string."""
+        io = InputOutput(
+            name="TEST",
+            io_type=IOType.FILE_SEQUENTIAL,
+            description="Test",
+            citation="Lines 10, 20, and 30",
+        )
+        assert io.citation == [10, 20, 30]
+
+    def test_citation_from_string_no_numbers(self):
+        """Test string with no numbers returns empty list."""
+        io = InputOutput(
+            name="TEST",
+            io_type=IOType.FILE_SEQUENTIAL,
+            description="Test",
+            citation="No line numbers here",
+        )
+        assert io.citation == []
+
+    def test_citation_from_mixed_list(self):
+        """Test citation accepts mixed list of ints and strings."""
+        io = InputOutput(
+            name="TEST",
+            io_type=IOType.FILE_SEQUENTIAL,
+            description="Test",
+            citation=[10, "line 20", 30],
+        )
+        assert io.citation == [10, 20, 30]
+
+    def test_citation_from_none(self):
+        """Test citation handles None gracefully."""
+        io = InputOutput(
+            name="TEST",
+            io_type=IOType.FILE_SEQUENTIAL,
+            description="Test",
+            citation=None,
+        )
+        assert io.citation == []
+
+    def test_citation_from_single_int(self):
+        """Test citation accepts a single int."""
+        io = InputOutput(
+            name="TEST",
+            io_type=IOType.FILE_SEQUENTIAL,
+            description="Test",
+            citation=42,
+        )
+        assert io.citation == [42]
+
+    def test_conditions_from_string(self):
+        """Test conditions field accepts a string and wraps it."""
+        rule = BusinessRule(
+            rule_id="BR001",
+            description="Test rule",
+            conditions="AMOUNT > 1000",
+        )
+        assert rule.conditions == ["AMOUNT > 1000"]
+
+    def test_conditions_from_none(self):
+        """Test conditions handles None gracefully."""
+        rule = BusinessRule(
+            rule_id="BR001",
+            description="Test rule",
+            conditions=None,
+        )
+        assert rule.conditions == []
+
+    def test_parameters_from_string(self):
+        """Test parameters accepts a string."""
+        called = CalledProgram(
+            program_name="SUBPROG",
+            call_type=CallType.STATIC_CALL,
+            parameters="WS-PARAM",
+        )
+        assert called.parameters == ["WS-PARAM"]

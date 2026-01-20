@@ -15,6 +15,8 @@ from enum import Enum
 
 from pydantic import BaseModel, Field, computed_field
 
+from war_rig.models.templates import LenientIntList, LenientStrList
+
 
 class ConfidenceLevel(str, Enum):
     """Confidence levels for documentation quality.
@@ -53,15 +55,15 @@ class SectionAssessment(BaseModel):
         default=ValidationLevel.SHAKY,
         description="Overall validation of this section",
     )
-    issues: list[str] = Field(
+    issues: LenientStrList = Field(
         default_factory=list,
         description="Specific issues found in this section",
     )
-    suggestions: list[str] = Field(
+    suggestions: LenientStrList = Field(
         default_factory=list,
         description="Suggestions for improvement",
     )
-    evidence: list[int] = Field(
+    evidence: LenientIntList = Field(
         default_factory=list,
         description="Line numbers supporting the assessment",
     )
@@ -109,7 +111,7 @@ class ChallengerAssessment(BaseModel):
         default="",
         description="Summary of the overall assessment",
     )
-    key_concerns: list[str] = Field(
+    key_concerns: LenientStrList = Field(
         default_factory=list,
         description="Most important issues to address",
     )
@@ -224,7 +226,7 @@ class ConfidenceAssessment(BaseModel):
         default_factory=dict,
         description="Per-section confidence levels",
     )
-    low_confidence_sections: list[str] = Field(
+    low_confidence_sections: LenientStrList = Field(
         default_factory=list,
         description="Sections with LOW confidence",
     )
@@ -232,7 +234,7 @@ class ConfidenceAssessment(BaseModel):
         default="",
         description="Brief explanation of the confidence assessment",
     )
-    unknown_items: list[str] = Field(
+    unknown_items: LenientStrList = Field(
         default_factory=list,
         description="Items that could not be determined",
     )

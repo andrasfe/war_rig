@@ -16,6 +16,8 @@ from uuid import uuid4
 
 from pydantic import BaseModel, Field
 
+from war_rig.models.templates import LenientIntList
+
 
 class IssueType(str, Enum):
     """Types of issues that can be identified in documentation.
@@ -203,7 +205,7 @@ class ChallengerQuestion(BaseModel):
         default=None,
         description="Additional context for the question",
     )
-    evidence: list[int] = Field(
+    evidence: LenientIntList = Field(
         default_factory=list,
         description="Line numbers or citations supporting the question",
     )
@@ -262,7 +264,7 @@ class ScribeResponse(BaseModel):
         default=None,
         description="If UPDATED, which section changed",
     )
-    citation: list[int] = Field(
+    citation: LenientIntList = Field(
         default_factory=list,
         description="Supporting evidence (line numbers)",
     )

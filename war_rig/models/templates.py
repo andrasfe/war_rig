@@ -10,11 +10,52 @@ the Scribe agent fills out. Templates vary by file type:
 All templates follow the structure defined in the War Rig specification v3.0.
 """
 
+import re
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Annotated, Any
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, BeforeValidator, Field, field_validator
+
+
+def coerce_to_int_list(v: Any) -> list[int]:
+    """Coerce any value to a list of integers, extracting numbers from strings."""
+    if v is None:
+        return []
+    if isinstance(v, int):
+        return [v]
+    if isinstance(v, str):
+        numbers = re.findall(r"\d+", v)
+        return [int(n) for n in numbers] if numbers else []
+    if isinstance(v, list):
+        result = []
+        for item in v:
+            if isinstance(item, int):
+                result.append(item)
+            elif isinstance(item, (str, float)):
+                try:
+                    result.append(int(item) if isinstance(item, float) else int(float(item)))
+                except (ValueError, TypeError):
+                    numbers = re.findall(r"\d+", str(item))
+                    result.extend(int(n) for n in numbers)
+        return result
+    return []
+
+
+def coerce_to_str_list(v: Any) -> list[str]:
+    """Coerce any value to a list of strings."""
+    if v is None:
+        return []
+    if isinstance(v, str):
+        return [v] if v.strip() else []
+    if isinstance(v, list):
+        return [str(item) for item in v if item is not None]
+    return [str(v)]
+
+
+# Lenient type aliases - accept any input and coerce to the expected type
+LenientIntList = Annotated[list[int], BeforeValidator(coerce_to_int_list)]
+LenientStrList = Annotated[list[str], BeforeValidator(coerce_to_str_list)]
 
 
 class FileType(str, Enum):
@@ -151,7 +192,7 @@ class PurposeSection(BaseModel):
         ...,
         description="Classification of execution context",
     )
-    citations: list[int] = Field(
+    citations: LenientIntList = Field(
         default_factory=list,
         description="Line numbers supporting the summary",
     )
@@ -176,7 +217,7 @@ class InputOutput(BaseModel):
         default=None,
         description="Associated copybook name",
     )
-    citation: list[int] = Field(
+    citation: LenientIntList = Field(
         default_factory=list,
         description="Line numbers where this is read/written",
     )
@@ -197,7 +238,7 @@ class CalledProgram(BaseModel):
         default=None,
         description="Why this program is called",
     )
-    parameters: list[str] = Field(
+    parameters: LenientStrList = Field(
         default_factory=list,
         description="Parameters passed (USING clause items)",
     )
@@ -210,15 +251,15 @@ class CalledProgram(BaseModel):
 class CallingContext(BaseModel):
     """Information about how this program is invoked."""
 
-    called_by: list[str] = Field(
+    called_by: LenientStrList = Field(
         default_factory=list,
         description="Program names known to call this (may be populated later)",
     )
-    entry_points: list[str] = Field(
+    entry_points: LenientStrList = Field(
         default_factory=list,
         description="Transaction IDs that invoke this (for CICS)",
     )
-    linkage_section: list[str] = Field(
+    linkage_section: LenientStrList = Field(
         default_factory=list,
         description="Key fields in LINKAGE SECTION",
     )
@@ -239,11 +280,11 @@ class BusinessRule(BaseModel):
         default=None,
         description="Brief explanation of implementation",
     )
-    conditions: list[str] = Field(
+    conditions: LenientStrList = Field(
         default_factory=list,
         description="Key conditions (IF statements) involved",
     )
-    citation: list[int] = Field(
+    citation: LenientIntList = Field(
         default_factory=list,
         description="Line numbers where rule is implemented",
     )
@@ -253,11 +294,11 @@ class DataFlowRead(BaseModel):
     """Description of data read by the program."""
 
     source: str = Field(..., description="Source of the data")
-    fields_used: list[str] = Field(
+    fields_used: LenientStrList = Field(
         default_factory=list,
         description="Fields read from this source",
     )
-    citation: list[int] = Field(
+    citation: LenientIntList = Field(
         default_factory=list,
         description="Line numbers where read occurs",
     )
@@ -267,11 +308,11 @@ class DataFlowWrite(BaseModel):
     """Description of data written by the program."""
 
     destination: str = Field(..., description="Destination for the data")
-    fields_written: list[str] = Field(
+    fields_written: LenientStrList = Field(
         default_factory=list,
         description="Fields written to this destination",
     )
-    citation: list[int] = Field(
+    citation: LenientIntList = Field(
         default_factory=list,
         description="Line numbers where write occurs",
     )
@@ -286,7 +327,7 @@ class DataTransform(BaseModel):
         ...,
         description="Description of the transformation",
     )
-    citation: list[int] = Field(
+    citation: LenientIntList = Field(
         default_factory=list,
         description="Line numbers where transformation occurs",
     )
@@ -349,11 +390,11 @@ class Paragraph(BaseModel):
         ...,
         description="What this paragraph does",
     )
-    called_by: list[str] = Field(
+    called_by: LenientStrList = Field(
         default_factory=list,
         description="Paragraphs that PERFORM this",
     )
-    calls: list[str] = Field(
+    calls: LenientStrList = Field(
         default_factory=list,
         description="Paragraphs this PERFORMs",
     )
@@ -374,7 +415,7 @@ class ErrorHandler(BaseModel):
         ...,
         description="What happens (ABEND, return code, etc.)",
     )
-    citation: list[int] = Field(
+    citation: LenientIntList = Field(
         default_factory=list,
         description="Line numbers",
     )
@@ -542,7 +583,7 @@ class RecordField(BaseModel):
         default=None,
         description="Business meaning of this field",
     )
-    valid_values: list[str] = Field(
+    valid_values: LenientStrList = Field(
         default_factory=list,
         description="Known valid values",
     )
@@ -563,7 +604,7 @@ class KeyField(BaseModel):
         ...,
         description="Why this field is important",
     )
-    related_programs: list[str] = Field(
+    related_programs: LenientStrList = Field(
         default_factory=list,
         description="Programs that use this field",
     )
@@ -625,7 +666,7 @@ class CopybookTemplate(BaseModel):
         default_factory=list,
         description="Notable fields",
     )
-    used_by: list[str] = Field(
+    used_by: LenientStrList = Field(
         default_factory=list,
         description="Programs that COPY this copybook",
     )
@@ -747,19 +788,19 @@ class JCLDDStatement(BaseModel):
 class JCLDependencies(BaseModel):
     """Job dependency information."""
 
-    input_datasets: list[str] = Field(
+    input_datasets: LenientStrList = Field(
         default_factory=list,
         description="Datasets that must exist before job runs",
     )
-    output_datasets: list[str] = Field(
+    output_datasets: LenientStrList = Field(
         default_factory=list,
         description="Datasets created/modified by job",
     )
-    predecessor_jobs: list[str] = Field(
+    predecessor_jobs: LenientStrList = Field(
         default_factory=list,
         description="Jobs that must complete first (if known)",
     )
-    successor_jobs: list[str] = Field(
+    successor_jobs: LenientStrList = Field(
         default_factory=list,
         description="Jobs that depend on this (if known)",
     )
@@ -768,7 +809,7 @@ class JCLDependencies(BaseModel):
 class JCLRestartRecovery(BaseModel):
     """Restart and recovery information."""
 
-    restart_points: list[str] = Field(
+    restart_points: LenientStrList = Field(
         default_factory=list,
         description="Steps that can be restarted",
     )
