@@ -101,6 +101,12 @@ class ScribeOutput(AgentOutput):
         description="True if any ScribeResponse had parsing errors and used lenient fallback. "
         "When True, the ticket should NOT be marked as complete to allow retry.",
     )
+    needs_revalidation: bool = Field(
+        default=False,
+        description="True if the ticket (CLARIFICATION/CHROME) had no questions/issues to process. "
+        "When True, the ticket should be marked complete and a new VALIDATION ticket created "
+        "so a Challenger can re-review the documentation from scratch.",
+    )
 
 
 class ScribeAgent(BaseAgent[ScribeInput, ScribeOutput]):

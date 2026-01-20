@@ -422,29 +422,39 @@ class TicketOrchestrator:
 
         Used by Challengers to know if they should wait for more work
         instead of timing out. Returns True if:
-        - There are DOCUMENTATION, CLARIFICATION, or CHROME tickets available
-        - There are such tickets being processed (IN_PROGRESS state)
-        - Scribes are actively working
+        - Scribe pool is running AND has active workers
+        - There are IN_PROGRESS tickets being processed
+
+        Note: Available tickets don't count if the scribe pool has stopped,
+        since no one will process them in this cycle. They'll be picked up
+        in the next cycle or marked as stuck.
 
         Returns:
             True if Scribe work is still in progress.
         """
-        # Ticket types that Scribes process (all can produce validation tickets)
+        # First check if scribe pool is still running with active workers
+        scribe_pool_active = False
+        if self._scribe_pool:
+            status = self._scribe_pool.get_status()
+            scribe_pool_active = status.get("active_workers", 0) > 0
+
+        # If scribe pool has no active workers, check if it's completely stopped
+        if not scribe_pool_active and self._scribe_pool:
+            status = self._scribe_pool.get_status()
+            # If all workers are stopped, upstream is not active
+            # (available tickets will be handled in next cycle)
+            if status.get("total_workers", 0) == status.get("stopped_workers", 0):
+                return False
+
+        # Ticket types that Scribes process
         scribe_ticket_types = [
             TicketType.DOCUMENTATION,
             TicketType.CLARIFICATION,
             TicketType.CHROME,
         ]
 
-        # Check for available tickets of any Scribe type
-        for ticket_type in scribe_ticket_types:
-            available = self.beads_client.get_available_tickets(
-                ticket_type=ticket_type
-            )
-            if available:
-                return True
-
         # Check for in-progress tickets of any Scribe type
+        # These are actively being worked on
         in_progress = [
             t for t in self.beads_client._pm_ticket_cache.values()
             if t.ticket_type in scribe_ticket_types
@@ -453,11 +463,14 @@ class TicketOrchestrator:
         if in_progress:
             return True
 
-        # Check if Scribe pool has active workers
-        if self._scribe_pool:
-            status = self._scribe_pool.get_status()
-            if status.get("active_workers", 0) > 0:
-                return True
+        # If scribe pool is active, check for available tickets
+        if scribe_pool_active:
+            for ticket_type in scribe_ticket_types:
+                available = self.beads_client.get_available_tickets(
+                    ticket_type=ticket_type
+                )
+                if available:
+                    return True
 
         return False
 
@@ -759,7 +772,7 @@ class TicketOrchestrator:
             return HolisticReviewOutput(
                 success=True,
                 decision=ImperatorHolisticDecision.NEEDS_CLARIFICATION,
-                quality_notes="Work still in progress, review deferred",
+                quality_notes=["Work still in progress, review deferred"],
             )
 
         self._state.status = OrchestrationStatus.REVIEWING
@@ -1206,8 +1219,7 @@ class TicketOrchestrator:
         self.beads_client.update_ticket_state(
             ticket.ticket_id,
             TicketState.IN_PROGRESS,
-            worker_id="imperator",
-            reason="Generating system overview",
+            reason="Generating system overview (imperator)",
         )
 
         logger.info("Generating system overview from completed documentation...")

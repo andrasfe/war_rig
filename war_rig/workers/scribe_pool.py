@@ -377,7 +377,22 @@ class ScribeWorker:
                 result = ScribeOutput(success=False, error="Unsupported ticket type")
 
             # Update ticket state based on result
-            if result.success and not result.responses_incomplete:
+            if result.success and result.needs_revalidation:
+                # Special case: CLARIFICATION/CHROME ticket had no questions/issues
+                # Mark as completed and create new VALIDATION ticket for fresh review
+                self.beads_client.update_ticket_state(
+                    ticket.ticket_id,
+                    TicketState.COMPLETED,
+                    reason="No questions/issues found, triggering revalidation",
+                )
+                logger.info(
+                    f"Worker {self.worker_id}: Ticket {ticket.ticket_id} had no questions/issues, "
+                    f"marking complete and creating new VALIDATION ticket for fresh review"
+                )
+                # Create VALIDATION ticket so Challenger can re-review from scratch
+                if result.template:
+                    self._create_validation_ticket(ticket, result)
+            elif result.success and not result.responses_incomplete:
                 self.beads_client.update_ticket_state(
                     ticket.ticket_id,
                     TicketState.COMPLETED,
@@ -722,7 +737,17 @@ class ScribeWorker:
 
         if not challenger_questions:
             logger.warning(
-                f"Worker {self.worker_id}: No questions found in clarification ticket"
+                f"Worker {self.worker_id}: No questions found in clarification ticket "
+                f"{ticket.ticket_id}. Ticket metadata: challenger_questions={bool(questions_data)}, "
+                f"issue_description={bool(ticket.metadata.get('issue_description'))}. "
+                f"Marking for revalidation so Challenger can review from scratch."
+            )
+            # Return success with needs_revalidation flag so a new VALIDATION ticket
+            # gets created and a Challenger can re-review the documentation
+            return ScribeOutput(
+                success=True,
+                template=previous_template,  # Preserve existing work
+                needs_revalidation=True,
             )
 
         file_type = self._determine_file_type(ticket.file_name)
@@ -841,7 +866,17 @@ class ScribeWorker:
 
         if not chrome_tickets:
             logger.warning(
-                f"Worker {self.worker_id}: No chrome issues found in ticket"
+                f"Worker {self.worker_id}: No chrome issues found in ticket "
+                f"{ticket.ticket_id}. Ticket metadata: chrome_tickets={bool(chrome_data)}, "
+                f"issue_description={bool(ticket.metadata.get('issue_description'))}. "
+                f"Marking for revalidation so Challenger can review from scratch."
+            )
+            # Return success with needs_revalidation flag so a new VALIDATION ticket
+            # gets created and a Challenger can re-review the documentation
+            return ScribeOutput(
+                success=True,
+                template=previous_template,  # Preserve existing work
+                needs_revalidation=True,
             )
 
         file_type = self._determine_file_type(ticket.file_name)
