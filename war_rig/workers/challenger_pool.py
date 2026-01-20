@@ -436,8 +436,33 @@ class ChallengerWorker:
             try:
                 state["template"] = DocumentationTemplate.model_validate(template_data)
             except Exception as e:
-                logger.error(f"Failed to validate template: {e}")
-                return None
+                # Try lenient parsing - schema mismatches from LLM outputs are common
+                logger.warning(
+                    f"Strict template validation failed: {e}. Trying lenient parsing."
+                )
+                try:
+                    # Use model_construct to bypass validation entirely
+                    # This creates the object without running validators
+                    header = template_data.get("header", {})
+                    purpose = template_data.get("purpose", {})
+                    state["template"] = DocumentationTemplate.model_construct(
+                        header=header if isinstance(header, dict) else {},
+                        purpose=purpose if isinstance(purpose, dict) else {},
+                        inputs=template_data.get("inputs", []),
+                        outputs=template_data.get("outputs", []),
+                        called_programs=template_data.get("called_programs", []),
+                        calling_context=template_data.get("calling_context", {}),
+                        business_rules=template_data.get("business_rules", []),
+                        data_flow=template_data.get("data_flow", {}),
+                        copybooks_used=template_data.get("copybooks_used", []),
+                        paragraphs=template_data.get("paragraphs", []),
+                        error_handling=template_data.get("error_handling", []),
+                        open_questions=template_data.get("open_questions", []),
+                    )
+                    logger.info("Successfully used lenient parsing for template")
+                except Exception as e2:
+                    logger.error(f"Lenient parsing also failed: {e2}")
+                    return None
         else:
             logger.warning("No template found in ticket metadata")
             return None
