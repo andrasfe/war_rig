@@ -103,6 +103,7 @@ class CallType(str, Enum):
     DYNAMIC_CALL = "DYNAMIC_CALL"
     CICS_LINK = "CICS_LINK"
     CICS_XCTL = "CICS_XCTL"
+    OTHER = "OTHER"  # Fallback for non-standard call types
 
 
 class FinalStatus(str, Enum):

@@ -553,8 +553,14 @@ class ScribeWorker:
         # Load source code from file or metadata
         source_code = ticket.metadata.get("source_code", "")
         if not source_code:
-            # Read from file system
-            source_path = self.input_directory / ticket.file_name
+            # Read from file system - check metadata for full path first
+            # (file_path in metadata may include subdirectory paths)
+            metadata_path = ticket.metadata.get("file_path")
+            if metadata_path:
+                source_path = Path(metadata_path)
+            else:
+                source_path = self.input_directory / ticket.file_name
+
             if not source_path.exists():
                 logger.error(
                     f"Worker {self.worker_id}: Source file not found: {source_path}"
@@ -643,8 +649,13 @@ class ScribeWorker:
                 error=f"No previous documentation found for {ticket.file_name}",
             )
 
-        # Load source code
-        source_path = self.input_directory / ticket.file_name
+        # Load source code - use file_path from metadata if available
+        metadata_path = ticket.metadata.get("file_path")
+        if metadata_path:
+            source_path = Path(metadata_path)
+        else:
+            source_path = self.input_directory / ticket.file_name
+
         if not source_path.exists():
             return ScribeOutput(
                 success=False,
@@ -755,8 +766,13 @@ class ScribeWorker:
                 error=f"No previous documentation found for {ticket.file_name}",
             )
 
-        # Load source code
-        source_path = self.input_directory / ticket.file_name
+        # Load source code - use file_path from metadata if available
+        metadata_path = ticket.metadata.get("file_path")
+        if metadata_path:
+            source_path = Path(metadata_path)
+        else:
+            source_path = self.input_directory / ticket.file_name
+
         if not source_path.exists():
             return ScribeOutput(
                 success=False,
@@ -850,12 +866,19 @@ class ScribeWorker:
         if result.template:
             validation_metadata["template"] = result.template.model_dump(mode="json")
 
-        # Include source code
-        source_path = self.input_directory / doc_ticket.file_name
+        # Include source code - use file_path from metadata if available
+        metadata_path = doc_ticket.metadata.get("file_path")
+        if metadata_path:
+            source_path = Path(metadata_path)
+        else:
+            source_path = self.input_directory / doc_ticket.file_name
+
         if source_path.exists():
             try:
                 source_code = source_path.read_text(encoding="utf-8", errors="replace")
                 validation_metadata["source_code"] = source_code
+                # Preserve file_path for future iterations
+                validation_metadata["file_path"] = str(source_path)
             except Exception as e:
                 logger.warning(
                     f"Worker {self.worker_id}: Failed to read source for validation: {e}"
