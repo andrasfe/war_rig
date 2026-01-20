@@ -807,7 +807,9 @@ class ScribeWorker:
                 needs_revalidation=True,
             )
 
-        file_type = self._determine_file_type(ticket.file_name)
+        # Get file_type from metadata first (set during initial documentation),
+        # fall back to inference from filename
+        file_type = self._get_file_type_from_metadata(ticket)
 
         # Build Scribe input with previous template and questions
         scribe_input = ScribeInput(
@@ -962,7 +964,9 @@ class ScribeWorker:
                 needs_revalidation=True,
             )
 
-        file_type = self._determine_file_type(ticket.file_name)
+        # Get file_type from metadata first (set during initial documentation),
+        # fall back to inference from filename
+        file_type = self._get_file_type_from_metadata(ticket)
 
         # Build Scribe input with previous template and chrome tickets
         scribe_input = ScribeInput(
@@ -1085,6 +1089,30 @@ class ScribeWorker:
             return FileType.PLI
         else:
             return FileType.OTHER
+
+    def _get_file_type_from_metadata(self, ticket: ProgramManagerTicket) -> FileType:
+        """Get FileType from ticket metadata, falling back to filename inference.
+
+        Args:
+            ticket: The ticket with potential file_type in metadata.
+
+        Returns:
+            FileType from metadata or inferred from filename.
+        """
+        file_type_str = ticket.metadata.get("file_type")
+        if file_type_str:
+            try:
+                return FileType(file_type_str)
+            except ValueError:
+                # Try uppercase version
+                try:
+                    return FileType(file_type_str.upper())
+                except ValueError:
+                    logger.warning(
+                        f"Worker {self.worker_id}: Invalid file_type '{file_type_str}' "
+                        f"in ticket {ticket.ticket_id}, inferring from filename"
+                    )
+        return self._determine_file_type(ticket.file_name)
 
 
 class ScribeWorkerPool:
