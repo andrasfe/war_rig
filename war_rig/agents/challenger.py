@@ -148,6 +148,23 @@ class ChallengerAgent(BaseAgent[ChallengerInput, ChallengerOutput]):
         """
         super().__init__(config, api_config, name="Challenger")
 
+    def _get_program_id(self, template) -> str:
+        """Extract program_id from template header, handling both object and dict.
+
+        When templates are created via lenient model_construct(), the header
+        may be a dict instead of a HeaderSection object.
+
+        Args:
+            template: The DocumentationTemplate (or dict-like from model_construct).
+
+        Returns:
+            The program_id string, or "UNKNOWN" if not found.
+        """
+        header = template.header
+        if isinstance(header, dict):
+            return header.get("program_id", "UNKNOWN")
+        return getattr(header, "program_id", "UNKNOWN")
+
     def _build_system_prompt(self) -> str:
         """Build the Challenger's system prompt.
 
@@ -321,7 +338,7 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
             assessment = None
             if "assessment" in data:
                 # Ensure program_id and iteration are set from input data
-                data["assessment"]["program_id"] = input_data.template.header.program_id
+                data["assessment"]["program_id"] = self._get_program_id(input_data.template)
                 data["assessment"]["iteration"] = input_data.iteration
                 assessment = ChallengerAssessment.model_validate(data["assessment"])
 
@@ -386,7 +403,7 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
 
         # Create mock assessment
         mock_assessment = ChallengerAssessment(
-            program_id=input_data.template.header.program_id,
+            program_id=self._get_program_id(input_data.template),
             iteration=input_data.iteration,
             section_assessments=[
                 SectionAssessment(
