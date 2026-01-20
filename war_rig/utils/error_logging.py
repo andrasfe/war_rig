@@ -1,21 +1,24 @@
 """Error file logging utility for War Rig.
 
-Provides centralized error logging with full stack traces, request/response data,
-and ticket information. Logs to file specified by ERR_FILE environment variable.
+Provides centralized error logging to capture ALL ERROR level logs to a file.
+Logs to file specified by ERR_FILE environment variable.
 
 Usage:
-    from war_rig.utils import log_error
+    # At application startup (e.g., in cli.py):
+    from war_rig.utils import setup_error_file_handler
+    setup_error_file_handler()
 
-    try:
-        # some operation
-    except Exception as e:
-        log_error(
-            e,
-            ticket_id="mem-000001",
-            request={"prompt": "..."},
-            response={"content": "..."},
-            context={"worker_id": "scribe-1"},
-        )
+    # Then any logger.error() call anywhere will be captured:
+    logger.error("Something went wrong")  # -> written to ERR_FILE
+
+    # For extra context (optional), use log_error():
+    from war_rig.utils import log_error
+    log_error(
+        exception,
+        ticket_id="mem-000001",
+        request={"prompt": "..."},
+        response={"content": "..."},
+    )
 """
 
 from __future__ import annotations
@@ -28,54 +31,72 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-# Module-level error logger
-_error_logger: logging.Logger | None = None
-_error_file_path: str | None = None
+from dotenv import load_dotenv
+
+# Ensure .env is loaded for ERR_FILE
+load_dotenv()
+
+# Track if handler is already set up
+_handler_installed = False
+
+
+def setup_error_file_handler() -> bool:
+    """Set up a file handler to capture ALL ERROR level logs.
+
+    Reads ERR_FILE from environment. If set, adds a file handler to the
+    root 'war_rig' logger that captures all ERROR and above messages.
+
+    Call this once at application startup.
+
+    Returns:
+        True if handler was set up, False if ERR_FILE not configured.
+    """
+    global _handler_installed
+
+    if _handler_installed:
+        return True
+
+    err_file = os.environ.get("ERR_FILE")
+    if not err_file:
+        return False
+
+    # Ensure directory exists
+    err_path = Path(err_file)
+    err_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Create file handler for ERROR level
+    file_handler = logging.FileHandler(err_file, mode="a", encoding="utf-8")
+    file_handler.setLevel(logging.ERROR)
+
+    # Detailed formatter with timestamp, logger name, and full message
+    formatter = logging.Formatter(
+        "%(asctime)s | %(levelname)s | %(name)s | %(message)s\n"
+        "%(pathname)s:%(lineno)d\n"
+    )
+    file_handler.setFormatter(formatter)
+
+    # Add to root logger to capture ALL errors from all war_rig modules
+    root_logger = logging.getLogger()
+    root_logger.addHandler(file_handler)
+
+    _handler_installed = True
+
+    # Log that error logging is enabled
+    logging.getLogger("war_rig.utils").info(f"Error file logging enabled: {err_file}")
+
+    return True
 
 
 def get_error_logger() -> logging.Logger | None:
-    """Get or create the error file logger.
-
-    Reads ERR_FILE from environment. If not set, returns None (no file logging).
+    """Get the error file logger (for backwards compatibility).
 
     Returns:
         Logger configured for error file output, or None if ERR_FILE not set.
     """
-    global _error_logger, _error_file_path
-
     err_file = os.environ.get("ERR_FILE")
     if not err_file:
         return None
-
-    # Check if we need to create/update the logger
-    if _error_logger is None or _error_file_path != err_file:
-        _error_file_path = err_file
-
-        # Ensure directory exists
-        err_path = Path(err_file)
-        err_path.parent.mkdir(parents=True, exist_ok=True)
-
-        # Create logger
-        _error_logger = logging.getLogger("war_rig.errors")
-        _error_logger.setLevel(logging.ERROR)
-
-        # Remove existing handlers to avoid duplicates
-        _error_logger.handlers.clear()
-
-        # Create file handler
-        file_handler = logging.FileHandler(err_file, mode="a", encoding="utf-8")
-        file_handler.setLevel(logging.ERROR)
-
-        # Create formatter - simple format, we'll add structured data in log_error
-        formatter = logging.Formatter("%(message)s")
-        file_handler.setFormatter(formatter)
-
-        _error_logger.addHandler(file_handler)
-
-        # Don't propagate to root logger
-        _error_logger.propagate = False
-
-    return _error_logger
+    return logging.getLogger("war_rig.errors")
 
 
 def log_error(
@@ -89,6 +110,9 @@ def log_error(
 ) -> None:
     """Log an error to the error file with full context.
 
+    This provides richer context than a simple logger.error() call.
+    Use this when you have request/response data or ticket info to include.
+
     Args:
         exception: The exception that occurred, or an error message string.
         ticket_id: Associated ticket ID if applicable.
@@ -97,9 +121,9 @@ def log_error(
         context: Additional context (worker_id, file_name, etc.).
         include_traceback: Whether to include full stack trace (default True).
     """
-    logger = get_error_logger()
-    if logger is None:
-        return  # ERR_FILE not configured, skip file logging
+    # Ensure handler is set up
+    if not setup_error_file_handler():
+        return  # ERR_FILE not configured
 
     # Build structured error entry
     timestamp = datetime.now().isoformat()
@@ -134,9 +158,10 @@ def log_error(
 
     # Format as JSON for easy parsing
     separator = "=" * 80
-    log_message = f"\n{separator}\n{json.dumps(error_entry, indent=2, default=str)}\n{separator}"
+    log_message = f"\n{separator}\nSTRUCTURED ERROR:\n{json.dumps(error_entry, indent=2, default=str)}\n{separator}"
 
-    logger.error(log_message)
+    # Use a dedicated logger for structured errors
+    logging.getLogger("war_rig.errors").error(log_message)
 
 
 def _truncate_string(s: str, max_length: int = 5000) -> str:

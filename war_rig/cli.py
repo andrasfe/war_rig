@@ -35,6 +35,7 @@ from war_rig.io.writer import DocumentationWriter
 from war_rig.models.templates import FileType
 from war_rig.orchestration.graph import create_war_rig_graph
 from war_rig.orchestration.ticket_engine import TicketOrchestrator
+from war_rig.utils import setup_error_file_handler
 
 # Set up Typer app
 app = typer.Typer(
@@ -61,6 +62,9 @@ def setup_logging(verbose: bool = False) -> None:
         datefmt="[%X]",
         handlers=[RichHandler(console=console, rich_tracebacks=True)],
     )
+
+    # Set up error file logging (captures ALL ERROR level logs to ERR_FILE)
+    setup_error_file_handler()
 
 
 def load_config_with_fallback(config_path: Optional[Path]) -> WarRigConfig:
