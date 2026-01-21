@@ -296,6 +296,8 @@ class BeadsClient:
         # In-memory PM ticket tracking for when beads CLI is unavailable
         self._pm_ticket_cache: dict[str, ProgramManagerTicket] = {}
         self._pm_ticket_counter: int = 0
+        # Current orchestrator cycle (for status display)
+        self._current_cycle: int = 1
         # Track if bd CLI is available (checked on first use)
         self._bd_available: bool | None = None
         # Lock for thread-safe access to in-memory ticket cache
@@ -367,6 +369,10 @@ class BeadsClient:
         try:
             with open(self._tickets_file) as f:
                 data = json.load(f)
+
+            # Restore current cycle if saved
+            if "current_cycle" in data:
+                self._current_cycle = data["current_cycle"]
 
             loaded_count = 0
             reset_count = 0
@@ -476,6 +482,7 @@ class BeadsClient:
                     "version": 1,
                     "saved_at": datetime.utcnow().isoformat(),
                     "ticket_count": len(tickets_data),
+                    "current_cycle": self._current_cycle,
                     "tickets": tickets_data,
                 }
 
@@ -1214,6 +1221,27 @@ class BeadsClient:
                 tickets.append(pm_ticket)
 
         return tickets
+
+    def set_current_cycle(self, cycle: int) -> None:
+        """Set the current orchestrator cycle number.
+
+        This is used for status display to show the actual cycle,
+        not just the max ticket cycle_number.
+
+        Args:
+            cycle: Current cycle number (1-based).
+        """
+        self._current_cycle = cycle
+        # Persist to disk so status scripts can read it
+        self._save_to_disk()
+
+    def get_current_cycle(self) -> int:
+        """Get the current orchestrator cycle number.
+
+        Returns:
+            Current cycle number (1-based).
+        """
+        return self._current_cycle
 
     def reset_orphaned_tickets(
         self,

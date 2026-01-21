@@ -336,6 +336,8 @@ class TicketOrchestrator:
 
             while self._state.cycle < max_cycles and not self._stop_requested:
                 self._state.cycle += 1
+                # Persist current cycle for status display
+                self.beads_client.set_current_cycle(self._state.cycle)
                 logger.info(f"Starting cycle {self._state.cycle} of {max_cycles}")
 
                 # Run documentation and validation

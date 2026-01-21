@@ -184,6 +184,9 @@ def summarize_tickets(data: dict[str, Any]) -> TicketSummary:
     # Extract JSON metadata
     summary.json_saved_at = data.get("saved_at")
 
+    # Get current_cycle from JSON if available (set by orchestrator)
+    json_current_cycle = data.get("current_cycle")
+
     tickets = data.get("tickets", [])
     summary.total = len(tickets)
 
@@ -282,7 +285,8 @@ def summarize_tickets(data: dict[str, Any]) -> TicketSummary:
     summary.all_tickets = all_tickets
     summary.total_size_bytes = total_size_bytes
     summary.batch_id = batch_id
-    summary.max_cycle = max_cycle
+    # Prefer current_cycle from JSON (set by orchestrator), fall back to max from tickets
+    summary.max_cycle = json_current_cycle if json_current_cycle is not None else max_cycle
 
     # Infer current phase from ticket states
     summary.current_phase, summary.phase_detail = infer_phase(by_type, by_state, active_work)
@@ -675,15 +679,14 @@ def build_summary_header(summary: TicketSummary, path: Path) -> Panel:
     header_text.append(f"Refreshed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n", style="dim")
 
     # Add batch info and cycle number
-    # Note: max_cycle is the highest cycle_number found in tickets, not necessarily
-    # the "current" cycle being processed. Show this clearly to avoid confusion.
+    # current_cycle is read from JSON (set by orchestrator), or computed from max ticket cycle
     if summary.batch_id:
         header_text.append(f"\nBatch: ", style="bold")
         header_text.append(f"{summary.batch_id}", style="cyan")
-        header_text.append(f"  |  Latest Cycle: ", style="bold")
+        header_text.append(f"  |  Cycle: ", style="bold")
         header_text.append(f"{summary.max_cycle}\n", style="cyan")
     else:
-        header_text.append(f"\nLatest Cycle: ", style="bold")
+        header_text.append(f"\nCycle: ", style="bold")
         header_text.append(f"{summary.max_cycle}\n", style="cyan")
 
     # Ticket count breakdown
