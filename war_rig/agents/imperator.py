@@ -17,21 +17,32 @@ Holistic Review Mode:
 - Track clarification requests across cycles
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import re
 from enum import Enum
-from typing import Any
+from pathlib import Path
 
 from pydantic import BaseModel, Field
 
 from war_rig.agents.base import AgentInput, AgentOutput, BaseAgent
 from war_rig.config import APIConfig, ImperatorConfig
-from war_rig.providers import Message
-from war_rig.models.assessments import ChallengerAssessment, ConfidenceAssessment, ConfidenceLevel
+from war_rig.models.assessments import (
+    ChallengerAssessment,
+    ConfidenceAssessment,
+    ConfidenceLevel,
+)
 from war_rig.models.templates import DocumentationTemplate, FileType, FinalStatus
-from war_rig.models.tickets import ChromeTicket, IssuePriority, IssueType, ScribeResponse
+from war_rig.models.tickets import (
+    ChromeTicket,
+    IssuePriority,
+    IssueType,
+    ScribeResponse,
+)
 from war_rig.preprocessors.base import PreprocessorResult
+from war_rig.providers import Message
 
 logger = logging.getLogger(__name__)
 
@@ -414,6 +425,20 @@ class HolisticReviewOutput(AgentOutput):
         description="Explanation of the decision",
     )
 
+    # System Design document generation results
+    system_design_generated: bool = Field(
+        default=False,
+        description="Whether SYSTEM_DESIGN.md was generated/updated in this cycle",
+    )
+    system_design_questions: list[InlineQuestion] = Field(
+        default_factory=list,
+        description="Questions identified during system design generation",
+    )
+    system_design_path: str | None = Field(
+        default=None,
+        description="Path to the generated SYSTEM_DESIGN.md file",
+    )
+
 
 # =============================================================================
 # System Overview Generation Models
@@ -455,6 +480,65 @@ class SystemOverviewOutput(BaseModel):
     markdown: str = Field(default="", description="The generated markdown content")
     executive_summary: str = Field(default="", description="High-level system description")
     subsystems: list[str] = Field(default_factory=list, description="Identified subsystems/modules")
+
+
+class InlineQuestion(BaseModel):
+    """A question identified during system design document generation.
+
+    Questions are embedded inline in the document to highlight areas
+    that need clarification or further investigation.
+    """
+
+    question_id: str = Field(
+        description="Unique identifier for the question (e.g., 'Q001')"
+    )
+    question_text: str = Field(description="The actual question being asked")
+    context: str = Field(
+        description="Where in the document this question applies (section/subsection)"
+    )
+    related_files: list[str] = Field(
+        default_factory=list,
+        description="Files this question relates to",
+    )
+    cycle_asked: int = Field(
+        default=1,
+        description="Which review cycle this question was identified",
+    )
+
+
+class SystemDesignInput(BaseModel):
+    """Input for system design document generation."""
+
+    batch_id: str = Field(default="", description="Batch identifier")
+    cycle: int = Field(default=1, description="Current review cycle number")
+    file_documentation: list[dict] = Field(
+        default_factory=list,
+        description="All file documentation (summaries from documented files)",
+    )
+    existing_content: str | None = Field(
+        default=None,
+        description="Existing SYSTEM_DESIGN.md content if any (for iterative refinement)",
+    )
+    call_graph: dict | None = Field(
+        default=None,
+        description="Call graph data if available (program dependencies)",
+    )
+
+
+class SystemDesignOutput(BaseModel):
+    """Output from system design document generation."""
+
+    success: bool = Field(default=True, description="Whether generation succeeded")
+    error: str | None = Field(default=None, description="Error message if failed")
+    markdown: str = Field(default="", description="The generated markdown content")
+    questions: list[InlineQuestion] = Field(
+        default_factory=list,
+        description="Questions identified in the document requiring clarification",
+    )
+    sections_updated: list[str] = Field(
+        default_factory=list,
+        description="Which sections were updated in this cycle",
+    )
 
 
 class ImperatorAgent(BaseAgent[ImperatorInput, ImperatorOutput]):
@@ -1199,6 +1283,7 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
         self,
         input_data: HolisticReviewInput,
         use_mock: bool = False,
+        output_directory: Path | None = None,
     ) -> HolisticReviewOutput:
         """Perform holistic review of batch documentation.
 
@@ -1209,9 +1294,14 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
         This method is separate from the per-file review (ainvoke) and
         is intended for batch processing workflows.
 
+        If output_directory is provided, also generates/updates SYSTEM_DESIGN.md
+        in that directory.
+
         Args:
             input_data: The holistic review input containing all documentation.
             use_mock: If True, return mock output instead of calling LLM.
+            output_directory: If provided, generates SYSTEM_DESIGN.md in this
+                directory. If None, skips system design generation.
 
         Returns:
             HolisticReviewOutput with decision and feedback.
@@ -1228,7 +1318,51 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
             response = await self._call_llm(system_prompt, user_prompt)
 
             # Parse response
-            return self._parse_holistic_response(response, input_data)
+            review_output = self._parse_holistic_response(response, input_data)
+
+            # Generate SYSTEM_DESIGN.md if output_directory is provided
+            if output_directory is not None:
+                try:
+                    # Read existing SYSTEM_DESIGN.md content if available
+                    existing_content = self._read_existing_system_design(output_directory)
+
+                    # Generate system design document
+                    design_result = await self.generate_system_design(
+                        input_data,
+                        existing_content=existing_content,
+                        use_mock=use_mock,
+                    )
+
+                    if design_result.success:
+                        # Write the markdown to SYSTEM_DESIGN.md
+                        system_design_path = output_directory / "SYSTEM_DESIGN.md"
+                        system_design_path.write_text(
+                            design_result.markdown, encoding="utf-8"
+                        )
+
+                        # Populate the new fields in the output
+                        review_output.system_design_generated = True
+                        review_output.system_design_questions = design_result.questions
+                        review_output.system_design_path = str(system_design_path)
+
+                        logger.info(
+                            f"Generated SYSTEM_DESIGN.md at {system_design_path} "
+                            f"with {len(design_result.questions)} inline questions"
+                        )
+                    else:
+                        logger.warning(
+                            f"System design generation failed: {design_result.error}"
+                        )
+                        review_output.system_design_generated = False
+
+                except Exception as design_error:
+                    # Log the error but don't fail the holistic review
+                    logger.warning(
+                        f"Failed to generate SYSTEM_DESIGN.md: {design_error}"
+                    )
+                    review_output.system_design_generated = False
+
+            return review_output
 
         except Exception as e:
             logger.error(f"Holistic review failed: {e}")
@@ -1562,4 +1696,533 @@ and architecture after reading your overview."""
             markdown="\n".join(lines),
             executive_summary=f"[MOCK] {input_data.system_name} system with {len(input_data.programs)} programs",
             subsystems=list(by_type.keys()),
+        )
+
+    # =========================================================================
+    # SYSTEM DESIGN DOCUMENT GENERATION
+    # =========================================================================
+
+    def _read_existing_system_design(self, output_dir: Path) -> str | None:
+        """Read existing SYSTEM_DESIGN.md content if it exists.
+
+        This utility method checks for an existing system design document
+        and returns its content for iterative refinement.
+
+        Args:
+            output_dir: Directory where SYSTEM_DESIGN.md would be located.
+
+        Returns:
+            The content of SYSTEM_DESIGN.md as a string, or None if:
+            - The file does not exist
+            - A read error occurred (logged as warning)
+        """
+        system_design_path = output_dir / "SYSTEM_DESIGN.md"
+
+        if not system_design_path.exists():
+            return None
+
+        try:
+            return system_design_path.read_text(encoding="utf-8")
+        except OSError as e:
+            logger.warning(
+                f"Failed to read existing SYSTEM_DESIGN.md at {system_design_path}: {e}"
+            )
+            return None
+
+    def _build_system_design_prompt(
+        self,
+        input_data: HolisticReviewInput,
+        existing_content: str | None = None,
+    ) -> str:
+        """Build the prompt for system design document generation.
+
+        Creates a prompt instructing the LLM to generate a comprehensive
+        SYSTEM_DESIGN.md document based on the file documentation and
+        call graph information.
+
+        Args:
+            input_data: The holistic review input containing file documentation,
+                call graph, and other system information.
+            existing_content: If provided, the LLM will enhance/update this
+                existing content rather than creating from scratch.
+
+        Returns:
+            The user prompt for the LLM to generate SYSTEM_DESIGN.md content.
+        """
+        parts = []
+
+        parts.append("# System Design Document Generation")
+        parts.append("")
+        parts.append(f"**Batch ID**: {input_data.batch_id}")
+        parts.append(f"**Review Cycle**: {input_data.cycle}")
+        parts.append(f"**Total Files Documented**: {len(input_data.file_documentation)}")
+        parts.append("")
+
+        # Instructions for the LLM
+        parts.append("## Your Task")
+        parts.append("")
+        if existing_content:
+            parts.append(
+                "An existing SYSTEM_DESIGN.md document is provided below. Your task is to "
+                "**enhance and update** this document based on the latest documentation. "
+                "Preserve valuable existing content while improving clarity, adding missing "
+                "details, and resolving any previously marked questions if the answer is now clear."
+            )
+        else:
+            parts.append(
+                "Create a comprehensive SYSTEM_DESIGN.md document that describes the "
+                "overall system architecture based on the program documentation provided below."
+            )
+        parts.append("")
+
+        parts.append("## Required Document Structure")
+        parts.append("")
+        parts.append("Generate a markdown document with the following sections:")
+        parts.append("")
+        parts.append("### 1. Executive Summary")
+        parts.append("- 2-3 paragraphs describing the system's purpose and scope")
+        parts.append("- Key business functions served")
+        parts.append("- Technology stack summary (COBOL, PL/I, DB2, CICS, etc.)")
+        parts.append("")
+        parts.append("### 2. Architecture Overview")
+        parts.append("- High-level system architecture description")
+        parts.append("- Entry points and interfaces")
+        parts.append("- Integration patterns (batch, online, database)")
+        parts.append("")
+        parts.append("### 3. Key Components and Relationships")
+        parts.append("- Core programs and their responsibilities")
+        parts.append("- Shared components (copybooks, utilities)")
+        parts.append("- Dependency relationships between programs")
+        parts.append("")
+        parts.append("### 4. Data Flows")
+        parts.append("- How data moves between programs")
+        parts.append("- Input sources and output destinations")
+        parts.append("- File/database interactions")
+        parts.append("")
+        parts.append("### 5. Subsystem Breakdown")
+        parts.append("- Logical groupings of programs by function")
+        parts.append("- Batch vs. online processing areas")
+        parts.append("- Shared services and utilities")
+        parts.append("")
+
+        parts.append("## Important Guidelines")
+        parts.append("")
+        parts.append(
+            "- **Insert inline questions** wherever your understanding is unclear or "
+            "information is missing. Mark these with: `\u2753 QUESTION: [your question here]`"
+        )
+        parts.append(
+            "- Focus on architectural understanding, not implementation details"
+        )
+        parts.append("- Identify patterns and relationships across the system")
+        parts.append("- Be explicit about assumptions and uncertainties")
+        parts.append("")
+
+        # Include file documentation summaries
+        parts.append("## Program Documentation Summaries")
+        parts.append("")
+
+        if input_data.file_documentation:
+            # Group by program type for better organization
+            by_type: dict[str, list[FileDocumentation]] = {}
+            for doc in input_data.file_documentation:
+                ptype = (
+                    doc.template.purpose.program_type.value
+                    if doc.template.purpose.program_type
+                    else "UNKNOWN"
+                )
+                if ptype not in by_type:
+                    by_type[ptype] = []
+                by_type[ptype].append(doc)
+
+            for ptype, docs in sorted(by_type.items()):
+                parts.append(f"### {ptype} Programs ({len(docs)})")
+                parts.append("")
+
+                for doc in docs:
+                    parts.append(f"**{doc.program_id}** (`{doc.file_name}`)")
+                    parts.append(f"- **Summary**: {doc.template.purpose.summary}")
+
+                    if doc.template.purpose.business_context:
+                        parts.append(
+                            f"- **Business Context**: {doc.template.purpose.business_context}"
+                        )
+
+                    # Called programs
+                    if doc.template.called_programs:
+                        called_names = [
+                            cp.program_name for cp in doc.template.called_programs
+                        ]
+                        parts.append(f"- **Calls**: {', '.join(called_names)}")
+
+                    # Calling context
+                    if doc.template.calling_context.called_by:
+                        parts.append(
+                            f"- **Called By**: {', '.join(doc.template.calling_context.called_by)}"
+                        )
+
+                    # Inputs
+                    if doc.template.inputs:
+                        input_names = [inp.name for inp in doc.template.inputs[:5]]
+                        suffix = (
+                            f" (+{len(doc.template.inputs) - 5} more)"
+                            if len(doc.template.inputs) > 5
+                            else ""
+                        )
+                        parts.append(f"- **Inputs**: {', '.join(input_names)}{suffix}")
+
+                    # Outputs
+                    if doc.template.outputs:
+                        output_names = [out.name for out in doc.template.outputs[:5]]
+                        suffix = (
+                            f" (+{len(doc.template.outputs) - 5} more)"
+                            if len(doc.template.outputs) > 5
+                            else ""
+                        )
+                        parts.append(f"- **Outputs**: {', '.join(output_names)}{suffix}")
+
+                    # Copybooks
+                    if doc.template.copybooks_used:
+                        copybook_names = [
+                            cb.copybook_name for cb in doc.template.copybooks_used[:5]
+                        ]
+                        suffix = (
+                            f" (+{len(doc.template.copybooks_used) - 5} more)"
+                            if len(doc.template.copybooks_used) > 5
+                            else ""
+                        )
+                        parts.append(
+                            f"- **Copybooks**: {', '.join(copybook_names)}{suffix}"
+                        )
+
+                    parts.append("")
+        else:
+            parts.append("*No file documentation available.*")
+            parts.append("")
+
+        # Include call graph if available
+        if input_data.call_graph:
+            parts.append("## Call Graph")
+            parts.append("")
+            parts.append(
+                "The following shows which programs call other programs:"
+            )
+            parts.append("")
+            for caller, callees in sorted(input_data.call_graph.items()):
+                if callees:
+                    parts.append(f"- **{caller}** calls: {', '.join(callees)}")
+            parts.append("")
+
+        # Include shared copybooks if available
+        if input_data.shared_copybooks:
+            parts.append("## Shared Copybooks")
+            parts.append("")
+            parts.append(
+                "The following copybooks are used by multiple programs:"
+            )
+            parts.append("")
+            for copybook, users in sorted(input_data.shared_copybooks.items()):
+                if len(users) > 1:
+                    parts.append(f"- **{copybook}**: used by {', '.join(users)}")
+            parts.append("")
+
+        # Include data flow if available
+        if input_data.data_flow:
+            parts.append("## Data Flow Information")
+            parts.append("")
+            for program, flows in sorted(input_data.data_flow.items()):
+                if flows:
+                    parts.append(f"- **{program}**: {', '.join(flows)}")
+            parts.append("")
+
+        # Include existing content if provided
+        if existing_content:
+            parts.append("## Existing SYSTEM_DESIGN.md Content")
+            parts.append("")
+            parts.append(
+                "Below is the current content of SYSTEM_DESIGN.md. Enhance and update "
+                "this document, preserving valuable content while improving it:"
+            )
+            parts.append("")
+            parts.append("```markdown")
+            parts.append(existing_content)
+            parts.append("```")
+            parts.append("")
+
+        # Final output instructions
+        parts.append("## Output Format")
+        parts.append("")
+        parts.append(
+            "Output ONLY the markdown content for SYSTEM_DESIGN.md. "
+            "Do not wrap in JSON or add any preamble."
+        )
+
+        return "\n".join(parts)
+
+    async def generate_system_design(
+        self,
+        input_data: HolisticReviewInput,
+        existing_content: str | None = None,
+        use_mock: bool = False,
+    ) -> SystemDesignOutput:
+        """Generate a SYSTEM_DESIGN.md document from batch documentation.
+
+        This method synthesizes individual file documentation into a comprehensive
+        system design document. It can either create a new document or enhance
+        an existing one based on the provided content.
+
+        Args:
+            input_data: Holistic review input containing file documentation,
+                call graph, and other system information.
+            existing_content: If provided, the document will be enhanced/updated
+                rather than created from scratch.
+            use_mock: If True, return mock output without calling the LLM.
+
+        Returns:
+            SystemDesignOutput with the generated markdown and any identified
+            questions requiring clarification.
+        """
+        if use_mock:
+            return self._create_mock_system_design(input_data, existing_content)
+
+        try:
+            system_prompt = """You are a technical architect creating a system design document.
+
+Your task is to synthesize individual program documentation into a comprehensive
+SYSTEM_DESIGN.md document that describes the overall system architecture.
+
+Guidelines:
+- Write for a technical audience (developers, architects, maintainers)
+- Focus on system-level understanding, not individual program details
+- Identify patterns, relationships, and architectural boundaries
+- Mark uncertainties with inline questions using the format: ❓ QUESTION: [your question]
+- Use clear markdown formatting with headers, lists, and tables
+- Be explicit about assumptions and information gaps"""
+
+            user_prompt = self._build_system_design_prompt(input_data, existing_content)
+
+            # Call LLM
+            response = await self._call_llm(system_prompt, user_prompt)
+
+            # Parse inline questions from the markdown
+            questions = self._parse_inline_questions(response, input_data.cycle)
+
+            # Identify which sections were updated (look for main headers)
+            sections_updated = self._extract_sections(response)
+
+            return SystemDesignOutput(
+                success=True,
+                markdown=response,
+                questions=questions,
+                sections_updated=sections_updated,
+            )
+
+        except Exception as e:
+            logger.error(f"System design generation failed: {e}")
+            return SystemDesignOutput(
+                success=False,
+                error=str(e),
+                markdown="",
+            )
+
+    def _parse_inline_questions(
+        self,
+        markdown: str,
+        cycle: int,
+    ) -> list[InlineQuestion]:
+        """Parse inline questions from the generated markdown.
+
+        Looks for the pattern: ❓ QUESTION: [question text]
+
+        Args:
+            markdown: The generated markdown content.
+            cycle: The current review cycle number.
+
+        Returns:
+            List of InlineQuestion objects parsed from the markdown.
+        """
+        import re
+
+        questions = []
+        # Pattern: ❓ QUESTION: followed by text until newline or end
+        pattern = r"❓\s*QUESTION:\s*(.+?)(?:\n|$)"
+        matches = re.finditer(pattern, markdown)
+
+        for idx, match in enumerate(matches, start=1):
+            question_text = match.group(1).strip()
+
+            # Try to determine context from surrounding content
+            # Look for the nearest preceding header
+            start_pos = match.start()
+            context = self._find_section_context(markdown, start_pos)
+
+            questions.append(
+                InlineQuestion(
+                    question_id=f"Q{idx:03d}",
+                    question_text=question_text,
+                    context=context,
+                    related_files=[],  # Could be enhanced to detect file references
+                    cycle_asked=cycle,
+                )
+            )
+
+        return questions
+
+    def _find_section_context(self, markdown: str, position: int) -> str:
+        """Find the section context for a given position in markdown.
+
+        Looks backwards from the position to find the nearest header.
+
+        Args:
+            markdown: The markdown content.
+            position: Character position to find context for.
+
+        Returns:
+            The section header text, or "General" if no header found.
+        """
+        import re
+
+        # Get the text before the position
+        text_before = markdown[:position]
+
+        # Find all headers before this position
+        header_pattern = r"^(#{1,6})\s+(.+?)$"
+        headers = list(re.finditer(header_pattern, text_before, re.MULTILINE))
+
+        if headers:
+            # Return the last (nearest) header
+            last_header = headers[-1]
+            return last_header.group(2).strip()
+
+        return "General"
+
+    def _extract_sections(self, markdown: str) -> list[str]:
+        """Extract top-level section names from markdown.
+
+        Args:
+            markdown: The markdown content.
+
+        Returns:
+            List of section names (## level headers).
+        """
+        import re
+
+        sections = []
+        # Match ## headers (level 2)
+        pattern = r"^##\s+(.+?)$"
+        matches = re.finditer(pattern, markdown, re.MULTILINE)
+
+        for match in matches:
+            sections.append(match.group(1).strip())
+
+        return sections
+
+    def _create_mock_system_design(
+        self,
+        input_data: HolisticReviewInput,
+        existing_content: str | None = None,
+    ) -> SystemDesignOutput:
+        """Create mock system design output for testing.
+
+        Args:
+            input_data: The holistic review input.
+            existing_content: Existing content if any.
+
+        Returns:
+            Mock SystemDesignOutput with sample content.
+        """
+        # Count programs by type
+        program_count = len(input_data.file_documentation)
+
+        lines = []
+        lines.append("# System Design Document")
+        lines.append("")
+        lines.append(f"*Batch: {input_data.batch_id} | Cycle: {input_data.cycle}*")
+        lines.append("")
+        lines.append("## Executive Summary")
+        lines.append("")
+        lines.append(
+            f"This system consists of {program_count} documented programs that work "
+            "together to provide business functionality. The system processes data "
+            "through a combination of batch and online components."
+        )
+        lines.append("")
+        lines.append(
+            "❓ QUESTION: What is the primary business domain this system serves?"
+        )
+        lines.append("")
+        lines.append("## Architecture Overview")
+        lines.append("")
+        lines.append(
+            "The system follows a layered architecture with clear separation between "
+            "presentation, business logic, and data access layers."
+        )
+        lines.append("")
+        lines.append(
+            "❓ QUESTION: Are there external system integrations that need to be documented?"
+        )
+        lines.append("")
+        lines.append("## Key Components and Relationships")
+        lines.append("")
+
+        if input_data.file_documentation:
+            lines.append("### Documented Programs")
+            lines.append("")
+            for doc in input_data.file_documentation[:5]:  # Limit for mock
+                lines.append(f"- **{doc.program_id}**: {doc.template.purpose.summary}")
+            if len(input_data.file_documentation) > 5:
+                lines.append(
+                    f"- *...and {len(input_data.file_documentation) - 5} more programs*"
+                )
+            lines.append("")
+
+        lines.append("## Data Flows")
+        lines.append("")
+        lines.append(
+            "Data flows through the system via file inputs, database operations, "
+            "and inter-program communication."
+        )
+        lines.append("")
+        lines.append("## Subsystem Breakdown")
+        lines.append("")
+        lines.append(
+            "Programs are organized into logical subsystems based on their functionality."
+        )
+        lines.append("")
+
+        if existing_content:
+            lines.append("---")
+            lines.append("*Note: This mock output was generated with existing content provided.*")
+
+        markdown = "\n".join(lines)
+
+        # Create mock questions
+        questions = [
+            InlineQuestion(
+                question_id="Q001",
+                question_text="What is the primary business domain this system serves?",
+                context="Executive Summary",
+                related_files=[],
+                cycle_asked=input_data.cycle,
+            ),
+            InlineQuestion(
+                question_id="Q002",
+                question_text="Are there external system integrations that need to be documented?",
+                context="Architecture Overview",
+                related_files=[],
+                cycle_asked=input_data.cycle,
+            ),
+        ]
+
+        return SystemDesignOutput(
+            success=True,
+            markdown=markdown,
+            questions=questions,
+            sections_updated=[
+                "Executive Summary",
+                "Architecture Overview",
+                "Key Components and Relationships",
+                "Data Flows",
+                "Subsystem Breakdown",
+            ],
         )
