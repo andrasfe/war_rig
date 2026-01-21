@@ -27,26 +27,34 @@ def load_documentation(doc_dir: Path) -> list[dict]:
 
 def get_program_type(doc: dict) -> str:
     """Extract program type from documentation."""
-    # Try different locations
-    if "program_type" in doc:
+    # Try different locations - check for None explicitly
+    if doc.get("program_type"):
         return doc["program_type"]
     if "purpose" in doc and isinstance(doc["purpose"], dict):
-        return doc["purpose"].get("program_type", "Unknown")
+        ptype = doc["purpose"].get("program_type")
+        if ptype:
+            return ptype
     return "Unknown"
 
 
 def get_summary(doc: dict) -> str:
     """Extract summary from documentation."""
     if "purpose" in doc and isinstance(doc["purpose"], dict):
-        return doc["purpose"].get("summary", "No summary available")
-    if "summary" in doc:
+        summary = doc["purpose"].get("summary")
+        if summary:
+            return summary
+    if doc.get("summary"):
         return doc["summary"]
     return "No summary available"
 
 
 def get_program_id(doc: dict) -> str:
     """Extract program ID from documentation."""
-    return doc.get("program_id", doc.get("_source_file", "Unknown").replace(".doc.json", ""))
+    program_id = doc.get("program_id")
+    if program_id:
+        return program_id
+    source_file = doc.get("_source_file", "Unknown")
+    return source_file.replace(".doc.json", "") if source_file else "Unknown"
 
 
 def categorize_programs(docs: list[dict]) -> dict[str, list[dict]]:
