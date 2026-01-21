@@ -529,6 +529,22 @@ class ScribeWorker:
                         f"resetting for other workers (different LLM may succeed)"
                     )
 
+        except asyncio.CancelledError:
+            # Worker cancelled mid-processing - reset ticket for retry
+            logger.warning(
+                f"Worker {self.worker_id}: Cancelled while processing {ticket.ticket_id}, "
+                f"resetting to CREATED for retry"
+            )
+            try:
+                self.beads_client.update_ticket_state(
+                    ticket.ticket_id,
+                    TicketState.CREATED,
+                    reason="Worker cancelled mid-processing, reset for retry",
+                )
+            except Exception as reset_err:
+                logger.error(f"Failed to reset ticket on cancellation: {reset_err}")
+            raise  # Re-raise to exit the worker
+
         except Exception as e:
             # Release ticket on error
             logger.error(

@@ -457,3 +457,245 @@ class TestScribeWorkerPool:
         assert pool.is_done() is True
 
         await pool.stop()
+
+
+# =============================================================================
+# Idle Timeout Tests
+# =============================================================================
+
+
+class TestIdleTimeout:
+    """Tests for idle timeout behavior."""
+
+    @pytest.mark.asyncio
+    async def test_idle_timeout_measured_from_processing_end(
+        self, mock_config, mock_beads_client, sample_pm_ticket
+    ):
+        """Test that idle timeout is measured from when processing ENDS, not starts.
+
+        This prevents workers from stopping immediately after completing a long-running
+        ticket (> idle_timeout duration).
+        """
+        # Track processing time
+        processing_duration = 0.4  # Longer than idle_timeout
+        idle_timeout = 0.2
+
+        call_count = [0]
+
+        def get_tickets(*args, **kwargs):
+            call_count[0] += 1
+            if call_count[0] == 1:
+                return [sample_pm_ticket]
+            return []
+
+        mock_beads_client.get_available_tickets.side_effect = get_tickets
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            poll_interval=0.05,
+            idle_timeout=idle_timeout,
+        )
+
+        # Mock the agent to simulate slow processing
+        async def slow_processing(*args, **kwargs):
+            await asyncio.sleep(processing_duration)
+            return ScribeOutput(success=True)
+
+        mock_agent = MagicMock()
+        mock_agent.ainvoke = slow_processing
+        worker._scribe_agent = mock_agent
+
+        start_time = datetime.utcnow()
+        await worker.run()
+        total_time = (datetime.utcnow() - start_time).total_seconds()
+
+        # Worker should have:
+        # 1. Processed the ticket (0.4s)
+        # 2. Then waited idle_timeout (0.2s) before stopping
+        # Total should be > processing_duration + idle_timeout
+        # If idle was measured from start, worker would stop immediately after processing
+        assert total_time >= processing_duration + idle_timeout - 0.1  # Small tolerance
+        assert worker.status.tickets_processed == 1
+
+    @pytest.mark.asyncio
+    async def test_worker_doesnt_stop_immediately_after_long_processing(
+        self, mock_config, mock_beads_client, sample_pm_ticket
+    ):
+        """Test that worker doesn't stop immediately after finishing a long ticket."""
+        processing_time = 0.3
+        idle_timeout = 0.1
+
+        tickets_returned = [0]
+
+        def get_tickets(*args, **kwargs):
+            tickets_returned[0] += 1
+            if tickets_returned[0] == 1:
+                return [sample_pm_ticket]
+            return []
+
+        mock_beads_client.get_available_tickets.side_effect = get_tickets
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            poll_interval=0.02,
+            idle_timeout=idle_timeout,
+        )
+
+        # Track how many times poll is called after processing
+        poll_after_processing = [0]
+        original_poll = worker._poll_for_ticket
+
+        async def tracking_poll():
+            if tickets_returned[0] > 1:
+                poll_after_processing[0] += 1
+            return await original_poll()
+
+        worker._poll_for_ticket = tracking_poll
+
+        async def slow_agent(*args, **kwargs):
+            await asyncio.sleep(processing_time)
+            return ScribeOutput(success=True)
+
+        mock_agent = MagicMock()
+        mock_agent.ainvoke = slow_agent
+        worker._scribe_agent = mock_agent
+
+        await worker.run()
+
+        # After processing (0.3s), worker should poll multiple times before idle timeout (0.1s)
+        # If idle was measured from start, worker would stop immediately (poll_after_processing = 0)
+        assert poll_after_processing[0] >= 2, (
+            f"Expected at least 2 polls after processing, got {poll_after_processing[0]}. "
+            "Worker may be stopping immediately after long-running tasks."
+        )
+
+
+# =============================================================================
+# CancelledError Handling Tests
+# =============================================================================
+
+
+class TestCancelledErrorHandling:
+    """Tests for CancelledError handling in workers."""
+
+    @pytest.mark.asyncio
+    async def test_cancelled_during_processing_resets_ticket(
+        self, mock_config, mock_beads_client, sample_pm_ticket
+    ):
+        """Test that cancellation during processing resets ticket to CREATED."""
+        mock_beads_client.get_available_tickets.return_value = [sample_pm_ticket]
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            poll_interval=0.1,
+            idle_timeout=30.0,
+        )
+
+        # Mock agent that takes forever (will be cancelled)
+        async def slow_forever(*args, **kwargs):
+            await asyncio.sleep(100)
+            return ScribeOutput(success=True)
+
+        mock_agent = MagicMock()
+        mock_agent.ainvoke = slow_forever
+        worker._scribe_agent = mock_agent
+
+        # Start worker and cancel it mid-processing
+        task = asyncio.create_task(worker.run())
+        await asyncio.sleep(0.1)  # Let it start processing
+        task.cancel()
+
+        with pytest.raises(asyncio.CancelledError):
+            await task
+
+        # Verify ticket was reset to CREATED (not left as IN_PROGRESS)
+        reset_calls = [
+            call for call in mock_beads_client.update_ticket_state.call_args_list
+            if call[0][1] == TicketState.CREATED
+        ]
+        assert len(reset_calls) >= 1, "Ticket should be reset to CREATED on cancellation"
+
+    @pytest.mark.asyncio
+    async def test_cancelled_ticket_has_retry_reason(
+        self, mock_config, mock_beads_client, sample_pm_ticket
+    ):
+        """Test that cancelled ticket reset includes appropriate reason."""
+        mock_beads_client.get_available_tickets.return_value = [sample_pm_ticket]
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            poll_interval=0.1,
+            idle_timeout=30.0,
+        )
+
+        async def slow_forever(*args, **kwargs):
+            await asyncio.sleep(100)
+            return ScribeOutput(success=True)
+
+        mock_agent = MagicMock()
+        mock_agent.ainvoke = slow_forever
+        worker._scribe_agent = mock_agent
+
+        task = asyncio.create_task(worker.run())
+        await asyncio.sleep(0.1)
+        task.cancel()
+
+        with pytest.raises(asyncio.CancelledError):
+            await task
+
+        # Check the reason includes "cancel" or "retry"
+        reset_calls = [
+            call for call in mock_beads_client.update_ticket_state.call_args_list
+            if call[0][1] == TicketState.CREATED and "reason" in call[1]
+        ]
+        if reset_calls:
+            reason = reset_calls[-1][1].get("reason", "")
+            assert "cancel" in reason.lower() or "retry" in reason.lower()
+
+
+# =============================================================================
+# Stop Behavior Tests
+# =============================================================================
+
+
+class TestStopBehavior:
+    """Tests for worker stop behavior."""
+
+    @pytest.mark.asyncio
+    async def test_stop_already_stopped_worker_no_duplicate_log(
+        self, mock_config, mock_beads_client, caplog
+    ):
+        """Test that stopping an already-stopped worker doesn't log 'Stop requested'."""
+        mock_beads_client.get_available_tickets.return_value = []
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            poll_interval=0.05,
+            idle_timeout=0.1,
+        )
+
+        # Run until natural stop (idle timeout)
+        await worker.run()
+        assert worker.status.state == WorkerState.STOPPED
+
+        # Clear logs and call stop() on already-stopped worker
+        caplog.clear()
+        await worker.stop()
+
+        # Should not log "Stop requested" for already-stopped worker
+        stop_requested_logs = [
+            r for r in caplog.records if "Stop requested" in r.message
+        ]
+        assert len(stop_requested_logs) == 0, (
+            "Should not log 'Stop requested' for already-stopped worker"
+        )
