@@ -1250,14 +1250,25 @@ class TicketOrchestrator:
 
         # Collect program summaries from completed documentation
         programs: list[ProgramSummary] = []
-        final_dir = self.config.output_directory / "final" / "programs"
 
-        # Also check the root final directory for backward compatibility
-        if not final_dir.exists():
-            final_dir = self.config.output_directory / "final"
+        # Check multiple locations for documentation files
+        # Priority: final/programs > final > root output directory
+        doc_dirs = [
+            self.config.output_directory / "final" / "programs",
+            self.config.output_directory / "final",
+            self.config.output_directory,  # Scribe saves here
+        ]
 
-        if final_dir.exists():
-            for doc_file in final_dir.glob("*.doc.json"):
+        doc_files: list[Path] = []
+        for doc_dir in doc_dirs:
+            if doc_dir.exists():
+                found = list(doc_dir.glob("*.doc.json"))
+                if found:
+                    doc_files = found
+                    logger.debug(f"Found {len(found)} documentation files in {doc_dir}")
+                    break
+
+        for doc_file in doc_files:
                 try:
                     doc_data = json.loads(doc_file.read_text(encoding="utf-8"))
 
