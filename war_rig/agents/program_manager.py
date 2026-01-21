@@ -169,10 +169,7 @@ class ClarificationRequest:
     priority: BeadsPriority = BeadsPriority.MEDIUM
     guidance: str | None = None
     parent_ticket_id: str | None = None
-    # Optional template/source data to pass to Scribe (avoids disk lookup)
-    template_data: dict | None = None
-    source_code: str | None = None
-    file_path: str | None = None
+    file_path: str | None = None  # Workers load content from disk
 
 
 @dataclass
@@ -607,18 +604,13 @@ class ProgramManagerAgent(BaseAgent[ProgramManagerInput, ProgramManagerOutput]):
             # Extract program ID from file name
             program_id = Path(request.file_name).stem.upper()
 
-            # Build metadata with optional template/source data
+            # Build metadata - only include file_path, workers load content from disk
             metadata: dict[str, Any] = {
                 "batch_id": self.batch_id,
                 "section": request.section,
                 "issue_description": request.issue_description,
                 "guidance": request.guidance,
             }
-            # Include template/source data if provided (avoids disk lookup in Scribe)
-            if request.template_data:
-                metadata["template"] = request.template_data
-            if request.source_code:
-                metadata["source_code"] = request.source_code
             if request.file_path:
                 metadata["file_path"] = request.file_path
 

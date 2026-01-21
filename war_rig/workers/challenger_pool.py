@@ -718,14 +718,10 @@ class ChallengerWorker:
             "challenger_worker": self.worker_id,
         }
 
-        # Include the original documentation state so Scribe can update it
+        # Include file path so Scribe can load from disk (don't embed content to avoid bloat)
         if validation_ticket.metadata:
-            rework_metadata["template"] = validation_ticket.metadata.get("template")
-            rework_metadata["source_code"] = validation_ticket.metadata.get("source_code")
+            rework_metadata["file_path"] = validation_ticket.metadata.get("file_path")
             rework_metadata["file_type"] = validation_ticket.metadata.get("file_type")
-            rework_metadata["preprocessor_result"] = validation_ticket.metadata.get(
-                "preprocessor_result"
-            )
 
         # Determine priority based on number of issues
         num_issues = len(result.blocking_questions)

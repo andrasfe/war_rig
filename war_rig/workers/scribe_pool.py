@@ -1268,16 +1268,13 @@ class ScribeWorker:
         else:
             source_path = self.input_directory / doc_ticket.file_name
 
+        # Store file_path only - workers load content from disk to avoid metadata bloat
         if source_path.exists():
-            try:
-                source_code = source_path.read_text(encoding="utf-8", errors="replace")
-                validation_metadata["source_code"] = source_code
-                # Preserve file_path for future iterations
-                validation_metadata["file_path"] = str(source_path)
-            except Exception as e:
-                logger.warning(
-                    f"Worker {self.worker_id}: Failed to read source for validation: {e}"
-                )
+            validation_metadata["file_path"] = str(source_path)
+        else:
+            logger.warning(
+                f"Worker {self.worker_id}: Source file not found for validation: {source_path}"
+            )
 
         # Include file type
         validation_metadata["file_type"] = self._determine_file_type(
