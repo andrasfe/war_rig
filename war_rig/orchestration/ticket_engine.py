@@ -579,6 +579,52 @@ class TicketOrchestrator:
         # Check for BLOCKED tickets and run automatic rescue with Super-Scribe
         await self._run_super_scribe_rescue()
 
+        # Final validation: ensure no tickets are stuck in non-terminal states
+        # Terminal states are: COMPLETED, BLOCKED, CANCELLED, MERGED
+        # Non-terminal states are: CREATED, CLAIMED, IN_PROGRESS, REWORK
+        await self._validate_cycle_complete()
+
+    async def _validate_cycle_complete(self) -> None:
+        """Validate that all tickets are in terminal states before proceeding.
+
+        This is a safety check to ensure no tickets are stuck in CREATED,
+        CLAIMED, IN_PROGRESS, or REWORK states before the cycle advances.
+        Any stuck tickets are forcibly marked as BLOCKED to prevent cycles
+        from advancing with incomplete work.
+        """
+        non_terminal_states = [
+            TicketState.CREATED,
+            TicketState.CLAIMED,
+            TicketState.IN_PROGRESS,
+            TicketState.REWORK,
+        ]
+
+        stuck_tickets = []
+        for state in non_terminal_states:
+            tickets = self.beads_client.get_tickets_by_state(state)
+            stuck_tickets.extend(tickets)
+
+        if not stuck_tickets:
+            logger.debug("All tickets in terminal states - cycle complete")
+            return
+
+        # Force stuck tickets to BLOCKED state
+        logger.warning(
+            f"Found {len(stuck_tickets)} stuck ticket(s) at cycle end - "
+            f"forcing to BLOCKED state"
+        )
+        for ticket in stuck_tickets:
+            logger.warning(
+                f"  Forcing BLOCKED: {ticket.ticket_id} ({ticket.file_name}) "
+                f"was in {ticket.state.value} state"
+            )
+            self.beads_client.update_ticket_state(
+                ticket.ticket_id,
+                TicketState.BLOCKED,
+                reason=f"Forced BLOCKED at cycle {self._state.cycle} end - "
+                       f"was stuck in {ticket.state.value}",
+            )
+
     async def _run_super_scribe_rescue(self) -> None:
         """Automatically rescue BLOCKED tickets using a stronger model (Super-Scribe).
 
@@ -1199,6 +1245,7 @@ class TicketOrchestrator:
             program_id="SYSTEM_OVERVIEW",
             ticket_type=TicketType.SYSTEM_OVERVIEW,
             state=TicketState.CREATED,
+            cycle_number=self._state.cycle,  # Use current orchestrator cycle
             metadata={
                 "batch_id": self._state.batch_id,
                 "system_name": "CardDemo",  # TODO: Make configurable
