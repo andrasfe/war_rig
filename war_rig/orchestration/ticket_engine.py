@@ -709,7 +709,7 @@ class TicketOrchestrator:
                 )
 
             await self._challenger_pool.start()
-            await self._challenger_pool.wait()
+            await self._challenger_pool.wait_for_completion()
 
             logger.info("Post-rescue validation complete")
 
