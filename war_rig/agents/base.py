@@ -383,7 +383,13 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
         try:
             messages = self._build_provider_messages(input_data)
 
-            logger.debug(f"{self.name}: Calling LLM provider with {len(messages)} messages")
+            # Calculate total words being sent to LLM
+            total_words = sum(len(m.content.split()) for m in messages)
+            logger.info(
+                f"{self.name}: Sending {total_words} words to LLM "
+                f"({len(messages)} messages)"
+            )
+
             response = await self._provider.complete(
                 messages=messages,
                 model=self.config.model,
@@ -391,8 +397,12 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
             )
 
             content = response.content
+            response_words = len(content.split())
 
-            logger.debug(f"{self.name}: Received response ({len(content)} chars)")
+            logger.info(
+                f"{self.name}: Received {response_words} words "
+                f"({len(content)} chars, {response.tokens_used} tokens)"
+            )
 
             # Parse and return
             output = self._parse_response(content, input_data)
