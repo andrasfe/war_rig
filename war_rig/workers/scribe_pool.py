@@ -602,6 +602,63 @@ class ScribeWorker:
             )
             return None
 
+    def _load_template_from_parent(
+        self, ticket: ProgramManagerTicket
+    ) -> DocumentationTemplate | None:
+        """Load template from parent ticket's metadata.
+
+        This is a fallback for tickets created before templates were saved to disk.
+        Looks up the parent validation ticket and extracts the template from its metadata.
+
+        Args:
+            ticket: The CLARIFICATION or CHROME ticket.
+
+        Returns:
+            DocumentationTemplate if found in parent, None otherwise.
+        """
+        # Try parent_ticket_id first, then metadata field
+        parent_id = ticket.parent_ticket_id or ticket.metadata.get(
+            "parent_validation_ticket"
+        )
+        if not parent_id:
+            return None
+
+        try:
+            # Access the ticket cache directly
+            parent_ticket = self.beads_client._pm_ticket_cache.get(parent_id)
+            if not parent_ticket:
+                logger.debug(
+                    f"Worker {self.worker_id}: Parent ticket {parent_id} not found in cache"
+                )
+                return None
+
+            template_data = parent_ticket.metadata.get("template")
+            if not template_data:
+                logger.debug(
+                    f"Worker {self.worker_id}: No template in parent ticket {parent_id}"
+                )
+                return None
+
+            template = DocumentationTemplate.model_validate(template_data)
+            logger.info(
+                f"Worker {self.worker_id}: Loaded template from parent ticket {parent_id}"
+            )
+
+            # Save to disk for future use
+            self._save_template(ticket.file_name, template)
+            logger.info(
+                f"Worker {self.worker_id}: Saved recovered template to disk for {ticket.file_name}"
+            )
+
+            return template
+
+        except Exception as e:
+            logger.warning(
+                f"Worker {self.worker_id}: Failed to load template from parent "
+                f"{parent_id}: {e}"
+            )
+            return None
+
     def _save_template(self, file_name: str, template: DocumentationTemplate) -> None:
         """Save the documentation template to the output directory.
 
@@ -981,6 +1038,10 @@ class ScribeWorker:
         if not previous_template:
             previous_template = self._load_previous_template(ticket.file_name)
 
+        # Fall back to parent validation ticket's metadata
+        if not previous_template:
+            previous_template = self._load_template_from_parent(ticket)
+
         if not previous_template:
             logger.error(
                 f"Worker {self.worker_id}: No previous template found for "
@@ -1166,6 +1227,10 @@ class ScribeWorker:
         # Fall back to disk if not in metadata
         if not previous_template:
             previous_template = self._load_previous_template(ticket.file_name)
+
+        # Fall back to parent ticket's metadata (for tickets created before disk-save fix)
+        if not previous_template:
+            previous_template = self._load_template_from_parent(ticket)
 
         if not previous_template:
             logger.error(
