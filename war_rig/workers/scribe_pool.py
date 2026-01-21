@@ -262,7 +262,6 @@ class ScribeWorker:
 
         try:
             while not self._should_stop:
-                logger.debug(f"Worker {self.worker_id}: Loop iteration, _should_stop={self._should_stop}")
                 # Poll for available tickets
                 self._update_state(WorkerState.POLLING)
                 ticket = await self._poll_for_ticket()
@@ -285,14 +284,7 @@ class ScribeWorker:
                     continue
 
                 # We have a ticket - process it
-                logger.info(
-                    f"Worker {self.worker_id}: Starting to process ticket {ticket.ticket_id} "
-                    f"({ticket.file_name})"
-                )
                 await self._process_ticket(ticket)
-                logger.info(
-                    f"Worker {self.worker_id}: Finished processing ticket {ticket.ticket_id}"
-                )
                 # Update last work time AFTER processing so idle timeout
                 # is measured from when we finished, not when we started
                 self._last_work_time = datetime.utcnow()
@@ -782,26 +774,10 @@ class ScribeWorker:
         )
 
         # Run the Scribe agent
-        logger.info(
-            f"Worker {self.worker_id}: Sending to LLM for {ticket.file_name} "
-            f"(cycle {ticket.cycle_number})"
+        logger.debug(
+            f"Worker {self.worker_id}: Running Scribe for {ticket.file_name}"
         )
-        try:
-            output = await self.scribe_agent.ainvoke(scribe_input)
-            logger.info(
-                f"Worker {self.worker_id}: LLM response received for {ticket.file_name}, "
-                f"success={output.success}"
-            )
-        except asyncio.CancelledError:
-            logger.warning(
-                f"Worker {self.worker_id}: LLM call CANCELLED for {ticket.file_name}"
-            )
-            raise
-        except Exception as e:
-            logger.error(
-                f"Worker {self.worker_id}: LLM call FAILED for {ticket.file_name}: {e}"
-            )
-            raise
+        output = await self.scribe_agent.ainvoke(scribe_input)
 
         # Save the template if successful
         if output.success and output.template:
