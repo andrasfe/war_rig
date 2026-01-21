@@ -476,14 +476,45 @@ class ChallengerWorker:
                     logger.error(f"Lenient parsing also failed: {e2}")
                     return None
         else:
-            logger.warning("No template found in ticket metadata")
-            return None
+            # Template not in metadata - try loading from disk (.doc.json file)
+            # This happens when PM creates VALIDATION tickets for files with existing docs
+            file_stem = ticket.file_name.rsplit(".", 1)[0] if "." in ticket.file_name else ticket.file_name
+            doc_file = self.config.output_directory / f"{file_stem}.doc.json"
+            if doc_file.exists():
+                try:
+                    with open(doc_file, "r", encoding="utf-8") as f:
+                        template_data = json.load(f)
+                    state["template"] = DocumentationTemplate.model_validate(template_data)
+                    logger.info(f"Loaded template from disk: {doc_file}")
+                except Exception as e:
+                    logger.error(f"Failed to load template from {doc_file}: {e}")
+                    return None
+            else:
+                logger.warning(f"No template in metadata and {doc_file} not found")
+                return None
 
         # Get source code
         state["source_code"] = metadata.get("source_code", "")
         if not state["source_code"]:
-            logger.warning("No source code found in ticket metadata")
-            return None
+            # Source code not in metadata - try loading from disk
+            file_path = metadata.get("file_path")
+            if file_path:
+                from pathlib import Path
+                source_path = Path(file_path)
+                if source_path.exists():
+                    try:
+                        with open(source_path, "r", encoding="utf-8", errors="replace") as f:
+                            state["source_code"] = f.read()
+                        logger.info(f"Loaded source code from disk: {file_path}")
+                    except Exception as e:
+                        logger.error(f"Failed to load source from {file_path}: {e}")
+                        return None
+                else:
+                    logger.warning(f"Source file not found: {file_path}")
+                    return None
+            else:
+                logger.warning("No source code in metadata and no file_path specified")
+                return None
 
         # Get file info
         state["file_name"] = ticket.file_name
