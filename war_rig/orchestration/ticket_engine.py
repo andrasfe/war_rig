@@ -798,6 +798,7 @@ class TicketOrchestrator:
             output = await self.imperator.holistic_review(
                 review_input,
                 use_mock=self.use_mock,
+                output_directory=self.config.output_directory,
             )
             return output
 
