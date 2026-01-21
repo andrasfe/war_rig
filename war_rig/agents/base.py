@@ -384,9 +384,11 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
             messages = self._build_provider_messages(input_data)
 
             # Calculate total words being sent to LLM
+            # Approximate tokens: ~1.33 tokens per word (or ~4 chars per token)
             total_words = sum(len(m.content.split()) for m in messages)
+            approx_tokens = int(total_words * 1.33)
             logger.info(
-                f"{self.name}: Sending {total_words} words to LLM "
+                f"{self.name}: Sending {total_words} words (~{approx_tokens} tokens) to LLM "
                 f"({len(messages)} messages)"
             )
 
