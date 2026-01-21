@@ -627,15 +627,15 @@ class ScribeWorker:
             # Access the ticket cache directly
             parent_ticket = self.beads_client._pm_ticket_cache.get(parent_id)
             if not parent_ticket:
-                logger.debug(
+                logger.warning(
                     f"Worker {self.worker_id}: Parent ticket {parent_id} not found in cache"
                 )
                 return None
 
             template_data = parent_ticket.metadata.get("template")
             if not template_data:
-                logger.debug(
-                    f"Worker {self.worker_id}: No template in parent ticket {parent_id}"
+                logger.warning(
+                    f"Worker {self.worker_id}: No template in parent ticket {parent_id} metadata"
                 )
                 return None
 
