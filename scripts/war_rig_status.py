@@ -554,7 +554,7 @@ def build_cycle_table(summary: TicketSummary) -> Table | None:
     if len(summary.by_cycle) <= 1:
         return None
 
-    table = Table(title="TICKETS BY CYCLE", title_style="bold", show_header=True, header_style="bold")
+    table = Table(title="TICKETS BY ORIGIN CYCLE", title_style="bold", show_header=True, header_style="bold")
 
     table.add_column("Cycle", style="bold", justify="center")
     table.add_column("Created", justify="right", style=STATE_STYLES.get("created", ""))
@@ -822,9 +822,9 @@ def build_ticket_list_table(summary: TicketSummary, max_display: int = MAX_TICKE
     table.add_column("Program", style="bold")
     table.add_column("File", no_wrap=True)
     table.add_column("State", justify="center")
+    table.add_column("Type", justify="center")
     table.add_column("File Type", justify="center")
     table.add_column("Size", justify="right")
-    table.add_column("Cycle", justify="center")
     table.add_column("Worker", style="cyan")
 
     for ticket in display_tickets:
@@ -834,10 +834,6 @@ def build_ticket_list_table(summary: TicketSummary, max_display: int = MAX_TICKE
         # Format state with color
         state_text = Text(state, style=state_style)
 
-        # Format cycle number
-        cycle = ticket.get("cycle_number")
-        cycle_str = str(cycle) if cycle is not None else "-"
-
         # Format worker
         worker = ticket.get("worker_id") or "-"
 
@@ -845,14 +841,25 @@ def build_ticket_list_table(summary: TicketSummary, max_display: int = MAX_TICKE
         size_bytes = ticket.get("size_bytes")
         size_str = format_bytes(size_bytes)
 
+        # Format ticket type (shortened)
+        ticket_type = ticket.get("ticket_type", "-")
+        type_abbrev = {
+            "documentation": "doc",
+            "validation": "val",
+            "clarification": "clar",
+            "chrome": "chrome",
+            "system_overview": "overview",
+            "holistic_review": "review",
+        }.get(ticket_type, ticket_type[:6] if ticket_type else "-")
+
         table.add_row(
             ticket["ticket_id"],
             str(ticket.get("program_id", "-")),
             ticket["file_name"],
             state_text,
+            type_abbrev,
             ticket.get("file_type", "-"),
             size_str,
-            cycle_str,
             worker,
         )
 
