@@ -50,6 +50,7 @@ from war_rig.beads import (
     TicketState,
     TicketType,
 )
+from war_rig.chunking import COBOLChunker, GenericChunker, ChunkMerger, TokenEstimator
 from war_rig.config import WarRigConfig
 from war_rig.models.templates import DocumentationTemplate, FileType
 from war_rig.models.tickets import ChallengerQuestion, ChromeTicket
@@ -641,6 +642,30 @@ class ScribeWorker:
         # Determine file type from extension
         file_type = self._determine_file_type(ticket.file_name)
 
+        # Check if file needs chunking (iteration 1 only)
+        # Subsequent iterations use the previous template which is smaller
+        if ticket.cycle_number == 1:
+            estimator = TokenEstimator()
+            max_prompt_tokens = self.config.scribe.max_prompt_tokens
+            max_source_tokens = max_prompt_tokens - 4000  # Reserve for overhead
+
+            source_tokens = estimator.estimate_source_tokens(source_code)
+            if source_tokens > max_source_tokens:
+                logger.info(
+                    f"Worker {self.worker_id}: File {ticket.file_name} needs chunking "
+                    f"({source_tokens} tokens > {max_source_tokens} limit)"
+                )
+                output = await self._process_chunked_documentation(
+                    ticket=ticket,
+                    source_code=source_code,
+                    file_type=file_type,
+                    formatting_strict=formatting_strict,
+                )
+                # Save the template if successful
+                if output.success and output.template:
+                    self._save_template(ticket.file_name, output.template)
+                return output
+
         # Load previous template if this is an update iteration
         previous_template = None
         if ticket.cycle_number > 1:
@@ -673,6 +698,148 @@ class ScribeWorker:
             self._save_template(ticket.file_name, output.template)
 
         return output
+
+    async def _process_chunked_documentation(
+        self,
+        ticket: ProgramManagerTicket,
+        source_code: str,
+        file_type: FileType,
+        formatting_strict: bool = False,
+    ) -> ScribeOutput:
+        """Process a large file by chunking it semantically.
+
+        Splits the file at structural boundaries (COBOL divisions/sections for
+        COBOL files, line boundaries for other files), processes each chunk
+        through ScribeAgent, and merges the results into a unified template.
+
+        Args:
+            ticket: The DOCUMENTATION ticket to process.
+            source_code: The source code (already determined to need chunking).
+            file_type: Type of the source file.
+            formatting_strict: If True, add extra JSON formatting instructions.
+
+        Returns:
+            ScribeOutput with merged documentation from all chunks.
+        """
+        # Initialize chunking components
+        estimator = TokenEstimator()
+        # Use COBOL-specific chunker for COBOL files, generic for others
+        if file_type == FileType.COBOL:
+            chunker = COBOLChunker(estimator)
+        else:
+            chunker = GenericChunker(estimator)
+        merger = ChunkMerger()
+
+        # Calculate available tokens for source code
+        # Use config's max_prompt_tokens, subtract overhead for other prompt components
+        max_prompt_tokens = self.config.scribe.max_prompt_tokens
+        # Reserve ~4000 tokens for system prompt, schema, instructions, and response buffer
+        max_source_tokens = max_prompt_tokens - 4000
+
+        logger.info(
+            f"Worker {self.worker_id}: Chunking {ticket.file_name} "
+            f"(max {max_source_tokens} tokens per chunk)"
+        )
+
+        # Chunk the source code
+        chunking_result = chunker.chunk(
+            source_code=source_code,
+            max_tokens=max_source_tokens,
+            file_name=ticket.file_name,
+        )
+
+        logger.info(
+            f"Worker {self.worker_id}: Split {ticket.file_name} into "
+            f"{chunking_result.chunk_count} chunks using {chunking_result.chunking_strategy}"
+        )
+
+        # Process each chunk through ScribeAgent
+        chunk_outputs: list[ScribeOutput] = []
+        for i, chunk in enumerate(chunking_result.chunks):
+            logger.info(
+                f"Worker {self.worker_id}: Processing chunk {i + 1}/{chunking_result.chunk_count} "
+                f"({chunk.chunk_id}, lines {chunk.start_line}-{chunk.end_line}, "
+                f"~{chunk.estimated_tokens} tokens)"
+            )
+
+            # Build ScribeInput for this chunk
+            chunk_input = ScribeInput(
+                source_code=chunk.content,
+                file_name=f"{ticket.file_name} (chunk {i + 1}/{chunking_result.chunk_count})",
+                file_type=file_type,
+                iteration=ticket.cycle_number,
+                copybook_contents=ticket.metadata.get("copybook_contents", {}),
+                formatting_strict=formatting_strict,
+            )
+
+            # Run Scribe on this chunk
+            try:
+                output = await self.scribe_agent.ainvoke(chunk_input)
+                chunk_outputs.append(output)
+
+                if not output.success:
+                    logger.warning(
+                        f"Worker {self.worker_id}: Chunk {chunk.chunk_id} failed: {output.error}"
+                    )
+            except Exception as e:
+                logger.error(
+                    f"Worker {self.worker_id}: Exception processing chunk {chunk.chunk_id}: {e}"
+                )
+                chunk_outputs.append(ScribeOutput(
+                    success=False,
+                    error=f"Chunk processing error: {e}",
+                ))
+
+        # Check if we have any successful outputs
+        successful_outputs = [o for o in chunk_outputs if o.success and o.template]
+        if not successful_outputs:
+            logger.error(
+                f"Worker {self.worker_id}: All {len(chunk_outputs)} chunks failed for {ticket.file_name}"
+            )
+            return ScribeOutput(
+                success=False,
+                error=f"All {len(chunk_outputs)} chunks failed during processing",
+            )
+
+        logger.info(
+            f"Worker {self.worker_id}: {len(successful_outputs)}/{len(chunk_outputs)} "
+            f"chunks succeeded for {ticket.file_name}"
+        )
+
+        # Merge chunk outputs into unified template
+        try:
+            merged_template = merger.merge(
+                chunks=chunking_result.chunks,
+                chunk_outputs=chunk_outputs,
+                file_name=ticket.file_name,
+            )
+
+            # Calculate total tokens used across all chunks
+            total_tokens = sum(o.tokens_used for o in chunk_outputs)
+
+            logger.info(
+                f"Worker {self.worker_id}: Successfully merged {len(successful_outputs)} chunks "
+                f"for {ticket.file_name} ({total_tokens} total tokens)"
+            )
+
+            return ScribeOutput(
+                success=True,
+                template=merged_template,
+                tokens_used=total_tokens,
+                open_questions=[
+                    f"[CHUNKED] File was processed in {chunking_result.chunk_count} chunks "
+                    f"using {chunking_result.chunking_strategy}"
+                ],
+            )
+
+        except Exception as e:
+            logger.error(
+                f"Worker {self.worker_id}: Failed to merge chunks for {ticket.file_name}: {e}"
+            )
+            return ScribeOutput(
+                success=False,
+                error=f"Chunk merge failed: {e}",
+            )
 
     async def _process_clarification_ticket(
         self,
