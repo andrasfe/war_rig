@@ -582,15 +582,18 @@ class TicketOrchestrator:
         # Final validation: ensure no tickets are stuck in non-terminal states
         # Terminal states are: COMPLETED, BLOCKED, CANCELLED, MERGED
         # Non-terminal states are: CREATED, CLAIMED, IN_PROGRESS, REWORK
-        await self._validate_cycle_complete()
+        await self._validate_cycle_complete(max_retries=3)
 
-    async def _validate_cycle_complete(self) -> None:
-        """Validate that all tickets are in terminal states before proceeding.
+    async def _validate_cycle_complete(self, max_retries: int = 3, retry_count: int = 0) -> None:
+        """Ensure all tickets are in terminal states before proceeding.
 
-        This is a safety check to ensure no tickets are stuck in CREATED,
-        CLAIMED, IN_PROGRESS, or REWORK states before the cycle advances.
-        Any stuck tickets are forcibly marked as BLOCKED to prevent cycles
-        from advancing with incomplete work.
+        This keeps retrying the worker cycle until all tickets are either
+        COMPLETED or BLOCKED. This prevents cycles from advancing with
+        incomplete work.
+
+        Args:
+            max_retries: Maximum number of retry attempts before forcing BLOCKED.
+            retry_count: Current retry attempt (used internally for recursion).
         """
         non_terminal_states = [
             TicketState.CREATED,
@@ -599,6 +602,7 @@ class TicketOrchestrator:
             TicketState.REWORK,
         ]
 
+        # Collect all non-terminal tickets
         stuck_tickets = []
         for state in non_terminal_states:
             tickets = self.beads_client.get_tickets_by_state(state)
@@ -608,22 +612,90 @@ class TicketOrchestrator:
             logger.debug("All tickets in terminal states - cycle complete")
             return
 
-        # Force stuck tickets to BLOCKED state
-        logger.warning(
-            f"Found {len(stuck_tickets)} stuck ticket(s) at cycle end - "
-            f"forcing to BLOCKED state"
+        # Check if we've exceeded max retries
+        if retry_count >= max_retries:
+            logger.warning(
+                f"Max retries ({max_retries}) exceeded - forcing {len(stuck_tickets)} "
+                f"ticket(s) to BLOCKED state"
+            )
+            for ticket in stuck_tickets:
+                logger.warning(
+                    f"  Forcing BLOCKED: {ticket.ticket_id} ({ticket.file_name}) "
+                    f"was in {ticket.state.value} state after {max_retries} retries"
+                )
+                self.beads_client.update_ticket_state(
+                    ticket.ticket_id,
+                    TicketState.BLOCKED,
+                    reason=f"Forced BLOCKED after {max_retries} retries at cycle {self._state.cycle}",
+                )
+            return
+
+        # Reset stuck tickets to CREATED so workers can retry them
+        logger.info(
+            f"Found {len(stuck_tickets)} incomplete ticket(s) - "
+            f"retry {retry_count + 1}/{max_retries}"
         )
         for ticket in stuck_tickets:
-            logger.warning(
-                f"  Forcing BLOCKED: {ticket.ticket_id} ({ticket.file_name}) "
+            logger.info(
+                f"  Resetting for retry: {ticket.ticket_id} ({ticket.file_name}) "
                 f"was in {ticket.state.value} state"
             )
-            self.beads_client.update_ticket_state(
-                ticket.ticket_id,
-                TicketState.BLOCKED,
-                reason=f"Forced BLOCKED at cycle {self._state.cycle} end - "
-                       f"was stuck in {ticket.state.value}",
-            )
+            # Reset to CREATED for retry (unless already CREATED)
+            if ticket.state != TicketState.CREATED:
+                self.beads_client.update_ticket_state(
+                    ticket.ticket_id,
+                    TicketState.CREATED,
+                    reason=f"Reset for retry {retry_count + 1} at cycle {self._state.cycle}",
+                )
+
+        # Run worker pools again to process remaining tickets
+        await self._run_worker_pools_only()
+
+        # Recursively validate (will check if all complete now)
+        await self._validate_cycle_complete(max_retries=max_retries, retry_count=retry_count + 1)
+
+    async def _run_worker_pools_only(self) -> None:
+        """Run worker pools without the full cycle overhead.
+
+        This is used for retry loops to process remaining tickets without
+        triggering orphan resets or super-scribe rescue (which would cause
+        infinite recursion).
+        """
+        logger.info("Running worker pools for retry...")
+
+        # Create and run Scribe pool
+        scribe_pool = ScribeWorkerPool(
+            config=self.config,
+            beads_client=self.beads_client,
+            input_directory=self._input_directory,
+            num_workers=self.config.num_scribes,
+            poll_interval=2.0,
+            idle_timeout=30.0,
+        )
+
+        # Create and run Challenger pool
+        challenger_pool = ChallengerWorkerPool(
+            num_workers=self.config.num_challengers,
+            config=self.config,
+            beads_client=self.beads_client,
+            poll_interval=2.0,
+            upstream_active_check=lambda: not scribe_pool._stopped,
+        )
+
+        # Start both pools
+        await scribe_pool.start()
+        await challenger_pool.start()
+
+        # Wait for completion
+        scribe_wait = asyncio.create_task(scribe_pool.wait())
+        challenger_wait = asyncio.create_task(challenger_pool.wait_for_completion())
+        await asyncio.gather(scribe_wait, challenger_wait, return_exceptions=True)
+
+        # Stop pools
+        await scribe_pool.stop()
+        await challenger_pool.stop()
+
+        logger.info("Retry worker pools complete")
 
     async def _run_super_scribe_rescue(self) -> None:
         """Automatically rescue BLOCKED tickets using a stronger model (Super-Scribe).
