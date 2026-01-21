@@ -433,6 +433,8 @@ class ScribeWorker:
                 )
                 # Create VALIDATION ticket so Challenger can re-review from scratch
                 if result.template:
+                    # Save template to disk so CLARIFICATION tickets can load it
+                    self._save_template(ticket.file_name, result.template)
                     self._create_validation_ticket(ticket, result)
             elif result.success and not result.responses_incomplete:
                 self.beads_client.update_ticket_state(
@@ -448,6 +450,8 @@ class ScribeWorker:
                 # Create VALIDATION ticket for Challenger to re-validate
                 # This applies to DOCUMENTATION, CLARIFICATION, and CHROME tickets
                 if result.template and ticket.ticket_type in self.COMPATIBLE_TICKET_TYPES:
+                    # Save template to disk so CLARIFICATION tickets can load it
+                    self._save_template(ticket.file_name, result.template)
                     self._create_validation_ticket(ticket, result)
             elif result.success and result.responses_incomplete:
                 # Success but responses were incomplete - leave ticket for retry
@@ -498,6 +502,8 @@ class ScribeWorker:
                     )
                     # Create VALIDATION ticket for re-validation
                     if result.template and ticket.ticket_type in self.COMPATIBLE_TICKET_TYPES:
+                        # Save template to disk so CLARIFICATION tickets can load it
+                        self._save_template(ticket.file_name, result.template)
                         self._create_validation_ticket(ticket, result)
                 elif result.success and result.responses_incomplete:
                     # Retry succeeded but responses incomplete - leave for another worker
