@@ -134,6 +134,7 @@ class TicketSummary:
     by_type: dict[str, dict[str, int]] = field(default_factory=dict)  # type -> state -> count
     by_state: dict[str, int] = field(default_factory=dict)  # state -> count
     by_file_type: dict[str, dict[str, int | float]] = field(default_factory=dict)  # file_type -> {count, size_bytes}
+    by_cycle: dict[int, dict[str, int]] = field(default_factory=dict)  # cycle -> state -> count
     stuck_tickets: list[dict[str, Any]] = field(default_factory=list)
     active_work: list[dict[str, Any]] = field(default_factory=list)  # in_progress tickets
     all_tickets: list[dict[str, Any]] = field(default_factory=list)  # all tickets with details
@@ -190,6 +191,7 @@ def summarize_tickets(data: dict[str, Any]) -> TicketSummary:
     by_type: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
     by_state: dict[str, int] = defaultdict(int)
     by_file_type: dict[str, dict[str, int | float]] = defaultdict(lambda: {"count": 0, "size_bytes": 0})
+    by_cycle: dict[int, dict[str, int]] = defaultdict(lambda: defaultdict(int))
     by_decision: dict[str, int] = defaultdict(int)
     stuck_tickets: list[dict[str, Any]] = []
     active_work: list[dict[str, Any]] = []
@@ -223,10 +225,11 @@ def summarize_tickets(data: dict[str, Any]) -> TicketSummary:
             by_file_type[file_type]["size_bytes"] += size_bytes
             total_size_bytes += size_bytes
 
-        # Track max cycle number
-        cycle_num = ticket.get("cycle_number", 1)
-        if cycle_num and cycle_num > max_cycle:
+        # Track max cycle number and aggregate by cycle
+        cycle_num = ticket.get("cycle_number", 1) or 1
+        if cycle_num > max_cycle:
             max_cycle = cycle_num
+        by_cycle[cycle_num][state] += 1
 
         # Track Imperator decisions (WITNESSED, VALHALLA, CHROME, FORCED)
         decision = ticket.get("decision")
@@ -272,6 +275,7 @@ def summarize_tickets(data: dict[str, Any]) -> TicketSummary:
     summary.by_type = {k: dict(v) for k, v in by_type.items()}
     summary.by_state = dict(by_state)
     summary.by_file_type = {k: dict(v) for k, v in by_file_type.items()}
+    summary.by_cycle = {k: dict(v) for k, v in by_cycle.items()}
     summary.by_decision = dict(by_decision)
     summary.stuck_tickets = stuck_tickets
     summary.active_work = active_work
@@ -536,6 +540,53 @@ def build_decision_table(summary: TicketSummary) -> Table | None:
     return table
 
 
+def build_cycle_table(summary: TicketSummary) -> Table | None:
+    """Build rich Table showing tickets by cycle with state breakdown.
+
+    Columns: Cycle | Created | In Progress | Completed | Blocked | Total
+
+    Returns None if only 1 cycle exists.
+    """
+    if len(summary.by_cycle) <= 1:
+        return None
+
+    table = Table(title="TICKETS BY CYCLE", title_style="bold", show_header=True, header_style="bold")
+
+    table.add_column("Cycle", style="bold", justify="center")
+    table.add_column("Created", justify="right", style=STATE_STYLES.get("created", ""))
+    table.add_column("In Progress", justify="right", style=STATE_STYLES.get("in_progress", ""))
+    table.add_column("Completed", justify="right", style=STATE_STYLES.get("completed", ""))
+    table.add_column("Blocked", justify="right", style=STATE_STYLES.get("blocked", ""))
+    table.add_column("Total", justify="right", style="bold")
+
+    for cycle in sorted(summary.by_cycle.keys()):
+        states = summary.by_cycle[cycle]
+        created = states.get("created", 0)
+        in_progress = states.get("in_progress", 0) + states.get("claimed", 0)
+        completed = states.get("completed", 0)
+        blocked = states.get("blocked", 0)
+        row_total = sum(states.values())
+
+        # Highlight rows with in_progress or blocked tickets
+        row_style = ""
+        if in_progress > 0:
+            row_style = "yellow"
+        elif blocked > 0:
+            row_style = "red"
+
+        table.add_row(
+            str(cycle),
+            str(created),
+            str(in_progress),
+            str(completed),
+            str(blocked),
+            str(row_total),
+            style=row_style,
+        )
+
+    return table
+
+
 def build_stuck_panel(summary: TicketSummary) -> Panel | None:
     """Build Panel listing stuck tickets.
 
@@ -624,13 +675,15 @@ def build_summary_header(summary: TicketSummary, path: Path) -> Panel:
     header_text.append(f"Refreshed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n", style="dim")
 
     # Add batch info and cycle number
+    # Note: max_cycle is the highest cycle_number found in tickets, not necessarily
+    # the "current" cycle being processed. Show this clearly to avoid confusion.
     if summary.batch_id:
         header_text.append(f"\nBatch: ", style="bold")
         header_text.append(f"{summary.batch_id}", style="cyan")
-        header_text.append(f"  |  Cycle: ", style="bold")
+        header_text.append(f"  |  Latest Cycle: ", style="bold")
         header_text.append(f"{summary.max_cycle}\n", style="cyan")
     else:
-        header_text.append(f"\nCycle: ", style="bold")
+        header_text.append(f"\nLatest Cycle: ", style="bold")
         header_text.append(f"{summary.max_cycle}\n", style="cyan")
 
     # Ticket count breakdown
@@ -897,6 +950,12 @@ def build_display(summary: TicketSummary | None, path: Path, error_msg: str | No
         # Ticket type breakdown table
         components.append(build_type_table(summary))
         components.append(Text())  # Spacer
+
+        # Cycle breakdown table (shows per-cycle state counts)
+        cycle_table = build_cycle_table(summary)
+        if cycle_table:
+            components.append(cycle_table)
+            components.append(Text())  # Spacer
 
         # File type breakdown table (shows COBOL, JCL, etc. with sizes)
         if summary.by_file_type:
