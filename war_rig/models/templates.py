@@ -549,19 +549,54 @@ class DocumentationTemplate(BaseModel):
     def load_lenient(cls, data: dict) -> "DocumentationTemplate":
         """Load template data leniently - log validation errors but don't fail.
 
-        Uses model_construct() to bypass validation, but first attempts
-        model_validate() to log any validation issues for debugging.
+        First attempts model_validate() which handles nested model construction.
+        On failure, logs the error and recursively constructs nested models.
         """
         import logging
         logger = logging.getLogger(__name__)
 
-        # Try validation first just to log any errors
+        # Try validation first - this properly constructs nested models
         try:
             return cls.model_validate(data)
         except Exception as e:
             logger.warning(f"Template validation warning (loading anyway): {e}")
-            # Fall back to construct without validation
-            return cls.model_construct(**data)
+            # Fall back to deep construct without validation
+            return cls._deep_construct(data)
+
+    @classmethod
+    def _deep_construct(cls, data: dict) -> "DocumentationTemplate":
+        """Recursively construct template with nested models."""
+        constructed = {}
+        for key, value in data.items():
+            if key == "header" and isinstance(value, dict):
+                constructed[key] = HeaderSection.model_construct(**value)
+            elif key == "purpose" and isinstance(value, dict):
+                constructed[key] = PurposeSection.model_construct(**value)
+            elif key == "calling_context" and isinstance(value, dict):
+                constructed[key] = CallingContext.model_construct(**value)
+            elif key == "data_flow" and isinstance(value, dict):
+                constructed[key] = DataFlow.model_construct(**value)
+            elif key in ("inputs", "outputs") and isinstance(value, list):
+                constructed[key] = [InputOutput.model_construct(**v) if isinstance(v, dict) else v for v in value]
+            elif key == "called_programs" and isinstance(value, list):
+                constructed[key] = [CalledProgram.model_construct(**v) if isinstance(v, dict) else v for v in value]
+            elif key == "business_rules" and isinstance(value, list):
+                constructed[key] = [BusinessRule.model_construct(**v) if isinstance(v, dict) else v for v in value]
+            elif key == "copybooks_used" and isinstance(value, list):
+                constructed[key] = [CopybookReference.model_construct(**v) if isinstance(v, dict) else v for v in value]
+            elif key == "paragraphs" and isinstance(value, list):
+                constructed[key] = [Paragraph.model_construct(**v) if isinstance(v, dict) else v for v in value]
+            elif key == "error_handling" and isinstance(value, list):
+                constructed[key] = [ErrorHandler.model_construct(**v) if isinstance(v, dict) else v for v in value]
+            elif key == "sql_operations" and isinstance(value, list):
+                constructed[key] = [SQLOperation.model_construct(**v) if isinstance(v, dict) else v for v in value]
+            elif key == "cics_operations" and isinstance(value, list):
+                constructed[key] = [CICSOperation.model_construct(**v) if isinstance(v, dict) else v for v in value]
+            elif key == "open_questions" and isinstance(value, list):
+                constructed[key] = [OpenQuestion.model_construct(**v) if isinstance(v, dict) else v for v in value]
+            else:
+                constructed[key] = value
+        return cls.model_construct(**constructed)
 
 
 # =============================================================================
