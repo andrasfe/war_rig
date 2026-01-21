@@ -147,16 +147,16 @@ class UsageType(str, Enum):
 class HeaderSection(BaseModel):
     """Documentation header with metadata about the analyzed file."""
 
-    program_id: str = Field(
-        ...,
+    program_id: str | None = Field(
+        default=None,
         description="Program name extracted from source (e.g., PROGRAM-ID)",
     )
-    file_name: str = Field(
-        ...,
+    file_name: str | None = Field(
+        default=None,
         description="Source file path",
     )
-    file_type: FileType = Field(
-        ...,
+    file_type: FileType | None = Field(
+        default=None,
         description="Classification of the source file",
     )
     analyzed_by: str = Field(
@@ -181,8 +181,8 @@ class HeaderSection(BaseModel):
 class PurposeSection(BaseModel):
     """Description of what the program does and its business context."""
 
-    summary: str = Field(
-        ...,
+    summary: str | None = Field(
+        default=None,
         description="2-3 sentence description of what this program does",
     )
     business_context: str | None = Field(
@@ -202,16 +202,16 @@ class PurposeSection(BaseModel):
 class InputOutput(BaseModel):
     """Description of a program input or output resource."""
 
-    name: str = Field(
-        ...,
+    name: str | None = Field(
+        default=None,
         description="File, table, or parameter name",
     )
     io_type: IOType | None = Field(
         default=None,
         description="Classification of the resource type",
     )
-    description: str = Field(
-        ...,
+    description: str | None = Field(
+        default=None,
         description="What this input/output contains",
     )
     copybook: str | None = Field(
@@ -227,8 +227,8 @@ class InputOutput(BaseModel):
 class CalledProgram(BaseModel):
     """Description of a program called by this program."""
 
-    program_name: str = Field(
-        ...,
+    program_name: str | None = Field(
+        default=None,
         description="Name of the called program",
     )
     call_type: CallType | None = Field(
@@ -269,12 +269,12 @@ class CallingContext(BaseModel):
 class BusinessRule(BaseModel):
     """Description of a business rule implemented in the program."""
 
-    rule_id: str = Field(
-        ...,
+    rule_id: str | None = Field(
+        default=None,
         description="Sequential identifier for the rule",
     )
-    description: str = Field(
-        ...,
+    description: str | None = Field(
+        default=None,
         description="Plain English description of the rule",
     )
     logic_summary: str | None = Field(
@@ -294,7 +294,7 @@ class BusinessRule(BaseModel):
 class DataFlowRead(BaseModel):
     """Description of data read by the program."""
 
-    source: str = Field(..., description="Source of the data")
+    source: str | None = Field(default=None, description="Source of the data")
     fields_used: LenientStrList = Field(
         default_factory=list,
         description="Fields read from this source",
@@ -308,7 +308,7 @@ class DataFlowRead(BaseModel):
 class DataFlowWrite(BaseModel):
     """Description of data written by the program."""
 
-    destination: str = Field(..., description="Destination for the data")
+    destination: str | None = Field(default=None, description="Destination for the data")
     fields_written: LenientStrList = Field(
         default_factory=list,
         description="Fields written to this destination",
@@ -322,10 +322,10 @@ class DataFlowWrite(BaseModel):
 class DataTransform(BaseModel):
     """Description of a data transformation."""
 
-    input_field: str = Field(..., description="Source field")
-    output_field: str = Field(..., description="Target field")
-    transformation_description: str = Field(
-        ...,
+    input_field: str | None = Field(default=None, description="Source field")
+    output_field: str | None = Field(default=None, description="Target field")
+    transformation_description: str | None = Field(
+        default=None,
         description="Description of the transformation",
     )
     citation: LenientIntList = Field(
@@ -362,8 +362,8 @@ class DataFlow(BaseModel):
 class CopybookReference(BaseModel):
     """Reference to a copybook used by the program."""
 
-    copybook_name: str = Field(
-        ...,
+    copybook_name: str | None = Field(
+        default=None,
         description="Name of the copybook",
     )
     purpose: str | None = Field(
@@ -383,12 +383,12 @@ class CopybookReference(BaseModel):
 class Paragraph(BaseModel):
     """Description of a key paragraph in the program."""
 
-    paragraph_name: str = Field(
-        ...,
+    paragraph_name: str | None = Field(
+        default=None,
         description="Paragraph name",
     )
-    purpose: str = Field(
-        ...,
+    purpose: str | None = Field(
+        default=None,
         description="What this paragraph does",
     )
     called_by: LenientStrList = Field(
@@ -408,12 +408,12 @@ class Paragraph(BaseModel):
 class ErrorHandler(BaseModel):
     """Description of an error handling case."""
 
-    condition: str = Field(
-        ...,
+    condition: str | None = Field(
+        default=None,
         description="What error condition is handled",
     )
-    action: str = Field(
-        ...,
+    action: str | None = Field(
+        default=None,
         description="What happens (ABEND, return code, etc.)",
     )
     citation: LenientIntList = Field(
@@ -425,8 +425,8 @@ class ErrorHandler(BaseModel):
 class SQLOperation(BaseModel):
     """Description of an embedded SQL operation."""
 
-    operation: str = Field(
-        ...,
+    operation: str | None = Field(
+        default=None,
         description="SQL operation type (SELECT, INSERT, UPDATE, DELETE, CURSOR)",
     )
     table: str | None = Field(
@@ -446,8 +446,8 @@ class SQLOperation(BaseModel):
 class CICSOperation(BaseModel):
     """Description of a CICS command."""
 
-    command: str = Field(
-        ...,
+    command: str | None = Field(
+        default=None,
         description="CICS command (RECEIVE, SEND, READ, WRITE, LINK, etc.)",
     )
     resource: str | None = Field(
@@ -467,8 +467,8 @@ class CICSOperation(BaseModel):
 class OpenQuestion(BaseModel):
     """An unresolved question about the program."""
 
-    question: str = Field(
-        ...,
+    question: str | None = Field(
+        default=None,
         description="What remains unclear",
     )
     context: str | None = Field(
@@ -488,12 +488,12 @@ class DocumentationTemplate(BaseModel):
     comprehensive documentation of a mainframe program.
     """
 
-    header: HeaderSection = Field(
-        ...,
+    header: HeaderSection | None = Field(
+        default=None,
         description="Metadata about the analyzed file",
     )
-    purpose: PurposeSection = Field(
-        ...,
+    purpose: PurposeSection | None = Field(
+        default=None,
         description="What the program does",
     )
     inputs: list[InputOutput] = Field(
@@ -554,14 +554,14 @@ class DocumentationTemplate(BaseModel):
 class RecordField(BaseModel):
     """Description of a field in a copybook record layout."""
 
-    level: int = Field(
-        ...,
+    level: int | None = Field(
+        default=None,
         ge=1,
         le=88,
         description="COBOL level number (01, 05, 10, etc.)",
     )
-    field_name: str = Field(
-        ...,
+    field_name: str | None = Field(
+        default=None,
         description="Field name",
     )
     picture: str | None = Field(
@@ -597,12 +597,12 @@ class RecordField(BaseModel):
 class KeyField(BaseModel):
     """Description of a notable field in a copybook."""
 
-    field_name: str = Field(
-        ...,
+    field_name: str | None = Field(
+        default=None,
         description="Name of the key field",
     )
-    significance: str = Field(
-        ...,
+    significance: str | None = Field(
+        default=None,
         description="Why this field is important",
     )
     related_programs: LenientStrList = Field(
@@ -614,12 +614,12 @@ class KeyField(BaseModel):
 class CopybookHeader(BaseModel):
     """Header section for copybook documentation."""
 
-    copybook_name: str = Field(
-        ...,
+    copybook_name: str | None = Field(
+        default=None,
         description="Name of the copybook",
     )
-    file_name: str = Field(
-        ...,
+    file_name: str | None = Field(
+        default=None,
         description="Source file path",
     )
     file_type: FileType = Field(
@@ -635,8 +635,8 @@ class CopybookHeader(BaseModel):
 class CopybookPurpose(BaseModel):
     """Purpose section for copybook documentation."""
 
-    summary: str = Field(
-        ...,
+    summary: str | None = Field(
+        default=None,
         description="What data structure this defines",
     )
     usage_context: str | None = Field(
@@ -651,12 +651,12 @@ class CopybookTemplate(BaseModel):
     Copybooks define data structures and are simpler than full programs.
     """
 
-    header: CopybookHeader = Field(
-        ...,
+    header: CopybookHeader | None = Field(
+        default=None,
         description="Copybook metadata",
     )
-    purpose: CopybookPurpose = Field(
-        ...,
+    purpose: CopybookPurpose | None = Field(
+        default=None,
         description="What this copybook defines",
     )
     record_layout: list[RecordField] = Field(
@@ -681,12 +681,12 @@ class CopybookTemplate(BaseModel):
 class JCLHeader(BaseModel):
     """Header section for JCL job documentation."""
 
-    job_name: str = Field(
-        ...,
+    job_name: str | None = Field(
+        default=None,
         description="JOB name",
     )
-    file_name: str = Field(
-        ...,
+    file_name: str | None = Field(
+        default=None,
         description="Source file path",
     )
     file_type: FileType = Field(
@@ -702,8 +702,8 @@ class JCLHeader(BaseModel):
 class JCLPurpose(BaseModel):
     """Purpose section for JCL job documentation."""
 
-    summary: str = Field(
-        ...,
+    summary: str | None = Field(
+        default=None,
         description="What this job accomplishes",
     )
     schedule: str | None = Field(
@@ -727,8 +727,8 @@ class JCLPurpose(BaseModel):
 class JCLStep(BaseModel):
     """Description of a JCL EXEC step."""
 
-    step_name: str = Field(
-        ...,
+    step_name: str | None = Field(
+        default=None,
         description="EXEC step name",
     )
     program: str | None = Field(
@@ -756,12 +756,12 @@ class JCLStep(BaseModel):
 class JCLDDStatement(BaseModel):
     """Description of a DD statement."""
 
-    step_name: str = Field(
-        ...,
+    step_name: str | None = Field(
+        default=None,
         description="Which step this belongs to",
     )
-    dd_name: str = Field(
-        ...,
+    dd_name: str | None = Field(
+        default=None,
         description="DD name",
     )
     dataset: str | None = Field(
@@ -823,12 +823,12 @@ class JCLRestartRecovery(BaseModel):
 class JCLTemplate(BaseModel):
     """Documentation template for JCL jobs."""
 
-    header: JCLHeader = Field(
-        ...,
+    header: JCLHeader | None = Field(
+        default=None,
         description="Job metadata",
     )
-    purpose: JCLPurpose = Field(
-        ...,
+    purpose: JCLPurpose | None = Field(
+        default=None,
         description="What this job does",
     )
     steps: list[JCLStep] = Field(
