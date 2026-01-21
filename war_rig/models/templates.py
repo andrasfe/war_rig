@@ -189,9 +189,9 @@ class PurposeSection(BaseModel):
         default=None,
         description="What business process this serves",
     )
-    program_type: ProgramType = Field(
-        ...,
-        description="Classification of execution context",
+    program_type: ProgramType | None = Field(
+        default=None,
+        description="Classification of execution context (None for copybooks)",
     )
     citations: LenientIntList = Field(
         default_factory=list,
