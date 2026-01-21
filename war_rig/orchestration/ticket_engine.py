@@ -602,11 +602,15 @@ class TicketOrchestrator:
             TicketState.REWORK,
         ]
 
-        # Collect all non-terminal tickets
+        # Collect all non-terminal tickets (excluding Imperator-handled types)
+        # SYSTEM_OVERVIEW and HOLISTIC_REVIEW are processed by Imperator, not Scribe/Challenger
+        imperator_ticket_types = {TicketType.SYSTEM_OVERVIEW, TicketType.HOLISTIC_REVIEW}
         stuck_tickets = []
         for state in non_terminal_states:
             tickets = self.beads_client.get_tickets_by_state(state)
-            stuck_tickets.extend(tickets)
+            for ticket in tickets:
+                if ticket.ticket_type not in imperator_ticket_types:
+                    stuck_tickets.append(ticket)
 
         if not stuck_tickets:
             logger.debug("All tickets in terminal states - cycle complete")
