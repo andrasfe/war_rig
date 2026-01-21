@@ -206,8 +206,8 @@ class InputOutput(BaseModel):
         ...,
         description="File, table, or parameter name",
     )
-    io_type: IOType = Field(
-        ...,
+    io_type: IOType | None = Field(
+        default=None,
         description="Classification of the resource type",
     )
     description: str = Field(
@@ -231,8 +231,8 @@ class CalledProgram(BaseModel):
         ...,
         description="Name of the called program",
     )
-    call_type: CallType = Field(
-        ...,
+    call_type: CallType | None = Field(
+        default=None,
         description="Type of call (STATIC, DYNAMIC, CICS_LINK, CICS_XCTL)",
     )
     purpose: str | None = Field(
@@ -370,8 +370,8 @@ class CopybookReference(BaseModel):
         default=None,
         description="What data structure it defines",
     )
-    location: CopybookLocation = Field(
-        ...,
+    location: CopybookLocation | None = Field(
+        default=None,
         description="Where the copybook is included",
     )
     citation: int | None = Field(
