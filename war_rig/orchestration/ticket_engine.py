@@ -1242,6 +1242,7 @@ class TicketOrchestrator:
 
     async def _stop_pools(self) -> None:
         """Stop all worker pools gracefully."""
+        logger.info("_stop_pools() called - stopping worker pools")
         if self._scribe_pool:
             try:
                 await self._scribe_pool.stop()
