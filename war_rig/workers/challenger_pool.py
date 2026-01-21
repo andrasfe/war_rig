@@ -150,6 +150,8 @@ class ChallengerWorker:
         self.beads_client = beads_client
         self.poll_interval = poll_interval
         self.upstream_active_check = upstream_active_check
+        # Resolve to absolute path for consistent file access
+        self.output_directory = config.output_directory.resolve()
 
         # Create the ChallengerAgent
         self.challenger = ChallengerAgent(
@@ -496,7 +498,7 @@ class ChallengerWorker:
             # Template not in metadata - try loading from disk (.doc.json file)
             # This happens when PM creates VALIDATION tickets for files with existing docs
             file_stem = ticket.file_name.rsplit(".", 1)[0] if "." in ticket.file_name else ticket.file_name
-            doc_file = self.config.output_directory / f"{file_stem}.doc.json"
+            doc_file = self.output_directory / f"{file_stem}.doc.json"
             if doc_file.exists():
                 try:
                     with open(doc_file, "r", encoding="utf-8") as f:

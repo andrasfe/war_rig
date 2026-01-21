@@ -180,8 +180,9 @@ class ScribeWorker:
         self.worker_id = worker_id
         self.config = config
         self.beads_client = beads_client
-        self.input_directory = input_directory or config.input_directory
-        self.output_directory = output_directory or config.output_directory
+        # Resolve to absolute paths to ensure consistent file access
+        self.input_directory = (input_directory or config.input_directory).resolve()
+        self.output_directory = (output_directory or config.output_directory).resolve()
         self.poll_interval = poll_interval
         self.idle_timeout = idle_timeout
 
