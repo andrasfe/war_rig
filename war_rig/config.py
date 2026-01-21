@@ -70,6 +70,10 @@ class ScribeConfig(ModelConfig):
     """
 
     temperature: float = Field(default=0.3)
+    max_prompt_tokens: int = Field(
+        default=15000,
+        description="Maximum approximate tokens for the prompt (will truncate content to fit)",
+    )
 
 
 class ChallengerConfig(ModelConfig):
@@ -80,6 +84,10 @@ class ChallengerConfig(ModelConfig):
     """
 
     temperature: float = Field(default=0.5)
+    max_prompt_tokens: int = Field(
+        default=15000,
+        description="Maximum approximate tokens for the prompt",
+    )
 
 
 class ImperatorConfig(ModelConfig):
@@ -90,6 +98,10 @@ class ImperatorConfig(ModelConfig):
     """
 
     temperature: float = Field(default=0.2)
+    max_prompt_tokens: int = Field(
+        default=15000,
+        description="Maximum approximate tokens for the prompt",
+    )
 
 
 class PreprocessingConfig(BaseModel):
@@ -184,18 +196,30 @@ class WarRigConfig(BaseSettings):
         description="Model for Scribe agent",
     )
     scribe_temperature: float = Field(default=0.3)
+    scribe_max_prompt_tokens: int = Field(
+        default=15000,
+        description="Maximum tokens for Scribe prompt (will truncate to fit)",
+    )
 
     challenger_model: str = Field(
         default="anthropic/claude-sonnet-4-20250514",
         description="Model for Challenger agent",
     )
     challenger_temperature: float = Field(default=0.5)
+    challenger_max_prompt_tokens: int = Field(
+        default=15000,
+        description="Maximum tokens for Challenger prompt",
+    )
 
     imperator_model: str = Field(
         default="anthropic/claude-sonnet-4-20250514",
         description="Model for Imperator agent",
     )
     imperator_temperature: float = Field(default=0.2)
+    imperator_max_prompt_tokens: int = Field(
+        default=15000,
+        description="Maximum tokens for Imperator prompt",
+    )
 
     # Workflow limits
     num_teams: int = Field(default=1, ge=1, le=10)
@@ -212,6 +236,10 @@ class WarRigConfig(BaseSettings):
     super_scribe_model: str = Field(
         default="anthropic/claude-opus-4-20250514",
         description="Model for Super-Scribe (stronger model to handle blocked tickets)",
+    )
+    super_scribe_max_prompt_tokens: int = Field(
+        default=30000,
+        description="Maximum tokens for Super-Scribe prompt (higher for Opus)",
     )
     num_super_scribes: int = Field(
         default=1,
@@ -297,6 +325,7 @@ class WarRigConfig(BaseSettings):
         return ScribeConfig(
             model=self.scribe_model,
             temperature=self.scribe_temperature,
+            max_prompt_tokens=self.scribe_max_prompt_tokens,
         )
 
     @property
@@ -305,6 +334,7 @@ class WarRigConfig(BaseSettings):
         return ChallengerConfig(
             model=self.challenger_model,
             temperature=self.challenger_temperature,
+            max_prompt_tokens=self.challenger_max_prompt_tokens,
         )
 
     @property
@@ -313,6 +343,7 @@ class WarRigConfig(BaseSettings):
         return ImperatorConfig(
             model=self.imperator_model,
             temperature=self.imperator_temperature,
+            max_prompt_tokens=self.imperator_max_prompt_tokens,
         )
 
     @property
