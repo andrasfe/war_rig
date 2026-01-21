@@ -29,6 +29,7 @@ from typing import Any
 from openai import AsyncOpenAI, APIError, APIConnectionError, RateLimitError
 
 from war_rig.providers.protocol import CompletionResponse, Message
+from war_rig.utils.error_logging import log_error
 
 logger = logging.getLogger(__name__)
 
@@ -197,6 +198,12 @@ class OpenRouterProvider:
 
         except RateLimitError as e:
             logger.error(f"OpenRouter rate limit exceeded: {e}")
+            log_error(
+                e,
+                context={"provider": "openrouter", "model": resolved_model, "error_type": "rate_limit"},
+                request={"model": resolved_model, "message_count": len(messages)},
+                response={"body": getattr(e, "body", None), "response": str(getattr(e, "response", None))},
+            )
             raise OpenRouterProviderError(
                 message="Rate limit exceeded. Please retry after a delay.",
                 status_code=429,
@@ -205,6 +212,11 @@ class OpenRouterProvider:
 
         except APIConnectionError as e:
             logger.error(f"OpenRouter connection error: {e}")
+            log_error(
+                e,
+                context={"provider": "openrouter", "model": resolved_model, "error_type": "connection"},
+                request={"model": resolved_model, "message_count": len(messages)},
+            )
             raise OpenRouterProviderError(
                 message="Failed to connect to OpenRouter API.",
                 original_error=e,
@@ -212,6 +224,12 @@ class OpenRouterProvider:
 
         except APIError as e:
             logger.error(f"OpenRouter API error: {e}")
+            log_error(
+                e,
+                context={"provider": "openrouter", "model": resolved_model, "error_type": "api_error", "status_code": e.status_code},
+                request={"model": resolved_model, "message_count": len(messages)},
+                response={"body": getattr(e, "body", None), "response": str(getattr(e, "response", None)), "message": getattr(e, "message", None)},
+            )
             raise OpenRouterProviderError(
                 message=f"OpenRouter API error: {e.message}",
                 status_code=e.status_code,
@@ -220,6 +238,11 @@ class OpenRouterProvider:
 
         except Exception as e:
             logger.error(f"Unexpected error calling OpenRouter: {e}")
+            log_error(
+                e,
+                context={"provider": "openrouter", "model": resolved_model, "error_type": "unexpected"},
+                request={"model": resolved_model, "message_count": len(messages)},
+            )
             raise OpenRouterProviderError(
                 message=f"Unexpected error: {e!s}",
                 original_error=e,
