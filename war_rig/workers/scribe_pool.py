@@ -1357,15 +1357,12 @@ class ScribeWorker:
         Returns:
             The created VALIDATION ticket, or None if creation failed.
         """
-        # Build metadata with documentation state for Challenger
+        # Build metadata - only references, not full content to avoid bloat
+        # Template is saved to disk (.doc.json) and loaded by Challenger from there
         validation_metadata: dict[str, Any] = {
             "parent_documentation_ticket": doc_ticket.ticket_id,
             "scribe_worker": self.worker_id,
         }
-
-        # Include template as JSON for Challenger to validate
-        if result.template:
-            validation_metadata["template"] = result.template.model_dump(mode="json")
 
         # Include source code - use file_path from metadata if available
         metadata_path = doc_ticket.metadata.get("file_path")
