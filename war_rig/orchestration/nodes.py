@@ -14,12 +14,14 @@ Nodes are designed to be:
 """
 
 import logging
+import random
 from datetime import datetime
 from typing import Any
 
 from war_rig.agents.challenger import ChallengerAgent, ChallengerInput
 from war_rig.agents.imperator import ImperatorAgent, ImperatorDecision, ImperatorInput
 from war_rig.agents.scribe import ScribeAgent, ScribeInput
+from war_rig.chunking import TokenEstimator
 from war_rig.config import APIConfig, WarRigConfig
 from war_rig.models.templates import FileType
 from war_rig.orchestration.state import WarRigState
@@ -29,6 +31,58 @@ from war_rig.preprocessors.generic import GenericPreprocessor
 from war_rig.preprocessors.jcl import JCLPreprocessor
 
 logger = logging.getLogger(__name__)
+
+
+def _sample_source_code(source_code: str, max_tokens: int) -> tuple[str, bool]:
+    """Sample a random portion of source code if it exceeds token limit.
+
+    Selects a random contiguous portion of the source code that fits within
+    the token budget. This allows agents to work with a representative
+    sample when the full source is too large.
+
+    Args:
+        source_code: The full source code.
+        max_tokens: Maximum tokens allowed for source code.
+
+    Returns:
+        Tuple of (sampled_code, was_sampled) where was_sampled indicates
+        if sampling was needed.
+    """
+    estimator = TokenEstimator()
+    source_tokens = estimator.estimate_source_tokens(source_code)
+
+    if source_tokens <= max_tokens:
+        return source_code, False
+
+    # Need to sample - calculate what fraction we can keep
+    lines = source_code.split("\n")
+    total_lines = len(lines)
+
+    # Estimate lines that fit (with some buffer)
+    chars_per_token = 3.5  # Conservative for COBOL
+    max_chars = int(max_tokens * chars_per_token * 0.9)  # 10% buffer
+
+    # Calculate approximate lines we can include
+    avg_chars_per_line = len(source_code) / total_lines if total_lines > 0 else 80
+    lines_to_keep = int(max_chars / avg_chars_per_line)
+    lines_to_keep = max(100, min(lines_to_keep, total_lines))  # At least 100 lines
+
+    # Random start position (ensuring we don't go past the end)
+    max_start = max(0, total_lines - lines_to_keep)
+    start_line = random.randint(0, max_start) if max_start > 0 else 0
+
+    # Extract the sample
+    sampled_lines = lines[start_line:start_line + lines_to_keep]
+    sampled_code = "\n".join(sampled_lines)
+
+    # Add header indicating this is a sample
+    header = (
+        f"* NOTE: Source code sampled (lines {start_line + 1}-"
+        f"{start_line + lines_to_keep} of {total_lines})\n"
+        f"* Full source: {source_tokens} tokens, sample: ~{estimator.estimate_source_tokens(sampled_code)} tokens\n\n"
+    )
+
+    return header + sampled_code, True
 
 
 class WarRigNodes:
@@ -207,10 +261,17 @@ class WarRigNodes:
             logger.error("No template to validate")
             return {"error": "No template to validate"}
 
+        # Sample source code if it exceeds token limit
+        max_prompt_tokens = self.config.challenger.max_prompt_tokens
+        max_source_tokens = max_prompt_tokens - 6000  # Reserve for template and overhead
+        source_code, was_sampled = _sample_source_code(state["source_code"], max_source_tokens)
+        if was_sampled:
+            logger.info(f"Source code sampled for Challenger validation ({state['file_name']})")
+
         # Build input
         challenger_input = ChallengerInput(
             template=template,
-            source_code=state["source_code"],
+            source_code=source_code,
             file_name=state["file_name"],
             file_type=state.get("file_type") or FileType.OTHER,
             preprocessor_result=state.get("preprocessor_result"),
@@ -316,10 +377,17 @@ class WarRigNodes:
                 "should_continue": False,
             }
 
+        # Sample source code if it exceeds token limit
+        max_prompt_tokens = self.config.imperator.max_prompt_tokens
+        max_source_tokens = max_prompt_tokens - 6000  # Reserve for template and overhead
+        source_code, was_sampled = _sample_source_code(state["source_code"], max_source_tokens)
+        if was_sampled:
+            logger.info(f"Source code sampled for Imperator review ({state['file_name']})")
+
         # Build input
         imperator_input = ImperatorInput(
             template=template,
-            source_code=state["source_code"],
+            source_code=source_code,
             file_name=state["file_name"],
             file_type=state.get("file_type") or FileType.OTHER,
             challenger_assessment=state.get("challenger_assessment"),
