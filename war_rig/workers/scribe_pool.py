@@ -595,7 +595,7 @@ class ScribeWorker:
         try:
             with open(doc_path) as f:
                 data = json.load(f)
-            return DocumentationTemplate.model_validate(data)
+            return DocumentationTemplate.load_lenient(data)
         except Exception as e:
             logger.warning(
                 f"Worker {self.worker_id}: Failed to load previous template "
@@ -640,7 +640,7 @@ class ScribeWorker:
                 )
                 return None
 
-            template = DocumentationTemplate.model_validate(template_data)
+            template = DocumentationTemplate.load_lenient(template_data)
             logger.info(
                 f"Worker {self.worker_id}: Loaded template from parent ticket {parent_id}"
             )
@@ -1018,7 +1018,7 @@ class ScribeWorker:
         template_data = ticket.metadata.get("template")
         if template_data:
             try:
-                previous_template = DocumentationTemplate.model_validate(template_data)
+                previous_template = DocumentationTemplate.load_lenient(template_data)
                 logger.debug(
                     f"Worker {self.worker_id}: Loaded template from ticket metadata"
                 )
@@ -1208,7 +1208,7 @@ class ScribeWorker:
         template_data = ticket.metadata.get("template")
         if template_data:
             try:
-                previous_template = DocumentationTemplate.model_validate(template_data)
+                previous_template = DocumentationTemplate.load_lenient(template_data)
                 logger.debug(
                     f"Worker {self.worker_id}: Loaded template from ticket metadata"
                 )

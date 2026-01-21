@@ -58,29 +58,6 @@ LenientIntList = Annotated[list[int], BeforeValidator(coerce_to_int_list)]
 LenientStrList = Annotated[list[str], BeforeValidator(coerce_to_str_list)]
 
 
-def make_lenient_enum_coercer(enum_class: type[Enum]):
-    """Create a coercer that accepts any value and returns None for invalid enum values."""
-    def coerce(v: Any) -> Enum | None:
-        if v is None:
-            return None
-        if isinstance(v, enum_class):
-            return v
-        if isinstance(v, str):
-            # Try exact match first
-            try:
-                return enum_class(v)
-            except ValueError:
-                pass
-            # Try case-insensitive match
-            v_upper = v.upper().replace(" ", "_").replace("-", "_")
-            for member in enum_class:
-                if member.value.upper() == v_upper or member.name.upper() == v_upper:
-                    return member
-            return None
-        return None
-    return coerce
-
-
 class FileType(str, Enum):
     """Classification of mainframe source file types."""
 
@@ -162,16 +139,6 @@ class UsageType(str, Enum):
     OTHER = "OTHER"
 
 
-# Lenient enum type aliases - accept any value and coerce to enum or None
-LenientFileType = Annotated[FileType | None, BeforeValidator(make_lenient_enum_coercer(FileType))]
-LenientProgramType = Annotated[ProgramType | None, BeforeValidator(make_lenient_enum_coercer(ProgramType))]
-LenientIOType = Annotated[IOType | None, BeforeValidator(make_lenient_enum_coercer(IOType))]
-LenientCallType = Annotated[CallType | None, BeforeValidator(make_lenient_enum_coercer(CallType))]
-LenientFinalStatus = Annotated[FinalStatus | None, BeforeValidator(make_lenient_enum_coercer(FinalStatus))]
-LenientCopybookLocation = Annotated[CopybookLocation | None, BeforeValidator(make_lenient_enum_coercer(CopybookLocation))]
-LenientUsageType = Annotated[UsageType | None, BeforeValidator(make_lenient_enum_coercer(UsageType))]
-
-
 # =============================================================================
 # Program Documentation Template Components
 # =============================================================================
@@ -188,7 +155,7 @@ class HeaderSection(BaseModel):
         default=None,
         description="Source file path",
     )
-    file_type: LenientFileType = Field(
+    file_type: FileType | None = Field(
         default=None,
         description="Classification of the source file",
     )
@@ -205,7 +172,7 @@ class HeaderSection(BaseModel):
         ge=1,
         description="Number of refinement cycles",
     )
-    final_status: LenientFinalStatus = Field(
+    final_status: FinalStatus | None = Field(
         default=None,
         description="Final approval status (set by Imperator)",
     )
@@ -222,7 +189,7 @@ class PurposeSection(BaseModel):
         default=None,
         description="What business process this serves",
     )
-    program_type: LenientProgramType = Field(
+    program_type: ProgramType | None = Field(
         default=None,
         description="Classification of execution context (None for copybooks)",
     )
@@ -239,7 +206,7 @@ class InputOutput(BaseModel):
         default=None,
         description="File, table, or parameter name",
     )
-    io_type: LenientIOType = Field(
+    io_type: IOType | None = Field(
         default=None,
         description="Classification of the resource type",
     )
@@ -264,7 +231,7 @@ class CalledProgram(BaseModel):
         default=None,
         description="Name of the called program",
     )
-    call_type: LenientCallType = Field(
+    call_type: CallType | None = Field(
         default=None,
         description="Type of call (STATIC, DYNAMIC, CICS_LINK, CICS_XCTL)",
     )
@@ -403,7 +370,7 @@ class CopybookReference(BaseModel):
         default=None,
         description="What data structure it defines",
     )
-    location: LenientCopybookLocation = Field(
+    location: CopybookLocation | None = Field(
         default=None,
         description="Where the copybook is included",
     )
@@ -578,6 +545,24 @@ class DocumentationTemplate(BaseModel):
         description="Unresolved questions",
     )
 
+    @classmethod
+    def load_lenient(cls, data: dict) -> "DocumentationTemplate":
+        """Load template data leniently - log validation errors but don't fail.
+
+        Uses model_construct() to bypass validation, but first attempts
+        model_validate() to log any validation issues for debugging.
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+
+        # Try validation first just to log any errors
+        try:
+            return cls.model_validate(data)
+        except Exception as e:
+            logger.warning(f"Template validation warning (loading anyway): {e}")
+            # Fall back to construct without validation
+            return cls.model_construct(**data)
+
 
 # =============================================================================
 # Copybook Template
@@ -601,7 +586,7 @@ class RecordField(BaseModel):
         default=None,
         description="PIC clause",
     )
-    usage: LenientUsageType = Field(
+    usage: UsageType | None = Field(
         default=UsageType.DISPLAY,
         description="Usage clause (DISPLAY, COMP, COMP-3, etc.)",
     )
@@ -655,7 +640,7 @@ class CopybookHeader(BaseModel):
         default=None,
         description="Source file path",
     )
-    file_type: LenientFileType = Field(
+    file_type: FileType | None = Field(
         default=FileType.COPYBOOK,
         description="Always COPYBOOK for this template",
     )
@@ -722,7 +707,7 @@ class JCLHeader(BaseModel):
         default=None,
         description="Source file path",
     )
-    file_type: LenientFileType = Field(
+    file_type: FileType | None = Field(
         default=FileType.JCL,
         description="Always JCL for this template",
     )

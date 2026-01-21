@@ -478,7 +478,7 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
 
         # First try strict validation
         try:
-            return DocumentationTemplate.model_validate(template_data)
+            return DocumentationTemplate.load_lenient(template_data)
         except ValidationError as e:
             # Log warning but don't fail - the JSON was valid, just schema mismatch
             error_fields = [".".join(str(x) for x in err["loc"]) for err in e.errors()]

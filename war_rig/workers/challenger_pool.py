@@ -465,7 +465,7 @@ class ChallengerWorker:
                     logger.error("Failed to parse template JSON")
                     return None
             try:
-                state["template"] = DocumentationTemplate.model_validate(template_data)
+                state["template"] = DocumentationTemplate.load_lenient(template_data)
             except Exception as e:
                 # Try lenient parsing - schema mismatches from LLM outputs are common
                 logger.warning(
@@ -503,7 +503,7 @@ class ChallengerWorker:
                 try:
                     with open(doc_file, "r", encoding="utf-8") as f:
                         template_data = json.load(f)
-                    state["template"] = DocumentationTemplate.model_validate(template_data)
+                    state["template"] = DocumentationTemplate.load_lenient(template_data)
                     logger.info(f"Loaded template from disk: {doc_file}")
                 except Exception as e:
                     logger.error(f"Failed to load template from {doc_file}: {e}")
