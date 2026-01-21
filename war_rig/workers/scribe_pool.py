@@ -284,11 +284,27 @@ class ScribeWorker:
                     continue
 
                 # We have a ticket - process it
-                self._last_work_time = datetime.utcnow()
                 await self._process_ticket(ticket)
+                # Update last work time AFTER processing so idle timeout
+                # is measured from when we finished, not when we started
+                self._last_work_time = datetime.utcnow()
 
         except asyncio.CancelledError:
             logger.info(f"Worker {self.worker_id}: Cancelled")
+            # Reset any in-progress ticket so it can be retried
+            if self._status.current_ticket_id:
+                logger.warning(
+                    f"Worker {self.worker_id}: Resetting ticket {self._status.current_ticket_id} "
+                    f"to CREATED due to cancellation"
+                )
+                try:
+                    self.beads_client.update_ticket_state(
+                        self._status.current_ticket_id,
+                        TicketState.CREATED,
+                        reason="Worker cancelled mid-processing, reset for retry",
+                    )
+                except Exception as e:
+                    logger.error(f"Failed to reset ticket on cancellation: {e}")
             raise
 
         except Exception as e:
@@ -319,7 +335,9 @@ class ScribeWorker:
         The worker will complete its current ticket before stopping.
         Use cancel() for immediate termination.
         """
-        logger.info(f"Worker {self.worker_id}: Stop requested")
+        # Only log if worker hasn't already stopped naturally
+        if self._status.state != WorkerState.STOPPED:
+            logger.info(f"Worker {self.worker_id}: Stop requested")
         self._should_stop = True
 
     async def _poll_for_ticket(self) -> ProgramManagerTicket | None:

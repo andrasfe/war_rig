@@ -185,6 +185,9 @@ class ChallengerWorker:
 
         Signals the worker to stop and waits for the current task to complete.
         """
+        # Only log and set state if not already stopped
+        if self.status.state == WorkerState.STOPPED:
+            return
         logger.info(f"Worker {self.worker_id} stopping")
         self.status.state = WorkerState.STOPPING
         self._stop_event.set()
@@ -281,6 +284,20 @@ class ChallengerWorker:
 
             except asyncio.CancelledError:
                 logger.debug(f"Worker {self.worker_id}: Cancelled")
+                # Reset any in-progress ticket so it can be retried
+                if self.status.current_ticket_id:
+                    logger.warning(
+                        f"Worker {self.worker_id}: Resetting ticket {self.status.current_ticket_id} "
+                        f"to CREATED due to cancellation"
+                    )
+                    try:
+                        self.beads_client.update_ticket_state(
+                            self.status.current_ticket_id,
+                            TicketState.CREATED,
+                            reason="Worker cancelled mid-processing, reset for retry",
+                        )
+                    except Exception as e:
+                        logger.error(f"Failed to reset ticket on cancellation: {e}")
                 raise
             except Exception as e:
                 logger.error(f"Worker {self.worker_id}: Unexpected error: {e}")

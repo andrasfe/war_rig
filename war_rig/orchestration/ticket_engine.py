@@ -432,6 +432,10 @@ class TicketOrchestrator:
         finally:
             # Ensure pools are stopped
             await self._stop_pools()
+            # Recover any orphaned tickets for next run
+            orphaned_count = self.beads_client.reset_orphaned_tickets()
+            if orphaned_count > 0:
+                logger.info(f"Reset {orphaned_count} orphaned tickets for future retry")
 
     def _is_documentation_in_progress(self) -> bool:
         """Check if Scribe work might still produce validation tickets.
@@ -692,12 +696,15 @@ class TicketOrchestrator:
         )
 
         # Create and run Challenger pool
+        # Use is_done() to check if scribes are still active - this correctly
+        # handles workers that stopped naturally due to idle timeout (not just
+        # via explicit stop() call which sets _stopped)
         challenger_pool = ChallengerWorkerPool(
             num_workers=self.config.num_challengers,
             config=self.config,
             beads_client=self.beads_client,
             poll_interval=2.0,
-            upstream_active_check=lambda: not scribe_pool._stopped,
+            upstream_active_check=lambda: not scribe_pool.is_done(),
         )
 
         # Start both pools
@@ -1502,7 +1509,7 @@ class TicketOrchestrator:
 
         Signals the orchestrator to stop processing after the current
         operation completes. Worker pools are stopped and resources
-        are cleaned up.
+        are cleaned up. Any orphaned tickets are reset for future retry.
 
         Example:
             # Start in background
@@ -1518,3 +1525,8 @@ class TicketOrchestrator:
         self._state.status_message = "Stop requested by user"
 
         await self._stop_pools()
+
+        # Recover any orphaned tickets for future retry
+        orphaned_count = self.beads_client.reset_orphaned_tickets()
+        if orphaned_count > 0:
+            logger.info(f"Reset {orphaned_count} orphaned tickets for future retry")

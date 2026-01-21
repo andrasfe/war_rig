@@ -168,10 +168,25 @@ def get_provider_from_env() -> LLMProvider:
 
     # Built-in openrouter provider with env configuration
     if provider_name == "openrouter":
+        # Build timeout from env if specified (in seconds)
+        # LLM_REQUEST_TIMEOUT sets the read timeout for LLM responses
+        # Default is 600s (10 min) to accommodate slow models
+        timeout = None
+        timeout_env = os.getenv("LLM_REQUEST_TIMEOUT")
+        if timeout_env:
+            try:
+                from httpx import Timeout
+                read_timeout = float(timeout_env)
+                timeout = Timeout(connect=30.0, read=read_timeout, write=60.0, pool=30.0)
+                logger.info(f"Using custom LLM request timeout: {read_timeout}s")
+            except ValueError:
+                logger.warning(f"Invalid LLM_REQUEST_TIMEOUT value: {timeout_env}, using default")
+
         return OpenRouterProvider(
             api_key=os.environ["OPENROUTER_API_KEY"],
             base_url=os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"),
             default_model=os.getenv("SCRIBE_MODEL", "anthropic/claude-sonnet-4-20250514"),
+            timeout=timeout,
         )
 
     # For plugins, they must handle their own env configuration

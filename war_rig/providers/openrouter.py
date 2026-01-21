@@ -26,6 +26,7 @@ Example:
 import logging
 from typing import Any
 
+from httpx import Timeout
 from openai import AsyncOpenAI, APIError, APIConnectionError, RateLimitError
 
 from war_rig.providers.protocol import CompletionResponse, Message
@@ -38,6 +39,14 @@ DEFAULT_BASE_URL = "https://openrouter.ai/api/v1"
 
 # Default model - Claude Sonnet 4 via OpenRouter
 DEFAULT_MODEL = "anthropic/claude-sonnet-4-20250514"
+
+# Default timeout for LLM requests (in seconds)
+# Set high to accommodate slow models with large prompts
+# - connect: timeout for establishing connection
+# - read: timeout for receiving response after request sent (can be very long for LLMs)
+# - write: timeout for sending request
+# - pool: timeout for acquiring a connection from the pool
+DEFAULT_TIMEOUT = Timeout(connect=30.0, read=600.0, write=60.0, pool=30.0)
 
 
 class OpenRouterProviderError(Exception):
@@ -95,6 +104,7 @@ class OpenRouterProvider:
         default_model: str = DEFAULT_MODEL,
         site_url: str | None = None,
         site_name: str | None = None,
+        timeout: Timeout | None = None,
     ):
         """Initialize the OpenRouter provider.
 
@@ -108,12 +118,15 @@ class OpenRouterProvider:
                 Sent as the HTTP-Referer header.
             site_name: Optional name of your site/app for OpenRouter analytics.
                 Sent as the X-Title header.
+            timeout: Request timeout configuration. Defaults to DEFAULT_TIMEOUT
+                which allows 10 minutes for LLM response (suitable for slow models).
         """
         self._api_key = api_key
         self._base_url = base_url
         self._default_model = default_model
         self._site_url = site_url
         self._site_name = site_name
+        self._timeout = timeout or DEFAULT_TIMEOUT
 
         # Build default headers for OpenRouter
         default_headers: dict[str, str] = {}
@@ -123,10 +136,12 @@ class OpenRouterProvider:
             default_headers["X-Title"] = site_name
 
         # Initialize the async OpenAI client with OpenRouter configuration
+        # Set generous timeout for slow models (default: 10 min read timeout)
         self._client = AsyncOpenAI(
             api_key=api_key,
             base_url=base_url,
             default_headers=default_headers if default_headers else None,
+            timeout=self._timeout,
         )
 
         logger.debug(
