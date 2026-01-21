@@ -50,63 +50,24 @@ from war_rig.beads import (
     TicketState,
     TicketType,
 )
-from war_rig.chunking import COBOLChunker, GenericChunker, ChunkMerger, TokenEstimator
+from war_rig.chunking import (
+    ChunkingResult,
+    ChunkMerger,
+    COBOLChunker,
+    GenericChunker,
+    TokenEstimator,
+)
 from war_rig.config import WarRigConfig
 from war_rig.models.templates import DocumentationTemplate, FileType
+from war_rig.workers.source_preparer import (
+    PreparationContext,
+    PreparedSource,
+    SourceCodePreparer,
+)
 from war_rig.models.tickets import ChallengerQuestion, ChromeTicket
 from war_rig.utils import log_error
 
 logger = logging.getLogger(__name__)
-
-
-def _sample_source_code(source_code: str, max_tokens: int) -> tuple[str, bool]:
-    """Sample a portion of source code if it exceeds token limit.
-
-    For Scribe updates (not initial documentation), we sample a representative
-    portion of the source code rather than chunking, since we already have
-    a template to update.
-
-    Args:
-        source_code: The full source code.
-        max_tokens: Maximum tokens allowed.
-
-    Returns:
-        Tuple of (sampled_code, was_sampled).
-    """
-    import random
-
-    estimator = TokenEstimator()
-    source_tokens = estimator.estimate_source_tokens(source_code)
-
-    if source_tokens <= max_tokens:
-        return source_code, False
-
-    # Sample a random contiguous portion
-    lines = source_code.split("\n")
-    total_lines = len(lines)
-    chars_per_token = 4  # Conservative estimate
-    max_chars = max_tokens * chars_per_token
-    target_lines = max(10, int(total_lines * (max_tokens / source_tokens)))
-
-    # Pick a random starting point
-    max_start = max(0, total_lines - target_lines)
-    start_line = random.randint(0, max_start) if max_start > 0 else 0
-
-    # Extract the sample
-    sampled_lines = lines[start_line:start_line + target_lines]
-    sampled_code = "\n".join(sampled_lines)
-
-    # Truncate if still too long
-    if len(sampled_code) > max_chars:
-        sampled_code = sampled_code[:max_chars]
-
-    header = (
-        f"* NOTE: Source code sampled (lines {start_line + 1}-"
-        f"{start_line + len(sampled_lines)} of {total_lines})\n"
-        f"* Full source exceeds token limit ({source_tokens} tokens)\n\n"
-    )
-
-    return header + sampled_code, True
 
 
 class WorkerState(str, Enum):
@@ -244,6 +205,9 @@ class ScribeWorker:
         # Track tickets this worker has failed on (to avoid re-picking immediately)
         # Other workers with different LLMs can still pick them up
         self._failed_tickets: set[str] = set()
+
+        # Initialize source code preparer for centralized token limit handling
+        self._source_preparer = SourceCodePreparer(config.scribe)
 
     @property
     def scribe_agent(self) -> ScribeAgent:
@@ -640,6 +604,37 @@ class ScribeWorker:
                 except Exception:
                     pass
 
+    def _prepare_source_for_processing(
+        self,
+        source_code: str,
+        ticket: ProgramManagerTicket,
+        previous_template: DocumentationTemplate | None,
+    ) -> PreparedSource:
+        """Prepare source code with centralized token limit handling.
+
+        This method provides a single entry point for all source code preparation,
+        delegating to SourceCodePreparer which decides whether to:
+        - Pass through (if within token limit)
+        - Sample (for updates/clarifications/chrome)
+        - Chunk (for initial documentation of large files)
+
+        Args:
+            source_code: The raw source code to prepare.
+            ticket: The ticket being processed (provides context).
+            previous_template: Previous documentation template, if any.
+
+        Returns:
+            PreparedSource with the appropriate strategy applied.
+        """
+        file_type = self._determine_file_type(ticket.file_name)
+        context = PreparationContext(
+            ticket_type=ticket.ticket_type,
+            cycle_number=ticket.cycle_number,
+            has_previous_template=previous_template is not None,
+            file_type=file_type,
+        )
+        return self._source_preparer.prepare(source_code, context)
+
     async def _process_documentation_ticket(
         self,
         ticket: ProgramManagerTicket,
@@ -652,6 +647,7 @@ class ScribeWorker:
 
         Args:
             ticket: The DOCUMENTATION ticket to process.
+            formatting_strict: If True, add extra JSON formatting instructions.
 
         Returns:
             ScribeOutput with documentation results.
@@ -689,33 +685,6 @@ class ScribeWorker:
                     error=f"Failed to read source file: {e}",
                 )
 
-        # Determine file type from extension
-        file_type = self._determine_file_type(ticket.file_name)
-
-        # Check if file needs chunking (iteration 1 only)
-        # Subsequent iterations use the previous template which is smaller
-        if ticket.cycle_number == 1:
-            estimator = TokenEstimator()
-            max_prompt_tokens = self.config.scribe.max_prompt_tokens
-            max_source_tokens = max_prompt_tokens - 4000  # Reserve for overhead
-
-            source_tokens = estimator.estimate_source_tokens(source_code)
-            if source_tokens > max_source_tokens:
-                logger.info(
-                    f"Worker {self.worker_id}: File {ticket.file_name} needs chunking "
-                    f"({source_tokens} tokens > {max_source_tokens} limit)"
-                )
-                output = await self._process_chunked_documentation(
-                    ticket=ticket,
-                    source_code=source_code,
-                    file_type=file_type,
-                    formatting_strict=formatting_strict,
-                )
-                # Save the template if successful
-                if output.success and output.template:
-                    self._save_template(ticket.file_name, output.template)
-                return output
-
         # Load previous template if this is an update iteration
         previous_template = None
         if ticket.cycle_number > 1:
@@ -725,19 +694,43 @@ class ScribeWorker:
                     f"Worker {self.worker_id}: Loaded previous template for "
                     f"{ticket.file_name} (iteration {ticket.cycle_number})"
                 )
-            # Sample source code for update iterations (already have template)
-            max_prompt_tokens = self.config.scribe.max_prompt_tokens
-            max_source_tokens = max_prompt_tokens - 4000
-            source_code, was_sampled = _sample_source_code(source_code, max_source_tokens)
-            if was_sampled:
-                logger.info(
-                    f"Worker {self.worker_id}: Source sampled for update iteration "
-                    f"({ticket.file_name})"
-                )
 
-        # Build Scribe input
+        # Prepare source code using centralized token limit handling
+        prepared = self._prepare_source_for_processing(
+            source_code, ticket, previous_template
+        )
+
+        # Determine file type from extension
+        file_type = self._determine_file_type(ticket.file_name)
+
+        # If chunking is needed, process each chunk separately
+        if prepared.needs_chunked_processing:
+            logger.info(
+                f"Worker {self.worker_id}: File {ticket.file_name} needs chunking "
+                f"({prepared.metadata.get('chunk_count', 0)} chunks)"
+            )
+            output = await self._process_chunked_documentation(
+                ticket=ticket,
+                source_code=source_code,
+                file_type=file_type,
+                formatting_strict=formatting_strict,
+                chunking_result=prepared.chunking_result,
+            )
+            # Save the template if successful
+            if output.success and output.template:
+                self._save_template(ticket.file_name, output.template)
+            return output
+
+        # Log if source was sampled
+        if prepared.was_modified:
+            logger.info(
+                f"Worker {self.worker_id}: Source {prepared.strategy_used} for "
+                f"{ticket.file_name} (cycle {ticket.cycle_number})"
+            )
+
+        # Build Scribe input with prepared source
         scribe_input = ScribeInput(
-            source_code=source_code,
+            source_code=prepared.source_code,
             file_name=ticket.file_name,
             file_type=file_type,
             iteration=ticket.cycle_number,
@@ -764,6 +757,7 @@ class ScribeWorker:
         source_code: str,
         file_type: FileType,
         formatting_strict: bool = False,
+        chunking_result: ChunkingResult | None = None,
     ) -> ScribeOutput:
         """Process a large file by chunking it semantically.
 
@@ -776,36 +770,38 @@ class ScribeWorker:
             source_code: The source code (already determined to need chunking).
             file_type: Type of the source file.
             formatting_strict: If True, add extra JSON formatting instructions.
+            chunking_result: Pre-computed chunking result from SourceCodePreparer.
+                If None, chunking will be performed here.
 
         Returns:
             ScribeOutput with merged documentation from all chunks.
         """
-        # Initialize chunking components
-        estimator = TokenEstimator()
-        # Use COBOL-specific chunker for COBOL files, generic for others
-        if file_type == FileType.COBOL:
-            chunker = COBOLChunker(estimator)
-        else:
-            chunker = GenericChunker(estimator)
         merger = ChunkMerger()
 
-        # Calculate available tokens for source code
-        # Use config's max_prompt_tokens, subtract overhead for other prompt components
-        max_prompt_tokens = self.config.scribe.max_prompt_tokens
-        # Reserve ~4000 tokens for system prompt, schema, instructions, and response buffer
-        max_source_tokens = max_prompt_tokens - 4000
+        # Use provided chunking result or compute it
+        if chunking_result is None:
+            # Initialize chunking components
+            estimator = TokenEstimator()
+            # Use COBOL-specific chunker for COBOL files, generic for others
+            if file_type == FileType.COBOL:
+                chunker = COBOLChunker(estimator)
+            else:
+                chunker = GenericChunker(estimator)
 
-        logger.info(
-            f"Worker {self.worker_id}: Chunking {ticket.file_name} "
-            f"(max {max_source_tokens} tokens per chunk)"
-        )
+            # Calculate available tokens for source code
+            max_source_tokens = self._source_preparer.max_source_tokens
 
-        # Chunk the source code
-        chunking_result = chunker.chunk(
-            source_code=source_code,
-            max_tokens=max_source_tokens,
-            file_name=ticket.file_name,
-        )
+            logger.info(
+                f"Worker {self.worker_id}: Chunking {ticket.file_name} "
+                f"(max {max_source_tokens} tokens per chunk)"
+            )
+
+            # Chunk the source code
+            chunking_result = chunker.chunk(
+                source_code=source_code,
+                max_tokens=max_source_tokens,
+                file_name=ticket.file_name,
+            )
 
         logger.info(
             f"Worker {self.worker_id}: Split {ticket.file_name} into "
@@ -977,14 +973,14 @@ class ScribeWorker:
                     error=f"Failed to read source file: {e}",
                 )
 
-        # Sample source code if it exceeds token limit (we already have a template)
-        max_prompt_tokens = self.config.scribe.max_prompt_tokens
-        max_source_tokens = max_prompt_tokens - 4000
-        source_code, was_sampled = _sample_source_code(source_code, max_source_tokens)
-        if was_sampled:
+        # Prepare source code using centralized token limit handling
+        prepared = self._prepare_source_for_processing(
+            source_code, ticket, previous_template
+        )
+        if prepared.was_modified:
             logger.info(
-                f"Worker {self.worker_id}: Source sampled for clarification ticket "
-                f"({ticket.file_name})"
+                f"Worker {self.worker_id}: Source {prepared.strategy_used} for "
+                f"clarification ticket ({ticket.file_name})"
             )
 
         # Extract challenger questions from ticket metadata
@@ -1047,9 +1043,9 @@ class ScribeWorker:
         # fall back to inference from filename
         file_type = self._get_file_type_from_metadata(ticket)
 
-        # Build Scribe input with previous template and questions
+        # Build Scribe input with prepared source and previous template
         scribe_input = ScribeInput(
-            source_code=source_code,
+            source_code=prepared.source_code,
             file_name=ticket.file_name,
             file_type=file_type,
             iteration=ticket.cycle_number,
@@ -1163,14 +1159,14 @@ class ScribeWorker:
                     error=f"Failed to read source file: {e}",
                 )
 
-        # Sample source code if it exceeds token limit (we already have a template)
-        max_prompt_tokens = self.config.scribe.max_prompt_tokens
-        max_source_tokens = max_prompt_tokens - 4000
-        source_code, was_sampled = _sample_source_code(source_code, max_source_tokens)
-        if was_sampled:
+        # Prepare source code using centralized token limit handling
+        prepared = self._prepare_source_for_processing(
+            source_code, ticket, previous_template
+        )
+        if prepared.was_modified:
             logger.info(
-                f"Worker {self.worker_id}: Source sampled for chrome ticket "
-                f"({ticket.file_name})"
+                f"Worker {self.worker_id}: Source {prepared.strategy_used} for "
+                f"chrome ticket ({ticket.file_name})"
             )
 
         # Extract chrome tickets from ticket metadata
@@ -1214,9 +1210,9 @@ class ScribeWorker:
         # fall back to inference from filename
         file_type = self._get_file_type_from_metadata(ticket)
 
-        # Build Scribe input with previous template and chrome tickets
+        # Build Scribe input with prepared source and previous template
         scribe_input = ScribeInput(
-            source_code=source_code,
+            source_code=prepared.source_code,
             file_name=ticket.file_name,
             file_type=file_type,
             iteration=ticket.cycle_number,

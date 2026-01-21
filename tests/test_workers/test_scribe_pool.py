@@ -53,6 +53,7 @@ def mock_config(tmp_path) -> MagicMock:
     config.scribe = MagicMock()
     config.scribe.model = "claude-sonnet-4-20250514"
     config.scribe.temperature = 0.3
+    config.scribe.max_prompt_tokens = 15000  # Required for SourceCodePreparer
     config.api = MagicMock()
     config.api.provider = "openrouter"
     config.api.api_key = "test-key"
