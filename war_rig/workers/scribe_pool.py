@@ -1431,6 +1431,7 @@ class ScribeWorkerPool:
         self._workers: list[ScribeWorker] = []
         self._tasks: list[asyncio.Task[None]] = []
         self._started = False
+        self._stopped = False
 
     async def start(self) -> None:
         """Start all workers in the pool.
@@ -1498,6 +1499,7 @@ class ScribeWorkerPool:
                         task.cancel()
 
         self._started = False
+        self._stopped = True
         self._workers = []
         self._tasks = []
 
