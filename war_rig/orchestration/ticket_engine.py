@@ -371,6 +371,19 @@ class TicketOrchestrator:
                     break
 
                 elif review_result.decision == ImperatorHolisticDecision.NEEDS_CLARIFICATION:
+                    # Check if there are actually any issues to address
+                    total_issues = (
+                        len(review_result.clarification_requests) +
+                        sum(len(tickets) for tickets in review_result.file_feedback.values())
+                    )
+
+                    if total_issues == 0:
+                        # No actual issues - treat as satisfied
+                        logger.info("Imperator said NEEDS_CLARIFICATION but no issues - completing")
+                        result.final_decision = ImperatorHolisticDecision.SATISFIED.value
+                        result.quality_notes = review_result.quality_notes
+                        break
+
                     if self._state.cycle >= max_cycles:
                         logger.info("Max cycles reached, forcing completion")
                         result.final_decision = ImperatorHolisticDecision.FORCED_COMPLETE.value
@@ -378,8 +391,9 @@ class TicketOrchestrator:
 
                     # Create clarification tickets for next cycle
                     logger.info(
-                        f"Imperator needs clarification: "
-                        f"{len(review_result.clarification_requests)} requests"
+                        f"Imperator needs clarification: {total_issues} issues "
+                        f"({len(review_result.clarification_requests)} requests, "
+                        f"{sum(len(t) for t in review_result.file_feedback.values())} chrome tickets)"
                     )
                     await self._handle_imperator_feedback(review_result)
 
