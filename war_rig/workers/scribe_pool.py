@@ -167,15 +167,20 @@ class ScribeWorker:
         ".cpy", ".copy",           # Copybooks
     ]
 
-    # Patterns to search for symbol references in source code
-    SYMBOL_SEARCH_PATTERNS = [
-        r"CALL\s+['\"]?{symbol}['\"]?",           # COBOL CALL
-        r"PERFORM\s+{symbol}",                    # COBOL PERFORM
-        r"EXEC\s+CICS\s+LINK\s+PROGRAM\s*\(\s*{symbol}\s*\)",  # CICS LINK
-        r"EXEC\s+CICS\s+XCTL\s+PROGRAM\s*\(\s*{symbol}\s*\)",  # CICS XCTL
-        r"GO\s+TO\s+{symbol}",                    # COBOL GO TO
-        r"EXEC\s+{symbol}",                       # JCL EXEC PGM=
-        r"PGM={symbol}",                          # JCL PGM=
+    # Patterns to search for symbol DEFINITIONS in source code (not calls)
+    # These patterns find where a symbol is defined, not where it's referenced
+    SYMBOL_DEFINITION_PATTERNS = [
+        # COBOL definitions
+        r"^\s*{symbol}\s+SECTION\s*\.",           # Section definition
+        r"^\s*{symbol}\s*\.\s*$",                 # Paragraph definition (name alone on line ending with period)
+        r"PROGRAM-ID\s*\.\s*{symbol}",            # Program ID with period
+        r"PROGRAM-ID\s+{symbol}",                 # Program ID without period
+        # JCL definitions
+        r"^//\s*{symbol}\s+PROC",                 # JCL PROC definition
+        # Assembler definitions
+        r"^{symbol}\s+CSECT",                     # Control section
+        r"^{symbol}\s+START",                     # Program start
+        r"^{symbol}\s+ENTRY",                     # Entry point
     ]
 
     def __init__(
@@ -1159,10 +1164,13 @@ class ScribeWorker:
     def _search_symbol_in_sources(
         self, program_id: str
     ) -> list[tuple[Path, int, str, str]]:
-        """Search for a symbol reference in all source files.
+        """Search for a symbol DEFINITION in all source files.
 
-        Searches all source files in the input directory for references
-        to the program ID (CALL, PERFORM, EXEC CICS LINK, etc.).
+        Searches all source files in the input directory for definitions
+        of the program ID (SECTION, paragraph, PROGRAM-ID, PROC, etc.).
+
+        Note: This finds where the symbol is DEFINED, not where it's called.
+        A CALL to XYZ does not qualify - we need the actual definition.
 
         Args:
             program_id: The program/symbol identifier to search for.
@@ -1173,13 +1181,13 @@ class ScribeWorker:
         matches: list[tuple[Path, int, str, str]] = []
         search_dir = self.input_directory
 
-        # Compile patterns for this symbol
+        # Compile definition patterns for this symbol
         compiled_patterns: list[tuple[re.Pattern, str]] = []
-        for pattern_template in self.SYMBOL_SEARCH_PATTERNS:
+        for pattern_template in self.SYMBOL_DEFINITION_PATTERNS:
             pattern_str = pattern_template.format(symbol=re.escape(program_id))
             try:
                 compiled_patterns.append(
-                    (re.compile(pattern_str, re.IGNORECASE), pattern_template)
+                    (re.compile(pattern_str, re.IGNORECASE | re.MULTILINE), pattern_template)
                 )
             except re.error:
                 continue
@@ -1193,19 +1201,21 @@ class ScribeWorker:
                 for line_num, line in enumerate(lines, start=1):
                     for pattern, pattern_type in compiled_patterns:
                         if pattern.search(line):
-                            # Determine match type from pattern
-                            if "PERFORM" in pattern_type:
-                                match_type = "PERFORM"
-                            elif "CALL" in pattern_type:
-                                match_type = "CALL"
-                            elif "LINK" in pattern_type:
-                                match_type = "CICS_LINK"
-                            elif "XCTL" in pattern_type:
-                                match_type = "CICS_XCTL"
-                            elif "PGM=" in pattern_type:
-                                match_type = "JCL_EXEC"
+                            # Determine definition type from pattern
+                            if "SECTION" in pattern_type:
+                                match_type = "SECTION"
+                            elif "PROGRAM-ID" in pattern_type:
+                                match_type = "PROGRAM"
+                            elif "PROC" in pattern_type:
+                                match_type = "JCL_PROC"
+                            elif "CSECT" in pattern_type:
+                                match_type = "ASM_CSECT"
+                            elif "START" in pattern_type or "ENTRY" in pattern_type:
+                                match_type = "ASM_ENTRY"
+                            elif r"\.\s*$" in pattern_type:
+                                match_type = "PARAGRAPH"
                             else:
-                                match_type = "REFERENCE"
+                                match_type = "DEFINITION"
 
                             matches.append((source_file, line_num, line.strip(), match_type))
                             break  # Only count first match per line
