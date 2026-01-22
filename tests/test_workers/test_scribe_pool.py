@@ -867,3 +867,138 @@ class TestCriticalSectionValidation:
         assert "purpose" in empty
         assert "inputs" in empty
         assert "outputs" in empty
+
+    def test_validate_critical_sections_copybook_skips_called_programs(
+        self, mock_config, mock_beads_client
+    ):
+        """Test validation skips called_programs for copybook files."""
+        from war_rig.models.templates import (
+            DocumentationTemplate,
+            HeaderSection,
+            FileType,
+        )
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        # Copybook with empty called_programs (legitimate)
+        template = DocumentationTemplate(
+            file_name="TEST.cpy",
+            header=HeaderSection(
+                program_id="TEST",
+                file_name="TEST.cpy",
+                file_type=FileType.COPYBOOK,
+            ),
+            called_programs=[],  # Empty but valid for copybook
+        )
+        feedback_context = {"critical_sections": ["called_programs", "data_flow"]}
+
+        is_valid, empty = worker._validate_critical_sections(template, feedback_context)
+
+        # Should pass - copybooks don't call programs
+        assert is_valid is True
+        assert empty == []
+
+    def test_validate_critical_sections_copybook_still_checks_purpose(
+        self, mock_config, mock_beads_client
+    ):
+        """Test validation still checks purpose for copybook files."""
+        from war_rig.models.templates import (
+            DocumentationTemplate,
+            HeaderSection,
+            FileType,
+            PurposeSection,
+        )
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        template = DocumentationTemplate(
+            file_name="TEST.cpy",
+            header=HeaderSection(
+                program_id="TEST",
+                file_name="TEST.cpy",
+                file_type=FileType.COPYBOOK,
+            ),
+            purpose=PurposeSection(summary=""),  # Empty - should fail
+        )
+        feedback_context = {"critical_sections": ["purpose", "called_programs"]}
+
+        is_valid, empty = worker._validate_critical_sections(template, feedback_context)
+
+        # Purpose should fail, called_programs should be skipped
+        assert is_valid is False
+        assert "purpose" in empty
+        assert "called_programs" not in empty
+
+    def test_validate_critical_sections_jcl_skips_called_programs(
+        self, mock_config, mock_beads_client
+    ):
+        """Test validation skips called_programs for JCL files."""
+        from war_rig.models.templates import (
+            DocumentationTemplate,
+            HeaderSection,
+            FileType,
+        )
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        template = DocumentationTemplate(
+            file_name="TEST.jcl",
+            header=HeaderSection(
+                program_id="TEST",
+                file_name="TEST.jcl",
+                file_type=FileType.JCL,
+            ),
+            called_programs=[],
+        )
+        feedback_context = {"critical_sections": ["called_programs"]}
+
+        is_valid, empty = worker._validate_critical_sections(template, feedback_context)
+
+        # Should pass - JCL doesn't use called_programs in the same way
+        assert is_valid is True
+        assert empty == []
+
+    def test_validate_critical_sections_cobol_checks_all(
+        self, mock_config, mock_beads_client
+    ):
+        """Test validation checks all sections for COBOL programs."""
+        from war_rig.models.templates import (
+            DocumentationTemplate,
+            HeaderSection,
+            FileType,
+        )
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        template = DocumentationTemplate(
+            file_name="TEST.cbl",
+            header=HeaderSection(
+                program_id="TEST",
+                file_name="TEST.cbl",
+                file_type=FileType.COBOL,
+            ),
+            called_programs=[],  # Empty - should fail for COBOL
+        )
+        feedback_context = {"critical_sections": ["called_programs"]}
+
+        is_valid, empty = worker._validate_critical_sections(template, feedback_context)
+
+        # Should fail - COBOL programs should have called_programs checked
+        assert is_valid is False
+        assert "called_programs" in empty

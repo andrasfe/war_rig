@@ -753,6 +753,11 @@ class ScribeWorker:
         Checks that sections marked as critical in the feedback context
         have actual content, not just placeholders or empty values.
 
+        Sections are skipped based on file type where they don't apply:
+        - COPYBOOK: skip called_programs, data_flow (include files don't execute)
+        - JCL/PROC: skip called_programs (different execution paradigm)
+        - BMS: skip most sections (screen map definitions)
+
         Args:
             template: The documentation template to validate.
             feedback_context: FeedbackContext dict with critical_sections list.
@@ -767,6 +772,24 @@ class ScribeWorker:
         critical_sections = feedback_context.get("critical_sections", [])
         if not critical_sections:
             return True, []
+
+        # Determine file type to skip inapplicable sections
+        file_type = None
+        if template.header and template.header.file_type:
+            file_type = template.header.file_type
+
+        # Sections to skip based on file type
+        # These sections are legitimately empty for certain file types
+        skip_sections_by_type: dict[str, set[str]] = {
+            "COPYBOOK": {"called_programs", "data_flow", "cics_operations", "sql_operations"},
+            "JCL": {"called_programs", "copybooks", "cics_operations", "sql_operations"},
+            "PROC": {"called_programs", "copybooks", "cics_operations", "sql_operations"},
+            "BMS": {"called_programs", "data_flow", "copybooks", "sql_operations", "business_rules"},
+        }
+
+        # Get the string value of the file type enum
+        file_type_str = file_type.value if hasattr(file_type, 'value') else str(file_type)
+        skip_sections = skip_sections_by_type.get(file_type_str, set())
 
         empty_sections: list[str] = []
 
@@ -787,6 +810,14 @@ class ScribeWorker:
 
         for section in critical_sections:
             section_key = section.lower().replace(" ", "_")
+
+            # Skip sections that don't apply to this file type
+            if section_key in skip_sections:
+                logger.debug(
+                    f"Worker {self.worker_id}: Skipping {section} validation for {file_type} file"
+                )
+                continue
+
             check_func = section_checks.get(section_key)
 
             if check_func:
