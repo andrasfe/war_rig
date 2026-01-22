@@ -57,6 +57,8 @@ def mock_beads_client() -> MagicMock:
     client.get_tickets_by_state.return_value = []
     client.claim_ticket.return_value = True
     client.update_ticket_state.return_value = True
+    # Required for deduplication in initialize_batch
+    client._pm_ticket_cache = {}
     return client
 
 

@@ -699,3 +699,171 @@ class TestStopBehavior:
         assert len(stop_requested_logs) == 0, (
             "Should not log 'Stop requested' for already-stopped worker"
         )
+
+
+# =============================================================================
+# Critical Section Validation Tests (IMPFB-005)
+# =============================================================================
+
+
+class TestCriticalSectionValidation:
+    """Tests for critical section validation in Scribe worker."""
+
+    def test_validate_critical_sections_no_context(
+        self, mock_config, mock_beads_client
+    ):
+        """Test validation passes when no feedback context."""
+        from war_rig.models.templates import DocumentationTemplate
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        template = DocumentationTemplate(file_name="TEST.cbl")
+        is_valid, empty = worker._validate_critical_sections(template, None)
+
+        assert is_valid is True
+        assert empty == []
+
+    def test_validate_critical_sections_no_critical_sections(
+        self, mock_config, mock_beads_client
+    ):
+        """Test validation passes when feedback context has no critical sections."""
+        from war_rig.models.templates import DocumentationTemplate
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        template = DocumentationTemplate(file_name="TEST.cbl")
+        feedback_context = {"critical_sections": []}
+
+        is_valid, empty = worker._validate_critical_sections(template, feedback_context)
+
+        assert is_valid is True
+        assert empty == []
+
+    def test_validate_critical_sections_purpose_empty(
+        self, mock_config, mock_beads_client
+    ):
+        """Test validation fails when purpose section is empty."""
+        from war_rig.models.templates import DocumentationTemplate, PurposeSection
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        # Template with empty purpose
+        template = DocumentationTemplate(
+            file_name="TEST.cbl",
+            purpose=PurposeSection(summary=""),  # Empty!
+        )
+        feedback_context = {"critical_sections": ["purpose"]}
+
+        is_valid, empty = worker._validate_critical_sections(template, feedback_context)
+
+        assert is_valid is False
+        assert "purpose" in empty
+
+    def test_validate_critical_sections_purpose_populated(
+        self, mock_config, mock_beads_client
+    ):
+        """Test validation passes when purpose section has content."""
+        from war_rig.models.templates import DocumentationTemplate, PurposeSection
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        template = DocumentationTemplate(
+            file_name="TEST.cbl",
+            purpose=PurposeSection(summary="This program processes customer data."),
+        )
+        feedback_context = {"critical_sections": ["purpose"]}
+
+        is_valid, empty = worker._validate_critical_sections(template, feedback_context)
+
+        assert is_valid is True
+        assert empty == []
+
+    def test_validate_critical_sections_inputs_empty(
+        self, mock_config, mock_beads_client
+    ):
+        """Test validation fails when inputs section is empty."""
+        from war_rig.models.templates import DocumentationTemplate
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        template = DocumentationTemplate(
+            file_name="TEST.cbl",
+            inputs=[],  # Empty inputs
+        )
+        feedback_context = {"critical_sections": ["inputs"]}
+
+        is_valid, empty = worker._validate_critical_sections(template, feedback_context)
+
+        assert is_valid is False
+        assert "inputs" in empty
+
+    def test_validate_critical_sections_outputs_empty(
+        self, mock_config, mock_beads_client
+    ):
+        """Test validation fails when outputs section is empty."""
+        from war_rig.models.templates import DocumentationTemplate
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        template = DocumentationTemplate(
+            file_name="TEST.cbl",
+            outputs=[],  # Empty outputs
+        )
+        feedback_context = {"critical_sections": ["outputs"]}
+
+        is_valid, empty = worker._validate_critical_sections(template, feedback_context)
+
+        assert is_valid is False
+        assert "outputs" in empty
+
+    def test_validate_critical_sections_multiple_missing(
+        self, mock_config, mock_beads_client
+    ):
+        """Test validation reports all missing sections."""
+        from war_rig.models.templates import DocumentationTemplate, PurposeSection
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        template = DocumentationTemplate(
+            file_name="TEST.cbl",
+            purpose=PurposeSection(summary=""),
+            inputs=[],
+            outputs=[],
+        )
+        feedback_context = {"critical_sections": ["purpose", "inputs", "outputs"]}
+
+        is_valid, empty = worker._validate_critical_sections(template, feedback_context)
+
+        assert is_valid is False
+        assert len(empty) == 3
+        assert "purpose" in empty
+        assert "inputs" in empty
+        assert "outputs" in empty

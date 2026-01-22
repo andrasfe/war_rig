@@ -72,6 +72,10 @@ class ScribeInput(AgentInput):
         default=False,
         description="If True, add extra instructions about JSON formatting (used on retry)",
     )
+    feedback_context: dict | None = Field(
+        default=None,
+        description="FeedbackContext from Imperator review with quality notes to address",
+    )
 
 
 class ScribeOutput(AgentOutput):
@@ -399,6 +403,48 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                 if t.guidance:
                     parts.append(f"  Guidance: {t.guidance}")
             parts.append("")
+
+        # Feedback context from Imperator review (IMPFB-004)
+        if input_data.feedback_context:
+            parts.append("## Imperator Feedback Context (MUST Address)")
+            parts.append("")
+            parts.append("The Imperator has identified the following quality issues from previous cycles.")
+            parts.append("You MUST explicitly address each note in your documentation:")
+            parts.append("")
+
+            # Quality notes
+            quality_notes = input_data.feedback_context.get("quality_notes", [])
+            if quality_notes:
+                for note in quality_notes:
+                    severity = note.get("severity", "medium").upper()
+                    category = note.get("category", "other")
+                    description = note.get("description", "")
+                    guidance = note.get("guidance", "")
+                    affected_sections = note.get("affected_sections", [])
+
+                    parts.append(f"- [{severity}] {category}: {description}")
+                    if affected_sections:
+                        parts.append(f"  Affected sections: {', '.join(affected_sections)}")
+                    if guidance:
+                        parts.append(f"  Guidance: {guidance}")
+                parts.append("")
+
+            # Critical sections that must be populated
+            critical_sections = input_data.feedback_context.get("critical_sections", [])
+            if critical_sections:
+                parts.append(f"**CRITICAL SECTIONS**: The following sections MUST NOT be empty: {', '.join(critical_sections)}")
+                parts.append("")
+
+            # Augment existing documentation
+            if input_data.feedback_context.get("augment_existing", True):
+                parts.append("**IMPORTANT**: You must AUGMENT existing documentation, not replace it.")
+                parts.append("Preserve all valid existing content and ADD missing information.")
+                parts.append("")
+
+            # Citations requirement
+            if input_data.feedback_context.get("required_citations", True):
+                parts.append("**CITATIONS REQUIRED**: Every factual claim must cite line numbers.")
+                parts.append("")
 
         # Instructions
         if input_data.iteration == 1:

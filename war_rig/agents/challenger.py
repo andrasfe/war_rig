@@ -81,6 +81,10 @@ class ChallengerInput(AgentInput):
         default=False,
         description="If True, add extra instructions about JSON formatting (used on retry)",
     )
+    feedback_context: dict | None = Field(
+        default=None,
+        description="FeedbackContext from Imperator with quality notes and critical sections",
+    )
 
 
 class ChallengerOutput(AgentOutput):
@@ -282,6 +286,39 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                     parts.append(f"A: {response.response} (Action: {response.action_taken.value})")
                 else:
                     parts.append("A: [No response]")
+                parts.append("")
+
+        # Feedback context from Imperator review (IMPFB-006)
+        if input_data.feedback_context:
+            parts.append("## Imperator Feedback Context (MUST Validate)")
+            parts.append("")
+            parts.append("The Imperator has identified quality issues from previous cycles.")
+            parts.append("You MUST validate these have been addressed:")
+            parts.append("")
+
+            # Critical sections
+            critical_sections = input_data.feedback_context.get("critical_sections", [])
+            if critical_sections:
+                parts.append(f"**CRITICAL SECTIONS (must NOT be empty)**: {', '.join(critical_sections)}")
+                parts.append("If any of these sections are empty or only contain placeholder text,")
+                parts.append("generate a BLOCKING question asking for the content.")
+                parts.append("")
+
+            # Quality notes to check
+            quality_notes = input_data.feedback_context.get("quality_notes", [])
+            if quality_notes:
+                parts.append("**Quality Issues to Verify:**")
+                for note in quality_notes:
+                    severity = note.get("severity", "medium").upper()
+                    category = note.get("category", "other")
+                    description = note.get("description", "")
+                    parts.append(f"- [{severity}] {category}: {description}")
+                parts.append("")
+
+            # Citation requirement
+            if input_data.feedback_context.get("required_citations", True):
+                parts.append("**CITATIONS**: All factual claims must have line number citations.")
+                parts.append("Generate questions for any claims without citations.")
                 parts.append("")
 
         # Instructions

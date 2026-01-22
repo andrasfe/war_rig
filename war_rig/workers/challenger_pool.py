@@ -695,6 +695,9 @@ class ChallengerWorker:
                     f"({ticket.file_name})"
                 )
 
+            # Extract feedback context from ticket metadata (IMPFB-006)
+            feedback_context = ticket.metadata.get("feedback_context") if ticket.metadata else None
+
             # Build ChallengerInput
             challenger_input = ChallengerInput(
                 template=state["template"],
@@ -705,6 +708,7 @@ class ChallengerWorker:
                 iteration=state.get("iteration", 1),
                 max_questions=self.config.max_questions_per_round,
                 formatting_strict=formatting_strict,
+                feedback_context=feedback_context,
             )
 
             # Invoke the ChallengerAgent

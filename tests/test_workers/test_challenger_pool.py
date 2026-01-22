@@ -72,6 +72,7 @@ def mock_config(tmp_path) -> MagicMock:
     config = MagicMock(spec=WarRigConfig)
     config.num_challengers = 3
     config.max_questions_per_round = 5
+    config.max_iterations = 2
     config.output_directory = tmp_path / "output"
     config.output_directory.mkdir(parents=True, exist_ok=True)
     config.challenger = MagicMock(spec=ChallengerConfig)
@@ -575,7 +576,8 @@ class TestChallengerWorker:
         mock_beads_client.create_pm_ticket.assert_called_once()
         call_kwargs = mock_beads_client.create_pm_ticket.call_args[1]
         assert call_kwargs["ticket_type"] == TicketType.CLARIFICATION
-        assert call_kwargs["cycle_number"] == 2  # Incremented
+        # Cycle number stays same - only orchestrator increments cycles
+        assert call_kwargs["cycle_number"] == 1
         assert call_kwargs["parent_ticket_id"] == sample_validation_ticket.ticket_id
 
     def test_create_rework_ticket_priority_based_on_issues(

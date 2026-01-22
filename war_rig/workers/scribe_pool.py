@@ -743,6 +743,68 @@ class ScribeWorker:
                 except Exception:
                     pass
 
+    def _validate_critical_sections(
+        self,
+        template: DocumentationTemplate,
+        feedback_context: dict | None,
+    ) -> tuple[bool, list[str]]:
+        """Validate that critical sections are not empty (IMPFB-005).
+
+        Checks that sections marked as critical in the feedback context
+        have actual content, not just placeholders or empty values.
+
+        Args:
+            template: The documentation template to validate.
+            feedback_context: FeedbackContext dict with critical_sections list.
+
+        Returns:
+            Tuple of (is_valid, list_of_empty_sections).
+            is_valid is True if all critical sections have content.
+        """
+        if not feedback_context:
+            return True, []
+
+        critical_sections = feedback_context.get("critical_sections", [])
+        if not critical_sections:
+            return True, []
+
+        empty_sections: list[str] = []
+
+        # Map section names to template attributes
+        section_checks = {
+            "purpose": lambda t: t.purpose and t.purpose.summary and len(t.purpose.summary.strip()) > 10,
+            "inputs": lambda t: t.inputs and len(t.inputs) > 0,
+            "outputs": lambda t: t.outputs and len(t.outputs) > 0,
+            "data_flow": lambda t: t.data_flow and (t.data_flow.internal_flow or t.data_flow.inputs or t.data_flow.outputs),
+            "copybooks": lambda t: t.copybooks and len(t.copybooks) > 0,
+            "sql_operations": lambda t: t.sql_operations and len(t.sql_operations) > 0,
+            "cics_operations": lambda t: t.cics_operations and len(t.cics_operations) > 0,
+            "business_rules": lambda t: t.business_rules and len(t.business_rules) > 0,
+            "error_handling": lambda t: t.error_handling and (t.error_handling.error_codes or t.error_handling.error_routines),
+            "called_programs": lambda t: t.called_programs and len(t.called_programs) > 0,
+            "summary": lambda t: t.purpose and t.purpose.summary and len(t.purpose.summary.strip()) > 10,
+        }
+
+        for section in critical_sections:
+            section_key = section.lower().replace(" ", "_")
+            check_func = section_checks.get(section_key)
+
+            if check_func:
+                try:
+                    if not check_func(template):
+                        empty_sections.append(section)
+                except Exception as e:
+                    logger.debug(f"Error checking section {section}: {e}")
+                    empty_sections.append(section)
+
+        is_valid = len(empty_sections) == 0
+        if not is_valid:
+            logger.warning(
+                f"Worker {self.worker_id}: Critical sections empty: {', '.join(empty_sections)}"
+            )
+
+        return is_valid, empty_sections
+
     def _prepare_source_for_processing(
         self,
         source_code: str,
@@ -832,15 +894,28 @@ class ScribeWorker:
                     error=f"Failed to read source file: {e}",
                 )
 
-        # Load previous template if this is an update iteration
+        # Load previous template - either for update iteration or augmentation (IMPFB-007)
         previous_template = None
-        if ticket.cycle_number > 1:
+        feedback_context = ticket.metadata.get("feedback_context")
+        augment_existing = (
+            feedback_context.get("augment_existing", True)
+            if feedback_context else False
+        )
+
+        # Always check for existing documentation to augment
+        if ticket.cycle_number > 1 or augment_existing:
             previous_template = self._load_previous_template(ticket.file_name)
             if previous_template:
-                logger.debug(
-                    f"Worker {self.worker_id}: Loaded previous template for "
-                    f"{ticket.file_name} (iteration {ticket.cycle_number})"
-                )
+                if ticket.cycle_number == 1 and augment_existing:
+                    logger.info(
+                        f"Worker {self.worker_id}: Augmenting existing documentation for "
+                        f"{ticket.file_name} (per feedback context)"
+                    )
+                else:
+                    logger.debug(
+                        f"Worker {self.worker_id}: Loaded previous template for "
+                        f"{ticket.file_name} (iteration {ticket.cycle_number})"
+                    )
 
         # Prepare source code using centralized token limit handling
         prepared = self._prepare_source_for_processing(
@@ -875,6 +950,8 @@ class ScribeWorker:
                 f"{ticket.file_name} (cycle {ticket.cycle_number})"
             )
 
+        # feedback_context already extracted above for augmentation check (IMPFB-004/007)
+
         # Build Scribe input with prepared source
         scribe_input = ScribeInput(
             source_code=prepared.source_code,
@@ -884,6 +961,7 @@ class ScribeWorker:
             copybook_contents=ticket.metadata.get("copybook_contents", {}),
             previous_template=previous_template,
             formatting_strict=formatting_strict,
+            feedback_context=feedback_context,
         )
 
         # Run the Scribe agent
@@ -891,6 +969,23 @@ class ScribeWorker:
             f"Worker {self.worker_id}: Running Scribe for {ticket.file_name}"
         )
         output = await self.scribe_agent.ainvoke(scribe_input)
+
+        # Validate critical sections if feedback context provided (IMPFB-005)
+        if output.success and output.template and feedback_context:
+            is_valid, empty_sections = self._validate_critical_sections(
+                output.template, feedback_context
+            )
+            if not is_valid:
+                logger.warning(
+                    f"Worker {self.worker_id}: Critical sections validation failed for "
+                    f"{ticket.file_name}: empty sections = {empty_sections}"
+                )
+                # Return failure so ticket can be retried or escalated
+                return ScribeOutput(
+                    success=False,
+                    error=f"Critical sections are empty: {', '.join(empty_sections)}",
+                    template=output.template,  # Include template for debugging
+                )
 
         # Save the template if successful
         if output.success and output.template:
@@ -955,6 +1050,9 @@ class ScribeWorker:
             f"{chunking_result.chunk_count} chunks using {chunking_result.chunking_strategy}"
         )
 
+        # Extract feedback context from ticket metadata (IMPFB-004)
+        feedback_context = ticket.metadata.get("feedback_context")
+
         # Process each chunk through ScribeAgent
         chunk_outputs: list[ScribeOutput] = []
         for i, chunk in enumerate(chunking_result.chunks):
@@ -972,6 +1070,7 @@ class ScribeWorker:
                 iteration=ticket.cycle_number,
                 copybook_contents=ticket.metadata.get("copybook_contents", {}),
                 formatting_strict=formatting_strict,
+                feedback_context=feedback_context,
             )
 
             # Run Scribe on this chunk
@@ -1665,6 +1764,9 @@ class ScribeWorker:
         # fall back to inference from filename
         file_type = self._get_file_type_from_metadata(ticket)
 
+        # Extract feedback context from ticket metadata (IMPFB-004)
+        feedback_context = ticket.metadata.get("feedback_context")
+
         # Build Scribe input with prepared source and previous template
         scribe_input = ScribeInput(
             source_code=prepared.source_code,
@@ -1675,13 +1777,31 @@ class ScribeWorker:
             previous_template=previous_template,
             challenger_questions=challenger_questions,
             formatting_strict=formatting_strict,
+            feedback_context=feedback_context,
         )
 
         logger.info(
             f"Worker {self.worker_id}: Processing clarification for {ticket.file_name} "
             f"with {len(challenger_questions)} questions"
+            + (f" (with feedback context)" if feedback_context else "")
         )
         output = await self.scribe_agent.ainvoke(scribe_input)
+
+        # Validate critical sections if feedback context provided (IMPFB-005)
+        if output.success and output.template and feedback_context:
+            is_valid, empty_sections = self._validate_critical_sections(
+                output.template, feedback_context
+            )
+            if not is_valid:
+                logger.warning(
+                    f"Worker {self.worker_id}: Critical sections validation failed for "
+                    f"{ticket.file_name} (clarification): empty sections = {empty_sections}"
+                )
+                return ScribeOutput(
+                    success=False,
+                    error=f"Critical sections are empty: {', '.join(empty_sections)}",
+                    template=output.template,
+                )
 
         # Save updated template if successful
         if output.success and output.template:
@@ -1836,6 +1956,9 @@ class ScribeWorker:
         # fall back to inference from filename
         file_type = self._get_file_type_from_metadata(ticket)
 
+        # Extract feedback context from ticket metadata (IMPFB-004)
+        feedback_context = ticket.metadata.get("feedback_context")
+
         # Build Scribe input with prepared source and previous template
         scribe_input = ScribeInput(
             source_code=prepared.source_code,
@@ -1846,13 +1969,31 @@ class ScribeWorker:
             previous_template=previous_template,
             chrome_tickets=chrome_tickets,
             formatting_strict=formatting_strict,
+            feedback_context=feedback_context,
         )
 
         logger.info(
             f"Worker {self.worker_id}: Processing chrome for {ticket.file_name} "
             f"with {len(chrome_tickets)} issues"
+            + (f" (with feedback context)" if feedback_context else "")
         )
         output = await self.scribe_agent.ainvoke(scribe_input)
+
+        # Validate critical sections if feedback context provided (IMPFB-005)
+        if output.success and output.template and feedback_context:
+            is_valid, empty_sections = self._validate_critical_sections(
+                output.template, feedback_context
+            )
+            if not is_valid:
+                logger.warning(
+                    f"Worker {self.worker_id}: Critical sections validation failed for "
+                    f"{ticket.file_name} (chrome): empty sections = {empty_sections}"
+                )
+                return ScribeOutput(
+                    success=False,
+                    error=f"Critical sections are empty: {', '.join(empty_sections)}",
+                    template=output.template,
+                )
 
         # Save updated template if successful
         if output.success and output.template:

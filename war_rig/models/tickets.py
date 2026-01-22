@@ -435,3 +435,133 @@ class Dialogue(BaseModel):
             if exchange.question.question_id in response_map:
                 exchange.response = response_map[exchange.question.question_id]
                 exchange.question.answered = True
+
+
+# =============================================================================
+# Imperator Feedback Models
+# =============================================================================
+
+
+class QualityNoteCategory(str, Enum):
+    """Categories of quality issues identified by Imperator."""
+
+    EMPTY_SECTION = "empty_section"  # Section is empty or has only placeholders
+    MISSING_CITATION = "missing_citation"  # Claims without line number citations
+    VAGUE_CONTENT = "vague_content"  # Content is too generic or unclear
+    NO_CROSS_REFERENCE = "no_cross_reference"  # Missing program cross-references
+    CONFIDENCE_MISMATCH = "confidence_mismatch"  # Confidence doesn't match quality
+    REDUNDANT_DOC = "redundant_doc"  # Duplicate documentation detected
+    OTHER = "other"  # Other quality issues
+
+
+class QualityNoteSeverity(str, Enum):
+    """Severity levels for quality notes."""
+
+    CRITICAL = "critical"  # Must be fixed - blocks approval
+    HIGH = "high"  # Should be fixed before next review
+    MEDIUM = "medium"  # Should be addressed
+    LOW = "low"  # Nice to have
+
+
+class QualityNote(BaseModel):
+    """A quality observation from Imperator holistic review.
+
+    Quality notes identify systemic issues across documentation that
+    should be addressed in subsequent cycles.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    note_id: str = Field(
+        default_factory=lambda: f"QN-{uuid4().hex[:8].upper()}",
+        description="Unique identifier for the note",
+    )
+    category: str = Field(
+        description="Category: empty_section, missing_citation, vague_content, "
+        "no_cross_reference, confidence_mismatch, redundant_doc, other",
+    )
+    severity: str = Field(
+        default="medium",
+        description="Severity: critical, high, medium, low",
+    )
+    description: str = Field(
+        description="Human-readable description of the quality issue",
+    )
+    affected_sections: list[str] = Field(
+        default_factory=list,
+        description="Template sections affected (e.g., 'inputs', 'outputs', 'data_flow')",
+    )
+    affected_files: list[str] = Field(
+        default_factory=list,
+        description="Files affected (empty = all files)",
+    )
+    guidance: str | None = Field(
+        default=None,
+        description="Specific guidance for addressing the issue",
+    )
+    cycle_identified: int = Field(
+        default=1,
+        description="Cycle when this note was first identified",
+    )
+
+
+class FeedbackContext(BaseModel):
+    """Aggregated feedback context for a documentation cycle.
+
+    Contains all Imperator feedback that should be applied globally
+    to documentation and validation tickets.
+    """
+
+    model_config = ConfigDict(extra="ignore")
+
+    quality_notes: list[QualityNote] = Field(
+        default_factory=list,
+        description="Quality observations from Imperator",
+    )
+    critical_sections: list[str] = Field(
+        default_factory=list,
+        description="Sections that MUST be populated (not empty)",
+    )
+    required_citations: bool = Field(
+        default=True,
+        description="Whether citations are required for all claims",
+    )
+    cross_reference_required: bool = Field(
+        default=False,
+        description="Whether cross-program references must be documented",
+    )
+    previous_cycle_issues: dict[str, list[str]] = Field(
+        default_factory=dict,
+        description="File-specific issues from previous cycle {file_name: [issues]}",
+    )
+    augment_existing: bool = Field(
+        default=True,
+        description="Always augment existing docs instead of creating new",
+    )
+
+    def get_notes_for_file(self, file_name: str) -> list[QualityNote]:
+        """Get quality notes applicable to a specific file.
+
+        Args:
+            file_name: The file to get notes for.
+
+        Returns:
+            List of notes that apply to this file (global + file-specific).
+        """
+        applicable = []
+        for note in self.quality_notes:
+            # Global notes (no specific files) apply to all
+            if not note.affected_files:
+                applicable.append(note)
+            # File-specific notes
+            elif file_name in note.affected_files:
+                applicable.append(note)
+        return applicable
+
+    def get_critical_notes(self) -> list[QualityNote]:
+        """Get all critical severity notes.
+
+        Returns:
+            List of notes with critical severity.
+        """
+        return [n for n in self.quality_notes if n.severity == "critical"]

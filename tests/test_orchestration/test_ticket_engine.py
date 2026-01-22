@@ -14,6 +14,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from war_rig.agents.imperator import (
+    ClarificationRequest,
     HolisticReviewOutput,
     ImperatorHolisticDecision,
 )
@@ -49,6 +50,12 @@ def mock_beads_client() -> MagicMock:
     client.create_pm_ticket.return_value = None
     client.claim_ticket.return_value = True
     client.update_ticket_state.return_value = True
+
+    # Required for system overview generation
+    client._pm_ticket_cache = {}
+
+    # Required for orphan check
+    client.reset_orphaned_tickets.return_value = 0
 
     return client
 
@@ -467,11 +474,16 @@ class TestTicketOrchestratorRunBatch:
         with patch.object(
             orchestrator, "_run_worker_cycle", new_callable=AsyncMock
         ):
-            # First cycle: needs clarification
+            # First cycle: needs clarification (must have actual issues to avoid SATISFIED shortcut)
+            clarification = ClarificationRequest(
+                question="What does PROGRAM1 do?",
+                context="Need more detail",
+                files=["PROGRAM1.cbl"],
+            )
             needs_clarification = HolisticReviewOutput(
                 success=True,
                 decision=ImperatorHolisticDecision.NEEDS_CLARIFICATION,
-                clarification_requests=[],
+                clarification_requests=[clarification],
             )
             # Second cycle: still needs clarification but max reached
             with patch.object(
@@ -558,3 +570,171 @@ class TestTicketOrchestratorInternals:
         assert len(result.completed_files) == 2
         assert len(result.failed_files) == 0
         assert "PROGRAM1.cbl" in result.completed_files
+
+
+# =============================================================================
+# Feedback Context Tests (IMPFB-002, IMPFB-003)
+# =============================================================================
+
+
+class TestFeedbackContextBuilding:
+    """Tests for feedback context building from Imperator review."""
+
+    def test_parse_quality_note_empty_section(
+        self,
+        mock_config: MagicMock,
+        mock_beads_client: MagicMock,
+    ) -> None:
+        """Test _parse_quality_note correctly parses empty section notes."""
+        orchestrator = TicketOrchestrator(
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        note_str = "The inputs section is empty for most files"
+        note = orchestrator._parse_quality_note(note_str, 0)
+
+        assert note.category == "empty_section"
+        assert "inputs" in note.description.lower()
+
+    def test_parse_quality_note_missing_citation(
+        self,
+        mock_config: MagicMock,
+        mock_beads_client: MagicMock,
+    ) -> None:
+        """Test _parse_quality_note correctly parses citation notes."""
+        orchestrator = TicketOrchestrator(
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        note_str = "Missing line number citations for claims"
+        note = orchestrator._parse_quality_note(note_str, 0)
+
+        assert note.category == "missing_citation"
+
+    def test_parse_quality_note_cross_reference(
+        self,
+        mock_config: MagicMock,
+        mock_beads_client: MagicMock,
+    ) -> None:
+        """Test _parse_quality_note correctly parses cross-reference notes."""
+        orchestrator = TicketOrchestrator(
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        note_str = "No cross-reference information between programs"
+        note = orchestrator._parse_quality_note(note_str, 0)
+
+        assert note.category == "no_cross_reference"
+
+    def test_identify_critical_sections_default(
+        self,
+        mock_config: MagicMock,
+        mock_beads_client: MagicMock,
+    ) -> None:
+        """Test _identify_critical_sections includes default sections."""
+        orchestrator = TicketOrchestrator(
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        # No notes - should return default critical sections
+        critical = orchestrator._identify_critical_sections([])
+
+        assert "purpose" in critical
+        assert "inputs" in critical
+        assert "outputs" in critical
+
+    def test_identify_critical_sections_from_notes(
+        self,
+        mock_config: MagicMock,
+        mock_beads_client: MagicMock,
+    ) -> None:
+        """Test _identify_critical_sections adds sections from empty_section notes."""
+        from war_rig.models.tickets import QualityNote
+
+        orchestrator = TicketOrchestrator(
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        notes = [
+            QualityNote(
+                category="empty_section",
+                description="Empty business_rules",
+                affected_sections=["business_rules", "error_handling"],
+            )
+        ]
+
+        critical = orchestrator._identify_critical_sections(notes)
+
+        assert "business_rules" in critical
+        assert "error_handling" in critical
+        assert "purpose" in critical  # Default still present
+
+    def test_build_feedback_context_from_holistic_review(
+        self,
+        mock_config: MagicMock,
+        mock_beads_client: MagicMock,
+    ) -> None:
+        """Test _build_feedback_context creates proper context from review."""
+        from typing import Any
+        from war_rig.models.tickets import ChromeTicket, IssueType, IssuePriority
+
+        # Rebuild the model to resolve forward references
+        HolisticReviewOutput.model_rebuild()
+
+        orchestrator = TicketOrchestrator(
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+        orchestrator._state.cycle = 1
+
+        # Create a mock holistic review output
+        review_output = HolisticReviewOutput(
+            decision=ImperatorHolisticDecision.NEEDS_CLARIFICATION,
+            quality_notes=[
+                "Empty inputs section in documentation",
+                "Missing line number citations",
+            ],
+            quality_notes_structured=[
+                {
+                    "category": "empty_section",
+                    "severity": "critical",
+                    "description": "Inputs section is empty",
+                    "affected_sections": ["inputs"],
+                },
+            ],
+            file_feedback={
+                "PROG.cbl": [
+                    ChromeTicket(
+                        ticket_id="CHR-001",
+                        section="inputs",
+                        issue_type=IssueType.INCOMPLETE,
+                        description="Input section incomplete",
+                        priority=IssuePriority.HIGH,
+                    )
+                ]
+            },
+            clarification_requests=[],
+        )
+
+        ctx = orchestrator._build_feedback_context(review_output)
+
+        # Should use structured notes when available
+        assert len(ctx.quality_notes) == 1
+        assert ctx.quality_notes[0].category == "empty_section"
+        assert ctx.quality_notes[0].severity == "critical"
+
+        # Should have critical sections
+        assert "inputs" in ctx.critical_sections
+
+        # Should have previous cycle issues
+        assert "PROG.cbl" in ctx.previous_cycle_issues
+        assert len(ctx.previous_cycle_issues["PROG.cbl"]) == 1
+
+        # Default settings
+        assert ctx.augment_existing is True
+        assert ctx.required_citations is True

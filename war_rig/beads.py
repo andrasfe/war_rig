@@ -194,6 +194,28 @@ class ProgramManagerTicket:
 
         return labels
 
+    def get_feedback_context(self) -> "FeedbackContext | None":
+        """Extract feedback context from ticket metadata if present.
+
+        Returns:
+            FeedbackContext if present in metadata, None otherwise.
+        """
+        from war_rig.models.tickets import FeedbackContext
+
+        ctx_data = self.metadata.get("feedback_context")
+        if not ctx_data:
+            return None
+
+        try:
+            if isinstance(ctx_data, dict):
+                return FeedbackContext.model_validate(ctx_data)
+            elif isinstance(ctx_data, FeedbackContext):
+                return ctx_data
+        except Exception:
+            return None
+
+        return None
+
     @classmethod
     def from_labels(
         cls,

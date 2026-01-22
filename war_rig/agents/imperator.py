@@ -24,6 +24,7 @@ import logging
 import re
 from enum import Enum
 from pathlib import Path
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -406,7 +407,11 @@ class HolisticReviewOutput(AgentOutput):
     )
     quality_notes: list[str] = Field(
         default_factory=list,
-        description="Notes on documentation quality",
+        description="Notes on documentation quality (legacy string format)",
+    )
+    quality_notes_structured: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="Structured quality notes with category, severity, affected_sections, guidance",
     )
 
     # Recommendations
@@ -504,6 +509,10 @@ class InlineQuestion(BaseModel):
         default=1,
         description="Which review cycle this question was identified",
     )
+
+
+# Rebuild HolisticReviewOutput to resolve forward references (Any, InlineQuestion)
+HolisticReviewOutput.model_rebuild()
 
 
 class SystemDesignInput(BaseModel):
@@ -1032,7 +1041,14 @@ Respond with valid JSON containing:
 - "clarification_requests": array of new ClarificationRequest objects (not repeating previous)
 - "assumptions": array of SystemAssumption objects
 - "overall_quality": one of EXCELLENT, GOOD, ACCEPTABLE, POOR
-- "quality_notes": array of observations about quality
+- "quality_notes": array of observations about quality (legacy string format)
+- "quality_notes_structured": array of structured quality observations (REQUIRED), each with:
+  - "category": one of empty_section, missing_citation, vague_content, no_cross_reference, confidence_mismatch, redundant_doc, other
+  - "severity": one of critical, high, medium, low
+  - "description": human-readable description of the quality issue
+  - "affected_sections": array of section names affected (e.g., ["inputs", "outputs", "data_flow"])
+  - "affected_files": array of file names affected (empty = applies to all files)
+  - "guidance": specific guidance for addressing the issue (optional)
 - "priority_files": array of file names to focus on next cycle
 - "missing_documentation": array of file names needing more work
 - "reasoning": explanation of your decision
@@ -1256,6 +1272,7 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                 assumptions=assumptions,
                 overall_quality=data.get("overall_quality", "ACCEPTABLE"),
                 quality_notes=data.get("quality_notes", []),
+                quality_notes_structured=data.get("quality_notes_structured", []),
                 priority_files=data.get("priority_files", []),
                 missing_documentation=data.get("missing_documentation", []),
                 reasoning=data.get("reasoning", ""),

@@ -560,6 +560,7 @@ class ProgramManagerAgent(BaseAgent[ProgramManagerInput, ProgramManagerOutput]):
     def handle_clarifications(
         self,
         clarification_requests: list[ClarificationRequest],
+        feedback_context: Any | None = None,
     ) -> list[ProgramManagerTicket]:
         """Create CLARIFICATION tickets from Imperator feedback.
 
@@ -570,6 +571,10 @@ class ProgramManagerAgent(BaseAgent[ProgramManagerInput, ProgramManagerOutput]):
         Args:
             clarification_requests: List of clarification requests from
                 Imperator feedback.
+            feedback_context: Optional FeedbackContext from Imperator review
+                containing quality notes and critical sections. If provided,
+                this context is embedded in each ticket's metadata for
+                Scribe/Challenger to reference.
 
         Returns:
             List of created tickets.
@@ -618,6 +623,14 @@ class ProgramManagerAgent(BaseAgent[ProgramManagerInput, ProgramManagerOutput]):
             }
             if request.file_path:
                 metadata["file_path"] = request.file_path
+
+            # Embed feedback context if provided (IMPFB-002)
+            if feedback_context is not None:
+                # Store as dict for serialization
+                if hasattr(feedback_context, "model_dump"):
+                    metadata["feedback_context"] = feedback_context.model_dump()
+                else:
+                    metadata["feedback_context"] = feedback_context
 
             ticket = self.beads.create_pm_ticket(
                 ticket_type=ticket_type,

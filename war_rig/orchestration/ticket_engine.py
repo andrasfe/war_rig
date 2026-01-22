@@ -266,6 +266,9 @@ class TicketOrchestrator:
         self._lock = asyncio.Lock()
         self._input_directory: Path | None = None
 
+        # Feedback context from Imperator (distributed to new tickets)
+        self._current_feedback_context: "FeedbackContext | None" = None
+
     @property
     def state(self) -> OrchestrationState:
         """Get the current orchestration state."""
@@ -708,6 +711,18 @@ class TicketOrchestrator:
 
             # We don't know the actual file name/path - mark as "discovery" ticket
             # The Scribe will need to search for this program
+            metadata: dict[str, Any] = {
+                "batch_id": self._state.batch_id,
+                "source": "call_graph_gap",
+                "discovery": True,  # Flag indicating this needs file discovery
+                "created_at": datetime.utcnow().isoformat(),
+                "priority": "high",  # Gap-filling is high priority
+            }
+
+            # Embed feedback context if available (IMPFB-002)
+            if self._current_feedback_context is not None:
+                metadata["feedback_context"] = self._current_feedback_context.model_dump()
+
             ticket = ProgramManagerTicket(
                 ticket_id=ticket_id,
                 file_name=f"{program_id}.cbl",  # Best guess - Scribe will search
@@ -715,13 +730,7 @@ class TicketOrchestrator:
                 ticket_type=TicketType.DOCUMENTATION,
                 state=TicketState.CREATED,
                 cycle_number=self._state.cycle,
-                metadata={
-                    "batch_id": self._state.batch_id,
-                    "source": "call_graph_gap",
-                    "discovery": True,  # Flag indicating this needs file discovery
-                    "created_at": datetime.utcnow().isoformat(),
-                    "priority": "high",  # Gap-filling is high priority
-                },
+                metadata=metadata,
             )
 
             # Add to cache
@@ -1227,13 +1236,21 @@ class TicketOrchestrator:
         """Process Imperator feedback and create new tickets.
 
         Converts the Imperator's feedback (clarification requests, Chrome
-        tickets) into beads tickets for the next cycle.
+        tickets) into beads tickets for the next cycle. Also builds
+        FeedbackContext from review output to embed in subsequent tickets.
 
         Args:
             review_output: The holistic review output with feedback.
         """
         self._state.status = OrchestrationStatus.PROCESSING_FEEDBACK
         self._state.status_message = "Processing Imperator feedback..."
+
+        # Build feedback context from review output for distribution to tickets
+        self._current_feedback_context = self._build_feedback_context(review_output)
+        logger.info(
+            f"Built feedback context with {len(self._current_feedback_context.quality_notes)} "
+            f"quality notes, {len(self._current_feedback_context.critical_sections)} critical sections"
+        )
 
         # Build a lookup of file paths only - workers load content from disk to avoid bloat
         file_path_lookup: dict[str, str] = {}
@@ -1279,10 +1296,13 @@ class TicketOrchestrator:
                     )
                 )
 
-        # Use Program Manager to create tickets
+        # Use Program Manager to create tickets with feedback context
         if clarification_requests:
             logger.info(f"Creating {len(clarification_requests)} clarification tickets")
-            self.program_manager.handle_clarifications(clarification_requests)
+            self.program_manager.handle_clarifications(
+                clarification_requests,
+                feedback_context=self._current_feedback_context,
+            )
 
     def _map_issue_priority(self, priority: Any) -> BeadsPriority:
         """Map Imperator issue priority to BeadsPriority.
@@ -1301,6 +1321,149 @@ class TicketOrchestrator:
             IssuePriority.MEDIUM: BeadsPriority.MEDIUM,
         }
         return mapping.get(priority, BeadsPriority.MEDIUM)
+
+    def _build_feedback_context(
+        self,
+        review_output: HolisticReviewOutput,
+    ) -> "FeedbackContext":
+        """Build FeedbackContext from Imperator review output.
+
+        Extracts quality notes, identifies critical sections, and
+        captures file-specific issues for distribution to tickets.
+
+        Args:
+            review_output: The holistic review output.
+
+        Returns:
+            FeedbackContext with parsed quality notes and settings.
+        """
+        from war_rig.models.tickets import FeedbackContext, QualityNote
+
+        # Use structured quality notes if available (IMPFB-003)
+        quality_notes: list[QualityNote] = []
+        if review_output.quality_notes_structured:
+            # Use structured notes directly - they have proper category/severity
+            for i, note_dict in enumerate(review_output.quality_notes_structured):
+                try:
+                    note = QualityNote(
+                        note_id=f"QN-{i:03d}",
+                        category=note_dict.get("category", "other"),
+                        severity=note_dict.get("severity", "medium"),
+                        description=note_dict.get("description", ""),
+                        affected_sections=note_dict.get("affected_sections", []),
+                        affected_files=note_dict.get("affected_files", []),
+                        guidance=note_dict.get("guidance"),
+                        cycle_identified=self._state.cycle,
+                    )
+                    quality_notes.append(note)
+                except Exception as e:
+                    logger.warning(f"Failed to parse structured quality note: {e}")
+        else:
+            # Fall back to parsing string notes (legacy format)
+            for i, note_str in enumerate(review_output.quality_notes or []):
+                note = self._parse_quality_note(note_str, i)
+                quality_notes.append(note)
+
+        # Determine critical sections from notes
+        critical_sections = self._identify_critical_sections(quality_notes)
+
+        # Build file-specific issues from file_feedback
+        previous_issues: dict[str, list[str]] = {}
+        for file_name, chrome_tickets in (review_output.file_feedback or {}).items():
+            previous_issues[file_name] = [t.description for t in chrome_tickets]
+
+        return FeedbackContext(
+            quality_notes=quality_notes,
+            critical_sections=critical_sections,
+            required_citations=True,  # Always require citations
+            cross_reference_required=any(
+                "cross-reference" in n.description.lower() for n in quality_notes
+            ),
+            previous_cycle_issues=previous_issues,
+            augment_existing=True,  # Per user requirement
+        )
+
+    def _parse_quality_note(self, note_str: str, index: int) -> "QualityNote":
+        """Parse a quality note string into a QualityNote object.
+
+        Infers category and severity from note content.
+
+        Args:
+            note_str: The raw quality note string from Imperator.
+            index: Index for generating note ID.
+
+        Returns:
+            Parsed QualityNote with inferred category and severity.
+        """
+        from war_rig.models.tickets import QualityNote
+
+        note_lower = note_str.lower()
+
+        # Infer category
+        if "empty" in note_lower or "blank" in note_lower:
+            category = "empty_section"
+            severity = "critical"
+        elif "citation" in note_lower or "cite" in note_lower:
+            category = "missing_citation"
+            severity = "high"
+        elif "cross-reference" in note_lower or "cross reference" in note_lower:
+            category = "no_cross_reference"
+            severity = "medium"
+        elif "confidence" in note_lower:
+            category = "confidence_mismatch"
+            severity = "medium"
+        elif "redundant" in note_lower or "duplicate" in note_lower:
+            category = "redundant_doc"
+            severity = "high"
+        elif "vague" in note_lower or "generic" in note_lower:
+            category = "vague_content"
+            severity = "medium"
+        else:
+            category = "other"
+            severity = "medium"
+
+        # Extract affected sections from note
+        affected_sections = []
+        section_keywords = [
+            "inputs", "outputs", "data_flow", "data flow", "copybooks",
+            "sql_operations", "sql operations", "cics_operations", "cics operations",
+            "business_rules", "business rules", "error_handling", "error handling",
+            "purpose", "summary",
+        ]
+        for section in section_keywords:
+            if section in note_lower:
+                # Normalize to underscore format
+                affected_sections.append(section.replace(" ", "_"))
+
+        return QualityNote(
+            note_id=f"QN-{index:03d}",
+            category=category,
+            severity=severity,
+            description=note_str,
+            affected_sections=affected_sections,
+            cycle_identified=self._state.cycle,
+        )
+
+    def _identify_critical_sections(self, notes: list["QualityNote"]) -> list[str]:
+        """Identify sections that must be populated based on quality notes.
+
+        If a section was noted as empty or incomplete, it becomes critical.
+
+        Args:
+            notes: List of parsed quality notes.
+
+        Returns:
+            List of section names that must be populated.
+        """
+        # Default critical sections
+        critical = {"purpose", "inputs", "outputs"}
+
+        # Add sections from empty_section notes
+        for note in notes:
+            if note.category == "empty_section" and note.affected_sections:
+                critical.update(note.affected_sections)
+
+        return list(critical)
 
     def _update_progress(self) -> None:
         """Update progress counters from ticket states."""
