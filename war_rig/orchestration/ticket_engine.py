@@ -1553,11 +1553,11 @@ class TicketOrchestrator:
                     output_names = [o.get("name", "") for o in outputs if o.get("name")][:5]
 
                     programs.append(ProgramSummary(
-                        file_name=header.get("file_name", doc_file.stem),
-                        program_id=header.get("program_id", doc_file.stem.replace(".doc", "")),
-                        program_type=purpose.get("program_type", "UNKNOWN"),
-                        summary=purpose.get("summary", "No summary available"),
-                        business_context=purpose.get("business_context", ""),
+                        file_name=header.get("file_name") or doc_file.stem,
+                        program_id=header.get("program_id") or doc_file.stem.replace(".doc", ""),
+                        program_type=purpose.get("program_type") or "UNKNOWN",
+                        summary=purpose.get("summary") or "No summary available",
+                        business_context=purpose.get("business_context") or "",
                         calls=calls,
                         called_by=[],  # Would need cross-reference to populate
                         inputs=input_names,
