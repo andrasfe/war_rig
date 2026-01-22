@@ -353,21 +353,13 @@ class TicketOrchestrator:
 
                 # Run call graph analysis to check for gaps
                 call_graph_result = await self._run_call_graph_analysis()
+                has_call_graph_gaps = (
+                    call_graph_result
+                    and call_graph_result.has_gaps()
+                    and self._state.cycle < max_cycles
+                )
 
-                if call_graph_result and call_graph_result.has_gaps():
-                    # Create DOCUMENTATION tickets for missing custom programs
-                    missing = call_graph_result.get_missing_for_documentation()
-                    if missing and self._state.cycle < max_cycles:
-                        logger.info(
-                            f"Call graph has {len(missing)} gaps - "
-                            f"creating DOCUMENTATION tickets"
-                        )
-                        self._create_documentation_tickets_for_missing(missing)
-                        # Continue to next cycle to document missing programs
-                        continue
-
-                # No gaps (or max cycles reached) - proceed to holistic review
-                # Trigger holistic review
+                # Always run holistic review to capture feedback for next cycle
                 review_result = await self._run_holistic_review()
 
                 if review_result is None:
@@ -378,7 +370,23 @@ class TicketOrchestrator:
 
                 self._state.review_history.append(review_result)
 
-                # Check if satisfied
+                # Always capture feedback context for next cycle (even if we have gaps)
+                # This ensures quality notes propagate to all subsequent work
+                await self._handle_imperator_feedback(review_result)
+
+                # If call graph has gaps, create tickets and continue to next cycle
+                if has_call_graph_gaps:
+                    missing = call_graph_result.get_missing_for_documentation()
+                    if missing:
+                        logger.info(
+                            f"Call graph has {len(missing)} gaps - "
+                            f"creating DOCUMENTATION tickets (feedback captured)"
+                        )
+                        self._create_documentation_tickets_for_missing(missing)
+                        # Continue to next cycle to document missing programs
+                        continue
+
+                # Check review decision for completion
                 if review_result.decision == ImperatorHolisticDecision.SATISFIED:
                     logger.info("Imperator satisfied - batch complete")
                     result.final_decision = review_result.decision.value
@@ -410,13 +418,12 @@ class TicketOrchestrator:
                         result.final_decision = ImperatorHolisticDecision.FORCED_COMPLETE.value
                         break
 
-                    # Create clarification tickets for next cycle
+                    # Log that we're continuing with clarification work
                     logger.info(
                         f"Imperator needs clarification: {total_issues} issues "
                         f"({len(review_result.clarification_requests)} requests, "
                         f"{sum(len(t) for t in review_result.file_feedback.values())} chrome tickets)"
                     )
-                    await self._handle_imperator_feedback(review_result)
 
             # Collect final results
             result = self._collect_results(result)
