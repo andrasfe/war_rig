@@ -41,6 +41,7 @@ from war_rig.agents.imperator import (
     SystemOverviewInput,
     SystemOverviewOutput,
 )
+from war_rig.analysis.call_graph import CallGraphAnalyzer, CallGraphAnalysis
 from war_rig.agents.program_manager import (
     ClarificationRequest,
     ProgramManagerAgent,
@@ -71,6 +72,7 @@ class OrchestrationStatus(str, Enum):
     INITIALIZING = "initializing"
     DOCUMENTING = "documenting"
     VALIDATING = "validating"
+    ANALYZING_CALL_GRAPH = "analyzing_call_graph"
     REVIEWING = "reviewing"
     PROCESSING_FEEDBACK = "processing_feedback"
     COMPLETED = "completed"
@@ -346,6 +348,22 @@ class TicketOrchestrator:
                 if self._stop_requested:
                     break
 
+                # Run call graph analysis to check for gaps
+                call_graph_result = await self._run_call_graph_analysis()
+
+                if call_graph_result and call_graph_result.has_gaps():
+                    # Create DOCUMENTATION tickets for missing custom programs
+                    missing = call_graph_result.get_missing_for_documentation()
+                    if missing and self._state.cycle < max_cycles:
+                        logger.info(
+                            f"Call graph has {len(missing)} gaps - "
+                            f"creating DOCUMENTATION tickets"
+                        )
+                        self._create_documentation_tickets_for_missing(missing)
+                        # Continue to next cycle to document missing programs
+                        continue
+
+                # No gaps (or max cycles reached) - proceed to holistic review
                 # Trigger holistic review
                 review_result = await self._run_holistic_review()
 
@@ -601,6 +619,122 @@ class TicketOrchestrator:
         # Terminal states are: COMPLETED, BLOCKED, CANCELLED, MERGED
         # Non-terminal states are: CREATED, CLAIMED, IN_PROGRESS, REWORK
         await self._validate_cycle_complete(max_retries=3)
+
+    async def _run_call_graph_analysis(self) -> CallGraphAnalysis | None:
+        """Analyze the call graph to identify documentation gaps.
+
+        Scans all completed documentation to build a call graph showing
+        program relationships. Identifies:
+        - Custom programs that are called but not documented (gaps)
+        - System utilities (which don't need documentation)
+        - External dependencies for SYSTEM_DESIGN.md
+
+        Returns:
+            CallGraphAnalysis with gap information, or None if analysis fails.
+        """
+        self._state.status = OrchestrationStatus.ANALYZING_CALL_GRAPH
+        self._state.status_message = "Analyzing call graph for documentation gaps..."
+
+        logger.info("Running call graph analysis")
+
+        try:
+            analyzer = CallGraphAnalyzer(doc_directory=self.config.output_directory)
+            analysis = analyzer.analyze()
+
+            # Log summary
+            logger.info(
+                f"Call graph: {len(analysis.documented_programs)} documented programs, "
+                f"{len(analysis.external_dependencies)} external deps, "
+                f"{len(analysis.system_utilities)} system utils, "
+                f"{len(analysis.custom_missing)} custom missing"
+            )
+
+            if analysis.custom_missing:
+                logger.info(f"Missing custom programs: {', '.join(analysis.custom_missing)}")
+
+            # Generate SYSTEM_DESIGN.md for external dependencies
+            if analysis.external_dependencies:
+                system_design_path = self.config.output_directory / "SYSTEM_DESIGN.md"
+                system_design_content = analyzer.generate_system_design_md(analysis)
+                system_design_path.write_text(system_design_content, encoding="utf-8")
+                logger.info(f"Generated SYSTEM_DESIGN.md with {len(analysis.external_dependencies)} external dependencies")
+
+            # Also regenerate CALL_GRAPH.md for current state
+            call_graph_path = self.config.output_directory / "CALL_GRAPH.md"
+            call_graph_content = analyzer.generate_markdown_report(analysis)
+            call_graph_path.write_text(call_graph_content, encoding="utf-8")
+            logger.info(f"Updated CALL_GRAPH.md")
+
+            return analysis
+
+        except Exception as e:
+            logger.error(f"Call graph analysis failed: {e}")
+            return None
+
+    def _create_documentation_tickets_for_missing(
+        self,
+        missing_programs: list[str],
+    ) -> list[ProgramManagerTicket]:
+        """Create DOCUMENTATION tickets for programs that are called but not documented.
+
+        These tickets allow the workflow to automatically discover and document
+        programs that were referenced in existing documentation.
+
+        Args:
+            missing_programs: List of program IDs that need documentation.
+
+        Returns:
+            List of created tickets.
+        """
+        from uuid import uuid4
+
+        created_tickets: list[ProgramManagerTicket] = []
+
+        for program_id in missing_programs:
+            # Check if ticket already exists for this program
+            existing = [
+                t for t in self.beads_client._pm_ticket_cache.values()
+                if t.program_id == program_id
+                and t.ticket_type == TicketType.DOCUMENTATION
+                and t.state not in (TicketState.COMPLETED, TicketState.BLOCKED, TicketState.CANCELLED)
+            ]
+
+            if existing:
+                logger.debug(f"Documentation ticket already exists for {program_id}")
+                continue
+
+            # Create new ticket
+            ticket_id = f"DOC-{uuid4().hex[:8].upper()}"
+
+            # We don't know the actual file name/path - mark as "discovery" ticket
+            # The Scribe will need to search for this program
+            ticket = ProgramManagerTicket(
+                ticket_id=ticket_id,
+                file_name=f"{program_id}.cbl",  # Best guess - Scribe will search
+                program_id=program_id,
+                ticket_type=TicketType.DOCUMENTATION,
+                state=TicketState.CREATED,
+                cycle_number=self._state.cycle,
+                priority=BeadsPriority.HIGH,  # Gap-filling is high priority
+                metadata={
+                    "batch_id": self._state.batch_id,
+                    "source": "call_graph_gap",
+                    "discovery": True,  # Flag indicating this needs file discovery
+                    "created_at": datetime.utcnow().isoformat(),
+                },
+            )
+
+            # Add to cache
+            self.beads_client._pm_ticket_cache[ticket_id] = ticket
+            created_tickets.append(ticket)
+            logger.info(f"Created documentation ticket {ticket_id} for missing program {program_id}")
+
+        # Save to disk
+        if created_tickets:
+            self.beads_client._save_to_disk()
+            logger.info(f"Created {len(created_tickets)} documentation tickets for call graph gaps")
+
+        return created_tickets
 
     async def _validate_cycle_complete(self, max_retries: int = 3, retry_count: int = 0) -> None:
         """Ensure all tickets are in terminal states before proceeding.

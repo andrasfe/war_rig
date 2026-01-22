@@ -438,18 +438,38 @@ class ChallengerWorker:
             )
             self.status.tickets_validated += 1
         else:
-            # Issues found - create REWORK ticket for Scribe
-            logger.info(
-                f"Worker {self.worker_id}: Issues found in documentation for "
-                f"{ticket.file_name}, creating rework ticket"
-            )
-            self._create_rework_ticket(ticket, result)
-            self.beads_client.update_ticket_state(
-                ticket.ticket_id,
-                TicketState.COMPLETED,
-                reason=f"Validation complete, {len(result.blocking_questions)} issues found",
-            )
-            self.status.tickets_rejected += 1
+            # Issues found - check if we've exceeded max iterations
+            validation_count = self._get_validation_count(ticket.file_name)
+            max_iterations = self.config.max_iterations
+
+            if validation_count >= max_iterations:
+                # Force approval - max iterations reached
+                logger.warning(
+                    f"Worker {self.worker_id}: Max iterations ({max_iterations}) reached for "
+                    f"{ticket.file_name} with {len(result.blocking_questions)} issues remaining. "
+                    f"Force approving documentation."
+                )
+                self.beads_client.update_ticket_state(
+                    ticket.ticket_id,
+                    TicketState.COMPLETED,
+                    reason=f"Force approved at max iterations ({validation_count}), "
+                    f"{len(result.blocking_questions)} issues remaining",
+                )
+                self.status.tickets_validated += 1
+            else:
+                # Create REWORK ticket for Scribe
+                logger.info(
+                    f"Worker {self.worker_id}: Issues found in documentation for "
+                    f"{ticket.file_name} (iteration {validation_count + 1}/{max_iterations}), "
+                    f"creating rework ticket"
+                )
+                self._create_rework_ticket(ticket, result)
+                self.beads_client.update_ticket_state(
+                    ticket.ticket_id,
+                    TicketState.COMPLETED,
+                    reason=f"Validation complete, {len(result.blocking_questions)} issues found",
+                )
+                self.status.tickets_rejected += 1
 
     def _load_documentation_state(
         self,
@@ -736,6 +756,27 @@ class ChallengerWorker:
                 is_valid=False,
                 issues_found=[str(e)],
             )
+
+    def _get_validation_count(self, file_name: str) -> int:
+        """Count completed validation tickets for a file.
+
+        Used to enforce max_iterations limit per file to prevent infinite
+        validation/clarification loops.
+
+        Args:
+            file_name: The file to count validations for.
+
+        Returns:
+            Number of completed validation tickets for this file.
+        """
+        completed_tickets = self.beads_client.get_tickets_by_state(TicketState.COMPLETED)
+        count = sum(
+            1
+            for t in completed_tickets
+            if t.file_name == file_name
+            and t.ticket_type == TicketType.VALIDATION
+        )
+        return count
 
     def _create_rework_ticket(
         self,
