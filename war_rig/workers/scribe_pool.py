@@ -36,6 +36,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -154,6 +155,27 @@ class ScribeWorker:
         TicketType.DOCUMENTATION,
         TicketType.CLARIFICATION,
         TicketType.CHROME,
+    ]
+
+    # File extensions to search for discovery tickets
+    DISCOVERY_EXTENSIONS = [
+        ".cbl", ".cob", ".cobol",  # COBOL
+        ".prc", ".proc",           # JCL procedures
+        ".jcl",                    # JCL
+        ".asm", ".s",              # Assembler
+        ".pli", ".pl1",            # PL/I
+        ".cpy", ".copy",           # Copybooks
+    ]
+
+    # Patterns to search for symbol references in source code
+    SYMBOL_SEARCH_PATTERNS = [
+        r"CALL\s+['\"]?{symbol}['\"]?",           # COBOL CALL
+        r"PERFORM\s+{symbol}",                    # COBOL PERFORM
+        r"EXEC\s+CICS\s+LINK\s+PROGRAM\s*\(\s*{symbol}\s*\)",  # CICS LINK
+        r"EXEC\s+CICS\s+XCTL\s+PROGRAM\s*\(\s*{symbol}\s*\)",  # CICS XCTL
+        r"GO\s+TO\s+{symbol}",                    # COBOL GO TO
+        r"EXEC\s+{symbol}",                       # JCL EXEC PGM=
+        r"PGM={symbol}",                          # JCL PGM=
     ]
 
     def __init__(
@@ -776,6 +798,14 @@ class ScribeWorker:
                 source_path = self.input_directory / ticket.file_name
 
             if not source_path.exists():
+                # Check if this is a discovery ticket (from call graph gap)
+                if ticket.metadata.get("discovery"):
+                    logger.info(
+                        f"Worker {self.worker_id}: Discovery ticket for {ticket.program_id}, "
+                        f"searching for file..."
+                    )
+                    return await self._handle_discovery_ticket(ticket, formatting_strict)
+
                 logger.error(
                     f"Worker {self.worker_id}: Source file not found: {source_path}"
                 )
@@ -1007,6 +1037,472 @@ class ScribeWorker:
                 success=False,
                 error=f"Chunk merge failed: {e}",
             )
+
+    # =========================================================================
+    # Discovery Ticket Handling
+    # =========================================================================
+
+    async def _handle_discovery_ticket(
+        self,
+        ticket: ProgramManagerTicket,
+        formatting_strict: bool = False,
+    ) -> ScribeOutput:
+        """Handle a discovery ticket for a program found via call graph analysis.
+
+        Discovery tickets are created when the call graph identifies a program
+        that is called but not documented. This method searches for the program:
+        1. First by file name with various extensions
+        2. If not found, by searching for the symbol in all source files
+        3. If found in another file, documents it as an internal routine
+        4. If not found anywhere, documents it as external/missing
+
+        Args:
+            ticket: The discovery ticket to process.
+            formatting_strict: If True, add extra JSON formatting instructions.
+
+        Returns:
+            ScribeOutput with documentation results.
+        """
+        program_id = ticket.program_id or ticket.file_name.split(".")[0]
+        logger.info(
+            f"Worker {self.worker_id}: Starting discovery for program {program_id}"
+        )
+
+        # Step 1: Search for file by name with various extensions
+        found_file = self._search_file_by_name(program_id)
+        if found_file:
+            logger.info(
+                f"Worker {self.worker_id}: Found file {found_file} for {program_id}"
+            )
+            # Update ticket with found file path and process normally
+            ticket.metadata["file_path"] = str(found_file)
+            ticket.metadata["discovery_resolved"] = "file_found"
+            # Read the file and continue with normal documentation
+            try:
+                source_code = found_file.read_text(encoding="utf-8", errors="replace")
+                # Continue with normal documentation processing
+                return await self._process_documentation_with_source(
+                    ticket, source_code, formatting_strict
+                )
+            except Exception as e:
+                logger.error(f"Worker {self.worker_id}: Failed to read {found_file}: {e}")
+                return ScribeOutput(success=False, error=f"Failed to read found file: {e}")
+
+        # Step 2: Search for symbol in all source files
+        symbol_matches = self._search_symbol_in_sources(program_id)
+        if symbol_matches:
+            logger.info(
+                f"Worker {self.worker_id}: Found {program_id} as symbol in "
+                f"{len(symbol_matches)} location(s)"
+            )
+            # Document as internal routine in parent file(s)
+            return await self._document_as_internal_routine(
+                ticket, program_id, symbol_matches
+            )
+
+        # Step 3: Not found anywhere - document as external/missing
+        logger.info(
+            f"Worker {self.worker_id}: {program_id} not found, documenting as external"
+        )
+        return await self._document_as_external(ticket, program_id)
+
+    def _search_file_by_name(self, program_id: str) -> Path | None:
+        """Search for a file matching the program ID.
+
+        Searches the input directory (non-recursive) for files matching
+        the program ID with various extensions.
+
+        Args:
+            program_id: The program identifier to search for.
+
+        Returns:
+            Path to the found file, or None if not found.
+        """
+        search_dir = self.input_directory
+        program_upper = program_id.upper()
+        program_lower = program_id.lower()
+
+        for ext in self.DISCOVERY_EXTENSIONS:
+            # Try exact case
+            candidate = search_dir / f"{program_id}{ext}"
+            if candidate.exists():
+                return candidate
+            # Try uppercase
+            candidate = search_dir / f"{program_upper}{ext}"
+            if candidate.exists():
+                return candidate
+            # Try lowercase
+            candidate = search_dir / f"{program_lower}{ext}"
+            if candidate.exists():
+                return candidate
+            # Try with uppercase extension
+            candidate = search_dir / f"{program_id}{ext.upper()}"
+            if candidate.exists():
+                return candidate
+
+        # Also check subdirectories (one level deep for organized projects)
+        for subdir in search_dir.iterdir():
+            if subdir.is_dir() and not subdir.name.startswith("."):
+                for ext in self.DISCOVERY_EXTENSIONS:
+                    candidate = subdir / f"{program_id}{ext}"
+                    if candidate.exists():
+                        return candidate
+                    candidate = subdir / f"{program_upper}{ext}"
+                    if candidate.exists():
+                        return candidate
+                    candidate = subdir / f"{program_lower}{ext}"
+                    if candidate.exists():
+                        return candidate
+
+        return None
+
+    def _search_symbol_in_sources(
+        self, program_id: str
+    ) -> list[tuple[Path, int, str, str]]:
+        """Search for a symbol reference in all source files.
+
+        Searches all source files in the input directory for references
+        to the program ID (CALL, PERFORM, EXEC CICS LINK, etc.).
+
+        Args:
+            program_id: The program/symbol identifier to search for.
+
+        Returns:
+            List of (file_path, line_number, matched_line, match_type) tuples.
+        """
+        matches: list[tuple[Path, int, str, str]] = []
+        search_dir = self.input_directory
+
+        # Compile patterns for this symbol
+        compiled_patterns: list[tuple[re.Pattern, str]] = []
+        for pattern_template in self.SYMBOL_SEARCH_PATTERNS:
+            pattern_str = pattern_template.format(symbol=re.escape(program_id))
+            try:
+                compiled_patterns.append(
+                    (re.compile(pattern_str, re.IGNORECASE), pattern_template)
+                )
+            except re.error:
+                continue
+
+        # Search all source files
+        for source_file in self._get_all_source_files(search_dir):
+            try:
+                content = source_file.read_text(encoding="utf-8", errors="replace")
+                lines = content.split("\n")
+
+                for line_num, line in enumerate(lines, start=1):
+                    for pattern, pattern_type in compiled_patterns:
+                        if pattern.search(line):
+                            # Determine match type from pattern
+                            if "PERFORM" in pattern_type:
+                                match_type = "PERFORM"
+                            elif "CALL" in pattern_type:
+                                match_type = "CALL"
+                            elif "LINK" in pattern_type:
+                                match_type = "CICS_LINK"
+                            elif "XCTL" in pattern_type:
+                                match_type = "CICS_XCTL"
+                            elif "PGM=" in pattern_type:
+                                match_type = "JCL_EXEC"
+                            else:
+                                match_type = "REFERENCE"
+
+                            matches.append((source_file, line_num, line.strip(), match_type))
+                            break  # Only count first match per line
+
+            except Exception as e:
+                logger.debug(f"Worker {self.worker_id}: Could not read {source_file}: {e}")
+                continue
+
+        return matches
+
+    def _get_all_source_files(self, directory: Path) -> list[Path]:
+        """Get all source files in directory (including subdirectories).
+
+        Args:
+            directory: Directory to search.
+
+        Returns:
+            List of Path objects for all source files.
+        """
+        source_files: list[Path] = []
+
+        for ext in self.DISCOVERY_EXTENSIONS:
+            # Direct files
+            source_files.extend(directory.glob(f"*{ext}"))
+            source_files.extend(directory.glob(f"*{ext.upper()}"))
+            # Subdirectory files (one level)
+            source_files.extend(directory.glob(f"*/*{ext}"))
+            source_files.extend(directory.glob(f"*/*{ext.upper()}"))
+
+        return sorted(set(source_files))
+
+    async def _document_as_internal_routine(
+        self,
+        ticket: ProgramManagerTicket,
+        program_id: str,
+        matches: list[tuple[Path, int, str, str]],
+    ) -> ScribeOutput:
+        """Document a program as an internal routine found in parent file(s).
+
+        Updates the parent file's documentation to include this routine
+        in the internal_routines section.
+
+        Args:
+            ticket: The discovery ticket being processed.
+            program_id: The program/routine identifier.
+            matches: List of (file_path, line_number, line, match_type) where found.
+
+        Returns:
+            ScribeOutput indicating success.
+        """
+        # Group matches by parent file
+        files_updated: list[str] = []
+
+        for file_path, line_num, line_content, match_type in matches:
+            # Load existing documentation for the parent file
+            rel_path = file_path.relative_to(self.input_directory)
+            doc_path = self.output_directory / rel_path.parent / f"{rel_path.stem}.doc.json"
+
+            if doc_path.exists():
+                try:
+                    with open(doc_path) as f:
+                        doc_data = json.load(f)
+
+                    # Add to internal_routines if not already present
+                    if "internal_routines" not in doc_data:
+                        doc_data["internal_routines"] = []
+
+                    # Check if already documented
+                    existing = [r for r in doc_data["internal_routines"]
+                               if r.get("name", "").upper() == program_id.upper()]
+                    if not existing:
+                        doc_data["internal_routines"].append({
+                            "name": program_id,
+                            "type": match_type,
+                            "line_number": line_num,
+                            "context": line_content[:100],
+                            "discovered_from": ticket.metadata.get("source", "call_graph"),
+                        })
+
+                        # Save updated documentation
+                        with open(doc_path, "w") as f:
+                            json.dump(doc_data, f, indent=2, default=str)
+
+                        files_updated.append(str(rel_path))
+                        logger.info(
+                            f"Worker {self.worker_id}: Added {program_id} to "
+                            f"internal_routines in {rel_path}"
+                        )
+
+                except Exception as e:
+                    logger.warning(
+                        f"Worker {self.worker_id}: Failed to update {doc_path}: {e}"
+                    )
+
+        # Update ticket metadata
+        ticket.metadata["discovery_resolved"] = "internal_routine"
+        ticket.metadata["found_in_files"] = files_updated
+        ticket.metadata["match_count"] = len(matches)
+
+        return ScribeOutput(
+            success=True,
+            template=None,  # No separate template for internal routines
+            discovery_result={
+                "status": "internal_routine",
+                "program_id": program_id,
+                "found_in": files_updated,
+                "match_count": len(matches),
+            },
+        )
+
+    async def _document_as_external(
+        self,
+        ticket: ProgramManagerTicket,
+        program_id: str,
+    ) -> ScribeOutput:
+        """Document a program as external/missing.
+
+        Creates documentation noting that the program could not be found
+        and providing guidance for resolution.
+
+        Args:
+            ticket: The discovery ticket being processed.
+            program_id: The program identifier that was not found.
+
+        Returns:
+            ScribeOutput with external program documentation.
+        """
+        # Determine likely explanation based on name patterns
+        likely_explanation = self._infer_program_type(program_id)
+
+        # Get caller information from metadata
+        called_from = ticket.metadata.get("called_from", [])
+        if not called_from and ticket.parent_ticket_id:
+            called_from = [ticket.parent_ticket_id]
+
+        # Build search summary
+        search_performed = [
+            f"File search: {self.input_directory}/*{ext}"
+            for ext in self.DISCOVERY_EXTENSIONS[:3]  # Sample
+        ] + [
+            "Symbol search: CALL, PERFORM, EXEC patterns in all source files"
+        ]
+
+        # Determine recommended action
+        if likely_explanation == "system_utility":
+            recommended_action = "Add to system utilities list in call_graph.py"
+        elif likely_explanation == "external_library":
+            recommended_action = "Verify with SME - may be from external library"
+        else:
+            recommended_action = "Locate source code or confirm as external dependency"
+
+        # Create external documentation
+        external_doc = {
+            "header": {
+                "program_id": program_id,
+                "file_name": f"{program_id}.EXTERNAL",
+                "program_type": "EXTERNAL",
+            },
+            "is_external": True,
+            "status": "missing",
+            "called_from": called_from,
+            "search_performed": search_performed,
+            "likely_explanation": likely_explanation,
+            "recommended_action": recommended_action,
+            "discovered_at": datetime.utcnow().isoformat(),
+        }
+
+        # Save external documentation
+        doc_path = self.output_directory / f"{program_id}.external.json"
+        try:
+            with open(doc_path, "w") as f:
+                json.dump(external_doc, f, indent=2)
+            logger.info(
+                f"Worker {self.worker_id}: Created external documentation for "
+                f"{program_id} at {doc_path}"
+            )
+        except Exception as e:
+            logger.error(f"Worker {self.worker_id}: Failed to save external doc: {e}")
+
+        # Update ticket metadata
+        ticket.metadata["discovery_resolved"] = "external"
+        ticket.metadata["likely_explanation"] = likely_explanation
+
+        return ScribeOutput(
+            success=True,
+            template=None,
+            discovery_result={
+                "status": "external",
+                "program_id": program_id,
+                "likely_explanation": likely_explanation,
+                "recommended_action": recommended_action,
+            },
+        )
+
+    def _infer_program_type(self, program_id: str) -> str:
+        """Infer the likely type of a missing program based on naming patterns.
+
+        Args:
+            program_id: The program identifier.
+
+        Returns:
+            One of: "system_utility", "external_library", "missing_source"
+        """
+        upper_id = program_id.upper()
+
+        # IBM system utility patterns
+        system_prefixes = [
+            "IEF", "IEB", "IEH", "IDC", "AMS",  # z/OS utilities
+            "DFH",  # CICS
+            "DSN",  # DB2
+            "CSQ",  # MQ
+            "IGY", "IGZ",  # COBOL runtime
+            "CEE",  # Language Environment
+            "DFS",  # IMS
+            "HEWL", "IEWL",  # Linkage editor
+            "IGYCRCTL", "IKJEFT",  # Common utilities
+        ]
+
+        for prefix in system_prefixes:
+            if upper_id.startswith(prefix):
+                return "system_utility"
+
+        # Common external library patterns
+        if upper_id.startswith(("LIB", "UTL", "CMN", "COM")):
+            return "external_library"
+
+        return "missing_source"
+
+    async def _process_documentation_with_source(
+        self,
+        ticket: ProgramManagerTicket,
+        source_code: str,
+        formatting_strict: bool = False,
+    ) -> ScribeOutput:
+        """Process documentation ticket with provided source code.
+
+        This is a helper that continues the normal documentation flow
+        after source code has been loaded (used by discovery flow).
+
+        Args:
+            ticket: The ticket being processed.
+            source_code: The loaded source code.
+            formatting_strict: If True, add extra JSON formatting instructions.
+
+        Returns:
+            ScribeOutput with documentation results.
+        """
+        # Load previous template if this is an update iteration
+        previous_template = self._load_previous_template(ticket)
+
+        # Determine file type from filename
+        file_type = self._determine_file_type(ticket.file_name)
+
+        # Run preprocessor if applicable
+        preprocessor_result = self._run_preprocessor(source_code, file_type)
+
+        # Prepare source code with centralized handling
+        prepared = self._prepare_source_for_processing(
+            source_code, ticket, previous_template
+        )
+
+        # Build input for ScribeAgent
+        scribe_input = ScribeInput(
+            source_code=prepared.content,
+            file_name=ticket.file_name,
+            file_type=file_type,
+            existing_template=previous_template,
+            iteration=ticket.cycle_number,
+            context={
+                "batch_id": ticket.metadata.get("batch_id", "unknown"),
+                "ticket_id": ticket.ticket_id,
+                "discovery": ticket.metadata.get("discovery", False),
+            },
+            preprocessor_result=preprocessor_result,
+        )
+
+        # Run the Scribe agent
+        try:
+            result = await self.scribe_agent.run(
+                scribe_input,
+                use_mock=self.config.use_mock,
+                formatting_strict=formatting_strict,
+            )
+        except Exception as e:
+            logger.error(
+                f"Worker {self.worker_id}: ScribeAgent failed for {ticket.file_name}: {e}"
+            )
+            return ScribeOutput(
+                success=False,
+                error=str(e),
+            )
+
+        # Save the template to disk
+        if result.template:
+            self._save_template(ticket.file_name, result.template)
+
+        return result
 
     async def _process_clarification_ticket(
         self,

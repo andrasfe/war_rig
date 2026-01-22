@@ -107,6 +107,11 @@ class ScribeOutput(AgentOutput):
         "When True, the ticket should be marked complete and a new VALIDATION ticket created "
         "so a Challenger can re-review the documentation from scratch.",
     )
+    discovery_result: dict | None = Field(
+        default=None,
+        description="Result of discovery ticket processing. Contains status (internal_routine, "
+        "external), program_id, and resolution details. Only set for discovery tickets.",
+    )
 
 
 class ScribeAgent(BaseAgent[ScribeInput, ScribeOutput]):

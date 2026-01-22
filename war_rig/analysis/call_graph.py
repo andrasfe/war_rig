@@ -13,6 +13,7 @@ import re
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
+from enum import Enum
 from pathlib import Path
 from typing import Any
 
@@ -84,6 +85,26 @@ SYSTEM_UTILITIES = frozenset({
 # Pattern to detect dynamic program names (contains parentheses with variables)
 DYNAMIC_PROGRAM_PATTERN = re.compile(r"\([A-Z0-9-]+\)")
 
+# Prefixes that indicate IBM system utilities (auto-classification)
+SYSTEM_UTILITY_PREFIXES = (
+    # IBM system utilities
+    "IEF", "IEB", "IEH", "IEV",
+    # CICS utilities
+    "DFH",
+    # DB2 utilities
+    "DSN",
+    # COBOL compiler and related
+    "IGY", "IEW", "HEW",
+    # TSO and REXX
+    "IKJ", "IRX",
+    # DFSORT
+    "ICE",
+    # DASD/Dataset utilities
+    "ADR", "ICK",
+    # Assembler
+    "ASM",
+)
+
 
 @dataclass
 class CallRelationship:
@@ -95,6 +116,14 @@ class CallRelationship:
     citation: int | None = None
 
 
+class ResolutionStatus(Enum):
+    """Status of a program's documentation resolution."""
+    DOCUMENTED = "documented"          # Fully documented from source file
+    INTERNAL_ROUTINE = "internal"      # Found as internal routine in parent
+    EXTERNAL_MISSING = "external"      # External/missing program
+    SYSTEM_UTILITY = "system"          # Known system utility
+
+
 @dataclass
 class ProgramInfo:
     """Information about a documented program."""
@@ -104,6 +133,18 @@ class ProgramInfo:
     summary: str | None = None
     calls: list[CallRelationship] = field(default_factory=list)
     called_by: list[str] = field(default_factory=list)
+    resolution_status: ResolutionStatus = ResolutionStatus.DOCUMENTED
+    parent_program: str | None = None  # For internal routines
+
+
+@dataclass
+class ResolvedProgram:
+    """A program that was resolved through discovery workflow."""
+    program_id: str
+    status: ResolutionStatus
+    parent_program: str | None = None  # For internal routines
+    called_by: list[str] = field(default_factory=list)
+    explanation: str | None = None
 
 
 @dataclass
@@ -118,6 +159,8 @@ class CallGraphAnalysis:
     call_chains: list[list[str]]
     dynamic_calls: list[CallRelationship]
     total_calls: int
+    auto_classified_utilities: set[str] = field(default_factory=set)  # Auto-detected by prefix
+    resolved_programs: dict[str, ResolvedProgram] = field(default_factory=dict)  # Discovery results
 
     def has_gaps(self) -> bool:
         """Check if there are undocumented custom programs."""
@@ -171,7 +214,7 @@ class CallGraphAnalyzer:
         logger.info(f"Analyzing {len(docs)} documentation files")
 
         # Build program info
-        programs = self._build_program_info(docs)
+        programs, resolved_programs = self._build_program_info(docs)
 
         # Extract call relationships
         all_calls, dynamic_calls = self._extract_calls(docs, programs)
@@ -181,9 +224,23 @@ class CallGraphAnalyzer:
         all_callees = {call.callee for call in all_calls if not call.is_dynamic}
         external_deps = all_callees - documented_ids
 
-        # Classify external dependencies
-        system_utils = external_deps & self.system_utilities
-        custom_missing = external_deps - system_utils
+        # Classify external dependencies (with auto-detection)
+        system_utils = set()
+        auto_classified = set()
+        custom_missing = set()
+
+        for dep in external_deps:
+            if dep in self.system_utilities:
+                system_utils.add(dep)
+            elif self._detect_system_utility(dep):
+                # Auto-classified based on prefix pattern
+                system_utils.add(dep)
+                auto_classified.add(dep)
+            else:
+                custom_missing.add(dep)
+
+        if auto_classified:
+            logger.info(f"Auto-classified {len(auto_classified)} utilities: {sorted(auto_classified)}")
 
         # Find entry points and leaf nodes
         entry_points = self._find_entry_points(programs, documented_ids)
@@ -206,6 +263,8 @@ class CallGraphAnalyzer:
             call_chains=call_chains,
             dynamic_calls=dynamic_calls,
             total_calls=len(all_calls),
+            auto_classified_utilities=auto_classified,
+            resolved_programs=resolved_programs,
         )
 
     def _empty_analysis(self) -> CallGraphAnalysis:
@@ -220,6 +279,8 @@ class CallGraphAnalyzer:
             call_chains=[],
             dynamic_calls=[],
             total_calls=0,
+            auto_classified_utilities=set(),
+            resolved_programs={},
         )
 
     def _load_documentation(self) -> list[dict[str, Any]]:
@@ -250,25 +311,67 @@ class CallGraphAnalyzer:
             return doc["purpose"].get("summary")
         return doc.get("summary")
 
-    def _build_program_info(self, docs: list[dict]) -> dict[str, ProgramInfo]:
-        """Build program info from documentation."""
+    def _build_program_info(
+        self,
+        docs: list[dict],
+    ) -> tuple[dict[str, ProgramInfo], dict[str, ResolvedProgram]]:
+        """Build program info from documentation.
+
+        Returns:
+            Tuple of (programs dict, resolved_programs dict)
+        """
         programs = {}
+        resolved_programs = {}
+
         for doc in docs:
             program_id = self._get_program_id(doc)
             if not program_id:
                 continue
 
             file_type = None
+            resolution_status = ResolutionStatus.DOCUMENTED
+            parent_program = None
+
             if "header" in doc and isinstance(doc["header"], dict):
                 file_type = doc["header"].get("file_type")
+
+            # Check for discovery metadata
+            discovery_result = doc.get("discovery_result")
+            if discovery_result:
+                status = discovery_result.get("status")
+                if status == "internal_routine":
+                    resolution_status = ResolutionStatus.INTERNAL_ROUTINE
+                    parent_program = discovery_result.get("parent_file")
+                    resolved_programs[program_id] = ResolvedProgram(
+                        program_id=program_id,
+                        status=ResolutionStatus.INTERNAL_ROUTINE,
+                        parent_program=parent_program,
+                        explanation=discovery_result.get("likely_explanation"),
+                    )
+                elif status == "external":
+                    resolution_status = ResolutionStatus.EXTERNAL_MISSING
+                    resolved_programs[program_id] = ResolvedProgram(
+                        program_id=program_id,
+                        status=ResolutionStatus.EXTERNAL_MISSING,
+                        explanation=discovery_result.get("likely_explanation"),
+                    )
+                elif status == "system_utility":
+                    resolution_status = ResolutionStatus.SYSTEM_UTILITY
+                    resolved_programs[program_id] = ResolvedProgram(
+                        program_id=program_id,
+                        status=ResolutionStatus.SYSTEM_UTILITY,
+                    )
 
             programs[program_id] = ProgramInfo(
                 program_id=program_id,
                 file_name=doc.get("_source_file", ""),
                 file_type=file_type,
                 summary=self._get_summary(doc),
+                resolution_status=resolution_status,
+                parent_program=parent_program,
             )
-        return programs
+
+        return programs, resolved_programs
 
     def _extract_calls(
         self,
@@ -401,6 +504,18 @@ class CallGraphAnalyzer:
         """Check if a program is a known system utility."""
         return program_name.upper() in self.system_utilities
 
+    def _detect_system_utility(self, program_name: str) -> bool:
+        """Auto-detect if a program is a system utility based on naming patterns.
+
+        Returns True if the program matches known IBM system utility prefixes.
+        """
+        name_upper = program_name.upper()
+        # Check explicit list first
+        if name_upper in self.system_utilities:
+            return True
+        # Check prefixes for auto-classification
+        return name_upper.startswith(SYSTEM_UTILITY_PREFIXES)
+
     def generate_markdown_report(self, analysis: CallGraphAnalysis) -> str:
         """Generate a markdown report of the call graph analysis."""
         lines = []
@@ -426,7 +541,16 @@ class CallGraphAnalyzer:
             for prog in sorted(analysis.entry_points):
                 info = analysis.documented_programs.get(prog)
                 summary = info.summary[:80] + "..." if info and info.summary and len(info.summary) > 80 else (info.summary if info else "")
-                lines.append(f"- **{prog}**: {summary or 'No summary'}")
+                # Get status icon
+                if info and info.resolution_status == ResolutionStatus.INTERNAL_ROUTINE:
+                    icon = "~"
+                elif info and info.resolution_status == ResolutionStatus.EXTERNAL_MISSING:
+                    icon = "✗"
+                elif info and info.resolution_status == ResolutionStatus.SYSTEM_UTILITY:
+                    icon = "⚙"
+                else:
+                    icon = "✓"
+                lines.append(f"- {icon} **{prog}**: {summary or 'No summary'}")
         else:
             lines.append("*No entry points found*")
         lines.append("")
@@ -437,16 +561,50 @@ class CallGraphAnalyzer:
         lines.append("### System Utilities (Skipped)")
         lines.append("")
         if analysis.system_utilities:
-            for prog in sorted(analysis.system_utilities):
-                lines.append(f"- {prog}")
+            known_utils = analysis.system_utilities - analysis.auto_classified_utilities
+            if known_utils:
+                lines.append("**Known utilities:**")
+                for prog in sorted(known_utils):
+                    lines.append(f"- {prog}")
+                lines.append("")
+            if analysis.auto_classified_utilities:
+                lines.append("**Auto-classified by prefix pattern:**")
+                for prog in sorted(analysis.auto_classified_utilities):
+                    lines.append(f"- {prog}")
+                lines.append("")
         else:
             lines.append("*None*")
-        lines.append("")
+            lines.append("")
+
+        # Resolved programs (from discovery workflow)
+        if analysis.resolved_programs:
+            lines.append("### Resolved Through Discovery")
+            lines.append("")
+            lines.append("| Status | Program | Resolution |")
+            lines.append("|--------|---------|------------|")
+            for prog_id in sorted(analysis.resolved_programs.keys()):
+                resolved = analysis.resolved_programs[prog_id]
+                if resolved.status == ResolutionStatus.INTERNAL_ROUTINE:
+                    status_icon = "~"
+                    resolution = f"Internal routine in {resolved.parent_program}"
+                elif resolved.status == ResolutionStatus.EXTERNAL_MISSING:
+                    status_icon = "✗"
+                    resolution = resolved.explanation or "External/missing"
+                elif resolved.status == ResolutionStatus.SYSTEM_UTILITY:
+                    status_icon = "⚙"
+                    resolution = "System utility"
+                else:
+                    status_icon = "✓"
+                    resolution = "Documented"
+                lines.append(f"| {status_icon} | {prog_id} | {resolution} |")
+            lines.append("")
 
         lines.append("### Custom Programs (Need Documentation)")
         lines.append("")
-        if analysis.custom_missing:
-            for prog in sorted(analysis.custom_missing):
+        # Exclude programs already in resolved_programs
+        truly_missing = analysis.custom_missing - set(analysis.resolved_programs.keys())
+        if truly_missing:
+            for prog in sorted(truly_missing):
                 # Find who calls this
                 callers = []
                 for pid, info in analysis.documented_programs.items():
@@ -469,8 +627,34 @@ class CallGraphAnalyzer:
         lines.append(f"| Leaf Nodes | {len(analysis.leaf_nodes)} |")
         lines.append(f"| External Dependencies | {len(analysis.external_dependencies)} |")
         lines.append(f"| System Utilities | {len(analysis.system_utilities)} |")
-        lines.append(f"| Custom Missing | {len(analysis.custom_missing)} |")
+        lines.append(f"| Auto-classified | {len(analysis.auto_classified_utilities)} |")
+
+        # Count resolved by status
+        internal_routines = sum(
+            1 for r in analysis.resolved_programs.values()
+            if r.status == ResolutionStatus.INTERNAL_ROUTINE
+        )
+        external_resolved = sum(
+            1 for r in analysis.resolved_programs.values()
+            if r.status == ResolutionStatus.EXTERNAL_MISSING
+        )
+        truly_missing = len(analysis.custom_missing) - len(analysis.resolved_programs)
+
+        if analysis.resolved_programs:
+            lines.append(f"| Resolved (Internal) | {internal_routines} |")
+            lines.append(f"| Resolved (External) | {external_resolved} |")
+
+        lines.append(f"| Custom Missing | {truly_missing} |")
         lines.append(f"| Total Calls | {analysis.total_calls} |")
+        lines.append("")
+
+        # Legend
+        lines.append("### Status Legend")
+        lines.append("")
+        lines.append("- ✓ **Documented**: Fully documented from source file")
+        lines.append("- ~ **Internal**: Found as routine/section in parent program")
+        lines.append("- ✗ **External**: External or missing program")
+        lines.append("- ⚙ **System**: Known system utility")
         lines.append("")
 
         return "\n".join(lines)
@@ -530,10 +714,32 @@ class CallGraphAnalyzer:
             lines.append("    classDef entryPoint fill:#90EE90,stroke:#228B22")
             lines.append(f"    class {','.join(ids)} entryPoint")
 
-        if analysis.custom_missing:
-            ids = [sanitize_id(p) for p in sorted(analysis.custom_missing)]
+        # Truly missing (not resolved)
+        truly_missing = analysis.custom_missing - set(analysis.resolved_programs.keys())
+        if truly_missing:
+            ids = [sanitize_id(p) for p in sorted(truly_missing)]
             lines.append("    classDef missing fill:#FFB6C1,stroke:#DC143C")
             lines.append(f"    class {','.join(ids)} missing")
+
+        # Internal routines (resolved)
+        internal_routines = [
+            p for p, r in analysis.resolved_programs.items()
+            if r.status == ResolutionStatus.INTERNAL_ROUTINE
+        ]
+        if internal_routines:
+            ids = [sanitize_id(p) for p in sorted(internal_routines)]
+            lines.append("    classDef internal fill:#FFF8DC,stroke:#DAA520")
+            lines.append(f"    class {','.join(ids)} internal")
+
+        # External resolved (documented as missing)
+        external_resolved = [
+            p for p, r in analysis.resolved_programs.items()
+            if r.status == ResolutionStatus.EXTERNAL_MISSING
+        ]
+        if external_resolved:
+            ids = [sanitize_id(p) for p in sorted(external_resolved)]
+            lines.append("    classDef external fill:#E6E6FA,stroke:#9370DB")
+            lines.append(f"    class {','.join(ids)} external")
 
         lines.append("```")
         return "\n".join(lines)
@@ -557,13 +763,22 @@ class CallGraphAnalyzer:
         # Program inventory
         lines.append("## Program Inventory")
         lines.append("")
-        lines.append("| Program | Type | Summary |")
-        lines.append("|---------|------|---------|")
+        lines.append("| Status | Program | Type | Summary |")
+        lines.append("|--------|---------|------|---------|")
         for prog_id in sorted(analysis.documented_programs.keys()):
             info = analysis.documented_programs[prog_id]
             file_type = info.file_type or "Unknown"
             summary = (info.summary[:60] + "...") if info.summary and len(info.summary) > 60 else (info.summary or "")
-            lines.append(f"| {prog_id} | {file_type} | {summary} |")
+            # Get status icon
+            if info.resolution_status == ResolutionStatus.INTERNAL_ROUTINE:
+                icon = "~"
+            elif info.resolution_status == ResolutionStatus.EXTERNAL_MISSING:
+                icon = "✗"
+            elif info.resolution_status == ResolutionStatus.SYSTEM_UTILITY:
+                icon = "⚙"
+            else:
+                icon = "✓"
+            lines.append(f"| {icon} | {prog_id} | {file_type} | {summary} |")
         lines.append("")
 
         # External dependencies
@@ -573,8 +788,16 @@ class CallGraphAnalyzer:
         lines.append("")
         lines.append("The following system utilities are called but not documented:")
         lines.append("")
-        for prog in sorted(analysis.system_utilities):
-            lines.append(f"- `{prog}`")
+        known_utils = analysis.system_utilities - analysis.auto_classified_utilities
+        if known_utils:
+            for prog in sorted(known_utils):
+                lines.append(f"- `{prog}`")
+        if analysis.auto_classified_utilities:
+            lines.append("")
+            lines.append("**Auto-classified (by prefix pattern):**")
+            lines.append("")
+            for prog in sorted(analysis.auto_classified_utilities):
+                lines.append(f"- `{prog}`")
         lines.append("")
 
         if analysis.custom_missing:

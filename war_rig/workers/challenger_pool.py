@@ -385,6 +385,11 @@ class ChallengerWorker:
             f"{ticket.ticket_id} for {ticket.file_name}"
         )
 
+        # Check if this is a discovery ticket validation
+        if ticket.metadata and ticket.metadata.get("discovery"):
+            await self._process_discovery_validation(ticket)
+            return
+
         # Load the documentation state from the ticket metadata
         state = self._load_documentation_state(ticket)
 
@@ -756,6 +761,148 @@ class ChallengerWorker:
                 is_valid=False,
                 issues_found=[str(e)],
             )
+
+    async def _process_discovery_validation(self, ticket: ProgramManagerTicket) -> None:
+        """Process validation for a discovery ticket.
+
+        Discovery tickets are for programs found in call graphs but not in source.
+        Scribe either:
+        - Found the symbol as an internal routine in a parent file
+        - Documented it as external/missing
+
+        This method validates that resolution.
+
+        Args:
+            ticket: The discovery validation ticket.
+        """
+        metadata = ticket.metadata or {}
+        discovery_result = metadata.get("discovery_result", {})
+        program_id = ticket.program_id
+
+        logger.info(
+            f"Worker {self.worker_id}: Validating discovery ticket for {program_id}"
+        )
+
+        status = discovery_result.get("status")
+        issues = []
+
+        if status == "internal_routine":
+            # Scribe found the symbol in a parent file
+            parent_file = discovery_result.get("parent_file")
+            parent_doc = discovery_result.get("parent_doc")
+
+            if not parent_file:
+                issues.append("Discovery marked as internal_routine but no parent_file specified")
+            else:
+                # Verify the parent documentation exists
+                parent_doc_path = self._get_doc_path(parent_file)
+                if not parent_doc_path.exists():
+                    issues.append(
+                        f"Parent documentation {parent_doc_path} not found for "
+                        f"internal routine {program_id}"
+                    )
+                else:
+                    # Verify the symbol is mentioned in the parent doc
+                    try:
+                        with open(parent_doc_path, "r", encoding="utf-8") as f:
+                            parent_content = f.read()
+                        if program_id.upper() not in parent_content.upper():
+                            issues.append(
+                                f"Symbol {program_id} not found in parent documentation "
+                                f"{parent_doc_path}"
+                            )
+                    except Exception as e:
+                        issues.append(f"Error reading parent doc {parent_doc_path}: {e}")
+
+        elif status == "external":
+            # Scribe documented it as external/missing
+            search_performed = discovery_result.get("search_performed", {})
+            likely_explanation = discovery_result.get("likely_explanation", "")
+
+            # Validate that a search was actually performed
+            files_searched = search_performed.get("files_searched", 0)
+            if files_searched == 0:
+                issues.append("Discovery marked as external but no files were searched")
+
+            # Quick spot-check: if there's a file with matching name, that's suspicious
+            input_dir = metadata.get("input_directory")
+            if input_dir:
+                input_path = Path(input_dir)
+                if input_path.exists():
+                    # Look for any file with matching name
+                    for ext in [".cbl", ".cob", ".cobol", ".prc", ".proc", ".jcl"]:
+                        matches = list(input_path.glob(f"**/{program_id}{ext}"))
+                        matches += list(input_path.glob(f"**/{program_id.lower()}{ext}"))
+                        if matches:
+                            issues.append(
+                                f"File {matches[0]} exists but was marked as external. "
+                                f"Re-verify discovery search."
+                            )
+                            break
+
+        elif status == "system_utility":
+            # Auto-classified as system utility - valid, just approve
+            logger.info(
+                f"Worker {self.worker_id}: {program_id} classified as system utility, approving"
+            )
+
+        else:
+            issues.append(f"Unknown discovery status: {status}")
+
+        # Process validation result
+        if issues:
+            logger.warning(
+                f"Worker {self.worker_id}: Discovery validation found issues for {program_id}: "
+                f"{issues}"
+            )
+            # Create clarification ticket for Scribe to re-check
+            clarification_metadata = {
+                "parent_validation_ticket": ticket.ticket_id,
+                "challenger_questions": [
+                    {
+                        "question_id": f"disc-{i}",
+                        "section": "discovery",
+                        "question_type": "verification",
+                        "question": issue,
+                        "severity": "blocking",
+                        "evidence": f"Discovery result: {discovery_result}",
+                    }
+                    for i, issue in enumerate(issues)
+                ],
+                "challenger_worker": self.worker_id,
+                "file_path": metadata.get("file_path"),
+                "discovery": True,
+                "discovery_result": discovery_result,
+            }
+
+            self.beads_client.create_pm_ticket(
+                ticket_type=TicketType.CLARIFICATION,
+                file_name=ticket.file_name,
+                program_id=program_id,
+                cycle_number=ticket.cycle_number,
+                parent_ticket_id=ticket.ticket_id,
+                priority=BeadsPriority.MEDIUM,
+                metadata=clarification_metadata,
+            )
+
+            self.beads_client.update_ticket_state(
+                ticket.ticket_id,
+                TicketState.COMPLETED,
+                reason=f"Discovery validation found {len(issues)} issues, created clarification",
+            )
+            self.status.tickets_rejected += 1
+        else:
+            # Discovery validated successfully
+            logger.info(
+                f"Worker {self.worker_id}: Discovery validated for {program_id} "
+                f"(status: {status})"
+            )
+            self.beads_client.update_ticket_state(
+                ticket.ticket_id,
+                TicketState.COMPLETED,
+                reason=f"Discovery validated successfully (status: {status})",
+            )
+            self.status.tickets_validated += 1
 
     def _get_validation_count(self, file_name: str) -> int:
         """Count completed validation tickets for a file.
