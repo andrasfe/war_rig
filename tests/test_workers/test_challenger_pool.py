@@ -65,14 +65,19 @@ def mock_beads_client() -> MagicMock:
 
 
 @pytest.fixture
-def mock_config() -> MagicMock:
+def mock_config(tmp_path) -> MagicMock:
     """Create a mock WarRigConfig."""
+    from pathlib import Path
+
     config = MagicMock(spec=WarRigConfig)
     config.num_challengers = 3
     config.max_questions_per_round = 5
+    config.output_directory = tmp_path / "output"
+    config.output_directory.mkdir(parents=True, exist_ok=True)
     config.challenger = MagicMock(spec=ChallengerConfig)
     config.challenger.model = "claude-sonnet-4-20250514"
     config.challenger.temperature = 0.3
+    config.challenger.max_prompt_tokens = 15000
     config.api = MagicMock()
     config.api.provider = "openrouter"
     config.api.api_key = "test-key"

@@ -30,6 +30,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
 from typing import Any
 
 from war_rig.agents.challenger import ChallengerAgent, ChallengerInput, ChallengerOutput
@@ -167,6 +168,28 @@ class ChallengerWorker:
         # Track tickets this worker has failed on (to avoid re-picking immediately)
         # Other workers with different LLMs can still pick them up
         self._failed_tickets: set[str] = set()
+
+    def _get_doc_path(self, file_name: str) -> Path:
+        """Get the documentation file path for a given file name.
+
+        Handles both flat paths (legacy) and relative paths (new structure):
+        - "PROG.cbl" -> output/PROG.doc.json
+        - "app/cobol/PROG.cbl" -> output/app/cobol/PROG.doc.json
+
+        Args:
+            file_name: Source file name or relative path.
+
+        Returns:
+            Path to the documentation JSON file.
+        """
+        rel_path = Path(file_name)
+
+        # If the path has a parent directory, mirror the structure
+        if rel_path.parent != Path("."):
+            return self.output_directory / rel_path.parent / f"{rel_path.stem}.doc.json"
+
+        # Flat path (legacy or root-level files)
+        return self.output_directory / f"{rel_path.stem}.doc.json"
 
     async def start(self) -> None:
         """Start the worker's processing loop.
@@ -497,8 +520,8 @@ class ChallengerWorker:
         else:
             # Template not in metadata - try loading from disk (.doc.json file)
             # This happens when PM creates VALIDATION tickets for files with existing docs
-            file_stem = ticket.file_name.rsplit(".", 1)[0] if "." in ticket.file_name else ticket.file_name
-            doc_file = self.output_directory / f"{file_stem}.doc.json"
+            # Handle both flat paths (legacy) and relative paths (new structure)
+            doc_file = self._get_doc_path(ticket.file_name)
             if doc_file.exists():
                 try:
                     with open(doc_file, "r", encoding="utf-8") as f:

@@ -28,7 +28,11 @@ class SourceFile(BaseModel):
     """
 
     path: Path = Field(..., description="Full path to the file")
-    name: str = Field(..., description="File name without path")
+    name: str = Field(..., description="File name (basename) without path")
+    relative_path: str = Field(
+        default="",
+        description="Relative path from input directory (e.g., 'app/cobol/PROG.cbl')",
+    )
     file_type: FileType = Field(..., description="Detected file type")
     size_bytes: int = Field(default=0, ge=0, description="File size in bytes")
     line_count: int | None = Field(default=None, description="Number of lines (if read)")
@@ -165,9 +169,17 @@ class SourceReader:
             except OSError:
                 size = 0
 
+            # Compute relative path from input directory
+            try:
+                rel_path = path.relative_to(directory)
+            except ValueError:
+                # If path is not relative to directory, use basename
+                rel_path = Path(path.name)
+
             yield SourceFile(
                 path=path,
                 name=path.name,
+                relative_path=str(rel_path),
                 file_type=file_type,
                 size_bytes=size,
             )

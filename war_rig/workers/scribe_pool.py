@@ -570,14 +570,24 @@ class ScribeWorker:
     def _get_doc_output_path(self, file_name: str) -> Path:
         """Get the output path for a documentation file.
 
+        The output path mirrors the input directory structure:
+        - Input: "app/cobol/PROG.cbl" -> Output: "output/app/cobol/PROG.doc.json"
+        - Input: "PROG.cbl" (flat) -> Output: "output/PROG.doc.json"
+
         Args:
-            file_name: Source file name.
+            file_name: Source file name or relative path (e.g., "app/cobol/PROG.cbl").
 
         Returns:
             Path to the documentation JSON file.
         """
-        base_name = Path(file_name).stem
-        return self.output_directory / f"{base_name}.doc.json"
+        rel_path = Path(file_name)
+
+        # If the path has a parent directory, mirror the structure
+        if rel_path.parent != Path("."):
+            return self.output_directory / rel_path.parent / f"{rel_path.stem}.doc.json"
+
+        # Flat path (legacy or root-level files)
+        return self.output_directory / f"{rel_path.stem}.doc.json"
 
     def _load_previous_template(self, file_name: str) -> DocumentationTemplate | None:
         """Load the previous iteration's documentation template.
@@ -663,17 +673,21 @@ class ScribeWorker:
     def _save_template(self, file_name: str, template: DocumentationTemplate) -> None:
         """Save the documentation template to the output directory.
 
+        Creates parent directories as needed to mirror input structure.
         Creates a backup of the existing template before overwriting to protect
         against corruption from bad LLM responses.
 
         Args:
-            file_name: Source file name.
+            file_name: Source file name or relative path (e.g., "app/cobol/PROG.cbl").
             template: The documentation template to save.
         """
         doc_path = self._get_doc_output_path(file_name)
         backup_path = Path(str(doc_path) + ".bak")
 
         try:
+            # Create parent directories if they don't exist (for mirrored structure)
+            doc_path.parent.mkdir(parents=True, exist_ok=True)
+
             # Backup existing template before overwriting
             if doc_path.exists():
                 import shutil

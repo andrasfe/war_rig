@@ -363,13 +363,16 @@ class ProgramManagerAgent(BaseAgent[ProgramManagerInput, ProgramManagerOutput]):
 
         # Create appropriate ticket for each file
         for source_file in self.discovered_files:
+            # Use relative_path as the file identifier (preserves directory structure)
+            file_identifier = source_file.relative_path or source_file.name
+
             # Check if ticket already exists for this file
-            if source_file.name in existing_tickets:
-                existing = existing_tickets[source_file.name]
+            if file_identifier in existing_tickets:
+                existing = existing_tickets[file_identifier]
                 self.created_tickets.append(existing)
                 skipped_count += 1
                 logger.debug(
-                    f"Skipping {source_file.name} - ticket {existing.ticket_id} "
+                    f"Skipping {file_identifier} - ticket {existing.ticket_id} "
                     f"already exists ({existing.state.value})"
                 )
                 continue
@@ -377,27 +380,29 @@ class ProgramManagerAgent(BaseAgent[ProgramManagerInput, ProgramManagerOutput]):
             program_id = source_file.stem.upper()
 
             # Check if documentation already exists for this file
-            doc_file = output_dir / f"{source_file.stem}.doc.json"
+            # Output mirrors input structure: output/rel/path/PROG.doc.json
+            rel_path = Path(file_identifier)
+            doc_file = output_dir / rel_path.parent / f"{rel_path.stem}.doc.json"
             has_existing_doc = doc_file.exists()
 
             # Create VALIDATION ticket if doc exists, DOCUMENTATION if not
             if has_existing_doc:
                 ticket_type = TicketType.VALIDATION
                 val_count += 1
-                logger.debug(f"Found existing doc for {source_file.name}, creating VALIDATION ticket")
+                logger.debug(f"Found existing doc for {file_identifier}, creating VALIDATION ticket")
             else:
                 ticket_type = TicketType.DOCUMENTATION
                 doc_count += 1
 
             ticket = self.beads.create_pm_ticket(
                 ticket_type=ticket_type,
-                file_name=source_file.name,
+                file_name=file_identifier,  # Use relative path as file_name
                 program_id=program_id,
                 cycle_number=self.cycle_number,
                 priority=BeadsPriority.MEDIUM,
                 metadata={
                     "batch_id": self.batch_id,
-                    "file_path": str(source_file.path),
+                    "file_path": str(source_file.path),  # Absolute path for direct access
                     "file_type": source_file.file_type.value,
                     "size_bytes": source_file.size_bytes,
                     "has_existing_doc": has_existing_doc,
@@ -406,7 +411,7 @@ class ProgramManagerAgent(BaseAgent[ProgramManagerInput, ProgramManagerOutput]):
 
             if ticket:
                 self.created_tickets.append(ticket)
-                logger.debug(f"Created {ticket_type.value} ticket {ticket.ticket_id} for {source_file.name}")
+                logger.debug(f"Created {ticket_type.value} ticket {ticket.ticket_id} for {file_identifier}")
 
         if skipped_count > 0:
             logger.info(
