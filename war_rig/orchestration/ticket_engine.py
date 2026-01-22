@@ -715,12 +715,12 @@ class TicketOrchestrator:
                 ticket_type=TicketType.DOCUMENTATION,
                 state=TicketState.CREATED,
                 cycle_number=self._state.cycle,
-                priority=BeadsPriority.HIGH,  # Gap-filling is high priority
                 metadata={
                     "batch_id": self._state.batch_id,
                     "source": "call_graph_gap",
                     "discovery": True,  # Flag indicating this needs file discovery
                     "created_at": datetime.utcnow().isoformat(),
+                    "priority": "high",  # Gap-filling is high priority
                 },
             )
 
