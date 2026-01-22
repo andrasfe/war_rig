@@ -124,7 +124,7 @@ class FileExtensionsConfig(BaseModel):
 
     cobol: list[str] = Field(default=[".cbl", ".cob", ".CBL", ".COB", ".cobol", ".COBOL"])
     copybook: list[str] = Field(default=[".cpy", ".CPY", ".copy", ".COPY", ".copybook"])
-    jcl: list[str] = Field(default=[".jcl", ".JCL", ".proc", ".PROC"])
+    jcl: list[str] = Field(default=[".jcl", ".JCL", ".proc", ".PROC", ".prc", ".PRC"])
     bms: list[str] = Field(default=[".bms", ".BMS"])
     pli: list[str] = Field(default=[".pli", ".PLI", ".pl1", ".PL1"])
     listing: list[str] = Field(default=[".lst", ".LST", ".list", ".LIST"])
