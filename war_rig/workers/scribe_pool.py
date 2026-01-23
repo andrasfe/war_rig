@@ -441,6 +441,20 @@ class ScribeWorker:
 
         # Try to claim the first available ticket
         for ticket in tickets:
+            # Check file lock BEFORE claiming to avoid wasteful claim-then-release churn
+            # This is an optimization - the actual lock is still acquired in _process_ticket()
+            if self.file_lock_manager is not None:
+                output_file = self._get_output_file_for_ticket(ticket)
+                if await self.file_lock_manager.is_locked_by_other(
+                    output_file, self.worker_id
+                ):
+                    # File is locked by another worker, skip this ticket
+                    logger.debug(
+                        f"Worker {self.worker_id}: Skipping ticket {ticket.ticket_id} - "
+                        f"file {output_file} is locked by another worker"
+                    )
+                    continue
+
             if self.beads_client.claim_ticket(ticket.ticket_id, self.worker_id):
                 logger.info(
                     f"Worker {self.worker_id}: Claimed ticket {ticket.ticket_id} "
@@ -448,7 +462,7 @@ class ScribeWorker:
                 )
                 return ticket
 
-        # All tickets were claimed by other workers
+        # All tickets were claimed by other workers or had locked files
         return None
 
     def _get_output_file_for_ticket(self, ticket: ProgramManagerTicket) -> str:

@@ -346,10 +346,16 @@ scripts/
 
 When running multiple Scribe or Challenger workers in parallel, War Rig uses a centralized file locking mechanism (`war_rig/utils/file_lock.py`) to prevent race conditions. Features include:
 
-- Thread-safe lock management using `asyncio.Lock`
+- Coroutine-level synchronization using `asyncio.Lock` (workers run as async tasks)
+- **Lock-before-claim pattern**: Workers check file lock availability before claiming tickets, reducing wasteful claim-release churn
 - Automatic lock expiration (default 5 minutes) for crash recovery
-- Workers check file availability before claiming tickets
 - Locks identified by normalized absolute file paths
+- Fallback skip tracking for rare race conditions
+
+**Lock ordering (deadlock prevention):**
+1. FileLockManager per-file locks (checked first)
+2. BeadsClient ticket state locks
+3. BeadsClient persistence locks
 
 ### Case-Insensitive Enum Handling
 

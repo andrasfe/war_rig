@@ -7,10 +7,15 @@ simultaneously.
 Ticket: war_rig-qxw9
 
 Features:
-    - Thread-safe file lock management using asyncio.Lock
+    - Coroutine-level synchronization using asyncio.Lock (NOT thread-safe)
     - Automatic lock expiration for crash recovery
     - Workers can check if a file is locked before claiming a ticket
     - Locks are identified by file path (normalized to absolute paths)
+
+Important:
+    This manager provides synchronization for coroutines running in the same
+    asyncio event loop. It is NOT thread-safe. All methods must be called
+    from an async context within the same event loop.
 
 Example:
     from war_rig.utils.file_lock import FileLockManager
@@ -59,15 +64,16 @@ class LockInfo:
 
 
 class FileLockManager:
-    """Thread-safe file lock manager for concurrent workers.
+    """File lock manager for concurrent asyncio workers.
 
     Manages locks on output files to prevent multiple workers from
     simultaneously processing tickets that write to the same file.
     Locks are stored in memory and automatically expire after a
     configurable timeout (for crash recovery).
 
-    The lock manager uses asyncio.Lock for thread-safety, ensuring
-    atomic acquire/release operations even with concurrent access.
+    The lock manager uses asyncio.Lock for coroutine-level synchronization,
+    ensuring atomic acquire/release operations even with concurrent coroutines.
+    This is NOT thread-safe - all operations must occur in the same event loop.
 
     Attributes:
         lock_timeout: Seconds after which a lock automatically expires.
@@ -230,6 +236,39 @@ class FileLockManager:
             if normalized not in self._locks:
                 return False
             return self._locks[normalized].worker_id == worker_id
+
+    async def is_locked_by_other(self, file_path: str, worker_id: str) -> bool:
+        """Check if a file is locked by a different worker.
+
+        This method allows a worker to check if a file is locked by someone
+        else BEFORE attempting to claim a ticket. This implements the
+        "lock-before-claim" pattern to reduce wasteful ticket churn.
+
+        Note: The state may change immediately after this call returns.
+        This is an optimization check, not an atomic lock acquisition.
+        The actual lock must still be acquired in _process_ticket().
+
+        Must be called from an async context within the same event loop
+        as all other FileLockManager operations.
+
+        Args:
+            file_path: Path to the file to check.
+            worker_id: The worker asking (returns False if this worker holds the lock).
+
+        Returns:
+            True if the file is locked by another worker, False if unlocked
+            or if locked by the calling worker.
+        """
+        async with self._lock:
+            self._cleanup_expired()
+            normalized = str(Path(file_path).resolve())
+
+            if normalized not in self._locks:
+                # File is not locked
+                return False
+
+            # File is locked - check if it's by someone else
+            return self._locks[normalized].worker_id != worker_id
 
     async def get_lock_holder(self, file_path: str) -> Optional[str]:
         """Get the worker ID holding a lock on a file.

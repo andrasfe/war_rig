@@ -108,6 +108,62 @@ class TestFileLockManager:
         assert await manager.is_locked_by(file_path, "worker-2") is False
 
     @pytest.mark.asyncio
+    async def test_is_locked_by_other_not_locked(self, tmp_path):
+        """Test is_locked_by_other returns False when file is not locked."""
+        manager = FileLockManager(lock_timeout=60.0)
+        file_path = str(tmp_path / "output.doc.json")
+
+        # File is not locked - should return False for any worker
+        assert await manager.is_locked_by_other(file_path, "worker-1") is False
+        assert await manager.is_locked_by_other(file_path, "worker-2") is False
+
+    @pytest.mark.asyncio
+    async def test_is_locked_by_other_locked_by_same_worker(self, tmp_path):
+        """Test is_locked_by_other returns False when locked by the same worker."""
+        manager = FileLockManager(lock_timeout=60.0)
+        file_path = str(tmp_path / "output.doc.json")
+
+        # Worker-1 acquires the lock
+        await manager.acquire(file_path, "worker-1")
+
+        # Worker-1 asks if it's locked by someone else - should be False
+        assert await manager.is_locked_by_other(file_path, "worker-1") is False
+
+    @pytest.mark.asyncio
+    async def test_is_locked_by_other_locked_by_different_worker(self, tmp_path):
+        """Test is_locked_by_other returns True when locked by a different worker."""
+        manager = FileLockManager(lock_timeout=60.0)
+        file_path = str(tmp_path / "output.doc.json")
+
+        # Worker-1 acquires the lock
+        await manager.acquire(file_path, "worker-1")
+
+        # Worker-2 asks if it's locked by someone else - should be True
+        assert await manager.is_locked_by_other(file_path, "worker-2") is True
+        # Worker-3 also sees it as locked by someone else
+        assert await manager.is_locked_by_other(file_path, "worker-3") is True
+
+    @pytest.mark.asyncio
+    async def test_is_locked_by_other_handles_expired_locks(self, tmp_path):
+        """Test is_locked_by_other correctly handles expired locks."""
+        # Very short timeout for testing
+        manager = FileLockManager(lock_timeout=0.1)
+        file_path = str(tmp_path / "output.doc.json")
+
+        # Worker-1 acquires the lock
+        await manager.acquire(file_path, "worker-1")
+
+        # Worker-2 sees it as locked
+        assert await manager.is_locked_by_other(file_path, "worker-2") is True
+
+        # Wait for lock to expire
+        import asyncio
+        await asyncio.sleep(0.15)
+
+        # After expiration, worker-2 should not see it as locked by other
+        assert await manager.is_locked_by_other(file_path, "worker-2") is False
+
+    @pytest.mark.asyncio
     async def test_get_all_locks(self, tmp_path):
         """Test getting all current locks."""
         manager = FileLockManager(lock_timeout=60.0)
