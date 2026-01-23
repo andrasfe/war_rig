@@ -768,7 +768,7 @@ class CallGraphAnalyzer:
         for prog_id in sorted(analysis.documented_programs.keys()):
             info = analysis.documented_programs[prog_id]
             file_type = info.file_type or "Unknown"
-            summary = (info.summary[:60] + "...") if info.summary and len(info.summary) > 60 else (info.summary or "")
+            summary = info.summary or ""
             # Get status icon
             if info.resolution_status == ResolutionStatus.INTERNAL_ROUTINE:
                 icon = "~"
