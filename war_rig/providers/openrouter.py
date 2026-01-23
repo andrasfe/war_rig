@@ -189,8 +189,10 @@ class OpenRouterProvider:
         # Convert our Message format to OpenAI's format
         openai_messages = self._convert_messages(messages)
 
-        logger.debug(
-            f"Calling OpenRouter API: model={resolved_model}, "
+        import time
+        start_time = time.time()
+        logger.info(
+            f"OpenRouter API call starting: model={resolved_model}, "
             f"temperature={temperature}, message_count={len(messages)}"
         )
 
@@ -205,8 +207,20 @@ class OpenRouterProvider:
             # Add any additional kwargs (top_p, stop, etc.)
             api_params.update(kwargs)
 
-            # Make the API call
-            response = await self._client.chat.completions.create(**api_params)
+            # Make the API call with explicit timeout (10 min max for large prompts)
+            # Note: HTTP 200 is logged when headers arrive, but body may still be streaming
+            response = await self._client.chat.completions.create(
+                **api_params,
+                timeout=600.0,  # 10 minute timeout for full response
+            )
+
+            elapsed = time.time() - start_time
+            content = response.choices[0].message.content if response.choices else None
+            content_len = len(content) if content else 0
+            logger.info(
+                f"OpenRouter API call completed: model={resolved_model}, "
+                f"elapsed={elapsed:.1f}s, response_chars={content_len}"
+            )
 
             # Parse the response
             return self._parse_response(response, resolved_model)
