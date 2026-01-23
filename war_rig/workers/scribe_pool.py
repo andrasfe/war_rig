@@ -786,10 +786,140 @@ class ScribeWorker:
         # Sections to skip based on file type
         # These sections are legitimately empty for certain file types
         skip_sections_by_type: dict[str, set[str]] = {
-            "COPYBOOK": {"called_programs", "data_flow", "cics_operations", "sql_operations"},
-            "JCL": {"called_programs", "copybooks", "cics_operations", "sql_operations", "data_flow"},
-            "PROC": {"called_programs", "copybooks", "cics_operations", "sql_operations", "data_flow"},
-            "BMS": {"called_programs", "data_flow", "copybooks", "sql_operations", "business_rules"},
+            # COBOL: skip nothing - full programs with all sections
+            # PLI: skip nothing - full programs like COBOL
+
+            "COPYBOOK": {
+                "called_programs",    # Don't execute, just included
+                "data_flow",          # No execution flow
+                "cics_operations",    # No CICS commands
+                "sql_operations",     # No SQL execution
+                "business_rules",     # Define data, not logic
+                "error_handling",     # No error handling
+            },
+
+            "JCL": {
+                "called_programs",    # EXECs programs, doesn't CALL
+                "copybooks",          # No COBOL copybooks
+                "cics_operations",    # Batch, not CICS
+                "sql_operations",     # No embedded SQL
+                "data_flow",          # Job steps, not data flow
+                "business_rules",     # Job control, not business logic
+                # Keep: purpose, inputs, outputs, error_handling (COND codes)
+            },
+
+            "PROC": {
+                "called_programs",    # Same as JCL
+                "copybooks",
+                "cics_operations",
+                "sql_operations",
+                "data_flow",
+                "business_rules",
+            },
+
+            "BMS": {
+                "called_programs",    # Screen definitions only
+                "data_flow",          # No execution
+                "copybooks",          # Generates copybooks, doesn't use
+                "sql_operations",     # No SQL
+                "cics_operations",    # Used BY CICS, doesn't contain commands
+                "business_rules",     # Just layout
+                "error_handling",     # No error handling
+                # Keep: purpose, inputs (fields), outputs (fields)
+            },
+
+            "LISTING": {
+                # Compiler output - skip almost everything
+                "called_programs",
+                "data_flow",
+                "copybooks",
+                "sql_operations",
+                "cics_operations",
+                "business_rules",
+                "error_handling",
+                "inputs",
+                "outputs",
+                # Keep: purpose only
+            },
+
+            "OTHER": {
+                # Unknown file type - be lenient
+                "called_programs",
+                "data_flow",
+                "copybooks",
+                "sql_operations",
+                "cics_operations",
+                "business_rules",
+                "error_handling",
+            },
+
+            # New file types
+            "ASM": {
+                # Assembler - low level, may have some sections
+                "copybooks",          # Uses macros, not copybooks
+                "cics_operations",    # Rarely has CICS
+                "sql_operations",     # Rarely has SQL
+            },
+
+            "REXX": {
+                "copybooks",          # No COBOL copybooks
+                "cics_operations",    # Usually batch/TSO
+                "sql_operations",     # Rarely embedded
+            },
+
+            "CLIST": {
+                "copybooks",          # TSO scripting
+                "cics_operations",
+                "sql_operations",
+                "data_flow",
+                "business_rules",
+            },
+
+            "NATURAL": {
+                # 4GL - similar to COBOL but different paradigm
+                "copybooks",          # Has own include mechanism
+            },
+
+            "EASYTRIEVE": {
+                "copybooks",          # Report generator
+                "cics_operations",
+                "called_programs",
+            },
+
+            "SORT": {
+                # DFSORT control cards - very specific
+                "called_programs",
+                "copybooks",
+                "cics_operations",
+                "sql_operations",
+                "business_rules",
+                "error_handling",
+                "data_flow",
+                # Keep: purpose, inputs, outputs
+            },
+
+            "DDL": {
+                # Database definitions
+                "called_programs",
+                "copybooks",
+                "cics_operations",
+                "data_flow",
+                "business_rules",
+                "error_handling",
+                # Keep: purpose, inputs (tables), outputs (tables), sql_operations
+            },
+
+            "IMS": {
+                # IMS database/program definitions
+                "called_programs",
+                "copybooks",
+                "cics_operations",
+                "sql_operations",
+                "data_flow",
+                "business_rules",
+                "error_handling",
+                # Keep: purpose, inputs, outputs
+            },
         }
 
         # Get the string value of the file type enum

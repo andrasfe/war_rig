@@ -68,6 +68,14 @@ class FileType(str, Enum):
     PROC = "PROC"
     BMS = "BMS"
     LISTING = "LISTING"
+    ASM = "ASM"  # Assembler/HLASM
+    REXX = "REXX"  # REXX scripting
+    CLIST = "CLIST"  # TSO command lists
+    NATURAL = "NATURAL"  # Software AG 4GL
+    EASYTRIEVE = "EASYTRIEVE"  # Report generator
+    SORT = "SORT"  # DFSORT control cards
+    DDL = "DDL"  # DB2 database definitions
+    IMS = "IMS"  # IMS DBD/PSB definitions
     OTHER = "OTHER"
 
 

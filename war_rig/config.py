@@ -128,6 +128,14 @@ class FileExtensionsConfig(BaseModel):
     bms: list[str] = Field(default=[".bms", ".BMS"])
     pli: list[str] = Field(default=[".pli", ".PLI", ".pl1", ".PL1"])
     listing: list[str] = Field(default=[".lst", ".LST", ".list", ".LIST"])
+    asm: list[str] = Field(default=[".asm", ".ASM", ".hlasm", ".HLASM", ".s", ".S"])
+    rexx: list[str] = Field(default=[".rexx", ".REXX", ".rex", ".REX", ".exec", ".EXEC"])
+    clist: list[str] = Field(default=[".clist", ".CLIST"])
+    natural: list[str] = Field(default=[".nsp", ".NSP", ".nsn", ".NSN"])
+    easytrieve: list[str] = Field(default=[".ezt", ".EZT", ".ezy", ".EZY"])
+    sort: list[str] = Field(default=[".srt", ".SRT", ".sort", ".SORT"])
+    ddl: list[str] = Field(default=[".ddl", ".DDL", ".sql", ".SQL"])
+    ims: list[str] = Field(default=[".dbd", ".DBD", ".psb", ".PSB"])
 
 
 class LoggingConfig(BaseModel):

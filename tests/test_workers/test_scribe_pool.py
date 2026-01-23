@@ -1075,3 +1075,230 @@ class TestCriticalSectionValidation:
         )
         assert is_valid is True
         assert empty == []
+
+    def test_validate_critical_sections_listing_skips_most(
+        self, mock_config, mock_beads_client
+    ):
+        """Test validation skips most sections for LISTING files (compiler output).
+
+        LISTING should skip: called_programs, data_flow, copybooks, sql_operations,
+        cics_operations, business_rules, error_handling, inputs, outputs
+        Only keeps: purpose
+        """
+        from war_rig.models.templates import (
+            DocumentationTemplate,
+            HeaderSection,
+            FileType,
+            PurposeSection,
+        )
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        # LISTING with all empty sections that should be skipped
+        template = DocumentationTemplate(
+            file_name="TEST.lst",
+            header=HeaderSection(
+                program_id="TEST",
+                file_name="TEST.lst",
+                file_type=FileType.LISTING,
+            ),
+            purpose=PurposeSection(summary="Compiler output listing"),  # Has content
+            inputs=[],
+            outputs=[],
+            called_programs=[],
+            copybooks_used=[],
+            sql_operations=[],
+            cics_operations=[],
+            business_rules=[],
+            error_handling=[],
+        )
+        # Request all the sections that should be skipped
+        feedback_context = {
+            "critical_sections": [
+                "called_programs",
+                "data_flow",
+                "copybooks",
+                "sql_operations",
+                "cics_operations",
+                "business_rules",
+                "error_handling",
+                "inputs",
+                "outputs",
+            ]
+        }
+
+        is_valid, empty = worker._validate_critical_sections(template, feedback_context)
+
+        # Should pass - LISTING skips all of these
+        assert is_valid is True
+        assert empty == []
+
+    def test_validate_critical_sections_other_is_lenient(
+        self, mock_config, mock_beads_client
+    ):
+        """Test validation is lenient for OTHER (unknown) file types.
+
+        OTHER should skip: called_programs, data_flow, copybooks, sql_operations,
+        cics_operations, business_rules, error_handling
+        """
+        from war_rig.models.templates import (
+            DocumentationTemplate,
+            HeaderSection,
+            FileType,
+            PurposeSection,
+        )
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        # OTHER with empty sections that should be skipped
+        template = DocumentationTemplate(
+            file_name="TEST.xyz",
+            header=HeaderSection(
+                program_id="TEST",
+                file_name="TEST.xyz",
+                file_type=FileType.OTHER,
+            ),
+            purpose=PurposeSection(summary="Unknown file type"),  # Has content
+            called_programs=[],
+            copybooks_used=[],
+            sql_operations=[],
+            cics_operations=[],
+            business_rules=[],
+            error_handling=[],
+        )
+        # Request all sections that should be skipped for OTHER
+        feedback_context = {
+            "critical_sections": [
+                "called_programs",
+                "data_flow",
+                "copybooks",
+                "sql_operations",
+                "cics_operations",
+                "business_rules",
+                "error_handling",
+            ]
+        }
+
+        is_valid, empty = worker._validate_critical_sections(template, feedback_context)
+
+        # Should pass - OTHER skips all of these
+        assert is_valid is True
+        assert empty == []
+
+    def test_validate_critical_sections_asm_skips_copybooks(
+        self, mock_config, mock_beads_client
+    ):
+        """Test validation skips copybooks, cics, sql for ASM (assembler) files.
+
+        ASM should skip: copybooks (uses macros), cics_operations, sql_operations
+        """
+        from war_rig.models.templates import (
+            DocumentationTemplate,
+            HeaderSection,
+            FileType,
+            PurposeSection,
+        )
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        # ASM with empty sections that should be skipped
+        template = DocumentationTemplate(
+            file_name="TEST.asm",
+            header=HeaderSection(
+                program_id="TEST",
+                file_name="TEST.asm",
+                file_type=FileType.ASM,
+            ),
+            purpose=PurposeSection(summary="Assembler program"),  # Has content
+            copybooks_used=[],  # Empty but valid for ASM (uses macros)
+            cics_operations=[],  # Empty but valid for ASM
+            sql_operations=[],  # Empty but valid for ASM
+        )
+        # Request sections that should be skipped for ASM
+        feedback_context = {
+            "critical_sections": [
+                "copybooks",
+                "cics_operations",
+                "sql_operations",
+            ]
+        }
+
+        is_valid, empty = worker._validate_critical_sections(template, feedback_context)
+
+        # Should pass - ASM skips copybooks, cics, sql
+        assert is_valid is True
+        assert empty == []
+
+    def test_validate_critical_sections_sort_skips_most(
+        self, mock_config, mock_beads_client
+    ):
+        """Test validation skips most sections for SORT (DFSORT control cards).
+
+        SORT should skip: called_programs, copybooks, cics_operations, sql_operations,
+        business_rules, error_handling, data_flow
+        Keeps: purpose, inputs, outputs
+        """
+        from war_rig.models.templates import (
+            DocumentationTemplate,
+            HeaderSection,
+            FileType,
+            PurposeSection,
+            InputOutput,
+            IOType,
+        )
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        # SORT with populated purpose, inputs, outputs (which are kept)
+        # and empty sections that should be skipped
+        template = DocumentationTemplate(
+            file_name="TEST.srt",
+            header=HeaderSection(
+                program_id="TEST",
+                file_name="TEST.srt",
+                file_type=FileType.SORT,
+            ),
+            purpose=PurposeSection(summary="DFSORT control cards for sorting"),
+            inputs=[InputOutput(name="SORTIN", io_type=IOType.FILE_SEQUENTIAL)],
+            outputs=[InputOutput(name="SORTOUT", io_type=IOType.FILE_SEQUENTIAL)],
+            called_programs=[],  # Empty but valid for SORT
+            copybooks_used=[],  # Empty but valid for SORT
+            cics_operations=[],  # Empty but valid for SORT
+            sql_operations=[],  # Empty but valid for SORT
+            business_rules=[],  # Empty but valid for SORT
+            error_handling=[],  # Empty but valid for SORT
+        )
+        # Request sections that should be skipped for SORT
+        feedback_context = {
+            "critical_sections": [
+                "called_programs",
+                "copybooks",
+                "cics_operations",
+                "sql_operations",
+                "business_rules",
+                "error_handling",
+                "data_flow",
+            ]
+        }
+
+        is_valid, empty = worker._validate_critical_sections(template, feedback_context)
+
+        # Should pass - SORT skips all of these
+        assert is_valid is True
+        assert empty == []

@@ -106,6 +106,30 @@ class SourceReader:
             for ext in self.extensions.listing:
                 mapping[ext.lower()] = FileType.LISTING
 
+        for ext in self.extensions.asm:
+            mapping[ext.lower()] = FileType.ASM
+
+        for ext in self.extensions.rexx:
+            mapping[ext.lower()] = FileType.REXX
+
+        for ext in self.extensions.clist:
+            mapping[ext.lower()] = FileType.CLIST
+
+        for ext in self.extensions.natural:
+            mapping[ext.lower()] = FileType.NATURAL
+
+        for ext in self.extensions.easytrieve:
+            mapping[ext.lower()] = FileType.EASYTRIEVE
+
+        for ext in self.extensions.sort:
+            mapping[ext.lower()] = FileType.SORT
+
+        for ext in self.extensions.ddl:
+            mapping[ext.lower()] = FileType.DDL
+
+        for ext in self.extensions.ims:
+            mapping[ext.lower()] = FileType.IMS
+
         return mapping
 
     def detect_file_type(self, path: Path) -> FileType:
