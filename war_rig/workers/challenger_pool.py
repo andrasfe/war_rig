@@ -736,6 +736,43 @@ class ChallengerWorker:
                 if q.severity == QuestionSeverity.BLOCKING
             ]
 
+            # When source was sampled, filter out blocking questions that may be due to
+            # the Challenger not seeing the full source code. COMPLETENESS questions
+            # about missing/empty sections are particularly suspect when we only showed
+            # a sample of the code - the relevant code may have been in the unsampled portion.
+            if was_sampled and blocking_questions:
+                original_count = len(blocking_questions)
+                filtered_questions = []
+                skipped_questions = []
+
+                for q in blocking_questions:
+                    question_text = q.get("question", "").lower()
+                    question_type = q.get("question_type", "")
+
+                    # Skip COMPLETENESS questions when source was sampled - these are
+                    # about missing content that may exist in the unsampled portion
+                    is_completeness = question_type == "COMPLETENESS"
+
+                    # Also skip questions explicitly about empty/missing sections
+                    mentions_empty = any(
+                        keyword in question_text
+                        for keyword in ["empty", "missing", "not documented", "no information"]
+                    )
+
+                    if is_completeness or mentions_empty:
+                        skipped_questions.append(q)
+                    else:
+                        filtered_questions.append(q)
+
+                if skipped_questions:
+                    logger.info(
+                        f"Worker {self.worker_id}: Source was sampled for {state['file_name']}, "
+                        f"filtering {len(skipped_questions)} of {original_count} blocking questions "
+                        f"that may be due to incomplete source visibility (COMPLETENESS or "
+                        f"empty/missing section questions)"
+                    )
+                    blocking_questions = filtered_questions
+
             # Documentation is valid if no blocking questions and no critical issues
             is_valid = len(blocking_questions) == 0 and all(
                 "WRONG" not in issue.upper() for issue in issues_found

@@ -1137,21 +1137,31 @@ class ScribeWorker:
         output = await self.scribe_agent.ainvoke(scribe_input)
 
         # Validate critical sections if feedback context provided (IMPFB-005)
+        # Skip validation if source was sampled/truncated - the LLM may not have
+        # seen all the code, so empty sections could be legitimate (the code for
+        # those sections wasn't in the sample). This prevents false failures.
         if output.success and output.template and feedback_context:
-            is_valid, empty_sections = self._validate_critical_sections(
-                output.template, feedback_context, detected_file_type=file_type
-            )
-            if not is_valid:
-                logger.warning(
-                    f"Worker {self.worker_id}: Critical sections validation failed for "
-                    f"{ticket.file_name}: empty sections = {empty_sections}"
+            if prepared.was_modified and prepared.strategy_used == "sampling":
+                logger.info(
+                    f"Worker {self.worker_id}: Skipping critical section validation for "
+                    f"{ticket.file_name} - source was sampled/truncated, LLM may "
+                    f"not have seen all code sections"
                 )
-                # Return failure so ticket can be retried or escalated
-                return ScribeOutput(
-                    success=False,
-                    error=f"Critical sections are empty: {', '.join(empty_sections)}",
-                    template=output.template,  # Include template for debugging
+            else:
+                is_valid, empty_sections = self._validate_critical_sections(
+                    output.template, feedback_context, detected_file_type=file_type
                 )
+                if not is_valid:
+                    logger.warning(
+                        f"Worker {self.worker_id}: Critical sections validation failed for "
+                        f"{ticket.file_name}: empty sections = {empty_sections}"
+                    )
+                    # Return failure so ticket can be retried or escalated
+                    return ScribeOutput(
+                        success=False,
+                        error=f"Critical sections are empty: {', '.join(empty_sections)}",
+                        template=output.template,  # Include template for debugging
+                    )
 
         # Save the template if successful
         if output.success and output.template:
@@ -1954,20 +1964,30 @@ class ScribeWorker:
         output = await self.scribe_agent.ainvoke(scribe_input)
 
         # Validate critical sections if feedback context provided (IMPFB-005)
+        # Skip validation if source was sampled/truncated - the LLM may not have
+        # seen all the code, so empty sections could be legitimate (the code for
+        # those sections wasn't in the sample). This prevents false failures.
         if output.success and output.template and feedback_context:
-            is_valid, empty_sections = self._validate_critical_sections(
-                output.template, feedback_context, detected_file_type=file_type
-            )
-            if not is_valid:
-                logger.warning(
-                    f"Worker {self.worker_id}: Critical sections validation failed for "
-                    f"{ticket.file_name} (clarification): empty sections = {empty_sections}"
+            if prepared.was_modified and prepared.strategy_used == "sampling":
+                logger.info(
+                    f"Worker {self.worker_id}: Skipping critical section validation for "
+                    f"{ticket.file_name} (clarification) - source was sampled/truncated, LLM may "
+                    f"not have seen all code sections"
                 )
-                return ScribeOutput(
-                    success=False,
-                    error=f"Critical sections are empty: {', '.join(empty_sections)}",
-                    template=output.template,
+            else:
+                is_valid, empty_sections = self._validate_critical_sections(
+                    output.template, feedback_context, detected_file_type=file_type
                 )
+                if not is_valid:
+                    logger.warning(
+                        f"Worker {self.worker_id}: Critical sections validation failed for "
+                        f"{ticket.file_name} (clarification): empty sections = {empty_sections}"
+                    )
+                    return ScribeOutput(
+                        success=False,
+                        error=f"Critical sections are empty: {', '.join(empty_sections)}",
+                        template=output.template,
+                    )
 
         # Save updated template if successful
         if output.success and output.template:
@@ -2146,20 +2166,30 @@ class ScribeWorker:
         output = await self.scribe_agent.ainvoke(scribe_input)
 
         # Validate critical sections if feedback context provided (IMPFB-005)
+        # Skip validation if source was sampled/truncated - the LLM may not have
+        # seen all the code, so empty sections could be legitimate (the code for
+        # those sections wasn't in the sample). This prevents false failures.
         if output.success and output.template and feedback_context:
-            is_valid, empty_sections = self._validate_critical_sections(
-                output.template, feedback_context, detected_file_type=file_type
-            )
-            if not is_valid:
-                logger.warning(
-                    f"Worker {self.worker_id}: Critical sections validation failed for "
-                    f"{ticket.file_name} (chrome): empty sections = {empty_sections}"
+            if prepared.was_modified and prepared.strategy_used == "sampling":
+                logger.info(
+                    f"Worker {self.worker_id}: Skipping critical section validation for "
+                    f"{ticket.file_name} (chrome) - source was sampled/truncated, LLM may "
+                    f"not have seen all code sections"
                 )
-                return ScribeOutput(
-                    success=False,
-                    error=f"Critical sections are empty: {', '.join(empty_sections)}",
-                    template=output.template,
+            else:
+                is_valid, empty_sections = self._validate_critical_sections(
+                    output.template, feedback_context, detected_file_type=file_type
                 )
+                if not is_valid:
+                    logger.warning(
+                        f"Worker {self.worker_id}: Critical sections validation failed for "
+                        f"{ticket.file_name} (chrome): empty sections = {empty_sections}"
+                    )
+                    return ScribeOutput(
+                        success=False,
+                        error=f"Critical sections are empty: {', '.join(empty_sections)}",
+                        template=output.template,
+                    )
 
         # Save updated template if successful
         if output.success and output.template:
