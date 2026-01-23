@@ -1,0 +1,195 @@
+{
+  "header": {
+    "program_id": "SORTTEST",
+    "file_name": "SORTTEST.jcl",
+    "file_type": "JCL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-23T04:33:56.072789",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This JCL defines a batch job that executes the SORT utility in step STEP05R to read transaction records from a backup dataset, sort them ascending by TRAN-CARD-NUM, and include only those matching TRAN-PROC-DT to the constant PARM-DATE '2022-06-02'. The output dataset SORTOUT and SYSOUT are defined but commented out, suggesting this is a test or partial job. It supports transaction processing in the CardDemo application.",
+    "business_context": "Daily transaction file generation from backup for CardDemo application, filtering and sorting by card number and process date",
+    "program_type": "BATCH",
+    "citations": [
+      19,
+      20,
+      21,
+      27,
+      28,
+      31
+    ]
+  },
+  "inputs": [
+    {
+      "name": "SORTIN",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Input transaction backup file containing records with card numbers and process dates",
+      "copybook": null,
+      "citation": [
+        20,
+        21
+      ]
+    },
+    {
+      "name": "SYMNAMES",
+      "io_type": "PARAMETER",
+      "description": "Inline data defining symbolic field names: TRAN-CARD-NUM (position 263, length 16, ZD), TRAN-PROC-DT (305,10,CH), and constant PARM-DATE '2022-06-02'",
+      "copybook": null,
+      "citation": [
+        22,
+        23,
+        24,
+        25
+      ]
+    },
+    {
+      "name": "SYSIN",
+      "io_type": "PARAMETER",
+      "description": "Inline SORT control statements specifying sort fields and include condition",
+      "copybook": null,
+      "citation": [
+        26,
+        27,
+        28
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "SORTOUT",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Sorted and filtered daily transaction output dataset (commented out: DSN=AWS.M2.CARDDEMO.TRANSACT.DALY(+1))",
+      "copybook": null,
+      "citation": [
+        31,
+        35
+      ]
+    },
+    {
+      "name": "SYSOUT",
+      "io_type": "REPORT",
+      "description": "SORT utility report output (commented out)",
+      "copybook": null,
+      "citation": [
+        30
+      ]
+    }
+  ],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Sort all input records in ascending order by TRAN-CARD-NUM",
+      "logic_summary": "SORT FIELDS=(TRAN-CARD-NUM,A)",
+      "conditions": [],
+      "citation": [
+        27
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Include only records where TRAN-PROC-DT exactly matches PARM-DATE ('2022-06-02')",
+      "logic_summary": "INCLUDE COND=(TRAN-PROC-DT,EQ,PARM-DATE)",
+      "conditions": [
+        "TRAN-PROC-DT,EQ,PARM-DATE"
+      ],
+      "citation": [
+        23,
+        25,
+        28
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "SORTIN",
+        "fields_used": [
+          "TRAN-CARD-NUM",
+          "TRAN-PROC-DT"
+        ],
+        "citation": [
+          23,
+          24,
+          27,
+          28
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "SORTOUT",
+        "fields_written": [
+          "All filtered and sorted input record fields"
+        ],
+        "citation": [
+          31
+        ]
+      }
+    ],
+    "transforms": [
+      {
+        "input_field": "TRAN-CARD-NUM",
+        "output_field": "TRAN-CARD-NUM",
+        "transformation_description": "Sort key: ascending order",
+        "citation": [
+          23,
+          27
+        ]
+      },
+      {
+        "input_field": "TRAN-PROC-DT",
+        "output_field": "TRAN-PROC-DT",
+        "transformation_description": "Filter condition: include if equal to '2022-06-02'",
+        "citation": [
+          24,
+          25,
+          28
+        ]
+      }
+    ]
+  },
+  "copybooks_used": [],
+  "paragraphs": [
+    {
+      "paragraph_name": "STEP05R",
+      "purpose": "Executes the SORT utility with specified inputs, control statements, and commented outputs",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        19,
+        39
+      ]
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "SORT utility failure (implicit)",
+      "action": "Standard JCL abend with SORT return codes",
+      "citation": [
+        19
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "Purpose of commented-out output DD statements (SYSOUT and SORTOUT)",
+      "context": "Lines 30-35 are commented, so job may not produce persistent output; unclear if intentional for testing",
+      "suggestion": "Check job logs or execution context to confirm runtime behavior"
+    },
+    {
+      "question": "Is this a complete production job or test-only?",
+      "context": "Job name SORTTEST and commented outputs suggest testing; no other steps present",
+      "suggestion": "Review job scheduling or related JCL procs"
+    }
+  ]
+}

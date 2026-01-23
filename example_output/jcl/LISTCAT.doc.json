@@ -1,0 +1,158 @@
+{
+  "header": {
+    "program_id": "LISTCAT",
+    "file_name": "jcl/LISTCAT.jcl",
+    "file_type": "JCL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-23T04:40:00.896480",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This JCL job generates a catalog listing for all entries under the AWS.M2.CARDDEMO level. STEP01 uses IEFBR14 to delete or modify the output dataset AWS.M2.CARDDEMO.LISTCAT. STEP05 executes IDCAMS with a LISTCAT command to produce the catalog listing into that dataset.",
+    "business_context": "Supports catalog inventory and management for the CARDDEMO application datasets",
+    "program_type": "BATCH",
+    "citations": [
+      19,
+      21,
+      27,
+      34
+    ]
+  },
+  "inputs": [
+    {
+      "name": "SYSIN",
+      "io_type": "PARAMETER",
+      "description": "Inline IDCAMS control statements specifying LISTCAT LEVEL(AWS.M2.CARDDEMO) ALL",
+      "copybook": null,
+      "citation": [
+        33,
+        34,
+        35
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "AWS.M2.CARDDEMO.LISTCAT",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Dataset containing the output from IDCAMS LISTCAT command listing all catalog entries under AWS.M2.CARDDEMO",
+      "copybook": null,
+      "citation": [
+        26,
+        32
+      ]
+    }
+  ],
+  "called_programs": [
+    {
+      "program_name": "IEFBR14",
+      "call_type": "STATIC_CALL",
+      "purpose": "Dummy execution to establish dataset disposition for deletion/modification of output file",
+      "parameters": [],
+      "citation": 21
+    },
+    {
+      "program_name": "IDCAMS",
+      "call_type": "STATIC_CALL",
+      "purpose": "Executes LISTCAT command to list catalog entries",
+      "parameters": [
+        "SYSIN"
+      ],
+      "citation": 27
+    }
+  ],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "STEP05 executes only if STEP01 return code is not equal to 0",
+      "logic_summary": "Uses COND=(0,NE) parameter on STEP05 EXEC statement",
+      "conditions": [
+        "Previous step RC NE 0"
+      ],
+      "citation": [
+        27
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "System catalog",
+        "fields_used": [],
+        "citation": [
+          34
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "AWS.M2.CARDDEMO.LISTCAT",
+        "fields_written": [
+          "Catalog listing data"
+        ],
+        "citation": [
+          32
+        ]
+      }
+    ],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [
+    {
+      "paragraph_name": "STEP01",
+      "purpose": "Prepares output dataset by defining it with MOD/DELETE disposition using IEFBR14 utility",
+      "called_by": [],
+      "calls": [
+        "IEFBR14"
+      ],
+      "citation": [
+        21,
+        26
+      ]
+    },
+    {
+      "paragraph_name": "STEP05",
+      "purpose": "Executes IDCAMS LISTCAT to generate catalog listing into the prepared output dataset",
+      "called_by": [],
+      "calls": [
+        "IDCAMS"
+      ],
+      "citation": [
+        27,
+        36
+      ]
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "Implicit file status via dataset disposition",
+      "action": "Dataset deleted or overwritten if exists via DISP=(MOD,DELETE,DELETE) in STEP01",
+      "citation": [
+        22
+      ]
+    },
+    {
+      "condition": "STEP01 return code NE 0",
+      "action": "Proceeds to execute STEP05 due to COND=(0,NE)",
+      "citation": [
+        27
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "Purpose of running STEP01 with IEFBR14 when it always returns RC=0",
+      "context": "IEFBR14 is a no-op utility that always completes with RC=0, making COND=(0,NE) on STEP05 effectively always skip to STEP05 but ensures dataset disposition",
+      "suggestion": "Confirm if this is intentional for dataset cleanup regardless of prior existence"
+    }
+  ]
+}

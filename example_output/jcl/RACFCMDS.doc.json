@@ -1,0 +1,139 @@
+{
+  "header": {
+    "program_id": "RACFCMDS",
+    "file_name": "jcl/RACFCMDS.jcl",
+    "file_type": "JCL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-23T04:42:58.780191",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This JCL job RACFCMDS executes the TSO program IKJEFT01 in batch mode to run RACF security commands. It uses RALT to add transaction CT02 to profile GCICSTRN and CONNECT to add user AWSCODR to group M2APPDEV. Duplicate SYSTSIN DD statements (lines 23 and 28) in the same step violate JCL syntax rules for unique DD names per step, likely causing submission failure (e.g., IE10414I error).",
+    "business_context": "RACF security administration: modifying class profiles by adding transactions and connecting users to groups.",
+    "program_type": "BATCH",
+    "citations": [
+      19,
+      24,
+      29
+    ]
+  },
+  "inputs": [
+    {
+      "name": "SYSTSIN",
+      "io_type": "PARAMETER",
+      "description": "Instream data for IKJEFT01 containing RACF commands; duplicate DD definitions (lines 23-25, 28-30) make this invalid JCL.",
+      "copybook": null,
+      "citation": [
+        23,
+        24,
+        28,
+        29
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "SYSTSPRT",
+      "io_type": "REPORT",
+      "description": "TSO session output including results of RACF command execution.",
+      "copybook": null,
+      "citation": [
+        21
+      ]
+    }
+  ],
+  "called_programs": [
+    {
+      "program_name": "IKJEFT01",
+      "call_type": "STATIC_CALL",
+      "purpose": "Executes TSO commands (RACF RALT and CONNECT) in batch.",
+      "parameters": [],
+      "citation": 19
+    }
+  ],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Add transaction identifier CT02 as a member to RACF profile GCICSTRN using RALT CARD ADDMEM.",
+      "logic_summary": "RACF command issued via TSO IKJEFT01 instream input.",
+      "conditions": [],
+      "citation": [
+        24
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Connect RACF user AWSCODR to group M2APPDEV.",
+      "logic_summary": "RACF CONNECT command issued via TSO IKJEFT01 instream input.",
+      "conditions": [],
+      "citation": [
+        29
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "SYSTSIN",
+        "fields_used": [
+          "RALT GCICSTRN CARD ADDMEM(CT02)",
+          "CONNECT AWSCODR GROUP(M2APPDEV)"
+        ],
+        "citation": [
+          24,
+          29
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "SYSTSPRT",
+        "fields_written": [
+          "RACF command execution output"
+        ],
+        "citation": [
+          21
+        ]
+      }
+    ],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [
+    {
+      "paragraph_name": "N/A",
+      "purpose": "JCL does not define paragraphs (COBOL/PL/I construct); control via JOB/EXEC/DD statements.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1,
+        35
+      ]
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "Duplicate DD names (SYSTSIN at lines 23 and 28)",
+      "action": "JCL submission fails (e.g., IE10414I DD statement error)",
+      "citation": [
+        23,
+        28
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "Intended handling of multiple RACF commands",
+      "context": "Duplicate SYSTSIN DD statements prevent execution; unclear if meant as separate steps or single multi-line input.",
+      "suggestion": "Inspect job logs for errors or review source intent; consolidate into one SYSTSIN with multiple command lines."
+    }
+  ]
+}

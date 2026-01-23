@@ -1,3 +1,0 @@
-[
-  "ticket_id='CHR-7B64148C' program_id='COUSR01C' section='challenger_assessment' issue_type=<IssueType.INCOMPLETE: 'INCOMPLETE'> description='Challenger assessment did not provide SOLID ratings for critical sections (Purpose, Inputs, Outputs), which is required for WITNESSED approval. The assessment shows empty section_assessments and solid_count of 0.' guidance='Ensure Challenger runs and provides explicit SOLID assessments for critical sections, or document why assessments are unavailable. This may involve reviewing Challenger configuration or iteration setup.' priority=<IssuePriority.CRITICAL: 'CRITICAL'> created_at=datetime.datetime(2026, 1, 18, 15, 58, 56, 213891) resolved=False resolution_notes=None"
-]

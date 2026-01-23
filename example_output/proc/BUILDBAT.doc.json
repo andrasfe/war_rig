@@ -1,0 +1,257 @@
+{
+  "header": {
+    "program_id": "BUILDBAT",
+    "file_name": "proc/BUILDBAT.prc",
+    "file_type": "PROC",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-23T04:39:42.957551",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This JCL procedure compiles a specified batch COBOL program using the IGYCRCTL compiler, copies the compiler listing to SYSOUT, and conditionally link-edits the object module into a load module using HEWL. It is designed for building batch COBOL programs with customizable dataset qualifiers and libraries. Comments indicate it is a sample for environments like CARDDEMO.",
+    "business_context": "Supports the build and deployment process for batch COBOL applications by automating compilation and link-edit.",
+    "program_type": "UTILITY",
+    "citations": [
+      2,
+      19,
+      24,
+      35,
+      64,
+      74
+    ]
+  },
+  "inputs": [
+    {
+      "name": "MEM",
+      "io_type": "PARAMETER",
+      "description": "Member name of the COBOL source program within the SOURCE dataset",
+      "copybook": null,
+      "citation": [
+        24
+      ]
+    },
+    {
+      "name": "HLQ",
+      "io_type": "PARAMETER",
+      "description": "High-level qualifier used to construct dataset names for source, copybooks, loadlib, and listing",
+      "copybook": null,
+      "citation": [
+        25
+      ]
+    },
+    {
+      "name": "COBLIB",
+      "io_type": "PARAMETER",
+      "description": "Dataset containing the COBOL compiler executable (default IGY.SIGYCOMP.V63)",
+      "copybook": null,
+      "citation": [
+        26,
+        37
+      ]
+    },
+    {
+      "name": "CPYBKS",
+      "io_type": "PARAMETER",
+      "description": "Dataset containing COBOL copybooks (default &HLQ..CARDDEMO.CPY)",
+      "copybook": null,
+      "citation": [
+        27,
+        39
+      ]
+    },
+    {
+      "name": "SOURCE",
+      "io_type": "PARAMETER",
+      "description": "Dataset containing the COBOL source members (default &HLQ..CARDDEMO.CBL)",
+      "copybook": null,
+      "citation": [
+        28,
+        38
+      ]
+    },
+    {
+      "name": "LOADLIB",
+      "io_type": "PARAMETER",
+      "description": "Target load library dataset for the linked load module (default &HLQ..CARDDEMO.LOADLIB)",
+      "copybook": null,
+      "citation": [
+        29,
+        82
+      ]
+    },
+    {
+      "name": "LISTING",
+      "io_type": "PARAMETER",
+      "description": "Dataset for storing the compiler listing (default &HLQ..CARDDEMO.LST)",
+      "copybook": null,
+      "citation": [
+        30,
+        41
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "&LISTING(&MEM)",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Compiler listing output from SYSPRINT, also copied to SYSOUT",
+      "copybook": null,
+      "citation": [
+        41,
+        66
+      ]
+    },
+    {
+      "name": "&LOADLIB(&MEM)",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Load library member containing the link-edited load module from SYSLMOD",
+      "copybook": null,
+      "citation": [
+        82
+      ]
+    },
+    {
+      "name": "SYSPRINT (CBLPRINT)",
+      "io_type": "REPORT",
+      "description": "Compiler listing routed to SYSOUT",
+      "copybook": null,
+      "citation": [
+        65
+      ]
+    },
+    {
+      "name": "SYSPRINT (LKED)",
+      "io_type": "REPORT",
+      "description": "Link-edit listing routed to SYSOUT",
+      "copybook": null,
+      "citation": [
+        75
+      ]
+    }
+  ],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Link-edit step (LKED) is bypassed if the compile step (COMPILE) return code is less than 8",
+      "logic_summary": "Uses JCL conditional execution COND=(8,LT,COMPILE) to control flow based on compiler return code",
+      "conditions": [
+        "RC of COMPILE LT 8"
+      ],
+      "citation": [
+        74
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "&COBLIB",
+        "fields_used": [],
+        "citation": [
+          37
+        ]
+      },
+      {
+        "source": "&SOURCE(&MEM)",
+        "fields_used": [],
+        "citation": [
+          38
+        ]
+      },
+      {
+        "source": "&CPYBKS",
+        "fields_used": [],
+        "citation": [
+          39
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "&LISTING(&MEM)",
+        "fields_written": [],
+        "citation": [
+          41
+        ]
+      },
+      {
+        "destination": "&&LOADSET",
+        "fields_written": [],
+        "citation": [
+          42
+        ]
+      },
+      {
+        "destination": "&LOADLIB(&MEM)",
+        "fields_written": [],
+        "citation": [
+          82
+        ]
+      }
+    ],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [
+    {
+      "paragraph_name": "COMPILE",
+      "purpose": "Compiles the COBOL source using IGYCRCTL compiler",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        35,
+        60
+      ]
+    },
+    {
+      "paragraph_name": "CBLPRINT",
+      "purpose": "Copies compiler listing from &LISTING(&MEM) to SYSOUT using IEBGENER",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        64,
+        69
+      ]
+    },
+    {
+      "paragraph_name": "LKED",
+      "purpose": "Link-edits the temporary loadset into &LOADLIB(&MEM) using HEWL binder",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        74,
+        83
+      ]
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "COMPILE return code less than 8",
+      "action": "Bypasses LKED step",
+      "citation": [
+        74
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "Exact return code thresholds for IGYCRCTL compiler",
+      "context": "COND=(8,LT,COMPILE) implies RC<8 bypasses LKED, but typical compiler RC=0(normal),4(warning),8(error); semantics unclear without manual",
+      "suggestion": "Consult IBM COBOL compiler documentation for IGYCRCTL return codes"
+    },
+    {
+      "question": "Specific usage of SYSUT1 through SYSUT15 DD statements",
+      "context": "Defined as temporary work files for compiler, but exact file roles undetermined from JCL alone",
+      "suggestion": "Refer to COBOL compiler reference for SYSUTn assignments"
+    }
+  ]
+}

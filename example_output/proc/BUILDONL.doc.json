@@ -1,0 +1,240 @@
+{
+  "header": {
+    "program_id": "BLDONL",
+    "file_name": "proc/BUILDONL.prc",
+    "file_type": "PROC",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-23T04:33:04.950383",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This JCL procedure compiles CICS-enabled COBOL programs using IGYCRCTL, replicates the compiler listing to SYSOUT, copies the CICS entry linkage module DFHEILID, and link-edits the object into a load module using HEWL. It is designed for building CICS programs after related BMS compilation. Parameters allow customization of memory, high-level qualifiers, libraries, source, and output datasets.",
+    "business_context": "Supports the build process for CICS COBOL applications, such as the CARDDEMO sample",
+    "program_type": "BATCH",
+    "citations": [
+      2,
+      19,
+      20,
+      21,
+      25,
+      37
+    ]
+  },
+  "inputs": [
+    {
+      "name": "SOURCE",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "COBOL source code member specified by &MEM in dataset &HLQ..CARDDEMO.CBL",
+      "copybook": null,
+      "citation": [
+        32,
+        48
+      ]
+    },
+    {
+      "name": "CPYBKS",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Copybook library &HLQ..CARDDEMO.CPY for SYSLIB during compilation",
+      "copybook": null,
+      "citation": [
+        31,
+        43
+      ]
+    },
+    {
+      "name": "MEM",
+      "io_type": "PARAMETER",
+      "description": "Member name for source, listing, and load module",
+      "copybook": null,
+      "citation": [
+        25,
+        47,
+        48,
+        104
+      ]
+    },
+    {
+      "name": "HLQ",
+      "io_type": "PARAMETER",
+      "description": "High-level qualifier for datasets like source, copybooks, loadlib, listing",
+      "copybook": null,
+      "citation": [
+        26,
+        32,
+        33,
+        34
+      ]
+    },
+    {
+      "name": "COBLIB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "COBOL compiler library IGY.SIGYCOMP.V63 for STEPLIB",
+      "copybook": null,
+      "citation": [
+        27,
+        41
+      ]
+    },
+    {
+      "name": "DFHLOAD",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "CICS load library for STEPLIB and SYSLIB",
+      "copybook": null,
+      "citation": [
+        28,
+        42,
+        96
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "LISTING",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "COBOL compiler listing output dataset &HLQ..CARDDEMO.LST(&MEM)",
+      "copybook": null,
+      "citation": [
+        34,
+        47
+      ]
+    },
+    {
+      "name": "LOADLIB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Load library &HLQ..CARDDEMO.LOADLIB receiving the linked module &MEM",
+      "copybook": null,
+      "citation": [
+        33,
+        104
+      ]
+    }
+  ],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Compile COBOL with CICS translator, no dynamic calls, reentrant code, no sequence numbers",
+      "logic_summary": "IGYCRCTL EXEC with PARM=(CICS,NODYNAM,RENT,NOSEQ)",
+      "conditions": [],
+      "citation": [
+        39,
+        40
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Link-edit with AMODE(31), RMODE(ANY), including LIST,XREF,LET,MAP options",
+      "logic_summary": "HEWL EXEC with specified PARM",
+      "conditions": [],
+      "citation": [
+        91
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "SOURCE",
+        "fields_used": [],
+        "citation": [
+          48
+        ]
+      },
+      {
+        "source": "CPYBKS",
+        "fields_used": [],
+        "citation": [
+          43
+        ]
+      },
+      {
+        "source": "DFHSAMP(DFHEILID)",
+        "fields_used": [],
+        "citation": [
+          81
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "LISTING",
+        "fields_written": [],
+        "citation": [
+          47
+        ]
+      },
+      {
+        "destination": "LOADLIB",
+        "fields_written": [],
+        "citation": [
+          104
+        ]
+      }
+    ],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [
+    {
+      "paragraph_name": "COB",
+      "purpose": "COBOL program compile step using IGYCRCTL",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        39,
+        69
+      ]
+    },
+    {
+      "paragraph_name": "DISPLIST",
+      "purpose": "Replicate compiler listing to SYSOUT using IEBGENER",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        70,
+        78
+      ]
+    },
+    {
+      "paragraph_name": "COPYLINK",
+      "purpose": "Copy CICS DFHEILID module to temporary dataset using IEBGENER",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        79,
+        86
+      ]
+    },
+    {
+      "paragraph_name": "LKED",
+      "purpose": "Link-edit step using HEWL to produce load module",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        91,
+        109
+      ]
+    }
+  ],
+  "error_handling": [],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "Specific usage of CARDDEMO datasets",
+      "context": "Dataset names like CARDDEMO.CBL, CARDDEMO.CPY suggest a sample application, but exact business purpose not detailed in PROC",
+      "suggestion": "Review calling JCL or CARDDEMO source for context"
+    },
+    {
+      "question": "Custom environment adjustments",
+      "context": "Comments note to check with Administrator for JCL suitable to environment (line 22)",
+      "suggestion": "Consult site-specific libraries and configurations"
+    }
+  ]
+}

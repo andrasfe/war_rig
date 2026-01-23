@@ -1,0 +1,116 @@
+{
+  "header": {
+    "program_id": "REPRTEST",
+    "file_name": "jcl/REPRTEST.jcl",
+    "file_type": "JCL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-23T04:44:15.476109",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This JCL job invokes the REPROC procedure to perform a file reproduction from a VSAM KSDS input dataset to a new sequential fixed-block output backup dataset. It specifies the input as AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS and output as AWS.M2.CARDDEMO.TRANSACT.BKUP(+1). The procedure library is loaded from AWS.M2.CARDDEMO.PROC.",
+    "business_context": "Backup process for CardDemo application transaction VSAM data",
+    "program_type": "BATCH",
+    "citations": [
+      1,
+      22,
+      23,
+      26,
+      33
+    ]
+  },
+  "inputs": [
+    {
+      "name": "PRC001.FILEIN",
+      "io_type": "FILE_VSAM",
+      "description": "Source VSAM KSDS dataset containing transaction records",
+      "copybook": null,
+      "citation": [
+        26,
+        27
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "PRC001.FILEOUT",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Backup copy of input VSAM records in fixed-block format (LRECL=350, RECFM=FB)",
+      "copybook": null,
+      "citation": [
+        29,
+        30,
+        31,
+        33
+      ]
+    }
+  ],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Implements versioned backups using generational dataset name qualifier (+1)",
+      "logic_summary": "Output DSN specified as AWS.M2.CARDDEMO.TRANSACT.BKUP(+1) to create next generation of GDG backup",
+      "conditions": [],
+      "citation": [
+        33
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "PRC001.FILEIN",
+        "fields_used": [
+          "ALL records (structure UNKNOWN)"
+        ],
+        "citation": [
+          27
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "PRC001.FILEOUT",
+        "fields_written": [
+          "ALL records copied from input"
+        ],
+        "citation": [
+          33
+        ]
+      }
+    ],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [],
+  "error_handling": [
+    {
+      "condition": "Abnormal job step end",
+      "action": "DELETE and uncatalog output dataset (per DISP=(NEW,CATLG,DELETE))",
+      "citation": [
+        29
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "Detailed logic and steps within REPROC procedure",
+      "context": "REPROC is an external procedure from AWS.M2.CARDDEMO.PROC library; source not provided",
+      "suggestion": "Analyze PROC definition in AWS.M2.CARDDEMO.PROC(REPROC) and CNTLLIB=AWS.M2.CARDDEMO.CNTL"
+    },
+    {
+      "question": "Record layout of input VSAM file",
+      "context": "JCL does not define record structure; repro copies all records",
+      "suggestion": "Examine associated COBOL copybook or VSAM cluster definition"
+    }
+  ]
+}

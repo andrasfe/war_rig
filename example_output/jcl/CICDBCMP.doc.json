@@ -1,0 +1,257 @@
+{
+  "header": {
+    "program_id": "CICDBCMP",
+    "file_name": "jcl/CICDBCMP.jcl",
+    "file_type": "JCL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-23T04:38:03.833037",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This JCL job sets symbolic parameters for libraries, DB2 subsystem, and plan name, then executes the cataloged procedure BLDCIDB2 to compile a CICS COBOL DB2 program. The target program is specified by MEMNAME (CICSDB2P). It supports the CARDDEMO application environment.",
+    "business_context": "Compilation of CICS/DB2 COBOL programs for the CARDDEMO plan in AWS.M2 environment",
+    "program_type": "BATCH",
+    "citations": [
+      1,
+      24,
+      25,
+      28,
+      33,
+      34,
+      35,
+      42,
+      54
+    ]
+  },
+  "inputs": [
+    {
+      "name": "HLQ",
+      "io_type": "PARAMETER",
+      "description": "High level qualifier for dataset libraries (AWS.M2.CARDDEMO)",
+      "copybook": null,
+      "citation": [
+        33
+      ]
+    },
+    {
+      "name": "SSID",
+      "io_type": "PARAMETER",
+      "description": "DB2 subsystem identifier (DAZ1)",
+      "copybook": null,
+      "citation": [
+        34
+      ]
+    },
+    {
+      "name": "MEMNAME",
+      "io_type": "PARAMETER",
+      "description": "Program member name to compile (CICSDB2P)",
+      "copybook": null,
+      "citation": [
+        35
+      ]
+    },
+    {
+      "name": "SRCLIB",
+      "io_type": "OTHER",
+      "description": "COBOL source library (&HLQ..CBL)",
+      "copybook": null,
+      "citation": [
+        36
+      ]
+    },
+    {
+      "name": "COPYLIB",
+      "io_type": "OTHER",
+      "description": "Copybook library (&HLQ..CPY)",
+      "copybook": null,
+      "citation": [
+        37
+      ]
+    },
+    {
+      "name": "DCLLIB",
+      "io_type": "OTHER",
+      "description": "DCLGEN library (&HLQ..DCL)",
+      "copybook": null,
+      "citation": [
+        38
+      ]
+    },
+    {
+      "name": "DBRMLIB",
+      "io_type": "OTHER",
+      "description": "DBRM library (&HLQ..DBRMLIB)",
+      "copybook": null,
+      "citation": [
+        40
+      ]
+    },
+    {
+      "name": "SYSLBLK",
+      "io_type": "PARAMETER",
+      "description": "DB2 precompiler block size (3200)",
+      "copybook": null,
+      "citation": [
+        41
+      ]
+    },
+    {
+      "name": "PLAN",
+      "io_type": "PARAMETER",
+      "description": "DB2 plan name (CARDDEMO)",
+      "copybook": null,
+      "citation": [
+        42
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "LOADLIB",
+      "io_type": "OTHER",
+      "description": "Target library for compiled load module (&HLQ..LOADLIB)",
+      "copybook": null,
+      "citation": [
+        39,
+        54
+      ]
+    },
+    {
+      "name": "DBRMLIB",
+      "io_type": "OTHER",
+      "description": "Output library for DBRM members (&HLQ..DBRMLIB)",
+      "copybook": null,
+      "citation": [
+        40,
+        54
+      ]
+    }
+  ],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Program compilation targets specific DB2 subsystem and plan",
+      "logic_summary": "Parameters SSID=DAZ1 and PLAN=CARDDEMO passed to BLDCIDB2 procedure",
+      "conditions": [
+        "DB2 precompile and bind required"
+      ],
+      "citation": [
+        34,
+        42,
+        54
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "SRCLIB",
+        "fields_used": [
+          "&MEMNAME"
+        ],
+        "citation": [
+          36,
+          54
+        ]
+      },
+      {
+        "source": "COPYLIB",
+        "fields_used": [
+          "Copybooks"
+        ],
+        "citation": [
+          37,
+          54
+        ]
+      },
+      {
+        "source": "DCLLIB",
+        "fields_used": [
+          "DCLGEN members"
+        ],
+        "citation": [
+          38,
+          54
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "LOADLIB",
+        "fields_written": [
+          "&MEMNAME load module"
+        ],
+        "citation": [
+          39,
+          54
+        ]
+      },
+      {
+        "destination": "DBRMLIB",
+        "fields_written": [
+          "&MEMNAME DBRM"
+        ],
+        "citation": [
+          40,
+          54
+        ]
+      }
+    ],
+    "transforms": [
+      {
+        "input_field": "&MEMNAME source from SRCLIB",
+        "output_field": "&MEMNAME load module in LOADLIB",
+        "transformation_description": "CICS COBOL compilation with DB2 precompiler, assembler link, and plan bind",
+        "citation": [
+          54
+        ]
+      }
+    ]
+  },
+  "copybooks_used": [],
+  "paragraphs": [
+    {
+      "paragraph_name": "CICSCMP",
+      "purpose": "Main execution step invoking BLDCIDB2 procedure for compilation",
+      "called_by": [],
+      "calls": [
+        "BLDCIDB2"
+      ],
+      "citation": [
+        54,
+        54
+      ]
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "Job or step failure",
+      "action": "Output messages to MSGCLASS=H, MSGLEVEL=(1,1); notify &SYSUID on abnormal end",
+      "citation": [
+        2
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "Exact steps performed by BLDCIDB2 cataloged procedure?",
+      "context": "JCL EXEC at line 54 references BLDCIDB2 but procedure definition not in source",
+      "suggestion": "Locate and analyze BLDCIDB2 PROC in &HLQ..PROC.UTIL library (ref line 46)"
+    },
+    {
+      "question": "Purpose of commented CCLIBS JCLLIB and EXPORT SYMLIST=*?",
+      "context": "Lines 46 and 50 are commented out; may be required in some environments",
+      "suggestion": "Check site-specific JCL requirements for proclib and symbol export"
+    }
+  ]
+}

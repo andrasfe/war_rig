@@ -1,0 +1,1286 @@
+{
+  "version": 1,
+  "saved_at": "2026-01-23T19:25:15.312156",
+  "ticket_count": 53,
+  "current_cycle": 3,
+  "tickets": [
+    {
+      "ticket_id": "mem-000001",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "proc/BUILDBAT.prc",
+      "program_id": "BUILDBAT",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260123-043231",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/proc/BUILDBAT.prc",
+        "file_type": "JCL",
+        "size_bytes": 3894,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-23T04:32:31.088870",
+      "updated_at": "2026-01-23T04:33:31.970735",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000002",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "proc/BUILDBMS.prc",
+      "program_id": "BUILDBMS",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260123-043231",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/proc/BUILDBMS.prc",
+        "file_type": "JCL",
+        "size_bytes": 8254,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-23T04:32:31.089482",
+      "updated_at": "2026-01-23T04:33:22.276273",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000003",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "proc/BUILDONL.prc",
+      "program_id": "BUILDONL",
+      "cycle_number": 1,
+      "worker_id": "scribe-3",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260123-043231",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/proc/BUILDONL.prc",
+        "file_type": "JCL",
+        "size_bytes": 5040,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-23T04:32:31.089983",
+      "updated_at": "2026-01-23T04:33:04.951898",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000004",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "proc/BLDCIDB2.prc",
+      "program_id": "BLDCIDB2",
+      "cycle_number": 1,
+      "worker_id": "scribe-3",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260123-043231",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/proc/BLDCIDB2.prc",
+        "file_type": "JCL",
+        "size_bytes": 7151,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-23T04:32:31.090474",
+      "updated_at": "2026-01-23T04:33:39.244237",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000005",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "jcl/SORTTEST.jcl",
+      "program_id": "SORTTEST",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260123-043231",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/SORTTEST.jcl",
+        "file_type": "JCL",
+        "size_bytes": 2200,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-23T04:32:31.090994",
+      "updated_at": "2026-01-23T04:33:56.074245",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000006",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "jcl/LISTCAT.jcl",
+      "program_id": "LISTCAT",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260123-043231",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/LISTCAT.jcl",
+        "file_type": "JCL",
+        "size_bytes": 1951,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-23T04:32:31.091483",
+      "updated_at": "2026-01-23T04:34:03.336484",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000007",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "jcl/BMSCMP.jcl",
+      "program_id": "BMSCMP",
+      "cycle_number": 1,
+      "worker_id": "scribe-3",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260123-043231",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/BMSCMP.jcl",
+        "file_type": "JCL",
+        "size_bytes": 2636,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-23T04:32:31.091982",
+      "updated_at": "2026-01-23T04:34:17.001156",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000008",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "jcl/IMSMQCMP.jcl",
+      "program_id": "IMSMQCMP",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260123-043231",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/IMSMQCMP.jcl",
+        "file_type": "JCL",
+        "size_bytes": 4437,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-23T04:32:31.092503",
+      "updated_at": "2026-01-23T04:38:05.925344",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000009",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "jcl/BATCMP.jcl",
+      "program_id": "BATCMP",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260123-043231",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/BATCMP.jcl",
+        "file_type": "JCL",
+        "size_bytes": 3182,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-23T04:32:31.093062",
+      "updated_at": "2026-01-23T04:34:26.979338",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000010",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "jcl/CICDBCMP.jcl",
+      "program_id": "CICDBCMP",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260123-043231",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/CICDBCMP.jcl",
+        "file_type": "JCL",
+        "size_bytes": 2690,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-23T04:32:31.093591",
+      "updated_at": "2026-01-23T04:38:03.834424",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000011",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "jcl/RACFCMDS.jcl",
+      "program_id": "RACFCMDS",
+      "cycle_number": 1,
+      "worker_id": "scribe-3",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260123-043231",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/RACFCMDS.jcl",
+        "file_type": "JCL",
+        "size_bytes": 2348,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-23T04:32:31.094132",
+      "updated_at": "2026-01-23T04:38:08.966290",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000012",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "jcl/REPRTEST.jcl",
+      "program_id": "REPRTEST",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260123-043231",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/REPRTEST.jcl",
+        "file_type": "JCL",
+        "size_bytes": 2529,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-23T04:32:31.094678",
+      "updated_at": "2026-01-23T04:38:45.222815",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000013",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "jcl/CICCMP.jcl",
+      "program_id": "CICCMP",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260123-043231",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/CICCMP.jcl",
+        "file_type": "JCL",
+        "size_bytes": 3810,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-23T04:32:31.095220",
+      "updated_at": "2026-01-23T04:38:43.546203",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000014",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "proc/BUILDONL.prc",
+      "program_id": "BUILDONL",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000003",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000003",
+        "scribe_worker": "scribe-3",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/proc/BUILDONL.prc",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-23T04:33:04.954010",
+      "updated_at": "2026-01-23T04:33:47.551087",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000015",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "proc/BUILDBMS.prc",
+      "program_id": "BUILDBMS",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000002",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000002",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/proc/BUILDBMS.prc",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-23T04:33:22.280353",
+      "updated_at": "2026-01-23T04:34:09.660586",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000016",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "proc/BUILDBAT.prc",
+      "program_id": "BUILDBAT",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000001",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000001",
+        "scribe_worker": "scribe-1",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/proc/BUILDBAT.prc",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-23T04:33:31.973748",
+      "updated_at": "2026-01-23T04:34:30.883959",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000017",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "proc/BLDCIDB2.prc",
+      "program_id": "BLDCIDB2",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000004",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000004",
+        "scribe_worker": "scribe-3",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/proc/BLDCIDB2.prc",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-23T04:33:39.248927",
+      "updated_at": "2026-01-23T04:38:32.887409",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000018",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/SORTTEST.jcl",
+      "program_id": "SORTTEST",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000005",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000005",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/SORTTEST.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-23T04:33:56.077006",
+      "updated_at": "2026-01-23T04:38:36.036618",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000019",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/LISTCAT.jcl",
+      "program_id": "LISTCAT",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000006",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000006",
+        "scribe_worker": "scribe-1",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/LISTCAT.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-23T04:34:03.339934",
+      "updated_at": "2026-01-23T04:39:24.466926",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000020",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "proc/BUILDBMS.prc",
+      "program_id": "BUILDBMS",
+      "cycle_number": 1,
+      "worker_id": "scribe-3",
+      "parent_ticket_id": "mem-000015",
+      "metadata": {
+        "parent_validation_ticket": "mem-000015",
+        "issues_found": [
+          "business_rules array is completely empty, violating critical section requirement for at least one rule with citation.",
+          "Inputs classify SRCCODE and CICSMAC as FILE_SEQUENTIAL despite being symbolic parameters (lines 25, 28), inconsistent with PARAMETER type for MAPNAME/HLQ.",
+          "Outputs descriptions do not note unusual DISP=SHR for LOADLIB (line 70) and LISTING SYSPRINT (line 81), which may imply pre-existing datasets.",
+          "No documentation of error handling despite sequential JCL steps with no COND parameters.",
+          "SYS1.MACLIB and CEE.SCEEMAC correctly listed as inputs but are hardcoded (lines 53, 54, 83, 84), not parameters."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-93FF18AE",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "The business_rules section is empty, but critical sections require at least one business rule with a citation. What business rules apply, such as requirements for the MAPNAME member to exist in SRCCODE?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-2",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/proc/BUILDBMS.prc",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-23T04:34:09.658927",
+      "updated_at": "2026-01-23T04:38:47.875487",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000021",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/BMSCMP.jcl",
+      "program_id": "BMSCMP",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000007",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000007",
+        "scribe_worker": "scribe-3",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/BMSCMP.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-23T04:34:17.005479",
+      "updated_at": "2026-01-23T04:39:03.987642",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000022",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/BATCMP.jcl",
+      "program_id": "BATCMP",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000009",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000009",
+        "scribe_worker": "scribe-1",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/BATCMP.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-23T04:34:26.981815",
+      "updated_at": "2026-01-23T04:39:46.038840",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000023",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "proc/BUILDBAT.prc",
+      "program_id": "BUILDBAT",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": "mem-000016",
+      "metadata": {
+        "parent_validation_ticket": "mem-000016",
+        "issues_found": [
+          "Inputs section omits critical parameters LOADLIB (line 29) and LISTING (line 30), which define key datasets for outputs and linking.",
+          "Outputs section lists &LISTING(&MEM) as primary output, but it is an intermediate file routed to SYSOUT=* via CBLPRINT (lines 65-67).",
+          "Hardcoded libraries in SYSLIB DDs (e.g., line 40, 76-80) not documented, potentially affecting completeness of inputs or business rules.",
+          "Multiple compiler work files (SYSUTx, lines 44-59) and LKED SYSUT1 (83) undocumented.",
+          "LKED SYSLMOD uses DISP=SHR (82), which may not be typical for load module creation."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-2DE47DB9",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Why are the LOADLIB (line 29) and LISTING (line 30) parameters missing from the inputs section, given they are used to define output datasets and libraries?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-1",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/proc/BUILDBAT.prc",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-23T04:34:30.880628",
+      "updated_at": "2026-01-23T04:39:42.959192",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000024",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/CICDBCMP.jcl",
+      "program_id": "CICDBCMP",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000010",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000010",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/CICDBCMP.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-23T04:38:03.836854",
+      "updated_at": "2026-01-23T04:40:07.212787",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000025",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/IMSMQCMP.jcl",
+      "program_id": "IMSMQCMP",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000008",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000008",
+        "scribe_worker": "scribe-1",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/IMSMQCMP.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-23T04:38:05.928444",
+      "updated_at": "2026-01-23T04:40:32.769153",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000026",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/RACFCMDS.jcl",
+      "program_id": "RACFCMDS",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000011",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000011",
+        "scribe_worker": "scribe-3",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/RACFCMDS.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-23T04:38:08.968741",
+      "updated_at": "2026-01-23T04:41:04.217822",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000027",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "proc/BLDCIDB2.prc",
+      "program_id": "BLDCIDB2",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": "mem-000017",
+      "metadata": {
+        "parent_validation_ticket": "mem-000017",
+        "issues_found": [
+          "SYSLIB references undefined &DCLLIB and &COPYLIB, creating gaps in inputs documentation.",
+          "Business rule BR001 does not fully account for non-standard COND=(4,LT,BINDPK) on BINDPL.",
+          "sql_operations incorrectly labels package name as 'table'.",
+          "Potential mismatch between file name BLDCIDB2.prc and PROC name BLDONL.",
+          "SYSPARM inputs incomplete; many defaulted parameters not listed."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-D3F7019B",
+            "section": "business_rules",
+            "question_type": "CLARIFICATION",
+            "question": "Business rule BR001 claims steps execute only if prior step RC=0 with citations including line 158, but BINDPL uses COND=(4,LT,BINDPK) which bypasses BINDPL if BINDPK RC <4 (i.e., executes BINDPL only on higher RC). Does this align with the rule?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-1",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/proc/BLDCIDB2.prc",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-23T04:38:32.885254",
+      "updated_at": "2026-01-23T04:39:48.401767",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000028",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/CICCMP.jcl",
+      "program_id": "CICCMP",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000013",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000013",
+        "scribe_worker": "scribe-1",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/CICCMP.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-23T04:38:43.548799",
+      "updated_at": "2026-01-23T04:41:21.437216",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000029",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/REPRTEST.jcl",
+      "program_id": "REPRTEST",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000012",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000012",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/REPRTEST.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-23T04:38:45.225664",
+      "updated_at": "2026-01-23T04:41:35.643616",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000030",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "proc/BUILDBMS.prc",
+      "program_id": "BUILDBMS",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000020",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000020",
+        "scribe_worker": "scribe-3",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/proc/BUILDBMS.prc",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-23T04:38:47.878277",
+      "updated_at": "2026-01-23T04:42:17.652418",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000031",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "jcl/BMSCMP.jcl",
+      "program_id": "BMSCMP",
+      "cycle_number": 1,
+      "worker_id": "scribe-3",
+      "parent_ticket_id": "mem-000021",
+      "metadata": {
+        "parent_validation_ticket": "mem-000021",
+        "issues_found": [
+          "Business rules section is completely empty, violating critical section requirements.",
+          "ISFIN input incorrectly typed as 'PARAMETER' instead of inline DD.",
+          "JCLLIB input references a commented-out line, potentially inactive.",
+          "Called_programs omits BUILDBMS procedure exec.",
+          "Minor mismatch between documented program_id 'BMSCMP' and source jobname 'CBLDBMS'."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-8A43FB58",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "The business_rules section is empty, but critical sections require at least one rule with citation. Should it document the job abend handling with NOTIFY=&SYSUID?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-2",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/BMSCMP.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-23T04:39:03.984964",
+      "updated_at": "2026-01-23T04:39:52.008566",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000032",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "jcl/LISTCAT.jcl",
+      "program_id": "LISTCAT",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": "mem-000019",
+      "metadata": {
+        "parent_validation_ticket": "mem-000019",
+        "issues_found": [
+          "Purpose summary inaccurately describes STEP01 as allocating the output dataset empty; DISP=(MOD,DELETE,DELETE) on line 22 deletes it instead.",
+          "Paragraphs STEP05 citations [27,36] omit key DD statements for SYSPRINT (line 28) and SYSIN data (lines 33-35).",
+          "Inputs section does not explicitly list the VSAM catalog as a read source, though covered in data_flow."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-925DCB23",
+            "section": "purpose",
+            "question_type": "CLARIFICATION",
+            "question": "",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-1",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/LISTCAT.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-23T04:39:24.465023",
+      "updated_at": "2026-01-23T04:40:00.897895",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000033",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "proc/BUILDBAT.prc",
+      "program_id": "BUILDBAT",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000023",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000023",
+        "scribe_worker": "scribe-1",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/proc/BUILDBAT.prc",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-23T04:39:42.961962",
+      "updated_at": "2026-01-23T04:42:24.071062",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000034",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "jcl/BATCMP.jcl",
+      "program_id": "BATCMP",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": "mem-000022",
+      "metadata": {
+        "parent_validation_ticket": "mem-000022",
+        "issues_found": [
+          "Business rules section empty - critical, must have at least one cited rule",
+          "Outputs section empty - critical gap, compilation JCL typically produces load modules/SYSOUT",
+          "Called_programs empty despite EXEC BUILDBAT invocation",
+          "Paragraphs mischaracterizes JCL step as 'paragraph'",
+          "Commented CCLIBS (line 38) impacts procedure resolution but not fully addressed beyond open_questions",
+          "Potential confusion between jobname CNJBATMP and step/program_id BATCMP"
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-A2129FF5",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Business rules section is empty, which is critical. What business rules govern the compilation process, such as using default MEMNAME=BATCHPGM unless overridden (as per comments)?",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-F44CEA3B",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Outputs section is empty, which is critical. What outputs does the BUILDBAT procedure produce, such as load modules or SYSOUT datasets?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-2",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/BATCMP.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-23T04:39:46.036636",
+      "updated_at": "2026-01-23T04:40:46.318605",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000035",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "proc/BLDCIDB2.prc",
+      "program_id": "BLDCIDB2",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000027",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000027",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/proc/BLDCIDB2.prc",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-23T04:39:48.403909",
+      "updated_at": "2026-01-23T04:43:11.957429",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000036",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/BMSCMP.jcl",
+      "program_id": "BMSCMP",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000031",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000031",
+        "scribe_worker": "scribe-3",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/BMSCMP.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-23T04:39:52.011184",
+      "updated_at": "2026-01-23T04:42:54.358970",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000037",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/LISTCAT.jcl",
+      "program_id": "LISTCAT",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000032",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000032",
+        "scribe_worker": "scribe-1",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/LISTCAT.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-23T04:40:00.900734",
+      "updated_at": "2026-01-23T04:43:37.107522",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000038",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "jcl/IMSMQCMP.jcl",
+      "program_id": "IMSMQCMP",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": "mem-000025",
+      "metadata": {
+        "parent_validation_ticket": "mem-000025",
+        "issues_found": [
+          "Business rules and error_handling incorrectly interpret COND=(4,LT) as skipping on RC>=4; actually skips on success (RC<4).",
+          "Documentation assumes creation of &&COPYIMS/&&COPYLINK/&&COPYMQ via IEBGENER SYSUT2, but those DDs are commented out, breaking LKED SYSLIN.",
+          "Missing explicit listing of key input libraries like &IMSHLQ..SDFSRESL (105) and STEPLIBs.",
+          "Purpose claims 'assembles entry points' without evidence of assembly step.",
+          "Data_flow reads_from cites SYSLIB(DFHELII) (84) and CSQSTUB(CSQCSTUB) (93) as sources, but these are linker INCLUDE control statements in inline SYSUT1 data."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-57D7C570",
+            "section": "business_rules",
+            "question_type": "CLARIFICATION",
+            "question": "Business rules BR001-BR005 claim 'Skip step if prior step RC >= 4' using COND=(4,LT), but line 37 (and similarly 71,82,91,100) COND=(4,LT) actually skips the step if prior RC < 4 (success), running only on failure RC >=4. Is this a documentation error or intentional?",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-1CF597DD",
+            "section": "paragraphs",
+            "question_type": "CLARIFICATION",
+            "question": "Paragraphs and data_flow describe COPYIMS/COPYLINK/COPYMQ generating temp datasets &&COPYIMS/&&COPYLINK/&&COPYMQ (citations 71-80,82-89,91-98), but SYSUT2 DDs are commented out (lines 76,85,94), preventing dataset creation, yet LKED SYSLIN references them (107-110). How does linkage succeed?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-2",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/IMSMQCMP.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-23T04:40:32.766488",
+      "updated_at": "2026-01-23T04:42:12.847428",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000039",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/BATCMP.jcl",
+      "program_id": "BATCMP",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000034",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000034",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/BATCMP.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-23T04:40:46.320934",
+      "updated_at": "2026-01-23T04:43:59.118724",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000040",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "jcl/RACFCMDS.jcl",
+      "program_id": "RACFCMDS",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": "mem-000026",
+      "metadata": {
+        "parent_validation_ticket": "mem-000026",
+        "issues_found": [
+          "Factual mismatch: Multiple sections (purpose, inputs[0], business_rules[0]) refer to 'RALTER' command, but source code line 24 has 'RALT' (potentially invalid RACF command).",
+          "Invalid JCL structure: Duplicate '//SYSTSIN DD *' at lines 23 and 28 in TSOBAT step (line 19), preventing successful submission.",
+          "Inputs section duplicates 'SYSTSIN' name without addressing conflict, despite open_questions note.",
+          "Purpose and business_rules citations include comment lines (22, 27), which may dilute focus on executable code.",
+          "No coverage of JOB-level parameters (lines 1-2) that affect execution environment."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-46AC91E2",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Line 24 shows 'RALT GCICSTRN CARD ADDMEM(CT02)', but the purpose summary states 'using RALTER', inputs[0] describes 'RACF RALTER command', and business_rules[0] says 'Invokes RALTER RACF command'. Does the documentation incorrectly expand the command name, or is the source code erroneous?",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-1BC471A3",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Lines 23 and 28 both define '//SYSTSIN DD *' within the same step (line 19), violating JCL rules for unique DD names per step (will cause JCL error like IE10414I). The inputs section lists two separate SYSTSIN without noting this conflict\u2014should this be flagged as invalid JCL in inputs or business rules?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-1",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/RACFCMDS.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-23T04:41:04.215116",
+      "updated_at": "2026-01-23T04:42:58.781183",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000041",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "jcl/CICCMP.jcl",
+      "program_id": "CICCMP",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": "mem-000028",
+      "metadata": {
+        "parent_validation_ticket": "mem-000028",
+        "issues_found": [
+          "Purpose implies NEWCOPY targets the same program as MEMNAME, but command hardcodes CICSPGMN (line 49)",
+          "ISFIN incorrectly documented as PARAMETER instead of inline DD input",
+          "No documentation of BUILDONL procedure's datasets (source, loadlib, etc.)",
+          "called_programs misrepresents SDSF DD names as parameters and omits BUILDONL",
+          "Data flow lacks details on how MEMNAME is used beyond citations"
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-80314F41",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Lines 33 and 41 use &MEMNAME for the compile step, but line 49 hardcodes 'CICSPGMN' in the NEWCOPY command. The purpose summary states it issues NEWCOPY 'for the program' specified by MEMNAME\u2014does this need correction to note the hardcoded value?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-2",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/CICCMP.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-23T04:41:21.435155",
+      "updated_at": "2026-01-23T04:43:45.686336",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000042",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "jcl/REPRTEST.jcl",
+      "program_id": "REPRTEST",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": "mem-000029",
+      "metadata": {
+        "parent_validation_ticket": "mem-000029",
+        "issues_found": [
+          "business_rules is completely empty, violating critical section requirement for at least one rule with citation.",
+          "Assumptions about REPROC procedure internals (e.g., IDCAMS REPRO utility, control statements) lack verification without procedure source.",
+          "called_programs empty despite invocation of REPROC procedure.",
+          "JCLLIB specification (line 22) mentioned in purpose but not explicitly in inputs."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-C303BB9C",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "The business_rules section is empty. What business rules apply, such as the use of generational qualifier (+1) in the output DSN to implement versioned backups (line 33)?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-1",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/REPRTEST.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-23T04:41:35.641516",
+      "updated_at": "2026-01-23T04:44:15.477173",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000043",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/IMSMQCMP.jcl",
+      "program_id": "IMSMQCMP",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000038",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000038",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/IMSMQCMP.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-23T04:42:12.850477",
+      "updated_at": "2026-01-23T04:44:46.321543",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000044",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "proc/BUILDBMS.prc",
+      "program_id": "BUILDBMS",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": "mem-000030",
+      "metadata": {
+        "parent_validation_ticket": "mem-000030",
+        "issues_found": [
+          "Inputs section incomplete: omits key PROC parameters HLQ, SRCCODE, LOADLIB, CPYBKS, CICSMAC, LISTING (lines 24-29).",
+          "Potential factual issue with LKED SYSLMOD DISP=SHR (line 70) preventing load module update.",
+          "Data_flow.writes_to misses &LISTING write (line 81).",
+          "PRINT step SYSIN DUMMY (line 41) may not perform expected copy.",
+          "MAP step listing handling unclear due to commented line 51."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-A7BC48DB",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "The inputs section lists only MAPNAME as a PARAMETER but omits other critical PROC parameters defined on lines 24-29 (HLQ, SRCCODE, LOADLIB, CPYBKS, CICSMAC, LISTING) which control dataset names for source, libraries, outputs, and listings. Why are these not documented as inputs?",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-DFA8FA69",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "In the LKED step, SYSLMOD for &LOADLIB(&MAPNAME) uses DISP=SHR (line 70), which typically allows read-sharing but not replacement of the PDS member. Are you sure this link-edits and updates the load module as documented in outputs and purpose?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-2",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/proc/BUILDBMS.prc",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-23T04:42:17.650402",
+      "updated_at": "2026-01-23T04:45:15.716817",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000045",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/RACFCMDS.jcl",
+      "program_id": "RACFCMDS",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000040",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000040",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/RACFCMDS.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-23T04:42:58.783257",
+      "updated_at": "2026-01-23T04:44:54.142439",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000046",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/CICCMP.jcl",
+      "program_id": "CICCMP",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000041",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000041",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/CICCMP.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-23T04:43:45.688402",
+      "updated_at": "2026-01-23T04:45:43.474759",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000047",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/REPRTEST.jcl",
+      "program_id": "REPRTEST",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000042",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000042",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/REPRTEST.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-23T04:44:15.479540",
+      "updated_at": "2026-01-23T04:46:14.580821",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000048",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "proc/BUILDBMS.prc",
+      "program_id": "BUILDBMS",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000044",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000044",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/proc/BUILDBMS.prc",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-23T04:45:15.719536",
+      "updated_at": "2026-01-23T04:46:33.035313",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000049",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "jcl/CICCMP.jcl",
+      "program_id": "CICCMP",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": "mem-000046",
+      "metadata": {
+        "parent_validation_ticket": "mem-000046",
+        "issues_found": [
+          "business_rules section is completely empty, missing critical conditional logic citation",
+          "NEWCOPY CICS command at line 49 hardcodes program name, not using &MEMNAME parameter",
+          "Potential intent mismatch: COND=(4,LT) executes NEWCOPY only on compile failure (RC >=4)",
+          "Data flow fields_used for ISFIN incomplete (omits /MODIFY CICSAWSA prefix)",
+          "Paragraph citations have duplicates (CICSCMP [41,41]) and line 51 is blank",
+          "No documentation of JCLLIB at line 37 beyond open questions"
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-DCCF7104",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "The business_rules section is empty, but critical business logic exists such as the conditional execution of the NEWCOPY step. What business rules apply, e.g., executing SDSF only if prior step RC >= 4?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-1",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/CICCMP.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-23T04:45:43.472719",
+      "updated_at": "2026-01-23T04:46:13.311844",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000050",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/CICCMP.jcl",
+      "program_id": "CICCMP",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000049",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000049",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/jcl/CICCMP.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-23T04:46:13.314127",
+      "updated_at": "2026-01-23T04:47:35.985209",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000051",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "proc/BUILDBMS.prc",
+      "program_id": "BUILDBMS",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": "mem-000048",
+      "metadata": {
+        "parent_validation_ticket": "mem-000048",
+        "issues_found": [
+          "business_rules section is completely empty, violating critical requirement for at least one rule with citation.",
+          "Outputs document &LOADLIB(&MAPNAME) as written load module, but SYSLMOD DISP=SHR (line 70) likely prevents replacement.",
+          "Error handling is generic 'standard JCL abend' without specifics on conditional steps or recovery procedures.",
+          "PRINT paragraph (lines 36-43) omits mention of source code printing via SYSPRINT SYSOUT=* (line 37)."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-750EAAC6",
+            "section": "business_rules",
+            "question_type": "CLARIFICATION",
+            "question": "The business_rules section is empty. What business rules govern the use of this PROC, such as requirements for MAPNAME to exist in SRCCODE or access permissions to target PDSes?",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-15649471",
+            "section": "outputs",
+            "question_type": "CLARIFICATION",
+            "question": "Line 70 defines SYSLMOD DD DSN=&LOADLIB(&MAPNAME),DISP=SHR. Does this actually replace or create the load module member, or is it read-only sharing as noted in open_questions?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-1",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/proc/BUILDBMS.prc",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-23T04:46:33.032933",
+      "updated_at": "2026-01-23T04:47:34.326263",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000052",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "proc/BUILDBMS.prc",
+      "program_id": "BUILDBMS",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000051",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000051",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/samples/proc/BUILDBMS.prc",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-23T04:47:34.329264",
+      "updated_at": "2026-01-23T04:48:05.789238",
+      "decision": null
+    },
+    {
+      "ticket_id": "OVW-090E417B",
+      "ticket_type": "system_overview",
+      "state": "created",
+      "file_name": "SYSTEM_OVERVIEW.md",
+      "program_id": "SYSTEM_OVERVIEW",
+      "cycle_number": 5,
+      "worker_id": null,
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260123-043725",
+        "system_name": "CardDemo",
+        "created_at": "2026-01-23T05:11:40.782827"
+      },
+      "created_at": "2026-01-23T05:11:40.782833",
+      "updated_at": "2026-01-23T19:01:26.983850",
+      "decision": null
+    }
+  ]
+}

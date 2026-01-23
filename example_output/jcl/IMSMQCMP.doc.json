@@ -1,0 +1,480 @@
+{
+  "header": {
+    "program_id": "IMSMQCMP",
+    "file_name": "IMSMQCMP.jcl",
+    "file_type": "JCL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-23T04:42:12.845685",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This JCL job translates, compiles, prepares link cards, and links the COBOL program IMSMQPGM for CICS/IMS/MQ integration. It uses DFHECP1$ for CICS translation, IGYCRCTL for compilation, IEBGENER for link card generation, and IEWL for linkage into a load module. Note: Several DD statements are commented out, likely rendering the job non-functional without modification.",
+    "business_context": "Build and compilation process for CICS application IMSMQPGM using IMS database and IBM MQ.",
+    "program_type": "BATCH",
+    "citations": [
+      1,
+      19,
+      20,
+      28,
+      37,
+      71,
+      82,
+      91,
+      100,
+      112
+    ]
+  },
+  "inputs": [
+    {
+      "name": "&HLQ..COBOL.SRC(IMSMQPGM)",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "COBOL source code for IMSMQPGM to be translated and compiled",
+      "copybook": null,
+      "citation": [
+        30
+      ]
+    },
+    {
+      "name": "&CICSHLQ..CICS.SDFHLOAD",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "CICS load library for translator and linker",
+      "copybook": null,
+      "citation": [
+        29,
+        104
+      ]
+    },
+    {
+      "name": "IGY.SIGYCOMP.V63",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "COBOL compiler library",
+      "copybook": null,
+      "citation": [
+        39
+      ]
+    },
+    {
+      "name": "CEE.SCEERUN*",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Language Environment run-time libraries for compiler",
+      "copybook": null,
+      "citation": [
+        40,
+        41,
+        103
+      ]
+    },
+    {
+      "name": "&MQHLQ..SCSQCOBC",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "MQ COBOL copybooks for compiler",
+      "copybook": null,
+      "citation": [
+        64
+      ]
+    },
+    {
+      "name": "&HLQ..COBCOPY",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Custom copybooks for compiler",
+      "copybook": null,
+      "citation": [
+        65
+      ]
+    },
+    {
+      "name": "&&SYSCIN",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Punched translated source passed from TRN to COBOL",
+      "copybook": null,
+      "citation": [
+        32,
+        66
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "&HLQ..CICSLOAD(IMSMQPGM)",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Final linked load module for IMSMQPGM",
+      "copybook": null,
+      "citation": [
+        112
+      ]
+    },
+    {
+      "name": "&&LOADSET",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Temporary compiler object module passed to LKED",
+      "copybook": null,
+      "citation": [
+        43,
+        109
+      ]
+    },
+    {
+      "name": "&&SYSCIN",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Temporary translated source from TRN punch",
+      "copybook": null,
+      "citation": [
+        32,
+        66
+      ]
+    }
+  ],
+  "called_programs": [
+    {
+      "program_name": "DFHECP1$",
+      "call_type": "STATIC_CALL",
+      "purpose": "Perform CICS COBOL translator/precompiler with IMS DLI support",
+      "parameters": [
+        "CICS,DLI,COBOL3"
+      ],
+      "citation": 28
+    },
+    {
+      "program_name": "IGYCRCTL",
+      "call_type": "STATIC_CALL",
+      "purpose": "Compile translated COBOL source to object module",
+      "parameters": [
+        "NODYNAM,OBJECT,RENT,APOST,MAP,XREF"
+      ],
+      "citation": 37
+    },
+    {
+      "program_name": "IEBGENER",
+      "call_type": "STATIC_CALL",
+      "purpose": "Generate load module entry and name card",
+      "parameters": [],
+      "citation": 71
+    },
+    {
+      "program_name": "IEBGENER",
+      "call_type": "STATIC_CALL",
+      "purpose": "Generate MQ stub include card",
+      "parameters": [],
+      "citation": 91
+    },
+    {
+      "program_name": "IEWL",
+      "call_type": "STATIC_CALL",
+      "purpose": "Link object, stubs, and includes into executable load module",
+      "parameters": [
+        "LIST,XREF"
+      ],
+      "citation": 100
+    }
+  ],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Bypass COBOL compile step if TRN translator return code < 4 (success)",
+      "logic_summary": "Step executes only on prior failure (RC >=4); unusual for standard flow",
+      "conditions": [
+        "TRN RC < 4"
+      ],
+      "citation": [
+        37
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Bypass COPYIMS if COBOL return code < 4 (success)",
+      "logic_summary": "Executes only on prior failure (RC >=4)",
+      "conditions": [
+        "COBOL RC < 4"
+      ],
+      "citation": [
+        71
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "Bypass COPYLINK if COPYIMS return code < 4",
+      "logic_summary": "Executes only on prior failure (RC >=4)",
+      "conditions": [
+        "COPYIMS RC < 4"
+      ],
+      "citation": [
+        82
+      ]
+    },
+    {
+      "rule_id": "BR004",
+      "description": "Bypass COPYMQ if COPYLINK return code < 4",
+      "logic_summary": "Executes only on prior failure (RC >=4)",
+      "conditions": [
+        "COPYLINK RC < 4"
+      ],
+      "citation": [
+        91
+      ]
+    },
+    {
+      "rule_id": "BR005",
+      "description": "Bypass LKED if COPYMQ return code < 4",
+      "logic_summary": "Executes only on prior failure (RC >=4)",
+      "conditions": [
+        "COPYMQ RC < 4"
+      ],
+      "citation": [
+        100
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "&HLQ..COBOL.SRC(IMSMQPGM)",
+        "fields_used": [
+          "COBOL source statements"
+        ],
+        "citation": [
+          30
+        ]
+      },
+      {
+        "source": "&&SYSCIN",
+        "fields_used": [
+          "Translated CICS COBOL source"
+        ],
+        "citation": [
+          66
+        ]
+      },
+      {
+        "source": "SYSLIB(DFHELII)",
+        "fields_used": [
+          "CICS linkage stubs"
+        ],
+        "citation": [
+          84
+        ]
+      },
+      {
+        "source": "CSQSTUB(CSQCSTUB)",
+        "fields_used": [
+          "MQ stub module"
+        ],
+        "citation": [
+          93
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "&&SYSCIN",
+        "fields_written": [
+          "Punched translated source"
+        ],
+        "citation": [
+          32
+        ]
+      },
+      {
+        "destination": "&&LOADSET",
+        "fields_written": [
+          "COBOL object module"
+        ],
+        "citation": [
+          43
+        ]
+      },
+      {
+        "destination": "&HLQ..CICSLOAD(IMSMQPGM)",
+        "fields_written": [
+          "Linked load module"
+        ],
+        "citation": [
+          112
+        ]
+      }
+    ],
+    "transforms": [
+      {
+        "input_field": "IMSMQPGM COBOL source",
+        "output_field": "Translated CICS COBOL",
+        "transformation_description": "CICS/IMS preprocessor translation via DFHECP1$",
+        "citation": [
+          28
+        ]
+      },
+      {
+        "input_field": "Translated COBOL",
+        "output_field": "Object module in &&LOADSET",
+        "transformation_description": "Enterprise COBOL compilation",
+        "citation": [
+          37
+        ]
+      },
+      {
+        "input_field": "Object + stubs + includes",
+        "output_field": "IMSMQPGM(R) load module",
+        "transformation_description": "Linkage editor assembly with entry/NAME cards and MQ/CICS stubs",
+        "citation": [
+          100
+        ]
+      }
+    ]
+  },
+  "copybooks_used": [
+    {
+      "copybook_name": "N/A",
+      "purpose": "JCL does not use copybooks; references libraries containing copybooks for compiler (e.g., &MQHLQ..SCSQCOBC)",
+      "location": "OTHER",
+      "citation": 64
+    }
+  ],
+  "paragraphs": [
+    {
+      "paragraph_name": "TRN",
+      "purpose": "CICS translator step: preprocesses COBOL source for CICS/IMS, punches to &&SYSCIN",
+      "called_by": [],
+      "calls": [
+        "DFHECP1$"
+      ],
+      "citation": [
+        28,
+        36
+      ]
+    },
+    {
+      "paragraph_name": "COBOL",
+      "purpose": "COBOL compiler step: compiles translated source to object in &&LOADSET",
+      "called_by": [],
+      "calls": [
+        "IGYCRCTL"
+      ],
+      "citation": [
+        37,
+        70
+      ]
+    },
+    {
+      "paragraph_name": "COPYIMS",
+      "purpose": "Generates ENTRY/NAME link cards for IMSMQPGM (SYSUT2 output commented out)",
+      "called_by": [],
+      "calls": [
+        "IEBGENER"
+      ],
+      "citation": [
+        71,
+        80
+      ]
+    },
+    {
+      "paragraph_name": "COPYLINK",
+      "purpose": "Generates INCLUDE for CICS DFHELII stubs (SYSUT2 output commented out)",
+      "called_by": [],
+      "calls": [
+        "IEBGENER"
+      ],
+      "citation": [
+        82,
+        89
+      ]
+    },
+    {
+      "paragraph_name": "COPYMQ",
+      "purpose": "Generates INCLUDE for MQ CSQCSTUB (SYSUT2 output commented out)",
+      "called_by": [],
+      "calls": [
+        "IEBGENER"
+      ],
+      "citation": [
+        91,
+        98
+      ]
+    },
+    {
+      "paragraph_name": "LKED",
+      "purpose": "Link editor step: links object and generated cards into load module",
+      "called_by": [],
+      "calls": [
+        "IEWL"
+      ],
+      "citation": [
+        100,
+        114
+      ]
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "Any prior step RC < 4 (success)",
+      "action": "Bypass current step via COND=(4,LT)",
+      "citation": [
+        37
+      ]
+    },
+    {
+      "condition": "Any prior step RC < 4 (success)",
+      "action": "Bypass current step via COND=(4,LT)",
+      "citation": [
+        71
+      ]
+    },
+    {
+      "condition": "Any prior step RC < 4 (success)",
+      "action": "Bypass current step via COND=(4,LT)",
+      "citation": [
+        82
+      ]
+    },
+    {
+      "condition": "Any prior step RC < 4 (success)",
+      "action": "Bypass current step via COND=(4,LT)",
+      "citation": [
+        91
+      ]
+    },
+    {
+      "condition": "Any prior step RC < 4 (success)",
+      "action": "Bypass current step via COND=(4,LT)",
+      "citation": [
+        100
+      ]
+    }
+  ],
+  "sql_operations": [
+    {
+      "operation": "N/A",
+      "table": "None",
+      "purpose": "JCL performs no SQL operations",
+      "citation": 1
+    }
+  ],
+  "cics_operations": [
+    {
+      "command": "N/A",
+      "resource": "None",
+      "purpose": "JCL compiles CICS program but performs no runtime CICS commands",
+      "citation": 1
+    }
+  ],
+  "open_questions": [
+    {
+      "question": "Why are SYSUT2 DD statements commented out in COPY* steps?",
+      "context": "Prevents creation of &&COPYIMS/&&COPYLINK/&&COPYMQ, causing LKED failure",
+      "suggestion": "Uncomment lines 76-78,85-87,94-96 and adjust SYSPRINT/SYSIN if needed"
+    },
+    {
+      "question": "Intent of unusual COND=(4,LT) logic?",
+      "context": "Bypasses steps on success (RC<4), opposite of typical compile chain",
+      "suggestion": "Possibly sample error; change to COND=(4,GE) or remove for standard flow"
+    },
+    {
+      "question": "Are SET statements (HLQ, CICSHLQ etc.) intended to be uncommented?",
+      "context": "Lines 23-27 start with //   SET, likely comments; symbols undefined otherwise",
+      "suggestion": "Uncomment or use JOBLIB/JECL parameters"
+    }
+  ]
+}

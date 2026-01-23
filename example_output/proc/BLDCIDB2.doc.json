@@ -1,0 +1,410 @@
+{
+  "header": {
+    "program_id": "BLDCIDB2",
+    "file_name": "BLDCIDB2.prc",
+    "file_type": "PROC",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-23T04:39:48.400518",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This JCL PROC compiles CICS COBOL programs with embedded DB2 SQL by executing DB2 precompilation to generate DBRMs, CICS translation, COBOL compilation, link-editing to produce a load module, package binding, and plan binding. It is designed for building CICS+DB2 applications after BMS compilation. Parameters control libraries, DB2 subsystem, and plan names.",
+    "business_context": "Compilation and binding process for CICS COBOL/DB2 programs in a mainframe environment, targeting CARDDEMO application package and plan.",
+    "program_type": "UTILITY",
+    "citations": [
+      2,
+      19,
+      20,
+      21,
+      25,
+      46,
+      68,
+      80,
+      114,
+      135,
+      158
+    ]
+  },
+  "inputs": [
+    {
+      "name": "MEMNAME",
+      "io_type": "PARAMETER",
+      "description": "Member name of the CICS COBOL source program to compile and bind",
+      "copybook": null,
+      "citation": [
+        25,
+        50
+      ]
+    },
+    {
+      "name": "HLQ",
+      "io_type": "PARAMETER",
+      "description": "High-level qualifier used for source, copybook, DBRM, and load libraries",
+      "copybook": null,
+      "citation": [
+        26,
+        34,
+        37,
+        38,
+        39
+      ]
+    },
+    {
+      "name": "SSID",
+      "io_type": "PARAMETER",
+      "description": "DB2 subsystem ID for binding operations",
+      "copybook": null,
+      "citation": [
+        27,
+        143,
+        167
+      ]
+    },
+    {
+      "name": "PLAN",
+      "io_type": "PARAMETER",
+      "description": "DB2 plan name to bind packages into",
+      "copybook": null,
+      "citation": [
+        28,
+        168
+      ]
+    },
+    {
+      "name": "SRCLIB(&MEMNAME)",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "COBOL source library containing CICS and DB2 code for the specified member",
+      "copybook": null,
+      "citation": [
+        38,
+        50
+      ]
+    },
+    {
+      "name": "CPYBKS",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Copybook library used during precompile and compilation",
+      "copybook": null,
+      "citation": [
+        37,
+        57,
+        85
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "DBRMLIB(&MEMNAME)",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "DBRM member generated from SQL statements in source during precompilation",
+      "copybook": null,
+      "citation": [
+        34,
+        54,
+        138
+      ]
+    },
+    {
+      "name": "LOADLIB(&MEMNAME)",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Final linked load module for the CICS COBOL DB2 program",
+      "copybook": null,
+      "citation": [
+        39,
+        127
+      ]
+    }
+  ],
+  "called_programs": [
+    {
+      "program_name": "DSNHPC",
+      "call_type": "STATIC_CALL",
+      "purpose": "DB2 precompiler to extract SQL into DBRM",
+      "parameters": [
+        "HOST(IBMCOB),XREF,SOURCE,FLAG(I),APOST"
+      ],
+      "citation": 46
+    },
+    {
+      "program_name": "DFHECP1$",
+      "call_type": "STATIC_CALL",
+      "purpose": "CICS translator to convert CICS commands to calls",
+      "parameters": [
+        "NOSEQ"
+      ],
+      "citation": 68
+    },
+    {
+      "program_name": "IGYCRCTL",
+      "call_type": "STATIC_CALL",
+      "purpose": "COBOL compiler",
+      "parameters": [
+        "RENT,NODYNAM,NOSEQ"
+      ],
+      "citation": 80
+    },
+    {
+      "program_name": "HEWL",
+      "call_type": "STATIC_CALL",
+      "purpose": "Link editor to create load module",
+      "parameters": [],
+      "citation": 114
+    },
+    {
+      "program_name": "IKJEFT01",
+      "call_type": "STATIC_CALL",
+      "purpose": "DB2 utility for package binding",
+      "parameters": [
+        "DSN SYSTEM (&SSID) BIND PACKAGE..."
+      ],
+      "citation": 135
+    },
+    {
+      "program_name": "IKJEFT01",
+      "call_type": "STATIC_CALL",
+      "purpose": "DB2 utility for plan binding",
+      "parameters": [
+        "DSN SYSTEM (&SSID) BIND PLAN..."
+      ],
+      "citation": 158
+    }
+  ],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "TRN step executes only if PRECMP return code is 0",
+      "logic_summary": "JCL COND=(0,NE,PRECMP) bypasses TRN if PRECMP RC <> 0",
+      "conditions": [
+        "PRECMP RC = 0"
+      ],
+      "citation": [
+        69
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "COBOL step executes only if TRN return code is 0",
+      "logic_summary": "JCL COND=(0,NE) bypasses COBOL if previous (TRN) RC <> 0",
+      "conditions": [
+        "TRN RC = 0"
+      ],
+      "citation": [
+        81
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "LKED, BINDPK, and BINDPL steps execute only if COBOL return code is 0",
+      "logic_summary": "JCL COND01 IF RC = 0 THEN block encompasses LKED and subsequent steps",
+      "conditions": [
+        "COBOL RC = 0"
+      ],
+      "citation": [
+        109
+      ]
+    },
+    {
+      "rule_id": "BR004",
+      "description": "BINDPK step executes only if LKED return code is 0",
+      "logic_summary": "JCL COND=(0,NE) bypasses BINDPK if previous (LKED) RC <> 0",
+      "conditions": [
+        "LKED RC = 0"
+      ],
+      "citation": [
+        135
+      ]
+    },
+    {
+      "rule_id": "BR005",
+      "description": "BINDPL step executes only if BINDPK return code is 4 or higher",
+      "logic_summary": "JCL COND=(4,LT,BINDPK) bypasses BINDPL if BINDPK RC < 4",
+      "conditions": [
+        "BINDPK RC >= 4"
+      ],
+      "citation": [
+        158
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "SRCLIB(&MEMNAME)",
+        "fields_used": [],
+        "citation": [
+          50
+        ]
+      },
+      {
+        "source": "CPYBKS",
+        "fields_used": [],
+        "citation": [
+          57
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "DBRMLIB(&MEMNAME)",
+        "fields_written": [],
+        "citation": [
+          54
+        ]
+      },
+      {
+        "destination": "LOADLIB(&MEMNAME)",
+        "fields_written": [],
+        "citation": [
+          127
+        ]
+      }
+    ],
+    "transforms": [
+      {
+        "input_field": "COBOL source with embedded SQL and CICS",
+        "output_field": "Precompiled COBOL without SQL and DBRM member",
+        "transformation_description": "DB2 precompilation extracts SQL statements into DBRM while modifying source",
+        "citation": [
+          46
+        ]
+      },
+      {
+        "input_field": "Precompiled COBOL with CICS commands",
+        "output_field": "Translated COBOL with CICS calls",
+        "transformation_description": "CICS translation replaces EXEC CICS with CALL statements",
+        "citation": [
+          68
+        ]
+      },
+      {
+        "input_field": "Translated COBOL object",
+        "output_field": "Linked load module",
+        "transformation_description": "COBOL compilation and link-edit combine objects with CICS/DB2 stubs",
+        "citation": [
+          80
+        ]
+      }
+    ]
+  },
+  "copybooks_used": [],
+  "paragraphs": [
+    {
+      "paragraph_name": "PRECMP",
+      "purpose": "DB2 precompile step extracts SQL to DBRMLIB and passes modified source",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        46,
+        63
+      ]
+    },
+    {
+      "paragraph_name": "TRN",
+      "purpose": "CICS translator step converts CICS commands and passes to compiler",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        68,
+        77
+      ]
+    },
+    {
+      "paragraph_name": "COBOL",
+      "purpose": "COBOL compiler step produces object module for link-edit",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        80,
+        108
+      ]
+    },
+    {
+      "paragraph_name": "LKED",
+      "purpose": "Link-edit step creates executable load module in LOADLIB",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        114,
+        131
+      ]
+    },
+    {
+      "paragraph_name": "BINDPK",
+      "purpose": "Bind DBRM member into CARDDEMO package",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        135,
+        152
+      ]
+    },
+    {
+      "paragraph_name": "BINDPL",
+      "purpose": "Bind CARDDEMO package list into specified plan",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        158,
+        175
+      ]
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "Any step RC <> 0",
+      "action": "Subsequent steps bypassed via COND parameters",
+      "citation": [
+        69,
+        81,
+        135
+      ]
+    },
+    {
+      "condition": "COBOL RC <> 0",
+      "action": "Skip LKED/BINDPK/BINDPL via COND01 IF RC=0",
+      "citation": [
+        109
+      ]
+    },
+    {
+      "condition": "BINDPK RC < 4",
+      "action": "Bypass BINDPL",
+      "citation": [
+        158
+      ]
+    }
+  ],
+  "sql_operations": [
+    {
+      "operation": "BIND PACKAGE",
+      "table": null,
+      "purpose": "Bind DBRM member into CARDDEMO package using specified qualifier and options",
+      "citation": 144
+    },
+    {
+      "operation": "BIND PLAN",
+      "table": null,
+      "purpose": "Bind CARDDEMO package list into the specified plan with retain option",
+      "citation": 168
+    }
+  ],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "Purpose of executing BINDPL only on BINDPK failure (RC>=4)",
+      "context": "Unusual conditional logic deviates from success-only pattern; comments do not explain",
+      "suggestion": "Review CARDDEMO application DB2ENTRY or deployment procedures for intent"
+    },
+    {
+      "question": "No copybooks used",
+      "context": "JCL PROC does not reference or define copybooks; section not applicable",
+      "suggestion": "N/A for PROC documentation"
+    }
+  ]
+}

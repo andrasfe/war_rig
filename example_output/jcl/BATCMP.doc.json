@@ -1,0 +1,151 @@
+{
+  "header": {
+    "program_id": "BATCMP",
+    "file_name": "jcl/BATCMP.jcl",
+    "file_type": "JCL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-23T04:40:46.317297",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This JCL defines a job to compile a batch COBOL program using the BUILDBAT cataloged procedure. It sets symbolic parameters MEMNAME to BATCHPGM and HLQ to AWS.M2 for dataset qualification. Comments instruct replacing BATCHPGM with the actual program name.",
+    "business_context": null,
+    "program_type": "BATCH",
+    "citations": [
+      29,
+      33,
+      34,
+      42
+    ]
+  },
+  "inputs": [
+    {
+      "name": "MEMNAME",
+      "io_type": "PARAMETER",
+      "description": "Symbolic parameter specifying the COBOL source member name to compile, set to BATCHPGM",
+      "copybook": null,
+      "citation": [
+        33
+      ]
+    },
+    {
+      "name": "HLQ",
+      "io_type": "PARAMETER",
+      "description": "Symbolic parameter providing the high-level dataset qualifier, set to AWS.M2",
+      "copybook": null,
+      "citation": [
+        34
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "BUILDBAT outputs",
+      "io_type": "OTHER",
+      "description": "Compilation products such as load modules, object modules, and SYSOUT listings produced by the BUILDBAT procedure",
+      "copybook": null,
+      "citation": [
+        42
+      ]
+    }
+  ],
+  "called_programs": [
+    {
+      "program_name": "BUILDBAT",
+      "call_type": "STATIC_CALL",
+      "purpose": "Performs the COBOL compilation steps for the specified program member",
+      "parameters": [
+        "MEM=&MEMNAME",
+        "HLQ=&HLQ"
+      ],
+      "citation": 42
+    }
+  ],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "MEMNAME symbolic parameter defaults to BATCHPGM for the program to compile, but comments instruct overriding it with the actual program name everywhere in the JCL",
+      "logic_summary": "Explicitly SET MEMNAME=BATCHPGM; change directive in comments",
+      "conditions": [],
+      "citation": [
+        4,
+        5,
+        26,
+        27,
+        33
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "MEMNAME",
+        "fields_used": [
+          "BATCHPGM"
+        ],
+        "citation": [
+          33
+        ]
+      },
+      {
+        "source": "HLQ",
+        "fields_used": [
+          "AWS.M2"
+        ],
+        "citation": [
+          34
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "BUILDBAT procedure outputs",
+        "fields_written": [],
+        "citation": [
+          42
+        ]
+      }
+    ],
+    "transforms": [
+      {
+        "input_field": "COBOL source member (&MEMNAME)",
+        "output_field": "Compiled load module (&MEMNAME)",
+        "transformation_description": "COBOL source code is compiled into executable load module via BUILDBAT procedure",
+        "citation": [
+          42
+        ]
+      }
+    ]
+  },
+  "copybooks_used": [],
+  "paragraphs": [
+    {
+      "paragraph_name": "BATCMP",
+      "purpose": "Job step that executes the BUILDBAT procedure to compile the COBOL program",
+      "called_by": [],
+      "calls": [
+        "BUILDBAT"
+      ],
+      "citation": [
+        42,
+        42
+      ]
+    }
+  ],
+  "error_handling": [],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "What specific datasets (input source library, output LOADLIB, SYSPRINT, etc.) are accessed by the BUILDBAT procedure?",
+      "context": "The invoked BUILDBAT procedure is cataloged externally and not defined inline in this JCL",
+      "suggestion": "Obtain and analyze the source for the BUILDBAT PROC from the proclib"
+    }
+  ]
+}
