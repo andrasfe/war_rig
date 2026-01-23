@@ -179,12 +179,12 @@ class TestBuildSystemDesignPrompt:
         assert "## Required Document Structure" in prompt
         assert "### 1. Executive Summary" in prompt
         assert "### 2. Architecture Overview" in prompt
-        assert "### 3. Key Components and Relationships" in prompt
-        assert "### 4. Data Flows" in prompt
-        assert "### 5. Subsystem Breakdown" in prompt
+        assert "### 3. Component Catalog" in prompt
+        assert "### 4. Subsystem Breakdown" in prompt
+        assert "### 5. Data Architecture" in prompt
 
         # Check guidelines
-        assert "## Important Guidelines" in prompt
+        assert "## Critical Guidelines" in prompt
         assert "QUESTION:" in prompt  # Should mention the question marker
 
         # Check output format
@@ -200,17 +200,17 @@ class TestBuildSystemDesignPrompt:
         prompt = imperator_agent._build_system_design_prompt(sample_holistic_input)
 
         # Check program documentation section
-        assert "## Program Documentation Summaries" in prompt
+        assert "## Program Documentation (Full Details)" in prompt
 
-        # Check BATCH programs
-        assert "### BATCH Programs" in prompt
-        assert "**MAINPGM**" in prompt
+        # Check BATCH programs (now "Components")
+        assert "### BATCH Components" in prompt
+        assert "#### MAINPGM" in prompt
         assert "MAINPGM.CBL" in prompt
         assert "Main batch program that orchestrates daily processing" in prompt
 
-        # Check ONLINE_CICS programs
-        assert "### ONLINE_CICS Programs" in prompt
-        assert "**INQPGM**" in prompt
+        # Check ONLINE_CICS programs (now "Components")
+        assert "### ONLINE_CICS Components" in prompt
+        assert "#### INQPGM" in prompt
         assert "Online inquiry program for account lookup" in prompt
 
         # Check business context is included
@@ -265,7 +265,7 @@ class TestBuildSystemDesignPrompt:
         prompt = imperator_agent._build_system_design_prompt(sample_holistic_input)
 
         # Should have creation instruction
-        assert "Create a comprehensive SYSTEM_DESIGN.md document" in prompt
+        assert "Create a comprehensive, detailed SYSTEM_DESIGN.md document" in prompt
         # Should not have update instruction
         assert "enhance and update" not in prompt.lower()
         # Should not have existing content section
@@ -326,7 +326,7 @@ This is the existing system design document.
         prompt = imperator_agent._build_system_design_prompt(sample_holistic_input)
 
         # MAINPGM calls SUBPGM1 and SUBPGM2 in its documentation
-        assert "**Calls**:" in prompt
+        assert "**Programs Called**:" in prompt
         assert "SUBPGM1" in prompt
         assert "SUBPGM2" in prompt
 
@@ -363,7 +363,7 @@ This is the existing system design document.
         """Test that copybooks from documentation are shown."""
         prompt = imperator_agent._build_system_design_prompt(sample_holistic_input)
 
-        assert "**Copybooks**:" in prompt
+        assert "**Copybooks Used**:" in prompt
         assert "COMMON.CPY" in prompt
         assert "SCREEN.CPY" in prompt
 

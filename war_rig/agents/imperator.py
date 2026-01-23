@@ -1819,63 +1819,146 @@ and architecture after reading your overview."""
         parts.append("")
         if existing_content:
             parts.append(
-                "An existing SYSTEM_DESIGN.md document is provided below. Your task is to "
-                "**enhance and update** this document based on the latest documentation. "
-                "Preserve valuable existing content while improving clarity, adding missing "
-                "details, and resolving any previously marked questions if the answer is now clear."
+                "**CRITICAL: An existing SYSTEM_DESIGN.md document is provided below.**"
+            )
+            parts.append("")
+            parts.append(
+                "You MUST **preserve ALL existing content** and **incrementally enhance** it. "
+                "Do NOT rewrite from scratch. Do NOT remove sections or details. Instead:"
+            )
+            parts.append("- **Add** new information discovered in the latest documentation")
+            parts.append("- **Expand** sections with more detail and context")
+            parts.append("- **Clarify** ambiguous areas based on new understanding")
+            parts.append("- **Resolve** previously marked questions if answers are now available")
+            parts.append("- **Cross-reference** by adding links to component documentation")
+            parts.append("")
+            parts.append(
+                "The resulting document should be **strictly longer and more detailed** "
+                "than the input document. Information loss is unacceptable."
             )
         else:
             parts.append(
-                "Create a comprehensive SYSTEM_DESIGN.md document that describes the "
+                "Create a comprehensive, detailed SYSTEM_DESIGN.md document that describes the "
                 "overall system architecture based on the program documentation provided below."
+            )
+            parts.append("")
+            parts.append(
+                "Be **verbose and thorough** - this document should serve as the definitive "
+                "architectural reference. Include all relevant details, not just summaries."
             )
         parts.append("")
 
-        parts.append("## Required Document Structure")
+        parts.append("## Required Document Structure (Comprehensive)")
         parts.append("")
-        parts.append("Generate a markdown document with the following sections:")
+        parts.append("Generate a detailed markdown document with the following sections. ")
+        parts.append("Each section should be **thorough and verbose** - this is the definitive reference.")
         parts.append("")
         parts.append("### 1. Executive Summary")
-        parts.append("- 2-3 paragraphs describing the system's purpose and scope")
-        parts.append("- Key business functions served")
-        parts.append("- Technology stack summary (COBOL, PL/I, DB2, CICS, etc.)")
+        parts.append("- 3-5 paragraphs describing the system's purpose, scope, and business value")
+        parts.append("- Key business functions served with specific examples")
+        parts.append("- Technology stack summary (COBOL, PL/I, DB2, CICS, IMS, etc.)")
+        parts.append("- System boundaries and external interfaces")
         parts.append("")
         parts.append("### 2. Architecture Overview")
-        parts.append("- High-level system architecture description")
-        parts.append("- Entry points and interfaces")
-        parts.append("- Integration patterns (batch, online, database)")
+        parts.append("- Detailed high-level system architecture description")
+        parts.append("- All entry points and interfaces with their purposes")
+        parts.append("- Integration patterns (batch, online, database, messaging)")
+        parts.append("- Architectural patterns identified (layers, tiers, pipelines)")
+        parts.append("- ASCII or Mermaid diagrams showing component relationships")
         parts.append("")
-        parts.append("### 3. Key Components and Relationships")
-        parts.append("- Core programs and their responsibilities")
-        parts.append("- Shared components (copybooks, utilities)")
-        parts.append("- Dependency relationships between programs")
+        parts.append("### 3. Component Catalog")
+        parts.append("**Create a comprehensive table of ALL components with markdown links:**")
         parts.append("")
-        parts.append("### 4. Data Flows")
-        parts.append("- How data moves between programs")
-        parts.append("- Input sources and output destinations")
-        parts.append("- File/database interactions")
+        parts.append("| Component | Type | Purpose | Dependencies | Doc Link |")
+        parts.append("|-----------|------|---------|--------------|----------|")
+        parts.append("| PROGNAME  | COBOL| Brief   | PROG2, PROG3 | [Link](docs/PROGNAME.doc.json) |")
         parts.append("")
-        parts.append("### 5. Subsystem Breakdown")
-        parts.append("- Logical groupings of programs by function")
-        parts.append("- Batch vs. online processing areas")
-        parts.append("- Shared services and utilities")
+        parts.append("Include EVERY program, JCL, copybook, and procedure documented.")
+        parts.append("")
+        parts.append("### 4. Subsystem Breakdown")
+        parts.append("- Logical groupings of programs by business function")
+        parts.append("- Batch processing subsystems with job flows")
+        parts.append("- Online/CICS transaction processing areas")
+        parts.append("- Shared services, utilities, and common routines")
+        parts.append("- For each subsystem: detailed description with component links")
+        parts.append("")
+        parts.append("### 5. Data Architecture")
+        parts.append("- All data stores (files, databases, queues)")
+        parts.append("- Data flow diagrams showing how data moves between components")
+        parts.append("- Input sources with formats and frequencies")
+        parts.append("- Output destinations with formats and consumers")
+        parts.append("- Key data structures and their usage patterns")
+        parts.append("")
+        parts.append("### 6. Integration Points")
+        parts.append("- External system interfaces")
+        parts.append("- Batch job dependencies and scheduling")
+        parts.append("- Database connections and access patterns")
+        parts.append("- File transfers and data exchanges")
+        parts.append("")
+        parts.append("### 7. Business Rules Summary")
+        parts.append("- Compile ALL business rules from component documentation")
+        parts.append("- Group by business domain or function")
+        parts.append("- Link each rule to its source component")
+        parts.append("")
+        parts.append("### 8. Error Handling Patterns")
+        parts.append("- Common error handling approaches in the system")
+        parts.append("- Recovery procedures and restart logic")
+        parts.append("- Logging and monitoring patterns")
+        parts.append("")
+        parts.append("### 9. Open Questions and Uncertainties")
+        parts.append("- Consolidate all ❓ QUESTION markers")
+        parts.append("- Areas needing further investigation")
+        parts.append("- Assumptions made and their implications")
         parts.append("")
 
-        parts.append("## Important Guidelines")
+        parts.append("## Critical Guidelines")
         parts.append("")
-        parts.append(
-            "- **Insert inline questions** wherever your understanding is unclear or "
-            "information is missing. Mark these with: `\u2753 QUESTION: [your question here]`"
-        )
-        parts.append(
-            "- Focus on architectural understanding, not implementation details"
-        )
-        parts.append("- Identify patterns and relationships across the system")
-        parts.append("- Be explicit about assumptions and uncertainties")
+        parts.append("**VERBOSITY**: Write detailed, comprehensive content. Every section should be ")
+        parts.append("thoroughly explained. A longer document is better than a sparse one.")
+        parts.append("")
+        parts.append("**LINKING**: Every time you mention a component (program, JCL, copybook), ")
+        parts.append("include a markdown link to its documentation: `[PROGNAME](docs/PROGNAME.doc.json)`")
+        parts.append("")
+        parts.append("**QUESTIONS**: Insert inline questions wherever your understanding is unclear ")
+        parts.append("or information is missing. Mark these with: `❓ QUESTION: [your question here]`")
+        parts.append("")
+        parts.append("**PRESERVATION**: If enhancing an existing document, preserve ALL existing content. ")
+        parts.append("Add to it, don't replace it. The document should only grow richer.")
+        parts.append("")
+        parts.append("**COMPLETENESS**: Include information about ALL documented components, not just ")
+        parts.append("the most important ones. Every component deserves mention and a link.")
         parts.append("")
 
-        # Include file documentation summaries
-        parts.append("## Program Documentation Summaries")
+        # Build documentation path reference table for linking
+        parts.append("## Documentation File Paths (for linking)")
+        parts.append("")
+        parts.append(
+            "When referencing these components in the SYSTEM_DESIGN.md, use markdown links. "
+            "Example: `[PROGNAME](docs/path/to/PROGNAME.doc.json)`"
+        )
+        parts.append("")
+        parts.append("| Component | Doc Path |")
+        parts.append("|-----------|----------|")
+
+        if input_data.file_documentation:
+            for doc in input_data.file_documentation:
+                # Compute documentation path from file_name
+                from pathlib import Path as PathLib
+                rel_path = PathLib(doc.file_name)
+                if rel_path.parent != PathLib("."):
+                    doc_path = f"docs/{rel_path.parent}/{rel_path.stem}.doc.json"
+                else:
+                    doc_path = f"docs/{rel_path.stem}.doc.json"
+                parts.append(f"| {doc.program_id} | `{doc_path}` |")
+        parts.append("")
+
+        # Include detailed file documentation
+        parts.append("## Program Documentation (Full Details)")
+        parts.append("")
+        parts.append(
+            "Below is comprehensive documentation for each component. "
+            "Include ALL relevant details in the SYSTEM_DESIGN.md and link to each component."
+        )
         parts.append("")
 
         if input_data.file_documentation:
@@ -1892,65 +1975,89 @@ and architecture after reading your overview."""
                 by_type[ptype].append(doc)
 
             for ptype, docs in sorted(by_type.items()):
-                parts.append(f"### {ptype} Programs ({len(docs)})")
+                parts.append(f"### {ptype} Components ({len(docs)})")
                 parts.append("")
 
                 for doc in docs:
-                    parts.append(f"**{doc.program_id}** (`{doc.file_name}`)")
-                    parts.append(f"- **Summary**: {doc.template.purpose.summary}")
+                    # Compute doc path for this file
+                    from pathlib import Path as PathLib
+                    rel_path = PathLib(doc.file_name)
+                    if rel_path.parent != PathLib("."):
+                        doc_path = f"docs/{rel_path.parent}/{rel_path.stem}.doc.json"
+                    else:
+                        doc_path = f"docs/{rel_path.stem}.doc.json"
+
+                    parts.append(f"#### {doc.program_id}")
+                    parts.append(f"- **Source File**: `{doc.file_name}`")
+                    parts.append(f"- **Documentation**: `{doc_path}`")
+                    parts.append(f"- **Link Format**: `[{doc.program_id}]({doc_path})`")
+                    parts.append("")
+                    parts.append(f"**Summary**: {doc.template.purpose.summary}")
+                    parts.append("")
 
                     if doc.template.purpose.business_context:
-                        parts.append(
-                            f"- **Business Context**: {doc.template.purpose.business_context}"
-                        )
+                        parts.append(f"**Business Context**: {doc.template.purpose.business_context}")
+                        parts.append("")
 
-                    # Called programs
+                    # Called programs - show ALL
                     if doc.template.called_programs:
-                        called_names = [
-                            cp.program_name for cp in doc.template.called_programs
-                        ]
-                        parts.append(f"- **Calls**: {', '.join(called_names)}")
+                        parts.append("**Programs Called**:")
+                        for cp in doc.template.called_programs:
+                            purpose = f" - {cp.purpose}" if cp.purpose else ""
+                            parts.append(f"  - `{cp.program_name}`{purpose}")
+                        parts.append("")
 
-                    # Calling context
+                    # Calling context - show ALL
                     if doc.template.calling_context.called_by:
-                        parts.append(
-                            f"- **Called By**: {', '.join(doc.template.calling_context.called_by)}"
-                        )
+                        parts.append(f"**Called By**: {', '.join(doc.template.calling_context.called_by)}")
+                        parts.append("")
 
-                    # Inputs
+                    # Inputs - show ALL with descriptions
                     if doc.template.inputs:
-                        input_names = [inp.name for inp in doc.template.inputs[:5]]
-                        suffix = (
-                            f" (+{len(doc.template.inputs) - 5} more)"
-                            if len(doc.template.inputs) > 5
-                            else ""
-                        )
-                        parts.append(f"- **Inputs**: {', '.join(input_names)}{suffix}")
+                        parts.append("**Inputs**:")
+                        for inp in doc.template.inputs:
+                            io_type = inp.io_type.value if inp.io_type else "unknown"
+                            desc = f" - {inp.description}" if inp.description else ""
+                            parts.append(f"  - `{inp.name}` ({io_type}){desc}")
+                        parts.append("")
 
-                    # Outputs
+                    # Outputs - show ALL with descriptions
                     if doc.template.outputs:
-                        output_names = [out.name for out in doc.template.outputs[:5]]
-                        suffix = (
-                            f" (+{len(doc.template.outputs) - 5} more)"
-                            if len(doc.template.outputs) > 5
-                            else ""
-                        )
-                        parts.append(f"- **Outputs**: {', '.join(output_names)}{suffix}")
+                        parts.append("**Outputs**:")
+                        for out in doc.template.outputs:
+                            io_type = out.io_type.value if out.io_type else "unknown"
+                            desc = f" - {out.description}" if out.description else ""
+                            parts.append(f"  - `{out.name}` ({io_type}){desc}")
+                        parts.append("")
 
-                    # Copybooks
+                    # Business rules - show ALL
+                    if doc.template.business_rules:
+                        parts.append("**Business Rules**:")
+                        for rule in doc.template.business_rules:
+                            rule_desc = rule.description or "No description"
+                            parts.append(f"  - {rule_desc}")
+                            if rule.logic_summary:
+                                parts.append(f"    *Logic: {rule.logic_summary}*")
+                        parts.append("")
+
+                    # Copybooks - show ALL
                     if doc.template.copybooks_used:
-                        copybook_names = [
-                            cb.copybook_name for cb in doc.template.copybooks_used[:5]
-                        ]
-                        suffix = (
-                            f" (+{len(doc.template.copybooks_used) - 5} more)"
-                            if len(doc.template.copybooks_used) > 5
-                            else ""
-                        )
-                        parts.append(
-                            f"- **Copybooks**: {', '.join(copybook_names)}{suffix}"
-                        )
+                        parts.append("**Copybooks Used**:")
+                        for cb in doc.template.copybooks_used:
+                            purpose = f" - {cb.purpose}" if cb.purpose else ""
+                            parts.append(f"  - `{cb.copybook_name}`{purpose}")
+                        parts.append("")
 
+                    # Error handling
+                    if doc.template.error_handling:
+                        parts.append("**Error Handling**:")
+                        for eh in doc.template.error_handling:
+                            condition = eh.condition or "Unknown condition"
+                            action = eh.action or "Unknown action"
+                            parts.append(f"  - **{condition}**: {action}")
+                        parts.append("")
+
+                    parts.append("---")
                     parts.append("")
         else:
             parts.append("*No file documentation available.*")
@@ -2042,17 +2149,34 @@ and architecture after reading your overview."""
             return self._create_mock_system_design(input_data, existing_content)
 
         try:
-            system_prompt = """You are a technical architect creating a system design document.
+            system_prompt = """You are a technical architect creating a comprehensive, detailed system design document.
 
-Your task is to synthesize individual program documentation into a comprehensive
-SYSTEM_DESIGN.md document that describes the overall system architecture.
+Your task is to synthesize individual program documentation into a SYSTEM_DESIGN.md
+document that serves as the authoritative architectural reference for this system.
 
-Guidelines:
+## Core Principles
+
+**INCREMENTAL ENHANCEMENT**: If existing content is provided, you MUST preserve and enhance it.
+Never discard valuable information from previous versions. Add to it, clarify it, and
+integrate new information seamlessly. The document should grow richer with each iteration.
+
+**MAXIMUM VERBOSITY**: Be thorough and detailed. Include:
+- Full explanations of architectural decisions and patterns
+- Detailed descriptions of each subsystem and component
+- Comprehensive data flow narratives
+- Complete interface specifications
+- All business rules and constraints discovered
+
+**CROSS-REFERENCING WITH LINKS**: For every component (program, JCL, copybook) you mention,
+include a markdown link to its documentation file. Format: [PROGRAM_NAME](docs/FILENAME.md)
+This creates a navigable documentation web.
+
+## Writing Style
 - Write for a technical audience (developers, architects, maintainers)
-- Focus on system-level understanding, not individual program details
-- Identify patterns, relationships, and architectural boundaries
+- Be comprehensive - include all relevant details, not just summaries
+- Use tables for structured comparisons and listings
+- Use diagrams (in ASCII or mermaid syntax) where helpful
 - Mark uncertainties with inline questions using the format: ❓ QUESTION: [your question]
-- Use clear markdown formatting with headers, lists, and tables
 - Be explicit about assumptions and information gaps"""
 
             user_prompt = self._build_system_design_prompt(input_data, existing_content)
