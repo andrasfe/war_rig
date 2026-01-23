@@ -56,6 +56,7 @@ from war_rig.beads import (
 )
 from war_rig.config import WarRigConfig, load_config
 from war_rig.models.assessments import ConfidenceLevel
+from war_rig.utils.exceptions import FatalWorkerError
 from war_rig.utils.file_lock import FileLockManager
 from war_rig.workers.challenger_pool import ChallengerWorkerPool
 from war_rig.workers.scribe_pool import ScribeWorkerPool
@@ -561,6 +562,7 @@ class TicketOrchestrator:
             poll_interval=2.0,
             idle_timeout=30.0,
             file_lock_manager=self._file_lock_manager,
+            exit_on_error=self.config.exit_on_error,
         )
 
         # Create Challenger pool with upstream check and file lock manager
@@ -572,6 +574,7 @@ class TicketOrchestrator:
             poll_interval=2.0,
             upstream_active_check=self._is_documentation_in_progress,
             file_lock_manager=self._file_lock_manager,
+            exit_on_error=self.config.exit_on_error,
         )
 
         # Start both pools simultaneously
@@ -586,7 +589,14 @@ class TicketOrchestrator:
         scribe_wait = asyncio.create_task(self._scribe_pool.wait())
         challenger_wait = asyncio.create_task(self._challenger_pool.wait_for_completion())
 
-        await asyncio.gather(scribe_wait, challenger_wait, return_exceptions=True)
+        # Gather results and check for FatalWorkerError
+        results = await asyncio.gather(scribe_wait, challenger_wait, return_exceptions=True)
+
+        # Re-raise FatalWorkerError if any worker encountered a fatal error
+        for result in results:
+            if isinstance(result, FatalWorkerError):
+                logger.error(f"Fatal worker error: {result}")
+                raise result
 
         logger.info("Pipeline complete, all workers finished")
 
@@ -916,6 +926,7 @@ class TicketOrchestrator:
             poll_interval=2.0,
             idle_timeout=30.0,
             file_lock_manager=self._file_lock_manager,
+            exit_on_error=self.config.exit_on_error,
         )
 
         # Create and run Challenger pool with file lock manager
@@ -929,6 +940,7 @@ class TicketOrchestrator:
             poll_interval=2.0,
             upstream_active_check=lambda: not scribe_pool.is_done(),
             file_lock_manager=self._file_lock_manager,
+            exit_on_error=self.config.exit_on_error,
         )
 
         # Start both pools
@@ -938,11 +950,17 @@ class TicketOrchestrator:
         # Wait for completion
         scribe_wait = asyncio.create_task(scribe_pool.wait())
         challenger_wait = asyncio.create_task(challenger_pool.wait_for_completion())
-        await asyncio.gather(scribe_wait, challenger_wait, return_exceptions=True)
+        results = await asyncio.gather(scribe_wait, challenger_wait, return_exceptions=True)
 
         # Stop pools
         await scribe_pool.stop()
         await challenger_pool.stop()
+
+        # Re-raise FatalWorkerError if any worker encountered a fatal error
+        for result in results:
+            if isinstance(result, FatalWorkerError):
+                logger.error(f"Fatal worker error during retry: {result}")
+                raise result
 
         logger.info("Retry worker pools complete")
 
@@ -1024,11 +1042,15 @@ class TicketOrchestrator:
             poll_interval=2.0,
             idle_timeout=30.0,
             file_lock_manager=self._file_lock_manager,
+            exit_on_error=self.config.exit_on_error,
         )
 
         try:
             await rescue_pool.start()
             await rescue_pool.wait()
+        except FatalWorkerError:
+            # Re-raise fatal errors to terminate the orchestrator
+            raise
         finally:
             await rescue_pool.stop()
 
@@ -1077,6 +1099,7 @@ class TicketOrchestrator:
                     beads_client=self.beads_client,
                     poll_interval=2.0,
                     file_lock_manager=self._file_lock_manager,
+                    exit_on_error=self.config.exit_on_error,
                 )
 
             await self._challenger_pool.start()

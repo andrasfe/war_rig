@@ -50,6 +50,7 @@ def mock_config(tmp_path) -> MagicMock:
     config.num_scribes = 3
     config.input_directory = tmp_path
     config.output_directory = tmp_path / "output"
+    config.exit_on_error = True
     config.scribe = MagicMock()
     config.scribe.model = "claude-sonnet-4-20250514"
     config.scribe.temperature = 0.3

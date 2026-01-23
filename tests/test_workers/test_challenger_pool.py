@@ -75,6 +75,7 @@ def mock_config(tmp_path) -> MagicMock:
     config.max_iterations = 2
     config.output_directory = tmp_path / "output"
     config.output_directory.mkdir(parents=True, exist_ok=True)
+    config.exit_on_error = True
     config.challenger = MagicMock(spec=ChallengerConfig)
     config.challenger.model = "claude-sonnet-4-20250514"
     config.challenger.temperature = 0.3

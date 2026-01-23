@@ -47,6 +47,7 @@ from war_rig.models.templates import DocumentationTemplate, FileType
 from war_rig.models.tickets import QuestionSeverity
 from war_rig.preprocessors.base import PreprocessorResult
 from war_rig.utils import log_error
+from war_rig.utils.exceptions import FatalWorkerError
 from war_rig.utils.file_lock import FileLockManager
 
 logger = logging.getLogger(__name__)
@@ -136,6 +137,7 @@ class ChallengerWorker:
         poll_interval: float = 2.0,
         upstream_active_check: Callable[[], bool] | None = None,
         file_lock_manager: FileLockManager | None = None,
+        exit_on_error: bool = True,
     ):
         """Initialize the ChallengerWorker.
 
@@ -150,6 +152,8 @@ class ChallengerWorker:
             file_lock_manager: Optional centralized lock manager for file locking.
                 When provided, workers will acquire locks on output files before
                 processing and skip files that are locked by other workers.
+            exit_on_error: If True, raise FatalWorkerError on processing errors
+                instead of just logging. Default True.
         """
         self.worker_id = worker_id
         self.config = config
@@ -157,6 +161,7 @@ class ChallengerWorker:
         self.poll_interval = poll_interval
         self.upstream_active_check = upstream_active_check
         self.file_lock_manager = file_lock_manager
+        self.exit_on_error = exit_on_error
         # Resolve to absolute path for consistent file access
         self.output_directory = config.output_directory.resolve()
 
@@ -309,6 +314,14 @@ class ChallengerWorker:
                         TicketState.BLOCKED,
                         reason=f"Error during validation: {e}",
                     )
+
+                    # If exit_on_error is enabled, raise FatalWorkerError to terminate
+                    if self.exit_on_error:
+                        raise FatalWorkerError(
+                            worker_id=self.worker_id,
+                            ticket_id=ticket.ticket_id,
+                            error=str(e),
+                        )
                 finally:
                     self.status.current_ticket_id = None
                     self.status.tickets_processed += 1
@@ -1115,6 +1128,7 @@ class ChallengerWorkerPool:
         poll_interval: float = 2.0,
         upstream_active_check: Callable[[], bool] | None = None,
         file_lock_manager: FileLockManager | None = None,
+        exit_on_error: bool | None = None,
     ):
         """Initialize the ChallengerWorkerPool.
 
@@ -1132,6 +1146,8 @@ class ChallengerWorkerPool:
                 processing and skip files that are locked by other workers.
                 This prevents race conditions when multiple workers attempt to
                 process tickets for the same output file.
+            exit_on_error: If True, workers will raise FatalWorkerError on errors.
+                Defaults to config.exit_on_error.
         """
         self.num_workers = num_workers
         self.config = config
@@ -1139,6 +1155,7 @@ class ChallengerWorkerPool:
         self.poll_interval = poll_interval
         self.upstream_active_check = upstream_active_check
         self.file_lock_manager = file_lock_manager
+        self.exit_on_error = exit_on_error if exit_on_error is not None else config.exit_on_error
 
         # Create workers
         self.workers: list[ChallengerWorker] = []
@@ -1150,6 +1167,7 @@ class ChallengerWorkerPool:
                 poll_interval=poll_interval,
                 upstream_active_check=upstream_active_check,
                 file_lock_manager=file_lock_manager,
+                exit_on_error=self.exit_on_error,
             )
             self.workers.append(worker)
 

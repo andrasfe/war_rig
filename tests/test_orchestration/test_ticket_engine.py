@@ -74,6 +74,7 @@ def mock_config(tmp_path: Path) -> MagicMock:
     config.rig_id = "TEST_RIG"
     config.output_directory = tmp_path / "output"
     config.output_directory.mkdir(exist_ok=True)
+    config.exit_on_error = True
 
     # Mock agent configs
     config.imperator = MagicMock()

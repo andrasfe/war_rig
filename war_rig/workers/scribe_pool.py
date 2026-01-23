@@ -67,6 +67,7 @@ from war_rig.workers.source_preparer import (
 )
 from war_rig.models.tickets import ChallengerQuestion, ChromeTicket
 from war_rig.utils import log_error
+from war_rig.utils.exceptions import FatalWorkerError
 from war_rig.utils.file_lock import FileLockManager
 
 logger = logging.getLogger(__name__)
@@ -194,6 +195,7 @@ class ScribeWorker:
         poll_interval: float = 2.0,
         idle_timeout: float = 30.0,
         file_lock_manager: FileLockManager | None = None,
+        exit_on_error: bool = True,
     ):
         """Initialize the Scribe worker.
 
@@ -208,10 +210,13 @@ class ScribeWorker:
             file_lock_manager: Optional centralized lock manager for file locking.
                 When provided, workers will acquire locks on output files before
                 processing and skip files that are locked by other workers.
+            exit_on_error: If True, raise FatalWorkerError on processing errors
+                instead of just logging. Default True.
         """
         self.worker_id = worker_id
         self.config = config
         self.beads_client = beads_client
+        self.exit_on_error = exit_on_error
         # Resolve to absolute paths to ensure consistent file access
         self.input_directory = (input_directory or config.input_directory).resolve()
         self.output_directory = (output_directory or config.output_directory).resolve()
@@ -636,6 +641,14 @@ class ScribeWorker:
                 reason=f"Worker error: {e}",
             )
             self._status.tickets_failed += 1
+
+            # If exit_on_error is enabled, raise FatalWorkerError to terminate
+            if self.exit_on_error:
+                raise FatalWorkerError(
+                    worker_id=self.worker_id,
+                    ticket_id=ticket.ticket_id,
+                    error=str(e),
+                )
 
         finally:
             # Release file lock if we acquired one
@@ -2452,6 +2465,7 @@ class ScribeWorkerPool:
         poll_interval: float = 2.0,
         idle_timeout: float = 30.0,
         file_lock_manager: FileLockManager | None = None,
+        exit_on_error: bool | None = None,
     ):
         """Initialize the Scribe worker pool.
 
@@ -2468,6 +2482,8 @@ class ScribeWorkerPool:
                 processing and skip files that are locked by other workers.
                 This prevents race conditions when multiple workers attempt to
                 process tickets for the same output file.
+            exit_on_error: If True, workers will raise FatalWorkerError on errors.
+                Defaults to config.exit_on_error.
         """
         self.config = config
         self.beads_client = beads_client
@@ -2477,6 +2493,7 @@ class ScribeWorkerPool:
         self.poll_interval = poll_interval
         self.idle_timeout = idle_timeout
         self.file_lock_manager = file_lock_manager
+        self.exit_on_error = exit_on_error if exit_on_error is not None else config.exit_on_error
 
         # Worker instances (created on start)
         self._workers: list[ScribeWorker] = []
@@ -2510,6 +2527,7 @@ class ScribeWorkerPool:
                 poll_interval=self.poll_interval,
                 idle_timeout=self.idle_timeout,
                 file_lock_manager=self.file_lock_manager,
+                exit_on_error=self.exit_on_error,
             )
             for i in range(self.num_workers)
         ]

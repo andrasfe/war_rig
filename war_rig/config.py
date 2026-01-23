@@ -288,6 +288,12 @@ class WarRigConfig(BaseSettings):
         description="Timeout in seconds for formatting fix attempts",
     )
 
+    # Error handling
+    exit_on_error: bool = Field(
+        default=True,
+        description="Exit immediately when any error occurs during processing",
+    )
+
     # Beads integration
     # Disabled by default - War Rig uses in-memory ticket tracking
     # Enable only if you have a separate beads instance configured
