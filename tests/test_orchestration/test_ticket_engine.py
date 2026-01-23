@@ -991,6 +991,98 @@ class TestMaxTicketRetries:
             assert exc_info.value.retry_count == 1
             assert exc_info.value.max_retries == 1
 
+    @pytest.mark.asyncio
+    async def test_super_scribe_rescue_injects_feedback_context(
+        self,
+        mock_config: MagicMock,
+        mock_beads_client: MagicMock,
+        blocked_ticket: ProgramManagerTicket,
+    ) -> None:
+        """Test _run_super_scribe_rescue injects feedback_context when resetting tickets (IMPFB-005)."""
+        from war_rig.models.tickets import FeedbackContext, QualityNote
+
+        mock_config.max_ticket_retries = 5
+        mock_config.exit_on_error = True
+        mock_config.super_scribe_model = "anthropic/claude-opus-4-20250514"
+        mock_config.num_super_scribes = 1
+        mock_config.model_dump.return_value = {
+            "scribe_model": "test-model",
+            "num_scribes": 1,
+            "exit_on_error": True,
+            "max_ticket_retries": 5,
+        }
+
+        orchestrator = TicketOrchestrator(
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+        orchestrator._input_directory = Path("/tmp")
+        orchestrator._file_lock_manager = None
+
+        # Set up feedback context (simulating Imperator review completed)
+        orchestrator._current_feedback_context = FeedbackContext(
+            quality_notes=[
+                QualityNote(
+                    category="empty_section",
+                    severity="critical",
+                    description="Inputs section is empty",
+                    affected_sections=["inputs"],
+                )
+            ],
+            critical_sections=["inputs", "outputs"],
+            required_citations=True,
+            augment_existing=True,
+        )
+
+        # Mock beads client to return blocked ticket
+        mock_beads_client.get_tickets_by_state.return_value = [blocked_ticket]
+
+        # Track the metadata_updates passed to update_ticket_state
+        captured_metadata_updates = {}
+
+        def capture_update(ticket_id, state, reason=None, metadata_updates=None, decision=None):
+            if metadata_updates:
+                captured_metadata_updates[ticket_id] = metadata_updates
+            return True
+
+        mock_beads_client.update_ticket_state.side_effect = capture_update
+
+        # Mock the ScribeWorkerPool
+        with patch(
+            "war_rig.orchestration.ticket_engine.ScribeWorkerPool"
+        ) as MockPool:
+            mock_pool = MagicMock()
+            mock_pool.start = AsyncMock()
+            mock_pool.wait = AsyncMock()
+            mock_pool.stop = AsyncMock()
+            mock_pool.get_status.return_value = {
+                "total_processed": 1,
+                "total_failed": 0,
+            }
+            MockPool.return_value = mock_pool
+
+            # After rescue, no more blocked tickets
+            mock_beads_client.get_tickets_by_state.side_effect = [
+                [blocked_ticket],  # First call - find blocked
+                [],                 # After rescue - no more blocked
+            ]
+            mock_beads_client.get_available_tickets.return_value = []
+
+            await orchestrator._run_super_scribe_rescue()
+
+            # Verify feedback_context was included in metadata updates
+            assert blocked_ticket.ticket_id in captured_metadata_updates
+            metadata = captured_metadata_updates[blocked_ticket.ticket_id]
+            assert "retry_count" in metadata
+            assert "feedback_context" in metadata
+
+            # Verify feedback_context contents
+            fc = metadata["feedback_context"]
+            assert len(fc["quality_notes"]) == 1
+            assert fc["quality_notes"][0]["category"] == "empty_section"
+            assert "inputs" in fc["critical_sections"]
+            assert fc["augment_existing"] is True
+
 
 class TestMaxTicketRetriesExceededException:
     """Tests for MaxTicketRetriesExceeded exception."""

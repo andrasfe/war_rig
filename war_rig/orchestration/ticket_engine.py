@@ -1050,11 +1050,15 @@ class TicketOrchestrator:
                 continue
 
             current_retries = ticket.metadata.get("retry_count", 0) + 1
+            # Build metadata updates with retry count and feedback context (IMPFB-005)
+            metadata_updates: dict = {"retry_count": current_retries}
+            if self._current_feedback_context is not None:
+                metadata_updates["feedback_context"] = self._current_feedback_context.model_dump()
             success = self.beads_client.update_ticket_state(
                 ticket.ticket_id,
                 TicketState.CREATED,
                 reason=f"Reset for Super-Scribe rescue (retry {current_retries}/{max_retries})",
-                metadata_updates={"retry_count": current_retries},
+                metadata_updates=metadata_updates,
             )
             if success:
                 reset_count += 1
