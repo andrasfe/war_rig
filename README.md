@@ -370,14 +370,24 @@ LLM outputs sometimes return enum values with inconsistent casing. War Rig's ass
 
 Different file types have different applicable documentation sections. The validation system maintains a skip matrix that knows which sections to skip for each file type:
 
-- **COBOL/PLI**: Full validation (no sections skipped)
-- **COPYBOOK**: Skip `called_programs`, `data_flow`, `cics_operations`, `sql_operations`, `business_rules`, `error_handling`
-- **JCL/PROC**: Skip `called_programs`, `copybooks`, `cics_operations`, `sql_operations`, `data_flow`, `business_rules`, `error_handling`
-- **BMS**: Skip most sections except `purpose`, `inputs`, `outputs`
-- **SORT**: Skip most sections except `purpose`, `inputs`, `outputs`
-- **DDL**: Skip program-related sections, keep `sql_operations`
+| File Type | Skipped Sections | Kept Sections |
+|-----------|------------------|---------------|
+| **COBOL/PLI** | (none) | All sections validated |
+| **COPYBOOK** | `called_programs`, `data_flow`, `cics_operations`, `sql_operations`, `business_rules`, `error_handling` | `purpose`, `inputs`, `outputs`, `copybooks` |
+| **JCL/PROC** | `called_programs`, `copybooks`, `cics_operations`, `sql_operations`, `data_flow`, `business_rules`, `error_handling` | `purpose`, `inputs`, `outputs` |
+| **BMS** | `called_programs`, `data_flow`, `copybooks`, `sql_operations`, `cics_operations`, `business_rules`, `error_handling` | `purpose`, `inputs`, `outputs` |
+| **LISTING** | All except `purpose` | `purpose` only |
+| **ASM** | `copybooks`, `cics_operations`, `sql_operations`, `business_rules`, `error_handling` | `purpose`, `inputs`, `outputs`, `data_flow`, `called_programs` |
+| **REXX** | `copybooks`, `cics_operations`, `sql_operations`, `business_rules`, `error_handling` | `purpose`, `inputs`, `outputs`, `data_flow`, `called_programs` |
+| **CLIST** | `copybooks`, `cics_operations`, `sql_operations`, `data_flow`, `business_rules`, `error_handling`, `called_programs` | `purpose`, `inputs`, `outputs` |
+| **NATURAL** | `copybooks`, `cics_operations`, `sql_operations`, `error_handling` | `purpose`, `inputs`, `outputs`, `data_flow`, `business_rules`, `called_programs` |
+| **EASYTRIEVE** | `copybooks`, `cics_operations`, `called_programs`, `business_rules`, `error_handling`, `data_flow` | `purpose`, `inputs`, `outputs`, `sql_operations` |
+| **SORT** | `called_programs`, `copybooks`, `cics_operations`, `sql_operations`, `business_rules`, `error_handling`, `data_flow` | `purpose`, `inputs`, `outputs` |
+| **DDL** | `called_programs`, `copybooks`, `cics_operations`, `data_flow`, `business_rules`, `error_handling` | `purpose`, `inputs`, `outputs`, `sql_operations` |
+| **IMS** | `called_programs`, `copybooks`, `cics_operations`, `sql_operations`, `data_flow`, `business_rules`, `error_handling` | `purpose`, `inputs`, `outputs` |
+| **OTHER** | `called_programs`, `data_flow`, `copybooks`, `sql_operations`, `cics_operations`, `business_rules`, `error_handling` | `purpose`, `inputs`, `outputs` |
 
-This prevents false validation failures when sections are legitimately empty for certain file types.
+This prevents false validation failures (and endless loops) when sections are legitimately empty for certain file types.
 
 ### Human Feedback Injection
 

@@ -961,37 +961,52 @@ class ScribeWorker:
                 "error_handling",
             },
 
-            # New file types
+            # New file types - be comprehensive to avoid validation loops
             "ASM": {
-                # Assembler - low level, may have some sections
-                "copybooks",          # Uses macros, not copybooks
-                "cics_operations",    # Rarely has CICS
-                "sql_operations",     # Rarely has SQL
+                # Assembler - low level, different paradigm
+                "copybooks",          # Uses macros, not COBOL copybooks
+                "cics_operations",    # Rarely has CICS macros
+                "sql_operations",     # Rarely has embedded SQL
+                "business_rules",     # Low-level, rules not explicit
+                "error_handling",     # Uses return codes/ABEND, not structured
             },
 
             "REXX": {
+                # Scripting language - simpler structure
                 "copybooks",          # No COBOL copybooks
                 "cics_operations",    # Usually batch/TSO
-                "sql_operations",     # Rarely embedded
+                "sql_operations",     # Rarely has EXECSQL
+                "business_rules",     # Scripts, not business logic
+                "error_handling",     # Uses SIGNAL, not structured handling
             },
 
             "CLIST": {
-                "copybooks",          # TSO scripting
-                "cics_operations",
-                "sql_operations",
-                "data_flow",
-                "business_rules",
+                # TSO command list scripting
+                "copybooks",          # TSO scripting, no copybooks
+                "cics_operations",    # Not online
+                "sql_operations",     # No SQL
+                "data_flow",          # Simple commands
+                "business_rules",     # Utility scripts
+                "error_handling",     # Simple error checking
+                "called_programs",    # Invokes commands, not CALL
             },
 
             "NATURAL": {
-                # 4GL - similar to COBOL but different paradigm
-                "copybooks",          # Has own include mechanism
+                # Software AG 4GL - different paradigm from COBOL
+                "copybooks",          # Has own LDA/PDA mechanism
+                "cics_operations",    # Uses Natural screens, not CICS
+                "sql_operations",     # Uses ADABAS, not SQL
+                "error_handling",     # Uses ON ERROR, different pattern
             },
 
             "EASYTRIEVE": {
-                "copybooks",          # Report generator
-                "cics_operations",
-                "called_programs",
+                # Report generator - simple utility
+                "copybooks",          # Report definitions
+                "cics_operations",    # Batch only
+                "called_programs",    # Standalone utility
+                "business_rules",     # Report formatting, not logic
+                "error_handling",     # Minimal error handling
+                "data_flow",          # Sequential file processing
             },
 
             "SORT": {
