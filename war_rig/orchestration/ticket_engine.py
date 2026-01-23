@@ -382,7 +382,9 @@ class TicketOrchestrator:
                             f"Call graph has {len(missing)} gaps - "
                             f"creating DOCUMENTATION tickets (feedback captured)"
                         )
-                        self._create_documentation_tickets_for_missing(missing)
+                        self._create_documentation_tickets_for_missing(
+                            missing, call_graph_result
+                        )
                         # Continue to next cycle to document missing programs
                         continue
 
@@ -684,46 +686,100 @@ class TicketOrchestrator:
     def _create_documentation_tickets_for_missing(
         self,
         missing_programs: list[str],
+        call_graph: CallGraphAnalysis,
     ) -> list[ProgramManagerTicket]:
-        """Create DOCUMENTATION tickets for programs that are called but not documented.
+        """Create DOCUMENTATION tickets for callers of undocumented programs.
 
-        These tickets allow the workflow to automatically discover and document
-        programs that were referenced in existing documentation.
+        When a call graph gap is detected (e.g., XYZ calls SOME_CALL but SOME_CALL
+        is not documented), we create tickets for the CALLER (XYZ), not the callee
+        (SOME_CALL). The caller is the file that needs documentation about what it
+        calls - the callee might be an external program or system utility that
+        doesn't exist in our codebase.
+
+        Bug fixes applied:
+        - war_rig-k323: Create tickets for callers, not callees
+        - war_rig-4o4l: Only create tickets for files that exist in input directory
 
         Args:
-            missing_programs: List of program IDs that need documentation.
+            missing_programs: List of program IDs (callees) that are not documented.
+            call_graph: The full call graph analysis with caller information.
 
         Returns:
-            List of created tickets.
+            List of created tickets for callers.
         """
         from uuid import uuid4
 
         created_tickets: list[ProgramManagerTicket] = []
 
-        for program_id in missing_programs:
-            # Check if ticket already exists for this program
+        # Build a set of callers that need documentation tickets
+        # For each missing callee, find which documented callers call it
+        callers_needing_tickets: dict[str, set[str]] = {}  # caller -> set of missing callees it calls
+
+        for missing_callee in missing_programs:
+            # Find all documented programs that call this missing callee
+            for program_id, program_info in call_graph.documented_programs.items():
+                for call in program_info.calls:
+                    if call.callee == missing_callee:
+                        if program_id not in callers_needing_tickets:
+                            callers_needing_tickets[program_id] = set()
+                        callers_needing_tickets[program_id].add(missing_callee)
+
+        for caller_id, missing_callees in callers_needing_tickets.items():
+            # Check if ticket already exists for this caller
             existing = [
                 t for t in self.beads_client._pm_ticket_cache.values()
-                if t.program_id == program_id
+                if t.program_id == caller_id
                 and t.ticket_type == TicketType.DOCUMENTATION
                 and t.state not in (TicketState.COMPLETED, TicketState.BLOCKED, TicketState.CANCELLED)
             ]
 
             if existing:
-                logger.debug(f"Documentation ticket already exists for {program_id}")
+                logger.debug(f"Documentation ticket already exists for caller {caller_id}")
                 continue
 
-            # Create new ticket
+            # Get file name from the documented program info
+            program_info = call_graph.documented_programs.get(caller_id)
+            if not program_info:
+                logger.warning(f"No program info found for caller {caller_id}")
+                continue
+
+            # Determine the file name - use the documented file_name or fall back to program_id.cbl
+            file_name = program_info.file_name or f"{caller_id}.cbl"
+
+            # Bug fix war_rig-4o4l: Verify the file exists before creating a ticket
+            if self._input_directory:
+                # Try common extensions
+                file_exists = False
+                for ext in [".cbl", ".CBL", ".cob", ".COB", ".jcl", ".JCL", ".prc", ".PRC", ""]:
+                    # Check both the exact file_name and program_id with extension
+                    candidates = [
+                        self._input_directory / file_name,
+                        self._input_directory / f"{caller_id}{ext}",
+                    ]
+                    for candidate in candidates:
+                        if candidate.exists():
+                            file_name = candidate.name
+                            file_exists = True
+                            break
+                    if file_exists:
+                        break
+
+                if not file_exists:
+                    logger.debug(
+                        f"Skipping ticket for caller {caller_id}: file not found in input directory"
+                    )
+                    continue
+
+            # Create new ticket for the CALLER
             ticket_id = f"DOC-{uuid4().hex[:8].upper()}"
 
-            # We don't know the actual file name/path - mark as "discovery" ticket
-            # The Scribe will need to search for this program
             metadata: dict[str, Any] = {
                 "batch_id": self._state.batch_id,
                 "source": "call_graph_gap",
-                "discovery": True,  # Flag indicating this needs file discovery
+                "discovery": False,  # We know the file exists
                 "created_at": datetime.utcnow().isoformat(),
                 "priority": "high",  # Gap-filling is high priority
+                "missing_callees": sorted(missing_callees),  # Document what calls are missing
             }
 
             # Embed feedback context if available (IMPFB-002)
@@ -732,8 +788,8 @@ class TicketOrchestrator:
 
             ticket = ProgramManagerTicket(
                 ticket_id=ticket_id,
-                file_name=f"{program_id}.cbl",  # Best guess - Scribe will search
-                program_id=program_id,
+                file_name=file_name,
+                program_id=caller_id,
                 ticket_type=TicketType.DOCUMENTATION,
                 state=TicketState.CREATED,
                 cycle_number=self._state.cycle,
@@ -743,12 +799,20 @@ class TicketOrchestrator:
             # Add to cache
             self.beads_client._pm_ticket_cache[ticket_id] = ticket
             created_tickets.append(ticket)
-            logger.info(f"Created documentation ticket {ticket_id} for missing program {program_id}")
+            logger.info(
+                f"Created documentation ticket {ticket_id} for caller {caller_id} "
+                f"(calls missing: {', '.join(sorted(missing_callees))})"
+            )
 
         # Save to disk
         if created_tickets:
             self.beads_client._save_to_disk()
             logger.info(f"Created {len(created_tickets)} documentation tickets for call graph gaps")
+        else:
+            logger.info(
+                f"No documentation tickets created - callers of missing programs "
+                f"either already have tickets or their files don't exist"
+            )
 
         return created_tickets
 
