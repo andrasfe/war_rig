@@ -392,10 +392,13 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
                 f"({len(messages)} messages)"
             )
 
+            # Get max_completion_tokens from config if available (default 8192 in provider)
+            max_tokens = getattr(self.config, "max_completion_tokens", None)
             response = await self._provider.complete(
                 messages=messages,
                 model=self.config.model,
                 temperature=self.config.temperature,
+                **({"max_tokens": max_tokens} if max_tokens else {}),
             )
 
             content = response.content

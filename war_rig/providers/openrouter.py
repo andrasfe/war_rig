@@ -197,6 +197,14 @@ class OpenRouterProvider:
         )
 
         try:
+            # Estimate input tokens for monitoring (rough: 1 token ≈ 4 chars)
+            total_chars = sum(len(m.get("content", "")) for m in openai_messages)
+            estimated_input_tokens = total_chars // 4
+            if estimated_input_tokens > 30000:
+                logger.warning(
+                    f"Large prompt detected: ~{estimated_input_tokens:,} tokens for {resolved_model}"
+                )
+
             # Build the API call parameters
             api_params: dict[str, Any] = {
                 "model": resolved_model,
@@ -204,7 +212,12 @@ class OpenRouterProvider:
                 "temperature": temperature,
             }
 
-            # Add any additional kwargs (top_p, stop, etc.)
+            # Set max_tokens to limit output generation time
+            # Default to 8192 if not specified in kwargs (reasonable for most tasks)
+            if "max_tokens" not in kwargs:
+                api_params["max_tokens"] = 8192
+
+            # Add any additional kwargs (top_p, stop, max_tokens override, etc.)
             api_params.update(kwargs)
 
             # Make the API call with explicit timeout (10 min max for large prompts)
@@ -217,9 +230,17 @@ class OpenRouterProvider:
             elapsed = time.time() - start_time
             content = response.choices[0].message.content if response.choices else None
             content_len = len(content) if content else 0
+
+            # Log actual token usage if available
+            token_info = ""
+            if response.usage:
+                prompt_tokens = response.usage.prompt_tokens or 0
+                completion_tokens = response.usage.completion_tokens or 0
+                token_info = f", tokens={prompt_tokens}+{completion_tokens}={prompt_tokens + completion_tokens}"
+
             logger.info(
                 f"OpenRouter API call completed: model={resolved_model}, "
-                f"elapsed={elapsed:.1f}s, response_chars={content_len}"
+                f"elapsed={elapsed:.1f}s, response_chars={content_len}{token_info}"
             )
 
             # Parse the response

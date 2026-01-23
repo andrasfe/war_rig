@@ -74,6 +74,10 @@ class ScribeConfig(ModelConfig):
         default=15000,
         description="Maximum approximate tokens for the prompt (will truncate content to fit)",
     )
+    max_completion_tokens: int = Field(
+        default=8192,
+        description="Maximum tokens for response (limits output generation time)",
+    )
 
 
 class ChallengerConfig(ModelConfig):
@@ -88,6 +92,10 @@ class ChallengerConfig(ModelConfig):
         default=15000,
         description="Maximum approximate tokens for the prompt",
     )
+    max_completion_tokens: int = Field(
+        default=4096,
+        description="Maximum tokens for response",
+    )
 
 
 class ImperatorConfig(ModelConfig):
@@ -101,6 +109,10 @@ class ImperatorConfig(ModelConfig):
     max_prompt_tokens: int = Field(
         default=15000,
         description="Maximum approximate tokens for the prompt",
+    )
+    max_completion_tokens: int = Field(
+        default=8192,
+        description="Maximum tokens for response (holistic review can be large)",
     )
 
 
@@ -208,6 +220,10 @@ class WarRigConfig(BaseSettings):
         default=15000,
         description="Maximum tokens for Scribe prompt (will truncate to fit)",
     )
+    scribe_max_completion_tokens: int = Field(
+        default=8192,
+        description="Maximum tokens for Scribe response (limits output generation time)",
+    )
 
     challenger_model: str = Field(
         default="anthropic/claude-sonnet-4-20250514",
@@ -218,6 +234,10 @@ class WarRigConfig(BaseSettings):
         default=15000,
         description="Maximum tokens for Challenger prompt",
     )
+    challenger_max_completion_tokens: int = Field(
+        default=4096,
+        description="Maximum tokens for Challenger response",
+    )
 
     imperator_model: str = Field(
         default="anthropic/claude-sonnet-4-20250514",
@@ -227,6 +247,10 @@ class WarRigConfig(BaseSettings):
     imperator_max_prompt_tokens: int = Field(
         default=15000,
         description="Maximum tokens for Imperator prompt",
+    )
+    imperator_max_completion_tokens: int = Field(
+        default=8192,
+        description="Maximum tokens for Imperator response (holistic review can be large)",
     )
 
     # Workflow limits
