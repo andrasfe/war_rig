@@ -167,7 +167,8 @@ MAX_ITERATIONS=3
 PM_MAX_CYCLES=5
 
 # Error Handling
-EXIT_ON_ERROR=true  # Stop on first error (default: true)
+EXIT_ON_ERROR=true        # Stop on first error (default: true)
+MAX_TICKET_RETRIES=5      # Max retries per ticket before fatal exit (default: 5)
 
 # Paths
 INPUT_DIRECTORY=./input
@@ -177,6 +178,26 @@ OUTPUT_DIRECTORY=./output
 ### Exit on Error Mode
 
 When `EXIT_ON_ERROR=true` (the default), War Rig will stop processing immediately when any error occurs. This is useful for debugging and ensuring issues are addressed before continuing. Set to `false` for batch processing where you want to continue despite individual file failures.
+
+### Max Ticket Retries (Endless Loop Prevention)
+
+The `MAX_TICKET_RETRIES` setting (default: 5) prevents endless retry loops when a ticket repeatedly fails to process. This safeguard applies to:
+
+1. **Normal Scribe failures**: When a ticket fails twice (initial + strict formatting retry), it gets reset for other workers
+2. **Super-Scribe escalation**: When all regular Scribes fail, blocked tickets are escalated to Super-Scribe (Opus model)
+3. **Retry tracking**: Each rescue attempt increments the ticket's `retry_count` in metadata
+
+When a ticket exceeds `MAX_TICKET_RETRIES` and `EXIT_ON_ERROR=true`:
+- The system raises `MaxTicketRetriesExceeded` with details about the failing ticket
+- Processing stops immediately to prevent resource waste on a persistently failing file
+- The error message includes the ticket ID, file name, and retry count for debugging
+
+This is particularly useful for catching:
+- Malformed source files that no LLM can parse correctly
+- Edge cases in the documentation template schema
+- Persistent API or network issues affecting specific files
+
+Set `MAX_TICKET_RETRIES` higher (up to 20) for more tolerance, or set `EXIT_ON_ERROR=false` to continue processing other files despite retry limit violations.
 
 ## Usage
 

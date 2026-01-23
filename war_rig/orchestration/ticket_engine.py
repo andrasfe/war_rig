@@ -56,7 +56,7 @@ from war_rig.beads import (
 )
 from war_rig.config import WarRigConfig, load_config
 from war_rig.models.assessments import ConfidenceLevel
-from war_rig.utils.exceptions import FatalWorkerError
+from war_rig.utils.exceptions import FatalWorkerError, MaxTicketRetriesExceeded
 from war_rig.utils.file_lock import FileLockManager
 from war_rig.workers.challenger_pool import ChallengerWorkerPool
 from war_rig.workers.scribe_pool import ScribeWorkerPool
@@ -969,14 +969,21 @@ class TicketOrchestrator:
 
         After the normal worker cycle completes, this method checks for any tickets
         that ended up in BLOCKED state (all workers failed). If found, it:
-        1. Resets them to CREATED state
-        2. Creates an Opus-powered ScribeWorkerPool with 1 worker
-        3. Runs the pool to attempt rescue
+        1. Increments retry_count in ticket metadata
+        2. Checks against max_ticket_retries limit (raises MaxTicketRetriesExceeded if exceeded)
+        3. Resets them to CREATED state
+        4. Creates an Opus-powered ScribeWorkerPool with 1 worker
+        5. Runs the pool to attempt rescue
 
         This provides automatic escalation without requiring a separate command.
         The rescue model and worker count are configured via:
         - config.super_scribe_model (default: anthropic/claude-opus-4-20250514)
         - config.num_super_scribes (default: 1)
+        - config.max_ticket_retries (default: 5) - fatal exit threshold
+
+        Raises:
+            MaxTicketRetriesExceeded: If any ticket exceeds max_ticket_retries and
+                exit_on_error is True.
         """
         # Ticket types that can be rescued (not VALIDATION - that's for Challenger)
         rescue_ticket_types = [
@@ -997,22 +1004,63 @@ class TicketOrchestrator:
         logger.info(
             f"Super-Scribe is rescuing {len(blocked_tickets)} blocked ticket(s)"
         )
+
+        # Track retry counts and check for exceeded limits
+        max_retries = self.config.max_ticket_retries
+        tickets_exceeding_limit: list[ProgramManagerTicket] = []
+
         for ticket in blocked_tickets:
+            # Get current retry count from metadata (default 0)
+            current_retries = ticket.metadata.get("retry_count", 0) + 1
+
             logger.info(
-                f"  - {ticket.ticket_id}: {ticket.file_name} ({ticket.ticket_type.value})"
+                f"  - {ticket.ticket_id}: {ticket.file_name} ({ticket.ticket_type.value}) "
+                f"[retry {current_retries}/{max_retries}]"
+            )
+
+            # Check if this ticket has exceeded max retries
+            if current_retries > max_retries:
+                tickets_exceeding_limit.append(ticket)
+                logger.error(
+                    f"Ticket {ticket.ticket_id} ({ticket.file_name}) has exceeded "
+                    f"max retry limit: {current_retries} > {max_retries}"
+                )
+
+        # If any tickets exceeded the limit and exit_on_error is enabled, fail immediately
+        if tickets_exceeding_limit and self.config.exit_on_error:
+            # Pick the first one to report (all will be in the log)
+            ticket = tickets_exceeding_limit[0]
+            retry_count = ticket.metadata.get("retry_count", 0) + 1
+            raise MaxTicketRetriesExceeded(
+                ticket_id=ticket.ticket_id,
+                file_name=ticket.file_name,
+                retry_count=retry_count,
+                max_retries=max_retries,
             )
 
         # Reset blocked tickets to CREATED so rescue workers can pick them up
+        # Also increment retry_count in metadata
         reset_count = 0
         for ticket in blocked_tickets:
+            # Skip tickets that exceeded the limit (they stay blocked)
+            if ticket in tickets_exceeding_limit:
+                logger.warning(
+                    f"Skipping ticket {ticket.ticket_id} - exceeded max retries"
+                )
+                continue
+
+            current_retries = ticket.metadata.get("retry_count", 0) + 1
             success = self.beads_client.update_ticket_state(
                 ticket.ticket_id,
                 TicketState.CREATED,
-                reason="Reset for Super-Scribe rescue",
+                reason=f"Reset for Super-Scribe rescue (retry {current_retries}/{max_retries})",
+                metadata_updates={"retry_count": current_retries},
             )
             if success:
                 reset_count += 1
-                logger.debug(f"Reset ticket {ticket.ticket_id} to CREATED")
+                logger.debug(
+                    f"Reset ticket {ticket.ticket_id} to CREATED (retry {current_retries})"
+                )
             else:
                 logger.warning(f"Failed to reset ticket {ticket.ticket_id}")
 
@@ -1073,9 +1121,32 @@ class TicketOrchestrator:
             logger.warning(
                 f"{len(still_blocked)} ticket(s) still blocked after Super-Scribe rescue:"
             )
+
+            # Check for tickets that have now exceeded the retry limit after this rescue attempt
+            tickets_now_exceeding_limit: list[ProgramManagerTicket] = []
             for ticket in still_blocked:
+                retry_count = ticket.metadata.get("retry_count", 0)
                 logger.warning(
-                    f"  - {ticket.ticket_id}: {ticket.file_name}"
+                    f"  - {ticket.ticket_id}: {ticket.file_name} "
+                    f"[retries: {retry_count}/{max_retries}]"
+                )
+                if retry_count >= max_retries:
+                    tickets_now_exceeding_limit.append(ticket)
+
+            # If any tickets now exceed limit and exit_on_error is enabled, fail
+            if tickets_now_exceeding_limit and self.config.exit_on_error:
+                ticket = tickets_now_exceeding_limit[0]
+                retry_count = ticket.metadata.get("retry_count", 0)
+                logger.error(
+                    f"Ticket {ticket.ticket_id} ({ticket.file_name}) is still blocked "
+                    f"after {retry_count} retries including Super-Scribe escalation. "
+                    f"Exiting due to exit_on_error=True."
+                )
+                raise MaxTicketRetriesExceeded(
+                    ticket_id=ticket.ticket_id,
+                    file_name=ticket.file_name,
+                    retry_count=retry_count,
+                    max_retries=max_retries,
                 )
 
         # Check for pending validation tickets created by rescue

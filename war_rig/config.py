@@ -293,6 +293,12 @@ class WarRigConfig(BaseSettings):
         default=True,
         description="Exit immediately when any error occurs during processing",
     )
+    max_ticket_retries: int = Field(
+        default=5,
+        ge=1,
+        le=20,
+        description="Maximum retry attempts per ticket (including Super-Scribe) before fatal exit",
+    )
 
     # Beads integration
     # Disabled by default - War Rig uses in-memory ticket tracking

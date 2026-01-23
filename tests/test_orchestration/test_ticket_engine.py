@@ -739,3 +739,291 @@ class TestFeedbackContextBuilding:
         # Default settings
         assert ctx.augment_existing is True
         assert ctx.required_citations is True
+
+
+# =============================================================================
+# Max Ticket Retries Tests
+# =============================================================================
+
+
+class TestMaxTicketRetries:
+    """Tests for max_ticket_retries feature that prevents endless loops."""
+
+    @pytest.fixture
+    def blocked_ticket(self) -> ProgramManagerTicket:
+        """Create a blocked ticket for testing."""
+        return ProgramManagerTicket(
+            ticket_id="war_rig-test-blocked",
+            ticket_type=TicketType.DOCUMENTATION,
+            state=TicketState.BLOCKED,
+            file_name="BLOCKED.cbl",
+            program_id="BLOCKED",
+            cycle_number=1,
+            metadata={"retry_count": 0},
+        )
+
+    @pytest.fixture
+    def ticket_at_max_retries(self) -> ProgramManagerTicket:
+        """Create a ticket that has reached max retries."""
+        return ProgramManagerTicket(
+            ticket_id="war_rig-test-maxed",
+            ticket_type=TicketType.DOCUMENTATION,
+            state=TicketState.BLOCKED,
+            file_name="MAXED.cbl",
+            program_id="MAXED",
+            cycle_number=1,
+            metadata={"retry_count": 5},  # Already at max (default is 5)
+        )
+
+    @pytest.mark.asyncio
+    async def test_super_scribe_rescue_increments_retry_count(
+        self,
+        mock_config: MagicMock,
+        mock_beads_client: MagicMock,
+        blocked_ticket: ProgramManagerTicket,
+    ) -> None:
+        """Test _run_super_scribe_rescue increments retry_count in metadata."""
+        mock_config.max_ticket_retries = 5
+        mock_config.exit_on_error = True
+        mock_config.super_scribe_model = "anthropic/claude-opus-4-20250514"
+        mock_config.num_super_scribes = 1
+        mock_config.model_dump.return_value = {
+            "scribe_model": "test-model",
+            "num_scribes": 1,
+            "exit_on_error": True,
+            "max_ticket_retries": 5,
+        }
+
+        orchestrator = TicketOrchestrator(
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+        orchestrator._input_directory = Path("/tmp")
+        orchestrator._file_lock_manager = None
+
+        # Mock beads client to return blocked ticket
+        mock_beads_client.get_tickets_by_state.return_value = [blocked_ticket]
+
+        # Track the metadata_updates passed to update_ticket_state
+        captured_metadata_updates = {}
+
+        def capture_update(ticket_id, state, reason=None, metadata_updates=None, decision=None):
+            if metadata_updates:
+                captured_metadata_updates[ticket_id] = metadata_updates
+            return True
+
+        mock_beads_client.update_ticket_state.side_effect = capture_update
+
+        # Mock the ScribeWorkerPool
+        with patch(
+            "war_rig.orchestration.ticket_engine.ScribeWorkerPool"
+        ) as MockPool:
+            mock_pool = MagicMock()
+            mock_pool.start = AsyncMock()
+            mock_pool.wait = AsyncMock()
+            mock_pool.stop = AsyncMock()
+            mock_pool.get_status.return_value = {
+                "total_processed": 1,
+                "total_failed": 0,
+            }
+            MockPool.return_value = mock_pool
+
+            # After rescue, no more blocked tickets
+            mock_beads_client.get_tickets_by_state.side_effect = [
+                [blocked_ticket],  # First call - find blocked
+                [],                 # After rescue - no more blocked
+            ]
+            mock_beads_client.get_available_tickets.return_value = []
+
+            await orchestrator._run_super_scribe_rescue()
+
+            # Verify retry_count was incremented
+            assert blocked_ticket.ticket_id in captured_metadata_updates
+            assert captured_metadata_updates[blocked_ticket.ticket_id]["retry_count"] == 1
+
+    @pytest.mark.asyncio
+    async def test_super_scribe_rescue_raises_on_exceeded_retries(
+        self,
+        mock_config: MagicMock,
+        mock_beads_client: MagicMock,
+        ticket_at_max_retries: ProgramManagerTicket,
+    ) -> None:
+        """Test _run_super_scribe_rescue raises MaxTicketRetriesExceeded when limit exceeded."""
+        from war_rig.utils.exceptions import MaxTicketRetriesExceeded
+
+        mock_config.max_ticket_retries = 5
+        mock_config.exit_on_error = True
+
+        orchestrator = TicketOrchestrator(
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        # Mock beads client to return ticket that has exceeded max retries
+        mock_beads_client.get_tickets_by_state.return_value = [ticket_at_max_retries]
+
+        # Should raise MaxTicketRetriesExceeded
+        with pytest.raises(MaxTicketRetriesExceeded) as exc_info:
+            await orchestrator._run_super_scribe_rescue()
+
+        # Verify exception details
+        assert exc_info.value.ticket_id == ticket_at_max_retries.ticket_id
+        assert exc_info.value.file_name == ticket_at_max_retries.file_name
+        assert exc_info.value.retry_count == 6  # 5 + 1 for this attempt
+        assert exc_info.value.max_retries == 5
+
+    @pytest.mark.asyncio
+    async def test_super_scribe_rescue_skips_exceeded_tickets_when_not_exit_on_error(
+        self,
+        mock_config: MagicMock,
+        mock_beads_client: MagicMock,
+        ticket_at_max_retries: ProgramManagerTicket,
+    ) -> None:
+        """Test tickets exceeding max retries are skipped when exit_on_error=False."""
+        mock_config.max_ticket_retries = 5
+        mock_config.exit_on_error = False  # Don't exit on error
+        mock_config.super_scribe_model = "anthropic/claude-opus-4-20250514"
+        mock_config.num_super_scribes = 1
+        mock_config.model_dump.return_value = {
+            "scribe_model": "test-model",
+            "num_scribes": 1,
+            "exit_on_error": False,
+            "max_ticket_retries": 5,
+        }
+
+        orchestrator = TicketOrchestrator(
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+        orchestrator._input_directory = Path("/tmp")
+        orchestrator._file_lock_manager = None
+
+        # Track which tickets were reset
+        reset_tickets = []
+
+        def track_update(ticket_id, state, reason=None, metadata_updates=None, decision=None):
+            if state == TicketState.CREATED:
+                reset_tickets.append(ticket_id)
+            return True
+
+        mock_beads_client.update_ticket_state.side_effect = track_update
+        mock_beads_client.get_tickets_by_state.return_value = [ticket_at_max_retries]
+
+        # Mock the ScribeWorkerPool - won't be called since no tickets to reset
+        with patch(
+            "war_rig.orchestration.ticket_engine.ScribeWorkerPool"
+        ) as MockPool:
+            mock_pool = AsyncMock()
+            MockPool.return_value = mock_pool
+
+            # Should not raise, but ticket should not be reset
+            await orchestrator._run_super_scribe_rescue()
+
+            # Exceeded ticket should NOT be reset to CREATED
+            assert ticket_at_max_retries.ticket_id not in reset_tickets
+
+    @pytest.mark.asyncio
+    async def test_super_scribe_rescue_raises_after_rescue_still_blocked(
+        self,
+        mock_config: MagicMock,
+        mock_beads_client: MagicMock,
+        blocked_ticket: ProgramManagerTicket,
+    ) -> None:
+        """Test raises MaxTicketRetriesExceeded when ticket still blocked after reaching max retries."""
+        from war_rig.utils.exceptions import MaxTicketRetriesExceeded
+
+        mock_config.max_ticket_retries = 1  # Low limit for testing
+        mock_config.exit_on_error = True
+        mock_config.super_scribe_model = "anthropic/claude-opus-4-20250514"
+        mock_config.num_super_scribes = 1
+        mock_config.model_dump.return_value = {
+            "scribe_model": "test-model",
+            "num_scribes": 1,
+            "exit_on_error": True,
+            "max_ticket_retries": 1,
+        }
+
+        orchestrator = TicketOrchestrator(
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+        orchestrator._input_directory = Path("/tmp")
+        orchestrator._file_lock_manager = None
+
+        # After reset and rescue, ticket is still blocked with retry_count = 1
+        blocked_after_rescue = ProgramManagerTicket(
+            ticket_id=blocked_ticket.ticket_id,
+            ticket_type=TicketType.DOCUMENTATION,
+            state=TicketState.BLOCKED,
+            file_name=blocked_ticket.file_name,
+            program_id=blocked_ticket.program_id,
+            cycle_number=1,
+            metadata={"retry_count": 1},  # Now at max
+        )
+
+        mock_beads_client.update_ticket_state.return_value = True
+
+        # First call returns original blocked ticket, second call returns still-blocked ticket
+        mock_beads_client.get_tickets_by_state.side_effect = [
+            [blocked_ticket],       # Find blocked tickets
+            [blocked_after_rescue], # Still blocked after rescue
+        ]
+        mock_beads_client.get_available_tickets.return_value = []
+
+        with patch(
+            "war_rig.orchestration.ticket_engine.ScribeWorkerPool"
+        ) as MockPool:
+            mock_pool = MagicMock()
+            mock_pool.start = AsyncMock()
+            mock_pool.wait = AsyncMock()
+            mock_pool.stop = AsyncMock()
+            mock_pool.get_status.return_value = {
+                "total_processed": 0,
+                "total_failed": 1,
+            }
+            MockPool.return_value = mock_pool
+
+            # Should raise because ticket is still blocked at max retries
+            with pytest.raises(MaxTicketRetriesExceeded) as exc_info:
+                await orchestrator._run_super_scribe_rescue()
+
+            assert exc_info.value.ticket_id == blocked_ticket.ticket_id
+            assert exc_info.value.retry_count == 1
+            assert exc_info.value.max_retries == 1
+
+
+class TestMaxTicketRetriesExceededException:
+    """Tests for MaxTicketRetriesExceeded exception."""
+
+    def test_exception_message_format(self) -> None:
+        """Test exception message contains all relevant information."""
+        from war_rig.utils.exceptions import MaxTicketRetriesExceeded
+
+        exc = MaxTicketRetriesExceeded(
+            ticket_id="DOC-12345678",
+            file_name="TESTPROG.cbl",
+            retry_count=6,
+            max_retries=5,
+        )
+
+        message = str(exc)
+        assert "DOC-12345678" in message
+        assert "TESTPROG.cbl" in message
+        assert "6" in message
+        assert "5" in message
+
+    def test_exception_attributes(self) -> None:
+        """Test exception stores attributes correctly."""
+        from war_rig.utils.exceptions import MaxTicketRetriesExceeded
+
+        exc = MaxTicketRetriesExceeded(
+            ticket_id="DOC-12345678",
+            file_name="TESTPROG.cbl",
+            retry_count=6,
+            max_retries=5,
+        )
+
+        assert exc.ticket_id == "DOC-12345678"
+        assert exc.file_name == "TESTPROG.cbl"
+        assert exc.retry_count == 6
+        assert exc.max_retries == 5
