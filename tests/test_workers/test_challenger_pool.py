@@ -978,3 +978,142 @@ class TestChallengerPoolIntegration:
         # Should have processed the ticket
         status = pool.get_status()
         assert status["total_tickets_processed"] >= 1
+
+
+# =============================================================================
+# Lock-Skipped Ticket Tests (Infinite Loop Prevention)
+# =============================================================================
+
+
+class TestLockSkippedTickets:
+    """Tests for lock-skipped ticket tracking to prevent infinite loops.
+
+    When a worker claims a ticket but can't acquire the file lock (because
+    another worker has it), it releases the ticket back to CREATED state.
+    Without tracking, the worker would immediately re-claim the same ticket,
+    creating an infinite loop. These tests verify the fix that tracks
+    recently-released tickets and skips them for a configurable duration.
+    """
+
+    def test_lock_skipped_tracking_initialized(self, mock_config, mock_beads_client):
+        """Test that lock-skipped tracking structures are initialized."""
+        worker = ChallengerWorker(
+            worker_id="challenger-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        assert hasattr(worker, "_lock_skipped_tickets")
+        assert hasattr(worker, "_lock_skip_duration")
+        assert isinstance(worker._lock_skipped_tickets, dict)
+        assert worker._lock_skip_duration > 0
+
+    @pytest.mark.asyncio
+    async def test_lock_skip_expires_after_duration(
+        self, mock_config, mock_beads_client, sample_validation_ticket
+    ):
+        """Test that lock-skipped tickets become claimable again after skip duration expires."""
+        worker = ChallengerWorker(
+            worker_id="challenger-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            poll_interval=0.05,
+        )
+
+        # Set a very short skip duration for testing
+        worker._lock_skip_duration = 0.1
+
+        # Manually add ticket to lock-skipped set
+        worker._lock_skipped_tickets[sample_validation_ticket.ticket_id] = datetime.utcnow()
+
+        # Ticket should be skipped initially
+        mock_beads_client.get_available_tickets.return_value = [sample_validation_ticket]
+        mock_beads_client.claim_ticket.return_value = True
+
+        ticket = await worker._poll_for_ticket()
+        assert ticket is None, "Ticket should be skipped immediately after lock failure"
+
+        # Wait for skip duration to expire
+        await asyncio.sleep(0.15)
+
+        # Now ticket should be claimable again
+        ticket = await worker._poll_for_ticket()
+        assert ticket is not None, "Ticket should be claimable after skip duration expires"
+        assert ticket.ticket_id == sample_validation_ticket.ticket_id
+
+    @pytest.mark.asyncio
+    async def test_multiple_tickets_only_locked_one_skipped(
+        self, mock_config, mock_beads_client
+    ):
+        """Test that only the lock-failed ticket is skipped, not other available tickets."""
+        # Create two tickets
+        ticket1 = ProgramManagerTicket(
+            ticket_id="ticket-1",
+            ticket_type=TicketType.VALIDATION,
+            state=TicketState.CREATED,
+            file_name="FILE1.cbl",
+            program_id="FILE1",
+            cycle_number=1,
+        )
+        ticket2 = ProgramManagerTicket(
+            ticket_id="ticket-2",
+            ticket_type=TicketType.VALIDATION,
+            state=TicketState.CREATED,
+            file_name="FILE2.cbl",
+            program_id="FILE2",
+            cycle_number=1,
+        )
+
+        worker = ChallengerWorker(
+            worker_id="challenger-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            poll_interval=0.05,
+        )
+
+        # Manually mark ticket1 as lock-skipped
+        worker._lock_skipped_tickets["ticket-1"] = datetime.utcnow()
+
+        # Both tickets available
+        mock_beads_client.get_available_tickets.return_value = [ticket1, ticket2]
+        mock_beads_client.claim_ticket.return_value = True
+
+        # Should skip ticket1 but claim ticket2
+        claimed = await worker._poll_for_ticket()
+
+        assert claimed is not None
+        assert claimed.ticket_id == "ticket-2", (
+            "Should claim ticket-2 since ticket-1 is lock-skipped"
+        )
+
+    @pytest.mark.asyncio
+    async def test_lock_failure_adds_to_skip_set(
+        self, mock_config, mock_beads_client, sample_validation_ticket
+    ):
+        """Test that failing to acquire a lock adds the ticket to the skip set."""
+        from war_rig.utils.file_lock import FileLockManager
+
+        lock_manager = FileLockManager()
+
+        # Pre-lock the file
+        output_file = str(mock_config.output_directory / "TESTPROG.doc.json")
+        await lock_manager.acquire(output_file, "other-worker")
+
+        worker = ChallengerWorker(
+            worker_id="challenger-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            file_lock_manager=lock_manager,
+        )
+
+        # Verify ticket not in skip set initially
+        assert sample_validation_ticket.ticket_id not in worker._lock_skipped_tickets
+
+        # Process the ticket (will fail to acquire lock)
+        await worker._process_ticket(sample_validation_ticket)
+
+        # Verify ticket was added to skip set
+        assert sample_validation_ticket.ticket_id in worker._lock_skipped_tickets
+
+        # Cleanup
+        await lock_manager.release(output_file, "other-worker")

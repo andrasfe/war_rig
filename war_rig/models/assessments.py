@@ -28,6 +28,16 @@ class ConfidenceLevel(str, Enum):
     MEDIUM = "MEDIUM"  # Reasonably confident, some uncertainty
     LOW = "LOW"  # Uncertain, may need SME verification
 
+    @classmethod
+    def _missing_(cls, value: object) -> "ConfidenceLevel | None":
+        """Handle case-insensitive matching for LLM outputs."""
+        if isinstance(value, str):
+            upper_value = value.upper()
+            for member in cls:
+                if member.value == upper_value:
+                    return member
+        return None
+
 
 class ValidationLevel(str, Enum):
     """Validation levels for Challenger assessments.
@@ -38,6 +48,16 @@ class ValidationLevel(str, Enum):
     SOLID = "SOLID"  # Documentation is accurate and complete
     SHAKY = "SHAKY"  # Some concerns but mostly acceptable
     WRONG = "WRONG"  # Factual errors or significant problems
+
+    @classmethod
+    def _missing_(cls, value: object) -> "ValidationLevel | None":
+        """Handle case-insensitive matching for LLM outputs."""
+        if isinstance(value, str):
+            upper_value = value.upper()
+            for member in cls:
+                if member.value == upper_value:
+                    return member
+        return None
 
 
 class SectionAssessment(BaseModel):

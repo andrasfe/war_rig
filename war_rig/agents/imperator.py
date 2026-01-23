@@ -19,6 +19,7 @@ Holistic Review Mode:
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import re
@@ -1327,29 +1328,54 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
             return self.create_mock_holistic_output(input_data)
 
         try:
-            # Build prompts
+            # Build prompts for holistic review
             system_prompt = self._build_holistic_system_prompt()
             user_prompt = self._build_holistic_user_prompt(input_data)
 
-            # Call LLM
-            response = await self._call_llm(system_prompt, user_prompt)
-
-            # Parse response
-            review_output = self._parse_holistic_response(response, input_data)
-
-            # Generate SYSTEM_DESIGN.md if output_directory is provided
+            # Read existing SYSTEM_DESIGN.md content before parallel execution
+            # (file I/O is fast and needed for system design generation)
+            existing_content: str | None = None
             if output_directory is not None:
-                try:
-                    # Read existing SYSTEM_DESIGN.md content if available
-                    existing_content = self._read_existing_system_design(output_directory)
+                existing_content = self._read_existing_system_design(output_directory)
 
-                    # Generate system design document
-                    design_result = await self.generate_system_design(
-                        input_data,
-                        existing_content=existing_content,
-                        use_mock=use_mock,
+            # Run holistic review and system design generation in parallel
+            # Both operations are independent: they use the same input_data (read-only)
+            # and neither depends on the other's output
+            if output_directory is not None:
+                # Run both LLM calls in parallel for significant time savings
+                # (each call can take 3-5 minutes)
+                holistic_task = self._call_llm(system_prompt, user_prompt)
+                design_task = self.generate_system_design(
+                    input_data,
+                    existing_content=existing_content,
+                    use_mock=use_mock,
+                )
+
+                results = await asyncio.gather(
+                    holistic_task,
+                    design_task,
+                    return_exceptions=True,
+                )
+
+                response_or_error = results[0]
+                design_result_or_error = results[1]
+
+                # Handle holistic review result - this is the primary operation
+                if isinstance(response_or_error, Exception):
+                    # Re-raise to be caught by outer exception handler
+                    raise response_or_error
+
+                response = response_or_error
+                review_output = self._parse_holistic_response(response, input_data)
+
+                # Handle system design result - failure should not fail holistic review
+                if isinstance(design_result_or_error, Exception):
+                    logger.warning(
+                        f"Failed to generate SYSTEM_DESIGN.md: {design_result_or_error}"
                     )
-
+                    review_output.system_design_generated = False
+                else:
+                    design_result = design_result_or_error
                     if design_result.success:
                         # Write the markdown to SYSTEM_DESIGN.md
                         system_design_path = output_directory / "SYSTEM_DESIGN.md"
@@ -1371,13 +1397,10 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                             f"System design generation failed: {design_result.error}"
                         )
                         review_output.system_design_generated = False
-
-                except Exception as design_error:
-                    # Log the error but don't fail the holistic review
-                    logger.warning(
-                        f"Failed to generate SYSTEM_DESIGN.md: {design_error}"
-                    )
-                    review_output.system_design_generated = False
+            else:
+                # No output_directory, just run holistic review
+                response = await self._call_llm(system_prompt, user_prompt)
+                review_output = self._parse_holistic_response(response, input_data)
 
             return review_output
 

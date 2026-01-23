@@ -716,3 +716,250 @@ class TestGenerateSystemDesign:
 
         for section in expected_sections:
             assert section in result.sections_updated
+
+
+class TestHolisticReviewParallelExecution:
+    """Tests for the parallel execution of holistic review and system design generation."""
+
+    @staticmethod
+    def _create_valid_holistic_json_response() -> str:
+        """Create a valid JSON response that can be parsed by _parse_holistic_response."""
+        import json
+
+        response_data = {
+            "decision": "SATISFIED",
+            "reasoning": "All documentation meets quality standards.",
+            "overall_quality": "GOOD",
+            "file_feedback": {},
+            "consistency_issues": [],
+            "clarification_requests": [],
+            "assumptions": [],
+            "quality_notes": [],
+            "priority_files": [],
+            "missing_documentation": [],
+        }
+        return json.dumps(response_data)
+
+    @pytest.mark.asyncio
+    async def test_parallel_execution_both_succeed(
+        self,
+        imperator_agent: ImperatorAgent,
+        sample_holistic_input: HolisticReviewInput,
+        tmp_path,
+    ):
+        """Test that both operations run and succeed in parallel."""
+        from unittest.mock import AsyncMock, patch
+
+        # Create mock responses - must be valid JSON for parsing
+        mock_holistic_response = self._create_valid_holistic_json_response()
+
+        mock_design_output = imperator_agent._create_mock_system_design(
+            sample_holistic_input, None
+        )
+
+        # Patch both async methods
+        with patch.object(
+            imperator_agent, "_call_llm", new_callable=AsyncMock
+        ) as mock_llm, patch.object(
+            imperator_agent, "generate_system_design", new_callable=AsyncMock
+        ) as mock_design:
+            mock_llm.return_value = mock_holistic_response
+            mock_design.return_value = mock_design_output
+
+            result = await imperator_agent.holistic_review(
+                sample_holistic_input,
+                use_mock=False,
+                output_directory=tmp_path,
+            )
+
+            # Verify both methods were called
+            mock_llm.assert_called_once()
+            mock_design.assert_called_once()
+
+            # Verify result is successful
+            assert result.success is True
+            assert result.system_design_generated is True
+
+    @pytest.mark.asyncio
+    async def test_holistic_review_fails_entire_operation_fails(
+        self,
+        imperator_agent: ImperatorAgent,
+        sample_holistic_input: HolisticReviewInput,
+        tmp_path,
+    ):
+        """Test that if holistic review LLM call fails, the entire operation fails."""
+        from unittest.mock import AsyncMock, patch
+
+        mock_design_output = imperator_agent._create_mock_system_design(
+            sample_holistic_input, None
+        )
+
+        with patch.object(
+            imperator_agent, "_call_llm", new_callable=AsyncMock
+        ) as mock_llm, patch.object(
+            imperator_agent, "generate_system_design", new_callable=AsyncMock
+        ) as mock_design:
+            # Holistic review fails
+            mock_llm.side_effect = RuntimeError("LLM API error")
+            # System design succeeds
+            mock_design.return_value = mock_design_output
+
+            result = await imperator_agent.holistic_review(
+                sample_holistic_input,
+                use_mock=False,
+                output_directory=tmp_path,
+            )
+
+            # Verify operation failed
+            assert result.success is False
+            assert "LLM API error" in result.error
+
+    @pytest.mark.asyncio
+    async def test_system_design_fails_holistic_review_succeeds(
+        self,
+        imperator_agent: ImperatorAgent,
+        sample_holistic_input: HolisticReviewInput,
+        tmp_path,
+    ):
+        """Test that if system design fails, holistic review still succeeds."""
+        from unittest.mock import AsyncMock, patch
+
+        # Create mock response - must be valid JSON for parsing
+        mock_holistic_response = self._create_valid_holistic_json_response()
+
+        with patch.object(
+            imperator_agent, "_call_llm", new_callable=AsyncMock
+        ) as mock_llm, patch.object(
+            imperator_agent, "generate_system_design", new_callable=AsyncMock
+        ) as mock_design:
+            # Holistic review succeeds
+            mock_llm.return_value = mock_holistic_response
+            # System design fails
+            mock_design.side_effect = RuntimeError("System design API error")
+
+            result = await imperator_agent.holistic_review(
+                sample_holistic_input,
+                use_mock=False,
+                output_directory=tmp_path,
+            )
+
+            # Verify holistic review succeeded
+            assert result.success is True
+            # But system design failed gracefully
+            assert result.system_design_generated is False
+
+    @pytest.mark.asyncio
+    async def test_no_output_directory_skips_system_design(
+        self,
+        imperator_agent: ImperatorAgent,
+        sample_holistic_input: HolisticReviewInput,
+    ):
+        """Test that without output_directory, only holistic review runs."""
+        from unittest.mock import AsyncMock, patch
+
+        # Create mock response - must be valid JSON for parsing
+        mock_holistic_response = self._create_valid_holistic_json_response()
+
+        with patch.object(
+            imperator_agent, "_call_llm", new_callable=AsyncMock
+        ) as mock_llm, patch.object(
+            imperator_agent, "generate_system_design", new_callable=AsyncMock
+        ) as mock_design:
+            mock_llm.return_value = mock_holistic_response
+
+            result = await imperator_agent.holistic_review(
+                sample_holistic_input,
+                use_mock=False,
+                output_directory=None,  # No output directory
+            )
+
+            # Verify holistic review was called
+            mock_llm.assert_called_once()
+            # Verify system design was NOT called
+            mock_design.assert_not_called()
+
+            # Verify result is successful
+            assert result.success is True
+
+    @pytest.mark.asyncio
+    async def test_system_design_returns_failure_result(
+        self,
+        imperator_agent: ImperatorAgent,
+        sample_holistic_input: HolisticReviewInput,
+        tmp_path,
+    ):
+        """Test handling when system design returns a failed result object."""
+        from unittest.mock import AsyncMock, patch
+
+        from war_rig.agents.imperator import SystemDesignOutput
+
+        # Create mock response - must be valid JSON for parsing
+        mock_holistic_response = self._create_valid_holistic_json_response()
+
+        # System design returns a failure result (not an exception)
+        mock_design_output = SystemDesignOutput(
+            success=False,
+            error="Failed to parse LLM response",
+            markdown="",
+        )
+
+        with patch.object(
+            imperator_agent, "_call_llm", new_callable=AsyncMock
+        ) as mock_llm, patch.object(
+            imperator_agent, "generate_system_design", new_callable=AsyncMock
+        ) as mock_design:
+            mock_llm.return_value = mock_holistic_response
+            mock_design.return_value = mock_design_output
+
+            result = await imperator_agent.holistic_review(
+                sample_holistic_input,
+                use_mock=False,
+                output_directory=tmp_path,
+            )
+
+            # Verify holistic review succeeded
+            assert result.success is True
+            # But system design generation is marked as failed
+            assert result.system_design_generated is False
+
+    @pytest.mark.asyncio
+    async def test_parallel_execution_writes_system_design_file(
+        self,
+        imperator_agent: ImperatorAgent,
+        sample_holistic_input: HolisticReviewInput,
+        tmp_path,
+    ):
+        """Test that system design is written to file on success."""
+        from unittest.mock import AsyncMock, patch
+
+        # Create mock response - must be valid JSON for parsing
+        mock_holistic_response = self._create_valid_holistic_json_response()
+
+        mock_design_output = imperator_agent._create_mock_system_design(
+            sample_holistic_input, None
+        )
+
+        with patch.object(
+            imperator_agent, "_call_llm", new_callable=AsyncMock
+        ) as mock_llm, patch.object(
+            imperator_agent, "generate_system_design", new_callable=AsyncMock
+        ) as mock_design:
+            mock_llm.return_value = mock_holistic_response
+            mock_design.return_value = mock_design_output
+
+            result = await imperator_agent.holistic_review(
+                sample_holistic_input,
+                use_mock=False,
+                output_directory=tmp_path,
+            )
+
+            # Verify file was written
+            system_design_path = tmp_path / "SYSTEM_DESIGN.md"
+            assert system_design_path.exists()
+            assert system_design_path.read_text() == mock_design_output.markdown
+
+            # Verify result fields are populated
+            assert result.success is True
+            assert result.system_design_generated is True
+            assert result.system_design_path == str(system_design_path)
+            assert len(result.system_design_questions) > 0

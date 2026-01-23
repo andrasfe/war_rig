@@ -7,6 +7,7 @@ by type and state, highlighting stuck tickets.
 
 Usage:
     python scripts/war_rig_status.py output/.war_rig_tickets.json
+    python scripts/war_rig_status.py output/.war_rig_tickets.json --once
 """
 
 from __future__ import annotations
@@ -1010,6 +1011,68 @@ def build_display(summary: TicketSummary | None, path: Path, error_msg: str | No
     return Group(*components)
 
 
+def run_once(path: Path) -> int:
+    """Print a single snapshot and exit.
+
+    Args:
+        path: Path to the tickets JSON file.
+
+    Returns:
+        Exit code (0 for success, 1 for error).
+    """
+    console = Console()
+
+    if not path.exists():
+        console.print(f"[red]Error: File not found: {path}[/red]")
+        return 1
+
+    data = load_tickets(path)
+    if not data:
+        console.print(f"[red]Error: Could not parse tickets file: {path}[/red]")
+        return 1
+
+    summary = summarize_tickets(data)
+
+    # Build and print display without footer (no live updates message)
+    components: list[Any] = []
+    components.append(build_summary_header(summary, path))
+    components.append(build_activity_panel(summary))
+    components.append(Text())
+    components.append(build_type_table(summary))
+    components.append(Text())
+
+    cycle_table = build_cycle_table(summary)
+    if cycle_table:
+        components.append(cycle_table)
+        components.append(Text())
+
+    if summary.by_file_type:
+        components.append(build_file_type_table(summary))
+        components.append(Text())
+
+    ticket_list_table = build_ticket_list_table(summary)
+    if ticket_list_table:
+        components.append(ticket_list_table)
+        components.append(Text())
+
+    components.append(build_state_table(summary))
+    components.append(Text())
+
+    decision_table = build_decision_table(summary)
+    if decision_table:
+        components.append(decision_table)
+        components.append(Text())
+
+    stuck_panel = build_stuck_panel(summary)
+    if stuck_panel:
+        components.append(stuck_panel)
+
+    display = Group(*components)
+    console.print(display)
+
+    return 0
+
+
 def run_monitor(path: Path, refresh_interval: float = REFRESH_INTERVAL) -> None:
     """Main monitoring loop with in-place updates.
 
@@ -1068,7 +1131,8 @@ def main() -> None:
         epilog="""
 Examples:
     python scripts/war_rig_status.py output/.war_rig_tickets.json
-    python scripts/war_rig_status.py /path/to/tickets.json
+    python scripts/war_rig_status.py output/.war_rig_tickets.json --once
+    python scripts/war_rig_status.py /path/to/tickets.json --refresh 5
         """,
     )
     parser.add_argument(
@@ -1082,6 +1146,11 @@ Examples:
         default=REFRESH_INTERVAL,
         help=f"Refresh interval in seconds (default: {REFRESH_INTERVAL})",
     )
+    parser.add_argument(
+        "--once",
+        action="store_true",
+        help="Print a single snapshot and exit (no live updates)",
+    )
 
     args = parser.parse_args()
 
@@ -1090,12 +1159,15 @@ Examples:
     if not file_path.is_absolute():
         file_path = Path.cwd() / file_path
 
-    # Note: File doesn't need to exist yet - we'll wait for it
+    # Note: File doesn't need to exist yet - we'll wait for it (in live mode)
     if file_path.exists() and file_path.is_dir():
         print(f"Error: {file_path} is a directory, not a file", file=sys.stderr)
         sys.exit(1)
 
-    run_monitor(file_path, args.refresh)
+    if args.once:
+        sys.exit(run_once(file_path))
+    else:
+        run_monitor(file_path, args.refresh)
 
 
 if __name__ == "__main__":

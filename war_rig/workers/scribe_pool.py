@@ -245,6 +245,13 @@ class ScribeWorker:
         # Other workers with different LLMs can still pick them up
         self._failed_tickets: set[str] = set()
 
+        # Track tickets released due to file locks with their release timestamps
+        # This prevents infinite loops where a worker claims the same ticket repeatedly
+        # when the file is locked by another worker. After the skip duration expires,
+        # the ticket becomes eligible for claiming again.
+        self._lock_skipped_tickets: dict[str, datetime] = {}
+        self._lock_skip_duration: float = 5.0  # seconds to skip a lock-released ticket
+
         # Initialize source code preparer for centralized token limit handling
         self._source_preparer = SourceCodePreparer(config.scribe)
 
@@ -410,6 +417,25 @@ class ScribeWorker:
         if not tickets:
             return None
 
+        # Filter out tickets recently released due to file locks
+        # This prevents infinite loops where a worker repeatedly claims and releases
+        # the same ticket when the file is locked by another worker
+        now = datetime.utcnow()
+        expired_skips = [
+            ticket_id
+            for ticket_id, skip_time in self._lock_skipped_tickets.items()
+            if (now - skip_time).total_seconds() >= self._lock_skip_duration
+        ]
+        for ticket_id in expired_skips:
+            del self._lock_skipped_tickets[ticket_id]
+
+        tickets = [
+            t for t in tickets if t.ticket_id not in self._lock_skipped_tickets
+        ]
+
+        if not tickets:
+            return None
+
         # Sort by priority (lower value = higher priority), then by created_at
         tickets.sort(key=lambda t: (t.cycle_number, t.created_at))
 
@@ -466,6 +492,7 @@ class ScribeWorker:
                 )
                 if not lock_acquired:
                     # Another worker has the lock - release ticket back to queue
+                    # and track it to prevent immediate re-claiming (infinite loop fix)
                     logger.info(
                         f"Worker {self.worker_id}: File {output_file} is locked, "
                         f"releasing ticket {ticket.ticket_id} for another worker"
@@ -475,6 +502,9 @@ class ScribeWorker:
                         TicketState.CREATED,
                         reason="File locked by another worker, released for retry",
                     )
+                    # Track this ticket to avoid re-claiming it immediately
+                    # This prevents the infinite loop where we claim -> lock fail -> release -> claim
+                    self._lock_skipped_tickets[ticket.ticket_id] = datetime.utcnow()
                     return
 
             # Update ticket to IN_PROGRESS
