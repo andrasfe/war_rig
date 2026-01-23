@@ -234,6 +234,8 @@ def mock_beads_client() -> MagicMock:
     # Expose internals for test assertions
     client._tickets = tickets
     client._claimed_tickets = claimed_tickets
+    # Code accesses _pm_ticket_cache directly from BeadsClient
+    client._pm_ticket_cache = tickets
 
     return client
 
@@ -256,6 +258,7 @@ def mock_war_rig_config(tmp_path, carddemo_path) -> MagicMock:
     config.max_questions_per_round = 3
     config.max_chrome_tickets = 3
     config.pm_max_cycles = 3
+    config.exit_on_error = True
 
     # Beads settings
     config.beads_enabled = False  # Use mock client

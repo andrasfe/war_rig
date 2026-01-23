@@ -372,7 +372,7 @@ Different file types have different applicable documentation sections. The valid
 
 - **COBOL/PLI**: Full validation (no sections skipped)
 - **COPYBOOK**: Skip `called_programs`, `data_flow`, `cics_operations`, `sql_operations`, `business_rules`, `error_handling`
-- **JCL/PROC**: Skip `called_programs`, `copybooks`, `cics_operations`, `sql_operations`, `data_flow`, `business_rules`
+- **JCL/PROC**: Skip `called_programs`, `copybooks`, `cics_operations`, `sql_operations`, `data_flow`, `business_rules`, `error_handling`
 - **BMS**: Skip most sections except `purpose`, `inputs`, `outputs`
 - **SORT**: Skip most sections except `purpose`, `inputs`, `outputs`
 - **DDL**: Skip program-related sections, keep `sql_operations`

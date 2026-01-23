@@ -911,7 +911,8 @@ class ScribeWorker:
                 "sql_operations",     # No embedded SQL
                 "data_flow",          # Job steps, not data flow
                 "business_rules",     # Job control, not business logic
-                # Keep: purpose, inputs, outputs, error_handling (COND codes)
+                "error_handling",     # COND codes not traditional error handling
+                # Keep: purpose, inputs, outputs
             },
 
             "PROC": {
@@ -921,6 +922,7 @@ class ScribeWorker:
                 "sql_operations",
                 "data_flow",
                 "business_rules",
+                "error_handling",     # Same as JCL
             },
 
             "BMS": {
