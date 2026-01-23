@@ -1002,3 +1002,76 @@ class TestCriticalSectionValidation:
         # Should fail - COBOL programs should have called_programs checked
         assert is_valid is False
         assert "called_programs" in empty
+
+    def test_validate_critical_sections_detected_file_type_overrides_template(
+        self, mock_config, mock_beads_client
+    ):
+        """Test that detected_file_type takes precedence over template.header.file_type.
+
+        This tests the fix for when LLM doesn't populate header.file_type but the
+        extension-detected file_type is passed explicitly.
+        """
+        from war_rig.models.templates import (
+            DocumentationTemplate,
+            HeaderSection,
+            FileType,
+        )
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        # Template with NO file_type in header (simulates LLM not setting it)
+        template = DocumentationTemplate(
+            file_name="TEST.cpy",
+            header=HeaderSection(
+                program_id="TEST",
+                file_name="TEST.cpy",
+                file_type=None,  # LLM didn't populate this
+            ),
+            called_programs=[],  # Empty
+        )
+        feedback_context = {"critical_sections": ["called_programs", "data_flow"]}
+
+        # Without detected_file_type, validation would fail
+        is_valid, empty = worker._validate_critical_sections(
+            template, feedback_context, detected_file_type=None
+        )
+        assert is_valid is False
+        assert "called_programs" in empty
+
+        # With detected_file_type=COPYBOOK, validation should pass
+        is_valid, empty = worker._validate_critical_sections(
+            template, feedback_context, detected_file_type=FileType.COPYBOOK
+        )
+        assert is_valid is True
+        assert empty == []
+
+    def test_validate_critical_sections_detected_file_type_with_no_header(
+        self, mock_config, mock_beads_client
+    ):
+        """Test that detected_file_type works even when template.header is None."""
+        from war_rig.models.templates import DocumentationTemplate, FileType
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        # Template with completely missing header
+        template = DocumentationTemplate(
+            file_name="TEST.cpy",
+            header=None,  # No header at all
+            called_programs=[],
+        )
+        feedback_context = {"critical_sections": ["called_programs", "data_flow"]}
+
+        # With detected_file_type=COPYBOOK, validation should skip these sections
+        is_valid, empty = worker._validate_critical_sections(
+            template, feedback_context, detected_file_type=FileType.COPYBOOK
+        )
+        assert is_valid is True
+        assert empty == []

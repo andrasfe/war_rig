@@ -747,6 +747,7 @@ class ScribeWorker:
         self,
         template: DocumentationTemplate,
         feedback_context: dict | None,
+        detected_file_type: FileType | None = None,
     ) -> tuple[bool, list[str]]:
         """Validate that critical sections are not empty (IMPFB-005).
 
@@ -761,6 +762,8 @@ class ScribeWorker:
         Args:
             template: The documentation template to validate.
             feedback_context: FeedbackContext dict with critical_sections list.
+            detected_file_type: File type detected from extension (takes precedence
+                over template.header.file_type which may not be set by LLM).
 
         Returns:
             Tuple of (is_valid, list_of_empty_sections).
@@ -773,9 +776,11 @@ class ScribeWorker:
         if not critical_sections:
             return True, []
 
-        # Determine file type to skip inapplicable sections
-        file_type = None
-        if template.header and template.header.file_type:
+        # Use detected file type (from extension) with fallback to template header
+        # The detected_file_type is more reliable since it's determined from the
+        # file extension, while template.header.file_type depends on LLM output
+        file_type = detected_file_type
+        if file_type is None and template.header and template.header.file_type:
             file_type = template.header.file_type
 
         # Sections to skip based on file type
@@ -1004,7 +1009,7 @@ class ScribeWorker:
         # Validate critical sections if feedback context provided (IMPFB-005)
         if output.success and output.template and feedback_context:
             is_valid, empty_sections = self._validate_critical_sections(
-                output.template, feedback_context
+                output.template, feedback_context, detected_file_type=file_type
             )
             if not is_valid:
                 logger.warning(
@@ -1821,7 +1826,7 @@ class ScribeWorker:
         # Validate critical sections if feedback context provided (IMPFB-005)
         if output.success and output.template and feedback_context:
             is_valid, empty_sections = self._validate_critical_sections(
-                output.template, feedback_context
+                output.template, feedback_context, detected_file_type=file_type
             )
             if not is_valid:
                 logger.warning(
@@ -2013,7 +2018,7 @@ class ScribeWorker:
         # Validate critical sections if feedback context provided (IMPFB-005)
         if output.success and output.template and feedback_context:
             is_valid, empty_sections = self._validate_critical_sections(
-                output.template, feedback_context
+                output.template, feedback_context, detected_file_type=file_type
             )
             if not is_valid:
                 logger.warning(
