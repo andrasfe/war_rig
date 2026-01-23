@@ -58,10 +58,11 @@ from war_rig.chunking import (
     GenericChunker,
     TokenEstimator,
 )
-from war_rig.models.templates import FileType
+from war_rig.models.templates import DocumentationTemplate, FileType
 
 if TYPE_CHECKING:
     from war_rig.config import ScribeConfig
+    from war_rig.models.tickets import ChallengerQuestion, ChromeTicket
 
 logger = logging.getLogger(__name__)
 
@@ -242,16 +243,29 @@ class SourceCodePreparer:
         self,
         source_code: str,
         context: PreparationContext,
+        challenger_questions: list["ChallengerQuestion"] | None = None,
+        chrome_tickets: list["ChromeTicket"] | None = None,
+        previous_template: DocumentationTemplate | None = None,
     ) -> PreparedSource:
         """Prepare source code for Scribe processing.
 
         Analyzes the source code size and processing context to determine
         the appropriate preparation strategy, then applies it.
 
+        For CLARIFICATION and CHROME tickets, uses intelligent sampling
+        that extracts relevance hints from questions/tickets to sample
+        the most relevant portions of source code.
+
         Args:
             source_code: The raw source code to prepare.
             context: Context about the processing scenario, used to
                 select between chunking and sampling strategies.
+            challenger_questions: Optional Challenger questions for intelligent
+                sampling (used with CLARIFICATION tickets).
+            chrome_tickets: Optional Chrome tickets for intelligent sampling
+                (used with CHROME tickets).
+            previous_template: Optional previous documentation template
+                containing citations for intelligent sampling.
 
         Returns:
             PreparedSource with the appropriate strategy applied.
@@ -288,7 +302,14 @@ class SourceCodePreparer:
                 f"Source exceeds limit ({source_tokens} > {self.max_source_tokens}), "
                 f"using sampling for {context.ticket_type.value} cycle {context.cycle_number}"
             )
-            return self._apply_sampling(source_code, source_tokens)
+            return self._apply_sampling(
+                source_code,
+                source_tokens,
+                context,
+                challenger_questions,
+                chrome_tickets,
+                previous_template,
+            )
 
     def _should_use_chunking(self, context: PreparationContext) -> bool:
         """Determine if chunking should be used.
@@ -328,8 +349,95 @@ class SourceCodePreparer:
         self,
         source_code: str,
         source_tokens: int,
+        context: PreparationContext | None = None,
+        challenger_questions: list["ChallengerQuestion"] | None = None,
+        chrome_tickets: list["ChromeTicket"] | None = None,
+        previous_template: DocumentationTemplate | None = None,
     ) -> PreparedSource:
         """Apply sampling strategy (extract representative portion).
+
+        For CLARIFICATION and CHROME tickets with questions/tickets provided,
+        uses intelligent sampling that extracts relevance hints to sample
+        the most relevant portions of source code.
+
+        For other cases (or when no hints are available), falls back to
+        random contiguous sampling for diversity across retries.
+
+        Args:
+            source_code: The full source code.
+            source_tokens: Estimated token count of full source.
+            context: Optional preparation context for intelligent sampling.
+            challenger_questions: Optional Challenger questions for hints.
+            chrome_tickets: Optional Chrome tickets for hints.
+            previous_template: Optional template with citations.
+
+        Returns:
+            PreparedSource with sampled source and metadata.
+        """
+        # Use intelligent sampling for CLARIFICATION/CHROME with hints
+        if context and context.ticket_type in (TicketType.CLARIFICATION, TicketType.CHROME):
+            if challenger_questions or chrome_tickets:
+                return self._apply_intelligent_sampling(
+                    source_code=source_code,
+                    context=context,
+                    challenger_questions=challenger_questions,
+                    chrome_tickets=chrome_tickets,
+                    previous_template=previous_template,
+                )
+
+        # Fall back to random sampling
+        return self._apply_random_sampling(source_code, source_tokens)
+
+    def _apply_intelligent_sampling(
+        self,
+        source_code: str,
+        context: PreparationContext,
+        challenger_questions: list["ChallengerQuestion"] | None = None,
+        chrome_tickets: list["ChromeTicket"] | None = None,
+        previous_template: DocumentationTemplate | None = None,
+    ) -> PreparedSource:
+        """Apply intelligent sampling using relevance hints.
+
+        Uses the SamplingOrchestrator to extract hints from questions/tickets
+        and sample the most relevant portions of source code.
+
+        Args:
+            source_code: The full source code.
+            context: Preparation context with ticket info.
+            challenger_questions: Challenger questions for hints.
+            chrome_tickets: Chrome tickets for hints.
+            previous_template: Template with citations.
+
+        Returns:
+            PreparedSource with intelligently sampled source.
+        """
+        from war_rig.sampling import SamplingOrchestrator
+
+        orchestrator = SamplingOrchestrator(self.estimator)
+        result = orchestrator.prepare_sample(
+            source_code=source_code,
+            file_name="source",  # File name not critical for sampling
+            file_type=context.file_type,
+            max_tokens=self.max_source_tokens,
+            ticket_type=context.ticket_type,
+            challenger_questions=challenger_questions,
+            chrome_tickets=chrome_tickets,
+            previous_template=previous_template,
+        )
+
+        logger.info(
+            f"Intelligent sampling: {result.sampled_lines} of {result.original_lines} lines, "
+            f"strategies={sorted(result.strategies_used)}"
+        )
+
+        return orchestrator.to_prepared_source(result)
+
+    def _apply_random_sampling(
+        self,
+        source_code: str,
+        source_tokens: int,
+    ) -> PreparedSource:
+        """Apply random sampling strategy (extract contiguous portion).
 
         Takes a random contiguous portion of the source code. The random
         start position provides diversity across retries (different workers

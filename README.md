@@ -326,6 +326,11 @@ war_rig/
 ├── feedback/           # Human feedback injection
 │   ├── models.py       # HumanFeedbackNote, HumanFeedbackContext
 │   └── injector.py     # FeedbackInjector for ticket updates
+├── sampling/           # Intelligent source code sampling
+│   ├── analyzer.py     # RelevanceAnalyzer for hint extraction
+│   ├── composer.py     # WindowComposer for merging windows
+│   ├── orchestrator.py # Main entry point
+│   └── strategies/     # Sampling strategies (5 implementations)
 ├── orchestration/      # Workflow coordination
 │   └── ticket_engine.py
 ├── utils/              # Utility modules
@@ -385,6 +390,33 @@ The human feedback system allows operators to inject domain knowledge and instru
 - **Atomic updates**: Ticket file updates use atomic writes (temp file + rename) for safety
 
 The feedback uses the same `FeedbackContext` structure that agents already read, requiring no agent code changes.
+
+### Intelligent Source Sampling
+
+When source code exceeds token limits for CLARIFICATION/CHROME tickets, War Rig uses intelligent sampling to select relevant portions based on the questions being asked:
+
+**Strategy Chain (priority order):**
+
+| Priority | Strategy | Triggers | Relevance |
+|----------|----------|----------|-----------|
+| 1 | LineCitation | Line numbers in `evidence` or question text | 1.0 |
+| 2 | SectionReference | `section` field → lookup template citations | 0.9 |
+| 3 | IdentifierMention | COBOL identifiers in question text → grep source | 0.7 |
+| 4 | SemanticRegion | Topic inference → COBOL division boundaries | 0.6 |
+| 5 | RandomFallback | No hints found (last resort) | 0.1 |
+
+**How it works:**
+1. `RelevanceAnalyzer` extracts hints from challenger questions (line numbers, sections, identifiers)
+2. Each applicable strategy generates `SourceWindow` objects pointing to relevant code regions
+3. `WindowComposer` merges overlapping windows, prioritizes by relevance, fits within token budget
+4. Result includes non-contiguous windows with context margins (±5 lines)
+
+**Example:** If Challenger asks "Why is WS-ACCOUNT-BALANCE set incorrectly at line 456?", the system:
+- LineCitationStrategy creates a window around line 456
+- IdentifierMentionStrategy searches for "WS-ACCOUNT-BALANCE" throughout the source
+- Both windows are merged and included in the sample
+
+This ensures the LLM sees the relevant code to answer questions, rather than random portions.
 
 ## License
 

@@ -1082,19 +1082,26 @@ class ScribeWorker:
         source_code: str,
         ticket: ProgramManagerTicket,
         previous_template: DocumentationTemplate | None,
+        challenger_questions: list[ChallengerQuestion] | None = None,
+        chrome_tickets: list[ChromeTicket] | None = None,
     ) -> PreparedSource:
         """Prepare source code with centralized token limit handling.
 
         This method provides a single entry point for all source code preparation,
         delegating to SourceCodePreparer which decides whether to:
         - Pass through (if within token limit)
-        - Sample (for updates/clarifications/chrome)
+        - Sample (for updates/clarifications/chrome) - uses intelligent sampling
+          when questions/tickets are provided
         - Chunk (for initial documentation of large files)
 
         Args:
             source_code: The raw source code to prepare.
             ticket: The ticket being processed (provides context).
             previous_template: Previous documentation template, if any.
+            challenger_questions: Optional Challenger questions for intelligent
+                sampling (CLARIFICATION tickets).
+            chrome_tickets: Optional Chrome tickets for intelligent sampling
+                (CHROME tickets).
 
         Returns:
             PreparedSource with the appropriate strategy applied.
@@ -1106,7 +1113,13 @@ class ScribeWorker:
             has_previous_template=previous_template is not None,
             file_type=file_type,
         )
-        return self._source_preparer.prepare(source_code, context)
+        return self._source_preparer.prepare(
+            source_code,
+            context,
+            challenger_questions=challenger_questions,
+            chrome_tickets=chrome_tickets,
+            previous_template=previous_template,
+        )
 
     async def _process_documentation_ticket(
         self,
@@ -1995,17 +2008,8 @@ class ScribeWorker:
                     error=f"Failed to read source file: {e}",
                 )
 
-        # Prepare source code using centralized token limit handling
-        prepared = self._prepare_source_for_processing(
-            source_code, ticket, previous_template
-        )
-        if prepared.was_modified:
-            logger.info(
-                f"Worker {self.worker_id}: Source {prepared.strategy_used} for "
-                f"clarification ticket ({ticket.file_name})"
-            )
-
-        # Extract challenger questions from ticket metadata
+        # Extract challenger questions from ticket metadata BEFORE source preparation
+        # so they can be used for intelligent sampling
         challenger_questions: list[ChallengerQuestion] = []
         questions_data = ticket.metadata.get("challenger_questions", [])
         for q in questions_data:
@@ -2044,6 +2048,20 @@ class ScribeWorker:
                     section=ticket.metadata.get("section"),
                     context=ticket.metadata.get("guidance", ""),
                 )
+            )
+
+        # Prepare source code using centralized token limit handling
+        # Pass challenger questions for intelligent sampling
+        prepared = self._prepare_source_for_processing(
+            source_code,
+            ticket,
+            previous_template,
+            challenger_questions=challenger_questions,
+        )
+        if prepared.was_modified:
+            logger.info(
+                f"Worker {self.worker_id}: Source {prepared.strategy_used} for "
+                f"clarification ticket ({ticket.file_name})"
             )
 
         if not challenger_questions:
@@ -2235,29 +2253,20 @@ class ScribeWorker:
                     error=f"Failed to read source file: {e}",
                 )
 
-        # Prepare source code using centralized token limit handling
-        prepared = self._prepare_source_for_processing(
-            source_code, ticket, previous_template
-        )
-        if prepared.was_modified:
-            logger.info(
-                f"Worker {self.worker_id}: Source {prepared.strategy_used} for "
-                f"chrome ticket ({ticket.file_name})"
-            )
-
-        # Extract chrome tickets from ticket metadata
-        chrome_tickets: list[ChromeTicket] = []
+        # Extract chrome tickets from ticket metadata BEFORE source preparation
+        # so they can be used for intelligent sampling
+        chrome_tickets_list: list[ChromeTicket] = []
         chrome_data = ticket.metadata.get("chrome_tickets", [])
         for ct in chrome_data:
             if isinstance(ct, dict):
-                chrome_tickets.append(ChromeTicket.model_validate(ct))
+                chrome_tickets_list.append(ChromeTicket.model_validate(ct))
             elif isinstance(ct, ChromeTicket):
-                chrome_tickets.append(ct)
+                chrome_tickets_list.append(ct)
 
         # Also check for single issue in issue_description
         if ticket.metadata.get("issue_description"):
             from war_rig.models.tickets import IssuePriority
-            chrome_tickets.append(
+            chrome_tickets_list.append(
                 ChromeTicket(
                     ticket_id=f"CHR-{ticket.ticket_id[-8:]}",
                     description=ticket.metadata["issue_description"],
@@ -2267,7 +2276,21 @@ class ScribeWorker:
                 )
             )
 
-        if not chrome_tickets:
+        # Prepare source code using centralized token limit handling
+        # Pass chrome tickets for intelligent sampling
+        prepared = self._prepare_source_for_processing(
+            source_code,
+            ticket,
+            previous_template,
+            chrome_tickets=chrome_tickets_list,
+        )
+        if prepared.was_modified:
+            logger.info(
+                f"Worker {self.worker_id}: Source {prepared.strategy_used} for "
+                f"chrome ticket ({ticket.file_name})"
+            )
+
+        if not chrome_tickets_list:
             logger.warning(
                 f"Worker {self.worker_id}: No chrome issues found in ticket "
                 f"{ticket.ticket_id}. Ticket metadata: chrome_tickets={bool(chrome_data)}, "
@@ -2297,14 +2320,14 @@ class ScribeWorker:
             iteration=ticket.cycle_number,
             copybook_contents=ticket.metadata.get("copybook_contents", {}),
             previous_template=previous_template,
-            chrome_tickets=chrome_tickets,
+            chrome_tickets=chrome_tickets_list,
             formatting_strict=formatting_strict,
             feedback_context=feedback_context,
         )
 
         logger.info(
             f"Worker {self.worker_id}: Processing chrome for {ticket.file_name} "
-            f"with {len(chrome_tickets)} issues"
+            f"with {len(chrome_tickets_list)} issues"
             + (f" (with feedback context)" if feedback_context else "")
         )
         output = await self.scribe_agent.ainvoke(scribe_input)
