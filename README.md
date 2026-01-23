@@ -235,6 +235,56 @@ python scripts/ticket_manager.py output/.war_rig_tickets.json reset mem-000042
 python scripts/ticket_manager.py output/.war_rig_tickets.json stats
 ```
 
+### Human-in-the-Loop Feedback
+
+Inject human feedback into pending tickets to guide agent behavior:
+
+```bash
+python scripts/human_feedback.py output/.war_rig_tickets.json
+```
+
+**Features:**
+- Shows current Imperator feedback before prompting for human input
+- Injects feedback only into `CREATED` state tickets (not yet claimed by agents)
+- Human feedback overrides Imperator feedback on conflicts
+- Supports multiple feedback categories and severity levels
+
+**Interactive Menu:**
+```
+=== War Rig Human Feedback Console ===
+
+Found 5 CREATED tickets ready for feedback injection.
+
+[1] Add quality note        - Add feedback with category/severity
+[2] Prioritize file(s)      - Move specific files to front of queue
+[3] Skip/cancel file(s)     - Cancel tickets for specific files
+[4] Override critical sections
+[5] Add global instructions
+
+[6] View Imperator feedback - See current AI feedback for a ticket
+[7] View pending queue      - See queued human feedback
+
+[8] Inject feedback and exit
+[q] Quit without injecting
+```
+
+**Feedback Categories:**
+| Category | Description |
+|----------|-------------|
+| `quality_issue` | Document quality problem to address |
+| `domain_context` | Business/domain knowledge agents should know |
+| `instruction` | Specific instruction for agents to follow |
+
+**Severity Levels:** `critical`, `high`, `medium`, `low`
+
+**Example Workflow:**
+1. Start the feedback console
+2. View current Imperator feedback for context
+3. Add domain knowledge (e.g., "CUST-BALANCE uses COMP-3 packed decimal")
+4. Prioritize specific files that need attention first
+5. Skip test stub files that shouldn't be documented
+6. Inject feedback - agents will see it when they claim tickets
+
 ## Output Structure
 
 ```
@@ -273,6 +323,9 @@ war_rig/
 ├── models/             # Pydantic data models
 │   ├── templates.py    # Documentation templates
 │   └── assessments.py  # Validation enums with case-insensitive handling
+├── feedback/           # Human feedback injection
+│   ├── models.py       # HumanFeedbackNote, HumanFeedbackContext
+│   └── injector.py     # FeedbackInjector for ticket updates
 ├── orchestration/      # Workflow coordination
 │   └── ticket_engine.py
 ├── utils/              # Utility modules
@@ -281,6 +334,7 @@ war_rig/
 └── cli.py              # Command-line interface
 
 scripts/
+├── human_feedback.py   # Human-in-the-loop feedback injection
 ├── ticket_manager.py   # CLI for managing tickets
 ├── war_rig_status.py   # Real-time status monitor
 └── run_carddemo.py     # CardDemo batch processor
@@ -313,6 +367,18 @@ Different file types have different applicable documentation sections. The valid
 - **DDL**: Skip program-related sections, keep `sql_operations`
 
 This prevents false validation failures when sections are legitimately empty for certain file types.
+
+### Human Feedback Injection
+
+The human feedback system allows operators to inject domain knowledge and instructions into pending tickets:
+
+- **Feedback merging**: Human feedback is prepended to existing Imperator feedback, with human overriding on conflicts
+- **Selective targeting**: Feedback can target all tickets, specific files, or specific template sections
+- **Priority control**: Files can be prioritized (moved to front of queue) or skipped (cancelled)
+- **Source tracking**: Human notes are marked with `source: "human"` for traceability
+- **Atomic updates**: Ticket file updates use atomic writes (temp file + rename) for safety
+
+The feedback uses the same `FeedbackContext` structure that agents already read, requiring no agent code changes.
 
 ## License
 
