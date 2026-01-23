@@ -230,6 +230,7 @@ def mock_beads_client() -> MagicMock:
     client.claim_ticket.side_effect = claim_ticket
     client.update_ticket_state.side_effect = update_ticket_state
     client.get_tickets_by_state.side_effect = get_tickets_by_state
+    client.reset_orphaned_tickets.return_value = 0
 
     # Expose internals for test assertions
     client._tickets = tickets
@@ -259,6 +260,8 @@ def mock_war_rig_config(tmp_path, carddemo_path) -> MagicMock:
     config.max_chrome_tickets = 3
     config.pm_max_cycles = 3
     config.exit_on_error = True
+    config.max_ticket_retries = 5
+    config.use_mock = True
 
     # Beads settings
     config.beads_enabled = False  # Use mock client
@@ -273,6 +276,7 @@ def mock_war_rig_config(tmp_path, carddemo_path) -> MagicMock:
     config.scribe = MagicMock()
     config.scribe.model = "mock-model"
     config.scribe.temperature = 0.3
+    config.scribe.max_prompt_tokens = 15000
 
     config.challenger = MagicMock()
     config.challenger.model = "mock-model"

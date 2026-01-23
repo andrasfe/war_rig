@@ -1344,6 +1344,7 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
             if output_directory is not None:
                 # Run both LLM calls in parallel for significant time savings
                 # (each call can take 3-5 minutes)
+                logger.info("Starting parallel holistic review and system design LLM calls...")
                 holistic_task = self._call_llm(system_prompt, user_prompt)
                 design_task = self.generate_system_design(
                     input_data,
@@ -1351,11 +1352,26 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                     use_mock=use_mock,
                 )
 
-                results = await asyncio.gather(
-                    holistic_task,
-                    design_task,
-                    return_exceptions=True,
-                )
+                # Wrap in timeout to prevent indefinite hangs (15 min = 900s)
+                try:
+                    results = await asyncio.wait_for(
+                        asyncio.gather(
+                            holistic_task,
+                            design_task,
+                            return_exceptions=True,
+                        ),
+                        timeout=900.0,  # 15 minutes max for both calls
+                    )
+                    logger.info("Parallel LLM calls completed successfully")
+                except asyncio.TimeoutError:
+                    logger.error("Holistic review timed out after 15 minutes")
+                    return HolisticReviewOutput(
+                        success=False,
+                        error="Holistic review timed out after 15 minutes",
+                        decision=ImperatorHolisticDecision.FORCED_COMPLETE
+                        if input_data.cycle >= input_data.max_cycles
+                        else ImperatorHolisticDecision.NEEDS_CLARIFICATION,
+                    )
 
                 response_or_error = results[0]
                 design_result_or_error = results[1]
