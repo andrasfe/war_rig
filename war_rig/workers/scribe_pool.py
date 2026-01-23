@@ -787,8 +787,8 @@ class ScribeWorker:
         # These sections are legitimately empty for certain file types
         skip_sections_by_type: dict[str, set[str]] = {
             "COPYBOOK": {"called_programs", "data_flow", "cics_operations", "sql_operations"},
-            "JCL": {"called_programs", "copybooks", "cics_operations", "sql_operations"},
-            "PROC": {"called_programs", "copybooks", "cics_operations", "sql_operations"},
+            "JCL": {"called_programs", "copybooks", "cics_operations", "sql_operations", "data_flow"},
+            "PROC": {"called_programs", "copybooks", "cics_operations", "sql_operations", "data_flow"},
             "BMS": {"called_programs", "data_flow", "copybooks", "sql_operations", "business_rules"},
         }
 
