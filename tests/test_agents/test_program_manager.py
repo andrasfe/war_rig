@@ -705,10 +705,10 @@ class TestProgramManagerAgentTriggerHolisticReview:
 class TestProgramManagerAgentHandleClarifications:
     """Tests for ProgramManagerAgent.handle_clarifications() method."""
 
-    def test_handle_clarifications_creates_tickets(
-        self, mock_config, mock_beads_client
+    def test_handle_clarifications_creates_tickets_when_files_exist(
+        self, mock_config, mock_beads_client, tmp_path
     ):
-        """Test handle_clarifications creates tickets for each request."""
+        """Test handle_clarifications creates tickets when source and docs exist."""
         clarification_ticket = ProgramManagerTicket(
             ticket_id="war_rig-clar001",
             ticket_type=TicketType.CLARIFICATION,
@@ -718,6 +718,19 @@ class TestProgramManagerAgentHandleClarifications:
             cycle_number=2,
         )
         mock_beads_client.create_pm_ticket.return_value = clarification_ticket
+
+        # Create mock source files and documentation
+        input_dir = tmp_path / "input"
+        output_dir = tmp_path / "output"
+        input_dir.mkdir()
+        output_dir.mkdir()
+        (input_dir / "PROG1.cbl").write_text("COBOL SOURCE")
+        (input_dir / "PROG2.cbl").write_text("COBOL SOURCE")
+        (output_dir / "PROG1.doc.json").write_text("{}")
+        (output_dir / "PROG2.doc.json").write_text("{}")
+
+        # Update mock config to use tmp_path
+        mock_config.output_directory = output_dir
 
         with patch.object(
             ProgramManagerAgent,
@@ -729,6 +742,8 @@ class TestProgramManagerAgentHandleClarifications:
             pm.beads = mock_beads_client
             pm.batch_id = "batch-test"
             pm.cycle_number = 1
+            pm.discovered_files = []
+            pm._input_directory = input_dir
 
         requests = [
             ClarificationRequest(
@@ -747,9 +762,49 @@ class TestProgramManagerAgentHandleClarifications:
 
         tickets = pm.handle_clarifications(requests)
 
+        # With files and docs existing, both tickets should be created
         assert len(tickets) == 2
         assert pm.cycle_number == 2  # Cycle incremented
         assert mock_beads_client.create_pm_ticket.call_count == 2
+
+    def test_handle_clarifications_skips_nonexistent_files(
+        self, mock_config, mock_beads_client, tmp_path
+    ):
+        """Test handle_clarifications skips tickets for files that don't exist."""
+        # Create empty directories - no source files or docs
+        input_dir = tmp_path / "input"
+        output_dir = tmp_path / "output"
+        input_dir.mkdir()
+        output_dir.mkdir()
+
+        mock_config.output_directory = output_dir
+
+        with patch.object(
+            ProgramManagerAgent,
+            "__init__",
+            lambda self, **kwargs: None,
+        ):
+            pm = ProgramManagerAgent.__new__(ProgramManagerAgent)
+            pm._war_rig_config = mock_config
+            pm.beads = mock_beads_client
+            pm.batch_id = "batch-test"
+            pm.cycle_number = 1
+            pm.discovered_files = []
+            pm._input_directory = input_dir
+
+        requests = [
+            ClarificationRequest(
+                file_name="NONEXISTENT.cbl",
+                issue_description="Missing section",
+                section="purpose",
+            ),
+        ]
+
+        tickets = pm.handle_clarifications(requests)
+
+        # File doesn't exist, ticket should be skipped
+        assert len(tickets) == 0
+        assert mock_beads_client.create_pm_ticket.call_count == 0
 
     def test_handle_clarifications_raises_without_batch(
         self, mock_config, mock_beads_client
@@ -765,12 +820,14 @@ class TestProgramManagerAgentHandleClarifications:
             pm.beads = mock_beads_client
             pm.batch_id = None  # No active batch
             pm.cycle_number = 1
+            pm.discovered_files = []
+            pm._input_directory = None
 
         with pytest.raises(ValueError, match="No active batch"):
             pm.handle_clarifications([])
 
     def test_handle_clarifications_creates_chrome_for_no_parent(
-        self, mock_config, mock_beads_client
+        self, mock_config, mock_beads_client, tmp_path
     ):
         """Test handle_clarifications creates CHROME ticket when no parent."""
         chrome_ticket = ProgramManagerTicket(
@@ -783,6 +840,16 @@ class TestProgramManagerAgentHandleClarifications:
         )
         mock_beads_client.create_pm_ticket.return_value = chrome_ticket
 
+        # Create mock source file and documentation
+        input_dir = tmp_path / "input"
+        output_dir = tmp_path / "output"
+        input_dir.mkdir()
+        output_dir.mkdir()
+        (input_dir / "PROG1.cbl").write_text("COBOL SOURCE")
+        (output_dir / "PROG1.doc.json").write_text("{}")
+
+        mock_config.output_directory = output_dir
+
         with patch.object(
             ProgramManagerAgent,
             "__init__",
@@ -793,6 +860,8 @@ class TestProgramManagerAgentHandleClarifications:
             pm.beads = mock_beads_client
             pm.batch_id = "batch-test"
             pm.cycle_number = 1
+            pm.discovered_files = []
+            pm._input_directory = input_dir
 
         requests = [
             ClarificationRequest(

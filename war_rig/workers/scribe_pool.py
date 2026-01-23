@@ -1839,13 +1839,23 @@ class ScribeWorker:
             previous_template = self._load_template_from_parent(ticket)
 
         if not previous_template:
-            logger.error(
+            # Bug fix war_rig-vllu: Handle missing template gracefully
+            # This can happen if the Imperator created a ticket for a callee
+            # (external program) that doesn't exist in our codebase. Instead of
+            # failing with an error, we return success=True to close the ticket
+            # since there's no documentation to clarify.
+            logger.warning(
                 f"Worker {self.worker_id}: No previous template found for "
-                f"clarification ticket {ticket.ticket_id}"
+                f"clarification ticket {ticket.ticket_id} ({ticket.file_name}). "
+                f"This may be a ticket for a non-existent file - closing gracefully."
             )
             return ScribeOutput(
-                success=False,
-                error=f"No previous documentation found for {ticket.file_name}",
+                success=True,  # Mark as success to close the ticket
+                template=None,
+                open_questions=[
+                    f"Clarification ticket for {ticket.file_name} could not be processed: "
+                    f"no existing documentation found. The file may not exist in the codebase."
+                ],
             )
 
         # Load source code - prefer metadata (passed from Challenger), fall back to disk
@@ -1858,9 +1868,18 @@ class ScribeWorker:
                 source_path = self.input_directory / ticket.file_name
 
             if not source_path.exists():
+                # Bug fix war_rig-vllu: Handle missing source file gracefully
+                logger.warning(
+                    f"Worker {self.worker_id}: Source file not found for "
+                    f"clarification ticket: {source_path}. Closing gracefully."
+                )
                 return ScribeOutput(
-                    success=False,
-                    error=f"Source file not found: {source_path}",
+                    success=True,  # Mark as success to close the ticket
+                    template=previous_template,  # Preserve existing template
+                    open_questions=[
+                        f"Source file {ticket.file_name} not found - clarification "
+                        f"could not be processed."
+                    ],
                 )
             try:
                 source_code = source_path.read_text(encoding="utf-8", errors="replace")
@@ -2060,13 +2079,23 @@ class ScribeWorker:
             previous_template = self._load_template_from_parent(ticket)
 
         if not previous_template:
-            logger.error(
+            # Bug fix war_rig-vllu: Handle missing template gracefully
+            # This can happen if the Imperator created a chrome ticket for a callee
+            # (external program) that doesn't exist in our codebase. Instead of
+            # failing with an error, we return success=True to close the ticket
+            # since there's no documentation to update.
+            logger.warning(
                 f"Worker {self.worker_id}: No previous template found for "
-                f"chrome ticket {ticket.ticket_id}"
+                f"chrome ticket {ticket.ticket_id} ({ticket.file_name}). "
+                f"This may be a ticket for a non-existent file - closing gracefully."
             )
             return ScribeOutput(
-                success=False,
-                error=f"No previous documentation found for {ticket.file_name}",
+                success=True,  # Mark as success to close the ticket
+                template=None,
+                open_questions=[
+                    f"Chrome ticket for {ticket.file_name} could not be processed: "
+                    f"no existing documentation found. The file may not exist in the codebase."
+                ],
             )
 
         # Load source code - prefer metadata, fall back to disk
@@ -2079,9 +2108,18 @@ class ScribeWorker:
                 source_path = self.input_directory / ticket.file_name
 
             if not source_path.exists():
+                # Bug fix war_rig-vllu: Handle missing source file gracefully
+                logger.warning(
+                    f"Worker {self.worker_id}: Source file not found for "
+                    f"chrome ticket: {source_path}. Closing gracefully."
+                )
                 return ScribeOutput(
-                    success=False,
-                    error=f"Source file not found: {source_path}",
+                    success=True,  # Mark as success to close the ticket
+                    template=previous_template,  # Preserve existing template
+                    open_questions=[
+                        f"Source file {ticket.file_name} not found - chrome issue "
+                        f"could not be addressed."
+                    ],
                 )
             try:
                 source_code = source_path.read_text(encoding="utf-8", errors="replace")

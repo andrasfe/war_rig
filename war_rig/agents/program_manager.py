@@ -284,6 +284,7 @@ class ProgramManagerAgent(BaseAgent[ProgramManagerInput, ProgramManagerOutput]):
         self.discovered_files: list[SourceFile] = []
         self.created_tickets: list[ProgramManagerTicket] = []
         self._batch_start_time: datetime | None = None
+        self._input_directory: Path | None = None  # Stored for validation in handle_clarifications
 
     @property
     def war_rig_config(self) -> WarRigConfig:
@@ -334,6 +335,7 @@ class ProgramManagerAgent(BaseAgent[ProgramManagerInput, ProgramManagerOutput]):
         self.cycle_number = 1
         self._batch_start_time = datetime.utcnow()
         self.created_tickets = []
+        self._input_directory = input_dir  # Store for validation in handle_clarifications
 
         logger.info(f"Initializing batch {self.batch_id} from {input_dir}")
 
@@ -601,9 +603,66 @@ class ProgramManagerAgent(BaseAgent[ProgramManagerInput, ProgramManagerOutput]):
             f"for cycle {self.cycle_number}"
         )
 
+        # Build a set of valid file names from discovered files for validation
+        # Bug fix war_rig-vllu: Filter out requests for files that don't exist
+        valid_file_names: set[str] = set()
+        if self.discovered_files:
+            for sf in self.discovered_files:
+                valid_file_names.add(sf.name)
+                if sf.relative_path:
+                    valid_file_names.add(sf.relative_path)
+
+        # Also check output directory for existing documentation
+        output_dir = self._war_rig_config.output_directory
+
         created_tickets: list[ProgramManagerTicket] = []
+        skipped_count = 0
 
         for request in clarification_requests:
+            # Bug fix war_rig-vllu: Validate that the file exists before creating a ticket
+            # This prevents the Imperator from creating tickets for callees (external programs)
+            # that don't have source files in our codebase
+            file_exists = False
+            doc_exists = False
+
+            # Check if file is in our discovered files
+            if request.file_name in valid_file_names:
+                file_exists = True
+            elif self._input_directory:
+                # Try to find the file with various extensions
+                base_name = Path(request.file_name).stem
+                for ext in [".cbl", ".CBL", ".cob", ".COB", ".jcl", ".JCL", ".prc", ".PRC", ""]:
+                    candidate = self._input_directory / f"{base_name}{ext}"
+                    if candidate.exists():
+                        file_exists = True
+                        break
+                    # Also try with original file name
+                    candidate = self._input_directory / request.file_name
+                    if candidate.exists():
+                        file_exists = True
+                        break
+
+            # Check if documentation exists for this file
+            if output_dir:
+                doc_name = f"{Path(request.file_name).stem}.doc.json"
+                doc_path = output_dir / doc_name
+                if doc_path.exists():
+                    doc_exists = True
+
+            # For CHROME/CLARIFICATION tickets, we need BOTH the source file AND existing docs
+            # because these tickets are meant to improve existing documentation
+            if not file_exists or not doc_exists:
+                skipped_count += 1
+                reason = []
+                if not file_exists:
+                    reason.append("source file not found")
+                if not doc_exists:
+                    reason.append("no existing documentation")
+                logger.debug(
+                    f"Skipping clarification for {request.file_name}: {', '.join(reason)}"
+                )
+                continue
+
             # Determine ticket type based on whether it has a parent
             ticket_type = (
                 TicketType.CLARIFICATION
@@ -649,6 +708,11 @@ class ProgramManagerAgent(BaseAgent[ProgramManagerInput, ProgramManagerOutput]):
                     f"for {request.file_name}"
                 )
 
+        if skipped_count > 0:
+            logger.info(
+                f"Skipped {skipped_count} clarification requests for "
+                f"non-existent files or files without documentation"
+            )
         logger.info(f"Created {len(created_tickets)} clarification/chrome tickets")
 
         return created_tickets
