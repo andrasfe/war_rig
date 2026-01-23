@@ -56,6 +56,7 @@ from war_rig.beads import (
 )
 from war_rig.config import WarRigConfig, load_config
 from war_rig.models.assessments import ConfidenceLevel
+from war_rig.utils.file_lock import FileLockManager
 from war_rig.workers.challenger_pool import ChallengerWorkerPool
 from war_rig.workers.scribe_pool import ScribeWorkerPool
 
@@ -259,6 +260,11 @@ class TicketOrchestrator:
         # Worker pools (created on demand)
         self._scribe_pool: ScribeWorkerPool | None = None
         self._challenger_pool: ChallengerWorkerPool | None = None
+
+        # Centralized file lock manager for concurrent workers (war_rig-qxw9)
+        # Workers acquire locks before processing tickets to prevent race conditions
+        # when multiple workers attempt to write to the same output file
+        self._file_lock_manager = FileLockManager(lock_timeout=300.0)
 
         # Internal state
         self._state = OrchestrationState()
@@ -546,7 +552,7 @@ class TicketOrchestrator:
 
         logger.info("Starting parallel Scribe and Challenger worker pools")
 
-        # Create Scribe pool
+        # Create Scribe pool with centralized file lock manager
         self._scribe_pool = ScribeWorkerPool(
             config=self.config,
             beads_client=self.beads_client,
@@ -554,9 +560,10 @@ class TicketOrchestrator:
             num_workers=self.config.num_scribes,
             poll_interval=2.0,
             idle_timeout=30.0,
+            file_lock_manager=self._file_lock_manager,
         )
 
-        # Create Challenger pool with upstream check
+        # Create Challenger pool with upstream check and file lock manager
         # Challengers won't idle-timeout while Scribes might produce more work
         self._challenger_pool = ChallengerWorkerPool(
             num_workers=self.config.num_challengers,
@@ -564,6 +571,7 @@ class TicketOrchestrator:
             beads_client=self.beads_client,
             poll_interval=2.0,
             upstream_active_check=self._is_documentation_in_progress,
+            file_lock_manager=self._file_lock_manager,
         )
 
         # Start both pools simultaneously
@@ -899,7 +907,7 @@ class TicketOrchestrator:
         """
         logger.info("Running worker pools for retry...")
 
-        # Create and run Scribe pool
+        # Create and run Scribe pool with file lock manager
         scribe_pool = ScribeWorkerPool(
             config=self.config,
             beads_client=self.beads_client,
@@ -907,9 +915,10 @@ class TicketOrchestrator:
             num_workers=self.config.num_scribes,
             poll_interval=2.0,
             idle_timeout=30.0,
+            file_lock_manager=self._file_lock_manager,
         )
 
-        # Create and run Challenger pool
+        # Create and run Challenger pool with file lock manager
         # Use is_done() to check if scribes are still active - this correctly
         # handles workers that stopped naturally due to idle timeout (not just
         # via explicit stop() call which sets _stopped)
@@ -919,6 +928,7 @@ class TicketOrchestrator:
             beads_client=self.beads_client,
             poll_interval=2.0,
             upstream_active_check=lambda: not scribe_pool.is_done(),
+            file_lock_manager=self._file_lock_manager,
         )
 
         # Start both pools
@@ -1004,7 +1014,7 @@ class TicketOrchestrator:
             f"worker(s) using {rescue_config.scribe_model}"
         )
 
-        # Create and run rescue pool
+        # Create and run rescue pool with file lock manager
         rescue_pool = ScribeWorkerPool(
             config=rescue_config,
             beads_client=self.beads_client,
@@ -1013,6 +1023,7 @@ class TicketOrchestrator:
             num_workers=rescue_config.num_scribes,
             poll_interval=2.0,
             idle_timeout=30.0,
+            file_lock_manager=self._file_lock_manager,
         )
 
         try:
@@ -1058,13 +1069,14 @@ class TicketOrchestrator:
             self._state.status = OrchestrationStatus.VALIDATING
             self._state.status_message = "Running post-rescue validation..."
 
-            # Run Challenger pool for validation
+            # Run Challenger pool for validation with file lock manager
             if self._challenger_pool is None:
                 self._challenger_pool = ChallengerWorkerPool(
                     num_workers=self.config.num_challengers,
                     config=self.config,
                     beads_client=self.beads_client,
                     poll_interval=2.0,
+                    file_lock_manager=self._file_lock_manager,
                 )
 
             await self._challenger_pool.start()

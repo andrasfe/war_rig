@@ -47,6 +47,7 @@ from war_rig.models.templates import DocumentationTemplate, FileType
 from war_rig.models.tickets import QuestionSeverity
 from war_rig.preprocessors.base import PreprocessorResult
 from war_rig.utils import log_error
+from war_rig.utils.file_lock import FileLockManager
 
 logger = logging.getLogger(__name__)
 
@@ -134,6 +135,7 @@ class ChallengerWorker:
         beads_client: BeadsClient,
         poll_interval: float = 2.0,
         upstream_active_check: Callable[[], bool] | None = None,
+        file_lock_manager: FileLockManager | None = None,
     ):
         """Initialize the ChallengerWorker.
 
@@ -145,12 +147,16 @@ class ChallengerWorker:
             upstream_active_check: Optional callback that returns True if upstream
                 (documentation) is still in progress. When set, workers won't
                 idle-timeout while upstream might produce more work.
+            file_lock_manager: Optional centralized lock manager for file locking.
+                When provided, workers will acquire locks on output files before
+                processing and skip files that are locked by other workers.
         """
         self.worker_id = worker_id
         self.config = config
         self.beads_client = beads_client
         self.poll_interval = poll_interval
         self.upstream_active_check = upstream_active_check
+        self.file_lock_manager = file_lock_manager
         # Resolve to absolute path for consistent file access
         self.output_directory = config.output_directory.resolve()
 
@@ -374,107 +380,153 @@ class ChallengerWorker:
 
         return None
 
+    def _get_output_file_for_ticket(self, ticket: ProgramManagerTicket) -> str:
+        """Get the output file path for a ticket.
+
+        Used for file locking to prevent concurrent access.
+
+        Args:
+            ticket: The ticket to get the output file for.
+
+        Returns:
+            Absolute path to the output .doc.json file.
+        """
+        return str(self._get_doc_path(ticket.file_name).resolve())
+
     async def _process_ticket(self, ticket: ProgramManagerTicket) -> None:
         """Process a claimed VALIDATION ticket.
+
+        If a FileLockManager is configured, acquires a lock on the output
+        file before processing and releases it when done (success or failure).
+        If the lock cannot be acquired, the ticket is released back to the
+        queue for another worker to pick up.
 
         Args:
             ticket: The ticket to process.
         """
-        logger.info(
-            f"Worker {self.worker_id}: Processing validation ticket "
-            f"{ticket.ticket_id} for {ticket.file_name}"
-        )
+        # Get the output file path for locking
+        output_file = self._get_output_file_for_ticket(ticket)
+        lock_acquired = False
 
-        # Check if this is a discovery ticket validation
-        if ticket.metadata and ticket.metadata.get("discovery"):
-            await self._process_discovery_validation(ticket)
-            return
+        try:
+            # Acquire file lock if manager is available
+            if self.file_lock_manager is not None:
+                lock_acquired = await self.file_lock_manager.acquire(
+                    output_file, self.worker_id
+                )
+                if not lock_acquired:
+                    # Another worker has the lock - release ticket back to queue
+                    logger.info(
+                        f"Worker {self.worker_id}: File {output_file} is locked, "
+                        f"releasing ticket {ticket.ticket_id} for another worker"
+                    )
+                    self.beads_client.update_ticket_state(
+                        ticket.ticket_id,
+                        TicketState.CREATED,
+                        reason="File locked by another worker, released for retry",
+                    )
+                    return
 
-        # Load the documentation state from the ticket metadata
-        state = self._load_documentation_state(ticket)
-
-        if state is None:
-            logger.error(
-                f"Worker {self.worker_id}: Could not load documentation state "
-                f"for ticket {ticket.ticket_id}"
+            logger.info(
+                f"Worker {self.worker_id}: Processing validation ticket "
+                f"{ticket.ticket_id} for {ticket.file_name}"
             )
-            self.beads_client.update_ticket_state(
-                ticket.ticket_id,
-                TicketState.BLOCKED,
-                reason="Could not load documentation state from parent ticket",
-            )
-            return
 
-        # Run validation
-        result = await self._validate_documentation(state, ticket)
+            # Check if this is a discovery ticket validation
+            if ticket.metadata and ticket.metadata.get("discovery"):
+                await self._process_discovery_validation(ticket)
+                return
 
-        if not result.success:
-            # First failure - retry with enhanced formatting
-            logger.warning(
-                f"Worker {self.worker_id}: Validation failed for {ticket.ticket_id}, "
-                f"retrying with strict formatting"
-            )
-            result = await self._validate_documentation(state, ticket, formatting_strict=True)
+            # Load the documentation state from the ticket metadata
+            state = self._load_documentation_state(ticket)
 
-            if not result.success:
-                # Second failure - reset ticket for other workers
-                self._failed_tickets.add(ticket.ticket_id)
+            if state is None:
+                logger.error(
+                    f"Worker {self.worker_id}: Could not load documentation state "
+                    f"for ticket {ticket.ticket_id}"
+                )
                 self.beads_client.update_ticket_state(
                     ticket.ticket_id,
-                    TicketState.CREATED,  # Reset for other workers
-                    reason="Validation failed twice, available for other workers",
-                )
-                logger.warning(
-                    f"Worker {self.worker_id}: Validation failed twice for {ticket.ticket_id}, "
-                    f"resetting for other workers"
+                    TicketState.BLOCKED,
+                    reason="Could not load documentation state from parent ticket",
                 )
                 return
 
-        if result.is_valid:
-            # Documentation is valid - close the ticket
-            logger.info(
-                f"Worker {self.worker_id}: Documentation validated for "
-                f"{ticket.file_name}"
-            )
-            self.beads_client.update_ticket_state(
-                ticket.ticket_id,
-                TicketState.COMPLETED,
-                reason="Documentation validated successfully",
-            )
-            self.status.tickets_validated += 1
-        else:
-            # Issues found - check if we've exceeded max iterations
-            validation_count = self._get_validation_count(ticket.file_name)
-            max_iterations = self.config.max_iterations
+            # Run validation
+            result = await self._validate_documentation(state, ticket)
 
-            if validation_count >= max_iterations:
-                # Force approval - max iterations reached
+            if not result.success:
+                # First failure - retry with enhanced formatting
                 logger.warning(
-                    f"Worker {self.worker_id}: Max iterations ({max_iterations}) reached for "
-                    f"{ticket.file_name} with {len(result.blocking_questions)} issues remaining. "
-                    f"Force approving documentation."
+                    f"Worker {self.worker_id}: Validation failed for {ticket.ticket_id}, "
+                    f"retrying with strict formatting"
+                )
+                result = await self._validate_documentation(state, ticket, formatting_strict=True)
+
+                if not result.success:
+                    # Second failure - reset ticket for other workers
+                    self._failed_tickets.add(ticket.ticket_id)
+                    self.beads_client.update_ticket_state(
+                        ticket.ticket_id,
+                        TicketState.CREATED,  # Reset for other workers
+                        reason="Validation failed twice, available for other workers",
+                    )
+                    logger.warning(
+                        f"Worker {self.worker_id}: Validation failed twice for {ticket.ticket_id}, "
+                        f"resetting for other workers"
+                    )
+                    return
+
+            if result.is_valid:
+                # Documentation is valid - close the ticket
+                logger.info(
+                    f"Worker {self.worker_id}: Documentation validated for "
+                    f"{ticket.file_name}"
                 )
                 self.beads_client.update_ticket_state(
                     ticket.ticket_id,
                     TicketState.COMPLETED,
-                    reason=f"Force approved at max iterations ({validation_count}), "
-                    f"{len(result.blocking_questions)} issues remaining",
+                    reason="Documentation validated successfully",
                 )
                 self.status.tickets_validated += 1
             else:
-                # Create REWORK ticket for Scribe
-                logger.info(
-                    f"Worker {self.worker_id}: Issues found in documentation for "
-                    f"{ticket.file_name} (iteration {validation_count + 1}/{max_iterations}), "
-                    f"creating rework ticket"
-                )
-                self._create_rework_ticket(ticket, result)
-                self.beads_client.update_ticket_state(
-                    ticket.ticket_id,
-                    TicketState.COMPLETED,
-                    reason=f"Validation complete, {len(result.blocking_questions)} issues found",
-                )
-                self.status.tickets_rejected += 1
+                # Issues found - check if we've exceeded max iterations
+                validation_count = self._get_validation_count(ticket.file_name)
+                max_iterations = self.config.max_iterations
+
+                if validation_count >= max_iterations:
+                    # Force approval - max iterations reached
+                    logger.warning(
+                        f"Worker {self.worker_id}: Max iterations ({max_iterations}) reached for "
+                        f"{ticket.file_name} with {len(result.blocking_questions)} issues remaining. "
+                        f"Force approving documentation."
+                    )
+                    self.beads_client.update_ticket_state(
+                        ticket.ticket_id,
+                        TicketState.COMPLETED,
+                        reason=f"Force approved at max iterations ({validation_count}), "
+                        f"{len(result.blocking_questions)} issues remaining",
+                    )
+                    self.status.tickets_validated += 1
+                else:
+                    # Create REWORK ticket for Scribe
+                    logger.info(
+                        f"Worker {self.worker_id}: Issues found in documentation for "
+                        f"{ticket.file_name} (iteration {validation_count + 1}/{max_iterations}), "
+                        f"creating rework ticket"
+                    )
+                    self._create_rework_ticket(ticket, result)
+                    self.beads_client.update_ticket_state(
+                        ticket.ticket_id,
+                        TicketState.COMPLETED,
+                        reason=f"Validation complete, {len(result.blocking_questions)} issues found",
+                    )
+                    self.status.tickets_rejected += 1
+
+        finally:
+            # Release file lock if we acquired one
+            if self.file_lock_manager is not None and lock_acquired:
+                await self.file_lock_manager.release(output_file, self.worker_id)
 
     def _load_documentation_state(
         self,
@@ -1062,6 +1114,7 @@ class ChallengerWorkerPool:
         beads_client: BeadsClient,
         poll_interval: float = 2.0,
         upstream_active_check: Callable[[], bool] | None = None,
+        file_lock_manager: FileLockManager | None = None,
     ):
         """Initialize the ChallengerWorkerPool.
 
@@ -1074,12 +1127,18 @@ class ChallengerWorkerPool:
                 (documentation) is still in progress. When set, workers won't
                 idle-timeout while upstream might produce more work. This enables
                 running Scribes and Challengers in parallel as a pipeline.
+            file_lock_manager: Optional centralized lock manager for file locking.
+                When provided, workers will acquire locks on output files before
+                processing and skip files that are locked by other workers.
+                This prevents race conditions when multiple workers attempt to
+                process tickets for the same output file.
         """
         self.num_workers = num_workers
         self.config = config
         self.beads_client = beads_client
         self.poll_interval = poll_interval
         self.upstream_active_check = upstream_active_check
+        self.file_lock_manager = file_lock_manager
 
         # Create workers
         self.workers: list[ChallengerWorker] = []
@@ -1090,6 +1149,7 @@ class ChallengerWorkerPool:
                 beads_client=beads_client,
                 poll_interval=poll_interval,
                 upstream_active_check=upstream_active_check,
+                file_lock_manager=file_lock_manager,
             )
             self.workers.append(worker)
 
