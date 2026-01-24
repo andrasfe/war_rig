@@ -1,0 +1,475 @@
+"""
+Citadel SDK - Programmatic interface for dependency graph extraction.
+
+This module provides a simple API for agents and tools to extract
+artifacts and their relationships from source files.
+
+Example usage:
+    from citadel.sdk import Citadel
+
+    # Initialize once
+    citadel = Citadel()
+
+    # Analyze a single file
+    result = citadel.analyze_file("/path/to/program.cbl")
+
+    # Get functions/artifacts and their callouts
+    for artifact in result.artifacts:
+        print(f"{artifact.name} ({artifact.type})")
+        for callout in artifact.callouts:
+            print(f"  -> {callout.target} ({callout.relationship})")
+"""
+
+import logging
+from dataclasses import dataclass, field
+from pathlib import Path
+from typing import Any
+
+from citadel.config import CitadelConfig, get_specs_cache_dir, load_config
+from citadel.discovery import FileDiscovery
+from citadel.graph.model import Artifact, SourceLocation
+from citadel.parser import FileParseResult, ParserEngine, RawReference
+from citadel.specs import ArtifactSpec, ArtifactType, RelationshipType, SpecManager
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class Callout:
+    """A reference/call from an artifact to another target."""
+
+    target: str
+    """The name of the target being called/referenced."""
+
+    relationship: str
+    """Type of relationship (calls, includes, reads, writes, etc.)."""
+
+    target_type: str | None = None
+    """Expected type of target (program, copybook, table, etc.)."""
+
+    line: int | None = None
+    """Line number where the callout occurs."""
+
+    raw_text: str | None = None
+    """The raw text of the reference in source."""
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary for JSON serialization."""
+        return {
+            "target": self.target,
+            "relationship": self.relationship,
+            "target_type": self.target_type,
+            "line": self.line,
+            "raw_text": self.raw_text,
+        }
+
+
+@dataclass
+class FileArtifact:
+    """An artifact (function, program, class, etc.) defined in a file."""
+
+    name: str
+    """Canonical name of the artifact."""
+
+    type: str
+    """Type of artifact (program, function, class, paragraph, etc.)."""
+
+    category: str
+    """Category (code, data, interface)."""
+
+    line_start: int | None = None
+    """Starting line number in source."""
+
+    line_end: int | None = None
+    """Ending line number in source."""
+
+    callouts: list[Callout] = field(default_factory=list)
+    """References/calls made by this artifact."""
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary for JSON serialization."""
+        return {
+            "name": self.name,
+            "type": self.type,
+            "category": self.category,
+            "line_start": self.line_start,
+            "line_end": self.line_end,
+            "callouts": [c.to_dict() for c in self.callouts],
+        }
+
+
+@dataclass
+class FileAnalysisResult:
+    """Result of analyzing a single file."""
+
+    file_path: str
+    """Path to the analyzed file."""
+
+    language: str
+    """Detected language/spec used."""
+
+    artifacts: list[FileArtifact]
+    """Artifacts defined in the file."""
+
+    file_level_callouts: list[Callout] = field(default_factory=list)
+    """Callouts not associated with a specific artifact (e.g., imports at file level)."""
+
+    preprocessor_includes: list[str] = field(default_factory=list)
+    """Files included via preprocessor (COPY, #include, import)."""
+
+    error: str | None = None
+    """Error message if analysis failed."""
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary for JSON serialization."""
+        return {
+            "file_path": self.file_path,
+            "language": self.language,
+            "artifacts": [a.to_dict() for a in self.artifacts],
+            "file_level_callouts": [c.to_dict() for c in self.file_level_callouts],
+            "preprocessor_includes": self.preprocessor_includes,
+            "error": self.error,
+        }
+
+    def get_all_callouts(self) -> list[Callout]:
+        """Get all callouts from all artifacts plus file-level callouts."""
+        all_callouts = list(self.file_level_callouts)
+        for artifact in self.artifacts:
+            all_callouts.extend(artifact.callouts)
+        return all_callouts
+
+    def get_artifact_by_name(self, name: str) -> FileArtifact | None:
+        """Find an artifact by name (case-insensitive)."""
+        name_lower = name.lower()
+        for artifact in self.artifacts:
+            if artifact.name.lower() == name_lower:
+                return artifact
+        return None
+
+
+class Citadel:
+    """
+    Citadel SDK for programmatic dependency extraction.
+
+    This class provides a simple interface for agents to analyze source files
+    and extract artifacts with their relationships.
+
+    Example:
+        citadel = Citadel()
+
+        # Analyze a COBOL program
+        result = citadel.analyze_file("COBPROG.cbl")
+
+        # Print all functions and their calls
+        for artifact in result.artifacts:
+            print(f"{artifact.name}:")
+            for call in artifact.callouts:
+                print(f"  calls {call.target}")
+    """
+
+    def __init__(self, config: CitadelConfig | None = None):
+        """
+        Initialize the Citadel SDK.
+
+        Args:
+            config: Optional configuration. If not provided, loads from environment.
+        """
+        self.config = config or load_config()
+
+        # Initialize spec manager
+        builtin_dir = Path(__file__).parent.parent.parent / "specs" / "builtin"
+        cache_dir = get_specs_cache_dir(self.config)
+        self.spec_manager = SpecManager(builtin_dir, cache_dir)
+
+        # Initialize parser
+        self.parser = ParserEngine()
+
+        # File discovery helper
+        self._extension_to_spec: dict[str, str] = {}
+        self._build_extension_map()
+
+    def _build_extension_map(self) -> None:
+        """Build mapping from file extensions to spec IDs."""
+        for spec_id in self.spec_manager.list_available_specs():
+            spec = self.spec_manager.get_spec(spec_id)
+            if spec:
+                for ext in spec.file_extensions:
+                    self._extension_to_spec[ext.lower()] = spec_id
+
+    def _get_spec_for_file(self, file_path: Path) -> ArtifactSpec | None:
+        """Get the appropriate spec for a file."""
+        ext = file_path.suffix.lower()
+        spec_id = self._extension_to_spec.get(ext)
+        if spec_id:
+            return self.spec_manager.get_spec(spec_id)
+        return None
+
+    def analyze_file(self, file_path: str | Path) -> FileAnalysisResult:
+        """
+        Analyze a single file and extract its artifacts and callouts.
+
+        Args:
+            file_path: Path to the source file to analyze.
+
+        Returns:
+            FileAnalysisResult containing artifacts and their relationships.
+        """
+        file_path = Path(file_path)
+
+        # Get spec for this file type
+        spec = self._get_spec_for_file(file_path)
+        if not spec:
+            return FileAnalysisResult(
+                file_path=str(file_path),
+                language="unknown",
+                artifacts=[],
+                error=f"No spec found for file extension '{file_path.suffix}'"
+            )
+
+        # Read file content
+        try:
+            content = self._read_file(file_path)
+        except Exception as e:
+            return FileAnalysisResult(
+                file_path=str(file_path),
+                language=spec.language,
+                artifacts=[],
+                error=f"Failed to read file: {e}"
+            )
+
+        # Parse the file
+        try:
+            parse_result = self.parser.parse_file(file_path, content, spec)
+        except Exception as e:
+            return FileAnalysisResult(
+                file_path=str(file_path),
+                language=spec.language,
+                artifacts=[],
+                error=f"Failed to parse file: {e}"
+            )
+
+        # Convert to SDK result format
+        return self._convert_parse_result(parse_result, spec)
+
+    def _read_file(self, file_path: Path) -> str:
+        """Read file content with encoding fallbacks."""
+        encodings = ["utf-8", "latin-1", "cp1252"]
+        for encoding in encodings:
+            try:
+                return file_path.read_text(encoding=encoding)
+            except UnicodeDecodeError:
+                continue
+        raise ValueError(f"Could not decode file with any supported encoding")
+
+    def _convert_parse_result(
+        self,
+        parse_result: FileParseResult,
+        spec: ArtifactSpec
+    ) -> FileAnalysisResult:
+        """Convert internal parse result to SDK format."""
+
+        # Build artifact map for associating callouts
+        artifact_map: dict[str, FileArtifact] = {}
+        artifacts: list[FileArtifact] = []
+
+        for artifact in parse_result.artifacts_defined:
+            file_artifact = FileArtifact(
+                name=artifact.canonical_name,
+                type=artifact.artifact_type.value,
+                category=artifact.category.value,
+                line_start=artifact.defined_in.line_start if artifact.defined_in else None,
+                line_end=artifact.defined_in.line_end if artifact.defined_in else None,
+                callouts=[],
+            )
+            artifacts.append(file_artifact)
+            artifact_map[artifact.id] = file_artifact
+
+        # Associate references with their containing artifacts
+        file_level_callouts: list[Callout] = []
+
+        for ref in parse_result.references_found:
+            callout = Callout(
+                target=ref.raw_text,
+                relationship=ref.relationship_type.value if ref.relationship_type else "references",
+                target_type=ref.expected_type.value if ref.expected_type else None,
+                line=ref.location.line_start if ref.location else None,
+                raw_text=ref.raw_text,
+            )
+
+            # Find containing artifact
+            if ref.containing_artifact and ref.containing_artifact in artifact_map:
+                artifact_map[ref.containing_artifact].callouts.append(callout)
+            else:
+                file_level_callouts.append(callout)
+
+        # Extract preprocessor includes
+        preprocessor_includes: list[str] = []
+        for directive in parse_result.preprocessor_directives:
+            if directive.get("target"):
+                preprocessor_includes.append(directive["target"])
+
+                # Also add as a callout
+                callout = Callout(
+                    target=directive["target"],
+                    relationship=directive.get("relationship_type", "includes"),
+                    target_type=directive.get("target_type"),
+                    line=directive.get("location", {}).get("line_start"),
+                )
+
+                # Associate with first artifact if available
+                if artifacts:
+                    artifacts[0].callouts.append(callout)
+                else:
+                    file_level_callouts.append(callout)
+
+        return FileAnalysisResult(
+            file_path=str(parse_result.file_path),
+            language=spec.language,
+            artifacts=artifacts,
+            file_level_callouts=file_level_callouts,
+            preprocessor_includes=preprocessor_includes,
+        )
+
+    def get_functions(self, file_path: str | Path) -> list[dict[str, Any]]:
+        """
+        Get all functions/procedures/programs in a file with their callouts.
+
+        This is a convenience method that returns a simplified dictionary format.
+
+        Args:
+            file_path: Path to the source file.
+
+        Returns:
+            List of dictionaries with function info and callouts.
+        """
+        result = self.analyze_file(file_path)
+
+        if result.error:
+            return [{"error": result.error}]
+
+        functions = []
+        for artifact in result.artifacts:
+            functions.append({
+                "name": artifact.name,
+                "type": artifact.type,
+                "line": artifact.line_start,
+                "calls": [
+                    {
+                        "target": c.target,
+                        "type": c.relationship,
+                        "line": c.line,
+                    }
+                    for c in artifact.callouts
+                ],
+            })
+
+        return functions
+
+    def get_callouts(self, file_path: str | Path) -> list[dict[str, Any]]:
+        """
+        Get all callouts/references from a file.
+
+        Args:
+            file_path: Path to the source file.
+
+        Returns:
+            List of all callouts with their source artifacts.
+        """
+        result = self.analyze_file(file_path)
+
+        if result.error:
+            return [{"error": result.error}]
+
+        callouts = []
+
+        # File-level callouts
+        for c in result.file_level_callouts:
+            callouts.append({
+                "from": None,
+                "to": c.target,
+                "type": c.relationship,
+                "line": c.line,
+            })
+
+        # Artifact callouts
+        for artifact in result.artifacts:
+            for c in artifact.callouts:
+                callouts.append({
+                    "from": artifact.name,
+                    "to": c.target,
+                    "type": c.relationship,
+                    "line": c.line,
+                })
+
+        return callouts
+
+    def get_includes(self, file_path: str | Path) -> list[str]:
+        """
+        Get all included/imported files from a source file.
+
+        Args:
+            file_path: Path to the source file.
+
+        Returns:
+            List of included file names (COPY members, imports, etc.)
+        """
+        result = self.analyze_file(file_path)
+        return result.preprocessor_includes
+
+    def list_supported_extensions(self) -> list[str]:
+        """
+        List all file extensions supported by Citadel.
+
+        Returns:
+            List of supported file extensions.
+        """
+        return sorted(self._extension_to_spec.keys())
+
+    def list_supported_languages(self) -> list[str]:
+        """
+        List all languages/specs supported by Citadel.
+
+        Returns:
+            List of supported language names.
+        """
+        languages = []
+        for spec_id in self.spec_manager.list_available_specs():
+            spec = self.spec_manager.get_spec(spec_id)
+            if spec:
+                languages.append(spec.language)
+        return sorted(languages)
+
+
+# Convenience function for one-off analysis
+def analyze_file(file_path: str | Path) -> FileAnalysisResult:
+    """
+    Analyze a single file and extract artifacts and callouts.
+
+    This is a convenience function that creates a Citadel instance
+    and analyzes the file. For multiple files, create a Citadel
+    instance and reuse it.
+
+    Args:
+        file_path: Path to the source file.
+
+    Returns:
+        FileAnalysisResult with artifacts and callouts.
+    """
+    citadel = Citadel()
+    return citadel.analyze_file(file_path)
+
+
+def get_functions(file_path: str | Path) -> list[dict[str, Any]]:
+    """
+    Get all functions in a file with their callouts.
+
+    Convenience function for quick analysis.
+
+    Args:
+        file_path: Path to the source file.
+
+    Returns:
+        List of function dictionaries with callouts.
+    """
+    citadel = Citadel()
+    return citadel.get_functions(file_path)
