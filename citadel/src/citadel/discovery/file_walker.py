@@ -66,6 +66,7 @@ EXTENSION_TO_SPEC: dict[str, str] = {
     # JCL
     ".jcl": "jcl",
     ".proc": "jcl",
+    ".prc": "jcl",
     # DB2 DDL
     ".sql": "db2_ddl",
     ".ddl": "db2_ddl",

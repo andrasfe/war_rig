@@ -11,6 +11,8 @@ file_extensions:
   - .JCL
   - .proc
   - .PROC
+  - .prc
+  - .PRC
 
 file_patterns:
   - "JCL*"
@@ -18,6 +20,7 @@ file_patterns:
 
 category: code
 primary_artifact_type: procedure
+create_file_artifact: true
 
 comments:
   line_prefix: "//*"
@@ -45,18 +48,21 @@ definition_patterns:
     capture_groups:
       - 1
     artifact_type: procedure
+    multiline: true
 
   - name: proc
     pattern: "^//([A-Z0-9@#$]+)\\s+PROC\\s"
     capture_groups:
       - 1
     artifact_type: procedure
+    multiline: true
 
   - name: step
     pattern: "^//([A-Z0-9@#$]+)\\s+EXEC\\s"
     capture_groups:
       - 1
     artifact_type: paragraph
+    multiline: true
 
 reference_patterns:
   - name: exec_pgm
@@ -67,12 +73,19 @@ reference_patterns:
     target_type_hint: program
 
   - name: exec_proc
-    pattern: "EXEC\\s+([A-Z0-9@#$]+)(?!\\s*=)"
+    pattern: "EXEC\\s+([A-Z0-9@#$]+),"
     capture_groups:
       - 1
     relationship_type: calls
     target_type_hint: procedure
     must_not_follow: "PGM="
+
+  - name: exec_proc_keyword
+    pattern: "EXEC\\s+PROC=([A-Z0-9@#$]+)"
+    capture_groups:
+      - 1
+    relationship_type: calls
+    target_type_hint: procedure
 
   - name: dd_dsn
     pattern: "DD\\s+.*DSN=([A-Z0-9@#$.]+)"
