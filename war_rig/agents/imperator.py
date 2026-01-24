@@ -650,7 +650,6 @@ class ImperatorAgent(BaseAgent[ImperatorInput, ImperatorOutput]):
             messages=messages,
             model=self.config.model,
             temperature=self.config.temperature,
-            max_tokens=self.config.max_completion_tokens,
         )
         return response.content
 

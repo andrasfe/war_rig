@@ -212,12 +212,8 @@ class OpenRouterProvider:
                 "temperature": temperature,
             }
 
-            # Set max_tokens to limit output generation time
-            # Default to 8192 if not specified in kwargs (reasonable for most tasks)
-            if "max_tokens" not in kwargs:
-                api_params["max_tokens"] = 8192
-
-            # Add any additional kwargs (top_p, stop, max_tokens override, etc.)
+            # Add any additional kwargs (top_p, stop, max_tokens, etc.)
+            # Note: We do NOT set a default max_tokens - documentation should be verbose
             api_params.update(kwargs)
 
             # Make the API call with explicit timeout (10 min max for large prompts)
