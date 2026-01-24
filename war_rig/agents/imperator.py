@@ -646,12 +646,133 @@ class ImperatorAgent(BaseAgent[ImperatorInput, ImperatorOutput]):
             Message(role="user", content=user_prompt),
         ]
 
+        # Log token estimation for monitoring
+        total_chars = len(system_prompt) + len(user_prompt)
+        estimated_tokens = total_chars // 4  # Rough: 1 token ≈ 4 chars
+        if estimated_tokens > 30000:
+            logger.warning(
+                f"Imperator: Large prompt detected: ~{estimated_tokens:,} tokens "
+                f"({total_chars:,} chars) for {self.config.model}"
+            )
+        else:
+            logger.info(
+                f"Imperator: Sending ~{estimated_tokens:,} tokens "
+                f"({total_chars:,} chars) to {self.config.model}"
+            )
+
         response = await self._provider.complete(
             messages=messages,
             model=self.config.model,
             temperature=self.config.temperature,
         )
         return response.content
+
+    def _summarize_template(
+        self,
+        template: "DocumentationTemplate",
+        max_items: int = 5,
+    ) -> str:
+        """Create a compact text summary of a DocumentationTemplate.
+
+        This produces a human-readable summary that is much smaller than
+        the full JSON dump, reducing token usage in prompts significantly.
+
+        Args:
+            template: The DocumentationTemplate to summarize.
+            max_items: Maximum items to show for lists (e.g., inputs, outputs).
+                Beyond this, shows a count of remaining items.
+
+        Returns:
+            A compact text summary of the template.
+        """
+        parts = []
+
+        # Purpose section (most important)
+        if template.purpose:
+            parts.append(f"**Purpose**: {template.purpose.summary or 'Not specified'}")
+            if template.purpose.program_type:
+                parts.append(f"**Type**: {template.purpose.program_type}")
+            if template.purpose.business_context:
+                parts.append(f"**Business Context**: {template.purpose.business_context}")
+
+        # Inputs - compact format
+        if template.inputs:
+            input_names = [inp.name for inp in template.inputs[:max_items]]
+            remaining = len(template.inputs) - max_items
+            inputs_str = ", ".join(input_names)
+            if remaining > 0:
+                inputs_str += f", +{remaining} more"
+            parts.append(f"**Inputs** ({len(template.inputs)}): {inputs_str}")
+
+        # Outputs - compact format
+        if template.outputs:
+            output_names = [out.name for out in template.outputs[:max_items]]
+            remaining = len(template.outputs) - max_items
+            outputs_str = ", ".join(output_names)
+            if remaining > 0:
+                outputs_str += f", +{remaining} more"
+            parts.append(f"**Outputs** ({len(template.outputs)}): {outputs_str}")
+
+        # Called programs - compact format
+        if template.called_programs:
+            call_names = [cp.program_name for cp in template.called_programs[:max_items]]
+            remaining = len(template.called_programs) - max_items
+            calls_str = ", ".join(call_names)
+            if remaining > 0:
+                calls_str += f", +{remaining} more"
+            parts.append(f"**Calls** ({len(template.called_programs)}): {calls_str}")
+
+        # Called by
+        if template.calling_context and template.calling_context.called_by:
+            callers = template.calling_context.called_by[:max_items]
+            remaining = len(template.calling_context.called_by) - max_items
+            callers_str = ", ".join(callers)
+            if remaining > 0:
+                callers_str += f", +{remaining} more"
+            parts.append(f"**Called By**: {callers_str}")
+
+        # Copybooks - compact format
+        if template.copybooks_used:
+            cb_names = [cb.copybook_name for cb in template.copybooks_used[:max_items]]
+            remaining = len(template.copybooks_used) - max_items
+            cb_str = ", ".join(cb_names)
+            if remaining > 0:
+                cb_str += f", +{remaining} more"
+            parts.append(f"**Copybooks** ({len(template.copybooks_used)}): {cb_str}")
+
+        # Business rules - just count and first few descriptions
+        if template.business_rules:
+            parts.append(f"**Business Rules** ({len(template.business_rules)}):")
+            for rule in template.business_rules[:3]:
+                desc = rule.description or "No description"
+                # Truncate long descriptions
+                if len(desc) > 100:
+                    desc = desc[:100] + "..."
+                parts.append(f"  - {desc}")
+            if len(template.business_rules) > 3:
+                parts.append(f"  - (+{len(template.business_rules) - 3} more rules)")
+
+        # Error handling - count only
+        if template.error_handling:
+            parts.append(f"**Error Handlers**: {len(template.error_handling)} defined")
+
+        # SQL operations - count only
+        if template.sql_operations:
+            parts.append(f"**SQL Operations**: {len(template.sql_operations)}")
+
+        # CICS operations - count only
+        if template.cics_operations:
+            parts.append(f"**CICS Operations**: {len(template.cics_operations)}")
+
+        # Open questions
+        if template.open_questions:
+            parts.append(f"**Open Questions**: {len(template.open_questions)}")
+            for q in template.open_questions[:2]:
+                parts.append(f"  - {q.question}")
+            if len(template.open_questions) > 2:
+                parts.append(f"  - (+{len(template.open_questions) - 2} more)")
+
+        return "\n".join(parts)
 
     def _build_system_prompt(self) -> str:
         """Build the Imperator's system prompt.
@@ -1115,9 +1236,10 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
         for doc in input_data.file_documentation:
             parts.append(f"### {doc.file_name} ({doc.program_id})")
             parts.append(f"Iterations: {doc.iteration_count}")
-            parts.append("```json")
-            parts.append(doc.template.model_dump_json(indent=2))
-            parts.append("```")
+            parts.append("")
+            # Use compact summary instead of full JSON to reduce token usage
+            parts.append(self._summarize_template(doc.template))
+            parts.append("")
 
             if doc.challenger_assessment:
                 parts.append("Challenger Assessment:")

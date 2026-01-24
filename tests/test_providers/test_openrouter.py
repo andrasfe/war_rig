@@ -84,8 +84,43 @@ class TestOpenRouterProviderComplete:
     """Tests for the complete() method."""
 
     @pytest.fixture
+    def mock_stream_response(self) -> list[MagicMock]:
+        """Create mock streaming response chunks."""
+        chunks = []
+
+        # Chunk 1: "This is "
+        chunk1 = MagicMock()
+        chunk1.choices = [MagicMock()]
+        chunk1.choices[0].delta = MagicMock()
+        chunk1.choices[0].delta.content = "This is "
+        chunks.append(chunk1)
+
+        # Chunk 2: "the assistant's "
+        chunk2 = MagicMock()
+        chunk2.choices = [MagicMock()]
+        chunk2.choices[0].delta = MagicMock()
+        chunk2.choices[0].delta.content = "the assistant's "
+        chunks.append(chunk2)
+
+        # Chunk 3: "response."
+        chunk3 = MagicMock()
+        chunk3.choices = [MagicMock()]
+        chunk3.choices[0].delta = MagicMock()
+        chunk3.choices[0].delta.content = "response."
+        chunks.append(chunk3)
+
+        # Final chunk with no content (end of stream)
+        chunk_final = MagicMock()
+        chunk_final.choices = [MagicMock()]
+        chunk_final.choices[0].delta = MagicMock()
+        chunk_final.choices[0].delta.content = None
+        chunks.append(chunk_final)
+
+        return chunks
+
+    @pytest.fixture
     def mock_response(self) -> MagicMock:
-        """Create a mock OpenAI API response."""
+        """Create a mock OpenAI API response (non-streaming, for compatibility)."""
         response = MagicMock()
         response.id = "chatcmpl-123"
         response.model = "anthropic/claude-sonnet-4-20250514"
@@ -114,15 +149,22 @@ class TestOpenRouterProviderComplete:
         provider._client.chat.completions = MagicMock()
         return provider
 
+    def _create_mock_stream(self, chunks: list[MagicMock]):
+        """Create an async iterator from chunks for mocking stream response."""
+        async def async_generator():
+            for chunk in chunks:
+                yield chunk
+        return async_generator()
+
     @pytest.mark.asyncio
     async def test_complete_success(
         self,
         provider_with_mock_client: OpenRouterProvider,
-        mock_response: MagicMock,
+        mock_stream_response: list[MagicMock],
     ) -> None:
-        """Test successful completion call."""
+        """Test successful completion call with streaming."""
         provider_with_mock_client._client.chat.completions.create = AsyncMock(
-            return_value=mock_response
+            return_value=self._create_mock_stream(mock_stream_response)
         )
 
         messages = [
@@ -134,19 +176,20 @@ class TestOpenRouterProviderComplete:
 
         assert isinstance(response, CompletionResponse)
         assert response.content == "This is the assistant's response."
-        assert response.model == "anthropic/claude-sonnet-4-20250514"
-        assert response.tokens_used == 150
+        # Model comes from provider's default since streaming doesn't return it
+        assert response.model == provider_with_mock_client.default_model
+        # Streaming doesn't return token counts
+        assert response.tokens_used == 0
 
     @pytest.mark.asyncio
     async def test_complete_with_custom_model(
         self,
         provider_with_mock_client: OpenRouterProvider,
-        mock_response: MagicMock,
+        mock_stream_response: list[MagicMock],
     ) -> None:
         """Test completion with custom model override."""
-        mock_response.model = "openai/gpt-4"
         provider_with_mock_client._client.chat.completions.create = AsyncMock(
-            return_value=mock_response
+            return_value=self._create_mock_stream(mock_stream_response)
         )
 
         messages = [Message(role="user", content="Hello!")]
@@ -156,6 +199,7 @@ class TestOpenRouterProviderComplete:
             model="openai/gpt-4",
         )
 
+        # Model is set to the requested model
         assert response.model == "openai/gpt-4"
 
         # Verify the call was made with the custom model
@@ -168,11 +212,11 @@ class TestOpenRouterProviderComplete:
     async def test_complete_with_temperature(
         self,
         provider_with_mock_client: OpenRouterProvider,
-        mock_response: MagicMock,
+        mock_stream_response: list[MagicMock],
     ) -> None:
         """Test completion with custom temperature."""
         provider_with_mock_client._client.chat.completions.create = AsyncMock(
-            return_value=mock_response
+            return_value=self._create_mock_stream(mock_stream_response)
         )
 
         messages = [Message(role="user", content="Hello!")]
@@ -188,11 +232,11 @@ class TestOpenRouterProviderComplete:
     async def test_complete_with_extra_kwargs(
         self,
         provider_with_mock_client: OpenRouterProvider,
-        mock_response: MagicMock,
+        mock_stream_response: list[MagicMock],
     ) -> None:
         """Test completion with additional kwargs passed through."""
         provider_with_mock_client._client.chat.completions.create = AsyncMock(
-            return_value=mock_response
+            return_value=self._create_mock_stream(mock_stream_response)
         )
 
         messages = [Message(role="user", content="Hello!")]
@@ -213,40 +257,39 @@ class TestOpenRouterProviderComplete:
     async def test_complete_raw_response_included(
         self,
         provider_with_mock_client: OpenRouterProvider,
-        mock_response: MagicMock,
+        mock_stream_response: list[MagicMock],
     ) -> None:
         """Test that raw_response is included in CompletionResponse."""
         provider_with_mock_client._client.chat.completions.create = AsyncMock(
-            return_value=mock_response
+            return_value=self._create_mock_stream(mock_stream_response)
         )
 
         messages = [Message(role="user", content="Hello!")]
 
         response = await provider_with_mock_client.complete(messages)
 
+        # Streaming returns chunk/elapsed info instead of API response details
         assert response.raw_response is not None
-        assert response.raw_response["id"] == "chatcmpl-123"
-        assert response.raw_response["model"] == "anthropic/claude-sonnet-4-20250514"
-        assert "usage" in response.raw_response
+        assert "chunks" in response.raw_response
+        assert "elapsed" in response.raw_response
 
     @pytest.mark.asyncio
     async def test_complete_empty_choices(
         self,
         provider_with_mock_client: OpenRouterProvider,
     ) -> None:
-        """Test handling of response with empty choices."""
-        mock_response = MagicMock()
-        mock_response.id = "chatcmpl-123"
-        mock_response.model = "test-model"
-        mock_response.created = 1704067200
-        mock_response.choices = []
-        mock_response.usage = MagicMock()
-        mock_response.usage.prompt_tokens = 50
-        mock_response.usage.completion_tokens = 0
-        mock_response.usage.total_tokens = 50
+        """Test handling of streaming response with no content chunks."""
+        # Create stream with only a final empty chunk
+        chunk = MagicMock()
+        chunk.choices = []
+        chunks = [chunk]
+
+        async def empty_stream():
+            for c in chunks:
+                yield c
 
         provider_with_mock_client._client.chat.completions.create = AsyncMock(
-            return_value=mock_response
+            return_value=empty_stream()
         )
 
         messages = [Message(role="user", content="Hello!")]
@@ -261,26 +304,20 @@ class TestOpenRouterProviderComplete:
         self,
         provider_with_mock_client: OpenRouterProvider,
     ) -> None:
-        """Test handling of response with null message content."""
-        mock_response = MagicMock()
-        mock_response.id = "chatcmpl-123"
-        mock_response.model = "test-model"
-        mock_response.created = 1704067200
+        """Test handling of streaming response with null content in chunks."""
+        # Create stream where all chunks have null content
+        chunk = MagicMock()
+        chunk.choices = [MagicMock()]
+        chunk.choices[0].delta = MagicMock()
+        chunk.choices[0].delta.content = None
+        chunks = [chunk]
 
-        choice = MagicMock()
-        choice.index = 0
-        choice.finish_reason = "stop"
-        choice.message = MagicMock()
-        choice.message.content = None
-        mock_response.choices = [choice]
-
-        mock_response.usage = MagicMock()
-        mock_response.usage.prompt_tokens = 50
-        mock_response.usage.completion_tokens = 0
-        mock_response.usage.total_tokens = 50
+        async def null_content_stream():
+            for c in chunks:
+                yield c
 
         provider_with_mock_client._client.chat.completions.create = AsyncMock(
-            return_value=mock_response
+            return_value=null_content_stream()
         )
 
         messages = [Message(role="user", content="Hello!")]
@@ -390,23 +427,22 @@ class TestOpenRouterProviderErrorHandling:
         assert exc_info.value.original_error is unexpected_error
 
     @pytest.mark.asyncio
-    async def test_parse_response_error(
+    async def test_stream_error_during_iteration(
         self,
         provider_with_mock_client: OpenRouterProvider,
     ) -> None:
-        """Test handling of response parsing errors."""
-        # Create a response that will cause parsing to fail
-        # The _parse_response accesses response.id in the raw_response dict building
-        # Making id a property that raises will trigger the parse error
-        mock_response = MagicMock()
-
-        # Use PropertyMock to make .id raise an exception when accessed
-        type(mock_response).id = property(
-            lambda self: (_ for _ in ()).throw(RuntimeError("Parse error"))
-        )
+        """Test handling of errors during stream iteration."""
+        # Create a stream that raises an error partway through
+        async def error_stream():
+            chunk = MagicMock()
+            chunk.choices = [MagicMock()]
+            chunk.choices[0].delta = MagicMock()
+            chunk.choices[0].delta.content = "partial"
+            yield chunk
+            raise RuntimeError("Stream error")
 
         provider_with_mock_client._client.chat.completions.create = AsyncMock(
-            return_value=mock_response
+            return_value=error_stream()
         )
 
         messages = [Message(role="user", content="Hello!")]
@@ -414,7 +450,7 @@ class TestOpenRouterProviderErrorHandling:
         with pytest.raises(OpenRouterProviderError) as exc_info:
             await provider_with_mock_client.complete(messages)
 
-        assert "Failed to parse response" in exc_info.value.message
+        assert "Unexpected error" in exc_info.value.message
 
 
 class TestOpenRouterProviderError:
@@ -499,3 +535,139 @@ class TestMessageConversion:
         converted = provider._convert_messages(messages)
 
         assert len(converted) == 0
+
+
+class TestOpenRouterProviderContentTimeout:
+    """Tests for content-based timeout behavior.
+
+    These tests verify that the provider correctly times out when receiving
+    chunks but no actual content, which can happen when a provider sends
+    keepalive chunks without generating content.
+    """
+
+    @pytest.fixture
+    def provider_with_mock_client(self) -> OpenRouterProvider:
+        """Create an OpenRouterProvider with a mocked client."""
+        provider = OpenRouterProvider(api_key="test-key")
+        provider._client = MagicMock()
+        provider._client.chat = MagicMock()
+        provider._client.chat.completions = MagicMock()
+        return provider
+
+    @pytest.mark.asyncio
+    async def test_consecutive_empty_chunks_triggers_error(
+        self,
+        provider_with_mock_client: OpenRouterProvider,
+    ) -> None:
+        """Test that excessive consecutive empty chunks trigger an error.
+
+        This tests the safety net for pathological cases where keepalives arrive
+        but never any content. The max_consecutive_empty_chunks threshold (300)
+        should trigger an error.
+        """
+        async def many_empty_chunks_stream():
+            """Stream that sends 301 empty chunks (exceeds 300 limit)."""
+            for _ in range(301):
+                chunk = MagicMock()
+                chunk.choices = [MagicMock()]
+                chunk.choices[0].delta = MagicMock()
+                chunk.choices[0].delta.content = None  # Empty chunk
+                yield chunk
+
+        provider_with_mock_client._client.chat.completions.create = AsyncMock(
+            return_value=many_empty_chunks_stream()
+        )
+
+        messages = [Message(role="user", content="Hello!")]
+
+        with pytest.raises(OpenRouterProviderError) as exc_info:
+            await provider_with_mock_client.complete(messages)
+
+        # Should fail due to consecutive empty chunks
+        assert "consecutive empty chunks" in exc_info.value.message.lower()
+
+    @pytest.mark.asyncio
+    async def test_mixed_content_and_empty_chunks_succeeds(
+        self,
+        provider_with_mock_client: OpenRouterProvider,
+    ) -> None:
+        """Test that streams with mixed content and empty chunks succeed.
+
+        Empty chunks interspersed with content chunks should not trigger timeout
+        as long as content is being received.
+        """
+        async def mixed_stream():
+            """Stream with both content and empty chunks."""
+            # Content chunk
+            chunk1 = MagicMock()
+            chunk1.choices = [MagicMock()]
+            chunk1.choices[0].delta = MagicMock()
+            chunk1.choices[0].delta.content = "Hello "
+            yield chunk1
+
+            # Empty chunk (keepalive)
+            chunk2 = MagicMock()
+            chunk2.choices = [MagicMock()]
+            chunk2.choices[0].delta = MagicMock()
+            chunk2.choices[0].delta.content = None
+            yield chunk2
+
+            # Content chunk
+            chunk3 = MagicMock()
+            chunk3.choices = [MagicMock()]
+            chunk3.choices[0].delta = MagicMock()
+            chunk3.choices[0].delta.content = "world!"
+            yield chunk3
+
+            # Empty chunk (final)
+            chunk4 = MagicMock()
+            chunk4.choices = [MagicMock()]
+            chunk4.choices[0].delta = MagicMock()
+            chunk4.choices[0].delta.content = None
+            yield chunk4
+
+        provider_with_mock_client._client.chat.completions.create = AsyncMock(
+            return_value=mixed_stream()
+        )
+
+        messages = [Message(role="user", content="Hello!")]
+
+        response = await provider_with_mock_client.complete(messages)
+
+        assert response.content == "Hello world!"
+        # Check that empty chunks are tracked in raw_response
+        assert response.raw_response["empty_chunks"] == 2
+        assert response.raw_response["content_chunks"] == 2
+
+    @pytest.mark.asyncio
+    async def test_raw_response_includes_chunk_statistics(
+        self,
+        provider_with_mock_client: OpenRouterProvider,
+    ) -> None:
+        """Test that raw_response includes detailed chunk statistics."""
+        async def simple_stream():
+            """Simple stream with one content chunk."""
+            chunk = MagicMock()
+            chunk.choices = [MagicMock()]
+            chunk.choices[0].delta = MagicMock()
+            chunk.choices[0].delta.content = "Response"
+            yield chunk
+
+        provider_with_mock_client._client.chat.completions.create = AsyncMock(
+            return_value=simple_stream()
+        )
+
+        messages = [Message(role="user", content="Hello!")]
+
+        response = await provider_with_mock_client.complete(messages)
+
+        # Verify all expected keys are present
+        assert "chunks" in response.raw_response
+        assert "content_chunks" in response.raw_response
+        assert "empty_chunks" in response.raw_response
+        assert "elapsed" in response.raw_response
+
+        # Verify values
+        assert response.raw_response["chunks"] == 1
+        assert response.raw_response["content_chunks"] == 1
+        assert response.raw_response["empty_chunks"] == 0

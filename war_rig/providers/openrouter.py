@@ -165,7 +165,10 @@ class OpenRouterProvider:
         temperature: float = 0.7,
         **kwargs: Any,
     ) -> CompletionResponse:
-        """Send messages and get a completion response.
+        """Send messages and get a completion response using streaming.
+
+        Uses streaming mode to show progress and detect stalls. This prevents
+        the appearance of "hanging" when the LLM is generating a long response.
 
         Converts the provider-agnostic Message format to OpenAI's message
         format, makes the API call via OpenRouter, and parses the response.
@@ -182,14 +185,16 @@ class OpenRouterProvider:
             CompletionResponse containing the generated content and metadata.
 
         Raises:
-            OpenRouterProviderError: If the API call fails.
+            OpenRouterProviderError: If the API call fails or stalls.
         """
+        import asyncio
+        import time
+
         resolved_model = model or self._default_model
 
         # Convert our Message format to OpenAI's format
         openai_messages = self._convert_messages(messages)
 
-        import time
         start_time = time.time()
         logger.info(
             f"OpenRouter API call starting: model={resolved_model}, "
@@ -210,37 +215,145 @@ class OpenRouterProvider:
                 "model": resolved_model,
                 "messages": openai_messages,
                 "temperature": temperature,
+                "stream": True,  # Enable streaming for progress visibility
             }
 
             # Add any additional kwargs (top_p, stop, max_tokens, etc.)
             # Note: We do NOT set a default max_tokens - documentation should be verbose
             api_params.update(kwargs)
 
-            # Make the API call with explicit timeout (10 min max for large prompts)
-            # Note: HTTP 200 is logged when headers arrive, but body may still be streaming
-            response = await self._client.chat.completions.create(
+            # Content timeout: fail if no CONTENT received within this time (seconds)
+            # This detects stalls where the model sends keepalive chunks but no actual content.
+            # IMPORTANT: We track time since last CONTENT, not time since last chunk,
+            # because some providers send empty keepalive chunks that would reset a naive timeout.
+            content_timeout = 120.0  # 2 minutes without receiving actual content
+
+            # Chunk timeout: fail if no chunk at all arrives within this time
+            # This catches complete network stalls where nothing is received
+            chunk_timeout = 180.0  # 3 minutes without any chunk (network-level stall)
+
+            # Maximum consecutive empty chunks before declaring a stall
+            # This is a safety net for pathological cases where keepalives arrive
+            # but never any content. At ~1 chunk/second, 300 = 5 minutes of empty chunks.
+            max_consecutive_empty_chunks = 300
+
+            # Progress logging interval (seconds)
+            progress_interval = 30.0
+            last_progress_log = start_time
+
+            # Collect streamed content
+            content_chunks: list[str] = []
+            chunk_count = 0
+            empty_chunk_count = 0
+            consecutive_empty_chunks = 0
+            last_content_time = start_time  # Track when we last received actual content
+
+            # Create streaming response
+            stream = await self._client.chat.completions.create(
                 **api_params,
-                timeout=600.0,  # 10 minute timeout for full response
+                timeout=self._timeout,
             )
 
-            elapsed = time.time() - start_time
-            content = response.choices[0].message.content if response.choices else None
-            content_len = len(content) if content else 0
+            # Process stream with chunk timeout
+            # We use an async iterator wrapper to add timeout between chunks
+            async def iter_with_timeout(stream_iter, timeout_seconds: float):
+                """Iterate over stream with timeout between chunks.
 
-            # Log actual token usage if available
-            token_info = ""
-            if response.usage:
-                prompt_tokens = response.usage.prompt_tokens or 0
-                completion_tokens = response.usage.completion_tokens or 0
-                token_info = f", tokens={prompt_tokens}+{completion_tokens}={prompt_tokens + completion_tokens}"
+                This is a safety net for complete network stalls. Content-based
+                timeout is handled in the main loop below.
+                """
+                iterator = stream_iter.__aiter__()
+                while True:
+                    try:
+                        chunk = await asyncio.wait_for(
+                            iterator.__anext__(),
+                            timeout=timeout_seconds,
+                        )
+                        yield chunk
+                    except StopAsyncIteration:
+                        break
+                    except asyncio.TimeoutError:
+                        raise OpenRouterProviderError(
+                            message=f"Stream stalled: no chunk received for {timeout_seconds}s (network-level timeout)",
+                            original_error=None,
+                        )
+
+            async for chunk in iter_with_timeout(stream, chunk_timeout):
+                chunk_count += 1
+                current_time = time.time()
+
+                # Extract content from chunk
+                if chunk.choices and chunk.choices[0].delta.content:
+                    content = chunk.choices[0].delta.content
+                    content_chunks.append(content)
+                    last_content_time = current_time  # Reset content timeout
+                    consecutive_empty_chunks = 0  # Reset consecutive empty counter
+                else:
+                    # Empty chunk (keepalive or metadata)
+                    empty_chunk_count += 1
+                    consecutive_empty_chunks += 1
+
+                    # Check for content timeout: we're receiving chunks but no content
+                    time_since_content = current_time - last_content_time
+                    if time_since_content >= content_timeout:
+                        chars_so_far = sum(len(c) for c in content_chunks)
+                        raise OpenRouterProviderError(
+                            message=(
+                                f"Stream stalled: no content received for {time_since_content:.0f}s "
+                                f"(received {consecutive_empty_chunks} empty chunks). "
+                                f"Total: {chars_so_far:,} chars from {chunk_count} chunks"
+                            ),
+                            original_error=None,
+                        )
+
+                    # Check for excessive consecutive empty chunks
+                    if consecutive_empty_chunks >= max_consecutive_empty_chunks:
+                        chars_so_far = sum(len(c) for c in content_chunks)
+                        raise OpenRouterProviderError(
+                            message=(
+                                f"Stream stalled: {consecutive_empty_chunks} consecutive empty chunks "
+                                f"without content. Total: {chars_so_far:,} chars from {chunk_count} chunks"
+                            ),
+                            original_error=None,
+                        )
+
+                # Log progress periodically
+                if current_time - last_progress_log >= progress_interval:
+                    elapsed = current_time - start_time
+                    chars_so_far = sum(len(c) for c in content_chunks)
+                    time_since_content = current_time - last_content_time
+                    logger.info(
+                        f"OpenRouter streaming: {elapsed:.0f}s elapsed, "
+                        f"{chars_so_far:,} chars, {chunk_count} chunks "
+                        f"({empty_chunk_count} empty, {time_since_content:.0f}s since last content)"
+                    )
+                    last_progress_log = current_time
+
+            # Combine all chunks
+            content = "".join(content_chunks)
+
+            elapsed = time.time() - start_time
+            content_len = len(content)
+            content_chunk_count = chunk_count - empty_chunk_count
 
             logger.info(
                 f"OpenRouter API call completed: model={resolved_model}, "
-                f"elapsed={elapsed:.1f}s, response_chars={content_len}{token_info}"
+                f"elapsed={elapsed:.1f}s, response_chars={content_len}, "
+                f"chunks={chunk_count} ({content_chunk_count} with content, {empty_chunk_count} empty)"
             )
 
-            # Parse the response
-            return self._parse_response(response, resolved_model)
+            # Build response (streaming doesn't return usage stats)
+            return CompletionResponse(
+                content=content,
+                model=resolved_model,
+                tokens_used=0,  # Not available with streaming
+                raw_response={
+                    "chunks": chunk_count,
+                    "content_chunks": content_chunk_count,
+                    "empty_chunks": empty_chunk_count,
+                    "elapsed": elapsed,
+                },
+            )
 
         except RateLimitError as e:
             logger.error(f"OpenRouter rate limit exceeded: {e}")
@@ -281,6 +394,23 @@ class OpenRouterProvider:
                 status_code=e.status_code,
                 original_error=e,
             ) from e
+
+        except asyncio.TimeoutError as e:
+            elapsed = time.time() - start_time
+            logger.error(f"OpenRouter stream timeout after {elapsed:.1f}s: {e}")
+            log_error(
+                e,
+                context={"provider": "openrouter", "model": resolved_model, "error_type": "stream_timeout", "elapsed": elapsed},
+                request={"model": resolved_model, "message_count": len(messages)},
+            )
+            raise OpenRouterProviderError(
+                message=f"Stream timeout after {elapsed:.1f}s - model may be overloaded or stalled",
+                original_error=e,
+            ) from e
+
+        except OpenRouterProviderError:
+            # Re-raise our own errors (e.g., from chunk timeout)
+            raise
 
         except Exception as e:
             logger.error(f"Unexpected error calling OpenRouter: {e}")

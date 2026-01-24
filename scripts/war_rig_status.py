@@ -601,7 +601,8 @@ def build_stuck_panel(summary: TicketSummary) -> Panel | None:
         return None
 
     lines: list[Text] = []
-    now = datetime.now()
+    # Use UTC since ticket timestamps are stored in UTC
+    now = datetime.utcnow()
 
     # Sort by state priority: blocked first, then in_progress, then claimed
     # Within each state, sort by duration (longest first)
@@ -633,6 +634,8 @@ def build_stuck_panel(summary: TicketSummary) -> Panel | None:
         state_verb = "blocked" if state == "blocked" else "stuck"
         if updated_at:
             duration_seconds = (now - updated_at).total_seconds()
+            # Clamp to non-negative (handles timezone mismatches)
+            duration_seconds = max(0, duration_seconds)
             duration_str = format_duration(duration_seconds)
             # Color code based on duration
             if duration_seconds > 3600:  # > 1 hour
