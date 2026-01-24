@@ -511,7 +511,48 @@ class Citadel:
         # Extract lines (convert to 0-indexed)
         body_lines = lines[body_start - 1 : body_end]
 
+        # For COBOL, trim trailing comment blocks that belong to next paragraph
+        if spec.language.lower() == "cobol":
+            body_lines = self._trim_trailing_cobol_comments(body_lines)
+
         return "\n".join(body_lines)
+
+    def _trim_trailing_cobol_comments(self, lines: list[str]) -> list[str]:
+        """
+        Trim trailing comment-only lines from COBOL paragraph body.
+
+        COBOL paragraphs often have comment header blocks like:
+        *----------------------------------------------------------------*
+        *                      PARAGRAPH-NAME
+        *----------------------------------------------------------------*
+
+        These belong to the NEXT paragraph, not the current one.
+        """
+        if not lines:
+            return lines
+
+        # Find the last non-comment, non-blank line
+        last_content_idx = len(lines) - 1
+
+        while last_content_idx >= 0:
+            line = lines[last_content_idx]
+            stripped = line.strip()
+
+            # Empty line - continue checking
+            if not stripped:
+                last_content_idx -= 1
+                continue
+
+            # Check if it's a comment line (column 7 has * or /)
+            if len(line) >= 7 and line[6] in ('*', '/'):
+                last_content_idx -= 1
+                continue
+
+            # Found a non-comment, non-blank line - stop here
+            break
+
+        # Return lines up to and including the last content line
+        return lines[: last_content_idx + 1]
 
     def _find_function_end(
         self,
