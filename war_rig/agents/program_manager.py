@@ -625,29 +625,45 @@ class ProgramManagerAgent(BaseAgent[ProgramManagerInput, ProgramManagerOutput]):
             file_exists = False
             doc_exists = False
 
+            # Parse the file path to handle both flat and nested directory structures
+            file_path = Path(request.file_name)
+            file_stem = file_path.stem
+            file_parent = file_path.parent  # May be "." for flat structure
+
             # Check if file is in our discovered files
             if request.file_name in valid_file_names:
                 file_exists = True
             elif self._input_directory:
-                # Try to find the file with various extensions
-                base_name = Path(request.file_name).stem
+                # Try to find the file - preserve relative path structure
+                candidates = [
+                    # Try exact file_name first (handles relative paths)
+                    self._input_directory / request.file_name,
+                ]
+                # Also try with various extensions in the same directory
                 for ext in [".cbl", ".CBL", ".cob", ".COB", ".jcl", ".JCL", ".prc", ".PRC", ""]:
-                    candidate = self._input_directory / f"{base_name}{ext}"
-                    if candidate.exists():
-                        file_exists = True
-                        break
-                    # Also try with original file name
-                    candidate = self._input_directory / request.file_name
+                    # With relative path preserved
+                    candidates.append(self._input_directory / file_parent / f"{file_stem}{ext}")
+                    # Also try flat (no subdirectory)
+                    if file_parent != Path("."):
+                        candidates.append(self._input_directory / f"{file_stem}{ext}")
+
+                for candidate in candidates:
                     if candidate.exists():
                         file_exists = True
                         break
 
             # Check if documentation exists for this file
+            # Preserve relative path structure for doc lookup
             if output_dir:
-                doc_name = f"{Path(request.file_name).stem}.doc.json"
-                doc_path = output_dir / doc_name
-                if doc_path.exists():
-                    doc_exists = True
+                # Try with relative path preserved first, then flat
+                doc_candidates = [
+                    output_dir / file_parent / f"{file_stem}.doc.json",
+                    output_dir / f"{file_stem}.doc.json",
+                ]
+                for doc_path in doc_candidates:
+                    if doc_path.exists():
+                        doc_exists = True
+                        break
 
             # For CHROME/CLARIFICATION tickets, we need BOTH the source file AND existing docs
             # because these tickets are meant to improve existing documentation
