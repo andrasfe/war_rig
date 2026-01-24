@@ -106,14 +106,36 @@ includes = citadel.get_includes("program.cbl")
 # Output: ["COCOM01Y", "DFHAID", "CSUSR01Y", ...]
 ```
 
+### Get Function Body Text
+
+```python
+# Get the actual source code of a specific function/paragraph
+body = citadel.get_function_body("program.cbl", "PROCESS-ENTER-KEY")
+
+# Returns ONLY the function body text:
+#        PROCESS-ENTER-KEY.
+#
+#            EXEC CICS RECEIVE
+#                      MAP('COSGN0A')
+#                      MAPSET('COSGN00')
+#            END-EXEC.
+#            ...
+
+# Returns None if function not found
+body = citadel.get_function_body("program.cbl", "NONEXISTENT")  # None
+```
+
+This is useful for agents that need to inspect or analyze specific functions without loading the entire file.
+
 ### One-off Convenience Functions
 
 ```python
-from citadel import analyze_file, get_functions
+from citadel import analyze_file, get_functions, get_function_body
 
 # No need to create Citadel instance
 result = analyze_file("program.cbl")
 funcs = get_functions("program.cbl")
+body = get_function_body("program.cbl", "MAIN-PARA")
 ```
 
 ### SDK Classes
