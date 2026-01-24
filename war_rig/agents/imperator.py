@@ -45,6 +45,7 @@ from war_rig.models.tickets import (
 )
 from war_rig.preprocessors.base import PreprocessorResult
 from war_rig.providers import Message
+from war_rig.validation.document_validator import DocumentValidator, ValidationResult
 
 logger = logging.getLogger(__name__)
 
@@ -594,6 +595,7 @@ class ImperatorAgent(BaseAgent[ImperatorInput, ImperatorOutput]):
             api_config: API configuration. If None, loads from environment.
         """
         super().__init__(config, api_config, name="Imperator")
+        self._document_validator = DocumentValidator()
 
     def _get_header_attr(self, template, attr: str, default=None):
         """Get an attribute from template header, handling both object and dict.
@@ -1142,6 +1144,36 @@ Beyond individual file quality, evaluate:
 - Conflicting business rule documentation
 - Copybook usage not aligned with data flow
 
+## Document Type Validation
+
+Each document type has specific structural requirements that must be verified:
+
+### JCL Jobs
+- EXEC statements: Each step must document PGM=/PROC= and purpose
+- DD statements: Key DDs must document DSN, DISP, and purpose
+- Job flow: Overall sequence and dependencies must be clear
+
+### COBOL Programs
+- Procedure division: Key paragraphs must be documented
+- Called programs: All CALLs with type (STATIC/DYNAMIC) and purpose
+- Data structures: Copybooks and data flow must be explained
+
+### Copybooks
+- Field descriptions: Business meaning, not just PIC clauses
+- Usage context: Where included (WS/LINKAGE/FILE) and by which programs
+- Key fields: Important fields identified with significance
+
+### PLI Programs
+- Procedure structure: Key procedures must be documented
+- Called procedures: All calls with purpose
+- Data structures: Declarations and their usage
+
+### BMS Maps
+- Screen purpose: What screen this defines and which transaction uses it
+- Screen fields: Input/output fields with their purposes
+
+When reviewing, flag documents missing these type-specific elements.
+
 ## Decision Criteria
 
 SATISFIED: All files meet quality standards, cross-file issues resolved, documentation is coherent
@@ -1419,6 +1451,33 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                 decision=ImperatorHolisticDecision.NEEDS_CLARIFICATION,
             )
 
+    def _validate_documents_by_type(
+        self,
+        file_documentation: list[FileDocumentation],
+    ) -> dict[str, list[ChromeTicket]]:
+        """Validate each document against type-specific criteria.
+
+        This runs BEFORE the LLM holistic review to catch structural
+        issues that can be detected programmatically.
+        """
+        validation_feedback: dict[str, list[ChromeTicket]] = {}
+
+        for doc in file_documentation:
+            result = self._document_validator.validate_document(
+                file_name=doc.file_name,
+                program_id=doc.program_id,
+                template=doc.template,
+            )
+
+            if not result.is_valid:
+                validation_feedback[doc.file_name] = result.tickets
+                logger.info(
+                    f"Document validation failed for {doc.file_name}: "
+                    f"{len(result.failed_criteria)} criteria failed"
+                )
+
+        return validation_feedback
+
     async def holistic_review(
         self,
         input_data: HolisticReviewInput,
@@ -1448,6 +1507,11 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
         """
         if use_mock:
             return self.create_mock_holistic_output(input_data)
+
+        # Run type-specific validation before LLM review
+        type_validation_feedback = self._validate_documents_by_type(
+            input_data.file_documentation
+        )
 
         try:
             # Build prompts for holistic review
@@ -1539,6 +1603,13 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                 # No output_directory, just run holistic review
                 response = await self._call_llm(system_prompt, user_prompt)
                 review_output = self._parse_holistic_response(response, input_data)
+
+            # Merge type-specific validation feedback into review output
+            for file_name, tickets in type_validation_feedback.items():
+                if file_name in review_output.file_feedback:
+                    review_output.file_feedback[file_name].extend(tickets)
+                else:
+                    review_output.file_feedback[file_name] = tickets
 
             return review_output
 

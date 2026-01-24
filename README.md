@@ -422,6 +422,30 @@ The human feedback system allows operators to inject domain knowledge and instru
 
 The feedback uses the same `FeedbackContext` structure that agents already read, requiring no agent code changes.
 
+### Per-Document Type Validation
+
+Per-document type validation ensures documentation meets type-specific structural requirements before LLM review. The validation system validates JCL, COBOL, Copybook, PLI, BMS, and PROC documents against specific criteria, creating actionable feedback when documentation is incomplete.
+
+**Key Validation Criteria by Type:**
+
+| File Type | Key Criteria |
+|-----------|--------------|
+| **JCL** | EXEC steps documented with purpose, DD statements with dataset info, job flow explanation, input/output dependencies |
+| **COBOL** | Procedure division paragraphs, CALL statements with parameters, data flow tracing, copybook usage |
+| **Copybook** | Field descriptions with PIC clauses, usage context (file record, commarea, etc.), key field identification |
+| **PLI** | Procedures with parameters, external CALLs, data structure declarations |
+| **BMS** | Screen purpose and transaction context, field positions and attributes |
+| **PROC** | Procedure steps with reusability focus, symbolic parameter documentation |
+
+**Priority Levels:**
+- `CRITICAL`: Must be present for documentation to be useful
+- `HIGH`: Should be present for complete documentation
+- `MEDIUM`: Nice to have, improves documentation quality
+
+**Integration:** Validation runs automatically during the Imperator holistic review phase. Failed criteria generate ChromeTickets with specific guidance for the Scribe to address.
+
+**Location:** Validation modules are in `war_rig/validation/` (`document_criteria.py` for criteria definitions, `document_validator.py` for validation logic).
+
 ### Intelligent Source Sampling
 
 When source code exceeds token limits for CLARIFICATION/CHROME tickets, War Rig uses intelligent sampling to select relevant portions based on the questions being asked:
