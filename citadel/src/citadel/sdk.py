@@ -21,6 +21,7 @@ Example usage:
 """
 
 import logging
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -439,6 +440,243 @@ class Citadel:
                 languages.append(spec.language)
         return sorted(languages)
 
+    def get_function_body(
+        self, file_path: str | Path, function_name: str
+    ) -> str | None:
+        """
+        Get the body text of a specific function/paragraph/method.
+
+        Extracts only the function body content, not including the function
+        definition line itself.
+
+        Args:
+            file_path: Path to the source file.
+            function_name: Name of the function/paragraph to extract.
+
+        Returns:
+            The function body text, or None if the function is not found.
+        """
+        file_path = Path(file_path)
+
+        # Get spec for this file type
+        spec = self._get_spec_for_file(file_path)
+        if not spec:
+            logger.warning("No spec found for file extension '%s'", file_path.suffix)
+            return None
+
+        # Read file content
+        try:
+            content = self._read_file(file_path)
+        except Exception as e:
+            logger.warning("Failed to read file %s: %s", file_path, e)
+            return None
+
+        # Analyze the file to find the artifact
+        result = self.analyze_file(file_path)
+        artifact = result.get_artifact_by_name(function_name)
+
+        if artifact is None:
+            logger.debug("Function '%s' not found in %s", function_name, file_path)
+            return None
+
+        if artifact.line_start is None:
+            logger.warning("Artifact '%s' has no line_start", function_name)
+            return None
+
+        # Get the lines of the file
+        lines = content.splitlines()
+
+        # Determine line_end if not already set
+        if artifact.line_end is None:
+            line_end = self._find_function_end(
+                content, artifact.line_start, spec, result.artifacts, artifact
+            )
+        else:
+            line_end = artifact.line_end
+
+        # Extract the body (exclude the definition line, start from next line)
+        # line_start is 1-indexed
+        body_start = artifact.line_start  # Include definition line for now
+        body_end = line_end
+
+        if body_start > len(lines) or body_end > len(lines):
+            logger.warning(
+                "Line range %d-%d exceeds file length %d",
+                body_start,
+                body_end,
+                len(lines),
+            )
+            return None
+
+        # Extract lines (convert to 0-indexed)
+        body_lines = lines[body_start - 1 : body_end]
+
+        return "\n".join(body_lines)
+
+    def _find_function_end(
+        self,
+        content: str,
+        start_line: int,
+        spec: ArtifactSpec,
+        all_artifacts: list[FileArtifact],
+        current_artifact: FileArtifact,
+    ) -> int:
+        """
+        Find the ending line of a function based on language-specific rules.
+
+        Args:
+            content: The full file content.
+            start_line: The starting line of the function (1-indexed).
+            spec: The artifact specification for this language.
+            all_artifacts: All artifacts in the file.
+            current_artifact: The artifact we're finding the end for.
+
+        Returns:
+            The ending line number (1-indexed, inclusive).
+        """
+        lines = content.splitlines()
+        total_lines = len(lines)
+
+        # Language-specific end detection
+        language = spec.language.lower()
+
+        if language == "cobol":
+            return self._find_cobol_paragraph_end(
+                lines, start_line, all_artifacts, current_artifact
+            )
+        elif language == "python":
+            return self._find_python_function_end(lines, start_line)
+        else:
+            # Default: use scope delimiters or next artifact
+            return self._find_end_by_next_artifact_or_eof(
+                lines, start_line, all_artifacts, current_artifact
+            )
+
+    def _find_cobol_paragraph_end(
+        self,
+        lines: list[str],
+        start_line: int,
+        all_artifacts: list[FileArtifact],
+        current_artifact: FileArtifact,
+    ) -> int:
+        """
+        Find the end of a COBOL paragraph.
+
+        COBOL paragraphs end when:
+        1. Another paragraph name is encountered (word followed by period at start in area A)
+        2. A SECTION is encountered
+        3. END-PROGRAM or end of PROCEDURE DIVISION is hit
+        4. End of file is reached
+        """
+        total_lines = len(lines)
+
+        # Pattern for paragraph/section names in COBOL (Area A starts at column 8, 0-indexed: 7)
+        # A paragraph name is a word in columns 8-11 followed by a period
+        paragraph_pattern = re.compile(r"^.{7}([A-Z0-9-]+)\s*\.$", re.IGNORECASE)
+        section_pattern = re.compile(r"^.{7}([A-Z0-9-]+)\s+SECTION\s*\.", re.IGNORECASE)
+        end_patterns = re.compile(
+            r"^\s*(END-PROGRAM|END\s+PROGRAM|IDENTIFICATION\s+DIVISION|DATA\s+DIVISION)",
+            re.IGNORECASE,
+        )
+
+        # Find the next artifact that starts after this one
+        next_artifact_line = total_lines + 1
+        for artifact in all_artifacts:
+            if artifact.line_start and artifact.line_start > start_line:
+                if artifact.line_start < next_artifact_line:
+                    next_artifact_line = artifact.line_start
+
+        # Scan from start_line + 1 to find the end
+        for i in range(start_line, total_lines):  # start_line is 1-indexed
+            line = lines[i]
+
+            # Check for end markers
+            if end_patterns.search(line):
+                return i  # Return previous line (i is 0-indexed, so i is the line before)
+
+            # Check for next paragraph or section (but not the current one)
+            if i > start_line - 1:  # Skip the starting line itself
+                if len(line) >= 8:
+                    # Check for section first
+                    if section_pattern.match(line):
+                        return i  # Line before this section
+
+                    # Check for paragraph
+                    if paragraph_pattern.match(line):
+                        return i  # Line before this paragraph
+
+        # If no end marker found, return the last line of the file
+        return total_lines
+
+    def _find_python_function_end(self, lines: list[str], start_line: int) -> int:
+        """
+        Find the end of a Python function using indentation.
+
+        A Python function ends when:
+        1. A line with equal or less indentation than the def line is found
+           (excluding blank lines and comments)
+        2. End of file is reached
+        """
+        total_lines = len(lines)
+
+        if start_line > total_lines:
+            return start_line
+
+        # Get the indentation of the definition line
+        def_line = lines[start_line - 1]  # Convert to 0-indexed
+        def_indent = len(def_line) - len(def_line.lstrip())
+
+        # Track the last non-empty line as potential end
+        last_content_line = start_line
+
+        for i in range(start_line, total_lines):  # Start from line after def
+            line = lines[i]
+            stripped = line.strip()
+
+            # Skip empty lines and comments - they don't end a function
+            if not stripped or stripped.startswith("#"):
+                continue
+
+            # Get current line's indentation
+            current_indent = len(line) - len(line.lstrip())
+
+            # If we find a line with indentation <= def line's indentation,
+            # the function ended on the previous content line
+            if current_indent <= def_indent:
+                return last_content_line
+
+            # This line is part of the function body
+            last_content_line = i + 1  # Convert back to 1-indexed
+
+        # If we reach end of file, function extends to last content line
+        return last_content_line
+
+    def _find_end_by_next_artifact_or_eof(
+        self,
+        lines: list[str],
+        start_line: int,
+        all_artifacts: list[FileArtifact],
+        current_artifact: FileArtifact,
+    ) -> int:
+        """
+        Find function end by looking for the next artifact or end of file.
+
+        This is the fallback for languages without specific rules.
+        """
+        total_lines = len(lines)
+
+        # Find the next artifact that starts after this one
+        next_start = total_lines + 1
+        for artifact in all_artifacts:
+            if artifact.line_start and artifact.line_start > start_line:
+                if artifact.line_start < next_start:
+                    next_start = artifact.line_start
+
+        # Return the line before the next artifact, or EOF
+        if next_start <= total_lines:
+            return next_start - 1
+        return total_lines
+
 
 # Convenience function for one-off analysis
 def analyze_file(file_path: str | Path) -> FileAnalysisResult:
@@ -473,3 +711,20 @@ def get_functions(file_path: str | Path) -> list[dict[str, Any]]:
     """
     citadel = Citadel()
     return citadel.get_functions(file_path)
+
+
+def get_function_body(file_path: str | Path, function_name: str) -> str | None:
+    """
+    Get the body text of a specific function/paragraph/method.
+
+    Convenience function for quick extraction.
+
+    Args:
+        file_path: Path to the source file.
+        function_name: Name of the function/paragraph to extract.
+
+    Returns:
+        The function body text, or None if the function is not found.
+    """
+    citadel = Citadel()
+    return citadel.get_function_body(file_path, function_name)

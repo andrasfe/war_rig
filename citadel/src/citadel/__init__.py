@@ -31,6 +31,7 @@ from citadel.sdk import (
     Callout,
     analyze_file,
     get_functions,
+    get_function_body,
 )
 
 __all__ = [
@@ -40,5 +41,6 @@ __all__ = [
     "Callout",
     "analyze_file",
     "get_functions",
+    "get_function_body",
     "__version__",
 ]

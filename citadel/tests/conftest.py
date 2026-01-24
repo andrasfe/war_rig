@@ -2,12 +2,15 @@
 Pytest configuration and fixtures for Citadel tests.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
 from typing import Generator
 
 import pytest
 
 from citadel.config import CitadelConfig
+from citadel.sdk import Citadel
 
 
 @pytest.fixture
@@ -68,3 +71,9 @@ def clean_env() -> Generator[None, None, None]:
     # Restore original values
     for var, value in original_env.items():
         os.environ[var] = value
+
+
+@pytest.fixture
+def citadel_instance(test_config: CitadelConfig) -> Citadel:
+    """Return a Citadel SDK instance for testing."""
+    return Citadel(config=test_config)

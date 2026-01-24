@@ -112,6 +112,9 @@ class ParserEngine:
                 file_artifact = self._create_file_artifact(file_path, spec)
                 definitions.insert(0, file_artifact)
 
+            # Step 2.6: Compute line_end for all artifacts
+            self._compute_artifact_end_lines(definitions, content, spec)
+
             result.artifacts_defined = definitions
 
             # Step 3: Extract references
@@ -281,6 +284,7 @@ class ParserEngine:
         content: str,
         match: re.Match,
         pattern: ExtractionPattern,
+        spec: "ArtifactSpec | None" = None,
     ) -> bool:
         """
         Check if match satisfies context constraints.
@@ -289,10 +293,18 @@ class ParserEngine:
             content: The source content
             match: Regex match object
             pattern: ExtractionPattern with context constraints
+            spec: Optional artifact specification for scope checking
 
         Returns:
             True if all constraints are satisfied
         """
+        # Check must_be_in_scope (only match within specified scope)
+        if pattern.must_be_in_scope and spec is not None:
+            if not self._check_scope_constraint(
+                content, match.start(), pattern.must_be_in_scope, spec
+            ):
+                return False
+
         # Check must_not_follow (negative lookbehind)
         if pattern.must_not_follow:
             try:
@@ -314,6 +326,72 @@ class ParserEngine:
                     return False
             except re.error as e:
                 logger.warning("Invalid must_not_precede pattern: %s", e)
+
+        return True
+
+    def _check_scope_constraint(
+        self,
+        content: str,
+        position: int,
+        required_scope: str,
+        spec: "ArtifactSpec",
+    ) -> bool:
+        """
+        Check if a position is within the required scope.
+
+        For COBOL, this means checking if we're within PROCEDURE DIVISION
+        when must_be_in_scope is "PROCEDURE DIVISION".
+
+        Args:
+            content: The source content
+            position: Character position in the content
+            required_scope: The scope name that must contain this position
+            spec: The artifact specification with scope patterns
+
+        Returns:
+            True if position is within the required scope
+        """
+        if not spec.scope or not spec.scope.start_pattern:
+            # No scope defined, constraint cannot be checked
+            return True
+
+        # Find the most recent scope start before this position
+        text_before = content[:position]
+
+        # Look for the required scope marker
+        # The required_scope is like "PROCEDURE DIVISION"
+        scope_pattern = re.compile(
+            rf"{re.escape(required_scope)}",
+            re.IGNORECASE,
+        )
+        scope_matches = list(scope_pattern.finditer(text_before))
+
+        if not scope_matches:
+            # Required scope was not found before this position
+            return False
+
+        # Get the position of the last scope marker
+        last_scope_pos = scope_matches[-1].end()
+
+        # Check if any other scope started after the required scope
+        # This would mean we've left the required scope
+        if spec.scope.end_pattern:
+            # Build a pattern to match scope changes after the required scope
+            # For COBOL, scopes are exclusive - a new DIVISION ends the previous one
+            other_scope_pattern = re.compile(
+                spec.scope.start_pattern,
+                re.IGNORECASE,
+            )
+            remaining_text = text_before[last_scope_pos:]
+            other_matches = list(other_scope_pattern.finditer(remaining_text))
+
+            if other_matches:
+                # Another scope started after our required scope
+                # Check if it's a different scope (not the same as required)
+                for other_match in other_matches:
+                    if not scope_pattern.search(other_match.group(0)):
+                        # A different scope started, we're no longer in required scope
+                        return False
 
         return True
 
@@ -343,8 +421,8 @@ class ParserEngine:
                 compiled = self._compile_pattern(pattern)
 
                 for match in compiled.finditer(content):
-                    # Check context constraints
-                    if not self._check_context_constraints(content, match, pattern):
+                    # Check context constraints (pass spec for scope checking)
+                    if not self._check_context_constraints(content, match, pattern, spec):
                         continue
 
                     # Extract the identifier
@@ -390,6 +468,170 @@ class ParserEngine:
                 )
 
         return artifacts
+
+    def _compute_artifact_end_lines(
+        self,
+        artifacts: list[Artifact],
+        content: str,
+        spec: ArtifactSpec,
+    ) -> None:
+        """
+        Compute line_end for all artifacts based on language-specific rules.
+
+        Modifies artifacts in place to set their line_end values.
+
+        Args:
+            artifacts: List of artifacts to update
+            content: The original file content
+            spec: Artifact specification for language-specific rules
+        """
+        if not artifacts:
+            return
+
+        lines = content.splitlines()
+        total_lines = len(lines)
+        language = spec.language.lower()
+
+        # Sort artifacts by line_start for easier processing
+        sorted_artifacts = sorted(
+            [a for a in artifacts if a.defined_in and a.defined_in.line_start],
+            key=lambda a: a.defined_in.line_start,  # type: ignore
+        )
+
+        for i, artifact in enumerate(sorted_artifacts):
+            if artifact.defined_in is None:
+                continue
+
+            start_line = artifact.defined_in.line_start
+
+            # Find the next artifact's start line
+            next_start = total_lines + 1
+            if i + 1 < len(sorted_artifacts):
+                next_artifact = sorted_artifacts[i + 1]
+                if next_artifact.defined_in:
+                    next_start = next_artifact.defined_in.line_start
+
+            # Compute end line based on language
+            if language == "cobol":
+                end_line = self._find_cobol_artifact_end(
+                    lines, start_line, next_start
+                )
+            elif language == "python":
+                end_line = self._find_python_artifact_end(
+                    lines, start_line, next_start
+                )
+            else:
+                # Default: end at line before next artifact or EOF
+                end_line = min(next_start - 1, total_lines)
+
+            artifact.defined_in.line_end = end_line
+
+    def _find_cobol_artifact_end(
+        self,
+        lines: list[str],
+        start_line: int,
+        next_artifact_start: int,
+    ) -> int:
+        """
+        Find the end line of a COBOL paragraph/section.
+
+        COBOL artifacts end when:
+        1. Another paragraph name is encountered (word + period in Area A)
+        2. A SECTION is encountered
+        3. END-PROGRAM or division marker is hit
+        4. Next artifact starts
+        5. End of file
+        """
+        total_lines = len(lines)
+
+        # Pattern for paragraph/section names in COBOL
+        paragraph_pattern = re.compile(r"^.{7}([A-Z0-9-]+)\s*\.$", re.IGNORECASE)
+        section_pattern = re.compile(r"^.{7}([A-Z0-9-]+)\s+SECTION\s*\.", re.IGNORECASE)
+        end_markers = re.compile(
+            r"^\s*(END-PROGRAM|END\s+PROGRAM|IDENTIFICATION\s+DIVISION|"
+            r"DATA\s+DIVISION|ENVIRONMENT\s+DIVISION|PROCEDURE\s+DIVISION)",
+            re.IGNORECASE,
+        )
+
+        # Track last line with actual content
+        last_content_line = start_line
+
+        # Scan from start_line + 1 onwards (line_num is 1-indexed)
+        for line_num in range(start_line + 1, min(next_artifact_start, total_lines + 1)):
+            line_idx = line_num - 1  # Convert to 0-indexed
+            if line_idx >= total_lines:
+                break
+
+            line = lines[line_idx]
+            stripped = line.strip()
+
+            # Check for end markers
+            if end_markers.search(line):
+                return line_num - 1  # End before this marker
+
+            # Check for paragraph/section markers (but ensure line is long enough for Area A)
+            if len(line) >= 8:
+                if section_pattern.match(line) or paragraph_pattern.match(line):
+                    return line_num - 1  # End before this new paragraph/section
+
+            # Track content lines
+            if stripped:
+                last_content_line = line_num
+
+        # Return the last content line, but don't exceed next_artifact_start - 1
+        return min(last_content_line, next_artifact_start - 1, total_lines)
+
+    def _find_python_artifact_end(
+        self,
+        lines: list[str],
+        start_line: int,
+        next_artifact_start: int,
+    ) -> int:
+        """
+        Find the end line of a Python function/class using indentation.
+
+        A Python block ends when:
+        1. A line with equal or less indentation than the def/class line is found
+        2. Next artifact starts
+        3. End of file
+        """
+        total_lines = len(lines)
+
+        if start_line > total_lines:
+            return start_line
+
+        # Get the indentation of the definition line (0-indexed)
+        def_line = lines[start_line - 1]
+        def_indent = len(def_line) - len(def_line.lstrip())
+
+        # Track the last non-empty line within the function
+        last_content_line = start_line
+
+        # Scan from the line after the definition
+        for line_num in range(start_line + 1, min(next_artifact_start, total_lines + 1)):
+            line_idx = line_num - 1  # Convert to 0-indexed
+            if line_idx >= total_lines:
+                break
+
+            line = lines[line_idx]
+            stripped = line.strip()
+
+            # Skip empty lines and comment-only lines
+            if not stripped or stripped.startswith("#"):
+                continue
+
+            # Get current line's indentation
+            current_indent = len(line) - len(line.lstrip())
+
+            # If we find a line with indentation <= def line, function ended
+            if current_indent <= def_indent:
+                return last_content_line
+
+            # This line is part of the function
+            last_content_line = line_num
+
+        # Return the last content line found
+        return min(last_content_line, next_artifact_start - 1, total_lines)
 
     def _get_category_for_type(self, artifact_type: ArtifactType) -> ArtifactCategory:
         """
