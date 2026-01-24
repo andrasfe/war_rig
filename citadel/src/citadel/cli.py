@@ -123,7 +123,7 @@ def cli(ctx: click.Context, verbose: bool) -> None:
 @click.option(
     "-f", "--format", "fmt",
     default="json",
-    type=click.Choice(["json", "dot", "cypher", "csv", "markdown"]),
+    type=click.Choice(["json", "dot", "cypher", "csv", "markdown", "mermaid"]),
     help="Output format"
 )
 @click.option(
@@ -240,6 +240,8 @@ def analyze(
             output = csv_dir
         elif fmt == "markdown":
             exporter.export_markdown(graph, output)
+        elif fmt == "mermaid":
+            exporter.export_mermaid(graph, output)
 
         console.print(f"\n[green]Graph exported to:[/green] {output}")
 
@@ -485,7 +487,7 @@ def spec_generate(ctx: click.Context, samples: tuple[Path, ...], hints: str | No
 @click.option(
     "-f", "--format", "fmt",
     required=True,
-    type=click.Choice(["json", "dot", "cypher", "csv", "markdown"]),
+    type=click.Choice(["json", "dot", "cypher", "csv", "markdown", "mermaid"]),
     help="Output format"
 )
 @click.option(
@@ -541,6 +543,8 @@ def export(
                 output = csv_dir
             elif fmt == "markdown":
                 exporter.export_markdown(dep_graph, output)
+            elif fmt == "mermaid":
+                exporter.export_mermaid(dep_graph, output)
 
             progress.update(task, description="Export complete")
 

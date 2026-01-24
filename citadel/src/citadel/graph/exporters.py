@@ -365,6 +365,33 @@ class GraphExporter:
 
         logger.info("Markdown export complete")
 
+    def export_mermaid(
+        self,
+        graph: DependencyGraph,
+        path: Path,
+        max_edges: int = 100,
+    ) -> None:
+        """
+        Export graph as a standalone Mermaid diagram file.
+
+        Args:
+            graph: The dependency graph to export.
+            path: Output file path (.mmd or .mermaid).
+            max_edges: Maximum number of edges to include (default 100).
+        """
+        logger.info("Exporting graph to Mermaid: %s", path)
+
+        lines = self._generate_mermaid_flowchart(graph, max_edges=max_edges)
+
+        with open(path, "w", encoding="utf-8") as f:
+            f.write("\n".join(lines))
+
+        logger.info(
+            "Mermaid export complete: %d artifacts, %d relationships",
+            len(graph.artifacts),
+            min(len(graph.relationships), max_edges),
+        )
+
     def export_summary(self, graph: DependencyGraph) -> str:
         """
         Generate a human-readable summary string.
@@ -694,7 +721,9 @@ class GraphExporter:
                 }
                 writer.writerow(row)
 
-    def _generate_mermaid_flowchart(self, graph: DependencyGraph) -> list[str]:
+    def _generate_mermaid_flowchart(
+        self, graph: DependencyGraph, max_edges: int = 50
+    ) -> list[str]:
         """Generate Mermaid flowchart lines for the graph."""
         lines = ["flowchart LR"]
 
@@ -727,8 +756,7 @@ class GraphExporter:
             )
         ]
 
-        # Limit to first 50 relationships to keep diagram readable
-        max_edges = 50
+        # Limit relationships to keep diagram readable
         if len(call_relationships) > max_edges:
             lines.append(f"    %% Showing {max_edges} of {len(call_relationships)} relationships")
             call_relationships = call_relationships[:max_edges]
