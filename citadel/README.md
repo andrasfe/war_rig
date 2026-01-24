@@ -127,15 +127,51 @@ body = citadel.get_function_body("program.cbl", "NONEXISTENT")  # None
 
 This is useful for agents that need to inspect or analyze specific functions without loading the entire file.
 
+### Find Callers of a Function
+
+```python
+# Find all places that call a specific function/paragraph
+callers = citadel.get_callers("UTILS.cbl", "CALCULATE-TAX")
+
+# Output:
+# [
+#   {
+#     "file": "/path/to/MAINPROG.cbl",
+#     "function": "PROCESS-ORDER",  # The function making the call
+#     "line": 125,                   # Line where the call occurs
+#     "type": "performs"             # Type of call (performs, calls, includes)
+#   },
+#   {
+#     "file": "/path/to/BILLING.cbl",
+#     "function": "CALC-TOTALS",
+#     "line": 89,
+#     "type": "performs"
+#   }
+# ]
+
+# Search in specific directories
+callers = citadel.get_callers(
+    "copybooks/CUSTOMER-REC.cpy",
+    "CUSTOMER-REC",
+    search_paths=["./app/cbl", "./app/copybooks"]
+)
+```
+
+For COBOL, this finds:
+- `PERFORM` statements referencing paragraphs/sections
+- `CALL` statements referencing programs
+- `COPY` statements referencing copybooks
+
 ### One-off Convenience Functions
 
 ```python
-from citadel import analyze_file, get_functions, get_function_body
+from citadel import analyze_file, get_functions, get_function_body, get_callers
 
 # No need to create Citadel instance
 result = analyze_file("program.cbl")
 funcs = get_functions("program.cbl")
 body = get_function_body("program.cbl", "MAIN-PARA")
+callers = get_callers("UTILS.cbl", "CALCULATE-TAX")
 ```
 
 ### SDK Classes

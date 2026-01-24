@@ -124,6 +124,7 @@ class ParserEngine:
                 file_path,
                 definitions,
                 preprocessed.line_map,
+                preprocessed.masked_strings,
             )
             result.references_found = references
 
@@ -747,6 +748,7 @@ class ParserEngine:
         file_path: Path,
         defined_artifacts: list[Artifact],
         line_map: dict[int, int],
+        masked_strings: list[tuple[int, int, str]] | None = None,
     ) -> list[RawReference]:
         """
         Extract all references from content.
@@ -757,11 +759,20 @@ class ParserEngine:
             file_path: Path to the source file
             defined_artifacts: Artifacts defined in this file (for containing_artifact)
             line_map: Mapping from cleaned line numbers to original
+            masked_strings: Optional list of (start, end, original) for masked strings
 
         Returns:
             List of extracted RawReference objects
         """
         references: list[RawReference] = []
+
+        # Build a lookup table for masked strings
+        # Maps placeholder like "__STR_73__" to original string like "'CSUTLDTC'"
+        placeholder_to_original: dict[str, str] = {}
+        if masked_strings:
+            for i, (_, _, original) in enumerate(masked_strings):
+                placeholder = f"__STR_{i}__"
+                placeholder_to_original[placeholder] = original
 
         for pattern in spec.reference_patterns:
             if pattern.relationship_type is None:
@@ -783,6 +794,12 @@ class ParserEngine:
                     identifier = self._extract_identifier(match, pattern)
                     if not identifier:
                         continue
+
+                    # If unmask_capture is set, restore original string from placeholder
+                    if pattern.unmask_capture and identifier in placeholder_to_original:
+                        original_string = placeholder_to_original[identifier]
+                        # Strip quotes from string literal (e.g., "'CSUTLDTC'" -> "CSUTLDTC")
+                        identifier = original_string.strip("'\"")
 
                     # Build source location
                     location = self._build_source_location(

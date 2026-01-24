@@ -718,6 +718,160 @@ class Citadel:
             return next_start - 1
         return total_lines
 
+    def get_callers(
+        self,
+        file_path: str | Path,
+        function_name: str,
+        search_paths: list[str | Path] | None = None,
+    ) -> list[dict[str, Any]]:
+        """
+        Find all callers of a specific function across the codebase.
+
+        This method searches through source files to find all locations that
+        reference or call the target function. For COBOL, this means finding
+        PERFORM and CALL statements. For copybooks, this finds COPY statements.
+
+        Args:
+            file_path: Path to the file containing the target function.
+            function_name: Name of the function/paragraph to find callers for.
+            search_paths: Directories to search for callers. If None, searches
+                         the same directory as the target file and subdirectories.
+
+        Returns:
+            List of caller dictionaries, each containing:
+            - file: Path to the file containing the call
+            - function: Name of the function making the call
+            - line: Line number where the call occurs
+            - type: Type of call (performs, calls, includes, etc.)
+
+        Example:
+            >>> citadel = Citadel()
+            >>> callers = citadel.get_callers("UTILS.cbl", "CALCULATE-TAX")
+            >>> for caller in callers:
+            ...     print(f"{caller['file']}:{caller['line']} - {caller['function']}")
+        """
+        file_path = Path(file_path).resolve()
+
+        # Determine search paths
+        if search_paths is None:
+            # Search in the same directory and subdirectories
+            search_dirs = [file_path.parent]
+        else:
+            search_dirs = [Path(p).resolve() for p in search_paths]
+
+        # Verify target function exists (optional validation)
+        target_result = self.analyze_file(file_path)
+        target_artifact = target_result.get_artifact_by_name(function_name)
+
+        # Get the canonical name if we found the artifact
+        canonical_name = target_artifact.name if target_artifact else function_name
+
+        # Collect all source files to analyze
+        files_to_analyze: list[Path] = []
+        for search_dir in search_dirs:
+            if not search_dir.exists():
+                logger.warning("Search path does not exist: %s", search_dir)
+                continue
+
+            if search_dir.is_file():
+                # If a file is specified, just add it
+                files_to_analyze.append(search_dir)
+            else:
+                # Discover all source files in the directory
+                discovery = FileDiscovery(search_dir)
+                result = discovery.discover()
+
+                # Add all identified files
+                for spec_files in result.files_by_spec.values():
+                    files_to_analyze.extend(spec_files)
+
+        # Analyze each file and find callers
+        callers: list[dict[str, Any]] = []
+        function_name_lower = canonical_name.lower()
+
+        for source_file in files_to_analyze:
+            try:
+                analysis = self.analyze_file(source_file)
+
+                if analysis.error:
+                    logger.debug(
+                        "Skipping file with analysis error: %s - %s",
+                        source_file,
+                        analysis.error,
+                    )
+                    continue
+
+                # Check file-level callouts (e.g., COPY statements at file level)
+                for callout in analysis.file_level_callouts:
+                    if self._matches_target(callout.target, function_name_lower):
+                        callers.append({
+                            "file": str(source_file),
+                            "function": None,  # File-level callout
+                            "line": callout.line,
+                            "type": callout.relationship,
+                        })
+
+                # Check each artifact's callouts
+                for artifact in analysis.artifacts:
+                    for callout in artifact.callouts:
+                        if self._matches_target(callout.target, function_name_lower):
+                            callers.append({
+                                "file": str(source_file),
+                                "function": artifact.name,
+                                "line": callout.line,
+                                "type": callout.relationship,
+                            })
+
+            except Exception as e:
+                logger.warning("Error analyzing file %s: %s", source_file, e)
+                continue
+
+        # Sort callers by file, then by line number
+        callers.sort(key=lambda x: (x["file"], x["line"] or 0))
+
+        return callers
+
+    def _matches_target(self, callout_target: str, target_name_lower: str) -> bool:
+        """
+        Check if a callout target matches the target function name.
+
+        Performs case-insensitive matching and handles common variations
+        like file extensions, prefixes, etc.
+
+        Args:
+            callout_target: The target name from a callout.
+            target_name_lower: The lowercase target function name to match.
+
+        Returns:
+            True if the callout references the target function.
+        """
+        if not callout_target:
+            return False
+
+        callout_lower = callout_target.lower()
+
+        # Direct match
+        if callout_lower == target_name_lower:
+            return True
+
+        # Match without common file extensions for copybooks
+        extensions_to_strip = [".cpy", ".copy", ".cbl", ".cob", ".cobol"]
+        for ext in extensions_to_strip:
+            if callout_lower.endswith(ext):
+                if callout_lower[: -len(ext)] == target_name_lower:
+                    return True
+            if target_name_lower.endswith(ext):
+                if callout_lower == target_name_lower[: -len(ext)]:
+                    return True
+
+        # Match base name (useful for paths like "COPYLIB/MEMBER")
+        if "/" in callout_lower:
+            base_name = callout_lower.split("/")[-1]
+            if base_name == target_name_lower:
+                return True
+
+        return False
+
 
 # Convenience function for one-off analysis
 def analyze_file(file_path: str | Path) -> FileAnalysisResult:
@@ -769,3 +923,32 @@ def get_function_body(file_path: str | Path, function_name: str) -> str | None:
     """
     citadel = Citadel()
     return citadel.get_function_body(file_path, function_name)
+
+
+def get_callers(
+    file_path: str | Path,
+    function_name: str,
+    search_paths: list[str | Path] | None = None,
+) -> list[dict[str, Any]]:
+    """
+    Find all callers of a specific function across the codebase.
+
+    Convenience function for quick analysis.
+
+    Args:
+        file_path: Path to the file containing the target function.
+        function_name: Name of the function/paragraph to find callers for.
+        search_paths: Directories to search for callers. If None, searches
+                     the same directory as the target file and subdirectories.
+
+    Returns:
+        List of caller dictionaries with keys: file, function, line, type.
+
+    Example:
+        >>> from citadel import get_callers
+        >>> callers = get_callers("UTILS.cbl", "CALCULATE-TAX")
+        >>> for caller in callers:
+        ...     print(f"{caller['file']}:{caller['line']} - {caller['function']}")
+    """
+    citadel = Citadel()
+    return citadel.get_callers(file_path, function_name, search_paths)

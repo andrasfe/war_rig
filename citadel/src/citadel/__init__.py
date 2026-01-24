@@ -32,6 +32,7 @@ from citadel.sdk import (
     analyze_file,
     get_functions,
     get_function_body,
+    get_callers,
 )
 
 __all__ = [
@@ -42,5 +43,6 @@ __all__ = [
     "analyze_file",
     "get_functions",
     "get_function_body",
+    "get_callers",
     "__version__",
 ]

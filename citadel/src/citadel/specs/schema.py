@@ -138,6 +138,9 @@ class ExtractionPattern(BaseModel):
     column_pattern: str | None = None  # Extract column names (for SQL)
     target_type_hint: ArtifactType | None = None  # Expected type of target
 
+    # String handling
+    unmask_capture: bool = False  # If True, restore original string from placeholder
+
     # Regex flags
     ignore_case: bool = False
     multiline: bool = False

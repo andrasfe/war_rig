@@ -66,20 +66,21 @@ definition_patterns:
     must_be_in_scope: PROCEDURE DIVISION
 
 reference_patterns:
-  # Program calls
+  # Program calls - matches string placeholders (preprocessor masks strings)
   - name: call_literal
-    pattern: "CALL\\s+['\"]([A-Za-z0-9-]+)['\"]"
+    pattern: "CALL\\s+(__STR_\\d+__)"
     capture_groups:
       - 1
     relationship_type: calls
     target_type_hint: program
+    unmask_capture: true
 
   - name: call_variable
     pattern: "CALL\\s+([A-Z0-9-]+)"
     capture_groups:
       - 1
     relationship_type: calls
-    must_not_follow: "CALL\\s+['\"]"
+    must_not_follow: "CALL\\s+__STR_"
 
   # PERFORM statements
   - name: perform
