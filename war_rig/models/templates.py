@@ -388,28 +388,94 @@ class CopybookReference(BaseModel):
     )
 
 
+class FunctionCall(BaseModel):
+    """A call reference from Citadel analysis.
+
+    Represents an outgoing call from a paragraph/function to another
+    function, program, or paragraph. This is programmatic data from
+    Citadel's static analysis, not LLM-generated.
+    """
+
+    target: str = Field(
+        description="Name of called function/program/paragraph",
+    )
+    call_type: str = Field(
+        default="performs",
+        description="Type of call: 'performs', 'calls', 'includes', 'links', 'xctl', etc.",
+    )
+    line: int | None = Field(
+        default=None,
+        description="Line number where the call occurs",
+    )
+
+
+class CallerReference(BaseModel):
+    """An incoming call reference from another file/function.
+
+    Represents an incoming call to this paragraph/function from another
+    location. This is programmatic data from Citadel's cross-file analysis,
+    not LLM-generated.
+    """
+
+    file: str = Field(
+        description="Source file path containing the caller",
+    )
+    function: str = Field(
+        description="Name of the calling function/paragraph",
+    )
+    line: int | None = Field(
+        default=None,
+        description="Line number of the call in the source file",
+    )
+    call_type: str = Field(
+        default="performs",
+        description="Type of call: 'performs', 'calls', 'includes', etc.",
+    )
+
+
 class Paragraph(BaseModel):
-    """Description of a key paragraph in the program."""
+    """Description of a key paragraph/function in the program.
+
+    Contains both LLM-generated documentation (summary, purpose) and
+    Citadel-provided programmatic call references (outgoing_calls, incoming_calls).
+    """
 
     paragraph_name: str | None = Field(
         default=None,
         description="Paragraph name",
     )
+    summary: str | None = Field(
+        default=None,
+        description="LLM-generated prose summary of what this paragraph does",
+    )
     purpose: str | None = Field(
         default=None,
-        description="What this paragraph does",
+        description="Business purpose or role of this paragraph",
     )
     called_by: LenientStrList = Field(
         default_factory=list,
-        description="Paragraphs that PERFORM this",
+        description="Paragraphs that PERFORM this (legacy simple list)",
     )
     calls: LenientStrList = Field(
         default_factory=list,
-        description="Paragraphs this PERFORMs",
+        description="Paragraphs this PERFORMs (legacy simple list)",
     )
     citation: tuple[int, int] | None = Field(
         default=None,
         description="Line number range (start, end)",
+    )
+    # Citadel-provided structured call references (programmatic, not LLM)
+    outgoing_calls: list[FunctionCall] = Field(
+        default_factory=list,
+        description="Citadel-provided outgoing call references with full metadata",
+    )
+    incoming_calls: list[CallerReference] = Field(
+        default_factory=list,
+        description="Citadel-provided incoming call references from other files/functions",
+    )
+    metadata: dict[str, Any] | None = Field(
+        default=None,
+        description="Additional metadata for processing (e.g., body_chunks count)",
     )
 
 
@@ -593,7 +659,7 @@ class DocumentationTemplate(BaseModel):
             elif key == "copybooks_used" and isinstance(value, list):
                 constructed[key] = [CopybookReference.model_construct(**v) if isinstance(v, dict) else v for v in value]
             elif key == "paragraphs" and isinstance(value, list):
-                constructed[key] = [Paragraph.model_construct(**v) if isinstance(v, dict) else v for v in value]
+                constructed[key] = [cls._construct_paragraph(v) if isinstance(v, dict) else v for v in value]
             elif key == "error_handling" and isinstance(value, list):
                 constructed[key] = [ErrorHandler.model_construct(**v) if isinstance(v, dict) else v for v in value]
             elif key == "sql_operations" and isinstance(value, list):
@@ -605,6 +671,27 @@ class DocumentationTemplate(BaseModel):
             else:
                 constructed[key] = value
         return cls.model_construct(**constructed)
+
+    @classmethod
+    def _construct_paragraph(cls, data: dict) -> "Paragraph":
+        """Construct a Paragraph with nested FunctionCall and CallerReference models."""
+        constructed = dict(data)
+
+        # Handle outgoing_calls list
+        if "outgoing_calls" in data and isinstance(data["outgoing_calls"], list):
+            constructed["outgoing_calls"] = [
+                FunctionCall.model_construct(**c) if isinstance(c, dict) else c
+                for c in data["outgoing_calls"]
+            ]
+
+        # Handle incoming_calls list
+        if "incoming_calls" in data and isinstance(data["incoming_calls"], list):
+            constructed["incoming_calls"] = [
+                CallerReference.model_construct(**c) if isinstance(c, dict) else c
+                for c in data["incoming_calls"]
+            ]
+
+        return Paragraph.model_construct(**constructed)
 
 
 # =============================================================================

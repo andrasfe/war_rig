@@ -17,6 +17,9 @@ from war_rig.models.templates import (
     CallType,
     CopybookLocation,
     FinalStatus,
+    FunctionCall,
+    CallerReference,
+    Paragraph,
 )
 
 
@@ -312,3 +315,273 @@ class TestLenientCoercion:
             parameters="WS-PARAM",
         )
         assert called.parameters == ["WS-PARAM"]
+
+
+class TestFunctionCall:
+    """Tests for FunctionCall model (Citadel call references)."""
+
+    def test_create_function_call_minimal(self):
+        """Test creating FunctionCall with required fields only."""
+        call = FunctionCall(target="2000-PROCESS")
+
+        assert call.target == "2000-PROCESS"
+        assert call.call_type == "performs"
+        assert call.line is None
+
+    def test_create_function_call_full(self):
+        """Test creating FunctionCall with all fields."""
+        call = FunctionCall(
+            target="SUBPROG1",
+            call_type="calls",
+            line=150,
+        )
+
+        assert call.target == "SUBPROG1"
+        assert call.call_type == "calls"
+        assert call.line == 150
+
+    def test_function_call_serialization(self):
+        """Test FunctionCall JSON serialization."""
+        call = FunctionCall(
+            target="3000-FINALIZE",
+            call_type="performs",
+            line=45,
+        )
+        json_str = call.model_dump_json()
+        assert "3000-FINALIZE" in json_str
+        assert "performs" in json_str
+        assert "45" in json_str
+
+    def test_function_call_deserialization(self):
+        """Test FunctionCall JSON deserialization."""
+        call = FunctionCall(
+            target="TEST-PARA",
+            call_type="includes",
+            line=100,
+        )
+        json_str = call.model_dump_json()
+        restored = FunctionCall.model_validate_json(json_str)
+
+        assert restored.target == call.target
+        assert restored.call_type == call.call_type
+        assert restored.line == call.line
+
+
+class TestCallerReference:
+    """Tests for CallerReference model (incoming call references)."""
+
+    def test_create_caller_reference_minimal(self):
+        """Test creating CallerReference with required fields only."""
+        ref = CallerReference(
+            file="MAINPROG.cbl",
+            function="0000-MAIN",
+        )
+
+        assert ref.file == "MAINPROG.cbl"
+        assert ref.function == "0000-MAIN"
+        assert ref.line is None
+        assert ref.call_type == "performs"
+
+    def test_create_caller_reference_full(self):
+        """Test creating CallerReference with all fields."""
+        ref = CallerReference(
+            file="path/to/CALLER.cbl",
+            function="1000-INIT",
+            line=75,
+            call_type="calls",
+        )
+
+        assert ref.file == "path/to/CALLER.cbl"
+        assert ref.function == "1000-INIT"
+        assert ref.line == 75
+        assert ref.call_type == "calls"
+
+    def test_caller_reference_serialization(self):
+        """Test CallerReference JSON serialization."""
+        ref = CallerReference(
+            file="BATCHPGM.cbl",
+            function="MAIN-ROUTINE",
+            line=200,
+            call_type="performs",
+        )
+        json_str = ref.model_dump_json()
+        assert "BATCHPGM.cbl" in json_str
+        assert "MAIN-ROUTINE" in json_str
+
+
+class TestParagraph:
+    """Tests for Paragraph model with Citadel call references."""
+
+    def test_create_paragraph_minimal(self):
+        """Test creating Paragraph with minimal fields."""
+        para = Paragraph(paragraph_name="0000-MAIN")
+
+        assert para.paragraph_name == "0000-MAIN"
+        assert para.summary is None
+        assert para.purpose is None
+        assert para.calls == []
+        assert para.called_by == []
+        assert para.outgoing_calls == []
+        assert para.incoming_calls == []
+
+    def test_create_paragraph_with_legacy_calls(self):
+        """Test Paragraph with legacy simple call lists."""
+        para = Paragraph(
+            paragraph_name="2000-PROCESS",
+            purpose="Process records",
+            calls=["3000-VALIDATE", "4000-UPDATE"],
+            called_by=["0000-MAIN"],
+        )
+
+        assert para.calls == ["3000-VALIDATE", "4000-UPDATE"]
+        assert para.called_by == ["0000-MAIN"]
+
+    def test_create_paragraph_with_citadel_calls(self):
+        """Test Paragraph with Citadel-provided structured call references."""
+        para = Paragraph(
+            paragraph_name="1000-INIT",
+            summary="Initializes program variables and opens files",
+            purpose="Program initialization",
+            outgoing_calls=[
+                FunctionCall(target="1100-OPEN-FILES", call_type="performs", line=50),
+                FunctionCall(target="1200-INIT-VARS", call_type="performs", line=55),
+            ],
+            incoming_calls=[
+                CallerReference(file="MAINPROG.cbl", function="0000-MAIN", line=30),
+            ],
+        )
+
+        assert para.paragraph_name == "1000-INIT"
+        assert para.summary == "Initializes program variables and opens files"
+        assert len(para.outgoing_calls) == 2
+        assert para.outgoing_calls[0].target == "1100-OPEN-FILES"
+        assert para.outgoing_calls[1].line == 55
+        assert len(para.incoming_calls) == 1
+        assert para.incoming_calls[0].file == "MAINPROG.cbl"
+
+    def test_paragraph_serialization_with_citadel_calls(self):
+        """Test Paragraph JSON serialization with nested models."""
+        para = Paragraph(
+            paragraph_name="TEST-PARA",
+            summary="Test paragraph",
+            outgoing_calls=[
+                FunctionCall(target="SUB-PARA", call_type="performs", line=10),
+            ],
+            incoming_calls=[
+                CallerReference(file="OTHER.cbl", function="CALLER", line=20),
+            ],
+        )
+
+        json_str = para.model_dump_json()
+        assert "TEST-PARA" in json_str
+        assert "SUB-PARA" in json_str
+        assert "OTHER.cbl" in json_str
+
+    def test_paragraph_deserialization_with_citadel_calls(self):
+        """Test Paragraph JSON deserialization preserves nested models."""
+        para = Paragraph(
+            paragraph_name="TEST-PARA",
+            summary="Test paragraph",
+            purpose="Testing",
+            outgoing_calls=[
+                FunctionCall(target="SUB-PARA", call_type="performs", line=10),
+            ],
+            incoming_calls=[
+                CallerReference(file="OTHER.cbl", function="CALLER", line=20),
+            ],
+        )
+
+        json_str = para.model_dump_json()
+        restored = Paragraph.model_validate_json(json_str)
+
+        assert restored.paragraph_name == para.paragraph_name
+        assert restored.summary == para.summary
+        assert len(restored.outgoing_calls) == 1
+        assert restored.outgoing_calls[0].target == "SUB-PARA"
+        assert len(restored.incoming_calls) == 1
+        assert restored.incoming_calls[0].file == "OTHER.cbl"
+
+
+class TestDocumentationTemplateWithParagraphs:
+    """Tests for DocumentationTemplate with updated Paragraph models."""
+
+    def test_template_with_paragraphs_citadel_calls(self):
+        """Test DocumentationTemplate serialization with Citadel call refs in paragraphs."""
+        template = DocumentationTemplate(
+            header=HeaderSection(
+                program_id="TESTPROG",
+                file_name="TESTPROG.cbl",
+                file_type=FileType.COBOL,
+            ),
+            purpose=PurposeSection(
+                summary="Test program",
+                program_type=ProgramType.BATCH,
+            ),
+            paragraphs=[
+                Paragraph(
+                    paragraph_name="0000-MAIN",
+                    summary="Main entry point",
+                    outgoing_calls=[
+                        FunctionCall(target="1000-INIT", call_type="performs", line=50),
+                        FunctionCall(target="2000-PROCESS", call_type="performs", line=55),
+                    ],
+                ),
+                Paragraph(
+                    paragraph_name="1000-INIT",
+                    summary="Initialization routine",
+                    incoming_calls=[
+                        CallerReference(file="TESTPROG.cbl", function="0000-MAIN", line=50),
+                    ],
+                ),
+            ],
+        )
+
+        # Test serialization
+        json_str = template.model_dump_json()
+        assert "0000-MAIN" in json_str
+        assert "1000-INIT" in json_str
+        assert "outgoing_calls" in json_str
+        assert "incoming_calls" in json_str
+
+        # Test deserialization
+        restored = DocumentationTemplate.model_validate_json(json_str)
+        assert len(restored.paragraphs) == 2
+        assert restored.paragraphs[0].outgoing_calls[0].target == "1000-INIT"
+        assert restored.paragraphs[1].incoming_calls[0].function == "0000-MAIN"
+
+    def test_load_lenient_with_paragraphs(self):
+        """Test load_lenient properly constructs nested Paragraph models."""
+        data = {
+            "header": {
+                "program_id": "TESTPROG",
+                "file_name": "TESTPROG.cbl",
+                "file_type": "COBOL",
+            },
+            "purpose": {
+                "summary": "Test",
+            },
+            "paragraphs": [
+                {
+                    "paragraph_name": "MAIN",
+                    "summary": "Main routine",
+                    "outgoing_calls": [
+                        {"target": "SUB1", "call_type": "performs", "line": 10},
+                        {"target": "SUB2", "call_type": "calls", "line": 20},
+                    ],
+                    "incoming_calls": [
+                        {"file": "CALLER.cbl", "function": "START", "line": 5},
+                    ],
+                }
+            ],
+        }
+
+        template = DocumentationTemplate.load_lenient(data)
+
+        assert len(template.paragraphs) == 1
+        para = template.paragraphs[0]
+        assert para.paragraph_name == "MAIN"
+        assert len(para.outgoing_calls) == 2
+        assert para.outgoing_calls[0].target == "SUB1"
+        assert para.outgoing_calls[1].call_type == "calls"
+        assert len(para.incoming_calls) == 1
+        assert para.incoming_calls[0].file == "CALLER.cbl"

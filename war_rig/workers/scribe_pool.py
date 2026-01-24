@@ -59,7 +59,12 @@ from war_rig.chunking import (
     TokenEstimator,
 )
 from war_rig.config import WarRigConfig
-from war_rig.models.templates import DocumentationTemplate, FileType
+from war_rig.models.templates import (
+    CallerReference,
+    DocumentationTemplate,
+    FileType,
+    FunctionCall,
+)
 from war_rig.workers.source_preparer import (
     PreparationContext,
     PreparedSource,
@@ -71,6 +76,9 @@ from war_rig.utils.exceptions import FatalWorkerError
 from war_rig.utils.file_lock import FileLockManager
 
 logger = logging.getLogger(__name__)
+
+# Maximum function body size (chars) before chunking
+MAX_FUNCTION_BODY_CHARS = 8000
 
 
 class WorkerState(str, Enum):
@@ -196,6 +204,7 @@ class ScribeWorker:
         idle_timeout: float = 30.0,
         file_lock_manager: FileLockManager | None = None,
         exit_on_error: bool = True,
+        dependency_graph_path: Path | None = None,
     ):
         """Initialize the Scribe worker.
 
@@ -212,6 +221,9 @@ class ScribeWorker:
                 processing and skip files that are locked by other workers.
             exit_on_error: If True, raise FatalWorkerError on processing errors
                 instead of just logging. Default True.
+            dependency_graph_path: Optional path to Citadel dependency graph JSON.
+                When provided, workers can use Citadel to enrich documentation
+                with function call references and cross-file relationships.
         """
         self.worker_id = worker_id
         self.config = config
@@ -229,6 +241,17 @@ class ScribeWorker:
 
         # Initialize the Scribe agent
         self._scribe_agent: ScribeAgent | None = None
+
+        # Initialize Citadel SDK if dependency graph path available
+        self._citadel = None
+        self._dependency_graph_path = dependency_graph_path
+        if dependency_graph_path and dependency_graph_path.exists():
+            try:
+                from citadel import Citadel
+                self._citadel = Citadel()
+                logger.debug(f"Worker {worker_id}: Citadel SDK initialized")
+            except ImportError:
+                logger.debug(f"Worker {worker_id}: Citadel SDK not available")
 
         # Worker state
         self._status = WorkerStatus(
@@ -290,6 +313,180 @@ class ScribeWorker:
         self._status.last_activity = datetime.utcnow()
 
         logger.debug(f"Worker {self.worker_id}: state -> {state.value}")
+
+    def _get_citadel_context(self, file_path: str) -> dict | None:
+        """Get Citadel analysis context for a file.
+
+        Uses the Citadel SDK to analyze a source file and extract function
+        definitions with their outgoing calls and includes.
+
+        Args:
+            file_path: Path to the source file to analyze.
+
+        Returns:
+            Dictionary with:
+            - functions: list of {name, type, calls: [{target, type, line}]}
+            - includes: list of included file names
+
+            Returns None if Citadel is not available or analysis fails.
+        """
+        if not self._citadel:
+            return None
+
+        try:
+            functions = self._citadel.get_functions(file_path)
+            includes = self._citadel.get_includes(file_path)
+
+            logger.debug(
+                f"Worker {self.worker_id}: Citadel found {len(functions)} functions "
+                f"and {len(includes)} includes in {file_path}"
+            )
+
+            return {"functions": functions, "includes": includes}
+        except Exception as e:
+            logger.debug(
+                f"Worker {self.worker_id}: Citadel analysis failed for {file_path}: {e}"
+            )
+            return None
+
+    def _chunk_function_body(
+        self, body: str, max_chars: int = MAX_FUNCTION_BODY_CHARS
+    ) -> list[str]:
+        """Split large function body into chunks for processing.
+
+        Attempts to split at logical boundaries (blank lines, paragraph headers).
+        Falls back to character-based splitting if needed.
+
+        Args:
+            body: The function body text.
+            max_chars: Maximum characters per chunk.
+
+        Returns:
+            List of chunks (each <= max_chars).
+        """
+        if len(body) <= max_chars:
+            return [body]
+
+        chunks = []
+        current_chunk: list[str] = []
+        current_size = 0
+
+        # Try to split at blank lines or paragraph boundaries
+        lines = body.split("\n")
+
+        for line in lines:
+            line_size = len(line) + 1  # +1 for newline
+
+            # Check for paragraph boundary (COBOL paragraph header pattern)
+            is_boundary = (
+                line.strip().endswith(".")
+                and len(line) - len(line.lstrip()) < 12
+                and line.strip().replace("-", "").replace("_", "").isalnum()
+            )
+
+            if current_size + line_size > max_chars and current_chunk:
+                # Save current chunk
+                chunks.append("\n".join(current_chunk))
+                current_chunk = []
+                current_size = 0
+
+            current_chunk.append(line)
+            current_size += line_size
+
+        # Don't forget the last chunk
+        if current_chunk:
+            chunks.append("\n".join(current_chunk))
+
+        return chunks
+
+    async def _enrich_paragraphs_with_citadel(
+        self,
+        template: DocumentationTemplate,
+        file_path: str,
+        citadel_context: dict,
+    ) -> DocumentationTemplate:
+        """Enrich template paragraphs with Citadel call references.
+
+        For each paragraph in the template that matches a Citadel-identified
+        function, adds structured outgoing_calls and incoming_calls references.
+        These are programmatic (from static analysis), not LLM-generated.
+
+        Args:
+            template: The documentation template to enrich.
+            file_path: Path to the source file (used for caller lookup).
+            citadel_context: Context from _get_citadel_context() with functions/includes.
+
+        Returns:
+            The template with enriched paragraphs (modified in place).
+        """
+        if not template.paragraphs or not self._citadel:
+            return template
+
+        # Build lookup of function name -> outgoing calls (case-insensitive)
+        func_calls: dict[str, list[dict]] = {}
+        for func in citadel_context.get("functions", []):
+            name = func.get("name", "")
+            if name:
+                func_calls[name.lower()] = func.get("calls", [])
+
+        for para in template.paragraphs:
+            para_name = para.paragraph_name
+            if not para_name:
+                continue
+
+            para_name_lower = para_name.lower()
+
+            # Add outgoing calls from Citadel
+            if para_name_lower in func_calls:
+                para.outgoing_calls = [
+                    FunctionCall(
+                        target=c.get("target", ""),
+                        call_type=c.get("type", "performs"),
+                        line=c.get("line"),
+                    )
+                    for c in func_calls[para_name_lower]
+                    if c.get("target")
+                ]
+
+            # Add incoming calls (callers) from cross-file analysis
+            try:
+                callers = self._citadel.get_callers(file_path, para_name)
+                para.incoming_calls = [
+                    CallerReference(
+                        file=c.get("file", ""),
+                        function=c.get("function", ""),
+                        line=c.get("line"),
+                        call_type=c.get("type", "performs"),
+                    )
+                    for c in callers
+                    if c.get("file") and c.get("function")
+                ]
+            except Exception:
+                # Skip if callers lookup fails - don't block documentation
+                pass
+
+            # Get function body and chunk if needed for LLM processing
+            try:
+                body = self._citadel.get_function_body(file_path, para_name)
+                if body and len(body) > MAX_FUNCTION_BODY_CHARS:
+                    chunks = self._chunk_function_body(body)
+                    # Store chunk count in metadata for potential future use
+                    if not hasattr(para, "metadata") or para.metadata is None:
+                        para.metadata = {}
+                    para.metadata["body_chunks"] = len(chunks)
+                    logger.debug(
+                        f"Function {para_name} body split into {len(chunks)} chunks"
+                    )
+            except Exception:
+                # Graceful handling - if chunking fails, continue without chunking
+                pass
+
+        logger.debug(
+            f"Worker {self.worker_id}: Enriched {len(template.paragraphs)} paragraphs "
+            f"with Citadel call references"
+        )
+
+        return template
 
     async def run(self) -> None:
         """Main worker loop.
@@ -1874,6 +2071,14 @@ class ScribeWorker:
         Returns:
             ScribeOutput with documentation results.
         """
+        # Determine the source file path for Citadel analysis
+        source_path = self.input_directory / ticket.file_name
+        if ticket.metadata.get("file_path"):
+            source_path = Path(ticket.metadata["file_path"])
+
+        # Get Citadel context early for potential use in enrichment
+        citadel_context = self._get_citadel_context(str(source_path))
+
         # Load previous template if this is an update iteration
         previous_template = self._load_previous_template(ticket)
 
@@ -1917,6 +2122,14 @@ class ScribeWorker:
             return ScribeOutput(
                 success=False,
                 error=str(e),
+            )
+
+        # Enrich with Citadel call references if available
+        if result.template and citadel_context:
+            result.template = await self._enrich_paragraphs_with_citadel(
+                result.template,
+                str(source_path),
+                citadel_context,
             )
 
         # Save the template to disk
@@ -2550,6 +2763,7 @@ class ScribeWorkerPool:
         idle_timeout: float = 30.0,
         file_lock_manager: FileLockManager | None = None,
         exit_on_error: bool | None = None,
+        dependency_graph_path: Path | None = None,
     ):
         """Initialize the Scribe worker pool.
 
@@ -2568,6 +2782,9 @@ class ScribeWorkerPool:
                 process tickets for the same output file.
             exit_on_error: If True, workers will raise FatalWorkerError on errors.
                 Defaults to config.exit_on_error.
+            dependency_graph_path: Optional path to Citadel dependency graph JSON.
+                When provided, workers can use the graph to understand code
+                relationships and improve documentation quality.
         """
         self.config = config
         self.beads_client = beads_client
@@ -2578,6 +2795,7 @@ class ScribeWorkerPool:
         self.idle_timeout = idle_timeout
         self.file_lock_manager = file_lock_manager
         self.exit_on_error = exit_on_error if exit_on_error is not None else config.exit_on_error
+        self.dependency_graph_path = dependency_graph_path
 
         # Worker instances (created on start)
         self._workers: list[ScribeWorker] = []
@@ -2612,6 +2830,7 @@ class ScribeWorkerPool:
                 idle_timeout=self.idle_timeout,
                 file_lock_manager=self.file_lock_manager,
                 exit_on_error=self.exit_on_error,
+                dependency_graph_path=self.dependency_graph_path,
             )
             for i in range(self.num_workers)
         ]

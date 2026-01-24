@@ -173,6 +173,9 @@ class OrchestrationState:
     # Current status message
     status_message: str = ""
 
+    # Citadel dependency graph path (generated at startup)
+    dependency_graph_path: Path | None = None
+
 
 class TicketOrchestrator:
     """Orchestrates ticket-based parallel documentation workflow.
@@ -342,6 +345,9 @@ class TicketOrchestrator:
             self._state.batch_id = self.program_manager.batch_id or ""
             self._state.total_files = len(tickets)
             logger.info(f"Batch {self._state.batch_id}: {len(tickets)} files to process")
+
+            # Generate Citadel dependency graph for the input directory
+            await self._generate_citadel_graph(input_dir)
 
             # Phase 2-6: Run cycles until completion
             max_cycles = self.config.pm_max_cycles
@@ -563,6 +569,7 @@ class TicketOrchestrator:
             idle_timeout=30.0,
             file_lock_manager=self._file_lock_manager,
             exit_on_error=self.config.exit_on_error,
+            dependency_graph_path=self._state.dependency_graph_path,
         )
 
         # Create Challenger pool with upstream check and file lock manager
@@ -927,6 +934,7 @@ class TicketOrchestrator:
             idle_timeout=30.0,
             file_lock_manager=self._file_lock_manager,
             exit_on_error=self.config.exit_on_error,
+            dependency_graph_path=self._state.dependency_graph_path,
         )
 
         # Create and run Challenger pool with file lock manager
@@ -1095,6 +1103,7 @@ class TicketOrchestrator:
             idle_timeout=30.0,
             file_lock_manager=self._file_lock_manager,
             exit_on_error=self.config.exit_on_error,
+            dependency_graph_path=self._state.dependency_graph_path,
         )
 
         try:
@@ -1981,6 +1990,54 @@ class TicketOrchestrator:
                 reason=f"Generation error: {e}",
             )
             return None
+
+    async def _generate_citadel_graph(self, input_dir: Path) -> None:
+        """Generate Citadel dependency graph for the input directory.
+
+        Uses the Citadel SDK to analyze all source files in the input directory
+        and produce a dependency graph. The graph is saved to the output directory
+        and its path is stored in orchestrator state for use by Scribe workers.
+
+        This is an enhancement that helps workers understand code relationships.
+        If Citadel analysis fails, a warning is logged but processing continues.
+
+        Args:
+            input_dir: Directory containing source files to analyze.
+        """
+        self._state.status_message = "Generating Citadel dependency graph..."
+
+        try:
+            from citadel import Citadel
+
+            citadel = Citadel()
+            graph_path = self.config.output_directory / "dependency_graph.json"
+
+            # Citadel's Orchestrator.analyze() is async, but the SDK's Citadel class
+            # provides synchronous file-level analysis. For directory-level analysis,
+            # we use the Orchestrator directly.
+            from citadel.orchestrator import Orchestrator as CitadelOrchestrator
+
+            citadel_orchestrator = CitadelOrchestrator()
+            await citadel_orchestrator.analyze(
+                source_root=input_dir,
+                output_path=graph_path,
+                output_format="json",
+            )
+
+            self._state.dependency_graph_path = graph_path
+            logger.info(f"Generated Citadel dependency graph at {graph_path}")
+
+        except ImportError:
+            logger.warning(
+                "Citadel SDK not available - skipping dependency graph generation. "
+                "Install citadel to enable this feature."
+            )
+        except Exception as e:
+            logger.warning(
+                f"Citadel dependency graph generation failed: {e}. "
+                "Continuing without dependency graph - this is an enhancement, not required."
+            )
+            # Do not set dependency_graph_path - it stays None
 
     async def stop(self) -> None:
         """Gracefully stop the orchestrator.
