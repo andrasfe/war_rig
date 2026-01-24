@@ -1,0 +1,107 @@
+# Python Artifact Specification
+# Handles Python source files including modules, classes, functions, and imports
+
+spec_version: "1.0"
+spec_id: python
+language: Python
+description: Python source files
+
+file_extensions:
+  - .py
+  - .pyw
+
+file_patterns: []
+
+category: code
+primary_artifact_type: module
+
+comments:
+  line_prefix: "#"
+  fixed_column: null
+  fixed_indicator: null
+  block_start: null
+  block_end: null
+
+strings:
+  delimiters:
+    - "'"
+    - '"'
+  escape_char: "\\"
+  triple_quoted: true
+
+continuation:
+  trailing_char: null
+  leading_char: null
+  leading_column: null
+
+scope:
+  start_pattern: "^(class|def)\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*[:(]"
+  end_pattern: "^(?=class\\s|def\\s|\\S)"
+  name_pattern: "^(?:class|def)\\s+([A-Za-z_][A-Za-z0-9_]*)"
+
+definition_patterns:
+  - name: class_def
+    pattern: "^class\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*[:(]"
+    capture_groups:
+      - 1
+    artifact_type: class
+
+  - name: function_def
+    pattern: "^def\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*\\("
+    capture_groups:
+      - 1
+    artifact_type: function
+
+  - name: method_def
+    pattern: "^\\s+def\\s+([A-Za-z_][A-Za-z0-9_]*)\\s*\\(self"
+    capture_groups:
+      - 1
+    artifact_type: method
+
+reference_patterns:
+  - name: import_module
+    pattern: "^import\\s+([A-Za-z_][A-Za-z0-9_.]*)"
+    capture_groups:
+      - 1
+    relationship_type: imports
+    target_type_hint: module
+
+  - name: from_import
+    pattern: "^from\\s+([A-Za-z_][A-Za-z0-9_.]*)\\s+import"
+    capture_groups:
+      - 1
+    relationship_type: imports
+    target_type_hint: module
+
+  - name: function_call
+    pattern: "([A-Za-z_][A-Za-z0-9_]*)\\s*\\("
+    capture_groups:
+      - 1
+    relationship_type: calls
+    target_type_hint: function
+
+  - name: sqlalchemy_table
+    pattern: "Table\\s*\\(\\s*['\"]([A-Za-z0-9_]+)['\"]"
+    capture_groups:
+      - 1
+    relationship_type: references
+    target_type_hint: table
+
+  - name: execute_sql
+    pattern: "\\.execute\\s*\\(\\s*['\"]\\s*(?:SELECT|INSERT|UPDATE|DELETE)\\s+.+?(?:FROM|INTO|UPDATE)\\s+([A-Za-z0-9_]+)"
+    capture_groups:
+      - 1
+    relationship_type: references
+    target_type_hint: table
+    ignore_case: true
+
+preprocessor_patterns: []
+
+naming:
+  case: preserve
+  max_length: null
+  strip_chars: ""
+  replace_map: {}
+  common_abbreviations: {}
+
+known_aliases: {}

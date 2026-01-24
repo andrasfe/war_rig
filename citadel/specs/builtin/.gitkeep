@@ -1,0 +1,4 @@
+# This directory contains built-in artifact specifications.
+# Specs are YAML files that define how to parse different file types.
+#
+# See the citadel-initial-spec.md for examples of spec files.

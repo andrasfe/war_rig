@@ -1,0 +1,82 @@
+# COBOL Copybook Artifact Specification
+# Handles COBOL copybook record layouts included via COPY statements
+
+spec_version: "1.0"
+spec_id: copybook
+language: COBOL Copybook
+description: COBOL copybook record layouts
+
+file_extensions:
+  - .cpy
+  - .copy
+  - .CPY
+  - .COPY
+
+file_patterns:
+  - "**/copylib/**"
+  - "**/COPYLIB/**"
+
+category: data
+primary_artifact_type: copybook
+create_file_artifact: true
+
+comments:
+  fixed_column: 7
+  fixed_indicator: "*"
+  line_prefix: null
+  block_start: null
+  block_end: null
+
+strings:
+  delimiters:
+    - "'"
+    - '"'
+  escape_char: ""
+  triple_quoted: false
+
+continuation:
+  trailing_char: null
+  leading_char: "-"
+  leading_column: 7
+
+scope: null
+
+definition_patterns:
+  - name: record_01_level
+    pattern: "^\\s*01\\s+([A-Z0-9-]+)\\s*\\."
+    capture_groups:
+      - 1
+    artifact_type: record_layout
+
+  - name: field_definition
+    pattern: "^\\s*(\\d{2})\\s+([A-Z0-9-]+)\\s+PIC"
+    capture_groups:
+      - 1
+      - 2
+    join_with: ":"
+    artifact_type: column
+
+reference_patterns: []
+
+preprocessor_patterns:
+  - name: copy_nested
+    pattern: "COPY\\s+([A-Za-z0-9-]+)"
+    capture_groups:
+      - 1
+    relationship_type: includes
+    target_type_hint: copybook
+
+naming:
+  case: upper
+  max_length: null
+  strip_chars: "-"
+  replace_map: {}
+  common_abbreviations:
+    CUSTOMER:
+      - CUST
+      - CST
+    ACCOUNT:
+      - ACCT
+      - ACC
+
+known_aliases: {}

@@ -1,0 +1,24 @@
+spec_version: "1.0"
+spec_id: bms
+language: CICS BMS
+description: CICS Basic Mapping Support map definitions
+file_extensions: [".bms", ".BMS"]
+category: interface
+primary_artifact_type: map
+
+comments:
+  line_prefix: "*"
+
+definition_patterns:
+  - name: mapset
+    pattern: "([A-Z0-9]+)\\s+DFHMSD"
+    capture_groups: [1]
+    artifact_type: map
+
+  - name: map
+    pattern: "([A-Z0-9]+)\\s+DFHMDI"
+    capture_groups: [1]
+    artifact_type: screen
+
+reference_patterns: []
+preprocessor_patterns: []

@@ -1,0 +1,106 @@
+# JCL Artifact Specification
+# Handles IBM Job Control Language for batch job definitions
+
+spec_version: "1.0"
+spec_id: jcl
+language: JCL
+description: IBM Job Control Language
+
+file_extensions:
+  - .jcl
+  - .JCL
+  - .proc
+  - .PROC
+
+file_patterns:
+  - "JCL*"
+  - "PROC*"
+
+category: code
+primary_artifact_type: procedure
+
+comments:
+  line_prefix: "//*"
+  fixed_column: null
+  fixed_indicator: null
+  block_start: null
+  block_end: null
+
+strings:
+  delimiters:
+    - "'"
+  escape_char: ""
+  triple_quoted: false
+
+continuation:
+  trailing_char: null
+  leading_char: null
+  leading_column: null
+
+scope: null
+
+definition_patterns:
+  - name: job
+    pattern: "^//([A-Z0-9@#$]+)\\s+JOB\\s"
+    capture_groups:
+      - 1
+    artifact_type: procedure
+
+  - name: proc
+    pattern: "^//([A-Z0-9@#$]+)\\s+PROC\\s"
+    capture_groups:
+      - 1
+    artifact_type: procedure
+
+  - name: step
+    pattern: "^//([A-Z0-9@#$]+)\\s+EXEC\\s"
+    capture_groups:
+      - 1
+    artifact_type: paragraph
+
+reference_patterns:
+  - name: exec_pgm
+    pattern: "EXEC\\s+PGM=([A-Z0-9@#$]+)"
+    capture_groups:
+      - 1
+    relationship_type: executes
+    target_type_hint: program
+
+  - name: exec_proc
+    pattern: "EXEC\\s+([A-Z0-9@#$]+)(?!\\s*=)"
+    capture_groups:
+      - 1
+    relationship_type: calls
+    target_type_hint: procedure
+    must_not_follow: "PGM="
+
+  - name: dd_dsn
+    pattern: "DD\\s+.*DSN=([A-Z0-9@#$.]+)"
+    capture_groups:
+      - 1
+    relationship_type: references
+    target_type_hint: dataset
+
+  - name: dd_dsn_quoted
+    pattern: "DD\\s+.*DSN='([A-Z0-9@#$.()+-]+)'"
+    capture_groups:
+      - 1
+    relationship_type: references
+    target_type_hint: dataset
+
+preprocessor_patterns:
+  - name: include
+    pattern: "//\\s+INCLUDE\\s+MEMBER=([A-Z0-9@#$]+)"
+    capture_groups:
+      - 1
+    relationship_type: includes
+    target_type_hint: procedure
+
+naming:
+  case: upper
+  max_length: 8
+  strip_chars: ""
+  replace_map: {}
+  common_abbreviations: {}
+
+known_aliases: {}

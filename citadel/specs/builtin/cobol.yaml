@@ -1,0 +1,209 @@
+# COBOL Artifact Specification
+# Handles COBOL programs with embedded SQL (DB2) and CICS commands
+
+spec_version: "1.0"
+spec_id: cobol
+language: COBOL
+description: COBOL programs with embedded SQL and CICS
+
+file_extensions:
+  - .cbl
+  - .cob
+  - .cobol
+  - .CBL
+  - .COB
+
+file_patterns: []
+
+category: code
+primary_artifact_type: program
+
+comments:
+  fixed_column: 7
+  fixed_indicator: "*"
+  line_prefix: null
+  block_start: null
+  block_end: null
+
+strings:
+  delimiters:
+    - "'"
+    - '"'
+  escape_char: ""
+  triple_quoted: false
+
+continuation:
+  trailing_char: null
+  leading_char: "-"
+  leading_column: 7
+
+scope:
+  start_pattern: "(PROCEDURE|DATA|WORKING-STORAGE|LINKAGE|FILE)\\s+DIVISION"
+  end_pattern: "(PROCEDURE|DATA|WORKING-STORAGE|LINKAGE|FILE)\\s+DIVISION|\\Z"
+  name_pattern: null
+
+definition_patterns:
+  - name: program_id
+    pattern: "PROGRAM-ID\\.\\s+([A-Za-z0-9-]+)"
+    capture_groups:
+      - 1
+    artifact_type: program
+
+  - name: paragraph
+    pattern: "^\\s{7}([A-Z0-9-]+)\\s*\\."
+    capture_groups:
+      - 1
+    artifact_type: paragraph
+    must_be_in_scope: PROCEDURE DIVISION
+
+  - name: section
+    pattern: "^\\s{7}([A-Z0-9-]+)\\s+SECTION\\."
+    capture_groups:
+      - 1
+    artifact_type: paragraph
+
+reference_patterns:
+  # Program calls
+  - name: call_literal
+    pattern: "CALL\\s+['\"]([A-Za-z0-9-]+)['\"]"
+    capture_groups:
+      - 1
+    relationship_type: calls
+    target_type_hint: program
+
+  - name: call_variable
+    pattern: "CALL\\s+([A-Z0-9-]+)"
+    capture_groups:
+      - 1
+    relationship_type: calls
+    must_not_follow: "CALL\\s+['\"]"
+
+  # PERFORM statements
+  - name: perform
+    pattern: "PERFORM\\s+([A-Z0-9-]+)"
+    capture_groups:
+      - 1
+    relationship_type: performs
+    target_type_hint: paragraph
+
+  # EXEC SQL statements
+  - name: exec_sql_select
+    pattern: "EXEC\\s+SQL\\s+SELECT\\s+.+?\\s+FROM\\s+([A-Za-z0-9_]+)"
+    capture_groups:
+      - 1
+    relationship_type: reads
+    target_type_hint: table
+    ignore_case: true
+    dotall: true
+
+  - name: exec_sql_insert
+    pattern: "EXEC\\s+SQL\\s+INSERT\\s+INTO\\s+([A-Za-z0-9_]+)"
+    capture_groups:
+      - 1
+    relationship_type: writes
+    target_type_hint: table
+    ignore_case: true
+
+  - name: exec_sql_update
+    pattern: "EXEC\\s+SQL\\s+UPDATE\\s+([A-Za-z0-9_]+)"
+    capture_groups:
+      - 1
+    relationship_type: updates
+    target_type_hint: table
+    ignore_case: true
+
+  - name: exec_sql_delete
+    pattern: "EXEC\\s+SQL\\s+DELETE\\s+FROM\\s+([A-Za-z0-9_]+)"
+    capture_groups:
+      - 1
+    relationship_type: deletes
+    target_type_hint: table
+    ignore_case: true
+
+  # EXEC CICS statements
+  - name: cics_link
+    pattern: "EXEC\\s+CICS\\s+LINK\\s+PROGRAM\\s*\\(\\s*['\"]?([A-Za-z0-9-]+)['\"]?\\s*\\)"
+    capture_groups:
+      - 1
+    relationship_type: calls
+    target_type_hint: program
+    ignore_case: true
+
+  - name: cics_xctl
+    pattern: "EXEC\\s+CICS\\s+XCTL\\s+PROGRAM\\s*\\(\\s*['\"]?([A-Za-z0-9-]+)['\"]?\\s*\\)"
+    capture_groups:
+      - 1
+    relationship_type: calls
+    target_type_hint: program
+    ignore_case: true
+
+  - name: cics_read
+    pattern: "EXEC\\s+CICS\\s+READ\\s+.+?FILE\\s*\\(\\s*['\"]?([A-Za-z0-9-]+)['\"]?\\s*\\)"
+    capture_groups:
+      - 1
+    relationship_type: reads
+    target_type_hint: file
+    ignore_case: true
+    dotall: true
+
+  - name: cics_write
+    pattern: "EXEC\\s+CICS\\s+WRITE\\s+.+?FILE\\s*\\(\\s*['\"]?([A-Za-z0-9-]+)['\"]?\\s*\\)"
+    capture_groups:
+      - 1
+    relationship_type: writes
+    target_type_hint: file
+    ignore_case: true
+    dotall: true
+
+  - name: cics_send_map
+    pattern: "EXEC\\s+CICS\\s+SEND\\s+MAP\\s*\\(\\s*['\"]?([A-Za-z0-9-]+)['\"]?\\s*\\)"
+    capture_groups:
+      - 1
+    relationship_type: sends_to
+    target_type_hint: map
+    ignore_case: true
+
+  - name: cics_receive_map
+    pattern: "EXEC\\s+CICS\\s+RECEIVE\\s+MAP\\s*\\(\\s*['\"]?([A-Za-z0-9-]+)['\"]?\\s*\\)"
+    capture_groups:
+      - 1
+    relationship_type: receives_from
+    target_type_hint: map
+    ignore_case: true
+
+preprocessor_patterns:
+  - name: copy
+    pattern: "COPY\\s+([A-Za-z0-9-]+)"
+    capture_groups:
+      - 1
+    relationship_type: includes
+    target_type_hint: copybook
+
+naming:
+  case: upper
+  max_length: 8
+  strip_chars: ""
+  replace_map: {}
+  common_abbreviations:
+    CUSTOMER:
+      - CUST
+      - CUSTMR
+      - CST
+    ACCOUNT:
+      - ACCT
+      - ACC
+    TRANSACTION:
+      - TRANS
+      - TXN
+      - TRAN
+    NUMBER:
+      - NUM
+      - NBR
+      - "NO"
+    BALANCE:
+      - BAL
+    MASTER:
+      - MSTR
+      - MST
+
+known_aliases: {}

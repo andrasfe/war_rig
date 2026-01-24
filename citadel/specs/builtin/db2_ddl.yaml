@@ -1,0 +1,107 @@
+# DB2 DDL Artifact Specification
+# Handles DB2 Data Definition Language for table, view, and index definitions
+
+spec_version: "1.0"
+spec_id: db2_ddl
+language: DB2 DDL
+description: DB2 Data Definition Language
+
+file_extensions:
+  - .sql
+  - .ddl
+  - .SQL
+  - .DDL
+
+file_patterns:
+  - "**/ddl/**"
+  - "**/DDL/**"
+
+category: data
+primary_artifact_type: table
+
+comments:
+  line_prefix: "--"
+  fixed_column: null
+  fixed_indicator: null
+  block_start: "/*"
+  block_end: "*/"
+
+strings:
+  delimiters:
+    - "'"
+  escape_char: "'"
+  triple_quoted: false
+
+continuation:
+  trailing_char: null
+  leading_char: null
+  leading_column: null
+
+scope: null
+
+definition_patterns:
+  - name: create_table
+    pattern: "CREATE\\s+TABLE\\s+(?:[A-Z0-9_]+\\.)?([A-Z0-9_]+)"
+    capture_groups:
+      - 1
+    artifact_type: table
+    ignore_case: true
+
+  - name: create_view
+    pattern: "CREATE\\s+VIEW\\s+(?:[A-Z0-9_]+\\.)?([A-Z0-9_]+)"
+    capture_groups:
+      - 1
+    artifact_type: view
+    ignore_case: true
+
+  - name: create_index
+    pattern: "CREATE\\s+(?:UNIQUE\\s+)?INDEX\\s+(?:[A-Z0-9_]+\\.)?([A-Z0-9_]+)"
+    capture_groups:
+      - 1
+    artifact_type: index
+    ignore_case: true
+
+  - name: column_def
+    pattern: "^\\s+([A-Z0-9_]+)\\s+(?:CHAR|VARCHAR|INTEGER|DECIMAL|DATE|TIMESTAMP|SMALLINT|BIGINT)"
+    capture_groups:
+      - 1
+    artifact_type: column
+    ignore_case: true
+
+reference_patterns:
+  - name: foreign_key
+    pattern: "REFERENCES\\s+(?:[A-Z0-9_]+\\.)?([A-Z0-9_]+)"
+    capture_groups:
+      - 1
+    relationship_type: references
+    target_type_hint: table
+    ignore_case: true
+
+  - name: view_select_from
+    pattern: "AS\\s+SELECT\\s+.+?\\s+FROM\\s+(?:[A-Z0-9_]+\\.)?([A-Z0-9_]+)"
+    capture_groups:
+      - 1
+    relationship_type: reads
+    target_type_hint: table
+    ignore_case: true
+    dotall: true
+
+preprocessor_patterns: []
+
+naming:
+  case: upper
+  max_length: null
+  strip_chars: ""
+  replace_map: {}
+  common_abbreviations:
+    CUSTOMER:
+      - CUST
+      - CUSTMR
+    ACCOUNT:
+      - ACCT
+      - ACC
+    TRANSACTION:
+      - TRANS
+      - TXN
+
+known_aliases: {}
