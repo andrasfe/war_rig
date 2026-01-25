@@ -676,7 +676,10 @@ class TicketOrchestrator:
 
         try:
             analyzer = CallGraphAnalyzer(doc_directory=self.config.output_directory)
-            analysis = analyzer.analyze()
+            # Use Citadel dependency graph if available, fall back to doc.json parsing
+            analysis = analyzer.analyze(
+                dependency_graph_path=self._state.dependency_graph_path
+            )
 
             # Log summary
             logger.info(

@@ -174,7 +174,16 @@ class CallGraphAnalysis:
 class CallGraphAnalyzer:
     """Analyzes documentation files to build call graphs.
 
+    The analyzer supports two data sources:
+    1. Citadel dependency_graph.json (preferred) - Accurate static analysis
+    2. .doc.json files (fallback) - Documentation-based extraction
+
     Usage:
+        # With Citadel graph (recommended)
+        analyzer = CallGraphAnalyzer(output_directory)
+        analysis = analyzer.analyze(dependency_graph_path=Path("dependency_graph.json"))
+
+        # Fallback to doc.json parsing
         analyzer = CallGraphAnalyzer(output_directory)
         analysis = analyzer.analyze()
 
@@ -199,20 +208,344 @@ class CallGraphAnalyzer:
         self.system_utilities = SYSTEM_UTILITIES.copy()
         if additional_system_utilities:
             self.system_utilities = self.system_utilities | additional_system_utilities
+        # Internal graph structures populated by load_from_citadel_graph
+        self._citadel_programs: dict[str, ProgramInfo] = {}
+        self._citadel_calls: list[CallRelationship] = []
+        self._citadel_loaded: bool = False
 
-    def analyze(self) -> CallGraphAnalysis:
-        """Perform call graph analysis on all documentation files.
+    def load_from_citadel_graph(self, graph_path: Path) -> None:
+        """Load call relationships from Citadel dependency graph.
+
+        Parses the Citadel-generated dependency_graph.json file which contains
+        accurate static analysis of program artifacts and their relationships.
+
+        The Citadel graph structure is:
+        {
+            "artifacts": {
+                "artifact_id": {
+                    "id": "procedure::PROGRAM1",
+                    "artifact_type": "procedure|paragraph|program",
+                    "canonical_name": "PROGRAM1",
+                    "defined_in": {
+                        "file_path": "/path/to/file.cbl",
+                        "line_start": 1
+                    },
+                    "language": "COBOL|JCL"
+                }
+            },
+            "relationships": [
+                {
+                    "from_artifact": "artifact_id",
+                    "to_artifact": "artifact_id",
+                    "relationship_type": "calls",
+                    "location": {"line_start": 123}
+                }
+            ]
+        }
+
+        Args:
+            graph_path: Path to the Citadel dependency_graph.json file.
+
+        Raises:
+            FileNotFoundError: If the graph file does not exist.
+            json.JSONDecodeError: If the file is not valid JSON.
+        """
+        logger.info(f"Loading Citadel dependency graph from {graph_path}")
+
+        data = json.loads(graph_path.read_text(encoding="utf-8"))
+        artifacts = data.get("artifacts", {})
+        relationships = data.get("relationships", [])
+
+        logger.debug(f"Citadel graph: {len(artifacts)} artifacts, {len(relationships)} relationships")
+
+        # Build program info from artifacts
+        self._citadel_programs = {}
+        for artifact_id, artifact in artifacts.items():
+            # Extract the canonical name (program/procedure name)
+            canonical_name = artifact.get("canonical_name", "")
+            if not canonical_name:
+                continue
+
+            # Get artifact type and file info
+            artifact_type = artifact.get("artifact_type", "unknown")
+            defined_in = artifact.get("defined_in", {})
+            file_path = defined_in.get("file_path", "")
+            file_name = Path(file_path).name if file_path else ""
+            language = artifact.get("language", "")
+
+            # Map language to file type
+            file_type = self._map_language_to_file_type(language)
+
+            # Create ProgramInfo - use canonical_name as program_id
+            # Skip paragraphs for now as they are internal, but include procedures and programs
+            if artifact_type in ("procedure", "program"):
+                program_info = ProgramInfo(
+                    program_id=canonical_name,
+                    file_name=file_name,
+                    file_type=file_type,
+                    summary=None,  # Citadel doesn't provide summaries
+                    resolution_status=ResolutionStatus.DOCUMENTED,
+                )
+                self._citadel_programs[canonical_name] = program_info
+
+                # Also store the artifact_id -> canonical_name mapping for relationship resolution
+                if artifact_id != canonical_name:
+                    # Store with artifact_id prefix for relationship lookup
+                    self._citadel_programs[artifact_id] = program_info
+
+        # Build call relationships from Citadel relationships
+        self._citadel_calls = []
+        for rel in relationships:
+            rel_type = rel.get("relationship_type", "")
+
+            # Only process call-like relationships
+            if rel_type not in ("calls", "performs", "invokes", "executes"):
+                continue
+
+            from_artifact = rel.get("from_artifact", "")
+            to_artifact = rel.get("to_artifact", "")
+            location = rel.get("location", {})
+            line = location.get("line_start")
+
+            # Resolve artifact IDs to canonical names
+            caller = self._resolve_artifact_name(from_artifact, artifacts)
+            callee = self._resolve_artifact_name(to_artifact, artifacts)
+
+            if not caller or not callee:
+                continue
+
+            # Normalize callee name
+            callee = callee.strip().rstrip("$").upper()
+
+            # Check for dynamic calls
+            is_dynamic = bool(DYNAMIC_PROGRAM_PATTERN.search(callee))
+
+            # Map relationship type to call type
+            call_type = self._map_relationship_to_call_type(rel_type)
+
+            relationship = CallRelationship(
+                caller=caller,
+                callee=callee,
+                call_type=call_type,
+                is_dynamic=is_dynamic,
+                citation=line,
+            )
+            self._citadel_calls.append(relationship)
+
+        self._citadel_loaded = True
+        logger.info(
+            f"Loaded {len(self._citadel_programs)} programs and "
+            f"{len(self._citadel_calls)} call relationships from Citadel graph"
+        )
+
+    def _resolve_artifact_name(self, artifact_id: str, artifacts: dict) -> str | None:
+        """Resolve an artifact ID to its canonical name.
+
+        Args:
+            artifact_id: The artifact ID (e.g., "procedure::BUILDBAT")
+            artifacts: The artifacts dictionary from the Citadel graph
+
+        Returns:
+            The canonical name or None if not found
+        """
+        if artifact_id in artifacts:
+            return artifacts[artifact_id].get("canonical_name", "")
+
+        # Try to extract name from the ID format (e.g., "procedure::NAME")
+        if "::" in artifact_id:
+            return artifact_id.split("::", 1)[1]
+
+        return artifact_id if artifact_id else None
+
+    def _map_language_to_file_type(self, language: str) -> str | None:
+        """Map Citadel language to file type.
+
+        Args:
+            language: The language from Citadel (e.g., "COBOL", "JCL")
+
+        Returns:
+            The file type string
+        """
+        mapping = {
+            "COBOL": "COBOL",
+            "JCL": "JCL",
+            "COPYBOOK": "COPYBOOK",
+            "BMS": "BMS",
+            "SQL": "SQL",
+        }
+        return mapping.get(language.upper() if language else "", None)
+
+    def _map_relationship_to_call_type(self, rel_type: str) -> str:
+        """Map Citadel relationship type to call type.
+
+        Args:
+            rel_type: The relationship type from Citadel
+
+        Returns:
+            The call type string
+        """
+        mapping = {
+            "calls": "CALL",
+            "performs": "PERFORM",
+            "invokes": "INVOKE",
+            "executes": "EXEC",
+        }
+        return mapping.get(rel_type.lower(), "CALL")
+
+    def analyze(
+        self,
+        dependency_graph_path: Path | None = None,
+    ) -> CallGraphAnalysis:
+        """Perform call graph analysis.
+
+        This method supports two data sources:
+        1. Citadel dependency_graph.json (preferred) - Uses accurate static analysis
+        2. .doc.json files (fallback) - Parses documentation for call relationships
+
+        When dependency_graph_path is provided and exists, the Citadel graph is used
+        to supplement or replace the doc.json-based analysis. The Citadel graph
+        provides more accurate call relationships from static analysis.
+
+        Args:
+            dependency_graph_path: Optional path to Citadel dependency_graph.json.
+                If provided and exists, loads call relationships from static analysis.
+                Falls back to doc.json parsing if not available.
 
         Returns:
             CallGraphAnalysis with all findings
         """
+        # Try to load Citadel graph if path provided
+        use_citadel = False
+        if dependency_graph_path and dependency_graph_path.exists():
+            try:
+                self.load_from_citadel_graph(dependency_graph_path)
+                use_citadel = self._citadel_loaded
+                if use_citadel:
+                    logger.info("Using Citadel dependency graph for call analysis")
+            except (json.JSONDecodeError, IOError, KeyError) as e:
+                logger.warning(f"Failed to load Citadel graph, falling back to doc.json: {e}")
+                use_citadel = False
+
+        # Load documentation files (needed for program summaries even with Citadel)
         docs = self._load_documentation()
+
+        if use_citadel and self._citadel_loaded:
+            # Use Citadel graph for call relationships, docs for metadata
+            return self._analyze_with_citadel(docs)
+
+        # Fallback: analyze from doc.json files only
         if not docs:
             logger.warning(f"No documentation files found in {self.doc_directory}")
             return self._empty_analysis()
 
-        logger.info(f"Analyzing {len(docs)} documentation files")
+        logger.info(f"Analyzing {len(docs)} documentation files (doc.json fallback)")
+        return self._analyze_from_docs(docs)
 
+    def _analyze_with_citadel(self, docs: list[dict[str, Any]]) -> CallGraphAnalysis:
+        """Analyze using Citadel graph with doc.json for supplementary metadata.
+
+        Args:
+            docs: Documentation files for extracting summaries and metadata
+
+        Returns:
+            CallGraphAnalysis from Citadel static analysis
+        """
+        # Build program info from docs for summaries/metadata
+        doc_programs, resolved_programs = self._build_program_info(docs) if docs else ({}, {})
+
+        # Merge Citadel programs with doc metadata
+        programs = {}
+        for program_id, citadel_info in self._citadel_programs.items():
+            # Skip artifact IDs (those with ::)
+            if "::" in program_id:
+                continue
+
+            # Merge with doc info if available
+            if program_id in doc_programs:
+                doc_info = doc_programs[program_id]
+                programs[program_id] = ProgramInfo(
+                    program_id=program_id,
+                    file_name=citadel_info.file_name or doc_info.file_name,
+                    file_type=citadel_info.file_type or doc_info.file_type,
+                    summary=doc_info.summary,  # Get summary from docs
+                    resolution_status=doc_info.resolution_status,
+                    parent_program=doc_info.parent_program,
+                )
+            else:
+                programs[program_id] = citadel_info
+
+        # Use Citadel call relationships
+        all_calls = [c for c in self._citadel_calls if not c.is_dynamic]
+        dynamic_calls = [c for c in self._citadel_calls if c.is_dynamic]
+
+        # Update program info with calls
+        for call in all_calls:
+            if call.caller in programs:
+                programs[call.caller].calls.append(call)
+            if call.callee in programs:
+                programs[call.callee].called_by.append(call.caller)
+
+        # Continue with standard analysis flow
+        documented_ids = set(programs.keys())
+        all_callees = {call.callee for call in all_calls}
+
+        # Identify external dependencies
+        documented_ids = set(programs.keys())
+        all_callees = {call.callee for call in all_calls if not call.is_dynamic}
+        external_deps = all_callees - documented_ids
+
+        # Classify external dependencies (with auto-detection)
+        system_utils = set()
+        auto_classified = set()
+        custom_missing = set()
+
+        for dep in external_deps:
+            if dep in self.system_utilities:
+                system_utils.add(dep)
+            elif self._detect_system_utility(dep):
+                # Auto-classified based on prefix pattern
+                system_utils.add(dep)
+                auto_classified.add(dep)
+            else:
+                custom_missing.add(dep)
+
+        if auto_classified:
+            logger.info(f"Auto-classified {len(auto_classified)} utilities: {sorted(auto_classified)}")
+
+        # Find entry points and leaf nodes
+        entry_points = self._find_entry_points(programs, documented_ids)
+        leaf_nodes = self._find_leaf_nodes(programs, documented_ids)
+
+        # Build call chains
+        call_chains = self._build_call_chains(programs, documented_ids)
+
+        logger.info(f"Found {len(external_deps)} external dependencies")
+        logger.info(f"  - {len(system_utils)} system utilities (skipped)")
+        logger.info(f"  - {len(custom_missing)} custom programs (need documentation)")
+
+        return CallGraphAnalysis(
+            documented_programs=programs,
+            external_dependencies=external_deps,
+            system_utilities=system_utils,
+            custom_missing=custom_missing,
+            entry_points=entry_points,
+            leaf_nodes=leaf_nodes,
+            call_chains=call_chains,
+            dynamic_calls=dynamic_calls,
+            total_calls=len(all_calls),
+            auto_classified_utilities=auto_classified,
+            resolved_programs=resolved_programs,
+        )
+
+    def _analyze_from_docs(self, docs: list[dict[str, Any]]) -> CallGraphAnalysis:
+        """Analyze using only doc.json files (fallback when Citadel unavailable).
+
+        Args:
+            docs: Documentation files to analyze
+
+        Returns:
+            CallGraphAnalysis from documentation parsing
+        """
         # Build program info
         programs, resolved_programs = self._build_program_info(docs)
 

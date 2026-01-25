@@ -279,3 +279,275 @@ class TestCallGraphAnalyzerEmpty:
             assert len(analysis.documented_programs) == 0
             assert analysis.total_calls == 0
             assert not analysis.has_gaps()
+
+
+class TestCitadelGraphLoading:
+    """Tests for loading call graph from Citadel dependency_graph.json."""
+
+    @pytest.fixture
+    def citadel_graph_fixture(self):
+        """Create a temporary directory with a Citadel dependency graph."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_dir = Path(tmpdir)
+
+            # Create a sample Citadel dependency graph
+            graph = {
+                "version": "1.0",
+                "generated_at": "2026-01-25T00:00:00",
+                "source_root": str(output_dir),
+                "artifacts": {
+                    "procedure::MAINPGM": {
+                        "id": "procedure::MAINPGM",
+                        "artifact_type": "procedure",
+                        "category": "code",
+                        "canonical_name": "MAINPGM",
+                        "defined_in": {
+                            "file_path": str(output_dir / "MAINPGM.cbl"),
+                            "line_start": 1,
+                            "line_end": 100,
+                        },
+                        "language": "COBOL",
+                    },
+                    "procedure::SUBPGM1": {
+                        "id": "procedure::SUBPGM1",
+                        "artifact_type": "procedure",
+                        "category": "code",
+                        "canonical_name": "SUBPGM1",
+                        "defined_in": {
+                            "file_path": str(output_dir / "SUBPGM1.cbl"),
+                            "line_start": 1,
+                            "line_end": 50,
+                        },
+                        "language": "COBOL",
+                    },
+                    "procedure::BUILDBAT": {
+                        "id": "procedure::BUILDBAT",
+                        "artifact_type": "procedure",
+                        "category": "code",
+                        "canonical_name": "BUILDBAT",
+                        "defined_in": {
+                            "file_path": str(output_dir / "BUILDBAT.prc"),
+                            "line_start": 1,
+                            "line_end": 23,
+                        },
+                        "language": "JCL",
+                    },
+                },
+                "relationships": [
+                    {
+                        "id": "rel-1",
+                        "from_artifact": "procedure::MAINPGM",
+                        "to_artifact": "procedure::SUBPGM1",
+                        "relationship_type": "calls",
+                        "location": {
+                            "file_path": str(output_dir / "MAINPGM.cbl"),
+                            "line_start": 50,
+                        },
+                        "confidence": 1.0,
+                    },
+                    {
+                        "id": "rel-2",
+                        "from_artifact": "procedure::MAINPGM",
+                        "to_artifact": "procedure::BUILDBAT",
+                        "relationship_type": "calls",
+                        "location": {
+                            "file_path": str(output_dir / "MAINPGM.cbl"),
+                            "line_start": 75,
+                        },
+                        "confidence": 1.0,
+                    },
+                ],
+                "unresolved": [],
+                "statistics": {
+                    "files_analyzed": 3,
+                    "artifacts_total": 3,
+                    "relationships_total": 2,
+                },
+            }
+
+            graph_path = output_dir / "dependency_graph.json"
+            graph_path.write_text(json.dumps(graph), encoding="utf-8")
+
+            yield output_dir, graph_path
+
+    def test_load_citadel_graph_extracts_artifacts(self, citadel_graph_fixture):
+        """Test that load_from_citadel_graph extracts artifacts correctly."""
+        output_dir, graph_path = citadel_graph_fixture
+        analyzer = CallGraphAnalyzer(doc_directory=output_dir)
+
+        analyzer.load_from_citadel_graph(graph_path)
+
+        assert analyzer._citadel_loaded is True
+        # Should have 3 programs (MAINPGM, SUBPGM1, BUILDBAT)
+        # The programs dict will have both canonical names and artifact IDs
+        canonical_programs = {
+            k for k in analyzer._citadel_programs.keys() if "::" not in k
+        }
+        assert "MAINPGM" in canonical_programs
+        assert "SUBPGM1" in canonical_programs
+        assert "BUILDBAT" in canonical_programs
+
+    def test_load_citadel_graph_extracts_relationships(self, citadel_graph_fixture):
+        """Test that load_from_citadel_graph extracts call relationships."""
+        output_dir, graph_path = citadel_graph_fixture
+        analyzer = CallGraphAnalyzer(doc_directory=output_dir)
+
+        analyzer.load_from_citadel_graph(graph_path)
+
+        assert len(analyzer._citadel_calls) == 2
+        callers = {c.caller for c in analyzer._citadel_calls}
+        callees = {c.callee for c in analyzer._citadel_calls}
+        assert "MAINPGM" in callers
+        assert "SUBPGM1" in callees
+        assert "BUILDBAT" in callees
+
+    def test_analyze_with_citadel_graph(self, citadel_graph_fixture):
+        """Test that analyze uses Citadel graph when provided."""
+        output_dir, graph_path = citadel_graph_fixture
+        analyzer = CallGraphAnalyzer(doc_directory=output_dir)
+
+        analysis = analyzer.analyze(dependency_graph_path=graph_path)
+
+        assert len(analysis.documented_programs) >= 3
+        assert analysis.total_calls == 2
+        assert "MAINPGM" in analysis.entry_points  # No callers
+
+    def test_analyze_falls_back_to_docs_when_no_graph(self, temp_output_dir):
+        """Test that analyze falls back to doc.json when no graph path."""
+        analyzer = CallGraphAnalyzer(doc_directory=temp_output_dir)
+
+        # No dependency_graph_path provided
+        analysis = analyzer.analyze()
+
+        # Should still work using doc.json files
+        assert len(analysis.documented_programs) == 2
+        assert "MAINPGM" in analysis.documented_programs
+
+    def test_analyze_falls_back_when_graph_missing(self, temp_output_dir):
+        """Test that analyze falls back to doc.json when graph file missing."""
+        analyzer = CallGraphAnalyzer(doc_directory=temp_output_dir)
+
+        # Provide a non-existent path
+        fake_path = temp_output_dir / "nonexistent_graph.json"
+        analysis = analyzer.analyze(dependency_graph_path=fake_path)
+
+        # Should fall back to doc.json parsing
+        assert len(analysis.documented_programs) == 2
+        assert "MAINPGM" in analysis.documented_programs
+
+    def test_analyze_merges_doc_metadata_with_citadel(self, citadel_graph_fixture):
+        """Test that analyze merges doc.json metadata with Citadel graph."""
+        output_dir, graph_path = citadel_graph_fixture
+
+        # Create a doc.json file with summary
+        doc = {
+            "header": {
+                "program_id": "MAINPGM",
+                "file_name": "MAINPGM.cbl",
+                "file_type": "COBOL",
+            },
+            "purpose": {
+                "summary": "Main program for processing",
+                "program_type": "BATCH",
+            },
+            "called_programs": [],
+        }
+        doc_path = output_dir / "MAINPGM.doc.json"
+        doc_path.write_text(json.dumps(doc), encoding="utf-8")
+
+        analyzer = CallGraphAnalyzer(doc_directory=output_dir)
+        analysis = analyzer.analyze(dependency_graph_path=graph_path)
+
+        # Should have the summary from doc.json merged in
+        mainpgm = analysis.documented_programs.get("MAINPGM")
+        assert mainpgm is not None
+        assert mainpgm.summary == "Main program for processing"
+
+    def test_citadel_graph_relationship_types(self):
+        """Test that different relationship types are mapped correctly."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_dir = Path(tmpdir)
+
+            graph = {
+                "version": "1.0",
+                "artifacts": {
+                    "program::CALLER": {
+                        "id": "program::CALLER",
+                        "artifact_type": "program",
+                        "canonical_name": "CALLER",
+                        "defined_in": {"file_path": "/test/CALLER.cbl"},
+                        "language": "COBOL",
+                    },
+                    "program::TARGET": {
+                        "id": "program::TARGET",
+                        "artifact_type": "program",
+                        "canonical_name": "TARGET",
+                        "defined_in": {"file_path": "/test/TARGET.cbl"},
+                        "language": "COBOL",
+                    },
+                },
+                "relationships": [
+                    {
+                        "from_artifact": "program::CALLER",
+                        "to_artifact": "program::TARGET",
+                        "relationship_type": "performs",
+                        "location": {"line_start": 10},
+                    },
+                ],
+            }
+
+            graph_path = output_dir / "dependency_graph.json"
+            graph_path.write_text(json.dumps(graph), encoding="utf-8")
+
+            analyzer = CallGraphAnalyzer(doc_directory=output_dir)
+            analyzer.load_from_citadel_graph(graph_path)
+
+            assert len(analyzer._citadel_calls) == 1
+            call = analyzer._citadel_calls[0]
+            assert call.call_type == "PERFORM"
+            assert call.caller == "CALLER"
+            assert call.callee == "TARGET"
+
+    @pytest.fixture
+    def temp_output_dir(self):
+        """Re-use the temp_output_dir fixture from parent class."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            output_dir = Path(tmpdir)
+
+            # Create a sample documentation file
+            doc = {
+                "header": {
+                    "program_id": "MAINPGM",
+                    "file_name": "MAINPGM.cbl",
+                    "file_type": "COBOL",
+                },
+                "purpose": {
+                    "summary": "Main batch program",
+                    "program_type": "BATCH",
+                },
+                "called_programs": [
+                    {"program_name": "SUBPGM1", "call_type": "STATIC_CALL"},
+                    {"program_name": "SUBPGM2", "call_type": "DYNAMIC_CALL"},
+                    {"program_name": "IEFBR14", "call_type": "EXEC"},
+                ],
+            }
+            doc_path = output_dir / "MAINPGM.doc.json"
+            doc_path.write_text(json.dumps(doc), encoding="utf-8")
+
+            # Create another documented program
+            doc2 = {
+                "header": {
+                    "program_id": "SUBPGM1",
+                    "file_name": "SUBPGM1.cbl",
+                    "file_type": "COBOL",
+                },
+                "purpose": {
+                    "summary": "Sub program 1",
+                    "program_type": "SUBROUTINE",
+                },
+                "called_programs": [],
+            }
+            doc2_path = output_dir / "SUBPGM1.doc.json"
+            doc2_path.write_text(json.dumps(doc2), encoding="utf-8")
+
+            yield output_dir
