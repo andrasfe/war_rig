@@ -411,9 +411,23 @@ class ProgramManagerAgent(BaseAgent[ProgramManagerInput, ProgramManagerOutput]):
                 },
             )
 
-            if ticket:
-                self.created_tickets.append(ticket)
-                logger.debug(f"Created {ticket_type.value} ticket {ticket.ticket_id} for {file_identifier}")
+            if not ticket:
+                raise RuntimeError(
+                    f"Failed to create ticket for {file_identifier}. "
+                    f"Every discovered file must have a ticket created."
+                )
+
+            self.created_tickets.append(ticket)
+            logger.debug(f"Created {ticket_type.value} ticket {ticket.ticket_id} for {file_identifier}")
+
+        # Validate that all discovered files have tickets
+        expected_count = len(self.discovered_files)
+        actual_count = len(self.created_tickets)
+        if actual_count != expected_count:
+            raise RuntimeError(
+                f"Ticket count mismatch: discovered {expected_count} files but "
+                f"have {actual_count} tickets. Every file must have a ticket."
+            )
 
         if skipped_count > 0:
             logger.info(
