@@ -2046,11 +2046,26 @@ and architecture after reading your overview."""
         parts.append("Generate a detailed markdown document with the following sections. ")
         parts.append("Each section should be **thorough and verbose** - this is the definitive reference.")
         parts.append("")
-        parts.append("### 1. Executive Summary")
-        parts.append("- 3-5 paragraphs describing the system's purpose, scope, and business value")
-        parts.append("- Key business functions served with specific examples")
-        parts.append("- Technology stack summary (COBOL, PL/I, DB2, CICS, IMS, etc.)")
-        parts.append("- System boundaries and external interfaces")
+        parts.append("### 1. Executive Summary (MANDATORY - NEVER SKIP)")
+        parts.append("")
+        parts.append("**CRITICAL REQUIREMENT**: This section MUST contain a comprehensive summary of ")
+        parts.append("AT LEAST 20 SENTENCES demonstrating deep understanding of the system.")
+        parts.append("")
+        parts.append("The Executive Summary must include:")
+        parts.append("- **System Purpose** (4-5 sentences): What business problem does this system solve? ")
+        parts.append("  What is its primary mission? Who are the users and stakeholders?")
+        parts.append("- **Functional Overview** (5-6 sentences): What are the major capabilities? ")
+        parts.append("  What transactions or processes does it handle? What are the key workflows?")
+        parts.append("- **Technical Foundation** (4-5 sentences): What technologies power this system? ")
+        parts.append("  (COBOL, PL/I, DB2, CICS, IMS, JCL, etc.) How do they work together?")
+        parts.append("- **System Boundaries** (3-4 sentences): What are the inputs and outputs? ")
+        parts.append("  What external systems does it integrate with? What are the data sources and sinks?")
+        parts.append("- **Business Value** (3-4 sentences): Why is this system important to the organization? ")
+        parts.append("  What would happen if it stopped working? What business metrics does it support?")
+        parts.append("")
+        parts.append("**DO NOT write a superficial summary. You must demonstrate that you understand ")
+        parts.append("HOW the system works, not just WHAT files exist. Connect the components into a ")
+        parts.append("coherent narrative that a new developer could use to understand the system.**")
         parts.append("")
         parts.append("### 2. Architecture Overview")
         parts.append("- Detailed high-level system architecture description")
@@ -2105,6 +2120,10 @@ and architecture after reading your overview."""
         parts.append("")
 
         parts.append("## Critical Guidelines")
+        parts.append("")
+        parts.append("**EXECUTIVE SUMMARY IS MANDATORY**: The Executive Summary section MUST be at least ")
+        parts.append("20 sentences long and demonstrate genuine understanding of the system. A placeholder ")
+        parts.append("or superficial summary is NOT acceptable. This is the most important section.")
         parts.append("")
         parts.append("**VERBOSITY**: Write detailed, comprehensive content. Every section should be ")
         parts.append("thoroughly explained. A longer document is better than a sparse one.")
@@ -2346,6 +2365,21 @@ and architecture after reading your overview."""
 
 Your task is to synthesize individual program documentation into a SYSTEM_DESIGN.md
 document that serves as the authoritative architectural reference for this system.
+
+## CRITICAL REQUIREMENT: Executive Summary
+
+The Executive Summary is the MOST IMPORTANT section and MUST NOT be skipped or abbreviated.
+It MUST contain AT LEAST 20 SENTENCES demonstrating deep, genuine understanding of the system.
+
+A proper Executive Summary covers:
+- System Purpose (4-5 sentences): What business problem it solves, its mission, users
+- Functional Overview (5-6 sentences): Major capabilities, transactions, key workflows
+- Technical Foundation (4-5 sentences): Technologies used and how they work together
+- System Boundaries (3-4 sentences): Inputs, outputs, external integrations
+- Business Value (3-4 sentences): Why it matters, impact if unavailable
+
+DO NOT write placeholder text like "This system processes data." You must show that you
+understand HOW the system works by connecting components into a coherent narrative.
 
 ## Core Principles
 
