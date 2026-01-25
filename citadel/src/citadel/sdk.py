@@ -407,11 +407,21 @@ class Citadel:
             return [{"error": result.error}]
 
         callouts = []
+        file_stem = file_path.stem  # Program name from filename
+
+        # Preprocessor includes (COPY statements, imports)
+        for include in result.preprocessor_includes:
+            callouts.append({
+                "from": file_stem,
+                "to": include,
+                "type": "includes",
+                "line": None,
+            })
 
         # File-level callouts
         for c in result.file_level_callouts:
             callouts.append({
-                "from": None,
+                "from": file_stem,
                 "to": c.target,
                 "type": c.relationship,
                 "line": c.line,
@@ -453,6 +463,7 @@ class Citadel:
         # First pass: analyze all files and collect artifacts
         all_artifacts: list[FileArtifact] = []
         all_callouts_data: list[tuple[str, str | None, Callout]] = []  # (file_stem, artifact_name, callout)
+        all_includes_data: list[tuple[str, str]] = []  # (file_stem, include_name)
 
         for source_file in files_to_analyze:
             try:
@@ -468,9 +479,13 @@ class Citadel:
                 # Collect all callouts with their source info
                 file_stem = source_file.stem  # Filename without extension
 
+                # Preprocessor includes (COPY statements, imports)
+                for include in analysis.preprocessor_includes:
+                    all_includes_data.append((file_stem, include))
+
                 # File-level callouts
                 for callout in analysis.file_level_callouts:
-                    all_callouts_data.append((file_stem, None, callout))
+                    all_callouts_data.append((file_stem, file_stem, callout))
 
                 # Artifact callouts
                 for artifact in analysis.artifacts:
@@ -481,17 +496,35 @@ class Citadel:
                 logger.debug("Error analyzing file %s: %s", source_file, e)
 
         # Build a set of known artifact names for resolution checking
+        # Include file stems (program names) for copybook resolution
         known_artifacts: set[str] = set()
+        known_files: set[str] = set()
         for artifact in all_artifacts:
             known_artifacts.add(artifact.name.lower())
+        for source_file in files_to_analyze:
+            known_files.add(source_file.stem.lower())
 
         # Convert callouts to result dictionaries with resolution status
         callouts = []
 
+        # Add preprocessor includes (copybooks, imports)
+        for file_stem, include_name in all_includes_data:
+            # Check if include target is resolved (exists as a file or artifact)
+            target_lower = include_name.lower() if include_name else ""
+            resolved = target_lower in known_files or target_lower in known_artifacts
+
+            callouts.append({
+                "from": file_stem,
+                "to": include_name,
+                "type": "includes",
+                "line": None,
+                "resolved": resolved,
+            })
+
         for file_stem, artifact_name, callout in all_callouts_data:
             # Check if target is resolved
             target_lower = callout.target.lower() if callout.target else ""
-            resolved = target_lower in known_artifacts
+            resolved = target_lower in known_artifacts or target_lower in known_files
 
             callouts.append({
                 "from": artifact_name,

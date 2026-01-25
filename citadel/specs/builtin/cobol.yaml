@@ -24,6 +24,9 @@ comments:
   line_prefix: null
   block_start: null
   block_end: null
+  # Strip COBOL sequence numbers from columns 1-6
+  strip_columns_start: 1
+  strip_columns_end: 6
 
 strings:
   delimiters:
@@ -44,10 +47,15 @@ scope:
 
 definition_patterns:
   - name: program_id
-    pattern: "PROGRAM-ID\\.\\s+([A-Za-z0-9-]+)"
+    # COBOL program names must start with a letter (not digit)
+    # [^A-Za-z]* skips whitespace, digits (sequence numbers), and newlines
+    # until the first letter of the program name
+    pattern: "PROGRAM-ID\\.[^A-Za-z]*([A-Za-z][A-Za-z0-9-]*)"
     capture_groups:
       - 1
     artifact_type: program
+    multiline: true
+    dotall: true
 
   - name: paragraph
     pattern: "^\\s{7}([A-Z0-9-]+)\\s*\\."

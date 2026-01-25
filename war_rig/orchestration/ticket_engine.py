@@ -1328,11 +1328,8 @@ class TicketOrchestrator:
         # Get previous clarification requests to avoid repetition
         previous_requests = self._state.clarification_history.copy()
 
-        # Build cross-file analysis (simplified for now)
-        # In full implementation, this would analyze actual program relationships
-        shared_copybooks: dict[str, list[str]] = {}
-        call_graph: dict[str, list[str]] = {}
-        data_flow: dict[str, list[str]] = {}
+        # Build cross-file analysis using Citadel
+        shared_copybooks, call_graph, data_flow = self._build_cross_file_analysis()
 
         # Load CALL_GRAPH.md content for Mermaid diagram injection
         call_graph_markdown: str | None = None
@@ -1363,6 +1360,80 @@ class TicketOrchestrator:
             resolution_status={},
             max_cycles=self.config.pm_max_cycles,
         )
+
+    def _build_cross_file_analysis(
+        self,
+    ) -> tuple[dict[str, list[str]], dict[str, list[str]], dict[str, list[str]]]:
+        """Build cross-file analysis using Citadel.
+
+        Uses Citadel's get_callouts to analyze the input directory and build:
+        - shared_copybooks: copybook -> list of programs that include it
+        - call_graph: program -> list of called programs
+        - data_flow: file -> list of tables/data accessed
+
+        Returns:
+            Tuple of (shared_copybooks, call_graph, data_flow) dictionaries.
+        """
+        shared_copybooks: dict[str, list[str]] = {}
+        call_graph: dict[str, list[str]] = {}
+        data_flow: dict[str, list[str]] = {}
+
+        if not self._input_directory:
+            return shared_copybooks, call_graph, data_flow
+
+        try:
+            from citadel import Citadel
+
+            citadel = Citadel()
+            callouts = citadel.get_callouts(self._input_directory)
+
+            for callout in callouts:
+                if "error" in callout:
+                    continue
+
+                from_prog = callout.get("from", "")
+                to_target = callout.get("to", "")
+                rel_type = callout.get("type", "")
+
+                if not from_prog or not to_target:
+                    continue
+
+                # Normalize names to uppercase for consistency
+                from_prog = from_prog.upper()
+                to_target = to_target.upper()
+
+                if rel_type == "includes":
+                    # shared_copybooks: copybook -> list of programs using it
+                    if to_target not in shared_copybooks:
+                        shared_copybooks[to_target] = []
+                    if from_prog not in shared_copybooks[to_target]:
+                        shared_copybooks[to_target].append(from_prog)
+
+                elif rel_type in ("calls", "executes", "performs"):
+                    # call_graph: program -> list of called programs
+                    if from_prog not in call_graph:
+                        call_graph[from_prog] = []
+                    if to_target not in call_graph[from_prog]:
+                        call_graph[from_prog].append(to_target)
+
+                elif rel_type in ("reads", "writes", "updates", "deletes"):
+                    # data_flow: file -> list of tables/data accessed
+                    if from_prog not in data_flow:
+                        data_flow[from_prog] = []
+                    if to_target not in data_flow[from_prog]:
+                        data_flow[from_prog].append(to_target)
+
+            logger.debug(
+                f"Cross-file analysis: {len(shared_copybooks)} copybooks, "
+                f"{len(call_graph)} callers, {len(data_flow)} data accessors"
+            )
+
+        except ImportError:
+            logger.debug("Citadel not available for cross-file analysis")
+        except Exception as e:
+            logger.warning(f"Cross-file analysis failed: {e}")
+
+        return shared_copybooks, call_graph, data_flow
 
     def _get_template_for_ticket(
         self,

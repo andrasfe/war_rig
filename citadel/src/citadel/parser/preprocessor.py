@@ -91,6 +91,10 @@ class Preprocessor:
         lines = content.splitlines()
         line_map: dict[int, int] = {i + 1: i + 1 for i in range(len(lines))}
 
+        # Step 0: Strip sequence number columns (e.g., COBOL columns 1-6)
+        if self._spec.comments.strip_columns_start is not None:
+            content = self._strip_sequence_columns(content)
+
         # Step 1: Strip fixed-column comments (e.g., COBOL column 7)
         if self._spec.comments.fixed_column is not None:
             content = self._strip_fixed_column_comments(content)
@@ -200,6 +204,49 @@ class Preprocessor:
         # Use non-greedy match to handle multiple block comments
         pattern = rf"{escaped_start}.*?{escaped_end}"
         return re.sub(pattern, "", content, flags=re.DOTALL)
+
+    def _strip_sequence_columns(self, content: str) -> str:
+        """
+        Strip sequence number columns from fixed-format source.
+
+        In COBOL fixed format, columns 1-6 contain sequence numbers
+        that should not be parsed as code. This removes those columns
+        from each line.
+
+        Args:
+            content: Source content to process.
+
+        Returns:
+            Content with sequence columns removed from each line.
+        """
+        start = self._spec.comments.strip_columns_start
+        end = self._spec.comments.strip_columns_end
+
+        if start is None:
+            return content
+
+        # Default end to start if not specified
+        if end is None:
+            end = start
+
+        # Convert to 0-indexed
+        start_idx = start - 1
+        end_idx = end  # end is inclusive, so we use it directly as the slice end
+
+        lines = content.splitlines(keepends=True)
+        result = []
+
+        for line in lines:
+            if len(line) >= end_idx:
+                # Remove the specified columns
+                # Keep everything after the stripped columns
+                new_line = line[end_idx:]
+                result.append(new_line)
+            else:
+                # Line is too short - keep as-is
+                result.append(line)
+
+        return "".join(result)
 
     def _strip_fixed_column_comments(self, content: str) -> str:
         """

@@ -89,6 +89,9 @@ class CommentSyntax(BaseModel):
     # For COBOL-style fixed-format
     fixed_column: int | None = None  # e.g., column 7
     fixed_indicator: str | None = None  # e.g., "*"
+    # Columns to strip from each line (e.g., 1-6 for COBOL sequence numbers)
+    strip_columns_start: int | None = None  # 1-indexed, inclusive
+    strip_columns_end: int | None = None  # 1-indexed, inclusive
 
 
 class StringSyntax(BaseModel):
