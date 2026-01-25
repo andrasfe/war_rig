@@ -1,127 +1,172 @@
 # System Design
 
-*Generated: 2026-01-24 15:20:30*
-*Review Cycle: 5*
-
 ## 1. Executive Summary
-The system serves as a comprehensive Build and Maintenance Framework for the **CardDemo** application, a mainframe-based credit card management system. Its primary purpose is to automate the compilation, linkage, and deployment of various mainframe artifacts, including Batch COBOL programs, Online CICS transactions, DB2-integrated modules, and BMS (Basic Mapping Support) screens. By providing a standardized set of JCL procedures, the system ensures consistent environment configurations across the AWS Mainframe Modernization platform.
 
-Key business functions served include the automated refresh of CICS resources (Newcopy), the management of VSAM datasets for transaction records, and the maintenance of security profiles via RACF. For example, when a developer updates a credit card transaction screen, this system handles the assembly of the map, the compilation of the underlying COBOL logic, and the notification to the CICS region to use the updated executable.
+The Card Authorization and Pending Transaction Management System is a mission-critical mainframe application designed to handle the complex lifecycle of credit card authorizations within the CardDemo ecosystem. Its primary purpose is to provide a robust, high-performance bridge between real-time transaction requests and the long-term financial records of the bank. The system solves the business problem of managing "pending" transactions—those that have been authorized but not yet fully cleared or settled—ensuring that customer credit limits are accurately reflected and fraud risks are mitigated in real-time. Stakeholders include bank risk officers, customer service representatives, and external merchants who rely on accurate authorization decisions.
 
-The technology stack is centered on IBM Mainframe standards, utilizing **COBOL (Enterprise V6)**, **Assembler (ASMA90)**, **CICS TS**, **DB2**, and **VSAM**. It leverages standard system utilities such as **IDCAMS** for file management, **IGYCRCTL** for compilation, and **IKJEFT01** for TSO/RACF command execution.
+Functionally, the system manages a sophisticated workflow that begins with the ingestion of authorization requests via IBM MQ messaging. These requests are processed by a decision engine that evaluates account status, customer profiles, and cross-reference data to approve or decline transactions. Once an authorization is created, it is stored in a hierarchical IMS database, where it remains until it is either cleared, manually flagged as fraudulent, or automatically purged by batch maintenance routines. The system provides online CICS interfaces for bank staff to search, view, and manage these pending authorizations, including a specialized workflow for marking suspicious transactions for fraud investigation.
 
-The system boundaries interface with the AWS M2 environment (High-Level Qualifier `AWS.M2`), CICS regions (specifically `CICSAWSA`), and DB2 subsystems (SSID `DAZ1`). It acts as the bridge between source code repositories and the operational runtime environment.
+Technically, the system is built on a foundation of COBOL and CICS for online processing, utilizing IBM MQ for asynchronous integration and IMS DB for high-availability hierarchical data storage. Batch operations are orchestrated via JCL, employing IMS BMP and DLI modes to perform heavy-duty data loading, unloading, and maintenance tasks. The data architecture is hybrid, leveraging VSAM for cross-reference lookups, IMS for transaction state management, and DB2 for persistent fraud reporting. This multi-tier approach ensures that the system can handle high transaction volumes while maintaining strict data integrity and auditability.
+
+The system's boundaries are well-defined, with inputs arriving as MQ messages from external payment gateways and outputs consisting of MQ responses, updated database records, and flat-file extracts for downstream reporting. It integrates deeply with the broader CardDemo environment, sharing common copybooks and linking to external modules for navigation and specialized fraud logic. If this system were to become unavailable, the bank would lose its ability to process new credit card transactions and manage existing pending authorizations, leading to immediate financial loss, merchant dissatisfaction, and significant reputational damage. It directly supports key business metrics including transaction success rates, fraud detection latency, and system uptime.
 
 ## 2. Architecture Overview
-The system follows a **Modular Build Pipeline** architectural pattern. It is structured into two primary layers:
-1.  **Orchestration Layer (JCL)**: High-level jobs that define specific execution parameters (member names, libraries, DB2 plans).
-2.  **Functional Layer (PROCs)**: Reusable cataloged procedures that encapsulate the complex logic of compilation, pre-compilation, and link-editing.
 
-### Integration Patterns
--   **Batch Processing**: Heavy use of JCL and Cataloged Procedures for lifecycle management.
--   **Online Integration**: Automated CICS resource updates using SDSF batch commands to issue `CEMT` transactions.
--   **Database Integration**: DB2 pre-compilation and BIND processes integrated into the build stream for CICS-DB2 programs.
--   **Security Integration**: Direct manipulation of RACF profiles to manage user access and transaction permissions.
+The system follows a classic mainframe multi-tier architecture, separating concerns between real-time message processing, online user interaction, and batch data management.
 
-### Component Relationship Diagram
+### Architectural Patterns
+- **Message-Driven Processing**: [COPAUA0C](cbl/COPAUA0C.md) acts as a listener/processor for MQ queues, implementing an asynchronous request-response pattern.
+- **Hierarchical Data Management**: The system uses IMS DB to represent the natural hierarchy of financial data (Account Summary -> Transaction Details).
+- **Online/Batch Separation**: CICS programs handle user-facing tasks, while JCL-driven COBOL programs handle bulk data movements and cleanup.
+- **Shared Service Layer**: Common logic for screen navigation and fraud processing is encapsulated in external modules like `CDEMO-TO-PROGRAM`.
+
+### Actual System Call Graph
+
 ```mermaid
-graph TD
-    subgraph "JCL Orchestration"
-        BATCMP[BATCMP]
-        CICCMP[CICCMP]
-        BMSCMP[BMSCMP]
-        CIDBCMP[CIDBCMP]
-        REPRTEST[REPRTEST]
+flowchart TD
+
+    subgraph jobs[" "]
+        COPAUA0C([COPAUA0C])
+        COPAUS0C([COPAUS0C])
+        COPAUS1C([COPAUS1C])
+        DBPAUTP0([DBPAUTP0])
+        DBUNLDGS([DBUNLDGS])
+        PAUDBLOD([PAUDBLOD])
+        PAUDBUNL([PAUDBUNL])
+        UNLDPADB([UNLDPADB])
     end
 
-    subgraph "Cataloged Procedures"
-        BUILDBAT[BUILDBAT]
-        BUILDONL[BUILDONL]
-        BUILDBMS[BUILDBMS]
-        BLDCIDB2[BLDCIDB2]
+    subgraph external[" "]
+        CBLTDLI>CBLTDLI]
+        CDEMO_TO_PROGRAM>CDEMO-TO-PROGRAM]
+        DFSRRC00>DFSRRC00]
+        MQCLOSE>MQCLOSE]
+        MQGET>MQGET]
+        MQOPEN>MQOPEN]
+        MQPUT1>MQPUT1]
+        WS_PGM_AUTH_FRAUD>WS-PGM-AUTH-FRAUD]
     end
 
-    subgraph "System Utilities"
-        IGYCRCTL[IGYCRCTL - COBOL]
-        HEWL[HEWL - Link Editor]
-        IDCAMS[IDCAMS - VSAM/Catalog]
-        SDSF[SDSF - CICS Refresh]
-    end
+    %% Call relationships
+    COPAUA0C --> MQOPEN
+    COPAUA0C --> MQGET
+    COPAUA0C --> MQPUT1
+    COPAUA0C --> MQCLOSE
+    COPAUS0C --> CDEMO_TO_PROGRAM
+    COPAUS0C --> CDEMO_TO_PROGRAM
+    COPAUS1C --> WS_PGM_AUTH_FRAUD
+    COPAUS1C --> CDEMO_TO_PROGRAM
+    DBPAUTP0 --> DFSRRC00
+    DBUNLDGS --> CBLTDLI
+    DBUNLDGS --> CBLTDLI
+    DBUNLDGS --> CBLTDLI
+    DBUNLDGS --> CBLTDLI
+    PAUDBLOD --> CBLTDLI
+    PAUDBLOD --> CBLTDLI
+    PAUDBLOD --> CBLTDLI
+    PAUDBUNL --> CBLTDLI
+    PAUDBUNL --> CBLTDLI
+    UNLDPADB --> DFSRRC00
+    UNLDPADB --> DFSRRC00
+    UNLDPADB --> DFSRRC00
+    UNLDPADB --> DFSRRC00
 
-    BATCMP --> BUILDBAT
-    CICCMP --> BUILDONL
-    BMSCMP --> BUILDBMS
-    CIDBCMP --> BLDCIDB2
-    
-    BUILDBAT --> IGYCRCTL
-    BUILDONL --> HEWL
-    BMSCMP --> SDSF
-    REPRTEST --> IDCAMS
+    %% Styling
+    classDef entryPoint fill:#90EE90,stroke:#228B22
+    class CBPAUP0C,CBPAUP0J,COPAUA0C,COPAUS0C,COPAUS1C,COPAUS2C,DBPAUTP0,DBUNLDGS,LOADPADB,PAUDBLOD,PAUDBUNL,UNLDGSAM,UNLDPADB entryPoint
+    classDef missing fill:#1E3A5F,stroke:#2E5A8F,color:#FFFFFF
+    class CBLTDLI,CDEMO_TO_PROGRAM,DFSRRC00,MQCLOSE,MQGET,MQOPEN,MQPUT1,WS_PGM_AUTH_FRAUD missing
 ```
 
 ## 3. Component Catalog
 
 | Component | Type | Purpose | Dependencies | Doc Link |
 |-----------|------|---------|--------------|----------|
-| [BUILDBAT](docs/proc/BUILDBAT.doc.json) | PROC | Compiles/Links Batch COBOL | IGYCRCTL, HEWL | [Link](docs/proc/BUILDBAT.doc.json) |
-| [BUILDBMS](docs/proc/BUILDBMS.doc.json) | PROC | Assembles BMS Maps & DSECTs | ASMA90, HEWL | [Link](docs/proc/BUILDBMS.doc.json) |
-| [BUILDONL](docs/proc/BUILDONL.doc.json) | PROC | Compiles/Links CICS COBOL | IGYCRCTL, DFHEILID | [Link](docs/proc/BUILDONL.doc.json) |
-| [BLDCIDB2](docs/proc/BLDCIDB2.doc.json) | PROC | DB2 Precompile/Compile/Bind | DSNHPC, IGYCRCTL | [Link](docs/proc/BLDCIDB2.doc.json) |
-| [BATCMP](docs/jcl/BATCMP.doc.json) | JCL | Orchestrates Batch Build | [BUILDBAT](docs/proc/BUILDBAT.doc.json) | [Link](docs/jcl/BATCMP.doc.json) |
-| [BMSCMP](docs/jcl/BMSCMP.doc.json) | JCL | Orchestrates BMS Build/Refresh | [BUILDBMS](docs/proc/BUILDBMS.doc.json), SDSF | [Link](docs/jcl/BMSCMP.doc.json) |
-| [CICCMP](docs/jcl/CICCMP.doc.json) | JCL | Orchestrates CICS Build/Refresh | [BUILDONL](docs/proc/BUILDONL.doc.json), SDSF | [Link](docs/jcl/CICCMP.doc.json) |
-| [CICDBCMP](docs/jcl/CICDBCMP.doc.json) | JCL | Orchestrates CICS-DB2 Build | [BLDCIDB2](docs/proc/BLDCIDB2.doc.json) | [Link](docs/jcl/CICDBCMP.doc.json) |
-| [IMSMQCMP](docs/jcl/IMSMQCMP.doc.json) | JCL | CICS/IMS/MQ Integrated Build | DFHECP1$, IGYCRCTL | [Link](docs/jcl/IMSMQCMP.doc.json) |
-| [LISTCAT](docs/jcl/LISTCAT.doc.json) | JCL | Catalog Inventory Utility | IDCAMS, IEFBR14 | [Link](docs/jcl/LISTCAT.doc.json) |
-| [RACFCMDS](docs/jcl/RACFCMDS.doc.json) | JCL | Security Profile Management | IKJEFT01 | [Link](docs/jcl/RACFCMDS.doc.json) |
-| [REPRTEST](docs/jcl/REPRTEST.doc.json) | JCL | VSAM Backup (REPRO) | IDCAMS | [Link](docs/jcl/REPRTEST.doc.json) |
-| [SORTTEST](docs/jcl/SORTTEST.doc.json) | JCL | Data Filtering/Sorting Test | SORT | [Link](docs/jcl/SORTTEST.doc.json) |
+| **CBPAUP0C** | COBOL | Batch IMS cleanup of expired authorizations | [CIPAUDTY](cpy/CIPAUDTY.md), [CIPAUSMY](cpy/CIPAUSMY.md) | [CBPAUP0C](cbl/CBPAUP0C.md) |
+| **CBPAUP0J** | JCL | Job to execute CBPAUP0C in BMP mode | [CBPAUP0C](cbl/CBPAUP0C.md), [PSBPAUTB](ims/PSBPAUTB.md) | [CBPAUP0J](jcl/CBPAUP0J.md) |
+| **COPAUA0C** | COBOL | MQ-based Authorization Decision Engine | [MQSeries], [CIPAUDTY](cpy/CIPAUDTY.md) | [COPAUA0C](cbl/COPAUA0C.md) |
+| **COPAUS0C** | COBOL | Online Summary View of Pending Auths | [COPAU00](bms/COPAU00.md), [CIPAUSMY](cpy/CIPAUSMY.md) | [COPAUS0C](cbl/COPAUS0C.md) |
+| **COPAUS1C** | COBOL | Online Detail View and Fraud Flagging | [COPAU01](bms/COPAU01.md), [CIPAUDTY](cpy/CIPAUDTY.md) | [COPAUS1C](cbl/COPAUS1C.md) |
+| **COPAUS2C** | COBOL | DB2 Fraud Record Insertion/Update | [AUTHFRDS](ddl/AUTHFRDS.md), [CIPAUDTY](cpy/CIPAUDTY.md) | [COPAUS2C](cbl/COPAUS2C.md) |
+| **DBPAUTP0** | JCL | Unload IMS DB to sequential file | [DFSRRC00], [DBPAUTP0](ims/DBPAUTP0.md) | [DBPAUTP0](jcl/DBPAUTP0.md) |
+| **DBUNLDGS** | COBOL | IMS to GSAM Database Migration Utility | [DLIGSAMP](ims/DLIGSAMP.md), [PAUTBPCB](cpy/PAUTBPCB.md) | [DBUNLDGS](cbl/DBUNLDGS.md) |
+| **LOADPADB** | JCL | Load PAUDB IMS Database | [PAUDBLOD](cbl/PAUDBLOD.md), [PSBPAUTB](ims/PSBPAUTB.md) | [LOADPADB](jcl/LOADPADB.md) |
+| **PAUDBLOD** | COBOL | Batch IMS Database Loader | [CBLTDLI], [CIPAUDTY](cpy/CIPAUDTY.md) | [PAUDBLOD](cbl/PAUDBLOD.md) |
+| **PAUDBUNL** | COBOL | Batch IMS Database Unloader | [CBLTDLI], [CIPAUSMY](cpy/CIPAUSMY.md) | [PAUDBUNL](cbl/PAUDBUNL.md) |
+| **UNLDGSAM** | JCL | Process GSAM datasets for PAUTDB | [DFSRRC00], [DLIGSAMP](ims/DLIGSAMP.md) | [UNLDGSAM](jcl/UNLDGSAM.md) |
+| **UNLDPADB** | JCL | Unload root/child segments to flat files | [PAUDBUNL](cbl/PAUDBUNL.md), [PAUTBUNL](ims/PAUTBUNL.md) | [UNLDPADB](jcl/UNLDPADB.md) |
+| **COPAU00** | BMS | Map for Authorization Summary Screen | N/A | [COPAU00](bms/COPAU00.md) |
+| **COPAU01** | BMS | Map for Authorization Detail Screen | N/A | [COPAU01](bms/COPAU01.md) |
+| **PADFLDBD** | DBD | IMS Database Definition (Detail) | N/A | [PADFLDBD](ims/PADFLDBD.md) |
+| **PASFLDBD** | DBD | IMS Database Definition (Summary) | N/A | [PASFLDBD](ims/PASFLDBD.md) |
+| **XAUTHFRD** | DDL | Index for Fraud Table | [AUTHFRDS](ddl/AUTHFRDS.md) | [XAUTHFRD](ddl/XAUTHFRD.md) |
 
 ## 4. Subsystem Breakdown
 
-### 4.1 Build & Deployment Subsystem
-This subsystem handles the transformation of source code into executable modules.
-- **Batch Build**: Uses [BATCMP](docs/jcl/BATCMP.doc.json) and [BUILDBAT](docs/proc/BUILDBAT.doc.json) to generate standard load modules.
-- **Online Build**: Uses [CICCMP](docs/jcl/CICCMP.doc.json) and [BUILDONL](docs/proc/BUILDONL.doc.json). It includes a post-linkage step to refresh the CICS region using `NEWCOPY`.
-- **Screen Management**: [BMSCMP](docs/jcl/BMSCMP.doc.json) and [BUILDBMS](docs/proc/BUILDBMS.doc.json) manage the dual-output nature of BMS (Physical maps for CICS and Symbolic maps/Copybooks for COBOL).
-- **Database Programs**: [CICDBCMP](docs/jcl/CICDBCMP.doc.json) manages the complex 4-step process of DB2 pre-compilation, compilation, link-editing, and BINDing the DBRM to a plan.
+### 4.1 Authorization Decision Subsystem (Online/MQ)
+This subsystem handles the real-time processing of incoming transaction requests.
+- **Primary Program**: [COPAUA0C](cbl/COPAUA0C.md)
+- **Workflow**:
+    1. Read request from MQ.
+    2. Validate card via VSAM XREF.
+    3. Check account/customer status via VSAM.
+    4. Query IMS for existing pending totals.
+    5. Apply business rules to Approve/Decline.
+    6. Update IMS with new authorization.
+    7. Reply via MQ.
 
-### 4.2 Data Management Subsystem
-Responsible for the integrity and lifecycle of the CardDemo data files.
-- **Backup/Recovery**: [REPRTEST](docs/jcl/REPRTEST.doc.json) utilizes IDCAMS REPRO to create Generation Data Group (GDG) backups of the transaction KSDS.
-- **Data Analysis**: [SORTTEST](docs/jcl/SORTTEST.doc.json) provides a template for filtering transaction data based on specific business dates (e.g., '2022-06-02').
-- **Inventory**: [LISTCAT](docs/jcl/LISTCAT.doc.json) provides visibility into the allocated datasets under the `AWS.M2.CARDDEMO` qualifier.
+### 4.2 Online Management Subsystem (CICS)
+Provides the user interface for bank staff to monitor and manage pending transactions.
+- **Summary View**: [COPAUS0C](cbl/COPAUS0C.md) displays a list of authorizations for an account using [COPAU00](bms/COPAU00.md).
+- **Detail View**: [COPAUS1C](cbl/COPAUS1C.md) provides deep-dive into a single transaction using [COPAU01](bms/COPAU01.md).
+- **Fraud Action**: [COPAUS2C](cbl/COPAUS2C.md) records fraud flags into DB2 via [AUTHFRDS](ddl/AUTHFRDS.md).
 
-### 4.3 Security & Administration Subsystem
-- **Access Control**: [RACFCMDS](docs/jcl/RACFCMDS.doc.json) automates the granting of permissions, such as connecting users to the `M2APPDEV` group and defining CICS transaction profiles.
+### 4.3 Batch Maintenance & ETL Subsystem
+Handles the lifecycle of data within the IMS databases.
+- **Cleanup**: [CBPAUP0C](cbl/CBPAUP0C.md) purges expired records based on business parameters.
+- **Loading**: [PAUDBLOD](cbl/PAUDBLOD.md) populates the database from flat files.
+- **Unloading/Backup**: [PAUDBUNL](cbl/PAUDBUNL.md) and [DBPAUTP0](jcl/DBPAUTP0.md) extract data for archival or reporting.
+- **Migration**: [DBUNLDGS](cbl/DBUNLDGS.md) moves data between standard IMS and GSAM structures.
 
 ## 5. Data Architecture
-The system interacts with several data formats:
-- **VSAM KSDS**: The primary storage for CardDemo transactions (`AWS.M2.CARDDEMO.TRANSACT.VSAM.KSDS`).
-- **Sequential Files**: Used for backups (`BKUP(+1)`) and temporary compiler work files.
-- **PDS/PDSE**: Libraries for Source code, Copybooks, Object modules, and Load modules.
-- **DBRM (Database Request Modules)**: Intermediate files produced by the DB2 pre-compiler, stored in `DBRMLIB`.
 
-❓ QUESTION: Are there specific retention policies for the GDG backups created in [REPRTEST](docs/jcl/REPRTEST.doc.json)?
+### 5.1 Data Stores
+- **IMS DB (PAUTDB)**: Hierarchical store for pending authorizations.
+    - **Root Segment (PAUTSUM0)**: Summary of authorizations per account.
+    - **Child Segment (PAUTDTL1)**: Individual transaction details.
+- **DB2 (CARDDEMO.AUTHFRDS)**: Relational table for persistent fraud reporting and audit trails.
+- **VSAM KSDS**: Used for Account, Customer, and Card Cross-Reference lookups.
+- **GSAM**: Sequential access to IMS data for batch processing.
+
+### 5.2 Key Data Structures
+- [CIPAUDTY](cpy/CIPAUDTY.md): Defines the layout for Authorization Detail records.
+- [CIPAUSMY](cpy/CIPAUSMY.md): Defines the layout for Authorization Summary records.
+- [PAUTBPCB](cpy/PAUTBPCB.md): IMS Program Communication Block for database access.
 
 ## 6. Integration Points
-- **CICS Interface**: The system integrates with CICS via SDSF batch commands. It issues `MODIFY` commands to the `CICSAWSA` region to execute `CEMT` transactions.
-- **DB2 Interface**: Integration is handled via the `DSNHPC` pre-compiler and the `BIND` command executed within the [BLDCIDB2](docs/proc/BLDCIDB2.doc.json) procedure.
-- **External Scheduler**: While not explicitly documented, the use of GDGs and standardized JCL suggests integration with a batch scheduler (e.g., Control-M or IWS).
+
+- **MQSeries**: Primary interface for external transaction requests. Uses `MQGET` for requests and `MQPUT1` for responses.
+- **CICS Link**: Online programs use `EXEC CICS LINK` to communicate with shared modules like `WS-PGM-AUTH-FRAUD`.
+- **IMS DLI/BMP**: Batch jobs interface with IMS via `CBLTDLI` calls or the `DFSRRC00` utility.
+- **DB2 SQL**: [COPAUS2C](cbl/COPAUS2C.md) uses standard SQL for interacting with the fraud table.
 
 ## 7. Business Rules Summary
-- **Compilation Integrity**: A load module must only be created if the compilation return code is less than 8 ([BUILDBAT](docs/proc/BUILDBAT.doc.json)).
-- **Environment Consistency**: All CardDemo components must use the `AWS.M2` High-Level Qualifier to ensure environment isolation.
-- **Security Compliance**: New transactions (e.g., `CT02`) must be explicitly added to the `GCICSTRN` RACF profile before use ([RACFCMDS](docs/jcl/RACFCMDS.doc.json)).
-- **Data Validation**: Sorting and filtering of transaction data must use standardized field offsets (e.g., Card Number at position 1, Process Date at position 50) as defined in [SORTTEST](docs/jcl/SORTTEST.doc.json).
+
+- **Expiration Logic**: [CBPAUP0C](cbl/CBPAUP0C.md) identifies transactions older than a configurable threshold and removes them to free up credit limits.
+- **Authorization Decision**: [COPAUA0C](cbl/COPAUA0C.md) evaluates multiple factors (account status, credit limit, card validity) before issuing an approval code.
+- **Fraud Handling**: [COPAUS2C](cbl/COPAUS2C.md) implements an "Upsert" logic—if a fraud record exists, update it; otherwise, insert a new one.
+- **Data Integrity**: Batch loaders ([PAUDBLOD](cbl/PAUDBLOD.md)) must ignore duplicate segments to prevent data corruption during re-runs.
 
 ## 8. Error Handling Patterns
-- **Conditional Execution**: Use of `COND=(8,LT)` or `IF/THEN/ELSE` constructs in JCL to prevent link-editing of failed compilations.
-- **Cleanup Steps**: Procedures like [BUILDBMS](docs/proc/BUILDBMS.doc.json) include `DELTEMP` steps to ensure work datasets are removed regardless of prior step success.
-- **Logging**: All compiler listings and utility outputs are routed to `SYSOUT=*` for centralized review in the spool.
+
+- **IMS Status Codes**: Programs check for 'GB' (End of Database), 'GE' (Not Found), and 'II' (Duplicate) to manage flow.
+- **SQLCODE Validation**: [COPAUS2C](cbl/COPAUS2C.md) specifically handles `-803` (Duplicate Key) to switch from Insert to Update mode.
+- **MQ Completion Codes**: [COPAUA0C](cbl/COPAUA0C.md) monitors MQCC and MQRC to handle messaging failures.
+- **Abend Strategy**: Batch programs like [PAUDBUNL](cbl/PAUDBUNL.md) use a `9999-ABEND` routine to halt processing on critical database errors.
 
 ## 9. Open Questions and Uncertainties
-- ❓ QUESTION: The [IMSMQCMP](docs/jcl/IMSMQCMP.doc.json) JCL contains several commented-out sections. Are these intended for a specific environment (e.g., Production vs. UAT)?
-- ❓ QUESTION: Is there a reason [SORTTEST](docs/jcl/SORTTEST.doc.json) comments out the persistent output dataset? Is this strictly for ad-hoc validation?
-- ❓ QUESTION: What is the specific purpose of the `DFHEILID` module copied in [BUILDONL](docs/proc/BUILDONL.doc.json)? Is it a site-specific CICS stub?
-- ❓ QUESTION: The [LISTCAT](docs/jcl/LISTCAT.doc.json) job deletes the output dataset before recreating it. Is there a risk of losing historical inventory logs?
+
+- ❓ QUESTION: What is the specific retention period (in days) used by [CBPAUP0C](cbl/CBPAUP0C.md) for expiration?
+- ❓ QUESTION: Are the MQ queues used by [COPAUA0C](cbl/COPAUA0C.md) persistent or non-persistent?
+- ❓ QUESTION: The program `CDEMO-TO-PROGRAM` is called frequently for navigation; is this a standard CardDemo router or a custom implementation?
+- ❓ QUESTION: Why are the sequential file outputs in [DBUNLDGS](cbl/DBUNLDGS.md) commented out? Is this program still in active use or replaced by GSAM?

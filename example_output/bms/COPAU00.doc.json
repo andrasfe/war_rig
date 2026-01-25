@@ -1,0 +1,191 @@
+{
+  "header": {
+    "program_id": "COPAU00",
+    "file_name": "bms/COPAU00.bms",
+    "file_type": "BMS",
+    "analyzed_by": "Scribe",
+    "analyzed_at": "2026-01-25T18:34:45.291848",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "BMS mapset COPAU00 defines map COPAU0A for the Pending Authorization Screen, displaying header info, customer account details, credit/cash limits and balances, approval/decline counts, and a scrollable list of up to 5 pending transactions. Users search by Account ID and select transactions by entering 'S' in selection fields. Includes error message field and navigation instructions.",
+    "business_context": "Credit card authorization review process in CardDemo application, allowing tellers or operators to view and select pending authorizations for further action.",
+    "program_type": "ONLINE_CICS",
+    "citations": [
+      2,
+      19,
+      26,
+      78,
+      83,
+      501
+    ]
+  },
+  "inputs": [
+    {
+      "name": "COPAU0A",
+      "io_type": "CICS_MAP",
+      "description": "Input fields include ACCTID for account search and SEL0001-SEL0005 for transaction selection (UNPROT, FSET attributes)",
+      "copybook": null,
+      "citation": [
+        84,
+        277,
+        321,
+        365,
+        409,
+        492
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "COPAU0A",
+      "io_type": "CICS_MAP",
+      "description": "Output fields display transaction ID/name (TRNNAME, PGMNAME), date/time (CURDATE, CURTIME), customer name/address/phone (CNAME, ADDR001, ADDR002, PHONE1), status/limits/balances/counts (CUSTID, ACCSTAT, CREDLIM, CASHLIM, APPRAMT, CREDBAL, CASHBAL, DECLAMT, APPRCNT, DECLCNT), transaction list (TRNIDxx, PDATExx, PTIMExx, PTYPExx, PAPRVxx, PSTATxx, PAMTxx), instructions, and ERRMSG",
+      "copybook": null,
+      "citation": [
+        26,
+        34,
+        47,
+        57,
+        70,
+        96,
+        107,
+        118,
+        125,
+        132,
+        139,
+        147,
+        156,
+        165,
+        174,
+        183,
+        192,
+        286,
+        503
+      ]
+    }
+  ],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Users type 'S' in SEL fields (SEL0001-SEL0005) to select a transaction from the list for viewing authorization details",
+      "logic_summary": "Screen instruction prompts user action; selection fields are unprotected for input",
+      "conditions": [
+        "ENTER 'S' in one of SEL0001 to SEL0005",
+        "F3=Back, F7=Backward, F8=Forward for navigation"
+      ],
+      "citation": [
+        277,
+        321,
+        365,
+        409,
+        492,
+        501,
+        511
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "COPAU0A",
+        "fields_used": [
+          "ACCTID",
+          "SEL0001",
+          "SEL0002",
+          "SEL0003",
+          "SEL0004",
+          "SEL0005"
+        ],
+        "citation": [
+          84,
+          277,
+          321,
+          365,
+          409,
+          492
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "COPAU0A",
+        "fields_written": [
+          "CNAME",
+          "CUSTID",
+          "ADDR001",
+          "ADDR002",
+          "PHONE1",
+          "ACCSTAT",
+          "CREDLIM",
+          "CASHLIM",
+          "APPRAMT",
+          "CREDBAL",
+          "CASHBAL",
+          "DECLAMT",
+          "APPRCNT",
+          "DECLCNT",
+          "TRNID01",
+          "PDATE01",
+          "PTIME01",
+          "PTYPE01",
+          "PAPRV01",
+          "PSTAT01",
+          "PAMT001",
+          "ERRMSG"
+        ],
+        "citation": [
+          96,
+          103,
+          107,
+          118,
+          125,
+          114,
+          147,
+          156,
+          165,
+          174,
+          183,
+          192,
+          132,
+          139,
+          286,
+          503
+        ]
+      }
+    ],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [],
+  "error_handling": [
+    {
+      "condition": "Application or validation errors",
+      "action": "Display error message in ERRMSG field (ATTRB=ASKIP,BRT,FSET, COLOR=RED)",
+      "citation": [
+        503
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "Which CICS transaction ID or program uses this BMS mapset COPAU00?",
+      "context": "BMS source defines the map but does not specify invoking program or transaction",
+      "suggestion": "Search COBOL CICS programs for 'COPAU00' in WORKING-STORAGE or FILE SECTION COPY statements"
+    },
+    {
+      "question": "What are the exact data sources populating the output fields like TRNID01, CNAME, CREDLIM?",
+      "context": "BMS defines layout only; no logic or data flow specified",
+      "suggestion": "Analyze the using COBOL program for DB2/IMS/file reads"
+    }
+  ]
+}

@@ -1,0 +1,131 @@
+{
+  "header": {
+    "program_id": "PAUTBUNL",
+    "file_name": "ims/PAUTBUNL.PSB",
+    "file_type": "OTHER",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-25T18:33:15.174451",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "Defines the Program Specification Block (PSB) named PAUTBUNL for a COBOL program. Specifies a single database PCB (PAUTBPCB) for accessing IMS database DBDNAME=DBPAUTP0 using PROCOPT=GOTP with KEYLEN=14. Declares two sensitive segments: PAUTSUM0 (root, PARENT=0) and PAUTDTL1 (child of PAUTSUM0).",
+    "business_context": null,
+    "program_type": "BATCH",
+    "citations": [
+      18,
+      19,
+      20,
+      21
+    ]
+  },
+  "inputs": [
+    {
+      "name": "PAUTSUM0",
+      "io_type": "IMS_SEGMENT",
+      "description": "Root sensitive segment (PARENT=0) accessible via PAUTBPCB PCB in DBPAUTP0 database",
+      "copybook": null,
+      "citation": [
+        19
+      ]
+    },
+    {
+      "name": "PAUTDTL1",
+      "io_type": "IMS_SEGMENT",
+      "description": "Child sensitive segment (PARENT=PAUTSUM0) accessible via PAUTBPCB PCB in DBPAUTP0 database",
+      "copybook": null,
+      "citation": [
+        20
+      ]
+    }
+  ],
+  "outputs": [],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Database access restricted to sensitive segments PAUTSUM0 and PAUTDTL1 under PCB PAUTBPCB",
+      "logic_summary": "SENSEG declarations define qualified access paths in hierarchical database",
+      "conditions": [
+        "PARENT=0 for root segment PAUTSUM0",
+        "PARENT=PAUTSUM0 for dependent segment PAUTDTL1"
+      ],
+      "citation": [
+        19,
+        20
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Processing option set to GOTP (Get Unique Positioned) with 14-byte key length",
+      "logic_summary": "Enables sequential positioned read access only (no updates)",
+      "conditions": [
+        "PROCOPT=GOTP",
+        "KEYLEN=14"
+      ],
+      "citation": [
+        18
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "PAUTBPCB",
+        "fields_used": [
+          "UNKNOWN - segment layouts not defined in PSB"
+        ],
+        "citation": [
+          18
+        ]
+      },
+      {
+        "source": "PAUTSUM0",
+        "fields_used": [
+          "UNKNOWN - segment layouts not defined in PSB"
+        ],
+        "citation": [
+          19
+        ]
+      },
+      {
+        "source": "PAUTDTL1",
+        "fields_used": [
+          "UNKNOWN - segment layouts not defined in PSB"
+        ],
+        "citation": [
+          20
+        ]
+      }
+    ],
+    "writes_to": [],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [],
+  "error_handling": [],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "What is the business purpose of the PAUTBUNL program and DBPAUTP0 database?",
+      "context": "PSB source defines only access structure, not business logic or data semantics",
+      "suggestion": "Analyze the COBOL program source that includes this PSB or review DBD/DBD source for DBPAUTP0"
+    },
+    {
+      "question": "What are the field layouts and key fields (KEYLEN=14) for segments PAUTSUM0 and PAUTDTL1?",
+      "context": "PSB does not include segment or field definitions",
+      "suggestion": "Examine DBD source for DBPAUTP0 and associated segment layouts"
+    },
+    {
+      "question": "Is this PSB used in batch, BMP, MPP, or IFP IMS region?",
+      "context": "No I/O PCB defined; only DB PCB with GOTP suggests non-transactional (batch/BMP) but cannot confirm",
+      "suggestion": "Check JCL or IMS region definitions referencing PSBNAME=PAUTBUNL"
+    }
+  ]
+}

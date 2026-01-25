@@ -1,0 +1,146 @@
+{
+  "header": {
+    "program_id": "IMSFUNCS",
+    "file_name": "cpy/IMSFUNCS.cpy",
+    "file_type": "COPYBOOK",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-25T18:35:43.405426",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This copybook defines the FUNC-CODES group containing fixed 4-character IMS DL/I function codes such as 'GU  ' for Get Unique and 'GHU ' for Get Hold Unique. It also defines PARMCOUNT as 4, likely indicating the number of parameters expected in related IMS calls.",
+    "business_context": "IMS DL/I database access operations, providing standardized function code constants",
+    "program_type": "UTILITY",
+    "citations": [
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27
+    ]
+  },
+  "inputs": [],
+  "outputs": [],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "FUNC-GU is predefined to 'GU  ' for IMS Get Unique function",
+      "logic_summary": "Assigned via VALUE clause",
+      "conditions": [],
+      "citation": [
+        18
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "FUNC-GHU is predefined to 'GHU ' for IMS Get Hold Unique function",
+      "logic_summary": "Assigned via VALUE clause",
+      "conditions": [],
+      "citation": [
+        19
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "FUNC-GN is predefined to 'GN  ' for IMS Get Next function",
+      "logic_summary": "Assigned via VALUE clause",
+      "conditions": [],
+      "citation": [
+        20
+      ]
+    },
+    {
+      "rule_id": "BR004",
+      "description": "FUNC-GHN is predefined to 'GHN ' for IMS Get Hold Next function",
+      "logic_summary": "Assigned via VALUE clause",
+      "conditions": [],
+      "citation": [
+        21
+      ]
+    },
+    {
+      "rule_id": "BR005",
+      "description": "FUNC-GNP is predefined to 'GNP ' for IMS Get Next within Parent function",
+      "logic_summary": "Assigned via VALUE clause",
+      "conditions": [],
+      "citation": [
+        22
+      ]
+    },
+    {
+      "rule_id": "BR006",
+      "description": "FUNC-GHNP is predefined to 'GHNP' for IMS Get Hold Next within Parent function",
+      "logic_summary": "Assigned via VALUE clause",
+      "conditions": [],
+      "citation": [
+        23
+      ]
+    },
+    {
+      "rule_id": "BR007",
+      "description": "FUNC-REPL is predefined to 'REPL' for IMS Replace function",
+      "logic_summary": "Assigned via VALUE clause",
+      "conditions": [],
+      "citation": [
+        24
+      ]
+    },
+    {
+      "rule_id": "BR008",
+      "description": "FUNC-ISRT is predefined to 'ISRT' for IMS Insert function",
+      "logic_summary": "Assigned via VALUE clause",
+      "conditions": [],
+      "citation": [
+        25
+      ]
+    },
+    {
+      "rule_id": "BR009",
+      "description": "FUNC-DLET is predefined to 'DLET' for IMS Delete function",
+      "logic_summary": "Assigned via VALUE clause",
+      "conditions": [],
+      "citation": [
+        26
+      ]
+    },
+    {
+      "rule_id": "BR010",
+      "description": "PARMCOUNT is predefined to +4, indicating expected parameter count for IMS calls using these functions",
+      "logic_summary": "Assigned via VALUE clause with COMP-5 usage",
+      "conditions": [],
+      "citation": [
+        27
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [],
+    "writes_to": [],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [],
+  "error_handling": [],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "Which programs or modules include this copybook?",
+      "context": "Usage context cannot be determined from the copybook source alone",
+      "suggestion": "Search including COPY statements for IMSFUNCS in related COBOL programs"
+    }
+  ]
+}

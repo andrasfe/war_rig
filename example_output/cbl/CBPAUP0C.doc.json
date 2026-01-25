@@ -1,0 +1,498 @@
+{
+  "header": {
+    "program_id": "CBPAUP0C",
+    "file_name": "cbl/CBPAUP0C.cbl",
+    "file_type": "COBOL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-25T18:35:06.670261",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "Batch IMS program that sequentially reads pending authorization summary root segments (PAUTSUM0), then child detail segments (PAUTDTL1), checks detail age against expiry parameter, deletes expired details via DLET, adjusts summary counters in memory, deletes summaries with zero remaining counts via DLET, and takes IMS checkpoints periodically.",
+    "business_context": "CardDemo Authorization Module: deletes expired pending authorization messages to clean up IMS database.",
+    "program_type": "BATCH",
+    "citations": [
+      2,
+      3,
+      4,
+      5,
+      136,
+      140,
+      142,
+      144,
+      169
+    ]
+  },
+  "inputs": [
+    {
+      "name": "SYSIN",
+      "io_type": "PARAMETER",
+      "description": "Program parameters: expiry days (P-EXPIRY-DAYS), checkpoint frequency (P-CHKP-FREQ), display frequency (P-CHKP-DIS-FREQ), debug flag (P-DEBUG-FLAG)",
+      "copybook": null,
+      "citation": [
+        189,
+        99,
+        101,
+        103,
+        105
+      ]
+    },
+    {
+      "name": "PAUTSUM0",
+      "io_type": "IMS_SEGMENT",
+      "description": "Pending authorization summary root segments containing account ID, approved/declined counts and amounts",
+      "copybook": "CIPAUSMY",
+      "citation": [
+        223,
+        117
+      ]
+    },
+    {
+      "name": "PAUTDTL1",
+      "io_type": "IMS_SEGMENT",
+      "description": "Pending authorization detail child segments containing auth date, response code, transaction amount",
+      "copybook": "CIPAUDTY",
+      "citation": [
+        255,
+        121
+      ]
+    },
+    {
+      "name": "SYSTEM_DATE",
+      "io_type": "OTHER",
+      "description": "Current YYDDD date from system for expiry calculation",
+      "copybook": null,
+      "citation": [
+        187
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "PAUTDTL1",
+      "io_type": "IMS_SEGMENT",
+      "description": "Deletion of expired pending authorization detail segments via DLET",
+      "copybook": "CIPAUDTY",
+      "citation": [
+        310
+      ]
+    },
+    {
+      "name": "PAUTSUM0",
+      "io_type": "IMS_SEGMENT",
+      "description": "Deletion of empty pending authorization summary segments via DLET",
+      "copybook": "CIPAUSMY",
+      "citation": [
+        335
+      ]
+    },
+    {
+      "name": "CONSOLE",
+      "io_type": "REPORT",
+      "description": "Display of processing statistics: summaries/details read/deleted and checkpoints",
+      "copybook": null,
+      "citation": [
+        171,
+        173,
+        175
+      ]
+    },
+    {
+      "name": "RETURN_CODE",
+      "io_type": "RETURN_CODE",
+      "description": "Set to 16 on abend conditions",
+      "copybook": null,
+      "citation": [
+        382
+      ]
+    }
+  ],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": [
+      "IO-PCB-MASK",
+      "PGM-PCB-MASK"
+    ]
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Qualify detail segment for deletion if days elapsed since authorization date exceeds or equals expiry days parameter",
+      "logic_summary": "Compute WS-AUTH-DATE as 99999 minus packed auth date, then WS-DAY-DIFF as current YYDDD minus WS-AUTH-DATE, set flag if >= WS-EXPIRY-DAYS",
+      "conditions": [
+        "WS-DAY-DIFF >= WS-EXPIRY-DAYS"
+      ],
+      "citation": [
+        280,
+        282,
+        284
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "On qualified detail deletion, decrement appropriate summary counters in memory: approved count/amount if response code '00', else declined count/amount",
+      "logic_summary": "Conditional subtract 1 from count and subtract amount from total in PENDING-AUTH-SUMMARY structure",
+      "conditions": [
+        "PA-AUTH-RESP-CODE = '00'"
+      ],
+      "citation": [
+        287,
+        288,
+        289,
+        291,
+        292
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "Delete summary segment after processing all details if both approved auth count <= 0 (note: code uses PA-APPROVED-AUTH-CNT twice, likely typo for declined)",
+      "logic_summary": "Check post-adjustment counts <=0 then DLET summary",
+      "conditions": [
+        "PA-APPROVED-AUTH-CNT <= 0 AND PA-APPROVED-AUTH-CNT <= 0"
+      ],
+      "citation": [
+        156
+      ]
+    },
+    {
+      "rule_id": "BR004",
+      "description": "Take IMS checkpoint after every P-CHKP-FREQ summaries processed, display every P-CHKP-DIS-FREQ checkpoints if debug on",
+      "logic_summary": "EXEC DLI CHKP, increment counter, conditional display",
+      "conditions": [
+        "WS-AUTH-SMRY-PROC-CNT > P-CHKP-FREQ",
+        "WS-NO-CHKP >= P-CHKP-DIS-FREQ"
+      ],
+      "citation": [
+        160,
+        355,
+        360
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "PAUTSUM0",
+        "fields_used": [
+          "PA-ACCT-ID",
+          "PA-APPROVED-AUTH-CNT"
+        ],
+        "citation": [
+          223,
+          233,
+          156
+        ]
+      },
+      {
+        "source": "PAUTDTL1",
+        "fields_used": [
+          "PA-AUTH-DATE-9C",
+          "PA-AUTH-RESP-CODE",
+          "PA-APPROVED-AMT",
+          "PA-TRANSACTION-AMT"
+        ],
+        "citation": [
+          255,
+          280,
+          287,
+          289,
+          292
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "PAUTDTL1",
+        "fields_written": [
+          "ENTIRE SEGMENT (DELETED)"
+        ],
+        "citation": [
+          310
+        ]
+      },
+      {
+        "destination": "PAUTSUM0",
+        "fields_written": [
+          "ENTIRE SEGMENT (DELETED)"
+        ],
+        "citation": [
+          335
+        ]
+      }
+    ],
+    "transforms": [
+      {
+        "input_field": "PA-AUTH-DATE-9C",
+        "output_field": "WS-AUTH-DATE",
+        "transformation_description": "WS-AUTH-DATE = 99999 - PA-AUTH-DATE-9C (unpacks YYDDD date)",
+        "citation": [
+          280
+        ]
+      },
+      {
+        "input_field": "CURRENT-YYDDD",
+        "output_field": "WS-DAY-DIFF",
+        "transformation_description": "WS-DAY-DIFF = CURRENT-YYDDD - WS-AUTH-DATE (computes days since auth)",
+        "citation": [
+          282
+        ]
+      },
+      {
+        "input_field": "PA-APPROVED-AUTH-CNT",
+        "output_field": "PA-APPROVED-AUTH-CNT",
+        "transformation_description": "Memory-only: SUBTRACT 1 (if approved response)",
+        "citation": [
+          288
+        ]
+      },
+      {
+        "input_field": "PA-APPROVED-AUTH-AMT",
+        "output_field": "PA-APPROVED-AUTH-AMT",
+        "transformation_description": "Memory-only: SUBTRACT PA-APPROVED-AMT (if approved response)",
+        "citation": [
+          289
+        ]
+      },
+      {
+        "input_field": "PA-DECLINED-AUTH-CNT",
+        "output_field": "PA-DECLINED-AUTH-CNT",
+        "transformation_description": "Memory-only: SUBTRACT 1 (if declined response)",
+        "citation": [
+          291
+        ]
+      },
+      {
+        "input_field": "PA-DECLINED-AUTH-AMT",
+        "output_field": "PA-DECLINED-AUTH-AMT",
+        "transformation_description": "Memory-only: SUBTRACT PA-TRANSACTION-AMT (if declined response)",
+        "citation": [
+          292
+        ]
+      }
+    ]
+  },
+  "copybooks_used": [
+    {
+      "copybook_name": "CIPAUSMY",
+      "purpose": "Defines layout of PENDING-AUTH-SUMMARY IMS root segment including PA-ACCT-ID, PA-APPROVED-AUTH-CNT/AMT, PA-DECLINED-AUTH-CNT/AMT",
+      "location": "WORKING_STORAGE",
+      "citation": 117
+    },
+    {
+      "copybook_name": "CIPAUDTY",
+      "purpose": "Defines layout of PENDING-AUTH-DETAILS IMS child segment including PA-AUTH-DATE-9C, PA-AUTH-RESP-CODE, PA-APPROVED-AMT, PA-TRANSACTION-AMT",
+      "location": "WORKING_STORAGE",
+      "citation": 121
+    }
+  ],
+  "paragraphs": [
+    {
+      "paragraph_name": "MAIN-PARA",
+      "summary": null,
+      "purpose": "Orchestrates initialization, loops over summaries and details to check/delete expired auths, final stats display",
+      "called_by": [],
+      "calls": [
+        "1000-INITIALIZE",
+        "2000-FIND-NEXT-AUTH-SUMMARY",
+        "3000-FIND-NEXT-AUTH-DTL",
+        "4000-CHECK-IF-EXPIRED",
+        "5000-DELETE-AUTH-DTL",
+        "6000-DELETE-AUTH-SUMMARY",
+        "9000-TAKE-CHECKPOINT"
+      ],
+      "citation": [
+        136,
+        181
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "1000-INITIALIZE",
+      "summary": null,
+      "purpose": "Accepts date parms from SYSIN, sets defaults for expiry/chkpt/debug, displays start info",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [],
+      "citation": [
+        183,
+        213
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "2000-FIND-NEXT-AUTH-SUMMARY",
+      "summary": null,
+      "purpose": "GN call to read next PAUTSUM0 summary segment, increments read counter, sets end flag on GB",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [],
+      "citation": [
+        216,
+        244
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "3000-FIND-NEXT-AUTH-DTL",
+      "summary": null,
+      "purpose": "GNP call to read next PAUTDTL1 detail under current summary, sets more/no-more flags",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [],
+      "citation": [
+        248,
+        274
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "4000-CHECK-IF-EXPIRED",
+      "summary": null,
+      "purpose": "Calculates age of detail auth, sets delete flag, adjusts summary counters in memory if qualified",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [],
+      "citation": [
+        277,
+        300
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "5000-DELETE-AUTH-DTL",
+      "summary": null,
+      "purpose": "DLET current detail segment, increments delete counter",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [],
+      "citation": [
+        303,
+        325
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "6000-DELETE-AUTH-SUMMARY",
+      "summary": null,
+      "purpose": "DLET current summary segment if empty post-adjustments, increments delete counter",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [],
+      "citation": [
+        328,
+        349
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "9000-TAKE-CHECKPOINT",
+      "summary": null,
+      "purpose": "CHKP call with ID, increments counter, conditional display on frequency",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [],
+      "citation": [
+        352,
+        374
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "9999-ABEND",
+      "summary": null,
+      "purpose": "Displays abend message, sets RETURN-CODE 16",
+      "called_by": [
+        "2000-FIND-NEXT-AUTH-SUMMARY",
+        "3000-FIND-NEXT-AUTH-DTL",
+        "5000-DELETE-AUTH-DTL",
+        "6000-DELETE-AUTH-SUMMARY",
+        "9000-TAKE-CHECKPOINT"
+      ],
+      "calls": [],
+      "citation": [
+        377,
+        386
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "IMS DIBSTAT not ' ' or 'GB' on GN summary read",
+      "action": "DISPLAY error details and PERFORM 9999-ABEND",
+      "citation": [
+        237
+      ]
+    },
+    {
+      "condition": "IMS DIBSTAT not ' ', 'GE', or 'GB' on GNP detail read",
+      "action": "DISPLAY error details and PERFORM 9999-ABEND",
+      "citation": [
+        267
+      ]
+    },
+    {
+      "condition": "IMS DIBSTAT not spaces on DLET detail",
+      "action": "DISPLAY error and PERFORM 9999-ABEND",
+      "citation": [
+        318
+      ]
+    },
+    {
+      "condition": "IMS DIBSTAT not spaces on DLET summary",
+      "action": "DISPLAY error and PERFORM 9999-ABEND",
+      "citation": [
+        343
+      ]
+    },
+    {
+      "condition": "IMS DIBSTAT not spaces on CHKP",
+      "action": "DISPLAY error and PERFORM 9999-ABEND",
+      "citation": [
+        366
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "Exact field layouts and data types in copybooks CIPAUSMY and CIPAUDTY",
+      "context": "Fields like PA-ACCT-ID, PA-AUTH-DATE-9C referenced but definitions not in source",
+      "suggestion": "Analyze copybook source files"
+    },
+    {
+      "question": "Is line 156 bug? Uses PA-APPROVED-AUTH-CNT twice instead of PA-DECLINED-AUTH-CNT",
+      "context": "Logic implies check both counters but code repeats approved",
+      "suggestion": "Verify with business or copybook for declined field name"
+    }
+  ]
+}

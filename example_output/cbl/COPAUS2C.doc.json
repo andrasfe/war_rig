@@ -1,0 +1,385 @@
+{
+  "header": {
+    "program_id": "COPAUS2C",
+    "file_name": "cbl/COPAUS2C.cbl",
+    "file_type": "COBOL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-25T18:31:17.060260",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This CICS COBOL program receives authorization message data including card details and fraud action via COMMAREA, formats timestamps, and attempts to insert a fraud record into the CARDDEMO.AUTHFRDS DB2 table. If a duplicate key error (SQLCODE -803) occurs, it updates the existing record with fraud status and report date instead. It updates the COMMAREA with success/failure status and message before returning.",
+    "business_context": "CardDemo application authorization module for marking authorization messages as fraud.",
+    "program_type": "ONLINE_CICS",
+    "citations": [
+      2,
+      3,
+      4,
+      5,
+      73,
+      78,
+      137,
+      141,
+      203,
+      221
+    ]
+  },
+  "inputs": [
+    {
+      "name": "DFHCOMMAREA",
+      "io_type": "CICS_COMMAREA",
+      "description": "Contains WS-ACCT-ID, WS-CUST-ID, WS-FRAUD-AUTH-RECORD (PA- fields from CIPAUDTY copybook defining authorization details like PA-CARD-NUM, PA-AUTH-ORIG-DATE), and WS-FRAUD-STATUS-RECORD (action 'F' or 'R')",
+      "copybook": "CIPAUDTY",
+      "citation": [
+        73,
+        75,
+        76,
+        77,
+        78,
+        80
+      ]
+    },
+    {
+      "name": "CICS_ABSTIME",
+      "io_type": "CICS_COMMAREA",
+      "description": "Current absolute time used to format current date for FRAUD_RPT_DATE",
+      "copybook": null,
+      "citation": [
+        91,
+        95
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "DFHCOMMAREA",
+      "io_type": "CICS_COMMAREA",
+      "description": "Updated with WS-FRD-UPDATE-STATUS ('S' or 'F') and WS-FRD-ACT-MSG (success/error message)",
+      "copybook": null,
+      "citation": [
+        84,
+        86,
+        200,
+        201,
+        206,
+        211,
+        231,
+        232,
+        234,
+        239
+      ]
+    }
+  ],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": [
+      "WS-ACCT-ID",
+      "WS-CUST-ID",
+      "WS-FRAUD-AUTH-RECORD",
+      "WS-FRAUD-STATUS-RECORD"
+    ]
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "If INSERT succeeds (SQLCODE = 0), set update status to success and message to 'ADD SUCCESS'",
+      "logic_summary": "Check SQLCODE after INSERT and set flags/message",
+      "conditions": [
+        "IF SQLCODE = ZERO"
+      ],
+      "citation": [
+        199,
+        200,
+        201
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "If INSERT fails with duplicate key (SQLCODE = -803), perform UPDATE on existing record",
+      "logic_summary": "Detect -803 and invoke FRAUD-UPDATE paragraph",
+      "conditions": [
+        "IF SQLCODE = -803"
+      ],
+      "citation": [
+        203,
+        204
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "If UPDATE succeeds (SQLCODE = 0), set update status to success and message to 'UPDT SUCCESS'",
+      "logic_summary": "Check SQLCODE after UPDATE and set flags/message",
+      "conditions": [
+        "IF SQLCODE = ZERO"
+      ],
+      "citation": [
+        230,
+        231,
+        232
+      ]
+    },
+    {
+      "rule_id": "BR004",
+      "description": "On any other SQL error, set update status to failed and construct error message with SQLCODE and SQLSTATE",
+      "logic_summary": "Capture SQLCODE/SQLSTATE and STRING into message",
+      "conditions": [
+        "ELSE (not 0 or -803)"
+      ],
+      "citation": [
+        206,
+        208,
+        209,
+        211,
+        234,
+        236,
+        237,
+        239
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "DFHCOMMAREA",
+        "fields_used": [
+          "PA-AUTH-ORIG-DATE",
+          "PA-CARD-NUM",
+          "PA-AUTH-TYPE",
+          "PA-CARD-EXPIRY-DATE",
+          "PA-MESSAGE-TYPE",
+          "PA-ACCT-ID",
+          "PA-CUST-ID",
+          "WS-FRD-ACTION"
+        ],
+        "citation": [
+          75,
+          76,
+          77,
+          80,
+          101,
+          103,
+          113,
+          137,
+          138,
+          139
+        ]
+      },
+      {
+        "source": "CICS_ABSTIME",
+        "fields_used": [
+          "WS-ABS-TIME"
+        ],
+        "citation": [
+          91
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "CARDDEMO.AUTHFRDS",
+        "fields_written": [
+          "AUTH_FRAUD",
+          "FRAUD_RPT_DATE",
+          "CARD_NUM",
+          "AUTH_TS",
+          "ACCT_ID",
+          "CUST_ID"
+        ],
+        "citation": [
+          142,
+          222,
+          225
+        ]
+      },
+      {
+        "destination": "DFHCOMMAREA",
+        "fields_written": [
+          "WS-FRD-UPDATE-STATUS",
+          "WS-FRD-ACT-MSG"
+        ],
+        "citation": [
+          200,
+          231
+        ]
+      }
+    ],
+    "transforms": [
+      {
+        "input_field": "PA-AUTH-ORIG-DATE",
+        "output_field": "WS-AUTH-TS",
+        "transformation_description": "Parse date parts to WS-AUTH-YY/MM/DD, compute WS-AUTH-TIME as 999999999 - PA-AUTH-TIME-9C, format time parts HH.MI.SS.SSS into AUTH-TS string",
+        "citation": [
+          103,
+          104,
+          105,
+          107,
+          108,
+          109,
+          110,
+          111
+        ]
+      },
+      {
+        "input_field": "WS-ABS-TIME",
+        "output_field": "PA-FRAUD-RPT-DATE",
+        "transformation_description": "Format ABSTIME to MMDDYY date string via FORMATTIME",
+        "citation": [
+          95,
+          101
+        ]
+      },
+      {
+        "input_field": "PA-MERCHANT-NAME",
+        "output_field": "MERCHANT-NAME-LEN",
+        "transformation_description": "Compute LENGTH OF PA-MERCHANT-NAME",
+        "citation": [
+          130
+        ]
+      }
+    ]
+  },
+  "copybooks_used": [
+    {
+      "copybook_name": "DFHBMSCA",
+      "purpose": "Standard CICS BMS symbolic map copybook (not actively used in visible code)",
+      "location": "WORKING_STORAGE",
+      "citation": 61
+    },
+    {
+      "copybook_name": "CIPAUDTY",
+      "purpose": "Defines WS-FRAUD-AUTH-RECORD structure with PA- fields for authorization data (e.g., PA-CARD-NUM, PA-AUTH-ORIG-DATE)",
+      "location": "LINKAGE",
+      "citation": 78
+    },
+    {
+      "copybook_name": "AUTHFRDS",
+      "purpose": "SQL INCLUDE defining host variables for AUTHFRDS table fields (e.g., CARD-NUM, AUTH-TS, AUTH-FRAUD)",
+      "location": "WORKING_STORAGE",
+      "citation": 69
+    }
+  ],
+  "paragraphs": [
+    {
+      "paragraph_name": "MAIN-PARA",
+      "summary": null,
+      "purpose": "Main logic: get current time, format timestamps, move data to host vars, perform INSERT, handle errors including UPDATE, set status, RETURN",
+      "called_by": [],
+      "calls": [
+        "FRAUD-UPDATE"
+      ],
+      "citation": [
+        89,
+        220
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "FRAUD-UPDATE",
+      "summary": null,
+      "purpose": "UPDATE existing AUTHFRDS record with AUTH_FRAUD and FRAUD_RPT_DATE on duplicate key",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [],
+      "citation": [
+        221,
+        244
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "SQLCODE NOT = 0 after INSERT and NOT = -803",
+      "action": "Set WS-FRD-UPDT-FAILED true, construct error message with SQLCODE/SQLSTATE",
+      "citation": [
+        203,
+        206,
+        208,
+        211
+      ]
+    },
+    {
+      "condition": "SQLCODE NOT = 0 after UPDATE",
+      "action": "Set WS-FRD-UPDT-FAILED true, construct error message with SQLCODE/SQLSTATE",
+      "citation": [
+        233,
+        234,
+        236,
+        239
+      ]
+    },
+    {
+      "condition": "CICS ASKTIME/FORMATTIME/RETURN with NOHANDLE",
+      "action": "Errors suppressed via NOHANDLE",
+      "citation": [
+        92,
+        99,
+        218
+      ]
+    }
+  ],
+  "sql_operations": [
+    {
+      "operation": "INSERT",
+      "table": "CARDDEMO.AUTHFRDS",
+      "purpose": "Insert new fraud authorization record with all details, fraud flag from WS-FRD-ACTION, current date, acct/cust IDs",
+      "citation": 141
+    },
+    {
+      "operation": "UPDATE",
+      "table": "CARDDEMO.AUTHFRDS",
+      "purpose": "Update existing fraud record with AUTH_FRAUD flag and current FRAUD_RPT_DATE matching CARD_NUM and AUTH_TS",
+      "citation": 222
+    }
+  ],
+  "cics_operations": [
+    {
+      "command": "ASKTIME",
+      "resource": "ABSTIME",
+      "purpose": "Retrieve current absolute time for formatting report date",
+      "citation": 91
+    },
+    {
+      "command": "FORMATTIME",
+      "resource": "ABSTIME",
+      "purpose": "Format ABSTIME to MMDDYY for PA-FRAUD-RPT-DATE",
+      "citation": 95
+    },
+    {
+      "command": "RETURN",
+      "resource": null,
+      "purpose": "Return to caller with updated COMMAREA",
+      "citation": 218
+    }
+  ],
+  "open_questions": [
+    {
+      "question": "Exact structure and fields of CIPAUDTY copybook",
+      "context": "PA- fields (e.g., PA-AUTH-ORIG-DATE, PA-AUTH-TIME-9C) are referenced but not defined in source",
+      "suggestion": "Analyze CIPAUDTY copybook source"
+    },
+    {
+      "question": "Exact host variables defined by SQL INCLUDE AUTHFRDS",
+      "context": "Fields like CARD-NUM, AUTH-TS used post-INCLUDE but definitions not in source",
+      "suggestion": "Review generated declarations from AUTHFRDS"
+    },
+    {
+      "question": "Purpose of DFHBMSCA copybook inclusion",
+      "context": "Included but no BMS MAP operations or references in code",
+      "suggestion": "Confirm if symbolic map variables are used conditionally or remnant"
+    },
+    {
+      "question": "Why header mentions IMS DB2 but no IMS DL/I calls visible",
+      "context": "Comment line 4 says 'CICS COBOL IMS DB2 Program' but only CICS/DB2 used",
+      "suggestion": "Check if IMS is used via copybooks or external"
+    }
+  ]
+}

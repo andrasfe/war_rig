@@ -1,0 +1,154 @@
+{
+  "header": {
+    "program_id": "CIPAUDTY",
+    "file_name": "cpy/CIPAUDTY.cpy",
+    "file_type": "COPYBOOK",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-25T18:36:28.016446",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "Defines the data structure for the IMS segment PA-AUTHORIZATION-KEY used to store pending authorization details. Includes fields for authorization timestamps, card details, response codes, transaction amounts, merchant information, match status, and fraud indicators. This structure supports processing of pending payment authorizations in an IMS database.",
+    "business_context": "Manages pending payment card authorizations, including matching transactions, fraud reporting, and merchant validation in a financial processing system.",
+    "program_type": "UTILITY",
+    "citations": [
+      1,
+      2,
+      3,
+      19
+    ]
+  },
+  "inputs": [
+    {
+      "name": "PA-AUTHORIZATION-KEY",
+      "io_type": "IMS_SEGMENT",
+      "description": "IMS segment structure containing pending authorization details: auth date/time (20-21), orig date/time (22-23), card num/expiry (24,26), auth/message types (25,27-29), response codes/reasons (30,32), amounts (34-35), merchant details (36-43), transaction ID (44), match status (45), fraud flags (50-53).",
+      "copybook": "CIPAUDTY",
+      "citation": [
+        19
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "PA-AUTHORIZATION-KEY",
+      "io_type": "IMS_SEGMENT",
+      "description": "IMS segment structure for storing/retrieving pending authorization details: auth date/time (20-21), orig date/time (22-23), card num/expiry (24,26), auth/message types (25,27-29), response codes/reasons (30,32), amounts (34-35), merchant details (36-43), transaction ID (44), match status (45), fraud flags (50-53).",
+      "copybook": "CIPAUDTY",
+      "citation": [
+        19
+      ]
+    }
+  ],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Authorization approved status",
+      "logic_summary": "88 level condition on response code",
+      "conditions": [
+        "PA-AUTH-RESP-CODE = '00'"
+      ],
+      "citation": [
+        30,
+        31
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Match status is pending",
+      "logic_summary": "88 level condition on match status field",
+      "conditions": [
+        "PA-MATCH-STATUS = 'P'"
+      ],
+      "citation": [
+        45,
+        46
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "Match status indicates auth declined",
+      "logic_summary": "88 level condition on match status field",
+      "conditions": [
+        "PA-MATCH-STATUS = 'D'"
+      ],
+      "citation": [
+        47
+      ]
+    },
+    {
+      "rule_id": "BR004",
+      "description": "Match status pending expired",
+      "logic_summary": "88 level condition on match status field",
+      "conditions": [
+        "PA-MATCH-STATUS = 'E'"
+      ],
+      "citation": [
+        48
+      ]
+    },
+    {
+      "rule_id": "BR005",
+      "description": "Match status matched with transaction",
+      "logic_summary": "88 level condition on match status field",
+      "conditions": [
+        "PA-MATCH-STATUS = 'M'"
+      ],
+      "citation": [
+        49
+      ]
+    },
+    {
+      "rule_id": "BR006",
+      "description": "Fraud confirmed status",
+      "logic_summary": "88 level condition on fraud field",
+      "conditions": [
+        "PA-AUTH-FRAUD = 'F'"
+      ],
+      "citation": [
+        50,
+        51
+      ]
+    },
+    {
+      "rule_id": "BR007",
+      "description": "Fraud removed status",
+      "logic_summary": "88 level condition on fraud field",
+      "conditions": [
+        "PA-AUTH-FRAUD = 'R'"
+      ],
+      "citation": [
+        52
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [],
+    "writes_to": [],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [],
+  "error_handling": [],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "Which COBOL programs include this copybook via COPY statement?",
+      "context": "Copybook source does not reference including programs",
+      "suggestion": "Perform text search for 'COPY CIPAUDTY' across codebase"
+    },
+    {
+      "question": "In which section (WORKING-STORAGE, FILE-SECTION, etc.) is this copybook typically included?",
+      "context": "Usage context not specified in copybook",
+      "suggestion": "Examine including programs"
+    }
+  ]
+}

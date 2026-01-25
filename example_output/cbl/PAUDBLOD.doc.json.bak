@@ -1,0 +1,467 @@
+{
+  "header": {
+    "program_id": "PAUDBLOD",
+    "file_name": "cbl/PAUDBLOD.CBL",
+    "file_type": "COBOL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-25T18:31:30.680436",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "Batch program that loads root segments (PAUTSUM0 pending authorization summaries) from INFILE1 and child segments (PAUTDTL1 pending authorization details) from INFILE2 into an IMS database. Inserts root segments via unconditional ISRT (ignoring duplicates), then for each child segment performs qualified GU on the matching root segment followed by child ISRT (ignoring duplicates). Abends on IMS call failures other than success or duplicate.",
+    "business_context": "Loads pending authorization summary and detail data into IMS database for authorization processing",
+    "program_type": "BATCH",
+    "citations": [
+      18,
+      26,
+      32,
+      44,
+      45,
+      47,
+      177,
+      180,
+      244,
+      296,
+      321
+    ]
+  },
+  "inputs": [
+    {
+      "name": "INFILE1",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Sequential file containing root segment records mapped to PENDING-AUTH-SUMMARY (PAUTSUM0)",
+      "copybook": null,
+      "citation": [
+        26,
+        201,
+        226
+      ]
+    },
+    {
+      "name": "INFILE2",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Sequential file containing root segment keys (ROOT-SEG-KEY) and child segment records (CHILD-SEG-REC) mapped to PENDING-AUTH-DETAILS (PAUTDTL1)",
+      "copybook": null,
+      "citation": [
+        32,
+        209,
+        272
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "PAUTSUM0",
+      "io_type": "IMS_SEGMENT",
+      "description": "IMS root segments (pending authorization summaries) inserted via ISRT",
+      "copybook": "CIPAUSMY",
+      "citation": [
+        244,
+        246
+      ]
+    },
+    {
+      "name": "PAUTDTL1",
+      "io_type": "IMS_SEGMENT",
+      "description": "IMS child segments (pending authorization details) inserted via ISRT under qualified root",
+      "copybook": "CIPAUDTY",
+      "citation": [
+        321,
+        323
+      ]
+    }
+  ],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [
+      "DLITCBL"
+    ],
+    "linkage_section": [
+      "IO-PCB-MASK",
+      "PAUTBPCB"
+    ]
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Insert root segments unconditionally, ignoring duplicates",
+      "logic_summary": "Performs ISRT on PENDING-AUTH-SUMMARY; if status 'II' displays message and continues, abends on other errors",
+      "conditions": [
+        "PAUT-PCB-STATUS = SPACES",
+        "PAUT-PCB-STATUS = 'II'"
+      ],
+      "citation": [
+        253,
+        256,
+        259
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "For each child segment, first GU the parent root segment using ROOT-SEG-KEY qualifier",
+      "logic_summary": "Moves ROOT-SEG-KEY to QUAL-SSA-KEY-VALUE, calls GU with ROOT-QUAL-SSA; requires status SPACES (continues only if SPACES or 'II'), abends otherwise",
+      "conditions": [
+        "ROOT-SEG-KEY IS NUMERIC",
+        "PAUT-PCB-STATUS = SPACES OR 'II'"
+      ],
+      "citation": [
+        275,
+        296,
+        305,
+        310
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "Insert child segments under qualified root, ignoring duplicates",
+      "logic_summary": "Performs ISRT on PENDING-AUTH-DETAILS with CHILD-UNQUAL-SSA after successful GU; if status 'II' displays message and continues, abends on other errors",
+      "conditions": [
+        "PAUT-PCB-STATUS = SPACES",
+        "PAUT-PCB-STATUS = 'II'"
+      ],
+      "citation": [
+        326,
+        329,
+        332
+      ]
+    },
+    {
+      "rule_id": "BR004",
+      "description": "Skip non-numeric ROOT-SEG-KEY in child records",
+      "logic_summary": "Checks IF ROOT-SEG-KEY IS NUMERIC before processing child",
+      "conditions": [
+        "ROOT-SEG-KEY IS NUMERIC"
+      ],
+      "citation": [
+        275
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "INFILE1",
+        "fields_used": [
+          "INFIL1-REC"
+        ],
+        "citation": [
+          226,
+          229
+        ]
+      },
+      {
+        "source": "INFILE2",
+        "fields_used": [
+          "ROOT-SEG-KEY",
+          "CHILD-SEG-REC"
+        ],
+        "citation": [
+          272,
+          277,
+          280
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "IMS PAUTSUM0",
+        "fields_written": [
+          "PENDING-AUTH-SUMMARY"
+        ],
+        "citation": [
+          244,
+          246
+        ]
+      },
+      {
+        "destination": "IMS PAUTDTL1",
+        "fields_written": [
+          "PENDING-AUTH-DETAILS"
+        ],
+        "citation": [
+          321,
+          323
+        ]
+      }
+    ],
+    "transforms": [
+      {
+        "input_field": "ROOT-SEG-KEY",
+        "output_field": "QUAL-SSA-KEY-VALUE",
+        "transformation_description": "Direct move of root key from child input record to SSA qualifier for GU call",
+        "citation": [
+          277
+        ]
+      },
+      {
+        "input_field": "INFIL1-REC",
+        "output_field": "PENDING-AUTH-SUMMARY",
+        "transformation_description": "Direct move of input record to IMS segment layout",
+        "citation": [
+          229
+        ]
+      },
+      {
+        "input_field": "CHILD-SEG-REC",
+        "output_field": "PENDING-AUTH-DETAILS",
+        "transformation_description": "Direct move of child record portion to IMS segment layout",
+        "citation": [
+          280
+        ]
+      }
+    ]
+  },
+  "copybooks_used": [
+    {
+      "copybook_name": "IMSFUNCS",
+      "purpose": "Defines IMS DL/I function codes (e.g. FUNC-ISRT, FUNC-GU)",
+      "location": "WORKING_STORAGE",
+      "citation": 142
+    },
+    {
+      "copybook_name": "CIPAUSMY",
+      "purpose": "Defines layout of PENDING-AUTH-SUMMARY root segment (PAUTSUM0)",
+      "location": "WORKING_STORAGE",
+      "citation": 149
+    },
+    {
+      "copybook_name": "CIPAUDTY",
+      "purpose": "Defines layout of PENDING-AUTH-DETAILS child segment (PAUTDTL1)",
+      "location": "WORKING_STORAGE",
+      "citation": 153
+    },
+    {
+      "copybook_name": "PAUTBPCB",
+      "purpose": "Defines PAUTBPCB IMS PCB mask structure",
+      "location": "LINKAGE",
+      "citation": 161
+    }
+  ],
+  "paragraphs": [
+    {
+      "paragraph_name": "MAIN-PARA",
+      "summary": null,
+      "purpose": "Main control logic: initializes, loops to load all root segments from INFILE1, then loops to load all child segments from INFILE2, closes files",
+      "called_by": [],
+      "calls": [
+        "1000-INITIALIZE",
+        "2000-READ-ROOT-SEG-FILE",
+        "3000-READ-CHILD-SEG-FILE",
+        "4000-FILE-CLOSE"
+      ],
+      "citation": [
+        169,
+        187
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "1000-INITIALIZE",
+      "summary": null,
+      "purpose": "Accepts date, displays it, opens input files INFILE1 and INFILE2 with status checks",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [],
+      "citation": [
+        190,
+        219
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "2000-READ-ROOT-SEG-FILE",
+      "summary": null,
+      "purpose": "Reads next record from INFILE1, moves to PENDING-AUTH-SUMMARY if successful, performs root insert; sets EOF flag on status 10",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [
+        "2100-INSERT-ROOT-SEG"
+      ],
+      "citation": [
+        222,
+        240
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "2100-INSERT-ROOT-SEG",
+      "summary": null,
+      "purpose": "Calls CBLTDLI ISRT to insert root segment with ROOT-UNQUAL-SSA; handles status (success or II ok, else abend)",
+      "called_by": [
+        "2000-READ-ROOT-SEG-FILE"
+      ],
+      "calls": [],
+      "citation": [
+        242,
+        265
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "3000-READ-CHILD-SEG-FILE",
+      "summary": null,
+      "purpose": "Reads next record from INFILE2; if ROOT-SEG-KEY numeric and read ok, moves data and performs child insert; sets EOF on status 10",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [
+        "3100-INSERT-CHILD-SEG"
+      ],
+      "citation": [
+        269,
+        291
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "3100-INSERT-CHILD-SEG",
+      "summary": null,
+      "purpose": "Performs GU on root using ROOT-QUAL-SSA (fails if not SPACES or II); if ok performs child insert",
+      "called_by": [
+        "3000-READ-CHILD-SEG-FILE"
+      ],
+      "calls": [
+        "3200-INSERT-IMS-CALL"
+      ],
+      "citation": [
+        292,
+        316
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "3200-INSERT-IMS-CALL",
+      "summary": null,
+      "purpose": "Calls CBLTDLI ISRT to insert child segment with CHILD-UNQUAL-SSA; handles status (success or II ok, else abend)",
+      "called_by": [
+        "3100-INSERT-CHILD-SEG"
+      ],
+      "calls": [],
+      "citation": [
+        318,
+        339
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "4000-FILE-CLOSE",
+      "summary": null,
+      "purpose": "Closes INFILE1 and INFILE2 with status checks (displays errors but no abend)",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [],
+      "citation": [
+        341,
+        358
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "9999-ABEND",
+      "summary": null,
+      "purpose": "Displays abend message, sets return-code 16, gobacks",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        360,
+        369
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "INFILE1 open status not SPACES or '00'",
+      "action": "Display error message and PERFORM 9999-ABEND",
+      "citation": [
+        202,
+        205
+      ]
+    },
+    {
+      "condition": "INFILE2 open status not SPACES or '00'",
+      "action": "Display error message and PERFORM 9999-ABEND",
+      "citation": [
+        210,
+        213
+      ]
+    },
+    {
+      "condition": "INFILE1 read status not SPACES or '00' or '10'",
+      "action": "Display error message",
+      "citation": [
+        235
+      ]
+    },
+    {
+      "condition": "INFILE2 read status not SPACES or '00' or '10'",
+      "action": "Display error message",
+      "citation": [
+        287
+      ]
+    },
+    {
+      "condition": "Root ISRT PAUT-PCB-STATUS not SPACES and not 'II'",
+      "action": "Display failure and PERFORM 9999-ABEND",
+      "citation": [
+        259
+      ]
+    },
+    {
+      "condition": "Root GU PAUT-PCB-STATUS not SPACES and not 'II'",
+      "action": "Display failure and PERFORM 9999-ABEND",
+      "citation": [
+        310
+      ]
+    },
+    {
+      "condition": "Child ISRT PAUT-PCB-STATUS not SPACES and not 'II'",
+      "action": "Display failure and PERFORM 9999-ABEND",
+      "citation": [
+        332
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "Exact field layouts and keys in CIPAUSMY (PAUTSUM0) and CIPAUDTY (PAUTDTL1) copybooks",
+      "context": "Copybooks referenced but source not provided; inferred from usage (e.g. ACCNTID key in SSA line 116)",
+      "suggestion": "Provide copybook sources for field-level analysis"
+    },
+    {
+      "question": "Purpose and source of PRM-INFO working storage fields (P-EXPIRY-DAYS, P-CHKP-FREQ, etc.)",
+      "context": "Defined lines 129-139 but never populated or referenced in code",
+      "suggestion": "Check JCL for sysin parms or prior program linkage"
+    },
+    {
+      "question": "Usage of counters like WS-TOT-REC-WRITTEN, WS-NO-DTL-READ (lines 65-69)",
+      "context": "Defined and initialized to 0 but never incremented or displayed",
+      "suggestion": "Possibly remnant code or for future use; confirm with execution traces"
+    }
+  ]
+}

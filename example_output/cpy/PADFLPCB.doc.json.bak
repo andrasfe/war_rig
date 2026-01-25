@@ -1,0 +1,78 @@
+{
+  "header": {
+    "program_id": "PADFLPCB",
+    "file_name": "cpy/PADFLPCB.CPY",
+    "file_type": "COPYBOOK",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-25T18:37:49.796419",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This copybook defines the 01 level record PADFLPCB, a Processing Control Block (PCB) structure for IMS DL/I database interface. It includes fields for database name (PADFL-DBDNAME), segment level (PADFL-SEG-LEVEL), PCB status (PADFL-PCB-STATUS), processing options (PADFL-PCB-PROCOPT), segment name (PADFL-SEG-NAME), key feedback name offset (PADFL-KEYFB-NAME), number of sensitive segments (PADFL-NUM-SENSEGS), and key feedback buffer (PADFL-KEYFB). A filler field is present between PROCOPT and SEG-NAME.",
+    "business_context": "Supports IMS hierarchical database (DL/I) access in mainframe COBOL programs by defining the standard PCB layout",
+    "program_type": "SUBROUTINE",
+    "citations": [
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26
+    ]
+  },
+  "inputs": [],
+  "outputs": [],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "PADFL-PCB-STATUS holds the 2-byte IMS PCB status code set by IMS after DL/I calls",
+      "logic_summary": "Defined as elementary field PIC X(02) within PADFLPCB group",
+      "conditions": [],
+      "citation": [
+        20
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "PADFL-PCB-PROCOPT holds the 4-byte processing options set by the application for IMS DL/I calls (e.g., GO, UPD)",
+      "logic_summary": "Defined as elementary field PIC X(04) within PADFLPCB group",
+      "conditions": [],
+      "citation": [
+        21
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [],
+    "writes_to": [],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [],
+  "error_handling": [],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "In which COBOL section (e.g., LINKAGE_SECTION, WORKING-STORAGE_SECTION) is this copybook typically COPY'ed?",
+      "context": "Copybook itself does not specify inclusion context; standard IMS usage is in LINKAGE_SECTION for PCBs",
+      "suggestion": "Examine programs that COPY this copybook to confirm usage"
+    },
+    {
+      "question": "What is the exact mapping of FILLER field (line 22) in standard IMS PCB layout?",
+      "context": "Code defines it as PIC S9(05) COMP but field name is FILLER; purpose undetermined from code alone",
+      "suggestion": "Reference IMS manuals or including program usage"
+    }
+  ]
+}

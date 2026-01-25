@@ -1,0 +1,372 @@
+{
+  "header": {
+    "program_id": "DBUNLDGS",
+    "file_name": "DBUNLDGS.CBL",
+    "file_type": "COBOL",
+    "analyzed_by": "Scribe",
+    "analyzed_at": "2026-01-25T18:31:55.663789",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "DBUNLDGS is an IMS batch utility program that reads all root pending authorization summary segments (PAUTSUM0) from the PAUT IMS database using GN calls and their dependent child detail segments (PAUTDTL1) using GNP calls. It inserts the summary segments into the PASFL GSAM database and detail segments into the PADFL GSAM database via ISRT calls. Sequential file outputs are defined but commented out.",
+    "business_context": "Unloading pending authorization data from hierarchical IMS database PAUT to GSAM databases PASFL/PADFL for processing or archiving",
+    "program_type": "BATCH",
+    "citations": [
+      18,
+      141,
+      145,
+      164,
+      170,
+      172,
+      222,
+      268,
+      302,
+      321
+    ]
+  },
+  "inputs": [
+    {
+      "name": "PAUTBPCB",
+      "io_type": "IMS_SEGMENT",
+      "description": "IMS application PCB providing access to PAUT database root summary (PAUTSUM0) and child detail (PAUTDTL1) segments",
+      "copybook": "PAUTBPCB",
+      "citation": [
+        222,
+        268
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "PASFLPCB",
+      "io_type": "IMS_SEGMENT",
+      "description": "GSAM PCB receiving inserted pending authorization summary segments from PAUT",
+      "copybook": "PASFLPCB",
+      "citation": [
+        302
+      ]
+    },
+    {
+      "name": "PADFLPCB",
+      "io_type": "IMS_SEGMENT",
+      "description": "GSAM PCB receiving inserted pending authorization detail segments from PAUT",
+      "copybook": "PADFLPCB",
+      "citation": [
+        321
+      ]
+    }
+  ],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": [
+      "PAUTBPCB",
+      "PASFLPCB",
+      "PADFLPCB"
+    ]
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Only insert summary segment and process its child details if the account ID is numeric",
+      "logic_summary": "IF PA-ACCT-ID IS NUMERIC before calling insert parent and looping child reads",
+      "conditions": [
+        "PAUT-PCB-STATUS = SPACES"
+      ],
+      "citation": [
+        241
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Terminate root segment loop on end-of-database condition",
+      "logic_summary": "Set end flags on IMS status 'GB'",
+      "conditions": [
+        "PAUT-PCB-STATUS = 'GB'"
+      ],
+      "citation": [
+        249
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "Terminate child segment loop for current parent on no-more-segments condition",
+      "logic_summary": "Set child end flag on IMS status 'GE'",
+      "conditions": [
+        "PAUT-PCB-STATUS = 'GE'"
+      ],
+      "citation": [
+        284
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "PAUTBPCB",
+        "fields_used": [
+          "PA-ACCT-ID",
+          "PENDING-AUTH-SUMMARY"
+        ],
+        "citation": [
+          222,
+          239
+        ]
+      },
+      {
+        "source": "PAUTBPCB",
+        "fields_used": [
+          "PENDING-AUTH-DETAILS"
+        ],
+        "citation": [
+          268
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "PASFLPCB",
+        "fields_written": [
+          "PENDING-AUTH-SUMMARY"
+        ],
+        "citation": [
+          302
+        ]
+      },
+      {
+        "destination": "PADFLPCB",
+        "fields_written": [
+          "PENDING-AUTH-DETAILS"
+        ],
+        "citation": [
+          321
+        ]
+      }
+    ],
+    "transforms": []
+  },
+  "copybooks_used": [
+    {
+      "copybook_name": "IMSFUNCS",
+      "purpose": "Defines IMS DL/I function codes (FUNC-GN, FUNC-GNP, FUNC-ISRT)",
+      "location": "WORKING_STORAGE",
+      "citation": 136
+    },
+    {
+      "copybook_name": "CIPAUSMY",
+      "purpose": "Defines layout of PENDING-AUTH-SUMMARY root segment (PAUTSUM0)",
+      "location": "WORKING_STORAGE",
+      "citation": 143
+    },
+    {
+      "copybook_name": "CIPAUDTY",
+      "purpose": "Defines layout of PENDING-AUTH-DETAILS child segment (PAUTDTL1)",
+      "location": "WORKING_STORAGE",
+      "citation": 147
+    },
+    {
+      "copybook_name": "PAUTBPCB",
+      "purpose": "PCB mask for PAUT IMS database access",
+      "location": "LINKAGE",
+      "citation": 154
+    },
+    {
+      "copybook_name": "PASFLPCB",
+      "purpose": "PCB mask for PASFL GSAM database inserts",
+      "location": "LINKAGE",
+      "citation": 155
+    },
+    {
+      "copybook_name": "PADFLPCB",
+      "purpose": "PCB mask for PADFL GSAM database inserts",
+      "location": "LINKAGE",
+      "citation": 156
+    }
+  ],
+  "paragraphs": [
+    {
+      "paragraph_name": "MAIN-PARA",
+      "summary": null,
+      "purpose": "Program entry point: performs initialization, loops over root summaries processing children until end, then closes",
+      "called_by": [],
+      "calls": [
+        "1000-INITIALIZE",
+        "2000-FIND-NEXT-AUTH-SUMMARY",
+        "4000-FILE-CLOSE"
+      ],
+      "citation": [
+        164,
+        179
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "1000-INITIALIZE",
+      "summary": null,
+      "purpose": "Accepts and displays current date, startup messages (files open commented out)",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [],
+      "citation": [
+        182,
+        212
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "2000-FIND-NEXT-AUTH-SUMMARY",
+      "summary": null,
+      "purpose": "Performs GN call to read next root summary, inserts to GSAM if valid and account numeric, loops children",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [
+        "3100-INSERT-PARENT-SEG-GSAM",
+        "3000-FIND-NEXT-AUTH-DTL"
+      ],
+      "citation": [
+        216,
+        258
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "3000-FIND-NEXT-AUTH-DTL",
+      "summary": null,
+      "purpose": "Performs GNP call to read next child detail under current root, inserts to GSAM if found",
+      "called_by": [
+        "2000-FIND-NEXT-AUTH-SUMMARY"
+      ],
+      "calls": [
+        "3200-INSERT-CHILD-SEG-GSAM"
+      ],
+      "citation": [
+        263,
+        296
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "3100-INSERT-PARENT-SEG-GSAM",
+      "summary": null,
+      "purpose": "Performs ISRT to insert summary segment into PASFL GSAM",
+      "called_by": [
+        "2000-FIND-NEXT-AUTH-SUMMARY"
+      ],
+      "calls": [],
+      "citation": [
+        300,
+        316
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "3200-INSERT-CHILD-SEG-GSAM",
+      "summary": null,
+      "purpose": "Performs ISRT to insert detail segment into PADFL GSAM",
+      "called_by": [
+        "3000-FIND-NEXT-AUTH-DTL"
+      ],
+      "calls": [],
+      "citation": [
+        319,
+        335
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "4000-FILE-CLOSE",
+      "summary": null,
+      "purpose": "Closes output files (logic commented out)",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [],
+      "citation": [
+        338,
+        354
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "9999-ABEND",
+      "summary": null,
+      "purpose": "Displays abend message and sets return code 16",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        357,
+        365
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "PAUT-PCB-STATUS NOT = SPACES AND NOT 'GB' after GN",
+      "action": "Display status and key feedback, perform 9999-ABEND",
+      "citation": [
+        253
+      ]
+    },
+    {
+      "condition": "PAUT-PCB-STATUS NOT = SPACES AND NOT 'GE' after GNP",
+      "action": "Display status and key feedback, perform 9999-ABEND",
+      "citation": [
+        290
+      ]
+    },
+    {
+      "condition": "PASFL-PCB-STATUS NOT = SPACES after ISRT parent",
+      "action": "Display status and key feedback, perform 9999-ABEND",
+      "citation": [
+        311
+      ]
+    },
+    {
+      "condition": "PADFL-PCB-STATUS NOT = SPACES after ISRT child",
+      "action": "Display status and key feedback, perform 9999-ABEND",
+      "citation": [
+        330
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "Exact field layouts and key fields in copybooks CIPAUSMY and CIPAUDTY",
+      "context": "Copybooks referenced but source not provided; field names like PA-ACCT-ID inferred from usage",
+      "suggestion": "Analyze copybook source files"
+    },
+    {
+      "question": "Business purpose of unloading to GSAM PASFL/PADFL",
+      "context": "Inferred as data migration/archiving but no explicit documentation in code",
+      "suggestion": "Review IMS DBDs or job documentation"
+    },
+    {
+      "question": "Usage of counters like WS-NO-SUMRY-READ (incremented for children?) and why no final display",
+      "context": "Counters updated but not output; possible code error in child counter name",
+      "suggestion": "Trace execution or review history"
+    }
+  ]
+}

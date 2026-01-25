@@ -1,0 +1,93 @@
+{
+  "header": {
+    "program_id": "PSBPAUTB",
+    "file_name": "ims/PSBPAUTB.psb",
+    "file_type": "OTHER",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-25T18:37:47.645628",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "Defines the IMS Program Specification Block (PSB) named PSBPAUTB for a COBOL application program. Specifies a single database PCB (PAUTBPCB) for access to the DBPAUTP0 database with PROCOPT=AP and KEYLEN=14. Sensitizes root segment PAUTSUM0 and child segment PAUTDTL1.",
+    "business_context": null,
+    "program_type": "BATCH",
+    "citations": [
+      17,
+      18,
+      19,
+      20
+    ]
+  },
+  "inputs": [
+    {
+      "name": "PAUTBPCB",
+      "io_type": "IMS_SEGMENT",
+      "description": "IMS DL/I database DBPAUTP0 with root segment PAUTSUM0 (PARENT=0) and dependent segment PAUTDTL1 (PARENT=PAUTSUM0)",
+      "copybook": null,
+      "citation": [
+        17,
+        18,
+        19
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "PAUTBPCB",
+      "io_type": "IMS_SEGMENT",
+      "description": "IMS DL/I database DBPAUTP0 for write operations enabled by PROCOPT=AP (e.g., append/insert new segments)",
+      "copybook": null,
+      "citation": [
+        17
+      ]
+    }
+  ],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "PAUTBPCB",
+        "fields_used": [
+          "PAUTSUM0",
+          "PAUTDTL1"
+        ],
+        "citation": [
+          18,
+          19
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "PAUTBPCB",
+        "fields_written": [
+          "PAUTSUM0",
+          "PAUTDTL1"
+        ],
+        "citation": [
+          17
+        ]
+      }
+    ],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [],
+  "error_handling": [],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "What exact DL/I call types (e.g., ISRT, REPL, DLT) are permitted by PROCOPT=AP?",
+      "context": "Source code specifies PROCOPT=AP but does not detail permitted operations; requires IMS DL/I reference.",
+      "suggestion": "Review IMS PSBGEN and DL/I documentation for PROCOPT=AP semantics on TYPE=DB PCB."
+    }
+  ]
+}

@@ -1,0 +1,4887 @@
+{
+  "version": "1.0",
+  "generated_at": "2026-01-25T18:29:46.525824",
+  "source_root": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq",
+  "artifacts": {
+    "procedure::LOADPADB": {
+      "id": "procedure::LOADPADB",
+      "artifact_type": "procedure",
+      "category": "code",
+      "canonical_name": "LOADPADB",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/LOADPADB.JCL",
+        "line_start": 1,
+        "line_end": 25,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "JCL",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "paragraph::STEP01": {
+      "id": "paragraph::STEP01",
+      "artifact_type": "paragraph",
+      "category": "code",
+      "canonical_name": "STEP01",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDPADB.JCL",
+        "line_start": 38,
+        "line_end": 69,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "JCL",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "procedure::DBPAUTP0": {
+      "id": "procedure::DBPAUTP0",
+      "artifact_type": "procedure",
+      "category": "code",
+      "canonical_name": "DBPAUTP0",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/DBPAUTP0.jcl",
+        "line_start": 1,
+        "line_end": 6,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "JCL",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "paragraph::STEPDEL": {
+      "id": "paragraph::STEPDEL",
+      "artifact_type": "paragraph",
+      "category": "code",
+      "canonical_name": "STEPDEL",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/DBPAUTP0.jcl",
+        "line_start": 7,
+        "line_end": 14,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "JCL",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "paragraph::UNLOAD": {
+      "id": "paragraph::UNLOAD",
+      "artifact_type": "paragraph",
+      "category": "code",
+      "canonical_name": "UNLOAD",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/DBPAUTP0.jcl",
+        "line_start": 15,
+        "line_end": 47,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "JCL",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "procedure::UNLDGSAM": {
+      "id": "procedure::UNLDGSAM",
+      "artifact_type": "procedure",
+      "category": "code",
+      "canonical_name": "UNLDGSAM",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDGSAM.JCL",
+        "line_start": 1,
+        "line_end": 25,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "JCL",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "procedure::CBPAUP0J": {
+      "id": "procedure::CBPAUP0J",
+      "artifact_type": "procedure",
+      "category": "code",
+      "canonical_name": "CBPAUP0J",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/CBPAUP0J.jcl",
+        "line_start": 1,
+        "line_end": 23,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "JCL",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "procedure::UNLDPADB": {
+      "id": "procedure::UNLDPADB",
+      "artifact_type": "procedure",
+      "category": "code",
+      "canonical_name": "UNLDPADB",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDPADB.JCL",
+        "line_start": 1,
+        "line_end": 24,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "JCL",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "paragraph::STEP0": {
+      "id": "paragraph::STEP0",
+      "artifact_type": "paragraph",
+      "category": "code",
+      "canonical_name": "STEP0",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDPADB.JCL",
+        "line_start": 25,
+        "line_end": 37,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "JCL",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "copybook::COPAU01": {
+      "id": "copybook::COPAU01",
+      "artifact_type": "copybook",
+      "category": "code",
+      "canonical_name": "COPAU01",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy-bms/COPAU01.cpy",
+        "line_start": 1,
+        "line_end": 0,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "COBOL Copybook",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "record_layout::COPAU1AI": {
+      "id": "record_layout::COPAU1AI",
+      "artifact_type": "record_layout",
+      "category": "data",
+      "canonical_name": "COPAU1AI",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy-bms/COPAU01.cpy",
+        "line_start": 1,
+        "line_end": 344,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "COBOL Copybook",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "copybook::COPAU00": {
+      "id": "copybook::COPAU00",
+      "artifact_type": "copybook",
+      "category": "code",
+      "canonical_name": "COPAU00",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy-bms/COPAU00.cpy",
+        "line_start": 1,
+        "line_end": 0,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "COBOL Copybook",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "record_layout::COPAU0AI": {
+      "id": "record_layout::COPAU0AI",
+      "artifact_type": "record_layout",
+      "category": "data",
+      "canonical_name": "COPAU0AI",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy-bms/COPAU00.cpy",
+        "line_start": 1,
+        "line_end": 764,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "COBOL Copybook",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "copybook::CCPAURLY": {
+      "id": "copybook::CCPAURLY",
+      "artifact_type": "copybook",
+      "category": "code",
+      "canonical_name": "CCPAURLY",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAURLY.cpy",
+        "line_start": 1,
+        "line_end": 0,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "COBOL Copybook",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "column::05:PA-RL-CARD-NUM": {
+      "id": "column::05:PA-RL-CARD-NUM",
+      "artifact_type": "column",
+      "category": "data",
+      "canonical_name": "05:PA-RL-CARD-NUM",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAURLY.cpy",
+        "line_start": 1,
+        "line_end": 24,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "COBOL Copybook",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "copybook::CIPAUSMY": {
+      "id": "copybook::CIPAUSMY",
+      "artifact_type": "copybook",
+      "category": "code",
+      "canonical_name": "CIPAUSMY",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CIPAUSMY.cpy",
+        "line_start": 1,
+        "line_end": 0,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "COBOL Copybook",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "column::05:PA-ACCT-ID": {
+      "id": "column::05:PA-ACCT-ID",
+      "artifact_type": "column",
+      "category": "data",
+      "canonical_name": "05:PA-ACCT-ID",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CIPAUSMY.cpy",
+        "line_start": 1,
+        "line_end": 31,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "COBOL Copybook",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "copybook::PASFLPCB": {
+      "id": "copybook::PASFLPCB",
+      "artifact_type": "copybook",
+      "category": "code",
+      "canonical_name": "PASFLPCB",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/PASFLPCB.CPY",
+        "line_start": 1,
+        "line_end": 0,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "COBOL Copybook",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "record_layout::PASFLPCB": {
+      "id": "record_layout::PASFLPCB",
+      "artifact_type": "record_layout",
+      "category": "data",
+      "canonical_name": "PASFLPCB",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/PASFLPCB.CPY",
+        "line_start": 1,
+        "line_end": 26,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "COBOL Copybook",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "copybook::IMSFUNCS": {
+      "id": "copybook::IMSFUNCS",
+      "artifact_type": "copybook",
+      "category": "code",
+      "canonical_name": "IMSFUNCS",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/IMSFUNCS.cpy",
+        "line_start": 1,
+        "line_end": 0,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "COBOL Copybook",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "record_layout::FUNC-CODES": {
+      "id": "record_layout::FUNC-CODES",
+      "artifact_type": "record_layout",
+      "category": "data",
+      "canonical_name": "FUNC-CODES",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/IMSFUNCS.cpy",
+        "line_start": 1,
+        "line_end": 27,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "COBOL Copybook",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "copybook::PAUTBPCB": {
+      "id": "copybook::PAUTBPCB",
+      "artifact_type": "copybook",
+      "category": "code",
+      "canonical_name": "PAUTBPCB",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/PAUTBPCB.CPY",
+        "line_start": 1,
+        "line_end": 0,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "COBOL Copybook",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "record_layout::PAUTBPCB": {
+      "id": "record_layout::PAUTBPCB",
+      "artifact_type": "record_layout",
+      "category": "data",
+      "canonical_name": "PAUTBPCB",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/PAUTBPCB.CPY",
+        "line_start": 1,
+        "line_end": 26,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "COBOL Copybook",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "copybook::CIPAUDTY": {
+      "id": "copybook::CIPAUDTY",
+      "artifact_type": "copybook",
+      "category": "code",
+      "canonical_name": "CIPAUDTY",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CIPAUDTY.cpy",
+        "line_start": 1,
+        "line_end": 54,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "COBOL Copybook",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "copybook::CCPAURQY": {
+      "id": "copybook::CCPAURQY",
+      "artifact_type": "copybook",
+      "category": "code",
+      "canonical_name": "CCPAURQY",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAURQY.cpy",
+        "line_start": 1,
+        "line_end": 0,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "COBOL Copybook",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "column::05:PA-RQ-AUTH-DATE": {
+      "id": "column::05:PA-RQ-AUTH-DATE",
+      "artifact_type": "column",
+      "category": "data",
+      "canonical_name": "05:PA-RQ-AUTH-DATE",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAURQY.cpy",
+        "line_start": 1,
+        "line_end": 36,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "COBOL Copybook",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "copybook::CCPAUERY": {
+      "id": "copybook::CCPAUERY",
+      "artifact_type": "copybook",
+      "category": "code",
+      "canonical_name": "CCPAUERY",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAUERY.cpy",
+        "line_start": 1,
+        "line_end": 0,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "COBOL Copybook",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "record_layout::ERROR-LOG-RECORD": {
+      "id": "record_layout::ERROR-LOG-RECORD",
+      "artifact_type": "record_layout",
+      "category": "data",
+      "canonical_name": "ERROR-LOG-RECORD",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAUERY.cpy",
+        "line_start": 1,
+        "line_end": 40,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "COBOL Copybook",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "copybook::PADFLPCB": {
+      "id": "copybook::PADFLPCB",
+      "artifact_type": "copybook",
+      "category": "code",
+      "canonical_name": "PADFLPCB",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/PADFLPCB.CPY",
+        "line_start": 1,
+        "line_end": 0,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "COBOL Copybook",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "record_layout::PADFLPCB": {
+      "id": "record_layout::PADFLPCB",
+      "artifact_type": "record_layout",
+      "category": "data",
+      "canonical_name": "PADFLPCB",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/PADFLPCB.CPY",
+        "line_start": 1,
+        "line_end": 26,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "COBOL Copybook",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "index::XAUTHFRD": {
+      "id": "index::XAUTHFRD",
+      "artifact_type": "index",
+      "category": "data",
+      "canonical_name": "XAUTHFRD",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ddl/XAUTHFRD.ddl",
+        "line_start": 1,
+        "line_end": 4,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "DB2 DDL",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "table::AUTHFRDS": {
+      "id": "table::AUTHFRDS",
+      "artifact_type": "table",
+      "category": "data",
+      "canonical_name": "AUTHFRDS",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ddl/AUTHFRDS.ddl",
+        "line_start": 1,
+        "line_end": 28,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "DB2 DDL",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "map::COPAU00": {
+      "id": "map::COPAU00",
+      "artifact_type": "map",
+      "category": "interface",
+      "canonical_name": "COPAU00",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/bms/COPAU00.bms",
+        "line_start": 19,
+        "line_end": 25,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "CICS BMS",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "screen::COPAU0A": {
+      "id": "screen::COPAU0A",
+      "artifact_type": "screen",
+      "category": "interface",
+      "canonical_name": "COPAU0A",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/bms/COPAU00.bms",
+        "line_start": 26,
+        "line_end": 515,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "CICS BMS",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "map::COPAU01": {
+      "id": "map::COPAU01",
+      "artifact_type": "map",
+      "category": "interface",
+      "canonical_name": "COPAU01",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/bms/COPAU01.bms",
+        "line_start": 19,
+        "line_end": 25,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "CICS BMS",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "screen::COPAU1A": {
+      "id": "screen::COPAU1A",
+      "artifact_type": "screen",
+      "category": "interface",
+      "canonical_name": "COPAU1A",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/bms/COPAU01.bms",
+        "line_start": 26,
+        "line_end": 294,
+        "column_start": 1,
+        "column_end": null
+      },
+      "language": "CICS BMS",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "program::PAUDBLOD": {
+      "id": "program::PAUDBLOD",
+      "artifact_type": "program",
+      "category": "code",
+      "canonical_name": "PAUDBLOD",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+        "line_start": 18,
+        "line_end": 20,
+        "column_start": 2,
+        "column_end": null
+      },
+      "language": "COBOL",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "program::COPAUS2C": {
+      "id": "program::COPAUS2C",
+      "artifact_type": "program",
+      "category": "code",
+      "canonical_name": "COPAUS2C",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
+        "line_start": 23,
+        "line_end": 25,
+        "column_start": 2,
+        "column_end": null
+      },
+      "language": "COBOL",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "program::COPAUA0C": {
+      "id": "program::COPAUA0C",
+      "artifact_type": "program",
+      "category": "code",
+      "canonical_name": "COPAUA0C",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 23,
+        "line_end": 25,
+        "column_start": 2,
+        "column_end": null
+      },
+      "language": "COBOL",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "program::DBUNLDGS": {
+      "id": "program::DBUNLDGS",
+      "artifact_type": "program",
+      "category": "code",
+      "canonical_name": "DBUNLDGS",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "line_start": 18,
+        "line_end": 20,
+        "column_start": 2,
+        "column_end": null
+      },
+      "language": "COBOL",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "program::CBPAUP0C": {
+      "id": "program::CBPAUP0C",
+      "artifact_type": "program",
+      "category": "code",
+      "canonical_name": "CBPAUP0C",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+        "line_start": 23,
+        "line_end": 25,
+        "column_start": 2,
+        "column_end": null
+      },
+      "language": "COBOL",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "program::PAUDBUNL": {
+      "id": "program::PAUDBUNL",
+      "artifact_type": "program",
+      "category": "code",
+      "canonical_name": "PAUDBUNL",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+        "line_start": 18,
+        "line_end": 20,
+        "column_start": 2,
+        "column_end": null
+      },
+      "language": "COBOL",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "program::COPAUS1C": {
+      "id": "program::COPAUS1C",
+      "artifact_type": "program",
+      "category": "code",
+      "canonical_name": "COPAUS1C",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 23,
+        "line_end": 25,
+        "column_start": 2,
+        "column_end": null
+      },
+      "language": "COBOL",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    },
+    "program::COPAUS0C": {
+      "id": "program::COPAUS0C",
+      "artifact_type": "program",
+      "category": "code",
+      "canonical_name": "COPAUS0C",
+      "aliases": [],
+      "display_name": null,
+      "defined_in": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 23,
+        "line_end": 25,
+        "column_start": 2,
+        "column_end": null
+      },
+      "language": "COBOL",
+      "attributes": {},
+      "maps_to": null,
+      "field_mappings": {}
+    }
+  },
+  "relationships": [
+    {
+      "id": "2f95b18f-2086-491c-a95f-240a397e21a0",
+      "from_artifact": "program::PAUDBLOD",
+      "to_artifact": "copybook::IMSFUNCS",
+      "relationship_type": "includes",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+        "line_start": 142,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "evidence_text": "IMSFUNCS",
+      "columns_accessed": [],
+      "access_mode": null,
+      "confidence": 1.0,
+      "resolution_method": "exact",
+      "is_resolved": true
+    },
+    {
+      "id": "e1b546ba-c5a8-466f-91d8-717256ce132b",
+      "from_artifact": "program::PAUDBLOD",
+      "to_artifact": "copybook::CIPAUSMY",
+      "relationship_type": "includes",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+        "line_start": 149,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "evidence_text": "CIPAUSMY",
+      "columns_accessed": [],
+      "access_mode": null,
+      "confidence": 1.0,
+      "resolution_method": "exact",
+      "is_resolved": true
+    },
+    {
+      "id": "c4f44493-036f-4468-b1a3-73efa8ee8ec2",
+      "from_artifact": "program::PAUDBLOD",
+      "to_artifact": "copybook::CIPAUDTY",
+      "relationship_type": "includes",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+        "line_start": 153,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "evidence_text": "CIPAUDTY",
+      "columns_accessed": [],
+      "access_mode": null,
+      "confidence": 1.0,
+      "resolution_method": "exact",
+      "is_resolved": true
+    },
+    {
+      "id": "2ff5209a-cd61-4531-93c6-2bcd42d2c14d",
+      "from_artifact": "program::PAUDBLOD",
+      "to_artifact": "copybook::PAUTBPCB",
+      "relationship_type": "includes",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+        "line_start": 160,
+        "line_end": null,
+        "column_start": 69,
+        "column_end": null
+      },
+      "evidence_text": "PAUTBPCB",
+      "columns_accessed": [],
+      "access_mode": null,
+      "confidence": 1.0,
+      "resolution_method": "exact",
+      "is_resolved": true
+    },
+    {
+      "id": "eef671e5-0a19-421a-a8d7-54f596b4abc6",
+      "from_artifact": "program::COPAUS2C",
+      "to_artifact": "copybook::CIPAUDTY",
+      "relationship_type": "includes",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
+        "line_start": 78,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "evidence_text": "CIPAUDTY",
+      "columns_accessed": [],
+      "access_mode": null,
+      "confidence": 1.0,
+      "resolution_method": "exact",
+      "is_resolved": true
+    },
+    {
+      "id": "e0603e98-fa68-4386-a4c0-c000bca94b73",
+      "from_artifact": "program::COPAUA0C",
+      "to_artifact": "copybook::CCPAURQY",
+      "relationship_type": "includes",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 178,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "evidence_text": "CCPAURQY",
+      "columns_accessed": [],
+      "access_mode": null,
+      "confidence": 1.0,
+      "resolution_method": "exact",
+      "is_resolved": true
+    },
+    {
+      "id": "58e56c84-bffc-4993-8178-518cf1a73242",
+      "from_artifact": "program::COPAUA0C",
+      "to_artifact": "copybook::CCPAURLY",
+      "relationship_type": "includes",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 182,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "evidence_text": "CCPAURLY",
+      "columns_accessed": [],
+      "access_mode": null,
+      "confidence": 1.0,
+      "resolution_method": "exact",
+      "is_resolved": true
+    },
+    {
+      "id": "e00abb8c-23a1-4ec1-9a96-f2f48de044c9",
+      "from_artifact": "program::COPAUA0C",
+      "to_artifact": "copybook::CCPAUERY",
+      "relationship_type": "includes",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 185,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "evidence_text": "CCPAUERY",
+      "columns_accessed": [],
+      "access_mode": null,
+      "confidence": 1.0,
+      "resolution_method": "exact",
+      "is_resolved": true
+    },
+    {
+      "id": "2dede4ff-be50-4473-9860-b353b599615a",
+      "from_artifact": "program::COPAUA0C",
+      "to_artifact": "copybook::CIPAUSMY",
+      "relationship_type": "includes",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 193,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "evidence_text": "CIPAUSMY",
+      "columns_accessed": [],
+      "access_mode": null,
+      "confidence": 1.0,
+      "resolution_method": "exact",
+      "is_resolved": true
+    },
+    {
+      "id": "a10e6e1d-3ade-49a4-b5fc-5c3781333e29",
+      "from_artifact": "program::COPAUA0C",
+      "to_artifact": "copybook::CIPAUDTY",
+      "relationship_type": "includes",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 197,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "evidence_text": "CIPAUDTY",
+      "columns_accessed": [],
+      "access_mode": null,
+      "confidence": 1.0,
+      "resolution_method": "exact",
+      "is_resolved": true
+    },
+    {
+      "id": "e2b94d5f-d30e-4553-ac5b-06bbbf34aab1",
+      "from_artifact": "program::DBUNLDGS",
+      "to_artifact": "copybook::IMSFUNCS",
+      "relationship_type": "includes",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "line_start": 136,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "evidence_text": "IMSFUNCS",
+      "columns_accessed": [],
+      "access_mode": null,
+      "confidence": 1.0,
+      "resolution_method": "exact",
+      "is_resolved": true
+    },
+    {
+      "id": "9611bd8a-132f-4b1b-a173-7d864c010071",
+      "from_artifact": "program::DBUNLDGS",
+      "to_artifact": "copybook::CIPAUSMY",
+      "relationship_type": "includes",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "line_start": 143,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "evidence_text": "CIPAUSMY",
+      "columns_accessed": [],
+      "access_mode": null,
+      "confidence": 1.0,
+      "resolution_method": "exact",
+      "is_resolved": true
+    },
+    {
+      "id": "88d8e221-9dd7-4134-9c97-3e8ed4d65f8d",
+      "from_artifact": "program::DBUNLDGS",
+      "to_artifact": "copybook::CIPAUDTY",
+      "relationship_type": "includes",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "line_start": 147,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "evidence_text": "CIPAUDTY",
+      "columns_accessed": [],
+      "access_mode": null,
+      "confidence": 1.0,
+      "resolution_method": "exact",
+      "is_resolved": true
+    },
+    {
+      "id": "50ef0f97-792a-4634-81b0-958fdb711828",
+      "from_artifact": "program::DBUNLDGS",
+      "to_artifact": "copybook::PAUTBPCB",
+      "relationship_type": "includes",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "line_start": 154,
+        "line_end": null,
+        "column_start": 3,
+        "column_end": null
+      },
+      "evidence_text": "PAUTBPCB",
+      "columns_accessed": [],
+      "access_mode": null,
+      "confidence": 1.0,
+      "resolution_method": "exact",
+      "is_resolved": true
+    },
+    {
+      "id": "1fbe8748-af9a-44a5-8ac0-f7b65047230f",
+      "from_artifact": "program::DBUNLDGS",
+      "to_artifact": "copybook::PASFLPCB",
+      "relationship_type": "includes",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "line_start": 155,
+        "line_end": null,
+        "column_start": 3,
+        "column_end": null
+      },
+      "evidence_text": "PASFLPCB",
+      "columns_accessed": [],
+      "access_mode": null,
+      "confidence": 1.0,
+      "resolution_method": "exact",
+      "is_resolved": true
+    },
+    {
+      "id": "751ddcee-96d8-43fc-a820-7ee4abb11f1b",
+      "from_artifact": "program::DBUNLDGS",
+      "to_artifact": "copybook::PADFLPCB",
+      "relationship_type": "includes",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "line_start": 156,
+        "line_end": null,
+        "column_start": 3,
+        "column_end": null
+      },
+      "evidence_text": "PADFLPCB",
+      "columns_accessed": [],
+      "access_mode": null,
+      "confidence": 1.0,
+      "resolution_method": "exact",
+      "is_resolved": true
+    },
+    {
+      "id": "51936fa2-875e-4a99-9dc3-6d2c0cbde397",
+      "from_artifact": "program::CBPAUP0C",
+      "to_artifact": "copybook::CIPAUSMY",
+      "relationship_type": "includes",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+        "line_start": 117,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "evidence_text": "CIPAUSMY",
+      "columns_accessed": [],
+      "access_mode": null,
+      "confidence": 1.0,
+      "resolution_method": "exact",
+      "is_resolved": true
+    },
+    {
+      "id": "5e65fde8-ac83-498c-9c6f-be87b5f30284",
+      "from_artifact": "program::CBPAUP0C",
+      "to_artifact": "copybook::CIPAUDTY",
+      "relationship_type": "includes",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+        "line_start": 121,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "evidence_text": "CIPAUDTY",
+      "columns_accessed": [],
+      "access_mode": null,
+      "confidence": 1.0,
+      "resolution_method": "exact",
+      "is_resolved": true
+    },
+    {
+      "id": "984391dc-23bf-4440-a307-d22c125acf4b",
+      "from_artifact": "program::PAUDBUNL",
+      "to_artifact": "copybook::IMSFUNCS",
+      "relationship_type": "includes",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+        "line_start": 132,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "evidence_text": "IMSFUNCS",
+      "columns_accessed": [],
+      "access_mode": null,
+      "confidence": 1.0,
+      "resolution_method": "exact",
+      "is_resolved": true
+    },
+    {
+      "id": "7c870483-59f7-4571-b4be-a5a9051f1da1",
+      "from_artifact": "program::PAUDBUNL",
+      "to_artifact": "copybook::CIPAUSMY",
+      "relationship_type": "includes",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+        "line_start": 139,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "evidence_text": "CIPAUSMY",
+      "columns_accessed": [],
+      "access_mode": null,
+      "confidence": 1.0,
+      "resolution_method": "exact",
+      "is_resolved": true
+    },
+    {
+      "id": "a08fbbfc-dd26-4595-b8dc-8af829ddc8fa",
+      "from_artifact": "program::PAUDBUNL",
+      "to_artifact": "copybook::CIPAUDTY",
+      "relationship_type": "includes",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+        "line_start": 143,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "evidence_text": "CIPAUDTY",
+      "columns_accessed": [],
+      "access_mode": null,
+      "confidence": 1.0,
+      "resolution_method": "exact",
+      "is_resolved": true
+    },
+    {
+      "id": "75faae44-21ff-4214-bce5-f96854a96b09",
+      "from_artifact": "program::PAUDBUNL",
+      "to_artifact": "copybook::PAUTBPCB",
+      "relationship_type": "includes",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+        "line_start": 150,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "evidence_text": "PAUTBPCB",
+      "columns_accessed": [],
+      "access_mode": null,
+      "confidence": 1.0,
+      "resolution_method": "exact",
+      "is_resolved": true
+    },
+    {
+      "id": "7e2fc69c-e20e-4ba1-b18e-8791a448c645",
+      "from_artifact": "program::COPAUS1C",
+      "to_artifact": "copybook::COPAU01",
+      "relationship_type": "includes",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 122,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "evidence_text": "COPAU01",
+      "columns_accessed": [],
+      "access_mode": null,
+      "confidence": 1.0,
+      "resolution_method": "exact",
+      "is_resolved": true
+    },
+    {
+      "id": "0eba9089-f672-4dd6-846b-2fef6c322264",
+      "from_artifact": "program::COPAUS1C",
+      "to_artifact": "copybook::CIPAUSMY",
+      "relationship_type": "includes",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 142,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "evidence_text": "CIPAUSMY",
+      "columns_accessed": [],
+      "access_mode": null,
+      "confidence": 1.0,
+      "resolution_method": "exact",
+      "is_resolved": true
+    },
+    {
+      "id": "bbc63f12-9013-4488-995b-17b453e67511",
+      "from_artifact": "program::COPAUS1C",
+      "to_artifact": "copybook::CIPAUDTY",
+      "relationship_type": "includes",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 146,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "evidence_text": "CIPAUDTY",
+      "columns_accessed": [],
+      "access_mode": null,
+      "confidence": 1.0,
+      "resolution_method": "exact",
+      "is_resolved": true
+    },
+    {
+      "id": "4d4afea7-5ddb-4952-9de7-b332630614af",
+      "from_artifact": "program::COPAUS0C",
+      "to_artifact": "copybook::COPAU00",
+      "relationship_type": "includes",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 129,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "evidence_text": "COPAU00",
+      "columns_accessed": [],
+      "access_mode": null,
+      "confidence": 1.0,
+      "resolution_method": "exact",
+      "is_resolved": true
+    },
+    {
+      "id": "b55eca92-c173-4abe-96af-6d0ece11e6ba",
+      "from_artifact": "program::COPAUS0C",
+      "to_artifact": "copybook::CIPAUSMY",
+      "relationship_type": "includes",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 161,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "evidence_text": "CIPAUSMY",
+      "columns_accessed": [],
+      "access_mode": null,
+      "confidence": 1.0,
+      "resolution_method": "exact",
+      "is_resolved": true
+    },
+    {
+      "id": "1dda7fd2-2bf1-4573-94a1-446cda13fa45",
+      "from_artifact": "program::COPAUS0C",
+      "to_artifact": "copybook::CIPAUDTY",
+      "relationship_type": "includes",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 165,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "evidence_text": "CIPAUDTY",
+      "columns_accessed": [],
+      "access_mode": null,
+      "confidence": 1.0,
+      "resolution_method": "exact",
+      "is_resolved": true
+    }
+  ],
+  "unresolved": [
+    {
+      "reference_text": "DFSRRC00",
+      "expected_type": "program",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/LOADPADB.JCL",
+        "line_start": 26,
+        "line_end": null,
+        "column_start": 11,
+        "column_end": null
+      },
+      "containing_artifact": "paragraph::STEP01",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'DFSRRC00'"
+    },
+    {
+      "reference_text": "DFSRRC00",
+      "expected_type": "program",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/DBPAUTP0.jcl",
+        "line_start": 15,
+        "line_end": null,
+        "column_start": 12,
+        "column_end": null
+      },
+      "containing_artifact": "paragraph::UNLOAD",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'DFSRRC00'"
+    },
+    {
+      "reference_text": "DFSRRC00",
+      "expected_type": "program",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDGSAM.JCL",
+        "line_start": 26,
+        "line_end": null,
+        "column_start": 11,
+        "column_end": null
+      },
+      "containing_artifact": "paragraph::STEP01",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'DFSRRC00'"
+    },
+    {
+      "reference_text": "DFSRRC00",
+      "expected_type": "program",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/CBPAUP0J.jcl",
+        "line_start": 24,
+        "line_end": null,
+        "column_start": 11,
+        "column_end": null
+      },
+      "containing_artifact": "paragraph::STEP01",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'DFSRRC00'"
+    },
+    {
+      "reference_text": "DFSRRC00",
+      "expected_type": "program",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDPADB.JCL",
+        "line_start": 38,
+        "line_end": null,
+        "column_start": 11,
+        "column_end": null
+      },
+      "containing_artifact": "paragraph::STEP01",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'DFSRRC00'"
+    },
+    {
+      "reference_text": "CBLTDLI",
+      "expected_type": "program",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+        "line_start": 244,
+        "line_end": null,
+        "column_start": 7,
+        "column_end": null
+      },
+      "containing_artifact": "program::PAUDBLOD",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'CBLTDLI'"
+    },
+    {
+      "reference_text": "CBLTDLI",
+      "expected_type": "program",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+        "line_start": 296,
+        "line_end": null,
+        "column_start": 7,
+        "column_end": null
+      },
+      "containing_artifact": "program::PAUDBLOD",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'CBLTDLI'"
+    },
+    {
+      "reference_text": "CBLTDLI",
+      "expected_type": "program",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+        "line_start": 321,
+        "line_end": null,
+        "column_start": 13,
+        "column_end": null
+      },
+      "containing_artifact": "program::PAUDBLOD",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'CBLTDLI'"
+    },
+    {
+      "reference_text": "THRU",
+      "expected_type": null,
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+        "line_start": 309,
+        "line_end": null,
+        "column_start": 37,
+        "column_end": null
+      },
+      "containing_artifact": "program::PAUDBLOD",
+      "candidates": [
+        "index::XAUTHFRD",
+        "table::AUTHFRDS"
+      ],
+      "best_score": 0.5,
+      "reason": "no match found for 'THRU'"
+    },
+    {
+      "reference_text": "1000-INITIALIZE",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+        "line_start": 175,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::PAUDBLOD",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '1000-INITIALIZE'"
+    },
+    {
+      "reference_text": "2000-READ-ROOT-SEG-FILE",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+        "line_start": 177,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::PAUDBLOD",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '2000-READ-ROOT-SEG-FILE'"
+    },
+    {
+      "reference_text": "3000-READ-CHILD-SEG-FILE",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+        "line_start": 180,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::PAUDBLOD",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '3000-READ-CHILD-SEG-FILE'"
+    },
+    {
+      "reference_text": "4000-FILE-CLOSE",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+        "line_start": 183,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::PAUDBLOD",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '4000-FILE-CLOSE'"
+    },
+    {
+      "reference_text": "9999-ABEND",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+        "line_start": 206,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::PAUDBLOD",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9999-ABEND'"
+    },
+    {
+      "reference_text": "9999-ABEND",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+        "line_start": 214,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::PAUDBLOD",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9999-ABEND'"
+    },
+    {
+      "reference_text": "2100-INSERT-ROOT-SEG",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+        "line_start": 230,
+        "line_end": null,
+        "column_start": 10,
+        "column_end": null
+      },
+      "containing_artifact": "program::PAUDBLOD",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '2100-INSERT-ROOT-SEG'"
+    },
+    {
+      "reference_text": "9999-ABEND",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+        "line_start": 261,
+        "line_end": null,
+        "column_start": 13,
+        "column_end": null
+      },
+      "containing_artifact": "program::PAUDBLOD",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9999-ABEND'"
+    },
+    {
+      "reference_text": "3100-INSERT-CHILD-SEG",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+        "line_start": 281,
+        "line_end": null,
+        "column_start": 10,
+        "column_end": null
+      },
+      "containing_artifact": "program::PAUDBLOD",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '3100-INSERT-CHILD-SEG'"
+    },
+    {
+      "reference_text": "3200-INSERT-IMS-CALL",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+        "line_start": 309,
+        "line_end": null,
+        "column_start": 13,
+        "column_end": null
+      },
+      "containing_artifact": "program::PAUDBLOD",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '3200-INSERT-IMS-CALL'"
+    },
+    {
+      "reference_text": "9999-ABEND",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+        "line_start": 313,
+        "line_end": null,
+        "column_start": 15,
+        "column_end": null
+      },
+      "containing_artifact": "program::PAUDBLOD",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9999-ABEND'"
+    },
+    {
+      "reference_text": "9999-ABEND",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+        "line_start": 335,
+        "line_end": null,
+        "column_start": 15,
+        "column_end": null
+      },
+      "containing_artifact": "program::PAUDBLOD",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9999-ABEND'"
+    },
+    {
+      "reference_text": "FRAUD-UPDATE",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
+        "line_start": 204,
+        "line_end": null,
+        "column_start": 12,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS2C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'FRAUD-UPDATE'"
+    },
+    {
+      "reference_text": "CARDDEMO",
+      "expected_type": "table",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
+        "line_start": 141,
+        "line_end": 142,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS2C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'CARDDEMO'"
+    },
+    {
+      "reference_text": "CARDDEMO",
+      "expected_type": "table",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
+        "line_start": 221,
+        "line_end": 223,
+        "column_start": 73,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS2C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'CARDDEMO'"
+    },
+    {
+      "reference_text": "MQOPEN",
+      "expected_type": "program",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 262,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'MQOPEN'"
+    },
+    {
+      "reference_text": "MQGET",
+      "expected_type": "program",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 400,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'MQGET'"
+    },
+    {
+      "reference_text": "MQPUT1",
+      "expected_type": "program",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 758,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'MQPUT1'"
+    },
+    {
+      "reference_text": "MQCLOSE",
+      "expected_type": "program",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 956,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'MQCLOSE'"
+    },
+    {
+      "reference_text": "IF",
+      "expected_type": null,
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 409,
+        "line_end": 410,
+        "column_start": 10,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'IF'"
+    },
+    {
+      "reference_text": "IF",
+      "expected_type": null,
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 766,
+        "line_end": 767,
+        "column_start": 10,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'IF'"
+    },
+    {
+      "reference_text": "1000-INITIALIZE",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 222,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '1000-INITIALIZE'"
+    },
+    {
+      "reference_text": "2000-MAIN-PROCESS",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 223,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '2000-MAIN-PROCESS'"
+    },
+    {
+      "reference_text": "9000-TERMINATE",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 224,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9000-TERMINATE'"
+    },
+    {
+      "reference_text": "1100-OPEN-REQUEST-QUEUE",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 244,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '1100-OPEN-REQUEST-QUEUE'"
+    },
+    {
+      "reference_text": "3100-READ-REQUEST-MQ",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 246,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '3100-READ-REQUEST-MQ'"
+    },
+    {
+      "reference_text": "9500-LOG-ERROR",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 282,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9500-LOG-ERROR'"
+    },
+    {
+      "reference_text": "9500-LOG-ERROR",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 316,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9500-LOG-ERROR'"
+    },
+    {
+      "reference_text": "UNTIL",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 326,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [
+        "paragraph::UNLOAD"
+      ],
+      "best_score": 0.5454545454545454,
+      "reason": "no match found for 'UNTIL'"
+    },
+    {
+      "reference_text": "2100-EXTRACT-REQUEST-MSG",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 328,
+        "line_end": null,
+        "column_start": 8,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '2100-EXTRACT-REQUEST-MSG'"
+    },
+    {
+      "reference_text": "5000-PROCESS-AUTH",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 330,
+        "line_end": null,
+        "column_start": 8,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '5000-PROCESS-AUTH'"
+    },
+    {
+      "reference_text": "3100-READ-REQUEST-MQ",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 342,
+        "line_end": null,
+        "column_start": 11,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '3100-READ-REQUEST-MQ'"
+    },
+    {
+      "reference_text": "9500-LOG-ERROR",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 429,
+        "line_end": null,
+        "column_start": 11,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9500-LOG-ERROR'"
+    },
+    {
+      "reference_text": "1200-SCHEDULE-PSB",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 443,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '1200-SCHEDULE-PSB'"
+    },
+    {
+      "reference_text": "5100-READ-XREF-RECORD",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 448,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '5100-READ-XREF-RECORD'"
+    },
+    {
+      "reference_text": "5200-READ-ACCT-RECORD",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 451,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '5200-READ-ACCT-RECORD'"
+    },
+    {
+      "reference_text": "5300-READ-CUST-RECORD",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 452,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '5300-READ-CUST-RECORD'"
+    },
+    {
+      "reference_text": "5500-READ-AUTH-SUMMRY",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 454,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '5500-READ-AUTH-SUMMRY'"
+    },
+    {
+      "reference_text": "5600-READ-PROFILE-DATA",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 456,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '5600-READ-PROFILE-DATA'"
+    },
+    {
+      "reference_text": "6000-MAKE-DECISION",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 459,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '6000-MAKE-DECISION'"
+    },
+    {
+      "reference_text": "7100-SEND-RESPONSE",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 461,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '7100-SEND-RESPONSE'"
+    },
+    {
+      "reference_text": "8000-WRITE-AUTH-TO-DB",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 464,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '8000-WRITE-AUTH-TO-DB'"
+    },
+    {
+      "reference_text": "9500-LOG-ERROR",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 500,
+        "line_end": null,
+        "column_start": 14,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9500-LOG-ERROR'"
+    },
+    {
+      "reference_text": "9500-LOG-ERROR",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 512,
+        "line_end": null,
+        "column_start": 14,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9500-LOG-ERROR'"
+    },
+    {
+      "reference_text": "9500-LOG-ERROR",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 547,
+        "line_end": null,
+        "column_start": 13,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9500-LOG-ERROR'"
+    },
+    {
+      "reference_text": "9500-LOG-ERROR",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 560,
+        "line_end": null,
+        "column_start": 13,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9500-LOG-ERROR'"
+    },
+    {
+      "reference_text": "9500-LOG-ERROR",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 595,
+        "line_end": null,
+        "column_start": 13,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9500-LOG-ERROR'"
+    },
+    {
+      "reference_text": "9500-LOG-ERROR",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 608,
+        "line_end": null,
+        "column_start": 13,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9500-LOG-ERROR'"
+    },
+    {
+      "reference_text": "9500-LOG-ERROR",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 639,
+        "line_end": null,
+        "column_start": 13,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9500-LOG-ERROR'"
+    },
+    {
+      "reference_text": "9500-LOG-ERROR",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 778,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9500-LOG-ERROR'"
+    },
+    {
+      "reference_text": "8400-UPDATE-SUMMARY",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 790,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '8400-UPDATE-SUMMARY'"
+    },
+    {
+      "reference_text": "8500-INSERT-AUTH",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 791,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '8500-INSERT-AUTH'"
+    },
+    {
+      "reference_text": "9500-LOG-ERROR",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 846,
+        "line_end": null,
+        "column_start": 8,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9500-LOG-ERROR'"
+    },
+    {
+      "reference_text": "9500-LOG-ERROR",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 931,
+        "line_end": null,
+        "column_start": 8,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9500-LOG-ERROR'"
+    },
+    {
+      "reference_text": "9100-CLOSE-REQUEST-QUEUE",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 947,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9100-CLOSE-REQUEST-QUEUE'"
+    },
+    {
+      "reference_text": "9500-LOG-ERROR",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 975,
+        "line_end": null,
+        "column_start": 12,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9500-LOG-ERROR'"
+    },
+    {
+      "reference_text": "9990-END-ROUTINE",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 1009,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9990-END-ROUTINE'"
+    },
+    {
+      "reference_text": "9000-TERMINATE",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 1019,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9000-TERMINATE'"
+    },
+    {
+      "reference_text": "WS-CCXREF-FILE",
+      "expected_type": "file",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 477,
+        "line_end": 478,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'WS-CCXREF-FILE'"
+    },
+    {
+      "reference_text": "WS-ACCTFILENAME",
+      "expected_type": "file",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 525,
+        "line_end": 526,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'WS-ACCTFILENAME'"
+    },
+    {
+      "reference_text": "WS-CUSTFILENAME",
+      "expected_type": "file",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 573,
+        "line_end": 574,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'WS-CUSTFILENAME'"
+    },
+    {
+      "reference_text": "CMQODV",
+      "expected_type": "copybook",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 149,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'CMQODV'"
+    },
+    {
+      "reference_text": "CMQMDV",
+      "expected_type": "copybook",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 152,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'CMQMDV'"
+    },
+    {
+      "reference_text": "CMQODV",
+      "expected_type": "copybook",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 155,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'CMQODV'"
+    },
+    {
+      "reference_text": "CMQMDV",
+      "expected_type": "copybook",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 158,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'CMQMDV'"
+    },
+    {
+      "reference_text": "CMQV",
+      "expected_type": "copybook",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 161,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'CMQV'"
+    },
+    {
+      "reference_text": "CMQTML",
+      "expected_type": "copybook",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 164,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'CMQTML'"
+    },
+    {
+      "reference_text": "CMQPMOV",
+      "expected_type": "copybook",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 167,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'CMQPMOV'"
+    },
+    {
+      "reference_text": "CMQGMOV",
+      "expected_type": "copybook",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 170,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'CMQGMOV'"
+    },
+    {
+      "reference_text": "CVACT03Y",
+      "expected_type": "copybook",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 203,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [
+        "copybook::CIPAUDTY"
+      ],
+      "best_score": 0.5,
+      "reason": "no match found for 'CVACT03Y'"
+    },
+    {
+      "reference_text": "CVACT01Y",
+      "expected_type": "copybook",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 206,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [
+        "copybook::COPAU01",
+        "copybook::CIPAUDTY"
+      ],
+      "best_score": 0.5333333333333333,
+      "reason": "no match found for 'CVACT01Y'"
+    },
+    {
+      "reference_text": "CVCUS01Y",
+      "expected_type": "copybook",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "line_start": 209,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUA0C",
+      "candidates": [
+        "copybook::COPAU01",
+        "copybook::CCPAURLY",
+        "copybook::CIPAUSMY",
+        "copybook::CCPAURQY",
+        "copybook::CCPAUERY"
+      ],
+      "best_score": 0.5333333333333333,
+      "reason": "no match found for 'CVCUS01Y'"
+    },
+    {
+      "reference_text": "CBLTDLI",
+      "expected_type": "program",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "line_start": 222,
+        "line_end": null,
+        "column_start": 7,
+        "column_end": null
+      },
+      "containing_artifact": "program::DBUNLDGS",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'CBLTDLI'"
+    },
+    {
+      "reference_text": "CBLTDLI",
+      "expected_type": "program",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "line_start": 267,
+        "line_end": null,
+        "column_start": 7,
+        "column_end": null
+      },
+      "containing_artifact": "program::DBUNLDGS",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'CBLTDLI'"
+    },
+    {
+      "reference_text": "CBLTDLI",
+      "expected_type": "program",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "line_start": 302,
+        "line_end": null,
+        "column_start": 7,
+        "column_end": null
+      },
+      "containing_artifact": "program::DBUNLDGS",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'CBLTDLI'"
+    },
+    {
+      "reference_text": "CBLTDLI",
+      "expected_type": "program",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "line_start": 321,
+        "line_end": null,
+        "column_start": 7,
+        "column_end": null
+      },
+      "containing_artifact": "program::DBUNLDGS",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'CBLTDLI'"
+    },
+    {
+      "reference_text": "1000-INITIALIZE",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "line_start": 170,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::DBUNLDGS",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '1000-INITIALIZE'"
+    },
+    {
+      "reference_text": "2000-FIND-NEXT-AUTH-SUMMARY",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "line_start": 172,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::DBUNLDGS",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '2000-FIND-NEXT-AUTH-SUMMARY'"
+    },
+    {
+      "reference_text": "4000-FILE-CLOSE",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "line_start": 175,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::DBUNLDGS",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '4000-FILE-CLOSE'"
+    },
+    {
+      "reference_text": "9999-ABEND",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "line_start": 200,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::DBUNLDGS",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9999-ABEND'"
+    },
+    {
+      "reference_text": "9999-ABEND",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "line_start": 208,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::DBUNLDGS",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9999-ABEND'"
+    },
+    {
+      "reference_text": "3100-INSERT-PARENT-SEG-GSAM",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "line_start": 243,
+        "line_end": null,
+        "column_start": 15,
+        "column_end": null
+      },
+      "containing_artifact": "program::DBUNLDGS",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '3100-INSERT-PARENT-SEG-GSAM'"
+    },
+    {
+      "reference_text": "3000-FIND-NEXT-AUTH-DTL",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "line_start": 245,
+        "line_end": null,
+        "column_start": 15,
+        "column_end": null
+      },
+      "containing_artifact": "program::DBUNLDGS",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '3000-FIND-NEXT-AUTH-DTL'"
+    },
+    {
+      "reference_text": "9999-ABEND",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "line_start": 256,
+        "line_end": null,
+        "column_start": 15,
+        "column_end": null
+      },
+      "containing_artifact": "program::DBUNLDGS",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9999-ABEND'"
+    },
+    {
+      "reference_text": "3200-INSERT-CHILD-SEG-GSAM",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "line_start": 282,
+        "line_end": null,
+        "column_start": 15,
+        "column_end": null
+      },
+      "containing_artifact": "program::DBUNLDGS",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '3200-INSERT-CHILD-SEG-GSAM'"
+    },
+    {
+      "reference_text": "9999-ABEND",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "line_start": 293,
+        "line_end": null,
+        "column_start": 15,
+        "column_end": null
+      },
+      "containing_artifact": "program::DBUNLDGS",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9999-ABEND'"
+    },
+    {
+      "reference_text": "9999-ABEND",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "line_start": 314,
+        "line_end": null,
+        "column_start": 13,
+        "column_end": null
+      },
+      "containing_artifact": "program::DBUNLDGS",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9999-ABEND'"
+    },
+    {
+      "reference_text": "9999-ABEND",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "line_start": 333,
+        "line_end": null,
+        "column_start": 13,
+        "column_end": null
+      },
+      "containing_artifact": "program::DBUNLDGS",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9999-ABEND'"
+    },
+    {
+      "reference_text": "1000-INITIALIZE",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+        "line_start": 138,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::CBPAUP0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '1000-INITIALIZE'"
+    },
+    {
+      "reference_text": "2000-FIND-NEXT-AUTH-SUMMARY",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+        "line_start": 140,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::CBPAUP0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '2000-FIND-NEXT-AUTH-SUMMARY'"
+    },
+    {
+      "reference_text": "UNTIL",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+        "line_start": 142,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::CBPAUP0C",
+      "candidates": [
+        "paragraph::UNLOAD"
+      ],
+      "best_score": 0.5454545454545454,
+      "reason": "no match found for 'UNTIL'"
+    },
+    {
+      "reference_text": "3000-FIND-NEXT-AUTH-DTL",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+        "line_start": 144,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::CBPAUP0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '3000-FIND-NEXT-AUTH-DTL'"
+    },
+    {
+      "reference_text": "UNTIL",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+        "line_start": 146,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::CBPAUP0C",
+      "candidates": [
+        "paragraph::UNLOAD"
+      ],
+      "best_score": 0.5454545454545454,
+      "reason": "no match found for 'UNTIL'"
+    },
+    {
+      "reference_text": "4000-CHECK-IF-EXPIRED",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+        "line_start": 147,
+        "line_end": null,
+        "column_start": 12,
+        "column_end": null
+      },
+      "containing_artifact": "program::CBPAUP0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '4000-CHECK-IF-EXPIRED'"
+    },
+    {
+      "reference_text": "5000-DELETE-AUTH-DTL",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+        "line_start": 150,
+        "line_end": null,
+        "column_start": 15,
+        "column_end": null
+      },
+      "containing_artifact": "program::CBPAUP0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '5000-DELETE-AUTH-DTL'"
+    },
+    {
+      "reference_text": "3000-FIND-NEXT-AUTH-DTL",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+        "line_start": 153,
+        "line_end": null,
+        "column_start": 12,
+        "column_end": null
+      },
+      "containing_artifact": "program::CBPAUP0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '3000-FIND-NEXT-AUTH-DTL'"
+    },
+    {
+      "reference_text": "IF",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+        "line_start": 154,
+        "line_end": 156,
+        "column_start": 13,
+        "column_end": null
+      },
+      "containing_artifact": "program::CBPAUP0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'IF'"
+    },
+    {
+      "reference_text": "6000-DELETE-AUTH-SUMMARY",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+        "line_start": 157,
+        "line_end": null,
+        "column_start": 12,
+        "column_end": null
+      },
+      "containing_artifact": "program::CBPAUP0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '6000-DELETE-AUTH-SUMMARY'"
+    },
+    {
+      "reference_text": "9000-TAKE-CHECKPOINT",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+        "line_start": 161,
+        "line_end": null,
+        "column_start": 12,
+        "column_end": null
+      },
+      "containing_artifact": "program::CBPAUP0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9000-TAKE-CHECKPOINT'"
+    },
+    {
+      "reference_text": "2000-FIND-NEXT-AUTH-SUMMARY",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+        "line_start": 165,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::CBPAUP0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '2000-FIND-NEXT-AUTH-SUMMARY'"
+    },
+    {
+      "reference_text": "9000-TAKE-CHECKPOINT",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+        "line_start": 169,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::CBPAUP0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9000-TAKE-CHECKPOINT'"
+    },
+    {
+      "reference_text": "9999-ABEND",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+        "line_start": 240,
+        "line_end": null,
+        "column_start": 15,
+        "column_end": null
+      },
+      "containing_artifact": "program::CBPAUP0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9999-ABEND'"
+    },
+    {
+      "reference_text": "9999-ABEND",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+        "line_start": 270,
+        "line_end": null,
+        "column_start": 15,
+        "column_end": null
+      },
+      "containing_artifact": "program::CBPAUP0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9999-ABEND'"
+    },
+    {
+      "reference_text": "9999-ABEND",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+        "line_start": 320,
+        "line_end": null,
+        "column_start": 10,
+        "column_end": null
+      },
+      "containing_artifact": "program::CBPAUP0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9999-ABEND'"
+    },
+    {
+      "reference_text": "9999-ABEND",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+        "line_start": 345,
+        "line_end": null,
+        "column_start": 10,
+        "column_end": null
+      },
+      "containing_artifact": "program::CBPAUP0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9999-ABEND'"
+    },
+    {
+      "reference_text": "9999-ABEND",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+        "line_start": 369,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::CBPAUP0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9999-ABEND'"
+    },
+    {
+      "reference_text": "CBLTDLI",
+      "expected_type": "program",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+        "line_start": 213,
+        "line_end": null,
+        "column_start": 7,
+        "column_end": null
+      },
+      "containing_artifact": "program::PAUDBUNL",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'CBLTDLI'"
+    },
+    {
+      "reference_text": "CBLTDLI",
+      "expected_type": "program",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+        "line_start": 257,
+        "line_end": null,
+        "column_start": 7,
+        "column_end": null
+      },
+      "containing_artifact": "program::PAUDBUNL",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'CBLTDLI'"
+    },
+    {
+      "reference_text": "1000-INITIALIZE",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+        "line_start": 161,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::PAUDBUNL",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '1000-INITIALIZE'"
+    },
+    {
+      "reference_text": "2000-FIND-NEXT-AUTH-SUMMARY",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+        "line_start": 163,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::PAUDBUNL",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '2000-FIND-NEXT-AUTH-SUMMARY'"
+    },
+    {
+      "reference_text": "4000-FILE-CLOSE",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+        "line_start": 166,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::PAUDBUNL",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '4000-FILE-CLOSE'"
+    },
+    {
+      "reference_text": "9999-ABEND",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+        "line_start": 191,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::PAUDBUNL",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9999-ABEND'"
+    },
+    {
+      "reference_text": "9999-ABEND",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+        "line_start": 199,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::PAUDBUNL",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9999-ABEND'"
+    },
+    {
+      "reference_text": "3000-FIND-NEXT-AUTH-DTL",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+        "line_start": 235,
+        "line_end": null,
+        "column_start": 15,
+        "column_end": null
+      },
+      "containing_artifact": "program::PAUDBUNL",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '3000-FIND-NEXT-AUTH-DTL'"
+    },
+    {
+      "reference_text": "9999-ABEND",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+        "line_start": 246,
+        "line_end": null,
+        "column_start": 15,
+        "column_end": null
+      },
+      "containing_artifact": "program::PAUDBUNL",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9999-ABEND'"
+    },
+    {
+      "reference_text": "9999-ABEND",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+        "line_start": 282,
+        "line_end": null,
+        "column_start": 15,
+        "column_end": null
+      },
+      "containing_artifact": "program::PAUDBUNL",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for '9999-ABEND'"
+    },
+    {
+      "reference_text": "RETURN-TO-PREV-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 169,
+        "line_end": null,
+        "column_start": 10,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'RETURN-TO-PREV-SCREEN'"
+    },
+    {
+      "reference_text": "PROCESS-ENTER-KEY",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 175,
+        "line_end": null,
+        "column_start": 14,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'PROCESS-ENTER-KEY'"
+    },
+    {
+      "reference_text": "SEND-AUTHVIEW-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 177,
+        "line_end": null,
+        "column_start": 14,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'SEND-AUTHVIEW-SCREEN'"
+    },
+    {
+      "reference_text": "RECEIVE-AUTHVIEW-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 179,
+        "line_end": null,
+        "column_start": 14,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'RECEIVE-AUTHVIEW-SCREEN'"
+    },
+    {
+      "reference_text": "PROCESS-ENTER-KEY",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 182,
+        "line_end": null,
+        "column_start": 22,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'PROCESS-ENTER-KEY'"
+    },
+    {
+      "reference_text": "SEND-AUTHVIEW-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 183,
+        "line_end": null,
+        "column_start": 22,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'SEND-AUTHVIEW-SCREEN'"
+    },
+    {
+      "reference_text": "RETURN-TO-PREV-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 186,
+        "line_end": null,
+        "column_start": 22,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'RETURN-TO-PREV-SCREEN'"
+    },
+    {
+      "reference_text": "MARK-AUTH-FRAUD",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 188,
+        "line_end": null,
+        "column_start": 22,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'MARK-AUTH-FRAUD'"
+    },
+    {
+      "reference_text": "SEND-AUTHVIEW-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 189,
+        "line_end": null,
+        "column_start": 22,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'SEND-AUTHVIEW-SCREEN'"
+    },
+    {
+      "reference_text": "PROCESS-PF8-KEY",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 191,
+        "line_end": null,
+        "column_start": 22,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'PROCESS-PF8-KEY'"
+    },
+    {
+      "reference_text": "SEND-AUTHVIEW-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 192,
+        "line_end": null,
+        "column_start": 22,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'SEND-AUTHVIEW-SCREEN'"
+    },
+    {
+      "reference_text": "PROCESS-ENTER-KEY",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 194,
+        "line_end": null,
+        "column_start": 22,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'PROCESS-ENTER-KEY'"
+    },
+    {
+      "reference_text": "SEND-AUTHVIEW-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 197,
+        "line_end": null,
+        "column_start": 22,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'SEND-AUTHVIEW-SCREEN'"
+    },
+    {
+      "reference_text": "READ-AUTH-RECORD",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 216,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'READ-AUTH-RECORD'"
+    },
+    {
+      "reference_text": "TAKE-SYNCPOINT",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 220,
+        "line_end": null,
+        "column_start": 12,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'TAKE-SYNCPOINT'"
+    },
+    {
+      "reference_text": "POPULATE-AUTH-DETAILS",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 227,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'POPULATE-AUTH-DETAILS'"
+    },
+    {
+      "reference_text": "READ-AUTH-RECORD",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 234,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'READ-AUTH-RECORD'"
+    },
+    {
+      "reference_text": "UPDATE-AUTH-DETAILS",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 255,
+        "line_end": null,
+        "column_start": 12,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'UPDATE-AUTH-DETAILS'"
+    },
+    {
+      "reference_text": "ROLL-BACK",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 258,
+        "line_end": null,
+        "column_start": 12,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'ROLL-BACK'"
+    },
+    {
+      "reference_text": "ROLL-BACK",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 261,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'ROLL-BACK'"
+    },
+    {
+      "reference_text": "POPULATE-AUTH-DETAILS",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 265,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'POPULATE-AUTH-DETAILS'"
+    },
+    {
+      "reference_text": "READ-AUTH-RECORD",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 273,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'READ-AUTH-RECORD'"
+    },
+    {
+      "reference_text": "READ-NEXT-AUTH-RECORD",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 274,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'READ-NEXT-AUTH-RECORD'"
+    },
+    {
+      "reference_text": "TAKE-SYNCPOINT",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 278,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'TAKE-SYNCPOINT'"
+    },
+    {
+      "reference_text": "POPULATE-AUTH-DETAILS",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 287,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'POPULATE-AUTH-DETAILS'"
+    },
+    {
+      "reference_text": "POPULATE-HEADER-INFO",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 375,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'POPULATE-HEADER-INFO'"
+    },
+    {
+      "reference_text": "SCHEDULE-PSB",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 433,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'SCHEDULE-PSB'"
+    },
+    {
+      "reference_text": "SEND-AUTHVIEW-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 461,
+        "line_end": null,
+        "column_start": 13,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'SEND-AUTHVIEW-SCREEN'"
+    },
+    {
+      "reference_text": "SEND-AUTHVIEW-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 487,
+        "line_end": null,
+        "column_start": 16,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'SEND-AUTHVIEW-SCREEN'"
+    },
+    {
+      "reference_text": "SEND-AUTHVIEW-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 516,
+        "line_end": null,
+        "column_start": 13,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'SEND-AUTHVIEW-SCREEN'"
+    },
+    {
+      "reference_text": "TAKE-SYNCPOINT",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 533,
+        "line_end": null,
+        "column_start": 13,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'TAKE-SYNCPOINT'"
+    },
+    {
+      "reference_text": "ROLL-BACK",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 540,
+        "line_end": null,
+        "column_start": 13,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'ROLL-BACK'"
+    },
+    {
+      "reference_text": "SEND-AUTHVIEW-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 550,
+        "line_end": null,
+        "column_start": 13,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'SEND-AUTHVIEW-SCREEN'"
+    },
+    {
+      "reference_text": "SEND-AUTHVIEW-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 601,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'SEND-AUTHVIEW-SCREEN'"
+    },
+    {
+      "reference_text": "WS-PGM-AUTH-FRAUD",
+      "expected_type": "program",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 248,
+        "line_end": 249,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'WS-PGM-AUTH-FRAUD'"
+    },
+    {
+      "reference_text": "CDEMO-TO-PROGRAM",
+      "expected_type": "program",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 367,
+        "line_end": 368,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'CDEMO-TO-PROGRAM'"
+    },
+    {
+      "reference_text": "COCOM01Y",
+      "expected_type": "copybook",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 109,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [
+        "copybook::COPAU01"
+      ],
+      "best_score": 0.5333333333333333,
+      "reason": "no match found for 'COCOM01Y'"
+    },
+    {
+      "reference_text": "COTTL01Y",
+      "expected_type": "copybook",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 126,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [
+        "copybook::COPAU01"
+      ],
+      "best_score": 0.5333333333333333,
+      "reason": "no match found for 'COTTL01Y'"
+    },
+    {
+      "reference_text": "CSDAT01Y",
+      "expected_type": "copybook",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 129,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [
+        "copybook::COPAU01",
+        "copybook::CIPAUDTY"
+      ],
+      "best_score": 0.5333333333333333,
+      "reason": "no match found for 'CSDAT01Y'"
+    },
+    {
+      "reference_text": "CSMSG01Y",
+      "expected_type": "copybook",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 132,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [
+        "copybook::CIPAUSMY"
+      ],
+      "best_score": 0.5,
+      "reason": "no match found for 'CSMSG01Y'"
+    },
+    {
+      "reference_text": "CSMSG02Y",
+      "expected_type": "copybook",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "line_start": 135,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS1C",
+      "candidates": [
+        "copybook::CIPAUSMY"
+      ],
+      "best_score": 0.5,
+      "reason": "no match found for 'CSMSG02Y'"
+    },
+    {
+      "reference_text": "SEND-PAULST-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 198,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'SEND-PAULST-SCREEN'"
+    },
+    {
+      "reference_text": "GATHER-DETAILS",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 215,
+        "line_end": null,
+        "column_start": 13,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'GATHER-DETAILS'"
+    },
+    {
+      "reference_text": "SEND-PAULST-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 219,
+        "line_end": null,
+        "column_start": 13,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'SEND-PAULST-SCREEN'"
+    },
+    {
+      "reference_text": "RECEIVE-PAULST-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 222,
+        "line_end": null,
+        "column_start": 13,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'RECEIVE-PAULST-SCREEN'"
+    },
+    {
+      "reference_text": "PROCESS-ENTER-KEY",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 226,
+        "line_end": null,
+        "column_start": 18,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'PROCESS-ENTER-KEY'"
+    },
+    {
+      "reference_text": "SEND-PAULST-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 234,
+        "line_end": null,
+        "column_start": 18,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'SEND-PAULST-SCREEN'"
+    },
+    {
+      "reference_text": "RETURN-TO-PREV-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 237,
+        "line_end": null,
+        "column_start": 18,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'RETURN-TO-PREV-SCREEN'"
+    },
+    {
+      "reference_text": "SEND-PAULST-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 238,
+        "line_end": null,
+        "column_start": 18,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'SEND-PAULST-SCREEN'"
+    },
+    {
+      "reference_text": "PROCESS-PF7-KEY",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 240,
+        "line_end": null,
+        "column_start": 18,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'PROCESS-PF7-KEY'"
+    },
+    {
+      "reference_text": "SEND-PAULST-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 241,
+        "line_end": null,
+        "column_start": 18,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'SEND-PAULST-SCREEN'"
+    },
+    {
+      "reference_text": "PROCESS-PF8-KEY",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 243,
+        "line_end": null,
+        "column_start": 18,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'PROCESS-PF8-KEY'"
+    },
+    {
+      "reference_text": "SEND-PAULST-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 244,
+        "line_end": null,
+        "column_start": 18,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'SEND-PAULST-SCREEN'"
+    },
+    {
+      "reference_text": "SEND-PAULST-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 249,
+        "line_end": null,
+        "column_start": 18,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'SEND-PAULST-SCREEN'"
+    },
+    {
+      "reference_text": "GATHER-DETAILS",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 337,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'GATHER-DETAILS'"
+    },
+    {
+      "reference_text": "GATHER-ACCOUNT-DETAILS",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 350,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'GATHER-ACCOUNT-DETAILS'"
+    },
+    {
+      "reference_text": "INITIALIZE-AUTH-DATA",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 352,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'INITIALIZE-AUTH-DATA'"
+    },
+    {
+      "reference_text": "PROCESS-PAGE-FORWARD",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 355,
+        "line_end": null,
+        "column_start": 12,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'PROCESS-PAGE-FORWARD'"
+    },
+    {
+      "reference_text": "GET-AUTH-SUMMARY",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 370,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'GET-AUTH-SUMMARY'"
+    },
+    {
+      "reference_text": "INITIALIZE-AUTH-DATA",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 377,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'INITIALIZE-AUTH-DATA'"
+    },
+    {
+      "reference_text": "PROCESS-PAGE-FORWARD",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 379,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'PROCESS-PAGE-FORWARD'"
+    },
+    {
+      "reference_text": "GET-AUTH-SUMMARY",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 396,
+        "line_end": null,
+        "column_start": 10,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'GET-AUTH-SUMMARY'"
+    },
+    {
+      "reference_text": "REPOSITION-AUTHORIZATIONS",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 397,
+        "line_end": null,
+        "column_start": 10,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'REPOSITION-AUTHORIZATIONS'"
+    },
+    {
+      "reference_text": "INITIALIZE-AUTH-DATA",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 405,
+        "line_end": null,
+        "column_start": 10,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'INITIALIZE-AUTH-DATA'"
+    },
+    {
+      "reference_text": "PROCESS-PAGE-FORWARD",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 407,
+        "line_end": null,
+        "column_start": 10,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'PROCESS-PAGE-FORWARD'"
+    },
+    {
+      "reference_text": "UNTIL",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 424,
+        "line_end": null,
+        "column_start": 10,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [
+        "paragraph::UNLOAD"
+      ],
+      "best_score": 0.5454545454545454,
+      "reason": "no match found for 'UNTIL'"
+    },
+    {
+      "reference_text": "REPOSITION-AUTHORIZATIONS",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 426,
+        "line_end": null,
+        "column_start": 17,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'REPOSITION-AUTHORIZATIONS'"
+    },
+    {
+      "reference_text": "GET-AUTHORIZATIONS",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 428,
+        "line_end": null,
+        "column_start": 17,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'GET-AUTHORIZATIONS'"
+    },
+    {
+      "reference_text": "POPULATE-AUTH-LIST",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 431,
+        "line_end": null,
+        "column_start": 18,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'POPULATE-AUTH-LIST'"
+    },
+    {
+      "reference_text": "IF",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 443,
+        "line_end": 445,
+        "column_start": 14,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'IF'"
+    },
+    {
+      "reference_text": "GET-AUTHORIZATIONS",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 446,
+        "line_end": null,
+        "column_start": 14,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'GET-AUTHORIZATIONS'"
+    },
+    {
+      "reference_text": "SEND-PAULST-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 483,
+        "line_end": null,
+        "column_start": 13,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'SEND-PAULST-SCREEN'"
+    },
+    {
+      "reference_text": "SEND-PAULST-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 516,
+        "line_end": null,
+        "column_start": 13,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'SEND-PAULST-SCREEN'"
+    },
+    {
+      "reference_text": "VARYING",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 611,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'VARYING'"
+    },
+    {
+      "reference_text": "POPULATE-HEADER-INFO",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 690,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'POPULATE-HEADER-INFO'"
+    },
+    {
+      "reference_text": "GETCARDXREF-BYACCT",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 753,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'GETCARDXREF-BYACCT'"
+    },
+    {
+      "reference_text": "GETACCTDATA-BYACCT",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 754,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'GETACCTDATA-BYACCT'"
+    },
+    {
+      "reference_text": "GETCUSTDATA-BYCUST",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 755,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'GETCUSTDATA-BYCUST'"
+    },
+    {
+      "reference_text": "GET-AUTH-SUMMARY",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 785,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'GET-AUTH-SUMMARY'"
+    },
+    {
+      "reference_text": "SEND-PAULST-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 845,
+        "line_end": null,
+        "column_start": 13,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'SEND-PAULST-SCREEN'"
+    },
+    {
+      "reference_text": "SEND-PAULST-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 860,
+        "line_end": null,
+        "column_start": 13,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'SEND-PAULST-SCREEN'"
+    },
+    {
+      "reference_text": "SEND-PAULST-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 895,
+        "line_end": null,
+        "column_start": 13,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'SEND-PAULST-SCREEN'"
+    },
+    {
+      "reference_text": "SEND-PAULST-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 910,
+        "line_end": null,
+        "column_start": 13,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'SEND-PAULST-SCREEN'"
+    },
+    {
+      "reference_text": "SEND-PAULST-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 946,
+        "line_end": null,
+        "column_start": 13,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'SEND-PAULST-SCREEN'"
+    },
+    {
+      "reference_text": "SEND-PAULST-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 961,
+        "line_end": null,
+        "column_start": 13,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'SEND-PAULST-SCREEN'"
+    },
+    {
+      "reference_text": "SCHEDULE-PSB",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 969,
+        "line_end": null,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'SCHEDULE-PSB'"
+    },
+    {
+      "reference_text": "SEND-PAULST-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 995,
+        "line_end": null,
+        "column_start": 13,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'SEND-PAULST-SCREEN'"
+    },
+    {
+      "reference_text": "SEND-PAULST-SCREEN",
+      "expected_type": "paragraph",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 1029,
+        "line_end": null,
+        "column_start": 9,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'SEND-PAULST-SCREEN'"
+    },
+    {
+      "reference_text": "CDEMO-TO-PROGRAM",
+      "expected_type": "program",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 322,
+        "line_end": 323,
+        "column_start": 19,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'CDEMO-TO-PROGRAM'"
+    },
+    {
+      "reference_text": "CDEMO-TO-PROGRAM",
+      "expected_type": "program",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 674,
+        "line_end": 675,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'CDEMO-TO-PROGRAM'"
+    },
+    {
+      "reference_text": "WS-CARDXREFNAME-ACCT-PATH",
+      "expected_type": "file",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 818,
+        "line_end": 819,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'WS-CARDXREFNAME-ACCT-PATH'"
+    },
+    {
+      "reference_text": "WS-ACCTFILENAME",
+      "expected_type": "file",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 869,
+        "line_end": 870,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'WS-ACCTFILENAME'"
+    },
+    {
+      "reference_text": "WS-CUSTFILENAME",
+      "expected_type": "file",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 920,
+        "line_end": 921,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'WS-CUSTFILENAME'"
+    },
+    {
+      "reference_text": "COCOM01Y",
+      "expected_type": "copybook",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 116,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [
+        "copybook::COPAU01"
+      ],
+      "best_score": 0.5333333333333333,
+      "reason": "no match found for 'COCOM01Y'"
+    },
+    {
+      "reference_text": "COTTL01Y",
+      "expected_type": "copybook",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 132,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [
+        "copybook::COPAU01"
+      ],
+      "best_score": 0.5333333333333333,
+      "reason": "no match found for 'COTTL01Y'"
+    },
+    {
+      "reference_text": "CSDAT01Y",
+      "expected_type": "copybook",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 135,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [
+        "copybook::COPAU01",
+        "copybook::CIPAUDTY"
+      ],
+      "best_score": 0.5333333333333333,
+      "reason": "no match found for 'CSDAT01Y'"
+    },
+    {
+      "reference_text": "CSMSG01Y",
+      "expected_type": "copybook",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 138,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [
+        "copybook::CIPAUSMY"
+      ],
+      "best_score": 0.5,
+      "reason": "no match found for 'CSMSG01Y'"
+    },
+    {
+      "reference_text": "CSMSG02Y",
+      "expected_type": "copybook",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 141,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [
+        "copybook::CIPAUSMY"
+      ],
+      "best_score": 0.5,
+      "reason": "no match found for 'CSMSG02Y'"
+    },
+    {
+      "reference_text": "CVACT01Y",
+      "expected_type": "copybook",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 144,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [
+        "copybook::COPAU01",
+        "copybook::CIPAUDTY"
+      ],
+      "best_score": 0.5333333333333333,
+      "reason": "no match found for 'CVACT01Y'"
+    },
+    {
+      "reference_text": "CVACT02Y",
+      "expected_type": "copybook",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 147,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [
+        "copybook::CIPAUDTY"
+      ],
+      "best_score": 0.5,
+      "reason": "no match found for 'CVACT02Y'"
+    },
+    {
+      "reference_text": "CVACT03Y",
+      "expected_type": "copybook",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 150,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [
+        "copybook::CIPAUDTY"
+      ],
+      "best_score": 0.5,
+      "reason": "no match found for 'CVACT03Y'"
+    },
+    {
+      "reference_text": "CVCUS01Y",
+      "expected_type": "copybook",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "line_start": 153,
+        "line_end": null,
+        "column_start": 2,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS0C",
+      "candidates": [
+        "copybook::COPAU01",
+        "copybook::CCPAURLY",
+        "copybook::CIPAUSMY",
+        "copybook::CCPAURQY",
+        "copybook::CCPAUERY"
+      ],
+      "best_score": 0.5333333333333333,
+      "reason": "no match found for 'CVCUS01Y'"
+    }
+  ],
+  "statistics": {
+    "files_analyzed": 28,
+    "files_skipped": 12,
+    "files_failed": 0,
+    "artifacts_by_type": {
+      "procedure": 5,
+      "paragraph": 4,
+      "copybook": 11,
+      "record_layout": 7,
+      "column": 3,
+      "index": 1,
+      "table": 1,
+      "map": 2,
+      "screen": 2,
+      "program": 8
+    },
+    "artifacts_total": 44,
+    "relationships_by_type": {
+      "includes": 28
+    },
+    "relationships_total": 28,
+    "unresolved_count": 227,
+    "resolution_rate": 10.980392156862745,
+    "languages_detected": [
+      "CICS BMS",
+      "COBOL",
+      "COBOL Copybook",
+      "DB2 DDL",
+      "JCL"
+    ],
+    "specs_used": {
+      "JCL": "jcl",
+      "COBOL Copybook": "copybook",
+      "DB2 DDL": "db2_ddl",
+      "CICS BMS": "bms",
+      "COBOL": "cobol"
+    }
+  },
+  "config_hash": "e098d916d22638fe",
+  "specs_hashes": {
+    "JCL": "61ec5dde77ec3a0f5f61449dd07d9224f996004b7072b3e96dda66f57a04148f",
+    "COBOL Copybook": "593b41b5c8795b11f59f481d6723eb048a4f7f8690cf63807fa6bf18165959f5",
+    "DB2 DDL": "015348a61159e7ff8fb7a5e62e43d1ed614d95295939d261ae105c3c69113bb5",
+    "CICS BMS": "ec39c982490d18d5c9c2d492255e454ae6d1a289a9e89831c1c5ad47bbfbed4b",
+    "COBOL": "0ce8b5d8f60199de566538339e7754a4768b7b1a6384a1c7fdbf11fe393a2fec"
+  }
+}

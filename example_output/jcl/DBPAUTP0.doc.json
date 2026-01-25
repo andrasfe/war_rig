@@ -1,0 +1,284 @@
+{
+  "header": {
+    "program_id": "DBPAUTP0",
+    "file_name": "DBPAUTP0.jcl",
+    "file_type": "JCL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-25T18:30:20.035105",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This JCL job first deletes any existing version of the output dataset AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0, then executes the IMS Database Unload utility DFSRRC00 to unload all records from the IMS database DBPAUTP0 into a newly cataloged sequential file using a user exit routine DFSURGU0.",
+    "business_context": "Supports CardDemo application by unloading IMS database DBPAUTP0 (likely Payment Authorization database based on PAUTHDB dataset names) for data extraction, backup, or offline processing.",
+    "program_type": "BATCH",
+    "citations": [
+      1,
+      7,
+      15,
+      16
+    ]
+  },
+  "inputs": [
+    {
+      "name": "PARM",
+      "io_type": "PARAMETER",
+      "description": "Specifies unload operation (ULU) using user routine DFSURGU0 for database DBPAUTP0",
+      "copybook": null,
+      "citation": [
+        16
+      ]
+    },
+    {
+      "name": "DDPAUTP0",
+      "io_type": "IMS_SEGMENT",
+      "description": "Primary IMS database dataset for DBPAUTP0 (PAUTHDB)",
+      "copybook": null,
+      "citation": [
+        31
+      ]
+    },
+    {
+      "name": "DDPAUTX0",
+      "io_type": "IMS_SEGMENT",
+      "description": "Secondary IMS database dataset for DBPAUTP0 (PAUTHDBX)",
+      "copybook": null,
+      "citation": [
+        32
+      ]
+    },
+    {
+      "name": "DFSCTL",
+      "io_type": "PARAMETER",
+      "description": "IMS utility control cards specifying SBPARM ACTIV=COND for conditional activation",
+      "copybook": null,
+      "citation": [
+        34,
+        35
+      ]
+    },
+    {
+      "name": "DFSVSAMP",
+      "io_type": "OTHER",
+      "description": "IMS VSAM sample member from proclib for database unload processing",
+      "copybook": null,
+      "citation": [
+        33
+      ]
+    },
+    {
+      "name": "RECON1",
+      "io_type": "OTHER",
+      "description": "IMS reconciliation dataset 1 (purpose unclear from code)",
+      "copybook": null,
+      "citation": [
+        40
+      ]
+    },
+    {
+      "name": "RECON2",
+      "io_type": "OTHER",
+      "description": "IMS reconciliation dataset 2 (purpose unclear from code)",
+      "copybook": null,
+      "citation": [
+        41
+      ]
+    },
+    {
+      "name": "RECON3",
+      "io_type": "OTHER",
+      "description": "IMS reconciliation dataset 3 (purpose unclear from code)",
+      "copybook": null,
+      "citation": [
+        42
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "DFSURGU1",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Unloaded records from IMS database DBPAUTP0 in variable blocked format (LRECL=27990, RECFM=VB)",
+      "copybook": null,
+      "citation": [
+        25
+      ]
+    },
+    {
+      "name": "SYSUT1",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Target dataset for deletion (AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0) to ensure clean output",
+      "copybook": null,
+      "citation": [
+        9
+      ]
+    }
+  ],
+  "called_programs": [
+    {
+      "program_name": "IEFBR14",
+      "call_type": "STATIC_CALL",
+      "purpose": "Delete existing output dataset before unload step",
+      "parameters": [],
+      "citation": 7
+    },
+    {
+      "program_name": "DFSRRC00",
+      "call_type": "STATIC_CALL",
+      "purpose": "Perform IMS database unload for DBPAUTP0 using user routine",
+      "parameters": [
+        "ULU",
+        "DFSURGU0",
+        "DBPAUTP0"
+      ],
+      "citation": 15
+    }
+  ],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Delete any existing output dataset before creating new unload file to prevent append or catalog conflicts",
+      "logic_summary": "STEPDEL uses IEFBR14 with DISP=(MOD,DELETE) on SYSUT1",
+      "conditions": [
+        "Prior to UNLOAD step"
+      ],
+      "citation": [
+        5,
+        7,
+        9
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Use conditional activation (ACTIV=COND) for IMS database unload",
+      "logic_summary": "Specified in DFSCTL SBPARM",
+      "conditions": [
+        "During DFSRRC00 execution"
+      ],
+      "citation": [
+        35
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "DDPAUTP0",
+        "fields_used": [
+          "ALL DBPAUTP0 segments"
+        ],
+        "citation": [
+          31
+        ]
+      },
+      {
+        "source": "DDPAUTX0",
+        "fields_used": [
+          "ALL DBPAUTP0 segments"
+        ],
+        "citation": [
+          32
+        ]
+      },
+      {
+        "source": "DFSCTL",
+        "fields_used": [
+          "SBPARM ACTIV=COND"
+        ],
+        "citation": [
+          35
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "DFSURGU1",
+        "fields_written": [
+          "Unloaded DBPAUTP0 records formatted by DFSURGU0"
+        ],
+        "citation": [
+          25
+        ]
+      }
+    ],
+    "transforms": [
+      {
+        "input_field": "DBPAUTP0 segments",
+        "output_field": "Unloaded records",
+        "transformation_description": "IMS database records unloaded and formatted by user exit routine DFSURGU0 into VB sequential file",
+        "citation": [
+          16,
+          25
+        ]
+      }
+    ]
+  },
+  "copybooks_used": [],
+  "paragraphs": [
+    {
+      "paragraph_name": "STEPDEL",
+      "summary": null,
+      "purpose": "Delete existing output dataset AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0",
+      "called_by": [],
+      "calls": [
+        "IEFBR14"
+      ],
+      "citation": [
+        7,
+        10
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "UNLOAD",
+      "summary": null,
+      "purpose": "Execute IMS unload utility DFSRRC00 for DBPAUTP0 database",
+      "called_by": [],
+      "calls": [
+        "DFSRRC00"
+      ],
+      "citation": [
+        15,
+        47
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "Program abend or dump required",
+      "action": "Generate SYSUDUMP for diagnosis",
+      "citation": [
+        36
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "What is the exact function of the user exit routine DFSURGU0?",
+      "context": "PARM specifies it but source code for DFSURGU0 not provided",
+      "suggestion": "Analyze DFSURGU0 source or IMS documentation for unload formatting"
+    },
+    {
+      "question": "What specific role do RECON1, RECON2, RECON3 play in the unload?",
+      "context": "DDs defined but no clear usage in comments or standard for ULU",
+      "suggestion": "Review IMS DFSRRC00 ULU documentation for optional recon datasets"
+    },
+    {
+      "question": "Is DBPAUTP0 database VSAM-based?",
+      "context": "DFSVSAMP references VSAM model but access method undetermined",
+      "suggestion": "Check DBD source for DBPAUTP0 or dataset attributes"
+    }
+  ]
+}

@@ -1,0 +1,157 @@
+{
+  "header": {
+    "program_id": "AUTHFRDS",
+    "file_name": "ddl/AUTHFRDS.ddl",
+    "file_type": "OTHER",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-25T18:31:02.877811",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "DDL script creates the CARDDEMO.AUTHFRDS table to store authorization transaction details for fraud analysis, including card number, timestamp, merchant information, transaction amounts, and fraud indicators. Fields cover authorization response, processing codes, and links to accounts/customers. Primary key ensures uniqueness by CARD_NUM and AUTH_TS.",
+    "business_context": "Fraud detection and reporting for credit/debit card authorization transactions",
+    "program_type": "UTILITY",
+    "citations": [
+      1,
+      2,
+      3,
+      28
+    ]
+  },
+  "inputs": [
+    {
+      "name": "N/A",
+      "io_type": "OTHER",
+      "description": "DDL script defines table structure; no runtime inputs",
+      "copybook": null,
+      "citation": []
+    }
+  ],
+  "outputs": [
+    {
+      "name": "CARDDEMO.AUTHFRDS",
+      "io_type": "DB2_TABLE",
+      "description": "Table storing auth fraud data created by this DDL",
+      "copybook": null,
+      "citation": [
+        1
+      ]
+    }
+  ],
+  "called_programs": [
+    {
+      "program_name": "N/A",
+      "call_type": "OTHER",
+      "purpose": "DDL script; no called programs",
+      "parameters": [],
+      "citation": 1
+    }
+  ],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "CARD_NUM is mandatory",
+      "logic_summary": "Defined as NOT NULL",
+      "conditions": [
+        "CARD_NUM CHAR(16) NOT NULL"
+      ],
+      "citation": [
+        2
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "AUTH_TS is mandatory",
+      "logic_summary": "Defined as NOT NULL",
+      "conditions": [
+        "AUTH_TS TIMESTAMP NOT NULL"
+      ],
+      "citation": [
+        3
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "Composite primary key on CARD_NUM and AUTH_TS ensures unique authorizations per card and timestamp",
+      "logic_summary": "PRIMARY KEY constraint",
+      "conditions": [
+        "PRIMARY KEY(CARD_NUM,AUTH_TS)"
+      ],
+      "citation": [
+        28
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [],
+    "writes_to": [],
+    "transforms": []
+  },
+  "copybooks_used": [
+    {
+      "copybook_name": "N/A",
+      "purpose": "DDL script; no copybooks used",
+      "location": "OTHER",
+      "citation": 1
+    }
+  ],
+  "paragraphs": [
+    {
+      "paragraph_name": "N/A",
+      "summary": null,
+      "purpose": "DDL script; no paragraphs or procedures",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1,
+        29
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "N/A",
+      "action": "DDL script; no runtime error handling",
+      "citation": [
+        1
+      ]
+    }
+  ],
+  "sql_operations": [
+    {
+      "operation": "CREATE TABLE",
+      "table": "CARDDEMO.AUTHFRDS",
+      "purpose": "Defines structure for authorization fraud records with 27 columns including keys, amounts, merchant details, and fraud flags",
+      "citation": 1
+    }
+  ],
+  "cics_operations": [
+    {
+      "command": "N/A",
+      "resource": "N/A",
+      "purpose": "DDL script; no CICS operations",
+      "citation": 1
+    }
+  ],
+  "open_questions": [
+    {
+      "question": "Which COBOL/PL/I programs read/write this table?",
+      "context": "Cannot determine from DDL alone; requires cross-referencing source code using this table",
+      "suggestion": "Search for AUTHFRDS in FILE SECTION or SELECT statements across codebase"
+    },
+    {
+      "question": "Detailed business validation rules enforced by applications using this table?",
+      "context": "DDL shows only DB constraints; application logic unknown",
+      "suggestion": "Analyze programs accessing CARDDEMO.AUTHFRDS"
+    }
+  ]
+}

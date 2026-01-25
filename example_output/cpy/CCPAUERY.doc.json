@@ -1,0 +1,52 @@
+{
+  "header": {
+    "program_id": "CCPAUERY",
+    "file_name": "cpy/CCPAUERY.cpy",
+    "file_type": "COPYBOOK",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-25T18:34:10.432657",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This COBOL copybook defines the ERROR-LOG-RECORD data structure for logging errors in pending authorization processes. It captures details such as date, time, application name, program name, location, error level (with 88-level conditions for LOG, INFO, WARNING, CRITICAL), subsystem (with 88-level conditions for APP, CICS, IMS, DB2, MQ, FILE), error codes, message text, and event key.",
+    "business_context": "Supports error logging for pending authorization error logs in an Amazon-affiliated mainframe application environment.",
+    "program_type": "UTILITY",
+    "citations": [
+      1,
+      2,
+      19
+    ]
+  },
+  "inputs": [],
+  "outputs": [],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [],
+  "data_flow": {
+    "reads_from": [],
+    "writes_to": [],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [],
+  "error_handling": [],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "In which programs or modules is this copybook included?",
+      "context": "The source code does not specify usage context; it only defines the data structure.",
+      "suggestion": "Search for COPY CCPAUERY statements in COBOL programs or review including source files."
+    },
+    {
+      "question": "What is the exact record length and usage context (e.g., file record, commarea)?",
+      "context": "Fields are defined but no FILLER or total length computation; usage not specified.",
+      "suggestion": "Calculate from PIC clauses (approx 112 chars) and check including programs' FILE or LINKAGE sections."
+    }
+  ]
+}

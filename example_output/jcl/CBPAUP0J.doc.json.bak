@@ -1,0 +1,268 @@
+{
+  "header": {
+    "program_id": "CBPAUP0J",
+    "file_name": "CBPAUP0J.jcl",
+    "file_type": "JCL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-25T18:30:17.971291",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This JCL submits a batch job to execute the IMS DFSRRC00 program in BMP mode, running application program CBPAUP0C with PSB PSBPAUTB to delete expired authorizations. It defines necessary IMS libraries, control input, and output datasets.",
+    "business_context": "Supports CARDDEMO system by deleting expired authorizations from IMS database",
+    "program_type": "BATCH",
+    "citations": [
+      1,
+      21,
+      24,
+      25
+    ]
+  },
+  "inputs": [
+    {
+      "name": "SYSIN",
+      "io_type": "PARAMETER",
+      "description": "Inline control cards for IMS program specifying SSID 00, PCB 00001, TPB 00001, and option Y",
+      "copybook": null,
+      "citation": [
+        36,
+        37
+      ]
+    },
+    {
+      "name": "STEPLIB",
+      "io_type": "OTHER",
+      "description": "IMS SDFSRESL and application LOADLIB for program execution",
+      "copybook": null,
+      "citation": [
+        26,
+        27
+      ]
+    },
+    {
+      "name": "DFSRESLB",
+      "io_type": "OTHER",
+      "description": "IMS SDFSRESL resource library",
+      "copybook": null,
+      "citation": [
+        28
+      ]
+    },
+    {
+      "name": "PROCLIB",
+      "io_type": "OTHER",
+      "description": "IMS PROCLIB for procedures",
+      "copybook": null,
+      "citation": [
+        29
+      ]
+    },
+    {
+      "name": "DFSSEL",
+      "io_type": "OTHER",
+      "description": "IMS SDFSRESL selection library",
+      "copybook": null,
+      "citation": [
+        31
+      ]
+    },
+    {
+      "name": "IMS",
+      "io_type": "OTHER",
+      "description": "IMS PSBLIB and DBDLIB for PSB and DBD definitions",
+      "copybook": null,
+      "citation": [
+        33,
+        34
+      ]
+    },
+    {
+      "name": "PSBPAUTB",
+      "io_type": "IMS_SEGMENT",
+      "description": "IMS database segments accessed via PSB PAUTB for authorization processing",
+      "copybook": null,
+      "citation": [
+        25
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "SYSOUX",
+      "io_type": "REPORT",
+      "description": "IMS extended output report",
+      "copybook": null,
+      "citation": [
+        39
+      ]
+    },
+    {
+      "name": "SYSOUT",
+      "io_type": "REPORT",
+      "description": "Standard job output",
+      "copybook": null,
+      "citation": [
+        40
+      ]
+    },
+    {
+      "name": "SYSABOUT",
+      "io_type": "REPORT",
+      "description": "IMS about information output",
+      "copybook": null,
+      "citation": [
+        41
+      ]
+    },
+    {
+      "name": "ABENDAID",
+      "io_type": "REPORT",
+      "description": "Abend aid output",
+      "copybook": null,
+      "citation": [
+        42
+      ]
+    },
+    {
+      "name": "SYSPRINT",
+      "io_type": "REPORT",
+      "description": "Print output from utilities",
+      "copybook": null,
+      "citation": [
+        45
+      ]
+    },
+    {
+      "name": "SYSUDUMP",
+      "io_type": "REPORT",
+      "description": "System dump output",
+      "copybook": null,
+      "citation": [
+        46
+      ]
+    },
+    {
+      "name": "IMSERR",
+      "io_type": "REPORT",
+      "description": "IMS error output",
+      "copybook": null,
+      "citation": [
+        47
+      ]
+    }
+  ],
+  "called_programs": [
+    {
+      "program_name": "DFSRRC00",
+      "call_type": "STATIC_CALL",
+      "purpose": "IMS batch driver to execute CBPAUP0C in BMP mode with specified PSB",
+      "parameters": [
+        "BMP,CBPAUP0C,PSBPAUTB"
+      ],
+      "citation": 24
+    },
+    {
+      "program_name": "CBPAUP0C",
+      "call_type": "DYNAMIC_CALL",
+      "purpose": "Application program to delete expired authorizations",
+      "parameters": [
+        "via PARM"
+      ],
+      "citation": 25
+    }
+  ],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Execute CBPAUP0C only with specific IMS subsystem (00), PCB (00001), TPB (00001), and option Y",
+      "logic_summary": "Passed via SYSIN control cards to DFSRRC00",
+      "conditions": [
+        "SSID=00",
+        "PCB=00001",
+        "TPB=00001",
+        "Y option"
+      ],
+      "citation": [
+        37
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "SYSIN",
+        "fields_used": [
+          "00",
+          "00001",
+          "00001",
+          "Y"
+        ],
+        "citation": [
+          37
+        ]
+      },
+      {
+        "source": "PSBPAUTB",
+        "fields_used": [
+          "Authorization records"
+        ],
+        "citation": [
+          25
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "SYSOUT*",
+        "fields_written": [
+          "Processing reports",
+          "Errors",
+          "Dumps"
+        ],
+        "citation": [
+          39,
+          40,
+          41,
+          42,
+          45,
+          46,
+          47
+        ]
+      }
+    ],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [],
+  "error_handling": [
+    {
+      "condition": "Program or IMS abend",
+      "action": "Capture dumps and aids in SYSOUT datasets including SYSUDUMP, ABENDAID, IMSERR",
+      "citation": [
+        42,
+        46,
+        47
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "Detailed function of control card values '00,00001,00001,Y' and their mapping to IMS resources",
+      "context": "Not explained in JCL comments; specific to IMS DFSRRC00 usage",
+      "suggestion": "Consult IMS documentation for DFSRRC00 SYSIN format or CBPAUP0C source"
+    },
+    {
+      "question": "Specific IMS database and segments accessed by PSBPAUTB in CBPAUP0C",
+      "context": "PSB name implies authorization table but details not in JCL",
+      "suggestion": "Analyze PSBPAUTB definition in IMS.PSBLIB or CBPAUP0C source"
+    }
+  ]
+}
