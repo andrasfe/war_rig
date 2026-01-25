@@ -1389,9 +1389,22 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                     decision = ImperatorHolisticDecision.FORCED_COMPLETE
 
             # Parse file feedback (Chrome tickets per file)
+            # Build set of valid file names from input documentation
+            valid_file_names = {doc.file_name for doc in input_data.file_documentation}
+
             file_feedback: dict[str, list[ChromeTicket]] = {}
             if "file_feedback" in data:
                 for file_name, tickets in data["file_feedback"].items():
+                    # Skip Chrome tickets for files not in our documentation batch
+                    # The LLM might create tickets for referenced files (like copybooks)
+                    # that weren't actually documented
+                    if file_name not in valid_file_names:
+                        logger.warning(
+                            f"Skipping Chrome tickets for {file_name}: "
+                            f"not in documented files list"
+                        )
+                        continue
+
                     file_feedback[file_name] = []
                     for t in tickets:
                         # Find program_id from file documentation

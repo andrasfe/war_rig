@@ -656,10 +656,17 @@ class ProgramManagerAgent(BaseAgent[ProgramManagerInput, ProgramManagerOutput]):
             # Preserve relative path structure for doc lookup
             if output_dir:
                 # Try with relative path preserved first, then flat
-                doc_candidates = [
+                doc_candidates: list[Path] = [
                     output_dir / file_parent / f"{file_stem}.doc.json",
                     output_dir / f"{file_stem}.doc.json",
                 ]
+                # Also check common subdirectory patterns (copybook files might be
+                # in a copybook/ subdirectory even if the ticket has a flat name)
+                if file_parent == Path("."):
+                    for subdir in ["copybook", "copybooks", "copy"]:
+                        doc_candidates.append(
+                            output_dir / subdir / f"{file_stem}.doc.json"
+                        )
                 for doc_path in doc_candidates:
                     if doc_path.exists():
                         doc_exists = True

@@ -922,26 +922,67 @@ class ScribeWorker:
     def _load_previous_template(self, file_name: str) -> DocumentationTemplate | None:
         """Load the previous iteration's documentation template.
 
+        Checks multiple possible locations for the doc.json file:
+        1. Primary path based on file_name structure (nested or flat)
+        2. Fallback to flat path if nested lookup fails
+        3. Fallback to nested path if flat lookup fails
+
+        This handles cases where Chrome tickets have file names that don't
+        exactly match the path structure where the doc was originally saved.
+
         Args:
-            file_name: Source file name.
+            file_name: Source file name or relative path.
 
         Returns:
             DocumentationTemplate if exists, None otherwise.
         """
-        doc_path = self._get_doc_output_path(file_name)
-        if not doc_path.exists():
-            return None
+        rel_path = Path(file_name)
+        file_stem = rel_path.stem
+        file_parent = rel_path.parent
 
-        try:
-            with open(doc_path) as f:
-                data = json.load(f)
-            return DocumentationTemplate.load_lenient(data)
-        except Exception as e:
-            logger.warning(
-                f"Worker {self.worker_id}: Failed to load previous template "
-                f"from {doc_path}: {e}"
-            )
-            return None
+        # Build list of candidate paths to check
+        doc_candidates: list[Path] = []
+
+        # Primary path based on _get_doc_output_path logic
+        doc_candidates.append(self._get_doc_output_path(file_name))
+
+        # Also check alternative paths for robustness
+        if file_parent != Path("."):
+            # If file_name has parent, also check flat path as fallback
+            doc_candidates.append(self.output_directory / f"{file_stem}.doc.json")
+        else:
+            # If file_name is flat, also check common subdirectory patterns
+            # (copybook files might be in a copybook/ subdirectory)
+            for subdir in ["copybook", "copybooks", "copy"]:
+                doc_candidates.append(
+                    self.output_directory / subdir / f"{file_stem}.doc.json"
+                )
+
+        # Try each candidate path
+        for doc_path in doc_candidates:
+            if not doc_path.exists():
+                continue
+
+            try:
+                with open(doc_path) as f:
+                    data = json.load(f)
+                logger.debug(
+                    f"Worker {self.worker_id}: Loaded previous template from {doc_path}"
+                )
+                return DocumentationTemplate.load_lenient(data)
+            except Exception as e:
+                logger.warning(
+                    f"Worker {self.worker_id}: Failed to load previous template "
+                    f"from {doc_path}: {e}"
+                )
+                continue
+
+        # No template found at any candidate path
+        logger.debug(
+            f"Worker {self.worker_id}: No previous template found for {file_name}. "
+            f"Checked: {[str(p) for p in doc_candidates]}"
+        )
+        return None
 
     def _load_template_from_parent(
         self, ticket: ProgramManagerTicket
