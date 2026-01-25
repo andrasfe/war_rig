@@ -726,8 +726,8 @@ class TestProgramManagerAgentHandleClarifications:
         output_dir.mkdir()
         (input_dir / "PROG1.cbl").write_text("COBOL SOURCE")
         (input_dir / "PROG2.cbl").write_text("COBOL SOURCE")
-        (output_dir / "PROG1.doc.json").write_text("{}")
-        (output_dir / "PROG2.doc.json").write_text("{}")
+        (output_dir / "PROG1.cbl.doc.json").write_text("{}")
+        (output_dir / "PROG2.cbl.doc.json").write_text("{}")
 
         # Update mock config to use tmp_path
         mock_config.output_directory = output_dir
@@ -846,7 +846,7 @@ class TestProgramManagerAgentHandleClarifications:
         input_dir.mkdir()
         output_dir.mkdir()
         (input_dir / "PROG1.cbl").write_text("COBOL SOURCE")
-        (output_dir / "PROG1.doc.json").write_text("{}")
+        (output_dir / "PROG1.cbl.doc.json").write_text("{}")
 
         mock_config.output_directory = output_dir
 

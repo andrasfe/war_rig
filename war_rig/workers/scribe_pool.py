@@ -931,74 +931,33 @@ class ScribeWorker:
     def _load_previous_template(self, file_name: str) -> DocumentationTemplate | None:
         """Load the previous iteration's documentation template.
 
-        Checks multiple possible locations for the doc.json file:
-        1. Primary path using new naming (PROG.cbl.doc.json)
-        2. Fallback to legacy naming (PROG.doc.json) for backwards compatibility
-        3. Alternative directory structures
-
         Args:
             file_name: Source file name or relative path.
 
         Returns:
             DocumentationTemplate if exists, None otherwise.
         """
-        rel_path = Path(file_name)
-        file_name_only = rel_path.name  # e.g., "PROG.cbl"
-        file_stem = rel_path.stem  # e.g., "PROG" (for legacy fallback)
-        file_parent = rel_path.parent
+        doc_path = self._get_doc_output_path(file_name)
 
-        # Build list of candidate paths to check
-        doc_candidates: list[Path] = []
+        if not doc_path.exists():
+            logger.debug(
+                f"Worker {self.worker_id}: No previous template found at {doc_path}"
+            )
+            return None
 
-        # Primary path based on _get_doc_output_path logic (new naming)
-        doc_candidates.append(self._get_doc_output_path(file_name))
-
-        # Legacy naming fallback (PROG.doc.json instead of PROG.cbl.doc.json)
-        if file_parent != Path("."):
-            doc_candidates.append(self.output_directory / file_parent / f"{file_stem}.doc.json")
-        else:
-            doc_candidates.append(self.output_directory / f"{file_stem}.doc.json")
-
-        # Also check alternative directory structures
-        if file_parent != Path("."):
-            # If file_name has parent, also check flat path as fallback
-            doc_candidates.append(self.output_directory / f"{file_name_only}.doc.json")
-            doc_candidates.append(self.output_directory / f"{file_stem}.doc.json")
-        else:
-            # If file_name is flat, also check common subdirectory patterns
-            for subdir in ["copybook", "copybooks", "copy"]:
-                doc_candidates.append(
-                    self.output_directory / subdir / f"{file_name_only}.doc.json"
-                )
-                doc_candidates.append(
-                    self.output_directory / subdir / f"{file_stem}.doc.json"
-                )
-
-        # Try each candidate path
-        for doc_path in doc_candidates:
-            if not doc_path.exists():
-                continue
-
-            try:
-                with open(doc_path) as f:
-                    data = json.load(f)
-                logger.debug(
-                    f"Worker {self.worker_id}: Loaded previous template from {doc_path}"
-                )
-                return DocumentationTemplate.load_lenient(data)
-            except Exception as e:
-                logger.warning(
-                    f"Worker {self.worker_id}: Failed to load previous template "
-                    f"from {doc_path}: {e}"
-                )
-                continue
-
-        # No template found at any candidate path
-        logger.debug(
-            f"Worker {self.worker_id}: No previous template found for {file_name}. "
-            f"Checked: {[str(p) for p in doc_candidates]}"
-        )
-        return None
+        try:
+            with open(doc_path) as f:
+                data = json.load(f)
+            logger.debug(
+                f"Worker {self.worker_id}: Loaded previous template from {doc_path}"
+            )
+            return DocumentationTemplate.load_lenient(data)
+        except Exception as e:
+            logger.warning(
+                f"Worker {self.worker_id}: Failed to load previous template "
+                f"from {doc_path}: {e}"
+            )
+            return None
 
     def _load_template_from_parent(
         self, ticket: ProgramManagerTicket
@@ -2069,11 +2028,7 @@ class ScribeWorker:
         for file_path, line_num, line_content, match_type in matches:
             # Load existing documentation for the parent file
             rel_path = file_path.relative_to(self.input_directory)
-            # Check new naming first, then legacy
             doc_path = self.output_directory / rel_path.parent / f"{rel_path.name}.doc.json"
-            if not doc_path.exists():
-                # Fallback to legacy naming
-                doc_path = self.output_directory / rel_path.parent / f"{rel_path.stem}.doc.json"
 
             if doc_path.exists():
                 try:
