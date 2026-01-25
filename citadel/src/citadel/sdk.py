@@ -54,15 +54,24 @@ class Callout:
     raw_text: str | None = None
     """The raw text of the reference in source."""
 
+    resolved: bool | None = None
+    """Whether the target was resolved to an existing artifact.
+
+    None for single file analysis, True/False for directory analysis.
+    """
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
-        return {
+        result = {
             "target": self.target,
             "relationship": self.relationship,
             "target_type": self.target_type,
             "line": self.line,
             "raw_text": self.raw_text,
         }
+        if self.resolved is not None:
+            result["resolved"] = self.resolved
+        return result
 
 
 @dataclass
@@ -366,16 +375,32 @@ class Citadel:
 
         return functions
 
-    def get_callouts(self, file_path: str | Path) -> list[dict[str, Any]]:
+    def get_callouts(self, path: str | Path) -> list[dict[str, Any]]:
         """
-        Get all callouts/references from a file.
+        Get all callouts/references from a file or directory.
+
+        When given a file path, returns callouts from that single file.
+        When given a directory path, analyzes all supported files in the
+        directory and returns callouts with a `resolved` field indicating
+        whether the target exists in the codebase.
 
         Args:
-            file_path: Path to the source file.
+            path: Path to a source file or directory to analyze.
 
         Returns:
             List of all callouts with their source artifacts.
+            For directory analysis, includes a `resolved` field (True/False).
+            For single file analysis, `resolved` is not included.
         """
+        path = Path(path)
+
+        if path.is_dir():
+            return self._get_callouts_from_directory(path)
+        else:
+            return self._get_callouts_from_file(path)
+
+    def _get_callouts_from_file(self, file_path: Path) -> list[dict[str, Any]]:
+        """Get callouts from a single file."""
         result = self.analyze_file(file_path)
 
         if result.error:
@@ -401,6 +426,80 @@ class Citadel:
                     "type": c.relationship,
                     "line": c.line,
                 })
+
+        return callouts
+
+    def _get_callouts_from_directory(self, directory_path: Path) -> list[dict[str, Any]]:
+        """
+        Get callouts from all files in a directory with resolution status.
+
+        Analyzes all supported source files in the directory and returns
+        callouts with `resolved` indicating whether each target exists.
+        """
+        directory_path = directory_path.resolve()
+
+        if not directory_path.exists():
+            return [{"error": f"Directory not found: {directory_path}"}]
+
+        # Discover all source files
+        discovery = FileDiscovery(directory_path)
+        discovered = discovery.discover()
+
+        # Collect all files to analyze
+        files_to_analyze: list[Path] = []
+        for spec_files in discovered.files_by_spec.values():
+            files_to_analyze.extend(spec_files)
+
+        # First pass: analyze all files and collect artifacts
+        all_artifacts: list[FileArtifact] = []
+        all_callouts_data: list[tuple[str, str | None, Callout]] = []  # (file_stem, artifact_name, callout)
+
+        for source_file in files_to_analyze:
+            try:
+                analysis = self.analyze_file(source_file)
+
+                if analysis.error:
+                    logger.debug("Skipping file with analysis error: %s - %s", source_file, analysis.error)
+                    continue
+
+                # Store artifacts
+                all_artifacts.extend(analysis.artifacts)
+
+                # Collect all callouts with their source info
+                file_stem = source_file.stem  # Filename without extension
+
+                # File-level callouts
+                for callout in analysis.file_level_callouts:
+                    all_callouts_data.append((file_stem, None, callout))
+
+                # Artifact callouts
+                for artifact in analysis.artifacts:
+                    for callout in artifact.callouts:
+                        all_callouts_data.append((file_stem, artifact.name, callout))
+
+            except Exception as e:
+                logger.debug("Error analyzing file %s: %s", source_file, e)
+
+        # Build a set of known artifact names for resolution checking
+        known_artifacts: set[str] = set()
+        for artifact in all_artifacts:
+            known_artifacts.add(artifact.name.lower())
+
+        # Convert callouts to result dictionaries with resolution status
+        callouts = []
+
+        for file_stem, artifact_name, callout in all_callouts_data:
+            # Check if target is resolved
+            target_lower = callout.target.lower() if callout.target else ""
+            resolved = target_lower in known_artifacts
+
+            callouts.append({
+                "from": artifact_name,
+                "to": callout.target,
+                "type": callout.relationship,
+                "line": callout.line,
+                "resolved": resolved,
+            })
 
         return callouts
 

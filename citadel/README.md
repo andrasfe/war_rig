@@ -87,7 +87,7 @@ funcs = citadel.get_functions("program.cbl")
 ### Get All Callouts
 
 ```python
-# Get all references/calls from a file
+# Get all references/calls from a single file
 callouts = citadel.get_callouts("program.cbl")
 
 # Output:
@@ -95,6 +95,21 @@ callouts = citadel.get_callouts("program.cbl")
 #   {"from": "COSGN00C", "to": "SEND-SCREEN", "type": "performs", "line": 83},
 #   {"from": "COSGN00C", "to": "COCOM01Y", "type": "includes", "line": 48}
 # ]
+
+# Get callouts from a DIRECTORY with resolution status
+callouts = citadel.get_callouts("./samples")
+
+# Output includes `resolved` field indicating if target exists:
+# [
+#   {"from": "BATCMP", "to": "BUILDBAT", "type": "calls", "line": 42, "resolved": True},
+#   {"from": "STEP05", "to": "REPROC", "type": "calls", "line": 23, "resolved": False}
+# ]
+
+# Filter to show only call relationships
+for c in callouts:
+    if c.get("type") == "calls":
+        status = "✓" if c.get("resolved") else "✗"
+        print(f"{status} {c['from']} -> {c['to']}")
 ```
 
 ### Get Included Files
