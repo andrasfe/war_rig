@@ -8,12 +8,15 @@ Usage:
     citadel spec generate <samples>... [--hints <hints>]
     citadel export <graph> --format <fmt> --output <path>
     citadel stats <graph>
+    citadel cache clear
+    citadel cache info
 
 Commands:
     analyze     Analyze source directory and produce dependency graph
     spec        Manage artifact specifications
     export      Export graph to different format
     stats       Show statistics for a graph
+    cache       Manage Citadel cache
 
 Options:
     -o, --output <path>       Output path [default: citadel-graph.json]
@@ -561,6 +564,76 @@ def export(
     except Exception as e:
         console.print(f"[red]Export failed:[/red] {e}")
         raise SystemExit(1)
+
+
+@cli.group()
+def cache() -> None:
+    """Manage Citadel cache."""
+    pass
+
+
+@cache.command("clear")
+@click.option("--yes", "-y", is_flag=True, help="Skip confirmation prompt")
+@click.pass_context
+def cache_clear(ctx: click.Context, yes: bool) -> None:
+    """Clear all cached data (specs, parse results)."""
+    verbose = ctx.obj.get("verbose", False)
+    setup_logging(verbose)
+
+    from citadel.sdk import Citadel
+
+    citadel = Citadel()
+    cache_dir = citadel.config.cache_dir
+
+    if not cache_dir.exists():
+        console.print("[yellow]Cache directory does not exist.[/yellow]")
+        return
+
+    if not yes:
+        console.print(f"Cache directory: [cyan]{cache_dir}[/cyan]")
+        if not click.confirm("Clear all cached data?"):
+            console.print("[dim]Cancelled.[/dim]")
+            return
+
+    citadel.clear_cache()
+    console.print("[green]Cache cleared successfully.[/green]")
+
+
+@cache.command("info")
+@click.pass_context
+def cache_info(ctx: click.Context) -> None:
+    """Show cache location and size."""
+    verbose = ctx.obj.get("verbose", False)
+    setup_logging(verbose)
+
+    from citadel.sdk import Citadel
+
+    citadel = Citadel()
+    cache_dir = citadel.config.cache_dir
+
+    console.print(f"Cache directory: [cyan]{cache_dir}[/cyan]")
+
+    if not cache_dir.exists():
+        console.print("[yellow]Cache directory does not exist.[/yellow]")
+        return
+
+    # Calculate cache size
+    total_size = 0
+    file_count = 0
+    for path in cache_dir.rglob("*"):
+        if path.is_file():
+            total_size += path.stat().st_size
+            file_count += 1
+
+    # Format size
+    if total_size < 1024:
+        size_str = f"{total_size} B"
+    elif total_size < 1024 * 1024:
+        size_str = f"{total_size / 1024:.1f} KB"
+    else:
+        size_str = f"{total_size / (1024 * 1024):.1f} MB"
+
+    console.print(f"Cache size: [green]{size_str}[/green] ({file_count} files)")
 
 
 @cli.command()

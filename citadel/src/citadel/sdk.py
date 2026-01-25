@@ -525,6 +525,23 @@ class Citadel:
         """
         return sorted(self._extension_to_spec.keys())
 
+    def clear_cache(self) -> None:
+        """
+        Clear all cached data (specs, parse results).
+
+        This can help resolve issues when specs have been modified
+        or when cached data becomes stale.
+        """
+        import shutil
+
+        cache_dir = self.config.cache_dir
+        if cache_dir.exists():
+            shutil.rmtree(cache_dir)
+            logger.info(f"Cleared cache at {cache_dir}")
+
+        # Rebuild extension map after clearing
+        self._build_extension_map()
+
     def list_supported_languages(self) -> list[str]:
         """
         List all languages/specs supported by Citadel.
@@ -1051,3 +1068,17 @@ def get_callers(
     """
     citadel = Citadel()
     return citadel.get_callers(file_path, function_name, search_paths)
+
+
+def clear_cache() -> None:
+    """
+    Clear all cached data (specs, parse results).
+
+    Convenience function for clearing the cache without creating
+    a Citadel instance first.
+
+    This can help resolve issues when specs have been modified
+    or when cached data becomes stale.
+    """
+    citadel = Citadel()
+    citadel.clear_cache()

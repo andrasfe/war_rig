@@ -1,8 +1,8 @@
 # Call Graph Analysis
 
-*Generated: 2026-01-23 12:25:45*
+*Generated: 2026-01-24 11:46:54*
 
-**Programs Analyzed:** 13
+**Programs Analyzed:** 12
 
 ## Visual Call Graph
 
@@ -11,13 +11,12 @@ flowchart TD
 
     %% Documented programs
     BATCMP([BATCMP])
-    BLDCIDB2([BLDCIDB2])
+    BLDBAT([BLDBAT])
     BLDONL([BLDONL])
-    BUILDBAT[/BUILDBAT/]
+    BMSCMP([BMSCMP])
     BUILDBMS[/BUILDBMS/]
-    CBLDBMS([CBLDBMS])
     CICCMP([CICCMP])
-    CICDBCMP([CICDBCMP])
+    CIDBCMP([CIDBCMP])
     IMSMQCMP([IMSMQCMP])
     LISTCAT([LISTCAT])
     RACFCMDS([RACFCMDS])
@@ -25,39 +24,45 @@ flowchart TD
     SORTTEST([SORTTEST])
 
     %% Missing custom programs
+    BLDCIDB2>BLDCIDB2]
+    BUILDBAT>BUILDBAT]
     BUILDONL>BUILDONL]
+    REPROC>REPROC]
 
     %% Call relationships
     BATCMP --> BUILDBAT
-    CBLDBMS --> BUILDBMS
+    BMSCMP --> BUILDBMS
     CICCMP --> BUILDONL
+    CIDBCMP --> BLDCIDB2
+    REPRTEST --> REPROC
 
     %% Styling
     classDef entryPoint fill:#90EE90,stroke:#228B22
-    class BATCMP,BLDCIDB2,BLDONL,CBLDBMS,CICCMP,CICDBCMP,IMSMQCMP,LISTCAT,RACFCMDS,REPRTEST,SORTTEST entryPoint
+    class BATCMP,BLDBAT,BLDONL,BMSCMP,CICCMP,CIDBCMP,IMSMQCMP,LISTCAT,RACFCMDS,REPRTEST,SORTTEST entryPoint
     classDef missing fill:#FFB6C1,stroke:#DC143C
-    class BUILDONL missing
+    class BLDCIDB2,BUILDBAT,BUILDONL,REPROC missing
 ```
 
 ## Entry Points
 
-- ✓ **BATCMP**: This JCL defines a job to compile a batch COBOL program using the BUILDBAT catal...
-- ✓ **BLDCIDB2**: This JCL PROC compiles CICS COBOL programs with embedded DB2 SQL by executing DB...
-- ✓ **BLDONL**: This JCL procedure compiles CICS-enabled COBOL programs using IGYCRCTL, replicat...
-- ✓ **CBLDBMS**: This JCL job compiles the CICS BMS map named CICSMAP using the BUILDBMS procedur...
-- ✓ **CICCMP**: This JCL job compiles a CICS COBOL program (default name CICSPGMN) using the BUI...
-- ✓ **CICDBCMP**: This JCL job sets symbolic parameters for libraries, DB2 subsystem, and plan nam...
-- ✓ **IMSMQCMP**: This JCL job translates, compiles, prepares link cards, and links the COBOL prog...
-- ✓ **LISTCAT**: This JCL job generates a catalog listing for all entries under the AWS.M2.CARDDE...
-- ✓ **RACFCMDS**: This JCL job RACFCMDS executes the TSO program IKJEFT01 in batch mode to run RAC...
-- ✓ **REPRTEST**: This JCL job invokes the REPROC procedure to perform a file reproduction from a ...
-- ✓ **SORTTEST**: This JCL defines a batch job that executes the SORT utility in step STEP05R to r...
+- ✓ **BATCMP**: This JCL member submits the CNJBATMP batch job to compile a COBOL program named ...
+- ✓ **BLDBAT**: This JCL procedure (PROC) compiles a specified COBOL batch program member using ...
+- ✓ **BLDONL**: This JCL procedure (BLDONL) compiles CICS-enabled COBOL source programs from &SO...
+- ✓ **BMSCMP**: Compiles CICS BMS map named CICSMAP using the BUILDBMS cataloged procedure, gene...
+- ✓ **CICCMP**: This JCL member compiles and link-edits a CICS COBOL program named by &MEMNAME (...
+- ✓ **CIDBCMP**: This JCL job sets symbolic parameters including HLQ=AWS.M2.CARDDEMO, SSID=DAZ1, ...
+- ✓ **IMSMQCMP**: This JCL job compiles the CICS/IMS/MQ-integrated COBOL program IMSMQPGM. It uses...
+- ✓ **LISTCAT**: This JCL job executes a dummy IEFBR14 step to delete or truncate any existing AW...
+- ✓ **RACFCMDS**: This JCL job executes the TSO batch program IKJEFT01 in step TSOBAT to run RACF ...
+- ✓ **REPRTEST**: REPRTEST JCL job executes STEP05 invoking the REPROC cataloged procedure to back...
+- ✓ **SORTTEST**: JCL job SORTTEST executes a single SORT step (STEP05R) to test filtering and sor...
 
 ## External Dependencies
 
 ### System Utilities (Skipped)
 
 **Known utilities:**
+- ASMA90
 - DFHECP1
 - DSNHPC
 - HEWL
@@ -68,23 +73,27 @@ flowchart TD
 - IGYCRCTL
 - IKJEFT01
 - SDSF
+- SORT
 
 ### Custom Programs (Need Documentation)
 
-- **BUILDONL**: Called by CICCMP (OTHER)
+- **BLDCIDB2**: Called by CIDBCMP (STATIC_CALL)
+- **BUILDBAT**: Called by BATCMP (STATIC_CALL)
+- **BUILDONL**: Called by CICCMP (STATIC_CALL)
+- **REPROC**: Called by REPRTEST (STATIC_CALL)
 
 ## Statistics
 
 | Metric | Count |
 |--------|-------|
-| Documented Programs | 13 |
+| Documented Programs | 12 |
 | Entry Points | 11 |
 | Leaf Nodes | 11 |
-| External Dependencies | 11 |
-| System Utilities | 10 |
+| External Dependencies | 16 |
+| System Utilities | 12 |
 | Auto-classified | 0 |
-| Custom Missing | 1 |
-| Total Calls | 19 |
+| Custom Missing | 4 |
+| Total Calls | 35 |
 
 ### Status Legend
 
