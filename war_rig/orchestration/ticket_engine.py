@@ -1334,12 +1334,23 @@ class TicketOrchestrator:
         call_graph: dict[str, list[str]] = {}
         data_flow: dict[str, list[str]] = {}
 
+        # Load CALL_GRAPH.md content for Mermaid diagram injection
+        call_graph_markdown: str | None = None
+        call_graph_path = self.config.output_directory / "CALL_GRAPH.md"
+        if call_graph_path.exists():
+            try:
+                call_graph_markdown = call_graph_path.read_text(encoding="utf-8")
+                logger.debug(f"Loaded CALL_GRAPH.md for holistic review ({len(call_graph_markdown)} chars)")
+            except Exception as e:
+                logger.warning(f"Failed to load CALL_GRAPH.md: {e}")
+
         return HolisticReviewInput(
             batch_id=self._state.batch_id,
             cycle=self._state.cycle,
             file_documentation=file_docs,
             shared_copybooks=shared_copybooks,
             call_graph=call_graph,
+            call_graph_markdown=call_graph_markdown,
             data_flow=data_flow,
             per_file_confidence=per_file_confidence,
             per_file_issues=per_file_issues,

@@ -333,6 +333,10 @@ class HolisticReviewInput(AgentInput):
         default_factory=dict,
         description="Mapping of file -> list of input/output files",
     )
+    call_graph_markdown: str | None = Field(
+        default=None,
+        description="Full CALL_GRAPH.md content from Citadel static analysis (contains Mermaid diagram)",
+    )
 
     # Quality metrics
     per_file_confidence: dict[str, ConfidenceLevel] = Field(
@@ -1978,6 +1982,26 @@ and architecture after reading your overview."""
             )
             return None
 
+    def _extract_mermaid_from_markdown(self, markdown: str) -> str | None:
+        """Extract the Mermaid diagram block from markdown content.
+
+        Searches for a ```mermaid ... ``` code block and returns the complete
+        block including the fence markers.
+
+        Args:
+            markdown: The markdown content to search.
+
+        Returns:
+            The complete Mermaid code block with fences, or None if not found.
+        """
+        import re
+
+        # Find ```mermaid ... ``` block (handles both \n and any whitespace)
+        match = re.search(r"```mermaid\n(.*?)\n```", markdown, re.DOTALL)
+        if match:
+            return f"```mermaid\n{match.group(1)}\n```"
+        return None
+
     def _build_system_design_prompt(
         self,
         input_data: HolisticReviewInput,
@@ -2072,7 +2096,11 @@ and architecture after reading your overview."""
         parts.append("- All entry points and interfaces with their purposes")
         parts.append("- Integration patterns (batch, online, database, messaging)")
         parts.append("- Architectural patterns identified (layers, tiers, pipelines)")
-        parts.append("- ASCII or Mermaid diagrams showing component relationships")
+        if input_data.call_graph_markdown:
+            parts.append("- **IMPORTANT**: Use the exact Mermaid diagram provided in the 'Actual System Call Graph' section below")
+            parts.append("- Do NOT create your own diagram - use the provided one which is based on actual static analysis")
+        else:
+            parts.append("- ASCII or Mermaid diagrams showing component relationships")
         parts.append("")
         parts.append("### 3. Component Catalog")
         parts.append("**Create a comprehensive table of ALL components with markdown links:**")
@@ -2286,6 +2314,34 @@ and architecture after reading your overview."""
             for caller, callees in sorted(input_data.call_graph.items()):
                 if callees:
                     parts.append(f"- **{caller}** calls: {', '.join(callees)}")
+            parts.append("")
+
+        # Add actual call graph diagram from Citadel analysis
+        if input_data.call_graph_markdown:
+            parts.append("## Actual System Call Graph (from static analysis)")
+            parts.append("")
+            parts.append(
+                "**IMPORTANT**: Use this exact Mermaid diagram in the Architecture Overview section."
+            )
+            parts.append(
+                "Do NOT create your own diagram - use this one which is based on actual code analysis:"
+            )
+            parts.append("")
+            # Extract just the mermaid block from the call graph markdown
+            mermaid_diagram = self._extract_mermaid_from_markdown(
+                input_data.call_graph_markdown
+            )
+            if mermaid_diagram:
+                parts.append(mermaid_diagram)
+            else:
+                # If no mermaid block found, log a warning but include the full content
+                logger.warning(
+                    "No Mermaid diagram found in call_graph_markdown, "
+                    "including full content for reference"
+                )
+                parts.append("```")
+                parts.append(input_data.call_graph_markdown)
+                parts.append("```")
             parts.append("")
 
         # Include shared copybooks if available

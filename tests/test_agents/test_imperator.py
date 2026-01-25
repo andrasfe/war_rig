@@ -389,6 +389,163 @@ This is the existing system design document.
         assert "Output ONLY the markdown content" in prompt
         assert "Do not wrap in JSON" in prompt
 
+    def test_prompt_includes_call_graph_markdown_mermaid(
+        self,
+        imperator_agent: ImperatorAgent,
+        sample_holistic_input: HolisticReviewInput,
+    ):
+        """Test that the Mermaid diagram from call_graph_markdown is included."""
+        # Add call graph markdown with a Mermaid diagram
+        sample_holistic_input.call_graph_markdown = """# Call Graph Analysis
+
+*Generated: 2024-01-15 10:00:00*
+
+## Visual Call Graph
+
+```mermaid
+flowchart TD
+    MAINPGM --> SUBPGM1
+    MAINPGM --> SUBPGM2
+    SUBPGM1 --> UTILITY
+```
+
+## Entry Points
+- MAINPGM: Main batch program
+"""
+        prompt = imperator_agent._build_system_design_prompt(sample_holistic_input)
+
+        # Check that the Mermaid diagram section is included
+        assert "## Actual System Call Graph (from static analysis)" in prompt
+        assert "Use this exact Mermaid diagram" in prompt
+        assert "Do NOT create your own diagram" in prompt
+        assert "```mermaid" in prompt
+        assert "flowchart TD" in prompt
+        assert "MAINPGM --> SUBPGM1" in prompt
+
+    def test_prompt_architecture_overview_references_mermaid(
+        self,
+        imperator_agent: ImperatorAgent,
+        sample_holistic_input: HolisticReviewInput,
+    ):
+        """Test that Architecture Overview section references the provided Mermaid diagram."""
+        sample_holistic_input.call_graph_markdown = """```mermaid
+flowchart TD
+    A --> B
+```"""
+        prompt = imperator_agent._build_system_design_prompt(sample_holistic_input)
+
+        # Check that Architecture Overview tells LLM to use provided diagram
+        assert "Use the exact Mermaid diagram provided" in prompt
+        assert "Do NOT create your own diagram" in prompt
+
+    def test_prompt_without_call_graph_markdown_suggests_creating_diagram(
+        self,
+        imperator_agent: ImperatorAgent,
+        sample_holistic_input: HolisticReviewInput,
+    ):
+        """Test that without call_graph_markdown, LLM is told to create diagrams."""
+        # Ensure no call_graph_markdown
+        sample_holistic_input.call_graph_markdown = None
+        prompt = imperator_agent._build_system_design_prompt(sample_holistic_input)
+
+        # Should suggest creating diagrams
+        assert "ASCII or Mermaid diagrams showing component relationships" in prompt
+        # Should NOT have the static analysis section
+        assert "Actual System Call Graph (from static analysis)" not in prompt
+
+
+class TestExtractMermaidFromMarkdown:
+    """Tests for the _extract_mermaid_from_markdown helper method."""
+
+    def test_extract_simple_mermaid_block(
+        self,
+        imperator_agent: ImperatorAgent,
+    ):
+        """Test extracting a simple Mermaid block."""
+        markdown = """# Header
+
+```mermaid
+flowchart TD
+    A --> B
+```
+
+More content here.
+"""
+        result = imperator_agent._extract_mermaid_from_markdown(markdown)
+
+        assert result is not None
+        assert result == "```mermaid\nflowchart TD\n    A --> B\n```"
+
+    def test_extract_complex_mermaid_block(
+        self,
+        imperator_agent: ImperatorAgent,
+    ):
+        """Test extracting a complex Mermaid block with multiple nodes."""
+        markdown = """```mermaid
+flowchart TD
+    MAINPGM["MAINPGM<br/>Main Program"]
+    MAINPGM --> SUBPGM1
+    MAINPGM --> SUBPGM2
+    SUBPGM1 --> UTILITY
+    SUBPGM2 --> UTILITY
+```"""
+        result = imperator_agent._extract_mermaid_from_markdown(markdown)
+
+        assert result is not None
+        assert "MAINPGM" in result
+        assert "SUBPGM1" in result
+        assert "flowchart TD" in result
+
+    def test_extract_no_mermaid_block(
+        self,
+        imperator_agent: ImperatorAgent,
+    ):
+        """Test that None is returned when no Mermaid block exists."""
+        markdown = """# Just regular markdown
+
+Some content here.
+
+```python
+print("hello")
+```
+"""
+        result = imperator_agent._extract_mermaid_from_markdown(markdown)
+
+        assert result is None
+
+    def test_extract_mermaid_with_surrounding_content(
+        self,
+        imperator_agent: ImperatorAgent,
+    ):
+        """Test extraction with content before and after the Mermaid block."""
+        markdown = """# Call Graph Analysis
+
+*Generated: 2024-01-15*
+
+## Visual Call Graph
+
+```mermaid
+flowchart TD
+    A --> B
+    B --> C
+```
+
+## Entry Points
+
+- A: Main entry
+- B: Sub program
+"""
+        result = imperator_agent._extract_mermaid_from_markdown(markdown)
+
+        assert result is not None
+        assert result.startswith("```mermaid")
+        assert result.endswith("```")
+        assert "A --> B" in result
+        assert "B --> C" in result
+        # Should not include surrounding content
+        assert "Entry Points" not in result
+        assert "Generated" not in result
+
 
 class TestParseInlineQuestions:
     """Tests for the _parse_inline_questions helper method."""
