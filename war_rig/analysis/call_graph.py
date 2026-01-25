@@ -1072,25 +1072,51 @@ class CallGraphAnalyzer:
             sanitized = re.sub(r"[^A-Za-z0-9_]", "", sanitized)
             return sanitized
 
-        # Node definitions
-        lines.append("")
-        lines.append("    %% Documented programs")
-        for prog in sorted(analysis.documented_programs.keys()):
-            node_id = sanitize_id(prog)
-            if prog in analysis.entry_points:
-                lines.append(f"    {node_id}([{prog}])")
-            elif prog in analysis.leaf_nodes:
-                lines.append(f"    {node_id}[/{prog}/]")
-            else:
-                lines.append(f"    {node_id}[{prog}]")
+        # Identify programs that make calls (callers) vs those that are only called
+        callers = set()
+        callees = set()
+        for prog_id, info in analysis.documented_programs.items():
+            for call in info.calls:
+                if call.callee not in analysis.system_utilities:
+                    callers.add(prog_id)
+                    callees.add(call.callee)
 
-        # External nodes (only custom missing, not system utils)
+        # Programs that are called but also documented
+        called_documented = callees & set(analysis.documented_programs.keys())
+        # Programs that only call others (entry points that make calls)
+        only_callers = callers - callees
+        # Programs with no connections
+        isolated = set(analysis.documented_programs.keys()) - callers - callees
+
+        # Subgraph: Jobs/Entry Points (callers)
+        if only_callers or (callers - called_documented):
+            lines.append("")
+            lines.append("    subgraph jobs[\" \"]")
+            for prog in sorted(only_callers | (callers - called_documented)):
+                node_id = sanitize_id(prog)
+                lines.append(f"        {node_id}([{prog}])")
+            lines.append("    end")
+
+        # Subgraph: Procedures (documented callees)
+        if called_documented:
+            lines.append("")
+            lines.append("    subgraph procs[\" \"]")
+            for prog in sorted(called_documented):
+                node_id = sanitize_id(prog)
+                if prog in analysis.leaf_nodes:
+                    lines.append(f"        {node_id}[/{prog}/]")
+                else:
+                    lines.append(f"        {node_id}[{prog}]")
+            lines.append("    end")
+
+        # Subgraph: Missing/External programs
         if analysis.custom_missing:
             lines.append("")
-            lines.append("    %% Missing custom programs")
+            lines.append("    subgraph external[\" \"]")
             for prog in sorted(analysis.custom_missing):
                 node_id = sanitize_id(prog)
-                lines.append(f"    {node_id}>{prog}]")
+                lines.append(f"        {node_id}>{prog}]")
+            lines.append("    end")
 
         # Edges
         lines.append("")
