@@ -190,9 +190,11 @@ class ChallengerWorker:
     def _get_doc_path(self, file_name: str) -> Path:
         """Get the documentation file path for a given file name.
 
-        Handles both flat paths (legacy) and relative paths (new structure):
-        - "PROG.cbl" -> output/PROG.doc.json
-        - "app/cobol/PROG.cbl" -> output/app/cobol/PROG.doc.json
+        Uses new naming convention with full filename to avoid conflicts:
+        - "PROG.cbl" -> output/PROG.cbl.doc.json
+        - "app/cobol/PROG.cbl" -> output/app/cobol/PROG.cbl.doc.json
+
+        Also checks legacy naming as fallback for backwards compatibility.
 
         Args:
             file_name: Source file name or relative path.
@@ -201,13 +203,28 @@ class ChallengerWorker:
             Path to the documentation JSON file.
         """
         rel_path = Path(file_name)
+        file_name_only = rel_path.name  # e.g., "PROG.cbl"
+        file_stem = rel_path.stem  # e.g., "PROG" (for legacy fallback)
 
-        # If the path has a parent directory, mirror the structure
+        # Build candidate paths - new naming first, then legacy
         if rel_path.parent != Path("."):
-            return self.output_directory / rel_path.parent / f"{rel_path.stem}.doc.json"
+            candidates = [
+                self.output_directory / rel_path.parent / f"{file_name_only}.doc.json",
+                self.output_directory / rel_path.parent / f"{file_stem}.doc.json",
+            ]
+        else:
+            candidates = [
+                self.output_directory / f"{file_name_only}.doc.json",
+                self.output_directory / f"{file_stem}.doc.json",
+            ]
 
-        # Flat path (legacy or root-level files)
-        return self.output_directory / f"{rel_path.stem}.doc.json"
+        # Return first existing path, or the new naming path if none exist
+        for path in candidates:
+            if path.exists():
+                return path
+
+        # Default to new naming convention
+        return candidates[0]
 
     async def start(self) -> None:
         """Start the worker's processing loop.

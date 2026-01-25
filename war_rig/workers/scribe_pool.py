@@ -2069,7 +2069,11 @@ class ScribeWorker:
         for file_path, line_num, line_content, match_type in matches:
             # Load existing documentation for the parent file
             rel_path = file_path.relative_to(self.input_directory)
-            doc_path = self.output_directory / rel_path.parent / f"{rel_path.stem}.doc.json"
+            # Check new naming first, then legacy
+            doc_path = self.output_directory / rel_path.parent / f"{rel_path.name}.doc.json"
+            if not doc_path.exists():
+                # Fallback to legacy naming
+                doc_path = self.output_directory / rel_path.parent / f"{rel_path.stem}.doc.json"
 
             if doc_path.exists():
                 try:
