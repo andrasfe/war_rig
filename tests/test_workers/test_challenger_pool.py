@@ -1095,8 +1095,8 @@ class TestLockSkippedTickets:
 
         lock_manager = FileLockManager()
 
-        # Pre-lock the file
-        output_file = str(mock_config.output_directory / "TESTPROG.doc.json")
+        # Pre-lock the file (new naming convention includes source extension)
+        output_file = str(mock_config.output_directory / "TESTPROG.cbl.doc.json")
         await lock_manager.acquire(output_file, "other-worker")
 
         worker = ChallengerWorker(

@@ -1174,7 +1174,13 @@ class CallGraphAnalyzer:
         return "\n".join(lines)
 
     def generate_system_design_md(self, analysis: CallGraphAnalysis) -> str:
-        """Generate SYSTEM_DESIGN.md content documenting the architecture."""
+        """Generate SYSTEM_DESIGN.md content documenting the architecture.
+
+        This method generates a basic system design document with the call graph
+        mermaid diagram. The Imperator's holistic review may later enhance this
+        document with LLM-generated content, but it will use the same mermaid
+        diagram from CALL_GRAPH.md for consistency.
+        """
         lines = []
 
         lines.append("# System Design")
@@ -1187,6 +1193,12 @@ class CallGraphAnalyzer:
         lines.append(f"This document describes the architecture of the analyzed codebase,")
         lines.append(f"including {len(analysis.documented_programs)} documented programs ")
         lines.append(f"and their dependencies.")
+        lines.append("")
+
+        # Architecture diagram (same as in CALL_GRAPH.md for consistency)
+        lines.append("## Architecture Overview")
+        lines.append("")
+        lines.append(self._generate_mermaid_diagram(analysis))
         lines.append("")
 
         # Program inventory

@@ -144,9 +144,9 @@ class TestOutputPathMirroring:
         worker = ScribeWorker.__new__(ScribeWorker)
         worker.output_directory = Path("/output")
 
-        # Test nested path
+        # Test nested path - new naming convention includes source extension
         result = worker._get_doc_output_path("app/cobol/CBACT01C.cbl")
-        assert result == Path("/output/app/cobol/CBACT01C.doc.json")
+        assert result == Path("/output/app/cobol/CBACT01C.cbl.doc.json")
 
     def test_get_doc_output_path_flat(self):
         """Test output path for flat (legacy) input files."""
@@ -155,9 +155,9 @@ class TestOutputPathMirroring:
         worker = ScribeWorker.__new__(ScribeWorker)
         worker.output_directory = Path("/output")
 
-        # Test flat path
+        # Test flat path - new naming convention includes source extension
         result = worker._get_doc_output_path("PROG.cbl")
-        assert result == Path("/output/PROG.doc.json")
+        assert result == Path("/output/PROG.cbl.doc.json")
 
     def test_challenger_get_doc_path_nested(self):
         """Test ChallengerWorker doc path for nested files."""
@@ -166,8 +166,9 @@ class TestOutputPathMirroring:
         worker = ChallengerWorker.__new__(ChallengerWorker)
         worker.output_directory = Path("/output")
 
+        # New naming convention includes source extension
         result = worker._get_doc_path("app/cobol/CBACT01C.cbl")
-        assert result == Path("/output/app/cobol/CBACT01C.doc.json")
+        assert result == Path("/output/app/cobol/CBACT01C.cbl.doc.json")
 
     def test_challenger_get_doc_path_flat(self):
         """Test ChallengerWorker doc path for flat files."""
@@ -176,5 +177,6 @@ class TestOutputPathMirroring:
         worker = ChallengerWorker.__new__(ChallengerWorker)
         worker.output_directory = Path("/output")
 
+        # New naming convention includes source extension
         result = worker._get_doc_path("PROG.cbl")
-        assert result == Path("/output/PROG.doc.json")
+        assert result == Path("/output/PROG.cbl.doc.json")

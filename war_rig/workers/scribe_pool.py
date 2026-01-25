@@ -2833,6 +2833,8 @@ class ScribeWorker:
             return FileType.BMS
         elif lower_name.endswith((".pli", ".pl1")):
             return FileType.PLI
+        elif lower_name.endswith((".lst", ".list")):
+            return FileType.LISTING
         else:
             return FileType.OTHER
 

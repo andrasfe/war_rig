@@ -1498,8 +1498,8 @@ class TestLockSkippedTickets:
         lock_manager = FileLockManager()
         (tmp_path / "output").mkdir(parents=True, exist_ok=True)
 
-        # Pre-lock the file
-        output_file = str(tmp_path / "output" / "TESTPROG.doc.json")
+        # Pre-lock the file (new naming convention includes source extension)
+        output_file = str(tmp_path / "output" / "TESTPROG.cbl.doc.json")
         await lock_manager.acquire(output_file, "other-worker")
 
         worker = ScribeWorker(
