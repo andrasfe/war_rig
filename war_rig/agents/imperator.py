@@ -2120,9 +2120,12 @@ and architecture after reading your overview."""
         parts.append("")
         parts.append("| Component | Type | Purpose | Dependencies | Doc Link |")
         parts.append("|-----------|------|---------|--------------|----------|")
-        parts.append("| PROGNAME  | COBOL| Brief   | PROG2, PROG3 | [Link](PROGNAME.md) |")
+        parts.append("| PROGNAME  | COBOL| Brief   | PROG2, PROG3 | [Link](PROGNAME.cbl.md) |")
+        parts.append("| JOBNAME   | JCL  | Brief   | PROG1        | [Link](JOBNAME.jcl.md) |")
+        parts.append("| CPYNAME   | COPY | Brief   | -            | [Link](CPYNAME.cpy.md) |")
         parts.append("")
         parts.append("Include EVERY program, JCL, copybook, and procedure documented.")
+        parts.append("Links must include the source file extension: PROG.cbl.md, JOB.jcl.md, CPY.cpy.md")
         parts.append("")
         parts.append("### 4. Subsystem Breakdown")
         parts.append("- Logical groupings of programs by business function")
@@ -2170,7 +2173,10 @@ and architecture after reading your overview."""
         parts.append("thoroughly explained. A longer document is better than a sparse one.")
         parts.append("")
         parts.append("**LINKING**: Every time you mention a component (program, JCL, copybook), ")
-        parts.append("include a markdown link to its documentation: `[PROGNAME](path/PROGNAME.md)`")
+        parts.append("include a markdown link to its documentation. Links MUST include the source extension:")
+        parts.append("  - COBOL: `[PROGNAME](path/PROGNAME.cbl.md)`")
+        parts.append("  - JCL: `[JOBNAME](path/JOBNAME.jcl.md)`")
+        parts.append("  - Copybook: `[CPYNAME](path/CPYNAME.cpy.md)`")
         parts.append("")
         parts.append("**QUESTIONS**: Insert inline questions wherever your understanding is unclear ")
         parts.append("or information is missing. Mark these with: `❓ QUESTION: [your question here]`")
@@ -2187,7 +2193,8 @@ and architecture after reading your overview."""
         parts.append("")
         parts.append(
             "When referencing these components in the SYSTEM_DESIGN.md, use markdown links. "
-            "Example: `[PROGNAME](path/to/PROGNAME.md)`"
+            "Links MUST include the source file extension. Examples: "
+            "`[PROG](PROG.cbl.md)`, `[JOB](JOB.jcl.md)`, `[CPY](CPY.cpy.md)`"
         )
         parts.append("")
         parts.append("| Component | Doc Path |")
@@ -2464,7 +2471,10 @@ integrate new information seamlessly. The document should grow richer with each 
 - All business rules and constraints discovered
 
 **CROSS-REFERENCING WITH LINKS**: For every component (program, JCL, copybook) you mention,
-include a markdown link to its documentation file. Format: [PROGRAM_NAME](docs/FILENAME.md)
+include a markdown link to its documentation file. Links MUST include the source extension:
+- COBOL: [PROGRAM_NAME](PROGRAM.cbl.md)
+- JCL: [JOB_NAME](JOB.jcl.md)
+- Copybook: [COPY_NAME](COPY.cpy.md)
 This creates a navigable documentation web.
 
 ## Writing Style

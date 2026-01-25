@@ -237,7 +237,8 @@ class DocumentationWriter:
         """
         # Clean the program name (remove any extension if present)
         clean_name = program_name.upper().replace(".CBL", "").replace(".COB", "")
-        return f"[{program_name}](./{clean_name}.md)"
+        # Use .cbl.md extension (most common for COBOL programs)
+        return f"[{program_name}](./{clean_name}.cbl.md)"
 
     def _copybook_link(self, copybook_name: str) -> str:
         """Generate a markdown link to a copybook's documentation.
@@ -250,7 +251,8 @@ class DocumentationWriter:
         """
         # Clean the copybook name (remove any extension if present)
         clean_name = copybook_name.upper().replace(".CPY", "").replace(".COPY", "")
-        return f"[{copybook_name}](../copybooks/{clean_name}.md)"
+        # Use .cpy.md extension for copybooks
+        return f"[{copybook_name}](../copybooks/{clean_name}.cpy.md)"
 
     def _template_to_markdown(self, template: DocumentationTemplate) -> str:
         """Convert a documentation template to Markdown.
@@ -561,7 +563,8 @@ class DocumentationWriter:
             lines.append("| Program | File | Type | Iterations |")
             lines.append("|---------|------|------|------------|")
             for e in valhalla:
-                lines.append(f"| [{e['program_id']}](programs/{e['program_id']}.md) | {e['file_name']} | {e['file_type']} | {e['iterations']} |")
+                # Link uses file_name to get correct extension (e.g., PROG.cbl.md)
+                lines.append(f"| [{e['program_id']}](programs/{e['file_name']}.md) | {e['file_name']} | {e['file_type']} | {e['iterations']} |")
             lines.append("")
 
         if witnessed:
@@ -570,7 +573,7 @@ class DocumentationWriter:
             lines.append("| Program | File | Type | Iterations |")
             lines.append("|---------|------|------|------------|")
             for e in witnessed:
-                lines.append(f"| [{e['program_id']}](programs/{e['program_id']}.md) | {e['file_name']} | {e['file_type']} | {e['iterations']} |")
+                lines.append(f"| [{e['program_id']}](programs/{e['file_name']}.md) | {e['file_name']} | {e['file_type']} | {e['iterations']} |")
             lines.append("")
 
         if forced:
@@ -579,7 +582,7 @@ class DocumentationWriter:
             lines.append("| Program | File | Type | Iterations |")
             lines.append("|---------|------|------|------------|")
             for e in forced:
-                lines.append(f"| [{e['program_id']}](programs/{e['program_id']}.md) | {e['file_name']} | {e['file_type']} | {e['iterations']} |")
+                lines.append(f"| [{e['program_id']}](programs/{e['file_name']}.md) | {e['file_name']} | {e['file_type']} | {e['iterations']} |")
             lines.append("")
 
         # Summary
