@@ -2079,7 +2079,7 @@ and architecture after reading your overview."""
         parts.append("")
         parts.append("| Component | Type | Purpose | Dependencies | Doc Link |")
         parts.append("|-----------|------|---------|--------------|----------|")
-        parts.append("| PROGNAME  | COBOL| Brief   | PROG2, PROG3 | [Link](docs/PROGNAME.doc.json) |")
+        parts.append("| PROGNAME  | COBOL| Brief   | PROG2, PROG3 | [Link](PROGNAME.md) |")
         parts.append("")
         parts.append("Include EVERY program, JCL, copybook, and procedure documented.")
         parts.append("")
@@ -2129,7 +2129,7 @@ and architecture after reading your overview."""
         parts.append("thoroughly explained. A longer document is better than a sparse one.")
         parts.append("")
         parts.append("**LINKING**: Every time you mention a component (program, JCL, copybook), ")
-        parts.append("include a markdown link to its documentation: `[PROGNAME](docs/PROGNAME.doc.json)`")
+        parts.append("include a markdown link to its documentation: `[PROGNAME](path/PROGNAME.md)`")
         parts.append("")
         parts.append("**QUESTIONS**: Insert inline questions wherever your understanding is unclear ")
         parts.append("or information is missing. Mark these with: `❓ QUESTION: [your question here]`")
@@ -2146,7 +2146,7 @@ and architecture after reading your overview."""
         parts.append("")
         parts.append(
             "When referencing these components in the SYSTEM_DESIGN.md, use markdown links. "
-            "Example: `[PROGNAME](docs/path/to/PROGNAME.doc.json)`"
+            "Example: `[PROGNAME](path/to/PROGNAME.md)`"
         )
         parts.append("")
         parts.append("| Component | Doc Path |")
@@ -2158,9 +2158,9 @@ and architecture after reading your overview."""
                 from pathlib import Path as PathLib
                 rel_path = PathLib(doc.file_name)
                 if rel_path.parent != PathLib("."):
-                    doc_path = f"docs/{rel_path.parent}/{rel_path.stem}.doc.json"
+                    doc_path = f"{rel_path.parent}/{rel_path.stem}.md"
                 else:
-                    doc_path = f"docs/{rel_path.stem}.doc.json"
+                    doc_path = f"{rel_path.stem}.md"
                 parts.append(f"| {doc.program_id} | `{doc_path}` |")
         parts.append("")
 
@@ -2195,9 +2195,9 @@ and architecture after reading your overview."""
                     from pathlib import Path as PathLib
                     rel_path = PathLib(doc.file_name)
                     if rel_path.parent != PathLib("."):
-                        doc_path = f"docs/{rel_path.parent}/{rel_path.stem}.doc.json"
+                        doc_path = f"{rel_path.parent}/{rel_path.stem}.md"
                     else:
-                        doc_path = f"docs/{rel_path.stem}.doc.json"
+                        doc_path = f"{rel_path.stem}.md"
 
                     parts.append(f"#### {doc.program_id}")
                     parts.append(f"- **Source File**: `{doc.file_name}`")

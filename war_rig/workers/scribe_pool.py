@@ -1000,6 +1000,123 @@ class ScribeWorker:
             )
             return None
 
+    def _generate_markdown_from_template(
+        self,
+        template: DocumentationTemplate,
+        file_name: str,
+    ) -> str:
+        """Generate human-readable markdown from a documentation template.
+
+        Creates a well-formatted markdown document suitable for reading
+        in documentation viewers, IDEs, and GitHub.
+
+        Args:
+            template: The documentation template to convert.
+            file_name: Source file name for display in the header.
+
+        Returns:
+            Formatted markdown string.
+        """
+        parts = []
+
+        # Header
+        program_id = template.header.program_id if template.header else "Unknown"
+        parts.append(f"# {program_id}")
+        parts.append("")
+        parts.append(f"**File**: `{file_name}`")
+        if template.header:
+            if template.header.file_type:
+                parts.append(f"**Type**: {template.header.file_type}")
+            if template.header.analyzed_at:
+                parts.append(f"**Analyzed**: {template.header.analyzed_at}")
+        parts.append("")
+
+        # Purpose
+        if template.purpose:
+            parts.append("## Purpose")
+            parts.append("")
+            if template.purpose.summary:
+                parts.append(template.purpose.summary)
+                parts.append("")
+            if template.purpose.business_context:
+                parts.append(f"**Business Context**: {template.purpose.business_context}")
+                parts.append("")
+
+        # Inputs
+        if template.inputs:
+            parts.append("## Inputs")
+            parts.append("")
+            parts.append("| Name | Type | Description |")
+            parts.append("|------|------|-------------|")
+            for inp in template.inputs:
+                name = inp.name or ""
+                io_type = inp.io_type or ""
+                description = inp.description or ""
+                parts.append(f"| {name} | {io_type} | {description} |")
+            parts.append("")
+
+        # Outputs
+        if template.outputs:
+            parts.append("## Outputs")
+            parts.append("")
+            parts.append("| Name | Type | Description |")
+            parts.append("|------|------|-------------|")
+            for out in template.outputs:
+                name = out.name or ""
+                io_type = out.io_type or ""
+                description = out.description or ""
+                parts.append(f"| {name} | {io_type} | {description} |")
+            parts.append("")
+
+        # Called Programs
+        if template.called_programs:
+            parts.append("## Called Programs")
+            parts.append("")
+            parts.append("| Program | Call Type | Purpose |")
+            parts.append("|---------|-----------|---------|")
+            for prog in template.called_programs:
+                program_name = prog.program_name or ""
+                call_type = prog.call_type or ""
+                purpose = prog.purpose or ""
+                parts.append(f"| {program_name} | {call_type} | {purpose} |")
+            parts.append("")
+
+        # Business Rules
+        if template.business_rules:
+            parts.append("## Business Rules")
+            parts.append("")
+            for rule in template.business_rules:
+                rule_id = rule.rule_id or "Rule"
+                description = rule.description or ""
+                parts.append(f"- **{rule_id}**: {description}")
+            parts.append("")
+
+        # Paragraphs/Functions
+        if template.paragraphs:
+            parts.append("## Paragraphs/Procedures")
+            parts.append("")
+            for para in template.paragraphs:
+                para_name = para.paragraph_name or "Unknown"
+                parts.append(f"### {para_name}")
+                if para.purpose:
+                    parts.append(para.purpose)
+                if para.summary:
+                    parts.append(para.summary)
+                parts.append("")
+
+        # Open Questions
+        if template.open_questions:
+            parts.append("## Open Questions")
+            parts.append("")
+            for q in template.open_questions:
+                question = q.question or ""
+                parts.append(f"- ? {question}")
+                if q.context:
+                    parts.append(f"  - Context: {q.context}")
+            parts.append("")
+
+        return "\n".join(parts)
+
     def _save_template(self, file_name: str, template: DocumentationTemplate) -> None:
         """Save the documentation template to the output directory.
 
@@ -1031,6 +1148,21 @@ class ScribeWorker:
             logger.debug(
                 f"Worker {self.worker_id}: Saved documentation to {doc_path}"
             )
+
+            # Also save human-readable markdown alongside the .doc.json
+            # Note: .bak files are created separately and do not get .md files
+            try:
+                md_content = self._generate_markdown_from_template(template, file_name)
+                # Change .doc.json to .md (remove both suffixes, add .md)
+                md_path = doc_path.with_suffix("").with_suffix(".md")
+                md_path.write_text(md_content, encoding="utf-8")
+                logger.debug(f"Worker {self.worker_id}: Saved markdown to {md_path}")
+            except Exception as md_error:
+                # Don't fail the main save if markdown generation fails
+                logger.warning(
+                    f"Worker {self.worker_id}: Failed to save markdown for "
+                    f"{doc_path}: {md_error}"
+                )
         except Exception as e:
             logger.error(
                 f"Worker {self.worker_id}: Failed to save template to {doc_path}: {e}"
