@@ -1121,7 +1121,7 @@ class CallGraphAnalyzer:
         truly_missing = analysis.custom_missing - set(analysis.resolved_programs.keys())
         if truly_missing:
             ids = [sanitize_id(p) for p in sorted(truly_missing)]
-            lines.append("    classDef missing fill:#FFB6C1,stroke:#DC143C")
+            lines.append("    classDef missing fill:#1E3A5F,stroke:#2E5A8F,color:#FFFFFF")
             lines.append(f"    class {','.join(ids)} missing")
 
         # Internal routines (resolved)
