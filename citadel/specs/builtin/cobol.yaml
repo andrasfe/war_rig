@@ -150,7 +150,9 @@ reference_patterns:
     ignore_case: true
 
   - name: cics_read
-    pattern: "EXEC\\s+CICS\\s+READ\\s+.+?FILE\\s*\\(\\s*['\"]?([A-Za-z0-9-]+)['\"]?\\s*\\)"
+    # Match both FILE and DATASET keywords for CICS file reads
+    # Use [^E]|E(?!ND-EXEC) to avoid matching across END-EXEC boundaries
+    pattern: "EXEC\\s+CICS\\s+READ(?:[^E]|E(?!ND-EXEC))+?(?:FILE|DATASET)\\s*\\(\\s*['\"]?([A-Za-z0-9-]+)['\"]?\\s*\\)"
     capture_groups:
       - 1
     relationship_type: reads
@@ -159,13 +161,16 @@ reference_patterns:
     dotall: true
 
   - name: cics_write
-    pattern: "EXEC\\s+CICS\\s+WRITE\\s+.+?FILE\\s*\\(\\s*['\"]?([A-Za-z0-9-]+)['\"]?\\s*\\)"
+    # Match both FILE and DATASET keywords for CICS file writes
+    # Use [^E]|E(?!ND-EXEC) to avoid matching across END-EXEC boundaries
+    pattern: "EXEC\\s+CICS\\s+WRITE(?:[^E]|E(?!ND-EXEC))+?(?:FILE|DATASET)\\s*\\(\\s*['\"]?([A-Za-z0-9-]+)['\"]?\\s*\\)"
     capture_groups:
       - 1
     relationship_type: writes
     target_type_hint: file
     ignore_case: true
     dotall: true
+
 
   - name: cics_send_map
     pattern: "EXEC\\s+CICS\\s+SEND\\s+MAP\\s*\\(\\s*['\"]?([A-Za-z0-9-]+)['\"]?\\s*\\)"
