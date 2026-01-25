@@ -1247,6 +1247,8 @@ class ScribeWorker:
                 "sql_operations",     # No SQL execution
                 "business_rules",     # Define data, not logic
                 "error_handling",     # No error handling
+                "inputs",             # Data definitions, not I/O
+                "outputs",            # Data definitions, not I/O
             },
 
             "JCL": {
