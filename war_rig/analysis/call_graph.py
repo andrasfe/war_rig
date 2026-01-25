@@ -258,6 +258,10 @@ class CallGraphAnalyzer:
 
         logger.debug(f"Citadel graph: {len(artifacts)} artifacts, {len(relationships)} relationships")
 
+        # Build mapping from file path to parent procedure/job
+        # This is used to resolve paragraphs (JCL steps) to their parent job
+        self._file_to_parent: dict[str, str] = {}
+
         # Build program info from artifacts
         self._citadel_programs = {}
         for artifact_id, artifact in artifacts.items():
@@ -278,18 +282,27 @@ class CallGraphAnalyzer:
 
             # Create ProgramInfo - use canonical_name as program_id
             # Skip paragraphs for now as they are internal, but include procedures and programs
-            if artifact_type in ("procedure", "program"):
+            if artifact_type in ("procedure", "program", "job"):
+                # For JCL jobs, use file name for more intuitive identification
+                program_id = canonical_name
+                if artifact_type == "job" and file_path:
+                    program_id = Path(file_path).stem.upper()
+
                 program_info = ProgramInfo(
-                    program_id=canonical_name,
+                    program_id=program_id,
                     file_name=file_name,
                     file_type=file_type,
                     summary=None,  # Citadel doesn't provide summaries
                     resolution_status=ResolutionStatus.DOCUMENTED,
                 )
-                self._citadel_programs[canonical_name] = program_info
+                self._citadel_programs[program_id] = program_info
 
-                # Also store the artifact_id -> canonical_name mapping for relationship resolution
-                if artifact_id != canonical_name:
+                # Map file path to this procedure/job for paragraph resolution
+                if file_path:
+                    self._file_to_parent[file_path] = program_id
+
+                # Also store the artifact_id -> program_id mapping for relationship resolution
+                if artifact_id != program_id:
                     # Store with artifact_id prefix for relationship lookup
                     self._citadel_programs[artifact_id] = program_info
 
@@ -332,6 +345,43 @@ class CallGraphAnalyzer:
             )
             self._citadel_calls.append(relationship)
 
+        # Also process unresolved references to capture external dependencies
+        # These are calls to programs/procedures that weren't found in the codebase
+        unresolved = data.get("unresolved", [])
+        for unres in unresolved:
+            # Only process procedure/program references (skip data references)
+            expected_type = unres.get("expected_type", "")
+            if expected_type not in ("procedure", "program"):
+                continue
+
+            reference_text = unres.get("reference_text", "")
+            if not reference_text:
+                continue
+
+            containing_artifact = unres.get("containing_artifact", "")
+            location = unres.get("location", {})
+            line = location.get("line_start")
+
+            # Resolve the containing artifact to get the caller
+            caller = self._resolve_artifact_name(containing_artifact, artifacts)
+            if not caller:
+                continue
+
+            # Normalize callee name
+            callee = reference_text.strip().rstrip("$").upper()
+
+            # Check for dynamic calls
+            is_dynamic = bool(DYNAMIC_PROGRAM_PATTERN.search(callee))
+
+            relationship = CallRelationship(
+                caller=caller,
+                callee=callee,
+                call_type="EXEC",  # Most unresolved are EXEC calls
+                is_dynamic=is_dynamic,
+                citation=line,
+            )
+            self._citadel_calls.append(relationship)
+
         self._citadel_loaded = True
         logger.info(
             f"Loaded {len(self._citadel_programs)} programs and "
@@ -341,6 +391,10 @@ class CallGraphAnalyzer:
     def _resolve_artifact_name(self, artifact_id: str, artifacts: dict) -> str | None:
         """Resolve an artifact ID to its canonical name.
 
+        For paragraphs (JCL steps), resolves to the parent file name
+        since steps are internal to their parent and we want to track
+        program-to-program relationships using intuitive file names.
+
         Args:
             artifact_id: The artifact ID (e.g., "procedure::BUILDBAT")
             artifacts: The artifacts dictionary from the Citadel graph
@@ -349,7 +403,23 @@ class CallGraphAnalyzer:
             The canonical name or None if not found
         """
         if artifact_id in artifacts:
-            return artifacts[artifact_id].get("canonical_name", "")
+            artifact = artifacts[artifact_id]
+            artifact_type = artifact.get("artifact_type", "")
+            defined_in = artifact.get("defined_in", {})
+            file_path = defined_in.get("file_path", "")
+
+            # For paragraphs (JCL steps), resolve to file name
+            # This gives more intuitive names like BATCMP instead of CNJBATMP
+            if artifact_type == "paragraph" and file_path:
+                file_name = Path(file_path).stem
+                return file_name.upper()
+
+            # For jobs in JCL, also use file name for consistency
+            if artifact_type == "job" and file_path:
+                file_name = Path(file_path).stem
+                return file_name.upper()
+
+            return artifact.get("canonical_name", "")
 
         # Try to extract name from the ID format (e.g., "procedure::NAME")
         if "::" in artifact_id:
