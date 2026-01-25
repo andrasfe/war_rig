@@ -65,7 +65,7 @@ class CitadelConfig(BaseSettings):
 
     # Specs settings
     builtin_specs_dir: Path = Field(
-        default=Path("specs/builtin"),
+        default_factory=lambda: Path(__file__).parent.parent.parent / "specs" / "builtin",
         description="Directory containing built-in specs"
     )
 
