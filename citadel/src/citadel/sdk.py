@@ -1089,6 +1089,7 @@ class Citadel:
             for artifact_id, artifact in graph.artifacts.items()
         }
 
+        # Include resolved relationships
         edges_list = [
             {
                 "source": rel.from_artifact,
@@ -1097,6 +1098,34 @@ class Citadel:
             }
             for rel in graph.relationships
         ]
+
+        # Also include unresolved call relationships for sequence diagrams
+        # These are calls/executes/performs to external or unresolved targets
+        # Infer relationship type from expected_type
+        call_target_types = {"program", "procedure", "paragraph"}
+        for unres in graph.unresolved:
+            expected = unres.expected_type
+            if expected and expected.value in call_target_types:
+                # Infer relationship type based on target type
+                if expected.value == "paragraph":
+                    rel_type = "performs"
+                elif expected.value == "procedure":
+                    rel_type = "executes"
+                else:
+                    rel_type = "calls"
+
+                edges_list.append({
+                    "source": unres.containing_artifact,
+                    "target": unres.reference_text,
+                    "relationship_type": rel_type,
+                })
+                # Add the target as a pseudo-artifact if not already known
+                if unres.reference_text not in artifacts_dict:
+                    artifacts_dict[unres.reference_text] = {
+                        "name": unres.reference_text,
+                        "display_name": unres.reference_text,
+                        "type": expected.value,
+                    }
 
         if not edges_list:
             logger.info("No relationships found in graph, returning empty diagrams")
