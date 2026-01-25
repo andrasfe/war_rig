@@ -900,9 +900,14 @@ class ScribeWorker:
     def _get_doc_output_path(self, file_name: str) -> Path:
         """Get the output path for a documentation file.
 
-        The output path mirrors the input directory structure:
-        - Input: "app/cobol/PROG.cbl" -> Output: "output/app/cobol/PROG.doc.json"
-        - Input: "PROG.cbl" (flat) -> Output: "output/PROG.doc.json"
+        The output path preserves the full filename (including extension) to
+        avoid naming conflicts between files with the same stem but different
+        extensions (e.g., XYZ100.cbl vs XYZ100.lst).
+
+        Examples:
+        - Input: "app/cobol/PROG.cbl" -> Output: "output/app/cobol/PROG.cbl.doc.json"
+        - Input: "PROG.cbl" (flat) -> Output: "output/PROG.cbl.doc.json"
+        - Input: "PROG.lst" (flat) -> Output: "output/PROG.lst.doc.json"
 
         Args:
             file_name: Source file name or relative path (e.g., "app/cobol/PROG.cbl").
@@ -912,23 +917,24 @@ class ScribeWorker:
         """
         rel_path = Path(file_name)
 
+        # Use full filename (with extension) to avoid naming conflicts
+        # e.g., XYZ100.cbl -> XYZ100.cbl.doc.json
+        doc_filename = f"{rel_path.name}.doc.json"
+
         # If the path has a parent directory, mirror the structure
         if rel_path.parent != Path("."):
-            return self.output_directory / rel_path.parent / f"{rel_path.stem}.doc.json"
+            return self.output_directory / rel_path.parent / doc_filename
 
         # Flat path (legacy or root-level files)
-        return self.output_directory / f"{rel_path.stem}.doc.json"
+        return self.output_directory / doc_filename
 
     def _load_previous_template(self, file_name: str) -> DocumentationTemplate | None:
         """Load the previous iteration's documentation template.
 
         Checks multiple possible locations for the doc.json file:
-        1. Primary path based on file_name structure (nested or flat)
-        2. Fallback to flat path if nested lookup fails
-        3. Fallback to nested path if flat lookup fails
-
-        This handles cases where Chrome tickets have file names that don't
-        exactly match the path structure where the doc was originally saved.
+        1. Primary path using new naming (PROG.cbl.doc.json)
+        2. Fallback to legacy naming (PROG.doc.json) for backwards compatibility
+        3. Alternative directory structures
 
         Args:
             file_name: Source file name or relative path.
@@ -937,23 +943,33 @@ class ScribeWorker:
             DocumentationTemplate if exists, None otherwise.
         """
         rel_path = Path(file_name)
-        file_stem = rel_path.stem
+        file_name_only = rel_path.name  # e.g., "PROG.cbl"
+        file_stem = rel_path.stem  # e.g., "PROG" (for legacy fallback)
         file_parent = rel_path.parent
 
         # Build list of candidate paths to check
         doc_candidates: list[Path] = []
 
-        # Primary path based on _get_doc_output_path logic
+        # Primary path based on _get_doc_output_path logic (new naming)
         doc_candidates.append(self._get_doc_output_path(file_name))
 
-        # Also check alternative paths for robustness
+        # Legacy naming fallback (PROG.doc.json instead of PROG.cbl.doc.json)
+        if file_parent != Path("."):
+            doc_candidates.append(self.output_directory / file_parent / f"{file_stem}.doc.json")
+        else:
+            doc_candidates.append(self.output_directory / f"{file_stem}.doc.json")
+
+        # Also check alternative directory structures
         if file_parent != Path("."):
             # If file_name has parent, also check flat path as fallback
+            doc_candidates.append(self.output_directory / f"{file_name_only}.doc.json")
             doc_candidates.append(self.output_directory / f"{file_stem}.doc.json")
         else:
             # If file_name is flat, also check common subdirectory patterns
-            # (copybook files might be in a copybook/ subdirectory)
             for subdir in ["copybook", "copybooks", "copy"]:
+                doc_candidates.append(
+                    self.output_directory / subdir / f"{file_name_only}.doc.json"
+                )
                 doc_candidates.append(
                     self.output_directory / subdir / f"{file_stem}.doc.json"
                 )

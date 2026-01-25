@@ -382,10 +382,13 @@ class ProgramManagerAgent(BaseAgent[ProgramManagerInput, ProgramManagerOutput]):
             program_id = source_file.stem.upper()
 
             # Check if documentation already exists for this file
-            # Output mirrors input structure: output/rel/path/PROG.doc.json
+            # Output mirrors input structure with full filename to avoid conflicts:
+            # e.g., output/rel/path/PROG.cbl.doc.json (not PROG.doc.json)
             rel_path = Path(file_identifier)
-            doc_file = output_dir / rel_path.parent / f"{rel_path.stem}.doc.json"
-            has_existing_doc = doc_file.exists()
+            doc_file = output_dir / rel_path.parent / f"{rel_path.name}.doc.json"
+            # Also check legacy naming for backwards compatibility
+            legacy_doc_file = output_dir / rel_path.parent / f"{rel_path.stem}.doc.json"
+            has_existing_doc = doc_file.exists() or legacy_doc_file.exists()
 
             # Create VALIDATION ticket if doc exists, DOCUMENTATION if not
             if has_existing_doc:
@@ -668,9 +671,14 @@ class ProgramManagerAgent(BaseAgent[ProgramManagerInput, ProgramManagerOutput]):
 
             # Check if documentation exists for this file
             # Preserve relative path structure for doc lookup
+            # New naming: PROG.cbl.doc.json, Legacy: PROG.doc.json
             if output_dir:
-                # Try with relative path preserved first, then flat
+                file_name_only = file_path.name  # e.g., "PROG.cbl"
                 doc_candidates: list[Path] = [
+                    # New naming with full filename
+                    output_dir / file_parent / f"{file_name_only}.doc.json",
+                    output_dir / f"{file_name_only}.doc.json",
+                    # Legacy naming with just stem
                     output_dir / file_parent / f"{file_stem}.doc.json",
                     output_dir / f"{file_stem}.doc.json",
                 ]
@@ -678,6 +686,9 @@ class ProgramManagerAgent(BaseAgent[ProgramManagerInput, ProgramManagerOutput]):
                 # in a copybook/ subdirectory even if the ticket has a flat name)
                 if file_parent == Path("."):
                     for subdir in ["copybook", "copybooks", "copy"]:
+                        doc_candidates.append(
+                            output_dir / subdir / f"{file_name_only}.doc.json"
+                        )
                         doc_candidates.append(
                             output_dir / subdir / f"{file_stem}.doc.json"
                         )
