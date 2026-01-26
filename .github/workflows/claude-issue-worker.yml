@@ -1,0 +1,114 @@
+name: Claude Issue Worker
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  claude-implement:
+    if: github.event.label.name == 'claude'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+
+      - name: Install project dependencies
+        run: uv sync --all-extras
+
+      - name: Install bd CLI
+        run: |
+          curl -fsSL https://raw.githubusercontent.com/steveyegge/beads/main/scripts/install.sh | bash
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Run Claude Code
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_args: "--max-turns 30"
+          prompt: |
+            You are working on issue #${{ github.event.issue.number }}.
+
+            **Issue title**: ${{ github.event.issue.title }}
+
+            **Issue body**:
+            ${{ github.event.issue.body }}
+
+            ## Instructions
+
+            1. Create a bead to track this work:
+               ```
+               bd create --title="${{ github.event.issue.title }}" --type=task --labels=gh-issue-${{ github.event.issue.number }}
+               ```
+
+            2. Read and understand the issue requirements thoroughly.
+
+            3. Create a new branch:
+               ```
+               git checkout -b claude/issue-${{ github.event.issue.number }}
+               ```
+
+            4. Implement the changes described in the issue.
+
+            5. Run quality checks and fix any failures:
+               ```
+               uv run pytest tests/ -x
+               uv run ruff check .
+               ```
+
+            6. Commit your changes with a reference to the issue:
+               ```
+               git add <changed-files>
+               git commit -m "Implement: ${{ github.event.issue.title }}
+
+               Closes #${{ github.event.issue.number }}
+
+               Co-Authored-By: Claude <noreply@anthropic.com>"
+               ```
+
+            7. Sync beads:
+               ```
+               bd sync
+               ```
+
+            8. Push the branch and open a PR:
+               ```
+               git push -u origin claude/issue-${{ github.event.issue.number }}
+               gh pr create \
+                 --title "Implement: ${{ github.event.issue.title }}" \
+                 --body "## Summary
+
+               Implements #${{ github.event.issue.number }}: ${{ github.event.issue.title }}
+
+               ## Changes
+
+               <describe what you changed and why>
+
+               ## Test plan
+
+               - [ ] All existing tests pass (`uv run pytest tests/ -x`)
+               - [ ] Ruff linting passes (`uv run ruff check .`)
+               - [ ] Changes match issue requirements
+
+               Closes #${{ github.event.issue.number }}
+
+               ---
+               *Automated by Claude Issue Worker*"
+               ```
+
+            If tests fail and you cannot fix them, comment on issue #${{ github.event.issue.number }} explaining the problem.
