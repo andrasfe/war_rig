@@ -177,16 +177,55 @@ For COBOL, this finds:
 - `CALL` statements referencing programs
 - `COPY` statements referencing copybooks
 
+### Generate Sequence Diagrams
+
+```python
+# Generate Mermaid sequence diagrams showing call chains
+diagrams = citadel.get_sequence_diagrams("./src")
+
+# Output: list of Mermaid sequence diagram strings
+for diagram in diagrams:
+    print(diagram)
+
+# Example output:
+# sequenceDiagram
+#     participant MAINPROG as MAINPROG
+#     participant SUBPROG as SUBPROG
+#     participant UTILITY as UTILITY
+#     MAINPROG->>SUBPROG: calls
+#     SUBPROG->>UTILITY: calls
+
+# Control diagram generation
+diagrams = citadel.get_sequence_diagrams(
+    "./src",
+    max_diagrams=5,           # Limit number of diagrams
+    min_sequence_length=2,    # Minimum calls in chain (2 = A->B->C)
+)
+
+# Can also use a pre-generated dependency graph
+diagrams = citadel.get_sequence_diagrams("./output/graph.json")
+```
+
+The sequence finder algorithm:
+- Finds longest call chains using DFS from entry points
+- Handles cycles without infinite loops
+- Discovers multiple sequences from disconnected subgraphs
+- Includes both resolved and unresolved call relationships
+
 ### One-off Convenience Functions
 
 ```python
-from citadel import analyze_file, get_functions, get_function_body, get_callers
+from citadel import (
+    analyze_file, get_functions, get_function_body,
+    get_callers, get_sequence_diagrams
+)
 
 # No need to create Citadel instance
 result = analyze_file("program.cbl")
 funcs = get_functions("program.cbl")
 body = get_function_body("program.cbl", "MAIN-PARA")
 callers = get_callers("UTILS.cbl", "CALCULATE-TAX")
+diagrams = get_sequence_diagrams("./src")
 ```
 
 ### SDK Classes
@@ -300,6 +339,7 @@ citadel/
 │   ├── sdk.py           # SDK for programmatic access
 │   ├── cli.py           # Command-line interface
 │   ├── orchestrator.py  # Main analysis coordinator
+│   ├── analysis/        # Graph analysis algorithms (sequence finder)
 │   ├── discovery/       # File discovery
 │   ├── specs/           # Language specifications
 │   ├── parser/          # Pattern-based parsing
