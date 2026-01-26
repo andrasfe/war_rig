@@ -4,13 +4,13 @@
     "file_name": "cpy-bms/COPAU01.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T02:33:00.052494",
+    "analyzed_at": "2026-01-26T14:19:57.212282",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the symbolic map structures COPAU1AI (input) and COPAU1AO (output, redefining input) for a CICS BMS screen displaying credit card authorization response details. Fields include transaction name, titles, current date/time, program name, card number, authorization date/time/response/reason/code/amount, POS entry mode, auth source, MCC, card expiration, auth type, transaction ID, auth method/fraud, merchant details (name/ID/city/state/zip), and error message. It follows standard BMS format with length (L: COMP S9(4)), flag (F: X), attribute (A: X), and input data (I: X(n)) for AI, redefined to C/P/H/V/O output fields.",
-    "business_context": "CICS online screen for displaying authorization responses in a credit card payment processing system.",
+    "summary": "This copybook defines the data structures COPAU1AI and COPAU1AO for a BMS map in a CICS online transaction screen. COPAU1AI provides the input layout from the terminal with length, flag/attribute, and input data fields for transaction details, authorization information, merchant data, and error messages. COPAU1AO redefines COPAU1AI for output to the terminal using standard BMS C/P/H/V/O attribute and output data fields.",
+    "business_context": "Credit card authorization response display in a merchant point-of-sale (POS) CICS application, showing transaction name, card number, auth details, merchant info, and errors.",
     "program_type": "ONLINE_CICS",
     "citations": [
       17,
@@ -21,10 +21,32 @@
     {
       "name": "COPAU1AI",
       "io_type": "CICS_MAP",
-      "description": "Symbolic input map structure populated by CICS RECEIVE MAP, holding data from terminal screen fields like card number, auth details, merchant info.",
+      "description": "Input structure from RECEIVE MAP containing terminal-entered data for fields like transaction name (TRNNAMEI), card number (CARDNUMI), authorization details (AUTHDTI, AUTHTMI, etc.), merchant info (MERNAMESI, etc.), and error message (ERRMSGI)",
       "copybook": null,
       "citation": [
-        17
+        17,
+        18,
+        60,
+        66,
+        72,
+        78,
+        84,
+        90,
+        96,
+        102,
+        108,
+        114,
+        120,
+        126,
+        132,
+        138,
+        144,
+        150,
+        156,
+        162,
+        168,
+        174,
+        180
       ]
     }
   ],
@@ -32,10 +54,37 @@
     {
       "name": "COPAU1AO",
       "io_type": "CICS_MAP",
-      "description": "Symbolic output map structure used by CICS SEND MAP to display data on terminal screen, including titles, dates, auth response, merchant info, error message.",
+      "description": "Output structure for SEND MAP containing display attributes (C=changed, P=protected, H=highlight, V=visible?) and output data fields (e.g., TRNNAMEO, CARDNUMO, AUTHDTO, MERNAMEO, ERRMSGO) for screen presentation",
       "copybook": null,
       "citation": [
-        181
+        181,
+        188,
+        194,
+        200,
+        206,
+        212,
+        218,
+        224,
+        230,
+        236,
+        242,
+        248,
+        254,
+        260,
+        266,
+        272,
+        278,
+        284,
+        290,
+        296,
+        302,
+        308,
+        314,
+        320,
+        326,
+        332,
+        338,
+        344
       ]
     }
   ],
@@ -58,9 +107,14 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "Which CICS program(s) include and use this copybook?",
-      "context": "Copybook defines structures but does not reference using programs.",
-      "suggestion": "Search source files for 'COPY COPAU01' or 'COPAU1' mapset references."
+      "question": "Which specific CICS programs include and use this BMS copybook?",
+      "context": "Copybook defines structures but does not indicate including programs",
+      "suggestion": "Search for COPY COPAU01 in CICS COBOL programs or BMS map definitions"
+    },
+    {
+      "question": "Exact meanings of BMS attribute flags (C, P, H, V) in this context?",
+      "context": "Standard BMS conventions assumed (Changed, Protected, Highlight, Visible?), but not explicitly documented here",
+      "suggestion": "Refer to including program's BMS DFHMSD/DFHMDI or CICS documentation"
     }
   ]
 }

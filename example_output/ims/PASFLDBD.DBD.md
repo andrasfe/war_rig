@@ -2,28 +2,25 @@
 
 **File**: `ims/PASFLDBD.DBD`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-01-26 02:33:26.709941
+**Analyzed**: 2026-01-26 14:23:47.921690
 
 ## Purpose
 
-This DBDGEN source file defines the IMS database PASFLDBD with GSAM and BSAM access methods and no password protection. It specifies dataset group DSG001 using DD1=PASFILIP (input) and DD2=PASFILOP (output) datasets, both with fixed-length records of 100 bytes and RECFM=F. The definition was generated on 04/21/2023 for IMS version 15.1.
-
-**Business Context**: IMS database definition supporting sequential file access for an application handling PASFL data (likely passenger flight files based on naming)
+This file contains the DBDGEN source defining the IMS database PASFLDBD with GSAM and BSAM access methods and no password. It specifies dataset group DSG001 using input dataset PASFILIP (DD1) and output dataset PASFILOP (DD2), both with fixed record length of 100 bytes and RECFM=F. The definition is terminated with DBDGEN, FINISH, and END statements.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| PASFILIP | IOType.FILE_SEQUENTIAL | Input dataset DD1 for PASFLDBD database dataset group DSG001 |
+| PASFILIP | IOType.FILE_SEQUENTIAL | Input dataset referenced as DD1 in dataset group DSG001 |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| PASFILOP | IOType.FILE_SEQUENTIAL | Output dataset DD2 for PASFLDBD database dataset group DSG001 |
+| PASFILOP | IOType.FILE_SEQUENTIAL | Output dataset referenced as DD2 in dataset group DSG001 |
 
 ## Business Rules
 
-- **BR001**: Database supports GSAM and BSAM access methods
-- **BR002**: No password protection required for database access
-- **BR003**: Datasets use fixed-length records of 100 bytes with RECFM=F
+- **BR001**: IMS database PASFLDBD is defined with access methods GSAM and BSAM, and no password protection
+- **BR002**: Dataset group DSG001 uses DD1=PASFILIP and DD2=PASFILOP with record format RECFM=F and length 100

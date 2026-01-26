@@ -3,43 +3,416 @@
     "program_id": "COPAUA0C",
     "file_name": "cbl/COPAUA0C.cbl",
     "file_type": "COBOL",
-    "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T02:35:20.495664",
+    "analyzed_by": "Scribe",
+    "analyzed_at": "2026-01-26T14:25:21.899998",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This COBOL source file is empty, containing only a single blank line at line 1. No IDENTIFICATION DIVISION, DATA DIVISION, PROCEDURE DIVISION, or any executable code is present. The program's purpose, logic, or functionality cannot be determined from the provided source.",
-    "business_context": null,
-    "program_type": "BATCH",
+    "summary": "COPAUA0C is a CICS transaction program that processes card authorization requests received via triggered MQ messages. It reads authorization request messages from an MQ request queue in a loop (up to 500 messages), extracts transaction details such as card number, amount, and merchant info, performs validation against cross-reference, account, customer files, and IMS database segments, decides on approval or decline based on business rules like funds availability and card status, and writes the authorization response to an IMS database. After processing, it commits via SYNCPOINT and potentially sends replies via MQ reply queue.",
+    "business_context": "CardDemo application - Authorization Module for processing payment card transaction authorizations",
+    "program_type": "ONLINE_CICS",
     "citations": [
-      1
+      15,
+      16,
+      17,
+      18,
+      50
     ]
   },
-  "inputs": [],
-  "outputs": [],
+  "inputs": [
+    {
+      "name": "WS-REQUEST-QNAME",
+      "io_type": "OTHER",
+      "description": "MQ request queue containing comma-delimited authorization request messages with fields like auth date/time, card number, transaction amount, merchant details",
+      "copybook": null,
+      "citation": [
+        246,
+        342
+      ]
+    },
+    {
+      "name": "CCXREF",
+      "io_type": "FILE_VSAM",
+      "description": "Card cross-reference file used to map card number to customer ID and account ID",
+      "copybook": null,
+      "citation": [
+        478
+      ]
+    },
+    {
+      "name": "ACCTDAT",
+      "io_type": "FILE_VSAM",
+      "description": "Account master file (inferred from WS-ACCTFILENAME; read not in sample but cited in challenger as line 278)",
+      "copybook": null,
+      "citation": [
+        35
+      ]
+    },
+    {
+      "name": "CUSTDAT",
+      "io_type": "FILE_VSAM",
+      "description": "Customer master file (inferred from WS-CUSTFILENAME; read not in sample but cited in challenger as line 325)",
+      "copybook": null,
+      "citation": [
+        36
+      ]
+    },
+    {
+      "name": "PSBPAUTB PAUT-SMRY-SEG",
+      "io_type": "IMS_SEGMENT",
+      "description": "IMS database segment for authorization summary (flagged as FOUND-PAUT-SMRY-SEG)",
+      "copybook": null,
+      "citation": [
+        99,
+        135,
+        136
+      ]
+    },
+    {
+      "name": "CARDDAT",
+      "io_type": "FILE_VSAM",
+      "description": "Card master file (defined but no read operation visible in sampled code)",
+      "copybook": null,
+      "citation": [
+        37
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "WS-REPLY-QNAME",
+      "io_type": "OTHER",
+      "description": "MQ reply queue for authorization responses (inferred from WS-REPLY-QNAME and program function; put operation not sampled)",
+      "copybook": null,
+      "citation": [
+        60
+      ]
+    },
+    {
+      "name": "PAUT IMS DB",
+      "io_type": "IMS_SEGMENT",
+      "description": "IMS authorization record written with response details including auth codes, dates, amounts, and merchant info",
+      "copybook": null,
+      "citation": [
+        464,
+        868
+      ]
+    }
+  ],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
-    "entry_points": [],
+    "entry_points": [
+      "CP00"
+    ],
     "linkage_section": []
   },
-  "business_rules": [],
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Decline authorization if insufficient funds",
+      "logic_summary": "Check available amount against transaction amount",
+      "conditions": [
+        "INSUFFICIENT-FUND (flag 'I')"
+      ],
+      "citation": [
+        156
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Decline if card not active",
+      "logic_summary": "Validate card status from master files",
+      "conditions": [
+        "CARD-NOT-ACTIVE (flag 'A')"
+      ],
+      "citation": [
+        157
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "Decline if account closed",
+      "logic_summary": "Check account status",
+      "conditions": [
+        "ACCOUNT-CLOSED (flag 'C')"
+      ],
+      "citation": [
+        158
+      ]
+    },
+    {
+      "rule_id": "BR004",
+      "description": "Decline if card or merchant fraud flagged",
+      "logic_summary": "Fraud checks",
+      "conditions": [
+        "CARD-FRAUD ('F')",
+        "MERCHANT-FRAUD ('M')"
+      ],
+      "citation": [
+        159,
+        160
+      ]
+    },
+    {
+      "rule_id": "BR005",
+      "description": "Process up to 500 requests per invocation",
+      "logic_summary": "Loop control via WS-MSG-PROCESSED > WS-REQSTS-PROCESS-LIMIT",
+      "conditions": [
+        "WS-MSG-PROCESSED > 500"
+      ],
+      "citation": [
+        56,
+        339
+      ]
+    }
+  ],
   "data_flow": {
-    "reads_from": [],
-    "writes_to": [],
-    "transforms": []
+    "reads_from": [
+      {
+        "source": "WS-REQUEST-QNAME",
+        "fields_used": [
+          "PA-RQ-AUTH-DATE",
+          "PA-RQ-CARD-NUM",
+          "PA-RQ-TRANSACTION-AMT-AN",
+          "PA-RQ-MERCHANT-ID"
+        ],
+        "citation": [
+          354
+        ]
+      },
+      {
+        "source": "CCXREF",
+        "fields_used": [
+          "XREF-CARD-NUM"
+        ],
+        "citation": [
+          475
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "PA-AUTH IMS segment",
+        "fields_written": [
+          "PA-AUTH-RESP-CODE",
+          "PA-AUTH-DATE-9C",
+          "PA-TRANSACTION-AMT"
+        ],
+        "citation": [
+          868,
+          898
+        ]
+      }
+    ],
+    "transforms": [
+      {
+        "input_field": "W01-GET-BUFFER",
+        "output_field": "PA-RQ-* fields",
+        "transformation_description": "UNSTRING delimited by comma into request fields including dates, card num, amt as string, merchant details",
+        "citation": [
+          354
+        ]
+      },
+      {
+        "input_field": "WS-TRANSACTION-AMT-AN",
+        "output_field": "PA-RQ-TRANSACTION-AMT",
+        "transformation_description": "NUMVAL conversion from alphanumeric to numeric amount",
+        "citation": [
+          376
+        ]
+      },
+      {
+        "input_field": "WS-CUR-DATE-X6, WS-CUR-TIME-X6",
+        "output_field": "PA-AUTH-DATE-9C, PA-AUTH-TIME-9C",
+        "transformation_description": "Compute inverted date/time stamps (99999 - YYDDD, 999999999 - time with ms)",
+        "citation": [
+          874,
+          875
+        ]
+      }
+    ]
   },
   "copybooks_used": [],
-  "paragraphs": [],
-  "error_handling": [],
+  "paragraphs": [
+    {
+      "paragraph_name": "1000-MAIN",
+      "summary": null,
+      "purpose": "This is the primary entry point paragraph that orchestrates the overall program flow for batch-like processing of MQ authorization requests under CICS. It begins by retrieving the trigger message from the CICS transient queue MQTM to obtain the request queue name and trigger data (original lines 233-240). It sets a wait interval and performs 1100-OPEN-REQUEST-QUEUE to open the MQ request queue for input-shared access. It then initiates the first read with 3100-READ-REQUEST-MQ and enters an implicit loop via later PERFORMs. Inputs consumed include the CICS EIB and MQ trigger message; no files opened here. Outputs include initialized queue handles and flags. Business logic involves setting up for looped message processing up to WS-REQSTS-PROCESS-LIMIT (500). No explicit error handling here beyond NOHANDLE on RETRIEVE. It calls 1100-OPEN-REQUEST-QUEUE for MQ open and 3100-READ-REQUEST-MQ to start the message loop. Control passes to 2000-LOOP-MAIN after first read.",
+      "called_by": [],
+      "calls": [
+        "1100-OPEN-REQUEST-QUEUE",
+        "3100-READ-REQUEST-MQ"
+      ],
+      "citation": [
+        231,
+        250
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "1100-OPEN-REQUEST-QUEUE",
+      "summary": null,
+      "purpose": "This paragraph opens the MQ request queue for shared input to enable reading authorization messages. It consumes WS-REQUEST-QNAME from the trigger message and sets MQOD fields like OBJECTTYPE to MQOT-Q and OBJECTNAME. Computes options as MQOO-INPUT-SHARED for non-exclusive access suitable for triggered processing. Performs MQOPEN call (inferred from context and omitted lines). Inputs are WS-REQUEST-QNAME and MQ constants; outputs updated MQMD/MQOD structures and connection objects like W01-HCONN-REQUEST. No business decisions, but sets WS-REQUEST-MQ-FLG to 'O'. Error handling via MQ compcode/reason codes (WS-COMPCODE, WS-REASON) not shown in sample. Calls MQOPEN routine (unsampled). Essential for enabling subsequent MQGET in 3100.",
+      "called_by": [
+        "1000-MAIN"
+      ],
+      "calls": [],
+      "citation": [
+        255,
+        261
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "2000-LOOP-MAIN",
+      "summary": null,
+      "purpose": "This paragraph implements the main processing loop for multiple authorization requests, extracting, processing, committing, and looping until limit or no more messages. It consumes the MQ buffer from prior GET, performs 2100-EXTRACT-REQUEST-MSG to parse into PA-RQ-* fields, then 5000-PROCESS-AUTH for validation and decision. Increments WS-MSG-PROCESSED counter and issues SYNCPOINT to commit changes. Inputs from prior MQ read and flags like WS-MSG-AVAILABLE-FLG; outputs updated counters and IMS writes. Business logic checks if WS-MSG-PROCESSED exceeds 500, setting WS-LOOP-END if true, else loops back to 3100-READ-REQUEST-MQ. Handles loop termination cleanly. Error handling via subordinate returns and IMS-PSB-NOT-SCHD reset. Calls 2100-EXTRACT-REQUEST-MSG, 5000-PROCESS-AUTH, and conditionally 3100-READ-REQUEST-MQ. Ensures bounded processing to avoid indefinite loops.",
+      "called_by": [
+        "1000-MAIN"
+      ],
+      "calls": [
+        "2100-EXTRACT-REQUEST-MSG",
+        "5000-PROCESS-AUTH",
+        "3100-READ-REQUEST-MQ"
+      ],
+      "citation": [
+        327,
+        344
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "2100-EXTRACT-REQUEST-MSG",
+      "summary": null,
+      "purpose": "This paragraph parses the raw MQ message buffer into structured authorization request fields using UNSTRING. It consumes W01-GET-BUFFER(1:W01-DATALEN) delimited by commas, populating PA-RQ-AUTH-DATE, PA-RQ-CARD-NUM, PA-RQ-TRANSACTION-AMT-AN, merchant fields, etc. Then converts WS-TRANSACTION-AMT-AN to numeric PA-RQ-TRANSACTION-AMT via NUMVAL. Inputs are raw comma-delimited string from MQGET; outputs populated PA-RQ-* working fields for downstream use. No conditions or decisions, purely data transformation. No error handling shown (assumes well-formed messages). No calls to other paragraphs. Prepares data for 5000-PROCESS-AUTH validations.",
+      "called_by": [
+        "2000-LOOP-MAIN"
+      ],
+      "calls": [],
+      "citation": [
+        351,
+        377
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "5000-PROCESS-AUTH",
+      "summary": null,
+      "purpose": "This core processing paragraph handles individual authorization decisions by reading cross-ref, account, customer data, and IMS segments, applying rules, and preparing response. It consumes extracted PA-RQ-* fields, performs 5100-READ-XREF-RECORD to get cust/acct IDs if card found. Conditionally reads ACCT/CUST masters (unsampled lines 278,325) and IMS PAUT-SMRY-SEG, computes available amt WS-AVAILABLE-AMT vs transaction. Sets flags like AUTH-RESP-APPROVED/DECLINED, decline reasons (insufficient, not active, etc.). If approved or certain conditions, performs 8000-WRITE-AUTH-TO-DB. Inputs from PA-RQ-*, XREF, masters, IMS; outputs flags WS-DECLINE-FLG, response fields PA-RL-*, IMS write. Business logic: fraud checks, balance validation, status checks leading to approve/decline. Error handling via file/IMS status flags like CARD-FOUND-XREF. Calls 5100-READ-XREF-RECORD and conditionally 8000-WRITE-AUTH-TO-DB. Determines final auth outcome.",
+      "called_by": [
+        "2000-LOOP-MAIN"
+      ],
+      "calls": [
+        "5100-READ-XREF-RECORD",
+        "8000-WRITE-AUTH-TO-DB"
+      ],
+      "citation": [
+        463,
+        469
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "5100-READ-XREF-RECORD",
+      "summary": null,
+      "purpose": "This paragraph reads the card cross-reference VSAM record using CICS READ DATASET with RIDFLD. Consumes PA-RQ-CARD-NUM moved to XREF-CARD-NUM. Performs READ into CARD-XREF-RECORD, captures RESP/RESP2. Evaluates WS-RESP-CD: NORMAL sets CARD-FOUND-XREF, extracts cust/acct IDs; NOTFND sets CARD-NFOUND-XREF and NFOUND-ACCT-IN-MSTR. Inputs card num from request; outputs XREF record fields or not-found flags. Business logic distinguishes found vs notfound for subsequent acct/cust reads. Error handling via DFHRESP evaluation for NORMAL/NOTFND. No calls. Enables mapping card to acct/cust.",
+      "called_by": [
+        "5000-PROCESS-AUTH"
+      ],
+      "calls": [],
+      "citation": [
+        472,
+        493
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "CICS READ RESP = DFHRESP(NOTFND)",
+      "action": "Set CARD-NFOUND-XREF and NFOUND-ACCT-IN-MSTR to TRUE",
+      "citation": [
+        490
+      ]
+    },
+    {
+      "condition": "CICS READ RESP = DFHRESP(NORMAL)",
+      "action": "Set CARD-FOUND-XREF to TRUE",
+      "citation": [
+        489
+      ]
+    },
+    {
+      "condition": "IMS STATUS-NOT-FOUND (GE)",
+      "action": "Set SEGMENT-NOT-FOUND 88",
+      "citation": [
+        104
+      ]
+    },
+    {
+      "condition": "MQ COMPcode or Reason code errors",
+      "action": "Captured in WS-COMPCODE, WS-REASON (inferred for MQOPEN/GET/PUT)",
+      "citation": [
+        75,
+        76
+      ]
+    }
+  ],
   "sql_operations": [],
-  "cics_operations": [],
+  "cics_operations": [
+    {
+      "command": "RETRIEVE",
+      "resource": "MQTM",
+      "purpose": "Retrieve trigger message to get request queue name",
+      "citation": 233
+    },
+    {
+      "command": "READ DATASET",
+      "resource": "CCXREF",
+      "purpose": "Read card cross-reference record by card number",
+      "citation": 477
+    },
+    {
+      "command": "SYNCPOINT",
+      "resource": null,
+      "purpose": "Commit processed authorization after each message",
+      "citation": 334
+    }
+  ],
   "open_questions": [
     {
-      "question": "What is the intended purpose of this empty COBOL file?",
-      "context": "The source contains no code, divisions, or comments to indicate functionality.",
-      "suggestion": "Check for additional source files, listings, or version control history."
+      "question": "Are there CICS READ operations for ACCTDAT (line 35), CUSTDAT (line 36), CARDDAT (line 37), CARDAIX (line 38)?",
+      "context": "No read statements visible in sampled code; challenger notes at lines 278 (ACCT), 325 (CUST), but samples omit those sections",
+      "suggestion": "Analyze full source or sections around PROCESS-AUTH"
+    },
+    {
+      "question": "Details of 3100-READ-REQUEST-MQ, 8000-WRITE-AUTH-TO-DB, MQPUT to reply queue?",
+      "context": "Performs cited but code omitted in samples",
+      "suggestion": "Include omitted sections around lines 246, 464"
+    },
+    {
+      "question": "IMS GU/GETV calls for PAUT-SMRY-SEG and other reads/writes?",
+      "context": "PSB and flags present (lines 99-136), but no EXEC DL/I shown in sample",
+      "suggestion": "Locate IMS calls in 5000-PROCESS-AUTH"
+    },
+    {
+      "question": "Copybook definitions for CARD-XREF-RECORD, PA-RQ-*, PA-* fields?",
+      "context": "Fields used extensively but no COPY statements in sample",
+      "suggestion": "Check FILE/WORKING-STORAGE SECTION full definitions"
     }
   ]
 }

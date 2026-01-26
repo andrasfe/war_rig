@@ -2,20 +2,20 @@
 
 **File**: `ddl/AUTHFRDS.ddl`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-01-26 02:32:37.862817
+**Analyzed**: 2026-01-26 14:20:07.895624
 
 ## Purpose
 
-This DDL script creates the CARDDEMO.AUTHFRDS table to store authorization records related to card fraud detection. It defines columns for card details, transaction information, merchant data, and fraud indicators such as AUTH_FRAUD and MATCH_STATUS. A primary key on CARD_NUM and AUTH_TS ensures uniqueness for each authorization event per card.
+DDL script that creates the CARDDEMO.AUTHFRDS table to store authorization and fraud-related data for card transactions. The table captures details such as card number, authorization timestamp, response codes, transaction amounts, merchant information, and fraud indicators. Primary key is composite on CARD_NUM and AUTH_TS.
 
-**Business Context**: Supports fraud analysis and reporting for card authorization transactions by capturing detailed authorization and merchant data.
+**Business Context**: Supports card payment authorization processing and fraud detection by storing transaction authorization details and fraud status.
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| CARDDEMO.AUTHFRDS | IOType.DB2_TABLE | Table storing card authorization fraud details including card number, timestamp, transaction amount, merchant info, and fraud flags |
+| CARDDEMO.AUTHFRDS | IOType.DB2_TABLE | Table storing card authorization fraud data including card details, timestamps, auth codes, amounts, merchant info, and fraud flags |
 
 ## Business Rules
 
-- **BR001**: Enforces uniqueness of authorization records per card and timestamp to prevent duplicate entries for the same authorization event
+- **BR001**: CARD_NUM and AUTH_TS are mandatory fields forming the primary key

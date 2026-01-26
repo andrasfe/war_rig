@@ -2,48 +2,58 @@
 
 **File**: `jcl/CBPAUP0J.jcl`
 **Type**: FileType.JCL
-**Analyzed**: 2026-01-26 02:32:24.666348
+**Analyzed**: 2026-01-26 14:20:01.500052
 
 ## Purpose
 
-This JCL defines a batch job that executes the IMS region controller DFSRRC00 to run the application program CBPAUP0C as a BMP under PSB PSBPAUTB. The program deletes expired authorizations from an IMS database. Standard IMS libraries and SYSOUT datasets are provided for execution, logging, and dumps.
+This JCL defines a batch job that executes the IMS batch message processing (BMP) region controller DFSRRC00 to run the application program CBPAUP0C using PSB PSBPAUTB. The job's purpose is to delete expired authorizations from an IMS database. It specifies required IMS libraries, control datasets, input parameters via SYSIN, and output destinations for logs and dumps.
 
-**Business Context**: CARDDEMO system authorization management, deleting expired authorizations from IMS database
+**Business Context**: Supports a card demo ('CARDDEMO') business process by purging expired authorizations from IMS to maintain data integrity.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| SYSIN | IOType.PARAMETER | IMS control statement '00,00001,00001,Y' providing parameters such as PCB index, position, length, and flag for the application program |
-| PSBPAUTB | IOType.IMS_SEGMENT | IMS database segments read by CBPAUP0C to identify expired authorizations |
+| SYSIN | IOType.PARAMETER | Control input data '00,00001,00001,Y' passed to DFSRRC00 for IMS region configuration |
+| IMS (PSBLIB/DBDLIB) | IOType.IMS_SEGMENT | IMS PSB and DBD libraries defining access for PSBPAUTB to authorization data |
+| STEPLIB | IOType.OTHER | Load libraries containing DFSRRC00, CBPAUP0C, and IMS modules |
+| DFSRESLB | IOType.OTHER | IMS resource library for region execution |
+| PROCLIB | IOType.OTHER | IMS procedure library |
+| DFSSEL | IOType.OTHER | IMS selection list dataset |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| SYSPRINT | IOType.REPORT | Standard IMS and program print output |
-| SYSUDUMP | IOType.REPORT | System dump on abend |
-| PSBPAUTB | IOType.IMS_SEGMENT | IMS database segments updated by deleting expired authorizations |
+| IMS DATABASE (PSBPAUTB) | IOType.IMS_SEGMENT | IMS database updated by deleting expired authorization records |
+| SYSOUX | IOType.REPORT | Job step output dataset X |
+| SYSOUT | IOType.REPORT | Standard job output |
+| SYSABOUT | IOType.REPORT | Informational output |
+| SYSPRINT | IOType.REPORT | Print file for job output |
+| SYSUDUMP | IOType.REPORT | System dump for diagnostics |
+| IMSERR | IOType.REPORT | IMS error messages |
 
 ## Called Programs
 
 | Program | Call Type | Purpose |
 |---------|-----------|---------|
-| DFSRRC00 | CallType.STATIC_CALL | IMS region controller to execute CBPAUP0C as BMP for deleting expired authorizations |
-| CBPAUP0C | CallType.STATIC_CALL | Application program that performs deletion of expired authorizations |
+| DFSRRC00 | CallType.STATIC_CALL | IMS region controller to execute BMP application |
+| CBPAUP0C | CallType.DYNAMIC_CALL | Application logic to delete expired authorizations using PSBPAUTB |
 
 ## Business Rules
 
-- **BR001**: Delete expired authorizations from IMS database
+- **BR001**: Execute deletion of expired authorizations in IMS database
 
 ## Paragraphs/Procedures
 
 ### STEP01
-This is the only step in the JCL job, serving as the primary execution point for the IMS batch processing. It executes PGM=DFSRRC00 with PARM='BMP,CBPAUP0C,PSBPAUTB', consuming IMS libraries from STEPLIB (lines 26-27: IMS.SDFSRESL, XXXXXXXXX.PROD.LOADLIB), DFSRESLB (28), PROCLIB (29), DFSSEL (31), and IMS PSBLIB/DBDLIB (33-34). It reads control data from SYSIN (lines 36-37: '00,00001,00001,Y') to configure the IMS region and PCB for CBPAUP0C. The step produces outputs to multiple SYSOUT datasets including SYSOUX (39), SYSOUT (40), SYSABOUT (41), ABENDAID (42), SYSPRINT (45), SYSUDUMP (46), and IMSERR (47) for reports, logs, and abend diagnostics. Business logic is delegated to CBPAUP0C, which deletes expired authorizations based on PSBPAUTB database access; no decisions are made in JCL itself. Error handling relies on IMS standard mechanisms: abends produce dumps to SYSUDUMP and ABENDAID, with DUMMY DDs for IEFRDER (43) and IMSLOGR (44). It statically calls DFSRRC00, which in turn runs CBPAUP0C to perform the core deletion logic. Upon step completion, the job terminates with the IMS program's return code. No loops or validations occur in the JCL; all processing flow is controlled by the IMS region controller.
+This is the only step in the JCL job, serving as the primary execution point for the IMS batch processing. Its main role is to invoke the IMS region controller DFSRRC00 with PARM='BMP,CBPAUP0C,PSBPAUTB' to load and run the CBPAUP0C application under PSBPAUTB for deleting expired authorizations (lines 24-25). It consumes inputs from SYSIN containing '00,00001,00001,Y' for region parameters (line 37), and multiple DD datasets providing IMS libraries such as STEPLIB (lines 26-27), DFSRESLB (28), PROCLIB (29), DFSSEL (31), and IMS PSB/DBD libraries (33-34). Outputs are produced to various SYSOUT=* datasets including SYSOUX, SYSOUT, SYSABOUT, ABENDAID, SYSPRINT, SYSUDUMP, and IMSERR for logging, printing, and error reporting (lines 39-47). Dummy DDs for IEFRDER and IMSLOGR suppress unnecessary reader and log outputs (lines 43-44). No business decisions are made in the JCL itself; all logic resides in CBPAUP0C. Error handling is passive, relying on standard IMS abend processing with dumps directed to specified SYSOUTs. The step has no subordinate paragraphs but effectively calls DFSRRC00 which dynamically loads CBPAUP0C. Upon completion, the job ends as there are no further steps.
 
 ## Open Questions
 
-- ? Precise format and meaning of SYSIN '00,00001,00001,Y'
-  - Context: Standard IMS DFSRRC00 control card format not definitively identifiable from JCL alone
-- ? Specific IMS segments and fields in PSBPAUTB accessed by CBPAUP0C
-  - Context: JCL does not specify database details; defined in PSB and application program
+- ? What is the exact format and meaning of SYSIN data '00,00001,00001,Y'?
+  - Context: Not explained in JCL comments; standard for DFSRRC00 but specifics unclear
+- ? What specific IMS databases and segments are accessed by PSB PAUTB?
+  - Context: PSBLIB provided but no PCB or segment details in JCL
+- ? Detailed logic of CBPAUP0C for identifying and deleting expired authorizations?
+  - Context: JCL only submits the program; no code provided

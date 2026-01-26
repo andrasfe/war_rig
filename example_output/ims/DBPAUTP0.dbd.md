@@ -2,21 +2,26 @@
 
 **File**: `ims/DBPAUTP0.dbd`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-01-26 02:31:02.367382
+**Analyzed**: 2026-01-26 14:21:28.415527
 
 ## Purpose
 
-This file is the source for the IMS Database Definition (DBD) of DBPAUTP0, defining a HIDAM database with VSAM access and EXIT options for key, data, logging without path or cascade. It specifies dataset group DSG001 with DDNAME DDPAUTP0 (4096 bytes, SCAN=3) and two segments: root segment PAUTSUM0 (100 bytes) with sequential unique key field ACCNTID (packed, 6 bytes starting at 1) and logical child PAUTINDX to DBPAUTX0, plus child segment PAUTDTL1 (200 bytes under PAUTSUM0) with sequential unique key PAUT9CTS (character, 8 bytes starting at 1). The DBD is generated via DBDGEN.
+This DBD source file defines the IMS database DBPAUTP0 as a HIDAM database with VSAM access and no password. It specifies one dataset group DSG001 using dataset DDPAUTP0 of size 4096 with SCAN=3. The database contains two segments: root segment PAUTSUM0 (Pending Authorization Summary, 100 bytes) with packed key field ACCNTID (positions 1-6) and a logical child to PAUTINDX in DBPAUTX0, and child segment PAUTDTL1 (Pending Authorization Details, 200 bytes) under PAUTSUM0 with character key PAUT9CTS (positions 1-8).
 
-**Business Context**: Defines structure for pending authorization summary (PAUTSUM0) and detail (PAUTDTL1) records keyed by account ID, supporting hierarchical IMS database access for authorization processing.
+**Business Context**: Supports storage and retrieval of pending authorization summary and detail records, likely for financial account or transaction authorization workflows.
 
 ## Business Rules
 
-- **BR001**: Root segment PAUTSUM0 uses RULES=(,HERE) indicating no parent rules and positioning at current segment.
+- **BR001**: Database access method is HIDAM with VSAM, EXIT for key/data/nopath/nocascade/log, no password
+- **BR002**: Root segment PAUTSUM0 (Pending Authorization Summary) is 100 bytes, unorderable sequence key ACCNTID (packed, 6 bytes at position 1), rules empty/HIERARCHY (HERE), twin backward pointer
+- **BR003**: Child segment PAUTDTL1 (Pending Authorization Details) is 200 bytes under parent PAUTSUM0, unorderable sequence key PAUT9CTS (character, 8 bytes at position 1)
+- **BR004**: Dataset group DSG001 uses DDNAME DDPAUTP0 with size 4096 and SCAN=3
 
 ## Open Questions
 
-- ? Details of referenced database DBPAUTX0 and segment PAUTINDX
-  - Context: LCHILD specifies POINTER=INDX to DBPAUTX0 but no further definition in this DBD
-- ? Purpose and content of fields beyond keys (e.g., remaining bytes in segments)
-  - Context: Only key fields defined; other fields implied but not named
+- ? What copybooks or data structures define the full layouts of segments PAUTSUM0 and PAUTDTL1 beyond the key fields?
+  - Context: Only key fields are explicitly defined in the DBD; remaining bytes are not detailed here
+- ? Details of the logical child PAUTINDX in database DBPAUTX0?
+  - Context: LCHILD references PAUTINDX in DBPAUTX0 but no further details provided
+- ? Associated PSB (Program Specification Block) for applications accessing this database?
+  - Context: DBD defines database but not application access paths

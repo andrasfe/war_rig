@@ -4,13 +4,13 @@
     "file_name": "cpy/IMSFUNCS.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T02:31:39.405570",
+    "analyzed_at": "2026-01-26T14:22:23.325418",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This COBOL copybook defines the FUNC-CODES group containing IMS DL/I function codes for database operations, such as 'GU  ' for Get Unique, 'GHU ' for Get Hold Unique, 'GN  ' for Get Next, and others including REPL, ISRT, and DLET. It also defines PARMCOUNT as a 5-digit signed binary field initialized to 4, likely indicating the number of parameters for IMS calls. These constants are used in programs performing IMS database calls to specify the function in the PCB mask.",
-    "business_context": "IMS hierarchical database access function codes for DL/I calls",
+    "summary": "This COBOL copybook defines a data structure FUNC-CODES containing constants for IMS DL/I function codes used in database calls, such as 'GU  ' for Get Unique, 'GHU ' for Get Hold Unique, 'GN  ' for Get Next, and others up to 'DLET' for Delete. It also defines PARMCOUNT as a 5-digit signed binary field initialized to +4, likely representing the expected number of parameters for IMS calls. The copybook is intended for inclusion in COBOL programs performing IMS database operations.",
+    "business_context": "IMS hierarchical database access and manipulation in mainframe applications",
     "program_type": "UTILITY",
     "citations": [
       17,
@@ -47,14 +47,14 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "In which specific programs is this IMSFUNCS copybook included?",
-      "context": "The copybook defines IMS function codes but does not indicate usage context or including programs.",
-      "suggestion": "Search for COPY IMSFUNCS statements in related COBOL source files."
+      "question": "In which specific programs or sections (e.g., WORKING-STORAGE, LINKAGE) is this copybook included?",
+      "context": "The copybook defines reusable constants but does not specify usage context",
+      "suggestion": "Analyze including COBOL programs via COPY statements referencing IMSFUNCS"
     },
     {
-      "question": "What do the specific IMS function codes correspond to in IMS DL/I documentation?",
-      "context": "Codes like 'GU  ', 'GHU ', etc., are standard IMS abbreviations, but exact mappings (e.g., spaces in 'GU  ') are not explained in the copybook.",
-      "suggestion": "Cross-reference with IMS DL/I Programmer's Reference manual."
+      "question": "What do the specific IMS function codes (e.g., GNP, GHNP) correspond to in IMS documentation?",
+      "context": "Standard IMS DL/I codes inferred (e.g., GU=Get Unique), but exact mappings for less common ones like GHNP not confirmed from file alone",
+      "suggestion": "Cross-reference with IMS DL/I manuals for precise function descriptions"
     }
   ]
 }

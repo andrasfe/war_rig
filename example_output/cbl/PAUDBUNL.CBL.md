@@ -2,60 +2,58 @@
 
 **File**: `cbl/PAUDBUNL.CBL`
 **Type**: FileType.COBOL
-**Analyzed**: 2026-01-26 02:30:46.356586
+**Analyzed**: 2026-01-26 14:21:10.930335
 
 ## Purpose
 
-This utility program unloads root segments (PAUTSUM0 Pending Authorization Summary) from an IMS database to sequential file OPFILE1 and associated child segments (PAUTDTL1 Pending Authorization Details) prefixed with the root segment's PA-ACCT-ID key to OPFILE2. It uses unqualified SSAs for sequential GN calls on roots and GNP calls on children under each root until end-of-database or end-of-children conditions are met. Files are opened at start, written sequentially, and closed at end, with abend on I/O or IMS errors.
+This batch COBOL program unloads data from an IMS database by reading root segments (PAUTSUM0 Pending Authorization Summary) using GN calls and writing them to sequential file OPFILE1. For each root segment, it then reads child segments (PAUTDTL1 Pending Authorization Details) using GNP calls and writes them prepended with the root segment key to OPFILE2. The process continues until the end of the database (GB status) is reached, with counters tracking records processed.
 
-**Business Context**: Supports extraction of pending authorization data from IMS PAUT database for backup, migration, reporting, or offline processing.
+**Business Context**: Supports unloading of pending authorization data from IMS database PAUT for potential archiving, migration, or offline processing.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| PAUT Database (PAUTSUM0 root segments) | IOType.IMS_SEGMENT | Pending Authorization Summary root segments read via IMS GN call using ROOT-UNQUAL-SSA |
-| PAUT Database (PAUTDTL1 child segments) | IOType.IMS_SEGMENT | Pending Authorization Details child segments under current root, read via IMS GNP call using CHILD-UNQUAL-SSA |
-| PAUTBPCB | IOType.OTHER | IMS PCB mask passed via linkage for database access |
+| PAUT IMS Database | IOType.IMS_SEGMENT | Root segments (PAUTSUM0 via PENDING-AUTH-SUMMARY) and child segments (PAUTDTL1 via PENDING-AUTH-DETAILS) read via DL/I calls using PAUTBPCB |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| OPFILE1 | IOType.FILE_SEQUENTIAL | Contains copied root Pending Authorization Summary segments (PIC X(100)) |
-| OPFILE2 | IOType.FILE_SEQUENTIAL | Contains root segment key (PA-ACCT-ID as ROOT-SEG-KEY PIC S9(11) COMP-3) followed by copied child Pending Authorization Details segments (PIC X(200)) |
+| OPFILE1 | IOType.FILE_SEQUENTIAL | Contains root segments (PAUTSUM0) copied from PENDING-AUTH-SUMMARY as fixed 100-byte records |
+| OPFILE2 | IOType.FILE_SEQUENTIAL | Contains child segments (PAUTDTL1) prepended with root segment key (PA-ACCT-ID as ROOT-SEG-KEY) as records with 11-byte COMP-3 key + 200-byte data |
 
 ## Business Rules
 
-- **BR001**: Root summary record is only written to OPFILE1 if PA-ACCT-ID is numeric
+- **BR001**: Only write root segment to OPFILE1 if PA-ACCT-ID is numeric
 
 ## Paragraphs/Procedures
 
 ### MAIN-PARA
-This is the primary entry point paragraph that orchestrates the entire IMS unload process. It accepts the PAUTBPCB linkage area for IMS database access. It first performs 1000-INITIALIZE to accept dates, display startup info, and open output files OPFILE1 and OPFILE2. Then it enters a loop performing 2000-FIND-NEXT-AUTH-SUMMARY until WS-END-OF-ROOT-SEG is 'Y', which handles reading each root summary segment, writing it to OPFILE1, and nested loop for child details to OPFILE2. Upon loop exit (end of database), it performs 4000-FILE-CLOSE to shut down files safely. No explicit error handling here beyond subordinate calls, but abends propagate via 9999-ABEND. It calls no external programs, only internal paragraphs. Counters like WS-NO-SUMRY-READ are incremented in subordinates but not displayed or used further here.
+This is the primary entry point and orchestration paragraph for the entire IMS unload process, establishing the DLITCBL entry convention for batch DL/I execution. It consumes the PAUTBPCB linkage area passed from IMS control region. It first performs initialization to open output files and set up dates/displays. Then it enters a loop performing 2000-FIND-NEXT-AUTH-SUMMARY for each root segment until WS-END-OF-ROOT-SEG is 'Y' (end of database). Within each 2000 iteration, child segments are processed via 3000 loops. After all roots are processed, it performs 4000-FILE-CLOSE to shut down files. No direct business decisions are made here; flow control relies on flags set by subordinate paragraphs. Errors in subordinates propagate via abend calls. Counters like WS-NO-SUMRY-READ are indirectly updated via performs. Finally, it GOBACKs with return code set only if abended.
 
 ### 1000-INITIALIZE
-This paragraph handles program startup initialization including date acceptance and output file opens. It consumes system date via ACCEPT CURRENT-DATE FROM DATE and CURRENT-YYDDD FROM DAY, then displays program start message and date. It opens OPFILE1 and checks WS-OUTFL1-STATUS for spaces or '00'; if not, displays error and performs 9999-ABEND. Similarly opens OPFILE2 and checks WS-OUTFL2-STATUS with same error handling. No data transformations or business decisions beyond status validation. It produces open files ready for writes and sets up WS file status flags. Calls no other paragraphs or programs. Error handling is immediate abend on open failure to prevent processing with bad files.
+This paragraph handles program startup by accepting system dates into CURRENT-DATE and CURRENT-YYDDD, displaying startup messages including program name and date. It consumes no input files or data beyond system date. It produces initialized working storage variables and opens output files OPFILE1 and OPFILE2. Business logic includes validating file status after OPEN: if not spaces or '00', displays error and performs 9999-ABEND. No other decisions or validations. It calls no other paragraphs but is invoked from MAIN-PARA. Error handling is explicit for file opens, leading to immediate abend on failure. Displays provide audit trail. Exits cleanly to allow main loop.
 
 ### 2000-FIND-NEXT-AUTH-SUMMARY
-This paragraph performs the IMS GN call to retrieve the next unqualified root PAUTSUM0 segment and coordinates child processing. It initializes PAUT-PCB-STATUS, calls CBLTDLI with FUNC-GN, PAUTBPCB, PENDING-AUTH-SUMMARY IO-area, and ROOT-UNQUAL-SSA. If PAUT-PCB-STATUS is spaces (success), increments WS-NO-SUMRY-READ and WS-AUTH-SMRY-PROC-CNT, moves segment to OPFIL1-REC, clears output fields, moves PA-ACCT-ID to ROOT-SEG-KEY, and if PA-ACCT-ID numeric, writes OPFILE1-REC then loops 3000-FIND-NEXT-AUTH-DTL until WS-END-OF-CHILD-SEG='Y'. If 'GB' (end of DB), sets END-OF-AUTHDB and WS-END-OF-ROOT-SEG='Y'. If other status, displays error/KEYFB and abends via 9999-ABEND. Business logic enforces numeric check on account ID before root write. It reads from IMS root, writes to OPFILE1, and triggers child reads/writes.
+This paragraph reads the next root segment (PAUTSUM0) from IMS PAUT database using GN call via CBLTDLI with ROOT-UNQUAL-SSA. It consumes PAUTBPCB and prior PCB state, reading into PENDING-AUTH-SUMMARY. On success (spaces status), increments counters WS-NO-SUMRY-READ and WS-AUTH-SMRY-PROC-CNT, moves segment to OPFIL1-REC, initializes ROOT-SEG-KEY and CHILD-SEG-REC, moves PA-ACCT-ID to ROOT-SEG-KEY, checks if PA-ACCT-ID numeric before WRITE to OPFILE1, then loops PERFORM 3000-FIND-NEXT-AUTH-DTL until WS-END-OF-CHILD-SEG='Y'. If PCB status 'GB', sets end flags for root and database. If other error statuses, displays status/KEYFB and abends. Initializes PAUT-PCB-STATUS before call. Business logic enforces numeric account ID for root write; controls loop over children per root.
 
 ### 3000-FIND-NEXT-AUTH-DTL
-This paragraph performs IMS GNP call to retrieve the next child PAUTDTL1 segment under the current root and writes it to OPFILE2. It calls CBLTDLI with FUNC-GNP, PAUTBPCB, PENDING-AUTH-DETAILS IO-area, and CHILD-UNQUAL-SSA. If PAUT-PCB-STATUS spaces (success), sets MORE-AUTHS, increments WS-NO-SUMRY-READ and WS-AUTH-SMRY-PROC-CNT (likely intended for detail counters), moves segment to CHILD-SEG-REC, and writes OPFIL2-REC. If 'GE' (segment not found/end children), sets WS-END-OF-CHILD-SEG='Y' and displays flag. If other status, displays error/KEYFB and abends via 9999-ABEND. Initializes PAUT-PCB-STATUS at end for next call. No additional validations or transforms beyond move/write. Error handling abends on non-success/non-GE to protect data integrity.
+This paragraph reads the next child segment (PAUTDTL1) under current root using GNP call via CBLTDLI with CHILD-UNQUAL-SSA. It consumes PAUTBPCB with positioned root context, reading into PENDING-AUTH-DETAILS. On success (spaces), sets MORE-AUTHS flag (unused), increments WS-NO-DTL-READ (wait, code has WS-NO-SUMRY-READ? likely typo for details), moves to CHILD-SEG-REC (pre-set with root key), and WRITEs OPFIL2-REC. If 'GE' (segment not found), sets WS-END-OF-CHILD-SEG='Y' and displays flag. If other statuses, displays error/KEYFB and abends. Initializes PAUT-PCB-STATUS post-call. No validations beyond status; assumes root key already set. Error handling abends on non-spaces/GE. Called repeatedly from 2000 until child end.
 
 ### 4000-FILE-CLOSE
-This paragraph closes the output files at program end. It displays 'CLOSING THE FILE', then CLOSE OPFILE1 and checks WS-OUTFL1-STATUS for spaces/'00'; if not, displays error but continues without abend. Similarly CLOSE OPFILE2 and checks WS-OUTFL2-STATUS with display on error. Consumes open file handles from initialization. Produces closed files and updated status flags. No business logic or decisions, purely housekeeping. Calls no paragraphs or programs. Error handling is non-fatal display only, allowing program to GOBACK cleanly.
+This paragraph performs program shutdown by closing output files OPFILE1 and OPFILE2. It consumes open file handles and statuses. It produces closed files and displays closure messages. Business logic checks WS-OUTFL*-STATUS after each CLOSE: if not spaces/'00', displays error but does not abend (non-fatal). No decisions or validations beyond status. Calls no others. Error handling is display-only. Displays 'CLOSING THE FILE' for audit. Invoked once from MAIN-PARA after all processing.
 
 ### 9999-ABEND
-This is the error termination paragraph invoked on any fatal condition. It displays 'IMSUNLOD ABENDING ...' (mismatch with program ID). Sets RETURN-CODE to 16. Performs GOBACK to exit abnormally. Consumes no specific inputs beyond context. Produces non-zero return code for caller. No decisions or validations, unconditional abend setup. Called by open checks, IMS call failures. No further calls.
+This error termination paragraph is called on any fatal condition like file open/close failures or IMS call errors. It consumes no specific inputs but relies on prior DISPLAYs for context. It produces a final display 'IMSUNLOD ABENDING ...' (mismatch with program ID), sets RETURN-CODE to 16, and GOBACKs. No business logic or conditions checked here. No validations. Calls nothing. Handles all abend paths uniformly without recovery. Note: 9999-EXIT defined but unused.
 
 ## Open Questions
 
-- ? Exact field layouts and all fields in copybooks CIPAUSMY, CIPAUDTY, PAUTBPCB, IMSFUNCS
-  - Context: Copybooks are referenced but contents not provided in source; limits field-level data flow details
-- ? Purpose of unused variables like WS-TOT-REC-WRITTEN, WS-NO-CHKP, WS-AUTH-SMRY-PROC-CNT (partially used), and lack of final counter display
-  - Context: Counters incremented but not totaled/displayed/used; possible incomplete code or remnants
-- ? WS-NO-SUMRY-READ incremented in both 2000 (root) and 3000 (child); likely bug intending WS-NO-DTL-READ in 3000
-  - Context: Inconsistent counter usage observed at lines 225,268
+- ? Exact field layouts and contents of copybooks CIPAUSMY, CIPAUDTY, PAUTBPCB, IMSFUNCS
+  - Context: Source includes COPY statements but not inline definitions; fields like PA-ACCT-ID referenced without visible structure
+- ? Purpose of counters like WS-NO-CHKP, WS-NO-SUMRY-DELETED, WS-NO-DTL-DELETED (initialized but not incremented/used)
+  - Context: Defined in WS-VARIABLES but no PERFORMs or logic reference them in visible code
 - ? IMS PSB name and full PCB details
-  - Context: Commented PSB-NAME 'IMSUNLOD' at 93; active PCB from PAUTBPCB linkage
+  - Context: WS-PGMNAME 'IMSUNLOD' and commented PSB-NAME; PCB from copybook
+- ? Expiry date logic (WS-AUTH-DATE, WS-EXPIRY-DAYS, WS-DAY-DIFF)
+  - Context: Variables defined and PRM-INFO has P-EXPIRY-DAYS but ACCEPT commented; no usage in procedure code

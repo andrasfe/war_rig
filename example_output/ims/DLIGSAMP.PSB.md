@@ -2,30 +2,23 @@
 
 **File**: `ims/DLIGSAMP.PSB`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-01-26 02:33:52.778949
+**Analyzed**: 2026-01-26 14:22:11.654695
 
 ## Purpose
 
-The DLIGSAMP.PSB is an IMS Program Specification Block (PSB) source file that defines database access structures for a COBOL DL/I application. It specifies a primary database PCB named PAUTBPCB for the DBPAUTP0 database with read-only GET processing on root segment PAUTSUM0 and child segment PAUTDTL1, plus two GSAM PCBs for sequential locate access to PASFLDBD and PADFLDBD datasets. The PSB is generated for COBOL language use without compatibility mode.
-
-**Business Context**: Sample IMS DL/I application demonstrating hierarchical database and GSAM dataset access, licensed under Apache 2.0 by Amazon.
+This file is a Program Specification Block (PSB) source definition for the DLIGSAMP COBOL program in IMS. It defines three PCBs: a database PCB (PAUTBPCB) for the hierarchical IMS database DBPAUTP0 with PROCOPT=GOTP and KEYLEN=14, including two sensitive segments PAUTSUM0 (root) and PAUTDTL1 (child of PAUTSUM0); and two GSAM PCBs for datasets PASFLDBD and PADFLDBD with PROCOPT=LS. The PSB is generated specifically for COBOL language with PSBNAME=DLIGSAMP.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| DBPAUTP0 | IOType.IMS_SEGMENT | IMS hierarchical database accessed via PAUTBPCB with segments PAUTSUM0 (root, PARENT=0) and PAUTDTL1 (PARENT=PAUTSUM0) |
-| PASFLDBD | IOType.OTHER | GSAM dataset accessed via unnamed PCB with Locate Sequential option |
-| PADFLDBD | IOType.OTHER | GSAM dataset accessed via unnamed PCB with Locate Sequential option |
-
-## Business Rules
-
-- **BR001**: Permitted DL/I calls on DBPAUTP0 database are restricted to read-only GET operations
-- **BR002**: GSAM datasets PASFLDBD and PADFLDBD support only Locate Sequential access
+| DBPAUTP0 | IOType.IMS_SEGMENT | IMS hierarchical database accessed via PAUTBPCB PCB with PROCOPT=GOTP and KEYLEN=14 |
+| PAUTSUM0 | IOType.IMS_SEGMENT | Root-level sensitive segment (PARENT=0) in DBPAUTP0 |
+| PAUTDTL1 | IOType.IMS_SEGMENT | Sensitive segment dependent on parent PAUTSUM0 in DBPAUTP0 |
+| PASFLDBD | IOType.FILE_SEQUENTIAL | GSAM dataset accessed via unnamed PCB with PROCOPT=LS |
+| PADFLDBD | IOType.FILE_SEQUENTIAL | GSAM dataset accessed via unnamed PCB with PROCOPT=LS |
 
 ## Open Questions
 
-- ? What specific fields are accessed within segments PAUTSUM0, PAUTDTL1, and the GSAM datasets?
-  - Context: PSB source defines segments and datasets at high level but does not include field-level layouts or SSA specifications
-- ? Is this PSB used in batch DL/I, BMP, MPP, or IFP (Fast Path) context?
-  - Context: No transaction PCB (TPCB) defined; GSAM PCBs suggest possible Fast Path but PROCOPT=LS is non-standard for IFP
+- ? What is the specific business purpose of the DLIGSAMP program and the data in DBPAUTP0, PASFLDBD, PADFLDBD?
+  - Context: PSB source defines access structures but contains no descriptive comments or business logic details

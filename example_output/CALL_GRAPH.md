@@ -1,6 +1,6 @@
 # Call Graph Analysis
 
-*Generated: 2026-01-25 19:36:30*
+*Generated: 2026-01-26 07:19:16*
 
 **Programs Analyzed:** 13
 
@@ -10,14 +10,19 @@
 flowchart TD
 
     subgraph jobs[" "]
-        COPAUA0C([COPAUA0C])
-        COPAUS0C([COPAUS0C])
-        COPAUS1C([COPAUS1C])
         DBPAUTP0([DBPAUTP0])
-        DBUNLDGS([DBUNLDGS])
-        PAUDBLOD([PAUDBLOD])
-        PAUDBUNL([PAUDBUNL])
         UNLDPADB([UNLDPADB])
+    end
+
+    subgraph procs[" "]
+        CBPAUP0C[CBPAUP0C]
+        COPAUA0C[COPAUA0C]
+        COPAUS0C[COPAUS0C]
+        COPAUS1C[COPAUS1C]
+        COPAUS2C[/COPAUS2C/]
+        DBUNLDGS[DBUNLDGS]
+        PAUDBLOD[PAUDBLOD]
+        PAUDBUNL[PAUDBUNL]
     end
 
     subgraph external[" "]
@@ -32,22 +37,141 @@ flowchart TD
     end
 
     %% Call relationships
+    CBPAUP0C --> PAUDBUNL
+    CBPAUP0C --> PAUDBUNL
+    CBPAUP0C --> PAUDBUNL
+    COPAUA0C --> COPAUA0C
+    COPAUA0C --> COPAUA0C
+    COPAUA0C --> COPAUA0C
+    COPAUA0C --> COPAUA0C
+    COPAUA0C --> COPAUA0C
+    COPAUA0C --> COPAUA0C
+    COPAUA0C --> COPAUA0C
+    COPAUA0C --> COPAUA0C
+    COPAUA0C --> COPAUA0C
+    COPAUA0C --> COPAUA0C
+    COPAUA0C --> COPAUA0C
+    COPAUA0C --> COPAUA0C
+    COPAUA0C --> COPAUA0C
+    COPAUA0C --> COPAUA0C
+    COPAUA0C --> COPAUA0C
+    COPAUA0C --> COPAUA0C
+    COPAUA0C --> COPAUA0C
+    COPAUA0C --> COPAUA0C
+    COPAUA0C --> COPAUA0C
+    COPAUA0C --> COPAUA0C
+    COPAUA0C --> COPAUA0C
+    COPAUA0C --> COPAUA0C
+    COPAUA0C --> COPAUA0C
+    COPAUA0C --> COPAUA0C
+    COPAUA0C --> COPAUA0C
+    COPAUA0C --> COPAUA0C
+    COPAUA0C --> COPAUA0C
+    COPAUA0C --> COPAUA0C
     COPAUA0C --> MQOPEN
     COPAUA0C --> MQGET
     COPAUA0C --> MQPUT1
     COPAUA0C --> MQCLOSE
+    COPAUS0C --> PAUDBUNL
+    COPAUS0C --> PAUDBLOD
+    COPAUS0C --> PAUDBLOD
+    COPAUS0C --> PAUDBUNL
+    COPAUS0C --> COPAUS2C
+    COPAUS0C --> COPAUA0C
+    COPAUS0C --> COPAUA0C
+    COPAUS0C --> PAUDBUNL
+    COPAUS0C --> PAUDBUNL
+    COPAUS0C --> CBPAUP0C
+    COPAUS0C --> CBPAUP0C
+    COPAUS0C --> CBPAUP0C
+    COPAUS0C --> CBPAUP0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS1C
+    COPAUS0C --> COPAUS1C
+    COPAUS0C --> COPAUS1C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS1C
+    COPAUS0C --> COPAUS1C
+    COPAUS0C --> COPAUS1C
+    COPAUS0C --> COPAUS1C
+    COPAUS0C --> COPAUS1C
+    COPAUS0C --> COPAUS1C
+    COPAUS0C --> COPAUS1C
+    COPAUS0C --> COPAUS1C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
     COPAUS0C --> CDEMO_TO_PROGRAM
     COPAUS0C --> CDEMO_TO_PROGRAM
+    COPAUS0C --> CDEMO_TO_PROGRAM
+    COPAUS1C --> COPAUS1C
+    COPAUS1C --> COPAUS1C
+    COPAUS1C --> COPAUS1C
+    COPAUS1C --> COPAUS1C
+    COPAUS1C --> COPAUS0C
+    COPAUS1C --> COPAUS0C
+    COPAUS1C --> COPAUS1C
+    COPAUS1C --> COPAUS1C
+    COPAUS1C --> COPAUS1C
+    COPAUS1C --> COPAUS1C
+    COPAUS1C --> COPAUS1C
     COPAUS1C --> WS_PGM_AUTH_FRAUD
-    COPAUS1C --> CDEMO_TO_PROGRAM
     DBPAUTP0 --> DFSRRC00
+    DBUNLDGS --> PAUDBUNL
+    DBUNLDGS --> PAUDBUNL
+    DBUNLDGS --> PAUDBUNL
+    DBUNLDGS --> PAUDBUNL
+    DBUNLDGS --> PAUDBUNL
     DBUNLDGS --> CBLTDLI
     DBUNLDGS --> CBLTDLI
-    DBUNLDGS --> CBLTDLI
-    DBUNLDGS --> CBLTDLI
+    PAUDBLOD --> PAUDBLOD
+    PAUDBLOD --> PAUDBLOD
+    PAUDBLOD --> PAUDBLOD
+    PAUDBLOD --> PAUDBUNL
     PAUDBLOD --> CBLTDLI
     PAUDBLOD --> CBLTDLI
     PAUDBLOD --> CBLTDLI
+    PAUDBUNL --> PAUDBUNL
+    PAUDBUNL --> PAUDBUNL
+    PAUDBUNL --> PAUDBUNL
+    PAUDBUNL --> COPAUA0C
+    PAUDBUNL --> COPAUA0C
+    PAUDBUNL --> DBUNLDGS
+    PAUDBUNL --> PAUDBUNL
+    PAUDBUNL --> DBUNLDGS
+    PAUDBUNL --> PAUDBUNL
+    PAUDBUNL --> PAUDBUNL
+    PAUDBUNL --> CBLTDLI
+    PAUDBUNL --> CBLTDLI
     PAUDBUNL --> CBLTDLI
     PAUDBUNL --> CBLTDLI
     UNLDPADB --> DFSRRC00
@@ -57,26 +181,18 @@ flowchart TD
 
     %% Styling
     classDef entryPoint fill:#90EE90,stroke:#228B22
-    class CBPAUP0C,CBPAUP0J,COPAUA0C,COPAUS0C,COPAUS1C,COPAUS2C,DBPAUTP0,DBUNLDGS,LOADPADB,PAUDBLOD,PAUDBUNL,UNLDGSAM,UNLDPADB entryPoint
+    class CBPAUP0J,DBPAUTP0,LOADPADB,UNLDGSAM,UNLDPADB entryPoint
     classDef missing fill:#1E3A5F,stroke:#2E5A8F,color:#FFFFFF
     class CBLTDLI,CDEMO_TO_PROGRAM,DFSRRC00,MQCLOSE,MQGET,MQOPEN,MQPUT1,WS_PGM_AUTH_FRAUD missing
 ```
 
 ## Entry Points
 
-- ✓ **CBPAUP0C**: This batch IMS COBOL program deletes expired pending authorization detail segmen...
-- ✓ **CBPAUP0J**: This JCL defines a batch job that executes the IMS region controller DFSRRC00 to...
-- ✓ **COPAUA0C**: This COBOL source file is empty, containing only a single blank line at line 1. ...
-- ✓ **COPAUS0C**: This CICS/IMS/BMS COBOL program provides a paginated summary view of pending aut...
-- ✓ **COPAUS1C**: COPAUS1C is a CICS/IMS/BMS online program that provides a detail view of pending...
-- ✓ **COPAUS2C**: This CICS COBOL program processes authorization messages to mark them as fraud b...
-- ✓ **DBPAUTP0**: JCL batch job that first deletes any existing unload dataset AWS.M2.CARDDEMO.IMS...
-- ✓ **DBUNLDGS**: This IMS batch program sequentially reads all root segments (PAUTSUM0) from the ...
-- ✓ **LOADPADB**: This JCL submits a batch job to execute the IMS utility program DFSRRC00 in BMP ...
-- ✓ **PAUDBLOD**: This batch COBOL program loads pending authorization data into an IMS hierarchic...
-- ✓ **PAUDBUNL**: This utility program unloads root segments (PAUTSUM0 Pending Authorization Summa...
-- ✓ **UNLDGSAM**: This JCL submits a batch job to execute the IMS utility program DFSRRC00 in DLI ...
-- ✓ **UNLDPADB**: This JCL job executes an IMS database unload using the DFSRRC00 utility to extra...
+- ✓ **CBPAUP0J**: No summary
+- ✓ **DBPAUTP0**: No summary
+- ✓ **LOADPADB**: No summary
+- ✓ **UNLDGSAM**: No summary
+- ✓ **UNLDPADB**: No summary
 
 ## External Dependencies
 
@@ -86,8 +202,8 @@ flowchart TD
 
 ### Custom Programs (Need Documentation)
 
-- **CBLTDLI**: Called by PAUDBLOD (EXEC), PAUDBLOD (EXEC), PAUDBLOD (EXEC), DBUNLDGS (EXEC), DBUNLDGS (EXEC), DBUNLDGS (EXEC), DBUNLDGS (EXEC), PAUDBUNL (EXEC), PAUDBUNL (EXEC)
-- **CDEMO-TO-PROGRAM**: Called by COPAUS1C (EXEC), COPAUS0C (EXEC), COPAUS0C (EXEC)
+- **CBLTDLI**: Called by PAUDBLOD (EXEC), PAUDBLOD (EXEC), PAUDBLOD (EXEC), DBUNLDGS (EXEC), DBUNLDGS (EXEC), PAUDBUNL (EXEC), PAUDBUNL (EXEC), PAUDBUNL (EXEC), PAUDBUNL (EXEC)
+- **CDEMO-TO-PROGRAM**: Called by COPAUS0C (EXEC), COPAUS0C (EXEC), COPAUS0C (EXEC)
 - **DFSRRC00**: Called by DBPAUTP0 (EXEC), UNLDPADB (EXEC), UNLDPADB (EXEC), UNLDPADB (EXEC), UNLDPADB (EXEC)
 - **MQCLOSE**: Called by COPAUA0C (EXEC)
 - **MQGET**: Called by COPAUA0C (EXEC)
@@ -100,13 +216,13 @@ flowchart TD
 | Metric | Count |
 |--------|-------|
 | Documented Programs | 13 |
-| Entry Points | 13 |
-| Leaf Nodes | 13 |
+| Entry Points | 5 |
+| Leaf Nodes | 6 |
 | External Dependencies | 8 |
 | System Utilities | 0 |
 | Auto-classified | 0 |
 | Custom Missing | 8 |
-| Total Calls | 22 |
+| Total Calls | 141 |
 
 ### Status Legend
 

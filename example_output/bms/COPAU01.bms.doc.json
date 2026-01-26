@@ -3,19 +3,19 @@
     "program_id": "COPAU01",
     "file_name": "COPAU01.bms",
     "file_type": "BMS",
-    "analyzed_by": "Scribe",
-    "analyzed_at": "2026-01-26T02:33:04.990818",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-26T14:23:23.186977",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This BMS mapset defines the COPAU01 screen for the CardDemo application, displaying pending authorization details including card number, auth date/time/response, amount, merchant info, and fraud/match status. The screen supports view-only display with protected fields and function keys for navigation (F3=Back), fraud marking (F5), and next auth (F8). It is designed for CICS online transaction review in a payment processing demo.",
-    "business_context": "Review and management of pending credit card authorizations, including fraud detection and merchant details verification.",
+    "summary": "This BMS file defines the mapset COPAU01 containing the single map COPAU1A for the 'Pending Authorization Details Screen' in a CICS CardDemo application. It specifies screen layout including header fields for transaction ID, date, time, program name, titles, and detailed fields for card number, auth date/time/response/reason/code/amount/type/source, merchant details, and fraud/match status. The map supports display-only fields with labels, colors, positions, and bottom function keys for user actions.",
+    "business_context": "Review and management of pending card authorization details in a payment processing system",
     "program_type": "ONLINE_CICS",
     "citations": [
       2,
       19,
-      78,
+      26,
       292
     ]
   },
@@ -23,13 +23,10 @@
     {
       "name": "COPAU1A",
       "io_type": "CICS_MAP",
-      "description": "Receives user input from the terminal, primarily function key actions (F3, F5, F8) since all data fields are protected with ASKIP; ERRMSG field supports error feedback but remains protected.",
+      "description": "Symbolic map for receiving user input such as function key presses from the screen",
       "copybook": null,
       "citation": [
-        22,
-        26,
-        284,
-        292
+        26
       ]
     }
   ],
@@ -37,10 +34,9 @@
     {
       "name": "COPAU1A",
       "io_type": "CICS_MAP",
-      "description": "Defines the 24x80 screen layout populated by the calling CICS program with authorization and merchant details for display to the user.",
+      "description": "Physical and symbolic map for sending authorization details to the 3270 screen display",
       "copybook": null,
       "citation": [
-        19,
         26
       ]
     }
@@ -54,48 +50,15 @@
   "business_rules": [
     {
       "rule_id": "BR001",
-      "description": "All data display fields are protected to enforce view-only access, preventing user modification of authorization details.",
-      "logic_summary": "Implemented via ASKIP attribute on every DFHMDF defining data fields, ensuring no unprotected input fields.",
+      "description": "Screen navigation and actions controlled by function keys: F3=Back to previous screen, F5=Mark/Remove Fraud on the authorization, F8=Next Auth to view subsequent authorization",
+      "logic_summary": "Function key labels displayed at screen bottom; handling implemented in calling CICS program based on received map AID field",
       "conditions": [
-        "ATTRB includes ASKIP on all data fields",
-        "MODE=INOUT but no PROT=OFF fields"
+        "User presses F3",
+        "User presses F5",
+        "User presses F8"
       ],
       "citation": [
-        22,
-        34,
-        57,
-        85,
-        94,
-        104,
-        114,
-        124,
-        134,
-        144,
-        154,
-        164,
-        174,
-        184,
-        194,
-        204,
-        214,
-        224,
-        239,
-        249,
-        259,
-        269,
-        279,
-        284
-      ]
-    },
-    {
-      "rule_id": "BR002",
-      "description": "Error messages are displayed in a dedicated protected field with bright and set attributes for visibility.",
-      "logic_summary": "ERRMSG field uses ATTRB=(ASKIP,BRT,FSET) to highlight errors without allowing modification.",
-      "conditions": [
-        "Error condition triggers population of ERRMSG"
-      ],
-      "citation": [
-        284
+        292
       ]
     }
   ],
@@ -105,28 +68,45 @@
     "transforms": []
   },
   "copybooks_used": [],
-  "paragraphs": [],
+  "paragraphs": [
+    {
+      "paragraph_name": "COPAU1A",
+      "summary": null,
+      "purpose": "This map definition serves as the primary screen layout for displaying pending authorization details in the CICS online transaction. It consumes data from the calling program's working storage variables mapped to symbolic fields such as CARDNUM (line 85), AUTHDT (94), AUTHTM (104), AUTHAMT (144), MERNAME (239), and others, which are populated before SEND MAP. It produces a formatted 24x80 screen output with protected label fields (ASKIP) in turquoise/blue/yellow and data fields in pink/blue/red/neutral colors for readability and highlighting (e.g., fraud status in red at 224). No business decisions are made here as it is a static layout definition; all fields are display-only (ATTRB includes ASKIP on data fields) except implied function key detection via RECEIVE MAP. Error handling is supported via the ERRMSG field (line 284) with attributes ASKIP,BRT,FSET for bright protected error message display. No subordinate paragraphs or programs are called as this is a BMS map, not executable code; it is referenced by CICS EXEC CICS SEND/RECEIVE MAP commands in the driving program.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        26,
+        293
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    }
+  ],
   "error_handling": [
     {
-      "condition": "Application or validation errors",
-      "action": "Display message in protected ERRMSG field at POS=(23,1) with bright red highlighting.",
+      "condition": "Application error requiring message display",
+      "action": "Populate and display error text in ERRMSG field (bright, protected, field-set attribute)",
       "citation": [
         284
       ]
     }
   ],
   "sql_operations": [],
-  "cics_operations": [],
-  "open_questions": [
+  "cics_operations": [
     {
-      "question": "Which CICS program(s) use this BMS mapset (SEND/RECEIVE COPAU1A)?",
-      "context": "Not specified in the BMS source file.",
-      "suggestion": "Search calling COBOL programs for references to COPAU01 or COPAU1A."
+      "command": "SEND MAP",
+      "resource": "COPAU1A",
+      "purpose": "Output populated authorization and merchant details to user screen",
+      "citation": 26
     },
     {
-      "question": "What are the exact data sources (e.g., VSAM files, DB2 tables) populating the map fields?",
-      "context": "BMS defines layout only, not data sources.",
-      "suggestion": "Analyze the using CICS program."
+      "command": "RECEIVE MAP",
+      "resource": "COPAU1A",
+      "purpose": "Input function key or any modifiable field from user interaction",
+      "citation": 26
     }
-  ]
+  ],
+  "open_questions": []
 }

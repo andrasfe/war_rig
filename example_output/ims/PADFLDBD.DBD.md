@@ -2,35 +2,25 @@
 
 **File**: `ims/PADFLDBD.DBD`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-01-26 02:33:09.024279
+**Analyzed**: 2026-01-26 14:21:22.137536
 
 ## Purpose
 
-This file is the source definition for the IMS Database Description (DBD) named PADFLDBD, generated via DBDGEN utility. It specifies GSAM and BSAM access methods with no password protection and defines a single dataset group DSG001 containing input dataset PADFILIP (DD1) and output dataset PADFILOP (DD2). Records are fixed-length (200 bytes) with RECFM=F format.
-
-**Business Context**: IMS database definition supporting PADFL file input/output processing in a mainframe environment
+This file is a DBDGEN source/listing defining the IMS database PADFLDBD with access methods GSAM and BSAM. It specifies dataset group DSG001 including input dataset DD1=PADFILIP and output dataset DD2=PADFILOP, both with fixed-length records of 200 bytes and RECFM=F. The definition was generated on 04/21/2023 for IMS version 15.1.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| PADFILIP | IOType.FILE_SEQUENTIAL | Input dataset (DD1) belonging to dataset group DSG001 for the PADFLDBD IMS database |
+| PADFILIP | IOType.FILE_SEQUENTIAL | Input dataset (DD1) in dataset group DSG001 for the PADFLDBD database, with fixed 200-byte records |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| PADFILOP | IOType.FILE_SEQUENTIAL | Output dataset (DD2) belonging to dataset group DSG001 for the PADFLDBD IMS database |
-
-## Business Rules
-
-- **BR001**: Database supports GSAM and BSAM access methods
-- **BR002**: No password protection is required for database access
-- **BR003**: Datasets use fixed-length records of 200 bytes with RECFM=F
+| PADFILOP | IOType.FILE_SEQUENTIAL | Output dataset (DD2) in dataset group DSG001 for the PADFLDBD database, with fixed 200-byte records |
 
 ## Open Questions
 
-- ? No segments, fields, or keys are defined in the DBD
-  - Context: Typical IMS DBDs include SEGMENT and FIELD macros; absent here after DSG001
-- ? Business purpose of PADFLDBD database
-  - Context: Inferred from dataset names PADFILIP/PADFILOP but no explicit description
+- ? What is the specific business purpose of the PADFLDBD database?
+  - Context: No descriptive comments or context provided beyond dataset names and technical specs

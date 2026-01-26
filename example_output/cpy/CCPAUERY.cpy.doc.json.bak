@@ -4,34 +4,31 @@
     "file_name": "cpy/CCPAUERY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T02:34:09.314977",
+    "analyzed_at": "2026-01-26T14:25:11.291718",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the ERROR-LOG-RECORD data structure for logging pending authorization errors in mainframe applications. It specifies fields for timestamp (ERR-DATE, ERR-TIME), identifiers (ERR-APPLICATION, ERR-PROGRAM, ERR-LOCATION), severity (ERR-LEVEL with 88-levels), subsystem (ERR-SUBSYSTEM with 88-levels), error codes (ERR-CODE-1, ERR-CODE-2), message (ERR-MESSAGE), and event key (ERR-EVENT-KEY). The structure standardizes error log entries across applications.",
-    "business_context": "Facilitates standardized error logging for pending authorization processes in mainframe environments, supporting subsystems such as CICS, IMS, DB2, MQ, and file I/O.",
+    "summary": "This COBOL copybook defines the ERROR-LOG-RECORD level-01 data structure for capturing details of errors in pending authorization processes. It includes fields for timestamp (ERR-DATE, ERR-TIME), application identifiers (ERR-APPLICATION, ERR-PROGRAM), location (ERR-LOCATION), severity level (ERR-LEVEL with 88 conditions), subsystem (ERR-SUBSYSTEM with 88 conditions), error codes (ERR-CODE-1, ERR-CODE-2), message (ERR-MESSAGE), and event key (ERR-EVENT-KEY). The structure supports standardized error logging across mainframe applications.",
+    "business_context": "Error logging for pending authorization workflows in Amazon mainframe systems, enabling categorization by severity and subsystem for auditing and diagnostics.",
     "program_type": "UTILITY",
     "citations": [
-      1,
-      2,
-      19
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      30,
+      37,
+      38,
+      39,
+      40
     ]
   },
   "inputs": [],
-  "outputs": [
-    {
-      "name": "ERROR-LOG-RECORD",
-      "io_type": "OTHER",
-      "description": "Data structure defining the complete error log record layout, populated by calling programs and written to error log files for auditing and diagnostics.",
-      "copybook": null,
-      "citation": [
-        19,
-        20,
-        40
-      ]
-    }
-  ],
+  "outputs": [],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
@@ -41,8 +38,8 @@
   "business_rules": [
     {
       "rule_id": "BR001",
-      "description": "Categorizes error severity levels using ERR-LEVEL field with valid values 'L' (LOG), 'I' (INFO), 'W' (WARNING), 'C' (CRITICAL)",
-      "logic_summary": "88-level condition names enable programmatic checks like IF ERR-CRITICAL for severity-based logic in calling COBOL programs",
+      "description": "Valid values for error severity level (ERR-LEVEL) are restricted to Log ('L'), Info ('I'), Warning ('W'), or Critical ('C')",
+      "logic_summary": "Implemented via 88-level condition names that can be used for validation and conditional logic in programs including this copybook",
       "conditions": [
         "ERR-LOG VALUE 'L'",
         "ERR-INFO VALUE 'I'",
@@ -50,14 +47,17 @@
         "ERR-CRITICAL VALUE 'C'"
       ],
       "citation": [
+        25,
         26,
+        27,
+        28,
         29
       ]
     },
     {
       "rule_id": "BR002",
-      "description": "Identifies originating subsystem using ERR-SUBSYSTEM field with valid values 'A' (APP), 'C' (CICS), 'I' (IMS), 'D' (DB2), 'M' (MQ), 'F' (FILE)",
-      "logic_summary": "88-level condition names allow subsystem-specific error handling like IF ERR-DB2 in calling programs",
+      "description": "Valid values for error subsystem (ERR-SUBSYSTEM) are restricted to Application ('A'), CICS ('C'), IMS ('I'), DB2 ('D'), MQ ('M'), or File ('F')",
+      "logic_summary": "Implemented via 88-level condition names for categorizing the source subsystem of the error in logging programs",
       "conditions": [
         "ERR-APP VALUE 'A'",
         "ERR-CICS VALUE 'C'",
@@ -67,7 +67,12 @@
         "ERR-FILE VALUE 'F'"
       ],
       "citation": [
+        30,
         31,
+        32,
+        33,
+        34,
+        35,
         36
       ]
     }
@@ -82,5 +87,11 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": []
+  "open_questions": [
+    {
+      "question": "In which specific programs and sections (e.g., WORKING-STORAGE, LINKAGE) is this CCPAUERY copybook included?",
+      "context": "Copybook analysis does not reveal usage context; only the structure definition is present",
+      "suggestion": "Analyze including COBOL programs via grep/search for 'COPY CCPAUERY' to identify usage"
+    }
+  ]
 }

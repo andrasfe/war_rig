@@ -2,24 +2,17 @@
 
 **File**: `cpy/CCPAURLY.cpy`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-01-26 02:33:33.455666
+**Analyzed**: 2026-01-26 14:22:33.175169
 
 ## Purpose
 
-This copybook defines the data structure for a Pending Authorization Response record. It specifies fields for card number, transaction ID, authorization ID code, response code, response reason, and approved amount. The structure supports payment authorization processing in mainframe COBOL programs.
+The CCPAURLY copybook defines a COBOL data structure at level 05 named implicitly as a group for Pending Authorization Response (PA-RL fields). It includes fields for card number (16 chars), transaction ID (15 chars), auth ID code (6 chars), auth response code (2 chars), auth response reason (4 chars), and approved amount (signed numeric with 10 integer digits, 2 decimals). This structure holds response data from payment authorization requests, as indicated by the header comments.
 
-**Business Context**: Credit card transaction authorization responses, capturing details from pending authorization requests (e.g., from card issuers)
-
-## Business Rules
-
-- **BR001**: PA-RL-CARD-NUM field stores the card number as a fixed 16-character alphanumeric string
-- **BR002**: PA-RL-TRANSACTION-ID field stores the transaction identifier as a fixed 15-character alphanumeric string
-- **BR003**: PA-RL-AUTH-ID-CODE field stores the authorization ID code as a fixed 6-character alphanumeric string
-- **BR004**: PA-RL-AUTH-RESP-CODE field stores the authorization response code as a fixed 2-character alphanumeric string
-- **BR005**: PA-RL-AUTH-RESP-REASON field stores the authorization response reason as a fixed 4-character alphanumeric string
-- **BR006**: PA-RL-APPROVED-AMT field stores the approved amount as a signed numeric value with 10 integer digits, decimal point, and 2 fractional digits
+**Business Context**: Payment processing for pending card authorizations, likely in e-commerce or financial systems handling transaction approvals (copyright Amazon.com).
 
 ## Open Questions
 
-- ? In which specific programs or sections (e.g., WORKING-STORAGE, LINKAGE, FILE_SECTION) is this copybook included?
-  - Context: Copybook file does not specify usage context
+- ? In which programs or sections (e.g., WORKING-STORAGE, LINKAGE, FILE-SECTION) is this copybook included?
+  - Context: The copybook defines a data structure but does not specify usage context; no including program provided.
+- ? What are the exact validation rules or population logic for the defined fields?
+  - Context: Copybook only defines PIC clauses; no logic provided.

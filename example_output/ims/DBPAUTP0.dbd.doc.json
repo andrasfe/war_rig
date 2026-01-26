@@ -4,25 +4,22 @@
     "file_name": "ims/DBPAUTP0.dbd",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T02:31:02.367382",
+    "analyzed_at": "2026-01-26T14:21:28.415527",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This file is the source for the IMS Database Definition (DBD) of DBPAUTP0, defining a HIDAM database with VSAM access and EXIT options for key, data, logging without path or cascade. It specifies dataset group DSG001 with DDNAME DDPAUTP0 (4096 bytes, SCAN=3) and two segments: root segment PAUTSUM0 (100 bytes) with sequential unique key field ACCNTID (packed, 6 bytes starting at 1) and logical child PAUTINDX to DBPAUTX0, plus child segment PAUTDTL1 (200 bytes under PAUTSUM0) with sequential unique key PAUT9CTS (character, 8 bytes starting at 1). The DBD is generated via DBDGEN.",
-    "business_context": "Defines structure for pending authorization summary (PAUTSUM0) and detail (PAUTDTL1) records keyed by account ID, supporting hierarchical IMS database access for authorization processing.",
+    "summary": "This DBD source file defines the IMS database DBPAUTP0 as a HIDAM database with VSAM access and no password. It specifies one dataset group DSG001 using dataset DDPAUTP0 of size 4096 with SCAN=3. The database contains two segments: root segment PAUTSUM0 (Pending Authorization Summary, 100 bytes) with packed key field ACCNTID (positions 1-6) and a logical child to PAUTINDX in DBPAUTX0, and child segment PAUTDTL1 (Pending Authorization Details, 200 bytes) under PAUTSUM0 with character key PAUT9CTS (positions 1-8).",
+    "business_context": "Supports storage and retrieval of pending authorization summary and detail records, likely for financial account or transaction authorization workflows.",
     "program_type": "UTILITY",
     "citations": [
       17,
       18,
-      19,
       24,
       28,
       30,
-      31,
       36,
-      37,
-      39
+      37
     ]
   },
   "inputs": [],
@@ -36,14 +33,43 @@
   "business_rules": [
     {
       "rule_id": "BR001",
-      "description": "Root segment PAUTSUM0 uses RULES=(,HERE) indicating no parent rules and positioning at current segment.",
-      "logic_summary": "Standard IMS segment rule for root with HERE positioning.",
-      "conditions": [
-        "PARENT=0"
-      ],
+      "description": "Database access method is HIDAM with VSAM, EXIT for key/data/nopath/nocascade/log, no password",
+      "logic_summary": "Specified in DBD macro",
+      "conditions": [],
+      "citation": [
+        18,
+        19
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Root segment PAUTSUM0 (Pending Authorization Summary) is 100 bytes, unorderable sequence key ACCNTID (packed, 6 bytes at position 1), rules empty/HIERARCHY (HERE), twin backward pointer",
+      "logic_summary": "Defined in SEGM macro with FIELD and LCHILD",
+      "conditions": [],
       "citation": [
         28,
-        29
+        29,
+        30,
+        31
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "Child segment PAUTDTL1 (Pending Authorization Details) is 200 bytes under parent PAUTSUM0, unorderable sequence key PAUT9CTS (character, 8 bytes at position 1)",
+      "logic_summary": "Defined in SEGM macro with FIELD",
+      "conditions": [],
+      "citation": [
+        36,
+        37
+      ]
+    },
+    {
+      "rule_id": "BR004",
+      "description": "Dataset group DSG001 uses DDNAME DDPAUTP0 with size 4096 and SCAN=3",
+      "logic_summary": "Physical dataset for database storage",
+      "conditions": [],
+      "citation": [
+        24
       ]
     }
   ],
@@ -59,14 +85,19 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "Details of referenced database DBPAUTX0 and segment PAUTINDX",
-      "context": "LCHILD specifies POINTER=INDX to DBPAUTX0 but no further definition in this DBD",
-      "suggestion": "Examine DBPAUTX0.dbd source for index segment structure"
+      "question": "What copybooks or data structures define the full layouts of segments PAUTSUM0 and PAUTDTL1 beyond the key fields?",
+      "context": "Only key fields are explicitly defined in the DBD; remaining bytes are not detailed here",
+      "suggestion": "Check associated COBOL copybooks or IMS segment layouts referenced in application programs"
     },
     {
-      "question": "Purpose and content of fields beyond keys (e.g., remaining bytes in segments)",
-      "context": "Only key fields defined; other fields implied but not named",
-      "suggestion": "Review application programs or segment layouts for full field definitions"
+      "question": "Details of the logical child PAUTINDX in database DBPAUTX0?",
+      "context": "LCHILD references PAUTINDX in DBPAUTX0 but no further details provided",
+      "suggestion": "Analyze DBD for DBPAUTX0"
+    },
+    {
+      "question": "Associated PSB (Program Specification Block) for applications accessing this database?",
+      "context": "DBD defines database but not application access paths",
+      "suggestion": "Locate PSB source files for programs using DBPAUTP0"
     }
   ]
 }

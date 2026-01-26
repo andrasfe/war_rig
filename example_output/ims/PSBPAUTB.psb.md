@@ -2,30 +2,23 @@
 
 **File**: `ims/PSBPAUTB.psb`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-01-26 02:34:48.664231
+**Analyzed**: 2026-01-26 14:24:17.627872
 
 ## Purpose
 
-This file is the source definition for IMS Program Specification Block (PSB) named PSBPAUTB, targeted for COBOL language applications. It defines a single database PCB named PAUTBPCB for DBD DBPAUTP0 with KEYLEN=14 and PROCOPT=AP, enabling segment retrieval (GET) and unqualified insert (ISRT append) operations. The PCB senses root segment PAUTSUM0 (PARENT=0) and child segment PAUTDTL1 (PARENT=PAUTSUM0).
+This file is an IMS PSB source definition that generates the Program Specification Block PSBPAUTB for a COBOL program. It defines the single PCB PAUTBPCB for database DBDNAME=DBPAUTP0 with PROCOPT=AP and KEYLEN=14. The PCB includes sensegs PAUTSUM0 as root segment and PAUTDTL1 as child of PAUTSUM0.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| PAUTSUM0 | IOType.IMS_SEGMENT | Root segment (PARENT=0) of database DBPAUTP0, accessible for retrieval via GET operations implied by PROCOPT=AP |
-| PAUTDTL1 | IOType.IMS_SEGMENT | Child segment of PAUTSUM0 in database DBPAUTP0, accessible for retrieval via GET operations implied by PROCOPT=AP |
+| PAUTBPCB | IOType.OTHER | IMS PCB TYPE=DB for DBDNAME=DBPAUTP0, PROCOPT=AP, KEYLEN=14 serving as the interface for DL/I calls to access defined segments |
+| PAUTSUM0 | IOType.IMS_SEGMENT | Root segment (PARENT=0) accessible via PAUTBPCB |
+| PAUTDTL1 | IOType.IMS_SEGMENT | Child segment (PARENT=PAUTSUM0) accessible via PAUTBPCB |
 
-## Outputs
+## Business Rules
 
-| Name | Type | Description |
-|------|------|-------------|
-| DBPAUTP0 | IOType.IMS_SEGMENT | IMS database allowing unqualified ISRT (insert as append to last positioned parent) operations enabled by PROCOPT=AP |
-
-## Open Questions
-
-- ? Which specific COBOL programs or transactions use this PSB?
-  - Context: PSB source defines PSBNAME=PSBPAUTB but does not list using programs (line 20)
-- ? What are the exact field layouts and key fields (KEYLEN=14) for segments PAUTSUM0 and PAUTDTL1?
-  - Context: PSB defines segment names and hierarchy but no field-level details (lines 18-19)
-- ? What is the business purpose of the PAUT database (DBPAUTP0)?
-  - Context: No descriptive comments beyond copyright/license (lines 1-16)
+- **BR001**: PCB PAUTBPCB configured with PROCOPT=AP defining the allowed DL/I processing options for the database
+- **BR002**: PCB PAUTBPCB configured with KEYLEN=14 for segment search arguments
+- **BR003**: PAUTSUM0 defined as root segment with no parent
+- **BR004**: PAUTDTL1 defined as child segment of PAUTSUM0

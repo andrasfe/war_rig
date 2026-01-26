@@ -1,31 +1,30 @@
 {
   "header": {
     "program_id": "LOADPADB",
-    "file_name": "LOADPADB.JCL",
+    "file_name": "jcl/LOADPADB.JCL",
     "file_type": "JCL",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T02:32:45.871509",
+    "analyzed_at": "2026-01-26T14:19:44.076289",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This JCL submits a batch job to execute the IMS utility program DFSRRC00 in BMP mode with PARM='BMP,PAUDBLOD,PSBPAUTB' to load an IMS database (likely PAUTHDB based on commented DDs). It reads root and child segment data from sequential unload files associated with PAUTDB and control statements from an external member. The job references IMS libraries for execution and produces standard print, dump, and error outputs.",
-    "business_context": "Supports AWS M2 Card Demo application by loading IMS database for payment authorization table (inferred from PAUTB PSB and dataset names).",
-    "program_type": "UTILITY",
+    "summary": "This JCL job executes the IMS utility DFSRRC00 in BMP mode to load the PAUDB database (DBD=PAUDBLOD) using PSB=PSBPAUTB. It reads root and child segment data from sequential unload files INFILE1 and INFILE2. Standard IMS libraries and control datasets are referenced, with output directed to SYSOUT datasets.",
+    "business_context": "Supports data loading for the AWS.M2.CARDDEMO application by reconstructing the IMS hierarchical database PAUTDB from unload files.",
+    "program_type": "BATCH",
     "citations": [
-      1,
+      23,
       26,
       27,
       36,
-      38,
-      44
+      38
     ]
   },
   "inputs": [
     {
       "name": "INFILE1",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "Root segment data from AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO",
+      "description": "Sequential unload file containing root segments for PAUTDB database",
       "copybook": null,
       "citation": [
         36
@@ -34,37 +33,45 @@
     {
       "name": "INFILE2",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "Child segment data from AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO",
+      "description": "Sequential unload file containing child segments for PAUTDB database",
       "copybook": null,
       "citation": [
         38
       ]
     },
     {
-      "name": "DFSVSAMP",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS utility control statements from OEMPP.IMS.V15R01MB.PROCLIB(DFSVSMDB)",
-      "copybook": null,
-      "citation": [
-        44,
-        45
-      ]
-    },
-    {
       "name": "PARM",
       "io_type": "PARAMETER",
-      "description": "'BMP,PAUDBLOD,PSBPAUTB' defining BMP region, load program identifier, and PSB name",
+      "description": "Parameters controlling IMS utility: BMP mode, DBD=PAUDBLOD, PSB=PSBPAUTB",
       "copybook": null,
       "citation": [
         27
+      ]
+    },
+    {
+      "name": "IMS",
+      "io_type": "OTHER",
+      "description": "PSBLIB and DBDLIB datasets providing IMS program specification and database definitions",
+      "copybook": null,
+      "citation": [
+        33
       ]
     }
   ],
   "outputs": [
     {
+      "name": "PAUDBLOD",
+      "io_type": "IMS_SEGMENT",
+      "description": "IMS database (DBD=PAUDBLOD) loaded with root and child segments from input files",
+      "copybook": null,
+      "citation": [
+        27
+      ]
+    },
+    {
       "name": "SYSPRINT",
       "io_type": "REPORT",
-      "description": "Standard print output including job logs",
+      "description": "Standard print output from IMS utility execution",
       "copybook": null,
       "citation": [
         48
@@ -73,7 +80,7 @@
     {
       "name": "SYSUDUMP",
       "io_type": "REPORT",
-      "description": "System dump output on abends",
+      "description": "System dump output for diagnostics",
       "copybook": null,
       "citation": [
         49
@@ -82,91 +89,55 @@
     {
       "name": "IMSERR",
       "io_type": "REPORT",
-      "description": "IMS-specific error messages",
+      "description": "IMS error log output",
       "copybook": null,
       "citation": [
         50
       ]
-    },
-    {
-      "name": "PAUTHDB",
-      "io_type": "IMS_SEGMENT",
-      "description": "Intended primary IMS database dataset for load (DDPAUTP0 commented out)",
-      "copybook": null,
-      "citation": [
-        40
-      ]
-    },
-    {
-      "name": "PAUTHDBX",
-      "io_type": "IMS_SEGMENT",
-      "description": "Intended index IMS database dataset for load (DDPAUTX0 commented out)",
-      "copybook": null,
-      "citation": [
-        41
-      ]
     }
   ],
-  "called_programs": [],
+  "called_programs": [
+    {
+      "program_name": "DFSRRC00",
+      "call_type": "STATIC_CALL",
+      "purpose": "Invoke IMS utility to load/reorganize PAUDBLOD database from sequential input files",
+      "parameters": [
+        "BMP",
+        "PAUDBLOD",
+        "PSBPAUTB"
+      ],
+      "citation": 26
+    }
+  ],
   "calling_context": {
     "called_by": [],
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [
-    {
-      "rule_id": "BR001",
-      "description": "Hierarchical segment loading into IMS database with root segments from INFILE1 and child segments from INFILE2",
-      "logic_summary": "Driven by DFSRRC00 utility and control statements in DFSVSAMP; standard IMS validations for hierarchy, keys, and data integrity",
-      "conditions": [
-        "Root segments precede child segments",
-        "Utility performs duplicate key and structure checks"
-      ],
-      "citation": [
-        36,
-        38,
-        44
-      ]
-    }
-  ],
+  "business_rules": [],
   "data_flow": {
     "reads_from": [
       {
         "source": "INFILE1",
-        "fields_used": [
-          "Root segment fields (structure UNKNOWN)"
-        ],
+        "fields_used": [],
         "citation": [
           36
         ]
       },
       {
         "source": "INFILE2",
-        "fields_used": [
-          "Child segment fields (structure UNKNOWN)"
-        ],
+        "fields_used": [],
         "citation": [
           38
-        ]
-      },
-      {
-        "source": "DFSVSAMP",
-        "fields_used": [
-          "LOAD/CHANGE control statements"
-        ],
-        "citation": [
-          44
         ]
       }
     ],
     "writes_to": [
       {
-        "destination": "PAUTHDB",
-        "fields_written": [
-          "Loaded root and child segments"
-        ],
+        "destination": "PAUDBLOD",
+        "fields_written": [],
         "citation": [
-          40
+          27
         ]
       }
     ],
@@ -177,7 +148,7 @@
     {
       "paragraph_name": "STEP01",
       "summary": null,
-      "purpose": "This JCL step is the sole execution step in the job, invoking PGM=DFSRRC00 as an IMS utility in BMP mode to perform database loading. It consumes data inputs from INFILE1 (root segments at line 36), INFILE2 (child segments at line 38), and control statements from DFSVSAMP (lines 44-45), along with IMS libraries from STEPLIB (lines 28-30), PSBLIB (33), and DBDLIB (34). The step produces loaded data into the target IMS database PAUTHDB/PAUTHDBX (commented lines 40-41), plus report outputs to SYSPRINT (48), SYSUDUMP (49), and IMSERR (50). Business logic is delegated to the DFSRRC00 utility, which enforces IMS database rules like segment hierarchy, key uniqueness, and data type validation based on the DBD and control cards. No explicit decisions in JCL itself; conditions are handled by the utility (e.g., invalid data causes abend). Error handling relies on standard z/OS/IMS mechanisms, directing dumps to SYSUDUMP and errors to IMSERR. The step does not call other paragraphs or programs directly; it executes DFSRRC00, which internally processes PAUDBLOD logic via PARM (27). Overall, it orchestrates the environment for batch IMS database population without local validation.",
+      "purpose": "This is the only job step in the LOADPADB JCL, serving as the primary execution point for the IMS database load utility. Its main role is to invoke DFSRRC00 with PARM='BMP,PAUDBLOD,PSBPAUTB' to process the PAUDBLOD database in batch message processing mode using the specified PSB (line 27). It consumes sequential input files INFILE1 for root segments (line 36) and INFILE2 for child segments (line 38), which contain unloaded database records from the AWS.M2.CARDDEMO.PAUTDB datasets. Supporting inputs include STEPLIB datasets for IMS libraries (lines 28-30), DFSRESLB (line 31), IMS PSBLIB/DBDLIB (lines 33-34), and DFSVSAMP for VSAM model database definitions (lines 44-45). Outputs are produced to the target IMS database PAUDBLOD implicitly via the utility, along with diagnostic reports to SYSPRINT, SYSUDUMP, and IMSERR on SYSOUT=* (lines 48-50). Dummy DDs like IMSLOGR and IEFRDER are provided for utility requirements (lines 46-47). No explicit business decisions or validations are implemented in the JCL itself; all logic is delegated to the IMS utility DFSRRC00. Error handling relies on the utility's return codes and standard JCL abend processing, with no COND or IF/THEN statements present. Commented DDs for PAUTHDB (lines 40-41) indicate potential alternative configurations. Overall, this step orchestrates the database load to support application data initialization.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -189,28 +160,14 @@
       "metadata": null
     }
   ],
-  "error_handling": [
-    {
-      "condition": "DFSRRC00 utility failure or IMS abend",
-      "action": "Job abends with SYSUDUMP dump and IMSERR logging",
-      "citation": [
-        49,
-        50
-      ]
-    }
-  ],
+  "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "Exact DBD name and load details (e.g., segment order, validation rules)",
-      "context": "Determined by PARM PAUDBLOD (27) and DFSVSMDB control member (45); naming between PAUTDB inputs and PAUTHDB outputs unclear",
-      "suggestion": "Review IMS DBD/PSB definitions and PROCLIB(DFSVSMDB) content"
-    },
-    {
-      "question": "Role of commented DDPAUTP0/DDPAUTX0",
-      "context": "Lines 40-41 commented; unclear if dynamically allocated or if load uses different DDs",
-      "suggestion": "Examine job execution logs or IMS utility documentation for this setup"
+      "question": "Precise function of DFSRRC00 with PARM='BMP,PAUDBLOD,PSBPAUTB' (load, unload, or reorg)?",
+      "context": "Inferred as database load from job name LOADPADB, input unload files, and context, but exact utility mode undocumented in source.",
+      "suggestion": "Reference IMS Utilities Reference manual for DFSRRC00 parameter details and DBD/PSB definitions."
     }
   ]
 }

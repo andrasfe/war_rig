@@ -4,111 +4,119 @@
     "file_name": "COPAU00.bms",
     "file_type": "BMS",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T02:29:53.682994",
+    "analyzed_at": "2026-01-26T14:23:14.843576",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This BMS file defines the COPAU00 mapset and COPAU0A physical map for the 'Pending Authorization Screen' in the CardDemo CICS application. The screen layout includes headers for transaction name, program name, date, and time; an input field for searching by Account ID; display areas for customer name, ID, address lines, account status, phone, approval/decline counts, credit/cash limits, balances, and amounts; a table listing up to 5 pending transactions with selectable checkboxes, transaction ID, date, time, type, A/D, status, and amount; and instructions for function keys and error messages.",
-    "business_context": "Credit card authorization viewing and selection in a demo banking application, allowing users to search an account and select pending authorizations for details.",
+    "summary": "The COPAU00 BMS map defines the layout for the CardDemo Pending Authorization Screen. It provides fields for inputting an Account ID to search, displays customer account details including name, customer ID, address, status, phone, approval/decline counts, credit/cash limits and balances. It also shows a table of up to five pending authorization transactions with columns for selection, transaction ID, date, time, type, A/D, status, and amount, allowing user selection via 'S' for details.",
+    "business_context": "Serves credit card authorization review process by displaying pending authorizations for a specific account to enable selection and further viewing.",
     "program_type": "ONLINE_CICS",
     "citations": [
       2,
       19,
-      26,
       78,
-      83,
-      201,
-      497,
-      511
+      83
     ]
   },
   "inputs": [
     {
       "name": "ACCTID",
       "io_type": "CICS_MAP",
-      "description": "Unprotected input field for Account ID search",
+      "description": "Account ID search field, unprotected for user entry",
       "copybook": null,
       "citation": [
-        84
+        84,
+        85,
+        87
       ]
     },
     {
       "name": "SEL0001",
       "io_type": "CICS_MAP",
-      "description": "Unprotected selection field (e.g., 'S') for first pending transaction",
+      "description": "Selection field (e.g., 'S') for first pending transaction, unprotected",
       "copybook": null,
       "citation": [
-        277
+        277,
+        278,
+        280
       ]
     },
     {
       "name": "SEL0002",
       "io_type": "CICS_MAP",
-      "description": "Unprotected selection field for second pending transaction",
+      "description": "Selection field (e.g., 'S') for second pending transaction, unprotected",
       "copybook": null,
       "citation": [
-        321
+        321,
+        322,
+        324
       ]
     },
     {
       "name": "SEL0003",
       "io_type": "CICS_MAP",
-      "description": "Unprotected selection field for third pending transaction",
+      "description": "Selection field (e.g., 'S') for third pending transaction, unprotected",
       "copybook": null,
       "citation": [
-        365
+        365,
+        366,
+        368
       ]
     },
     {
       "name": "SEL0004",
       "io_type": "CICS_MAP",
-      "description": "Unprotected selection field for fourth pending transaction",
+      "description": "Selection field (e.g., 'S') for fourth pending transaction, unprotected",
       "copybook": null,
       "citation": [
-        409
+        409,
+        410,
+        412
       ]
     },
     {
       "name": "SEL0005",
       "io_type": "CICS_MAP",
-      "description": "Unprotected selection field for fifth pending transaction",
+      "description": "Selection field (e.g., 'S') for fifth pending transaction, unprotected",
       "copybook": null,
       "citation": [
-        488
+        488,
+        489,
+        491
       ]
     }
   ],
   "outputs": [
     {
-      "name": "COPAU0A",
+      "name": "COPAU00",
       "io_type": "CICS_MAP",
-      "description": "Physical map defining all screen fields including headers (TRNNAME, CURDATE, PGMNAME, CURTIME), customer info (CNAME, CUSTID, ADDR001, ADDR002, ACCSTAT, PHONE1), counts (APPRCNT, DECLCNT), limits/balances/amounts (CREDLIM, CASHLIM, APPRAMT, CREDBAL, CASHBAL, DECLAMT), transaction list (TRNID01-PAMT005 etc.), instructions, and error message (ERRMSG)",
+      "description": "Full screen map including headers, account details (CNAME, CUSTID, PHONE1, APPRCNT, DECLCNT, CREDLIM, CASHLIM, APPRAMT, CREDBAL, CASHBAL, DECLAMT), and transaction list fields (TRNID01-05, PDATE01-05, etc.) populated by calling program",
       "copybook": null,
       "citation": [
+        19,
         26,
-        34,
-        47,
-        57,
-        60,
-        70,
-        73,
         96,
         103,
-        107,
-        118,
         125,
-        131,
-        138,
+        132,
+        139,
         147,
         156,
         165,
         174,
         183,
         192,
-        286,
-        503,
-        511
+        286
+      ]
+    },
+    {
+      "name": "ERRMSG",
+      "io_type": "CICS_MAP",
+      "description": "Error message display field",
+      "copybook": null,
+      "citation": [
+        503
       ]
     }
   ],
@@ -118,7 +126,24 @@
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [],
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Limits display to a maximum of five pending authorization transactions per account",
+      "logic_summary": "Screen layout defines exactly five rows of transaction fields (TRNID01-05, PDATE01-05, PTIME01-05, PTYPE01-05, PAPRV01-05, PSTAT01-05, PAMT001-05) with corresponding selection fields SEL0001-SEL0005",
+      "conditions": [
+        "Display only 5 transactions",
+        "User selects via SEL fields"
+      ],
+      "citation": [
+        277,
+        321,
+        365,
+        409,
+        488
+      ]
+    }
+  ],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
@@ -128,25 +153,39 @@
   "paragraphs": [],
   "error_handling": [
     {
-      "condition": "Display error message",
-      "action": "Populate ERRMSG field for user feedback",
+      "condition": "Application error",
+      "action": "Populate and display message in ERRMSG field (bright, red, FSET)",
       "citation": [
-        503
+        503,
+        504
       ]
     }
   ],
   "sql_operations": [],
-  "cics_operations": [],
-  "open_questions": [
+  "cics_operations": [
     {
-      "question": "Which CICS COBOL program(s) include and use this BMS map?",
-      "context": "BMS file does not specify the calling program; only mapset/map names provided",
-      "suggestion": "Search for COBOL programs with COPY COPAU00 or references to COPAU00 mapset"
+      "command": "SEND MAP",
+      "resource": "COPAU00",
+      "purpose": "Transmit screen layout and data for pending authorizations display",
+      "citation": 19
     },
     {
-      "question": "What are the exact data sources populating the display fields (e.g., customer details, transaction list)?",
-      "context": "BMS defines layout only, not data retrieval logic",
-      "suggestion": "Analyze calling CICS program for file/DB2/IMS reads or LINK/XCTL calls"
+      "command": "RECEIVE MAP",
+      "resource": "COPAU00",
+      "purpose": "Receive user inputs from ACCTID and SELxxxx fields",
+      "citation": 19
+    }
+  ],
+  "open_questions": [
+    {
+      "question": "Which CICS COBOL program(s) reference and use this BMS map?",
+      "context": "BMS file defines the map but does not indicate the calling transaction/program",
+      "suggestion": "Search for COPY COPAU00 or DFHMDI COPAU00 in associated COBOL source files"
+    },
+    {
+      "question": "What populates the dynamic display fields like TRNID01, CNAME, etc.?",
+      "context": "BMS defines layout and initial values (mostly spaces) but data sources are in calling program",
+      "suggestion": "Analyze referencing CICS program for MOVE statements to map fields"
     }
   ]
 }

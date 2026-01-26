@@ -4,13 +4,13 @@
     "file_name": "cbl/COPAUS0C.cbl",
     "file_type": "COBOL",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T02:30:55.148775",
+    "analyzed_at": "2026-01-26T14:22:43.300258",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This CICS/IMS/BMS COBOL program provides a paginated summary view of pending authorization details for a specified account in the CardDemo authorization module. It retrieves related account, customer, card cross-reference data from VSAM files and authorization summary/details from IMS database segments PAUTSUM0/PAUTDTL1. Users enter an account ID, navigate lists with PF7/PF8, select 'S' for details via XCTL to COPAUS1C, or PF3 to menu.",
-    "business_context": "Serves card authorization processing by displaying summary of pending auths including transaction ID, date, time, type, approval status, match status, and amount for account review.",
+    "summary": "COPAUS0C is a CICS online program that provides a paginated summary view of pending authorization details for a specific account ID in the CardDemo authorization module. It retrieves account, customer, and card cross-reference data from VSAM files, fetches IMS pending authorization summary and detail segments, populates a BMS map with header info, customer details, summary counts, and a list of up to 5 authorizations, and handles navigation (PF7/PF8), selection for detail view (ENTER), and return to menu (PF3).",
+    "business_context": "Serves the CardDemo application by displaying authorization message summaries to allow users to review and select pending authorizations for an account.",
     "program_type": "ONLINE_CICS",
     "citations": [
       2,
@@ -19,79 +19,83 @@
       5,
       23,
       36,
-      258
+      178
     ]
   },
   "inputs": [
     {
-      "name": "DFHCOMMAREA",
-      "io_type": "CICS_COMMAREA",
-      "description": "CARDDEMO-COMMAREA from copybook COCOM01Y containing account ID, program context, auth keys, page info",
-      "copybook": "COCOM01Y",
-      "citation": [
-        116,
-        172,
-        200
-      ]
-    },
-    {
       "name": "COPAU0AI",
       "io_type": "CICS_MAP",
-      "description": "Input map fields for account ID (ACCTIDI), selection fields (SEL0001I-SEL0005I)",
+      "description": "BMS input map containing entered account ID (ACCTIDI) and selection flags (SEL0001I-SEL0005I) from user screen interactions",
       "copybook": "COPAU00",
       "citation": [
-        129,
-        715
+        715,
+        716,
+        717,
+        718
       ]
     },
     {
       "name": "CXACAIX",
       "io_type": "FILE_VSAM",
-      "description": "Card XREF file accessed by ACCT-ID alternate index for customer/card linkage",
+      "description": "Card cross-reference alternate index by account ID to retrieve customer ID and card number",
       "copybook": "CVACT03Y",
       "citation": [
-        41,
-        817
+        817,
+        818,
+        819
       ]
     },
     {
       "name": "ACCTDAT",
       "io_type": "FILE_VSAM",
-      "description": "Account master file read by ACCT-ID",
+      "description": "Account master file containing account details like credit limits",
       "copybook": "CVACT01Y",
       "citation": [
-        38,
-        868
+        868,
+        869,
+        870
       ]
     },
     {
       "name": "CUSTDAT",
       "io_type": "FILE_VSAM",
-      "description": "Customer master file read by CUST-ID",
+      "description": "Customer master file containing customer name, address, phone",
       "copybook": "CVCUS01Y",
       "citation": [
-        39,
-        918
+        918,
+        920,
+        921
       ]
     },
     {
       "name": "PAUTSUM0",
       "io_type": "IMS_SEGMENT",
-      "description": "IMS root segment for pending auth summary by ACCT-ID",
+      "description": "Pending authorization summary root segment containing counts and balances for the account",
       "copybook": "CIPAUSMY",
       "citation": [
-        159,
-        971
+        974,
+        975
       ]
     },
     {
       "name": "PAUTDTL1",
       "io_type": "IMS_SEGMENT",
-      "description": "IMS child segment for pending auth details, GU/GNP calls",
+      "description": "Pending authorization details child segments containing individual authorization records",
       "copybook": "CIPAUDTY",
       "citation": [
-        163,
-        461
+        462,
+        463
+      ]
+    },
+    {
+      "name": "DFHCOMMAREA",
+      "io_type": "CICS_COMMAREA",
+      "description": "Common CardDemo commarea passed between programs containing account ID, page keys, selected auth key",
+      "copybook": "COCOM01Y",
+      "citation": [
+        200,
+        201
       ]
     }
   ],
@@ -99,31 +103,22 @@
     {
       "name": "COPAU0AO",
       "io_type": "CICS_MAP",
-      "description": "Output map populated with account details, customer info, auth summary counts/balances, list of 5 auths",
+      "description": "BMS output map populated with header, customer info, account summary stats, authorization list, and error messages",
       "copybook": "COPAU00",
       "citation": [
-        129,
-        696
+        696,
+        697,
+        698
       ]
     },
     {
-      "name": "DFHCOMMAREA",
+      "name": "CARDDEMO-COMMAREA",
       "io_type": "CICS_COMMAREA",
-      "description": "Updated CARDDEMO-COMMAREA with auth keys, page info, selection for return/XCTL",
+      "description": "Updated commarea with page navigation keys, selected authorization, page number for return or XCTL",
       "copybook": "COCOM01Y",
       "citation": [
-        116,
-        256
-      ]
-    },
-    {
-      "name": "WS-MESSAGE",
-      "io_type": "OTHER",
-      "description": "Error/informational messages displayed on map",
-      "copybook": null,
-      "citation": [
-        37,
-        692
+        256,
+        324
       ]
     }
   ],
@@ -131,7 +126,7 @@
     {
       "program_name": "COPAUS1C",
       "call_type": "CICS_XCTL",
-      "purpose": "Transfer control to authorization details screen when 'S' selected on list entry",
+      "purpose": "Transfer control to authorization detail program when user selects 'S' on an authorization line",
       "parameters": [
         "CARDDEMO-COMMAREA"
       ],
@@ -140,7 +135,7 @@
     {
       "program_name": "COMEN01C",
       "call_type": "CICS_XCTL",
-      "purpose": "Return to menu screen via CDEMO-TO-PROGRAM on PF3",
+      "purpose": "Return to menu program on PF3 key press",
       "parameters": [
         "CARDDEMO-COMMAREA"
       ],
@@ -149,7 +144,7 @@
     {
       "program_name": "COSGN00C",
       "call_type": "CICS_XCTL",
-      "purpose": "Fallback to signon screen if no previous program specified",
+      "purpose": "Default fallback program for return if no previous program specified",
       "parameters": [
         "CARDDEMO-COMMAREA"
       ],
@@ -162,18 +157,18 @@
       "CPVS"
     ],
     "linkage_section": [
-      "DFHCOMMAREA",
-      "LK-COMMAREA"
+      "LK-COMMAREA",
+      "EIBCALEN"
     ]
   },
   "business_rules": [
     {
       "rule_id": "BR001",
-      "description": "Account ID must be numeric and non-blank for processing",
-      "logic_summary": "Validate ACCTIDI numeric, else error message and clear field",
+      "description": "Account ID must be numeric and not spaces/low-values for processing",
+      "logic_summary": "Validates ACCTIDI from map; sets error if invalid",
       "conditions": [
-        "ACCTIDI = SPACES OR LOW-VALUES",
-        "ACCTIDI NOT NUMERIC"
+        "IF ACCTIDI = SPACES OR LOW-VALUES",
+        "IF ACCTIDI NOT NUMERIC"
       ],
       "citation": [
         264,
@@ -182,11 +177,11 @@
     },
     {
       "rule_id": "BR002",
-      "description": "Selection field (SELxxxxI) must be 'S' or 's' to XCTL to details",
-      "logic_summary": "Map SELxxxxI to selected auth key index, check case-insensitive 'S', else invalid selection message",
+      "description": "Authorization selection must be 'S' or 's' to proceed to detail view",
+      "logic_summary": "Checks SEL000XI fields and sets selected auth key; invalid sets error message",
       "conditions": [
-        "SEL0001I-SEL0005I NOT = SPACES/LOW-VALUES",
-        "CDEMO-CPVS-PAU-SEL-FLG = 'S'/'s'"
+        "EVALUATE SEL0001I-SEL0005I",
+        "WHEN 'S' or 's'"
       ],
       "citation": [
         286,
@@ -195,27 +190,54 @@
     },
     {
       "rule_id": "BR003",
-      "description": "Approval status derived from PA-AUTH-RESP-CODE: '00'=A(Approved), else D(Declined)",
-      "logic_summary": "Set WS-AUTH-APRV-STAT based on response code for display",
+      "description": "Approval status 'A' if response code '00', else 'D' for display",
+      "logic_summary": "Transforms PA-AUTH-RESP-CODE to WS-AUTH-APRV-STAT for map population",
       "conditions": [
-        "PA-AUTH-RESP-CODE = '00'"
+        "IF PA-AUTH-RESP-CODE = '00'"
       ],
       "citation": [
         536
+      ]
+    },
+    {
+      "rule_id": "BR004",
+      "description": "Page navigation backward only if current page >1; forward repositions from last key",
+      "logic_summary": "PF7 decrements page, loads prev key; PF8 uses last key to GNP",
+      "conditions": [
+        "IF CDEMO-CPVS-PAGE-NUM > 1",
+        "IF CDEMO-CPVS-PAUKEY-LAST NOT = SPACES"
+      ],
+      "citation": [
+        365,
+        391
       ]
     }
   ],
   "data_flow": {
     "reads_from": [
       {
+        "source": "COPAU0AI",
+        "fields_used": [
+          "ACCTIDI",
+          "SEL0001I",
+          "SEL0002I",
+          "SEL0003I",
+          "SEL0004I",
+          "SEL0005I"
+        ],
+        "citation": [
+          264,
+          286
+        ]
+      },
+      {
         "source": "CXACAIX",
         "fields_used": [
           "XREF-CUST-ID",
-          "XREF-CARD-NUM",
-          "XREF-ACCT-ID"
+          "XREF-CARD-NUM"
         ],
         "citation": [
-          829
+          830
         ]
       },
       {
@@ -235,12 +257,11 @@
           "CUST-ID",
           "CUST-FIRST-NAME",
           "CUST-LAST-NAME",
-          "CUST-ADDR-LINE-1",
-          "CUST-PHONE-NUM-1"
+          "CUST-ADDR-LINE-1"
         ],
         "citation": [
           757,
-          779
+          759
         ]
       },
       {
@@ -251,16 +272,16 @@
           "PA-CREDIT-BALANCE"
         ],
         "citation": [
-          787
+          787,
+          788
         ]
       },
       {
         "source": "PAUTDTL1",
         "fields_used": [
           "PA-AUTHORIZATION-KEY",
-          "PA-TRANSACTION-ID",
-          "PA-AUTH-ORIG-DATE",
-          "PA-APPROVED-AMT"
+          "PA-APPROVED-AMT",
+          "PA-AUTH-ORIG-DATE"
         ],
         "citation": [
           434,
@@ -276,7 +297,8 @@
           "CNAMEO",
           "CREDLIMO",
           "APPRCNTO",
-          "TRNID01I"
+          "TRNID01I",
+          "PAMT001I"
         ],
         "citation": [
           230,
@@ -289,40 +311,48 @@
       {
         "destination": "CARDDEMO-COMMAREA",
         "fields_written": [
+          "CDEMO-CPVS-PAU-SELECTED",
           "CDEMO-CPVS-AUTH-KEYS",
-          "CDEMO-CPVS-PAGE-NUM",
-          "CDEMO-ACCT-ID"
+          "CDEMO-CPVS-PAGE-NUM"
         ],
         "citation": [
-          544,
-          437,
-          284
+          289,
+          545,
+          437
         ]
       }
     ],
     "transforms": [
       {
-        "input_field": "CUST-FIRST-NAME, CUST-MIDDLE-NAME, CUST-LAST-NAME",
-        "output_field": "CNAMEO",
-        "transformation_description": "Concatenate first + middle initial + last name with spaces",
+        "input_field": "PA-AUTH-ORIG-TIME",
+        "output_field": "WS-AUTH-TIME",
+        "transformation_description": "Reformats HHMMSS to HH:MM:SS string by substring moves",
         "citation": [
-          758
+          527
         ]
       },
       {
         "input_field": "PA-AUTH-ORIG-DATE",
         "output_field": "WS-AUTH-DATE",
-        "transformation_description": "Reformat YYMMDD to MM/DD/YY using WS-CURDATE-MM-DD-YY",
+        "transformation_description": "Reformats YYMMDD to MM/DD/YY using WS-CURDATE intermediates",
         "citation": [
           531
         ]
       },
       {
-        "input_field": "PA-AUTH-ORIG-TIME",
-        "output_field": "WS-AUTH-TIME",
-        "transformation_description": "Reformat HHMMSS to HH:MM:SS",
+        "input_field": "PA-AUTH-RESP-CODE",
+        "output_field": "WS-AUTH-APRV-STAT",
+        "transformation_description": "'00' becomes 'A' (approved), else 'D' (declined)",
         "citation": [
-          527
+          536
+        ]
+      },
+      {
+        "input_field": "CUST-FIRST-NAME CUST-MIDDLE-NAME CUST-LAST-NAME",
+        "output_field": "CNAMEO",
+        "transformation_description": "Concatenates name parts with spaces, middle initial truncated to 1",
+        "citation": [
+          758
         ]
       }
     ]
@@ -330,73 +360,101 @@
   "copybooks_used": [
     {
       "copybook_name": "COCOM01Y",
-      "purpose": "Common CardDemo commarea structure including program navigation, account/card IDs, auth keys, page info",
+      "purpose": "Defines CARDDEMO-COMMAREA structure including CDEMO-CPVS-INFO for page keys, selected auth, account ID",
       "location": "WORKING_STORAGE",
       "citation": 116
     },
     {
       "copybook_name": "COPAU00",
-      "purpose": "BMS mapset for PAULST screen input/output fields (COPAU0AI/AO)",
+      "purpose": "BMS mapset for COPAU0A input/output maps handling account ID, auth list fields, selections",
       "location": "WORKING_STORAGE",
       "citation": 129
     },
     {
+      "copybook_name": "COTTL01Y",
+      "purpose": "Screen titles like CCDA-TITLE01 used in header",
+      "location": "WORKING_STORAGE",
+      "citation": 132
+    },
+    {
+      "copybook_name": "CSDAT01Y",
+      "purpose": "Current date working variables WS-CURDATE-* for formatting",
+      "location": "WORKING_STORAGE",
+      "citation": 135
+    },
+    {
+      "copybook_name": "CSMSG01Y",
+      "purpose": "Common messages like CCDA-MSG-INVALID-KEY",
+      "location": "WORKING_STORAGE",
+      "citation": 138
+    },
+    {
+      "copybook_name": "CSMSG02Y",
+      "purpose": "Abend variables",
+      "location": "WORKING_STORAGE",
+      "citation": 141
+    },
+    {
+      "copybook_name": "CVACT01Y",
+      "purpose": "Account record layout ACCOUNT-RECORD",
+      "location": "WORKING_STORAGE",
+      "citation": 144
+    },
+    {
+      "copybook_name": "CVACT02Y",
+      "purpose": "Additional customer or account related layout",
+      "location": "WORKING_STORAGE",
+      "citation": 147
+    },
+    {
+      "copybook_name": "CVACT03Y",
+      "purpose": "Card XREF record layout CARD-XREF-RECORD",
+      "location": "WORKING_STORAGE",
+      "citation": 150
+    },
+    {
+      "copybook_name": "CVCUS01Y",
+      "purpose": "Customer record layout CUSTOMER-RECORD",
+      "location": "WORKING_STORAGE",
+      "citation": 153
+    },
+    {
       "copybook_name": "CIPAUSMY",
-      "purpose": "IMS PAUTSUM0 pending auth summary segment layout",
+      "purpose": "IMS PENDING-AUTH-SUMMARY segment PAUTSUM0 layout",
       "location": "WORKING_STORAGE",
       "citation": 161
     },
     {
       "copybook_name": "CIPAUDTY",
-      "purpose": "IMS PAUTDTL1 pending auth details segment layout",
+      "purpose": "IMS PENDING-AUTH-DETAILS segment PAUTDTL1 layout",
       "location": "WORKING_STORAGE",
       "citation": 165
     },
     {
-      "copybook_name": "CVACT03Y",
-      "purpose": "Card XREF record layout",
-      "location": "WORKING_STORAGE",
-      "citation": 150
-    },
-    {
-      "copybook_name": "CVACT01Y",
-      "purpose": "Account record layout",
-      "location": "WORKING_STORAGE",
-      "citation": 144
-    },
-    {
-      "copybook_name": "CVCUS01Y",
-      "purpose": "Customer record layout",
-      "location": "WORKING_STORAGE",
-      "citation": 153
-    },
-    {
       "copybook_name": "DFHAID",
-      "purpose": "CICS attention identifier",
+      "purpose": "CICS attention identifier EIBAID",
       "location": "WORKING_STORAGE",
       "citation": 168
     },
     {
       "copybook_name": "DFHBMSCA",
-      "purpose": "CICS BMS control attributes (DFHBMUNP, DFHBMPRO)",
+      "purpose": "CICS BMS control attributes like DFHBMUNP, DFHBMPRO",
       "location": "WORKING_STORAGE",
-      "citation": 169
+      "citation": 170
     }
   ],
   "paragraphs": [
     {
       "paragraph_name": "MAIN-PARA",
       "summary": null,
-      "purpose": "This is the primary entry point orchestrating the entire program flow for the authorization summary screen. It initializes flags (ERR-FLG-OFF, AUTHS-NOT-EOF, SEND-ERASE-YES), clears messages and sets ACCTIDL to -1. On first entry (EIBCALEN=0), initializes commarea and sends initial screen. On reentry, receives map if not reenter mode, gathers details for account, or processes PF keys: ENTER for selection/validation/XCTL, PF3 to menu, PF7/PF8 for page navigation. Always ends with CICS RETURN TRANSID(CPVS) updating commarea. Error handling via WS-ERR-FLG and messages. Calls GATHER-DETAILS, SEND-PAULST-SCREEN, RECEIVE-PAULST-SCREEN, PROCESS-ENTER-KEY etc. as needed.",
+      "purpose": "This is the primary entry point and orchestration paragraph that initializes flags, handles first-time entry (EIBCALEN=0) by sending initial screen, or processes commarea for reentry. It consumes EIBCALEN, DFHCOMMAREA if present, and map data via RECEIVE-PAULST-SCREEN. It produces updated COPAU0AO map and CARDDEMO-COMMAREA for return or XCTL. Business logic evaluates EIBAID for PF/ENTER keys dispatching to specific handlers like PROCESS-ENTER-KEY, navigation, or return; first distinguishes initial load vs reenter. Errors set WS-ERR-FLG and message. Calls RECEIVE-PAULST-SCREEN, PROCESS-ENTER-KEY, SEND-PAULST-SCREEN, RETURN-TO-PREV-SCREEN, GATHER-DETAILS, and CICS RETURN with TRANSID CPVS. Always ends with CICS RETURN preserving commarea and transaction.",
       "called_by": [],
       "calls": [
-        "GATHER-DETAILS",
-        "SEND-PAULST-SCREEN",
         "RECEIVE-PAULST-SCREEN",
         "PROCESS-ENTER-KEY",
-        "RETURN-TO-PREV-SCREEN",
-        "PROCESS-PF7-KEY",
-        "PROCESS-PF8-KEY"
+        "SEND-PAULST-SCREEN",
+        "GATHER-DETAILS",
+        "RETURN-TO-PREV-SCREEN"
       ],
       "citation": [
         178,
@@ -409,7 +467,7 @@
     {
       "paragraph_name": "PROCESS-ENTER-KEY",
       "summary": null,
-      "purpose": "Handles ENTER key to validate/process account ID input and selection fields. Consumes ACCTIDI from map and SEL000xI fields, checks blank/low-values or non-numeric ACCTIDI setting error/message/clear field. If valid, stores ACCT-ID to WS/commarea, maps selection to CDEMO-CPVS-PAU-SELECTED auth key. If selection 'S'/'s', XCTL to COPAUS1C details with context. Else invalid selection message. Always calls GATHER-DETAILS to refresh list. Errors set WS-ERR-FLG and clear ACCTIDL.",
+      "purpose": "Handles ENTER key press to validate and process account ID entry or line selection for detail view. Consumes ACCTIDI and SEL0001I-SEL0005I from input map COPAU0AI. Produces updated CDEMO-CPVS-PAU-SEL-FLG, CDEMO-CPVS-PAU-SELECTED in commarea, WS-ACCT-ID, and error message if invalid. Business logic checks ACCTIDI for spaces/low/non-numeric, maps SEL fields to index 1-5 for selected auth key, validates selection 'S'/'s' before XCTL to detail program. Errors set WS-ERR-FLG, cursor to ACCTIDL, custom messages. Calls GATHER-DETAILS to refresh data post-processing.",
       "called_by": [
         "MAIN-PARA"
       ],
@@ -427,7 +485,7 @@
     {
       "paragraph_name": "GATHER-DETAILS",
       "summary": null,
-      "purpose": "Refreshes screen data for current WS-ACCT-ID by clearing ACCTIDL, resetting page num, gathering account/customer/xref details if valid ID, initializing auth list, and processing first page of auths if summary segment found. Inputs WS-ACCT-ID, outputs populated map fields via subordinates. No direct business decisions but chains to data retrieval. Errors propagated from calls. Calls GATHER-ACCOUNT-DETAILS, INITIALIZE-AUTH-DATA, PROCESS-PAGE-FORWARD.",
+      "purpose": "Orchestrates data retrieval and page population for the current account. Consumes WS-ACCT-ID from map/commarea. Produces populated auth list in map via PROCESS-PAGE-FORWARD, initializes data. Business logic conditionally gathers account details if valid ACCT-ID, initializes auth data, processes first page of auths if summary segment found. No explicit errors but relies on subordinate error handling. Calls GATHER-ACCOUNT-DETAILS, INITIALIZE-AUTH-DATA, PROCESS-PAGE-FORWARD.",
       "called_by": [
         "MAIN-PARA",
         "PROCESS-ENTER-KEY"
@@ -448,7 +506,7 @@
     {
       "paragraph_name": "PROCESS-PF7-KEY",
       "summary": null,
-      "purpose": "Handles backward page navigation (PF7) if not page 1, decrements page num, repositions to prev page key, gets summary, initializes list, processes forward to redisplay current page. Inputs CDEMO-CPVS-PAGE-NUM/PREVPGS, outputs updated page data/message if at top. Logic checks page >1, sets NEXT-PAGE-YES/SEND-ERASE-NO. Errors via WS-MESSAGE if at top. Calls GET-AUTH-SUMMARY, INITIALIZE-AUTH-DATA, PROCESS-PAGE-FORWARD.",
+      "purpose": "Handles backward page navigation (PF7). Consumes CDEMO-CPVS-PAGE-NUM and PAUKEY-PREV-PG array from commarea. Produces updated page num, WS-AUTH-KEY-SAVE from prev key, refreshed list via PROCESS-PAGE-FORWARD. Business logic decrements page if >1, loads prev key, calls GET-AUTH-SUMMARY and PROCESS-PAGE-FORWARD; else error message. Sets SEND-ERASE-NO and NEXT-PAGE-YES. Calls GET-AUTH-SUMMARY, INITIALIZE-AUTH-DATA, PROCESS-PAGE-FORWARD.",
       "called_by": [
         "MAIN-PARA"
       ],
@@ -468,7 +526,7 @@
     {
       "paragraph_name": "PROCESS-PF8-KEY",
       "summary": null,
-      "purpose": "Handles forward page navigation (PF8) to last/next page, repositions to last key if set, gets summary, repositions auths, sets flags, processes forward if next available else message at bottom. Inputs CDEMO-CPVS-PAUKEY-LAST, outputs updated list/message. Logic determines if more pages via peek next. Calls GET-AUTH-SUMMARY, REPOSITION-AUTHORIZATIONS, INITIALIZE-AUTH-DATA, PROCESS-PAGE-FORWARD.",
+      "purpose": "Handles forward page navigation to next page (PF8). Consumes CDEMO-CPVS-PAUKEY-LAST from commarea. Produces repositioned auth list via REPOSITION-AUTHORIZATIONS and PROCESS-PAGE-FORWARD. Business logic uses last key for GNP reposition if valid, sets NEXT-PAGE-YES/NO based on further read; error if at end. Sets SEND-ERASE-NO. Calls GET-AUTH-SUMMARY, REPOSITION-AUTHORIZATIONS, INITIALIZE-AUTH-DATA, PROCESS-PAGE-FORWARD.",
       "called_by": [
         "MAIN-PARA"
       ],
@@ -489,7 +547,7 @@
     {
       "paragraph_name": "PROCESS-PAGE-FORWARD",
       "summary": null,
-      "purpose": "Populates one page (5 auths) via loop: init index=1, until 5/EOF/ERR, reposition if PF7 first, else GNP next detail, populate list entry if success, track last/prev keys/page num, peek one extra for NEXT-PAGE-YES. Inputs current IMS position/WS-AUTH-KEY-SAVE, outputs 5 map list fields + commarea keys/page. Business logic limits to 5 per page, tracks navigation keys. Errors stop loop. Calls REPOSITION-AUTHORIZATIONS/GET-AUTHORIZATIONS, POPULATE-AUTH-LIST, GET-AUTHORIZATIONS.",
+      "purpose": "Fills the current page with up to 5 authorization details by sequential GNP reads. Consumes current IMS position/WS-AUTH-KEY-SAVE. Produces CDEMO-CPVS-AUTH-KEYS(1-5), PAUKEY-LAST/PREV-PG, map fields TRNIDxxI/PDATExxI etc via POPULATE-AUTH-LIST, sets NEXT-PAGE-YES if more. Business logic loops WS-IDX 1-5 calling GET-AUTHORIZATIONS or REPOSITION for first, populates if no EOF/error, peeks one extra for next flag. Handles PF7 reposition special case. Calls REPOSITION-AUTHORIZATIONS, GET-AUTHORIZATIONS, POPULATE-AUTH-LIST.",
       "called_by": [
         "GATHER-DETAILS",
         "PROCESS-PF7-KEY",
@@ -509,13 +567,97 @@
       "metadata": null
     },
     {
+      "paragraph_name": "GET-AUTHORIZATIONS",
+      "summary": null,
+      "purpose": "Performs IMS GNP to fetch next PAUTDTL1 detail segment. Consumes current PCB position. Produces PENDING-AUTH-DETAILS populated. Business logic executes DLI GNP PAUTDTL1, evaluates IMS-RETURN-CODE: OK continues, GE/GB sets EOF, others error with message and SEND. No subordinate calls.",
+      "called_by": [
+        "PROCESS-PAGE-FORWARD"
+      ],
+      "calls": [],
+      "citation": [
+        458,
+        486
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "REPOSITION-AUTHORIZATIONS",
+      "summary": null,
+      "purpose": "Repositions IMS cursor to specific authorization key for paging. Consumes WS-AUTH-KEY-SAVE moved to PA-AUTHORIZATION-KEY. Produces PENDING-AUTH-DETAILS at key. Business logic DLI GNP PAUTDTL1 WHERE PAUT9CTS=KEY, evaluates code: OK/AUTHS-NOT-EOF, GE/GB EOF, other error/SEND. No calls.",
+      "called_by": [
+        "PROCESS-PF8-KEY",
+        "PROCESS-PAGE-FORWARD"
+      ],
+      "calls": [],
+      "citation": [
+        488,
+        518
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "POPULATE-AUTH-LIST",
+      "summary": null,
+      "purpose": "Transforms and maps current detail segment to screen list fields for current WS-IDX (1-5). Consumes PENDING-AUTH-DETAILS fields like PA-APPROVED-AMT, dates, resp code. Produces map fields TRNIDxxI, PAMTxxI, CDEMO-CPVS-AUTH-KEYS(WS-IDX). Business logic formats time/date, sets status A/D, EVALUATE WS-IDX to assign specific map fields and unprotected attrs. No errors or calls.",
+      "called_by": [
+        "PROCESS-PAGE-FORWARD"
+      ],
+      "calls": [],
+      "citation": [
+        522,
+        605
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "INITIALIZE-AUTH-DATA",
+      "summary": null,
+      "purpose": "Clears the 5 authorization list fields in map to protected blanks before population. Consumes nothing specific. Produces SPACES in TRNIDxxI/PDATE etc, DFHBMPRO in SEL000xA. Business logic VARYING WS-IDX 1-5 EVALUATE to set each group of fields. No errors/calls.",
+      "called_by": [
+        "GATHER-DETAILS",
+        "PROCESS-PF7-KEY",
+        "PROCESS-PF8-KEY"
+      ],
+      "calls": [],
+      "citation": [
+        608,
+        662
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "RETURN-TO-PREV-SCREEN",
+      "summary": null,
+      "purpose": "Prepares XCTL to previous or menu program on PF3. Consumes CDEMO-TO-PROGRAM (defaults COSGN00C). Produces updated commarea context flags. Business logic sets from/to programs, context 0, XCTL PROGRAM. No errors.",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [],
+      "citation": [
+        665,
+        677
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
       "paragraph_name": "SEND-PAULST-SCREEN",
       "summary": null,
-      "purpose": "Sends the populated output map COPAU0AO with header/message, ERASE if flag yes else refresh, CURSOR position. Inputs COPAU0AO fields, WS-MESSAGE, SEND-ERASE-FLG. Syncpoint IMS if PSB scheduled. No decisions, always sends. Calls POPULATE-HEADER-INFO.",
+      "purpose": "Sends the populated map to terminal with optional ERASE. Consumes fully populated COPAU0AO incl message/header. Produces screen display. Business logic syncpoint if PSB scheduled, calls POPULATE-HEADER-INFO, SEND MAP COPAU0A ERASE if flag or CURSOR only. No errors.",
       "called_by": [
         "MAIN-PARA",
+        "PROCESS-ENTER-KEY",
         "GETCARDXREF-BYACCT",
-        "GETACCTDATA-BYACCT"
+        "GET-AUTH-SUMMARY"
       ],
       "calls": [
         "POPULATE-HEADER-INFO"
@@ -531,7 +673,7 @@
     {
       "paragraph_name": "RECEIVE-PAULST-SCREEN",
       "summary": null,
-      "purpose": "Receives input map COPAU0AI with RESP codes. Inputs none directly, outputs map fields/RESP. No logic or errors handled here.",
+      "purpose": "Receives user input from map into COPAU0AI with resp codes. Consumes screen data. Produces COPAU0AI fields populated, WS-RESP-CD/REAS. Business logic CICS RECEIVE MAP. No further logic.",
       "called_by": [
         "MAIN-PARA"
       ],
@@ -545,9 +687,25 @@
       "metadata": null
     },
     {
+      "paragraph_name": "POPULATE-HEADER-INFO",
+      "summary": null,
+      "purpose": "Fills static header fields with titles, tran/prog names, current date/time. Consumes FUNCTION CURRENT-DATE. Produces TITLE01O-02O, TRNNAMEO, PGMNAMEO, CURDATEO, CURTIMEO in map. Business logic formats date/time from WS-CURDATE-*, moves constants. No errors/calls.",
+      "called_by": [
+        "SEND-PAULST-SCREEN"
+      ],
+      "calls": [],
+      "citation": [
+        726,
+        747
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
       "paragraph_name": "GATHER-ACCOUNT-DETAILS",
       "summary": null,
-      "purpose": "Retrieves and displays account header info: xref, acct, cust reads, formats customer name/address/phone, credit limits, auth summary stats (counts/bals/amts) if found. Inputs WS-ACCT-ID, outputs map fields like CNAMEO, CREDLIMO, APPRCNTO. Chains file reads, formats strings. Errors send screen with message. Calls GETCARDXREF-BYACCT, GETACCTDATA-BYACCT, GETCUSTDATA-BYCUST, GET-AUTH-SUMMARY.",
+      "purpose": "Retrieves and displays account/customer summary info from VSAM files and IMS summary. Consumes WS-ACCT-ID. Produces map fields CNAMEO, ADDR001O-002O, CREDLIMO, APPRCNTO etc from records/IMS. Business logic calls file reads, formats name/address, moves limits/balances/counts if summary found else zeros. Calls GET-AUTH-SUMMARY.",
       "called_by": [
         "GATHER-DETAILS"
       ],
@@ -559,7 +717,100 @@
       ],
       "citation": [
         750,
-        808
+        807
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "GETCARDXREF-BYACCT",
+      "summary": null,
+      "purpose": "Reads card xref VSAM via alt index for cust/card nums. Consumes WS-ACCT-ID to RID. Produces CARD-XREF-RECORD, CDEMO-CUST-ID/CARD-NUM. Business logic CICS READ, NORMAL moves fields, NOTFND/OTHER error message/SEND.",
+      "called_by": [
+        "GATHER-ACCOUNT-DETAILS"
+      ],
+      "calls": [
+        "SEND-PAULST-SCREEN"
+      ],
+      "citation": [
+        812,
+        862
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "GETACCTDATA-BYACCT",
+      "summary": null,
+      "purpose": "Reads account VSAM by acct ID from xref. Consumes XREF-ACCT-ID to RID. Produces ACCOUNT-RECORD. Business logic CICS READ, NORMAL continue, NOTFND/OTHER error/SEND.",
+      "called_by": [
+        "GATHER-ACCOUNT-DETAILS"
+      ],
+      "calls": [
+        "SEND-PAULST-SCREEN"
+      ],
+      "citation": [
+        865,
+        912
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "GETCUSTDATA-BYCUST",
+      "summary": null,
+      "purpose": "Reads customer VSAM by cust ID from xref. Consumes XREF-CUST-ID to RID. Produces CUSTOMER-RECORD. Business logic CICS READ, NORMAL continue, NOTFND/OTHER error/SEND.",
+      "called_by": [
+        "GATHER-ACCOUNT-DETAILS"
+      ],
+      "calls": [
+        "SEND-PAULST-SCREEN"
+      ],
+      "citation": [
+        915,
+        963
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "GET-AUTH-SUMMARY",
+      "summary": null,
+      "purpose": "Schedules PSB and GU IMS summary segment by acct ID. Consumes CDEMO-ACCT-ID to PA-ACCT-ID. Produces PENDING-AUTH-SUMMARY if found, sets FOUND-PAUT-SMRY-SEG flag. Business logic SCHEDULE-PSB, DLI GU WHERE ACCNTID=, OK found, GE notfound, other error/SEND.",
+      "called_by": [
+        "PROCESS-PF7-KEY",
+        "PROCESS-PF8-KEY",
+        "GATHER-ACCOUNT-DETAILS"
+      ],
+      "calls": [
+        "SCHEDULE-PSB",
+        "SEND-PAULST-SCREEN"
+      ],
+      "citation": [
+        966,
+        996
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "SCHEDULE-PSB",
+      "summary": null,
+      "purpose": "Schedules IMS PSB 'PSBPAUTB' handling duplicates. Consumes PSB-NAME. Produces scheduled PCB, sets IMS-PSB-SCHD flag. Business logic DLI SCHD NODHABEND, if TC TERM+SCHD again, OK set flag else error/SEND.",
+      "called_by": [
+        "GET-AUTH-SUMMARY"
+      ],
+      "calls": [
+        "SEND-PAULST-SCREEN"
+      ],
+      "citation": [
+        1001,
+        1031
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
@@ -568,62 +819,60 @@
   ],
   "error_handling": [
     {
-      "condition": "EIBAID OTHER than ENTER/PF3/PF7/PF8",
-      "action": "Set WS-ERR-FLG 'Y', invalid key message, send screen",
+      "condition": "CICS READ RESP NOT NORMAL (e.g. NOTFND)",
+      "action": "Set WS-MESSAGE with resp/reason, MOVE -1 to ACCTIDL, PERFORM SEND-PAULST-SCREEN",
+      "citation": [
+        828,
+        846
+      ]
+    },
+    {
+      "condition": "IMS DLI GNP/REPOSITION STATUS NOT OK/GE/GB",
+      "action": "Set WS-ERR-FLG 'Y', build WS-MESSAGE with IMS-RETURN-CODE, MOVE -1 ACCTIDL, SEND-PAULST-SCREEN",
+      "citation": [
+        467,
+        474
+      ]
+    },
+    {
+      "condition": "Invalid EIBAID (OTHER)",
+      "action": "Set WS-ERR-FLG 'Y', MOVE -1 ACCTIDL, CCDA-MSG-INVALID-KEY to WS-MESSAGE, SEND",
       "citation": [
         246
       ]
     },
     {
-      "condition": "CICS READ RESP NOT NORMAL/NOTFND",
-      "action": "Format error message with RESP/RESP2, send screen",
+      "condition": "PSB schedule failure (NOT STATUS-OK)",
+      "action": "WS-ERR-FLG 'Y', message with code, SEND",
       "citation": [
-        828,
-        879,
-        930
-      ]
-    },
-    {
-      "condition": "IMS DIBSTAT NOT OK/GE/GB",
-      "action": "Set WS-ERR-FLG 'Y', format IMS code message, send screen",
-      "citation": [
-        467,
-        979
-      ]
-    },
-    {
-      "condition": "ACCTIDI blank/low or non-numeric",
-      "action": "Error message, clear field to -1",
-      "citation": [
-        264,
-        273
+        1017
       ]
     }
   ],
   "sql_operations": [],
   "cics_operations": [
     {
-      "command": "SEND MAP",
-      "resource": "COPAU0A",
-      "purpose": "Display/refresh authorization summary screen with ERASE or CURSOR",
-      "citation": 695
+      "command": "RECEIVE MAP",
+      "resource": "COPAU0A/COPAU00",
+      "purpose": "Capture user input account ID and selections",
+      "citation": 715
     },
     {
-      "command": "RECEIVE MAP",
-      "resource": "COPAU0A",
-      "purpose": "Receive user input from screen fields",
-      "citation": 715
+      "command": "SEND MAP",
+      "resource": "COPAU0A/COPAU00",
+      "purpose": "Display populated summary screen with cursor/erase",
+      "citation": 695
     },
     {
       "command": "XCTL PROGRAM",
       "resource": "COPAUS1C/COMEN01C/etc",
-      "purpose": "Transfer to details/menu screens preserving commarea",
+      "purpose": "Transfer to detail or menu program preserving commarea",
       "citation": 323
     },
     {
       "command": "RETURN TRANSID",
       "resource": "CPVS",
-      "purpose": "Return control to CICS with updated commarea and transaction",
+      "purpose": "Return control keeping transaction active with updated commarea",
       "citation": 254
     },
     {
@@ -631,18 +880,24 @@
       "resource": "CXACAIX/ACCTDAT/CUSTDAT",
       "purpose": "Retrieve VSAM records by RIDFLD",
       "citation": 818
+    },
+    {
+      "command": "SYNCPOINT",
+      "resource": "",
+      "purpose": "Commit before SEND if PSB scheduled",
+      "citation": 686
     }
   ],
   "open_questions": [
     {
-      "question": "Exact layout/fields of copybooks like COCOM01Y, COPAU00, CIPAUSMY",
-      "context": "Inferred from usage but not fully defined in source",
-      "suggestion": "Review copybook source files"
+      "question": "Exact field layouts and meanings in copybooks like CIPAUSMY, CVACT01Y",
+      "context": "Copybooks not provided in source; inferred from usage but precise types/sizes unknown",
+      "suggestion": "Provide copybook sources for field-level accuracy"
     },
     {
-      "question": "Calling programs/transactions invoking CPVS",
-      "context": "Not specified in this source",
-      "suggestion": "Trace CICS transaction definitions or callers"
+      "question": "Calling programs and full navigation flow (e.g. who calls CPVS)",
+      "context": "No self-references; commarea suggests from menu like COMEN01C",
+      "suggestion": "Analyze caller programs or JCL/TDQs"
     }
   ]
 }

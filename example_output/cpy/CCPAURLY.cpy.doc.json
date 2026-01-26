@@ -4,13 +4,13 @@
     "file_name": "cpy/CCPAURLY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T02:33:33.455666",
+    "analyzed_at": "2026-01-26T14:22:33.175169",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the data structure for a Pending Authorization Response record. It specifies fields for card number, transaction ID, authorization ID code, response code, response reason, and approved amount. The structure supports payment authorization processing in mainframe COBOL programs.",
-    "business_context": "Credit card transaction authorization responses, capturing details from pending authorization requests (e.g., from card issuers)",
+    "summary": "The CCPAURLY copybook defines a COBOL data structure at level 05 named implicitly as a group for Pending Authorization Response (PA-RL fields). It includes fields for card number (16 chars), transaction ID (15 chars), auth ID code (6 chars), auth response code (2 chars), auth response reason (4 chars), and approved amount (signed numeric with 10 integer digits, 2 decimals). This structure holds response data from payment authorization requests, as indicated by the header comments.",
+    "business_context": "Payment processing for pending card authorizations, likely in e-commerce or financial systems handling transaction approvals (copyright Amazon.com).",
     "program_type": "UTILITY",
     "citations": [
       1,
@@ -31,62 +31,7 @@
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [
-    {
-      "rule_id": "BR001",
-      "description": "PA-RL-CARD-NUM field stores the card number as a fixed 16-character alphanumeric string",
-      "logic_summary": "Format enforced by PIC X(16) clause",
-      "conditions": [],
-      "citation": [
-        19
-      ]
-    },
-    {
-      "rule_id": "BR002",
-      "description": "PA-RL-TRANSACTION-ID field stores the transaction identifier as a fixed 15-character alphanumeric string",
-      "logic_summary": "Format enforced by PIC X(15) clause",
-      "conditions": [],
-      "citation": [
-        20
-      ]
-    },
-    {
-      "rule_id": "BR003",
-      "description": "PA-RL-AUTH-ID-CODE field stores the authorization ID code as a fixed 6-character alphanumeric string",
-      "logic_summary": "Format enforced by PIC X(06) clause",
-      "conditions": [],
-      "citation": [
-        21
-      ]
-    },
-    {
-      "rule_id": "BR004",
-      "description": "PA-RL-AUTH-RESP-CODE field stores the authorization response code as a fixed 2-character alphanumeric string",
-      "logic_summary": "Format enforced by PIC X(02) clause",
-      "conditions": [],
-      "citation": [
-        22
-      ]
-    },
-    {
-      "rule_id": "BR005",
-      "description": "PA-RL-AUTH-RESP-REASON field stores the authorization response reason as a fixed 4-character alphanumeric string",
-      "logic_summary": "Format enforced by PIC X(04) clause",
-      "conditions": [],
-      "citation": [
-        23
-      ]
-    },
-    {
-      "rule_id": "BR006",
-      "description": "PA-RL-APPROVED-AMT field stores the approved amount as a signed numeric value with 10 integer digits, decimal point, and 2 fractional digits",
-      "logic_summary": "Format enforced by PIC +9(10).99 clause",
-      "conditions": [],
-      "citation": [
-        24
-      ]
-    }
-  ],
+  "business_rules": [],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
@@ -99,9 +44,14 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "In which specific programs or sections (e.g., WORKING-STORAGE, LINKAGE, FILE_SECTION) is this copybook included?",
-      "context": "Copybook file does not specify usage context",
-      "suggestion": "Analyze including COBOL programs via grep or cross-reference tools for COPY CCPAURLY statements"
+      "question": "In which programs or sections (e.g., WORKING-STORAGE, LINKAGE, FILE-SECTION) is this copybook included?",
+      "context": "The copybook defines a data structure but does not specify usage context; no including program provided.",
+      "suggestion": "Analyze programs that COPY this copybook to determine inclusion location and usage."
+    },
+    {
+      "question": "What are the exact validation rules or population logic for the defined fields?",
+      "context": "Copybook only defines PIC clauses; no logic provided.",
+      "suggestion": "Review programs using this copybook for MOVE, IF statements on these fields."
     }
   ]
 }
