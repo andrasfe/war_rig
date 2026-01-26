@@ -281,8 +281,8 @@ class CallGraphAnalyzer:
             file_type = self._map_language_to_file_type(language)
 
             # Create ProgramInfo - use canonical_name as program_id
-            # Skip paragraphs for now as they are internal, but include procedures and programs
-            if artifact_type in ("procedure", "program", "job"):
+            # Skip paragraphs for now as they are internal, but include procedures, programs, and copybooks
+            if artifact_type in ("procedure", "program", "job", "copybook"):
                 # For JCL jobs, use file name for more intuitive identification
                 program_id = canonical_name
                 if artifact_type == "job" and file_path:
@@ -311,8 +311,8 @@ class CallGraphAnalyzer:
         for rel in relationships:
             rel_type = rel.get("relationship_type", "")
 
-            # Only process call-like relationships
-            if rel_type not in ("calls", "performs", "invokes", "executes"):
+            # Only process call-like and include relationships
+            if rel_type not in ("calls", "performs", "invokes", "executes", "includes"):
                 continue
 
             from_artifact = rel.get("from_artifact", "")
@@ -459,6 +459,7 @@ class CallGraphAnalyzer:
             "performs": "PERFORM",
             "invokes": "INVOKE",
             "executes": "EXEC",
+            "includes": "COPY",
         }
         return mapping.get(rel_type.lower(), "CALL")
 
@@ -1072,6 +1073,12 @@ class CallGraphAnalyzer:
             sanitized = re.sub(r"[^A-Za-z0-9_]", "", sanitized)
             return sanitized
 
+        # Identify copybooks (file_type == "COPYBOOK") for separate rendering
+        copybook_ids = {
+            prog_id for prog_id, info in analysis.documented_programs.items()
+            if info.file_type == "COPYBOOK"
+        }
+
         # Identify programs that make calls (callers) vs those that are only called
         callers = set()
         callees = set()
@@ -1081,23 +1088,25 @@ class CallGraphAnalyzer:
                     callers.add(prog_id)
                     callees.add(call.callee)
 
-        # Programs that are called but also documented
-        called_documented = callees & set(analysis.documented_programs.keys())
+        # Programs that are called but also documented (excluding copybooks)
+        called_documented = (callees & set(analysis.documented_programs.keys())) - copybook_ids
+        # Copybooks that are included
+        called_copybooks = callees & copybook_ids
         # Programs that only call others (entry points that make calls)
         only_callers = callers - callees
         # Programs with no connections
-        isolated = set(analysis.documented_programs.keys()) - callers - callees
+        isolated = set(analysis.documented_programs.keys()) - callers - callees - copybook_ids
 
         # Subgraph: Jobs/Entry Points (callers)
-        if only_callers or (callers - called_documented):
+        if only_callers or (callers - called_documented - copybook_ids):
             lines.append("")
             lines.append("    subgraph jobs[\" \"]")
-            for prog in sorted(only_callers | (callers - called_documented)):
+            for prog in sorted(only_callers | (callers - called_documented - copybook_ids)):
                 node_id = sanitize_id(prog)
                 lines.append(f"        {node_id}([{prog}])")
             lines.append("    end")
 
-        # Subgraph: Procedures (documented callees)
+        # Subgraph: Procedures (documented callees, excluding copybooks)
         if called_documented:
             lines.append("")
             lines.append("    subgraph procs[\" \"]")
@@ -1107,6 +1116,15 @@ class CallGraphAnalyzer:
                     lines.append(f"        {node_id}[/{prog}/]")
                 else:
                     lines.append(f"        {node_id}[{prog}]")
+            lines.append("    end")
+
+        # Subgraph: Copybooks
+        if called_copybooks:
+            lines.append("")
+            lines.append("    subgraph copybooks[\" \"]")
+            for prog in sorted(called_copybooks):
+                node_id = sanitize_id(prog)
+                lines.append(f"        {node_id}{{{{{prog}}}}}")
             lines.append("    end")
 
         # Subgraph: Missing/External programs
@@ -1128,7 +1146,9 @@ class CallGraphAnalyzer:
                 if call.callee in analysis.system_utilities:
                     continue
                 callee_id = sanitize_id(call.callee)
-                if "XCTL" in call.call_type:
+                if call.call_type == "COPY":
+                    lines.append(f"    {caller_id} -.->|COPY| {callee_id}")
+                elif "XCTL" in call.call_type:
                     lines.append(f"    {caller_id} -.->|XCTL| {callee_id}")
                 elif "LINK" in call.call_type:
                     lines.append(f"    {caller_id} -->|LINK| {callee_id}")
@@ -1142,6 +1162,12 @@ class CallGraphAnalyzer:
             ids = [sanitize_id(p) for p in sorted(analysis.entry_points)]
             lines.append("    classDef entryPoint fill:#90EE90,stroke:#228B22")
             lines.append(f"    class {','.join(ids)} entryPoint")
+
+        # Copybooks
+        if called_copybooks:
+            ids = [sanitize_id(p) for p in sorted(called_copybooks)]
+            lines.append("    classDef copybook fill:#E8F5E9,stroke:#4CAF50")
+            lines.append(f"    class {','.join(ids)} copybook")
 
         # Truly missing (not resolved)
         truly_missing = analysis.custom_missing - set(analysis.resolved_programs.keys())
