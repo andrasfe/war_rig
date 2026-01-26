@@ -95,6 +95,10 @@ class Preprocessor:
         if self._spec.comments.strip_columns_start is not None:
             content = self._strip_sequence_columns(content)
 
+        # Step 0.5: Strip right-side columns (e.g., COBOL columns 73-80)
+        if self._spec.comments.strip_right_start is not None:
+            content = self._strip_right_columns(content)
+
         # Step 1: Strip fixed-column comments (e.g., COBOL column 7)
         if self._spec.comments.fixed_column is not None:
             content = self._strip_fixed_column_comments(content)
@@ -244,6 +248,52 @@ class Preprocessor:
                 result.append(new_line)
             else:
                 # Line is too short - keep as-is
+                result.append(line)
+
+        return "".join(result)
+
+    def _strip_right_columns(self, content: str) -> str:
+        """
+        Strip right-side columns from fixed-format source.
+
+        In COBOL fixed format, columns 73-80 contain sequence/identification
+        numbers that should not be parsed as code. This removes those columns
+        from each line.
+
+        The column indices refer to the ORIGINAL source column positions
+        (before any left-side stripping). The method automatically adjusts
+        for any left-side columns that were already stripped.
+
+        Args:
+            content: Source content to process (after left-side stripping).
+
+        Returns:
+            Content with right-side columns removed from each line.
+        """
+        right_start = self._spec.comments.strip_right_start
+        if right_start is None:
+            return content
+
+        # Adjust for left-side columns already stripped
+        left_stripped = self._get_stripped_column_count()
+        adjusted_start = right_start - 1 - left_stripped  # 0-indexed
+
+        if adjusted_start < 0:
+            return content
+
+        lines = content.splitlines(keepends=True)
+        result = []
+
+        for line in lines:
+            # Separate trailing newline
+            has_newline = line.endswith("\n")
+            line_content = line.rstrip("\n")
+
+            if len(line_content) > adjusted_start:
+                # Truncate at the right-side column boundary
+                new_line = line_content[:adjusted_start].rstrip()
+                result.append(new_line + ("\n" if has_newline else ""))
+            else:
                 result.append(line)
 
         return "".join(result)

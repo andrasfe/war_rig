@@ -27,6 +27,9 @@ comments:
   # Strip COBOL sequence numbers from columns 1-6
   strip_columns_start: 1
   strip_columns_end: 6
+  # Strip COBOL trailing sequence/identification numbers from columns 73-80
+  strip_right_start: 73
+  strip_right_end: 80
 
 strings:
   delimiters:
@@ -84,23 +87,36 @@ reference_patterns:
     unmask_capture: true
 
   - name: call_variable
-    pattern: "CALL\\s+([A-Z0-9-]+)"
+    pattern: "(?<![-])\\bCALL\\s+(?!__STR_|IF\\b|ELSE\\b|END-|USING\\b|ON\\b)([A-Z0-9][A-Z0-9-]*[A-Z0-9]|[A-Z0-9])"
     capture_groups:
       - 1
     relationship_type: calls
-    must_not_follow: "CALL\\s+__STR_"
+    ignore_case: true
 
-  # PERFORM statements
+  # PERFORM statements - exclude COBOL reserved words (UNTIL, VARYING, etc.)
+  # and prevent matching PERFORM inside END-PERFORM via word boundary (\b)
   - name: perform
-    pattern: "PERFORM\\s+([A-Z0-9-]+)"
+    pattern: "(?<![-])\\bPERFORM\\s+(?!UNTIL\\b|VARYING\\b|TIMES\\b|WITH\\b|TEST\\b)([A-Z0-9][A-Z0-9-]*[A-Z0-9]|[A-Z0-9])"
     capture_groups:
       - 1
     relationship_type: performs
     target_type_hint: paragraph
+    ignore_case: true
 
   # EXEC SQL statements
+  # Schema-qualified table names use dots (e.g., CARDDEMO.TRANSACTION_TYPE)
   - name: exec_sql_select
-    pattern: "EXEC\\s+SQL\\s+SELECT\\s+.+?\\s+FROM\\s+([A-Za-z0-9_]+)"
+    pattern: "EXEC\\s+SQL\\s+SELECT\\s+.+?\\s+FROM\\s+([A-Za-z0-9_.]+)"
+    capture_groups:
+      - 1
+    relationship_type: reads
+    target_type_hint: table
+    ignore_case: true
+    dotall: true
+
+  # DECLARE CURSOR FOR SELECT ... FROM (captures table from cursor declarations)
+  - name: exec_sql_declare_cursor_select
+    pattern: "EXEC\\s+SQL\\s+DECLARE\\s+\\S+\\s+CURSOR\\s+(?:WITH\\s+HOLD\\s+)?FOR\\s+SELECT\\s+.+?\\s+FROM\\s+([A-Za-z0-9_.]+)"
     capture_groups:
       - 1
     relationship_type: reads
@@ -109,30 +125,34 @@ reference_patterns:
     dotall: true
 
   - name: exec_sql_insert
-    pattern: "EXEC\\s+SQL\\s+INSERT\\s+INTO\\s+([A-Za-z0-9_]+)"
+    pattern: "EXEC\\s+SQL\\s+INSERT\\s+INTO\\s+([A-Za-z0-9_.]+)"
     capture_groups:
       - 1
     relationship_type: writes
     target_type_hint: table
     ignore_case: true
+    dotall: true
 
   - name: exec_sql_update
-    pattern: "EXEC\\s+SQL\\s+UPDATE\\s+([A-Za-z0-9_]+)"
+    pattern: "EXEC\\s+SQL\\s+UPDATE\\s+([A-Za-z0-9_.]+)"
     capture_groups:
       - 1
     relationship_type: updates
     target_type_hint: table
     ignore_case: true
+    dotall: true
 
   - name: exec_sql_delete
-    pattern: "EXEC\\s+SQL\\s+DELETE\\s+FROM\\s+([A-Za-z0-9_]+)"
+    pattern: "EXEC\\s+SQL\\s+DELETE\\s+FROM\\s+([A-Za-z0-9_.]+)"
     capture_groups:
       - 1
     relationship_type: deletes
     target_type_hint: table
     ignore_case: true
+    dotall: true
 
   # EXEC CICS statements
+  # dotall needed for multiline EXEC CICS blocks where PROGRAM is on a separate line
   - name: cics_link
     pattern: "EXEC\\s+CICS\\s+LINK\\s+PROGRAM\\s*\\(\\s*['\"]?([A-Za-z0-9-]+)['\"]?\\s*\\)"
     capture_groups:
@@ -140,6 +160,7 @@ reference_patterns:
     relationship_type: calls
     target_type_hint: program
     ignore_case: true
+    dotall: true
 
   - name: cics_xctl
     pattern: "EXEC\\s+CICS\\s+XCTL\\s+PROGRAM\\s*\\(\\s*['\"]?([A-Za-z0-9-]+)['\"]?\\s*\\)"
@@ -148,6 +169,7 @@ reference_patterns:
     relationship_type: calls
     target_type_hint: program
     ignore_case: true
+    dotall: true
 
   - name: cics_read
     # Match both FILE and DATASET keywords for CICS file reads
@@ -179,6 +201,7 @@ reference_patterns:
     relationship_type: sends_to
     target_type_hint: map
     ignore_case: true
+    dotall: true
 
   - name: cics_receive_map
     pattern: "EXEC\\s+CICS\\s+RECEIVE\\s+MAP\\s*\\(\\s*['\"]?([A-Za-z0-9-]+)['\"]?\\s*\\)"
@@ -187,14 +210,38 @@ reference_patterns:
     relationship_type: receives_from
     target_type_hint: map
     ignore_case: true
+    dotall: true
 
 preprocessor_patterns:
+  # Word boundary prevents matching variable names ending in -COPY
+  # e.g., REQUEST-MSG-COPY should not trigger COPY pattern
   - name: copy
-    pattern: "COPY\\s+([A-Za-z0-9-]+)"
+    pattern: "(?<![A-Za-z0-9-])COPY\\s+([A-Za-z0-9-]+)"
     capture_groups:
       - 1
     relationship_type: includes
     target_type_hint: copybook
+
+  # COPY with quoted member name (e.g., COPY 'CSSTRPFY')
+  # The preprocessor masks quotes to __STR_N__ placeholders
+  # Word boundary prevents matching variable names ending in -COPY
+  - name: copy_quoted
+    pattern: "(?<![A-Za-z0-9-])COPY\\s+(__STR_\\d+__)"
+    capture_groups:
+      - 1
+    relationship_type: includes
+    target_type_hint: copybook
+    unmask_capture: true
+
+  # EXEC SQL INCLUDE (DB2 equivalent of COPY)
+  - name: exec_sql_include
+    pattern: "EXEC\\s+SQL\\s+INCLUDE\\s+([A-Za-z0-9_-]+)\\s+END-EXEC"
+    capture_groups:
+      - 1
+    relationship_type: includes
+    target_type_hint: copybook
+    ignore_case: true
+    dotall: true
 
 naming:
   case: upper

@@ -134,6 +134,7 @@ class ParserEngine:
                 spec,
                 file_path,
                 preprocessed.line_map,
+                preprocessed.masked_strings,
             )
             result.preprocessor_directives = directives
 
@@ -908,6 +909,7 @@ class ParserEngine:
         spec: ArtifactSpec,
         file_path: Path,
         line_map: dict[int, int],
+        masked_strings: list[tuple[int, int, str]] | None = None,
     ) -> list[dict]:
         """
         Extract preprocessor directives (COPY, INCLUDE).
@@ -917,11 +919,19 @@ class ParserEngine:
             spec: Artifact specification
             file_path: Path to the source file
             line_map: Mapping from cleaned line numbers to original
+            masked_strings: Optional list of (start, end, original) for masked strings
 
         Returns:
             List of directive dictionaries with type, target, and location
         """
         directives: list[dict] = []
+
+        # Build a lookup table for masked strings
+        placeholder_to_original: dict[str, str] = {}
+        if masked_strings:
+            for i, (_, _, original) in enumerate(masked_strings):
+                placeholder = f"__STR_{i}__"
+                placeholder_to_original[placeholder] = original
 
         for pattern in spec.preprocessor_patterns:
             try:
@@ -936,6 +946,12 @@ class ParserEngine:
                     identifier = self._extract_identifier(match, pattern)
                     if not identifier:
                         continue
+
+                    # If unmask_capture is set, restore original string from placeholder
+                    if pattern.unmask_capture and identifier in placeholder_to_original:
+                        original_string = placeholder_to_original[identifier]
+                        # Strip quotes from string literal
+                        identifier = original_string.strip("'\"")
 
                     # Build source location
                     location = self._build_source_location(

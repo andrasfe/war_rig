@@ -92,6 +92,9 @@ class CommentSyntax(BaseModel):
     # Columns to strip from each line (e.g., 1-6 for COBOL sequence numbers)
     strip_columns_start: int | None = None  # 1-indexed, inclusive
     strip_columns_end: int | None = None  # 1-indexed, inclusive
+    # Right-side columns to strip (e.g., 73-80 for COBOL trailing sequence numbers)
+    strip_right_start: int | None = None  # 1-indexed, inclusive
+    strip_right_end: int | None = None  # 1-indexed, inclusive (or None = end of line)
 
 
 class StringSyntax(BaseModel):

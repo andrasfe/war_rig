@@ -26,6 +26,12 @@ comments:
   line_prefix: null
   block_start: null
   block_end: null
+  # Strip COBOL sequence numbers from columns 1-6
+  strip_columns_start: 1
+  strip_columns_end: 6
+  # Strip COBOL trailing sequence/identification numbers from columns 73-80
+  strip_right_start: 73
+  strip_right_end: 80
 
 strings:
   delimiters:
@@ -59,8 +65,9 @@ definition_patterns:
 reference_patterns: []
 
 preprocessor_patterns:
+  # Word boundary prevents matching variable names ending in -COPY
   - name: copy_nested
-    pattern: "COPY\\s+([A-Za-z0-9-]+)"
+    pattern: "(?<![A-Za-z0-9-])COPY\\s+([A-Za-z0-9-]+)"
     capture_groups:
       - 1
     relationship_type: includes
