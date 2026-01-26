@@ -1,0 +1,110 @@
+{
+  "header": {
+    "program_id": "PSBPAUTB",
+    "file_name": "ims/PSBPAUTB.psb",
+    "file_type": "OTHER",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-26T02:34:48.664231",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This file is the source definition for IMS Program Specification Block (PSB) named PSBPAUTB, targeted for COBOL language applications. It defines a single database PCB named PAUTBPCB for DBD DBPAUTP0 with KEYLEN=14 and PROCOPT=AP, enabling segment retrieval (GET) and unqualified insert (ISRT append) operations. The PCB senses root segment PAUTSUM0 (PARENT=0) and child segment PAUTDTL1 (PARENT=PAUTSUM0).",
+    "business_context": null,
+    "program_type": "BATCH",
+    "citations": [
+      17,
+      18,
+      19,
+      20
+    ]
+  },
+  "inputs": [
+    {
+      "name": "PAUTSUM0",
+      "io_type": "IMS_SEGMENT",
+      "description": "Root segment (PARENT=0) of database DBPAUTP0, accessible for retrieval via GET operations implied by PROCOPT=AP",
+      "copybook": null,
+      "citation": [
+        18
+      ]
+    },
+    {
+      "name": "PAUTDTL1",
+      "io_type": "IMS_SEGMENT",
+      "description": "Child segment of PAUTSUM0 in database DBPAUTP0, accessible for retrieval via GET operations implied by PROCOPT=AP",
+      "copybook": null,
+      "citation": [
+        19
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "DBPAUTP0",
+      "io_type": "IMS_SEGMENT",
+      "description": "IMS database allowing unqualified ISRT (insert as append to last positioned parent) operations enabled by PROCOPT=AP",
+      "copybook": null,
+      "citation": [
+        17
+      ]
+    }
+  ],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "PAUTSUM0",
+        "fields_used": [],
+        "citation": [
+          18
+        ]
+      },
+      {
+        "source": "PAUTDTL1",
+        "fields_used": [],
+        "citation": [
+          19
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "DBPAUTP0",
+        "fields_written": [],
+        "citation": [
+          17
+        ]
+      }
+    ],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [],
+  "error_handling": [],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "Which specific COBOL programs or transactions use this PSB?",
+      "context": "PSB source defines PSBNAME=PSBPAUTB but does not list using programs (line 20)",
+      "suggestion": "Examine JCL STEPLIB/PSB= parameters, IMS application definitions, or transaction routing tables"
+    },
+    {
+      "question": "What are the exact field layouts and key fields (KEYLEN=14) for segments PAUTSUM0 and PAUTDTL1?",
+      "context": "PSB defines segment names and hierarchy but no field-level details (lines 18-19)",
+      "suggestion": "Review corresponding DBD source (DBPAUTP0) or segment copybooks"
+    },
+    {
+      "question": "What is the business purpose of the PAUT database (DBPAUTP0)?",
+      "context": "No descriptive comments beyond copyright/license (lines 1-16)",
+      "suggestion": "Consult system documentation or naming conventions (PAUT likely 'Payment Authority' or similar)"
+    }
+  ]
+}

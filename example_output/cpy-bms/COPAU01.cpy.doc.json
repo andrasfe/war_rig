@@ -1,0 +1,66 @@
+{
+  "header": {
+    "program_id": "COPAU01",
+    "file_name": "cpy-bms/COPAU01.cpy",
+    "file_type": "COPYBOOK",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-26T02:33:00.052494",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This copybook defines the symbolic map structures COPAU1AI (input) and COPAU1AO (output, redefining input) for a CICS BMS screen displaying credit card authorization response details. Fields include transaction name, titles, current date/time, program name, card number, authorization date/time/response/reason/code/amount, POS entry mode, auth source, MCC, card expiration, auth type, transaction ID, auth method/fraud, merchant details (name/ID/city/state/zip), and error message. It follows standard BMS format with length (L: COMP S9(4)), flag (F: X), attribute (A: X), and input data (I: X(n)) for AI, redefined to C/P/H/V/O output fields.",
+    "business_context": "CICS online screen for displaying authorization responses in a credit card payment processing system.",
+    "program_type": "ONLINE_CICS",
+    "citations": [
+      17,
+      181
+    ]
+  },
+  "inputs": [
+    {
+      "name": "COPAU1AI",
+      "io_type": "CICS_MAP",
+      "description": "Symbolic input map structure populated by CICS RECEIVE MAP, holding data from terminal screen fields like card number, auth details, merchant info.",
+      "copybook": null,
+      "citation": [
+        17
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "COPAU1AO",
+      "io_type": "CICS_MAP",
+      "description": "Symbolic output map structure used by CICS SEND MAP to display data on terminal screen, including titles, dates, auth response, merchant info, error message.",
+      "copybook": null,
+      "citation": [
+        181
+      ]
+    }
+  ],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [],
+  "data_flow": {
+    "reads_from": [],
+    "writes_to": [],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [],
+  "error_handling": [],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "Which CICS program(s) include and use this copybook?",
+      "context": "Copybook defines structures but does not reference using programs.",
+      "suggestion": "Search source files for 'COPY COPAU01' or 'COPAU1' mapset references."
+    }
+  ]
+}

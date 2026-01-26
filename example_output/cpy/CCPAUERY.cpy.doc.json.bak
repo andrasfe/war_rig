@@ -1,0 +1,86 @@
+{
+  "header": {
+    "program_id": "CCPAUERY",
+    "file_name": "cpy/CCPAUERY.cpy",
+    "file_type": "COPYBOOK",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-26T02:34:09.314977",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This copybook defines the ERROR-LOG-RECORD data structure for logging pending authorization errors in mainframe applications. It specifies fields for timestamp (ERR-DATE, ERR-TIME), identifiers (ERR-APPLICATION, ERR-PROGRAM, ERR-LOCATION), severity (ERR-LEVEL with 88-levels), subsystem (ERR-SUBSYSTEM with 88-levels), error codes (ERR-CODE-1, ERR-CODE-2), message (ERR-MESSAGE), and event key (ERR-EVENT-KEY). The structure standardizes error log entries across applications.",
+    "business_context": "Facilitates standardized error logging for pending authorization processes in mainframe environments, supporting subsystems such as CICS, IMS, DB2, MQ, and file I/O.",
+    "program_type": "UTILITY",
+    "citations": [
+      1,
+      2,
+      19
+    ]
+  },
+  "inputs": [],
+  "outputs": [
+    {
+      "name": "ERROR-LOG-RECORD",
+      "io_type": "OTHER",
+      "description": "Data structure defining the complete error log record layout, populated by calling programs and written to error log files for auditing and diagnostics.",
+      "copybook": null,
+      "citation": [
+        19,
+        20,
+        40
+      ]
+    }
+  ],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Categorizes error severity levels using ERR-LEVEL field with valid values 'L' (LOG), 'I' (INFO), 'W' (WARNING), 'C' (CRITICAL)",
+      "logic_summary": "88-level condition names enable programmatic checks like IF ERR-CRITICAL for severity-based logic in calling COBOL programs",
+      "conditions": [
+        "ERR-LOG VALUE 'L'",
+        "ERR-INFO VALUE 'I'",
+        "ERR-WARNING VALUE 'W'",
+        "ERR-CRITICAL VALUE 'C'"
+      ],
+      "citation": [
+        26,
+        29
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Identifies originating subsystem using ERR-SUBSYSTEM field with valid values 'A' (APP), 'C' (CICS), 'I' (IMS), 'D' (DB2), 'M' (MQ), 'F' (FILE)",
+      "logic_summary": "88-level condition names allow subsystem-specific error handling like IF ERR-DB2 in calling programs",
+      "conditions": [
+        "ERR-APP VALUE 'A'",
+        "ERR-CICS VALUE 'C'",
+        "ERR-IMS VALUE 'I'",
+        "ERR-DB2 VALUE 'D'",
+        "ERR-MQ VALUE 'M'",
+        "ERR-FILE VALUE 'F'"
+      ],
+      "citation": [
+        31,
+        36
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [],
+    "writes_to": [],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [],
+  "error_handling": [],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": []
+}

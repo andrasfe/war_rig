@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "generated_at": "2026-01-25T18:29:46.525824",
+  "generated_at": "2026-01-26T02:28:53.978407",
   "source_root": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq",
   "artifacts": {
     "procedure::LOADPADB": {
@@ -842,7 +842,7 @@
   },
   "relationships": [
     {
-      "id": "2f95b18f-2086-491c-a95f-240a397e21a0",
+      "id": "fa96ac1e-9c6e-4d7f-83ed-176b7a7fa18c",
       "from_artifact": "program::PAUDBLOD",
       "to_artifact": "copybook::IMSFUNCS",
       "relationship_type": "includes",
@@ -861,7 +861,7 @@
       "is_resolved": true
     },
     {
-      "id": "e1b546ba-c5a8-466f-91d8-717256ce132b",
+      "id": "1435be7d-9a73-4e0c-93c7-f7f0b96392d2",
       "from_artifact": "program::PAUDBLOD",
       "to_artifact": "copybook::CIPAUSMY",
       "relationship_type": "includes",
@@ -880,7 +880,7 @@
       "is_resolved": true
     },
     {
-      "id": "c4f44493-036f-4468-b1a3-73efa8ee8ec2",
+      "id": "7f6df75a-d569-455c-818f-17325e7327f6",
       "from_artifact": "program::PAUDBLOD",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
@@ -899,7 +899,7 @@
       "is_resolved": true
     },
     {
-      "id": "2ff5209a-cd61-4531-93c6-2bcd42d2c14d",
+      "id": "11674866-20c4-4678-b866-4b6fe9f228b0",
       "from_artifact": "program::PAUDBLOD",
       "to_artifact": "copybook::PAUTBPCB",
       "relationship_type": "includes",
@@ -918,7 +918,7 @@
       "is_resolved": true
     },
     {
-      "id": "eef671e5-0a19-421a-a8d7-54f596b4abc6",
+      "id": "cf0b21be-e77a-4877-bdb8-a49424d76dcb",
       "from_artifact": "program::COPAUS2C",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
@@ -937,7 +937,7 @@
       "is_resolved": true
     },
     {
-      "id": "e0603e98-fa68-4386-a4c0-c000bca94b73",
+      "id": "edd2f3b8-0ba4-4429-a7bb-21469b249229",
       "from_artifact": "program::COPAUA0C",
       "to_artifact": "copybook::CCPAURQY",
       "relationship_type": "includes",
@@ -956,7 +956,7 @@
       "is_resolved": true
     },
     {
-      "id": "58e56c84-bffc-4993-8178-518cf1a73242",
+      "id": "065957bf-8623-4767-a711-0ae604bdc7a1",
       "from_artifact": "program::COPAUA0C",
       "to_artifact": "copybook::CCPAURLY",
       "relationship_type": "includes",
@@ -975,7 +975,7 @@
       "is_resolved": true
     },
     {
-      "id": "e00abb8c-23a1-4ec1-9a96-f2f48de044c9",
+      "id": "745d7dc7-99e2-4a70-8559-847d57693e9b",
       "from_artifact": "program::COPAUA0C",
       "to_artifact": "copybook::CCPAUERY",
       "relationship_type": "includes",
@@ -994,7 +994,7 @@
       "is_resolved": true
     },
     {
-      "id": "2dede4ff-be50-4473-9860-b353b599615a",
+      "id": "9bfec3a4-e3bb-46dc-94dd-53fc5d98131a",
       "from_artifact": "program::COPAUA0C",
       "to_artifact": "copybook::CIPAUSMY",
       "relationship_type": "includes",
@@ -1013,7 +1013,7 @@
       "is_resolved": true
     },
     {
-      "id": "a10e6e1d-3ade-49a4-b5fc-5c3781333e29",
+      "id": "4f2a4355-968d-40ba-b6e9-b7555abeebeb",
       "from_artifact": "program::COPAUA0C",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
@@ -1032,7 +1032,7 @@
       "is_resolved": true
     },
     {
-      "id": "e2b94d5f-d30e-4553-ac5b-06bbbf34aab1",
+      "id": "f8a2f656-f725-4442-8a8a-270a3db7b161",
       "from_artifact": "program::DBUNLDGS",
       "to_artifact": "copybook::IMSFUNCS",
       "relationship_type": "includes",
@@ -1051,7 +1051,7 @@
       "is_resolved": true
     },
     {
-      "id": "9611bd8a-132f-4b1b-a173-7d864c010071",
+      "id": "614d2c2d-e50f-48f4-bcb0-a576579d4cbc",
       "from_artifact": "program::DBUNLDGS",
       "to_artifact": "copybook::CIPAUSMY",
       "relationship_type": "includes",
@@ -1070,7 +1070,7 @@
       "is_resolved": true
     },
     {
-      "id": "88d8e221-9dd7-4134-9c97-3e8ed4d65f8d",
+      "id": "3e9a9fd7-9764-449e-a6fe-0db471abacc6",
       "from_artifact": "program::DBUNLDGS",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
@@ -1089,7 +1089,7 @@
       "is_resolved": true
     },
     {
-      "id": "50ef0f97-792a-4634-81b0-958fdb711828",
+      "id": "7c03ff91-ecbf-4790-bd98-986feccce59f",
       "from_artifact": "program::DBUNLDGS",
       "to_artifact": "copybook::PAUTBPCB",
       "relationship_type": "includes",
@@ -1108,7 +1108,7 @@
       "is_resolved": true
     },
     {
-      "id": "1fbe8748-af9a-44a5-8ac0-f7b65047230f",
+      "id": "755b7453-7975-4147-b096-10ebc814ea2a",
       "from_artifact": "program::DBUNLDGS",
       "to_artifact": "copybook::PASFLPCB",
       "relationship_type": "includes",
@@ -1127,7 +1127,7 @@
       "is_resolved": true
     },
     {
-      "id": "751ddcee-96d8-43fc-a820-7ee4abb11f1b",
+      "id": "74d754d4-8168-4337-9f91-c5a7ae33afc0",
       "from_artifact": "program::DBUNLDGS",
       "to_artifact": "copybook::PADFLPCB",
       "relationship_type": "includes",
@@ -1146,7 +1146,7 @@
       "is_resolved": true
     },
     {
-      "id": "51936fa2-875e-4a99-9dc3-6d2c0cbde397",
+      "id": "a4bcf80b-2a1b-4724-91a0-c6ce9add8c5b",
       "from_artifact": "program::CBPAUP0C",
       "to_artifact": "copybook::CIPAUSMY",
       "relationship_type": "includes",
@@ -1165,7 +1165,7 @@
       "is_resolved": true
     },
     {
-      "id": "5e65fde8-ac83-498c-9c6f-be87b5f30284",
+      "id": "61f18590-846d-4b05-b6a1-56079072143f",
       "from_artifact": "program::CBPAUP0C",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
@@ -1184,7 +1184,7 @@
       "is_resolved": true
     },
     {
-      "id": "984391dc-23bf-4440-a307-d22c125acf4b",
+      "id": "0bdb190f-7fe2-4c75-95ca-29fa3962991a",
       "from_artifact": "program::PAUDBUNL",
       "to_artifact": "copybook::IMSFUNCS",
       "relationship_type": "includes",
@@ -1203,7 +1203,7 @@
       "is_resolved": true
     },
     {
-      "id": "7c870483-59f7-4571-b4be-a5a9051f1da1",
+      "id": "8a454d7a-b92a-4b4e-816f-a3a7d6e99946",
       "from_artifact": "program::PAUDBUNL",
       "to_artifact": "copybook::CIPAUSMY",
       "relationship_type": "includes",
@@ -1222,7 +1222,7 @@
       "is_resolved": true
     },
     {
-      "id": "a08fbbfc-dd26-4595-b8dc-8af829ddc8fa",
+      "id": "f81a6739-478e-44b2-a434-6a8179f58599",
       "from_artifact": "program::PAUDBUNL",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
@@ -1241,7 +1241,7 @@
       "is_resolved": true
     },
     {
-      "id": "75faae44-21ff-4214-bce5-f96854a96b09",
+      "id": "7df31c3d-c164-46fe-8dcc-70a6adb79dcf",
       "from_artifact": "program::PAUDBUNL",
       "to_artifact": "copybook::PAUTBPCB",
       "relationship_type": "includes",
@@ -1260,7 +1260,7 @@
       "is_resolved": true
     },
     {
-      "id": "7e2fc69c-e20e-4ba1-b18e-8791a448c645",
+      "id": "77aa0713-e2a9-4c62-aee8-8bafc30992c8",
       "from_artifact": "program::COPAUS1C",
       "to_artifact": "copybook::COPAU01",
       "relationship_type": "includes",
@@ -1279,7 +1279,7 @@
       "is_resolved": true
     },
     {
-      "id": "0eba9089-f672-4dd6-846b-2fef6c322264",
+      "id": "d0ee6fdf-65c4-424c-a0d6-bd7ca22e6fdf",
       "from_artifact": "program::COPAUS1C",
       "to_artifact": "copybook::CIPAUSMY",
       "relationship_type": "includes",
@@ -1298,7 +1298,7 @@
       "is_resolved": true
     },
     {
-      "id": "bbc63f12-9013-4488-995b-17b453e67511",
+      "id": "c2261b8b-1f25-475c-addf-fc2e8c39cbfe",
       "from_artifact": "program::COPAUS1C",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
@@ -1317,7 +1317,7 @@
       "is_resolved": true
     },
     {
-      "id": "4d4afea7-5ddb-4952-9de7-b332630614af",
+      "id": "c886382a-ec57-49ed-baa1-f61ecdeab207",
       "from_artifact": "program::COPAUS0C",
       "to_artifact": "copybook::COPAU00",
       "relationship_type": "includes",
@@ -1336,7 +1336,7 @@
       "is_resolved": true
     },
     {
-      "id": "b55eca92-c173-4abe-96af-6d0ece11e6ba",
+      "id": "9c542cde-f3b5-4722-9ee0-43a2e6aa837e",
       "from_artifact": "program::COPAUS0C",
       "to_artifact": "copybook::CIPAUSMY",
       "relationship_type": "includes",
@@ -1355,7 +1355,7 @@
       "is_resolved": true
     },
     {
-      "id": "1dda7fd2-2bf1-4573-94a1-446cda13fa45",
+      "id": "ba26248c-2979-4169-9e87-21f45b4ba1c5",
       "from_artifact": "program::COPAUS0C",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",

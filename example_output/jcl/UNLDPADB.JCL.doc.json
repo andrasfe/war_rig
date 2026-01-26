@@ -1,0 +1,231 @@
+{
+  "header": {
+    "program_id": "UNLDPADB",
+    "file_name": "jcl/UNLDPADB.JCL",
+    "file_type": "JCL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-26T02:32:44.232598",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This JCL job executes an IMS database unload using the DFSRRC00 utility to extract root segments from PAUDBUNL database and child segments from PAUTBUNL database into sequential files. STEP0 performs cleanup by deleting any existing output files. STEP01 runs the unload utility with DLI access method.",
+    "business_context": "Supports unloading of IMS PAUTHDB databases in the AWS.M2.CARDDEMO payment authorization demo environment for backup, migration, or analysis purposes.",
+    "program_type": "BATCH",
+    "citations": [
+      1,
+      25,
+      38,
+      39
+    ]
+  },
+  "inputs": [
+    {
+      "name": "DDPAUTP0",
+      "io_type": "IMS_SEGMENT",
+      "description": "IMS PAUTHDB primary database dataset containing PAUDBUNL root segments",
+      "copybook": null,
+      "citation": [
+        58
+      ]
+    },
+    {
+      "name": "DDPAUTX0",
+      "io_type": "IMS_SEGMENT",
+      "description": "IMS PAUTHDBX secondary/index dataset associated with PAUTBUNL child segments",
+      "copybook": null,
+      "citation": [
+        59
+      ]
+    },
+    {
+      "name": "PARM",
+      "io_type": "PARAMETER",
+      "description": "Parameters for DFSRRC00 specifying DLI access, PAUDBUNL root, PAUTBUNL child, and unload options",
+      "copybook": null,
+      "citation": [
+        39
+      ]
+    },
+    {
+      "name": "DD1",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Existing ROOT.FILEO unload file targeted for deletion in cleanup",
+      "copybook": null,
+      "citation": [
+        33
+      ]
+    },
+    {
+      "name": "DD2",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Existing CHILD.FILEO unload file targeted for deletion in cleanup",
+      "copybook": null,
+      "citation": [
+        35
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "OUTFIL1",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Sequential unload file for PAUDBUNL root segments (LRECL=100, RECFM=FB)",
+      "copybook": null,
+      "citation": [
+        48
+      ]
+    },
+    {
+      "name": "OUTFIL2",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Sequential unload file for PAUTBUNL child segments (LRECL=206, RECFM=FB)",
+      "copybook": null,
+      "citation": [
+        53
+      ]
+    }
+  ],
+  "called_programs": [
+    {
+      "program_name": "IEFBR14",
+      "call_type": "STATIC_CALL",
+      "purpose": "Dummy execution to process DD deletes for cleanup of prior output files",
+      "parameters": [],
+      "citation": 25
+    },
+    {
+      "program_name": "DFSRRC00",
+      "call_type": "STATIC_CALL",
+      "purpose": "IMS database unload utility to extract segments into sequential files",
+      "parameters": [
+        "DLI,PAUDBUNL,PAUTBUNL,,,,,,,,,,,N"
+      ],
+      "citation": 38
+    }
+  ],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Unload only PAUDBUNL root database and PAUTBUNL child database segments",
+      "logic_summary": "DFSRRC00 utility invoked with PARM specifying exact databases and DLI access method with trailing N option",
+      "conditions": [
+        "DLI access method",
+        "Specific DBDs PAUDBUNL and PAUTBUNL",
+        "N flag for final option (likely no secondary processing)"
+      ],
+      "citation": [
+        39
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "DDPAUTP0",
+        "fields_used": [
+          "PAUDBUNL root segments"
+        ],
+        "citation": [
+          58
+        ]
+      },
+      {
+        "source": "DDPAUTX0",
+        "fields_used": [
+          "PAUTBUNL child segments"
+        ],
+        "citation": [
+          59
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "OUTFIL1",
+        "fields_written": [
+          "PAUDBUNL root unload records"
+        ],
+        "citation": [
+          48
+        ]
+      },
+      {
+        "destination": "OUTFIL2",
+        "fields_written": [
+          "PAUTBUNL child unload records"
+        ],
+        "citation": [
+          53
+        ]
+      }
+    ],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [
+    {
+      "paragraph_name": "STEP0",
+      "summary": null,
+      "purpose": "This is the initial cleanup step in the job, designed to remove any existing versions of the output unload files to prevent conflicts or overwrites during the subsequent unload process. It executes the IEFBR14 program, which performs no computation but allows JCL DD statements to be honored. Inputs consumed are DD1 (AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO) and DD2 (AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO), both accessed with DISP=(OLD,DELETE,DELETE) to delete if present. No outputs are produced; the step modifies the catalog/external storage by removing old files. There is no business logic or conditional decision-making; deletion is unconditional. Error handling is implicit in JCL: if files do not exist, the step completes normally without abend. It defines diagnostic DDs like SYSPRINT, SYSOUT, and SYSDUMP for any potential issues. This step is called first in job sequence and calls no other paragraphs or programs. Its role ensures a clean environment for STEP01.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        25,
+        37
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    },
+    {
+      "paragraph_name": "STEP01",
+      "summary": null,
+      "purpose": "This is the primary processing step that orchestrates the IMS database unload operation using the DFSRRC00 utility. Its primary purpose is to read segments from the specified IMS databases and write them as fixed-block sequential unload files for root and child segments. It consumes inputs from IMS libraries (STEPLIB, DFSRESLB, IMS PSBLIB/DBDLIB), database datasets DDPAUTP0 (PAUTHDB) and DDPAUTX0 (PAUTHDBX), and the PARM='DLI,PAUDBUNL,PAUTBUNL,,,,,,,,,,,N' specifying unload targets. Outputs produced are OUTFIL1 (root unload, LRECL=100) and OUTFIL2 (child unload, LRECL=206), both cataloged with space allocation. Business logic is encapsulated in the utility and PARM: DLI access for PAUDBUNL root and PAUTBUNL child with defaults and N option (likely suppressing secondary index unload). No explicit decisions in JCL; utility handles all validations and EOF. Error handling includes IMSERR, SYSUDUMP, SYSPRINT for diagnostics, with job abend on utility failure. Defines additional DDs like DFSVSAMP (VSMDB proclib), IMSLOGR (DUMMY). No subordinate paragraphs called; relies on prior STEP0 cleanup. This step controls the core business function of database unloading.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        38,
+        70
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "metadata": null
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "Output files exist from prior run",
+      "action": "Deleted by STEP0 IEFBR14 (tolerant if missing)",
+      "citation": [
+        33,
+        35
+      ]
+    },
+    {
+      "condition": "DFSRRC00 utility failure or IMS database access error",
+      "action": "Job abends with dumps to SYSPRINT, SYSUDUMP, IMSERR",
+      "citation": [
+        27,
+        31,
+        66,
+        67,
+        68
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "Exact interpretation of all comma-delimited fields in DFSRRC00 PARM beyond PAUTBUNL",
+      "context": "Multiple commas indicate default values not explicitly documented in JCL comments",
+      "suggestion": "Reference IMS Utilities Reference manual for DFSRRC00 PARM format specific to unload function"
+    }
+  ]
+}

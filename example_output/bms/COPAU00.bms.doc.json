@@ -1,0 +1,152 @@
+{
+  "header": {
+    "program_id": "COPAU00",
+    "file_name": "COPAU00.bms",
+    "file_type": "BMS",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-26T02:29:53.682994",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This BMS file defines the COPAU00 mapset and COPAU0A physical map for the 'Pending Authorization Screen' in the CardDemo CICS application. The screen layout includes headers for transaction name, program name, date, and time; an input field for searching by Account ID; display areas for customer name, ID, address lines, account status, phone, approval/decline counts, credit/cash limits, balances, and amounts; a table listing up to 5 pending transactions with selectable checkboxes, transaction ID, date, time, type, A/D, status, and amount; and instructions for function keys and error messages.",
+    "business_context": "Credit card authorization viewing and selection in a demo banking application, allowing users to search an account and select pending authorizations for details.",
+    "program_type": "ONLINE_CICS",
+    "citations": [
+      2,
+      19,
+      26,
+      78,
+      83,
+      201,
+      497,
+      511
+    ]
+  },
+  "inputs": [
+    {
+      "name": "ACCTID",
+      "io_type": "CICS_MAP",
+      "description": "Unprotected input field for Account ID search",
+      "copybook": null,
+      "citation": [
+        84
+      ]
+    },
+    {
+      "name": "SEL0001",
+      "io_type": "CICS_MAP",
+      "description": "Unprotected selection field (e.g., 'S') for first pending transaction",
+      "copybook": null,
+      "citation": [
+        277
+      ]
+    },
+    {
+      "name": "SEL0002",
+      "io_type": "CICS_MAP",
+      "description": "Unprotected selection field for second pending transaction",
+      "copybook": null,
+      "citation": [
+        321
+      ]
+    },
+    {
+      "name": "SEL0003",
+      "io_type": "CICS_MAP",
+      "description": "Unprotected selection field for third pending transaction",
+      "copybook": null,
+      "citation": [
+        365
+      ]
+    },
+    {
+      "name": "SEL0004",
+      "io_type": "CICS_MAP",
+      "description": "Unprotected selection field for fourth pending transaction",
+      "copybook": null,
+      "citation": [
+        409
+      ]
+    },
+    {
+      "name": "SEL0005",
+      "io_type": "CICS_MAP",
+      "description": "Unprotected selection field for fifth pending transaction",
+      "copybook": null,
+      "citation": [
+        488
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "COPAU0A",
+      "io_type": "CICS_MAP",
+      "description": "Physical map defining all screen fields including headers (TRNNAME, CURDATE, PGMNAME, CURTIME), customer info (CNAME, CUSTID, ADDR001, ADDR002, ACCSTAT, PHONE1), counts (APPRCNT, DECLCNT), limits/balances/amounts (CREDLIM, CASHLIM, APPRAMT, CREDBAL, CASHBAL, DECLAMT), transaction list (TRNID01-PAMT005 etc.), instructions, and error message (ERRMSG)",
+      "copybook": null,
+      "citation": [
+        26,
+        34,
+        47,
+        57,
+        60,
+        70,
+        73,
+        96,
+        103,
+        107,
+        118,
+        125,
+        131,
+        138,
+        147,
+        156,
+        165,
+        174,
+        183,
+        192,
+        286,
+        503,
+        511
+      ]
+    }
+  ],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [],
+  "data_flow": {
+    "reads_from": [],
+    "writes_to": [],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [],
+  "error_handling": [
+    {
+      "condition": "Display error message",
+      "action": "Populate ERRMSG field for user feedback",
+      "citation": [
+        503
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "Which CICS COBOL program(s) include and use this BMS map?",
+      "context": "BMS file does not specify the calling program; only mapset/map names provided",
+      "suggestion": "Search for COBOL programs with COPY COPAU00 or references to COPAU00 mapset"
+    },
+    {
+      "question": "What are the exact data sources populating the display fields (e.g., customer details, transaction list)?",
+      "context": "BMS defines layout only, not data retrieval logic",
+      "suggestion": "Analyze calling CICS program for file/DB2/IMS reads or LINK/XCTL calls"
+    }
+  ]
+}

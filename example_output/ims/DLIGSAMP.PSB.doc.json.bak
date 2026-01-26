@@ -1,0 +1,147 @@
+{
+  "header": {
+    "program_id": "DLIGSAMP",
+    "file_name": "ims/DLIGSAMP.PSB",
+    "file_type": "OTHER",
+    "analyzed_by": "Scribe",
+    "analyzed_at": "2026-01-26T02:33:52.778949",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "The DLIGSAMP.PSB is an IMS Program Specification Block (PSB) source file that defines database access structures for a COBOL DL/I application. It specifies a primary database PCB named PAUTBPCB for the DBPAUTP0 database with read-only GET processing on root segment PAUTSUM0 and child segment PAUTDTL1, plus two GSAM PCBs for sequential locate access to PASFLDBD and PADFLDBD datasets. The PSB is generated for COBOL language use without compatibility mode.",
+    "business_context": "Sample IMS DL/I application demonstrating hierarchical database and GSAM dataset access, licensed under Apache 2.0 by Amazon.",
+    "program_type": "BATCH",
+    "citations": [
+      18,
+      19,
+      20,
+      21,
+      22,
+      23
+    ]
+  },
+  "inputs": [
+    {
+      "name": "DBPAUTP0",
+      "io_type": "IMS_SEGMENT",
+      "description": "IMS hierarchical database accessed via PAUTBPCB with segments PAUTSUM0 (root, PARENT=0) and PAUTDTL1 (PARENT=PAUTSUM0)",
+      "copybook": null,
+      "citation": [
+        18,
+        19,
+        20
+      ]
+    },
+    {
+      "name": "PASFLDBD",
+      "io_type": "OTHER",
+      "description": "GSAM dataset accessed via unnamed PCB with Locate Sequential option",
+      "copybook": null,
+      "citation": [
+        21
+      ]
+    },
+    {
+      "name": "PADFLDBD",
+      "io_type": "OTHER",
+      "description": "GSAM dataset accessed via unnamed PCB with Locate Sequential option",
+      "copybook": null,
+      "citation": [
+        22
+      ]
+    }
+  ],
+  "outputs": [],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Permitted DL/I calls on DBPAUTP0 database are restricted to read-only GET operations",
+      "logic_summary": "PROCOPT=GOTP enables Get Unique (GU), Get Next (GN), and Get Next Parent (GNP) calls only; no update, insert, or delete allowed",
+      "conditions": [
+        "PROCOPT=GOTP",
+        "KEYLEN=14"
+      ],
+      "citation": [
+        18
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "GSAM datasets PASFLDBD and PADFLDBD support only Locate Sequential access",
+      "logic_summary": "PROCOPT=LS restricts to sequential locate operations without update capabilities",
+      "conditions": [
+        "PROCOPT=LS"
+      ],
+      "citation": [
+        21,
+        22
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "DBPAUTP0.PAUTSUM0",
+        "fields_used": [
+          "UNKNOWN - PSB defines segment access but not field-level details"
+        ],
+        "citation": [
+          19
+        ]
+      },
+      {
+        "source": "DBPAUTP0.PAUTDTL1",
+        "fields_used": [
+          "UNKNOWN - PSB defines segment access but not field-level details"
+        ],
+        "citation": [
+          20
+        ]
+      },
+      {
+        "source": "PASFLDBD",
+        "fields_used": [
+          "UNKNOWN - PSB defines dataset access but not field-level details"
+        ],
+        "citation": [
+          21
+        ]
+      },
+      {
+        "source": "PADFLDBD",
+        "fields_used": [
+          "UNKNOWN - PSB defines dataset access but not field-level details"
+        ],
+        "citation": [
+          22
+        ]
+      }
+    ],
+    "writes_to": [],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [],
+  "error_handling": [],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "What specific fields are accessed within segments PAUTSUM0, PAUTDTL1, and the GSAM datasets?",
+      "context": "PSB source defines segments and datasets at high level but does not include field-level layouts or SSA specifications",
+      "suggestion": "Examine the corresponding DBD source, segment layouts, or the DLIGSAMP COBOL application source for SSAs and field usage"
+    },
+    {
+      "question": "Is this PSB used in batch DL/I, BMP, MPP, or IFP (Fast Path) context?",
+      "context": "No transaction PCB (TPCB) defined; GSAM PCBs suggest possible Fast Path but PROCOPT=LS is non-standard for IFP",
+      "suggestion": "Review IMS region definitions or application JCL/transaction setup"
+    }
+  ]
+}

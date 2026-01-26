@@ -1,0 +1,86 @@
+{
+  "header": {
+    "program_id": "PSBPAUTL",
+    "file_name": "ims/PSBPAUTL.psb",
+    "file_type": "OTHER",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-26T02:33:26.241011",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This is an IMS Program Specification Block (PSB) definition file that generates PSBPAUTL for assembler language. It defines a single database PCB named PAUTLPCB accessing DBDNAME=DBPAUTP0 with PROCOPT=L (language interface) and KEYLEN=14. The PCB senses root segment PAUTSUM0 (PARENT=0) and child segment PAUTDTL1 (PARENT=PAUTSUM0).",
+    "business_context": null,
+    "program_type": "UTILITY",
+    "citations": [
+      17,
+      18,
+      19,
+      20
+    ]
+  },
+  "inputs": [
+    {
+      "name": "PAUTSUM0",
+      "io_type": "IMS_SEGMENT",
+      "description": "Root segment (PARENT=0) sensed in PCB PAUTLPCB for database DBPAUTP0",
+      "copybook": null,
+      "citation": [
+        18
+      ]
+    },
+    {
+      "name": "PAUTDTL1",
+      "io_type": "IMS_SEGMENT",
+      "description": "Child segment (PARENT=PAUTSUM0) sensed in PCB PAUTLPCB for database DBPAUTP0",
+      "copybook": null,
+      "citation": [
+        19
+      ]
+    }
+  ],
+  "outputs": [],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Defines IMS segment hierarchy for PCB access: PAUTSUM0 as root segment (PARENT=0), PAUTDTL1 as dependent child segment of PAUTSUM0",
+      "logic_summary": "Specified via SENSEG statements in the PCB definition",
+      "conditions": [
+        "PARENT=0 (root)",
+        "PARENT=PAUTSUM0 (child)"
+      ],
+      "citation": [
+        18,
+        19
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [],
+    "writes_to": [],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [],
+  "error_handling": [],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "What IMS application programs use this PSB (PSBPAUTL)?",
+      "context": "PSB definition does not specify calling programs",
+      "suggestion": "Check JCL, COBOL programs, or IMS system definitions for PSB usage"
+    },
+    {
+      "question": "Specific business purpose of DBPAUTP0 database and segments PAUTSUM0/PAUTDTL1?",
+      "context": "Names suggest Payment Authority Utility (PAUT), but no descriptive comments",
+      "suggestion": "Review DBD source or application documentation"
+    }
+  ]
+}

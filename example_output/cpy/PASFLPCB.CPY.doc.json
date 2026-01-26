@@ -1,0 +1,61 @@
+{
+  "header": {
+    "program_id": "PASFLPCB",
+    "file_name": "cpy/PASFLPCB.CPY",
+    "file_type": "COPYBOOK",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-26T02:31:48.228372",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This copybook defines the data structure for the PASFL Program Communication Block (PCB) used in IMS DL/I COBOL programs. The structure includes fields for database name, segment level, PCB status, processing options, segment name, key feedback name, number of sensitive segments, and a key feedback buffer. It is typically copied into the LINKAGE SECTION to enable database access and navigation via DL/I calls.",
+    "business_context": "IMS DL/I interface for accessing the PASFL database",
+    "program_type": "SUBROUTINE",
+    "citations": [
+      17,
+      18,
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26
+    ]
+  },
+  "inputs": [],
+  "outputs": [],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": [
+      "PASFLPCB"
+    ]
+  },
+  "business_rules": [],
+  "data_flow": {
+    "reads_from": [],
+    "writes_to": [],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [],
+  "error_handling": [],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "Which specific programs include and use this copybook?",
+      "context": "The copybook file does not reference any including programs",
+      "suggestion": "Search source code base for 'COPY PASFLPCB' statements"
+    },
+    {
+      "question": "What does 'PASFL' acronym represent in the database context?",
+      "context": "Not defined or explained within the copybook",
+      "suggestion": "Consult system documentation or database definitions"
+    }
+  ]
+}
