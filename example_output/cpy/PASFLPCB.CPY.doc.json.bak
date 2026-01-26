@@ -4,21 +4,20 @@
     "file_name": "cpy/PASFLPCB.CPY",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T14:22:50.167330",
+    "analyzed_at": "2026-01-26T15:13:22.762435",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This COBOL copybook defines the PASFLPCB record structure, which is the Program Communication Block (PCB) for the PASFL IMS database. It specifies fields for DBD name (line 18), segment level (line 19), PCB status (line 20), processing options (line 21), filler (line 22), segment name (line 23), key feedback name (line 24), number of sensitive segments (line 25), and key feedback area (line 26). This structure is used in IMS DL/I application programs to interface with the PASFL database for call statements like GU, GN, etc.",
-    "business_context": "IMS DL/I database access for the PASFL database",
-    "program_type": "SUBROUTINE",
+    "summary": "This COBOL copybook defines the data structure for the PASFL IMS Program Communication Block (PCB). It specifies fields including the database name, current segment level, PCB status, processing options, segment name, key feedback name (length), number of sensitive segments, and the key feedback area. This structure is referenced in IMS-enabled COBOL programs via COPY PASFLPCB to facilitate DL/I database calls to the PASFL database.",
+    "business_context": "IMS hierarchical database access and navigation for the PASFL database.",
+    "program_type": "UTILITY",
     "citations": [
       17,
       18,
       19,
       20,
       21,
-      22,
       23,
       24,
       25,
@@ -44,16 +43,5 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
-    {
-      "question": "Specific programs or sections where this copybook is included",
-      "context": "Copybook defines structure but does not indicate including programs or exact placement (e.g., WORKING-STORAGE or LINKAGE)",
-      "suggestion": "Analyze COBOL programs containing COPY PASFLPCB to determine usage context"
-    },
-    {
-      "question": "Length of key feedback area",
-      "context": "PASFL-KEYFB defined as PIC X(100) (line 26), but actual length may vary based on database keys",
-      "suggestion": "Check PASFL database DBD or PSB definitions for precise key feedback length"
-    }
-  ]
+  "open_questions": []
 }

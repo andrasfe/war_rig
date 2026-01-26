@@ -4,18 +4,19 @@
     "file_name": "COPAU01.bms",
     "file_type": "BMS",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T14:23:23.186977",
+    "analyzed_at": "2026-01-26T15:13:57.330348",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This BMS file defines the mapset COPAU01 containing the single map COPAU1A for the 'Pending Authorization Details Screen' in a CICS CardDemo application. It specifies screen layout including header fields for transaction ID, date, time, program name, titles, and detailed fields for card number, auth date/time/response/reason/code/amount/type/source, merchant details, and fraud/match status. The map supports display-only fields with labels, colors, positions, and bottom function keys for user actions.",
-    "business_context": "Review and management of pending card authorization details in a payment processing system",
+    "summary": "The COPAU01 BMS mapset defines a CICS 3270 screen layout named COPAU1A for displaying pending credit card authorization details in the CardDemo application. It includes static labels, output-only data fields for transaction, authorization response, merchant information, and an error message area. Function keys allow navigation and actions like backing out, marking fraud, or viewing next authorization.",
+    "business_context": "Serves the business process of viewing and managing pending authorization details in a credit card transaction processing system.",
     "program_type": "ONLINE_CICS",
     "citations": [
       2,
       19,
       26,
+      78,
       292
     ]
   },
@@ -23,10 +24,11 @@
     {
       "name": "COPAU1A",
       "io_type": "CICS_MAP",
-      "description": "Symbolic map for receiving user input such as function key presses from the screen",
+      "description": "CICS map used for RECEIVE to capture function key inputs (e.g., F3, F5, F8) since no modifiable fields exist",
       "copybook": null,
       "citation": [
-        26
+        26,
+        292
       ]
     }
   ],
@@ -34,10 +36,12 @@
     {
       "name": "COPAU1A",
       "io_type": "CICS_MAP",
-      "description": "Physical and symbolic map for sending authorization details to the 3270 screen display",
+      "description": "CICS map used for SEND to display authorization details, merchant info, timestamps, and error messages",
       "copybook": null,
       "citation": [
-        26
+        26,
+        284,
+        292
       ]
     }
   ],
@@ -50,15 +54,36 @@
   "business_rules": [
     {
       "rule_id": "BR001",
-      "description": "Screen navigation and actions controlled by function keys: F3=Back to previous screen, F5=Mark/Remove Fraud on the authorization, F8=Next Auth to view subsequent authorization",
-      "logic_summary": "Function key labels displayed at screen bottom; handling implemented in calling CICS program based on received map AID field",
+      "description": "The screen is display-only; users cannot enter or modify data fields, only interact via function keys",
+      "logic_summary": "All data and label fields use ATTRB=(ASKIP,NORM) or similar, which skips cursor over fields during input scan, preventing modifications",
       "conditions": [
-        "User presses F3",
-        "User presses F5",
-        "User presses F8"
+        "ATTRB includes ASKIP for all DFHMDF fields",
+        "No fields use UNPROT or lack ASKIP for input"
       ],
       "citation": [
-        292
+        29,
+        34,
+        47,
+        85,
+        94,
+        104,
+        114,
+        124,
+        134,
+        144,
+        154,
+        164,
+        174,
+        184,
+        194,
+        204,
+        214,
+        224,
+        239,
+        249,
+        259,
+        269,
+        279
       ]
     }
   ],
@@ -68,26 +93,11 @@
     "transforms": []
   },
   "copybooks_used": [],
-  "paragraphs": [
-    {
-      "paragraph_name": "COPAU1A",
-      "summary": null,
-      "purpose": "This map definition serves as the primary screen layout for displaying pending authorization details in the CICS online transaction. It consumes data from the calling program's working storage variables mapped to symbolic fields such as CARDNUM (line 85), AUTHDT (94), AUTHTM (104), AUTHAMT (144), MERNAME (239), and others, which are populated before SEND MAP. It produces a formatted 24x80 screen output with protected label fields (ASKIP) in turquoise/blue/yellow and data fields in pink/blue/red/neutral colors for readability and highlighting (e.g., fraud status in red at 224). No business decisions are made here as it is a static layout definition; all fields are display-only (ATTRB includes ASKIP on data fields) except implied function key detection via RECEIVE MAP. Error handling is supported via the ERRMSG field (line 284) with attributes ASKIP,BRT,FSET for bright protected error message display. No subordinate paragraphs or programs are called as this is a BMS map, not executable code; it is referenced by CICS EXEC CICS SEND/RECEIVE MAP commands in the driving program.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        26,
-        293
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "metadata": null
-    }
-  ],
+  "paragraphs": [],
   "error_handling": [
     {
-      "condition": "Application error requiring message display",
-      "action": "Populate and display error text in ERRMSG field (bright, protected, field-set attribute)",
+      "condition": "Application errors requiring user notification",
+      "action": "Display error message in ERRMSG field with bright, reverse video, and set attribute (FSET)",
       "citation": [
         284
       ]
@@ -98,15 +108,26 @@
     {
       "command": "SEND MAP",
       "resource": "COPAU1A",
-      "purpose": "Output populated authorization and merchant details to user screen",
+      "purpose": "Display authorization details screen to user",
       "citation": 26
     },
     {
       "command": "RECEIVE MAP",
       "resource": "COPAU1A",
-      "purpose": "Input function key or any modifiable field from user interaction",
+      "purpose": "Capture function key presses for actions like F3=Back, F5=Mark/Remove Fraud, F8=Next Auth",
       "citation": 26
     }
   ],
-  "open_questions": []
+  "open_questions": [
+    {
+      "question": "Which CICS COBOL program(s) include and use this BMS mapset?",
+      "context": "BMS file does not reference calling programs; must be determined from including source code",
+      "suggestion": "Search COBOL programs for COPY COPAU01 or references to COPAU01/COPAU1A"
+    },
+    {
+      "question": "What are the exact symbolic map field names and layouts in the generated copybook?",
+      "context": "BMS defines physical map; symbolic map details inferred from field names but not explicitly coded here",
+      "suggestion": "Compile BMS to generate .cpy and analyze"
+    }
+  ]
 }

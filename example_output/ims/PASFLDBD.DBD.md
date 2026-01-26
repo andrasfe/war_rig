@@ -2,25 +2,29 @@
 
 **File**: `ims/PASFLDBD.DBD`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-01-26 14:23:47.921690
+**Analyzed**: 2026-01-26 15:16:13.031113
 
 ## Purpose
 
-This file contains the DBDGEN source defining the IMS database PASFLDBD with GSAM and BSAM access methods and no password. It specifies dataset group DSG001 using input dataset PASFILIP (DD1) and output dataset PASFILOP (DD2), both with fixed record length of 100 bytes and RECFM=F. The definition is terminated with DBDGEN, FINISH, and END statements.
+This file is the source for the IMS Database Definition (DBD) named PASFLDBD. It defines a GSAM database with BSAM access using a single dataset group DSG001. The dataset group specifies DD1=PASFILIP for input and DD2=PASFILOP for output, both with fixed-length records of 100 bytes and RECFM=F.
+
+**Business Context**: Provides IMS database definition for sequential file processing, likely supporting PASFLIP-related batch operations with dedicated input dataset PASFILIP and output dataset PASFILOP.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| PASFILIP | IOType.FILE_SEQUENTIAL | Input dataset referenced as DD1 in dataset group DSG001 |
+| PASFILIP | IOType.FILE_SEQUENTIAL | Input dataset DDNAME for the PASFLDBD GSAM database |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| PASFILOP | IOType.FILE_SEQUENTIAL | Output dataset referenced as DD2 in dataset group DSG001 |
+| PASFILOP | IOType.FILE_SEQUENTIAL | Output dataset DDNAME for the PASFLDBD GSAM database |
 
-## Business Rules
+## Open Questions
 
-- **BR001**: IMS database PASFLDBD is defined with access methods GSAM and BSAM, and no password protection
-- **BR002**: Dataset group DSG001 uses DD1=PASFILIP and DD2=PASFILOP with record format RECFM=F and length 100
+- ? No segment definitions present; is this a complete GSAM DBD?
+  - Context: GSAM DBDs typically lack SEGMENT statements and focus on dataset groups, but confirmation from IMS documentation would verify.
+- ? What application programs reference this DBD?
+  - Context: DBD defines database structure but does not list using programs.

@@ -2,113 +2,106 @@
 
 **File**: `cbl/COPAUS0C.cbl`
 **Type**: FileType.COBOL
-**Analyzed**: 2026-01-26 14:22:43.300258
+**Analyzed**: 2026-01-26 15:12:25.395280
 
 ## Purpose
 
-COPAUS0C is a CICS online program that provides a paginated summary view of pending authorization details for a specific account ID in the CardDemo authorization module. It retrieves account, customer, and card cross-reference data from VSAM files, fetches IMS pending authorization summary and detail segments, populates a BMS map with header info, customer details, summary counts, and a list of up to 5 authorizations, and handles navigation (PF7/PF8), selection for detail view (ENTER), and return to menu (PF3).
+COPAUS0C is a CICS online program that displays a paginated summary list of pending authorization details for a given account ID in the CardDemo application. It retrieves account, customer, and card cross-reference data from VSAM files, fetches authorization summary and detail segments from IMS database, populates a BMS screen with up to 5 authorization entries per page, handles user selections to XCTL to detail view, and supports PF7/PF8 paging.
 
-**Business Context**: Serves the CardDemo application by displaying authorization message summaries to allow users to review and select pending authorizations for an account.
+**Business Context**: Serves the CardDemo authorization module by providing a summary view of pending authorizations (approved/declined) for credit card accounts, enabling users to browse, select, and drill down to details.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| COPAU0AI | IOType.CICS_MAP | BMS input map containing entered account ID (ACCTIDI) and selection flags (SEL0001I-SEL0005I) from user screen interactions |
+| CARDDEMO-COMMAREA | IOType.CICS_COMMAREA | Common commarea containing account ID, program context flags, previous/next page auth keys, page number, and selection flags from prior screens |
+| COPAU0AI | IOType.CICS_MAP | BMS input map fields for account ID entry (ACCTIDI), selection fields (SEL0001I-SEL0005I), from mapset COPAU00 |
 | CXACAIX | IOType.FILE_VSAM | Card cross-reference alternate index by account ID to retrieve customer ID and card number |
-| ACCTDAT | IOType.FILE_VSAM | Account master file containing account details like credit limits |
-| CUSTDAT | IOType.FILE_VSAM | Customer master file containing customer name, address, phone |
-| PAUTSUM0 | IOType.IMS_SEGMENT | Pending authorization summary root segment containing counts and balances for the account |
-| PAUTDTL1 | IOType.IMS_SEGMENT | Pending authorization details child segments containing individual authorization records |
-| DFHCOMMAREA | IOType.CICS_COMMAREA | Common CardDemo commarea passed between programs containing account ID, page keys, selected auth key |
+| ACCTDAT | IOType.FILE_VSAM | Account master file read by account ID for credit limits and other account details |
+| CUSTDAT | IOType.FILE_VSAM | Customer master file read by customer ID for name, address, phone |
+| PAUTSUM0 | IOType.IMS_SEGMENT | IMS root segment for pending auth summary (counts, balances, totals) qualified by account ID |
+| PAUTDTL1 | IOType.IMS_SEGMENT | IMS child segment for pending auth details (transaction ID, date, time, type, status, amount) under summary |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| COPAU0AO | IOType.CICS_MAP | BMS output map populated with header, customer info, account summary stats, authorization list, and error messages |
-| CARDDEMO-COMMAREA | IOType.CICS_COMMAREA | Updated commarea with page navigation keys, selected authorization, page number for return or XCTL |
+| COPAU0AO | IOType.CICS_MAP | BMS output map populated with header (titles, date/time, tran/program), account details (customer name, address, limits), auth summary counts/balances, list of 5 auth details, error messages |
+| CARDDEMO-COMMAREA | IOType.CICS_COMMAREA | Updated commarea with selected auth key, page info, flags for XCTL/RETURN |
 
 ## Called Programs
 
 | Program | Call Type | Purpose |
 |---------|-----------|---------|
-| COPAUS1C | CallType.CICS_XCTL | Transfer control to authorization detail program when user selects 'S' on an authorization line |
-| COMEN01C | CallType.CICS_XCTL | Return to menu program on PF3 key press |
-| COSGN00C | CallType.CICS_XCTL | Default fallback program for return if no previous program specified |
+| COPAUS1C | CallType.CICS_XCTL | Transfer control to authorization details screen with selected auth key |
+| COMEN01C | CallType.CICS_XCTL | Return to menu screen on PF3 |
+| COSGN00C | CallType.CICS_XCTL | Fallback to signon screen if no previous program set |
 
 ## Business Rules
 
-- **BR001**: Account ID must be numeric and not spaces/low-values for processing
-- **BR002**: Authorization selection must be 'S' or 's' to proceed to detail view
-- **BR003**: Approval status 'A' if response code '00', else 'D' for display
-- **BR004**: Page navigation backward only if current page >1; forward repositions from last key
+- **BR001**: Account ID must be numeric and non-blank to retrieve details; otherwise display error message
+- **BR002**: Selection field (SELxxxxI) must be 'S' or 's' to XCTL to details; invalid sets error
+- **BR003**: Display up to 5 auth details per page; PF7 previous page if page >1 using saved prev key; PF8 next using last key
+- **BR004**: Approval status 'A' if resp code '00', else 'D'; populate screen fields accordingly
 
 ## Paragraphs/Procedures
 
 ### MAIN-PARA
-This is the primary entry point and orchestration paragraph that initializes flags, handles first-time entry (EIBCALEN=0) by sending initial screen, or processes commarea for reentry. It consumes EIBCALEN, DFHCOMMAREA if present, and map data via RECEIVE-PAULST-SCREEN. It produces updated COPAU0AO map and CARDDEMO-COMMAREA for return or XCTL. Business logic evaluates EIBAID for PF/ENTER keys dispatching to specific handlers like PROCESS-ENTER-KEY, navigation, or return; first distinguishes initial load vs reenter. Errors set WS-ERR-FLG and message. Calls RECEIVE-PAULST-SCREEN, PROCESS-ENTER-KEY, SEND-PAULST-SCREEN, RETURN-TO-PREV-SCREEN, GATHER-DETAILS, and CICS RETURN with TRANSID CPVS. Always ends with CICS RETURN preserving commarea and transaction.
+This is the primary entry point and orchestration paragraph that initializes flags, handles first-time entry vs reentry via commarea, receives map if applicable, dispatches to key handlers (ENTER/PF3/PF7/PF8), gathers details, sends the populated summary screen, and returns with transaction ID preserving commarea. It consumes EIBCALEN to detect initial call (0), DFHCOMMAREA for context, and BMS input map COPAU0AI for user data. It produces updated COPAU0AO map output, refreshed auth list and header info, and updated CARDDEMO-COMMAREA with page/selection data. Business logic includes checking reenter flag to decide init vs process, evaluating EIBAID for PF keys to invoke specific handlers like PROCESS-ENTER-KEY for selection/validation/XCTL or paging. Error handling sets WS-ERR-FLG and WS-MESSAGE for invalid keys, sending screen immediately. It calls GATHER-DETAILS to fetch/populate data, RECEIVE-PAULST-SCREEN, SEND-PAULST-SCREEN, and handlers like PROCESS-PF7-KEY/PF8-KEY for navigation, RETURN-TO-PREV-SCREEN for PF3. On initial call, initializes commarea and sends empty screen prompting for acct ID.
 
 ### PROCESS-ENTER-KEY
-Handles ENTER key press to validate and process account ID entry or line selection for detail view. Consumes ACCTIDI and SEL0001I-SEL0005I from input map COPAU0AI. Produces updated CDEMO-CPVS-PAU-SEL-FLG, CDEMO-CPVS-PAU-SELECTED in commarea, WS-ACCT-ID, and error message if invalid. Business logic checks ACCTIDI for spaces/low/non-numeric, maps SEL fields to index 1-5 for selected auth key, validates selection 'S'/'s' before XCTL to detail program. Errors set WS-ERR-FLG, cursor to ACCTIDL, custom messages. Calls GATHER-DETAILS to refresh data post-processing.
+Handles ENTER keypress to validate/process account ID input and selection fields for drill-down to auth details. Consumes ACCTIDI from COPAU0AI and SEL000xI fields to determine selected auth key index. Produces updated CDEMO-CPVS-PAU-SEL-FLG/SELECTED in commarea, WS-ACCT-ID, error message if invalid, and XCTL to details if valid 'S'. Logic validates acct ID non-blank/numeric, maps SEL field to CDEMO-CPVS-AUTH-KEYS(n), checks 'S'/'s' for XCTL COPAUS1C with commarea. Errors for blank/non-numeric acct or invalid sel set WS-ERR-FLG/'Y', cursor to ACCTIDL, message. Calls GATHER-DETAILS to refresh list post-process.
 
 ### GATHER-DETAILS
-Orchestrates data retrieval and page population for the current account. Consumes WS-ACCT-ID from map/commarea. Produces populated auth list in map via PROCESS-PAGE-FORWARD, initializes data. Business logic conditionally gathers account details if valid ACCT-ID, initializes auth data, processes first page of auths if summary segment found. No explicit errors but relies on subordinate error handling. Calls GATHER-ACCOUNT-DETAILS, INITIALIZE-AUTH-DATA, PROCESS-PAGE-FORWARD.
+Coordinates retrieval of account-related data and auth list population for the screen. Consumes WS-ACCT-ID to drive file reads and IMS GU for summary. Produces populated screen fields via sub-calls, initializes page num/keys, sets flags for paging. Logic checks acct ID valid, calls GATHER-ACCOUNT-DETAILS for VSAM data, INITIALIZE-AUTH-DATA to clear list, PROCESS-PAGE-FORWARD if summary found. No direct error handling, propagates from subs. Calls GATHER-ACCOUNT-DETAILS, INITIALIZE-AUTH-DATA, PROCESS-PAGE-FORWARD.
 
 ### PROCESS-PF7-KEY
-Handles backward page navigation (PF7). Consumes CDEMO-CPVS-PAGE-NUM and PAUKEY-PREV-PG array from commarea. Produces updated page num, WS-AUTH-KEY-SAVE from prev key, refreshed list via PROCESS-PAGE-FORWARD. Business logic decrements page if >1, loads prev key, calls GET-AUTH-SUMMARY and PROCESS-PAGE-FORWARD; else error message. Sets SEND-ERASE-NO and NEXT-PAGE-YES. Calls GET-AUTH-SUMMARY, INITIALIZE-AUTH-DATA, PROCESS-PAGE-FORWARD.
+Handles backward paging (previous page) if not on page 1, repositions using saved prev key. Consumes CDEMO-CPVS-PAGE-NUM and PAUKEY-PREV-PG array. Produces decremented page num, sets WS-AUTH-KEY-SAVE to prev key, refreshes list via forward process. Logic checks page >1, computes page-1, moves prev key( page), GET-AUTH-SUMMARY, INITIALIZE/PROCESS-PAGE-FORWARD with REPOSITION if PF7. Error/message if already top. Calls GET-AUTH-SUMMARY, INITIALIZE-AUTH-DATA, PROCESS-PAGE-FORWARD.
 
 ### PROCESS-PF8-KEY
-Handles forward page navigation to next page (PF8). Consumes CDEMO-CPVS-PAUKEY-LAST from commarea. Produces repositioned auth list via REPOSITION-AUTHORIZATIONS and PROCESS-PAGE-FORWARD. Business logic uses last key for GNP reposition if valid, sets NEXT-PAGE-YES/NO based on further read; error if at end. Sets SEND-ERASE-NO. Calls GET-AUTH-SUMMARY, REPOSITION-AUTHORIZATIONS, INITIALIZE-AUTH-DATA, PROCESS-PAGE-FORWARD.
+Handles forward paging (next page) from last key, repositions to end. Consumes CDEMO-CPVS-PAUKEY-LAST. Produces NEXT-PAGE-YES/NO flag, refreshed list. Logic moves last key to save, GET-AUTH-SUMMARY, REPOSITION-AUTHORIZATIONS to position after last, then forward. Message if already bottom. Calls GET-AUTH-SUMMARY, REPOSITION-AUTHORIZATIONS, INITIALIZE-AUTH-DATA, PROCESS-PAGE-FORWARD.
 
 ### PROCESS-PAGE-FORWARD
-Fills the current page with up to 5 authorization details by sequential GNP reads. Consumes current IMS position/WS-AUTH-KEY-SAVE. Produces CDEMO-CPVS-AUTH-KEYS(1-5), PAUKEY-LAST/PREV-PG, map fields TRNIDxxI/PDATExxI etc via POPULATE-AUTH-LIST, sets NEXT-PAGE-YES if more. Business logic loops WS-IDX 1-5 calling GET-AUTHORIZATIONS or REPOSITION for first, populates if no EOF/error, peeks one extra for next flag. Handles PF7 reposition special case. Calls REPOSITION-AUTHORIZATIONS, GET-AUTHORIZATIONS, POPULATE-AUTH-LIST.
+Fetches and populates up to 5 sequential auth detail segments for current page display. Consumes WS-IDX=1 init, current position from prior GNP/GU. Produces screen list fields TRNIDxxI/PDATExxI etc via POPULATE, saves LAST/PREV-PG keys, sets NEXT-PAGE-YES if more after 5. Loop PERFORM UNTIL idx>5/EOF/ERR: REPOSITION if PF7 idx1 else GET-AUTHORIZATIONS, POPULATE if ok, inc idx/save keys. After loop, peeks one more for next flag. Calls GET-AUTHORIZATIONS, REPOSITION-AUTHORIZATIONS, POPULATE-AUTH-LIST.
 
 ### GET-AUTHORIZATIONS
-Performs IMS GNP to fetch next PAUTDTL1 detail segment. Consumes current PCB position. Produces PENDING-AUTH-DETAILS populated. Business logic executes DLI GNP PAUTDTL1, evaluates IMS-RETURN-CODE: OK continues, GE/GB sets EOF, others error with message and SEND. No subordinate calls.
+Performs IMS GNP call to retrieve next PAUTDTL1 child segment under current parent. Consumes current PCB position. Produces PENDING-AUTH-DETAILS populated, sets AUTHS-EOF if GE/GB. Logic GNP PAUTDTL1 INTO details, eval DIBSTAT: OK=not eof, GE/GB=eof, other=err msg/abend-like send. Calls SEND-PAULST-SCREEN on error.
 
 ### REPOSITION-AUTHORIZATIONS
-Repositions IMS cursor to specific authorization key for paging. Consumes WS-AUTH-KEY-SAVE moved to PA-AUTHORIZATION-KEY. Produces PENDING-AUTH-DETAILS at key. Business logic DLI GNP PAUTDTL1 WHERE PAUT9CTS=KEY, evaluates code: OK/AUTHS-NOT-EOF, GE/GB EOF, other error/SEND. No calls.
+Repositions IMS cursor to specific auth key via qualified GNP for paging. Consumes WS-AUTH-KEY-SAVE moved to PA-AUTHORIZATION-KEY. Produces PENDING-AUTH-DETAILS at that key, sets eof if not found. Logic GNP PAUTDTL1 WHERE PAUT9CTS=KEY, eval STATUS-OK/not-eof, GE/GB=eof, other err.
 
 ### POPULATE-AUTH-LIST
-Transforms and maps current detail segment to screen list fields for current WS-IDX (1-5). Consumes PENDING-AUTH-DETAILS fields like PA-APPROVED-AMT, dates, resp code. Produces map fields TRNIDxxI, PAMTxxI, CDEMO-CPVS-AUTH-KEYS(WS-IDX). Business logic formats time/date, sets status A/D, EVALUATE WS-IDX to assign specific map fields and unprotected attrs. No errors or calls.
+Transforms current PENDING-AUTH-DETAILS into screen fields for specific list row (1-5). Consumes PA fields like AMT, TIME, DATE, RESP-CODE, saves KEY to commarea array. Produces COPAU0AI fields like TRNID01I, PAMT001I, sets UNP for sel attr. Logic formats time/date, sets A/D stat, EVALUATE WS-IDX to move to row n fields.
 
 ### INITIALIZE-AUTH-DATA
-Clears the 5 authorization list fields in map to protected blanks before population. Consumes nothing specific. Produces SPACES in TRNIDxxI/PDATE etc, DFHBMPRO in SEL000xA. Business logic VARYING WS-IDX 1-5 EVALUATE to set each group of fields. No errors/calls.
-
-### RETURN-TO-PREV-SCREEN
-Prepares XCTL to previous or menu program on PF3. Consumes CDEMO-TO-PROGRAM (defaults COSGN00C). Produces updated commarea context flags. Business logic sets from/to programs, context 0, XCTL PROGRAM. No errors.
+Clears the 5 auth list fields on screen map to protected blanks before repopulate. Consumes WS-IDX 1-5 loop. Produces SPACES in TRNIDxxI/PDATE etc, PRO for sel attr. VARYING loop EVALUATE idx move SPACES/DFHBMPRO to row fields.
 
 ### SEND-PAULST-SCREEN
-Sends the populated map to terminal with optional ERASE. Consumes fully populated COPAU0AO incl message/header. Produces screen display. Business logic syncpoint if PSB scheduled, calls POPULATE-HEADER-INFO, SEND MAP COPAU0A ERASE if flag or CURSOR only. No errors.
+Sends the BMS map COPAU0A with cursor/erase if flagged, after IMS syncpoint if PSB scheduled. Consumes fully populated COPAU0AO, WS-MESSAGE to ERRMSGO. Produces screen display to user. Logic unschedule PSB/SYNCPOINT if sched, POPULATE-HEADER-INFO, move msg, SEND MAPSET FROM AO ERASE if yes else no.
 
 ### RECEIVE-PAULST-SCREEN
-Receives user input from map into COPAU0AI with resp codes. Consumes screen data. Produces COPAU0AI fields populated, WS-RESP-CD/REAS. Business logic CICS RECEIVE MAP. No further logic.
+Receives user input from BMS map into COPAU0AI with resp codes. Consumes screen data. Produces COPAU0AI fields populated, WS-RESP-CD/REAS-CD for validation.
 
 ### POPULATE-HEADER-INFO
-Fills static header fields with titles, tran/prog names, current date/time. Consumes FUNCTION CURRENT-DATE. Produces TITLE01O-02O, TRNNAMEO, PGMNAMEO, CURDATEO, CURTIMEO in map. Business logic formats date/time from WS-CURDATE-*, moves constants. No errors/calls.
+Fills static/dynamic header fields like titles, current date/time, tran/program names. Consumes FUNCTION CURRENT-DATE. Produces TITLE01O etc, formatted CURDATEO/CURTIMEO. Moves constants WS vars to output fields.
 
 ### GATHER-ACCOUNT-DETAILS
-Retrieves and displays account/customer summary info from VSAM files and IMS summary. Consumes WS-ACCT-ID. Produces map fields CNAMEO, ADDR001O-002O, CREDLIMO, APPRCNTO etc from records/IMS. Business logic calls file reads, formats name/address, moves limits/balances/counts if summary found else zeros. Calls GET-AUTH-SUMMARY.
+Retrieves and displays acct/cust summary info and auth totals from VSAM/IMS. Consumes WS-ACCT-ID driving chain. Produces screen fields CNAMEO, CREDLIMO, APPRCNTO etc from records. Calls VSAM reads xref/acct/cust, formats name/addr, moves limits, GET-AUTH-SUMMARY for totals if found else zeros.
 
 ### GETCARDXREF-BYACCT
-Reads card xref VSAM via alt index for cust/card nums. Consumes WS-ACCT-ID to RID. Produces CARD-XREF-RECORD, CDEMO-CUST-ID/CARD-NUM. Business logic CICS READ, NORMAL moves fields, NOTFND/OTHER error message/SEND.
+Reads VSAM card xref AIX by acct ID to get cust/card nums. Consumes WS-ACCT-ID to RID. Produces CARD-XREF-RECORD, CDEMO-CUST-ID/NUM. Eval RESP: NORMAL ok, NOTFND/OTHER err msg/send.
 
 ### GETACCTDATA-BYACCT
-Reads account VSAM by acct ID from xref. Consumes XREF-ACCT-ID to RID. Produces ACCOUNT-RECORD. Business logic CICS READ, NORMAL continue, NOTFND/OTHER error/SEND.
+Reads VSAM acct file by acct ID from xref. Consumes XREF-ACCT-ID. Produces ACCOUNT-RECORD. Eval RESP normal cont, notfnd/other err.
 
 ### GETCUSTDATA-BYCUST
-Reads customer VSAM by cust ID from xref. Consumes XREF-CUST-ID to RID. Produces CUSTOMER-RECORD. Business logic CICS READ, NORMAL continue, NOTFND/OTHER error/SEND.
+Reads VSAM cust file by cust ID from xref. Consumes XREF-CUST-ID. Produces CUSTOMER-RECORD. Eval RESP normal cont, notfnd/other err.
 
 ### GET-AUTH-SUMMARY
-Schedules PSB and GU IMS summary segment by acct ID. Consumes CDEMO-ACCT-ID to PA-ACCT-ID. Produces PENDING-AUTH-SUMMARY if found, sets FOUND-PAUT-SMRY-SEG flag. Business logic SCHEDULE-PSB, DLI GU WHERE ACCNTID=, OK found, GE notfound, other error/SEND.
+Schedules PSB, GU qualified IMS root PAUTSUM0 by acct ID. Consumes CDEMO-ACCT-ID to PA-ACCT-ID. Produces PENDING-AUTH-SUMMARY, sets FOUND/NFOUND flags. Eval STATUS-OK found, GE nfound, other err.
 
 ### SCHEDULE-PSB
-Schedules IMS PSB 'PSBPAUTB' handling duplicates. Consumes PSB-NAME. Produces scheduled PCB, sets IMS-PSB-SCHD flag. Business logic DLI SCHD NODHABEND, if TC TERM+SCHD again, OK set flag else error/SEND.
+Schedules IMS PSBPAUTB, reschedules if already once, sets flag. Handles TERM if TC. Produces IMS-PSB-SCHD 'Y'. Err if not OK.
 
-## Open Questions
-
-- ? Exact field layouts and meanings in copybooks like CIPAUSMY, CVACT01Y
-  - Context: Copybooks not provided in source; inferred from usage but precise types/sizes unknown
-- ? Calling programs and full navigation flow (e.g. who calls CPVS)
-  - Context: No self-references; commarea suggests from menu like COMEN01C
+### RETURN-TO-PREV-SCREEN
+Prepares XCTL to previous program (menu or signon) on PF3. Sets CDEMO-TO/FROM-PROGRAM/TRANID, context 0. Consumes CDEMO-TO-PROGRAM fallback COSGN00C.

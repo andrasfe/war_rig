@@ -4,12 +4,12 @@
     "file_name": "ims/PAUTBUNL.PSB",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T14:24:18.203803",
+    "analyzed_at": "2026-01-26T15:15:03.203687",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This PSB source defines the Program Specification Block for the COBOL program PAUTBUNL (line 21). It specifies one database PCB named PAUTBPCB for DBD DBPAUTP0 with PROCOPT=GOTP and KEYLEN=14 (line 18). Sensitive segments include root PAUTSUM0 (line 19) and child PAUTDTL1 under PAUTSUM0 (line 20).",
+    "summary": "This PSB source file defines the Program Specification Block for the COBOL program PAUTBUNL, specifying IMS database access via a single PCB named PAUTBPCB to the DBPAUTP0 database with PROCOPT=GOTP and KEYLEN=14. It declares two sensed segments: PAUTSUM0 as the root segment (PARENT=0) and PAUTDTL1 as a child segment under PAUTSUM0. The PSB is generated for COBOL language compatibility without compatibility mode.",
     "business_context": null,
     "program_type": "BATCH",
     "citations": [
@@ -21,13 +21,20 @@
   },
   "inputs": [
     {
-      "name": "PAUTBPCB",
+      "name": "PAUTSUM0",
       "io_type": "IMS_SEGMENT",
-      "description": "IMS database PCB for DBPAUTP0 providing access to segments PAUTSUM0 (root) and PAUTDTL1 (child)",
+      "description": "Root segment (PARENT=0) of the DBPAUTP0 IMS database, accessible via PAUTBPCB PCB",
       "copybook": null,
       "citation": [
-        18,
-        19,
+        19
+      ]
+    },
+    {
+      "name": "PAUTDTL1",
+      "io_type": "IMS_SEGMENT",
+      "description": "Child segment (PARENT=PAUTSUM0) of the DBPAUTP0 IMS database, accessible via PAUTBPCB PCB",
+      "copybook": null,
+      "citation": [
         20
       ]
     }
@@ -42,8 +49,8 @@
   "business_rules": [
     {
       "rule_id": "BR001",
-      "description": "Supports IMS DL/I retrieval calls including GU (Get Unique), GN (Get Next), and GNP (Get Next within Parent) with parentage qualification",
-      "logic_summary": "Defined by PROCOPT=GOTP on the PCB allowing qualified and unqualified SSAs with parentage",
+      "description": "PCB access constrained to processing options defined by PROCOPT=GOTP, permitting Get Unique retrieval operations with positioning support",
+      "logic_summary": "PROCOPT=GOTP in PCB definition limits DL/I calls to compatible retrieval verbs (G for Get Unique, P for Positioned, O/T for additional IMS-specific options)",
       "conditions": [
         "PROCOPT=GOTP"
       ],
@@ -53,8 +60,8 @@
     },
     {
       "rule_id": "BR002",
-      "description": "Concatenated key length for unqualified segment search arguments (SSAs) is 14 bytes",
-      "logic_summary": "Specified by KEYLEN=14 on the PCB",
+      "description": "Key length for DL/I segment searches limited to 14 bytes",
+      "logic_summary": "KEYLEN=14 specifies the length of the concatenated key for unqualified segment access in Get Unique calls",
       "conditions": [
         "KEYLEN=14"
       ],
@@ -64,22 +71,7 @@
     }
   ],
   "data_flow": {
-    "reads_from": [
-      {
-        "source": "DBPAUTP0.PAUTSUM0",
-        "fields_used": [],
-        "citation": [
-          19
-        ]
-      },
-      {
-        "source": "DBPAUTP0.PAUTDTL1",
-        "fields_used": [],
-        "citation": [
-          20
-        ]
-      }
-    ],
+    "reads_from": [],
     "writes_to": [],
     "transforms": []
   },
@@ -90,14 +82,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "Specific field layouts and keys for segments PAUTSUM0 and PAUTDTL1",
-      "context": "PSB defines segments but not field-level details; requires DBD or copybook source",
-      "suggestion": "Analyze corresponding DBD source for DBPAUTP0 or program copybooks"
-    },
-    {
-      "question": "Business purpose of PAUTBUNL program (e.g., unload utility for PAUTP0 database)",
-      "context": "Inferred from name (PAUT=Payment Automation Utility?, BUNL=Bundle/Unload) but not explicit in PSB",
-      "suggestion": "Review COBOL source of PAUTBUNL for file I/O and processing logic"
+      "question": "What is the business purpose of the DBPAUTP0 database and PAUT segments?",
+      "context": "PSB defines access structure but provides no descriptive comments on data content or application use",
+      "suggestion": "Examine the associated DBD source for DBPAUTP0 or the COBOL program PAUTBUNL source code"
     }
   ]
 }

@@ -2,48 +2,44 @@
 
 **File**: `jcl/UNLDGSAM.JCL`
 **Type**: FileType.JCL
-**Analyzed**: 2026-01-26 14:25:04.182555
+**Analyzed**: 2026-01-26 15:13:59.576908
 
 ## Purpose
 
-JCL to execute the IMS Database Unload utility (DBUNLDGS) via DFSRRC00 program in DLI mode for the DLIGSAMP database. It reads ROOT and CHILD GSAM input files (PASFILOP and PADFILOP) containing database segments. Control statements from DFSVSAMP define the unload process and output datasets.
+This JCL defines a batch job UNLDGSAM that executes the IMS utility DFSRRC00 to unload the GSAM database DLIGSAMP using the DBUNLDGS utility in DLI mode. It provides necessary STEPLIB, IMS libraries, input GSAM files (PAUTDB.ROOT.GSAM and PAUTDB.CHILD.GSAM), and shared authorization datasets. Standard output datasets capture print, dumps, and errors.
 
-**Business Context**: Supports unloading of PAUTDB IMS database segments in the AWS M2 CARDDEMO application, likely for backup, migration, or analysis.
+**Business Context**: Supports AWS M2 CardDemo application by unloading IMS GSAM databases, likely for backup, migration, or offline processing (inferred from dataset names AWS.M2.CARDDEMO.PAUTDB).
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| PASFILOP | IOType.FILE_SEQUENTIAL | GSAM dataset containing ROOT segments of PAUTDB database |
-| PADFILOP | IOType.FILE_SEQUENTIAL | GSAM dataset containing CHILD segments of PAUTDB database |
-| DFSVSAMP | IOType.FILE_SEQUENTIAL | Control statements for DBUNLDGS utility from PROCLIB(DFSVSMDB), defining unload parameters and output datasets |
-| PARM | IOType.PARAMETER | Utility parameters 'DLI,DBUNLDGS,DLIGSAMP,,,,,,,,,,,N' specifying DLI access, DBUNLDGS utility, and DLIGSAMP database |
-| DDPAUTP0 | IOType.OTHER | IMS PAUTHDB library for database authorization or definitions |
-| DDPAUTX0 | IOType.OTHER | IMS PAUTHDBX library for extended database authorization or definitions |
+| PASFILOP | IOType.FILE_VSAM | GSAM file for PAUTDB.ROOT, provided as input to IMS utility (DISP=OLD) |
+| PADFILOP | IOType.FILE_VSAM | GSAM file for PAUTDB.CHILD, provided as input to IMS utility (DISP=OLD) |
+| DDPAUTP0 | IOType.FILE_VSAM | IMS PAUTHDB dataset, shared reference likely for database authorization |
+| DDPAUTX0 | IOType.FILE_VSAM | IMS PAUTHDBX dataset, shared reference likely for extended authorization |
+| DFSVSAMP | IOType.OTHER | IMS proclib member defining VSAM database structure (DFSVSMDB) |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| UNLOAD-DATASETS | IOType.FILE_SEQUENTIAL | Sequential datasets containing unloaded IMS database segments (ROOT and CHILD), as defined in DFSVSAMP control statements |
-| SYSPRINT | IOType.REPORT | Standard utility print output including messages and reports |
+| SYSPRINT | IOType.REPORT | Standard utility print output |
+| SYSUDUMP | IOType.REPORT | System dump output for abends |
 | IMSERR | IOType.REPORT | IMS-specific error messages |
-| SYSUDUMP | IOType.REPORT | System dump output on program abend |
 
-## Called Programs
+## Business Rules
 
-| Program | Call Type | Purpose |
-|---------|-----------|---------|
-| DFSRRC00 | CallType.STATIC_CALL | IMS general utility driver executing DBUNLDGS for database unload |
+- **BR001**: Unloads specific GSAM database DLIGSAMP using IMS DBUNLDGS utility
 
 ## Paragraphs/Procedures
 
 ### STEP01
-This is the only step in the JCL, serving as the primary execution point for the IMS Database Unload utility. Its main role is to invoke DFSRRC00 with parameters for DBUNLDGS on the DLIGSAMP database in DLI mode, orchestrating the unload process. It consumes input datasets PASFILOP (ROOT GSAM) and PADFILOP (CHILD GSAM) containing the IMS database segments to be unloaded, along with control statements from DFSVSAMP (PROCLIB DFSVSMDB) that specify unload options, segment selection, and output dataset definitions. Additional inputs include IMS libraries (STEPLIB, DFSRESLB, IMS/PSBLIB/DBDLIB) and PAUTHDB libraries for runtime support. It produces output unload sequential files as defined in the control statements, capturing the raw database segments, and directs reports/errors to SYSPRINT, IMSERR, and SYSUDUMP. There are no conditional decisions or business rules in the JCL; all processing logic is delegated to the IMS utility based on PARM and control cards. Error handling relies on standard JCL/IMS mechanisms: abnormal termination keeps input files (DISP=OLD,KEEP,KEEP), dumps to SYSUDUMP, and errors to IMSERR. No subordinate JCL steps or paragraphs are called; it statically executes PGM=DFSRRC00 to perform the unload. The step ensures all required libraries are accessible via concatenated DD statements. Upon completion, the job notifies the submitter (NOTIFY=&SYSUID).
+STEP01 serves as the primary and only execution step in this JCL job, orchestrating the invocation of the IMS database unload utility. Its core purpose is to execute PGM=DFSRRC00 with a specific PARM='DLI,DBUNLDGS,DLIGSAMP,,,,,,,,,,,N' to perform a GSAM database unload operation on DLIGSAMP using the DBUNLDGS utility module in DLI access mode. It consumes IMS libraries from STEPLIB (lines 28-30), IMS macro libraries (lines 33-34), input GSAM datasets PASFILOP and PADFILOP (lines 36-40), authorization datasets DDPAUTP0 and DDPAUTX0 (lines 42-43), and the VSAM database definition from DFSVSAMP (lines 46-47). These inputs provide the runtime environment, database files, and structural definitions required for the unload process. The step produces outputs to SYSPRINT for logs and reports (line 50), SYSUDUMP for any abend diagnostics (line 51), and IMSERR for utility-specific errors (line 52). Business logic is encapsulated in the PARM specifying the exact utility and target database, with no additional conditional processing at the JCL level. Error handling relies on IMS utility defaults, routing failures to SYSUDUMP and IMSERR DDs, while dummy DDs (lines 45,48,49) suppress unnecessary logging for IMSLOGR and IEFRDER. No subordinate paragraphs or programs are called from this step, as it directly EXECs DFSRRC00. The configuration ensures high availability via DISP=SHR for shared datasets and appropriate job parameters like REGION=0M and TIME=1440 (lines 1-2). Overall, this step handles the complete unload workflow from resource setup to output capture.
 
 ## Open Questions
 
-- ? What are the exact contents of the DFSVSAMP control statements in PROCLIB(DFSVSMDB)?
-  - Context: Referenced as input but source code does not include the member contents; needed for precise output dataset names and unload options
-- ? Relationship between PAUTDB DSNs and DLIGSAMP database name?
-  - Context: PARM specifies DLIGSAMP but inputs are PAUTDB.ROOT/CHILD.GSAM; likely aliases or specific implementation
+- ? Role of separate PASFILOP (ROOT.GSAM) and PADFILOP (CHILD.GSAM) files relative to single DLIGSAMP database
+  - Context: PARM specifies one database DLIGSAMP (line 27), but two GSAM input files suggest possible multi-file DB or additional data sources
+- ? Exact mapping of PAUTDB GSAM files to DLIGSAMP database
+  - Context: Dataset names PAUTDB.ROOT/CHILD.GSAM differ from PARM database name DLIGSAMP

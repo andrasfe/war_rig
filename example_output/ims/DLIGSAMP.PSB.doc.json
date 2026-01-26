@@ -4,15 +4,16 @@
     "file_name": "ims/DLIGSAMP.PSB",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T14:22:11.654695",
+    "analyzed_at": "2026-01-26T15:17:26.169793",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This file is a Program Specification Block (PSB) source definition for the DLIGSAMP COBOL program in IMS. It defines three PCBs: a database PCB (PAUTBPCB) for the hierarchical IMS database DBPAUTP0 with PROCOPT=GOTP and KEYLEN=14, including two sensitive segments PAUTSUM0 (root) and PAUTDTL1 (child of PAUTSUM0); and two GSAM PCBs for datasets PASFLDBD and PADFLDBD with PROCOPT=LS. The PSB is generated specifically for COBOL language with PSBNAME=DLIGSAMP.",
+    "summary": "This file is the source for the IMS Program Specification Block (PSB) named DLIGSAMP, targeted for a COBOL language application program. It defines one database PCB (PAUTBPCB) providing access to the hierarchical IMS database DBDNAME=DBPAUTP0 with PROCOPT=GOTP and KEYLEN=14, including root segment PAUTSUM0 (PARENT=0) and child segment PAUTDTL1 (PARENT=PAUTSUM0). It also defines two GSAM PCBs for read access (PROCOPT=LS) to DBDNAME=PASFLDBD and DBDNAME=PADFLDBD. The PSB is generated with PRINT NOGEN, no compatibility mode (CMPAT=NO), for use in IMS DL/I calls from the DLIGSAMP COBOL program.",
     "business_context": null,
-    "program_type": "UTILITY",
+    "program_type": "BATCH",
     "citations": [
+      17,
       18,
       19,
       20,
@@ -25,27 +26,11 @@
     {
       "name": "DBPAUTP0",
       "io_type": "IMS_SEGMENT",
-      "description": "IMS hierarchical database accessed via PAUTBPCB PCB with PROCOPT=GOTP and KEYLEN=14",
+      "description": "IMS hierarchical database accessed via PAUTBPCB with segments PAUTSUM0 (root) and PAUTDTL1 (child), PROCOPT=GOTP, KEYLEN=14",
       "copybook": null,
       "citation": [
-        18
-      ]
-    },
-    {
-      "name": "PAUTSUM0",
-      "io_type": "IMS_SEGMENT",
-      "description": "Root-level sensitive segment (PARENT=0) in DBPAUTP0",
-      "copybook": null,
-      "citation": [
-        19
-      ]
-    },
-    {
-      "name": "PAUTDTL1",
-      "io_type": "IMS_SEGMENT",
-      "description": "Sensitive segment dependent on parent PAUTSUM0 in DBPAUTP0",
-      "copybook": null,
-      "citation": [
+        18,
+        19,
         20
       ]
     },
@@ -88,9 +73,14 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the specific business purpose of the DLIGSAMP program and the data in DBPAUTP0, PASFLDBD, PADFLDBD?",
-      "context": "PSB source defines access structures but contains no descriptive comments or business logic details",
-      "suggestion": "Review the associated COBOL application source code using this PSB or related documentation for context"
+      "question": "What is the specific business purpose or application context of the DLIGSAMP program and its accessed IMS resources (DBPAUTP0, PASFLDBD, PADFLDBD)?",
+      "context": "The PSB defines technical access structures but contains no descriptive comments, segment field details, or business logic indications.",
+      "suggestion": "Examine the associated COBOL source code for DLIGSAMP, DBD definitions for DBPAUTP0/PASFLDBD/PADFLDBD, or application documentation."
+    },
+    {
+      "question": "Is this PSB intended for batch (DLI batch) or online IMS regions (e.g., MPP, BMP, IFP)?",
+      "context": "PROCOPT values (GOTP, LS) support both, but no explicit indication of transaction IDs or online-specific features.",
+      "suggestion": "Check JCL or IMS region definitions using this PSB, or the program's entry logic."
     }
   ]
 }

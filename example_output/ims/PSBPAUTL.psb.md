@@ -2,30 +2,23 @@
 
 **File**: `ims/PSBPAUTL.psb`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-01-26 14:24:07.322896
+**Analyzed**: 2026-01-26 15:14:32.478553
 
 ## Purpose
 
-This file defines the IMS Program Specification Block (PSB) named PSBPAUTL for assembly language (LANG=ASSEM). It specifies a single database PCB named PAUTLPCB for accessing the DBPAUTP0 database in Learn/Browse mode only (PROCOPT=L) with key length 14. The PCB includes the root segment PAUTSUM0 (PARENT=0) and its child segment PAUTDTL1 (PARENT=PAUTSUM0).
+This file defines the IMS Program Specification Block (PSB) named PSBPAUTL. It specifies a single Database PCB (PAUTLPCB) for the DBPAUTP0 database with PROCOPT=L (language interface processing), KEYLEN=14, sensitive to root segment PAUTSUM0 and child segment PAUTDTL1 under PAUTSUM0. The PSB is generated for assembler language (LANG=ASSEM).
 
-**Business Context**: IMS database access control block for PAUTL utility, enabling qualified segment search on PAUT database hierarchy.
-
-## Inputs
-
-| Name | Type | Description |
-|------|------|-------------|
-| DBPAUTP0 | IOType.IMS_SEGMENT | IMS database accessed via PAUTLPCB PCB |
-| PAUTSUM0 | IOType.IMS_SEGMENT | Root segment (PARENT=0) in DBPAUTP0 |
-| PAUTDTL1 | IOType.IMS_SEGMENT | Child segment under PAUTSUM0 in DBPAUTP0 |
+**Business Context**: Provides database access specification for IMS DL/I application programs processing PAUT (likely Payment Authority Utility) summary and detail data in DBPAUTP0 (inferred from DBDNAME and segment names; exact business process UNKNOWN)
 
 ## Business Rules
 
-- **BR001**: Access restricted to Learn/Browse mode only
-- **BR002**: Defines segment hierarchy with PAUTSUM0 as root and PAUTDTL1 as dependent child
+- **BR001**: PCB PAUTLPCB is sensitive only to segments PAUTSUM0 (PARENT=0, root segment) and PAUTDTL1 (PARENT=PAUTSUM0, child segment)
+- **BR002**: Accesses IMS database DBDNAME=DBPAUTP0 using PCB TYPE=DB
+- **BR003**: PROCOPT=L enables language interface processing (inquiry/update via DL/I calls); KEYLEN=14 defines key length for segment searches
 
 ## Open Questions
 
-- ? Specific fields or keys accessed in segments
-  - Context: Only KEYLEN=14 specified; no field-level details in PSB
-- ? Application programs referencing this PSB
-  - Context: PSB defines access but does not list callers
+- ? What IMS application programs reference this PSB (PSBPAUTL)?
+  - Context: PSB name is specified but no calling programs mentioned in source
+- ? Exact business purpose of DBPAUTP0 database and segments PAUTSUM0/PAUTDTL1?
+  - Context: Inferred from names (PAUT likely Payment Authority Utility, SUM0 summary, DTL1 detail) but not explicitly documented

@@ -2,45 +2,49 @@
 
 **File**: `cbl/COPAUS2C.cbl`
 **Type**: FileType.COBOL
-**Analyzed**: 2026-01-26 14:21:08.902004
+**Analyzed**: 2026-01-26 15:11:40.757393
 
 ## Purpose
 
-This CICS COBOL program processes fraud marking requests for authorization messages in the CardDemo application. It receives authorization details, account ID, customer ID, and fraud action via COMMAREA, formats timestamps, and inserts a new record into the CARDDEMO.AUTHFRDS DB2 table. If a duplicate key error (SQLCODE -803) occurs, it updates the existing record instead; otherwise, it sets success or failure status in the COMMAREA and returns.
+This CICS COBOL program marks credit card authorization messages as fraud (or updates status) by inserting a full record into the CARDDEMO.AUTHFRDS DB2 table or updating an existing one if duplicate key error occurs. It receives authorization details, account/customer IDs, and fraud action via COMMAREA, formats timestamps using CICS time services, populates SQL host variables, and handles success/failure by updating COMMAREA status fields before returning to CICS.
 
-**Business Context**: CardDemo Authorization Module: Marks authorization messages as fraudulent
+**Business Context**: CardDemo application authorization module for logging fraud reports on authorization transactions in a payment processing system.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| DFHCOMMAREA | IOType.CICS_COMMAREA | Contains WS-ACCT-ID, WS-CUST-ID, WS-FRAUD-AUTH-RECORD (authorization details like PA-AUTH-ORIG-DATE, PA-CARD-NUM, etc.), and WS-FRAUD-STATUS-RECORD (fraud action 'F' or 'R') |
+| DFHCOMMAREA | IOType.CICS_COMMAREA | Contains account ID, customer ID, fraud authorization record with auth details (PA- fields), and fraud status record including action ('F' report fraud, 'R' remove) |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| DFHCOMMAREA | IOType.CICS_COMMAREA | Updated with WS-FRD-UPDT-SUCCESS/FAILED status and WS-FRD-ACT-MSG (success/error message) |
-| CARDDEMO.AUTHFRDS | IOType.DB2_TABLE | Fraud authorization records inserted or updated with details like CARD_NUM, AUTH_TS, AUTH_FRAUD='F', FRAUD_RPT_DATE, ACCT_ID, CUST_ID |
+| CARDDEMO.AUTHFRDS | IOType.DB2_TABLE | Fraud authorization records storing full auth transaction details, fraud flag, report date, account ID, and customer ID |
+| DFHCOMMAREA | IOType.CICS_COMMAREA | Updated with fraud status record fields WS-FRD-UPDT-STATUS and WS-FRD-ACT-MSG reflecting insert/update success or failure |
 
 ## Business Rules
 
-- **BR001**: Insert new fraud authorization record; on duplicate key (SQLCODE -803), update existing record's AUTH_FRAUD and FRAUD_RPT_DATE
-- **BR002**: Set success status and message on successful INSERT or UPDATE; set failure and SQL error details otherwise
+- **BR001**: On successful INSERT (SQLCODE=0), set update status to success and message 'ADD SUCCESS'
+- **BR002**: On INSERT duplicate key error (SQLCODE=-803), perform UPDATE to set fraud flag and report date on existing record
+- **BR003**: On any other SQL error after INSERT or UPDATE, set update status to failed and build error message from SQLCODE/SQLSTATE
+- **BR004**: Set AUTH_FRAUD field to value from input WS-FRD-ACTION ('F' or 'R')
 
 ## Paragraphs/Procedures
 
 ### MAIN-PARA
-This is the primary entry point and orchestration paragraph for the entire program flow in this CICS transaction. It begins by executing CICS ASKTIME and FORMATTIME to obtain current absolute time and formatted date, storing in WS-ABS-TIME and WS-CUR-DATE, then moves WS-CUR-DATE to PA-FRAUD-RPT-DATE (line 101). It consumes input from DFHCOMMAREA linkage fields including WS-ACCT-ID, WS-CUST-ID, WS-FRD-ACTION, and WS-FRAUD-AUTH-RECORD (PA- fields like PA-AUTH-ORIG-DATE, PA-CARD-NUM). It transforms and formats the authorization timestamp by parsing PA-AUTH-ORIG-DATE into WS-AUTH-YY/MM/DD and computing inverted time from PA-AUTH-TIME-9C into WS-AUTH-HH/MI/SS/SSS, assembling WS-AUTH-TS (lines 103-111). It then moves numerous PA- fields to host variables defined by AUTHFRDS include (e.g., CARD-NUM, AUTH-TYPE, lines 113-139). The core business logic performs an SQL INSERT into CARDDEMO.AUTHFRDS with formatted data, CURRENT DATE for FRAUD_RPT_DATE, and WS-FRD-ACTION as AUTH_FRAUD (lines 141-198). It checks SQLCODE: if 0, sets success status and message; if -803 (duplicate), performs FRAUD-UPDATE paragraph; else, sets failure with SQLCODE/STATE in message (lines 199-216). No explicit file I/O errors beyond SQL, but SQL errors are captured in WS-SQLCODE/STATE. Finally, it executes CICS RETURN to send updated COMMAREA back (line 218). This paragraph calls FRAUD-UPDATE only on duplicate key to handle upserts.
+This is the main entry point and orchestration paragraph controlling the entire program flow for fraud marking. It consumes input from DFHCOMMAREA including WS-ACCT-ID, WS-CUST-ID, PA- authorization fields from CIPAUDTY, and WS-FRD-ACTION. It first obtains current absolute time via CICS ASKTIME into WS-ABS-TIME and formats it to MMDDYY in WS-CUR-DATE using FORMATTIME, then moves WS-CUR-DATE to PA-FRAUD-RPT-DATE in commarea. It parses PA-AUTH-ORIG-DATE into date parts of WS-AUTH-TS, computes adjusted time WS-AUTH-TIME = 999999999 - PA-AUTH-TIME-9C, and formats time parts into full AUTH-TS timestamp string. It populates all SQL host variables from AUTHFRDS include by moving input PA- fields (CARD-NUM, AUTH-TYPE, etc.), WS-FRD-ACTION to AUTH-FRAUD, WS-ACCT-ID/CUST-ID, and prepares MERCHANT-NAME with length. The core business logic performs INSERT into AUTHFRDS with CURRENT DATE for FRAUD_RPT_DATE. It evaluates SQLCODE post-INSERT: if 0, sets success status/message; if -803 duplicate, PERFORMs FRAUD-UPDATE; else sets failure and strings SQLCODE/SQLSTATE error into WS-FRD-ACT-MSG. Error handling relies on SQLCA without additional validation beyond dupkey. Finally, EXEC CICS RETURN ends the transaction, producing updated commarea status and modified DB2 table.
 
 ### FRAUD-UPDATE
-This paragraph handles the update case for existing fraud authorization records when INSERT fails with duplicate key (SQLCODE -803). It is called exclusively from MAIN-PARA at line 204. It consumes host variables populated in MAIN-PARA such as AUTH-FRAUD (from WS-FRD-ACTION), CARD-NUM, AUTH-TS. It produces an SQL UPDATE on CARDDEMO.AUTHFRDS setting AUTH_FRAUD and FRAUD_RPT_DATE = CURRENT DATE, keyed by CARD_NUM and exact AUTH_TS match (lines 223-229). The business logic checks SQLCODE post-update: if 0, sets WS-FRD-UPDT-SUCCESS and 'UPDT SUCCESS' message; else, sets failure and builds error string with WS-SQLCODE/WS-SQLSTATE (lines 230-243). Error handling mirrors MAIN-PARA by capturing SQL errors into COMMAREA message fields. It produces no further calls or outputs beyond the SQL and status updates. Control returns to caller (MAIN-PARA) after completion, leading to CICS RETURN. This implements the upsert pattern for fraud marking to avoid duplicates while allowing status changes.
+This subordinate paragraph handles idempotent update for duplicate authorization records after failed INSERT. It consumes pre-populated SQL host variables CARD-NUM, AUTH-TS, AUTH-FRAUD from MAIN-PARA. It produces an UPDATE to AUTHFRDS setting AUTH_FRAUD = :AUTH-FRAUD and FRAUD_RPT_DATE = CURRENT DATE WHERE CARD_NUM and AUTH_TS match input. The business logic ensures fraud marking overrides without duplication for same card/timestamp. Post-UPDATE, it checks SQLCODE: if 0, sets WS-FRD-UPDT-SUCCESS and 'UPDT SUCCESS' message; else sets WS-FRD-UPDT-FAILED and strings SQLCODE/SQLSTATE into WS-FRD-ACT-MSG. Error handling is via SQLCA check with no further actions or validations. No subordinate calls or loops, returns control to caller (MAIN-PARA). Outputs update the DB2 record and commarea status for return to CICS.
 
 ## Open Questions
 
-- ? Exact structure and field definitions of CIPAUDTY copybook
-  - Context: PA- fields like PA-AUTH-ORIG-DATE, PA-CARD-NUM used extensively but definitions not in source
-- ? Host variable definitions from AUTHFRDS SQL INCLUDE
-  - Context: Fields like CARD-NUM, AUTH-TS referenced but not declared in visible COBOL code
-- ? IMS usage
-  - Context: Header mentions IMS but no IMS DL/I calls visible
+- ? Definition and PIC clause of PA-AUTH-TIME-9C
+  - Context: Used in COMPUTE WS-AUTH-TIME but not defined in source; assumed packed decimal in CIPAUDTY
+- ? CICS transaction ID or entry point for this program
+  - Context: Not present in source code
+- ? Role of IMS in 'CICS COBOL IMS DB2 Program' header
+  - Context: No DL/I or IMS calls visible; possibly environmental
+- ? Purpose of MOVE WS-CUR-DATE TO PA-FRAUD-RPT-DATE
+  - Context: PA-FRAUD-RPT-DATE modified but not used in SQL (uses CURRENT DATE)

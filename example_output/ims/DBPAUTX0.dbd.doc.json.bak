@@ -3,13 +3,13 @@
     "program_id": "DBPAUTX0",
     "file_name": "ims/DBPAUTX0.dbd",
     "file_type": "OTHER",
-    "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T14:24:07.627925",
+    "analyzed_by": "Scribe",
+    "analyzed_at": "2026-01-26T15:14:37.504976",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This DBD source defines the IMS hierarchical database DBPAUTX0 with INDEX/VSAM access and protection. It specifies dataset group DSG001 using VSAM dataset DDPAUTX0 of size 4096 bytes. The database has a single root segment PAUTINDX (6 bytes) with unique packed sequence key field INDXSEQ, and a logical child relationship to PAUTSUM0 segment in database DBPAUTP0 via index ACCNTID.",
+    "summary": "This file is an IMS Database Definition (DBD) source for the database DBPAUTX0, specifying an indexed VSAM-accessible database with protection. It defines one dataset group DSG001 referencing physical dataset DDPAUTX0 of size 4096. It includes a single root segment PAUTINDX with a unique sequential packed decimal key field INDXSEQ and a logical child relationship to PAUTSUM0 in database DBPAUTP0 via the ACCNTID index.",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
@@ -21,26 +21,7 @@
       30
     ]
   },
-  "inputs": [
-    {
-      "name": "DDPAUTX0",
-      "io_type": "FILE_VSAM",
-      "description": "Primary VSAM dataset assigned to DD1 for dataset group DSG001",
-      "copybook": null,
-      "citation": [
-        23
-      ]
-    },
-    {
-      "name": "INDXSEQ",
-      "io_type": "IMS_SEGMENT",
-      "description": "Unique packed sequence key field (6 bytes) for root segment PAUTINDX, starting at position 1, used for primary index access",
-      "copybook": null,
-      "citation": [
-        29
-      ]
-    }
-  ],
+  "inputs": [],
   "outputs": [],
   "called_programs": [],
   "calling_context": {
@@ -51,35 +32,32 @@
   "business_rules": [
     {
       "rule_id": "BR001",
-      "description": "PAUTINDX segment is defined as root segment with no parent",
-      "logic_summary": "Specified via PARENT=0",
-      "conditions": [],
+      "description": "The root segment PAUTINDX enforces uniqueness and sequential ordering via the INDXSEQ key field.",
+      "logic_summary": "Defined as a unique sequential (SEQ,U) packed decimal field (TYPE=P) of 6 bytes starting at position 1.",
+      "conditions": [
+        "FIELD NAME=(INDXSEQ,SEQ,U)"
+      ],
       "citation": [
-        27
+        29
       ]
     },
     {
       "rule_id": "BR002",
-      "description": "PAUTINDX segment frequency is estimated at 100000 occurrences",
-      "logic_summary": "Specified via FREQ=100000 for database loading and performance planning",
-      "conditions": [],
+      "description": "Establishes a logical hierarchical relationship from the PAUTINDX segment to the PAUTSUM0 segment in database DBPAUTP0.",
+      "logic_summary": "Specified via LCHILD with INDEX=ACCNTID, enabling indexed access across databases.",
+      "conditions": [
+        "PARENT=0 (root segment)",
+        "LCHILD to PAUTSUM0"
+      ],
       "citation": [
-        28
+        27,
+        30,
+        31
       ]
     }
   ],
   "data_flow": {
-    "reads_from": [
-      {
-        "source": "PAUTINDX",
-        "fields_used": [
-          "INDXSEQ"
-        ],
-        "citation": [
-          29
-        ]
-      }
-    ],
+    "reads_from": [],
     "writes_to": [],
     "transforms": []
   },
@@ -88,16 +66,5 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
-    {
-      "question": "What is the exact business purpose of DBPAUTX0 and segments PAUTINDX/PAUTSUM0?",
-      "context": "Names suggest Payment Authorization indexing (PAUT=Payment Auth?), but no descriptive comments in source",
-      "suggestion": "Review calling application programs or IMS documentation"
-    },
-    {
-      "question": "Details of logical child PAUTSUM0 in DBPAUTP0?",
-      "context": "Referenced but not defined here; requires cross-reference to DBPAUTP0 DBD",
-      "suggestion": "Analyze DBPAUTP0.dbd source"
-    }
-  ]
+  "open_questions": []
 }

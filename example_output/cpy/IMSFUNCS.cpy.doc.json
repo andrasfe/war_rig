@@ -4,13 +4,13 @@
     "file_name": "cpy/IMSFUNCS.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T14:22:23.325418",
+    "analyzed_at": "2026-01-26T15:15:09.421309",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This COBOL copybook defines a data structure FUNC-CODES containing constants for IMS DL/I function codes used in database calls, such as 'GU  ' for Get Unique, 'GHU ' for Get Hold Unique, 'GN  ' for Get Next, and others up to 'DLET' for Delete. It also defines PARMCOUNT as a 5-digit signed binary field initialized to +4, likely representing the expected number of parameters for IMS calls. The copybook is intended for inclusion in COBOL programs performing IMS database operations.",
-    "business_context": "IMS hierarchical database access and manipulation in mainframe applications",
+    "summary": "This COBOL copybook defines the FUNC-CODES group (01 level) containing elementary 05-level constant function codes for IMS DL/I database calls, including Get Unique (GU), Get Hold Unique (GHU), Get Next (GN), Get Hold Next (GHN), Get Next Parent (GNP), Get Hold Next Parent (GHNP), Replace (REPL), Insert (ISRT), and Delete (DLET). It also defines PARMCOUNT as a constant numeric value of 4 in S9(05) COMP-5 format, likely specifying the expected parameter count for certain IMS calls. These constants are intended to be copied into COBOL programs for standardized IMS DL/I PCB mask function codes.",
+    "business_context": "Supports IMS hierarchical database access operations in mainframe COBOL applications, ensuring consistent function code values across programs interacting with IMS DL/I databases.",
     "program_type": "UTILITY",
     "citations": [
       17,
@@ -34,27 +34,114 @@
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [],
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "FUNC-GU defines the constant 'GU  ' for IMS DL/I Get Unique operation, retrieving a unique database segment by key.",
+      "logic_summary": "Defined as PIC X(04) VALUE 'GU  '.",
+      "conditions": [],
+      "citation": [
+        18
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "FUNC-GHU defines the constant 'GHU ' for IMS DL/I Get Hold Unique operation, retrieving and holding a unique database segment by key.",
+      "logic_summary": "Defined as PIC X(04) VALUE 'GHU '.",
+      "conditions": [],
+      "citation": [
+        19
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "FUNC-GN defines the constant 'GN  ' for IMS DL/I Get Next operation, retrieving the next sequential database segment.",
+      "logic_summary": "Defined as PIC X(04) VALUE 'GN  '.",
+      "conditions": [],
+      "citation": [
+        20
+      ]
+    },
+    {
+      "rule_id": "BR004",
+      "description": "FUNC-GHN defines the constant 'GHN ' for IMS DL/I Get Hold Next operation, retrieving and holding the next sequential database segment.",
+      "logic_summary": "Defined as PIC X(04) VALUE 'GHN '.",
+      "conditions": [],
+      "citation": [
+        21
+      ]
+    },
+    {
+      "rule_id": "BR005",
+      "description": "FUNC-GNP defines the constant 'GNP ' for IMS DL/I Get Next within Parent operation, retrieving the next segment at the same level under the parent.",
+      "logic_summary": "Defined as PIC X(04) VALUE 'GNP '.",
+      "conditions": [],
+      "citation": [
+        22
+      ]
+    },
+    {
+      "rule_id": "BR006",
+      "description": "FUNC-GHNP defines the constant 'GHNP' for IMS DL/I Get Hold Next within Parent operation, retrieving and holding the next segment at the same level under the parent.",
+      "logic_summary": "Defined as PIC X(04) VALUE 'GHNP'.",
+      "conditions": [],
+      "citation": [
+        23
+      ]
+    },
+    {
+      "rule_id": "BR007",
+      "description": "FUNC-REPL defines the constant 'REPL' for IMS DL/I Replace operation, updating an existing database segment.",
+      "logic_summary": "Defined as PIC X(04) VALUE 'REPL'.",
+      "conditions": [],
+      "citation": [
+        24
+      ]
+    },
+    {
+      "rule_id": "BR008",
+      "description": "FUNC-ISRT defines the constant 'ISRT' for IMS DL/I Insert operation, adding a new database segment.",
+      "logic_summary": "Defined as PIC X(04) VALUE 'ISRT'.",
+      "conditions": [],
+      "citation": [
+        25
+      ]
+    },
+    {
+      "rule_id": "BR009",
+      "description": "FUNC-DLET defines the constant 'DLET' for IMS DL/I Delete operation, removing a database segment.",
+      "logic_summary": "Defined as PIC X(04) VALUE 'DLET'.",
+      "conditions": [],
+      "citation": [
+        26
+      ]
+    },
+    {
+      "rule_id": "BR010",
+      "description": "PARMCOUNT defines a constant value of 4, likely governing the number of parameters passed in specific IMS DL/I calls using these function codes.",
+      "logic_summary": "Defined as PIC S9(05) VALUE +4 COMP-5.",
+      "conditions": [],
+      "citation": [
+        27
+      ]
+    }
+  ],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
     "transforms": []
   },
-  "copybooks_used": [],
+  "copybooks_used": [
+    {
+      "copybook_name": "IMSFUNCS",
+      "purpose": "Defines the FUNC-CODES 01-group and PARMCOUNT field as constants for IMS DL/I function codes and parameter count, to be included in COBOL programs for standardized database call specifications.",
+      "location": "WORKING_STORAGE",
+      "citation": 17
+    }
+  ],
   "paragraphs": [],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
-    {
-      "question": "In which specific programs or sections (e.g., WORKING-STORAGE, LINKAGE) is this copybook included?",
-      "context": "The copybook defines reusable constants but does not specify usage context",
-      "suggestion": "Analyze including COBOL programs via COPY statements referencing IMSFUNCS"
-    },
-    {
-      "question": "What do the specific IMS function codes (e.g., GNP, GHNP) correspond to in IMS documentation?",
-      "context": "Standard IMS DL/I codes inferred (e.g., GU=Get Unique), but exact mappings for less common ones like GHNP not confirmed from file alone",
-      "suggestion": "Cross-reference with IMS DL/I manuals for precise function descriptions"
-    }
-  ]
+  "open_questions": []
 }

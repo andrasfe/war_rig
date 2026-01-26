@@ -248,6 +248,25 @@ class Preprocessor:
 
         return "".join(result)
 
+    def _get_stripped_column_count(self) -> int:
+        """
+        Calculate how many columns were stripped by _strip_sequence_columns().
+
+        Returns:
+            Number of columns that were stripped (0 if no stripping configured).
+        """
+        start = self._spec.comments.strip_columns_start
+        end = self._spec.comments.strip_columns_end
+
+        if start is None:
+            return 0
+
+        if end is None:
+            end = start
+
+        # Columns are 1-indexed inclusive, so stripping cols 1-6 removes 6 columns
+        return end - (start - 1)
+
     def _strip_fixed_column_comments(self, content: str) -> str:
         """
         Remove COBOL-style column-based comments.
@@ -259,6 +278,11 @@ class Preprocessor:
 
         The specified indicator from the spec is used, plus standard
         COBOL comment indicators.
+
+        If sequence columns have already been stripped (e.g., COBOL cols 1-6),
+        the column index is automatically adjusted so that the spec can use
+        the real column number (e.g., 7 for COBOL) rather than the
+        post-stripping position.
 
         Args:
             content: Source content to process.
@@ -273,8 +297,10 @@ class Preprocessor:
         if column is None:
             return content
 
-        # Column is 1-indexed, so subtract 1 for 0-indexed access
-        col_index = column - 1
+        # Column is 1-indexed, so subtract 1 for 0-indexed access.
+        # Then auto-adjust for any columns already stripped by
+        # _strip_sequence_columns(), so the spec can use real column numbers.
+        col_index = column - 1 - self._get_stripped_column_count()
 
         # Build set of comment indicators
         # Include the configured indicator plus standard COBOL ones
@@ -457,7 +483,7 @@ class Preprocessor:
 
             # Check for leading continuation character at specific column (COBOL-style)
             if continuation.leading_char and continuation.leading_column is not None:
-                col_idx = continuation.leading_column - 1
+                col_idx = continuation.leading_column - 1 - self._get_stripped_column_count()
                 if len(line) > col_idx and line[col_idx] == continuation.leading_char:
                     # This is a continuation of the previous line
                     # In COBOL, continuation starts at column 12 (Area B starts at 12)

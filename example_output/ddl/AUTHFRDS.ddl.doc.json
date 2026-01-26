@@ -4,13 +4,13 @@
     "file_name": "ddl/AUTHFRDS.ddl",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T14:20:07.895624",
+    "analyzed_at": "2026-01-26T15:10:54.921567",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "DDL script that creates the CARDDEMO.AUTHFRDS table to store authorization and fraud-related data for card transactions. The table captures details such as card number, authorization timestamp, response codes, transaction amounts, merchant information, and fraud indicators. Primary key is composite on CARD_NUM and AUTH_TS.",
-    "business_context": "Supports card payment authorization processing and fraud detection by storing transaction authorization details and fraud status.",
+    "summary": "DDL script that creates the AUTHFRDS table in the CARDDEMO schema. The table stores detailed authorization transaction data for card processing, including card numbers, timestamps, merchant details, transaction amounts, response codes, and fraud indicators. It supports fraud detection and reporting by maintaining historical authorization records with uniqueness enforced on card number and timestamp.",
+    "business_context": "Card authorization processing and fraud analysis in a demonstration (CARDDEMO) system",
     "program_type": "UTILITY",
     "citations": [
       1,
@@ -22,7 +22,7 @@
     {
       "name": "CARDDEMO.AUTHFRDS",
       "io_type": "DB2_TABLE",
-      "description": "Table storing card authorization fraud data including card details, timestamps, auth codes, amounts, merchant info, and fraud flags",
+      "description": "Table storing authorization fraud details including card, merchant, transaction, and fraud fields",
       "copybook": null,
       "citation": [
         1
@@ -38,18 +38,29 @@
   "business_rules": [
     {
       "rule_id": "BR001",
-      "description": "CARD_NUM and AUTH_TS are mandatory fields forming the primary key",
-      "logic_summary": "Defined with NOT NULL constraints and PRIMARY KEY clause",
+      "description": "CARD_NUM and AUTH_TS form a composite primary key to ensure each authorization per card is uniquely identified by timestamp",
+      "logic_summary": "PRIMARY KEY constraint defined on columns CARD_NUM and AUTH_TS",
       "conditions": [
-        "NOT NULL on CARD_NUM (line 2)",
-        "NOT NULL on AUTH_TS (line 3)",
-        "PRIMARY KEY(CARD_NUM, AUTH_TS) (line 28)"
+        "NOT NULL on CARD_NUM",
+        "NOT NULL on AUTH_TS"
       ],
       "citation": [
-        1,
         2,
         3,
         28
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "CARD_NUM and AUTH_TS are mandatory fields for all records",
+      "logic_summary": "NOT NULL constraints enforced at table creation",
+      "conditions": [
+        "CARD_NUM NOT NULL",
+        "AUTH_TS NOT NULL"
+      ],
+      "citation": [
+        2,
+        3
       ]
     }
   ],
@@ -65,10 +76,21 @@
     {
       "operation": "CREATE TABLE",
       "table": "CARDDEMO.AUTHFRDS",
-      "purpose": "Defines persistent storage for authorization fraud transaction data with specified columns and primary key",
+      "purpose": "Defines persistent storage for card authorization transactions with fraud tracking fields",
       "citation": 1
     }
   ],
   "cics_operations": [],
-  "open_questions": []
+  "open_questions": [
+    {
+      "question": "Specific database system (e.g., DB2 version or dialect)",
+      "context": "Data types like TIMESTAMP, DECIMAL(12,2), SMALLINT, VARCHAR(22) suggest DB2 or similar but not explicitly stated",
+      "suggestion": "Check execution environment or comments for DBMS confirmation"
+    },
+    {
+      "question": "Usage of nullable fields and business validation beyond DDL constraints",
+      "context": "Many fields lack NOT NULL (e.g., lines 4-27 except PK), unclear if application enforces further rules",
+      "suggestion": "Review programs that INSERT/UPDATE this table for additional validations"
+    }
+  ]
 }

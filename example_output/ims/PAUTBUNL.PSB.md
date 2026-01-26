@@ -2,26 +2,25 @@
 
 **File**: `ims/PAUTBUNL.PSB`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-01-26 14:24:18.203803
+**Analyzed**: 2026-01-26 15:15:03.203687
 
 ## Purpose
 
-This PSB source defines the Program Specification Block for the COBOL program PAUTBUNL (line 21). It specifies one database PCB named PAUTBPCB for DBD DBPAUTP0 with PROCOPT=GOTP and KEYLEN=14 (line 18). Sensitive segments include root PAUTSUM0 (line 19) and child PAUTDTL1 under PAUTSUM0 (line 20).
+This PSB source file defines the Program Specification Block for the COBOL program PAUTBUNL, specifying IMS database access via a single PCB named PAUTBPCB to the DBPAUTP0 database with PROCOPT=GOTP and KEYLEN=14. It declares two sensed segments: PAUTSUM0 as the root segment (PARENT=0) and PAUTDTL1 as a child segment under PAUTSUM0. The PSB is generated for COBOL language compatibility without compatibility mode.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| PAUTBPCB | IOType.IMS_SEGMENT | IMS database PCB for DBPAUTP0 providing access to segments PAUTSUM0 (root) and PAUTDTL1 (child) |
+| PAUTSUM0 | IOType.IMS_SEGMENT | Root segment (PARENT=0) of the DBPAUTP0 IMS database, accessible via PAUTBPCB PCB |
+| PAUTDTL1 | IOType.IMS_SEGMENT | Child segment (PARENT=PAUTSUM0) of the DBPAUTP0 IMS database, accessible via PAUTBPCB PCB |
 
 ## Business Rules
 
-- **BR001**: Supports IMS DL/I retrieval calls including GU (Get Unique), GN (Get Next), and GNP (Get Next within Parent) with parentage qualification
-- **BR002**: Concatenated key length for unqualified segment search arguments (SSAs) is 14 bytes
+- **BR001**: PCB access constrained to processing options defined by PROCOPT=GOTP, permitting Get Unique retrieval operations with positioning support
+- **BR002**: Key length for DL/I segment searches limited to 14 bytes
 
 ## Open Questions
 
-- ? Specific field layouts and keys for segments PAUTSUM0 and PAUTDTL1
-  - Context: PSB defines segments but not field-level details; requires DBD or copybook source
-- ? Business purpose of PAUTBUNL program (e.g., unload utility for PAUTP0 database)
-  - Context: Inferred from name (PAUT=Payment Automation Utility?, BUNL=Bundle/Unload) but not explicit in PSB
+- ? What is the business purpose of the DBPAUTP0 database and PAUT segments?
+  - Context: PSB defines access structure but provides no descriptive comments on data content or application use

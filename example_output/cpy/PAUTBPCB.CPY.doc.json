@@ -4,14 +4,14 @@
     "file_name": "cpy/PAUTBPCB.CPY",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T14:24:31.886625",
+    "analyzed_at": "2026-01-26T15:15:32.838197",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the PAUTBPCB level-01 group structure, which is the IMS Database Program Communication Block (PCB) for the PAUT database. It includes standard IMS DBPCB fields such as DBD name, segment level and name, PCB status and processing options, number of sensitive segments, and a key feedback buffer area. This structure is used in COBOL programs (typically in the LINKAGE SECTION) to interface with IMS DL/I calls for database navigation and access.",
-    "business_context": "IMS DL/I hierarchical database access for applications processing PAUT database segments",
-    "program_type": "SUBROUTINE",
+    "summary": "This copybook defines the PAUTBPCB 01-level record structure for an IMS Program Communication Block (PCB) used in IMS/DB applications. It specifies fields for database identification, processing options set by the application, status and feedback fields populated by IMS, and key feedback buffer. The structure follows standard IMS PCB layout for DL/I database calls.",
+    "business_context": "IMS database access control block for PAUT application, enabling application programs to issue DL/I calls (GU, GNP, etc.) to hierarchical databases.",
+    "program_type": "UTILITY",
     "citations": [
       17,
       18,
@@ -19,19 +19,130 @@
       20,
       21,
       23,
+      24,
       25,
       26
     ]
   },
-  "inputs": [],
-  "outputs": [],
+  "inputs": [
+    {
+      "name": "PAUT-DBDNAME",
+      "io_type": "IMS_SEGMENT",
+      "description": "8-character Database Definition (DBD) name, set by the application before IMS DL/I calls",
+      "copybook": null,
+      "citation": [
+        18
+      ]
+    },
+    {
+      "name": "PAUT-PCB-PROCOPT",
+      "io_type": "IMS_SEGMENT",
+      "description": "4-character IMS processing options (PROCOPT), set by the application to specify call types like retrieval or update",
+      "copybook": null,
+      "citation": [
+        21
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "PAUT-SEG-LEVEL",
+      "io_type": "IMS_SEGMENT",
+      "description": "2-character segment level of the segment retrieved or affected by IMS call, populated by IMS",
+      "copybook": null,
+      "citation": [
+        19
+      ]
+    },
+    {
+      "name": "PAUT-PCB-STATUS",
+      "io_type": "IMS_SEGMENT",
+      "description": "2-character status code returned by IMS (spaces=success, non-spaces=error), populated by IMS after each call",
+      "copybook": null,
+      "citation": [
+        20
+      ]
+    },
+    {
+      "name": "PAUT-SEG-NAME",
+      "io_type": "IMS_SEGMENT",
+      "description": "8-character name of the segment retrieved, populated by IMS",
+      "copybook": null,
+      "citation": [
+        23
+      ]
+    },
+    {
+      "name": "PAUT-KEYFB-NAME",
+      "io_type": "IMS_SEGMENT",
+      "description": "Field offset/name for key feedback, populated/used by IMS",
+      "copybook": null,
+      "citation": [
+        24
+      ]
+    },
+    {
+      "name": "PAUT-NUM-SENSEGS",
+      "io_type": "IMS_SEGMENT",
+      "description": "Number of sensitive segments for the PCB, populated by IMS",
+      "copybook": null,
+      "citation": [
+        25
+      ]
+    },
+    {
+      "name": "PAUT-KEYFB",
+      "io_type": "IMS_SEGMENT",
+      "description": "255-character key feedback buffer containing concatenated keys of parent segments up to the retrieved segment, populated by IMS",
+      "copybook": null,
+      "citation": [
+        26
+      ]
+    }
+  ],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
     "entry_points": [],
-    "linkage_section": []
+    "linkage_section": [
+      "PAUTBPCB"
+    ]
   },
-  "business_rules": [],
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Application programs must populate PAUT-DBDNAME with the target database DBD name prior to IMS DL/I calls",
+      "logic_summary": "Field defined as PIC X(08) for exact 8-character DBD identifier",
+      "conditions": [
+        "PAUT-DBDNAME must be valid DBD registered in IMS"
+      ],
+      "citation": [
+        18
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Application programs must set PAUT-PCB-PROCOPT to appropriate IMS processing options before calls",
+      "logic_summary": "Field defined as PIC X(04); governs call behavior (retrieval, insert, etc.)",
+      "conditions": [
+        "Valid PROCOPT per IMS standards"
+      ],
+      "citation": [
+        21
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "After each IMS DL/I call, application must check PAUT-PCB-STATUS for success (spaces) or error",
+      "logic_summary": "Field defined as PIC X(02); non-spaces indicate IMS-specific error conditions",
+      "conditions": [
+        "IF PAUT-PCB-STATUS NOT = '  ' THEN handle error"
+      ],
+      "citation": [
+        20
+      ]
+    }
+  ],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
@@ -39,19 +150,16 @@
   },
   "copybooks_used": [],
   "paragraphs": [],
-  "error_handling": [],
+  "error_handling": [
+    {
+      "condition": "PAUT-PCB-STATUS not equal to spaces",
+      "action": "Application program is expected to interpret IMS status code and abend or retry (handled in using program)",
+      "citation": [
+        20
+      ]
+    }
+  ],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
-    {
-      "question": "Specific programs or PSBs that include this PCB",
-      "context": "Copybook does not reference including programs or PSB definitions",
-      "suggestion": "Analyze including COBOL programs or IMS PSB source for usage context"
-    },
-    {
-      "question": "Exact length and offset details of PAUT-KEYFB",
-      "context": "Field is PIC X(255), but actual key feedback length depends on PSB and segment keys",
-      "suggestion": "Review IMS PSB or DBD definitions for PAUT database"
-    }
-  ]
+  "open_questions": []
 }

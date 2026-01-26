@@ -4,17 +4,16 @@
     "file_name": "ims/PADFLDBD.DBD",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T14:21:22.137536",
+    "analyzed_at": "2026-01-26T15:14:19.130784",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This file is a DBDGEN source/listing defining the IMS database PADFLDBD with access methods GSAM and BSAM. It specifies dataset group DSG001 including input dataset DD1=PADFILIP and output dataset DD2=PADFILOP, both with fixed-length records of 200 bytes and RECFM=F. The definition was generated on 04/21/2023 for IMS version 15.1.",
+    "summary": "This file is the source code for the IMS Database Definition (DBD) named PADFLDBD, generated via DBDGEN. It specifies GSAM and BSAM access methods for a simple database with no segments. A single dataset group DSG001 is defined, including input dataset PADFILIP (DD1) and output dataset PADFILOP (DD2), both using fixed-length records of 200 bytes (RECFM=F).",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
       17,
-      20,
       22,
       27
     ]
@@ -23,7 +22,7 @@
     {
       "name": "PADFILIP",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "Input dataset (DD1) in dataset group DSG001 for the PADFLDBD database, with fixed 200-byte records",
+      "description": "Input dataset defined as DD1 in dataset group DSG001 for the PADFLDBD database",
       "copybook": null,
       "citation": [
         27
@@ -34,7 +33,7 @@
     {
       "name": "PADFILOP",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "Output dataset (DD2) in dataset group DSG001 for the PADFLDBD database, with fixed 200-byte records",
+      "description": "Output dataset defined as DD2 in dataset group DSG001 for the PADFLDBD database",
       "copybook": null,
       "citation": [
         27
@@ -47,7 +46,31 @@
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [],
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Access to the PADFLDBD IMS database is restricted to GSAM and BSAM methods only",
+      "logic_summary": "Explicitly defined in the DBD macro with ACCESS=(GSAM,BSAM)",
+      "conditions": [
+        "ACCESS=(GSAM,BSAM)"
+      ],
+      "citation": [
+        22
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Datasets in DSG001 must use fixed-length records (RECFM=F) of exactly 200 bytes",
+      "logic_summary": "Specified in the DSG macro with RECORD=(200),RECFM=F",
+      "conditions": [
+        "RECORD=(200)",
+        "RECFM=F"
+      ],
+      "citation": [
+        27
+      ]
+    }
+  ],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
@@ -60,9 +83,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the specific business purpose of the PADFLDBD database?",
-      "context": "No descriptive comments or context provided beyond dataset names and technical specs",
-      "suggestion": "Review calling IMS application programs or related documentation for usage"
+      "question": "No IMS segments or fields are defined in this DBD",
+      "context": "The DBD defines only datasets and access methods without any SEGMENT, FIELD, or DATASET macros beyond DSG001",
+      "suggestion": "Review application programs or additional DBD sources for segment definitions if this is a root-only or GSAM-specific database"
     }
   ]
 }

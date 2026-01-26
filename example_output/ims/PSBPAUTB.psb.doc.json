@@ -4,14 +4,14 @@
     "file_name": "ims/PSBPAUTB.psb",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T14:24:17.627872",
+    "analyzed_at": "2026-01-26T15:12:50.372498",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This file is an IMS PSB source definition that generates the Program Specification Block PSBPAUTB for a COBOL program. It defines the single PCB PAUTBPCB for database DBDNAME=DBPAUTP0 with PROCOPT=AP and KEYLEN=14. The PCB includes sensegs PAUTSUM0 as root segment and PAUTDTL1 as child of PAUTSUM0.",
-    "business_context": null,
-    "program_type": "UTILITY",
+    "summary": "This file is an IMS Program Specification Block (PSB) definition that generates PSBPAUTB for COBOL programs. It defines a single database PCB named PAUTBPCB for the DBD DBPAUTP0 with PROCOPT=AP and KEYLEN=14, providing access to the root segment PAUTSUM0 and its child segment PAUTDTL1. The PSB is generated in COBOL language with CMPAT=YES for compatibility.",
+    "business_context": "Defines IMS hierarchical database access structure for PAUT-related summary (PAUTSUM0) and detail (PAUTDTL1) segments, likely supporting batch DL/I applications for business data such as purchase authorizations or similar transactional records.",
+    "program_type": "BATCH",
     "citations": [
       17,
       18,
@@ -21,18 +21,9 @@
   },
   "inputs": [
     {
-      "name": "PAUTBPCB",
-      "io_type": "OTHER",
-      "description": "IMS PCB TYPE=DB for DBDNAME=DBPAUTP0, PROCOPT=AP, KEYLEN=14 serving as the interface for DL/I calls to access defined segments",
-      "copybook": null,
-      "citation": [
-        17
-      ]
-    },
-    {
       "name": "PAUTSUM0",
       "io_type": "IMS_SEGMENT",
-      "description": "Root segment (PARENT=0) accessible via PAUTBPCB",
+      "description": "Root segment (PARENT=0) of the DBPAUTP0 IMS database accessible via PAUTBPCB",
       "copybook": null,
       "citation": [
         18
@@ -41,7 +32,7 @@
     {
       "name": "PAUTDTL1",
       "io_type": "IMS_SEGMENT",
-      "description": "Child segment (PARENT=PAUTSUM0) accessible via PAUTBPCB",
+      "description": "Child segment (PARENT=PAUTSUM0) of the DBPAUTP0 IMS database accessible via PAUTBPCB",
       "copybook": null,
       "citation": [
         19
@@ -55,61 +46,9 @@
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [
-    {
-      "rule_id": "BR001",
-      "description": "PCB PAUTBPCB configured with PROCOPT=AP defining the allowed DL/I processing options for the database",
-      "logic_summary": "PROCOPT=AP specified in PCB definition",
-      "conditions": [],
-      "citation": [
-        17
-      ]
-    },
-    {
-      "rule_id": "BR002",
-      "description": "PCB PAUTBPCB configured with KEYLEN=14 for segment search arguments",
-      "logic_summary": "KEYLEN=14 specified in PCB definition",
-      "conditions": [],
-      "citation": [
-        17
-      ]
-    },
-    {
-      "rule_id": "BR003",
-      "description": "PAUTSUM0 defined as root segment with no parent",
-      "logic_summary": "PARENT=0 in SENSEG statement",
-      "conditions": [],
-      "citation": [
-        18
-      ]
-    },
-    {
-      "rule_id": "BR004",
-      "description": "PAUTDTL1 defined as child segment of PAUTSUM0",
-      "logic_summary": "PARENT=PAUTSUM0 in SENSEG statement",
-      "conditions": [],
-      "citation": [
-        19
-      ]
-    }
-  ],
+  "business_rules": [],
   "data_flow": {
-    "reads_from": [
-      {
-        "source": "PAUTSUM0",
-        "fields_used": [],
-        "citation": [
-          18
-        ]
-      },
-      {
-        "source": "PAUTDTL1",
-        "fields_used": [],
-        "citation": [
-          19
-        ]
-      }
-    ],
+    "reads_from": [],
     "writes_to": [],
     "transforms": []
   },
@@ -118,5 +57,16 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": []
+  "open_questions": [
+    {
+      "question": "Exact meaning of PROCOPT=AP in this IMS PCB context",
+      "context": "Standard IMS PROCOPT values include G,I,U etc., but AP is specified without further code to clarify usage (e.g., path calls or specific authorities)",
+      "suggestion": "Consult IMS manuals or DBD definitions for DBPAUTP0 to confirm PROCOPT interpretation"
+    },
+    {
+      "question": "Business meaning of PAUTSUM0 and PAUTDTL1 segments",
+      "context": "Segment names suggest summary/detail structure for 'PAUT' data, but no field-level details or application context provided",
+      "suggestion": "Review DBD source for DBPAUTP0 or associated COBOL programs using this PSB"
+    }
+  ]
 }

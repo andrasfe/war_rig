@@ -3,14 +3,14 @@
     "program_id": "PSBPAUTL",
     "file_name": "ims/PSBPAUTL.psb",
     "file_type": "OTHER",
-    "analyzed_by": "Scribe",
-    "analyzed_at": "2026-01-26T14:24:07.322896",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-26T15:14:32.478553",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This file defines the IMS Program Specification Block (PSB) named PSBPAUTL for assembly language (LANG=ASSEM). It specifies a single database PCB named PAUTLPCB for accessing the DBPAUTP0 database in Learn/Browse mode only (PROCOPT=L) with key length 14. The PCB includes the root segment PAUTSUM0 (PARENT=0) and its child segment PAUTDTL1 (PARENT=PAUTSUM0).",
-    "business_context": "IMS database access control block for PAUTL utility, enabling qualified segment search on PAUT database hierarchy.",
+    "summary": "This file defines the IMS Program Specification Block (PSB) named PSBPAUTL. It specifies a single Database PCB (PAUTLPCB) for the DBPAUTP0 database with PROCOPT=L (language interface processing), KEYLEN=14, sensitive to root segment PAUTSUM0 and child segment PAUTDTL1 under PAUTSUM0. The PSB is generated for assembler language (LANG=ASSEM).",
+    "business_context": "Provides database access specification for IMS DL/I application programs processing PAUT (likely Payment Authority Utility) summary and detail data in DBPAUTP0 (inferred from DBDNAME and segment names; exact business process UNKNOWN)",
     "program_type": "UTILITY",
     "citations": [
       17,
@@ -19,35 +19,7 @@
       20
     ]
   },
-  "inputs": [
-    {
-      "name": "DBPAUTP0",
-      "io_type": "IMS_SEGMENT",
-      "description": "IMS database accessed via PAUTLPCB PCB",
-      "copybook": null,
-      "citation": [
-        17
-      ]
-    },
-    {
-      "name": "PAUTSUM0",
-      "io_type": "IMS_SEGMENT",
-      "description": "Root segment (PARENT=0) in DBPAUTP0",
-      "copybook": null,
-      "citation": [
-        18
-      ]
-    },
-    {
-      "name": "PAUTDTL1",
-      "io_type": "IMS_SEGMENT",
-      "description": "Child segment under PAUTSUM0 in DBPAUTP0",
-      "copybook": null,
-      "citation": [
-        19
-      ]
-    }
-  ],
+  "inputs": [],
   "outputs": [],
   "called_programs": [],
   "calling_context": {
@@ -58,46 +30,35 @@
   "business_rules": [
     {
       "rule_id": "BR001",
-      "description": "Access restricted to Learn/Browse mode only",
-      "logic_summary": "PROCOPT=L prevents any update, insert, or delete operations; supports inquiry and navigation only",
-      "conditions": [
-        "PROCOPT=L"
-      ],
+      "description": "PCB PAUTLPCB is sensitive only to segments PAUTSUM0 (PARENT=0, root segment) and PAUTDTL1 (PARENT=PAUTSUM0, child segment)",
+      "logic_summary": "Defined using SENSEG statements under the PCB",
+      "conditions": [],
+      "citation": [
+        18,
+        19
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Accesses IMS database DBDNAME=DBPAUTP0 using PCB TYPE=DB",
+      "logic_summary": "Specified in PCB declaration",
+      "conditions": [],
       "citation": [
         17
       ]
     },
     {
-      "rule_id": "BR002",
-      "description": "Defines segment hierarchy with PAUTSUM0 as root and PAUTDTL1 as dependent child",
-      "logic_summary": "PARENT=0 for root segment PAUTSUM0; PARENT=PAUTSUM0 for child PAUTDTL1 enables hierarchical qualified SSA in application programs",
-      "conditions": [
-        "PARENT=0",
-        "PARENT=PAUTSUM0"
-      ],
+      "rule_id": "BR003",
+      "description": "PROCOPT=L enables language interface processing (inquiry/update via DL/I calls); KEYLEN=14 defines key length for segment searches",
+      "logic_summary": "Set in PCB parameters",
+      "conditions": [],
       "citation": [
-        18,
-        19
+        17
       ]
     }
   ],
   "data_flow": {
-    "reads_from": [
-      {
-        "source": "PAUTSUM0",
-        "fields_used": [],
-        "citation": [
-          18
-        ]
-      },
-      {
-        "source": "PAUTDTL1",
-        "fields_used": [],
-        "citation": [
-          19
-        ]
-      }
-    ],
+    "reads_from": [],
     "writes_to": [],
     "transforms": []
   },
@@ -108,14 +69,14 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "Specific fields or keys accessed in segments",
-      "context": "Only KEYLEN=14 specified; no field-level details in PSB",
-      "suggestion": "Review DBD source for DBPAUTP0 or application program using this PSB"
+      "question": "What IMS application programs reference this PSB (PSBPAUTL)?",
+      "context": "PSB name is specified but no calling programs mentioned in source",
+      "suggestion": "Check IMS application source code or PSB usage logs for references"
     },
     {
-      "question": "Application programs referencing this PSB",
-      "context": "PSB defines access but does not list callers",
-      "suggestion": "Search JCL, COBOL/PL/I programs for PSBNAME=PSBPAUTL"
+      "question": "Exact business purpose of DBPAUTP0 database and segments PAUTSUM0/PAUTDTL1?",
+      "context": "Inferred from names (PAUT likely Payment Authority Utility, SUM0 summary, DTL1 detail) but not explicitly documented",
+      "suggestion": "Review DBD (Database Definition) source for DBPAUTP0 or associated application documentation"
     }
   ]
 }

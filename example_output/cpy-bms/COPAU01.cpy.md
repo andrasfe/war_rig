@@ -2,29 +2,29 @@
 
 **File**: `cpy-bms/COPAU01.cpy`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-01-26 14:19:57.212282
+**Analyzed**: 2026-01-26 15:13:42.871836
 
 ## Purpose
 
-This copybook defines the data structures COPAU1AI and COPAU1AO for a BMS map in a CICS online transaction screen. COPAU1AI provides the input layout from the terminal with length, flag/attribute, and input data fields for transaction details, authorization information, merchant data, and error messages. COPAU1AO redefines COPAU1AI for output to the terminal using standard BMS C/P/H/V/O attribute and output data fields.
+This copybook defines the data structures COPAU1AI (input) and COPAU1AO (output redefines input) for the COPAU1 BMS map in a CICS online application. It structures fields for screen elements including transaction name, titles, current date/time, program name, card number, authorization details (date, time, response, code, amount), POS entry mode, source, MCC, card expiration, auth type, transaction ID, match code, fraud code, merchant details (name, ID, city, state, zip), and error message. Each field follows BMS convention with length (L COMP S9(4)), format flag (F X), attribute (A X), and input data (I), redefined for output with control chars (C/P/H/V) and output data (O).
 
-**Business Context**: Credit card authorization response display in a merchant point-of-sale (POS) CICS application, showing transaction name, card number, auth details, merchant info, and errors.
+**Business Context**: CICS BMS map for payment card authorization screen, capturing/displaying transaction, card, auth response, and merchant information in a financial processing system.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| COPAU1AI | IOType.CICS_MAP | Input structure from RECEIVE MAP containing terminal-entered data for fields like transaction name (TRNNAMEI), card number (CARDNUMI), authorization details (AUTHDTI, AUTHTMI, etc.), merchant info (MERNAMESI, etc.), and error message (ERRMSGI) |
+| COPAU1AI | IOType.CICS_MAP | Input data structure for COPAU1 BMS map, containing screen input fields for transaction details, card info, auth data, merchant info, and error msg. |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| COPAU1AO | IOType.CICS_MAP | Output structure for SEND MAP containing display attributes (C=changed, P=protected, H=highlight, V=visible?) and output data fields (e.g., TRNNAMEO, CARDNUMO, AUTHDTO, MERNAMEO, ERRMSGO) for screen presentation |
+| COPAU1AO | IOType.CICS_MAP | Output data structure redefining COPAU1AI for COPAU1 BMS map, with BMS control characters (C=changed, P=protected, H=high, V=visible) and output field values. |
 
 ## Open Questions
 
-- ? Which specific CICS programs include and use this BMS copybook?
-  - Context: Copybook defines structures but does not indicate including programs
-- ? Exact meanings of BMS attribute flags (C, P, H, V) in this context?
-  - Context: Standard BMS conventions assumed (Changed, Protected, Highlight, Visible?), but not explicitly documented here
+- ? Which CICS programs include and use this COPAU01 copybook?
+  - Context: Copybook defines map structures but does not specify including programs.
+- ? What is the exact transaction ID or program that uses this map?
+  - Context: Fields like TRNNAMEL/TRNNAMEI suggest transaction name, but no specific usage shown.

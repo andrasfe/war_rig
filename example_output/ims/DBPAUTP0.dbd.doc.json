@@ -4,25 +4,34 @@
     "file_name": "ims/DBPAUTP0.dbd",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T14:21:28.415527",
+    "analyzed_at": "2026-01-26T15:12:46.878791",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This DBD source file defines the IMS database DBPAUTP0 as a HIDAM database with VSAM access and no password. It specifies one dataset group DSG001 using dataset DDPAUTP0 of size 4096 with SCAN=3. The database contains two segments: root segment PAUTSUM0 (Pending Authorization Summary, 100 bytes) with packed key field ACCNTID (positions 1-6) and a logical child to PAUTINDX in DBPAUTX0, and child segment PAUTDTL1 (Pending Authorization Details, 200 bytes) under PAUTSUM0 with character key PAUT9CTS (positions 1-8).",
-    "business_context": "Supports storage and retrieval of pending authorization summary and detail records, likely for financial account or transaction authorization workflows.",
+    "summary": "This file contains the source for the IMS Database Definition (DBD) named DBPAUTP0, defining a HIDAM database with VSAM access. It specifies one dataset group, a root segment PAUTSUM0 for Pending Authorization Summary with key field ACCNTID, a logical child to PAUTINDX in DBPAUTX0, and a child segment PAUTDTL1 for Pending Authorization Details with key field PAUT9CTS. The DBDGEN and FINISH statements indicate this is input to the IMS DBDGEN utility to generate the executable DBD module.",
+    "business_context": "Supports storage and retrieval of pending authorization summaries and details, likely for transaction or payment authorization processing in a mainframe financial or e-commerce system.",
     "program_type": "UTILITY",
     "citations": [
       17,
       18,
       24,
       28,
-      30,
       36,
-      37
+      39
     ]
   },
-  "inputs": [],
+  "inputs": [
+    {
+      "name": "DDPAUTP0",
+      "io_type": "FILE_VSAM",
+      "description": "Primary dataset for the DBPAUTP0 IMS database, defined in dataset group 1 with size 4096 and SCAN=3",
+      "copybook": null,
+      "citation": [
+        24
+      ]
+    }
+  ],
   "outputs": [],
   "called_programs": [],
   "calling_context": {
@@ -33,8 +42,8 @@
   "business_rules": [
     {
       "rule_id": "BR001",
-      "description": "Database access method is HIDAM with VSAM, EXIT for key/data/nopath/nocascade/log, no password",
-      "logic_summary": "Specified in DBD macro",
+      "description": "Database access method is HIDAM with VSAM, no password, with EXIT for key/data/nopath logging",
+      "logic_summary": "Specified in DBD macro with ACCESS=(HIDAM,VSAM), PASSWD=NO, EXIT parameters",
       "conditions": [],
       "citation": [
         18,
@@ -43,33 +52,49 @@
     },
     {
       "rule_id": "BR002",
-      "description": "Root segment PAUTSUM0 (Pending Authorization Summary) is 100 bytes, unorderable sequence key ACCNTID (packed, 6 bytes at position 1), rules empty/HIERARCHY (HERE), twin backward pointer",
-      "logic_summary": "Defined in SEGM macro with FIELD and LCHILD",
+      "description": "Root segment PAUTSUM0 (Pending Authorization Summary) is 100 bytes, parent 0, rules HERE for insert, with twin backward pointer",
+      "logic_summary": "Defined with SEGM NAME=PAUTSUM0,PARENT=0,BYTES=100,RULES=(,HERE),POINTER=(TWINBWD)",
       "conditions": [],
       "citation": [
         28,
-        29,
-        30,
-        31
+        29
       ]
     },
     {
       "rule_id": "BR003",
-      "description": "Child segment PAUTDTL1 (Pending Authorization Details) is 200 bytes under parent PAUTSUM0, unorderable sequence key PAUT9CTS (character, 8 bytes at position 1)",
-      "logic_summary": "Defined in SEGM macro with FIELD",
+      "description": "Sequence key field ACCNTID for root segment is packed decimal, unique, 6 bytes starting at position 1",
+      "logic_summary": "FIELD NAME=(ACCNTID,SEQ,U),START=1,BYTES=6,TYPE=P",
       "conditions": [],
       "citation": [
-        36,
-        37
+        30
       ]
     },
     {
       "rule_id": "BR004",
-      "description": "Dataset group DSG001 uses DDNAME DDPAUTP0 with size 4096 and SCAN=3",
-      "logic_summary": "Physical dataset for database storage",
+      "description": "Logical child PAUTINDX from database DBPAUTX0 referenced from root segment",
+      "logic_summary": "LCHILD NAME=(PAUTINDX,DBPAUTX0),POINTER=INDX",
       "conditions": [],
       "citation": [
-        24
+        31,
+        32
+      ]
+    },
+    {
+      "rule_id": "BR005",
+      "description": "Child segment PAUTDTL1 (Pending Authorization Details) is 200 bytes under parent PAUTSUM0",
+      "logic_summary": "SEGM NAME=PAUTDTL1,PARENT=((PAUTSUM0,)),BYTES=200",
+      "conditions": [],
+      "citation": [
+        36
+      ]
+    },
+    {
+      "rule_id": "BR006",
+      "description": "Sequence key field PAUT9CTS for child segment is character, unique, 8 bytes starting at position 1",
+      "logic_summary": "FIELD NAME=(PAUT9CTS,SEQ,U),START=1,BYTES=8,TYPE=C",
+      "conditions": [],
+      "citation": [
+        37
       ]
     }
   ],
@@ -85,19 +110,14 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What copybooks or data structures define the full layouts of segments PAUTSUM0 and PAUTDTL1 beyond the key fields?",
-      "context": "Only key fields are explicitly defined in the DBD; remaining bytes are not detailed here",
-      "suggestion": "Check associated COBOL copybooks or IMS segment layouts referenced in application programs"
+      "question": "Precise business meaning of fields like ACCNTID and PAUT9CTS",
+      "context": "Field names and comments provide high-level purpose but no detailed field descriptions",
+      "suggestion": "Review associated COBOL programs or data dictionaries that use this database"
     },
     {
-      "question": "Details of the logical child PAUTINDX in database DBPAUTX0?",
-      "context": "LCHILD references PAUTINDX in DBPAUTX0 but no further details provided",
-      "suggestion": "Analyze DBD for DBPAUTX0"
-    },
-    {
-      "question": "Associated PSB (Program Specification Block) for applications accessing this database?",
-      "context": "DBD defines database but not application access paths",
-      "suggestion": "Locate PSB source files for programs using DBPAUTP0"
+      "question": "Details of referenced DBPAUTX0 and PAUTINDX",
+      "context": "Logical child points to another database/segment but source for DBPAUTX0 not provided",
+      "suggestion": "Analyze DBPAUTX0.dbd source file"
     }
   ]
 }

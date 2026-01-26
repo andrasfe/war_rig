@@ -4,26 +4,25 @@
     "file_name": "ddl/XAUTHFRD.ddl",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T14:23:13.882483",
+    "analyzed_at": "2026-01-26T15:13:37.100261",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This DDL script creates a unique index named CARDDEMO.XAUTHFRD on the CARDDEMO.AUTHFRDS table. The index is defined on CARD_NUM in ascending order and AUTH_TS in descending order, enforcing uniqueness on these column combinations. It includes the COPY YES option.",
+    "summary": "This DDL script creates a unique index named CARDDEMO.XAUTHFRD on the CARDDEMO.AUTHFRDS table. The index is defined on CARD_NUM in ascending order and AUTH_TS in descending order. It enforces uniqueness on combinations of CARD_NUM and AUTH_TS to prevent duplicate entries.",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
       1,
       2,
-      3,
-      4
+      3
     ]
   },
   "inputs": [
     {
       "name": "CARDDEMO.AUTHFRDS",
       "io_type": "DB2_TABLE",
-      "description": "Target table on which the unique index is created",
+      "description": "DB2 table on which the unique index is created",
       "copybook": null,
       "citation": [
         2
@@ -34,10 +33,12 @@
     {
       "name": "CARDDEMO.XAUTHFRD",
       "io_type": "OTHER",
-      "description": "Unique index enforcing no duplicate (CARD_NUM, AUTH_TS) combinations and supporting ordered access",
+      "description": "Unique DB2 index on CARD_NUM ASC and AUTH_TS DESC with COPY YES option",
       "copybook": null,
       "citation": [
-        1
+        1,
+        3,
+        4
       ]
     }
   ],
@@ -50,14 +51,14 @@
   "business_rules": [
     {
       "rule_id": "BR001",
-      "description": "Enforce uniqueness on (CARD_NUM, AUTH_TS) combinations in the AUTHFRDS table",
-      "logic_summary": "Unique index prevents insertion or update of duplicate key values on the composite key",
+      "description": "Enforces uniqueness constraint on the CARDDEMO.AUTHFRDS table, preventing duplicate combinations of CARD_NUM and AUTH_TS",
+      "logic_summary": "Implemented by creating a UNIQUE INDEX on (CARD_NUM ASC, AUTH_TS DESC)",
       "conditions": [
-        "CARD_NUM ASC",
-        "AUTH_TS DESC"
+        "No two rows can have the same CARD_NUM and AUTH_TS values"
       ],
       "citation": [
         1,
+        2,
         3
       ]
     }
@@ -72,18 +73,23 @@
   "error_handling": [],
   "sql_operations": [
     {
-      "operation": "CREATE UNIQUE INDEX",
+      "operation": "CREATE INDEX",
       "table": "CARDDEMO.AUTHFRDS",
-      "purpose": "Enforce uniqueness on CARD_NUM and AUTH_TS combinations while providing efficient access ordered by card number ascending and authorization timestamp descending",
+      "purpose": "Establish unique index to enforce no duplicates on CARD_NUM and AUTH_TS for data integrity",
       "citation": 1
     }
   ],
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "Exact purpose and implications of the COPY YES option",
-      "context": "Syntax is present at line 4 but specific DB2 behavior (e.g., copy utility compatibility) cannot be confirmed without external documentation",
-      "suggestion": "Reference DB2 for z/OS Reference Manual for CREATE INDEX syntax details"
+      "question": "What is the exact business purpose of the AUTHFRDS table and this index?",
+      "context": "Table and index names suggest authorization fraud records for card demo, but no descriptive comments or context in the DDL",
+      "suggestion": "Review table DDL or application code using AUTHFRDS"
+    },
+    {
+      "question": "What does the COPY YES clause precisely imply in this DB2 context?",
+      "context": "Recognized as DB2 z/OS option related to image copies, but exact behavior not confirmed from this file alone",
+      "suggestion": "Consult DB2 reference manual for CREATE INDEX syntax"
     }
   ]
 }

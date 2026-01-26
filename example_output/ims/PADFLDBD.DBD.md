@@ -2,25 +2,30 @@
 
 **File**: `ims/PADFLDBD.DBD`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-01-26 14:21:22.137536
+**Analyzed**: 2026-01-26 15:14:19.130784
 
 ## Purpose
 
-This file is a DBDGEN source/listing defining the IMS database PADFLDBD with access methods GSAM and BSAM. It specifies dataset group DSG001 including input dataset DD1=PADFILIP and output dataset DD2=PADFILOP, both with fixed-length records of 200 bytes and RECFM=F. The definition was generated on 04/21/2023 for IMS version 15.1.
+This file is the source code for the IMS Database Definition (DBD) named PADFLDBD, generated via DBDGEN. It specifies GSAM and BSAM access methods for a simple database with no segments. A single dataset group DSG001 is defined, including input dataset PADFILIP (DD1) and output dataset PADFILOP (DD2), both using fixed-length records of 200 bytes (RECFM=F).
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| PADFILIP | IOType.FILE_SEQUENTIAL | Input dataset (DD1) in dataset group DSG001 for the PADFLDBD database, with fixed 200-byte records |
+| PADFILIP | IOType.FILE_SEQUENTIAL | Input dataset defined as DD1 in dataset group DSG001 for the PADFLDBD database |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| PADFILOP | IOType.FILE_SEQUENTIAL | Output dataset (DD2) in dataset group DSG001 for the PADFLDBD database, with fixed 200-byte records |
+| PADFILOP | IOType.FILE_SEQUENTIAL | Output dataset defined as DD2 in dataset group DSG001 for the PADFLDBD database |
+
+## Business Rules
+
+- **BR001**: Access to the PADFLDBD IMS database is restricted to GSAM and BSAM methods only
+- **BR002**: Datasets in DSG001 must use fixed-length records (RECFM=F) of exactly 200 bytes
 
 ## Open Questions
 
-- ? What is the specific business purpose of the PADFLDBD database?
-  - Context: No descriptive comments or context provided beyond dataset names and technical specs
+- ? No IMS segments or fields are defined in this DBD
+  - Context: The DBD defines only datasets and access methods without any SEGMENT, FIELD, or DATASET macros beyond DSG001
