@@ -473,6 +473,14 @@ class Paragraph(BaseModel):
         default_factory=list,
         description="Citadel-provided incoming call references from other files/functions",
     )
+    is_dead_code: bool = Field(
+        default=False,
+        description="Whether this paragraph is dead code (never referenced)",
+    )
+    dead_code_reason: str | None = Field(
+        default=None,
+        description="Explanation of why this is considered dead code",
+    )
     metadata: dict[str, Any] | None = Field(
         default=None,
         description="Additional metadata for processing (e.g., body_chunks count)",
@@ -555,6 +563,15 @@ class OpenQuestion(BaseModel):
     )
 
 
+class DeadCodeItem(BaseModel):
+    """An artifact identified as dead code by static analysis."""
+
+    name: str = Field(description="Name of the unreferenced artifact")
+    artifact_type: str = Field(description="Type: paragraph, copybook, program, etc.")
+    line: int | None = Field(default=None, description="Line number in source")
+    reason: str = Field(description="Why this is considered dead code")
+
+
 class DocumentationTemplate(BaseModel):
     """Complete documentation template for COBOL/PL/I programs.
 
@@ -618,6 +635,10 @@ class DocumentationTemplate(BaseModel):
         default_factory=list,
         description="Unresolved questions",
     )
+    dead_code: list[DeadCodeItem] = Field(
+        default_factory=list,
+        description="Artifacts identified as dead code by static analysis",
+    )
 
     @classmethod
     def load_lenient(cls, data: dict) -> "DocumentationTemplate":
@@ -668,6 +689,8 @@ class DocumentationTemplate(BaseModel):
                 constructed[key] = [CICSOperation.model_construct(**v) if isinstance(v, dict) else v for v in value]
             elif key == "open_questions" and isinstance(value, list):
                 constructed[key] = [OpenQuestion.model_construct(**v) if isinstance(v, dict) else v for v in value]
+            elif key == "dead_code" and isinstance(value, list):
+                constructed[key] = [DeadCodeItem.model_construct(**v) if isinstance(v, dict) else v for v in value]
             else:
                 constructed[key] = value
         return cls.model_construct(**constructed)

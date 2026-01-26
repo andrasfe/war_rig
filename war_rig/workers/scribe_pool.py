@@ -253,6 +253,23 @@ class ScribeWorker:
             except ImportError:
                 logger.debug(f"Worker {worker_id}: Citadel SDK not available")
 
+        # Cache dead code detection results (keyed by normalized file path)
+        self._dead_code_by_file: dict[str, list[dict]] = {}
+        if self._citadel and dependency_graph_path and dependency_graph_path.exists():
+            try:
+                all_dead = self._citadel.get_dead_code(str(dependency_graph_path))
+                for item in all_dead:
+                    file_key = item.get("file", "")
+                    if file_key:
+                        self._dead_code_by_file.setdefault(file_key, []).append(item)
+                if all_dead:
+                    logger.debug(
+                        f"Worker {worker_id}: Cached {len(all_dead)} dead code items "
+                        f"across {len(self._dead_code_by_file)} files"
+                    )
+            except Exception as e:
+                logger.debug(f"Worker {worker_id}: Dead code detection failed: {e}")
+
         # Worker state
         self._status = WorkerStatus(
             worker_id=worker_id,
@@ -342,7 +359,20 @@ class ScribeWorker:
                 f"and {len(includes)} includes in {file_path}"
             )
 
-            return {"functions": functions, "includes": includes}
+            # Look up cached dead code for this file
+            dead_code = []
+            if self._dead_code_by_file:
+                # Try exact match first, then basename match
+                norm_path = str(Path(file_path).resolve())
+                dead_code = self._dead_code_by_file.get(norm_path, [])
+                if not dead_code:
+                    # Fallback: match by filename suffix
+                    for cached_path, items in self._dead_code_by_file.items():
+                        if cached_path.endswith(Path(file_path).name):
+                            dead_code = items
+                            break
+
+            return {"functions": functions, "includes": includes, "dead_code": dead_code}
         except Exception as e:
             logger.debug(
                 f"Worker {self.worker_id}: Citadel analysis failed for {file_path}: {e}"
@@ -480,6 +510,34 @@ class ScribeWorker:
             except Exception:
                 # Graceful handling - if chunking fails, continue without chunking
                 pass
+
+        # Mark dead code paragraphs and build dead_code section
+        dead_code_items = citadel_context.get("dead_code", [])
+        if dead_code_items:
+            from war_rig.models.templates import DeadCodeItem
+
+            # Build lookup of dead paragraph names (case-insensitive)
+            dead_names = {}
+            for item in dead_code_items:
+                dead_names[item.get("name", "").lower()] = item
+
+            # Mark paragraphs as dead code
+            for para in template.paragraphs:
+                if para.paragraph_name and para.paragraph_name.lower() in dead_names:
+                    item = dead_names[para.paragraph_name.lower()]
+                    para.is_dead_code = True
+                    para.dead_code_reason = item.get("reason", "Never referenced")
+
+            # Add all dead code items to the template section
+            template.dead_code = [
+                DeadCodeItem(
+                    name=item.get("name", ""),
+                    artifact_type=item.get("type", "unknown"),
+                    line=item.get("line"),
+                    reason=item.get("reason", "Never referenced"),
+                )
+                for item in dead_code_items
+            ]
 
         logger.debug(
             f"Worker {self.worker_id}: Enriched {len(template.paragraphs)} paragraphs "
@@ -1113,12 +1171,33 @@ class ScribeWorker:
             parts.append("")
             for para in template.paragraphs:
                 para_name = para.paragraph_name or "Unknown"
-                parts.append(f"### {para_name}")
-                if para.purpose:
-                    parts.append(para.purpose)
-                if para.summary:
-                    parts.append(para.summary)
+                if para.is_dead_code:
+                    parts.append(f"### ~~{para_name}~~ (Dead Code)")
+                    if para.dead_code_reason:
+                        parts.append(f"*{para.dead_code_reason}*")
+                else:
+                    parts.append(f"### {para_name}")
+                    if para.purpose:
+                        parts.append(para.purpose)
+                    if para.summary:
+                        parts.append(para.summary)
                 parts.append("")
+
+        # Dead Code
+        if template.dead_code:
+            parts.append("## Dead Code")
+            parts.append("")
+            parts.append("The following artifacts were identified as dead code by static analysis:")
+            parts.append("")
+            parts.append("| Artifact | Type | Line | Reason |")
+            parts.append("|----------|------|------|--------|")
+            for item in template.dead_code:
+                name = item.name or ""
+                atype = item.artifact_type or ""
+                line = str(item.line) if item.line else "-"
+                reason = item.reason or ""
+                parts.append(f"| {name} | {atype} | {line} | {reason} |")
+            parts.append("")
 
         # Open Questions
         if template.open_questions:

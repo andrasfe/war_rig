@@ -12,6 +12,7 @@ Citadel extracts dependency graphs from mixed-language codebases, with emphasis 
 - **Rich artifact extraction**: Programs, copybooks, tables, procedures, screens, and more
 - **Relationship tracking**: CALL, PERFORM, COPY, EXEC SQL, EXEC CICS, imports
 - **Multiple export formats**: JSON, DOT (GraphViz), Cypher (Neo4j), CSV, Markdown, Mermaid
+- **Dead code detection**: Find unreferenced artifacts (paragraphs, programs, copybooks)
 - **SDK for agents**: Simple Python API for programmatic analysis
 
 ### Sample Results
@@ -212,12 +213,50 @@ The sequence finder algorithm:
 - Discovers multiple sequences from disconnected subgraphs
 - Includes both resolved and unresolved call relationships
 
+### Detect Dead Code
+
+```python
+# Find artifacts that are never referenced by anything else
+dead = citadel.get_dead_code("./src")
+
+# Output:
+# [
+#   {
+#     "name": "5000-EXIT",
+#     "type": "paragraph",
+#     "file": "/path/to/MAINPROG.cbl",
+#     "line": 324,
+#     "reason": "Paragraph '5000-EXIT' is never PERFORMed..."
+#   },
+#   {
+#     "name": "OLD-UTILITY",
+#     "type": "program",
+#     "file": "/path/to/OLDUTIL.cbl",
+#     "line": 23,
+#     "reason": "Program 'OLD-UTILITY' is never CALLed..."
+#   }
+# ]
+
+# Filter by type
+dead_paragraphs = [d for d in dead if d["type"] == "paragraph"]
+dead_copybooks = [d for d in dead if d["type"] == "copybook"]
+
+# Can also use a pre-generated dependency graph
+dead = citadel.get_dead_code("./output/graph.json")
+```
+
+The dead code detector:
+- Finds artifacts with zero incoming edges in the dependency graph
+- Excludes entry points: programs, JCL procedures, and the first paragraph per COBOL file (execution starts there)
+- Reports file path and line number for each dead artifact
+- Provides type-specific reason messages
+
 ### One-off Convenience Functions
 
 ```python
 from citadel import (
     analyze_file, get_functions, get_function_body,
-    get_callers, get_sequence_diagrams
+    get_callers, get_sequence_diagrams, get_dead_code
 )
 
 # No need to create Citadel instance
@@ -226,6 +265,7 @@ funcs = get_functions("program.cbl")
 body = get_function_body("program.cbl", "MAIN-PARA")
 callers = get_callers("UTILS.cbl", "CALCULATE-TAX")
 diagrams = get_sequence_diagrams("./src")
+dead = get_dead_code("./src")
 ```
 
 ### SDK Classes
@@ -339,7 +379,7 @@ citadel/
 │   ├── sdk.py           # SDK for programmatic access
 │   ├── cli.py           # Command-line interface
 │   ├── orchestrator.py  # Main analysis coordinator
-│   ├── analysis/        # Graph analysis algorithms (sequence finder)
+│   ├── analysis/        # Graph analysis (sequence finder, dead code)
 │   ├── discovery/       # File discovery
 │   ├── specs/           # Language specifications
 │   ├── parser/          # Pattern-based parsing
