@@ -1118,14 +1118,11 @@ class CallGraphAnalyzer:
                     lines.append(f"        {node_id}[{prog}]")
             lines.append("    end")
 
-        # Subgraph: Copybooks
+        # Single copybook node listing all included copybooks
         if called_copybooks:
             lines.append("")
-            lines.append("    subgraph copybooks[\" \"]")
-            for prog in sorted(called_copybooks):
-                node_id = sanitize_id(prog)
-                lines.append(f"        {node_id}{{{{{prog}}}}}")
-            lines.append("    end")
+            copybook_label = "<br>".join(sorted(called_copybooks))
+            lines.append(f"    COPYBOOKS[/{copybook_label}/]")
 
         # Subgraph: Missing/External programs
         if analysis.custom_missing:
@@ -1139,6 +1136,7 @@ class CallGraphAnalyzer:
         # Edges
         lines.append("")
         lines.append("    %% Call relationships")
+        copy_edges_emitted: set[str] = set()
         for prog_id, info in sorted(analysis.documented_programs.items()):
             caller_id = sanitize_id(prog_id)
             for call in info.calls:
@@ -1147,7 +1145,10 @@ class CallGraphAnalyzer:
                     continue
                 callee_id = sanitize_id(call.callee)
                 if call.call_type == "COPY":
-                    lines.append(f"    {caller_id} -.->|COPY| {callee_id}")
+                    # One edge per caller to the shared COPYBOOKS node
+                    if caller_id not in copy_edges_emitted:
+                        copy_edges_emitted.add(caller_id)
+                        lines.append(f"    {caller_id} -.->|COPY| COPYBOOKS")
                 elif "XCTL" in call.call_type:
                     lines.append(f"    {caller_id} -.->|XCTL| {callee_id}")
                 elif "LINK" in call.call_type:
@@ -1165,9 +1166,8 @@ class CallGraphAnalyzer:
 
         # Copybooks
         if called_copybooks:
-            ids = [sanitize_id(p) for p in sorted(called_copybooks)]
             lines.append("    classDef copybook fill:#E8F5E9,stroke:#4CAF50")
-            lines.append(f"    class {','.join(ids)} copybook")
+            lines.append("    class COPYBOOKS copybook")
 
         # Truly missing (not resolved)
         truly_missing = analysis.custom_missing - set(analysis.resolved_programs.keys())
