@@ -176,6 +176,10 @@ class OrchestrationState:
     # Citadel dependency graph path (generated at startup)
     dependency_graph_path: Path | None = None
 
+    # Upfront artifacts (generated once after Citadel graph)
+    call_graph_analysis: CallGraphAnalysis | None = None
+    sequence_diagrams: list[str] | None = None
+
 
 class TicketOrchestrator:
     """Orchestrates ticket-based parallel documentation workflow.
@@ -349,6 +353,10 @@ class TicketOrchestrator:
             # Generate Citadel dependency graph for the input directory
             await self._generate_citadel_graph(input_dir)
 
+            # Generate CALL_GRAPH.md, SYSTEM_DESIGN.md, and sequence diagrams upfront
+            # These depend only on the static dependency graph, not on documentation output
+            await self._generate_upfront_artifacts()
+
             # Phase 2-6: Run cycles until completion
             max_cycles = self.config.pm_max_cycles
 
@@ -364,8 +372,8 @@ class TicketOrchestrator:
                 if self._stop_requested:
                     break
 
-                # Run call graph analysis to check for gaps
-                call_graph_result = await self._run_call_graph_analysis()
+                # Check upfront call graph analysis for documentation gaps
+                call_graph_result = self._state.call_graph_analysis
                 has_call_graph_gaps = (
                     call_graph_result
                     and call_graph_result.has_gaps()
@@ -1321,16 +1329,14 @@ class TicketOrchestrator:
                 decision=ImperatorHolisticDecision.NEEDS_CLARIFICATION,
             )
 
-        # Get sequence diagrams from citadel for SYSTEM_DESIGN.md Flows section
-        sequence_diagrams = self._get_sequence_diagrams()
-
+        # Use upfront-generated sequence diagrams for SYSTEM_DESIGN.md Flows section
         # Run holistic review
         try:
             output = await self.imperator.holistic_review(
                 review_input,
                 use_mock=self.use_mock,
                 output_directory=self.config.output_directory,
-                sequence_diagrams=sequence_diagrams,
+                sequence_diagrams=self._state.sequence_diagrams,
             )
             return output
 
@@ -2174,6 +2180,22 @@ class TicketOrchestrator:
                 "Continuing without dependency graph - this is an enhancement, not required."
             )
             # Do not set dependency_graph_path - it stays None
+
+    async def _generate_upfront_artifacts(self) -> None:
+        """Generate CALL_GRAPH.md, SYSTEM_DESIGN.md, and sequence diagrams upfront.
+
+        These artifacts depend only on the static Citadel dependency graph,
+        not on documentation output. Generating them before the worker cycles
+        avoids redundant per-cycle regeneration.
+
+        Results are stored in self._state for use by the cycle loop (gap
+        detection) and holistic review (sequence diagrams).
+        """
+        # Generate call graph analysis (CALL_GRAPH.md + SYSTEM_DESIGN.md)
+        self._state.call_graph_analysis = await self._run_call_graph_analysis()
+
+        # Generate sequence diagrams
+        self._state.sequence_diagrams = self._get_sequence_diagrams()
 
     async def stop(self) -> None:
         """Gracefully stop the orchestrator.
