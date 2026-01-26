@@ -695,7 +695,14 @@ class TicketOrchestrator:
             # Generate SYSTEM_DESIGN.md for external dependencies
             if analysis.external_dependencies:
                 system_design_path = self.config.output_directory / "SYSTEM_DESIGN.md"
-                system_design_content = analyzer.generate_system_design_md(analysis)
+
+                # Get sequence diagrams from citadel if dependency graph is available
+                sequence_diagrams = self._get_sequence_diagrams()
+
+                system_design_content = analyzer.generate_system_design_md(
+                    analysis,
+                    sequence_diagrams=sequence_diagrams,
+                )
                 system_design_path.write_text(system_design_content, encoding="utf-8")
                 logger.info(f"Generated SYSTEM_DESIGN.md with {len(analysis.external_dependencies)} external dependencies")
 
@@ -709,6 +716,52 @@ class TicketOrchestrator:
 
         except Exception as e:
             logger.error(f"Call graph analysis failed: {e}")
+            return None
+
+    def _get_sequence_diagrams(self) -> list[str] | None:
+        """Get sequence diagrams from citadel for SYSTEM_DESIGN.md.
+
+        Uses citadel.get_sequence_diagrams() to generate Mermaid sequence
+        diagrams showing key call sequences in the codebase.
+
+        Returns:
+            List of Mermaid sequence diagram strings, or None if unavailable.
+        """
+        if not self._state.dependency_graph_path:
+            logger.debug("No dependency graph path available for sequence diagrams")
+            return None
+
+        try:
+            from citadel import Citadel
+
+            citadel = Citadel()
+            diagrams = citadel.get_sequence_diagrams(
+                path=self._state.dependency_graph_path,
+                max_diagrams=5,
+                min_sequence_length=1,  # Include shorter sequences for better coverage
+            )
+
+            if diagrams:
+                logger.info(f"Generated {len(diagrams)} sequence diagrams for SYSTEM_DESIGN.md")
+            else:
+                logger.debug("No sequence diagrams generated (no qualifying call sequences)")
+
+            return diagrams if diagrams else None
+
+        except ImportError:
+            logger.warning(
+                "citadel package not available for sequence diagrams. "
+                "Install citadel to enable this feature."
+            )
+            return None
+        except FileNotFoundError as e:
+            logger.warning(f"Dependency graph file not found for sequence diagrams: {e}")
+            return None
+        except Exception as e:
+            logger.warning(
+                f"Failed to generate sequence diagrams: {e}. "
+                "Continuing without sequence diagrams."
+            )
             return None
 
     def _create_documentation_tickets_for_missing(

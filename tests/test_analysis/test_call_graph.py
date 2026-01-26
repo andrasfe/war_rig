@@ -266,6 +266,61 @@ class TestCallGraphAnalyzer:
         assert "External" in system_design or "System" in system_design
         assert "IEFBR14" in system_design  # Should document system utilities
 
+    def test_generate_system_design_md_with_sequence_diagrams(self, temp_output_dir):
+        """Test SYSTEM_DESIGN.md generation with sequence diagrams."""
+        analyzer = CallGraphAnalyzer(doc_directory=temp_output_dir)
+        analysis = analyzer.analyze()
+
+        # Sample sequence diagrams (Mermaid format)
+        sequence_diagrams = [
+            "```mermaid\nsequenceDiagram\n    MAINPGM->>SUBPGM1: CALL\n    SUBPGM1->>MAINPGM: return\n```",
+            "```mermaid\nsequenceDiagram\n    JOBSTEP->>BUILDBAT: EXEC\n```",
+        ]
+
+        system_design = analyzer.generate_system_design_md(
+            analysis,
+            sequence_diagrams=sequence_diagrams,
+        )
+
+        # Verify Flows section is present
+        assert "## Flows" in system_design
+        assert "key call sequences" in system_design
+
+        # Verify individual flows are labeled
+        assert "### Flow 1" in system_design
+        assert "### Flow 2" in system_design
+
+        # Verify the diagrams are included
+        assert "sequenceDiagram" in system_design
+        assert "MAINPGM->>SUBPGM1: CALL" in system_design
+        assert "JOBSTEP->>BUILDBAT: EXEC" in system_design
+
+    def test_generate_system_design_md_without_sequence_diagrams(self, temp_output_dir):
+        """Test SYSTEM_DESIGN.md generation without sequence diagrams skips Flows section."""
+        analyzer = CallGraphAnalyzer(doc_directory=temp_output_dir)
+        analysis = analyzer.analyze()
+
+        # Call without sequence_diagrams parameter
+        system_design = analyzer.generate_system_design_md(analysis)
+
+        # Verify Flows section is NOT present
+        assert "## Flows" not in system_design
+        assert "### Flow 1" not in system_design
+
+    def test_generate_system_design_md_with_empty_sequence_diagrams(self, temp_output_dir):
+        """Test SYSTEM_DESIGN.md generation with empty sequence diagrams list."""
+        analyzer = CallGraphAnalyzer(doc_directory=temp_output_dir)
+        analysis = analyzer.analyze()
+
+        # Pass empty list
+        system_design = analyzer.generate_system_design_md(
+            analysis,
+            sequence_diagrams=[],
+        )
+
+        # Verify Flows section is NOT present (empty list should be skipped)
+        assert "## Flows" not in system_design
+
 
 class TestCallGraphAnalyzerEmpty:
     """Tests for CallGraphAnalyzer with no documentation."""

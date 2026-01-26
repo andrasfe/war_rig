@@ -1173,13 +1173,26 @@ class CallGraphAnalyzer:
         lines.append("```")
         return "\n".join(lines)
 
-    def generate_system_design_md(self, analysis: CallGraphAnalysis) -> str:
+    def generate_system_design_md(
+        self,
+        analysis: CallGraphAnalysis,
+        sequence_diagrams: list[str] | None = None,
+    ) -> str:
         """Generate SYSTEM_DESIGN.md content documenting the architecture.
 
         This method generates a basic system design document with the call graph
         mermaid diagram. The Imperator's holistic review may later enhance this
         document with LLM-generated content, but it will use the same mermaid
         diagram from CALL_GRAPH.md for consistency.
+
+        Args:
+            analysis: The call graph analysis results.
+            sequence_diagrams: Optional list of Mermaid sequence diagram strings
+                from citadel.get_sequence_diagrams(). If provided and non-empty,
+                a "## Flows" section will be added showing key call sequences.
+
+        Returns:
+            The generated SYSTEM_DESIGN.md content as a string.
         """
         lines = []
 
@@ -1200,6 +1213,20 @@ class CallGraphAnalyzer:
         lines.append("")
         lines.append(self._generate_mermaid_diagram(analysis))
         lines.append("")
+
+        # Flows section with sequence diagrams (if provided)
+        if sequence_diagrams:
+            lines.append("## Flows")
+            lines.append("")
+            lines.append("The following sequence diagrams illustrate key call sequences")
+            lines.append("identified in the codebase, showing how programs interact")
+            lines.append("during execution.")
+            lines.append("")
+            for i, diagram in enumerate(sequence_diagrams, start=1):
+                lines.append(f"### Flow {i}")
+                lines.append("")
+                lines.append(diagram)
+                lines.append("")
 
         # Program inventory
         lines.append("## Program Inventory")
