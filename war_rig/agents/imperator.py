@@ -2210,9 +2210,9 @@ and architecture after reading your overview."""
                 from pathlib import Path as PathLib
                 rel_path = PathLib(doc.file_name)
                 if rel_path.parent != PathLib("."):
-                    doc_path = f"{rel_path.parent}/{rel_path.stem}.md"
+                    doc_path = f"{rel_path.parent}/{rel_path.name}.md"
                 else:
-                    doc_path = f"{rel_path.stem}.md"
+                    doc_path = f"{rel_path.name}.md"
                 parts.append(f"| {doc.program_id} | `{doc_path}` |")
         parts.append("")
 
@@ -2247,9 +2247,9 @@ and architecture after reading your overview."""
                     from pathlib import Path as PathLib
                     rel_path = PathLib(doc.file_name)
                     if rel_path.parent != PathLib("."):
-                        doc_path = f"{rel_path.parent}/{rel_path.stem}.md"
+                        doc_path = f"{rel_path.parent}/{rel_path.name}.md"
                     else:
-                        doc_path = f"{rel_path.stem}.md"
+                        doc_path = f"{rel_path.name}.md"
 
                     parts.append(f"#### {doc.program_id}")
                     parts.append(f"- **Source File**: `{doc.file_name}`")
