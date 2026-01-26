@@ -2,23 +2,30 @@
 
 **File**: `ims/PSBPAUTL.psb`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-01-26 15:14:32.478553
+**Analyzed**: 2026-01-26 17:40:13.573635
 
 ## Purpose
 
-This file defines the IMS Program Specification Block (PSB) named PSBPAUTL. It specifies a single Database PCB (PAUTLPCB) for the DBPAUTP0 database with PROCOPT=L (language interface processing), KEYLEN=14, sensitive to root segment PAUTSUM0 and child segment PAUTDTL1 under PAUTSUM0. The PSB is generated for assembler language (LANG=ASSEM).
+This PSB defines a single database PCB (PAUTLPCB) for accessing the IMS database DBPAUTP0 in browse mode (PROCOPT=L) with a key length of 14 bytes. It specifies two sensitive segments: PAUTSUM0 as the root segment (PARENT=0) and PAUTDTL1 as a dependent child segment of PAUTSUM0. The PSB is generated for assembly language programs under the name PSBPAUTL.
 
-**Business Context**: Provides database access specification for IMS DL/I application programs processing PAUT (likely Payment Authority Utility) summary and detail data in DBPAUTP0 (inferred from DBDNAME and segment names; exact business process UNKNOWN)
+**Business Context**: IMS database access specification for PAUTL utility application
+
+## Inputs
+
+| Name | Type | Description |
+|------|------|-------------|
+| PAUTSUM0 | IOType.IMS_SEGMENT | Root segment (PARENT=0) accessible via PAUTLPCB PCB |
+| PAUTDTL1 | IOType.IMS_SEGMENT | Child segment dependent on parent PAUTSUM0, accessible via PAUTLPCB PCB |
 
 ## Business Rules
 
-- **BR001**: PCB PAUTLPCB is sensitive only to segments PAUTSUM0 (PARENT=0, root segment) and PAUTDTL1 (PARENT=PAUTSUM0, child segment)
-- **BR002**: Accesses IMS database DBDNAME=DBPAUTP0 using PCB TYPE=DB
-- **BR003**: PROCOPT=L enables language interface processing (inquiry/update via DL/I calls); KEYLEN=14 defines key length for segment searches
+- **BR001**: Defines allowable access path to root sensitive segment PAUTSUM0 with no parent (PARENT=0)
+- **BR002**: Defines allowable access path to child sensitive segment PAUTDTL1 under parent PAUTSUM0
+- **BR003**: Restricts PCB processing option to browse-only (PROCOPT=L) with key length 14
 
 ## Open Questions
 
-- ? What IMS application programs reference this PSB (PSBPAUTL)?
-  - Context: PSB name is specified but no calling programs mentioned in source
-- ? Exact business purpose of DBPAUTP0 database and segments PAUTSUM0/PAUTDTL1?
-  - Context: Inferred from names (PAUT likely Payment Authority Utility, SUM0 summary, DTL1 detail) but not explicitly documented
+- ? What specific fields are defined in segments PAUTSUM0 and PAUTDTL1?
+  - Context: PSB defines segments but not field-level details; these are in DBD/PSB source or generated macros
+- ? Which application programs reference this PSB (PSBPAUTL)?
+  - Context: PSB is a specification used by IMS DL/I application programs, but callers not listed in this file

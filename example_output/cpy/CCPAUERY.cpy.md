@@ -2,10 +2,17 @@
 
 **File**: `cpy/CCPAUERY.cpy`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-01-26 15:17:07.916490
+**Analyzed**: 2026-01-26 17:39:20.222512
 
 ## Purpose
 
-This COBOL copybook defines the ERROR-LOG-RECORD level 01 data structure for logging pending authorization errors. It includes fields for error date (PIC X(06)), time (PIC X(06)), application (PIC X(08)), program (PIC X(08)), location (PIC X(04)), level (PIC X(01)) with 88 levels for LOG/I/WARNING/CRITICAL, subsystem (PIC X(01)) with 88 levels for APP/CICS/IMS/DB2/MQ/FILE, two error codes (PIC X(09) each), message (PIC X(50)), and event key (PIC X(20)). The structure standardizes error logging across mainframe applications.
+This COBOL copybook defines the ERROR-LOG-RECORD data structure for logging errors related to pending authorizations. It captures timestamp (ERR-DATE, ERR-TIME), identifiers (ERR-APPLICATION, ERR-PROGRAM, ERR-LOCATION), severity level (ERR-LEVEL with 88-level condition names: ERR-LOG 'L', ERR-INFO 'I', ERR-WARNING 'W', ERR-CRITICAL 'C'), subsystem (ERR-SUBSYSTEM with 88-levels: ERR-APP 'A', ERR-CICS 'C', ERR-IMS 'I', ERR-DB2 'D', ERR-MQ 'M', ERR-FILE 'F'), error codes (ERR-CODE-1, ERR-CODE-2), message (ERR-MESSAGE), and event key (ERR-EVENT-KEY). The structure is used in mainframe applications for standardized error logging.
 
-**Business Context**: Supports standardized error logging for pending authorization processes in Amazon's mainframe environment, capturing diagnostics for applications, subsystems, and events.
+**Business Context**: Error logging for pending authorization processes in Amazon mainframe applications, under Apache License 2.0 (lines 4-17).
+
+## Open Questions
+
+- ? In which specific programs or modules is this copybook included?
+  - Context: Copybook usage is not indicated within the source file itself.
+- ? What are the exact formats or validation rules for fields like ERR-DATE, ERR-CODE-1, etc.?
+  - Context: PIC clauses define lengths and types (e.g., PIC X(06) for ERR-DATE at line 20), but no MOVE/IF statements or comments specify content formats.

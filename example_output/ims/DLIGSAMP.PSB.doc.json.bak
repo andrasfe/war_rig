@@ -4,14 +4,14 @@
     "file_name": "ims/DLIGSAMP.PSB",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T15:17:26.169793",
+    "analyzed_at": "2026-01-26T17:39:00.243223",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This file is the source for the IMS Program Specification Block (PSB) named DLIGSAMP, targeted for a COBOL language application program. It defines one database PCB (PAUTBPCB) providing access to the hierarchical IMS database DBDNAME=DBPAUTP0 with PROCOPT=GOTP and KEYLEN=14, including root segment PAUTSUM0 (PARENT=0) and child segment PAUTDTL1 (PARENT=PAUTSUM0). It also defines two GSAM PCBs for read access (PROCOPT=LS) to DBDNAME=PASFLDBD and DBDNAME=PADFLDBD. The PSB is generated with PRINT NOGEN, no compatibility mode (CMPAT=NO), for use in IMS DL/I calls from the DLIGSAMP COBOL program.",
+    "summary": "The DLIGSAMP.PSB defines the IMS Program Specification Block (PSB) for the COBOL program DLIGSAMP. It specifies three Program Communication Blocks (PCBs): PAUTBPCB for hierarchical database DBPAUTP0 with segments PAUTSUM0 (root) and PAUTDTL1 (child under PROCOPT=GOTP, KEYLEN=14), and two unnamed GSAM PCBs for datasets PASFLDBD and PADFLDBD (both PROCOPT=LS). The PSB is generated with PRINT NOGEN and CMPAT=NO.",
     "business_context": null,
-    "program_type": "BATCH",
+    "program_type": "UTILITY",
     "citations": [
       17,
       18,
@@ -26,7 +26,7 @@
     {
       "name": "DBPAUTP0",
       "io_type": "IMS_SEGMENT",
-      "description": "IMS hierarchical database accessed via PAUTBPCB with segments PAUTSUM0 (root) and PAUTDTL1 (child), PROCOPT=GOTP, KEYLEN=14",
+      "description": "Hierarchical IMS database accessed via named PCB PAUTBPCB (TYPE=DB, PROCOPT=GOTP, KEYLEN=14) with qualified segments PAUTSUM0 (PARENT=0) and PAUTDTL1 (PARENT=PAUTSUM0)",
       "copybook": null,
       "citation": [
         18,
@@ -36,8 +36,8 @@
     },
     {
       "name": "PASFLDBD",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "GSAM dataset accessed via unnamed PCB with PROCOPT=LS",
+      "io_type": "IMS_SEGMENT",
+      "description": "GSAM dataset accessed via unnamed PCB (TYPE=GSAM, PROCOPT=LS)",
       "copybook": null,
       "citation": [
         21
@@ -45,8 +45,8 @@
     },
     {
       "name": "PADFLDBD",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "GSAM dataset accessed via unnamed PCB with PROCOPT=LS",
+      "io_type": "IMS_SEGMENT",
+      "description": "GSAM dataset accessed via unnamed PCB (TYPE=GSAM, PROCOPT=LS)",
       "copybook": null,
       "citation": [
         22
@@ -73,14 +73,14 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the specific business purpose or application context of the DLIGSAMP program and its accessed IMS resources (DBPAUTP0, PASFLDBD, PADFLDBD)?",
-      "context": "The PSB defines technical access structures but contains no descriptive comments, segment field details, or business logic indications.",
-      "suggestion": "Examine the associated COBOL source code for DLIGSAMP, DBD definitions for DBPAUTP0/PASFLDBD/PADFLDBD, or application documentation."
+      "question": "What is the business purpose of databases DBPAUTP0 (segments PAUTSUM0/PAUTDTL1), PASFLDBD, and PADFLDBD?",
+      "context": "PSB source provides only structural access definitions with no descriptive comments or context",
+      "suggestion": "Consult associated DBD source, program source code using this PSB, or application documentation"
     },
     {
-      "question": "Is this PSB intended for batch (DLI batch) or online IMS regions (e.g., MPP, BMP, IFP)?",
-      "context": "PROCOPT values (GOTP, LS) support both, but no explicit indication of transaction IDs or online-specific features.",
-      "suggestion": "Check JCL or IMS region definitions using this PSB, or the program's entry logic."
+      "question": "Are there any write/update operations possible via these PCBs?",
+      "context": "PROCOPT values (GOTP, LS) suggest read-only access (Get operations), but cannot confirm without program source",
+      "suggestion": "Analyze the DLIGSAMP COBOL program source for DL/I call types (e.g., ISRT, REPL)"
     }
   ]
 }

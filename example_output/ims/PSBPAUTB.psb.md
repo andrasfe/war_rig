@@ -2,24 +2,33 @@
 
 **File**: `ims/PSBPAUTB.psb`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-01-26 15:12:50.372498
+**Analyzed**: 2026-01-26 17:40:21.924538
 
 ## Purpose
 
-This file is an IMS Program Specification Block (PSB) definition that generates PSBPAUTB for COBOL programs. It defines a single database PCB named PAUTBPCB for the DBD DBPAUTP0 with PROCOPT=AP and KEYLEN=14, providing access to the root segment PAUTSUM0 and its child segment PAUTDTL1. The PSB is generated in COBOL language with CMPAT=YES for compatibility.
-
-**Business Context**: Defines IMS hierarchical database access structure for PAUT-related summary (PAUTSUM0) and detail (PAUTDTL1) segments, likely supporting batch DL/I applications for business data such as purchase authorizations or similar transactional records.
+This PSB source file defines a single IMS database PCB named PAUTBPCB for accessing DBDNAME=DBPAUTP0 with PROCOPT=AP and KEYLEN=14. It senses the root segment PAUTSUM0 (PARENT=0) and child segment PAUTDTL1 (PARENT=PAUTSUM0), enabling qualified and unqualified DL/I calls to these segments. The PSB is generated for COBOL language with PSBNAME=PSBPAUTB.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| PAUTSUM0 | IOType.IMS_SEGMENT | Root segment (PARENT=0) of the DBPAUTP0 IMS database accessible via PAUTBPCB |
-| PAUTDTL1 | IOType.IMS_SEGMENT | Child segment (PARENT=PAUTSUM0) of the DBPAUTP0 IMS database accessible via PAUTBPCB |
+| PAUTSUM0 | IOType.IMS_SEGMENT | Root segment (PARENT=0) sensed for access via DL/I calls such as GU/GN |
+| PAUTDTL1 | IOType.IMS_SEGMENT | Child segment under PAUTSUM0 sensed for access via DL/I calls such as GU/GN |
+
+## Outputs
+
+| Name | Type | Description |
+|------|------|-------------|
+| PAUTSUM0 | IOType.IMS_SEGMENT | New root segments insertable via ISRT after positioning |
+| PAUTDTL1 | IOType.IMS_SEGMENT | New child segments insertable via ISRT under PAUTSUM0 after positioning |
+
+## Business Rules
+
+- **BR001**: PROCOPT=AP governs segment access, permitting positioning (GU/GN) and insert (ISRT) DL/I calls but prohibiting update (CHG) or delete (DLT)
 
 ## Open Questions
 
-- ? Exact meaning of PROCOPT=AP in this IMS PCB context
-  - Context: Standard IMS PROCOPT values include G,I,U etc., but AP is specified without further code to clarify usage (e.g., path calls or specific authorities)
-- ? Business meaning of PAUTSUM0 and PAUTDTL1 segments
-  - Context: Segment names suggest summary/detail structure for 'PAUT' data, but no field-level details or application context provided
+- ? What are the exact segment layouts and key fields?
+  - Context: PSB defines access but not field-level details; these are in DBD/PSBGEN output or application copybooks
+- ? Which application programs use this PSB?
+  - Context: PSB source does not specify callers

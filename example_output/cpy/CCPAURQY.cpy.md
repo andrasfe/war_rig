@@ -2,10 +2,17 @@
 
 **File**: `cpy/CCPAURQY.cpy`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-01-26 15:16:52.761487
+**Analyzed**: 2026-01-26 17:39:12.182544
 
 ## Purpose
 
-This COBOL copybook defines a data structure for a Pending Authorization Request record, consisting of level-05 fields for authorization date/time, card number, expiry date, transaction amount, merchant details, and transaction ID. It is designed for use in payment processing programs handling credit card or similar authorization requests. The header explicitly identifies it as 'PENDING AUTHORIZATION REQUEST' (lines 2,19-36).
+This COBOL copybook defines the data structure for a Pending Authorization Request record used in payment processing systems. It includes fields for authorization date and time, card number, expiry date, transaction details, merchant information, and other related data elements. The structure supports capturing and passing authorization request data between programs.
 
-**Business Context**: Payment processing system for handling pending credit/debit card authorization requests from merchants or acquirers, including transaction and merchant validation data.
+**Business Context**: Serves credit card or payment authorization workflows, holding details like card info, transaction amount, merchant data, and processing codes for pending auth requests (citation: lines 19-37).
+
+## Open Questions
+
+- ? In which specific programs is this copybook included?
+  - Context: Copybook analysis does not reveal including programs; must review referencing COBOL source files.
+- ? Detailed field formats and validation rules (e.g., packed decimal usage, edit masks)?
+  - Context: PIC clauses provided but no usage or validation logic in copybook itself.

@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "generated_at": "2026-01-26T15:10:06.894476",
+  "generated_at": "2026-01-26T17:36:11.487350",
   "source_root": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq",
   "artifacts": {
     "procedure::LOADPADB": {
@@ -773,7 +773,7 @@
       "defined_in": {
         "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
         "line_start": 221,
-        "line_end": 238,
+        "line_end": 237,
         "column_start": 1,
         "column_end": null
       },
@@ -810,7 +810,7 @@
       "display_name": null,
       "defined_in": {
         "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
-        "line_start": 242,
+        "line_start": 241,
         "line_end": 263,
         "column_start": 1,
         "column_end": null
@@ -925,7 +925,7 @@
       "defined_in": {
         "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
         "line_start": 317,
-        "line_end": 337,
+        "line_end": 336,
         "column_start": 1,
         "column_end": null
       },
@@ -2571,7 +2571,7 @@
   },
   "relationships": [
     {
-      "id": "ce560309-2d88-442d-8837-b96a82fa7459",
+      "id": "92bfa618-9f31-4667-8b2e-b75306f11dc4",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::1000-INITIALIZE",
       "relationship_type": "performs",
@@ -2590,7 +2590,7 @@
       "is_resolved": true
     },
     {
-      "id": "2f643628-31a7-40e9-b7b9-b158fc1b872e",
+      "id": "d9463564-5706-4d51-b642-bdaca98464e2",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::2000-READ-ROOT-SEG-FILE",
       "relationship_type": "performs",
@@ -2609,7 +2609,7 @@
       "is_resolved": true
     },
     {
-      "id": "74329a78-1e89-4abd-adaf-8be6c8bb5c95",
+      "id": "b0d434fe-e3ee-4a68-b911-5bd823568438",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::3000-READ-CHILD-SEG-FILE",
       "relationship_type": "performs",
@@ -2628,7 +2628,7 @@
       "is_resolved": true
     },
     {
-      "id": "0f9e86f7-b809-40c8-89ca-40652d924f97",
+      "id": "05785177-2ca8-4c89-87dc-93790b1f775b",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::4000-FILE-CLOSE",
       "relationship_type": "performs",
@@ -2647,7 +2647,7 @@
       "is_resolved": true
     },
     {
-      "id": "c4ee8e19-56c3-421e-ab3f-7ba8ebb94891",
+      "id": "1c14b63d-b1db-4ed8-8b77-b31471d14ea8",
       "from_artifact": "paragraph::1000-INITIALIZE",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -2666,7 +2666,7 @@
       "is_resolved": true
     },
     {
-      "id": "66621fb9-ece0-4116-8b53-c57dbbe05f89",
+      "id": "571b0f96-6638-4eba-9d66-8e3e1f928b16",
       "from_artifact": "paragraph::2000-READ-ROOT-SEG-FILE",
       "to_artifact": "paragraph::2100-INSERT-ROOT-SEG",
       "relationship_type": "performs",
@@ -2685,7 +2685,7 @@
       "is_resolved": true
     },
     {
-      "id": "92d66c6c-f2cf-49ce-b19e-2f840bb32df7",
+      "id": "8a6e6aef-578d-4cc9-b94c-dbc1f89804ad",
       "from_artifact": "paragraph::2100-INSERT-ROOT-SEG",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -2704,7 +2704,7 @@
       "is_resolved": true
     },
     {
-      "id": "1b3c4492-382d-430b-8831-c0b86ca3bb26",
+      "id": "af4e4736-20df-499a-b2a3-b0fe85637c7c",
       "from_artifact": "paragraph::3000-READ-CHILD-SEG-FILE",
       "to_artifact": "paragraph::3100-INSERT-CHILD-SEG",
       "relationship_type": "performs",
@@ -2723,7 +2723,7 @@
       "is_resolved": true
     },
     {
-      "id": "2933736e-77a1-48a4-ab69-77d90630c8f3",
+      "id": "8a32e5e3-acb8-4e55-b29d-976c5fbca721",
       "from_artifact": "paragraph::3100-INSERT-CHILD-SEG",
       "to_artifact": "paragraph::3200-INSERT-IMS-CALL",
       "relationship_type": "performs",
@@ -2742,7 +2742,7 @@
       "is_resolved": true
     },
     {
-      "id": "19a26320-7f5b-4daf-a9fe-e1cf1aa96fa9",
+      "id": "02320d93-af9a-4882-b899-4e2044e3cee3",
       "from_artifact": "paragraph::3100-INSERT-CHILD-SEG",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -2761,7 +2761,7 @@
       "is_resolved": true
     },
     {
-      "id": "8faf3d20-d156-4a77-b5a1-b3fbf86fcfc3",
+      "id": "167122f6-0f03-42fe-ade8-0464e40b06f2",
       "from_artifact": "paragraph::3200-INSERT-IMS-CALL",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -2780,7 +2780,7 @@
       "is_resolved": true
     },
     {
-      "id": "0cf50543-595b-4884-8c9a-8ee77b9b4983",
+      "id": "d0f761df-8b66-4bd2-92ef-9ff81442f44e",
       "from_artifact": "program::PAUDBLOD",
       "to_artifact": "copybook::IMSFUNCS",
       "relationship_type": "includes",
@@ -2799,7 +2799,7 @@
       "is_resolved": true
     },
     {
-      "id": "8af13bc8-37cb-44e0-b00f-de734005dca0",
+      "id": "adc0d454-7bfc-49dc-b3be-645e79743609",
       "from_artifact": "program::PAUDBLOD",
       "to_artifact": "copybook::CIPAUSMY",
       "relationship_type": "includes",
@@ -2818,7 +2818,7 @@
       "is_resolved": true
     },
     {
-      "id": "a7dfbdeb-ffd1-42ef-ac2c-1b177156c31c",
+      "id": "51bd9cd2-0191-429b-8787-f06daa99d5b1",
       "from_artifact": "program::PAUDBLOD",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
@@ -2837,7 +2837,7 @@
       "is_resolved": true
     },
     {
-      "id": "047c1660-682e-49a9-a0a8-542c36e39b47",
+      "id": "5260d57f-f6b0-4099-99dc-8d46c01863c9",
       "from_artifact": "program::PAUDBLOD",
       "to_artifact": "copybook::PAUTBPCB",
       "relationship_type": "includes",
@@ -2856,7 +2856,7 @@
       "is_resolved": true
     },
     {
-      "id": "94abbca3-6232-40f9-b64f-2587c4b9e381",
+      "id": "015671b6-a9d6-41da-9a36-0b23ae117876",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::FRAUD-UPDATE",
       "relationship_type": "performs",
@@ -2875,7 +2875,7 @@
       "is_resolved": true
     },
     {
-      "id": "5eb03db6-cc5d-4c3a-bf5c-b9e166b68039",
+      "id": "2114323a-3536-4eb6-a5f4-095324a63669",
       "from_artifact": "program::COPAUS2C",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
@@ -2894,7 +2894,7 @@
       "is_resolved": true
     },
     {
-      "id": "ad7dd38b-bd9f-4af5-8c0a-f4df4f055908",
+      "id": "76ae1c3f-3db3-474d-aca5-e7a538ee21c2",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::2000-MAIN-PROCESS",
       "relationship_type": "performs",
@@ -2913,7 +2913,7 @@
       "is_resolved": true
     },
     {
-      "id": "d8799bf9-c3d8-49d9-bc90-81b45857d038",
+      "id": "2725a197-2390-43f1-8c33-283c54e3409a",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::9000-TERMINATE",
       "relationship_type": "performs",
@@ -2932,7 +2932,7 @@
       "is_resolved": true
     },
     {
-      "id": "efd73502-cd70-4fc4-821c-cf2e7d1dfc71",
+      "id": "89a82aa2-9d1b-4451-b25d-bf2cc86290c6",
       "from_artifact": "paragraph::1000-INITIALIZE",
       "to_artifact": "paragraph::1100-OPEN-REQUEST-QUEUE",
       "relationship_type": "performs",
@@ -2951,7 +2951,7 @@
       "is_resolved": true
     },
     {
-      "id": "10bde7f7-596e-48ab-bec0-db9e8e535f77",
+      "id": "c01a3dba-2541-4460-ad08-e445d29c6eeb",
       "from_artifact": "paragraph::1000-INITIALIZE",
       "to_artifact": "paragraph::3100-READ-REQUEST-MQ",
       "relationship_type": "performs",
@@ -2970,7 +2970,7 @@
       "is_resolved": true
     },
     {
-      "id": "439a9c29-0352-4dd3-bdca-8c888b593df5",
+      "id": "5196d9f4-a366-47b1-aec3-38f38e4ce2e3",
       "from_artifact": "paragraph::1100-OPEN-REQUEST-QUEUE",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -2989,7 +2989,7 @@
       "is_resolved": true
     },
     {
-      "id": "2d0d48bd-9b4b-44ad-8c3f-787e0958f9ce",
+      "id": "7dc953be-fb0c-4a34-8ae2-8ee12be4e821",
       "from_artifact": "paragraph::1200-SCHEDULE-PSB",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -3008,7 +3008,7 @@
       "is_resolved": true
     },
     {
-      "id": "d9a99f08-1c02-40c6-977f-e74b7963d7a1",
+      "id": "19307509-da46-4b64-a690-6123e268c279",
       "from_artifact": "paragraph::2000-MAIN-PROCESS",
       "to_artifact": "paragraph::2100-EXTRACT-REQUEST-MSG",
       "relationship_type": "performs",
@@ -3027,7 +3027,7 @@
       "is_resolved": true
     },
     {
-      "id": "e945f2b2-caa3-4fc8-b485-726da45c8221",
+      "id": "6f57ac18-ea37-42ed-8121-9a059a70f833",
       "from_artifact": "paragraph::2000-MAIN-PROCESS",
       "to_artifact": "paragraph::5000-PROCESS-AUTH",
       "relationship_type": "performs",
@@ -3046,7 +3046,7 @@
       "is_resolved": true
     },
     {
-      "id": "24ddaaf8-63bc-431c-a30a-59b66f720d40",
+      "id": "4806377a-e330-4d39-bffa-410c9eafdbae",
       "from_artifact": "paragraph::2000-MAIN-PROCESS",
       "to_artifact": "paragraph::3100-READ-REQUEST-MQ",
       "relationship_type": "performs",
@@ -3065,7 +3065,7 @@
       "is_resolved": true
     },
     {
-      "id": "2178f7dd-e358-4e1b-870c-664bf36660f6",
+      "id": "c423a8c6-5c1b-48ce-9504-7f545633cf8c",
       "from_artifact": "paragraph::3100-READ-REQUEST-MQ",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -3084,7 +3084,7 @@
       "is_resolved": true
     },
     {
-      "id": "6463c75c-7889-46bd-b697-52120ed8f4cd",
+      "id": "db2f0890-40fc-45a4-9bd3-1405a9075b65",
       "from_artifact": "paragraph::5000-PROCESS-AUTH",
       "to_artifact": "paragraph::1200-SCHEDULE-PSB",
       "relationship_type": "performs",
@@ -3103,7 +3103,7 @@
       "is_resolved": true
     },
     {
-      "id": "c10ce28b-464c-4f92-80f6-be18da6054ce",
+      "id": "e581be82-35b2-47d1-bac8-20690fcc34f2",
       "from_artifact": "paragraph::5000-PROCESS-AUTH",
       "to_artifact": "paragraph::5100-READ-XREF-RECORD",
       "relationship_type": "performs",
@@ -3122,7 +3122,7 @@
       "is_resolved": true
     },
     {
-      "id": "b10c1dc5-c1d0-4403-9c74-78bf0b051171",
+      "id": "6c7ff590-6ac9-4247-a21a-22469259b847",
       "from_artifact": "paragraph::5000-PROCESS-AUTH",
       "to_artifact": "paragraph::5200-READ-ACCT-RECORD",
       "relationship_type": "performs",
@@ -3141,7 +3141,7 @@
       "is_resolved": true
     },
     {
-      "id": "78e9e38e-1a32-496c-a038-9d96e555760d",
+      "id": "4b33b912-344f-45c2-ab1b-82245308281a",
       "from_artifact": "paragraph::5000-PROCESS-AUTH",
       "to_artifact": "paragraph::5300-READ-CUST-RECORD",
       "relationship_type": "performs",
@@ -3160,7 +3160,7 @@
       "is_resolved": true
     },
     {
-      "id": "db5a75d0-1e20-418f-b597-1d8c18b2bbe4",
+      "id": "e2ea1ae9-c7b1-4733-8637-698a043b3e94",
       "from_artifact": "paragraph::5000-PROCESS-AUTH",
       "to_artifact": "paragraph::5500-READ-AUTH-SUMMRY",
       "relationship_type": "performs",
@@ -3179,7 +3179,7 @@
       "is_resolved": true
     },
     {
-      "id": "d487d629-c8f5-48a2-9a0a-f7b6f481d73e",
+      "id": "57e65118-a876-49b2-987d-9484946696de",
       "from_artifact": "paragraph::5000-PROCESS-AUTH",
       "to_artifact": "paragraph::5600-READ-PROFILE-DATA",
       "relationship_type": "performs",
@@ -3198,7 +3198,7 @@
       "is_resolved": true
     },
     {
-      "id": "a716dfed-0fb0-441e-b10f-72d7ebd2f4b9",
+      "id": "c55123ca-6860-4ef0-8040-2b51f81e5f07",
       "from_artifact": "paragraph::5000-PROCESS-AUTH",
       "to_artifact": "paragraph::6000-MAKE-DECISION",
       "relationship_type": "performs",
@@ -3217,7 +3217,7 @@
       "is_resolved": true
     },
     {
-      "id": "84a3e21e-1a56-4e50-ba2d-d8ab9597519b",
+      "id": "83ecaa95-2810-47ec-a025-246880d17be0",
       "from_artifact": "paragraph::5000-PROCESS-AUTH",
       "to_artifact": "paragraph::7100-SEND-RESPONSE",
       "relationship_type": "performs",
@@ -3236,7 +3236,7 @@
       "is_resolved": true
     },
     {
-      "id": "a5133c3f-b8d6-4451-9148-480fe8b525b1",
+      "id": "a3e9acb8-fd31-4368-a8ae-63fb50965a67",
       "from_artifact": "paragraph::5000-PROCESS-AUTH",
       "to_artifact": "paragraph::8000-WRITE-AUTH-TO-DB",
       "relationship_type": "performs",
@@ -3255,7 +3255,7 @@
       "is_resolved": true
     },
     {
-      "id": "b9be34d4-a835-49d5-87f1-cc220fbf280f",
+      "id": "5995b4f2-474a-4de5-ba6b-354ae28f0723",
       "from_artifact": "paragraph::5100-READ-XREF-RECORD",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -3274,7 +3274,7 @@
       "is_resolved": true
     },
     {
-      "id": "bd4146b5-c981-460a-adee-b83530074523",
+      "id": "06c37c79-2621-44fb-90c8-b2b9d27a6e4b",
       "from_artifact": "paragraph::5200-READ-ACCT-RECORD",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -3293,7 +3293,7 @@
       "is_resolved": true
     },
     {
-      "id": "102028b4-9dc2-4dc9-b0a7-8a068d43c578",
+      "id": "24cde2aa-7b8e-4a27-a2cd-49755e9cdf97",
       "from_artifact": "paragraph::5300-READ-CUST-RECORD",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -3312,7 +3312,7 @@
       "is_resolved": true
     },
     {
-      "id": "ab7c53d9-718c-42a2-a67d-80219efb564a",
+      "id": "a206b601-2147-4c43-93ab-09e9956f8d32",
       "from_artifact": "paragraph::5500-READ-AUTH-SUMMRY",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -3331,7 +3331,7 @@
       "is_resolved": true
     },
     {
-      "id": "e70ef040-01d9-4658-88a0-53075293bf98",
+      "id": "01924b82-3947-4278-ace6-0ffee000e0ca",
       "from_artifact": "paragraph::7100-SEND-RESPONSE",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -3350,7 +3350,7 @@
       "is_resolved": true
     },
     {
-      "id": "a32e9d75-dd65-4ced-8285-92368638f91f",
+      "id": "d7373166-8d1c-49b2-bfb0-d17f8bf601a3",
       "from_artifact": "paragraph::8000-WRITE-AUTH-TO-DB",
       "to_artifact": "paragraph::8400-UPDATE-SUMMARY",
       "relationship_type": "performs",
@@ -3369,7 +3369,7 @@
       "is_resolved": true
     },
     {
-      "id": "2ca786ae-35e7-4e95-bb7b-3b0eb80db345",
+      "id": "1a35d388-2fa3-4001-8808-f33f322369be",
       "from_artifact": "paragraph::8000-WRITE-AUTH-TO-DB",
       "to_artifact": "paragraph::8500-INSERT-AUTH",
       "relationship_type": "performs",
@@ -3388,7 +3388,7 @@
       "is_resolved": true
     },
     {
-      "id": "82d9f1fc-9f1d-44d7-98c4-50c6d05792ce",
+      "id": "c55a4a37-ae0f-4c44-85b6-a1cbbe84541a",
       "from_artifact": "paragraph::8400-UPDATE-SUMMARY",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -3407,7 +3407,7 @@
       "is_resolved": true
     },
     {
-      "id": "32a16961-bc65-46ec-83fd-f811d5a9f2a7",
+      "id": "6ba91a17-3919-4be2-949c-ba334a990b55",
       "from_artifact": "paragraph::8500-INSERT-AUTH",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -3426,7 +3426,7 @@
       "is_resolved": true
     },
     {
-      "id": "c5cbb6ce-6a38-4425-85b4-e514253fb822",
+      "id": "3c11dec2-b02c-4b26-b2b8-2f15ac6b4981",
       "from_artifact": "paragraph::9000-TERMINATE",
       "to_artifact": "paragraph::9100-CLOSE-REQUEST-QUEUE",
       "relationship_type": "performs",
@@ -3445,7 +3445,7 @@
       "is_resolved": true
     },
     {
-      "id": "ab1664f2-fd29-40ea-956a-6708e5e2ac5a",
+      "id": "67166362-fb96-47c6-936d-de30b00773a5",
       "from_artifact": "paragraph::9100-CLOSE-REQUEST-QUEUE",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -3464,7 +3464,7 @@
       "is_resolved": true
     },
     {
-      "id": "20e7b46c-fc41-4cb8-88f7-f1eae8a3fee8",
+      "id": "111fc987-32ad-46c2-9ab3-7dbdab5772a8",
       "from_artifact": "paragraph::9500-LOG-ERROR",
       "to_artifact": "paragraph::9990-END-ROUTINE",
       "relationship_type": "performs",
@@ -3483,7 +3483,7 @@
       "is_resolved": true
     },
     {
-      "id": "1001e9f6-2f65-4fca-a37d-5e405fb86665",
+      "id": "5ab1da27-d8ac-4862-aa90-d8632f48654b",
       "from_artifact": "paragraph::9990-END-ROUTINE",
       "to_artifact": "paragraph::9000-TERMINATE",
       "relationship_type": "performs",
@@ -3502,7 +3502,7 @@
       "is_resolved": true
     },
     {
-      "id": "934b3656-bf41-4573-8d7c-f0c4ef13ec07",
+      "id": "6b4e8b72-54e9-412a-bc5d-09b1a4cc51b4",
       "from_artifact": "program::COPAUA0C",
       "to_artifact": "copybook::CCPAURQY",
       "relationship_type": "includes",
@@ -3521,7 +3521,7 @@
       "is_resolved": true
     },
     {
-      "id": "c605df15-3708-4d19-8630-11ad6102487c",
+      "id": "010865a8-ec8c-4264-967c-3a7b0fcbea22",
       "from_artifact": "program::COPAUA0C",
       "to_artifact": "copybook::CCPAURLY",
       "relationship_type": "includes",
@@ -3540,7 +3540,7 @@
       "is_resolved": true
     },
     {
-      "id": "6811aabe-9d0a-425c-9b8e-8b35e68cadb9",
+      "id": "be76e4c7-a9ee-4979-91fc-d19104343ff6",
       "from_artifact": "program::COPAUA0C",
       "to_artifact": "copybook::CCPAUERY",
       "relationship_type": "includes",
@@ -3559,7 +3559,7 @@
       "is_resolved": true
     },
     {
-      "id": "6f68d3e6-9e31-4fad-aa73-0c598fb7f68c",
+      "id": "1bfeb252-4736-4a3e-a0cf-232e6cbf205d",
       "from_artifact": "program::COPAUA0C",
       "to_artifact": "copybook::CIPAUSMY",
       "relationship_type": "includes",
@@ -3578,7 +3578,7 @@
       "is_resolved": true
     },
     {
-      "id": "3c9e3ee5-9c1d-4bac-9d6f-66d5010ba9a9",
+      "id": "45741620-ad30-414b-8b34-9eef205d7794",
       "from_artifact": "program::COPAUA0C",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
@@ -3597,7 +3597,7 @@
       "is_resolved": true
     },
     {
-      "id": "b305d635-26ef-42d0-adbd-cc4c7282b621",
+      "id": "a0c50d70-5e17-448c-8b49-b221ff51beef",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::2000-FIND-NEXT-AUTH-SUMMARY",
       "relationship_type": "performs",
@@ -3616,7 +3616,7 @@
       "is_resolved": true
     },
     {
-      "id": "6eb478ec-a138-459e-b195-738969a9307a",
+      "id": "2576d393-a248-4f87-ac6b-3a6675a18c2c",
       "from_artifact": "paragraph::2000-FIND-NEXT-AUTH-SUMMARY",
       "to_artifact": "paragraph::3100-INSERT-PARENT-SEG-GSAM",
       "relationship_type": "performs",
@@ -3635,7 +3635,7 @@
       "is_resolved": true
     },
     {
-      "id": "21eb1e82-3faf-4cce-927c-d9ceee9b1fe6",
+      "id": "35c1ceae-ada3-4c77-9339-fcf0f216fbf3",
       "from_artifact": "paragraph::2000-FIND-NEXT-AUTH-SUMMARY",
       "to_artifact": "paragraph::3000-FIND-NEXT-AUTH-DTL",
       "relationship_type": "performs",
@@ -3654,7 +3654,7 @@
       "is_resolved": true
     },
     {
-      "id": "e760575e-2fed-4d68-887f-8d2c35d99380",
+      "id": "00fb3eb8-a350-46d5-a513-a635364d2078",
       "from_artifact": "paragraph::2000-FIND-NEXT-AUTH-SUMMARY",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -3673,7 +3673,7 @@
       "is_resolved": true
     },
     {
-      "id": "0b001f91-b234-4280-a302-6203ba86eb32",
+      "id": "191beec1-2588-4a91-85ce-ffd0f471c8f2",
       "from_artifact": "paragraph::3000-FIND-NEXT-AUTH-DTL",
       "to_artifact": "paragraph::3200-INSERT-CHILD-SEG-GSAM",
       "relationship_type": "performs",
@@ -3692,7 +3692,7 @@
       "is_resolved": true
     },
     {
-      "id": "7dfeb8f9-1539-44f7-be4d-f15dd8e530e9",
+      "id": "bd3744d6-67e7-43ec-b08d-c00ae1f8da0d",
       "from_artifact": "paragraph::3000-FIND-NEXT-AUTH-DTL",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -3711,7 +3711,7 @@
       "is_resolved": true
     },
     {
-      "id": "736c54a6-7e7a-4565-9986-91bb8a592286",
+      "id": "ae0bff3a-665f-43d3-94a7-a0e13e3dc06a",
       "from_artifact": "paragraph::3100-INSERT-PARENT-SEG-GSAM",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -3730,7 +3730,7 @@
       "is_resolved": true
     },
     {
-      "id": "43d78f7c-f4d1-42a8-b332-fd75bce9ba80",
+      "id": "43bcbc59-5332-413f-bfaa-df0296329718",
       "from_artifact": "paragraph::3200-INSERT-CHILD-SEG-GSAM",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -3749,7 +3749,7 @@
       "is_resolved": true
     },
     {
-      "id": "49090e0e-6466-4b11-92a7-b47b86fe1efe",
+      "id": "713b7bf0-ae98-467b-9d22-84202529ec8b",
       "from_artifact": "program::DBUNLDGS",
       "to_artifact": "copybook::IMSFUNCS",
       "relationship_type": "includes",
@@ -3768,7 +3768,7 @@
       "is_resolved": true
     },
     {
-      "id": "d5ed5322-6f1b-4471-b476-e325032e7921",
+      "id": "803f68dd-bf1b-4a1d-b1da-3f4b50787b45",
       "from_artifact": "program::DBUNLDGS",
       "to_artifact": "copybook::CIPAUSMY",
       "relationship_type": "includes",
@@ -3787,7 +3787,7 @@
       "is_resolved": true
     },
     {
-      "id": "4e1088be-ee86-4164-8b1c-01624d695522",
+      "id": "c6054622-b52d-4036-bd1d-87abccde95a1",
       "from_artifact": "program::DBUNLDGS",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
@@ -3806,7 +3806,7 @@
       "is_resolved": true
     },
     {
-      "id": "8337b992-c335-460c-b55f-73aa2225ad82",
+      "id": "b8fee9d2-577b-4976-86dd-8b0ac7c10467",
       "from_artifact": "program::DBUNLDGS",
       "to_artifact": "copybook::PAUTBPCB",
       "relationship_type": "includes",
@@ -3825,7 +3825,7 @@
       "is_resolved": true
     },
     {
-      "id": "f9ca6b11-b20e-4f06-b646-9d267c4bebef",
+      "id": "036c64d1-c923-42f3-b554-56536ab9930d",
       "from_artifact": "program::DBUNLDGS",
       "to_artifact": "copybook::PASFLPCB",
       "relationship_type": "includes",
@@ -3844,7 +3844,7 @@
       "is_resolved": true
     },
     {
-      "id": "23908c0c-b910-46b4-81d5-27be8592d2ba",
+      "id": "16cadf52-f09f-4808-acb3-41a441023910",
       "from_artifact": "program::DBUNLDGS",
       "to_artifact": "copybook::PADFLPCB",
       "relationship_type": "includes",
@@ -3863,7 +3863,7 @@
       "is_resolved": true
     },
     {
-      "id": "6f8a71c2-7bf3-4345-988e-fc8b7b54823e",
+      "id": "d350f1c7-c3ef-48f6-930b-b4a8886bca5d",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::3000-FIND-NEXT-AUTH-DTL",
       "relationship_type": "performs",
@@ -3882,7 +3882,7 @@
       "is_resolved": true
     },
     {
-      "id": "c6fb9e37-6ca0-425e-94d5-ea30c8044420",
+      "id": "ee0db438-10e3-4652-bf9b-83bad969b3df",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::4000-CHECK-IF-EXPIRED",
       "relationship_type": "performs",
@@ -3901,7 +3901,7 @@
       "is_resolved": true
     },
     {
-      "id": "da9ab113-3e39-44cd-953c-48116b3d7db2",
+      "id": "feec17b0-874c-4318-85c2-8a7bb2b15925",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::5000-DELETE-AUTH-DTL",
       "relationship_type": "performs",
@@ -3920,7 +3920,7 @@
       "is_resolved": true
     },
     {
-      "id": "0426d0d8-7381-497b-8806-ea25c64aa59b",
+      "id": "a13ae2f1-37b9-4e6d-afc2-5e75fdbb08cb",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::6000-DELETE-AUTH-SUMMARY",
       "relationship_type": "performs",
@@ -3939,7 +3939,7 @@
       "is_resolved": true
     },
     {
-      "id": "262abaf0-23e6-4619-82f1-7fc4016b6f01",
+      "id": "11cc9b8e-16d3-4894-b065-2c9ed8f55f2b",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::9000-TAKE-CHECKPOINT",
       "relationship_type": "performs",
@@ -3958,7 +3958,7 @@
       "is_resolved": true
     },
     {
-      "id": "af274ccc-5525-4442-9424-93e410a3c004",
+      "id": "ebecfc5e-5f47-4175-9e6c-d9992e7ef4d5",
       "from_artifact": "paragraph::5000-DELETE-AUTH-DTL",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -3977,7 +3977,7 @@
       "is_resolved": true
     },
     {
-      "id": "feb1c99e-6ec8-4616-bc23-b13424391d2a",
+      "id": "a49c46ac-5c89-4e90-ba73-a5b259f6dc9a",
       "from_artifact": "paragraph::6000-DELETE-AUTH-SUMMARY",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -3996,7 +3996,7 @@
       "is_resolved": true
     },
     {
-      "id": "3b19b413-f92a-400c-8bc0-01af87b5358e",
+      "id": "4636b20d-31a2-4e6b-8b62-576ca3808b1d",
       "from_artifact": "paragraph::9000-TAKE-CHECKPOINT",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -4015,7 +4015,7 @@
       "is_resolved": true
     },
     {
-      "id": "db896886-4e33-4fa8-a9bc-1127a5dd869d",
+      "id": "f9e6223e-5159-40d8-91bd-fcd7f82fff33",
       "from_artifact": "program::CBPAUP0C",
       "to_artifact": "copybook::CIPAUSMY",
       "relationship_type": "includes",
@@ -4034,7 +4034,7 @@
       "is_resolved": true
     },
     {
-      "id": "82065879-0712-486e-a6e0-e75f8355ccea",
+      "id": "a5f6d6c5-9df7-4c90-b27a-278da5b49094",
       "from_artifact": "program::CBPAUP0C",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
@@ -4053,7 +4053,7 @@
       "is_resolved": true
     },
     {
-      "id": "9e631179-a190-4bc8-a082-88b3e3e74da0",
+      "id": "ce8f9189-72f2-40d8-8ef4-8a90ee184460",
       "from_artifact": "program::PAUDBUNL",
       "to_artifact": "copybook::IMSFUNCS",
       "relationship_type": "includes",
@@ -4072,7 +4072,7 @@
       "is_resolved": true
     },
     {
-      "id": "9b09fc78-f7a9-45d4-8d28-46d7c6cd3ece",
+      "id": "d321d0ce-918f-44af-90fb-0ab9029dbe90",
       "from_artifact": "program::PAUDBUNL",
       "to_artifact": "copybook::CIPAUSMY",
       "relationship_type": "includes",
@@ -4091,7 +4091,7 @@
       "is_resolved": true
     },
     {
-      "id": "095ba211-8617-4277-9b7a-cc2ff0be9bbe",
+      "id": "6bce8146-6495-4ec2-ade8-859b94bda93a",
       "from_artifact": "program::PAUDBUNL",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
@@ -4110,7 +4110,7 @@
       "is_resolved": true
     },
     {
-      "id": "fb4334d7-52f1-4356-ad48-3ad3ca72fa03",
+      "id": "eb8688c3-3adb-4401-8c19-389b0f43e76b",
       "from_artifact": "program::PAUDBUNL",
       "to_artifact": "copybook::PAUTBPCB",
       "relationship_type": "includes",
@@ -4129,7 +4129,7 @@
       "is_resolved": true
     },
     {
-      "id": "1f80b474-7bcd-4ac7-a047-8ba8bd709155",
+      "id": "b8f3c086-8007-4aec-9b04-a1327b4b7353",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::RETURN-TO-PREV-SCREEN",
       "relationship_type": "performs",
@@ -4148,7 +4148,7 @@
       "is_resolved": true
     },
     {
-      "id": "93cd56c0-aa6d-4cd8-a2d9-063a03f52d42",
+      "id": "12ee3909-2666-48fa-b457-e79af158e3b9",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::PROCESS-ENTER-KEY",
       "relationship_type": "performs",
@@ -4167,7 +4167,7 @@
       "is_resolved": true
     },
     {
-      "id": "35ecce38-adc9-4623-95c2-b59ee5790993",
+      "id": "ba98d8d5-b103-4658-8b5f-1d6e2b2f2002",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::SEND-AUTHVIEW-SCREEN",
       "relationship_type": "performs",
@@ -4186,7 +4186,7 @@
       "is_resolved": true
     },
     {
-      "id": "e990f610-8131-421b-8f17-8019ebeebc63",
+      "id": "17e84aa0-b92f-4d3c-9d52-0b2a32ad99fb",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::RECEIVE-AUTHVIEW-SCREEN",
       "relationship_type": "performs",
@@ -4205,7 +4205,7 @@
       "is_resolved": true
     },
     {
-      "id": "77c34e01-6346-4b30-b1c4-30fa1f780fa6",
+      "id": "ef9eca72-5abb-4fde-aee5-26779aa53665",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::MARK-AUTH-FRAUD",
       "relationship_type": "performs",
@@ -4224,7 +4224,7 @@
       "is_resolved": true
     },
     {
-      "id": "4cc60b1d-add8-455f-9193-b54a1e767627",
+      "id": "1bf55b55-d60f-4adb-8b8b-d2ebe00b81a5",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::PROCESS-PF8-KEY",
       "relationship_type": "performs",
@@ -4243,7 +4243,7 @@
       "is_resolved": true
     },
     {
-      "id": "18798883-6a18-4abe-9301-98a1b7de629c",
+      "id": "2ec28040-d3fc-4b8d-95bf-8d7cbabcce61",
       "from_artifact": "paragraph::PROCESS-ENTER-KEY",
       "to_artifact": "paragraph::READ-AUTH-RECORD",
       "relationship_type": "performs",
@@ -4262,7 +4262,7 @@
       "is_resolved": true
     },
     {
-      "id": "080a265b-e9f3-4246-bf40-ed299c3c874b",
+      "id": "02da0eb5-f011-45dd-b81b-91c5c9f43dc7",
       "from_artifact": "paragraph::PROCESS-ENTER-KEY",
       "to_artifact": "paragraph::TAKE-SYNCPOINT",
       "relationship_type": "performs",
@@ -4281,7 +4281,7 @@
       "is_resolved": true
     },
     {
-      "id": "0694d091-370d-4c6e-aa1e-a51bc0f6179f",
+      "id": "7ec5fc7a-4240-4e77-9cd3-1a11a6ae91de",
       "from_artifact": "paragraph::PROCESS-ENTER-KEY",
       "to_artifact": "paragraph::POPULATE-AUTH-DETAILS",
       "relationship_type": "performs",
@@ -4300,7 +4300,7 @@
       "is_resolved": true
     },
     {
-      "id": "18a98de0-8108-4e5e-95dc-e4232823a888",
+      "id": "67ad27c1-8650-4c23-a69c-7e7f230bb53a",
       "from_artifact": "paragraph::MARK-AUTH-FRAUD",
       "to_artifact": "paragraph::READ-AUTH-RECORD",
       "relationship_type": "performs",
@@ -4319,7 +4319,7 @@
       "is_resolved": true
     },
     {
-      "id": "4ce09dfd-0cb2-41b4-bdd1-7eb1b7bb2c89",
+      "id": "46916b6b-ff2e-4eb7-8bbc-b8954cb8dfb0",
       "from_artifact": "paragraph::MARK-AUTH-FRAUD",
       "to_artifact": "paragraph::UPDATE-AUTH-DETAILS",
       "relationship_type": "performs",
@@ -4338,7 +4338,7 @@
       "is_resolved": true
     },
     {
-      "id": "e56c3636-46b2-4061-b502-fc5fb8557bde",
+      "id": "f84487cc-a785-49f5-be01-10e3fff6f736",
       "from_artifact": "paragraph::MARK-AUTH-FRAUD",
       "to_artifact": "paragraph::ROLL-BACK",
       "relationship_type": "performs",
@@ -4357,7 +4357,7 @@
       "is_resolved": true
     },
     {
-      "id": "78286a04-5c75-4d6b-8cc6-e83d6cfa645a",
+      "id": "799453c3-d7bd-4a1d-af29-c4a8fcb42bcc",
       "from_artifact": "paragraph::MARK-AUTH-FRAUD",
       "to_artifact": "paragraph::POPULATE-AUTH-DETAILS",
       "relationship_type": "performs",
@@ -4376,7 +4376,7 @@
       "is_resolved": true
     },
     {
-      "id": "3c945343-6963-442c-867a-c419244bee4d",
+      "id": "6a33c561-d1ec-4c73-96fb-95d0a28e72fe",
       "from_artifact": "paragraph::PROCESS-PF8-KEY",
       "to_artifact": "paragraph::READ-AUTH-RECORD",
       "relationship_type": "performs",
@@ -4395,7 +4395,7 @@
       "is_resolved": true
     },
     {
-      "id": "50ef403f-af08-4bd3-b96b-1a49a9e54f0f",
+      "id": "abe4751f-1cf6-4bad-9ab0-7e674373bfaa",
       "from_artifact": "paragraph::PROCESS-PF8-KEY",
       "to_artifact": "paragraph::READ-NEXT-AUTH-RECORD",
       "relationship_type": "performs",
@@ -4414,7 +4414,7 @@
       "is_resolved": true
     },
     {
-      "id": "005f3e6a-c96f-4a5b-94a8-e8ed7c830ebf",
+      "id": "6d860b8f-529a-4679-a4d1-9d1bfbfc7f6a",
       "from_artifact": "paragraph::PROCESS-PF8-KEY",
       "to_artifact": "paragraph::TAKE-SYNCPOINT",
       "relationship_type": "performs",
@@ -4433,7 +4433,7 @@
       "is_resolved": true
     },
     {
-      "id": "085c145e-ee27-44e2-9240-c7d368e52f6f",
+      "id": "f892220c-0a0f-4678-90c2-ac09a3293f18",
       "from_artifact": "paragraph::PROCESS-PF8-KEY",
       "to_artifact": "paragraph::POPULATE-AUTH-DETAILS",
       "relationship_type": "performs",
@@ -4452,7 +4452,7 @@
       "is_resolved": true
     },
     {
-      "id": "9a3d1cbc-dac8-4641-94c4-36cefa4415e4",
+      "id": "050fb853-16b9-45cc-ae72-6f53ab16f266",
       "from_artifact": "paragraph::SEND-AUTHVIEW-SCREEN",
       "to_artifact": "paragraph::POPULATE-HEADER-INFO",
       "relationship_type": "performs",
@@ -4471,7 +4471,7 @@
       "is_resolved": true
     },
     {
-      "id": "e4873e0e-3bd0-4376-9623-345d8d89439b",
+      "id": "8c2c24db-175d-43b5-a61c-6c2ddb8b48ca",
       "from_artifact": "paragraph::READ-AUTH-RECORD",
       "to_artifact": "paragraph::SCHEDULE-PSB",
       "relationship_type": "performs",
@@ -4490,7 +4490,7 @@
       "is_resolved": true
     },
     {
-      "id": "2230a033-5cf6-4187-8604-e17c768c2e14",
+      "id": "341481c1-b955-46f6-a00a-407ebef8c7be",
       "from_artifact": "paragraph::READ-AUTH-RECORD",
       "to_artifact": "paragraph::SEND-AUTHVIEW-SCREEN",
       "relationship_type": "performs",
@@ -4509,7 +4509,7 @@
       "is_resolved": true
     },
     {
-      "id": "7cd2add9-77d4-423f-87f7-70cd32630f6d",
+      "id": "480d1bef-d44c-42e4-8c18-366081f36025",
       "from_artifact": "paragraph::READ-NEXT-AUTH-RECORD",
       "to_artifact": "paragraph::SEND-AUTHVIEW-SCREEN",
       "relationship_type": "performs",
@@ -4528,7 +4528,7 @@
       "is_resolved": true
     },
     {
-      "id": "f6c90e62-8b6f-4f0b-89e5-a3dc1e6de697",
+      "id": "c49805ab-5a36-41bc-9d9f-2b840ab8d70a",
       "from_artifact": "paragraph::UPDATE-AUTH-DETAILS",
       "to_artifact": "paragraph::TAKE-SYNCPOINT",
       "relationship_type": "performs",
@@ -4547,7 +4547,7 @@
       "is_resolved": true
     },
     {
-      "id": "d76f2aee-b2d2-4e69-bd12-28b68ed0e93d",
+      "id": "e4f0d634-c8f4-4275-9baa-2696f79b3745",
       "from_artifact": "paragraph::UPDATE-AUTH-DETAILS",
       "to_artifact": "paragraph::ROLL-BACK",
       "relationship_type": "performs",
@@ -4566,7 +4566,7 @@
       "is_resolved": true
     },
     {
-      "id": "7be4ec2b-8985-4088-9968-b7d22d31b31c",
+      "id": "82045c10-43ad-4ef7-880f-628ccaaa1378",
       "from_artifact": "paragraph::UPDATE-AUTH-DETAILS",
       "to_artifact": "paragraph::SEND-AUTHVIEW-SCREEN",
       "relationship_type": "performs",
@@ -4585,7 +4585,7 @@
       "is_resolved": true
     },
     {
-      "id": "5de3abff-9ccd-43d0-b1f3-cdbfe0135f24",
+      "id": "e18a2475-aa76-4997-8c68-af4047586ae8",
       "from_artifact": "paragraph::SCHEDULE-PSB",
       "to_artifact": "paragraph::SEND-AUTHVIEW-SCREEN",
       "relationship_type": "performs",
@@ -4604,7 +4604,7 @@
       "is_resolved": true
     },
     {
-      "id": "935f7168-86bd-491d-989b-3cba38779775",
+      "id": "9fa7757c-d4dc-46d6-94e9-1f37050acaec",
       "from_artifact": "program::COPAUS1C",
       "to_artifact": "copybook::COPAU01",
       "relationship_type": "includes",
@@ -4623,7 +4623,7 @@
       "is_resolved": true
     },
     {
-      "id": "a3335291-7391-4127-806c-21d8377fcd6b",
+      "id": "5920094f-41ed-4a54-af17-9bd68941bd4e",
       "from_artifact": "program::COPAUS1C",
       "to_artifact": "copybook::CIPAUSMY",
       "relationship_type": "includes",
@@ -4642,7 +4642,7 @@
       "is_resolved": true
     },
     {
-      "id": "7b6a5056-2262-4483-a255-4922b6c39358",
+      "id": "82847881-4641-4d86-b9e3-65085b20cdcf",
       "from_artifact": "program::COPAUS1C",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
@@ -4661,7 +4661,7 @@
       "is_resolved": true
     },
     {
-      "id": "1fc07b1d-3063-44b4-a5df-47dabd5e3b5e",
+      "id": "5edbf6f3-9f26-427e-956f-596ea0919ad4",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::SEND-PAULST-SCREEN",
       "relationship_type": "performs",
@@ -4680,7 +4680,7 @@
       "is_resolved": true
     },
     {
-      "id": "9b632eb3-9d74-4506-b88c-328aaa448472",
+      "id": "1129c8e2-37cd-4bf5-bb64-f94bbb04c40d",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::GATHER-DETAILS",
       "relationship_type": "performs",
@@ -4699,7 +4699,7 @@
       "is_resolved": true
     },
     {
-      "id": "59634057-79af-40c4-8b40-de0873c52a9d",
+      "id": "fc1d1113-99a1-4ee4-a76a-1f9acb6f5958",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::RECEIVE-PAULST-SCREEN",
       "relationship_type": "performs",
@@ -4718,7 +4718,7 @@
       "is_resolved": true
     },
     {
-      "id": "32110437-7388-4322-9b25-99c3ff0cb9e5",
+      "id": "0eed93c1-844b-4b23-8ef0-981fba4132ee",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::PROCESS-PF7-KEY",
       "relationship_type": "performs",
@@ -4737,7 +4737,7 @@
       "is_resolved": true
     },
     {
-      "id": "539ff13c-55d1-435e-bc3a-c79d122df426",
+      "id": "6f0291a7-7cbf-4d8e-aa04-c12534b17071",
       "from_artifact": "paragraph::PROCESS-ENTER-KEY",
       "to_artifact": "paragraph::GATHER-DETAILS",
       "relationship_type": "performs",
@@ -4756,7 +4756,7 @@
       "is_resolved": true
     },
     {
-      "id": "3d6e5e23-3ab8-46e5-a611-6f8b58034f5d",
+      "id": "ae129f8c-ff85-406a-91be-2aa1fe581cdd",
       "from_artifact": "paragraph::GATHER-DETAILS",
       "to_artifact": "paragraph::GATHER-ACCOUNT-DETAILS",
       "relationship_type": "performs",
@@ -4775,7 +4775,7 @@
       "is_resolved": true
     },
     {
-      "id": "96fdc7c0-7793-444c-a87f-94898db20f45",
+      "id": "c3a1a434-2545-4c0f-b6c4-a23ad156e83c",
       "from_artifact": "paragraph::GATHER-DETAILS",
       "to_artifact": "paragraph::INITIALIZE-AUTH-DATA",
       "relationship_type": "performs",
@@ -4794,7 +4794,7 @@
       "is_resolved": true
     },
     {
-      "id": "d623c9f8-3b93-4b67-b78d-830a1a5697e4",
+      "id": "2a9e8f85-7bd7-4e3a-b9b1-e2ff4dc2b7fe",
       "from_artifact": "paragraph::GATHER-DETAILS",
       "to_artifact": "paragraph::PROCESS-PAGE-FORWARD",
       "relationship_type": "performs",
@@ -4813,7 +4813,7 @@
       "is_resolved": true
     },
     {
-      "id": "81774e1e-9a82-4e94-9b53-d980e47c21df",
+      "id": "b6a9d329-1b8b-4b53-81f3-6c2b61b4256a",
       "from_artifact": "paragraph::PROCESS-PF7-KEY",
       "to_artifact": "paragraph::GET-AUTH-SUMMARY",
       "relationship_type": "performs",
@@ -4832,7 +4832,7 @@
       "is_resolved": true
     },
     {
-      "id": "6a60fd80-c34b-4467-8b85-03b18135db5e",
+      "id": "88271cc5-1b76-4b94-a71c-930678f82ca2",
       "from_artifact": "paragraph::PROCESS-PF7-KEY",
       "to_artifact": "paragraph::INITIALIZE-AUTH-DATA",
       "relationship_type": "performs",
@@ -4851,7 +4851,7 @@
       "is_resolved": true
     },
     {
-      "id": "a2218905-77dd-4eaa-9c99-271f889b90b4",
+      "id": "9e88d61d-e8e6-425b-9011-d0fe1db1b322",
       "from_artifact": "paragraph::PROCESS-PF7-KEY",
       "to_artifact": "paragraph::PROCESS-PAGE-FORWARD",
       "relationship_type": "performs",
@@ -4870,7 +4870,7 @@
       "is_resolved": true
     },
     {
-      "id": "76f2e974-65ce-4567-878a-483374f4c085",
+      "id": "9761e429-d55a-4700-bc72-4e0cbe5270c9",
       "from_artifact": "paragraph::PROCESS-PF8-KEY",
       "to_artifact": "paragraph::GET-AUTH-SUMMARY",
       "relationship_type": "performs",
@@ -4889,7 +4889,7 @@
       "is_resolved": true
     },
     {
-      "id": "946ae45f-263b-44a4-a10e-6d13984509de",
+      "id": "67163e87-8290-4cb3-841c-68bd2d0ff873",
       "from_artifact": "paragraph::PROCESS-PF8-KEY",
       "to_artifact": "paragraph::REPOSITION-AUTHORIZATIONS",
       "relationship_type": "performs",
@@ -4908,7 +4908,7 @@
       "is_resolved": true
     },
     {
-      "id": "4c9a373d-d08b-48f4-98f7-68b634be8768",
+      "id": "28b9a394-df16-4c8f-a093-54b4841f7327",
       "from_artifact": "paragraph::PROCESS-PF8-KEY",
       "to_artifact": "paragraph::INITIALIZE-AUTH-DATA",
       "relationship_type": "performs",
@@ -4927,7 +4927,7 @@
       "is_resolved": true
     },
     {
-      "id": "7e4254cd-8481-420c-b391-91418dc06712",
+      "id": "8242e2fd-becc-45d9-aa6e-cd576ebba2e0",
       "from_artifact": "paragraph::PROCESS-PF8-KEY",
       "to_artifact": "paragraph::PROCESS-PAGE-FORWARD",
       "relationship_type": "performs",
@@ -4946,7 +4946,7 @@
       "is_resolved": true
     },
     {
-      "id": "d641f986-5ed1-43c2-990a-a953355e0929",
+      "id": "04794685-7b3e-48d7-83a9-42c5fa24f7f9",
       "from_artifact": "paragraph::PROCESS-PAGE-FORWARD",
       "to_artifact": "paragraph::REPOSITION-AUTHORIZATIONS",
       "relationship_type": "performs",
@@ -4965,7 +4965,7 @@
       "is_resolved": true
     },
     {
-      "id": "f5fe60fc-4978-4761-b54a-3607e5e15ac6",
+      "id": "1aef1a57-9251-4a35-b247-e6f700786102",
       "from_artifact": "paragraph::PROCESS-PAGE-FORWARD",
       "to_artifact": "paragraph::GET-AUTHORIZATIONS",
       "relationship_type": "performs",
@@ -4984,7 +4984,7 @@
       "is_resolved": true
     },
     {
-      "id": "74080df3-3fe6-402e-9807-404e5d4368f4",
+      "id": "7dc3c2c0-c6b4-4bc2-b964-a6a0ebace7a3",
       "from_artifact": "paragraph::PROCESS-PAGE-FORWARD",
       "to_artifact": "paragraph::POPULATE-AUTH-LIST",
       "relationship_type": "performs",
@@ -5003,7 +5003,7 @@
       "is_resolved": true
     },
     {
-      "id": "ceb8c91a-503d-4f73-bb0e-d673385f251d",
+      "id": "3720d536-7b47-4bc5-a411-043f8428ec9e",
       "from_artifact": "paragraph::GET-AUTHORIZATIONS",
       "to_artifact": "paragraph::SEND-PAULST-SCREEN",
       "relationship_type": "performs",
@@ -5022,7 +5022,7 @@
       "is_resolved": true
     },
     {
-      "id": "41d5004d-7b0c-4989-b3c4-b05c453ab07a",
+      "id": "923e57bd-8f7a-435a-af23-1fc6af458fb5",
       "from_artifact": "paragraph::REPOSITION-AUTHORIZATIONS",
       "to_artifact": "paragraph::SEND-PAULST-SCREEN",
       "relationship_type": "performs",
@@ -5041,7 +5041,7 @@
       "is_resolved": true
     },
     {
-      "id": "ce456fde-8d25-47b5-a988-f96278e9f18d",
+      "id": "df99b5d8-0193-4f25-9c96-8b1b42df7284",
       "from_artifact": "paragraph::SEND-PAULST-SCREEN",
       "to_artifact": "paragraph::POPULATE-HEADER-INFO",
       "relationship_type": "performs",
@@ -5060,7 +5060,7 @@
       "is_resolved": true
     },
     {
-      "id": "95c65acc-b440-4629-9e46-3861b8b49341",
+      "id": "62dec05e-08b2-4f74-b58c-947f6225835f",
       "from_artifact": "paragraph::GATHER-ACCOUNT-DETAILS",
       "to_artifact": "paragraph::GETCARDXREF-BYACCT",
       "relationship_type": "performs",
@@ -5079,7 +5079,7 @@
       "is_resolved": true
     },
     {
-      "id": "4dcc20c2-6230-4b7f-8399-92d450ec0636",
+      "id": "568d818d-97bb-4e76-a8f3-9897625ba6c1",
       "from_artifact": "paragraph::GATHER-ACCOUNT-DETAILS",
       "to_artifact": "paragraph::GETACCTDATA-BYACCT",
       "relationship_type": "performs",
@@ -5098,7 +5098,7 @@
       "is_resolved": true
     },
     {
-      "id": "f11e7c08-289e-454c-98c6-c349ad2de815",
+      "id": "2b80e75c-5f15-43d8-8bf1-dccc67c2d784",
       "from_artifact": "paragraph::GATHER-ACCOUNT-DETAILS",
       "to_artifact": "paragraph::GETCUSTDATA-BYCUST",
       "relationship_type": "performs",
@@ -5117,7 +5117,7 @@
       "is_resolved": true
     },
     {
-      "id": "660d8be1-0b63-46f6-a08f-300c4a230831",
+      "id": "40b680e1-c229-4c50-a86d-0eb7a6f4e58f",
       "from_artifact": "paragraph::GATHER-ACCOUNT-DETAILS",
       "to_artifact": "paragraph::GET-AUTH-SUMMARY",
       "relationship_type": "performs",
@@ -5136,7 +5136,7 @@
       "is_resolved": true
     },
     {
-      "id": "85fead0f-7f75-4e32-9e9a-c3402f65dac0",
+      "id": "73307a3b-f36f-48ed-a361-4e0468e6f3aa",
       "from_artifact": "paragraph::GETCARDXREF-BYACCT",
       "to_artifact": "paragraph::SEND-PAULST-SCREEN",
       "relationship_type": "performs",
@@ -5155,7 +5155,7 @@
       "is_resolved": true
     },
     {
-      "id": "e524d980-f96a-4ebb-986f-0551dbd40ac9",
+      "id": "72f48f7d-cf14-4c85-99bd-1d0f440489d5",
       "from_artifact": "paragraph::GETACCTDATA-BYACCT",
       "to_artifact": "paragraph::SEND-PAULST-SCREEN",
       "relationship_type": "performs",
@@ -5174,7 +5174,7 @@
       "is_resolved": true
     },
     {
-      "id": "4a4f3936-f244-4a98-80d6-7b9b676ede95",
+      "id": "c080527b-0e21-439a-928d-7ff7bcbac7cc",
       "from_artifact": "paragraph::GETCUSTDATA-BYCUST",
       "to_artifact": "paragraph::SEND-PAULST-SCREEN",
       "relationship_type": "performs",
@@ -5193,7 +5193,7 @@
       "is_resolved": true
     },
     {
-      "id": "f2418a72-1320-4f97-9327-1b96207650a0",
+      "id": "6d92b99b-7c6f-4cc8-8293-4036d7feff36",
       "from_artifact": "paragraph::GET-AUTH-SUMMARY",
       "to_artifact": "paragraph::SCHEDULE-PSB",
       "relationship_type": "performs",
@@ -5212,7 +5212,7 @@
       "is_resolved": true
     },
     {
-      "id": "965927bb-833e-4324-92db-c25dfdac1521",
+      "id": "150ea0e3-f529-4348-9e07-335863a57a6c",
       "from_artifact": "paragraph::GET-AUTH-SUMMARY",
       "to_artifact": "paragraph::SEND-PAULST-SCREEN",
       "relationship_type": "performs",
@@ -5231,7 +5231,7 @@
       "is_resolved": true
     },
     {
-      "id": "093c1691-fe3f-4ec3-bc96-4f6d602bb211",
+      "id": "414d7841-54b1-4974-a66e-19d8030eb346",
       "from_artifact": "paragraph::SCHEDULE-PSB",
       "to_artifact": "paragraph::SEND-PAULST-SCREEN",
       "relationship_type": "performs",
@@ -5250,7 +5250,7 @@
       "is_resolved": true
     },
     {
-      "id": "5caeb6fc-135f-4d32-91a2-eeb3118bb8c7",
+      "id": "474f05dd-a9a3-4611-a656-359351c3b9d3",
       "from_artifact": "program::COPAUS0C",
       "to_artifact": "copybook::COPAU00",
       "relationship_type": "includes",
@@ -5269,7 +5269,7 @@
       "is_resolved": true
     },
     {
-      "id": "aafeae0f-7690-48e4-900a-53f4f52f78ff",
+      "id": "d300aef7-77e7-4044-b998-46e5072f480f",
       "from_artifact": "program::COPAUS0C",
       "to_artifact": "copybook::CIPAUSMY",
       "relationship_type": "includes",
@@ -5288,7 +5288,7 @@
       "is_resolved": true
     },
     {
-      "id": "e7dcedf7-432e-40cc-a288-73238d20a161",
+      "id": "8085dff3-8e05-4db5-a9a4-d7a183e6423a",
       "from_artifact": "program::COPAUS0C",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
@@ -5429,25 +5429,7 @@
       "reason": "no match found for 'CBLTDLI'"
     },
     {
-      "reference_text": "THRU",
-      "expected_type": null,
-      "location": {
-        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
-        "line_start": 309,
-        "line_end": null,
-        "column_start": 37,
-        "column_end": null
-      },
-      "containing_artifact": "paragraph::3100-INSERT-CHILD-SEG",
-      "candidates": [
-        "index::XAUTHFRD",
-        "table::AUTHFRDS"
-      ],
-      "best_score": 0.5,
-      "reason": "no match found for 'THRU'"
-    },
-    {
-      "reference_text": "CARDDEMO",
+      "reference_text": "CARDDEMO.AUTHFRDS",
       "expected_type": "table",
       "location": {
         "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
@@ -5457,12 +5439,14 @@
         "column_end": null
       },
       "containing_artifact": "paragraph::MAIN-PARA",
-      "candidates": [],
-      "best_score": 0.0,
-      "reason": "no match found for 'CARDDEMO'"
+      "candidates": [
+        "table::AUTHFRDS"
+      ],
+      "best_score": 0.64,
+      "reason": "no match found for 'CARDDEMO.AUTHFRDS'"
     },
     {
-      "reference_text": "CARDDEMO",
+      "reference_text": "CARDDEMO.AUTHFRDS",
       "expected_type": "table",
       "location": {
         "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
@@ -5472,9 +5456,41 @@
         "column_end": null
       },
       "containing_artifact": "paragraph::FRAUD-UPDATE",
+      "candidates": [
+        "table::AUTHFRDS"
+      ],
+      "best_score": 0.64,
+      "reason": "no match found for 'CARDDEMO.AUTHFRDS'"
+    },
+    {
+      "reference_text": "SQLCA",
+      "expected_type": "copybook",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
+        "line_start": 65,
+        "line_end": 67,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS2C",
       "candidates": [],
       "best_score": 0.0,
-      "reason": "no match found for 'CARDDEMO'"
+      "reason": "no match found for 'SQLCA'"
+    },
+    {
+      "reference_text": "AUTHFRDS",
+      "expected_type": "copybook",
+      "location": {
+        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
+        "line_start": 68,
+        "line_end": 70,
+        "column_start": 6,
+        "column_end": null
+      },
+      "containing_artifact": "program::COPAUS2C",
+      "candidates": [],
+      "best_score": 0.0,
+      "reason": "no match found for 'AUTHFRDS'"
     },
     {
       "reference_text": "MQOPEN",
@@ -5535,83 +5551,6 @@
       "candidates": [],
       "best_score": 0.0,
       "reason": "no match found for 'MQCLOSE'"
-    },
-    {
-      "reference_text": "IF",
-      "expected_type": null,
-      "location": {
-        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
-        "line_start": 268,
-        "line_end": 270,
-        "column_start": 10,
-        "column_end": null
-      },
-      "containing_artifact": "paragraph::1100-OPEN-REQUEST-QUEUE",
-      "candidates": [],
-      "best_score": 0.0,
-      "reason": "no match found for 'IF'"
-    },
-    {
-      "reference_text": "IF",
-      "expected_type": null,
-      "location": {
-        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
-        "line_start": 409,
-        "line_end": 410,
-        "column_start": 10,
-        "column_end": null
-      },
-      "containing_artifact": "paragraph::3100-READ-REQUEST-MQ",
-      "candidates": [],
-      "best_score": 0.0,
-      "reason": "no match found for 'IF'"
-    },
-    {
-      "reference_text": "IF",
-      "expected_type": null,
-      "location": {
-        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
-        "line_start": 766,
-        "line_end": 767,
-        "column_start": 10,
-        "column_end": null
-      },
-      "containing_artifact": "paragraph::7100-SEND-RESPONSE",
-      "candidates": [],
-      "best_score": 0.0,
-      "reason": "no match found for 'IF'"
-    },
-    {
-      "reference_text": "IF",
-      "expected_type": null,
-      "location": {
-        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
-        "line_start": 961,
-        "line_end": 963,
-        "column_start": 13,
-        "column_end": null
-      },
-      "containing_artifact": "paragraph::9100-CLOSE-REQUEST-QUEUE",
-      "candidates": [],
-      "best_score": 0.0,
-      "reason": "no match found for 'IF'"
-    },
-    {
-      "reference_text": "UNTIL",
-      "expected_type": "paragraph",
-      "location": {
-        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
-        "line_start": 326,
-        "line_end": null,
-        "column_start": 6,
-        "column_end": null
-      },
-      "containing_artifact": "paragraph::2000-MAIN-PROCESS",
-      "candidates": [
-        "paragraph::UNLOAD"
-      ],
-      "best_score": 0.5454545454545454,
-      "reason": "no match found for 'UNTIL'"
     },
     {
       "reference_text": "WS-CCXREF-FILE",
@@ -5895,70 +5834,6 @@
       "reason": "no match found for 'CBLTDLI'"
     },
     {
-      "reference_text": "UNTIL",
-      "expected_type": "paragraph",
-      "location": {
-        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
-        "line_start": 142,
-        "line_end": null,
-        "column_start": 6,
-        "column_end": null
-      },
-      "containing_artifact": "paragraph::MAIN-PARA",
-      "candidates": [
-        "paragraph::UNLOAD"
-      ],
-      "best_score": 0.5454545454545454,
-      "reason": "no match found for 'UNTIL'"
-    },
-    {
-      "reference_text": "UNTIL",
-      "expected_type": "paragraph",
-      "location": {
-        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
-        "line_start": 146,
-        "line_end": null,
-        "column_start": 9,
-        "column_end": null
-      },
-      "containing_artifact": "paragraph::MAIN-PARA",
-      "candidates": [
-        "paragraph::UNLOAD"
-      ],
-      "best_score": 0.5454545454545454,
-      "reason": "no match found for 'UNTIL'"
-    },
-    {
-      "reference_text": "IF",
-      "expected_type": "paragraph",
-      "location": {
-        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
-        "line_start": 154,
-        "line_end": 156,
-        "column_start": 13,
-        "column_end": null
-      },
-      "containing_artifact": "paragraph::MAIN-PARA",
-      "candidates": [],
-      "best_score": 0.0,
-      "reason": "no match found for 'IF'"
-    },
-    {
-      "reference_text": "PERFORM",
-      "expected_type": "paragraph",
-      "location": {
-        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
-        "line_start": 167,
-        "line_end": 169,
-        "column_start": 10,
-        "column_end": null
-      },
-      "containing_artifact": "paragraph::MAIN-PARA",
-      "candidates": [],
-      "best_score": 0.0,
-      "reason": "no match found for 'PERFORM'"
-    },
-    {
       "reference_text": "CBLTDLI",
       "expected_type": "program",
       "location": {
@@ -6133,53 +6008,6 @@
       "candidates": [],
       "best_score": 0.0,
       "reason": "no match found for 'DFHBMSCA'"
-    },
-    {
-      "reference_text": "UNTIL",
-      "expected_type": "paragraph",
-      "location": {
-        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
-        "line_start": 424,
-        "line_end": null,
-        "column_start": 10,
-        "column_end": null
-      },
-      "containing_artifact": "paragraph::PROCESS-PAGE-FORWARD",
-      "candidates": [
-        "paragraph::UNLOAD"
-      ],
-      "best_score": 0.5454545454545454,
-      "reason": "no match found for 'UNTIL'"
-    },
-    {
-      "reference_text": "IF",
-      "expected_type": "paragraph",
-      "location": {
-        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
-        "line_start": 443,
-        "line_end": 445,
-        "column_start": 14,
-        "column_end": null
-      },
-      "containing_artifact": "paragraph::PROCESS-PAGE-FORWARD",
-      "candidates": [],
-      "best_score": 0.0,
-      "reason": "no match found for 'IF'"
-    },
-    {
-      "reference_text": "VARYING",
-      "expected_type": "paragraph",
-      "location": {
-        "file_path": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
-        "line_start": 611,
-        "line_end": null,
-        "column_start": 6,
-        "column_end": null
-      },
-      "containing_artifact": "paragraph::INITIALIZE-AUTH-DATA",
-      "candidates": [],
-      "best_score": 0.0,
-      "reason": "no match found for 'VARYING'"
     },
     {
       "reference_text": "CDEMO-TO-PROGRAM",
@@ -6468,8 +6296,8 @@
       "includes": 28
     },
     "relationships_total": 144,
-    "unresolved_count": 72,
-    "resolution_rate": 66.66666666666666,
+    "unresolved_count": 61,
+    "resolution_rate": 70.24390243902438,
     "languages_detected": [
       "CICS BMS",
       "COBOL",
@@ -6488,9 +6316,9 @@
   "config_hash": "e098d916d22638fe",
   "specs_hashes": {
     "JCL": "1854bf9131ea65cc905aa6688a1426c1ebcdae779c12bf492a74cf782045935b",
-    "COBOL Copybook": "593b41b5c8795b11f59f481d6723eb048a4f7f8690cf63807fa6bf18165959f5",
+    "COBOL Copybook": "58b586760f727a5a0b8d0fc12f0aad0c19317dd8d0c5b37f5de4d0b48db0e8c3",
     "DB2 DDL": "015348a61159e7ff8fb7a5e62e43d1ed614d95295939d261ae105c3c69113bb5",
     "CICS BMS": "ec39c982490d18d5c9c2d492255e454ae6d1a289a9e89831c1c5ad47bbfbed4b",
-    "COBOL": "b79078ca837a2a78e883bb1c48468b65a20fb02fdf19c2f1c0aebc5c06a436b9"
+    "COBOL": "d1ebcd72285dc87f1d307b1ed19128ca0df882ed477ed2796bf5f2b3e67e2780"
   }
 }

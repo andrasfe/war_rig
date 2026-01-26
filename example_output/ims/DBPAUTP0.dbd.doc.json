@@ -4,35 +4,46 @@
     "file_name": "ims/DBPAUTP0.dbd",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T15:12:46.878791",
+    "analyzed_at": "2026-01-26T17:38:32.016946",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This file contains the source for the IMS Database Definition (DBD) named DBPAUTP0, defining a HIDAM database with VSAM access. It specifies one dataset group, a root segment PAUTSUM0 for Pending Authorization Summary with key field ACCNTID, a logical child to PAUTINDX in DBPAUTX0, and a child segment PAUTDTL1 for Pending Authorization Details with key field PAUT9CTS. The DBDGEN and FINISH statements indicate this is input to the IMS DBDGEN utility to generate the executable DBD module.",
-    "business_context": "Supports storage and retrieval of pending authorization summaries and details, likely for transaction or payment authorization processing in a mainframe financial or e-commerce system.",
+    "summary": "This file contains the IMS Database Definition (DBD) source code for defining database DBPAUTP0 as a HIDAM database with VSAM access method and associated user exits for key, data, and logging. It specifies one dataset group DSG001 with VSAM dataset DDPAUTP0 (4096 bytes, SCAN=3). The database structure includes a root segment PAUTSUM0 (Pending Authorization Summary, 100 bytes, key ACCNTID at position 1, 6 packed bytes, unique sequence, twin backward pointers, logical child PAUTINDX from DBPAUTX0) and a single child segment PAUTDTL1 (Pending Authorization Details, 200 bytes under PAUTSUM0, key PAUT9CTS at position 1, 8 character bytes, unique sequence).",
+    "business_context": "Manages hierarchical storage of pending authorization summaries by account ID with associated detail records, likely for financial transaction or payment authorization processing.",
     "program_type": "UTILITY",
     "citations": [
       17,
       18,
       24,
       28,
+      30,
       36,
-      39
+      37
     ]
   },
   "inputs": [
     {
       "name": "DDPAUTP0",
       "io_type": "FILE_VSAM",
-      "description": "Primary dataset for the DBPAUTP0 IMS database, defined in dataset group 1 with size 4096 and SCAN=3",
+      "description": "VSAM dataset referenced as the primary storage for the HIDAM database segments (Dataset Group 1, DD1)",
       "copybook": null,
       "citation": [
         24
       ]
     }
   ],
-  "outputs": [],
+  "outputs": [
+    {
+      "name": "DDPAUTP0",
+      "io_type": "FILE_VSAM",
+      "description": "VSAM dataset serving as output storage for the HIDAM database segments (same as input reference for database persistence)",
+      "copybook": null,
+      "citation": [
+        24
+      ]
+    }
+  ],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
@@ -42,58 +53,26 @@
   "business_rules": [
     {
       "rule_id": "BR001",
-      "description": "Database access method is HIDAM with VSAM, no password, with EXIT for key/data/nopath logging",
-      "logic_summary": "Specified in DBD macro with ACCESS=(HIDAM,VSAM), PASSWD=NO, EXIT parameters",
-      "conditions": [],
-      "citation": [
-        18,
-        19
-      ]
-    },
-    {
-      "rule_id": "BR002",
-      "description": "Root segment PAUTSUM0 (Pending Authorization Summary) is 100 bytes, parent 0, rules HERE for insert, with twin backward pointer",
-      "logic_summary": "Defined with SEGM NAME=PAUTSUM0,PARENT=0,BYTES=100,RULES=(,HERE),POINTER=(TWINBWD)",
-      "conditions": [],
+      "description": "Root segment PAUTSUM0 uses unique sequential key ACCNTID (packed decimal, 6 bytes starting at offset 1)",
+      "logic_summary": "Defined with SEQ U for uniqueness and sequencing under HERE rules",
+      "conditions": [
+        "PARENT=0 (root)",
+        "RULES=(,HERE)"
+      ],
       "citation": [
         28,
-        29
-      ]
-    },
-    {
-      "rule_id": "BR003",
-      "description": "Sequence key field ACCNTID for root segment is packed decimal, unique, 6 bytes starting at position 1",
-      "logic_summary": "FIELD NAME=(ACCNTID,SEQ,U),START=1,BYTES=6,TYPE=P",
-      "conditions": [],
-      "citation": [
         30
       ]
     },
     {
-      "rule_id": "BR004",
-      "description": "Logical child PAUTINDX from database DBPAUTX0 referenced from root segment",
-      "logic_summary": "LCHILD NAME=(PAUTINDX,DBPAUTX0),POINTER=INDX",
-      "conditions": [],
+      "rule_id": "BR002",
+      "description": "Child segment PAUTDTL1 subordinate to PAUTSUM0 root with unique sequential key PAUT9CTS (character, 8 bytes starting at offset 1)",
+      "logic_summary": "Explicit parent linkage to PAUTSUM0",
+      "conditions": [
+        "PARENT=((PAUTSUM0,))"
+      ],
       "citation": [
-        31,
-        32
-      ]
-    },
-    {
-      "rule_id": "BR005",
-      "description": "Child segment PAUTDTL1 (Pending Authorization Details) is 200 bytes under parent PAUTSUM0",
-      "logic_summary": "SEGM NAME=PAUTDTL1,PARENT=((PAUTSUM0,)),BYTES=200",
-      "conditions": [],
-      "citation": [
-        36
-      ]
-    },
-    {
-      "rule_id": "BR006",
-      "description": "Sequence key field PAUT9CTS for child segment is character, unique, 8 bytes starting at position 1",
-      "logic_summary": "FIELD NAME=(PAUT9CTS,SEQ,U),START=1,BYTES=8,TYPE=C",
-      "conditions": [],
-      "citation": [
+        36,
         37
       ]
     }
@@ -110,14 +89,14 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "Precise business meaning of fields like ACCNTID and PAUT9CTS",
-      "context": "Field names and comments provide high-level purpose but no detailed field descriptions",
-      "suggestion": "Review associated COBOL programs or data dictionaries that use this database"
+      "question": "Precise business semantics of fields ACCNTID and PAUT9CTS",
+      "context": "Names suggest account ID and pending auth counter/timestamp/sequence, but no explicit descriptions in DBD",
+      "suggestion": "Review application programs using this database or IMS documentation for field-level details"
     },
     {
-      "question": "Details of referenced DBPAUTX0 and PAUTINDX",
-      "context": "Logical child points to another database/segment but source for DBPAUTX0 not provided",
-      "suggestion": "Analyze DBPAUTX0.dbd source file"
+      "question": "Details of logical child PAUTINDX from DBPAUTX0",
+      "context": "References external database DBPAUTX0 for index pointer, but no further definition here",
+      "suggestion": "Analyze DBD for DBPAUTX0 to understand index relationship"
     }
   ]
 }

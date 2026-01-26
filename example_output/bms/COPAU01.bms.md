@@ -2,33 +2,27 @@
 
 **File**: `bms/COPAU01.bms`
 **Type**: FileType.BMS
-**Analyzed**: 2026-01-26 15:13:57.330348
+**Analyzed**: 2026-01-26 17:40:52.520665
 
 ## Purpose
 
-The COPAU01 BMS mapset defines a CICS 3270 screen layout named COPAU1A for displaying pending credit card authorization details in the CardDemo application. It includes static labels, output-only data fields for transaction, authorization response, merchant information, and an error message area. Function keys allow navigation and actions like backing out, marking fraud, or viewing next authorization.
+The COPAU01 BMS mapset defines the COPAU1A map for the 'Pending Authorization Details Screen' in a CICS online application. It layouts fields for displaying transaction header (Tran, Date, Prog, Time), authorization details (Card #, Auth Date/Time, Resp, Reason, Code, Amount, POS Entry Mode, Source, MCC Code, Card Exp Date, Auth Type, Tran Id, Match Status, Fraud Status), merchant details (Name, ID, City, State, Zip), error messages, and function keys (F3=Back, F5=Mark/Remove Fraud, F8=Next Auth). The map operates in INOUT mode for both display and user input on unprotected fields.
 
-**Business Context**: Serves the business process of viewing and managing pending authorization details in a credit card transaction processing system.
+**Business Context**: Serves the CardDemo application for viewing and managing pending card authorization details, including fraud marking.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| COPAU1A | IOType.CICS_MAP | CICS map used for RECEIVE to capture function key inputs (e.g., F3, F5, F8) since no modifiable fields exist |
+| COPAU1A | IOType.CICS_MAP | Receives user input from unprotected modifiable fields such as CARDNUM (card number), AUTHMTC (match status), AUTHFRD (fraud status), and others without PROT attribute for actions like fraud marking. |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| COPAU1A | IOType.CICS_MAP | CICS map used for SEND to display authorization details, merchant info, timestamps, and error messages |
-
-## Business Rules
-
-- **BR001**: The screen is display-only; users cannot enter or modify data fields, only interact via function keys
+| COPAU1A | IOType.CICS_MAP | Displays authorization details, merchant information, timestamps, transaction data, error messages (ERRMSG), and static labels/function keys to the terminal. |
 
 ## Open Questions
 
-- ? Which CICS COBOL program(s) include and use this BMS mapset?
-  - Context: BMS file does not reference calling programs; must be determined from including source code
-- ? What are the exact symbolic map field names and layouts in the generated copybook?
-  - Context: BMS defines physical map; symbolic map details inferred from field names but not explicitly coded here
+- ? Specific transaction ID or CICS program that uses this mapset
+  - Context: BMS file defines the map but does not reference calling programs or entry points.

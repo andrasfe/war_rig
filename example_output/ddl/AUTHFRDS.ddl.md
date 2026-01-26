@@ -2,28 +2,29 @@
 
 **File**: `ddl/AUTHFRDS.ddl`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-01-26 15:10:54.921567
+**Analyzed**: 2026-01-26 17:36:58.109388
 
 ## Purpose
 
-DDL script that creates the AUTHFRDS table in the CARDDEMO schema. The table stores detailed authorization transaction data for card processing, including card numbers, timestamps, merchant details, transaction amounts, response codes, and fraud indicators. It supports fraud detection and reporting by maintaining historical authorization records with uniqueness enforced on card number and timestamp.
+DDL script that creates the AUTHFRDS table in the CARDDEMO schema. The table stores authorization transaction details including card number, timestamp, merchant information, transaction amounts, and fraud indicators for fraud analysis. Primary key is composite on CARD_NUM and AUTH_TS.
 
-**Business Context**: Card authorization processing and fraud analysis in a demonstration (CARDDEMO) system
+**Business Context**: Fraud detection and reporting for card authorization transactions in a demonstration (CARDDEMO) environment.
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| CARDDEMO.AUTHFRDS | IOType.DB2_TABLE | Table storing authorization fraud details including card, merchant, transaction, and fraud fields |
+| CARDDEMO.AUTHFRDS | IOType.DB2_TABLE | Table storing authorization fraud details including card number (line 2), auth timestamp (line 3), transaction amount (line 12), fraud flag (line 24), and merchant details (lines 17-21). |
 
 ## Business Rules
 
-- **BR001**: CARD_NUM and AUTH_TS form a composite primary key to ensure each authorization per card is uniquely identified by timestamp
-- **BR002**: CARD_NUM and AUTH_TS are mandatory fields for all records
+- **BR001**: CARD_NUM and AUTH_TS form the primary key ensuring unique identification of each authorization record.
+- **BR002**: CARD_NUM is mandatory for all records.
+- **BR003**: AUTH_TS is mandatory for all records.
 
 ## Open Questions
 
-- ? Specific database system (e.g., DB2 version or dialect)
-  - Context: Data types like TIMESTAMP, DECIMAL(12,2), SMALLINT, VARCHAR(22) suggest DB2 or similar but not explicitly stated
-- ? Usage of nullable fields and business validation beyond DDL constraints
-  - Context: Many fields lack NOT NULL (e.g., lines 4-27 except PK), unclear if application enforces further rules
+- ? Detailed business validation rules for populating fields like AUTH_FRAUD or MATCH_STATUS.
+  - Context: DDL defines structure only; no logic for field population or validation provided.
+- ? Usage context of fields like MESSAGE_TYPE, AUTH_ID_CODE, or PROCESSING_CODE.
+  - Context: Field names suggest ISO 8583 or payment network standards, but exact mappings not specified.

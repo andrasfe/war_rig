@@ -2,29 +2,29 @@
 
 **File**: `cpy/CIPAUSMY.cpy`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-01-26 15:14:56.834383
+**Analyzed**: 2026-01-26 17:41:40.148363
 
 ## Purpose
 
-This copybook defines the COBOL level-05 record layout for the IMS 'PENDING AUTHORIZATION SUMMARY' segment (PAUSMY). It specifies fields for account and customer identifiers, authorization and account statuses, credit/cash limits and balances, counts and amounts of approved/declined authorizations, and a filler area. The structure supports storage and retrieval of summary data for pending authorizations in an IMS database.
+This copybook defines the data structure for an IMS database segment named 'PENDING AUTHORIZATION SUMMARY'. It specifies fields for account and customer identification, authorization and account statuses, credit and cash limits and balances, and cumulative counts and amounts for approved and declined authorizations. The layout supports IMS DL/I get/insert/update operations in programs handling pending authorizations.
 
-**Business Context**: Serves financial transaction processing by maintaining summary records of pending authorizations for customer accounts, including limits, balances, and approval/decline statistics (likely credit/cash accounts).
+**Business Context**: Financial authorization processing for customer accounts, tracking pending credit and cash authorization summaries in an IMS hierarchical database.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| PAUSMY | IOType.IMS_SEGMENT | IMS segment structure defining pending authorization summary data, including PA-ACCT-ID (account ID), PA-CUST-ID (customer ID), PA-AUTH-STATUS (auth status), PA-ACCOUNT-STATUS (5-occurrence account status array), PA-CREDIT-LIMIT/BALANCE, PA-CASH-LIMIT/BALANCE, approval/decline counts and amounts, and filler. |
+| PENDING-AUTHORIZATION-SUMMARY | IOType.IMS_SEGMENT | IMS segment layout holding account ID, customer ID, auth status, 5 account statuses, credit/cash limits and balances, approved/declined auth counts and amounts. |
+
+## Outputs
+
+| Name | Type | Description |
+|------|------|-------------|
+| PENDING-AUTHORIZATION-SUMMARY | IOType.IMS_SEGMENT | IMS segment layout for output/update of pending authorization summary data matching input structure. |
 
 ## Business Rules
 
-- **BR001**: PA-ACCT-ID is defined as a signed 11-digit packed decimal field for the account identifier.
-- **BR002**: PA-ACCOUNT-STATUS is a repeating group of 5 two-character status codes for account statuses.
-- **BR003**: Credit and cash limits/balances are signed 9-digit with 2 decimals in packed decimal format.
-
-## Open Questions
-
-- ? Specific usage context of this IMS segment (e.g., PCB name, parent/child segments in database).
-  - Context: Copybook defines structure only; no calling program provided to determine DL/I calls or hierarchy.
-- ? Exact business meaning of PA-ACCOUNT-STATUS codes and PA-AUTH-STATUS values.
-  - Context: PIC clauses define format but not valid values or enums.
+- **BR001**: PA-ACCOUNT-STATUS defines an array of exactly 5 two-character account status values.
+- **BR002**: Monetary fields (limits, balances, auth amounts) use signed 9-digit with 2 decimals, packed decimal format.
+- **BR003**: Authorization count fields are signed 4-digit binary integers.
+- **BR004**: Account ID is a signed 11-digit packed decimal.

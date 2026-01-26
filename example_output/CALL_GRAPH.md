@@ -1,8 +1,8 @@
 # Call Graph Analysis
 
-*Generated: 2026-01-26 08:10:06*
+*Generated: 2026-01-26 10:36:11*
 
-**Programs Analyzed:** 13
+**Programs Analyzed:** 24
 
 ## Visual Call Graph
 
@@ -16,13 +16,24 @@ flowchart TD
 
     subgraph procs[" "]
         CBPAUP0C[CBPAUP0C]
+        CCPAUERY[/CCPAUERY/]
+        CCPAURLY[/CCPAURLY/]
+        CCPAURQY[/CCPAURQY/]
+        CIPAUDTY[/CIPAUDTY/]
+        CIPAUSMY[/CIPAUSMY/]
+        COPAU00[/COPAU00/]
+        COPAU01[/COPAU01/]
         COPAUA0C[COPAUA0C]
         COPAUS0C[COPAUS0C]
         COPAUS1C[COPAUS1C]
-        COPAUS2C[/COPAUS2C/]
+        COPAUS2C[COPAUS2C]
         DBUNLDGS[DBUNLDGS]
+        IMSFUNCS[/IMSFUNCS/]
+        PADFLPCB[/PADFLPCB/]
+        PASFLPCB[/PASFLPCB/]
         PAUDBLOD[PAUDBLOD]
         PAUDBUNL[PAUDBUNL]
+        PAUTBPCB[/PAUTBPCB/]
     end
 
     subgraph external[" "]
@@ -40,6 +51,7 @@ flowchart TD
     CBPAUP0C --> PAUDBUNL
     CBPAUP0C --> PAUDBUNL
     CBPAUP0C --> PAUDBUNL
+    CBPAUP0C -.->|COPY| COPYBOOKS
     COPAUA0C --> COPAUA0C
     COPAUA0C --> COPAUA0C
     COPAUA0C --> COPAUA0C
@@ -68,6 +80,7 @@ flowchart TD
     COPAUA0C --> COPAUA0C
     COPAUA0C --> COPAUA0C
     COPAUA0C --> COPAUA0C
+    COPAUA0C -.->|COPY| COPYBOOKS
     COPAUA0C --> MQOPEN
     COPAUA0C --> MQGET
     COPAUA0C --> MQPUT1
@@ -130,6 +143,7 @@ flowchart TD
     COPAUS0C --> COPAUS0C
     COPAUS0C --> COPAUS0C
     COPAUS0C --> COPAUS0C
+    COPAUS0C -.->|COPY| COPYBOOKS
     COPAUS0C --> CDEMO_TO_PROGRAM
     COPAUS0C --> CDEMO_TO_PROGRAM
     COPAUS0C --> CDEMO_TO_PROGRAM
@@ -144,10 +158,13 @@ flowchart TD
     COPAUS1C --> COPAUS1C
     COPAUS1C --> COPAUS1C
     COPAUS1C --> COPAUS1C
+    COPAUS1C -.->|COPY| COPYBOOKS
     COPAUS1C --> WS_PGM_AUTH_FRAUD
+    COPAUS2C -.->|COPY| COPYBOOKS
     DBPAUTP0 --> DFSRRC00
     DBUNLDGS --> PAUDBUNL
     DBUNLDGS --> PAUDBUNL
+    DBUNLDGS -.->|COPY| COPYBOOKS
     DBUNLDGS --> CBLTDLI
     DBUNLDGS --> CBLTDLI
     PAUDBLOD --> PAUDBLOD
@@ -156,6 +173,7 @@ flowchart TD
     PAUDBLOD --> PAUDBLOD
     PAUDBLOD --> PAUDBUNL
     PAUDBLOD --> PAUDBUNL
+    PAUDBLOD -.->|COPY| COPYBOOKS
     PAUDBLOD --> CBLTDLI
     PAUDBLOD --> CBLTDLI
     PAUDBLOD --> CBLTDLI
@@ -167,6 +185,7 @@ flowchart TD
     PAUDBUNL --> PAUDBUNL
     PAUDBUNL --> DBUNLDGS
     PAUDBUNL --> PAUDBUNL
+    PAUDBUNL -.->|COPY| COPYBOOKS
     PAUDBUNL --> CBLTDLI
     PAUDBUNL --> CBLTDLI
     PAUDBUNL --> CBLTDLI
@@ -212,14 +231,14 @@ flowchart TD
 
 | Metric | Count |
 |--------|-------|
-| Documented Programs | 13 |
+| Documented Programs | 24 |
 | Entry Points | 5 |
-| Leaf Nodes | 6 |
+| Leaf Nodes | 16 |
 | External Dependencies | 8 |
 | System Utilities | 0 |
 | Auto-classified | 0 |
 | Custom Missing | 8 |
-| Total Calls | 138 |
+| Total Calls | 166 |
 
 ### Status Legend
 

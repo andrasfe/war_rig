@@ -2,29 +2,29 @@
 
 **File**: `cpy-bms/COPAU00.cpy`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-01-26 15:10:56.102993
+**Analyzed**: 2026-01-26 17:36:56.405042
 
 ## Purpose
 
-This COBOL copybook defines the symbolic map structure for the COPAU00 BMS map used in CICS online transactions. It includes COPAU0AI for input fields from the terminal screen and COPAU0AO as a redefines for output fields, supporting display of transaction name, titles, current date/time, program name, customer account details (ID, name, customer ID, addresses, status, phone), approval/decline counts, credit/cash limits and balances, up to five recent transactions with details (select flag, transaction ID, date, time, type, approval flag, status, amount), and error messages. The structure follows standard BMS conventions with length (L), format/flag (F with attribute A), and input/output data fields (I/O).
+This COBOL copybook defines the symbolic map data structures COPAU0AI for input and COPAU0AO for output used with the COPAU0A BMS map in CICS online transactions. It structures fields for screen display and data entry including headers like transaction name, titles, date, time, program name; customer account details such as account ID, name, customer ID, addresses, status, phone; financial data like approval/decline counts, credit/cash limits, balances, totals; up to five recent transactions with ID, post date, time, type, approval flag, status, amount; and an error message field. The structure supports typical CICS BMS field attributes and formats for protected, highlighted, visible, and output/input data handling.
 
-**Business Context**: CICS screen for customer account inquiry displaying summary information and recent transaction history in a financial or credit card processing system.
+**Business Context**: Customer account inquiry and update screen in a financial or banking CICS application, displaying summary information and recent transaction history.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| COPAU0AI | IOType.CICS_MAP | Input structure containing terminal screen data for account details, transaction history selectors, and fields like ACCTIDI, CNAMEI, transaction details (TRNID01I etc.), populated from 3270 input |
+| COPAU0AI | IOType.CICS_MAP | Input symbolic map structure capturing terminal data for fields like account ID, selectors, transaction details entered by user |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| COPAU0AO | IOType.CICS_MAP | Output structure redefining COPAU0AI for sending data to terminal screen, including protected/highlight/visible attributes (C/P/H/V) and output data (O) for all fields like TRNNAMEO, ACCTIDO, balances, transaction details, and ERRMSGO |
+| COPAU0AO | IOType.CICS_MAP | Output symbolic map structure for sending data to terminal including headers, customer details, balances, recent transactions, error messages |
 
 ## Open Questions
 
-- ? Which specific CICS COBOL programs include and use this COPYBOOK?
-  - Context: The copybook does not contain references to including programs; usage can only be inferred from BMS map name and field purposes.
-- ? What are the exact meanings of transaction fields like PTYPEnnI, PAPRVnnI, PSTATnnI, and SEL000nI?
-  - Context: Field names suggest PTYPE=transaction type, PAPRV=approval, PSTAT=status, SEL=selector, but no comments or context provided in copybook.
+- ? Which CICS programs include and use this copybook?
+  - Context: Copybook defines structures but does not specify including programs
+- ? What are the exact BMS physical map details and transaction IDs using this symbolic map?
+  - Context: Symbolic map only; physical map layout and transids not defined here

@@ -4,14 +4,14 @@
     "file_name": "cpy/PASFLPCB.CPY",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T15:13:22.762435",
+    "analyzed_at": "2026-01-26T17:40:50.363983",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This COBOL copybook defines the data structure for the PASFL IMS Program Communication Block (PCB). It specifies fields including the database name, current segment level, PCB status, processing options, segment name, key feedback name (length), number of sensitive segments, and the key feedback area. This structure is referenced in IMS-enabled COBOL programs via COPY PASFLPCB to facilitate DL/I database calls to the PASFL database.",
-    "business_context": "IMS hierarchical database access and navigation for the PASFL database.",
-    "program_type": "UTILITY",
+    "summary": "This copybook defines the data structure for the PASFL IMS Program Communication Block (PCB), used in the LINKAGE SECTION of IMS DL/I application programs. It specifies fields for database identification, processing options set by the application, status and segment details returned by IMS, and a key feedback buffer. The structure follows standard IMS PCB layout for facilitating database calls to the PASFL database.",
+    "business_context": "Supports IMS DL/I database access for the PASFL database in batch or online IMS regions (MPP, BMP, etc.).",
+    "program_type": "SUBROUTINE",
     "citations": [
       17,
       18,
@@ -19,20 +19,121 @@
       20,
       21,
       23,
-      24,
-      25,
       26
     ]
   },
-  "inputs": [],
-  "outputs": [],
+  "inputs": [
+    {
+      "name": "PASFL-PCB-PROCOPT",
+      "io_type": "PARAMETER",
+      "description": "Processing options set by the application program to specify the type of DL/I operation (e.g., GU for Get Unique, GN for Get Next, ISRT for Insert).",
+      "copybook": null,
+      "citation": [
+        21
+      ]
+    },
+    {
+      "name": "PASFL-DBDNAME",
+      "io_type": "OTHER",
+      "description": "Database name identifier (PASFL) referenced by the application for the target database.",
+      "copybook": null,
+      "citation": [
+        18
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "PASFL-PCB-STATUS",
+      "io_type": "RETURN_CODE",
+      "description": "Two-byte status code set by IMS after a DL/I call (e.g., '00' success, 'GE' segment not found).",
+      "copybook": null,
+      "citation": [
+        20
+      ]
+    },
+    {
+      "name": "PASFL-SEG-LEVEL",
+      "io_type": "OTHER",
+      "description": "Segment hierarchical level set by IMS for the accessed segment.",
+      "copybook": null,
+      "citation": [
+        19
+      ]
+    },
+    {
+      "name": "PASFL-SEG-NAME",
+      "io_type": "OTHER",
+      "description": "Eight-byte segment name set by IMS for the accessed or sensed segment.",
+      "copybook": null,
+      "citation": [
+        23
+      ]
+    },
+    {
+      "name": "PASFL-KEYFB",
+      "io_type": "OTHER",
+      "description": "Key feedback buffer (100 bytes) filled by IMS with concatenated keys from root to accessed segment when PROCOPT requests it.",
+      "copybook": null,
+      "citation": [
+        26
+      ]
+    },
+    {
+      "name": "PASFL-NUM-SENSEGS",
+      "io_type": "OTHER",
+      "description": "Number of sensitive segments set by IMS.",
+      "copybook": null,
+      "citation": [
+        25
+      ]
+    }
+  ],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
     "entry_points": [],
-    "linkage_section": []
+    "linkage_section": [
+      "PASFLPCB"
+    ]
   },
-  "business_rules": [],
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Application sets processing options in PCB before issuing DL/I call",
+      "logic_summary": "PASFL-PCB-PROCOPT is updated by the program with DL/I command codes to control the call behavior.",
+      "conditions": [
+        "Prior to DL/I CALL statement"
+      ],
+      "citation": [
+        21
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "IMS sets PCB status code after DL/I call completion",
+      "logic_summary": "Application must check PASFL-PCB-STATUS post-call to determine success or failure and take appropriate action.",
+      "conditions": [
+        "After DL/I CALL statement"
+      ],
+      "citation": [
+        20
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "IMS populates segment level, name, and key feedback for qualified calls",
+      "logic_summary": "Fields like PASFL-SEG-LEVEL, PASFL-SEG-NAME, and PASFL-KEYFB are filled by IMS when PROCOPT includes K (key feedback) or similar options.",
+      "conditions": [
+        "DL/I calls with key feedback requested"
+      ],
+      "citation": [
+        19,
+        23,
+        26
+      ]
+    }
+  ],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
@@ -40,7 +141,15 @@
   },
   "copybooks_used": [],
   "paragraphs": [],
-  "error_handling": [],
+  "error_handling": [
+    {
+      "condition": "PASFL-PCB-STATUS not equal to '00'",
+      "action": "Application program logic checks status and handles errors (e.g., abnormal end, retry, or logging) based on code meaning.",
+      "citation": [
+        20
+      ]
+    }
+  ],
   "sql_operations": [],
   "cics_operations": [],
   "open_questions": []

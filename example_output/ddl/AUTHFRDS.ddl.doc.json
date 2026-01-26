@@ -4,13 +4,13 @@
     "file_name": "ddl/AUTHFRDS.ddl",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T15:10:54.921567",
+    "analyzed_at": "2026-01-26T17:36:58.109388",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "DDL script that creates the AUTHFRDS table in the CARDDEMO schema. The table stores detailed authorization transaction data for card processing, including card numbers, timestamps, merchant details, transaction amounts, response codes, and fraud indicators. It supports fraud detection and reporting by maintaining historical authorization records with uniqueness enforced on card number and timestamp.",
-    "business_context": "Card authorization processing and fraud analysis in a demonstration (CARDDEMO) system",
+    "summary": "DDL script that creates the AUTHFRDS table in the CARDDEMO schema. The table stores authorization transaction details including card number, timestamp, merchant information, transaction amounts, and fraud indicators for fraud analysis. Primary key is composite on CARD_NUM and AUTH_TS.",
+    "business_context": "Fraud detection and reporting for card authorization transactions in a demonstration (CARDDEMO) environment.",
     "program_type": "UTILITY",
     "citations": [
       1,
@@ -22,7 +22,7 @@
     {
       "name": "CARDDEMO.AUTHFRDS",
       "io_type": "DB2_TABLE",
-      "description": "Table storing authorization fraud details including card, merchant, transaction, and fraud fields",
+      "description": "Table storing authorization fraud details including card number (line 2), auth timestamp (line 3), transaction amount (line 12), fraud flag (line 24), and merchant details (lines 17-21).",
       "copybook": null,
       "citation": [
         1
@@ -38,11 +38,11 @@
   "business_rules": [
     {
       "rule_id": "BR001",
-      "description": "CARD_NUM and AUTH_TS form a composite primary key to ensure each authorization per card is uniquely identified by timestamp",
-      "logic_summary": "PRIMARY KEY constraint defined on columns CARD_NUM and AUTH_TS",
+      "description": "CARD_NUM and AUTH_TS form the primary key ensuring unique identification of each authorization record.",
+      "logic_summary": "PRIMARY KEY clause enforces uniqueness and non-nullability.",
       "conditions": [
-        "NOT NULL on CARD_NUM",
-        "NOT NULL on AUTH_TS"
+        "CARD_NUM NOT NULL (line 2)",
+        "AUTH_TS NOT NULL (line 3)"
       ],
       "citation": [
         2,
@@ -52,14 +52,19 @@
     },
     {
       "rule_id": "BR002",
-      "description": "CARD_NUM and AUTH_TS are mandatory fields for all records",
-      "logic_summary": "NOT NULL constraints enforced at table creation",
-      "conditions": [
-        "CARD_NUM NOT NULL",
-        "AUTH_TS NOT NULL"
-      ],
+      "description": "CARD_NUM is mandatory for all records.",
+      "logic_summary": "Defined as CHAR(16) NOT NULL.",
+      "conditions": [],
       "citation": [
-        2,
+        2
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "AUTH_TS is mandatory for all records.",
+      "logic_summary": "Defined as TIMESTAMP NOT NULL.",
+      "conditions": [],
+      "citation": [
         3
       ]
     }
@@ -76,21 +81,21 @@
     {
       "operation": "CREATE TABLE",
       "table": "CARDDEMO.AUTHFRDS",
-      "purpose": "Defines persistent storage for card authorization transactions with fraud tracking fields",
+      "purpose": "Defines persistent storage for authorization transaction data used in fraud detection.",
       "citation": 1
     }
   ],
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "Specific database system (e.g., DB2 version or dialect)",
-      "context": "Data types like TIMESTAMP, DECIMAL(12,2), SMALLINT, VARCHAR(22) suggest DB2 or similar but not explicitly stated",
-      "suggestion": "Check execution environment or comments for DBMS confirmation"
+      "question": "Detailed business validation rules for populating fields like AUTH_FRAUD or MATCH_STATUS.",
+      "context": "DDL defines structure only; no logic for field population or validation provided.",
+      "suggestion": "Analyze application programs (COBOL/PL/I) that INSERT into this table."
     },
     {
-      "question": "Usage of nullable fields and business validation beyond DDL constraints",
-      "context": "Many fields lack NOT NULL (e.g., lines 4-27 except PK), unclear if application enforces further rules",
-      "suggestion": "Review programs that INSERT/UPDATE this table for additional validations"
+      "question": "Usage context of fields like MESSAGE_TYPE, AUTH_ID_CODE, or PROCESSING_CODE.",
+      "context": "Field names suggest ISO 8583 or payment network standards, but exact mappings not specified.",
+      "suggestion": "Review related documentation or programs referencing these fields."
     }
   ]
 }

@@ -2,29 +2,26 @@
 
 **File**: `cpy-bms/COPAU01.cpy`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-01-26 15:13:42.871836
+**Analyzed**: 2026-01-26 17:39:58.969964
 
 ## Purpose
 
-This copybook defines the data structures COPAU1AI (input) and COPAU1AO (output redefines input) for the COPAU1 BMS map in a CICS online application. It structures fields for screen elements including transaction name, titles, current date/time, program name, card number, authorization details (date, time, response, code, amount), POS entry mode, source, MCC, card expiration, auth type, transaction ID, match code, fraud code, merchant details (name, ID, city, state, zip), and error message. Each field follows BMS convention with length (L COMP S9(4)), format flag (F X), attribute (A X), and input data (I), redefined for output with control chars (C/P/H/V) and output data (O).
+This COBOL copybook defines the BMS map data structures COPAU1AI and COPAU1AO for a CICS screen handling payment authorization details. COPAU1AI provides input field definitions with length (L), flag/format (F), attribute (A), and input data (I) for RECEIVE MAP. COPAU1AO redefines the storage for output with cursor (C), protected (P), highlight (H), visible (V), and output data (O) fields for SEND MAP.
 
-**Business Context**: CICS BMS map for payment card authorization screen, capturing/displaying transaction, card, auth response, and merchant information in a financial processing system.
+**Business Context**: Payment authorization response screen in a CICS-based point-of-sale or transaction processing system, displaying transaction info, card details, auth codes, merchant data, and errors.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| COPAU1AI | IOType.CICS_MAP | Input data structure for COPAU1 BMS map, containing screen input fields for transaction details, card info, auth data, merchant info, and error msg. |
+| COPAU1AI | IOType.CICS_MAP | Input structure for BMS RECEIVE MAP containing screen data for transaction name, titles, date/time, program name, card number, auth details, merchant info, and error message |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| COPAU1AO | IOType.CICS_MAP | Output data structure redefining COPAU1AI for COPAU1 BMS map, with BMS control characters (C=changed, P=protected, H=high, V=visible) and output field values. |
+| COPAU1AO | IOType.CICS_MAP | Output structure redefining COPAU1AI for BMS SEND MAP with C/P/H/V/O fields for the same data elements |
 
-## Open Questions
+## Business Rules
 
-- ? Which CICS programs include and use this COPAU01 copybook?
-  - Context: Copybook defines map structures but does not specify including programs.
-- ? What is the exact transaction ID or program that uses this map?
-  - Context: Fields like TRNNAMEL/TRNNAMEI suggest transaction name, but no specific usage shown.
+- **BR001**: BMS map fields use a standard structure with length (COMP S9(4)), flag/format (X), attribute (X), and data fields for input (COPAU1AI), redefined as C/P/H/V/O for output (COPAU1AO) to support dynamic screen formatting in CICS.

@@ -4,19 +4,23 @@
     "file_name": "cpy/PADFLPCB.CPY",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T15:13:38.087008",
+    "analyzed_at": "2026-01-26T17:43:07.543285",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the data structure for the PADFL Program Communication Block (PCB), a standard IMS DL/I structure used for database access and navigation. It includes fields for database name (DBDNAME), current segment level, PCB status, processing options, segment name, key feedback name and count, and a key feedback buffer. This structure is typically included in the LINKAGE SECTION of IMS programs to receive status and positioning information from DL/I calls.",
-    "business_context": "IMS hierarchical database (DL/I) access and navigation in mainframe batch or online programs",
-    "program_type": "UTILITY",
+    "summary": "This copybook defines the PADFLPCB group structure (line 17), which maps an IMS Database Program Communication Block (DBPCB) used in COBOL programs for IMS DL/I database access. It includes standard DBPCB fields such as DBD name (line 18), segment level (line 19), PCB status (line 20), processing options (line 21), segment name (line 23), key feedback details (lines 24-26), and a key feedback buffer (line 26). As a copybook, it provides data definitions for IMS PCB handling and contains no executable logic.",
+    "business_context": "IMS hierarchical database interface for mainframe applications performing DL/I calls (GU, GN, ISRT, etc.)",
+    "program_type": "SUBROUTINE",
     "citations": [
       17,
       18,
+      19,
       20,
+      21,
       23,
+      24,
+      25,
       26
     ]
   },
@@ -39,5 +43,16 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": []
+  "open_questions": [
+    {
+      "question": "What is the exact IMS database (DBD) or PSB associated with PADFLPCB?",
+      "context": "The PADFL- prefix suggests a specific database or application context, but not determinable from this copybook alone.",
+      "suggestion": "Examine programs that COPY this book or associated PSB/DBD definitions."
+    },
+    {
+      "question": "Precise byte offsets and full compliance with IMS DBPCB layout?",
+      "context": "FILLER at line 22 and PIC S9(05) COMP fields approximate standard layout but may have custom sizing.",
+      "suggestion": "Cross-reference with IMS/ESA manuals or dump of populated PCB."
+    }
+  ]
 }
