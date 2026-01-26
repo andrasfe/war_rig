@@ -19,7 +19,7 @@ category: code
 primary_artifact_type: program
 
 comments:
-  fixed_column: 7
+  fixed_column: 1
   fixed_indicator: "*"
   line_prefix: null
   block_start: null
@@ -38,7 +38,7 @@ strings:
 continuation:
   trailing_char: null
   leading_char: "-"
-  leading_column: 7
+  leading_column: 1
 
 scope:
   start_pattern: "(PROCEDURE|DATA|WORKING-STORAGE|LINKAGE|FILE)\\s+DIVISION"
@@ -58,7 +58,7 @@ definition_patterns:
     dotall: true
 
   - name: paragraph
-    pattern: "^\\s{7}([A-Z0-9-]+)\\s*\\."
+    pattern: "^\\s+([A-Z0-9-]+)\\s*\\."
     capture_groups:
       - 1
     artifact_type: paragraph
@@ -66,7 +66,7 @@ definition_patterns:
     must_be_in_scope: PROCEDURE DIVISION
 
   - name: section
-    pattern: "^\\s{7}([A-Z0-9-]+)\\s+SECTION\\."
+    pattern: "^\\s+([A-Z0-9-]+)\\s+SECTION\\."
     capture_groups:
       - 1
     artifact_type: paragraph
