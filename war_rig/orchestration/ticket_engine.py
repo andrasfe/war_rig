@@ -692,19 +692,13 @@ class TicketOrchestrator:
             if analysis.custom_missing:
                 logger.info(f"Missing custom programs: {', '.join(analysis.custom_missing)}")
 
-            # Generate SYSTEM_DESIGN.md for external dependencies
+            # Generate initial SYSTEM_DESIGN.md for external dependencies
+            # (Imperator's holistic_review will enhance this with LLM content and sequence diagrams)
             if analysis.external_dependencies:
                 system_design_path = self.config.output_directory / "SYSTEM_DESIGN.md"
-
-                # Get sequence diagrams from citadel if dependency graph is available
-                sequence_diagrams = self._get_sequence_diagrams()
-
-                system_design_content = analyzer.generate_system_design_md(
-                    analysis,
-                    sequence_diagrams=sequence_diagrams,
-                )
+                system_design_content = analyzer.generate_system_design_md(analysis)
                 system_design_path.write_text(system_design_content, encoding="utf-8")
-                logger.info(f"Generated SYSTEM_DESIGN.md with {len(analysis.external_dependencies)} external dependencies")
+                logger.info(f"Generated initial SYSTEM_DESIGN.md with {len(analysis.external_dependencies)} external dependencies")
 
             # Also regenerate CALL_GRAPH.md for current state
             call_graph_path = self.config.output_directory / "CALL_GRAPH.md"
@@ -1327,12 +1321,16 @@ class TicketOrchestrator:
                 decision=ImperatorHolisticDecision.NEEDS_CLARIFICATION,
             )
 
+        # Get sequence diagrams from citadel for SYSTEM_DESIGN.md Flows section
+        sequence_diagrams = self._get_sequence_diagrams()
+
         # Run holistic review
         try:
             output = await self.imperator.holistic_review(
                 review_input,
                 use_mock=self.use_mock,
                 output_directory=self.config.output_directory,
+                sequence_diagrams=sequence_diagrams,
             )
             return output
 

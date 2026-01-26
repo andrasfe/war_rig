@@ -1500,6 +1500,7 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
         input_data: HolisticReviewInput,
         use_mock: bool = False,
         output_directory: Path | None = None,
+        sequence_diagrams: list[str] | None = None,
     ) -> HolisticReviewOutput:
         """Perform holistic review of batch documentation.
 
@@ -1518,6 +1519,8 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
             use_mock: If True, return mock output instead of calling LLM.
             output_directory: If provided, generates SYSTEM_DESIGN.md in this
                 directory. If None, skips system design generation.
+            sequence_diagrams: Optional list of mermaid sequence diagram strings
+                from citadel to include in SYSTEM_DESIGN.md Flows section.
 
         Returns:
             HolisticReviewOutput with decision and feedback.
@@ -1553,6 +1556,7 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                     input_data,
                     existing_content=existing_content,
                     use_mock=use_mock,
+                    sequence_diagrams=sequence_diagrams,
                 )
 
                 # Wrap in timeout to prevent indefinite hangs (15 min = 900s)
@@ -2415,6 +2419,7 @@ and architecture after reading your overview."""
         input_data: HolisticReviewInput,
         existing_content: str | None = None,
         use_mock: bool = False,
+        sequence_diagrams: list[str] | None = None,
     ) -> SystemDesignOutput:
         """Generate a SYSTEM_DESIGN.md document from batch documentation.
 
@@ -2428,6 +2433,8 @@ and architecture after reading your overview."""
             existing_content: If provided, the document will be enhanced/updated
                 rather than created from scratch.
             use_mock: If True, return mock output without calling the LLM.
+            sequence_diagrams: Optional list of mermaid sequence diagram strings
+                from citadel to append as a Flows section.
 
         Returns:
             SystemDesignOutput with the generated markdown and any identified
@@ -2490,15 +2497,21 @@ This creates a navigable documentation web.
             # Call LLM
             response = await self._call_llm(system_prompt, user_prompt)
 
+            # Append Flows section with sequence diagrams if provided
+            final_markdown = response
+            if sequence_diagrams:
+                flows_section = self._format_flows_section(sequence_diagrams)
+                final_markdown = response.rstrip() + "\n\n" + flows_section
+
             # Parse inline questions from the markdown
-            questions = self._parse_inline_questions(response, input_data.cycle)
+            questions = self._parse_inline_questions(final_markdown, input_data.cycle)
 
             # Identify which sections were updated (look for main headers)
-            sections_updated = self._extract_sections(response)
+            sections_updated = self._extract_sections(final_markdown)
 
             return SystemDesignOutput(
                 success=True,
-                markdown=response,
+                markdown=final_markdown,
                 questions=questions,
                 sections_updated=sections_updated,
             )
@@ -2602,6 +2615,44 @@ This creates a navigable documentation web.
             sections.append(match.group(1).strip())
 
         return sections
+
+    def _format_flows_section(self, sequence_diagrams: list[str]) -> str:
+        """Format sequence diagrams as a Flows section for SYSTEM_DESIGN.md.
+
+        Args:
+            sequence_diagrams: List of mermaid sequence diagram strings.
+
+        Returns:
+            Formatted markdown Flows section with all diagrams.
+        """
+        if not sequence_diagrams:
+            return ""
+
+        lines = []
+        lines.append("## Flows")
+        lines.append("")
+        lines.append(
+            "The following sequence diagrams illustrate key call sequences "
+            "identified in the codebase, showing how programs interact "
+            "during execution."
+        )
+        lines.append("")
+
+        for idx, diagram in enumerate(sequence_diagrams, start=1):
+            lines.append(f"### Flow {idx}")
+            lines.append("")
+            lines.append("```mermaid")
+            # The diagram may already have mermaid fence, strip if so
+            diagram_content = diagram.strip()
+            if diagram_content.startswith("```mermaid"):
+                diagram_content = diagram_content[len("```mermaid"):].strip()
+            if diagram_content.endswith("```"):
+                diagram_content = diagram_content[:-3].strip()
+            lines.append(diagram_content)
+            lines.append("```")
+            lines.append("")
+
+        return "\n".join(lines)
 
     def _create_mock_system_design(
         self,
