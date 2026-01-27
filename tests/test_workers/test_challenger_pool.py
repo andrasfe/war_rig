@@ -75,6 +75,8 @@ def mock_config(tmp_path) -> MagicMock:
     config.max_iterations = 2
     config.output_directory = tmp_path / "output"
     config.output_directory.mkdir(parents=True, exist_ok=True)
+    config.input_directory = tmp_path / "input"
+    config.input_directory.mkdir(parents=True, exist_ok=True)
     config.exit_on_error = True
     config.challenger = MagicMock(spec=ChallengerConfig)
     config.challenger.model = "claude-sonnet-4-20250514"
@@ -1117,3 +1119,723 @@ class TestLockSkippedTickets:
 
         # Cleanup
         await lock_manager.release(output_file, "other-worker")
+
+
+# =============================================================================
+# Structural Pre-check Tests: _get_citadel_context
+# =============================================================================
+
+
+class TestGetCitadelContext:
+    """Tests for ChallengerWorker._get_citadel_context method."""
+
+    def test_successful_context_loading(self, mock_config, mock_beads_client):
+        """Test successful Citadel analysis returns dict with paragraphs, includes, dead_code."""
+        worker = ChallengerWorker(
+            worker_id="challenger-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        # Set up mock Citadel
+        mock_citadel = MagicMock()
+        worker._citadel = mock_citadel
+
+        # Create mock analysis result
+        mock_callout = MagicMock()
+        mock_callout.target = "SUB-PARA"
+        mock_callout.relationship = "PERFORMS"
+        mock_callout.line = 100
+
+        mock_artifact = MagicMock()
+        mock_artifact.name = "MAIN-PARA"
+        mock_artifact.line_start = 50
+        mock_artifact.line_end = 120
+        mock_artifact.callouts = [mock_callout]
+
+        mock_result = MagicMock()
+        mock_result.error = None
+        mock_result.artifacts = [mock_artifact]
+        mock_result.preprocessor_includes = ["COPYLIB.cpy"]
+
+        mock_citadel.analyze_file.return_value = mock_result
+
+        context = worker._get_citadel_context("/path/to/TEST.cbl")
+
+        assert context is not None
+        assert "paragraphs" in context
+        assert "includes" in context
+        assert "dead_code" in context
+
+        assert len(context["paragraphs"]) == 1
+        para = context["paragraphs"][0]
+        assert para["name"] == "MAIN-PARA"
+        assert para["line_start"] == 50
+        assert para["line_end"] == 120
+        assert len(para["calls"]) == 1
+        assert para["calls"][0]["target"] == "SUB-PARA"
+        assert para["calls"][0]["type"] == "PERFORMS"
+        assert para["calls"][0]["line"] == 100
+
+        assert context["includes"] == ["COPYLIB.cpy"]
+        mock_citadel.analyze_file.assert_called_once_with("/path/to/TEST.cbl")
+
+    def test_returns_none_when_citadel_is_none(self, mock_config, mock_beads_client):
+        """Test returns None when self._citadel is None."""
+        worker = ChallengerWorker(
+            worker_id="challenger-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+        # _citadel defaults to None without dependency_graph_path
+        assert worker._citadel is None
+
+        result = worker._get_citadel_context("/path/to/TEST.cbl")
+        assert result is None
+
+    def test_returns_none_on_citadel_exception(self, mock_config, mock_beads_client):
+        """Test returns None when Citadel analyze_file raises an exception."""
+        worker = ChallengerWorker(
+            worker_id="challenger-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        mock_citadel = MagicMock()
+        mock_citadel.analyze_file.side_effect = RuntimeError("Citadel analysis crashed")
+        worker._citadel = mock_citadel
+
+        result = worker._get_citadel_context("/path/to/TEST.cbl")
+        assert result is None
+
+
+# =============================================================================
+# Structural Pre-check Tests: _find_perform_thru_targets
+# =============================================================================
+
+
+class TestFindPerformThruTargets:
+    """Tests for ChallengerWorker._find_perform_thru_targets method."""
+
+    def test_finds_thru_targets(self, mock_config, mock_beads_client, tmp_path):
+        """Test finding PERFORM THRU target paragraphs from source file."""
+        source_file = tmp_path / "PROG.cbl"
+        source_file.write_text(
+            "       IDENTIFICATION DIVISION.\n"
+            "       PROGRAM-ID. PROG.\n"
+            "       PROCEDURE DIVISION.\n"
+            "           PERFORM 1000-START THRU 1000-EXIT.\n"
+            "           PERFORM 2000-PROCESS THRU 2000-END.\n"
+            "           STOP RUN.\n",
+            encoding="utf-8",
+        )
+
+        worker = ChallengerWorker(
+            worker_id="challenger-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        targets = worker._find_perform_thru_targets(str(source_file))
+
+        assert "1000-EXIT" in targets
+        assert "2000-END" in targets
+        assert len(targets) == 2
+
+    def test_finds_through_targets(self, mock_config, mock_beads_client, tmp_path):
+        """Test finding PERFORM THROUGH (synonym for THRU) target paragraphs."""
+        source_file = tmp_path / "PROG.cbl"
+        source_file.write_text(
+            "       PROCEDURE DIVISION.\n"
+            "           PERFORM INIT-PARA THROUGH INIT-EXIT.\n"
+            "           STOP RUN.\n",
+            encoding="utf-8",
+        )
+
+        worker = ChallengerWorker(
+            worker_id="challenger-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        targets = worker._find_perform_thru_targets(str(source_file))
+
+        assert "INIT-EXIT" in targets
+        assert len(targets) == 1
+
+    def test_returns_empty_set_for_no_perform_thru(
+        self, mock_config, mock_beads_client, tmp_path
+    ):
+        """Test returns empty set when file has no PERFORM THRU."""
+        source_file = tmp_path / "SIMPLE.cbl"
+        source_file.write_text(
+            "       PROCEDURE DIVISION.\n"
+            "           PERFORM SOME-PARA.\n"
+            "           STOP RUN.\n",
+            encoding="utf-8",
+        )
+
+        worker = ChallengerWorker(
+            worker_id="challenger-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        targets = worker._find_perform_thru_targets(str(source_file))
+
+        assert targets == set()
+
+    def test_returns_empty_set_for_nonexistent_file(
+        self, mock_config, mock_beads_client
+    ):
+        """Test returns empty set for a file that does not exist."""
+        worker = ChallengerWorker(
+            worker_id="challenger-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        targets = worker._find_perform_thru_targets("/nonexistent/path/GHOST.cbl")
+
+        assert targets == set()
+
+
+# =============================================================================
+# Structural Pre-check Tests: _run_structural_precheck
+# =============================================================================
+
+
+class TestRunStructuralPrecheck:
+    """Tests for ChallengerWorker._run_structural_precheck method."""
+
+    def _make_worker(self, mock_config, mock_beads_client):
+        """Helper to create a ChallengerWorker for structural pre-check tests."""
+        return ChallengerWorker(
+            worker_id="challenger-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+    def _make_template(self, para_names=None, copybook_names=None, **kwargs):
+        """Helper to create a DocumentationTemplate with configurable paragraphs.
+
+        Args:
+            para_names: List of paragraph names to include. Each is created as a
+                Paragraph with the given name and default calls/outgoing_calls.
+            copybook_names: List of copybook names to include.
+            **kwargs: Extra fields passed to DocumentationTemplate.
+        """
+        from war_rig.models.templates import (
+            CopybookReference,
+            HeaderSection,
+            InputOutput,
+            BusinessRule,
+            Paragraph,
+            PurposeSection,
+            ProgramType,
+            FileType,
+        )
+
+        paragraphs = []
+        if para_names:
+            for name in para_names:
+                paragraphs.append(Paragraph(paragraph_name=name))
+
+        copybooks = []
+        if copybook_names:
+            for cn in copybook_names:
+                copybooks.append(CopybookReference(copybook_name=cn))
+
+        defaults = dict(
+            header=HeaderSection(
+                program_id="TEST",
+                file_name="TEST.cbl",
+                file_type=FileType.COBOL,
+            ),
+            purpose=PurposeSection(
+                summary="Test program for structural pre-check.",
+                business_context="Testing",
+                program_type=ProgramType.BATCH,
+            ),
+            inputs=[InputOutput(name="INPUT-FILE")],
+            outputs=[InputOutput(name="OUTPUT-FILE")],
+            business_rules=[BusinessRule(rule_id="BR1", description="A rule")],
+            paragraphs=paragraphs,
+            copybooks_used=copybooks,
+        )
+        defaults.update(kwargs)
+        return DocumentationTemplate(**defaults)
+
+    def _make_citadel_context(
+        self, para_names=None, includes=None, dead_code=None, calls_map=None,
+    ):
+        """Helper to create a Citadel context dict.
+
+        Args:
+            para_names: List of paragraph name strings.
+            includes: List of included file name strings.
+            dead_code: List of dead code dicts.
+            calls_map: Dict mapping paragraph name to list of call target strings.
+        """
+        paragraphs = []
+        if para_names:
+            for name in para_names:
+                calls = []
+                if calls_map and name in calls_map:
+                    for target in calls_map[name]:
+                        calls.append({
+                            "target": target,
+                            "type": "PERFORMS",
+                            "line": 100,
+                        })
+                paragraphs.append({
+                    "name": name,
+                    "line_start": 10,
+                    "line_end": 50,
+                    "calls": calls,
+                })
+
+        return {
+            "paragraphs": paragraphs,
+            "includes": includes or [],
+            "dead_code": dead_code or [],
+        }
+
+    def test_missing_paragraphs_blocking(self, mock_config, mock_beads_client):
+        """Test: Citadel has 5 paragraphs, template has 3 -> 2 BLOCKING issues."""
+        worker = self._make_worker(mock_config, mock_beads_client)
+
+        citadel_context = self._make_citadel_context(
+            para_names=["PARA-A", "PARA-B", "PARA-C", "PARA-D", "PARA-E"]
+        )
+        template = self._make_template(
+            para_names=["PARA-A", "PARA-B", "PARA-C"]
+        )
+
+        issues = worker._run_structural_precheck(
+            citadel_context, template, "TEST.cbl"
+        )
+
+        # Should find 2 missing paragraphs (PARA-D and PARA-E)
+        missing_para_issues = [
+            q for q in issues
+            if q.section == "paragraphs"
+            and q.severity == QuestionSeverity.BLOCKING
+            and "not documented" in q.question.lower()
+        ]
+        assert len(missing_para_issues) == 2
+
+        # All missing paragraph issues should be BLOCKING
+        for issue in missing_para_issues:
+            assert issue.severity == QuestionSeverity.BLOCKING
+            assert issue.question_type == QuestionType.COMPLETENESS
+
+    def test_no_missing_paragraphs(self, mock_config, mock_beads_client):
+        """Test: Same paragraphs in Citadel and template -> no missing paragraph issues."""
+        worker = self._make_worker(mock_config, mock_beads_client)
+
+        citadel_context = self._make_citadel_context(
+            para_names=["PARA-A", "PARA-B", "PARA-C"]
+        )
+        template = self._make_template(
+            para_names=["PARA-A", "PARA-B", "PARA-C"]
+        )
+
+        issues = worker._run_structural_precheck(
+            citadel_context, template, "TEST.cbl"
+        )
+
+        # Should have no missing paragraph issues
+        missing_para_issues = [
+            q for q in issues
+            if q.section == "paragraphs"
+            and "not documented" in q.question.lower()
+        ]
+        assert len(missing_para_issues) == 0
+
+    def test_dead_code_exclusion(self, mock_config, mock_beads_client):
+        """Test: Missing paragraph in dead_code -> not flagged."""
+        worker = self._make_worker(mock_config, mock_beads_client)
+
+        citadel_context = self._make_citadel_context(
+            para_names=["PARA-A", "PARA-B", "DEAD-PARA"],
+            dead_code=[{"name": "DEAD-PARA", "type": "paragraph"}],
+        )
+        template = self._make_template(para_names=["PARA-A", "PARA-B"])
+
+        issues = worker._run_structural_precheck(
+            citadel_context, template, "TEST.cbl"
+        )
+
+        # DEAD-PARA should not be flagged
+        missing_para_issues = [
+            q for q in issues
+            if q.section == "paragraphs"
+            and "not documented" in q.question.lower()
+        ]
+        assert len(missing_para_issues) == 0
+
+    def test_thru_target_exclusion(self, mock_config, mock_beads_client):
+        """Test: Missing paragraph is a THRU target -> not flagged."""
+        worker = self._make_worker(mock_config, mock_beads_client)
+
+        citadel_context = self._make_citadel_context(
+            para_names=["PARA-A", "PARA-B", "PARA-EXIT"]
+        )
+        template = self._make_template(para_names=["PARA-A", "PARA-B"])
+
+        thru_targets = {"PARA-EXIT"}
+
+        issues = worker._run_structural_precheck(
+            citadel_context, template, "TEST.cbl", thru_targets=thru_targets
+        )
+
+        # PARA-EXIT should not be flagged because it is a THRU target
+        missing_para_issues = [
+            q for q in issues
+            if q.section == "paragraphs"
+            and "not documented" in q.question.lower()
+        ]
+        assert len(missing_para_issues) == 0
+
+    def test_missing_calls_important(self, mock_config, mock_beads_client):
+        """Test: Citadel says para X calls Y and Z, template para X only has Y -> 1 IMPORTANT."""
+        from war_rig.models.templates import Paragraph
+
+        worker = self._make_worker(mock_config, mock_beads_client)
+
+        citadel_context = self._make_citadel_context(
+            para_names=["MAIN-PARA"],
+            calls_map={"MAIN-PARA": ["SUB-A", "SUB-B"]},
+        )
+
+        # Template has MAIN-PARA calling only SUB-A (missing SUB-B)
+        template = self._make_template()
+        template.paragraphs = [
+            Paragraph(paragraph_name="MAIN-PARA", calls=["SUB-A"]),
+        ]
+
+        issues = worker._run_structural_precheck(
+            citadel_context, template, "TEST.cbl"
+        )
+
+        # Should find 1 missing call (SUB-B)
+        missing_call_issues = [
+            q for q in issues
+            if q.section == "paragraphs"
+            and "calls" in q.question.lower()
+            and "SUB-B" in q.question.upper()
+        ]
+        assert len(missing_call_issues) == 1
+        assert missing_call_issues[0].severity == QuestionSeverity.IMPORTANT
+
+    def test_missing_copybooks_important(self, mock_config, mock_beads_client):
+        """Test: Citadel has 2 includes, template has 1 -> 1 IMPORTANT issue."""
+        worker = self._make_worker(mock_config, mock_beads_client)
+
+        citadel_context = self._make_citadel_context(
+            para_names=["PARA-A"],
+            includes=["COPY1.cpy", "COPY2.cpy"],
+        )
+        template = self._make_template(
+            para_names=["PARA-A"],
+            copybook_names=["COPY1.cpy"],
+        )
+
+        issues = worker._run_structural_precheck(
+            citadel_context, template, "TEST.cbl"
+        )
+
+        missing_cb_issues = [
+            q for q in issues
+            if q.section == "copybooks_used"
+            and q.severity == QuestionSeverity.IMPORTANT
+        ]
+        assert len(missing_cb_issues) == 1
+        assert "COPY2.CPY" in missing_cb_issues[0].question.upper()
+
+    def test_empty_critical_sections(self, mock_config, mock_beads_client):
+        """Test: Empty purpose -> BLOCKING; empty inputs -> IMPORTANT."""
+        worker = self._make_worker(mock_config, mock_beads_client)
+
+        citadel_context = self._make_citadel_context(para_names=["PARA-A"])
+
+        # Template with None purpose and empty inputs
+        template = self._make_template(para_names=["PARA-A"])
+        template.purpose = None  # type: ignore[assignment]
+        template.inputs = []  # Empty inputs
+
+        issues = worker._run_structural_precheck(
+            citadel_context, template, "TEST.cbl"
+        )
+
+        # Purpose missing -> BLOCKING
+        purpose_issues = [
+            q for q in issues if q.section == "purpose"
+        ]
+        assert len(purpose_issues) == 1
+        assert purpose_issues[0].severity == QuestionSeverity.BLOCKING
+
+        # Empty inputs -> IMPORTANT
+        input_issues = [
+            q for q in issues if q.section == "inputs"
+        ]
+        assert len(input_issues) == 1
+        assert input_issues[0].severity == QuestionSeverity.IMPORTANT
+
+    def test_empty_purpose_summary(self, mock_config, mock_beads_client):
+        """Test: purpose exists but summary is empty -> BLOCKING."""
+        from war_rig.models.templates import PurposeSection
+
+        worker = self._make_worker(mock_config, mock_beads_client)
+
+        citadel_context = self._make_citadel_context(para_names=["PARA-A"])
+        template = self._make_template(para_names=["PARA-A"])
+        template.purpose = PurposeSection(summary="", business_context="test")
+
+        issues = worker._run_structural_precheck(
+            citadel_context, template, "TEST.cbl"
+        )
+
+        purpose_issues = [q for q in issues if q.section == "purpose"]
+        assert len(purpose_issues) == 1
+        assert purpose_issues[0].severity == QuestionSeverity.BLOCKING
+
+    def test_case_insensitive_matching(self, mock_config, mock_beads_client):
+        """Test: Citadel 'MAIN-PROCESS', template 'main-process' -> no false positive."""
+        worker = self._make_worker(mock_config, mock_beads_client)
+
+        citadel_context = self._make_citadel_context(
+            para_names=["MAIN-PROCESS", "SUB-ROUTINE"]
+        )
+        template = self._make_template(
+            para_names=["main-process", "sub-routine"]
+        )
+
+        issues = worker._run_structural_precheck(
+            citadel_context, template, "TEST.cbl"
+        )
+
+        # Should have no missing paragraph issues (case-insensitive match)
+        missing_para_issues = [
+            q for q in issues
+            if q.section == "paragraphs"
+            and "not documented" in q.question.lower()
+        ]
+        assert len(missing_para_issues) == 0
+
+    def test_issues_sorted_blocking_first(self, mock_config, mock_beads_client):
+        """Test: Results are sorted with BLOCKING before IMPORTANT."""
+        worker = self._make_worker(mock_config, mock_beads_client)
+
+        # Create a scenario with both BLOCKING and IMPORTANT issues
+        citadel_context = self._make_citadel_context(
+            para_names=["PARA-A", "PARA-MISSING"],
+            includes=["MISSING-COPY.cpy"],
+        )
+        template = self._make_template(para_names=["PARA-A"])
+
+        issues = worker._run_structural_precheck(
+            citadel_context, template, "TEST.cbl"
+        )
+
+        # Should have at least one BLOCKING (missing para) and one IMPORTANT (missing copy)
+        blocking_indices = [
+            i for i, q in enumerate(issues)
+            if q.severity == QuestionSeverity.BLOCKING
+        ]
+        important_indices = [
+            i for i, q in enumerate(issues)
+            if q.severity == QuestionSeverity.IMPORTANT
+        ]
+
+        assert len(blocking_indices) > 0
+        assert len(important_indices) > 0
+
+        # All BLOCKING should come before all IMPORTANT
+        if blocking_indices and important_indices:
+            assert max(blocking_indices) < min(important_indices)
+
+
+# =============================================================================
+# Structural Pre-check Integration Tests
+# =============================================================================
+
+
+class TestStructuralPrecheckIntegration:
+    """Integration tests for structural pre-check in the validation pipeline."""
+
+    @pytest.mark.asyncio
+    async def test_structural_issues_prepended_to_blocking_questions(
+        self, mock_config, mock_beads_client, sample_validation_ticket
+    ):
+        """Test that structural issues come first in blocking_questions list."""
+        worker = ChallengerWorker(
+            worker_id="challenger-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        # Create structural issues
+        structural_issue = ChallengerQuestion(
+            question_id="STRUCT-001",
+            section="paragraphs",
+            question_type=QuestionType.COMPLETENESS,
+            question="Paragraph 'MISSING-PARA' exists in source but not in template.",
+            severity=QuestionSeverity.BLOCKING,
+        )
+
+        # Create LLM blocking question
+        llm_question = ChallengerQuestion(
+            question_id="LLM-001",
+            section="purpose",
+            question_type=QuestionType.CLARIFICATION,
+            question="What is the business context?",
+            severity=QuestionSeverity.BLOCKING,
+        )
+
+        mock_challenger_output = ChallengerOutput(
+            success=True,
+            questions=[llm_question],
+            issues_found=[],
+        )
+        worker.challenger = MagicMock()
+        worker.challenger.ainvoke = AsyncMock(return_value=mock_challenger_output)
+
+        state = worker._load_documentation_state(sample_validation_ticket)
+        assert state is not None
+
+        result = await worker._validate_documentation(
+            state, sample_validation_ticket,
+            structural_issues=[structural_issue],
+        )
+
+        assert result.success is True
+        assert result.is_valid is False
+        assert len(result.blocking_questions) >= 2
+
+        # Structural issue should be first
+        first_q = result.blocking_questions[0]
+        assert first_q["question_id"] == "STRUCT-001"
+        assert result.structural_issues_count == 1
+
+    @pytest.mark.asyncio
+    async def test_llm_skipped_on_3_or_more_structural_blockers(
+        self, mock_config, mock_beads_client, sample_validation_ticket
+    ):
+        """Test: Pre-check returns 3+ BLOCKING -> ChallengerAgent.ainvoke NOT called."""
+        worker = ChallengerWorker(
+            worker_id="challenger-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        # Create 3 BLOCKING structural issues
+        structural_issues = [
+            ChallengerQuestion(
+                question_id=f"STRUCT-{i:03d}",
+                section="paragraphs",
+                question_type=QuestionType.COMPLETENESS,
+                question=f"Paragraph 'MISSING-{i}' not documented.",
+                severity=QuestionSeverity.BLOCKING,
+            )
+            for i in range(3)
+        ]
+
+        # Mock the challenger agent - should NOT be called
+        worker.challenger = MagicMock()
+        worker.challenger.ainvoke = AsyncMock()
+
+        state = worker._load_documentation_state(sample_validation_ticket)
+        assert state is not None
+
+        result = await worker._validate_documentation(
+            state, sample_validation_ticket,
+            structural_issues=structural_issues,
+        )
+
+        # LLM should NOT have been invoked
+        worker.challenger.ainvoke.assert_not_called()
+
+        # Result should be valid success=True (pre-check ran) but is_valid=False
+        assert result.success is True
+        assert result.is_valid is False
+
+        # Only BLOCKING structural issues should appear in result
+        assert len(result.blocking_questions) == 3
+        for q in result.blocking_questions:
+            assert q["severity"] == QuestionSeverity.BLOCKING.value
+
+        assert result.structural_issues_count == 3
+
+    @pytest.mark.asyncio
+    async def test_no_citadel_runs_llm_only(
+        self, mock_config, mock_beads_client, sample_validation_ticket
+    ):
+        """Test: self._citadel is None -> validation runs LLM-only (backwards compatible)."""
+        worker = ChallengerWorker(
+            worker_id="challenger-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        # Ensure no Citadel
+        assert worker._citadel is None
+
+        mock_challenger_output = ChallengerOutput(
+            success=True,
+            questions=[],
+            issues_found=[],
+        )
+        worker.challenger = MagicMock()
+        worker.challenger.ainvoke = AsyncMock(return_value=mock_challenger_output)
+
+        await worker._process_ticket(sample_validation_ticket)
+
+        # LLM should have been called
+        worker.challenger.ainvoke.assert_called_once()
+
+        # Ticket should be validated
+        assert worker.status.tickets_validated == 1
+
+    @pytest.mark.asyncio
+    async def test_structural_issues_count_in_result(
+        self, mock_config, mock_beads_client, sample_validation_ticket
+    ):
+        """Test that structural_issues_count is tracked in ValidationResult."""
+        worker = ChallengerWorker(
+            worker_id="challenger-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        # One IMPORTANT (non-blocking) structural issue
+        structural_issue = ChallengerQuestion(
+            question_id="STRUCT-001",
+            section="copybooks_used",
+            question_type=QuestionType.COMPLETENESS,
+            question="Missing copybook",
+            severity=QuestionSeverity.IMPORTANT,
+        )
+
+        mock_challenger_output = ChallengerOutput(
+            success=True,
+            questions=[],
+            issues_found=[],
+        )
+        worker.challenger = MagicMock()
+        worker.challenger.ainvoke = AsyncMock(return_value=mock_challenger_output)
+
+        state = worker._load_documentation_state(sample_validation_ticket)
+        assert state is not None
+
+        result = await worker._validate_documentation(
+            state, sample_validation_ticket,
+            structural_issues=[structural_issue],
+        )
+
+        # Structural count should be tracked
+        assert result.structural_issues_count == 1
+        # IMPORTANT issues are not prepended to blocking_questions
+        # (only BLOCKING structural issues are)
+        assert result.is_valid is True

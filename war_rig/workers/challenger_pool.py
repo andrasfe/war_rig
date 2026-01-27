@@ -26,6 +26,7 @@ import asyncio
 import json
 import logging
 import random
+import re
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -44,7 +45,12 @@ from war_rig.beads import (
 )
 from war_rig.config import WarRigConfig
 from war_rig.models.templates import DocumentationTemplate, FileType
-from war_rig.models.tickets import QuestionSeverity
+from war_rig.models.tickets import (
+    ChallengerQuestion,
+    QuestionSeverity,
+    QuestionType,
+    generate_question_id,
+)
 from war_rig.preprocessors.base import PreprocessorResult
 from war_rig.utils import log_error
 from war_rig.utils.exceptions import FatalWorkerError
@@ -98,6 +104,8 @@ class ValidationResult:
         issues_found: List of issues found during validation.
         blocking_questions: Questions that require Scribe attention.
         challenger_output: Full output from the ChallengerAgent.
+        structural_issues_count: Number of issues from structural pre-check
+            (for observability, does not affect validation logic).
     """
 
     success: bool
@@ -105,6 +113,7 @@ class ValidationResult:
     issues_found: list[str] = field(default_factory=list)
     blocking_questions: list[dict[str, Any]] = field(default_factory=list)
     challenger_output: ChallengerOutput | None = None
+    structural_issues_count: int = 0
 
 
 class ChallengerWorker:
@@ -138,6 +147,7 @@ class ChallengerWorker:
         upstream_active_check: Callable[[], bool] | None = None,
         file_lock_manager: FileLockManager | None = None,
         exit_on_error: bool = True,
+        dependency_graph_path: Path | None = None,
     ):
         """Initialize the ChallengerWorker.
 
@@ -154,6 +164,9 @@ class ChallengerWorker:
                 processing and skip files that are locked by other workers.
             exit_on_error: If True, raise FatalWorkerError on processing errors
                 instead of just logging. Default True.
+            dependency_graph_path: Optional path to Citadel dependency graph JSON.
+                When provided, workers can use Citadel for structural pre-checks
+                comparing static analysis facts against documentation templates.
         """
         self.worker_id = worker_id
         self.config = config
@@ -164,12 +177,41 @@ class ChallengerWorker:
         self.exit_on_error = exit_on_error
         # Resolve to absolute path for consistent file access
         self.output_directory = config.output_directory.resolve()
+        self._input_directory = config.input_directory.resolve()
 
         # Create the ChallengerAgent
         self.challenger = ChallengerAgent(
             config=config.challenger,
             api_config=config.api,
         )
+
+        # Initialize Citadel SDK if dependency graph path available
+        self._citadel = None
+        self._dependency_graph_path = dependency_graph_path
+        if dependency_graph_path and dependency_graph_path.exists():
+            try:
+                from citadel import Citadel
+                self._citadel = Citadel()
+                logger.debug(f"Worker {worker_id}: Citadel SDK initialized")
+            except ImportError:
+                logger.debug(f"Worker {worker_id}: Citadel SDK not available")
+
+        # Cache dead code detection results (keyed by normalized file path)
+        self._dead_code_by_file: dict[str, list[dict[str, Any]]] = {}
+        if self._citadel and dependency_graph_path and dependency_graph_path.exists():
+            try:
+                all_dead = self._citadel.get_dead_code(str(dependency_graph_path))
+                for item in all_dead:
+                    file_key = item.get("file", "")
+                    if file_key:
+                        self._dead_code_by_file.setdefault(file_key, []).append(item)
+                if all_dead:
+                    logger.debug(
+                        f"Worker {worker_id}: Cached {len(all_dead)} dead code items "
+                        f"across {len(self._dead_code_by_file)} files"
+                    )
+            except Exception as e:
+                logger.debug(f"Worker {worker_id}: Dead code detection failed: {e}")
 
         # Worker state
         self.status = WorkerStatus(worker_id=worker_id)
@@ -208,6 +250,331 @@ class ChallengerWorker:
             return self.output_directory / rel_path.parent / doc_filename
 
         return self.output_directory / doc_filename
+
+    def _get_citadel_context(self, file_path: str) -> dict[str, Any] | None:
+        """Get Citadel analysis context for a file.
+
+        Uses the Citadel SDK to analyze a source file and extract paragraph
+        definitions with their outgoing calls, preprocessor includes, and
+        dead code information.
+
+        Args:
+            file_path: Path to the source file to analyze.
+
+        Returns:
+            Dictionary with:
+            - paragraphs: list of dicts with name, line_start, line_end,
+              calls (list of {target, type, line})
+            - includes: list of included file names (str)
+            - dead_code: list of dicts from dead code analysis
+
+            Returns None if Citadel is not available or analysis fails.
+        """
+        if not self._citadel:
+            return None
+
+        try:
+            result = self._citadel.analyze_file(file_path)
+
+            if result.error:
+                logger.debug(
+                    f"Worker {self.worker_id}: Citadel analysis error for "
+                    f"{file_path}: {result.error}"
+                )
+                return None
+
+            # Extract paragraphs with their calls from FileArtifact objects
+            paragraphs: list[dict[str, Any]] = []
+            for artifact in result.artifacts:
+                calls: list[dict[str, Any]] = []
+                for callout in artifact.callouts:
+                    calls.append({
+                        "target": callout.target,
+                        "type": callout.relationship,
+                        "line": callout.line,
+                    })
+                paragraphs.append({
+                    "name": artifact.name,
+                    "line_start": artifact.line_start,
+                    "line_end": artifact.line_end,
+                    "calls": calls,
+                })
+
+            includes = result.preprocessor_includes
+
+            logger.debug(
+                f"Worker {self.worker_id}: Citadel found {len(paragraphs)} paragraphs "
+                f"and {len(includes)} includes in {file_path}"
+            )
+
+            # Look up cached dead code for this file
+            dead_code: list[dict[str, Any]] = []
+            if self._dead_code_by_file:
+                # Try exact match first, then basename match
+                norm_path = str(Path(file_path).resolve())
+                dead_code = self._dead_code_by_file.get(norm_path, [])
+                if not dead_code:
+                    # Fallback: match by filename suffix
+                    for cached_path, items in self._dead_code_by_file.items():
+                        if cached_path.endswith(Path(file_path).name):
+                            dead_code = items
+                            break
+
+            return {
+                "paragraphs": paragraphs,
+                "includes": includes,
+                "dead_code": dead_code,
+            }
+        except Exception as e:
+            logger.debug(
+                f"Worker {self.worker_id}: Citadel analysis failed for "
+                f"{file_path}: {e}"
+            )
+            return None
+
+    def _find_perform_thru_targets(self, file_path: str) -> set[str]:
+        """Find paragraph names used as PERFORM THRU range endpoints.
+
+        Reads the source file and extracts all paragraph names that appear
+        as the second operand in PERFORM ... THRU/THROUGH statements. These
+        paragraphs serve as range markers and should not be flagged as dead
+        code even if they have no other incoming references.
+
+        Args:
+            file_path: Path to the COBOL source file.
+
+        Returns:
+            Set of paragraph names (uppercased) used as THRU endpoints.
+        """
+        thru_targets: set[str] = set()
+        try:
+            source = Path(file_path).read_text(encoding="utf-8", errors="replace")
+            # Match PERFORM <name> THRU/THROUGH <name>
+            # The second capture group is the THRU target paragraph
+            pattern = re.compile(
+                r"\bPERFORM\s+[A-Z0-9][A-Z0-9-]*"
+                r"\s+(?:THRU|THROUGH)\s+"
+                r"([A-Z0-9][A-Z0-9-]*)",
+                re.IGNORECASE,
+            )
+            for match in pattern.finditer(source):
+                thru_targets.add(match.group(1).upper())
+        except Exception as e:
+            logger.debug(
+                f"Worker {self.worker_id}: Could not read {file_path} for "
+                f"PERFORM THRU analysis: {e}"
+            )
+        return thru_targets
+
+    def _run_structural_precheck(
+        self,
+        citadel_context: dict[str, Any],
+        template: DocumentationTemplate,
+        file_name: str,
+        thru_targets: set[str] | None = None,
+    ) -> list[ChallengerQuestion]:
+        """Compare Citadel static analysis facts against the documentation template.
+
+        Generates ChallengerQuestion objects for structural discrepancies found
+        between the ground-truth Citadel analysis and the LLM-generated template.
+        This catches missing paragraphs, missing calls, missing copybooks, and
+        empty critical sections without requiring an LLM call.
+
+        Args:
+            citadel_context: Context dict from _get_citadel_context() containing
+                paragraphs, includes, and dead_code lists.
+            template: The DocumentationTemplate to check against.
+            file_name: Name of the source file being validated.
+            thru_targets: Optional set of PERFORM THRU target paragraph names
+                (uppercased) to exclude from missing paragraph checks.
+
+        Returns:
+            List of ChallengerQuestion objects sorted by severity
+            (BLOCKING first, then IMPORTANT).
+        """
+        issues: list[ChallengerQuestion] = []
+        if thru_targets is None:
+            thru_targets = set()
+
+        # Build sets of dead code paragraph names (uppercased) for exclusion
+        dead_code_names: set[str] = set()
+        for dc_item in citadel_context.get("dead_code", []):
+            dc_name = dc_item.get("name", "")
+            if dc_name:
+                dead_code_names.add(dc_name.upper())
+
+        # --- (a) Missing paragraphs ---
+        # Citadel paragraph names (ground truth from static analysis)
+        citadel_paragraphs = citadel_context.get("paragraphs", [])
+        citadel_para_names: set[str] = {
+            p["name"].upper() for p in citadel_paragraphs if p.get("name")
+        }
+
+        # Template paragraph names (from LLM documentation)
+        template_para_names: set[str] = set()
+        for p in template.paragraphs:
+            if p.paragraph_name:
+                template_para_names.add(p.paragraph_name.upper())
+
+        # Paragraphs in Citadel but missing from template (excluding dead code and THRU targets)
+        for para_name in citadel_para_names:
+            if para_name in template_para_names:
+                continue
+            if para_name in dead_code_names:
+                continue
+            if para_name in thru_targets:
+                continue
+
+            issues.append(ChallengerQuestion(
+                question_id=generate_question_id(),
+                section="paragraphs",
+                question_type=QuestionType.COMPLETENESS,
+                question=(
+                    f"Paragraph '{para_name}' exists in the source code (per static analysis) "
+                    f"but is not documented in the template for {file_name}. "
+                    f"Please add documentation for this paragraph."
+                ),
+                severity=QuestionSeverity.BLOCKING,
+            ))
+
+        # --- (b) Missing calls ---
+        # Build a lookup of citadel paragraphs by uppercase name
+        citadel_para_by_name: dict[str, dict[str, Any]] = {}
+        for cp in citadel_paragraphs:
+            if cp.get("name"):
+                citadel_para_by_name[cp["name"].upper()] = cp
+
+        for template_para in template.paragraphs:
+            if not template_para.paragraph_name:
+                continue
+            t_name = template_para.paragraph_name.upper()
+            citadel_para = citadel_para_by_name.get(t_name)
+            if not citadel_para:
+                continue
+
+            # Citadel outgoing call targets for this paragraph
+            citadel_call_targets: set[str] = set()
+            for call in citadel_para.get("calls", []):
+                target = call.get("target", "")
+                if target:
+                    citadel_call_targets.add(target.upper())
+
+            # Template call targets: combine legacy 'calls' list and structured 'outgoing_calls'
+            template_call_targets: set[str] = set()
+            for c in template_para.calls:
+                if c:
+                    template_call_targets.add(c.upper())
+            for oc in template_para.outgoing_calls:
+                if oc.target:
+                    template_call_targets.add(oc.target.upper())
+
+            # Calls in Citadel but missing from template
+            missing_calls = citadel_call_targets - template_call_targets
+            for missing_call in missing_calls:
+                issues.append(ChallengerQuestion(
+                    question_id=generate_question_id(),
+                    section="paragraphs",
+                    question_type=QuestionType.COMPLETENESS,
+                    question=(
+                        f"Paragraph '{t_name}' calls '{missing_call}' according to "
+                        f"static analysis, but this call is not documented in the "
+                        f"template for {file_name}."
+                    ),
+                    severity=QuestionSeverity.IMPORTANT,
+                ))
+
+        # --- (c) Missing copybooks ---
+        citadel_includes: set[str] = {
+            inc.upper() for inc in citadel_context.get("includes", []) if inc
+        }
+
+        template_copybook_names: set[str] = set()
+        for cb in template.copybooks_used:
+            if cb.copybook_name:
+                template_copybook_names.add(cb.copybook_name.upper())
+
+        for missing_cb in citadel_includes - template_copybook_names:
+            issues.append(ChallengerQuestion(
+                question_id=generate_question_id(),
+                section="copybooks_used",
+                question_type=QuestionType.COMPLETENESS,
+                question=(
+                    f"Copybook/include '{missing_cb}' is used in the source code "
+                    f"(per static analysis) but is not listed in copybooks_used "
+                    f"for {file_name}."
+                ),
+                severity=QuestionSeverity.IMPORTANT,
+            ))
+
+        # --- (d) Empty critical sections ---
+        # Purpose summary: BLOCKING if missing
+        if template.purpose is None or not template.purpose.summary:
+            issues.append(ChallengerQuestion(
+                question_id=generate_question_id(),
+                section="purpose",
+                question_type=QuestionType.COMPLETENESS,
+                question=(
+                    f"The purpose summary is empty or missing for {file_name}. "
+                    f"This is a critical section that must be populated."
+                ),
+                severity=QuestionSeverity.BLOCKING,
+            ))
+
+        # Inputs: IMPORTANT if empty
+        if not template.inputs:
+            issues.append(ChallengerQuestion(
+                question_id=generate_question_id(),
+                section="inputs",
+                question_type=QuestionType.COMPLETENESS,
+                question=(
+                    f"The inputs section is empty for {file_name}. "
+                    f"Please document program inputs if any exist."
+                ),
+                severity=QuestionSeverity.IMPORTANT,
+            ))
+
+        # Outputs: IMPORTANT if empty
+        if not template.outputs:
+            issues.append(ChallengerQuestion(
+                question_id=generate_question_id(),
+                section="outputs",
+                question_type=QuestionType.COMPLETENESS,
+                question=(
+                    f"The outputs section is empty for {file_name}. "
+                    f"Please document program outputs if any exist."
+                ),
+                severity=QuestionSeverity.IMPORTANT,
+            ))
+
+        # Business rules: IMPORTANT if empty
+        if not template.business_rules:
+            issues.append(ChallengerQuestion(
+                question_id=generate_question_id(),
+                section="business_rules",
+                question_type=QuestionType.COMPLETENESS,
+                question=(
+                    f"The business_rules section is empty for {file_name}. "
+                    f"Please document business rules if any exist."
+                ),
+                severity=QuestionSeverity.IMPORTANT,
+            ))
+
+        # Sort: BLOCKING first, then IMPORTANT
+        severity_order = {
+            QuestionSeverity.BLOCKING: 0,
+            QuestionSeverity.IMPORTANT: 1,
+            QuestionSeverity.MINOR: 2,
+        }
+        issues.sort(key=lambda q: severity_order.get(q.severity, 99))
+
+        if issues:
+            logger.info(
+                f"Worker {self.worker_id}: Structural pre-check found "
+                f"{len(issues)} issues for {file_name} "
+                f"({sum(1 for q in issues if q.severity == QuestionSeverity.BLOCKING)} blocking)"
+            )
+
+        return issues
 
     async def start(self) -> None:
         """Start the worker's processing loop.
@@ -509,8 +876,32 @@ class ChallengerWorker:
                 )
                 return
 
+            # Run structural pre-check using Citadel if available
+            structural_issues: list[ChallengerQuestion] | None = None
+            if self._citadel:
+                # Resolve file path from state metadata or ticket
+                file_path = None
+                if ticket.metadata:
+                    file_path = ticket.metadata.get("file_path")
+                if not file_path:
+                    file_path = str(self._input_directory / ticket.file_name)
+
+                citadel_context = self._get_citadel_context(file_path)
+                if citadel_context is not None:
+                    template = state.get("template")
+                    if template is not None:
+                        thru_targets = self._find_perform_thru_targets(file_path)
+                        structural_issues = self._run_structural_precheck(
+                            citadel_context,
+                            template,
+                            ticket.file_name,
+                            thru_targets,
+                        )
+
             # Run validation
-            result = await self._validate_documentation(state, ticket)
+            result = await self._validate_documentation(
+                state, ticket, structural_issues=structural_issues,
+            )
 
             if not result.success:
                 # First failure - retry with enhanced formatting
@@ -518,7 +909,10 @@ class ChallengerWorker:
                     f"Worker {self.worker_id}: Validation failed for {ticket.ticket_id}, "
                     f"retrying with strict formatting"
                 )
-                result = await self._validate_documentation(state, ticket, formatting_strict=True)
+                result = await self._validate_documentation(
+                    state, ticket, formatting_strict=True,
+                    structural_issues=structural_issues,
+                )
 
                 if not result.success:
                     # Second failure - reset ticket for other workers
@@ -779,17 +1173,71 @@ class ChallengerWorker:
         state: dict[str, Any],
         ticket: ProgramManagerTicket,
         formatting_strict: bool = False,
+        structural_issues: list[ChallengerQuestion] | None = None,
     ) -> ValidationResult:
         """Validate documentation using the ChallengerAgent.
+
+        When structural_issues are provided from the Citadel pre-check:
+        - If there are >= 3 BLOCKING structural issues, the LLM call is skipped
+          entirely and only structural issues are returned.
+        - Otherwise, the LLM validation runs normally and structural issues are
+          prepended to the blocking questions list.
+        - Structural issues are NOT filtered by the was_sampled logic (that only
+          applies to LLM-generated questions).
 
         Args:
             state: The documentation state to validate.
             ticket: The ticket being processed.
             formatting_strict: If True, add extra JSON formatting instructions.
+            structural_issues: Optional list of ChallengerQuestion objects from
+                the structural pre-check. These are prepended to blocking questions.
 
         Returns:
             ValidationResult with validation outcome.
         """
+        # Convert structural issues to blocking question dicts for the result
+        structural_question_dicts: list[dict[str, Any]] = []
+        if structural_issues:
+            for q in structural_issues:
+                structural_question_dicts.append({
+                    "question_id": q.question_id,
+                    "section": q.section,
+                    "question_type": q.question_type.value,
+                    "question": q.question,
+                    "severity": q.severity.value,
+                    "evidence": q.evidence,
+                })
+
+        structural_count = len(structural_question_dicts)
+
+        # Count BLOCKING structural issues
+        structural_blocking_count = sum(
+            1 for q in (structural_issues or [])
+            if q.severity == QuestionSeverity.BLOCKING
+        )
+
+        # If >= 3 BLOCKING structural issues, skip the LLM call entirely
+        if structural_blocking_count >= 3:
+            logger.info(
+                f"Worker {self.worker_id}: Skipping LLM validation for "
+                f"{ticket.file_name} - {structural_blocking_count} blocking "
+                f"structural issues found by pre-check"
+            )
+            # Only include blocking structural issues in the result
+            blocking_structural = [
+                q for q in structural_question_dicts
+                if q.get("severity") == QuestionSeverity.BLOCKING.value
+            ]
+            return ValidationResult(
+                success=True,
+                is_valid=False,
+                issues_found=[
+                    f"Structural pre-check: {structural_blocking_count} blocking issues"
+                ],
+                blocking_questions=blocking_structural,
+                structural_issues_count=structural_count,
+            )
+
         try:
             # Check if source code needs sampling due to token limits
             source_code = state["source_code"]
@@ -828,6 +1276,7 @@ class ChallengerWorker:
                     success=False,
                     is_valid=False,
                     challenger_output=output,
+                    structural_issues_count=structural_count,
                 )
 
             # Analyze the output to determine if documentation is valid
@@ -845,10 +1294,11 @@ class ChallengerWorker:
                 if q.severity == QuestionSeverity.BLOCKING
             ]
 
-            # When source was sampled, filter out blocking questions that may be due to
+            # When source was sampled, filter out LLM blocking questions that may be due to
             # the Challenger not seeing the full source code. COMPLETENESS questions
             # about missing/empty sections are particularly suspect when we only showed
             # a sample of the code - the relevant code may have been in the unsampled portion.
+            # NOTE: This filtering only applies to LLM questions, not structural issues.
             if was_sampled and blocking_questions:
                 original_count = len(blocking_questions)
                 filtered_questions = []
@@ -882,6 +1332,14 @@ class ChallengerWorker:
                     )
                     blocking_questions = filtered_questions
 
+            # Prepend structural issues (not subject to was_sampled filtering)
+            if structural_question_dicts:
+                blocking_structural = [
+                    q for q in structural_question_dicts
+                    if q.get("severity") == QuestionSeverity.BLOCKING.value
+                ]
+                blocking_questions = blocking_structural + blocking_questions
+
             # Documentation is valid if no blocking questions and no critical issues
             is_valid = len(blocking_questions) == 0 and all(
                 "WRONG" not in issue.upper() for issue in issues_found
@@ -893,6 +1351,7 @@ class ChallengerWorker:
                 issues_found=issues_found,
                 blocking_questions=blocking_questions,
                 challenger_output=output,
+                structural_issues_count=structural_count,
             )
 
         except Exception as e:
@@ -910,6 +1369,7 @@ class ChallengerWorker:
                 success=False,
                 is_valid=False,
                 issues_found=[str(e)],
+                structural_issues_count=structural_count,
             )
 
     async def _process_discovery_validation(self, ticket: ProgramManagerTicket) -> None:
@@ -1173,6 +1633,7 @@ class ChallengerWorkerPool:
         upstream_active_check: Callable[[], bool] | None = None,
         file_lock_manager: FileLockManager | None = None,
         exit_on_error: bool | None = None,
+        dependency_graph_path: Path | None = None,
     ):
         """Initialize the ChallengerWorkerPool.
 
@@ -1192,6 +1653,8 @@ class ChallengerWorkerPool:
                 process tickets for the same output file.
             exit_on_error: If True, workers will raise FatalWorkerError on errors.
                 Defaults to config.exit_on_error.
+            dependency_graph_path: Optional path to Citadel dependency graph JSON.
+                When provided, workers can use Citadel for structural pre-checks.
         """
         self.num_workers = num_workers
         self.config = config
@@ -1212,6 +1675,7 @@ class ChallengerWorkerPool:
                 upstream_active_check=upstream_active_check,
                 file_lock_manager=file_lock_manager,
                 exit_on_error=self.exit_on_error,
+                dependency_graph_path=dependency_graph_path,
             )
             self.workers.append(worker)
 
