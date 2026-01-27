@@ -13,6 +13,7 @@ Citadel extracts dependency graphs from mixed-language codebases, with emphasis 
 - **Relationship tracking**: CALL, PERFORM, COPY, EXEC SQL, EXEC CICS, imports
 - **Multiple export formats**: JSON, DOT (GraphViz), Cypher (Neo4j), CSV, Markdown, Mermaid
 - **Dead code detection**: Find unreferenced artifacts (paragraphs, programs, copybooks)
+- **Flow diagrams**: Generate Mermaid flowcharts of intra-file COBOL control flow
 - **SDK for agents**: Simple Python API for programmatic analysis
 
 ### Sample Results
@@ -251,12 +252,47 @@ The dead code detector:
 - Reports file path and line number for each dead artifact
 - Provides type-specific reason messages
 
+### Generate Flow Diagrams
+
+```python
+# Generate Mermaid flowchart of internal control flow for a COBOL file
+diagram = citadel.get_flow_diagram("program.cbl")
+
+# Example output:
+# flowchart TD
+#     MAIN_PARA[MAIN-PARA]
+#     PROCESS_ENTER_KEY[PROCESS-ENTER-KEY]
+#     SEND_SIGNON_SCREEN[SEND-SIGNON-SCREEN]
+#     POPULATE_HEADER_INFO[POPULATE-HEADER-INFO]
+#     READ_USER_SEC_FILE[READ-USER-SEC-FILE]
+#     WS_USRSEC_FILE[(WS-USRSEC-FILE)]
+#     MAIN_PARA --> PROCESS_ENTER_KEY
+#     MAIN_PARA --> SEND_SIGNON_SCREEN
+#     PROCESS_ENTER_KEY --> READ_USER_SEC_FILE
+#     READ_USER_SEC_FILE -.->|reads| WS_USRSEC_FILE
+#     SEND_SIGNON_SCREEN --> POPULATE_HEADER_INFO
+
+# Start from a specific paragraph (only shows reachable subgraph)
+diagram = citadel.get_flow_diagram("program.cbl", paragraph="PROCESS-ENTER-KEY")
+
+# Hide external calls (only show internal PERFORM flow)
+diagram = citadel.get_flow_diagram("program.cbl", include_external=False)
+```
+
+The flow diagram generator:
+- Shows PERFORM relationships between paragraphs within a single file
+- External calls (CALL, EXEC SQL, EXEC CICS, reads/writes) appear as distinctively shaped leaf nodes
+- Node shapes: `[rectangle]` for paragraphs, `([stadium])` for programs, `[(cylinder)]` for tables/files, `{{hexagon}}` for maps/screens
+- Solid arrows for internal PERFORMs, dashed arrows for external calls
+- De-duplicates edges and handles cycles
+
 ### One-off Convenience Functions
 
 ```python
 from citadel import (
     analyze_file, get_functions, get_function_body,
-    get_callers, get_sequence_diagrams, get_dead_code
+    get_callers, get_sequence_diagrams, get_dead_code,
+    get_flow_diagram,
 )
 
 # No need to create Citadel instance
@@ -266,6 +302,7 @@ body = get_function_body("program.cbl", "MAIN-PARA")
 callers = get_callers("UTILS.cbl", "CALCULATE-TAX")
 diagrams = get_sequence_diagrams("./src")
 dead = get_dead_code("./src")
+diagram = get_flow_diagram("program.cbl")
 ```
 
 ### SDK Classes
@@ -379,7 +416,7 @@ citadel/
 │   ├── sdk.py           # SDK for programmatic access
 │   ├── cli.py           # Command-line interface
 │   ├── orchestrator.py  # Main analysis coordinator
-│   ├── analysis/        # Graph analysis (sequence finder, dead code)
+│   ├── analysis/        # Graph analysis (sequence finder, dead code, flow diagrams)
 │   ├── discovery/       # File discovery
 │   ├── specs/           # Language specifications
 │   ├── parser/          # Pattern-based parsing
