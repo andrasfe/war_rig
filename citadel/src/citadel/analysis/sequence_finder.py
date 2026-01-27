@@ -441,6 +441,15 @@ def sequences_to_mermaid(
             return artifact_id.split("::")[-1]
         return artifact_id
 
+    def get_participant_label(artifact_id: str) -> str:
+        """Get participant label including file name if available."""
+        name = get_display_name(artifact_id)
+        if artifacts and artifact_id in artifacts:
+            file_name = artifacts[artifact_id].get("file")
+            if file_name:
+                return f"{name} ({file_name})"
+        return name
+
     # Track all participants for declaration
     all_participants: dict[str, str] = {}  # id -> display_name
 
@@ -455,7 +464,8 @@ def sequences_to_mermaid(
     for artifact_id, display_name in all_participants.items():
         # Sanitize name for Mermaid (remove special chars)
         safe_name = "".join(c if c.isalnum() or c == "_" else "_" for c in display_name)
-        lines.append(f"    participant {safe_name} as {display_name}")
+        label = get_participant_label(artifact_id)
+        lines.append(f"    participant {safe_name} as {label}")
 
     # Add sequence arrows
     for i, sequence in enumerate(sequences):

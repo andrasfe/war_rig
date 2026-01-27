@@ -4,12 +4,12 @@
     "file_name": "ims/PSBPAUTB.psb",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T17:40:21.924538",
+    "analyzed_at": "2026-01-27T02:42:53.716557",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This PSB source file defines a single IMS database PCB named PAUTBPCB for accessing DBDNAME=DBPAUTP0 with PROCOPT=AP and KEYLEN=14. It senses the root segment PAUTSUM0 (PARENT=0) and child segment PAUTDTL1 (PARENT=PAUTSUM0), enabling qualified and unqualified DL/I calls to these segments. The PSB is generated for COBOL language with PSBNAME=PSBPAUTB.",
+    "summary": "This file defines an IMS Program Specification Block (PSB) named PSBPAUTB for COBOL application programs. It specifies a database PCB named PAUTBPCB accessing DBDNAME=DBPAUTP0 with PROCOPT=AP and KEYLEN=14, sensitive to root segment PAUTSUM0 and child segment PAUTDTL1. The PSB is generated with CMPAT=YES.",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
@@ -21,9 +21,18 @@
   },
   "inputs": [
     {
+      "name": "PAUTBPCB",
+      "io_type": "OTHER",
+      "description": "IMS Database PCB providing access to DBDNAME=DBPAUTP0 database with PROCOPT=AP and KEYLEN=14",
+      "copybook": null,
+      "citation": [
+        17
+      ]
+    },
+    {
       "name": "PAUTSUM0",
       "io_type": "IMS_SEGMENT",
-      "description": "Root segment (PARENT=0) sensed for access via DL/I calls such as GU/GN",
+      "description": "Root sensitive segment (PARENT=0) accessible via PAUTBPCB for application programs to retrieve/process",
       "copybook": null,
       "citation": [
         18
@@ -32,35 +41,14 @@
     {
       "name": "PAUTDTL1",
       "io_type": "IMS_SEGMENT",
-      "description": "Child segment under PAUTSUM0 sensed for access via DL/I calls such as GU/GN",
+      "description": "Child sensitive segment (PARENT=PAUTSUM0) accessible via PAUTBPCB for application programs to retrieve/process",
       "copybook": null,
       "citation": [
         19
       ]
     }
   ],
-  "outputs": [
-    {
-      "name": "PAUTSUM0",
-      "io_type": "IMS_SEGMENT",
-      "description": "New root segments insertable via ISRT after positioning",
-      "copybook": null,
-      "citation": [
-        17,
-        18
-      ]
-    },
-    {
-      "name": "PAUTDTL1",
-      "io_type": "IMS_SEGMENT",
-      "description": "New child segments insertable via ISRT under PAUTSUM0 after positioning",
-      "copybook": null,
-      "citation": [
-        17,
-        19
-      ]
-    }
-  ],
+  "outputs": [],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
@@ -70,55 +58,27 @@
   "business_rules": [
     {
       "rule_id": "BR001",
-      "description": "PROCOPT=AP governs segment access, permitting positioning (GU/GN) and insert (ISRT) DL/I calls but prohibiting update (CHG) or delete (DLT)",
-      "logic_summary": "AP combination allows cursor positioning before inserts to establish sequence/parentage; applies to sensed segments PAUTSUM0 and PAUTDTL1",
-      "conditions": [
-        "PROCOPT=AP",
-        "KEYLEN=14 for SSA keys",
-        "SENSEG PARENT hierarchy"
-      ],
+      "description": "Segment hierarchy: PAUTSUM0 defined as root segment with PARENT=0; PAUTDTL1 defined as child segment with PARENT=PAUTSUM0",
+      "logic_summary": "Enforced via SENSEG statements in PCB definition",
+      "conditions": [],
       "citation": [
-        17,
         18,
         19
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Access permissions for PAUTBPCB set to PROCOPT=AP with KEYLEN=14",
+      "logic_summary": "PROCOPT=AP specifies allowed DL/I operations and access methods for the PCB",
+      "conditions": [],
+      "citation": [
+        17
       ]
     }
   ],
   "data_flow": {
-    "reads_from": [
-      {
-        "source": "PAUTSUM0",
-        "fields_used": [],
-        "citation": [
-          18
-        ]
-      },
-      {
-        "source": "PAUTDTL1",
-        "fields_used": [],
-        "citation": [
-          19
-        ]
-      }
-    ],
-    "writes_to": [
-      {
-        "destination": "PAUTSUM0",
-        "fields_written": [],
-        "citation": [
-          17,
-          18
-        ]
-      },
-      {
-        "destination": "PAUTDTL1",
-        "fields_written": [],
-        "citation": [
-          17,
-          19
-        ]
-      }
-    ],
+    "reads_from": [],
+    "writes_to": [],
     "transforms": []
   },
   "copybooks_used": [],
@@ -128,14 +88,15 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What are the exact segment layouts and key fields?",
-      "context": "PSB defines access but not field-level details; these are in DBD/PSBGEN output or application copybooks",
-      "suggestion": "Examine DBD source for DBPAUTP0 or COBOL programs using PSBPAUTB"
+      "question": "Precise IMS DL/I operations permitted by PROCOPT=AP",
+      "context": "PROCOPT=AP is specified but exact combination of GET/ISRT/REPL/DLET etc. not determinable from PSB source alone",
+      "suggestion": "Reference IMS/ESA PSBGEN documentation or DBD definition for DBPAUTP0"
     },
     {
-      "question": "Which application programs use this PSB?",
-      "context": "PSB source does not specify callers",
-      "suggestion": "Search JCL/COBOL for PSB=PSBPAUTB or PCB references"
+      "question": "Business purpose of DBPAUTP0 database and PAUT segments",
+      "context": "Names suggest Payment Authorization (PAUT) summary/detail but no descriptive comments or context provided",
+      "suggestion": "Review associated DBD source or application programs using PSBPAUTB"
     }
-  ]
+  ],
+  "dead_code": []
 }

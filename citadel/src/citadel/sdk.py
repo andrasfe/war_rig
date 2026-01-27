@@ -1072,6 +1072,11 @@ class Citadel:
                 "name": artifact.canonical_name,
                 "display_name": artifact.display_name,
                 "type": artifact.artifact_type.value,
+                "file": (
+                    Path(artifact.defined_in.file_path).name
+                    if artifact.defined_in
+                    else None
+                ),
             }
             for artifact_id, artifact in graph.artifacts.items()
         }

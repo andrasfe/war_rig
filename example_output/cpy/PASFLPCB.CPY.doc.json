@@ -4,49 +4,36 @@
     "file_name": "cpy/PASFLPCB.CPY",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T17:40:50.363983",
+    "analyzed_at": "2026-01-27T02:44:15.851827",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the data structure for the PASFL IMS Program Communication Block (PCB), used in the LINKAGE SECTION of IMS DL/I application programs. It specifies fields for database identification, processing options set by the application, status and segment details returned by IMS, and a key feedback buffer. The structure follows standard IMS PCB layout for facilitating database calls to the PASFL database.",
-    "business_context": "Supports IMS DL/I database access for the PASFL database in batch or online IMS regions (MPP, BMP, etc.).",
-    "program_type": "SUBROUTINE",
+    "summary": "This copybook defines the structure of the PASFL Program Communication Block (PCB) for IMS DL/I database access. It includes fields for DBD name, segment level, status, processing options, segment name, key feedback length, number of sensitive segments, and the key feedback buffer. Used in COBOL programs to interface with the IMS hierarchical database PASFL.",
+    "business_context": "IMS database navigation and access control for the PASFL database in application programs.",
+    "program_type": "UTILITY",
     "citations": [
       17,
       18,
-      19,
-      20,
-      21,
-      23,
       26
     ]
   },
   "inputs": [
     {
       "name": "PASFL-PCB-PROCOPT",
-      "io_type": "PARAMETER",
-      "description": "Processing options set by the application program to specify the type of DL/I operation (e.g., GU for Get Unique, GN for Get Next, ISRT for Insert).",
+      "io_type": "OTHER",
+      "description": "Processing options field set by the application prior to DL/I calls to specify the database function (e.g., GO, GNP, K)",
       "copybook": null,
       "citation": [
         21
-      ]
-    },
-    {
-      "name": "PASFL-DBDNAME",
-      "io_type": "OTHER",
-      "description": "Database name identifier (PASFL) referenced by the application for the target database.",
-      "copybook": null,
-      "citation": [
-        18
       ]
     }
   ],
   "outputs": [
     {
       "name": "PASFL-PCB-STATUS",
-      "io_type": "RETURN_CODE",
-      "description": "Two-byte status code set by IMS after a DL/I call (e.g., '00' success, 'GE' segment not found).",
+      "io_type": "OTHER",
+      "description": "PCB status code populated by IMS after DL/I calls indicating success or failure",
       "copybook": null,
       "citation": [
         20
@@ -55,7 +42,7 @@
     {
       "name": "PASFL-SEG-LEVEL",
       "io_type": "OTHER",
-      "description": "Segment hierarchical level set by IMS for the accessed segment.",
+      "description": "Segment hierarchy level returned by IMS after DL/I calls",
       "copybook": null,
       "citation": [
         19
@@ -64,28 +51,37 @@
     {
       "name": "PASFL-SEG-NAME",
       "io_type": "OTHER",
-      "description": "Eight-byte segment name set by IMS for the accessed or sensed segment.",
+      "description": "Name of the segment retrieved by IMS",
       "copybook": null,
       "citation": [
         23
       ]
     },
     {
-      "name": "PASFL-KEYFB",
+      "name": "PASFL-KEYFB-NAME",
       "io_type": "OTHER",
-      "description": "Key feedback buffer (100 bytes) filled by IMS with concatenated keys from root to accessed segment when PROCOPT requests it.",
+      "description": "Length of the key feedback area provided by IMS",
       "copybook": null,
       "citation": [
-        26
+        24
       ]
     },
     {
       "name": "PASFL-NUM-SENSEGS",
       "io_type": "OTHER",
-      "description": "Number of sensitive segments set by IMS.",
+      "description": "Number of sensitive segments for the PCB as defined in the PSB",
       "copybook": null,
       "citation": [
         25
+      ]
+    },
+    {
+      "name": "PASFL-KEYFB",
+      "io_type": "OTHER",
+      "description": "Key feedback buffer populated by IMS with concatenated keys and parentage after qualifying DL/I calls",
+      "copybook": null,
+      "citation": [
+        26
       ]
     }
   ],
@@ -100,10 +96,10 @@
   "business_rules": [
     {
       "rule_id": "BR001",
-      "description": "Application sets processing options in PCB before issuing DL/I call",
-      "logic_summary": "PASFL-PCB-PROCOPT is updated by the program with DL/I command codes to control the call behavior.",
+      "description": "Application programs set PASFL-PCB-PROCOPT to valid IMS processing options prior to issuing DL/I calls",
+      "logic_summary": "Field sized PIC X(04) to hold codes like GO (Get Unique), GNP (Get Next Parent), K (Set Key)",
       "conditions": [
-        "Prior to DL/I CALL statement"
+        "Before any DL/I call"
       ],
       "citation": [
         21
@@ -111,10 +107,10 @@
     },
     {
       "rule_id": "BR002",
-      "description": "IMS sets PCB status code after DL/I call completion",
-      "logic_summary": "Application must check PASFL-PCB-STATUS post-call to determine success or failure and take appropriate action.",
+      "description": "After DL/I calls, application programs must check PASFL-PCB-STATUS for '00' (success) or error codes",
+      "logic_summary": "Field sized PIC X(02) receives IMS status",
       "conditions": [
-        "After DL/I CALL statement"
+        "After DL/I call"
       ],
       "citation": [
         20
@@ -122,35 +118,67 @@
     },
     {
       "rule_id": "BR003",
-      "description": "IMS populates segment level, name, and key feedback for qualified calls",
-      "logic_summary": "Fields like PASFL-SEG-LEVEL, PASFL-SEG-NAME, and PASFL-KEYFB are filled by IMS when PROCOPT includes K (key feedback) or similar options.",
+      "description": "Key feedback length is provided in PASFL-KEYFB-NAME for application use in navigating the key feedback area",
+      "logic_summary": "Field sized PIC S9(05) COMP indicates bytes in PASFL-KEYFB",
       "conditions": [
-        "DL/I calls with key feedback requested"
+        "After qualifying DL/I calls (GU, GNP)"
       ],
       "citation": [
-        19,
-        23,
-        26
+        24
       ]
     }
   ],
   "data_flow": {
-    "reads_from": [],
-    "writes_to": [],
+    "reads_from": [
+      {
+        "source": "IMS",
+        "fields_used": [
+          "PASFL-PCB-STATUS",
+          "PASFL-SEG-LEVEL",
+          "PASFL-SEG-NAME",
+          "PASFL-KEYFB-NAME",
+          "PASFL-NUM-SENSEGS",
+          "PASFL-KEYFB"
+        ],
+        "citation": [
+          19,
+          20,
+          23,
+          24,
+          25,
+          26
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "IMS",
+        "fields_written": [
+          "PASFL-PCB-PROCOPT"
+        ],
+        "citation": [
+          21
+        ]
+      }
+    ],
     "transforms": []
   },
   "copybooks_used": [],
   "paragraphs": [],
-  "error_handling": [
-    {
-      "condition": "PASFL-PCB-STATUS not equal to '00'",
-      "action": "Application program logic checks status and handles errors (e.g., abnormal end, retry, or logging) based on code meaning.",
-      "citation": [
-        20
-      ]
-    }
-  ],
+  "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": []
+  "open_questions": [
+    {
+      "question": "Exact valid values and lengths for processing options in PASFL-PCB-PROCOPT",
+      "context": "Copybook defines layout (PIC X(04)) but not enumerated values; relies on IMS standards",
+      "suggestion": "Consult IMS/ESA Manuals or PSB source for PASFL database"
+    },
+    {
+      "question": "Precise usage of FILLER field at line 22",
+      "context": "Unnamed FILLER PIC S9(05) COMP; standard IMS PCB may use for reserved or length",
+      "suggestion": "Compare with IMS system macro DFSPB or PSBGEN output"
+    }
+  ],
+  "dead_code": []
 }

@@ -4,56 +4,101 @@
     "file_name": "cpy/CCPAURQY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T17:39:12.182544",
+    "analyzed_at": "2026-01-27T02:43:41.819054",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This COBOL copybook defines the data structure for a Pending Authorization Request record used in payment processing systems. It includes fields for authorization date and time, card number, expiry date, transaction details, merchant information, and other related data elements. The structure supports capturing and passing authorization request data between programs.",
-    "business_context": "Serves credit card or payment authorization workflows, holding details like card info, transaction amount, merchant data, and processing codes for pending auth requests (citation: lines 19-37).",
+    "summary": "This copybook defines the record structure for a Pending Authorization Request used in payment processing systems. It specifies fields for authorization date/time, card details, transaction amount, merchant information, and other ISO-8583-like elements essential for auth request handling. The structure ensures consistent data layout across programs that include this copybook.",
+    "business_context": "Credit card transaction authorization workflow, capturing pending auth requests from acquirers or POS terminals for fraud/risk assessment.",
     "program_type": "UTILITY",
     "citations": [
       2,
       19,
-      37
+      36
     ]
   },
-  "inputs": [],
-  "outputs": [],
+  "inputs": [
+    {
+      "name": "N/A",
+      "io_type": "OTHER",
+      "description": "Not applicable; this is a copybook defining data structures, not an executable program with inputs. Fields like PA-RQ-AUTH-DATE (line 19), PA-RQ-CARD-NUM (line 21) serve as record layouts for input files or commareas in including programs.",
+      "copybook": null,
+      "citation": [
+        1,
+        37
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "N/A",
+      "io_type": "OTHER",
+      "description": "Not applicable; copybook defines reusable structures, not program outputs. Fields like PA-RQ-TRANSACTION-ID (line 36) can be populated for output records in using programs.",
+      "copybook": null,
+      "citation": [
+        1,
+        37
+      ]
+    }
+  ],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [],
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "PA-RQ-AUTH-DATE must conform to 6-character alphanumeric format",
+      "logic_summary": "PIC X(06) enforces fixed-length string for date storage",
+      "conditions": [
+        "Length exactly 6 characters"
+      ],
+      "citation": [
+        19
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "PA-RQ-CARD-NUM is fixed 16-character field for card number",
+      "logic_summary": "PIC X(16) defines alphanumeric card identifier",
+      "conditions": [
+        "Exactly 16 characters"
+      ],
+      "citation": [
+        21
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "PA-RQ-TRANSACTION-AMT uses signed decimal format with 10 integer digits and 2 decimal places",
+      "logic_summary": "PIC +9(10).99 allows positive/negative amounts up to 99,999,999,999.99",
+      "conditions": [
+        "Signed numeric, COMP-3 implied in usage"
+      ],
+      "citation": [
+        27
+      ]
+    }
+  ],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
     "transforms": []
   },
-  "copybooks_used": [
-    {
-      "copybook_name": "CCPAURQY",
-      "purpose": "Defines the 05-level group for PA-RQ- prefixed fields representing a pending authorization request structure",
-      "location": "OTHER",
-      "citation": 19
-    }
-  ],
+  "copybooks_used": [],
   "paragraphs": [],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "In which specific programs is this copybook included?",
-      "context": "Copybook analysis does not reveal including programs; must review referencing COBOL source files.",
-      "suggestion": "Search for COPY CCPAURQY statements in associated program listings."
-    },
-    {
-      "question": "Detailed field formats and validation rules (e.g., packed decimal usage, edit masks)?",
-      "context": "PIC clauses provided but no usage or validation logic in copybook itself.",
-      "suggestion": "Examine programs using this copybook for MOVE/usage statements."
+      "question": "Which programs include or reference this CCPAURQY copybook?",
+      "context": "No including programs or usage context provided in the file",
+      "suggestion": "Search codebase for COPY CCPAURQY statements or analyze linked source files"
     }
-  ]
+  ],
+  "dead_code": []
 }

@@ -4,13 +4,13 @@
     "file_name": "cbl/DBUNLDGS.CBL",
     "file_type": "COBOL",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T17:37:56.992182",
+    "analyzed_at": "2026-01-27T02:43:04.043604",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This batch IMS DL/I program unloads root segments (PAUTSUM0 Pending Authorization Summary) sequentially from the PAUT IMS database and inserts them into the PASFL GSAM database, then unloads all child segments (PAUTDTL1 Pending Authorization Details) under each root using parentage and inserts them into the PADFL GSAM database. It processes until end of database (GB status), tracks read counts, and abends on IMS call errors. Commented sequential file outputs suggest this replaced file writes with GSAM inserts.",
-    "business_context": "Unloading pending authorization summary and detail data from hierarchical IMS database to flat GSAM datasets, likely for migration, backup, or processing.",
+    "summary": "This IMS DL/I batch program unloads pending authorization data from the PAUT hierarchical database by sequentially reading root PENDING-AUTH-SUMMARY (PAUTSUM0) segments using GN calls and associated child PENDING-AUTH-DETAILS (PAUTDTL1) segments using GNP calls via PAUTBPCB. It then inserts the unloaded root segments into the PASFL GSAM database and child segments into the PADFL GSAM database using ISRT calls via respective PCBs. Processing skips root and children if PA-ACCT-ID is not numeric, and maintains counters for processed records.",
+    "business_context": "Supports unloading of pending authorization summary and detail records from IMS PAUT database to GSAM structures, likely for data migration, archiving, or flat file processing in an authorization system.",
     "program_type": "BATCH",
     "citations": [
       18,
@@ -18,54 +18,41 @@
       170,
       172,
       216,
-      222,
       263,
-      268,
       300,
       319
     ]
   },
   "inputs": [
     {
-      "name": "PAUTSUM0",
-      "io_type": "IMS_SEGMENT",
-      "description": "Root segment (Pending Authorization Summary) read sequentially via unqualified GN calls",
-      "copybook": "CIPAUSMY",
+      "name": "PAUTBPCB",
+      "io_type": "OTHER",
+      "description": "Linkage IMS PCB parameter providing access to read PENDING-AUTH-SUMMARY root segments and PENDING-AUTH-DETAILS child segments from PAUT IMS database",
+      "copybook": "PAUTBPCB",
       "citation": [
+        159,
         222,
-        236
-      ]
-    },
-    {
-      "name": "PAUTDTL1",
-      "io_type": "IMS_SEGMENT",
-      "description": "Child segment (Pending Authorization Details) read via unqualified GNP calls under current root",
-      "copybook": "CIPAUDTY",
-      "citation": [
-        268,
-        280
+        268
       ]
     }
   ],
   "outputs": [
     {
-      "name": "PASFL",
+      "name": "PASFLPCB",
       "io_type": "IMS_SEGMENT",
-      "description": "GSAM dataset receiving inserted root summary segments",
-      "copybook": null,
+      "description": "Linkage IMS PCB for GSAM database receiving inserted PENDING-AUTH-SUMMARY root segments",
+      "copybook": "PASFLPCB",
       "citation": [
-        302,
-        304
+        303
       ]
     },
     {
-      "name": "PADFL",
+      "name": "PADFLPCB",
       "io_type": "IMS_SEGMENT",
-      "description": "GSAM dataset receiving inserted child detail segments",
-      "copybook": null,
+      "description": "Linkage IMS PCB for GSAM database receiving inserted PENDING-AUTH-DETAILS child segments",
+      "copybook": "PADFLPCB",
       "citation": [
-        321,
-        323
+        322
       ]
     }
   ],
@@ -84,62 +71,55 @@
   "business_rules": [
     {
       "rule_id": "BR001",
-      "description": "Skip processing root and its children if PA-ACCT-ID is not numeric",
-      "logic_summary": "Checks IF PA-ACCT-ID IS NUMERIC before inserting parent to GSAM and looping children",
+      "description": "Skip insertion of summary segment and processing of its detail children if the account ID is not numeric",
+      "logic_summary": "Checks PA-ACCT-ID IS NUMERIC before performing parent insert and child loop",
       "conditions": [
         "PA-ACCT-ID IS NUMERIC"
       ],
       "citation": [
         241
       ]
-    },
-    {
-      "rule_id": "BR002",
-      "description": "Process children only under current root using GNP parentage",
-      "logic_summary": "Unqualified GNP SSA ensures children belong to the previously positioned root",
-      "conditions": [
-        "PAUT-PCB-STATUS = SPACES",
-        "PAUT-PCB-STATUS = 'GE' to end children"
-      ],
-      "citation": [
-        245,
-        268,
-        284
-      ]
     }
   ],
   "data_flow": {
     "reads_from": [
       {
-        "source": "PAUTSUM0",
+        "source": "PAUTBPCB",
         "fields_used": [
           "PA-ACCT-ID"
         ],
         "citation": [
+          222,
           239
         ]
       },
       {
-        "source": "PAUTDTL1",
-        "fields_used": [],
+        "source": "PAUTBPCB",
+        "fields_used": [
+          "PENDING-AUTH-DETAILS fields"
+        ],
         "citation": [
-          280
+          268
         ]
       }
     ],
     "writes_to": [
       {
-        "destination": "PASFL",
-        "fields_written": [],
+        "destination": "PASFLPCB",
+        "fields_written": [
+          "PENDING-AUTH-SUMMARY"
+        ],
         "citation": [
-          304
+          303
         ]
       },
       {
-        "destination": "PADFL",
-        "fields_written": [],
+        "destination": "PADFLPCB",
+        "fields_written": [
+          "PENDING-AUTH-DETAILS"
+        ],
         "citation": [
-          323
+          322
         ]
       }
     ],
@@ -147,19 +127,19 @@
       {
         "input_field": "PENDING-AUTH-SUMMARY",
         "output_field": "PENDING-AUTH-SUMMARY",
-        "transformation_description": "Direct copy/insert of entire root segment to GSAM (no changes observed)",
+        "transformation_description": "Direct copy from IMS I/O area to GSAM insert without modification after GN read",
         "citation": [
           236,
-          304
+          303
         ]
       },
       {
         "input_field": "PENDING-AUTH-DETAILS",
         "output_field": "PENDING-AUTH-DETAILS",
-        "transformation_description": "Direct copy/insert of entire child segment to GSAM (no changes observed; ROOT-SEG-KEY set from parent but unused in insert)",
+        "transformation_description": "Direct copy from IMS I/O area to GSAM insert without modification after GNP read",
         "citation": [
           280,
-          323
+          322
         ]
       }
     ]
@@ -167,7 +147,7 @@
   "copybooks_used": [
     {
       "copybook_name": "IMSFUNCS",
-      "purpose": "Defines IMS DL/I function codes (FUNC-GN, FUNC-GNP, FUNC-ISRT)",
+      "purpose": "Defines IMS DL/I function codes such as FUNC-GN, FUNC-GNP, FUNC-ISRT",
       "location": "WORKING_STORAGE",
       "citation": 136
     },
@@ -185,19 +165,19 @@
     },
     {
       "copybook_name": "PAUTBPCB",
-      "purpose": "PCB mask for input IMS database PAUT (source for reads)",
+      "purpose": "Defines PCB mask for source PAUT IMS database",
       "location": "LINKAGE",
       "citation": 154
     },
     {
       "copybook_name": "PASFLPCB",
-      "purpose": "PCB mask for output GSAM PASFL (summary inserts)",
+      "purpose": "Defines PCB mask for target PASFL GSAM database",
       "location": "LINKAGE",
       "citation": 155
     },
     {
       "copybook_name": "PADFLPCB",
-      "purpose": "PCB mask for output GSAM PADFL (detail inserts)",
+      "purpose": "Defines PCB mask for target PADFL GSAM database",
       "location": "LINKAGE",
       "citation": 156
     }
@@ -206,7 +186,7 @@
     {
       "paragraph_name": "MAIN-PARA",
       "summary": null,
-      "purpose": "This is the primary orchestration paragraph serving as the program entry point, supporting alternate entry DLITCBL for potential linkage compatibility. It receives IMS PCBs (PAUTBPCB for source DB, PASFLPCB/PADFLPCB for GSAM outputs) via linkage section. It begins by performing 1000-INITIALIZE to accept system dates, display startup messages including program name and date. Next, it enters a processing loop invoking 2000-FIND-NEXT-AUTH-SUMMARY repeatedly until WS-END-OF-ROOT-SEG is set to 'Y' (end of database reached via GB status). Within the loop, each root summary is read, validated (numeric acct ID), inserted to PASFL GSAM, and its children processed similarly to PADFL GSAM. Counters like WS-AUTH-SMRY-PROC-CNT and WS-NO-SUMRY-READ are incremented during reads. No direct data inputs beyond PCBs; outputs are GSAM inserts handled in subordinates. Error handling is delegated to called paragraphs which abend on IMS failures. After loop completion, it performs 4000-FILE-CLOSE for cleanup display (no actual files). Finally, it GOBACKs with normal return code unless abended earlier.",
+      "purpose": "This paragraph serves as the primary orchestration point and entry point for the program, including an alternate ENTRY 'DLITCBL' for potential dynamic invocation using the same linkage PCBs. It consumes the linkage section PCBs PAUTBPCB, PASFLPCB, and PADFLPCB passed via PROCEDURE DIVISION USING at line 159. It begins by performing 1000-INITIALIZE to accept system dates and display startup messages. It then enters a loop at lines 172-173 that repeatedly performs 2000-FIND-NEXT-AUTH-SUMMARY until WS-END-OF-ROOT-SEG is set to 'Y', processing all root summaries and their children from IMS to GSAM. After the loop completes upon end-of-database, it performs 4000-FILE-CLOSE to display a closing message, though actual file closes are commented out. No direct data outputs are produced here; outputs occur via subordinate inserts in GSAM databases. Business logic is implicit in the loop control based on end-of-root flag set during reads. No explicit error handling occurs in this paragraph; subordinate paragraphs handle errors by abending. It calls 1000-INITIALIZE for setup, 2000-FIND-NEXT-AUTH-SUMMARY for core processing loop, and 4000-FILE-CLOSE for termination.",
       "called_by": [],
       "calls": [
         "1000-INITIALIZE",
@@ -219,28 +199,32 @@
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
       "metadata": null
     },
     {
       "paragraph_name": "1000-INITIALIZE",
       "summary": null,
-      "purpose": "This initialization paragraph sets up runtime variables and logs program start for audit trail. It accepts CURRENT-DATE from DATE and CURRENT-YYDDD from DAY into working storage fields. It displays startup banner, program name 'DBUNLDGS', separator line, and current date for operator visibility. Commented code for parameter acceptance from SYSIN and sequential file opens (OPFILE1/OPFILE2) indicates legacy or optional file-based output now replaced by GSAM inserts. No inputs consumed beyond system date; outputs are display messages to console. No business decisions or validations performed here. No error handling or abends. No subordinate calls. Control returns to caller via 1000-EXIT.",
+      "purpose": "This initialization paragraph sets up runtime variables and displays program startup information. It consumes system date via ACCEPT statements at lines 185-186 into CURRENT-DATE and CURRENT-YYDDD. No files are opened as those statements are commented out at lines 195-209. It produces display output to console with program start message, date, and decorative lines at 189-192. No business decisions or validations are performed. No error handling is present since no I/O occurs. No subordinate calls are made. Control returns to caller via 1000-EXIT at line 212.",
       "called_by": [
         "MAIN-PARA"
       ],
       "calls": [],
       "citation": [
         182,
-        212
+        213
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
       "metadata": null
     },
     {
       "paragraph_name": "2000-FIND-NEXT-AUTH-SUMMARY",
       "summary": null,
-      "purpose": "This paragraph handles sequential reading of root summary segments (PAUTSUM0) from PAUT IMS database using GN call, driving the main processing loop. It initializes PAUT-PCB-STATUS, issues CBLTDLI GN using PAUTBPCB, PENDING-AUTH-SUMMARY IO area, and unqualified ROOT-UNQUAL-SSA ('PAUTSUM0 '). If status is spaces (success), increments WS-NO-SUMRY-READ and WS-AUTH-SMRY-PROC-CNT counters, moves full segment to unused OPFIL1-REC, initializes ROOT-SEG-KEY/CHILD-SEG-REC, sets ROOT-SEG-KEY from PA-ACCT-ID. Then checks if PA-ACCT-ID NUMERIC; if yes, performs 3100-INSERT-PARENT-SEG-GSAM to insert summary to PASFL GSAM, resets WS-END-OF-CHILD-SEG, and loops PERFORM 3000-FIND-NEXT-AUTH-DTL until child end ('Y'). If GN returns GB (end of DB), sets END-OF-AUTHDB and WS-END-OF-ROOT-SEG to 'Y' to exit main loop. If other status, displays error/status/KEYFB and performs 9999-ABEND. Inputs from prior PCB position; outputs root insert and child loop trigger. Business logic enforces numeric acct ID for processing.",
+      "purpose": "This paragraph handles reading the next root PENDING-AUTH-SUMMARY segment from PAUT IMS database and orchestrates processing of the root and its children. It consumes the current position in PAUTBPCB and reads via CBLTDLI GN call at lines 222-225 into PENDING-AUTH-SUMMARY I/O area using ROOT-UNQUAL-SSA. If PAUT-PCB-STATUS is spaces (success) at line 232, it increments summary read and process counters at 234-235, moves segment to WS OPFIL1-REC at 236, initializes keys and child rec at 237-238, moves PA-ACCT-ID to ROOT-SEG-KEY at 239. It then checks if PA-ACCT-ID IS NUMERIC at 241; if yes, performs 3100-INSERT-PARENT-SEG-GSAM at 243 to insert into PASFL GSAM, initializes child end flag at 244, and loops PERFORM 3000-FIND-NEXT-AUTH-DTL until WS-END-OF-CHILD-SEG='Y' at 245-246 to process all children under this root. If PAUT-PCB-STATUS='GB' (end-of-db) at 249, sets end flags at 250-251. If other error status at 253, displays feedback and abends via 9999-ABEND at 256. Business logic enforces numeric account ID for processing to avoid invalid inserts. Error handling abends on unexpected IMS statuses.",
       "called_by": [
         "MAIN-PARA"
       ],
@@ -250,16 +234,18 @@
       ],
       "citation": [
         216,
-        258
+        259
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
       "metadata": null
     },
     {
       "paragraph_name": "3000-FIND-NEXT-AUTH-DTL",
       "summary": null,
-      "purpose": "This paragraph reads child detail segments (PAUTDTL1) under the current root using GNP for parentage-qualified sequential access. It issues CBLTDLI GNP using PAUTBPCB, PENDING-AUTH-DETAILS IO area, and unqualified CHILD-UNQUAL-SSA ('PAUTDTL1 '). If status spaces, sets MORE-AUTHS flag, increments WS-NO-SUMRY-READ (likely bug, intended for details), WS-AUTH-SMRY-PROC-CNT, moves full segment to CHILD-SEG-REC (part of unused OPFIL2-REC), then performs 3200-INSERT-CHILD-SEG-GSAM to insert to PADFL GSAM. If GE (segment not found, end of children), sets WS-END-OF-CHILD-SEG to 'Y' and displays flag. If other status, displays error/status/KEYFB and abends via 9999-ABEND. Initializes PAUT-PCB-STATUS post-call. Inputs from current PCB position (after root GN); outputs child insert to GSAM. No additional validations; relies on GNP for correct parentage. Error handling aborts on failures.",
+      "purpose": "This paragraph reads the next child PENDING-AUTH-DETAILS segment under the current root using GNP positioned by prior GN. It consumes current PCB position in PAUTBPCB and calls CBLTDLI GNP at lines 267-270 into PENDING-AUTH-DETAILS using CHILD-UNQUAL-SSA. If PAUT-PCB-STATUS=spaces (success) at 276, sets MORE-AUTHS flag at 277, increments WS-NO-SUMRY-READ and WS-AUTH-SMRY-PROC-CNT counters at 278-279 (note: counters named for summary but used here), moves segment to CHILD-SEG-REC at 280, and performs 3200-INSERT-CHILD-SEG-GSAM at 282 to insert into PADFL GSAM. If PAUT-PCB-STATUS='GE' (segment not found, end of children) at 284, sets WS-END-OF-CHILD-SEG='Y' at 286 and displays flag. If other error at 290, displays status/feedback and abends at 293. Finally initializes PAUT-PCB-STATUS at 295. No business decisions beyond IMS status checks. Error handling abends on non-success/non-end statuses. Called repeatedly from 2000 until child end.",
       "called_by": [
         "2000-FIND-NEXT-AUTH-SUMMARY"
       ],
@@ -268,64 +254,72 @@
       ],
       "citation": [
         263,
-        296
+        297
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
       "metadata": null
     },
     {
       "paragraph_name": "3100-INSERT-PARENT-SEG-GSAM",
       "summary": null,
-      "purpose": "This utility paragraph inserts the current root summary segment into the PASFL GSAM database. It issues CBLTDLI ISRT using PASFLPCB and PENDING-AUTH-SUMMARY IO area (full segment from prior GN). If PASFL-PCB-STATUS not spaces post-call, displays error/status/KEYFB and performs 9999-ABEND. No data transformations; direct segment insert preserving structure. Inputs full PENDING-AUTH-SUMMARY from working storage (populated by 2000 para). Outputs inserted segment to GSAM PCB. No business logic/decisions beyond status check. Strict error handling abends on any insert failure. No subordinate calls.",
+      "purpose": "This utility paragraph inserts the current PENDING-AUTH-SUMMARY root segment into the PASFL GSAM database. It consumes the segment data in PENDING-AUTH-SUMMARY I/O area populated from prior GN read. Performs CBLTDLI ISRT call at lines 302-304 using PASFLPCB. Produces the inserted segment in PASFL GSAM. No transformations or validations performed. If PASFL-PCB-STATUS not spaces at 311, displays error/KEYFB and abends via 9999-ABEND at 314. No subordinate calls. Business logic is direct insert assuming valid data from read.",
       "called_by": [
         "2000-FIND-NEXT-AUTH-SUMMARY"
       ],
       "calls": [],
       "citation": [
         300,
-        316
+        317
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
       "metadata": null
     },
     {
       "paragraph_name": "3200-INSERT-CHILD-SEG-GSAM",
       "summary": null,
-      "purpose": "This utility paragraph inserts the current child detail segment into the PADFL GSAM database. It issues CBLTDLI ISRT using PADFLPCB and PENDING-AUTH-DETAILS IO area (full segment from prior GNP). If PADFL-PCB-STATUS not spaces post-call, displays error/status/KEYFB and performs 9999-ABEND. No data transformations; direct segment insert. Inputs full PENDING-AUTH-DETAILS from working storage (populated by 3000 para). Outputs inserted segment to GSAM PCB. No decisions or validations. Error handling abends immediately on failure. No calls.",
+      "purpose": "This utility paragraph inserts the current PENDING-AUTH-DETAILS child segment into the PADFL GSAM database. It consumes the segment data in PENDING-AUTH-DETAILS I/O area from prior GNP read. Performs CBLTDLI ISRT call at lines 321-323 using PADFLPCB. Produces the inserted segment in PADFL GSAM. No transformations or validations. If PADFL-PCB-STATUS not spaces at 330, displays error/KEYFB and abends at 333. No subordinate calls. Direct insert assuming valid positioned context from parent.",
       "called_by": [
         "3000-FIND-NEXT-AUTH-DTL"
       ],
       "calls": [],
       "citation": [
         319,
-        335
+        336
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
       "metadata": null
     },
     {
       "paragraph_name": "4000-FILE-CLOSE",
       "summary": null,
-      "purpose": "This termination paragraph logs file closure, though no actual files are open (commented FD/SELECT/OPEN/CLOSE). It displays 'CLOSING THE FILE' message. Commented checks for WS-OUTFL*-STATUS on close would continue or display errors if non-zero/'00'. Inputs none; outputs console display. No business logic. No error handling active. No calls. Serves as cleanup placeholder.",
+      "purpose": "This termination paragraph handles program closeout by displaying a closing message at 339. It consumes no data inputs as file CLOSE statements are commented out at 340 and 347. Produces console display output. No business logic or decisions. No error handling since no active I/O. No calls made. Though labeled for file close, actual closes and status checks are commented, so effectively just a display.",
       "called_by": [
         "MAIN-PARA"
       ],
       "calls": [],
       "citation": [
         338,
-        354
+        355
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
       "metadata": null
     },
     {
       "paragraph_name": "9999-ABEND",
       "summary": null,
-      "purpose": "This error termination paragraph handles all program abends from IMS call failures. It displays 'DBUNLDGS ABENDING ...' message. Sets RETURN-CODE to 16 and GOBACKs, causing abnormal end. Inputs error context from caller (PCB status/KEYFB displayed prior). Outputs abend message and non-zero return code. No recovery or logging beyond display. Called by all error paths in read/insert paras.",
+      "purpose": "This error termination paragraph abends the program on IMS call failures or other errors. It consumes no specific inputs but is invoked on error conditions from other paragraphs. Displays abend message at 360. Sets RETURN-CODE to 16 at 362 and GOBACKs at 363. No validations or subordinate calls. Serves as centralized error exit point, halting execution with non-zero return.",
       "called_by": [
         "2000-FIND-NEXT-AUTH-SUMMARY",
         "3000-FIND-NEXT-AUTH-DTL",
@@ -335,37 +329,39 @@
       "calls": [],
       "citation": [
         357,
-        365
+        366
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
       "metadata": null
     }
   ],
   "error_handling": [
     {
-      "condition": "PAUT-PCB-STATUS NOT = SPACES AND NOT = 'GB' after root GN",
+      "condition": "PAUT-PCB-STATUS NOT = SPACES AND NOT = 'GB'",
       "action": "DISPLAY status and KEYFB, then PERFORM 9999-ABEND",
       "citation": [
-        252
+        253
       ]
     },
     {
-      "condition": "PAUT-PCB-STATUS NOT = SPACES AND NOT = 'GE' after child GNP",
+      "condition": "PAUT-PCB-STATUS NOT = SPACES AND NOT = 'GE'",
       "action": "DISPLAY status and KEYFB, then PERFORM 9999-ABEND",
       "citation": [
         290
       ]
     },
     {
-      "condition": "PASFL-PCB-STATUS NOT = SPACES after parent ISRT",
+      "condition": "PASFL-PCB-STATUS NOT = SPACES",
       "action": "DISPLAY status and KEYFB, then PERFORM 9999-ABEND",
       "citation": [
         311
       ]
     },
     {
-      "condition": "PADFL-PCB-STATUS NOT = SPACES after child ISRT",
+      "condition": "PADFL-PCB-STATUS NOT = SPACES",
       "action": "DISPLAY status and KEYFB, then PERFORM 9999-ABEND",
       "citation": [
         330
@@ -376,24 +372,15 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "Exact layout and fields of segments defined by CIPAUSMY and CIPAUDTY copybooks",
-      "context": "Copybooks referenced but source not provided; only names and usage inferred",
-      "suggestion": "Analyze CIPAUSMY.cpy and CIPAUDTY.cpy for field-level details"
+      "question": "Why does 3000-FIND-NEXT-AUTH-DTL increment WS-NO-SUMRY-READ and WS-AUTH-SMRY-PROC-CNT (lines 278-279) instead of detail-specific counters WS-NO-DTL-READ/WS-NO-DTL-DELETED?",
+      "context": "Code increments summary counters during child processing, which may be a naming/logic error as variables suggest separation at lines 70-73",
+      "suggestion": "Review variable usage or check if intentional aggregation"
     },
     {
-      "question": "Purpose of unused OPFIL1-REC and OPFIL2-REC moves and commented file I/O",
-      "context": "Records defined and moved to (236,280) but no OPEN/WRITE/CLOSE executed",
-      "suggestion": "Check if GSAM replaced sequential files; review version history"
-    },
-    {
-      "question": "Why WS-NO-SUMRY-READ incremented in child paragraph (278)",
-      "context": "Increments summary read counter during detail processing; likely copy-paste error vs WS-NO-DTL-READ",
-      "suggestion": "Static analysis or runtime test to confirm impact"
-    },
-    {
-      "question": "Usage of expiry/date/chkpt variables (WS-EXPIRY-DAYS, WS-AUTH-DATE, etc.)",
-      "context": "Defined and partially initialized but never used in logic",
-      "suggestion": "Possibly vestigial from prior version; confirm with business specs"
+      "question": "Purpose of MOVE PA-ACCT-ID TO ROOT-SEG-KEY (line 239) and preparation of OPFIL1-REC/OPFIL2-REC since no WRITE occurs (commented)?",
+      "context": "Records prepared in WS at 236/280 but files commented out; ROOT-SEG-KEY in child rec structure unused in IMS calls",
+      "suggestion": "Likely remnant of prior sequential file version; confirm if vestigial"
     }
-  ]
+  ],
+  "dead_code": []
 }

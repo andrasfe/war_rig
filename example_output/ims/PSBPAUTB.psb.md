@@ -2,33 +2,28 @@
 
 **File**: `ims/PSBPAUTB.psb`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-01-26 17:40:21.924538
+**Analyzed**: 2026-01-27 02:42:53.716557
 
 ## Purpose
 
-This PSB source file defines a single IMS database PCB named PAUTBPCB for accessing DBDNAME=DBPAUTP0 with PROCOPT=AP and KEYLEN=14. It senses the root segment PAUTSUM0 (PARENT=0) and child segment PAUTDTL1 (PARENT=PAUTSUM0), enabling qualified and unqualified DL/I calls to these segments. The PSB is generated for COBOL language with PSBNAME=PSBPAUTB.
+This file defines an IMS Program Specification Block (PSB) named PSBPAUTB for COBOL application programs. It specifies a database PCB named PAUTBPCB accessing DBDNAME=DBPAUTP0 with PROCOPT=AP and KEYLEN=14, sensitive to root segment PAUTSUM0 and child segment PAUTDTL1. The PSB is generated with CMPAT=YES.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| PAUTSUM0 | IOType.IMS_SEGMENT | Root segment (PARENT=0) sensed for access via DL/I calls such as GU/GN |
-| PAUTDTL1 | IOType.IMS_SEGMENT | Child segment under PAUTSUM0 sensed for access via DL/I calls such as GU/GN |
-
-## Outputs
-
-| Name | Type | Description |
-|------|------|-------------|
-| PAUTSUM0 | IOType.IMS_SEGMENT | New root segments insertable via ISRT after positioning |
-| PAUTDTL1 | IOType.IMS_SEGMENT | New child segments insertable via ISRT under PAUTSUM0 after positioning |
+| PAUTBPCB | IOType.OTHER | IMS Database PCB providing access to DBDNAME=DBPAUTP0 database with PROCOPT=AP and KEYLEN=14 |
+| PAUTSUM0 | IOType.IMS_SEGMENT | Root sensitive segment (PARENT=0) accessible via PAUTBPCB for application programs to retrieve/process |
+| PAUTDTL1 | IOType.IMS_SEGMENT | Child sensitive segment (PARENT=PAUTSUM0) accessible via PAUTBPCB for application programs to retrieve/process |
 
 ## Business Rules
 
-- **BR001**: PROCOPT=AP governs segment access, permitting positioning (GU/GN) and insert (ISRT) DL/I calls but prohibiting update (CHG) or delete (DLT)
+- **BR001**: Segment hierarchy: PAUTSUM0 defined as root segment with PARENT=0; PAUTDTL1 defined as child segment with PARENT=PAUTSUM0
+- **BR002**: Access permissions for PAUTBPCB set to PROCOPT=AP with KEYLEN=14
 
 ## Open Questions
 
-- ? What are the exact segment layouts and key fields?
-  - Context: PSB defines access but not field-level details; these are in DBD/PSBGEN output or application copybooks
-- ? Which application programs use this PSB?
-  - Context: PSB source does not specify callers
+- ? Precise IMS DL/I operations permitted by PROCOPT=AP
+  - Context: PROCOPT=AP is specified but exact combination of GET/ISRT/REPL/DLET etc. not determinable from PSB source alone
+- ? Business purpose of DBPAUTP0 database and PAUT segments
+  - Context: Names suggest Payment Authorization (PAUT) summary/detail but no descriptive comments or context provided

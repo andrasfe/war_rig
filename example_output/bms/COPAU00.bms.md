@@ -2,39 +2,36 @@
 
 **File**: `bms/COPAU00.bms`
 **Type**: FileType.BMS
-**Analyzed**: 2026-01-26 17:41:11.273119
+**Analyzed**: 2026-01-27 02:42:27.496687
 
 ## Purpose
 
-Defines BMS mapset COPAU00 with map COPAU0A for the CardDemo Pending Authorization Screen. Enables searching by Account ID to view customer details, credit/cash limits and balances, approval/decline counts, and a list of up to 5 pending transactions. Users select transactions by entering 'S' in SEL fields for detail view, with error message display and function key guidance.
+This BMS mapset COPAU00 defines the COPAU0A map for the Pending Authorization Screen (CardDemo). It displays header info (transaction, date/time, program, titles), customer details (name, ID, address, status, phone, approval/decline counts, credit/cash limits/balances), and a table of up to 5 pending transactions (ID, date, time, type, A/D, status, amount). Users input search account ID and select transactions via SEL fields.
 
-**Business Context**: CICS-based credit card demonstration application for inquiring on pending authorizations.
+**Business Context**: Supports reviewing pending credit card authorizations by account in a demo payment processing system
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| ACCTID | IOType.CICS_MAP | Account ID field for searching pending authorizations |
-| SEL0001 | IOType.CICS_MAP | Selection field (enter 'S') for first listed transaction |
-| SEL0002 | IOType.CICS_MAP | Selection field (enter 'S') for second listed transaction |
-| SEL0003 | IOType.CICS_MAP | Selection field (enter 'S') for third listed transaction |
-| SEL0004 | IOType.CICS_MAP | Selection field (enter 'S') for fourth listed transaction |
-| SEL0005 | IOType.CICS_MAP | Selection field (enter 'S') for fifth listed transaction |
+| ACCTID | IOType.CICS_MAP | User-entered account ID for searching pending authorizations |
+| SEL0001 | IOType.CICS_MAP | Selection field (e.g., 'S') for first pending transaction |
+| SEL0002 | IOType.CICS_MAP | Selection field (e.g., 'S') for second pending transaction |
+| SEL0003 | IOType.CICS_MAP | Selection field (e.g., 'S') for third pending transaction |
+| SEL0004 | IOType.CICS_MAP | Selection field (e.g., 'S') for fourth pending transaction |
+| SEL0005 | IOType.CICS_MAP | Selection field (e.g., 'S') for fifth pending transaction |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| CUSTOMER_INFO | IOType.CICS_MAP | Display fields for customer name, ID, address lines, status, phone (CNAME, CUSTID, ADDR001, ADDR002, ACCSTAT, PHONE1) |
-| LIMITS_COUNTS | IOType.CICS_MAP | Credit/cash limits, balances, approval/decline counts and amounts (CREDLIM, CASHLIM, APPRAMT, CREDBAL, CASHBAL, DECLAMT, APPRCNT, DECLCNT) |
-| TRANSACTION_LIST | IOType.CICS_MAP | Pending transaction details including ID, date, time, type, approve/decline, status, amount (TRNIDxx, PDATExx, PTIMExx, PTYPExx, PAPRVxx, PSTATxx, PAMTxx for xx=01-05) |
-| ERRMSG | IOType.CICS_MAP | Error message display field |
+| COPAU0A | IOType.CICS_MAP | Display-only fields for customer info (CNAME, CUSTID, ADDR001/2, ACCSTAT, PHONE1), counts (APPRCNT, DECLCNT), limits/balances (CREDLIM, CASHLIM, APPRAMT, CREDBAL, CASHBAL, DECLAMT), transaction list (TRNIDxx, PDATExx, PTIMExx, PTYPExx, PAPRVxx, PSTATxx, PAMTxx), headers, titles, dates/times, instructions, and error message (ERRMSG) |
 
 ## Business Rules
 
-- **BR001**: Users enter 'S' in one of the SELxxxx fields to select a listed transaction for viewing authorization details.
+- **BR001**: User must enter 'S' in one of the SELxxxx fields to select a pending transaction for viewing authorization details
 
 ## Open Questions
 
-- ? Which CICS program(s) include and use this BMS mapset COPAU00?
-  - Context: BMS file does not reference calling programs or transactions.
+- ? Specific transaction ID or CICS program using this map
+  - Context: Not specified in BMS source; would be in referencing COBOL/JCL

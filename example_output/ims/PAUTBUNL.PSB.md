@@ -2,22 +2,21 @@
 
 **File**: `ims/PAUTBUNL.PSB`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-01-26 17:42:09.963326
+**Analyzed**: 2026-01-27 02:41:39.309305
 
 ## Purpose
 
-This PSB source defines the Program Specification Block for COBOL program PAUTBUNL, specifying a database PCB PAUTBPCB for accessing IMS database DBPAUTP0 with PROCOPT=GOTP (GO=Get Next using SSAs + TP=IMS TM mode), KEYLEN=14. It senses root segment PAUTSUM0 (PARENT=0) and child segment PAUTDTL1 (PARENT=PAUTSUM0). The PSBGEN generates the control block for DL/I calls in the application (lines 17-22).
+This is an IMS Program Specification Block (PSB) definition file for the COBOL program PAUTBUNL. It defines a single database PCB named PAUTBPCB providing access to IMS database DBDNAME=DBPAUTP0 with PROCOPT=GOTP and KEYLEN=14. The PCB includes two sensegments: PAUTSUM0 as the root segment (PARENT=0) and PAUTDTL1 as a child segment of PAUTSUM0.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| DBPAUTP0 | IOType.IMS_SEGMENT | IMS database accessed via PCB PAUTBPCB |
-| PAUTSUM0 | IOType.IMS_SEGMENT | Root segment (PARENT=0) sensed by the PCB |
-| PAUTDTL1 | IOType.IMS_SEGMENT | Child segment (PARENT=PAUTSUM0) sensed by the PCB |
+| PAUTBPCB | IOType.IMS_SEGMENT | IMS database PCB for DBDNAME=DBPAUTP0 with PROCOPT=GOTP (get next in TP mode) and KEYLEN=14; includes senseg PAUTSUM0 (root) and PAUTDTL1 (child of PAUTSUM0) |
 
-## Business Rules
+## Open Questions
 
-- **BR001**: PCB senses root segment PAUTSUM0 with no parent
-- **BR002**: PCB senses detail segment PAUTDTL1 as child of PAUTSUM0
-- **BR003**: PROCOPT=GOTP enables Get Next segment retrieval using SSAs in IMS TM/TP mode
+- ? What are the field layouts and key fields for segments PAUTSUM0 and PAUTDTL1?
+  - Context: PSB defines segment names and hierarchy but no field-level details
+- ? What is the exact business function of program PAUTBUNL using this PSB?
+  - Context: PSB provides only database access specs, no functional description

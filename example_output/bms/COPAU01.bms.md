@@ -2,27 +2,29 @@
 
 **File**: `bms/COPAU01.bms`
 **Type**: FileType.BMS
-**Analyzed**: 2026-01-26 17:40:52.520665
+**Analyzed**: 2026-01-27 02:42:19.367437
 
 ## Purpose
 
-The COPAU01 BMS mapset defines the COPAU1A map for the 'Pending Authorization Details Screen' in a CICS online application. It layouts fields for displaying transaction header (Tran, Date, Prog, Time), authorization details (Card #, Auth Date/Time, Resp, Reason, Code, Amount, POS Entry Mode, Source, MCC Code, Card Exp Date, Auth Type, Tran Id, Match Status, Fraud Status), merchant details (Name, ID, City, State, Zip), error messages, and function keys (F3=Back, F5=Mark/Remove Fraud, F8=Next Auth). The map operates in INOUT mode for both display and user input on unprotected fields.
+This BMS mapset COPAU01 defines the screen layout named COPAU1A for the 'Pending Authorization Details Screen' in a CICS application. It displays transaction header, authorization details (card number, dates, times, responses, amounts, merchant info), and navigation options like F3=Back, F5=Mark/Remove Fraud, F8=Next Auth. The map uses colors, positions, and attributes to present read-only details with an error message area.
 
-**Business Context**: Serves the CardDemo application for viewing and managing pending card authorization details, including fraud marking.
-
-## Inputs
-
-| Name | Type | Description |
-|------|------|-------------|
-| COPAU1A | IOType.CICS_MAP | Receives user input from unprotected modifiable fields such as CARDNUM (card number), AUTHMTC (match status), AUTHFRD (fraud status), and others without PROT attribute for actions like fraud marking. |
+**Business Context**: Serves the CardDemo application for viewing and managing pending credit card authorization details, including fraud marking.
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| COPAU1A | IOType.CICS_MAP | Displays authorization details, merchant information, timestamps, transaction data, error messages (ERRMSG), and static labels/function keys to the terminal. |
+| COPAU1A | IOType.CICS_MAP | 24x80 character screen map displaying authorization details fields such as CARDNUM, AUTHDT, AUTHRSP, MERNAME, etc., with labels and initial values |
+
+## Business Rules
+
+- **BR001**: Screen triggers terminal alarm on errors or when transmitting modified unprotected fields
+- **BR002**: Map operates in input/output mode with automatic storage and extended high-level attributes
+- **BR003**: Function keys F3, F5, F8 provide navigation and action options: Back, Mark/Remove Fraud, Next Auth
 
 ## Open Questions
 
-- ? Specific transaction ID or CICS program that uses this mapset
-  - Context: BMS file defines the map but does not reference calling programs or entry points.
+- ? Which fields are modifiable (unprotected) vs. protected output-only?
+  - Context: ATTRB specifications like (ASKIP,NORM) do not explicitly state PROT/UNPROT; default behavior unclear without CICS BMS reference
+- ? Exact transaction ID or CICS entry point using this map
+  - Context: Not specified in BMS source

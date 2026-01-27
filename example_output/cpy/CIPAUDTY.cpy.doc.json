@@ -4,17 +4,20 @@
     "file_name": "cpy/CIPAUDTY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T17:39:14.388008",
+    "analyzed_at": "2026-01-27T02:41:50.175960",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This COBOL copybook defines the data structure for an IMS segment named 'PENDING AUTHORIZATION DETAILS'. It provides fields for authorization keys, card information, merchant details, transaction amounts, response codes, and status flags for matching and fraud detection in payment processing. The structure is used to store pending authorization data for further transaction matching and review.",
-    "business_context": "Credit card authorization processing, transaction matching, and fraud management in a financial transaction system.",
+    "summary": "This COBOL copybook defines the data structure for an IMS database segment named 'PENDING AUTHORIZATION DETAILS'. It specifies the layout starting with the group item PA-AUTHORIZATION-KEY (line 19) containing authorization date/time keys, card details, response codes, transaction amounts, merchant information, and status flags. Condition names (88-levels) are provided for key business states such as authorization approval, match status, and fraud indicators.",
+    "business_context": "Supports payment processing for credit card authorizations, including matching pending transactions, fraud detection, and merchant transaction logging in an IMS database environment.",
     "program_type": "UTILITY",
     "citations": [
       2,
-      19
+      19,
+      31,
+      46,
+      51
     ]
   },
   "inputs": [],
@@ -27,9 +30,9 @@
   },
   "business_rules": [
     {
-      "rule_id": "BR-PA001",
+      "rule_id": "BR001",
       "description": "Authorization response is approved when the response code is '00'",
-      "logic_summary": "88 condition level on PA-AUTH-RESP-CODE field",
+      "logic_summary": "88-level condition name PA-AUTH-APPROVED defined on PA-AUTH-RESP-CODE",
       "conditions": [
         "PA-AUTH-RESP-CODE = '00'"
       ],
@@ -39,70 +42,34 @@
       ]
     },
     {
-      "rule_id": "BR-PA002",
-      "description": "Match status indicates pending matching",
-      "logic_summary": "88 condition level on PA-MATCH-STATUS field",
+      "rule_id": "BR002",
+      "description": "Match status indicates pending, declined, expired, or matched with transaction",
+      "logic_summary": "88-level conditions on PA-MATCH-STATUS field",
       "conditions": [
-        "PA-MATCH-STATUS = 'P'"
-      ],
-      "citation": [
-        45,
-        46
-      ]
-    },
-    {
-      "rule_id": "BR-PA003",
-      "description": "Match status indicates authorization declined",
-      "logic_summary": "88 condition level on PA-MATCH-STATUS field",
-      "conditions": [
-        "PA-MATCH-STATUS = 'D'"
-      ],
-      "citation": [
-        47
-      ]
-    },
-    {
-      "rule_id": "BR-PA004",
-      "description": "Match status indicates pending expired",
-      "logic_summary": "88 condition level on PA-MATCH-STATUS field",
-      "conditions": [
-        "PA-MATCH-STATUS = 'E'"
-      ],
-      "citation": [
-        48
-      ]
-    },
-    {
-      "rule_id": "BR-PA005",
-      "description": "Match status indicates matched with transaction",
-      "logic_summary": "88 condition level on PA-MATCH-STATUS field",
-      "conditions": [
+        "PA-MATCH-STATUS = 'P'",
+        "PA-MATCH-STATUS = 'D'",
+        "PA-MATCH-STATUS = 'E'",
         "PA-MATCH-STATUS = 'M'"
       ],
       "citation": [
+        45,
+        46,
+        47,
+        48,
         49
       ]
     },
     {
-      "rule_id": "BR-PA006",
-      "description": "Fraud is confirmed on the authorization",
-      "logic_summary": "88 condition level on PA-AUTH-FRAUD field",
+      "rule_id": "BR003",
+      "description": "Fraud status is confirmed or removed",
+      "logic_summary": "88-level conditions on PA-AUTH-FRAUD field",
       "conditions": [
-        "PA-AUTH-FRAUD = 'F'"
-      ],
-      "citation": [
-        50,
-        51
-      ]
-    },
-    {
-      "rule_id": "BR-PA007",
-      "description": "Fraud has been removed from the authorization",
-      "logic_summary": "88 condition level on PA-AUTH-FRAUD field",
-      "conditions": [
+        "PA-AUTH-FRAUD = 'F'",
         "PA-AUTH-FRAUD = 'R'"
       ],
       "citation": [
+        50,
+        51,
         52
       ]
     }
@@ -117,16 +84,6 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
-    {
-      "question": "Which programs include and use this copybook?",
-      "context": "No referencing programs are provided in the source file",
-      "suggestion": "Analyze including programs or JCL to identify usage context"
-    },
-    {
-      "question": "What is the exact IMS database and segment name using this structure?",
-      "context": "Comment indicates IMS segment but no explicit database or full segment name beyond description",
-      "suggestion": "Review IMS DL/I definitions or using programs for PCB/segment details"
-    }
-  ]
+  "open_questions": [],
+  "dead_code": []
 }

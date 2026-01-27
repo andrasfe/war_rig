@@ -2,17 +2,15 @@
 
 **File**: `cpy/PADFLPCB.CPY`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-01-26 17:43:07.543285
+**Analyzed**: 2026-01-27 02:41:59.543157
 
 ## Purpose
 
-This copybook defines the PADFLPCB group structure (line 17), which maps an IMS Database Program Communication Block (DBPCB) used in COBOL programs for IMS DL/I database access. It includes standard DBPCB fields such as DBD name (line 18), segment level (line 19), PCB status (line 20), processing options (line 21), segment name (line 23), key feedback details (lines 24-26), and a key feedback buffer (line 26). As a copybook, it provides data definitions for IMS PCB handling and contains no executable logic.
+This COBOL copybook defines the PADFLPCB group item (line 17), which is the Program Communication Block (PCB) for the PADFL IMS database. It specifies fields including database name (PADFL-DBDNAME, line 18), segment level (line 19), PCB status (line 20), processing options (line 21), segment name (line 23), key feedback name offset (line 24), number of sensitive segments (line 25), and key feedback buffer (line 26). This structure is used in IMS DL/I programs to obtain status and navigation information during database calls.
 
-**Business Context**: IMS hierarchical database interface for mainframe applications performing DL/I calls (GU, GN, ISRT, etc.)
+**Business Context**: IMS database access and navigation for the PADFL database, providing control block fields for segment search and status reporting (lines 17-26).
 
 ## Open Questions
 
-- ? What is the exact IMS database (DBD) or PSB associated with PADFLPCB?
-  - Context: The PADFL- prefix suggests a specific database or application context, but not determinable from this copybook alone.
-- ? Precise byte offsets and full compliance with IMS DBPCB layout?
-  - Context: FILLER at line 22 and PIC S9(05) COMP fields approximate standard layout but may have custom sizing.
+- ? In which programs or PSBs is this copybook included?
+  - Context: The copybook defines a data structure but does not specify usage context or including programs.

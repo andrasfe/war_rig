@@ -4,29 +4,28 @@
     "file_name": "ims/DBPAUTP0.dbd",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T17:38:32.016946",
+    "analyzed_at": "2026-01-27T02:41:14.287501",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This file contains the IMS Database Definition (DBD) source code for defining database DBPAUTP0 as a HIDAM database with VSAM access method and associated user exits for key, data, and logging. It specifies one dataset group DSG001 with VSAM dataset DDPAUTP0 (4096 bytes, SCAN=3). The database structure includes a root segment PAUTSUM0 (Pending Authorization Summary, 100 bytes, key ACCNTID at position 1, 6 packed bytes, unique sequence, twin backward pointers, logical child PAUTINDX from DBPAUTX0) and a single child segment PAUTDTL1 (Pending Authorization Details, 200 bytes under PAUTSUM0, key PAUT9CTS at position 1, 8 character bytes, unique sequence).",
-    "business_context": "Manages hierarchical storage of pending authorization summaries by account ID with associated detail records, likely for financial transaction or payment authorization processing.",
+    "summary": "This is an IMS Database Definition (DBD) source file for the HIDAM database DBPAUTP0 using VSAM access. It defines one dataset group DSG001 with VSAM dataset DDPAUTP0 and two segments: root segment PAUTSUM0 (Pending Authorization Summary) with packed key field ACCNTID (6 bytes) and logical child pointer to PAUTINDX in DBPAUTX0, and child segment PAUTDTL1 (Pending Authorization Details, 200 bytes) under PAUTSUM0 with character key PAUT9CTS (8 bytes). The file ends with DBDGEN to generate the database macro for IMS application linkage.",
+    "business_context": "Supports pending authorization processing, likely summarizing account-level authorizations (PAUTSUM0) with associated detail records (PAUTDTL1) in a financial or transaction system.",
     "program_type": "UTILITY",
     "citations": [
       17,
       18,
       24,
       28,
-      30,
       36,
-      37
+      39
     ]
   },
   "inputs": [
     {
       "name": "DDPAUTP0",
       "io_type": "FILE_VSAM",
-      "description": "VSAM dataset referenced as the primary storage for the HIDAM database segments (Dataset Group 1, DD1)",
+      "description": "VSAM dataset referenced in dataset group DSG001 for database storage, size 4096 with SCAN=3",
       "copybook": null,
       "citation": [
         24
@@ -35,12 +34,12 @@
   ],
   "outputs": [
     {
-      "name": "DDPAUTP0",
-      "io_type": "FILE_VSAM",
-      "description": "VSAM dataset serving as output storage for the HIDAM database segments (same as input reference for database persistence)",
+      "name": "DBPAUTP0",
+      "io_type": "OTHER",
+      "description": "Generated IMS HIDAM database definition for use by application programs",
       "copybook": null,
       "citation": [
-        24
+        18
       ]
     }
   ],
@@ -53,10 +52,10 @@
   "business_rules": [
     {
       "rule_id": "BR001",
-      "description": "Root segment PAUTSUM0 uses unique sequential key ACCNTID (packed decimal, 6 bytes starting at offset 1)",
-      "logic_summary": "Defined with SEQ U for uniqueness and sequencing under HERE rules",
+      "description": "PAUTSUM0 is the root segment with unique sequential packed key ACCNTID starting at position 1",
+      "logic_summary": "Defined as SEQ,U with BYTES=100 and POINTER=(TWINBWD)",
       "conditions": [
-        "PARENT=0 (root)",
+        "PARENT=0",
         "RULES=(,HERE)"
       ],
       "citation": [
@@ -66,8 +65,8 @@
     },
     {
       "rule_id": "BR002",
-      "description": "Child segment PAUTDTL1 subordinate to PAUTSUM0 root with unique sequential key PAUT9CTS (character, 8 bytes starting at offset 1)",
-      "logic_summary": "Explicit parent linkage to PAUTSUM0",
+      "description": "PAUTDTL1 is a child segment under PAUTSUM0 with unique sequential character key PAUT9CTS",
+      "logic_summary": "PARENT=((PAUTSUM0,)) with BYTES=200",
       "conditions": [
         "PARENT=((PAUTSUM0,))"
       ],
@@ -87,16 +86,6 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
-    {
-      "question": "Precise business semantics of fields ACCNTID and PAUT9CTS",
-      "context": "Names suggest account ID and pending auth counter/timestamp/sequence, but no explicit descriptions in DBD",
-      "suggestion": "Review application programs using this database or IMS documentation for field-level details"
-    },
-    {
-      "question": "Details of logical child PAUTINDX from DBPAUTX0",
-      "context": "References external database DBPAUTX0 for index pointer, but no further definition here",
-      "suggestion": "Analyze DBD for DBPAUTX0 to understand index relationship"
-    }
-  ]
+  "open_questions": [],
+  "dead_code": []
 }

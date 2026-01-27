@@ -2,57 +2,52 @@
 
 **File**: `jcl/UNLDPADB.JCL`
 **Type**: FileType.JCL
-**Analyzed**: 2026-01-26 17:36:35.171039
+**Analyzed**: 2026-01-27 02:39:44.120788
 
 ## Purpose
 
-This JCL job unloads the IMS database PAUTDB into two sequential flat files: root segments to PAUTDB.ROOT.FILEO and child segments to PAUTDB.CHILD.FILEO. STEP0 performs cleanup by deleting any existing output files using IEFBR14. STEP01 executes the IMS unload utility DFSRRC00 with parameters specifying DLI access, unload DBDs PAUDBUNL and PAUTBUNL.
+This JCL job unloads the IMS database PAUTDB into two sequential flat files, separating root and child segments. STEP0 deletes any prior versions of the output files. STEP01 executes the IMS utility DFSRRC00 using DLI access method with specified PSB (PAUDBUNL) and DBD (PAUTBUNL) to perform the unload.
 
-**Business Context**: Supports AWS Mainframe Modernization (M2) CARDDEMO application by unloading IMS PAUTDB database for potential backup, migration, or demo purposes.
+**Business Context**: Prepares sequential unload files from IMS PAUTDB database for AWS M2 Card Demo application, likely for data migration, backup, or offline processing.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| STEPLIB | IOType.FILE_SEQUENTIAL | IMS SDFSRESL libraries and application LOADLIB for executing DFSRRC00 |
-| DFSRESLB | IOType.FILE_SEQUENTIAL | IMS SDFSRESL library for utility execution |
-| IMS | IOType.FILE_SEQUENTIAL | IMS PSBLIB and DBDLIB for PSB and DBD definitions |
-| DDPAUTP0 | IOType.FILE_SEQUENTIAL | IMS PAUTHDB (primary authorization database library) |
-| DDPAUTX0 | IOType.FILE_SEQUENTIAL | IMS PAUTHDBX (extended authorization database library) |
-| DFSVSAMP | IOType.FILE_SEQUENTIAL | IMS proclib containing DFSVSMDB macro for database access |
+| DDPAUTP0 | IOType.FILE_SEQUENTIAL | IMS PSB library containing PAUTHDB for PAUTDB unload PSB PAUDBUNL |
+| DDPAUTX0 | IOType.FILE_SEQUENTIAL | IMS DBDX library containing PAUTHDBX for PAUTDB unload DBD PAUTBUNL |
+| DFSVSAMP | IOType.FILE_SEQUENTIAL | IMS VSAM macro library member DFSVSMDB for utility support |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| OUTFIL1 | IOType.FILE_SEQUENTIAL | Unload file for PAUTDB root segments (LRECL=100, RECFM=FB) |
-| OUTFIL2 | IOType.FILE_SEQUENTIAL | Unload file for PAUTDB child segments (LRECL=206, RECFM=FB) |
-| SYSPRINT | IOType.REPORT | Standard print output for job logs |
+| OUTFIL1 | IOType.FILE_SEQUENTIAL | Sequential file containing unloaded root segments from PAUTDB (LRECL=100, RECFM=FB) |
+| OUTFIL2 | IOType.FILE_SEQUENTIAL | Sequential file containing unloaded child segments from PAUTDB (LRECL=206, RECFM=FB) |
 
 ## Called Programs
 
 | Program | Call Type | Purpose |
 |---------|-----------|---------|
-| IEFBR14 | CallType.STATIC_CALL | No-op execution to trigger deletion of old output files via DD DISP |
-| DFSRRC00 | CallType.STATIC_CALL | IMS database unload utility to extract PAUTDB segments to flat files |
+| IEFBR14 | CallType.STATIC_CALL | Perform housekeeping deletion of prior output files |
+| DFSRRC00 | CallType.STATIC_CALL | Execute IMS database unload utility for PAUTDB |
 
 ## Business Rules
 
-- **BR001**: Delete existing output files before unload to prevent append or conflicts
-- **BR002**: Allocate new output files with specific DCB and space parameters
-- **BR003**: Use DLI access mode for unload without checkpointing (N flag)
+- **BR001**: Prior output files must be deleted before new unload to ensure clean output
+- **BR002**: Unload uses DLI access method with specific PSB and DBD names
 
 ## Paragraphs/Procedures
 
 ### STEP0
-This step serves as a cleanup phase prior to the main unload operation, executing the no-op program IEFBR14 to trigger deletion of any pre-existing output datasets. It consumes the DD1 and DD2 datasets (old versions of ROOT.FILEO and CHILD.FILEO) specified with DISP=(OLD,DELETE,DELETE), ensuring no residual files interfere with new cataloging. No data is read or processed beyond the existence check for deletion; there are no working variables or computations. Outputs are limited to standard SYSOUT datasets like SYSPRINT, SYSOUT, and SYSDUMP for any job logs. No business logic or conditional decisions are implemented, as it is purely a housekeeping step without PERFORM or IF statements typical in COBOL. Error handling relies on standard JCL disposition failure, which would cause job ABEND if files are not deletable. It calls no subordinate steps, programs, or paragraphs, serving only to prepare the environment for STEP01. SYSDUMP is provided for diagnostics if deletion fails.
+This step serves as a housekeeping procedure to delete any existing versions of the output unload files before the main unload operation begins. It executes the dummy program IEFBR14, which performs no computation but processes all DD statements. It consumes no input data files but references DD1 and DD2 pointing to the prior DSNs AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO and CHILD.FILEO with DISP=(OLD,DELETE,DELETE), ensuring they are deleted if present. No outputs are produced beyond potential SYSOUT messages to SYSPRINT, SYSOUT, and SYSDUMP. There is no business logic or conditional decision-making; it unconditionally attempts deletion. Error handling is implicit via JCL: if files do not exist, the step abends with JCL error, preventing STEP01 from running. It defines dummy DDs for standard output. This step is the entry point of the job and passes control to STEP01 upon success. No other paragraphs or programs are called.
 
 ### STEP01
-This is the primary processing step that executes the IMS database unload utility DFSRRC00 to extract segments from PAUTDB into flat files. It consumes IMS libraries (STEPLIB, DFSRESLB, IMS, DDPAUTP0, DDPAUTX0, DFSVSAMP) for program load, DBD/PSB definitions, and database access macros, plus the target IMS database PAUTDB accessed via DLI mode and unload DBDs PAUDBUNL/PAUTBUNL specified in PARM. Outputs are the newly cataloged sequential files OUTFIL1 (root segments) and OUTFIL2 (child segments) with specific DCB attributes, plus SYSOUT files for logs, dumps, and errors. Business logic is encapsulated in the utility's PARM, specifying dual unloads without checkpointing (N flag) for a complete one-pass extraction. No explicit validations or decisions are coded in JCL, deferring to DFSRRC00's internal handling of database status and segment hierarchies. Error handling uses DUMMY DDs (IMSLOGR, IEFRDER) to suppress unnecessary logs, with SYSUDUMP and IMSERR for capturing failures. It calls no other programs or steps, operating independently after STEP0 cleanup. The REGION=0M and TIME=1440 parameters accommodate potentially large database unloads.
+This is the primary processing step that performs the actual unload of the IMS PAUTDB database into sequential files. It executes IMS utility DFSRRC00 with PARM='DLI,PAUDBUNL,PAUTBUNL,,,,,,,,,,,N' specifying DLI access, unload PSB PAUDBUNL, DBD PAUTBUNL, and no statistics output. It consumes IMS control files from STEPLIB (SDFSRESL libraries and loadlib), DFSRESLB, IMS (PSBLIB/DBDLIB), DDPAUTP0 (PAUTHDB PSB), DDPAUTX0 (PAUTHDBX DBDX), and DFSVSAMP (DFSVSMDB). The utility reads all root and child segments from PAUTDB IMS database. It produces two outputs: OUTFIL1 for root segments (new cataloged DSN with specified DCB/SPACE) and OUTFIL2 for child segments. Business logic is encapsulated in the utility: separates root/child based on DBD definition, formats as FB sequential. Validation and error handling are handled by IMS utility, with dumps to SYSUDUMP, IMSERR, IMSLOGR (DUMMY), and SYSPRINT. Dummy DDs like IEFRDER prevent unnecessary I/O. Called unconditionally after STEP0, it completes the job upon success. No subordinate paragraphs; relies on utility internals.
 
 ## Open Questions
 
-- ? Exact segment structure and field layouts in unloaded files
-  - Context: JCL does not specify; depends on IMS DBD definitions in PAUTHDB
-- ? Relationship between PAUTBUNL and child segments
-  - Context: PARM lists PAUDBUNL then PAUTBUNL mapping to OUTFIL1/OUTFIL2
+- ? Precise role of DFSRRC00 in this context
+  - Context: Non-standard program name for IMS unload (typically DFSURGL0); confirmed as unload by job name, outputs, and PARM format
+- ? Specific segment/field layouts in PAUTDB
+  - Context: Not visible in JCL; inferred root/child separation only

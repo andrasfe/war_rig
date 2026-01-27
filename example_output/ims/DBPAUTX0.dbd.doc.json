@@ -4,12 +4,12 @@
     "file_name": "ims/DBPAUTX0.dbd",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T17:38:53.460678",
+    "analyzed_at": "2026-01-27T02:41:28.790384",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This file is the source code for the IMS Database Definition (DBD) named DBPAUTX0, defining an indexed VSAM-protected IMS database. It specifies one dataset group DSG001 with VSAM dataset DDPAUTX0 of size 4096. The database has a single root segment PAUTINDX of 6 bytes with a packed sequential index field INDXSEQ starting at position 1, and a logical child segment PAUTSUM0 from database DBPAUTP0 accessed via the ACCNTID index.",
+    "summary": "This is a Database Definition (DBD) source file for the IMS hierarchical database named DBPAUTX0. It defines an indexed VSAM-protected database with a single dataset group DSG001 mapped to DDPAUTX0 and one root segment PAUTINDX of 6 bytes containing a unique packed sequence key field INDXSEQ. The PAUTINDX segment establishes a logical child (LCHILD) relationship to the PAUTSUM0 segment in the DBPAUTP0 database via the ACCNTID index.",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
@@ -25,24 +25,70 @@
     {
       "name": "DDPAUTX0",
       "io_type": "FILE_VSAM",
-      "description": "VSAM dataset defined for dataset group DSG001 in the IMS database",
+      "description": "Physical dataset for storing the DBPAUTX0 IMS database segments",
       "copybook": null,
       "citation": [
         23
       ]
     }
   ],
-  "outputs": [],
+  "outputs": [
+    {
+      "name": "DDPAUTX0",
+      "io_type": "FILE_VSAM",
+      "description": "Physical dataset for storing the DBPAUTX0 IMS database segments (read/write access implied by VSAM INDEX access method)",
+      "copybook": null,
+      "citation": [
+        18,
+        23
+      ]
+    }
+  ],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [],
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "The INDXSEQ field serves as a unique sequence key for the PAUTINDX root segment",
+      "logic_summary": "Defined as SEQ,U (sequence, unique) packed field starting at position 1",
+      "conditions": [
+        "TYPE=P",
+        "SEQ",
+        "U"
+      ],
+      "citation": [
+        29
+      ]
+    }
+  ],
   "data_flow": {
-    "reads_from": [],
-    "writes_to": [],
+    "reads_from": [
+      {
+        "source": "PAUTINDX",
+        "fields_used": [
+          "INDXSEQ"
+        ],
+        "citation": [
+          29
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "PAUTX0 (via DDPAUTX0)",
+        "fields_written": [
+          "INDXSEQ"
+        ],
+        "citation": [
+          23,
+          29
+        ]
+      }
+    ],
     "transforms": []
   },
   "copybooks_used": [],
@@ -52,14 +98,20 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the specific business purpose of the DBPAUTX0 database and its segments PAUTINDX and PAUTSUM0?",
-      "context": "DBD source defines structure only; no business logic or usage described.",
-      "suggestion": "Examine application programs (COBOL/PL/I) that use this DBD via DL/I calls or review system documentation."
+      "question": "What is the business purpose and content of the PAUTINDX segment?",
+      "context": "No descriptive comments or field-level documentation beyond key definition",
+      "suggestion": "Review related PSB, application programs, or data dictionary for segment semantics"
     },
     {
-      "question": "Are there additional segments or dataset groups in the full database definition?",
-      "context": "Source shows only one segment and one dataset group up to DBDGEN.",
-      "suggestion": "Verify the assembled DBD or check for INCLUDED DBDs if any."
+      "question": "Details of the ACCNTID index and PAUTSUM0 segment structure",
+      "context": "LCHILD references external segment in DBPAUTP0; not defined in this DBD",
+      "suggestion": "Examine DBD for DBPAUTP0 to understand logical relationship"
+    },
+    {
+      "question": "How is this DBD used in application programs?",
+      "context": "DBD is a definition; no calling programs identifiable from this file",
+      "suggestion": "Search for DL/I calls to DBPAUTX0 in COBOL/PL/I sources"
     }
-  ]
+  ],
+  "dead_code": []
 }

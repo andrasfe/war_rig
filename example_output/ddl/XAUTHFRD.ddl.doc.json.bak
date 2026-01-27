@@ -4,13 +4,13 @@
     "file_name": "ddl/XAUTHFRD.ddl",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T17:39:50.104629",
+    "analyzed_at": "2026-01-27T02:39:58.128148",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This DDL script creates a unique index named CARDDEMO.XAUTHFRD on the CARDDEMO.AUTHFRDS table. The index keys on CARD_NUM in ascending order and AUTH_TS in descending order. The COPY YES option is specified, which in DB2 context allows the index to be copied during reorganization.",
-    "business_context": "Supports data integrity and efficient querying of authorization records (likely fraud-related) in the CARDDEMO schema by enforcing uniqueness and optimizing access by card number and timestamp.",
+    "summary": "This DDL script creates a unique index named CARDDEMO.XAUTHFRD on the CARDDEMO.AUTHFRDS table. The index is defined on CARD_NUM in ascending order and AUTH_TS in descending order. It includes the COPY YES option.",
+    "business_context": null,
     "program_type": "UTILITY",
     "citations": [
       1,
@@ -23,7 +23,7 @@
     {
       "name": "CARDDEMO.AUTHFRDS",
       "io_type": "DB2_TABLE",
-      "description": "Base table on which the unique index is created",
+      "description": "Target table on which the unique index is created",
       "copybook": null,
       "citation": [
         2
@@ -34,10 +34,11 @@
     {
       "name": "CARDDEMO.XAUTHFRD",
       "io_type": "OTHER",
-      "description": "Unique index enforcing data integrity and supporting ordered access",
+      "description": "Unique index enforcing uniqueness on (CARD_NUM ASC, AUTH_TS DESC)",
       "copybook": null,
       "citation": [
-        1
+        1,
+        3
       ]
     }
   ],
@@ -50,11 +51,9 @@
   "business_rules": [
     {
       "rule_id": "BR001",
-      "description": "Enforces uniqueness constraint preventing duplicate combinations of CARD_NUM and AUTH_TS in the AUTHFRDS table",
-      "logic_summary": "Implemented through CREATE UNIQUE INDEX declaration",
-      "conditions": [
-        "CARD_NUM and AUTH_TS combination must be unique across all records"
-      ],
+      "description": "Enforces uniqueness on the composite key (CARD_NUM, AUTH_TS)",
+      "logic_summary": "Implemented via unique index definition",
+      "conditions": [],
       "citation": [
         1,
         3
@@ -71,12 +70,19 @@
   "error_handling": [],
   "sql_operations": [
     {
-      "operation": "CREATE INDEX",
+      "operation": "CREATE UNIQUE INDEX",
       "table": "CARDDEMO.AUTHFRDS",
-      "purpose": "Establishes unique index for data integrity and performance on CARD_NUM ASC, AUTH_TS DESC",
+      "purpose": "Create index for uniqueness enforcement and query optimization on CARD_NUM and AUTH_TS",
       "citation": 1
     }
   ],
   "cics_operations": [],
-  "open_questions": []
+  "open_questions": [
+    {
+      "question": "Specific purpose of the COPY YES option",
+      "context": "Not self-explanatory from the DDL statement alone",
+      "suggestion": "Consult DB2 documentation for CREATE INDEX syntax details"
+    }
+  ],
+  "dead_code": []
 }

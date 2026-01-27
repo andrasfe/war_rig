@@ -4,126 +4,63 @@
     "file_name": "cpy/CIPAUSMY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T17:41:40.148363",
+    "analyzed_at": "2026-01-27T02:43:07.655153",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the data structure for an IMS database segment named 'PENDING AUTHORIZATION SUMMARY'. It specifies fields for account and customer identification, authorization and account statuses, credit and cash limits and balances, and cumulative counts and amounts for approved and declined authorizations. The layout supports IMS DL/I get/insert/update operations in programs handling pending authorizations.",
-    "business_context": "Financial authorization processing for customer accounts, tracking pending credit and cash authorization summaries in an IMS hierarchical database.",
+    "summary": "This copybook defines the data structure for the IMS segment named Pending Authorization Summary (PAUS). It includes fields for account and customer identifiers, authorization and account status information, credit and cash limits and current balances, counts of approved and declined authorizations, and corresponding amounts. The structure is used to store summary data related to pending authorizations in an IMS database.",
+    "business_context": "Serves financial authorization processing for customer accounts, tracking pending authorization summaries including limits, balances, and approval/decline statistics, within an Amazon-affiliated system (citation lines 4-17).",
     "program_type": "UTILITY",
     "citations": [
       1,
       2,
       3,
       19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
       31
     ]
   },
-  "inputs": [
-    {
-      "name": "PENDING-AUTHORIZATION-SUMMARY",
-      "io_type": "IMS_SEGMENT",
-      "description": "IMS segment layout holding account ID, customer ID, auth status, 5 account statuses, credit/cash limits and balances, approved/declined auth counts and amounts.",
-      "copybook": "CIPAUSMY",
-      "citation": [
-        1,
-        2,
-        3,
-        19,
-        31
-      ]
-    }
-  ],
-  "outputs": [
-    {
-      "name": "PENDING-AUTHORIZATION-SUMMARY",
-      "io_type": "IMS_SEGMENT",
-      "description": "IMS segment layout for output/update of pending authorization summary data matching input structure.",
-      "copybook": "CIPAUSMY",
-      "citation": [
-        1,
-        2,
-        3,
-        19,
-        31
-      ]
-    }
-  ],
+  "inputs": [],
+  "outputs": [],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [
-    {
-      "rule_id": "BR001",
-      "description": "PA-ACCOUNT-STATUS defines an array of exactly 5 two-character account status values.",
-      "logic_summary": "Repeating group implemented with OCCURS 5 TIMES PIC X(02).",
-      "conditions": [
-        "OCCURS 5 TIMES"
-      ],
-      "citation": [
-        22
-      ]
-    },
-    {
-      "rule_id": "BR002",
-      "description": "Monetary fields (limits, balances, auth amounts) use signed 9-digit with 2 decimals, packed decimal format.",
-      "logic_summary": "Consistent PIC S9(09)V99 COMP-3 across credit/cash limits, balances, and auth amounts.",
-      "conditions": [
-        "PIC S9(09)V99 COMP-3"
-      ],
-      "citation": [
-        23,
-        24,
-        25,
-        26,
-        29,
-        30
-      ]
-    },
-    {
-      "rule_id": "BR003",
-      "description": "Authorization count fields are signed 4-digit binary integers.",
-      "logic_summary": "PIC S9(04) COMP for approved and declined counts.",
-      "conditions": [
-        "PIC S9(04) COMP"
-      ],
-      "citation": [
-        27,
-        28
-      ]
-    },
-    {
-      "rule_id": "BR004",
-      "description": "Account ID is a signed 11-digit packed decimal.",
-      "logic_summary": "PIC S9(11) COMP-3 for primary key field.",
-      "conditions": [
-        "PIC S9(11) COMP-3"
-      ],
-      "citation": [
-        19
-      ]
-    }
-  ],
+  "business_rules": [],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
     "transforms": []
   },
-  "copybooks_used": [
-    {
-      "copybook_name": "CIPAUSMY",
-      "purpose": "Defines complete layout for IMS PENDING AUTHORIZATION SUMMARY segment including all fields from IDs to filler.",
-      "location": "OTHER",
-      "citation": 19
-    }
-  ],
+  "copybooks_used": [],
   "paragraphs": [],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": []
+  "open_questions": [
+    {
+      "question": "In which programs or modules is this copybook included?",
+      "context": "The copybook defines an IMS segment layout but does not indicate usage locations.",
+      "suggestion": "Search for COPY CIPAUSMY statements in associated COBOL programs."
+    },
+    {
+      "question": "What are the exact meanings or valid values for PA-AUTH-STATUS and PA-ACCOUNT-STATUS?",
+      "context": "Field descriptions are not provided beyond PIC clauses; no comments explain codes.",
+      "suggestion": "Review associated program logic or data dictionaries."
+    }
+  ],
+  "dead_code": []
 }

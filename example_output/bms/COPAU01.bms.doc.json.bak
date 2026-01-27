@@ -1,50 +1,35 @@
 {
   "header": {
     "program_id": "COPAU01",
-    "file_name": "bms/COPAU01.bms",
+    "file_name": "COPAU01.bms",
     "file_type": "BMS",
-    "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T17:40:52.520665",
+    "analyzed_by": "Scribe",
+    "analyzed_at": "2026-01-27T02:42:19.367437",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "The COPAU01 BMS mapset defines the COPAU1A map for the 'Pending Authorization Details Screen' in a CICS online application. It layouts fields for displaying transaction header (Tran, Date, Prog, Time), authorization details (Card #, Auth Date/Time, Resp, Reason, Code, Amount, POS Entry Mode, Source, MCC Code, Card Exp Date, Auth Type, Tran Id, Match Status, Fraud Status), merchant details (Name, ID, City, State, Zip), error messages, and function keys (F3=Back, F5=Mark/Remove Fraud, F8=Next Auth). The map operates in INOUT mode for both display and user input on unprotected fields.",
-    "business_context": "Serves the CardDemo application for viewing and managing pending card authorization details, including fraud marking.",
+    "summary": "This BMS mapset COPAU01 defines the screen layout named COPAU1A for the 'Pending Authorization Details Screen' in a CICS application. It displays transaction header, authorization details (card number, dates, times, responses, amounts, merchant info), and navigation options like F3=Back, F5=Mark/Remove Fraud, F8=Next Auth. The map uses colors, positions, and attributes to present read-only details with an error message area.",
+    "business_context": "Serves the CardDemo application for viewing and managing pending credit card authorization details, including fraud marking.",
     "program_type": "ONLINE_CICS",
     "citations": [
+      1,
       2,
       19,
-      22,
       26,
       292
     ]
   },
-  "inputs": [
-    {
-      "name": "COPAU1A",
-      "io_type": "CICS_MAP",
-      "description": "Receives user input from unprotected modifiable fields such as CARDNUM (card number), AUTHMTC (match status), AUTHFRD (fraud status), and others without PROT attribute for actions like fraud marking.",
-      "copybook": null,
-      "citation": [
-        22,
-        85,
-        214,
-        224
-      ]
-    }
-  ],
+  "inputs": [],
   "outputs": [
     {
       "name": "COPAU1A",
       "io_type": "CICS_MAP",
-      "description": "Displays authorization details, merchant information, timestamps, transaction data, error messages (ERRMSG), and static labels/function keys to the terminal.",
+      "description": "24x80 character screen map displaying authorization details fields such as CARDNUM, AUTHDT, AUTHRSP, MERNAME, etc., with labels and initial values",
       "copybook": null,
       "citation": [
         26,
-        33,
-        284,
-        292
+        28
       ]
     }
   ],
@@ -54,7 +39,46 @@
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [],
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Screen triggers terminal alarm on errors or when transmitting modified unprotected fields",
+      "logic_summary": "Defined by CTRL=(ALARM,FREEKB) which enables alarm and treats function keys as free",
+      "conditions": [
+        "Transmission of modified data",
+        "CICS map error conditions"
+      ],
+      "citation": [
+        19,
+        20
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Map operates in input/output mode with automatic storage and extended high-level attributes",
+      "logic_summary": "MODE=INOUT, STORAGE=AUTO, EXTATT=YES allow bidirectional data exchange with full color and attribute support",
+      "conditions": [
+        "CICS SEND/RECEIVE MAP invocations"
+      ],
+      "citation": [
+        20,
+        21,
+        22,
+        23
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "Function keys F3, F5, F8 provide navigation and action options: Back, Mark/Remove Fraud, Next Auth",
+      "logic_summary": "Displayed as constant text at screen bottom for user guidance",
+      "conditions": [
+        "User presses specified PF keys"
+      ],
+      "citation": [
+        292
+      ]
+    }
+  ],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
@@ -62,14 +86,44 @@
   },
   "copybooks_used": [],
   "paragraphs": [],
-  "error_handling": [],
+  "error_handling": [
+    {
+      "condition": "Application or validation errors",
+      "action": "Display error message highlighted in bright red at POS=(23,1) using FSET attribute",
+      "citation": [
+        284,
+        285,
+        286,
+        287
+      ]
+    }
+  ],
   "sql_operations": [],
-  "cics_operations": [],
+  "cics_operations": [
+    {
+      "command": "SEND MAP",
+      "resource": "COPAU1A",
+      "purpose": "Display authorization details screen to terminal",
+      "citation": 26
+    },
+    {
+      "command": "RECEIVE MAP",
+      "resource": "COPAU1A",
+      "purpose": "Receive any modifiable field data or function key from user",
+      "citation": 19
+    }
+  ],
   "open_questions": [
     {
-      "question": "Specific transaction ID or CICS program that uses this mapset",
-      "context": "BMS file defines the map but does not reference calling programs or entry points.",
-      "suggestion": "Examine CICS COBOL programs that issue EXEC CICS SEND MAP('COPAU1A') or similar."
+      "question": "Which fields are modifiable (unprotected) vs. protected output-only?",
+      "context": "ATTRB specifications like (ASKIP,NORM) do not explicitly state PROT/UNPROT; default behavior unclear without CICS BMS reference",
+      "suggestion": "Consult CICS BMS documentation or linked COBOL program using this map"
+    },
+    {
+      "question": "Exact transaction ID or CICS entry point using this map",
+      "context": "Not specified in BMS source",
+      "suggestion": "Analyze calling CICS COBOL program"
     }
-  ]
+  ],
+  "dead_code": []
 }

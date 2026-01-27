@@ -1,124 +1,80 @@
 {
   "header": {
     "program_id": "CBPAUP0C",
-    "file_name": "cbl/CBPAUP0C.cbl",
+    "file_name": "CBPAUP0C.cbl",
     "file_type": "COBOL",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T17:41:56.916129",
+    "analyzed_at": "2026-01-27T02:44:51.177838",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This batch IMS COBOL program deletes expired pending authorization detail segments from the PAUT database and conditionally deletes their parent summary segments. It sequentially reads root summary segments (PAUTSUM0), then child detail segments (PAUTDTL1), checks each detail's age against a configurable expiry threshold, deletes qualified details while decrementing summary counters in memory, and deletes summaries with zero remaining counts. Checkpoints are taken periodically, and statistics are displayed at completion.",
-    "business_context": "CardDemo Authorization Module - purges expired pending authorization messages to maintain database hygiene",
+    "summary": "This batch IMS DL/I program processes pending authorization summary segments (PAUTSUM0) and their child detail segments (PAUTDTL1) in the PAUT database. For each detail segment, it calculates the age based on authorization date and deletes the detail if expired beyond the parameter-specified days threshold, adjusting summary counters in working storage accordingly. After processing all details for a summary, it deletes the summary segment if PA-APPROVED-AUTH-CNT <= 0 (condition coded with duplication of the same field check). Periodic checkpoints are taken, and final statistics are displayed.",
+    "business_context": "CardDemo Authorization Module: Batch cleanup of expired pending authorization messages from IMS database.",
     "program_type": "BATCH",
     "citations": [
       2,
       3,
       4,
       5,
-      136,
-      137,
-      140,
-      142,
-      169
+      136
     ]
   },
   "inputs": [
     {
       "name": "PRM-INFO",
       "io_type": "PARAMETER",
-      "description": "Command-line parameters from SYSIN containing expiry days (P-EXPIRY-DAYS), checkpoint frequency (P-CHKP-FREQ), display frequency (P-CHKP-DIS-FREQ), and debug flag (P-DEBUG-FLAG)",
+      "description": "Command line parameters from SYSIN containing expiry days, checkpoint frequency, checkpoint display frequency, and debug flag",
       "copybook": null,
       "citation": [
         189
       ]
     },
     {
-      "name": "PENDING-AUTH-SUMMARY",
+      "name": "PAUTSUM0",
       "io_type": "IMS_SEGMENT",
-      "description": "Root segment (PAUTSUM0) containing account ID, approved/declined auth counts and amounts from IMS database via PSBPAUTB PCB",
+      "description": "Root segments for pending authorization summaries",
       "copybook": "CIPAUSMY",
       "citation": [
-        223,
-        224,
-        225
+        223
       ]
     },
     {
-      "name": "PENDING-AUTH-DETAILS",
+      "name": "PAUTDTL1",
       "io_type": "IMS_SEGMENT",
-      "description": "Child segment (PAUTDTL1) under current summary containing authorization date, response code, transaction amount from IMS database via PSBPAUTB PCB",
+      "description": "Child segments for pending authorization details under current summary",
       "copybook": "CIPAUDTY",
       "citation": [
-        255,
-        256,
-        257
-      ]
-    },
-    {
-      "name": "IO-PCB-MASK",
-      "io_type": "IMS_SEGMENT",
-      "description": "IMS I/O PCB mask passed via linkage for database access",
-      "copybook": null,
-      "citation": [
-        132
-      ]
-    },
-    {
-      "name": "PGM-PCB-MASK",
-      "io_type": "IMS_SEGMENT",
-      "description": "IMS program PCB mask passed via linkage for database access",
-      "copybook": null,
-      "citation": [
-        132
+        255
       ]
     }
   ],
   "outputs": [
     {
-      "name": "PENDING-AUTH-DETAILS",
+      "name": "PAUTDTL1",
       "io_type": "IMS_SEGMENT",
       "description": "Expired detail segments deleted from IMS database",
       "copybook": "CIPAUDTY",
       "citation": [
-        310,
-        311,
-        312
+        310
       ]
     },
     {
-      "name": "PENDING-AUTH-SUMMARY",
+      "name": "PAUTSUM0",
       "io_type": "IMS_SEGMENT",
-      "description": "Empty summary segments (zero approved/declined counts) deleted from IMS database",
+      "description": "Summary segments with no remaining approved auth count deleted from IMS database",
       "copybook": "CIPAUSMY",
       "citation": [
-        335,
-        336,
-        337
+        335
       ]
     },
     {
-      "name": "WK-CHKPT-ID",
-      "io_type": "OTHER",
-      "description": "IMS checkpoints taken periodically using checkpoint ID",
-      "copybook": null,
-      "citation": [
-        355
-      ]
-    },
-    {
-      "name": "Program Statistics",
+      "name": "Console",
       "io_type": "REPORT",
-      "description": "Console displays of summary/detail read/deleted counts and checkpoints",
+      "description": "Processing statistics including counts of summaries/details read/deleted and checkpoints",
       "copybook": null,
       "citation": [
-        171,
-        172,
-        173,
-        174,
-        175,
-        176
+        171
       ]
     }
   ],
@@ -134,75 +90,54 @@
   "business_rules": [
     {
       "rule_id": "BR001",
-      "description": "Delete a pending authorization detail segment if the number of days since its authorization date exceeds the configured expiry days",
-      "logic_summary": "Compute auth date as 99999 - PA-AUTH-DATE-9C, day difference as CURRENT-YYDDD - WS-AUTH-DATE; if >= WS-EXPIRY-DAYS, qualify for delete",
+      "description": "Pending authorization detail qualifies for deletion if days elapsed since authorization date (computed as CURRENT-YYDDD - (99999 - PA-AUTH-DATE-9C)) is greater than or equal to expiry days parameter",
+      "logic_summary": "Date conversion and difference calculation performed in working storage",
       "conditions": [
         "WS-DAY-DIFF >= WS-EXPIRY-DAYS"
       ],
       "citation": [
         280,
-        281,
         282,
-        284,
-        285
+        284
       ]
     },
     {
       "rule_id": "BR002",
-      "description": "When qualifying a detail for deletion, decrement the appropriate summary segment counters in memory: approved count/amount if PA-AUTH-RESP-CODE = '00', else declined count/amount",
-      "logic_summary": "Modify PA-APPROVED-AUTH-CNT/AMT or PA-DECLINED-AUTH-CNT/AMT in the in-memory PENDING-AUTH-SUMMARY; changes NOT persisted via REPL/ISRT/CHG unless summary later deleted",
+      "description": "Upon qualifying a detail for deletion, adjust summary segment counters in working storage: for approved (resp code '00') decrement count and approved amount; for declined decrement count and transaction amount",
+      "logic_summary": "Subtractions performed on summary fields in memory prior to detail deletion",
       "conditions": [
-        "PA-AUTH-RESP-CODE = '00'",
-        "QUALIFIED-FOR-DELETE"
+        "PA-AUTH-RESP-CODE = '00'"
       ],
       "citation": [
         287,
-        288,
-        289,
-        291,
-        292
+        291
       ]
     },
     {
       "rule_id": "BR003",
-      "description": "Delete the parent summary segment if both approved and declined authorization counts are <= 0 after processing details (note: code checks PA-APPROVED-AUTH-CNT twice, likely a bug intending PA-DECLINED-AUTH-CNT)",
-      "logic_summary": "Check PA-APPROVED-AUTH-CNT <= 0 AND PA-APPROVED-AUTH-CNT <= 0; if true, perform DLET on summary",
+      "description": "Delete summary segment only if PA-APPROVED-AUTH-CNT <= 0 (condition implemented as PA-APPROVED-AUTH-CNT <= 0 AND PA-APPROVED-AUTH-CNT <= 0)",
+      "logic_summary": "Checked after all details processed for the summary; no check on declined count",
       "conditions": [
         "PA-APPROVED-AUTH-CNT <= 0 AND PA-APPROVED-AUTH-CNT <= 0"
       ],
       "citation": [
-        156,
-        157
-      ]
-    },
-    {
-      "rule_id": "BR004",
-      "description": "Take IMS checkpoint after every P-CHKP-FREQ summaries processed (default 5) or at end",
-      "logic_summary": "EXEC DLI CHKP if WS-AUTH-SMRY-PROC-CNT > P-CHKP-FREQ, reset counter; display every P-CHKP-DIS-FREQ checkpoints",
-      "conditions": [
-        "WS-AUTH-SMRY-PROC-CNT > P-CHKP-FREQ"
-      ],
-      "citation": [
-        160,
-        161
+        156
       ]
     }
   ],
   "data_flow": {
     "reads_from": [
       {
-        "source": "PENDING-AUTH-SUMMARY",
+        "source": "PAUTSUM0",
         "fields_used": [
-          "PA-ACCT-ID",
-          "PA-APPROVED-AUTH-CNT"
+          "PA-ACCT-ID"
         ],
         "citation": [
-          233,
-          156
+          233
         ]
       },
       {
-        "source": "PENDING-AUTH-DETAILS",
+        "source": "PAUTDTL1",
         "fields_used": [
           "PA-AUTH-DATE-9C",
           "PA-AUTH-RESP-CODE",
@@ -215,40 +150,21 @@
           289,
           292
         ]
-      },
-      {
-        "source": "PRM-INFO",
-        "fields_used": [
-          "P-EXPIRY-DAYS",
-          "P-CHKP-FREQ",
-          "P-CHKP-DIS-FREQ",
-          "P-DEBUG-FLAG"
-        ],
-        "citation": [
-          196,
-          201,
-          204,
-          207
-        ]
       }
     ],
     "writes_to": [
       {
-        "destination": "PENDING-AUTH-DETAILS",
+        "destination": "PAUTDTL1",
         "fields_written": [],
         "citation": [
           310
         ]
       },
       {
-        "destination": "PENDING-AUTH-SUMMARY",
-        "fields_written": [
-          "PA-APPROVED-AUTH-CNT",
-          "PA-DECLINED-AUTH-CNT"
-        ],
+        "destination": "PAUTSUM0",
+        "fields_written": [],
         "citation": [
-          288,
-          291
+          335
         ]
       }
     ],
@@ -256,7 +172,7 @@
       {
         "input_field": "PA-AUTH-DATE-9C",
         "output_field": "WS-AUTH-DATE",
-        "transformation_description": "WS-AUTH-DATE = 99999 - PA-AUTH-DATE-9C to convert to YYDDD format",
+        "transformation_description": "Convert packed date to YYDDD format: 99999 - PA-AUTH-DATE-9C",
         "citation": [
           280
         ]
@@ -264,7 +180,7 @@
       {
         "input_field": "CURRENT-YYDDD",
         "output_field": "WS-DAY-DIFF",
-        "transformation_description": "WS-DAY-DIFF = CURRENT-YYDDD - WS-AUTH-DATE to compute age in days",
+        "transformation_description": "Compute days difference: CURRENT-YYDDD - WS-AUTH-DATE",
         "citation": [
           282
         ]
@@ -272,17 +188,17 @@
       {
         "input_field": "PA-APPROVED-AUTH-CNT",
         "output_field": "PA-APPROVED-AUTH-CNT",
-        "transformation_description": "Decrement by 1 if approved expired detail (not persisted unless summary deleted)",
+        "transformation_description": "Decrement by 1 if approved expired detail",
         "citation": [
           288
         ]
       },
       {
-        "input_field": "PA-DECLINED-AUTH-CNT",
-        "output_field": "PA-DECLINED-AUTH-CNT",
-        "transformation_description": "Decrement by 1 if declined expired detail (not persisted unless summary deleted)",
+        "input_field": "PA-APPROVED-AUTH-AMT",
+        "output_field": "PA-APPROVED-AUTH-AMT",
+        "transformation_description": "Subtract PA-APPROVED-AMT if approved expired detail",
         "citation": [
-          291
+          289
         ]
       }
     ]
@@ -290,13 +206,13 @@
   "copybooks_used": [
     {
       "copybook_name": "CIPAUSMY",
-      "purpose": "Defines layout of PENDING-AUTH-SUMMARY root IMS segment including PA-ACCT-ID, PA-APPROVED-AUTH-CNT/AMT, PA-DECLINED-AUTH-CNT/AMT",
+      "purpose": "Defines layout of PENDING-AUTH-SUMMARY root segment including counts like PA-APPROVED-AUTH-CNT and PA-ACCT-ID",
       "location": "WORKING_STORAGE",
       "citation": 117
     },
     {
       "copybook_name": "CIPAUDTY",
-      "purpose": "Defines layout of PENDING-AUTH-DETAILS child IMS segment including PA-AUTH-DATE-9C, PA-AUTH-RESP-CODE, PA-APPROVED-AMT, PA-TRANSACTION-AMT",
+      "purpose": "Defines layout of PENDING-AUTH-DETAILS child segment including PA-AUTH-DATE-9C and PA-AUTH-RESP-CODE",
       "location": "WORKING_STORAGE",
       "citation": 121
     }
@@ -305,7 +221,7 @@
     {
       "paragraph_name": "MAIN-PARA",
       "summary": null,
-      "purpose": "This is the primary orchestration paragraph controlling the entire program execution flow in this batch IMS job. It first performs 1000-INITIALIZE to accept parameters from SYSIN, compute current date in YYDDD, set defaults for expiry days (default 5), checkpoint frequencies (5/10), and debug flag. It then initiates reading of summary segments via repeated 2000-FIND-NEXT-AUTH-SUMMARY calls until end-of-DB or error flag. For each summary (identified by PA-ACCT-ID), it enters an inner loop calling 3000-FIND-NEXT-AUTH-DTL to read child details until no more, applying 4000-CHECK-IF-EXPIRED to compute age and qualify deletions, executing 5000-DELETE-AUTH-DTL for qualified details while decrementing summary counters in memory (approved/declined based on response code). After processing all details for a summary, it checks if both counts <=0 (bug: duplicate approved check) and performs 6000-DELETE-AUTH-SUMMARY if true. Periodically takes 9000-TAKE-CHECKPOINT if summaries processed exceed frequency. At EOF, final checkpoint and displays total read/deleted stats to console. Errors in subordinates trigger abend via 9999-ABEND; no local error handling beyond loop exits on ERR-FLG-ON.",
+      "purpose": "This is the primary orchestration paragraph controlling the entire program flow for deleting expired authorizations. It begins by performing 1000-INITIALIZE to accept parameters, dates, and set defaults. It then enters the main loop by calling 2000-FIND-NEXT-AUTH-SUMMARY to retrieve the next summary segment until end of database or error. For each summary, it loops through 3000-FIND-NEXT-AUTH-DTL to get child details, calling 4000-CHECK-IF-EXPIRED to assess expiry and adjust summary counters in memory if qualified, followed by 5000-DELETE-AUTH-DTL if applicable. After all details, it checks if PA-APPROVED-AUTH-CNT <= 0 (duplicated condition) and performs 6000-DELETE-AUTH-SUMMARY if true. Periodically takes checkpoints via 9000-TAKE-CHECKPOINT when processing count exceeds frequency. Upon loop exit, performs final checkpoint, displays total statistics (reads/deletes for summary/details), and returns. Errors from subordinate paragraphs trigger abend via 9999-ABEND indirectly through status checks. No direct validation beyond subordinate returns.",
       "called_by": [],
       "calls": [
         "1000-INITIALIZE",
@@ -322,12 +238,14 @@
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
       "metadata": null
     },
     {
       "paragraph_name": "1000-INITIALIZE",
       "summary": null,
-      "purpose": "This initialization paragraph sets up all working storage variables, dates, and parameters essential for program operation. It consumes system date via ACCEPT CURRENT-DATE FROM DATE and CURRENT-YYDDD FROM DAY (lines 186-187), and reads PRM-INFO from SYSIN (189). It produces initialized WS-EXPIRY-DAYS (from P-EXPIRY-DAYS or default 5, 196-200), defaults P-CHKP-FREQ to 5 (201-203), P-CHKP-DIS-FREQ to 10 (204-206), P-DEBUG-FLAG to 'N' (207-209). Business logic includes numeric validation for P-EXPIRY-DAYS and space/zero/low-values checks for frequencies with defaults. Displays startup info including parms and date (190-194). No subordinate calls or error handling beyond defaults; assumes SYSIN present. Exits cleanly to MAIN-PARA.",
+      "purpose": "This initialization paragraph sets up program variables and parameters for processing. It accepts CURRENT-DATE from DATE and CURRENT-YYDDD from DAY for expiry calculations. It reads PRM-INFO from SYSIN and displays program start, parameters, and date. It validates and moves P-EXPIRY-DAYS to WS-EXPIRY-DAYS if numeric, else defaults to 5. It defaults P-CHKP-FREQ to 5 and P-CHKP-DIS-FREQ to 10 if invalid, and ensures P-DEBUG-FLAG is 'Y' or 'N'. Displays initial information for audit trail. No file opens or IMS calls; relies on batch IMS environment. No explicit error handling beyond parameter defaults; proceeds with defaults on invalid input. Does not call other paragraphs.",
       "called_by": [
         "MAIN-PARA"
       ],
@@ -338,12 +256,14 @@
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
       "metadata": null
     },
     {
       "paragraph_name": "2000-FIND-NEXT-AUTH-SUMMARY",
       "summary": null,
-      "purpose": "This paragraph reads the next root pending auth summary segment from IMS DB using GN call on PAUTSUM0. It consumes IMS PCB at PAUT-PCB-NUM (223-226) and current DB position. Produces loaded PENDING-AUTH-SUMMARY data, increments WS-NO-SUMRY-READ and WS-AUTH-SMRY-PROC-CNT (231-232), sets WS-CURR-APP-ID = PA-ACCT-ID (233), sets NOT-END-OF-AUTHDB (230). Business logic evaluates DIBSTAT: ' ' continues, 'GB' sets END-OF-AUTHDB (235), other statuses display error and abend via 9999-ABEND (237-240). Optional debug display (219-220). Error handling abends on non-ok/non-EOF status. No calls.",
+      "purpose": "This paragraph retrieves the next pending authorization summary root segment from IMS database. If debug on, displays current summary read count. Performs DL/I GN call on PAUT-PCB for PAUTSUM0 segment into PENDING-AUTH-SUMMARY. Evaluates DIBSTAT: if blank, sets not end-of-DB, increments WS-NO-SUMRY-READ and WS-AUTH-SMRY-PROC-CNT, moves PA-ACCT-ID to WS-CURR-APP-ID. If 'GB', sets END-OF-AUTHDB true. Any other status displays error details and performs 9999-ABEND. Serves as entry to each summary processing iteration. Inputs from IMS PCB; outputs updated counters and current app ID in WS. No subordinate calls.",
       "called_by": [
         "MAIN-PARA"
       ],
@@ -356,12 +276,14 @@
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
       "metadata": null
     },
     {
       "paragraph_name": "3000-FIND-NEXT-AUTH-DTL",
       "summary": null,
-      "purpose": "This paragraph retrieves the next child pending auth detail segment under the current summary using GNP on PAUTDTL1. Consumes IMS PCB and parent position from prior summary read (255-258). Produces loaded PENDING-AUTH-DETAILS data, sets MORE-AUTHS and increments WS-NO-DTL-READ (261-262). Business logic via DIBSTAT: ' ' continues loop, 'GE'/'GB' sets NO-MORE-AUTHS (264-266), other displays details (app ID, read count) and abends (267-270). Optional debug (251-252). Error handling abends on unexpected status. No calls.",
+      "purpose": "This paragraph retrieves the next child detail segment under the current summary from IMS database. If debug on, displays current detail read count. Performs DL/I GNP call on PAUT-PCB for PAUTDTL1 segment into PENDING-AUTH-DETAILS. Evaluates DIBSTAT: if blank, sets MORE-AUTHS true and increments WS-NO-DTL-READ. If 'GE' (not found) or 'GB' (end DB), sets NO-MORE-AUTHS true. Any other status displays error with app ID and read count, then abends via 9999-ABEND. Controls the inner loop for detail processing per summary. Inputs current position from prior GNP; outputs populated detail record or end flag.",
       "called_by": [
         "MAIN-PARA"
       ],
@@ -374,12 +296,14 @@
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
       "metadata": null
     },
     {
       "paragraph_name": "4000-CHECK-IF-EXPIRED",
       "summary": null,
-      "purpose": "This paragraph determines if current detail is expired by computing its age against expiry threshold. Consumes PA-AUTH-DATE-9C from detail, CURRENT-YYDDD, WS-EXPIRY-DAYS. Produces WS-AUTH-DATE (280), WS-DAY-DIFF (282), sets QUALIFIED-FOR-DELETE if >= threshold (284-285), and if qualified, decrements summary counters conditionally on PA-AUTH-RESP-CODE='00' (approved: 288-289) else declined (291-292). Business logic implements expiry check and counter adjustment in memory only (non-persistent). No writes or displays. No error handling or calls; sets flags for caller.",
+      "purpose": "This paragraph determines if the current detail segment is expired and prepares summary for adjustment if so. Computes WS-AUTH-DATE by subtracting PA-AUTH-DATE-9C from 99999 to normalize date. Computes WS-DAY-DIFF as CURRENT-YYDDD minus WS-AUTH-DATE. If WS-DAY-DIFF >= WS-EXPIRY-DAYS, sets QUALIFIED-FOR-DELETE true and adjusts summary counters: if PA-AUTH-RESP-CODE='00', decrements PA-APPROVED-AUTH-CNT and subtracts PA-APPROVED-AMT from PA-APPROVED-AUTH-AMT; else decrements PA-DECLINED-AUTH-CNT and subtracts PA-TRANSACTION-AMT from PA-DECLINED-AUTH-AMT. If not expired, sets NOT-QUALIFIED-FOR-DELETE. All adjustments in working storage memory only. Implements core business logic for expiry. No I/O or calls; validates date fields implicitly via computation.",
       "called_by": [
         "MAIN-PARA"
       ],
@@ -390,12 +314,14 @@
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
       "metadata": null
     },
     {
       "paragraph_name": "5000-DELETE-AUTH-DTL",
       "summary": null,
-      "purpose": "This paragraph executes IMS DLET to remove qualified expired detail segment. Consumes current PENDING-AUTH-DETAILS in memory and PCB position (310-313). Produces deletion in DB, increments WS-NO-DTL-DELETED if success (316). Business logic checks DIBSTAT=spaces for success, else displays app ID and abends (318-320). Optional debug display of app ID (307). Error handling abends on failure. No further calls.",
+      "purpose": "This paragraph deletes the current qualified expired detail segment from IMS database. If debug on, displays app ID for audit. Performs DL/I DLET call on PAUT-PCB for PAUTDTL1 from PENDING-AUTH-DETAILS. If DIBSTAT blank, increments WS-NO-DTL-DELETED. If not blank, displays failure status and app ID, then abends via 9999-ABEND. Executed conditionally after expiry check. Inputs populated detail record; outputs deletion and updated delete counter. Error handling via status check leading to abend. No subordinate calls.",
       "called_by": [
         "MAIN-PARA"
       ],
@@ -408,12 +334,14 @@
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
       "metadata": null
     },
     {
       "paragraph_name": "6000-DELETE-AUTH-SUMMARY",
       "summary": null,
-      "purpose": "This paragraph deletes the current summary segment if no remaining auths after detail processing. Consumes PENDING-AUTH-SUMMARY in memory (with adjusted counters) and PCB (335-338). Produces DB deletion, increments WS-NO-SUMRY-DELETED if DIBSTAT=spaces (341). Business logic abends on failure with display of status and app ID (343-345). Optional debug (332). Error handling via abend.",
+      "purpose": "This paragraph deletes the current summary segment when no approved auths remain. If debug on, displays app ID. Performs DL/I DLET call on PAUT-PCB for PAUTSUM0 from PENDING-AUTH-SUMMARY. If DIBSTAT blank, increments WS-NO-SUMRY-DELETED. If not blank, displays failure status and app ID, then abends via 9999-ABEND. Called conditionally after all details processed. Inputs adjusted summary record; outputs deletion and counter update. Strict error handling with abend on failure.",
       "called_by": [
         "MAIN-PARA"
       ],
@@ -426,12 +354,14 @@
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
       "metadata": null
     },
     {
       "paragraph_name": "9000-TAKE-CHECKPOINT",
       "summary": null,
-      "purpose": "This paragraph issues IMS CHKP to commit changes periodically or at end. Consumes WK-CHKPT-ID (355). Produces checkpoint in IMS, increments WS-NO-CHKP (359), displays success message with counts/app ID every P-CHKP-DIS-FREQ (361-364). Business logic checks DIBSTAT=spaces for success, else displays failure details and abends (366-369). No data reads. Error handling abends on failure.",
+      "purpose": "This paragraph commits current IMS changes via checkpoint for restartability. Performs DL/I CHKP with WK-CHKPT-ID (RMADnnnn). If DIBSTAT blank, increments WS-NO-CHKP; if reaches P-CHKP-DIS-FREQ, resets counter and displays success with read count and app ID. If not blank, displays failure details and abends via 9999-ABEND. Called periodically in main loop and at end. Ensures data integrity in long-running batch. Inputs current checkpoint ID; outputs committed position or error.",
       "called_by": [
         "MAIN-PARA"
       ],
@@ -444,12 +374,14 @@
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
       "metadata": null
     },
     {
       "paragraph_name": "9999-ABEND",
       "summary": null,
-      "purpose": "Universal error termination paragraph invoked on any IMS failure or invalid status. Consumes no inputs beyond caller context. Produces display 'CBPAUP0C ABENDING ...' (380), sets RETURN-CODE=16 (382), and GOBACKs. No business logic, decisions, validations, or calls. Handles all errors by forced abend.",
+      "purpose": "This terminal error handling paragraph abends the program on any IMS or processing failure. Displays 'CBPAUP0C ABENDING ...' message. Sets RETURN-CODE to 16 and GOBACKs. Called from status evaluation points in IMS calls. No recovery or retry; immediate termination. Inputs error context from caller displays; outputs non-zero return code. Minimal logic focused on exit.",
       "called_by": [
         "2000-FIND-NEXT-AUTH-SUMMARY",
         "3000-FIND-NEXT-AUTH-DTL",
@@ -464,48 +396,50 @@
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
       "metadata": null
     }
   ],
   "error_handling": [
     {
-      "condition": "DIBSTAT NOT ' ' OR 'GB' in summary read",
-      "action": "Display error and perform 9999-ABEND",
+      "condition": "DIBSTAT not blank or 'GB' on GN summary",
+      "action": "Display error and read counts, PERFORM 9999-ABEND",
       "citation": [
         237
       ]
     },
     {
-      "condition": "DIBSTAT NOT ' ', 'GE', 'GB' in detail read",
-      "action": "Display error details and perform 9999-ABEND",
+      "condition": "DIBSTAT not blank, 'GE', or 'GB' on GNP detail",
+      "action": "Display error, app ID, read counts, PERFORM 9999-ABEND",
       "citation": [
         267
       ]
     },
     {
-      "condition": "DIBSTAT NOT spaces in detail delete",
-      "action": "Display error and perform 9999-ABEND",
+      "condition": "DIBSTAT not blank on DLET detail",
+      "action": "Display failure and app ID, PERFORM 9999-ABEND",
       "citation": [
         318
       ]
     },
     {
-      "condition": "DIBSTAT NOT spaces in summary delete",
-      "action": "Display error and perform 9999-ABEND",
+      "condition": "DIBSTAT not blank on DLET summary",
+      "action": "Display failure and app ID, PERFORM 9999-ABEND",
       "citation": [
         343
       ]
     },
     {
-      "condition": "DIBSTAT NOT spaces in CHKP",
-      "action": "Display error and perform 9999-ABEND",
+      "condition": "DIBSTAT not blank on CHKP",
+      "action": "Display failure details, PERFORM 9999-ABEND",
       "citation": [
         366
       ]
     },
     {
       "condition": "P-EXPIRY-DAYS not numeric",
-      "action": "Default to 5 (no abend)",
+      "action": "Default WS-EXPIRY-DAYS to 5, continue processing",
       "citation": [
         198
       ]
@@ -515,19 +449,15 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "Exact field layouts in copybooks CIPAUSMY and CIPAUDTY",
-      "context": "Copybooks referenced but contents not provided; fields like PA-AUTH-DATE-9C inferred from usage",
-      "suggestion": "Provide copybook source for field-level details"
+      "question": "Does the program persist adjusted counts to summary segments when not deleting the summary?",
+      "context": "Counts like PA-APPROVED-AUTH-CNT are modified in working storage after detail deletions (lines 288-292), but no IMS CHG or ISRT call updates the database segment unless fully deleted (line 335).",
+      "suggestion": "Review copybooks for field locations and check job logs or requirements for missing update logic."
     },
     {
-      "question": "Apparent bug in line 156: checks PA-APPROVED-AUTH-CNT <=0 twice instead of approved AND declined",
-      "context": "Leads to deleting summary only if approved <=0, ignoring declined count",
-      "suggestion": "Confirm intent; likely should be PA-DECLINED-AUTH-CNT"
-    },
-    {
-      "question": "Persistence of summary counter decrements when summary not deleted",
-      "context": "Memory changes in 288-292 not written back via IMS REPL/CHG/ISRT; counters desynchronized if non-expired details remain",
-      "suggestion": "Review design; may require REPL after adjustments or accept as known limitation"
+      "question": "Is the duplicated condition in line 156 intended to check PA-DECLINED-AUTH-CNT instead of PA-APPROVED-AUTH-CNT twice?",
+      "context": "Logic checks PA-APPROVED-AUTH-CNT <= 0 AND PA-APPROVED-AUTH-CNT <= 0, ignoring declined counts despite adjustments to both.",
+      "suggestion": "Examine requirements or prior versions for intended both-counts-zero logic."
     }
-  ]
+  ],
+  "dead_code": []
 }

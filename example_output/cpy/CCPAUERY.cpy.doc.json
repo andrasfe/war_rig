@@ -4,19 +4,28 @@
     "file_name": "cpy/CCPAUERY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T17:39:20.222512",
+    "analyzed_at": "2026-01-27T02:44:55.629482",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This COBOL copybook defines the ERROR-LOG-RECORD data structure for logging errors related to pending authorizations. It captures timestamp (ERR-DATE, ERR-TIME), identifiers (ERR-APPLICATION, ERR-PROGRAM, ERR-LOCATION), severity level (ERR-LEVEL with 88-level condition names: ERR-LOG 'L', ERR-INFO 'I', ERR-WARNING 'W', ERR-CRITICAL 'C'), subsystem (ERR-SUBSYSTEM with 88-levels: ERR-APP 'A', ERR-CICS 'C', ERR-IMS 'I', ERR-DB2 'D', ERR-MQ 'M', ERR-FILE 'F'), error codes (ERR-CODE-1, ERR-CODE-2), message (ERR-MESSAGE), and event key (ERR-EVENT-KEY). The structure is used in mainframe applications for standardized error logging.",
-    "business_context": "Error logging for pending authorization processes in Amazon mainframe applications, under Apache License 2.0 (lines 4-17).",
+    "summary": "This copybook defines the ERROR-LOG-RECORD data structure for logging errors related to pending authorizations. It captures key error details such as date (ERR-DATE), time (ERR-TIME), application (ERR-APPLICATION), program (ERR-PROGRAM), location (ERR-LOCATION), severity level (ERR-LEVEL with 88 condition names for LOG, INFO, WARNING, CRITICAL), subsystem (ERR-SUBSYSTEM with 88 conditions for APP, CICS, IMS, DB2, MQ, FILE), error codes (ERR-CODE-1, ERR-CODE-2), message (ERR-MESSAGE), and event key (ERR-EVENT-KEY). The structure is intended for use in error logging by mainframe applications.",
+    "business_context": "Supports error logging in mainframe environments for pending authorization processes, accommodating various subsystems like CICS, IMS, DB2, MQ, and file I/O.",
     "program_type": "UTILITY",
     "citations": [
-      1,
       2,
-      3,
-      19
+      19,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      30,
+      37,
+      38,
+      39,
+      40
     ]
   },
   "inputs": [],
@@ -33,7 +42,14 @@
     "writes_to": [],
     "transforms": []
   },
-  "copybooks_used": [],
+  "copybooks_used": [
+    {
+      "copybook_name": "CCPAUERY",
+      "purpose": "Defines ERROR-LOG-RECORD structure for standardizing error log entries across applications, including timestamps, identifiers, severity indicators, subsystem types, codes, messages, and keys.",
+      "location": "OTHER",
+      "citation": 19
+    }
+  ],
   "paragraphs": [],
   "error_handling": [],
   "sql_operations": [],
@@ -41,13 +57,14 @@
   "open_questions": [
     {
       "question": "In which specific programs or modules is this copybook included?",
-      "context": "Copybook usage is not indicated within the source file itself.",
-      "suggestion": "Analyze including COBOL programs or review JCL/PROC for COPY statements referencing CCPAUERY."
+      "context": "The copybook file does not specify usage locations; it would be determined from including programs.",
+      "suggestion": "Scan programs for COPY CCPAUERY statements."
     },
     {
-      "question": "What are the exact formats or validation rules for fields like ERR-DATE, ERR-CODE-1, etc.?",
-      "context": "PIC clauses define lengths and types (e.g., PIC X(06) for ERR-DATE at line 20), but no MOVE/IF statements or comments specify content formats.",
-      "suggestion": "Review programs using this copybook for field population logic."
+      "question": "What is the exact output destination (file, queue) for records using this structure?",
+      "context": "Not defined in the copybook; depends on consuming program.",
+      "suggestion": "Analyze programs that COPY this and check their outputs."
     }
-  ]
+  ],
+  "dead_code": []
 }

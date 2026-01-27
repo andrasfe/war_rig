@@ -4,13 +4,13 @@
     "file_name": "cpy-bms/COPAU00.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T17:36:56.405042",
+    "analyzed_at": "2026-01-27T02:39:58.053664",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This COBOL copybook defines the symbolic map data structures COPAU0AI for input and COPAU0AO for output used with the COPAU0A BMS map in CICS online transactions. It structures fields for screen display and data entry including headers like transaction name, titles, date, time, program name; customer account details such as account ID, name, customer ID, addresses, status, phone; financial data like approval/decline counts, credit/cash limits, balances, totals; up to five recent transactions with ID, post date, time, type, approval flag, status, amount; and an error message field. The structure supports typical CICS BMS field attributes and formats for protected, highlighted, visible, and output/input data handling.",
-    "business_context": "Customer account inquiry and update screen in a financial or banking CICS application, displaying summary information and recent transaction history.",
+    "summary": "This COBOL copybook defines the symbolic input map COPAU0AI and output map COPAU0AO (via REDEFINES at line 391) for a CICS BMS screen named COPAU00. It structures fields for displaying transaction name, titles, current date/time, program name, customer account ID, name, address lines, account status, phone, approval/decline counts, credit/cash limits and balances, selection flags for up to 5 transactions, and per-transaction details (ID, date, time, type, approval, status, amount), plus an error message field. The structure follows standard BMS conventions with L (length), F/A (flags/attributes), I (input data) for AI, and C/P/H/V/O (change/protect/highlight/visible/output) for AO.",
+    "business_context": "Supports CICS online transaction processing for customer account summary inquiry in a financial or banking system, displaying account details and recent transactions.",
     "program_type": "ONLINE_CICS",
     "citations": [
       17,
@@ -21,7 +21,7 @@
     {
       "name": "COPAU0AI",
       "io_type": "CICS_MAP",
-      "description": "Input symbolic map structure capturing terminal data for fields like account ID, selectors, transaction details entered by user",
+      "description": "Symbolic input map structure capturing data from BMS RECEIVE MAP, including customer details and transaction selections",
       "copybook": null,
       "citation": [
         17
@@ -32,7 +32,7 @@
     {
       "name": "COPAU0AO",
       "io_type": "CICS_MAP",
-      "description": "Output symbolic map structure for sending data to terminal including headers, customer details, balances, recent transactions, error messages",
+      "description": "Symbolic output map structure for populating BMS SEND MAP with account summary, limits, balances, and transaction history",
       "copybook": null,
       "citation": [
         391
@@ -58,14 +58,15 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "Which CICS programs include and use this copybook?",
-      "context": "Copybook defines structures but does not specify including programs",
-      "suggestion": "Search for COPY COPAU00 statements in associated BMS map programs or CICS COBOL sources"
+      "question": "Which CICS programs include this COPY statement?",
+      "context": "Copybook usage not visible in this file; required to understand integration.",
+      "suggestion": "Grep source files for 'COPY COPAU00' or analyze including programs."
     },
     {
-      "question": "What are the exact BMS physical map details and transaction IDs using this symbolic map?",
-      "context": "Symbolic map only; physical map layout and transids not defined here",
-      "suggestion": "Locate the corresponding BMS map definition file (e.g., COPAU0A.bms)"
+      "question": "What are the exact BMS mapset name and transaction ID using this map?",
+      "context": "Inferred as COPAU00 from filename and group name, but not explicitly stated.",
+      "suggestion": "Review BMS source (.bms) or CICS program using this copybook."
     }
-  ]
+  ],
+  "dead_code": []
 }

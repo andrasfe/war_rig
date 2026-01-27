@@ -1,139 +1,103 @@
 {
   "header": {
     "program_id": "COPAU00",
-    "file_name": "COPAU00.bms",
+    "file_name": "bms/COPAU00.bms",
     "file_type": "BMS",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T17:41:11.273119",
+    "analyzed_at": "2026-01-27T02:42:27.496687",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "Defines BMS mapset COPAU00 with map COPAU0A for the CardDemo Pending Authorization Screen. Enables searching by Account ID to view customer details, credit/cash limits and balances, approval/decline counts, and a list of up to 5 pending transactions. Users select transactions by entering 'S' in SEL fields for detail view, with error message display and function key guidance.",
-    "business_context": "CICS-based credit card demonstration application for inquiring on pending authorizations.",
+    "summary": "This BMS mapset COPAU00 defines the COPAU0A map for the Pending Authorization Screen (CardDemo). It displays header info (transaction, date/time, program, titles), customer details (name, ID, address, status, phone, approval/decline counts, credit/cash limits/balances), and a table of up to 5 pending transactions (ID, date, time, type, A/D, status, amount). Users input search account ID and select transactions via SEL fields.",
+    "business_context": "Supports reviewing pending credit card authorizations by account in a demo payment processing system",
     "program_type": "ONLINE_CICS",
     "citations": [
       2,
       19,
       26,
       78,
-      82,
-      497,
-      511
+      83
     ]
   },
   "inputs": [
     {
       "name": "ACCTID",
       "io_type": "CICS_MAP",
-      "description": "Account ID field for searching pending authorizations",
-      "copybook": null,
+      "description": "User-entered account ID for searching pending authorizations",
+      "copybook": "COPAU00",
       "citation": [
-        82,
         84
       ]
     },
     {
       "name": "SEL0001",
       "io_type": "CICS_MAP",
-      "description": "Selection field (enter 'S') for first listed transaction",
-      "copybook": null,
+      "description": "Selection field (e.g., 'S') for first pending transaction",
+      "copybook": "COPAU00",
       "citation": [
-        277,
-        281
+        277
       ]
     },
     {
       "name": "SEL0002",
       "io_type": "CICS_MAP",
-      "description": "Selection field (enter 'S') for second listed transaction",
-      "copybook": null,
+      "description": "Selection field (e.g., 'S') for second pending transaction",
+      "copybook": "COPAU00",
       "citation": [
-        321,
-        325
+        321
       ]
     },
     {
       "name": "SEL0003",
       "io_type": "CICS_MAP",
-      "description": "Selection field (enter 'S') for third listed transaction",
-      "copybook": null,
+      "description": "Selection field (e.g., 'S') for third pending transaction",
+      "copybook": "COPAU00",
       "citation": [
-        365,
-        369
+        365
       ]
     },
     {
       "name": "SEL0004",
       "io_type": "CICS_MAP",
-      "description": "Selection field (enter 'S') for fourth listed transaction",
-      "copybook": null,
+      "description": "Selection field (e.g., 'S') for fourth pending transaction",
+      "copybook": "COPAU00",
       "citation": [
-        409,
-        413
+        409
       ]
     },
     {
       "name": "SEL0005",
       "io_type": "CICS_MAP",
-      "description": "Selection field (enter 'S') for fifth listed transaction",
-      "copybook": null,
+      "description": "Selection field (e.g., 'S') for fifth pending transaction",
+      "copybook": "COPAU00",
       "citation": [
-        488,
-        492
+        488
       ]
     }
   ],
   "outputs": [
     {
-      "name": "CUSTOMER_INFO",
+      "name": "COPAU0A",
       "io_type": "CICS_MAP",
-      "description": "Display fields for customer name, ID, address lines, status, phone (CNAME, CUSTID, ADDR001, ADDR002, ACCSTAT, PHONE1)",
-      "copybook": null,
+      "description": "Display-only fields for customer info (CNAME, CUSTID, ADDR001/2, ACCSTAT, PHONE1), counts (APPRCNT, DECLCNT), limits/balances (CREDLIM, CASHLIM, APPRAMT, CREDBAL, CASHBAL, DECLAMT), transaction list (TRNIDxx, PDATExx, PTIMExx, PTYPExx, PAPRVxx, PSTATxx, PAMTxx), headers, titles, dates/times, instructions, and error message (ERRMSG)",
+      "copybook": "COPAU00",
       "citation": [
+        26,
         96,
         103,
         107,
-        118,
         114,
-        125
-      ]
-    },
-    {
-      "name": "LIMITS_COUNTS",
-      "io_type": "CICS_MAP",
-      "description": "Credit/cash limits, balances, approval/decline counts and amounts (CREDLIM, CASHLIM, APPRAMT, CREDBAL, CASHBAL, DECLAMT, APPRCNT, DECLCNT)",
-      "copybook": null,
-      "citation": [
+        125,
+        132,
+        139,
         147,
         156,
         165,
         174,
         183,
-        192,
-        132,
-        139
-      ]
-    },
-    {
-      "name": "TRANSACTION_LIST",
-      "io_type": "CICS_MAP",
-      "description": "Pending transaction details including ID, date, time, type, approve/decline, status, amount (TRNIDxx, PDATExx, PTIMExx, PTYPExx, PAPRVxx, PSTATxx, PAMTxx for xx=01-05)",
-      "copybook": null,
-      "citation": [
+        191,
         286,
-        330,
-        374,
-        418,
-        453
-      ]
-    },
-    {
-      "name": "ERRMSG",
-      "io_type": "CICS_MAP",
-      "description": "Error message display field",
-      "copybook": null,
-      "citation": [
         503
       ]
     }
@@ -147,13 +111,17 @@
   "business_rules": [
     {
       "rule_id": "BR001",
-      "description": "Users enter 'S' in one of the SELxxxx fields to select a listed transaction for viewing authorization details.",
-      "logic_summary": "Screen instruction text guides user interaction; program using this map checks SEL fields post-RECEIVE MAP.",
+      "description": "User must enter 'S' in one of the SELxxxx fields to select a pending transaction for viewing authorization details",
+      "logic_summary": "Instructional text displayed on screen prompting user action; handled in associated CICS program on RECEIVE MAP",
       "conditions": [
-        "Type 'S' to View Authorization details from the list"
+        "SELxxxx = 'S'"
       ],
       "citation": [
-        497,
+        277,
+        321,
+        365,
+        409,
+        488,
         501
       ]
     }
@@ -163,24 +131,37 @@
     "writes_to": [],
     "transforms": []
   },
-  "copybooks_used": [],
-  "paragraphs": [],
-  "error_handling": [
+  "copybooks_used": [
     {
-      "condition": "Application or validation errors",
-      "action": "Populate and display message in ERRMSG field",
-      "citation": [
-        503
-      ]
+      "copybook_name": "COPAU00",
+      "purpose": "Generates symbolic and physical maps for CICS screen I/O handling in COBOL programs",
+      "location": "OTHER",
+      "citation": 19
     }
   ],
+  "paragraphs": [],
+  "error_handling": [],
   "sql_operations": [],
-  "cics_operations": [],
+  "cics_operations": [
+    {
+      "command": "DFHMSD",
+      "resource": "COPAU00",
+      "purpose": "Defines mapset with INOUT mode, AUTO storage, for bidirectional screen I/O",
+      "citation": 19
+    },
+    {
+      "command": "DFHMDI",
+      "resource": "COPAU0A",
+      "purpose": "Defines the main map of size 24x80",
+      "citation": 26
+    }
+  ],
   "open_questions": [
     {
-      "question": "Which CICS program(s) include and use this BMS mapset COPAU00?",
-      "context": "BMS file does not reference calling programs or transactions.",
-      "suggestion": "Search COBOL sources for 'COPY COPAU00' or 'COPAU0A' in CICS SEND/RECEIVE MAP statements."
+      "question": "Specific transaction ID or CICS program using this map",
+      "context": "Not specified in BMS source; would be in referencing COBOL/JCL",
+      "suggestion": "Analyze calling CICS programs or JCL for references to COPAU00"
     }
-  ]
+  ],
+  "dead_code": []
 }

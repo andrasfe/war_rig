@@ -2,33 +2,40 @@
 
 **File**: `cpy/PASFLPCB.CPY`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-01-26 17:40:50.363983
+**Analyzed**: 2026-01-27 02:44:15.851827
 
 ## Purpose
 
-This copybook defines the data structure for the PASFL IMS Program Communication Block (PCB), used in the LINKAGE SECTION of IMS DL/I application programs. It specifies fields for database identification, processing options set by the application, status and segment details returned by IMS, and a key feedback buffer. The structure follows standard IMS PCB layout for facilitating database calls to the PASFL database.
+This copybook defines the structure of the PASFL Program Communication Block (PCB) for IMS DL/I database access. It includes fields for DBD name, segment level, status, processing options, segment name, key feedback length, number of sensitive segments, and the key feedback buffer. Used in COBOL programs to interface with the IMS hierarchical database PASFL.
 
-**Business Context**: Supports IMS DL/I database access for the PASFL database in batch or online IMS regions (MPP, BMP, etc.).
+**Business Context**: IMS database navigation and access control for the PASFL database in application programs.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| PASFL-PCB-PROCOPT | IOType.PARAMETER | Processing options set by the application program to specify the type of DL/I operation (e.g., GU for Get Unique, GN for Get Next, ISRT for Insert). |
-| PASFL-DBDNAME | IOType.OTHER | Database name identifier (PASFL) referenced by the application for the target database. |
+| PASFL-PCB-PROCOPT | IOType.OTHER | Processing options field set by the application prior to DL/I calls to specify the database function (e.g., GO, GNP, K) |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| PASFL-PCB-STATUS | IOType.RETURN_CODE | Two-byte status code set by IMS after a DL/I call (e.g., '00' success, 'GE' segment not found). |
-| PASFL-SEG-LEVEL | IOType.OTHER | Segment hierarchical level set by IMS for the accessed segment. |
-| PASFL-SEG-NAME | IOType.OTHER | Eight-byte segment name set by IMS for the accessed or sensed segment. |
-| PASFL-KEYFB | IOType.OTHER | Key feedback buffer (100 bytes) filled by IMS with concatenated keys from root to accessed segment when PROCOPT requests it. |
-| PASFL-NUM-SENSEGS | IOType.OTHER | Number of sensitive segments set by IMS. |
+| PASFL-PCB-STATUS | IOType.OTHER | PCB status code populated by IMS after DL/I calls indicating success or failure |
+| PASFL-SEG-LEVEL | IOType.OTHER | Segment hierarchy level returned by IMS after DL/I calls |
+| PASFL-SEG-NAME | IOType.OTHER | Name of the segment retrieved by IMS |
+| PASFL-KEYFB-NAME | IOType.OTHER | Length of the key feedback area provided by IMS |
+| PASFL-NUM-SENSEGS | IOType.OTHER | Number of sensitive segments for the PCB as defined in the PSB |
+| PASFL-KEYFB | IOType.OTHER | Key feedback buffer populated by IMS with concatenated keys and parentage after qualifying DL/I calls |
 
 ## Business Rules
 
-- **BR001**: Application sets processing options in PCB before issuing DL/I call
-- **BR002**: IMS sets PCB status code after DL/I call completion
-- **BR003**: IMS populates segment level, name, and key feedback for qualified calls
+- **BR001**: Application programs set PASFL-PCB-PROCOPT to valid IMS processing options prior to issuing DL/I calls
+- **BR002**: After DL/I calls, application programs must check PASFL-PCB-STATUS for '00' (success) or error codes
+- **BR003**: Key feedback length is provided in PASFL-KEYFB-NAME for application use in navigating the key feedback area
+
+## Open Questions
+
+- ? Exact valid values and lengths for processing options in PASFL-PCB-PROCOPT
+  - Context: Copybook defines layout (PIC X(04)) but not enumerated values; relies on IMS standards
+- ? Precise usage of FILLER field at line 22
+  - Context: Unnamed FILLER PIC S9(05) COMP; standard IMS PCB may use for reserved or length

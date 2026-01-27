@@ -4,16 +4,15 @@
     "file_name": "ims/DLIGSAMP.PSB",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T17:39:00.243223",
+    "analyzed_at": "2026-01-27T02:41:29.510044",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "The DLIGSAMP.PSB defines the IMS Program Specification Block (PSB) for the COBOL program DLIGSAMP. It specifies three Program Communication Blocks (PCBs): PAUTBPCB for hierarchical database DBPAUTP0 with segments PAUTSUM0 (root) and PAUTDTL1 (child under PROCOPT=GOTP, KEYLEN=14), and two unnamed GSAM PCBs for datasets PASFLDBD and PADFLDBD (both PROCOPT=LS). The PSB is generated with PRINT NOGEN and CMPAT=NO.",
+    "summary": "This file is the source input for the IMS PSBGEN utility to generate the Program Specification Block (PSB) named DLIGSAMP for a COBOL language program. It defines one database PCB (PAUTBPCB) for the IMS hierarchical database DBDNAME=DBPAUTP0 with PROCOPT=GOTP and KEYLEN=14, including sensitive segments PAUTSUM0 (root, PARENT=0) and PAUTDTL1 (PARENT=PAUTSUM0). It also defines two GSAM PCBs for sequential datasets PASFLDBD and PADFLDBD, each with PROCOPT=LS.",
     "business_context": null,
-    "program_type": "UTILITY",
+    "program_type": "BATCH",
     "citations": [
-      17,
       18,
       19,
       20,
@@ -26,7 +25,7 @@
     {
       "name": "DBPAUTP0",
       "io_type": "IMS_SEGMENT",
-      "description": "Hierarchical IMS database accessed via named PCB PAUTBPCB (TYPE=DB, PROCOPT=GOTP, KEYLEN=14) with qualified segments PAUTSUM0 (PARENT=0) and PAUTDTL1 (PARENT=PAUTSUM0)",
+      "description": "IMS hierarchical database accessed via PCB named PAUTBPCB with PROCOPT=GOTP and KEYLEN=14; sensitive segments are PAUTSUM0 (PARENT=0) and PAUTDTL1 (PARENT=PAUTSUM0)",
       "copybook": null,
       "citation": [
         18,
@@ -36,8 +35,8 @@
     },
     {
       "name": "PASFLDBD",
-      "io_type": "IMS_SEGMENT",
-      "description": "GSAM dataset accessed via unnamed PCB (TYPE=GSAM, PROCOPT=LS)",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "GSAM dataset accessed via unnamed PCB with PROCOPT=LS",
       "copybook": null,
       "citation": [
         21
@@ -45,8 +44,8 @@
     },
     {
       "name": "PADFLDBD",
-      "io_type": "IMS_SEGMENT",
-      "description": "GSAM dataset accessed via unnamed PCB (TYPE=GSAM, PROCOPT=LS)",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "GSAM dataset accessed via unnamed PCB with PROCOPT=LS",
       "copybook": null,
       "citation": [
         22
@@ -71,16 +70,6 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
-    {
-      "question": "What is the business purpose of databases DBPAUTP0 (segments PAUTSUM0/PAUTDTL1), PASFLDBD, and PADFLDBD?",
-      "context": "PSB source provides only structural access definitions with no descriptive comments or context",
-      "suggestion": "Consult associated DBD source, program source code using this PSB, or application documentation"
-    },
-    {
-      "question": "Are there any write/update operations possible via these PCBs?",
-      "context": "PROCOPT values (GOTP, LS) suggest read-only access (Get operations), but cannot confirm without program source",
-      "suggestion": "Analyze the DLIGSAMP COBOL program source for DL/I call types (e.g., ISRT, REPL)"
-    }
-  ]
+  "open_questions": [],
+  "dead_code": []
 }

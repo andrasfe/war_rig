@@ -4,14 +4,14 @@
     "file_name": "ims/PAUTBUNL.PSB",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-26T17:42:09.963326",
+    "analyzed_at": "2026-01-27T02:41:39.309305",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This PSB source defines the Program Specification Block for COBOL program PAUTBUNL, specifying a database PCB PAUTBPCB for accessing IMS database DBPAUTP0 with PROCOPT=GOTP (GO=Get Next using SSAs + TP=IMS TM mode), KEYLEN=14. It senses root segment PAUTSUM0 (PARENT=0) and child segment PAUTDTL1 (PARENT=PAUTSUM0). The PSBGEN generates the control block for DL/I calls in the application (lines 17-22).",
+    "summary": "This is an IMS Program Specification Block (PSB) definition file for the COBOL program PAUTBUNL. It defines a single database PCB named PAUTBPCB providing access to IMS database DBDNAME=DBPAUTP0 with PROCOPT=GOTP and KEYLEN=14. The PCB includes two sensegments: PAUTSUM0 as the root segment (PARENT=0) and PAUTDTL1 as a child segment of PAUTSUM0.",
     "business_context": null,
-    "program_type": "UTILITY",
+    "program_type": "BATCH",
     "citations": [
       18,
       19,
@@ -21,29 +21,13 @@
   },
   "inputs": [
     {
-      "name": "DBPAUTP0",
+      "name": "PAUTBPCB",
       "io_type": "IMS_SEGMENT",
-      "description": "IMS database accessed via PCB PAUTBPCB",
+      "description": "IMS database PCB for DBDNAME=DBPAUTP0 with PROCOPT=GOTP (get next in TP mode) and KEYLEN=14; includes senseg PAUTSUM0 (root) and PAUTDTL1 (child of PAUTSUM0)",
       "copybook": null,
       "citation": [
-        18
-      ]
-    },
-    {
-      "name": "PAUTSUM0",
-      "io_type": "IMS_SEGMENT",
-      "description": "Root segment (PARENT=0) sensed by the PCB",
-      "copybook": null,
-      "citation": [
-        19
-      ]
-    },
-    {
-      "name": "PAUTDTL1",
-      "io_type": "IMS_SEGMENT",
-      "description": "Child segment (PARENT=PAUTSUM0) sensed by the PCB",
-      "copybook": null,
-      "citation": [
+        18,
+        19,
         20
       ]
     }
@@ -55,35 +39,7 @@
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [
-    {
-      "rule_id": "BR001",
-      "description": "PCB senses root segment PAUTSUM0 with no parent",
-      "logic_summary": "Defined as SENSEG NAME=PAUTSUM0,PARENT=0",
-      "conditions": [],
-      "citation": [
-        19
-      ]
-    },
-    {
-      "rule_id": "BR002",
-      "description": "PCB senses detail segment PAUTDTL1 as child of PAUTSUM0",
-      "logic_summary": "Defined as SENSEG NAME=PAUTDTL1,PARENT=PAUTSUM0",
-      "conditions": [],
-      "citation": [
-        20
-      ]
-    },
-    {
-      "rule_id": "BR003",
-      "description": "PROCOPT=GOTP enables Get Next segment retrieval using SSAs in IMS TM/TP mode",
-      "logic_summary": "GO=Get Next using SSAs; TP=Path calls allowed only under IMS TM",
-      "conditions": [],
-      "citation": [
-        18
-      ]
-    }
-  ],
+  "business_rules": [],
   "data_flow": {
     "reads_from": [
       {
@@ -109,5 +65,17 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": []
+  "open_questions": [
+    {
+      "question": "What are the field layouts and key fields for segments PAUTSUM0 and PAUTDTL1?",
+      "context": "PSB defines segment names and hierarchy but no field-level details",
+      "suggestion": "Examine the corresponding DBD definition for DBPAUTP0"
+    },
+    {
+      "question": "What is the exact business function of program PAUTBUNL using this PSB?",
+      "context": "PSB provides only database access specs, no functional description",
+      "suggestion": "Analyze the COBOL source code for PAUTBUNL or related documentation"
+    }
+  ],
+  "dead_code": []
 }

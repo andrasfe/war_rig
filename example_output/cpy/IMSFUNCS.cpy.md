@@ -2,15 +2,15 @@
 
 **File**: `cpy/IMSFUNCS.cpy`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-01-26 17:39:06.546163
+**Analyzed**: 2026-01-27 02:43:02.293366
 
 ## Purpose
 
-This COBOL copybook defines a data structure FUNC-CODES containing standardized 4-character IMS DL/I function codes for database operations including Get Unique (GU), Get Hold Unique (GHU), Get Next (GN), Get Hold Next (GHN), Get Next within Parent (GNP), Get Hold Next within Parent (GHNP), Replace (REPL), Insert (ISRT), and Delete (DLET). It also defines a PARMCOUNT field with an initial value of 4 in COMP-5 format, likely specifying the number of parameters for IMS calls. These constants are used in programs performing IMS database access to ensure consistent function code values.
+The IMSFUNCS copybook defines a group of constants under 01 FUNC-CODES for IMS DL/I function codes such as 'GU  ', 'GHU ', 'GN  ', 'GHN ', 'GNP ', 'GHNP', 'REPL', 'ISRT', and 'DLET'. It also defines PARMCOUNT as a fixed value of +4, likely for the number of parameters in IMS PCB calls. These constants standardize IMS database operation calls in COBOL programs.
 
-**Business Context**: IMS hierarchical database (DL/I) interface standardization for COBOL programs handling get, insert, delete, and update operations on IMS segments.
+**Business Context**: IMS DL/I database navigation, insertion, deletion, and replacement operations in mainframe COBOL applications
 
-## Open Questions
+## Business Rules
 
-- ? In which specific programs or modules is this copybook included?
-  - Context: The copybook defines reusable constants but does not indicate usage locations within this file.
+- **BR001**: FUNC-CODES provides standardized 4-character IMS DL/I function codes (GU, GHU, GN, GHN, GNP, GHNP, REPL, ISRT, DLET)
+- **BR002**: PARMCOUNT is fixed at +4 for IMS PCB calls

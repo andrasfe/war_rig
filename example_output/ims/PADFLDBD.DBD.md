@@ -2,20 +2,20 @@
 
 **File**: `ims/PADFLDBD.DBD`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-01-26 17:40:54.146429
+**Analyzed**: 2026-01-27 02:42:35.201465
 
 ## Purpose
 
-This file is a DBD (Database Definition) source for the IMS database PADFLDBD, defining it with GSAM and BSAM access methods and no password. It specifies a single dataset group DSG001 with input dataset PADFILIP (DD1) and output dataset PADFILOP (DD2), both using fixed-length records (RECFM=F, length 200). The DBDGEN assembly details include IMS version 15.1 and generation date 04/21/2023.
+This DBD source file defines the IMS database PADFLDBD using GSAM as the primary access method and BSAM as secondary. It specifies a single dataset group DSG001 with input dataset DD1=PADFILIP and output dataset DD2=PADFILOP, both using fixed-length records (RECFM=F, length 200). The file includes assembly information, IMS version 15.1, and Apache License 2.0 copyright notice.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| PADFILIP | IOType.FILE_SEQUENTIAL | Input dataset (DD1) in dataset group DSG001 for the PADFLDBD IMS database, fixed record format length 200 |
+| PADFILIP | IOType.FILE_SEQUENTIAL | Input dataset referenced in dataset group DSG001 for the PADFLDBD database |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| PADFILOP | IOType.FILE_SEQUENTIAL | Output dataset (DD2) in dataset group DSG001 for the PADFLDBD IMS database, fixed record format length 200 |
+| PADFILOP | IOType.FILE_SEQUENTIAL | Output dataset referenced in dataset group DSG001 for the PADFLDBD database |
