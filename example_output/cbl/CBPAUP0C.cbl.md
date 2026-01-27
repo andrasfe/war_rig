@@ -61,6 +61,42 @@ This paragraph commits current IMS changes via checkpoint for restartability. Pe
 ### 9999-ABEND
 This terminal error handling paragraph abends the program on any IMS or processing failure. Displays 'CBPAUP0C ABENDING ...' message. Sets RETURN-CODE to 16 and GOBACKs. Called from status evaluation points in IMS calls. No recovery or retry; immediate termination. Inputs error context from caller displays; outputs non-zero return code. Minimal logic focused on exit.
 
+## Control Flow
+
+```mermaid
+flowchart TD
+    %% Title: CBPAUP0C.cbl
+    1000_EXIT["1000-EXIT"]
+    1000_INITIALIZE["1000-INITIALIZE"]
+    2000_EXIT["2000-EXIT"]
+    2000_FIND_NEXT_AUTH_SUMMARY["2000-FIND-NEXT-AUTH-SUMMARY"]
+    9999_ABEND["9999-ABEND"]
+    3000_EXIT["3000-EXIT"]
+    3000_FIND_NEXT_AUTH_DTL["3000-FIND-NEXT-AUTH-DTL"]
+    4000_CHECK_IF_EXPIRED["4000-CHECK-IF-EXPIRED"]
+    4000_EXIT["4000-EXIT"]
+    5000_DELETE_AUTH_DTL["5000-DELETE-AUTH-DTL"]
+    5000_EXIT["5000-EXIT"]
+    6000_DELETE_AUTH_SUMMARY["6000-DELETE-AUTH-SUMMARY"]
+    6000_EXIT["6000-EXIT"]
+    9000_EXIT["9000-EXIT"]
+    9000_TAKE_CHECKPOINT["9000-TAKE-CHECKPOINT"]
+    9999_EXIT["9999-EXIT"]
+    MAIN_PARA["MAIN-PARA"]
+    2000_FIND_NEXT_AUTH_SUMMARY --> 9999_ABEND
+    3000_FIND_NEXT_AUTH_DTL --> 9999_ABEND
+    5000_DELETE_AUTH_DTL --> 9999_ABEND
+    6000_DELETE_AUTH_SUMMARY --> 9999_ABEND
+    9000_TAKE_CHECKPOINT --> 9999_ABEND
+    MAIN_PARA --> 1000_INITIALIZE
+    MAIN_PARA --> 2000_FIND_NEXT_AUTH_SUMMARY
+    MAIN_PARA --> 3000_FIND_NEXT_AUTH_DTL
+    MAIN_PARA --> 4000_CHECK_IF_EXPIRED
+    MAIN_PARA --> 5000_DELETE_AUTH_DTL
+    MAIN_PARA --> 6000_DELETE_AUTH_SUMMARY
+    MAIN_PARA --> 9000_TAKE_CHECKPOINT
+```
+
 ## Open Questions
 
 - ? Does the program persist adjusted counts to summary segments when not deleting the summary?

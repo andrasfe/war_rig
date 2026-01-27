@@ -59,6 +59,45 @@ This termination paragraph closes input files post-processing. Displays closing 
 ### 9999-ABEND
 Universal abend handler invoked on file/IMS errors. Displays 'IMS LOAD ABENDING ...' message. Sets RETURN-CODE to 16 indicating failure. Performs GOBACK to terminate. Consumes error context from caller (statuses displayed prior). Produces non-zero return code for JCL. No conditions checked here. No validation beyond invocation. No calls.
 
+## Control Flow
+
+```mermaid
+flowchart TD
+    %% Title: PAUDBLOD.CBL
+    1000_EXIT["1000-EXIT"]
+    1000_INITIALIZE["1000-INITIALIZE"]
+    9999_ABEND["9999-ABEND"]
+    2000_EXIT["2000-EXIT"]
+    2000_READ_ROOT_SEG_FILE["2000-READ-ROOT-SEG-FILE"]
+    2100_INSERT_ROOT_SEG["2100-INSERT-ROOT-SEG"]
+    2100_EXIT["2100-EXIT"]
+    CBLTDLI__ext(["CBLTDLI"])
+    3000_EXIT["3000-EXIT"]
+    3000_READ_CHILD_SEG_FILE["3000-READ-CHILD-SEG-FILE"]
+    3100_INSERT_CHILD_SEG["3100-INSERT-CHILD-SEG"]
+    3100_EXIT["3100-EXIT"]
+    3200_INSERT_IMS_CALL["3200-INSERT-IMS-CALL"]
+    3200_EXIT["3200-EXIT"]
+    4000_EXIT["4000-EXIT"]
+    4000_FILE_CLOSE["4000-FILE-CLOSE"]
+    9999_EXIT["9999-EXIT"]
+    MAIN_PARA["MAIN-PARA"]
+    1000_INITIALIZE --> 9999_ABEND
+    2000_READ_ROOT_SEG_FILE --> 2100_INSERT_ROOT_SEG
+    2100_INSERT_ROOT_SEG --> 9999_ABEND
+    2100_INSERT_ROOT_SEG -.->|calls| CBLTDLI__ext
+    3000_READ_CHILD_SEG_FILE --> 3100_INSERT_CHILD_SEG
+    3100_INSERT_CHILD_SEG --> 3200_INSERT_IMS_CALL
+    3100_INSERT_CHILD_SEG --> 9999_ABEND
+    3100_INSERT_CHILD_SEG -.->|calls| CBLTDLI__ext
+    3200_INSERT_IMS_CALL --> 9999_ABEND
+    3200_INSERT_IMS_CALL -.->|calls| CBLTDLI__ext
+    MAIN_PARA --> 1000_INITIALIZE
+    MAIN_PARA --> 2000_READ_ROOT_SEG_FILE
+    MAIN_PARA --> 3000_READ_CHILD_SEG_FILE
+    MAIN_PARA --> 4000_FILE_CLOSE
+```
+
 ## Open Questions
 
 - ? Exact field layouts and key fields in copybooks CIPAUSMY and CIPAUDTY?

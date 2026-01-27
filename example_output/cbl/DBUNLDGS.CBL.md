@@ -53,6 +53,43 @@ This termination paragraph handles program closeout by displaying a closing mess
 ### 9999-ABEND
 This error termination paragraph abends the program on IMS call failures or other errors. It consumes no specific inputs but is invoked on error conditions from other paragraphs. Displays abend message at 360. Sets RETURN-CODE to 16 at 362 and GOBACKs at 363. No validations or subordinate calls. Serves as centralized error exit point, halting execution with non-zero return.
 
+## Control Flow
+
+```mermaid
+flowchart TD
+    %% Title: DBUNLDGS.CBL
+    1000_EXIT["1000-EXIT"]
+    1000_INITIALIZE["1000-INITIALIZE"]
+    2000_EXIT["2000-EXIT"]
+    2000_FIND_NEXT_AUTH_SUMMARY["2000-FIND-NEXT-AUTH-SUMMARY"]
+    3000_FIND_NEXT_AUTH_DTL["3000-FIND-NEXT-AUTH-DTL"]
+    3100_INSERT_PARENT_SEG_GSAM["3100-INSERT-PARENT-SEG-GSAM"]
+    9999_ABEND["9999-ABEND"]
+    CBLTDLI__ext(["CBLTDLI"])
+    3000_EXIT["3000-EXIT"]
+    3200_INSERT_CHILD_SEG_GSAM["3200-INSERT-CHILD-SEG-GSAM"]
+    3100_EXIT["3100-EXIT"]
+    3200_EXIT["3200-EXIT"]
+    4000_EXIT["4000-EXIT"]
+    4000_FILE_CLOSE["4000-FILE-CLOSE"]
+    9999_EXIT["9999-EXIT"]
+    MAIN_PARA["MAIN-PARA"]
+    2000_FIND_NEXT_AUTH_SUMMARY --> 3000_FIND_NEXT_AUTH_DTL
+    2000_FIND_NEXT_AUTH_SUMMARY --> 3100_INSERT_PARENT_SEG_GSAM
+    2000_FIND_NEXT_AUTH_SUMMARY --> 9999_ABEND
+    2000_FIND_NEXT_AUTH_SUMMARY -.->|calls| CBLTDLI__ext
+    3000_FIND_NEXT_AUTH_DTL --> 3200_INSERT_CHILD_SEG_GSAM
+    3000_FIND_NEXT_AUTH_DTL --> 9999_ABEND
+    3000_FIND_NEXT_AUTH_DTL -.->|calls| CBLTDLI__ext
+    3100_INSERT_PARENT_SEG_GSAM --> 9999_ABEND
+    3100_INSERT_PARENT_SEG_GSAM -.->|calls| CBLTDLI__ext
+    3200_INSERT_CHILD_SEG_GSAM --> 9999_ABEND
+    3200_INSERT_CHILD_SEG_GSAM -.->|calls| CBLTDLI__ext
+    MAIN_PARA --> 1000_INITIALIZE
+    MAIN_PARA --> 2000_FIND_NEXT_AUTH_SUMMARY
+    MAIN_PARA --> 4000_FILE_CLOSE
+```
+
 ## Open Questions
 
 - ? Why does 3000-FIND-NEXT-AUTH-DTL increment WS-NO-SUMRY-READ and WS-AUTH-SMRY-PROC-CNT (lines 278-279) instead of detail-specific counters WS-NO-DTL-READ/WS-NO-DTL-DELETED?

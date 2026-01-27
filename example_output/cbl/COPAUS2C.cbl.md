@@ -35,6 +35,19 @@ This is the main orchestration paragraph serving as the program's entry point an
 ### FRAUD-UPDATE
 This paragraph performs the SQL UPDATE for existing AUTHFRDS records when INSERT detects a duplicate key (SQLCODE -803). It consumes host variables populated in MAIN-PARA, specifically CARD-NUM, AUTH-TS (formatted), AUTH-FRAUD, using them in the WHERE clause and SET for AUTH_FRAUD and FRAUD_RPT_DATE = CURRENT DATE (222-228). The primary purpose is to overwrite the fraud status on matching card number and auth timestamp without inserting a new record. It produces updates to the DB2 table and sets WS-FRD-STATUS-RECORD accordingly. Business logic checks SQLCODE post-UPDATE: if 0, sets WS-FRD-UPDT-SUCCESS and 'UPDT SUCCESS' message (231-232); else sets WS-FRD-UPDT-FAILED and builds error string with SQLCODE/SQLSTATE (234-241). No additional validations or conditions are checked beyond SQL success. Error handling is SQLCODE-based, mirroring MAIN-PARA. It makes no calls to other paragraphs or programs. Control returns implicitly to MAIN-PARA after PERFORM completion.
 
+## Control Flow
+
+```mermaid
+flowchart TD
+    %% Title: COPAUS2C.cbl
+    FRAUD_UPDATE["FRAUD-UPDATE"]
+    CARDDEMO_AUTHFRDS__ext[("CARDDEMO.AUTHFRDS")]
+    MAIN_PARA["MAIN-PARA"]
+    FRAUD_UPDATE -.->|updates| CARDDEMO_AUTHFRDS__ext
+    MAIN_PARA --> FRAUD_UPDATE
+    MAIN_PARA -.->|writes| CARDDEMO_AUTHFRDS__ext
+```
+
 ## Open Questions
 
 - ? Exact field definitions in CIPAUDTY copybook?

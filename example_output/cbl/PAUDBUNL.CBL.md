@@ -50,6 +50,34 @@ This termination paragraph closes output files OPFILE1 and OPFILE2, displaying '
 ### 9999-ABEND
 This error termination paragraph displays 'IMSUNLOD ABENDING ...' (mismatched program name comment), sets RETURN-CODE to 16, and GOBACKs. It consumes error context from caller (e.g., status codes displayed prior). Produces abend with RC=16 and console message. No inputs read, no business logic, no validations. Handles all program errors by uniform abend. Called only on failures from other paragraphs.
 
+## Control Flow
+
+```mermaid
+flowchart TD
+    %% Title: PAUDBUNL.CBL
+    1000_EXIT["1000-EXIT"]
+    1000_INITIALIZE["1000-INITIALIZE"]
+    9999_ABEND["9999-ABEND"]
+    2000_EXIT["2000-EXIT"]
+    2000_FIND_NEXT_AUTH_SUMMARY["2000-FIND-NEXT-AUTH-SUMMARY"]
+    3000_FIND_NEXT_AUTH_DTL["3000-FIND-NEXT-AUTH-DTL"]
+    CBLTDLI__ext(["CBLTDLI"])
+    3000_EXIT["3000-EXIT"]
+    4000_EXIT["4000-EXIT"]
+    4000_FILE_CLOSE["4000-FILE-CLOSE"]
+    9999_EXIT["9999-EXIT"]
+    MAIN_PARA["MAIN-PARA"]
+    1000_INITIALIZE --> 9999_ABEND
+    2000_FIND_NEXT_AUTH_SUMMARY --> 3000_FIND_NEXT_AUTH_DTL
+    2000_FIND_NEXT_AUTH_SUMMARY --> 9999_ABEND
+    2000_FIND_NEXT_AUTH_SUMMARY -.->|calls| CBLTDLI__ext
+    3000_FIND_NEXT_AUTH_DTL --> 9999_ABEND
+    3000_FIND_NEXT_AUTH_DTL -.->|calls| CBLTDLI__ext
+    MAIN_PARA --> 1000_INITIALIZE
+    MAIN_PARA --> 2000_FIND_NEXT_AUTH_SUMMARY
+    MAIN_PARA --> 4000_FILE_CLOSE
+```
+
 ## Open Questions
 
 - ? Exact field definitions in copybooks CIPAUSMY and CIPAUDTY
