@@ -1,26 +1,22 @@
 {
   "header": {
     "program_id": "CCPAURLY",
-    "file_name": "cpy/CCPAURLY.cpy",
+    "file_name": "CCPAURLY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T02:44:36.189648",
+    "analyzed_at": "2026-01-27T23:03:36.240723",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This COBOL copybook defines the data structure for a Pending Authorization Response record. It consists of six elementary 05-level fields: PA-RL-CARD-NUM (PIC X(16)), PA-RL-TRANSACTION-ID (PIC X(15)), PA-RL-AUTH-ID-CODE (PIC X(06)), PA-RL-AUTH-RESP-CODE (PIC X(02)), PA-RL-AUTH-RESP-REASON (PIC X(04)), and PA-RL-APPROVED-AMT (PIC +9(10).99). As a copybook, it provides reusable data definitions for use in COBOL programs handling authorization responses; no executable logic is present.",
-    "business_context": null,
-    "program_type": "UTILITY",
+    "summary": "This copybook defines the data structure for a pending authorization response related to credit card transactions. It includes fields for card number, transaction ID, authorization codes, response codes, reason codes, and the approved amount. The copybook is licensed under the Apache License 2.0.",
+    "business_context": "This copybook is used in systems that process credit card authorizations, likely within a financial transaction processing system.",
+    "program_type": "SUBROUTINE",
     "citations": [
-      1,
       2,
+      4,
       19,
-      20,
-      21,
-      22,
-      23,
-      24
+      25
     ]
   },
   "inputs": [],
@@ -37,22 +33,43 @@
     "writes_to": [],
     "transforms": []
   },
-  "copybooks_used": [],
-  "paragraphs": [],
+  "copybooks_used": [
+    {
+      "copybook_name": "CCPAURLY",
+      "purpose": "Defines the data structure for a pending authorization response.",
+      "location": "WORKING_STORAGE",
+      "citation": 19
+    }
+  ],
+  "paragraphs": [
+    {
+      "paragraph_name": "DATA-DEFINITION",
+      "summary": null,
+      "purpose": "This section defines the data structure for a pending authorization response. It includes fields related to the credit card number (PA-RL-CARD-NUM), transaction identifier (PA-RL-TRANSACTION-ID), authorization identification code (PA-RL-AUTH-ID-CODE), authorization response code (PA-RL-AUTH-RESP-CODE), authorization response reason (PA-RL-AUTH-RESP-REASON), and the approved amount (PA-RL-APPROVED-AMT). The PA-RL-CARD-NUM field stores the card number as a 16-character alphanumeric string. The PA-RL-TRANSACTION-ID field stores the transaction ID as a 15-character alphanumeric string. The PA-RL-AUTH-ID-CODE field stores the authorization ID code as a 6-character alphanumeric string. The PA-RL-AUTH-RESP-CODE field stores the authorization response code as a 2-character alphanumeric string. The PA-RL-AUTH-RESP-REASON field stores the authorization response reason as a 4-character alphanumeric string. The PA-RL-APPROVED-AMT field stores the approved amount as a signed numeric value with 10 digits before the decimal and 2 digits after the decimal. This data structure is likely used to pass authorization response information between different modules or programs within a transaction processing system. No specific business logic or error handling is present within this data definition. No paragraphs or programs are called from within this section.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        19,
+        25
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    }
+  ],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
+  "open_questions": [],
+  "dead_code": [
     {
-      "question": "What is the containing 01-level group name for these 05 fields?",
-      "context": "The copybook begins directly with 05-level items (lines 19-24), which in COBOL are typically subordinate to an unshown 01-level record description.",
-      "suggestion": "Examine programs that COPY this copybook to identify the parent level-01 name and usage context (e.g., WORKING-STORAGE or FILE-SECTION)."
-    },
-    {
-      "question": "In which programs and sections is this copybook included?",
-      "context": "No usage context is provided in the copybook itself.",
-      "suggestion": "Search for COPY CCPAURLY statements in related COBOL source files."
+      "name": "05:PA-RL-CARD-NUM",
+      "artifact_type": "column",
+      "line": 1,
+      "reason": "Artifact '05:PA-RL-CARD-NUM' (column) is never referenced by any other artifact in the dependency graph"
     }
   ],
-  "dead_code": []
+  "flow_diagram": null
 }

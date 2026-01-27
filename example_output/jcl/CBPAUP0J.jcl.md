@@ -2,48 +2,46 @@
 
 **File**: `jcl/CBPAUP0J.jcl`
 **Type**: FileType.JCL
-**Analyzed**: 2026-01-27 02:42:05.309734
+**Analyzed**: 2026-01-27 23:06:14.375641
 
 ## Purpose
 
-This JCL job executes the IMS region controller DFSRRC00 in BMP mode to run the application program CBPAUP0C using PSB PSBPAUTB. The job's purpose is to delete expired authorizations as documented in the header comment. Input parameters and transaction data are provided via PARM and SYSIN.
+This JCL executes an IMS program (CBPAUP0C) to delete expired authorizations. It defines the execution environment for the IMS program, including necessary libraries and input parameters.
 
-**Business Context**: IMS-based authorization management system cleanup process for expired records
+**Business Context**: UNKNOWN
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| PARM | IOType.PARAMETER | Execution parameters for DFSRRC00: 'BMP' (Batch Message Processing mode), 'CBPAUP0C' (application program name), 'PSBPAUTB' (PSB name for database access) |
-| SYSIN | IOType.OTHER | Inline input data for IMS transaction processing: '00,00001,00001,Y' |
-| IMS PSBLIB/DBDLIB | IOType.OTHER | IMS PSB and DBD libraries required for program execution and database navigation |
+| SYSIN | IOType.PARAMETER | Control input for the IMS program, likely containing parameters related to authorization expiration criteria. The example shows '00,00001,00001,Y' as input. |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| SYSPRINT | IOType.REPORT | Standard job print output including IMS processing logs |
-| SYSOUT/SYSOUX/SYSABOUT/ABENDAID/SYSUDUMP/IMSERR | IOType.REPORT | Various SYSOUT datasets capturing transaction output, abend aids, dumps, and error logs |
+| SYSOUX | IOType.REPORT | System output. |
+| SYSOUT | IOType.REPORT | Standard system output. |
+| SYSABOUT | IOType.REPORT | System output for ABEND information. |
+| ABENDAID | IOType.REPORT | System output for ABEND debugging. |
+| SYSPRINT | IOType.REPORT | System print output. |
+| SYSUDUMP | IOType.REPORT | System dump output. |
+| IMSERR | IOType.REPORT | IMS error output. |
 
 ## Called Programs
 
 | Program | Call Type | Purpose |
 |---------|-----------|---------|
-| DFSRRC00 | CallType.STATIC_CALL | IMS region controller program to execute BMP application CBPAUP0C |
-| CBPAUP0C | CallType.DYNAMIC_CALL | Application program performing deletion of expired authorizations |
-
-## Business Rules
-
-- **BR001**: Execute IMS program to delete expired authorizations
+| DFSRRC00 | CallType.STATIC_CALL | Executes the IMS control region to run the specified BMP program. |
 
 ## Paragraphs/Procedures
 
 ### STEP01
-This is the sole execution step in the JCL job, serving as the main orchestration point for running the IMS BMP workload. Its primary purpose is to invoke DFSRRC00, the IMS control region program, to execute the application CBPAUP0C under PSBPAUTB for deleting expired authorizations. It consumes inputs from the PARM parameter on line 25 ('BMP,CBPAUP0C,PSBPAUTB') specifying the mode, program, and PSB, and from SYSIN on lines 36-37 providing transaction data '00,00001,00001,Y'. It also relies on library datasets defined in STEPLIB (lines 26-27), DFSRESLB (28), PROCLIB (29), DFSSEL (31), and IMS (33-34) for IMS runtime support, PSBs, and DBDs. Outputs are produced to multiple SYSOUT-class DD statements (lines 39-47) including SYSPRINT for logs, SYSUDUMP/ABENDAID for diagnostics, and others for IMS-specific traces. There are no conditional business decisions implemented directly in the JCL; all logic, including any validations or deletions, is handled by the called IMS program CBPAUP0C. Error handling is provided implicitly via ABENDAID (line 42) and SYSUDUMP (line 46) for capturing program abends and system dumps, with dummy DD's like IEFRDER (43) and IMSLOGR (44) suppressing unnecessary files. The step calls DFSRRC00 statically via EXEC PGM=, which in turn dynamically processes CBPAUP0C based on PARM. Upon completion, standard job return codes are set based on the IMS program's outcome.
+This step executes the IMS program CBPAUP0C within the IMS control region. It uses the DFSRRC00 program to initiate the IMS environment and specifies 'BMP' as the execution type, indicating a Batch Message Processing program. The PSBPAUTB parameter likely identifies the Program Specification Block (PSB) to be used for this execution, defining the program's access to IMS databases. The STEPLIB DD statements define the load libraries required for the execution, including the IMS.SDFSRESL and XXXXXXXX.PROD.LOADLIB. The DFSRESLB DD statement specifies the IMS resident library. The SYSIN DD statement provides input parameters to the CBPAUP0C program, potentially controlling the criteria for deleting expired authorizations. Several SYSOUT DD statements define output datasets for various system and program messages, including standard output, ABEND information, and IMS error messages. IEFRDER and IMSLOGR are DUMMY datasets, likely placeholders for log data that is not being captured in this execution.
 
 ## Open Questions
 
-- ? What specific meaning do the SYSIN values '00,00001,00001,Y' hold?
-  - Context: Values are provided inline but not explained in JCL comments
-- ? What IMS databases/segments are accessed via PSBPAUTB?
-  - Context: PSB name given but no DBD or segment details in JCL
+- ? What is the exact purpose of the input parameters provided via SYSIN?
+  - Context: The meaning of '00,00001,00001,Y' is unclear without further documentation or the source code of CBPAUP0C.
+- ? What specific business process does deleting expired authorizations support?
+  - Context: The JCL does not provide enough information to determine the business context.

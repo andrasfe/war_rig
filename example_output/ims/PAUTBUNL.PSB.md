@@ -2,21 +2,13 @@
 
 **File**: `ims/PAUTBUNL.PSB`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-01-27 02:41:39.309305
+**Analyzed**: 2026-01-27 23:03:49.248341
 
 ## Purpose
 
-This is an IMS Program Specification Block (PSB) definition file for the COBOL program PAUTBUNL. It defines a single database PCB named PAUTBPCB providing access to IMS database DBDNAME=DBPAUTP0 with PROCOPT=GOTP and KEYLEN=14. The PCB includes two sensegments: PAUTSUM0 as the root segment (PARENT=0) and PAUTDTL1 as a child segment of PAUTSUM0.
-
-## Inputs
-
-| Name | Type | Description |
-|------|------|-------------|
-| PAUTBPCB | IOType.IMS_SEGMENT | IMS database PCB for DBDNAME=DBPAUTP0 with PROCOPT=GOTP (get next in TP mode) and KEYLEN=14; includes senseg PAUTSUM0 (root) and PAUTDTL1 (child of PAUTSUM0) |
+This PSB (Program Specification Block) defines the database access characteristics for an IMS (Information Management System) application. It specifies the database (DBPAUTP0), the processing options (GOTP), key length, and the segment hierarchy (PAUTSUM0, PAUTDTL1) that the program will use. The PSB is generated for COBOL and is named PAUTBUNL.
 
 ## Open Questions
 
-- ? What are the field layouts and key fields for segments PAUTSUM0 and PAUTDTL1?
-  - Context: PSB defines segment names and hierarchy but no field-level details
-- ? What is the exact business function of program PAUTBUNL using this PSB?
-  - Context: PSB provides only database access specs, no functional description
+- ? What is the purpose of the 'PRINT NOGEN' statement?
+  - Context: The meaning of this assembler directive is unclear without further context.

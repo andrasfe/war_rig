@@ -2,28 +2,38 @@
 
 **File**: `cpy-bms/COPAU01.cpy`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-01-27 02:42:16.634986
+**Analyzed**: 2026-01-27 23:06:00.393695
 
 ## Purpose
 
-This copybook defines the symbolic map input structure COPAU1AI and output structure COPAU1AO for the CICS BMS map COPAU1. It structures fields for transaction name, titles, current date/time, program name, card number, authorization details (date, time, response, code, amount), POS entry mode, auth source, MCC, card expiration, auth type, transaction ID, merchant details (name, ID, city, state, zip), and error messages. The input area includes length (L), format (F), attribute (A), and input data (I) fields; the output redefines with attribute flags (C=Cursor, P=Protected, H=Highlight, V=Visible) and output data (O).
+This copybook defines the input and output data structures for a CICS BMS map, COPAU1A. It contains field definitions for both input (COPAU1AI) and output (COPAU1AO) screen layouts, including attributes, lengths, and data types for various fields such as transaction name, titles, dates, times, card number, authorization details, and merchant information.
 
-**Business Context**: CICS online screen for credit card payment authorization response, displaying transaction, card, auth, and merchant data with error messaging.
+**Business Context**: This copybook is used in a CICS environment to define the structure of data displayed on and received from a user screen, likely related to payment authorization processing.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| COPAU1AI | IOType.CICS_MAP | Input (receive) map area with field lengths, formats, attributes, field names, and input data from CICS RECEIVE MAP |
+| COPAU1AI | IOType.CICS_MAP | Defines the input fields received from the CICS BMS map COPAU1A. Includes fields for transaction name (TRNNAMEI), titles (TITLE01I, TITLE02I), current date and time (CURDATEI, CURTIMEI), card number (CARDNUMI), authorization details (AUTHDTI, AUTHTMI, AUTHRSPI, AUTHRSNI, AUTHCDI, AUTHAMTI), POS entry mode (POSEMDI), authorization source (AUTHSRCI), MCC code (MCCCDI), card expiry (CRDEXPI), authorization type (AUTHTYPI), transaction ID (TRNIDI), authorization match (AUTHMTCI), authorization fraud (AUTHFRDI), merchant name (MERNAMEI), merchant ID (MERIDI), merchant city (MERCITYI), merchant state (MERSTI), merchant zip (MERZIPI), and error message (ERRMSGI). |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| COPAU1AO | IOType.CICS_MAP | Output (send) map area redefining COPAU1AI, with per-field C/P/H/V attributes and output data for CICS SEND MAP |
+| COPAU1AO | IOType.CICS_MAP | Defines the output fields sent to the CICS BMS map COPAU1A.  It redefines COPAU1AI and includes control characters (C), protected attributes (P), highlight attributes (H), modified data tags (V), and output data fields (O) for each input field. These attributes control how the data is displayed on the screen. |
 
-## Business Rules
+## Paragraphs/Procedures
 
-- **BR001**: Card number input field CARDNUMI is fixed length PIC X(16) to accommodate standard credit card numbers (e.g., 16-digit Visa/Mastercard)
-- **BR002**: Error message field ERRMSGI is PIC X(78) to span full screen width for display messages
-- **BR003**: Field lengths (e.g., TRNNAMEL) are COMP PIC S9(4) supporting up to 9999 characters per BMS field
+### COPAU01
+[Citadel] Paragraph identified by static analysis
+
+### ~~COPAU1AI~~ (Dead Code)
+*Record layout 'COPAU1AI' is never used by any program*
+
+## Dead Code
+
+The following artifacts were identified as dead code by static analysis:
+
+| Artifact | Type | Line | Reason |
+|----------|------|------|--------|
+| COPAU1AI | record_layout | 1 | Record layout 'COPAU1AI' is never used by any program |

@@ -1,46 +1,24 @@
 {
   "header": {
     "program_id": "PADFLDBD",
-    "file_name": "ims/PADFLDBD.DBD",
+    "file_name": "PADFLDBD.DBD",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T02:42:35.201465",
+    "analyzed_at": "2026-01-27T23:05:24.970080",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This DBD source file defines the IMS database PADFLDBD using GSAM as the primary access method and BSAM as secondary. It specifies a single dataset group DSG001 with input dataset DD1=PADFILIP and output dataset DD2=PADFILOP, both using fixed-length records (RECFM=F, length 200). The file includes assembly information, IMS version 15.1, and Apache License 2.0 copyright notice.",
+    "summary": "This file contains the DBD (Database Description) for PADFLDBD. It defines the database name, access method (GSAM, BSAM), dataset names (PADFILIP, PADFILOP), record length (200), and record format (F).",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
-      17,
-      20,
       22,
       27
     ]
   },
-  "inputs": [
-    {
-      "name": "PADFILIP",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "Input dataset referenced in dataset group DSG001 for the PADFLDBD database",
-      "copybook": null,
-      "citation": [
-        27
-      ]
-    }
-  ],
-  "outputs": [
-    {
-      "name": "PADFILOP",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "Output dataset referenced in dataset group DSG001 for the PADFLDBD database",
-      "copybook": null,
-      "citation": [
-        27
-      ]
-    }
-  ],
+  "inputs": [],
+  "outputs": [],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
@@ -59,5 +37,6 @@
   "sql_operations": [],
   "cics_operations": [],
   "open_questions": [],
-  "dead_code": []
+  "dead_code": [],
+  "flow_diagram": null
 }

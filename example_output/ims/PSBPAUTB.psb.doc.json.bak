@@ -1,17 +1,17 @@
 {
   "header": {
     "program_id": "PSBPAUTB",
-    "file_name": "ims/PSBPAUTB.psb",
+    "file_name": "PSBPAUTB.psb",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T02:42:53.716557",
+    "analyzed_at": "2026-01-27T23:05:40.583535",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This file defines an IMS Program Specification Block (PSB) named PSBPAUTB for COBOL application programs. It specifies a database PCB named PAUTBPCB accessing DBDNAME=DBPAUTP0 with PROCOPT=AP and KEYLEN=14, sensitive to root segment PAUTSUM0 and child segment PAUTDTL1. The PSB is generated with CMPAT=YES.",
+    "summary": "This PSB defines the program view for accessing the DBPAUTP0 database. It specifies the program's access rights (PROCOPT=AP), key length (KEYLEN=14), and the segments it can access (PAUTSUM0, PAUTDTL1). The PSBGEN statement indicates it's designed for COBOL and compatibility is enabled.",
     "business_context": null,
-    "program_type": "UTILITY",
+    "program_type": "BATCH",
     "citations": [
       17,
       18,
@@ -21,30 +21,12 @@
   },
   "inputs": [
     {
-      "name": "PAUTBPCB",
-      "io_type": "OTHER",
-      "description": "IMS Database PCB providing access to DBDNAME=DBPAUTP0 database with PROCOPT=AP and KEYLEN=14",
+      "name": "DBPAUTP0",
+      "io_type": "IMS_SEGMENT",
+      "description": "The DBPAUTP0 database, accessed via the PCB.",
       "copybook": null,
       "citation": [
         17
-      ]
-    },
-    {
-      "name": "PAUTSUM0",
-      "io_type": "IMS_SEGMENT",
-      "description": "Root sensitive segment (PARENT=0) accessible via PAUTBPCB for application programs to retrieve/process",
-      "copybook": null,
-      "citation": [
-        18
-      ]
-    },
-    {
-      "name": "PAUTDTL1",
-      "io_type": "IMS_SEGMENT",
-      "description": "Child sensitive segment (PARENT=PAUTSUM0) accessible via PAUTBPCB for application programs to retrieve/process",
-      "copybook": null,
-      "citation": [
-        19
       ]
     }
   ],
@@ -55,29 +37,17 @@
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [
-    {
-      "rule_id": "BR001",
-      "description": "Segment hierarchy: PAUTSUM0 defined as root segment with PARENT=0; PAUTDTL1 defined as child segment with PARENT=PAUTSUM0",
-      "logic_summary": "Enforced via SENSEG statements in PCB definition",
-      "conditions": [],
-      "citation": [
-        18,
-        19
-      ]
-    },
-    {
-      "rule_id": "BR002",
-      "description": "Access permissions for PAUTBPCB set to PROCOPT=AP with KEYLEN=14",
-      "logic_summary": "PROCOPT=AP specifies allowed DL/I operations and access methods for the PCB",
-      "conditions": [],
-      "citation": [
-        17
-      ]
-    }
-  ],
+  "business_rules": [],
   "data_flow": {
-    "reads_from": [],
+    "reads_from": [
+      {
+        "source": "DBPAUTP0",
+        "fields_used": [],
+        "citation": [
+          17
+        ]
+      }
+    ],
     "writes_to": [],
     "transforms": []
   },
@@ -88,15 +58,11 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "Precise IMS DL/I operations permitted by PROCOPT=AP",
-      "context": "PROCOPT=AP is specified but exact combination of GET/ISRT/REPL/DLET etc. not determinable from PSB source alone",
-      "suggestion": "Reference IMS/ESA PSBGEN documentation or DBD definition for DBPAUTP0"
-    },
-    {
-      "question": "Business purpose of DBPAUTP0 database and PAUT segments",
-      "context": "Names suggest Payment Authorization (PAUT) summary/detail but no descriptive comments or context provided",
-      "suggestion": "Review associated DBD source or application programs using PSBPAUTB"
+      "question": "What is the purpose of the PAUTSUM0 and PAUTDTL1 segments?",
+      "context": "The code only defines the segments, but not their content or relationship.",
+      "suggestion": "Examine the DBD for DBPAUTP0."
     }
   ],
-  "dead_code": []
+  "dead_code": [],
+  "flow_diagram": null
 }

@@ -2,52 +2,50 @@
 
 **File**: `jcl/UNLDPADB.JCL`
 **Type**: FileType.JCL
-**Analyzed**: 2026-01-27 02:39:44.120788
+**Analyzed**: 2026-01-27 23:06:17.021503
 
 ## Purpose
 
-This JCL job unloads the IMS database PAUTDB into two sequential flat files, separating root and child segments. STEP0 deletes any prior versions of the output files. STEP01 executes the IMS utility DFSRRC00 using DLI access method with specified PSB (PAUDBUNL) and DBD (PAUTBUNL) to perform the unload.
-
-**Business Context**: Prepares sequential unload files from IMS PAUTDB database for AWS M2 Card Demo application, likely for data migration, backup, or offline processing.
+This JCL job unloads the PAUTDB database using the IMS program DFSRRC00. It deletes existing root and child files, creates new ones, and then executes the unload utility.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| DDPAUTP0 | IOType.FILE_SEQUENTIAL | IMS PSB library containing PAUTHDB for PAUTDB unload PSB PAUDBUNL |
-| DDPAUTX0 | IOType.FILE_SEQUENTIAL | IMS DBDX library containing PAUTHDBX for PAUTDB unload DBD PAUTBUNL |
-| DFSVSAMP | IOType.FILE_SEQUENTIAL | IMS VSAM macro library member DFSVSMDB for utility support |
+| AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO | IOType.FILE_VSAM | Existing root file to be unloaded and deleted. It is then recreated as an output file. |
+| AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO | IOType.FILE_VSAM | Existing child file to be unloaded and deleted. It is then recreated as an output file. |
+| OEMA.IMS.IMSP.SDFSRESL | IOType.FILE_SEQUENTIAL | IMS RESLIB |
+| OEMA.IMS.IMSP.SDFSRESL.V151 | IOType.FILE_SEQUENTIAL | IMS RESLIB version 151 |
+| AWS.M2.CARDDEMO.LOADLIB | IOType.FILE_SEQUENTIAL | Load library for the application |
+| OEM.IMS.IMSP.PSBLIB | IOType.FILE_SEQUENTIAL | IMS PSBLIB |
+| OEM.IMS.IMSP.DBDLIB | IOType.FILE_SEQUENTIAL | IMS DBDLIB |
+| OEM.IMS.IMSP.PAUTHDB | IOType.FILE_SEQUENTIAL | PAUTHDB dataset |
+| OEM.IMS.IMSP.PAUTHDBX | IOType.FILE_SEQUENTIAL | PAUTHDBX dataset |
+| OEMPP.IMS.V15R01MB.PROCLIB(DFSVSMDB) | IOType.FILE_SEQUENTIAL | DFSVSMDB proc from IMS PROCLIB |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| OUTFIL1 | IOType.FILE_SEQUENTIAL | Sequential file containing unloaded root segments from PAUTDB (LRECL=100, RECFM=FB) |
-| OUTFIL2 | IOType.FILE_SEQUENTIAL | Sequential file containing unloaded child segments from PAUTDB (LRECL=206, RECFM=FB) |
+| AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO | IOType.FILE_VSAM | Recreated root file after unloading |
+| AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO | IOType.FILE_VSAM | Recreated child file after unloading |
+| SYSPRINT | IOType.REPORT | System print output |
+| SYSOUT | IOType.REPORT | System output |
+| SYSDUMP | IOType.REPORT | System dump output |
+| SYSUDUMP | IOType.REPORT | System user dump output |
+| IMSERR | IOType.REPORT | IMS error output |
 
 ## Called Programs
 
 | Program | Call Type | Purpose |
 |---------|-----------|---------|
-| IEFBR14 | CallType.STATIC_CALL | Perform housekeeping deletion of prior output files |
-| DFSRRC00 | CallType.STATIC_CALL | Execute IMS database unload utility for PAUTDB |
-
-## Business Rules
-
-- **BR001**: Prior output files must be deleted before new unload to ensure clean output
-- **BR002**: Unload uses DLI access method with specific PSB and DBD names
+| IEFBR14 | CallType.STATIC_CALL | Dummy program used to delete and define the output files |
+| DFSRRC00 | CallType.STATIC_CALL | IMS program to unload the PAUTDB database |
 
 ## Paragraphs/Procedures
 
 ### STEP0
-This step serves as a housekeeping procedure to delete any existing versions of the output unload files before the main unload operation begins. It executes the dummy program IEFBR14, which performs no computation but processes all DD statements. It consumes no input data files but references DD1 and DD2 pointing to the prior DSNs AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO and CHILD.FILEO with DISP=(OLD,DELETE,DELETE), ensuring they are deleted if present. No outputs are produced beyond potential SYSOUT messages to SYSPRINT, SYSOUT, and SYSDUMP. There is no business logic or conditional decision-making; it unconditionally attempts deletion. Error handling is implicit via JCL: if files do not exist, the step abends with JCL error, preventing STEP01 from running. It defines dummy DDs for standard output. This step is the entry point of the job and passes control to STEP01 upon success. No other paragraphs or programs are called.
+This step executes the IEFBR14 program, a dummy program, to pre-allocate and delete the existing root and child files (AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO and AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO). The DD1 and DD2 DD statements define these files with a disposition of OLD, DELETE, DELETE, ensuring they are deleted before the next step. This step prepares the environment for the subsequent unloading process by removing the old database files. No specific business logic is implemented in this step, as it primarily focuses on file management. It does not call any other programs or paragraphs.
 
 ### STEP01
-This is the primary processing step that performs the actual unload of the IMS PAUTDB database into sequential files. It executes IMS utility DFSRRC00 with PARM='DLI,PAUDBUNL,PAUTBUNL,,,,,,,,,,,N' specifying DLI access, unload PSB PAUDBUNL, DBD PAUTBUNL, and no statistics output. It consumes IMS control files from STEPLIB (SDFSRESL libraries and loadlib), DFSRESLB, IMS (PSBLIB/DBDLIB), DDPAUTP0 (PAUTHDB PSB), DDPAUTX0 (PAUTHDBX DBDX), and DFSVSAMP (DFSVSMDB). The utility reads all root and child segments from PAUTDB IMS database. It produces two outputs: OUTFIL1 for root segments (new cataloged DSN with specified DCB/SPACE) and OUTFIL2 for child segments. Business logic is encapsulated in the utility: separates root/child based on DBD definition, formats as FB sequential. Validation and error handling are handled by IMS utility, with dumps to SYSUDUMP, IMSERR, IMSLOGR (DUMMY), and SYSPRINT. Dummy DDs like IEFRDER prevent unnecessary I/O. Called unconditionally after STEP0, it completes the job upon success. No subordinate paragraphs; relies on utility internals.
-
-## Open Questions
-
-- ? Precise role of DFSRRC00 in this context
-  - Context: Non-standard program name for IMS unload (typically DFSURGL0); confirmed as unload by job name, outputs, and PARM format
-- ? Specific segment/field layouts in PAUTDB
-  - Context: Not visible in JCL; inferred root/child separation only
+This step executes the IMS program DFSRRC00 to unload the PAUTDB database. The PARM parameter specifies 'DLI,PAUDBUNL,PAUTBUNL,,,,,,,,,,,N', indicating a DLI call to the PAUDBUNL program using the PAUTBUNL PSB. The STEPLIB DD statements define the libraries required to execute the IMS program, including OEMA.IMS.IMSP.SDFSRESL, OEMA.IMS.IMSP.SDFSRESL.V151, and AWS.M2.CARDDEMO.LOADLIB. The DFSRESLB DD statement points to the IMS RESLIB. The IMS DD statement defines the PSBLIB and DBDLIB. The OUTFIL1 and OUTFIL2 DD statements define the output files for the unloaded root and child segments, respectively, specifying their DCB attributes and space allocation. The DDPAUTP0 and DDPAUTX0 DD statements define the PAUTHDB and PAUTHDBX datasets. The DFSVSAMP DD statement defines the DFSVSMDB proc from OEMPP.IMS.V15R01MB.PROCLIB. The remaining DD statements define dummy datasets for IMS logging and error handling, as well as SYSOUT datasets for various outputs. This step is crucial for extracting the data from the IMS database into sequential files. It does not call any other programs or paragraphs directly, but relies on the DFSRRC00 program to perform the unload operation.

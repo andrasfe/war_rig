@@ -1,44 +1,23 @@
 {
   "header": {
-    "program_id": "COPAU00",
-    "file_name": "cpy-bms/COPAU00.cpy",
+    "program_id": "UNKNOWN",
+    "file_name": "COPAU00.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T02:39:58.053664",
+    "analyzed_at": "2026-01-27T23:06:02.727038",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This COBOL copybook defines the symbolic input map COPAU0AI and output map COPAU0AO (via REDEFINES at line 391) for a CICS BMS screen named COPAU00. It structures fields for displaying transaction name, titles, current date/time, program name, customer account ID, name, address lines, account status, phone, approval/decline counts, credit/cash limits and balances, selection flags for up to 5 transactions, and per-transaction details (ID, date, time, type, approval, status, amount), plus an error message field. The structure follows standard BMS conventions with L (length), F/A (flags/attributes), I (input data) for AI, and C/P/H/V/O (change/protect/highlight/visible/output) for AO.",
-    "business_context": "Supports CICS online transaction processing for customer account summary inquiry in a financial or banking system, displaying account details and recent transactions.",
-    "program_type": "ONLINE_CICS",
+    "summary": "This copybook appears to be empty. It likely serves as a placeholder or is intended to be populated with data structures related to screen definitions, possibly for CICS BMS.",
+    "business_context": "UNKNOWN",
+    "program_type": "UNKNOWN",
     "citations": [
-      17,
-      391
+      1
     ]
   },
-  "inputs": [
-    {
-      "name": "COPAU0AI",
-      "io_type": "CICS_MAP",
-      "description": "Symbolic input map structure capturing data from BMS RECEIVE MAP, including customer details and transaction selections",
-      "copybook": null,
-      "citation": [
-        17
-      ]
-    }
-  ],
-  "outputs": [
-    {
-      "name": "COPAU0AO",
-      "io_type": "CICS_MAP",
-      "description": "Symbolic output map structure for populating BMS SEND MAP with account summary, limits, balances, and transaction history",
-      "copybook": null,
-      "citation": [
-        391
-      ]
-    }
-  ],
+  "inputs": [],
+  "outputs": [],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
@@ -52,21 +31,59 @@
     "transforms": []
   },
   "copybooks_used": [],
-  "paragraphs": [],
+  "paragraphs": [
+    {
+      "paragraph_name": "COPAU00",
+      "summary": null,
+      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1,
+        1
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "COPAU0AI",
+      "summary": null,
+      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1,
+        1
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": true,
+      "dead_code_reason": "Record layout 'COPAU0AI' is never used by any program",
+      "metadata": {
+        "body_chunks": 8
+      }
+    }
+  ],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "Which CICS programs include this COPY statement?",
-      "context": "Copybook usage not visible in this file; required to understand integration.",
-      "suggestion": "Grep source files for 'COPY COPAU00' or analyze including programs."
-    },
-    {
-      "question": "What are the exact BMS mapset name and transaction ID using this map?",
-      "context": "Inferred as COPAU00 from filename and group name, but not explicitly stated.",
-      "suggestion": "Review BMS source (.bms) or CICS program using this copybook."
+      "question": "What is the intended purpose of this copybook?",
+      "context": "The copybook is empty, so its purpose cannot be determined from the code itself.",
+      "suggestion": "Consult the program(s) that include this copybook to understand how it's used or intended to be used. Check related documentation or contact the developers."
     }
   ],
-  "dead_code": []
+  "dead_code": [
+    {
+      "name": "COPAU0AI",
+      "artifact_type": "record_layout",
+      "line": 1,
+      "reason": "Record layout 'COPAU0AI' is never used by any program"
+    }
+  ],
+  "flow_diagram": null
 }

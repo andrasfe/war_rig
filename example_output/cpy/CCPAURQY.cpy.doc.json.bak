@@ -1,104 +1,90 @@
 {
   "header": {
     "program_id": "CCPAURQY",
-    "file_name": "cpy/CCPAURQY.cpy",
+    "file_name": "CCPAURQY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T02:43:41.819054",
+    "analyzed_at": "2026-01-27T23:05:09.942963",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the record structure for a Pending Authorization Request used in payment processing systems. It specifies fields for authorization date/time, card details, transaction amount, merchant information, and other ISO-8583-like elements essential for auth request handling. The structure ensures consistent data layout across programs that include this copybook.",
-    "business_context": "Credit card transaction authorization workflow, capturing pending auth requests from acquirers or POS terminals for fraud/risk assessment.",
-    "program_type": "UTILITY",
+    "summary": "This copybook defines the data structure for a pending authorization request. It includes fields for transaction details such as card number, amount, merchant information, and date/time of the authorization request.",
+    "business_context": "This copybook is likely used in systems that process credit card transactions and require authorization before completing a purchase.",
+    "program_type": "COPYBOOK",
     "citations": [
       2,
       19,
-      36
+      37
     ]
   },
-  "inputs": [
-    {
-      "name": "N/A",
-      "io_type": "OTHER",
-      "description": "Not applicable; this is a copybook defining data structures, not an executable program with inputs. Fields like PA-RQ-AUTH-DATE (line 19), PA-RQ-CARD-NUM (line 21) serve as record layouts for input files or commareas in including programs.",
-      "copybook": null,
-      "citation": [
-        1,
-        37
-      ]
-    }
-  ],
-  "outputs": [
-    {
-      "name": "N/A",
-      "io_type": "OTHER",
-      "description": "Not applicable; copybook defines reusable structures, not program outputs. Fields like PA-RQ-TRANSACTION-ID (line 36) can be populated for output records in using programs.",
-      "copybook": null,
-      "citation": [
-        1,
-        37
-      ]
-    }
-  ],
+  "inputs": [],
+  "outputs": [],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [
-    {
-      "rule_id": "BR001",
-      "description": "PA-RQ-AUTH-DATE must conform to 6-character alphanumeric format",
-      "logic_summary": "PIC X(06) enforces fixed-length string for date storage",
-      "conditions": [
-        "Length exactly 6 characters"
-      ],
-      "citation": [
-        19
-      ]
-    },
-    {
-      "rule_id": "BR002",
-      "description": "PA-RQ-CARD-NUM is fixed 16-character field for card number",
-      "logic_summary": "PIC X(16) defines alphanumeric card identifier",
-      "conditions": [
-        "Exactly 16 characters"
-      ],
-      "citation": [
-        21
-      ]
-    },
-    {
-      "rule_id": "BR003",
-      "description": "PA-RQ-TRANSACTION-AMT uses signed decimal format with 10 integer digits and 2 decimal places",
-      "logic_summary": "PIC +9(10).99 allows positive/negative amounts up to 99,999,999,999.99",
-      "conditions": [
-        "Signed numeric, COMP-3 implied in usage"
-      ],
-      "citation": [
-        27
-      ]
-    }
-  ],
+  "business_rules": [],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
     "transforms": []
   },
-  "copybooks_used": [],
-  "paragraphs": [],
+  "copybooks_used": [
+    {
+      "copybook_name": "CCPAURQY",
+      "purpose": "Defines the data structure for a pending authorization request.",
+      "location": "WORKING_STORAGE",
+      "citation": 19
+    }
+  ],
+  "paragraphs": [
+    {
+      "paragraph_name": "CCPAURQY",
+      "summary": null,
+      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1,
+        1
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "05:PA-RQ-AUTH-DATE",
+      "summary": null,
+      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1,
+        1
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": true,
+      "dead_code_reason": "Artifact '05:PA-RQ-AUTH-DATE' (column) is never referenced by any other artifact in the dependency graph",
+      "metadata": null
+    }
+  ],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
+  "open_questions": [],
+  "dead_code": [
     {
-      "question": "Which programs include or reference this CCPAURQY copybook?",
-      "context": "No including programs or usage context provided in the file",
-      "suggestion": "Search codebase for COPY CCPAURQY statements or analyze linked source files"
+      "name": "05:PA-RQ-AUTH-DATE",
+      "artifact_type": "column",
+      "line": 1,
+      "reason": "Artifact '05:PA-RQ-AUTH-DATE' (column) is never referenced by any other artifact in the dependency graph"
     }
   ],
-  "dead_code": []
+  "flow_diagram": null
 }

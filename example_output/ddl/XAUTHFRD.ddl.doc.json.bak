@@ -1,15 +1,15 @@
 {
   "header": {
     "program_id": "XAUTHFRD",
-    "file_name": "ddl/XAUTHFRD.ddl",
+    "file_name": "XAUTHFRD.ddl",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T02:39:58.128148",
+    "analyzed_at": "2026-01-27T23:03:40.758949",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This DDL script creates a unique index named CARDDEMO.XAUTHFRD on the CARDDEMO.AUTHFRDS table. The index is defined on CARD_NUM in ascending order and AUTH_TS in descending order. It includes the COPY YES option.",
+    "summary": "This DDL file creates a unique index named CARDDEMO.XAUTHFRD on the CARDDEMO.AUTHFRDS table, using the CARD_NUM in ascending order and AUTH_TS in descending order. It also specifies that the index should be copied.",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
@@ -19,70 +19,56 @@
       4
     ]
   },
-  "inputs": [
-    {
-      "name": "CARDDEMO.AUTHFRDS",
-      "io_type": "DB2_TABLE",
-      "description": "Target table on which the unique index is created",
-      "copybook": null,
-      "citation": [
-        2
-      ]
-    }
-  ],
-  "outputs": [
-    {
-      "name": "CARDDEMO.XAUTHFRD",
-      "io_type": "OTHER",
-      "description": "Unique index enforcing uniqueness on (CARD_NUM ASC, AUTH_TS DESC)",
-      "copybook": null,
-      "citation": [
-        1,
-        3
-      ]
-    }
-  ],
+  "inputs": [],
+  "outputs": [],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [
-    {
-      "rule_id": "BR001",
-      "description": "Enforces uniqueness on the composite key (CARD_NUM, AUTH_TS)",
-      "logic_summary": "Implemented via unique index definition",
-      "conditions": [],
-      "citation": [
-        1,
-        3
-      ]
-    }
-  ],
+  "business_rules": [],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
     "transforms": []
   },
   "copybooks_used": [],
-  "paragraphs": [],
-  "error_handling": [],
-  "sql_operations": [
+  "paragraphs": [
     {
-      "operation": "CREATE UNIQUE INDEX",
-      "table": "CARDDEMO.AUTHFRDS",
-      "purpose": "Create index for uniqueness enforcement and query optimization on CARD_NUM and AUTH_TS",
-      "citation": 1
+      "paragraph_name": "XAUTHFRD",
+      "summary": null,
+      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1,
+        1
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": true,
+      "dead_code_reason": "Artifact 'XAUTHFRD' (index) is never referenced by any other artifact in the dependency graph",
+      "metadata": null
     }
   ],
+  "error_handling": [],
+  "sql_operations": [],
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "Specific purpose of the COPY YES option",
-      "context": "Not self-explanatory from the DDL statement alone",
-      "suggestion": "Consult DB2 documentation for CREATE INDEX syntax details"
+      "question": "What is the purpose of copying the index?",
+      "context": "The 'COPY YES' clause is used, but its specific function is unclear without more context.",
+      "suggestion": "Consult the database documentation to understand the implications of the COPY YES clause."
     }
   ],
-  "dead_code": []
+  "dead_code": [
+    {
+      "name": "XAUTHFRD",
+      "artifact_type": "index",
+      "line": 1,
+      "reason": "Artifact 'XAUTHFRD' (index) is never referenced by any other artifact in the dependency graph"
+    }
+  ],
+  "flow_diagram": null
 }

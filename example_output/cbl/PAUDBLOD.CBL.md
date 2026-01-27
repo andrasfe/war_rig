@@ -2,62 +2,64 @@
 
 **File**: `cbl/PAUDBLOD.CBL`
 **Type**: FileType.COBOL
-**Analyzed**: 2026-01-27 02:40:33.888798
+**Analyzed**: 2026-01-27 23:04:29.893971
 
 ## Purpose
 
-This batch COBOL program loads pending authorization data into an IMS hierarchical database. It reads root segment records from INFILE1, inserts them as PAUTSUM0 segments via IMS ISRT calls, then reads child records from INFILE2 (each prefixed with parent root key), performs GU on the parent root to establish hierarchy, and inserts child PAUTDTL1 segments via ISRT. It handles duplicates by tolerating 'II' status and abends on other IMS errors or file I/O failures.
-
-**Business Context**: Supports loading of pending authorization summary and detail records into IMS for account authorization processing.
+The COBOL program PAUDBLOD reads root and child segment data from two sequential input files (INFILE1 and INFILE2) and inserts them into an IMS database. It reads pending authorization summary records from INFILE1 and pending authorization detail records from INFILE2, then inserts them as root and child segments respectively into the IMS database.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| INFILE1 | IOType.FILE_SEQUENTIAL | Sequential file containing fixed-length 100-byte root segment records for PAUTSUM0 pending authorization summaries. |
-| INFILE2 | IOType.FILE_SEQUENTIAL | Sequential file containing root segment key (S9(11) COMP-3) followed by 200-byte child segment records for PAUTDTL1 pending authorization details. |
+| INFILE1 | IOType.FILE_SEQUENTIAL | Contains pending authorization summary records to be inserted as root segments into the IMS database. |
+| INFILE2 | IOType.FILE_SEQUENTIAL | Contains pending authorization detail records to be inserted as child segments into the IMS database.  The ROOT-SEG-KEY field contains the key of the parent root segment. |
+| PAUTBPCB | IOType.PARAMETER | IMS Program Communication Block (PCB) mask, used for IMS calls. |
+| IO-PCB-MASK | IOType.PARAMETER | IO PCB Mask |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| PAUTSUM0 | IOType.IMS_SEGMENT | IMS root segment for pending authorization summaries, inserted unconditionally after reading from INFILE1. |
-| PAUTDTL1 | IOType.IMS_SEGMENT | IMS child segment for pending authorization details, inserted under parent PAUTSUM0 after GU parent and reading from INFILE2. |
+| IMS Database | IOType.IMS_SEGMENT | The IMS database is updated with pending authorization summary (root) and detail (child) segments. |
+| RETURN-CODE | IOType.RETURN_CODE | Return code set to 16 if the program abends. |
 
-## Business Rules
+## Called Programs
 
-- **BR001**: Process child segment only if ROOT-SEG-KEY is numeric to ensure valid parent key.
-- **BR002**: Tolerate IMS insert status ' ' (success) or 'II' (duplicate), abend on other statuses.
-- **BR003**: Require successful parent GU (status spaces or 'II') before child insert.
+| Program | Call Type | Purpose |
+|---------|-----------|---------|
+| CBLTDLI | CallType.STATIC_CALL | Interface with IMS DL/I to perform database operations (ISRT, GU). |
+| CBLTDLI | CallType.STATIC_CALL | Interface with IMS DL/I to perform database operations (GU). |
+| CBLTDLI | CallType.STATIC_CALL | Interface with IMS DL/I to perform database operations (ISRT). |
 
 ## Paragraphs/Procedures
 
 ### MAIN-PARA
-This is the primary entry point and orchestration paragraph controlling the entire program flow for IMS database loading. It begins with an alternate ENTRY 'DLITCBL' using the PAUTBPCB linkage for potential dynamic invocation, followed by a startup display. It then performs 1000-INITIALIZE to open input files and set up dates. Next, it enters a loop performing 2000-READ-ROOT-SEG-FILE until END-ROOT-SEG-FILE is 'Y', loading all root segments first to ensure parents exist. After exhausting roots, it loops on 3000-READ-CHILD-SEG-FILE until END-CHILD-SEG-FILE is 'Y', processing children with parent GU for hierarchy. Finally, it performs 4000-FILE-CLOSE to shut down files and GOBACKs with return code intact. No explicit error handling here beyond subordinate abends; assumes all processing succeeds or abends propagate. It consumes IMS PCB from linkage and file inputs indirectly via performs. Produces IMS segments as outputs via subordinate inserts.
+This is the main control paragraph of the program. It orchestrates the overall process of reading root and child segment data from input files and inserting them into an IMS database. It first calls 1000-INITIALIZE to open the input files and perform initial setup. Then, it enters a loop that reads root segments from INFILE1 using 2000-READ-ROOT-SEG-FILE until the end of the file is reached.  Subsequently, it enters another loop that reads child segments from INFILE2 using 3000-READ-CHILD-SEG-FILE until the end of that file. Finally, it calls 4000-FILE-CLOSE to close the input files before terminating the program. The program uses flags END-ROOT-SEG-FILE and END-CHILD-SEG-FILE to control the read loops. The program abends if there are errors opening the input files, or during root segment insertion.
 
 ### 1000-INITIALIZE
-This initialization paragraph sets up program environment by accepting current date and YYDDD into WS variables for potential logging. It displays startup information including today's date. It opens INFILE1 input sequential file and checks WS-INFIL1-STATUS for spaces or '00'; if not, displays error and performs 9999-ABEND. Similarly opens INFILE2 and validates its status with same error handling. It consumes no prior data beyond linkage PCBs. It produces open files ready for reads and initialized date fields. Business logic enforces file availability before proceeding to load. Error handling abends immediately on open failures to prevent invalid processing. No subordinate calls. Flow returns to 1000-EXIT.
+This paragraph initializes the program by accepting the current date and opening the input files INFILE1 and INFILE2. It accepts the current date and current year-day from the system. It then attempts to open INFILE1 and INFILE2 in INPUT mode. The file status codes WS-INFIL1-STATUS and WS-INFIL2-STATUS are checked after each OPEN. If either file fails to open (status is not SPACES or '00'), an error message is displayed, and the program abends by calling 9999-ABEND. If the files open successfully, the program continues to the next step. No data is directly read or written in this paragraph, it only prepares the environment for subsequent processing.
 
 ### 2000-READ-ROOT-SEG-FILE
-This paragraph handles reading and initial processing of root segment input from INFILE1 in the main loop. It performs a READ INFILE1 into INFIL1-REC. If WS-INFIL1-STATUS is spaces or '00', moves entire record to PENDING-AUTH-SUMMARY structure and performs 2100-INSERT-ROOT-SEG to load into IMS. If status '10', sets END-ROOT-SEG-FILE to 'Y' to exit loop. Other statuses trigger error display but no abend here (handled in insert). Consumes sequential file records. Produces populated root segment structure for insert. Logic decides loop continuation based on EOF. Error handling defers to subordinate for IMS issues. Calls 2100-INSERT-ROOT-SEG for each valid record.
+This paragraph reads records from INFILE1 and attempts to insert them as root segments into the IMS database. It reads a record from INFILE1 into INFIL1-REC. If the read is successful (WS-INFIL1-STATUS is SPACES or '00'), it moves the contents of INFIL1-REC to PENDING-AUTH-SUMMARY and then calls 2100-INSERT-ROOT-SEG to insert the segment into the IMS database. If the end of the file is reached (WS-INFIL1-STATUS is '10'), it sets the END-ROOT-SEG-FILE flag to 'Y'. If any other error occurs during the read, an error message is displayed. The paragraph uses the END-ROOT-SEG-FILE flag to signal the end of the input file to the calling paragraph (MAIN-PARA).
 
 ### 2100-INSERT-ROOT-SEG
-This paragraph inserts a single root segment into IMS database unconditionally. It issues CALL 'CBLTDLI' with FUNC-ISRT using PAUTBPCB, PENDING-AUTH-SUMMARY data, and unqualified ROOT-UNQUAL-SSA. Displays boundaries for debugging. Checks PAUT-PCB-STATUS: displays success if spaces, notes duplicate if 'II'. Abends via 9999-ABEND if neither spaces nor 'II' (e.g., other errors like GB, GE). Consumes pre-moved PENDING-AUTH-SUMMARY from read. Produces inserted PAUTSUM0 segment in IMS or tolerates dup. Business logic allows idempotent reloads via duplicate tolerance. Robust error handling abends on non-successful inserts. No further calls.
+This paragraph inserts a root segment into the IMS database using the CBLTDLI call. It calls the CBLTDLI routine with the FUNC-ISRT function code to insert the PENDING-AUTH-SUMMARY segment. The PAUTBPCB and ROOT-UNQUAL-SSA are also passed to the CBLTDLI call. After the call, the PAUT-PCB-STATUS is checked. If the status is SPACES, it indicates a successful insertion. If the status is 'II', it indicates that the root segment already exists in the database. If the status is anything else, it indicates an error, and the program abends by calling 9999-ABEND. The paragraph displays messages indicating the success or failure of the insertion based on the PCB status.
 
 ### 3000-READ-CHILD-SEG-FILE
-This paragraph reads and prepares child segments from INFILE2 in the main post-root loop. Performs READ INFILE2 into INFIL2-REC structure. If WS-INFIL2-STATUS spaces or '00', checks if ROOT-SEG-KEY IS NUMERIC; if yes, moves key to QUAL-SSA-KEY-VALUE for qualified parent search, moves CHILD-SEG-REC to PENDING-AUTH-DETAILS, and performs 3100-INSERT-CHILD-SEG. If EOF '10', sets END-CHILD-SEG-FILE 'Y'. Other statuses display error but defer abend. Consumes child file records with parent key prefix. Produces populated child structure and SSA key. Logic validates key numeric to skip invalids. Errors handled in subordinate. Calls 3100 for valid numerics.
+This paragraph reads records from INFILE2 and attempts to insert them as child segments into the IMS database. It reads a record from INFILE2. If the read is successful (WS-INFIL2-STATUS is SPACES or '00') and ROOT-SEG-KEY is numeric, it moves the ROOT-SEG-KEY to QUAL-SSA-KEY-VALUE and the CHILD-SEG-REC to PENDING-AUTH-DETAILS. Then, it calls 3100-INSERT-CHILD-SEG to insert the child segment into the IMS database. If the end of the file is reached (WS-INFIL2-STATUS is '10'), it sets the END-CHILD-SEG-FILE flag to 'Y'. If any other error occurs during the read, an error message is displayed. The paragraph uses the END-CHILD-SEG-FILE flag to signal the end of the input file to the calling paragraph (MAIN-PARA).
 
 ### 3100-INSERT-CHILD-SEG
-This paragraph establishes parentage and delegates child insert for hierarchy. Initializes PAUT-PCB-STATUS, then CALL 'CBLTDLI' FUNC-GU using PAUTBPCB, PENDING-AUTH-SUMMARY (io area), and qualified ROOT-QUAL-SSA with key from child input. Displays for debug. If status spaces, displays success. Regardless, performs 3200-INSERT-IMS-CALL to insert child. Post-GU, if PAUT-PCB-STATUS not spaces and not 'II', displays failure details including KEYFB and abends. Consumes child details and parent key in SSA. Produces positioned parent for child insert. Logic enforces parent existence before child add. Error handling abends on GU failure (e.g., GE not found).
+This paragraph retrieves the root segment and then inserts a child segment into the IMS database. It first initializes PAUT-PCB-STATUS. It then calls CBLTDLI with FUNC-GU to retrieve the root segment using the qualified SSA (ROOT-QUAL-SSA). If the GU call is successful (PAUT-PCB-STATUS is SPACES), it calls 3200-INSERT-IMS-CALL to insert the child segment. If the GU call fails (PAUT-PCB-STATUS is not SPACES), an error message is displayed, and the program abends by calling 9999-ABEND. The paragraph relies on the ROOT-QUAL-SSA to specify which root segment the child segment should be associated with. The success or failure of the GU call determines whether the child segment insertion is attempted.
 
 ### 3200-INSERT-IMS-CALL
-This paragraph performs the actual IMS insert for child segment under positioned parent. Issues CALL 'CBLTDLI' FUNC-ISRT with PAUTBPCB, PENDING-AUTH-DETAILS data, and unqualified CHILD-UNQUAL-SSA. Checks PAUT-PCB-STATUS post-call: success display if spaces, duplicate note if 'II', else displays error with KEYFB and abends via 9999. Consumes pre-GU positioned PCB and child data. Produces inserted PAUTDTL1 child segment. Business logic mirrors root insert for idempotency. Strict error handling abends non-success/dup. No further calls.
+This paragraph inserts a child segment into the IMS database using the CBLTDLI call. It calls CBLTDLI with FUNC-ISRT to insert the PENDING-AUTH-DETAILS segment using the CHILD-UNQUAL-SSA. After the call, the PAUT-PCB-STATUS is checked. If the status is SPACES, it indicates a successful insertion. If the status is 'II', it indicates that the child segment already exists in the database. If the status is anything else, it indicates an error, and the program abends by calling 9999-ABEND. The paragraph displays messages indicating the success or failure of the insertion based on the PCB status.
 
 ### 4000-FILE-CLOSE
-This termination paragraph closes input files post-processing. Displays closing message, then CLOSE INFILE1 and checks WS-INFIL1-STATUS (spaces/'00' ok, else display error no abend). Similarly CLOSE INFILE2 with status check. Consumes opened files. Produces closed files and potential error logs. No decisions beyond status display. Error handling logs but continues to GOBACK. No calls.
+This paragraph closes the input files INFILE1 and INFILE2. It attempts to close each file and checks the file status after each close operation. If the file status is not SPACES or '00', an error message is displayed, but the program does NOT abend. The paragraph ensures that all files are properly closed before the program terminates. The error handling in this paragraph only displays an error message and continues, unlike the OPEN and INSERT paragraphs which abend on error.
 
 ### 9999-ABEND
-Universal abend handler invoked on file/IMS errors. Displays 'IMS LOAD ABENDING ...' message. Sets RETURN-CODE to 16 indicating failure. Performs GOBACK to terminate. Consumes error context from caller (statuses displayed prior). Produces non-zero return code for JCL. No conditions checked here. No validation beyond invocation. No calls.
+This paragraph handles program termination due to an error condition. It displays a message indicating that the IMS load is abending and sets the RETURN-CODE to 16. The program then terminates using the GOBACK statement. This paragraph is called from various points in the program where critical errors are detected, such as file open failures or IMS database insertion errors. The setting of the RETURN-CODE allows the calling environment to recognize that the program terminated abnormally.
 
 ## Control Flow
 
@@ -100,9 +102,9 @@ flowchart TD
 
 ## Open Questions
 
-- ? Exact field layouts and key fields in copybooks CIPAUSMY and CIPAUDTY?
-  - Context: Copybooks define segment structures but contents not provided; cannot detail specific data transforms or validations.
-- ? IMS database name and PSB name in use?
-  - Context: PAUTBPCB implies PAUT database; PSB 'IMSUNLOD' commented out (line 95); not explicitly used.
-- ? Purpose and population of PRM-INFO parameters (e.g., P-EXPIRY-DAYS)?
-  - Context: Defined in WS (129-139) but never referenced or populated.
+- ? What is the purpose of the COPY IMSFUNCS?
+  - Context: The code includes COPY IMSFUNCS, but the contents of this copybook are not available. Without knowing the contents, it is difficult to determine the exact function codes used in the CBLTDLI calls.
+- ? What is the structure of the PAUTBPCB copybook?
+  - Context: The code uses PAUTBPCB in the linkage section and in the CBLTDLI calls, but the structure of this copybook is not available. Without knowing the structure, it is difficult to fully understand the IMS calls.
+- ? What is the exact structure of the PENDING-AUTH-SUMMARY and PENDING-AUTH-DETAILS segments?
+  - Context: The code uses COPY CIPAUSMY and COPY CIPAUDTY to define these segments, but the contents of these copybooks are not available. Without knowing the exact structure, it is difficult to fully understand the data being inserted into the IMS database.

@@ -1,34 +1,21 @@
 {
   "header": {
     "program_id": "CIPAUSMY",
-    "file_name": "cpy/CIPAUSMY.cpy",
+    "file_name": "CIPAUSMY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T02:43:07.655153",
+    "analyzed_at": "2026-01-27T23:05:09.642099",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the data structure for the IMS segment named Pending Authorization Summary (PAUS). It includes fields for account and customer identifiers, authorization and account status information, credit and cash limits and current balances, counts of approved and declined authorizations, and corresponding amounts. The structure is used to store summary data related to pending authorizations in an IMS database.",
-    "business_context": "Serves financial authorization processing for customer accounts, tracking pending authorization summaries including limits, balances, and approval/decline statistics, within an Amazon-affiliated system (citation lines 4-17).",
-    "program_type": "UTILITY",
+    "summary": "This copybook defines the data structure for the IMS segment related to pending authorization summary information. It includes fields for account ID, customer ID, authorization status, account status, credit and cash limits/balances, and counts/amounts for approved and declined authorizations.",
+    "business_context": "This copybook is used in applications that manage and process pending authorizations for customer accounts, likely within a financial institution or credit card processing system.",
+    "program_type": "SUBROUTINE",
     "citations": [
-      1,
       2,
-      3,
       19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31
+      30
     ]
   },
   "inputs": [],
@@ -45,22 +32,43 @@
     "writes_to": [],
     "transforms": []
   },
-  "copybooks_used": [],
-  "paragraphs": [],
+  "copybooks_used": [
+    {
+      "copybook_name": "CIPAUSMY",
+      "purpose": "Defines the structure of the IMS segment for pending authorization summary.",
+      "location": "FILE_SECTION",
+      "citation": 19
+    }
+  ],
+  "paragraphs": [
+    {
+      "paragraph_name": "DATA-DEFINITION",
+      "summary": null,
+      "purpose": "This section defines the data structure for the pending authorization summary IMS segment. It contains various fields related to customer accounts and their authorization activities. The PA-ACCT-ID field stores the account identifier as a COMP-3 packed decimal. PA-CUST-ID holds the customer identifier. PA-AUTH-STATUS indicates the overall authorization status. PA-ACCOUNT-STATUS is an array that stores up to 5 account statuses. PA-CREDIT-LIMIT and PA-CASH-LIMIT define the credit and cash limits for the account, respectively. PA-CREDIT-BALANCE and PA-CASH-BALANCE represent the current credit and cash balances. PA-APPROVED-AUTH-CNT and PA-DECLINED-AUTH-CNT store the counts of approved and declined authorizations. PA-APPROVED-AUTH-AMT and PA-DECLINED-AUTH-AMT store the total amounts of approved and declined authorizations. Finally, FILLER provides padding to ensure the segment has a fixed length. This data structure is likely used by IMS transactions to retrieve and update pending authorization information.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        19,
+        31
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    }
+  ],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
+  "open_questions": [],
+  "dead_code": [
     {
-      "question": "In which programs or modules is this copybook included?",
-      "context": "The copybook defines an IMS segment layout but does not indicate usage locations.",
-      "suggestion": "Search for COPY CIPAUSMY statements in associated COBOL programs."
-    },
-    {
-      "question": "What are the exact meanings or valid values for PA-AUTH-STATUS and PA-ACCOUNT-STATUS?",
-      "context": "Field descriptions are not provided beyond PIC clauses; no comments explain codes.",
-      "suggestion": "Review associated program logic or data dictionaries."
+      "name": "05:PA-ACCT-ID",
+      "artifact_type": "column",
+      "line": 1,
+      "reason": "Artifact '05:PA-ACCT-ID' (column) is never referenced by any other artifact in the dependency graph"
     }
   ],
-  "dead_code": []
+  "flow_diagram": null
 }

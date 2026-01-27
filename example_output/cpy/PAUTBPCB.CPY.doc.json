@@ -1,154 +1,74 @@
 {
   "header": {
     "program_id": "PAUTBPCB",
-    "file_name": "cpy/PAUTBPCB.CPY",
+    "file_name": "PAUTBPCB.CPY",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T02:43:40.680332",
+    "analyzed_at": "2026-01-27T23:03:20.772026",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the 01 PAUTBPCB level structure for an IMS Database Program Communication Block (DBPCB). It includes fields for database name, segment level, PCB status, processing options, segment name, key feedback name, number of sensitive segments, and the key feedback area. Used in IMS DL/I programs to pass control information to and receive feedback from IMS database calls.",
-    "business_context": "Supports IMS DL/I database access in batch or online IMS applications for segment retrieval, insertion, replacement, and deletion operations.",
-    "program_type": "UTILITY",
+    "summary": "This copybook defines the structure of PAUTBPCB, which appears to be a PCB (Program Communication Block) used in IMS (Information Management System) database interaction. It contains fields related to database name, segment level, PCB status, processing options, segment name, key feedback, number of sensitive segments, and key feedback area.",
+    "business_context": null,
+    "program_type": "SUBROUTINE",
     "citations": [
       17,
       18,
-      19,
-      20,
-      21,
-      23,
-      24,
-      25,
       26
     ]
   },
-  "inputs": [
-    {
-      "name": "PAUT-PCB-PROCOPT",
-      "io_type": "OTHER",
-      "description": "Processing options set by the application program to specify the type of DL/I call (e.g., GU for Get Unique, GNP for Get Next, ISRT for Insert)",
-      "copybook": "PAUTBPCB",
-      "citation": [
-        21
-      ]
-    },
-    {
-      "name": "PAUT-DBDNAME",
-      "io_type": "OTHER",
-      "description": "Database name, typically predefined in the PSB and referenced or confirmed by the application",
-      "copybook": "PAUTBPCB",
-      "citation": [
-        18
-      ]
-    }
-  ],
-  "outputs": [
-    {
-      "name": "PAUT-PCB-STATUS",
-      "io_type": "OTHER",
-      "description": "Two-byte status code returned by IMS indicating success (spaces) or error conditions after DL/I call",
-      "copybook": "PAUTBPCB",
-      "citation": [
-        20
-      ]
-    },
-    {
-      "name": "PAUT-SEG-LEVEL",
-      "io_type": "OTHER",
-      "description": "Segment level of the retrieved or affected segment, populated by IMS on successful calls",
-      "copybook": "PAUTBPCB",
-      "citation": [
-        19
-      ]
-    },
-    {
-      "name": "PAUT-SEG-NAME",
-      "io_type": "OTHER",
-      "description": "Name of the segment retrieved or affected, populated by IMS",
-      "copybook": "PAUTBPCB",
-      "citation": [
-        23
-      ]
-    },
-    {
-      "name": "PAUT-KEYFB-NAME",
-      "io_type": "OTHER",
-      "description": "Key feedback name or length indicator populated by IMS",
-      "copybook": "PAUTBPCB",
-      "citation": [
-        24
-      ]
-    },
-    {
-      "name": "PAUT-NUM-SENSEGS",
-      "io_type": "OTHER",
-      "description": "Number of sensitive segments for the PCB, populated by IMS",
-      "copybook": "PAUTBPCB",
-      "citation": [
-        25
-      ]
-    },
-    {
-      "name": "PAUT-KEYFB",
-      "io_type": "OTHER",
-      "description": "Key feedback area containing concatenated key fields of the retrieved segment",
-      "copybook": "PAUTBPCB",
-      "citation": [
-        26
-      ]
-    }
-  ],
+  "inputs": [],
+  "outputs": [],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [
-    {
-      "rule_id": "BR001",
-      "description": "Application must set valid processing option codes in PAUT-PCB-PROCOPT before issuing a DL/I call",
-      "logic_summary": "Field defined as PIC X(04) to hold IMS PROCOPT values dictating call type (e.g., K for key, P for parentage)",
-      "conditions": [
-        "Prior to DL/I CALL"
-      ],
-      "citation": [
-        21
-      ]
-    },
-    {
-      "rule_id": "BR002",
-      "description": "After DL/I call, application must check PAUT-PCB-STATUS for success (blanks) or error codes",
-      "logic_summary": "Field defined as PIC X(02) receives IMS status; non-blank indicates error requiring handling",
-      "conditions": [
-        "PAUT-PCB-STATUS NOT = '  '",
-        "Post DL/I CALL"
-      ],
-      "citation": [
-        20
-      ]
-    }
-  ],
+  "business_rules": [],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
     "transforms": []
   },
-  "copybooks_used": [],
-  "paragraphs": [],
-  "error_handling": [
+  "copybooks_used": [
     {
-      "condition": "PAUT-PCB-STATUS contains non-blank error code",
-      "action": "Application program logic evaluates status and takes remedial action such as abend or retry",
-      "citation": [
-        20
-      ]
+      "copybook_name": "PAUTBPCB",
+      "purpose": "Defines the structure of the PAUTBPCB data area, likely used for IMS PCB communication.",
+      "location": "WORKING_STORAGE",
+      "citation": 17
     }
   ],
+  "paragraphs": [
+    {
+      "paragraph_name": "PAUTBPCB",
+      "summary": null,
+      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1,
+        1
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": true,
+      "dead_code_reason": "Record layout 'PAUTBPCB' is never used by any program",
+      "metadata": null
+    }
+  ],
+  "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
   "open_questions": [],
-  "dead_code": []
+  "dead_code": [
+    {
+      "name": "PAUTBPCB",
+      "artifact_type": "record_layout",
+      "line": 1,
+      "reason": "Record layout 'PAUTBPCB' is never used by any program"
+    }
+  ],
+  "flow_diagram": null
 }

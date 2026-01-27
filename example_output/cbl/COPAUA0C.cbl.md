@@ -2,121 +2,66 @@
 
 **File**: `cbl/COPAUA0C.cbl`
 **Type**: FileType.COBOL
-**Analyzed**: 2026-01-27 02:40:21.081116
+**Analyzed**: 2026-01-27 23:05:46.053388
 
 ## Purpose
 
-COPAUA0C is a CICS COBOL program in the CardDemo application that performs card authorization decisions. It processes incoming authorization requests received via IBM MQ, validates against VSAM files (ACCTDAT, CUSTDAT, CARDDAT, CCXREF) and IMS database segments (PAUT PCB), and sends responses via MQ reply queue. The program applies business rules for approval/decline based on account status, funds availability, fraud flags, and other conditions.
+This COBOL program, COPAUA0C, is a Card Authorization Decision Program designed for a CICS COBOL IMS MQ environment. It handles card authorization requests, interacts with IMS databases, and uses MQ for messaging. The program extracts request messages, processes authorization logic, and sends responses via MQ.
 
-**Business Context**: CardDemo Authorization Module for processing payment card authorization requests
+**Business Context**: Card authorization processing within a financial transaction system.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| WS-REQUEST-QNAME | IOType.OTHER | MQ queue for incoming pending authorization requests, parsed into PENDING-AUTH-REQUEST structure |
-| PAUT-PCB | IOType.IMS_SEGMENT | IMS database PCB for reading pending authorization summary (root) and details (child) segments |
-| ACCTDAT | IOType.FILE_VSAM | Account master file for account status and balance validation |
-| CUSTDAT | IOType.FILE_VSAM | Customer master file for customer details validation |
-| CARDDAT | IOType.FILE_VSAM | Card master file for card details and status |
-| CCXREF | IOType.FILE_VSAM | Card cross-reference file linking card to customer/account |
-| DFHCOMMAREA | IOType.CICS_COMMAREA | CICS linkage commarea for program communication |
-| REQUEST-MQ-QUEUE | IOType.OTHER | IBM MQ queue containing comma-delimited authorization request messages with fields like date, time, card number, amount, merchant details |
-| WS-CCXREF-FILE | IOType.FILE_VSAM | Card cross-reference VSAM file keyed by card number to get account and customer IDs |
-| WS-ACCTFILENAME | IOType.FILE_VSAM | Account master VSAM file keyed by account ID for credit limits and balances |
-| WS-CUSTFILENAME | IOType.FILE_VSAM | Customer master VSAM file keyed by customer ID |
-| PAUT-PCB-NUM | IOType.IMS_SEGMENT | IMS PCB for PAUT database, segments PAUTSUM0 (pending auth summary), PAUTDTL1 (pending auth details) |
+| W01-GET-BUFFER | IOType.CICS_QUEUE | Input message from MQ containing card authorization request details. |
+| IMS Database | IOType.IMS_SEGMENT | IMS database segments containing cardholder account and profile data. |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| WS-REPLY-QNAME | IOType.OTHER | MQ queue for sending authorization responses populated from PENDING-AUTH-RESPONSE |
-| PAUT-PCB | IOType.IMS_SEGMENT | IMS database for writing updated pending authorization summary and details segments |
-| CCPAUERY | IOType.OTHER | Application error log structure for logging errors |
-| REPLY-MQ-QUEUE | IOType.OTHER | IBM MQ reply queue receiving comma-delimited response with card num, transaction ID, auth code, response code, reason, approved amount |
-| CSSL | IOType.CICS_QUEUE | CICS transient data queue for error logging with details like location, codes, message, event key |
+| W02-PUT-BUFFER | IOType.CICS_QUEUE | Output message to MQ containing the card authorization response. |
+
+## Called Programs
+
+| Program | Call Type | Purpose |
+|---------|-----------|---------|
+| MQOPEN | CallType.STATIC_CALL | Opens the request queue for reading messages. |
+| MQGET | CallType.STATIC_CALL | Retrieves a message from the request queue. |
+| MQPUT1 | CallType.STATIC_CALL | Sends a reply message to the reply queue. |
 
 ## Business Rules
 
-- **BR001**: Decline authorization if insufficient funds
-- **BR002**: Decline authorization if card not active
-- **BR003**: Decline authorization if account closed
-- **BR004**: Decline authorization if card fraud flagged
-- **BR005**: Decline authorization if merchant fraud
-- **BR006**: Decline authorization if transaction amount exceeds available credit (credit limit minus balance)
-- **BR007**: Set authorization response code and reason based on decline conditions like not found records, insufficient funds, fraud, etc.
+- **BR001**: If the MQOPEN call fails, log an error.
+- **BR002**: If the MQGET call fails due to no message available, set the NO-MORE-MSG-AVAILABLE flag.
+- **BR003**: If the MQPUT1 call fails, log an error.
 
 ## Paragraphs/Procedures
 
-### MAIN-PARA
-This is the primary entry point paragraph that orchestrates the entire program flow for processing authorization requests. It consumes no direct inputs but relies on CICS environment including TS queue for trigger data. It sequentially performs initialization to open MQ queue and read first message, then main processing loop, and finally termination to close resources before CICS RETURN. No business decisions are made here; it delegates to subordinate paragraphs. Error handling is implicit via performed paragraphs. It calls 1000-INITIALIZE for setup including MQ open and first read, 2000-MAIN-PROCESS for loop of message processing, and 9000-TERMINATE for cleanup.
-
-### 1000-INITIALIZE
-This paragraph handles program initialization by retrieving trigger message from CICS TS queue into MQTM, extracting queue name and trigger data. It sets wait interval and performs opening the request MQ queue and reading the first request message. Inputs are CICS TS queue via RETRIEVE and MQ queue via MQGET in sub-paragraphs. Outputs are working storage flags like WS-REQUEST-MQ-OPEN and initial message buffer. No business logic or decisions; purely setup. Errors from sub-calls propagate via error flags. Calls 1100-OPEN-REQUEST-QUEUE to open MQ and 3100-READ-REQUEST-MQ for first message.
-
 ### 1100-OPEN-REQUEST-QUEUE
-Prepares and calls MQOPEN to open the request queue in input-shared mode using queue name from trigger message. Inputs: WS-REQUEST-QNAME from MQTM-QNAME. Outputs: handle in W01-HOBJ-REQUEST if successful, sets WS-REQUEST-MQ-OPEN flag. On failure (non-MQCC-OK), sets error flags, populates error record with codes and 'REQ MQ OPEN ERROR', performs 9500-LOG-ERROR. No business logic. Called during init.
+This paragraph opens the MQ request queue, enabling the program to receive authorization requests. It moves the queue name (WS-REQUEST-QNAME) and object type (MQOT-Q) into the MQ object descriptor (MQM-OD-REQUEST). It then computes the options for opening the queue, setting it to input-shared mode. The MQOPEN call is then made, using the connection handle, object descriptor, options, object handle, completion code, and reason code. If the MQOPEN call is successful (WS-COMPCODE = MQCC-OK), the WS-REQUEST-MQ-OPEN flag is set to TRUE. If the call fails, an error is logged using paragraph 9500-LOG-ERROR, including the completion code and reason code. The paragraph consumes WS-REQUEST-QNAME and MQOT-Q as inputs, and produces either a successful queue opening or an error log entry. It calls the MQOPEN program and potentially the 9500-LOG-ERROR paragraph.
 
 ### 1200-SCHEDULE-PSB
-Schedules the IMS PSB named in PSB-NAME using DLI SCHD, handling if already scheduled by TERM then reschedule. Inputs: PSB-NAME working storage. Outputs: sets IMS-PSB-SCHD flag if status OK. On failure, sets critical IMS error, logs via 9500-LOG-ERROR. Ensures PSB available for later DL/I calls. Called in processing.
-
-### 2000-MAIN-PROCESS
-Main loop performs until no more messages or loop end: extracts message, processes auth, increments count, syncpoint, unschedule PSB, checks process limit then reads next or ends. Inputs: messages from prior 3100 read. Outputs: processed count WS-MSG-PROCESSED, database updates via process, MQ responses. Business logic: limits processing to WS-REQSTS-PROCESS-LIMIT. Errors handled in subs. Calls extract, process auth, read next.
+This paragraph schedules a PSB (Program Specification Block) for IMS database interaction. It uses the EXEC DLI SCHD command with the PSB-NAME. If the PSB has been scheduled more than once (PSB-SCHEDULED-MORE-THAN-ONCE), it terminates the PSB using EXEC DLI TERM and then reschedules it. The IMS-RETURN-CODE is updated with the DIBSTAT value after each scheduling attempt. This paragraph ensures the program can access the necessary IMS database resources. The paragraph consumes PSB-NAME as input and updates IMS-RETURN-CODE. It calls EXEC DLI SCHD and EXEC DLI TERM. The purpose of scheduling the PSB is to prepare the IMS environment for subsequent database operations related to card authorization processing. Error handling is implicit in the IMS environment, with DIBSTAT providing status information.
 
 ### 2100-EXTRACT-REQUEST-MSG
-Parses comma-delimited buffer from MQGET into PA-RQ-* fields using UNSTRING, converts transaction amount AN to numeric. Inputs: W01-GET-BUFFER from MQ read. Outputs: populated PA-RQ- fields like CARD-NUM, AMT, MERCHANT-ID for processing, WS-TRANSACTION-AMT. No decisions or errors here. Prepares data for auth logic.
+This paragraph extracts the card authorization request message from the W01-GET-BUFFER. It uses the UNSTRING statement to parse the message, which is delimited by commas. The extracted data elements are moved into corresponding fields within the PA-RQ-* data structure, such as PA-RQ-AUTH-DATE, PA-RQ-CARD-NUM, and PA-RQ-TRANSACTION-AMT. The alphanumeric transaction amount (WS-TRANSACTION-AMT-AN) is converted to a numeric value (PA-RQ-TRANSACTION-AMT) using the FUNCTION NUMVAL. This paragraph consumes W01-GET-BUFFER and produces the parsed data elements in the PA-RQ-* fields. The purpose is to prepare the request data for subsequent authorization processing. No explicit error handling is shown in the provided code snippet for the UNSTRING operation, but it is assumed that the message format is validated elsewhere.
 
 ### 3100-READ-REQUEST-MQ
-Calls MQGET with wait, no-syncpoint, convert options to read next message into buffer. Inputs: open queue handles. Outputs: message data, correlid, replyqname saved; sets NO-MORE-MSG-AVAILABLE on MQRC-NO-MSG. On other errors, critical CICS error log with 'FAILED TO READ REQUEST MQ'. Loops until no msg or limit.
+This paragraph reads a message from the MQ request queue. It sets the MQGMO-OPTIONS for the MQGET call, including MQGMO-NO-SYNCPOINT, MQGMO-WAIT, MQGMO-CONVERT, and MQGMO-FAIL-IF-QUIESCING. It also sets the MQMD fields, such as MSGID and CORRELID. The MQGET call is then made, using the connection handle, object handle, message descriptor, get message options, buffer length, buffer, data length, completion code, and reason code. If the MQGET call is successful (WS-COMPCODE = MQCC-OK), the correlation ID and reply queue name are saved. If the call fails and the reason code is MQRC-NO-MSG-AVAILABLE, the NO-MORE-MSG-AVAILABLE flag is set to TRUE. Otherwise, an error is logged using paragraph 9500-LOG-ERROR. This paragraph consumes the MQ request queue and produces a message in W01-GET-BUFFER. It calls the MQGET program and potentially the 9500-LOG-ERROR paragraph.
 
 ### 5000-PROCESS-AUTH
-Core processing: assumes approve, schedules PSB, assumes found records, reads xref/acct/cust/authsum/profile (profile empty), makes decision, sends response, conditionally writes to DB. Inputs: parsed PA-RQ- data. Outputs: response MQ, IMS updates, flags like APPROVE-AUTH/DECLINE-AUTH. Business logic delegated to 6000. Errors via reads. Calls multiple read/update paragraphs.
+This paragraph orchestrates the authorization processing. It first sets the APPROVE-AUTH flag to TRUE. It then schedules the PSB using paragraph 1200-SCHEDULE-PSB. After scheduling the PSB, it sets CARD-FOUND-XREF and FOUND-ACCT-IN-MSTR to TRUE. It then calls several paragraphs to read data: 5100-READ-XREF-RECORD, 5200-READ-ACCT-RECORD, 5300-READ-CUST-RECORD, 5500-READ-AUTH-SUMMRY, and 5600-READ-PROFILE-DATA. These read operations are performed only if CARD-FOUND-XREF is TRUE. This paragraph consumes the request data and produces the authorization decision. It calls 1200-SCHEDULE-PSB and several read paragraphs. The purpose is to gather all necessary data for making an authorization decision based on card and account information. The paragraph assumes that the called paragraphs will handle their own error conditions.
 
-### 5100-READ-XREF-RECORD
-CICS READ VSAM CCXREF by card num into CARD-XREF-RECORD. Sets CARD-FOUND-XREF or NFOUND, propagates NFOUND-ACCT-IN-MSTR. Logs warning A001 if notfnd, critical C001 other resp. Inputs: PA-RQ-CARD-NUM. Outputs: XREF-ACCT-ID etc if found.
+## Dead Code
 
-### 5200-READ-ACCT-RECORD
-CICS READ VSAM account file by acct ID from xref. Sets FOUND-ACCT-IN-MSTR or NFOUND. Logs warning A002 notfnd, critical C002 other.
+The following artifacts were identified as dead code by static analysis:
 
-### 5300-READ-CUST-RECORD
-CICS READ VSAM customer file by cust ID from xref. Sets FOUND-CUST-IN-MSTR or NFOUND. Logs warning A003 notfnd, critical C003 other.
-
-### 5500-READ-AUTH-SUMMRY
-DL/I GU PAUTSUM0 by acct ID into PENDING-AUTH-SUMMARY. Sets FOUND/NFOUND-PAUT-SMRY-SEG. Critical I002 other status.
-
-### 5600-READ-PROFILE-DATA
-Empty implementation, just CONTINUE. Intended for profile data read but not implemented in this chunk.
-
-### 6000-MAKE-DECISION
-Populates response fields PA-RL-*, computes available amt from summary or acct, declines if amt exceeded or not found, sets resp code '00'/'05', reason based on flags (3100 notfnd, 4100 insuff, etc.), strings response buffer. Inputs: all read data/flags. Outputs: PA-RL- fields, W02-PUT-BUFFER. Key business logic for auth decision.
-
-### 7100-SEND-RESPONSE
-Prepares MQPUT1 to reply queue using saved correlid, strings buffer. On fail, critical M004 MQ error log.
-
-### 8000-WRITE-AUTH-TO-DB
-Updates/inserts IMS pending auth summary and inserts details if card found in xref.
-
-### 8400-UPDATE-SUMMARY
-Initializes summary if not found, sets limits from acct, increments approved/declined cnts/amts, REPL if found else ISRT PAUTSUM0. Critical I003 fail.
-
-### 8500-INSERT-AUTH
-Gets current time/date, computes inverted timestamps, populates PENDING-AUTH-DETAILS from request/response, sets match flags, ISRT PAUTDTL1 under PAUTSUM0. Critical I004 fail.
-
-### 9000-TERMINATE
-Terms IMS PSB if scheduled, closes request queue.
-
-### 9100-CLOSE-REQUEST-QUEUE
-Calls MQCLOSE if open, warning M005 if fail.
-
-### 9500-LOG-ERROR
-Formats time/date, populates ERROR-LOG-RECORD, WRITEQ to CSSL TD queue. If critical, performs 9990-END-ROUTINE (not shown).
-
-### 9990-END-ROUTINE
-The 9990-END-ROUTINE paragraph serves as the primary termination handler in the COPAUA0C CICS program, controlling the final steps before exiting back to CICS. Its role in the overall program flow is to orchestrate end-of-task cleanup and return control to the transaction manager. It consumes no explicit inputs or data, relying instead on the global state of working storage and files established by prior paragraphs (not shown in this chunk). It produces no direct data outputs but triggers actions in the called 9000-TERMINATE paragraph, which is expected to perform tasks such as closing files, resetting flags, or logging final status. There is no business logic or conditional decision-making within this paragraph; execution is strictly sequential without IF statements or validations. No error handling is explicitly implemented here, though any issues from 9000-TERMINATE would propagate implicitly. This paragraph calls the 9000-TERMINATE paragraph solely for standardized termination procedures. After the PERFORM, it executes an unconditional EXEC CICS RETURN to end the task. The paragraph concludes with a scope terminator period, ensuring proper COBOL syntax.
-
-### 9990-EXIT
-The 9990-EXIT paragraph acts as a simple exit label and transfer point within the COPAUA0C program, likely targeted by GO TO statements from other paragraphs for branching to termination logic. Its primary role in program flow is to provide a clean, named endpoint that immediately transfers control via EXIT without further processing. It consumes no inputs, data, files, or variables. It produces no outputs or modifications to any data areas. There are no business rules, conditions, validations, or decisions implemented, as it contains only the EXIT statement. No error handling is present, as it performs no operations that could fail. It calls no other paragraphs or programs. The EXIT statement relinquishes control to the next executable statement in the PROCEDURE DIVISION or effectively ends the current flow if at the end. This minimal structure ensures reliable control flow redirection without side effects.
+| Artifact | Type | Line | Reason |
+|----------|------|------|--------|
+| 9500-EXIT | paragraph | 1012 | Paragraph '9500-EXIT' is never PERFORMed or referenced by any other paragraph or program |
+| 9990-EXIT | paragraph | 1024 | Paragraph '9990-EXIT' is never PERFORMed or referenced by any other paragraph or program |
 
 ## Control Flow
 
@@ -217,25 +162,9 @@ flowchart TD
 
 ## Open Questions
 
-- ? No PROCEDURE DIVISION visible in chunk 1/3
-  - Context: From chunk SOURCE-chunk-1-header (lines 1-217)
-- ? Exact file organizations (e.g., VSAM KSDS) and queue names values
-  - Context: From chunk SOURCE-chunk-1-header (lines 1-217)
-- ? Specific field mappings in copybooks
-  - Context: From chunk SOURCE-chunk-1-header (lines 1-217)
-- ? Data division and copybooks definitions
-  - Context: From chunk SOURCE-chunk-2 (lines 220-1015)
-- ? Details of 5600-READ-PROFILE-DATA and 9990-END-ROUTINE
-  - Context: From chunk SOURCE-chunk-2 (lines 220-1015)
-- ? Exact queue names, file names values
-  - Context: From chunk SOURCE-chunk-2 (lines 220-1015)
-- ? Calling transaction ID
-  - Context: From chunk SOURCE-chunk-2 (lines 220-1015)
-- ? What is the overall purpose and main processing logic of COPAUA0C?
-  - Context: From chunk SOURCE-chunk-3 (lines 1016-1027)
-- ? What does the 9000-TERMINATE paragraph perform?
-  - Context: From chunk SOURCE-chunk-3 (lines 1016-1027)
-- ? What are the data structures, files, copybooks, and variables used?
-  - Context: From chunk SOURCE-chunk-3 (lines 1016-1027)
-- ? What are the inputs, outputs, entry points, and calling context?
-  - Context: From chunk SOURCE-chunk-3 (lines 1016-1027)
+- ? What are the exact structures of the MQ message descriptors and options copybooks?
+  - Context: The copybook names are not provided, making it impossible to determine the precise layout of the MQ structures.
+- ? What is the purpose and implementation of the 9500-LOG-ERROR paragraph?
+  - Context: This paragraph is called in several error handling routines, but its code is not included in the sampled source.
+- ? What are the specific IMS database segments accessed by the read paragraphs (5100-5600)?
+  - Context: The code only shows the paragraph calls, not the actual IMS database operations.

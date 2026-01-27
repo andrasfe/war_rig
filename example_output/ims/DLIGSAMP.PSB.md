@@ -1,17 +1,14 @@
 # DLIGSAMP
 
 **File**: `ims/DLIGSAMP.PSB`
-**Type**: FileType.OTHER
-**Analyzed**: 2026-01-27 02:41:29.510044
+**Type**: OTHER
+**Analyzed**: 2026-01-27 23:05:45.249565
 
 ## Purpose
 
-This file is the source input for the IMS PSBGEN utility to generate the Program Specification Block (PSB) named DLIGSAMP for a COBOL language program. It defines one database PCB (PAUTBPCB) for the IMS hierarchical database DBDNAME=DBPAUTP0 with PROCOPT=GOTP and KEYLEN=14, including sensitive segments PAUTSUM0 (root, PARENT=0) and PAUTDTL1 (PARENT=PAUTSUM0). It also defines two GSAM PCBs for sequential datasets PASFLDBD and PADFLDBD, each with PROCOPT=LS.
+This PSB (Program Specification Block) defines the database access characteristics for an IMS application program. It specifies the PCBs (Program Communication Blocks) that the program will use to interact with IMS databases, including DB PCBs for DBPAUTP0 and GSAM PCBs for PASFLDBD and PADFLDBD.
 
-## Inputs
+## Open Questions
 
-| Name | Type | Description |
-|------|------|-------------|
-| DBPAUTP0 | IOType.IMS_SEGMENT | IMS hierarchical database accessed via PCB named PAUTBPCB with PROCOPT=GOTP and KEYLEN=14; sensitive segments are PAUTSUM0 (PARENT=0) and PAUTDTL1 (PARENT=PAUTSUM0) |
-| PASFLDBD | IOType.FILE_SEQUENTIAL | GSAM dataset accessed via unnamed PCB with PROCOPT=LS |
-| PADFLDBD | IOType.FILE_SEQUENTIAL | GSAM dataset accessed via unnamed PCB with PROCOPT=LS |
+- ? What is the specific purpose of the PAUTSUM0 and PAUTDTL1 segments?
+  - Context: The code defines these segments as SENSEG but doesn't provide enough context to understand their role in the database structure.

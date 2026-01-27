@@ -86,6 +86,15 @@ class ProgramType(str, Enum):
     ONLINE_CICS = "ONLINE_CICS"
     SUBROUTINE = "SUBROUTINE"
     UTILITY = "UTILITY"
+    BMS = "BMS"
+    COPYBOOK = "COPYBOOK"
+    JCL = "JCL"
+    DDL = "DDL"
+    DBD = "DBD"
+    PSB = "PSB"
+    ASSEMBLER = "ASSEMBLER"
+    REXX = "REXX"
+    PLI = "PLI"
 
 
 class IOType(str, Enum):

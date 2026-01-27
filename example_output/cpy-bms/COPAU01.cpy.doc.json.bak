@@ -1,17 +1,17 @@
 {
   "header": {
     "program_id": "COPAU01",
-    "file_name": "cpy-bms/COPAU01.cpy",
+    "file_name": "COPAU01.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T02:42:16.634986",
+    "analyzed_at": "2026-01-27T23:06:00.393695",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the symbolic map input structure COPAU1AI and output structure COPAU1AO for the CICS BMS map COPAU1. It structures fields for transaction name, titles, current date/time, program name, card number, authorization details (date, time, response, code, amount), POS entry mode, auth source, MCC, card expiration, auth type, transaction ID, merchant details (name, ID, city, state, zip), and error messages. The input area includes length (L), format (F), attribute (A), and input data (I) fields; the output redefines with attribute flags (C=Cursor, P=Protected, H=Highlight, V=Visible) and output data (O).",
-    "business_context": "CICS online screen for credit card payment authorization response, displaying transaction, card, auth, and merchant data with error messaging.",
-    "program_type": "ONLINE_CICS",
+    "summary": "This copybook defines the input and output data structures for a CICS BMS map, COPAU1A. It contains field definitions for both input (COPAU1AI) and output (COPAU1AO) screen layouts, including attributes, lengths, and data types for various fields such as transaction name, titles, dates, times, card number, authorization details, and merchant information.",
+    "business_context": "This copybook is used in a CICS environment to define the structure of data displayed on and received from a user screen, likely related to payment authorization processing.",
+    "program_type": "BMS",
     "citations": [
       17,
       181
@@ -21,11 +21,38 @@
     {
       "name": "COPAU1AI",
       "io_type": "CICS_MAP",
-      "description": "Input (receive) map area with field lengths, formats, attributes, field names, and input data from CICS RECEIVE MAP",
+      "description": "Defines the input fields received from the CICS BMS map COPAU1A. Includes fields for transaction name (TRNNAMEI), titles (TITLE01I, TITLE02I), current date and time (CURDATEI, CURTIMEI), card number (CARDNUMI), authorization details (AUTHDTI, AUTHTMI, AUTHRSPI, AUTHRSNI, AUTHCDI, AUTHAMTI), POS entry mode (POSEMDI), authorization source (AUTHSRCI), MCC code (MCCCDI), card expiry (CRDEXPI), authorization type (AUTHTYPI), transaction ID (TRNIDI), authorization match (AUTHMTCI), authorization fraud (AUTHFRDI), merchant name (MERNAMEI), merchant ID (MERIDI), merchant city (MERCITYI), merchant state (MERSTI), merchant zip (MERZIPI), and error message (ERRMSGI).",
       "copybook": null,
       "citation": [
         17,
-        18
+        18,
+        24,
+        30,
+        36,
+        42,
+        48,
+        54,
+        60,
+        66,
+        72,
+        78,
+        84,
+        90,
+        96,
+        102,
+        108,
+        114,
+        120,
+        126,
+        132,
+        138,
+        144,
+        150,
+        156,
+        162,
+        168,
+        174,
+        180
       ]
     }
   ],
@@ -33,11 +60,145 @@
     {
       "name": "COPAU1AO",
       "io_type": "CICS_MAP",
-      "description": "Output (send) map area redefining COPAU1AI, with per-field C/P/H/V attributes and output data for CICS SEND MAP",
+      "description": "Defines the output fields sent to the CICS BMS map COPAU1A.  It redefines COPAU1AI and includes control characters (C), protected attributes (P), highlight attributes (H), modified data tags (V), and output data fields (O) for each input field. These attributes control how the data is displayed on the screen.",
       "copybook": null,
       "citation": [
         181,
-        182
+        184,
+        185,
+        186,
+        187,
+        188,
+        190,
+        191,
+        192,
+        193,
+        194,
+        196,
+        197,
+        198,
+        199,
+        200,
+        202,
+        203,
+        204,
+        205,
+        206,
+        208,
+        209,
+        210,
+        211,
+        212,
+        214,
+        215,
+        216,
+        217,
+        218,
+        220,
+        221,
+        222,
+        223,
+        224,
+        226,
+        227,
+        228,
+        229,
+        230,
+        232,
+        233,
+        234,
+        235,
+        236,
+        238,
+        239,
+        240,
+        241,
+        242,
+        244,
+        245,
+        246,
+        247,
+        248,
+        250,
+        251,
+        252,
+        253,
+        254,
+        256,
+        257,
+        258,
+        259,
+        260,
+        262,
+        263,
+        264,
+        265,
+        266,
+        268,
+        269,
+        270,
+        271,
+        272,
+        274,
+        275,
+        276,
+        277,
+        278,
+        280,
+        281,
+        282,
+        283,
+        284,
+        286,
+        287,
+        288,
+        289,
+        290,
+        292,
+        293,
+        294,
+        295,
+        296,
+        298,
+        299,
+        300,
+        301,
+        302,
+        304,
+        305,
+        306,
+        307,
+        308,
+        310,
+        311,
+        312,
+        313,
+        314,
+        316,
+        317,
+        318,
+        319,
+        320,
+        322,
+        323,
+        324,
+        325,
+        326,
+        328,
+        329,
+        330,
+        331,
+        332,
+        334,
+        335,
+        336,
+        337,
+        338,
+        340,
+        341,
+        342,
+        343,
+        344
       ]
     }
   ],
@@ -47,54 +208,60 @@
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [
-    {
-      "rule_id": "BR001",
-      "description": "Card number input field CARDNUMI is fixed length PIC X(16) to accommodate standard credit card numbers (e.g., 16-digit Visa/Mastercard)",
-      "logic_summary": "Structural enforcement via PIC clause; truncation/padding handled by COBOL/BMS",
-      "conditions": [
-        "Input data must fit 16 characters"
-      ],
-      "citation": [
-        55,
-        60
-      ]
-    },
-    {
-      "rule_id": "BR002",
-      "description": "Error message field ERRMSGI is PIC X(78) to span full screen width for display messages",
-      "logic_summary": "Defines maximum message length for BMS field",
-      "conditions": [
-        "Messages limited to 78 chars"
-      ],
-      "citation": [
-        175,
-        180
-      ]
-    },
-    {
-      "rule_id": "BR003",
-      "description": "Field lengths (e.g., TRNNAMEL) are COMP PIC S9(4) supporting up to 9999 characters per BMS field",
-      "logic_summary": "Standard BMS length field format",
-      "conditions": [
-        "Length values 1-9999"
-      ],
-      "citation": [
-        19,
-        25
-      ]
-    }
-  ],
+  "business_rules": [],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
     "transforms": []
   },
   "copybooks_used": [],
-  "paragraphs": [],
+  "paragraphs": [
+    {
+      "paragraph_name": "COPAU01",
+      "summary": null,
+      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1,
+        1
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "COPAU1AI",
+      "summary": null,
+      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1,
+        1
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": true,
+      "dead_code_reason": "Record layout 'COPAU1AI' is never used by any program",
+      "metadata": {
+        "body_chunks": 4
+      }
+    }
+  ],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
   "open_questions": [],
-  "dead_code": []
+  "dead_code": [
+    {
+      "name": "COPAU1AI",
+      "artifact_type": "record_layout",
+      "line": 1,
+      "reason": "Record layout 'COPAU1AI' is never used by any program"
+    }
+  ],
+  "flow_diagram": null
 }

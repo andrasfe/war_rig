@@ -1,19 +1,20 @@
 {
   "header": {
     "program_id": "PADFLPCB",
-    "file_name": "cpy/PADFLPCB.CPY",
+    "file_name": "PADFLPCB.CPY",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T02:41:59.543157",
+    "analyzed_at": "2026-01-27T23:05:02.795599",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This COBOL copybook defines the PADFLPCB group item (line 17), which is the Program Communication Block (PCB) for the PADFL IMS database. It specifies fields including database name (PADFL-DBDNAME, line 18), segment level (line 19), PCB status (line 20), processing options (line 21), segment name (line 23), key feedback name offset (line 24), number of sensitive segments (line 25), and key feedback buffer (line 26). This structure is used in IMS DL/I programs to obtain status and navigation information during database calls.",
-    "business_context": "IMS database access and navigation for the PADFL database, providing control block fields for segment search and status reporting (lines 17-26).",
+    "summary": "This copybook defines the structure PADFLPCB, which appears to be related to IMS PCB (Program Communication Block) information. It contains fields for DBD name, segment level, PCB status, processing options, segment name, key feedback name, number of sensitive segments, and key feedback.",
+    "business_context": null,
     "program_type": "SUBROUTINE",
     "citations": [
       17,
+      18,
       26
     ]
   },
@@ -32,16 +33,46 @@
     "transforms": []
   },
   "copybooks_used": [],
-  "paragraphs": [],
+  "paragraphs": [
+    {
+      "paragraph_name": "PADFLPCB",
+      "summary": null,
+      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1,
+        1
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": true,
+      "dead_code_reason": "Record layout 'PADFLPCB' is never used by any program",
+      "metadata": null
+    }
+  ],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "In which programs or PSBs is this copybook included?",
-      "context": "The copybook defines a data structure but does not specify usage context or including programs.",
-      "suggestion": "Examine programs that COPY this member or review the associated PSB source for PADFL."
+      "question": "What is the purpose of the FILLER field?",
+      "context": "The FILLER field is not named descriptively, making its purpose unclear.",
+      "suggestion": "Review the programs that use this copybook to understand how the FILLER field is used."
+    },
+    {
+      "question": "What is the significance of the 'S' in PIC S9(05) COMP for the numeric fields?",
+      "context": "The 'S' indicates a signed numeric field, but the context of its usage within IMS is unclear.",
+      "suggestion": "Consult IMS documentation or related code to understand the sign representation and its implications."
     }
   ],
-  "dead_code": []
+  "dead_code": [
+    {
+      "name": "PADFLPCB",
+      "artifact_type": "record_layout",
+      "line": 1,
+      "reason": "Record layout 'PADFLPCB' is never used by any program"
+    }
+  ],
+  "flow_diagram": null
 }

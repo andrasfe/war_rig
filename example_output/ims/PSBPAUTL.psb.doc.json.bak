@@ -1,15 +1,15 @@
 {
   "header": {
     "program_id": "PSBPAUTL",
-    "file_name": "ims/PSBPAUTL.psb",
+    "file_name": "PSBPAUTL.psb",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T02:41:26.528725",
+    "analyzed_at": "2026-01-27T23:03:46.552896",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This file defines an IMS Program Specification Block (PSB) named PSBPAUTL for database access. It specifies a single Database PCB named PAUTLPCB targeting the database DBDNAME=DBPAUTP0 with PROCOPT=L and KEYLEN=14. The PCB defines access to two segments: root segment PAUTSUM0 (PARENT=0) and dependent segment PAUTDTL1 under PAUTSUM0.",
+    "summary": "This PSB (Program Specification Block) defines the interface for an IMS (Information Management System) application. It specifies the database (DBPAUTP0) and the segments (PAUTSUM0, PAUTDTL1) that the application can access, along with their hierarchical relationships.",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
@@ -19,19 +19,7 @@
       20
     ]
   },
-  "inputs": [
-    {
-      "name": "PAUTLPCB",
-      "io_type": "IMS_SEGMENT",
-      "description": "IMS Database PCB providing access to DBPAUTP0 database, including segments PAUTSUM0 (root) and PAUTDTL1 (child of PAUTSUM0)",
-      "copybook": null,
-      "citation": [
-        17,
-        18,
-        19
-      ]
-    }
-  ],
+  "inputs": [],
   "outputs": [],
   "called_programs": [],
   "calling_context": {
@@ -41,22 +29,7 @@
   },
   "business_rules": [],
   "data_flow": {
-    "reads_from": [
-      {
-        "source": "PAUTSUM0",
-        "fields_used": [],
-        "citation": [
-          18
-        ]
-      },
-      {
-        "source": "PAUTDTL1",
-        "fields_used": [],
-        "citation": [
-          19
-        ]
-      }
-    ],
+    "reads_from": [],
     "writes_to": [],
     "transforms": []
   },
@@ -67,20 +40,11 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the exact meaning of PROCOPT=L in this IMS PSB context?",
-      "context": "PROCOPT=L is specified but standard IMS PROCOPT values are typically G, I, R, D, etc.; L is not clearly defined from the source alone.",
-      "suggestion": "Consult IMS documentation or DBD definition for DBPAUTP0 to clarify processing options."
-    },
-    {
-      "question": "What application programs or transactions use this PSB?",
-      "context": "PSB is referenced by IMS application programs, but no calling context is defined in this file.",
-      "suggestion": "Check JCL, PSB lists in application programs, or IMS system definitions."
-    },
-    {
-      "question": "What are the data fields in segments PAUTSUM0 and PAUTDTL1?",
-      "context": "PSB defines segment names but not field layouts, which are in the DBD.",
-      "suggestion": "Analyze the corresponding DBD source for DBPAUTP0."
+      "question": "What is the specific purpose of the DBPAUTP0 database and the PAUTSUM0 and PAUTDTL1 segments?",
+      "context": "The PSB defines the database and segments, but their specific function within the application is unclear.",
+      "suggestion": "Review related documentation or code that uses this PSB to understand the data stored in these segments."
     }
   ],
-  "dead_code": []
+  "dead_code": [],
+  "flow_diagram": null
 }

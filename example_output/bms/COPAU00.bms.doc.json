@@ -1,77 +1,43 @@
 {
   "header": {
     "program_id": "COPAU00",
-    "file_name": "bms/COPAU00.bms",
+    "file_name": "COPAU00.bms",
     "file_type": "BMS",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T02:42:27.496687",
+    "analyzed_at": "2026-01-27T23:05:09.274267",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This BMS mapset COPAU00 defines the COPAU0A map for the Pending Authorization Screen (CardDemo). It displays header info (transaction, date/time, program, titles), customer details (name, ID, address, status, phone, approval/decline counts, credit/cash limits/balances), and a table of up to 5 pending transactions (ID, date, time, type, A/D, status, amount). Users input search account ID and select transactions via SEL fields.",
-    "business_context": "Supports reviewing pending credit card authorizations by account in a demo payment processing system",
+    "summary": "This BMS map defines the screen layout for the CardDemo Pending Authorization screen. It displays a list of pending authorizations for a given account ID, along with customer details and credit information. The screen allows the user to select a transaction to view its details.",
+    "business_context": "This screen is used in a card authorization application to display and manage pending authorizations.",
     "program_type": "ONLINE_CICS",
     "citations": [
       2,
-      19,
-      26,
-      78,
-      83
+      83,
+      501
     ]
   },
   "inputs": [
     {
       "name": "ACCTID",
       "io_type": "CICS_MAP",
-      "description": "User-entered account ID for searching pending authorizations",
-      "copybook": "COPAU00",
+      "description": "Account ID entered by the user to search for pending authorizations.",
+      "copybook": null,
       "citation": [
         84
       ]
     },
     {
-      "name": "SEL0001",
+      "name": "SEL0001 - SEL0005",
       "io_type": "CICS_MAP",
-      "description": "Selection field (e.g., 'S') for first pending transaction",
-      "copybook": "COPAU00",
+      "description": "Selection fields for each transaction, allowing the user to select a transaction for viewing details.",
+      "copybook": null,
       "citation": [
-        277
-      ]
-    },
-    {
-      "name": "SEL0002",
-      "io_type": "CICS_MAP",
-      "description": "Selection field (e.g., 'S') for second pending transaction",
-      "copybook": "COPAU00",
-      "citation": [
-        321
-      ]
-    },
-    {
-      "name": "SEL0003",
-      "io_type": "CICS_MAP",
-      "description": "Selection field (e.g., 'S') for third pending transaction",
-      "copybook": "COPAU00",
-      "citation": [
-        365
-      ]
-    },
-    {
-      "name": "SEL0004",
-      "io_type": "CICS_MAP",
-      "description": "Selection field (e.g., 'S') for fourth pending transaction",
-      "copybook": "COPAU00",
-      "citation": [
-        409
-      ]
-    },
-    {
-      "name": "SEL0005",
-      "io_type": "CICS_MAP",
-      "description": "Selection field (e.g., 'S') for fifth pending transaction",
-      "copybook": "COPAU00",
-      "citation": [
+        277,
+        321,
+        365,
+        409,
         488
       ]
     }
@@ -80,24 +46,289 @@
     {
       "name": "COPAU0A",
       "io_type": "CICS_MAP",
-      "description": "Display-only fields for customer info (CNAME, CUSTID, ADDR001/2, ACCSTAT, PHONE1), counts (APPRCNT, DECLCNT), limits/balances (CREDLIM, CASHLIM, APPRAMT, CREDBAL, CASHBAL, DECLAMT), transaction list (TRNIDxx, PDATExx, PTIMExx, PTYPExx, PAPRVxx, PSTATxx, PAMTxx), headers, titles, dates/times, instructions, and error message (ERRMSG)",
-      "copybook": "COPAU00",
+      "description": "The entire screen layout, including customer information, transaction details, and messages.",
+      "copybook": null,
       "citation": [
-        26,
-        96,
-        103,
-        107,
-        114,
-        125,
-        132,
-        139,
-        147,
-        156,
-        165,
-        174,
-        183,
-        191,
+        26
+      ]
+    },
+    {
+      "name": "TRNNAME",
+      "io_type": "CICS_MAP",
+      "description": "Transaction name",
+      "copybook": null,
+      "citation": [
+        34
+      ]
+    },
+    {
+      "name": "TITLE01",
+      "io_type": "CICS_MAP",
+      "description": "Title 1",
+      "copybook": null,
+      "citation": [
+        38
+      ]
+    },
+    {
+      "name": "CURDATE",
+      "io_type": "CICS_MAP",
+      "description": "Current Date",
+      "copybook": null,
+      "citation": [
+        47
+      ]
+    },
+    {
+      "name": "PGMNAME",
+      "io_type": "CICS_MAP",
+      "description": "Program Name",
+      "copybook": null,
+      "citation": [
+        57
+      ]
+    },
+    {
+      "name": "TITLE02",
+      "io_type": "CICS_MAP",
+      "description": "Title 2",
+      "copybook": null,
+      "citation": [
+        61
+      ]
+    },
+    {
+      "name": "CURTIME",
+      "io_type": "CICS_MAP",
+      "description": "Current Time",
+      "copybook": null,
+      "citation": [
+        70
+      ]
+    },
+    {
+      "name": "CNAME",
+      "io_type": "CICS_MAP",
+      "description": "Customer Name",
+      "copybook": null,
+      "citation": [
+        96
+      ]
+    },
+    {
+      "name": "CUSTID",
+      "io_type": "CICS_MAP",
+      "description": "Customer ID",
+      "copybook": null,
+      "citation": [
+        103
+      ]
+    },
+    {
+      "name": "ADDR001",
+      "io_type": "CICS_MAP",
+      "description": "Address Line 1",
+      "copybook": null,
+      "citation": [
+        107
+      ]
+    },
+    {
+      "name": "ACCSTAT",
+      "io_type": "CICS_MAP",
+      "description": "Account Status",
+      "copybook": null,
+      "citation": [
+        114
+      ]
+    },
+    {
+      "name": "ADDR002",
+      "io_type": "CICS_MAP",
+      "description": "Address Line 2",
+      "copybook": null,
+      "citation": [
+        118
+      ]
+    },
+    {
+      "name": "PHONE1",
+      "io_type": "CICS_MAP",
+      "description": "Phone Number",
+      "copybook": null,
+      "citation": [
+        125
+      ]
+    },
+    {
+      "name": "APPRCNT",
+      "io_type": "CICS_MAP",
+      "description": "Approval Count",
+      "copybook": null,
+      "citation": [
+        132
+      ]
+    },
+    {
+      "name": "DECLCNT",
+      "io_type": "CICS_MAP",
+      "description": "Decline Count",
+      "copybook": null,
+      "citation": [
+        139
+      ]
+    },
+    {
+      "name": "CREDLIM",
+      "io_type": "CICS_MAP",
+      "description": "Credit Limit",
+      "copybook": null,
+      "citation": [
+        147
+      ]
+    },
+    {
+      "name": "CASHLIM",
+      "io_type": "CICS_MAP",
+      "description": "Cash Limit",
+      "copybook": null,
+      "citation": [
+        156
+      ]
+    },
+    {
+      "name": "APPRAMT",
+      "io_type": "CICS_MAP",
+      "description": "Approved Amount",
+      "copybook": null,
+      "citation": [
+        165
+      ]
+    },
+    {
+      "name": "CREDBAL",
+      "io_type": "CICS_MAP",
+      "description": "Credit Balance",
+      "copybook": null,
+      "citation": [
+        174
+      ]
+    },
+    {
+      "name": "CASHBAL",
+      "io_type": "CICS_MAP",
+      "description": "Cash Balance",
+      "copybook": null,
+      "citation": [
+        183
+      ]
+    },
+    {
+      "name": "DECLAMT",
+      "io_type": "CICS_MAP",
+      "description": "Declined Amount",
+      "copybook": null,
+      "citation": [
+        192
+      ]
+    },
+    {
+      "name": "TRNID01 - TRNID05",
+      "io_type": "CICS_MAP",
+      "description": "Transaction IDs for the displayed transactions.",
+      "copybook": null,
+      "citation": [
         286,
+        330,
+        374,
+        418,
+        453
+      ]
+    },
+    {
+      "name": "PDATE01 - PDATE05",
+      "io_type": "CICS_MAP",
+      "description": "Transaction Dates for the displayed transactions.",
+      "copybook": null,
+      "citation": [
+        291,
+        335,
+        379,
+        423,
+        458
+      ]
+    },
+    {
+      "name": "PTIME01 - PTIME05",
+      "io_type": "CICS_MAP",
+      "description": "Transaction Times for the displayed transactions.",
+      "copybook": null,
+      "citation": [
+        296,
+        340,
+        384,
+        428,
+        463
+      ]
+    },
+    {
+      "name": "PTYPE01 - PTYPE05",
+      "io_type": "CICS_MAP",
+      "description": "Transaction Types for the displayed transactions.",
+      "copybook": null,
+      "citation": [
+        301,
+        345,
+        389,
+        433,
+        468
+      ]
+    },
+    {
+      "name": "PAPRV01 - PAPRV05",
+      "io_type": "CICS_MAP",
+      "description": "Transaction Approval indicators for the displayed transactions.",
+      "copybook": null,
+      "citation": [
+        306,
+        350,
+        394,
+        438,
+        473
+      ]
+    },
+    {
+      "name": "PSTAT01 - PSTAT05",
+      "io_type": "CICS_MAP",
+      "description": "Transaction Statuses for the displayed transactions.",
+      "copybook": null,
+      "citation": [
+        311,
+        355,
+        399,
+        443,
+        478
+      ]
+    },
+    {
+      "name": "PAMT001 - PAMT005",
+      "io_type": "CICS_MAP",
+      "description": "Transaction Amounts for the displayed transactions.",
+      "copybook": null,
+      "citation": [
+        316,
+        360,
+        404,
+        448,
+        483
+      ]
+    },
+    {
+      "name": "ERRMSG",
+      "io_type": "CICS_MAP",
+      "description": "Error message displayed on the screen.",
+      "copybook": null,
+      "citation": [
         503
       ]
     }
@@ -108,60 +339,198 @@
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [
-    {
-      "rule_id": "BR001",
-      "description": "User must enter 'S' in one of the SELxxxx fields to select a pending transaction for viewing authorization details",
-      "logic_summary": "Instructional text displayed on screen prompting user action; handled in associated CICS program on RECEIVE MAP",
-      "conditions": [
-        "SELxxxx = 'S'"
-      ],
-      "citation": [
-        277,
-        321,
-        365,
-        409,
-        488,
-        501
-      ]
-    }
-  ],
+  "business_rules": [],
   "data_flow": {
-    "reads_from": [],
-    "writes_to": [],
+    "reads_from": [
+      {
+        "source": "ACCTID",
+        "fields_used": [
+          "ACCTID"
+        ],
+        "citation": [
+          84
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "COPAU0A",
+        "fields_written": [
+          "TRNNAME",
+          "TITLE01",
+          "CURDATE",
+          "PGMNAME",
+          "TITLE02",
+          "CURTIME",
+          "CNAME",
+          "CUSTID",
+          "ADDR001",
+          "ACCSTAT",
+          "ADDR002",
+          "PHONE1",
+          "APPRCNT",
+          "DECLCNT",
+          "CREDLIM",
+          "CASHLIM",
+          "APPRAMT",
+          "CREDBAL",
+          "CASHBAL",
+          "DECLAMT",
+          "TRNID01",
+          "PDATE01",
+          "PTIME01",
+          "PTYPE01",
+          "PAPRV01",
+          "PSTAT01",
+          "PAMT001",
+          "TRNID02",
+          "PDATE02",
+          "PTIME02",
+          "PTYPE02",
+          "PAPRV02",
+          "PSTAT02",
+          "PAMT002",
+          "TRNID03",
+          "PDATE03",
+          "PTIME03",
+          "PTYPE03",
+          "PAPRV03",
+          "PSTAT03",
+          "PAMT003",
+          "TRNID04",
+          "PDATE04",
+          "PTIME04",
+          "PTYPE04",
+          "PAPRV04",
+          "PSTAT04",
+          "PAMT004",
+          "TRNID05",
+          "PDATE05",
+          "PTIME05",
+          "PTYPE05",
+          "PAPRV05",
+          "PSTAT05",
+          "PAMT005",
+          "ERRMSG"
+        ],
+        "citation": [
+          26,
+          34,
+          38,
+          47,
+          57,
+          61,
+          70,
+          96,
+          103,
+          107,
+          114,
+          118,
+          125,
+          132,
+          139,
+          147,
+          156,
+          165,
+          174,
+          183,
+          192,
+          286,
+          291,
+          296,
+          301,
+          306,
+          311,
+          316,
+          330,
+          335,
+          340,
+          345,
+          350,
+          355,
+          360,
+          374,
+          379,
+          384,
+          389,
+          394,
+          399,
+          404,
+          418,
+          423,
+          428,
+          433,
+          438,
+          443,
+          448,
+          453,
+          458,
+          463,
+          468,
+          473,
+          478,
+          483,
+          503
+        ]
+      }
+    ],
     "transforms": []
   },
-  "copybooks_used": [
+  "copybooks_used": [],
+  "paragraphs": [
     {
-      "copybook_name": "COPAU00",
-      "purpose": "Generates symbolic and physical maps for CICS screen I/O handling in COBOL programs",
-      "location": "OTHER",
-      "citation": 19
+      "paragraph_name": "MAP DEFINITION",
+      "summary": null,
+      "purpose": "This section defines the BMS map COPAU0A, which represents the 'CardDemo - Pending Authorization Screen' (lines 1-513). It specifies the overall screen characteristics, such as the control options (ALARM, FREEKB), extended attributes (EXTATT=YES), programming language (LANG=COBOL), input/output mode (MODE=INOUT), storage type (STORAGE=AUTO), terminal I/O area prefix (TIOAPFX=YES), and the map type (TYPE=&&SYSPARM). The map is divided into fields (DFHMDF) that define the position, size, attributes, and initial values of text and input areas on the screen. These fields are used to display labels, data, and allow user input for searching account IDs and selecting transactions. The map includes fields for displaying customer information (name, address, account status), credit limits and balances, and a list of pending transactions with details like transaction ID, date, time, type, approval status, and amount. The ERRMSG field (line 503) is used to display error messages to the user. The final line (513) indicates the end of the map definition.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1,
+        513
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
     }
   ],
-  "paragraphs": [],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [
     {
-      "command": "DFHMSD",
-      "resource": "COPAU00",
-      "purpose": "Defines mapset with INOUT mode, AUTO storage, for bidirectional screen I/O",
-      "citation": 19
+      "command": "SEND MAP",
+      "resource": "COPAU0A",
+      "purpose": "Display the pending authorization screen to the user.",
+      "citation": 26
     },
     {
-      "command": "DFHMDI",
+      "command": "RECEIVE MAP",
       "resource": "COPAU0A",
-      "purpose": "Defines the main map of size 24x80",
+      "purpose": "Receive input from the user, such as the account ID and transaction selection.",
       "citation": 26
     }
   ],
   "open_questions": [
     {
-      "question": "Specific transaction ID or CICS program using this map",
-      "context": "Not specified in BMS source; would be in referencing COBOL/JCL",
-      "suggestion": "Analyze calling CICS programs or JCL for references to COPAU00"
+      "question": "What is the purpose of the TYPE=&&SYSPARM parameter in the DFHMSD macro?",
+      "context": "The meaning of &&SYSPARM is unclear without additional context or JCL.",
+      "suggestion": "Review the JCL or build process to determine the value passed to SYSPARM."
     }
   ],
-  "dead_code": []
+  "dead_code": [
+    {
+      "name": "COPAU00",
+      "artifact_type": "map",
+      "line": 19,
+      "reason": "Artifact 'COPAU00' (map) is never referenced by any other artifact in the dependency graph"
+    },
+    {
+      "name": "COPAU0A",
+      "artifact_type": "screen",
+      "line": 26,
+      "reason": "Screen/Map 'COPAU0A' is never sent to or received from by any program"
+    }
+  ],
+  "flow_diagram": null
 }

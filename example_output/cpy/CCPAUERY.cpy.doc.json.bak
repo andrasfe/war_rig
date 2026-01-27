@@ -1,31 +1,21 @@
 {
   "header": {
     "program_id": "CCPAUERY",
-    "file_name": "cpy/CCPAUERY.cpy",
+    "file_name": "CCPAUERY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T02:44:55.629482",
+    "analyzed_at": "2026-01-27T23:05:19.083984",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the ERROR-LOG-RECORD data structure for logging errors related to pending authorizations. It captures key error details such as date (ERR-DATE), time (ERR-TIME), application (ERR-APPLICATION), program (ERR-PROGRAM), location (ERR-LOCATION), severity level (ERR-LEVEL with 88 condition names for LOG, INFO, WARNING, CRITICAL), subsystem (ERR-SUBSYSTEM with 88 conditions for APP, CICS, IMS, DB2, MQ, FILE), error codes (ERR-CODE-1, ERR-CODE-2), message (ERR-MESSAGE), and event key (ERR-EVENT-KEY). The structure is intended for use in error logging by mainframe applications.",
-    "business_context": "Supports error logging in mainframe environments for pending authorization processes, accommodating various subsystems like CICS, IMS, DB2, MQ, and file I/O.",
-    "program_type": "UTILITY",
+    "summary": "This copybook defines the structure of an error log record, used for logging errors and warnings within an application. It includes fields for date, time, application name, program name, location, error level, subsystem, error codes, message, and event key. The copybook also defines 88-level condition names for error levels and subsystems.",
+    "business_context": null,
+    "program_type": "SUBROUTINE",
     "citations": [
       2,
       19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      30,
-      37,
-      38,
-      39,
-      40
+      20
     ]
   },
   "inputs": [],
@@ -45,26 +35,56 @@
   "copybooks_used": [
     {
       "copybook_name": "CCPAUERY",
-      "purpose": "Defines ERROR-LOG-RECORD structure for standardizing error log entries across applications, including timestamps, identifiers, severity indicators, subsystem types, codes, messages, and keys.",
-      "location": "OTHER",
+      "purpose": "Defines the structure of an error log record.",
+      "location": "WORKING_STORAGE",
       "citation": 19
     }
   ],
-  "paragraphs": [],
+  "paragraphs": [
+    {
+      "paragraph_name": "CCPAUERY",
+      "summary": null,
+      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1,
+        1
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "ERROR-LOG-RECORD",
+      "summary": null,
+      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1,
+        1
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": true,
+      "dead_code_reason": "Record layout 'ERROR-LOG-RECORD' is never used by any program",
+      "metadata": null
+    }
+  ],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
+  "open_questions": [],
+  "dead_code": [
     {
-      "question": "In which specific programs or modules is this copybook included?",
-      "context": "The copybook file does not specify usage locations; it would be determined from including programs.",
-      "suggestion": "Scan programs for COPY CCPAUERY statements."
-    },
-    {
-      "question": "What is the exact output destination (file, queue) for records using this structure?",
-      "context": "Not defined in the copybook; depends on consuming program.",
-      "suggestion": "Analyze programs that COPY this and check their outputs."
+      "name": "ERROR-LOG-RECORD",
+      "artifact_type": "record_layout",
+      "line": 1,
+      "reason": "Record layout 'ERROR-LOG-RECORD' is never used by any program"
     }
   ],
-  "dead_code": []
+  "flow_diagram": null
 }

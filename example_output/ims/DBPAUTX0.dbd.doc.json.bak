@@ -1,94 +1,36 @@
 {
   "header": {
     "program_id": "DBPAUTX0",
-    "file_name": "ims/DBPAUTX0.dbd",
+    "file_name": "DBPAUTX0.dbd",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T02:41:28.790384",
+    "analyzed_at": "2026-01-27T23:05:34.453132",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This is a Database Definition (DBD) source file for the IMS hierarchical database named DBPAUTX0. It defines an indexed VSAM-protected database with a single dataset group DSG001 mapped to DDPAUTX0 and one root segment PAUTINDX of 6 bytes containing a unique packed sequence key field INDXSEQ. The PAUTINDX segment establishes a logical child (LCHILD) relationship to the PAUTSUM0 segment in the DBPAUTP0 database via the ACCNTID index.",
+    "summary": "This DBD (Database Description) file defines the structure and access methods for the DBPAUTX0 database, which uses an index and VSAM for data storage. It defines a single segment, PAUTINDX, and a dataset group DSG001, specifying the DD name and size. It also defines a logical child relationship to PAUTSUM0 in database DBPAUTP0.",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
-      17,
       18,
       23,
       27,
-      29,
       30
     ]
   },
-  "inputs": [
-    {
-      "name": "DDPAUTX0",
-      "io_type": "FILE_VSAM",
-      "description": "Physical dataset for storing the DBPAUTX0 IMS database segments",
-      "copybook": null,
-      "citation": [
-        23
-      ]
-    }
-  ],
-  "outputs": [
-    {
-      "name": "DDPAUTX0",
-      "io_type": "FILE_VSAM",
-      "description": "Physical dataset for storing the DBPAUTX0 IMS database segments (read/write access implied by VSAM INDEX access method)",
-      "copybook": null,
-      "citation": [
-        18,
-        23
-      ]
-    }
-  ],
+  "inputs": [],
+  "outputs": [],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [
-    {
-      "rule_id": "BR001",
-      "description": "The INDXSEQ field serves as a unique sequence key for the PAUTINDX root segment",
-      "logic_summary": "Defined as SEQ,U (sequence, unique) packed field starting at position 1",
-      "conditions": [
-        "TYPE=P",
-        "SEQ",
-        "U"
-      ],
-      "citation": [
-        29
-      ]
-    }
-  ],
+  "business_rules": [],
   "data_flow": {
-    "reads_from": [
-      {
-        "source": "PAUTINDX",
-        "fields_used": [
-          "INDXSEQ"
-        ],
-        "citation": [
-          29
-        ]
-      }
-    ],
-    "writes_to": [
-      {
-        "destination": "PAUTX0 (via DDPAUTX0)",
-        "fields_written": [
-          "INDXSEQ"
-        ],
-        "citation": [
-          23,
-          29
-        ]
-      }
-    ],
+    "reads_from": [],
+    "writes_to": [],
     "transforms": []
   },
   "copybooks_used": [],
@@ -98,20 +40,11 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the business purpose and content of the PAUTINDX segment?",
-      "context": "No descriptive comments or field-level documentation beyond key definition",
-      "suggestion": "Review related PSB, application programs, or data dictionary for segment semantics"
-    },
-    {
-      "question": "Details of the ACCNTID index and PAUTSUM0 segment structure",
-      "context": "LCHILD references external segment in DBPAUTP0; not defined in this DBD",
-      "suggestion": "Examine DBD for DBPAUTP0 to understand logical relationship"
-    },
-    {
-      "question": "How is this DBD used in application programs?",
-      "context": "DBD is a definition; no calling programs identifiable from this file",
-      "suggestion": "Search for DL/I calls to DBPAUTX0 in COBOL/PL/I sources"
+      "question": "What is the purpose of the VERSION parameter in the DBD macro?",
+      "context": "The code includes VERSION= without a value, and its significance is unclear.",
+      "suggestion": "Consult IMS documentation to determine the meaning and usage of the VERSION parameter."
     }
   ],
-  "dead_code": []
+  "dead_code": [],
+  "flow_diagram": null
 }

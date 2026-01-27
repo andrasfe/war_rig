@@ -1,17 +1,17 @@
 {
   "header": {
     "program_id": "IMSFUNCS",
-    "file_name": "cpy/IMSFUNCS.cpy",
+    "file_name": "IMSFUNCS.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T02:43:02.293366",
+    "analyzed_at": "2026-01-27T23:05:15.057360",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "The IMSFUNCS copybook defines a group of constants under 01 FUNC-CODES for IMS DL/I function codes such as 'GU  ', 'GHU ', 'GN  ', 'GHN ', 'GNP ', 'GHNP', 'REPL', 'ISRT', and 'DLET'. It also defines PARMCOUNT as a fixed value of +4, likely for the number of parameters in IMS PCB calls. These constants standardize IMS database operation calls in COBOL programs.",
-    "business_context": "IMS DL/I database navigation, insertion, deletion, and replacement operations in mainframe COBOL applications",
-    "program_type": "UTILITY",
+    "summary": "This copybook defines a set of IMS function codes used for database operations (GU, GHU, GN, GHN, GNP, GHNP, REPL, ISRT, DLET) and initializes a parameter count field. The function codes are used to specify the type of IMS database operation to be performed. The parameter count field initializes the number of parameters expected by the IMS functions.",
+    "business_context": null,
+    "program_type": "SUBROUTINE",
     "citations": [
       17,
       18,
@@ -34,45 +34,65 @@
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [
-    {
-      "rule_id": "BR001",
-      "description": "FUNC-CODES provides standardized 4-character IMS DL/I function codes (GU, GHU, GN, GHN, GNP, GHNP, REPL, ISRT, DLET)",
-      "logic_summary": "Defined as PIC X(04) VALUE literals under 01 FUNC-CODES group item",
-      "conditions": [],
-      "citation": [
-        17,
-        18,
-        19,
-        20,
-        21,
-        22,
-        23,
-        24,
-        25,
-        26
-      ]
-    },
-    {
-      "rule_id": "BR002",
-      "description": "PARMCOUNT is fixed at +4 for IMS PCB calls",
-      "logic_summary": "Defined as PIC S9(05) VALUE +4 COMP-5 under 01 FUNC-CODES",
-      "conditions": [],
-      "citation": [
-        27
-      ]
-    }
-  ],
+  "business_rules": [],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
     "transforms": []
   },
-  "copybooks_used": [],
-  "paragraphs": [],
+  "copybooks_used": [
+    {
+      "copybook_name": "IMSFUNCS",
+      "purpose": "Defines IMS function codes and a parameter count for use in IMS database operations.",
+      "location": "WORKING_STORAGE",
+      "citation": 17
+    }
+  ],
+  "paragraphs": [
+    {
+      "paragraph_name": "IMSFUNCS",
+      "summary": null,
+      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1,
+        1
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "FUNC-CODES",
+      "summary": null,
+      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1,
+        1
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": true,
+      "dead_code_reason": "Record layout 'FUNC-CODES' is never used by any program",
+      "metadata": null
+    }
+  ],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
   "open_questions": [],
-  "dead_code": []
+  "dead_code": [
+    {
+      "name": "FUNC-CODES",
+      "artifact_type": "record_layout",
+      "line": 1,
+      "reason": "Record layout 'FUNC-CODES' is never used by any program"
+    }
+  ],
+  "flow_diagram": null
 }

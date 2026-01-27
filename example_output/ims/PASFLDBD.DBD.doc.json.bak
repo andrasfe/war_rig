@@ -1,80 +1,33 @@
 {
   "header": {
     "program_id": "PASFLDBD",
-    "file_name": "ims/PASFLDBD.DBD",
+    "file_name": "PASFLDBD.DBD",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T02:42:44.390903",
+    "analyzed_at": "2026-01-27T23:05:29.812853",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This DBD source file defines the IMS database PASFLDBD using DBDGEN. It specifies access methods GSAM and BSAM with no password protection. The database uses dataset group DSG001 with input dataset DD1=PASFILIP, output dataset DD2=PASFILOP, fixed record length of 100 bytes, and RECFM=F.",
+    "summary": "This file contains the Database Description (DBD) for PASFLDBD, defining its access method as GSAM/BSAM and specifying the datasets PASFILIP and PASFILOP with a record length of 100 and RECFM=F. It was generated on 04/21/2023 for IMS version 15.1.",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
       17,
+      20,
       22,
       27
     ]
   },
-  "inputs": [
-    {
-      "name": "PASFILIP",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "Input dataset (DD1) for IMS database PASFLDBD dataset group DSG001",
-      "copybook": null,
-      "citation": [
-        27
-      ]
-    }
-  ],
-  "outputs": [
-    {
-      "name": "PASFILOP",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "Output dataset (DD2) for IMS database PASFLDBD dataset group DSG001",
-      "copybook": null,
-      "citation": [
-        27
-      ]
-    }
-  ],
+  "inputs": [],
+  "outputs": [],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [
-    {
-      "rule_id": "BR001",
-      "description": "Database access methods are GSAM (generalized sequential access method) and BSAM (basic sequential access method)",
-      "logic_summary": "Specified in DBD macro ACCESS=(GSAM,BSAM)",
-      "conditions": [],
-      "citation": [
-        22
-      ]
-    },
-    {
-      "rule_id": "BR002",
-      "description": "No password protection required for the database",
-      "logic_summary": "PASSWD=NO parameter in DBD macro",
-      "conditions": [],
-      "citation": [
-        22
-      ]
-    },
-    {
-      "rule_id": "BR003",
-      "description": "Dataset records are fixed length of 100 bytes with RECFM=F",
-      "logic_summary": "Defined in DSG001 DATASET with RECORD=(100),RECFM=F",
-      "conditions": [],
-      "citation": [
-        27
-      ]
-    }
-  ],
+  "business_rules": [],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
@@ -85,6 +38,13 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [],
-  "dead_code": []
+  "open_questions": [
+    {
+      "question": "What is the purpose of the PASFLDBD database and how is it used within the IMS system?",
+      "context": "The DBD file defines the structure and access methods, but the specific application and data stored are unclear.",
+      "suggestion": "Review related application code or system documentation to understand the database's role."
+    }
+  ],
+  "dead_code": [],
+  "flow_diagram": null
 }

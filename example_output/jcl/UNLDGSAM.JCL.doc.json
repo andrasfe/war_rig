@@ -1,146 +1,118 @@
 {
   "header": {
     "program_id": "UNLDGSAM",
-    "file_name": "jcl/UNLDGSAM.JCL",
+    "file_name": "UNLDGSAM.JCL",
     "file_type": "JCL",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T02:42:19.932191",
+    "analyzed_at": "2026-01-27T23:06:08.310394",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This JCL defines a batch job that executes the IMS utility DFSRRC00 to unload the GSAM database DBUNLDGS (using DBD DLIGSAMP) by reading root and child GSAM datasets from AWS.M2.CARDDEMO.PAUTDB. It configures necessary IMS libraries, database descriptor libraries, and dummy datasets for execution. Standard output datasets capture print, dumps, and errors.",
-    "business_context": "Supports AWS M2 CARDDEMO application by unloading PAUTDB IMS GSAM database, likely for backup, migration, or demo purposes.",
+    "summary": "This JCL executes the IMS program DFSRRC00 to unload a GSAM database. It specifies the program to execute, the parameters for the execution, and the datasets required for the IMS program to run.",
+    "business_context": null,
     "program_type": "BATCH",
     "citations": [
       26,
       27,
-      36,
-      39
+      36
     ]
   },
   "inputs": [
     {
-      "name": "PARM",
-      "io_type": "PARAMETER",
-      "description": "Command parameters for DFSRRC00 specifying DLI access mode, database name DBUNLDGS, DBD name DLIGSAMP, and other defaults for unload operation",
-      "copybook": null,
-      "citation": [
-        27
-      ]
-    },
-    {
-      "name": "STEPLIB",
-      "io_type": "OTHER",
-      "description": "Concatenated load libraries required for executing DFSRRC00 and related IMS modules",
+      "name": "OEMA.IMS.IMSP.SDFSRESL",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS RESLIB dataset.",
       "copybook": null,
       "citation": [
         28,
-        29,
-        30
-      ]
-    },
-    {
-      "name": "DFSRESLB",
-      "io_type": "OTHER",
-      "description": "IMS resource library for DFSRRC00 execution",
-      "copybook": null,
-      "citation": [
         31
       ]
     },
     {
-      "name": "IMS",
-      "io_type": "OTHER",
-      "description": "Concatenated IMS PSBLIB (parameter library) and DBDLIB (database definition library) for database metadata",
+      "name": "OEMA.IMS.IMSP.SDFSRESL.V151",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS RESLIB dataset, specific version.",
       "copybook": null,
       "citation": [
-        33,
+        29
+      ]
+    },
+    {
+      "name": "AWS.M2.CARDDEMO.LOADLIB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Load library containing the program DFSRRC00.",
+      "copybook": null,
+      "citation": [
+        30
+      ]
+    },
+    {
+      "name": "OEM.IMS.IMSP.PSBLIB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS PSB library.",
+      "copybook": null,
+      "citation": [
+        33
+      ]
+    },
+    {
+      "name": "OEM.IMS.IMSP.DBDLIB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS DBD library.",
+      "copybook": null,
+      "citation": [
         34
       ]
     },
     {
-      "name": "PASFILOP",
+      "name": "AWS.M2.CARDDEMO.PAUTDB.ROOT.GSAM",
       "io_type": "FILE_VSAM",
-      "description": "GSAM dataset containing root segments of PAUTDB (DBUNLDGS database)",
+      "description": "Input GSAM database root segment.",
       "copybook": null,
       "citation": [
         36
       ]
     },
     {
-      "name": "PADFILOP",
+      "name": "AWS.M2.CARDDEMO.PAUTDB.CHILD.GSAM",
       "io_type": "FILE_VSAM",
-      "description": "GSAM dataset containing child segments of PAUTDB (DBUNLDGS database)",
+      "description": "Input GSAM database child segment.",
       "copybook": null,
       "citation": [
         39
       ]
     },
     {
-      "name": "DDPAUTP0",
-      "io_type": "OTHER",
-      "description": "Primary IMS PAUTHDB library for database authorization and descriptors",
+      "name": "OEM.IMS.IMSP.PAUTHDB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS PAUTHDB dataset.",
       "copybook": null,
       "citation": [
         42
       ]
     },
     {
-      "name": "DDPAUTX0",
-      "io_type": "OTHER",
-      "description": "Secondary IMS PAUTHDBX library for database authorization and descriptors",
+      "name": "OEM.IMS.IMSP.PAUTHDBX",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS PAUTHDBX dataset.",
       "copybook": null,
       "citation": [
         43
       ]
-    },
-    {
-      "name": "DFSVSAMP",
-      "io_type": "OTHER",
-      "description": "IMS proclib member DFSVSMDB for system definitions",
-      "copybook": null,
-      "citation": [
-        46
-      ]
     }
   ],
-  "outputs": [
-    {
-      "name": "SYSPRINT",
-      "io_type": "REPORT",
-      "description": "Standard print output from DFSRRC00 utility execution",
-      "copybook": null,
-      "citation": [
-        50
-      ]
-    },
-    {
-      "name": "SYSUDUMP",
-      "io_type": "REPORT",
-      "description": "System dump output in case of abends",
-      "copybook": null,
-      "citation": [
-        51
-      ]
-    },
-    {
-      "name": "IMSERR",
-      "io_type": "REPORT",
-      "description": "IMS-specific error messages and logs",
-      "copybook": null,
-      "citation": [
-        52
-      ]
-    }
-  ],
+  "outputs": [],
   "called_programs": [
     {
       "program_name": "DFSRRC00",
       "call_type": "STATIC_CALL",
-      "purpose": "IMS utility to unload/reorganize GSAM database DBUNLDGS using specified DBD and input GSAM files",
+      "purpose": "Executes the IMS DL/I batch utility to unload a GSAM database.",
       "parameters": [
-        "DLI,DBUNLDGS,DLIGSAMP,,,,,,,,,,,N"
+        "DLI",
+        "DBUNLDGS",
+        "DLIGSAMP",
+        "N"
       ],
       "citation": 26
     }
@@ -150,118 +122,113 @@
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [
-    {
-      "rule_id": "BR001",
-      "description": "Retain input GSAM datasets after processing for safety or reuse",
-      "logic_summary": "All input GSAM DDs use DISP=(OLD,KEEP,KEEP)",
-      "conditions": [
-        "Input files exist (OLD)"
-      ],
-      "citation": [
-        37,
-        40
-      ]
-    },
-    {
-      "rule_id": "BR002",
-      "description": "Use DLI access mode for unload operation",
-      "logic_summary": "PARM starts with 'DLI'",
-      "conditions": [
-        "IMS batch DLI environment"
-      ],
-      "citation": [
-        27
-      ]
-    }
-  ],
+  "business_rules": [],
   "data_flow": {
-    "reads_from": [
-      {
-        "source": "PASFILOP",
-        "fields_used": [
-          "Root segment data"
-        ],
-        "citation": [
-          36
-        ]
-      },
-      {
-        "source": "PADFILOP",
-        "fields_used": [
-          "Child segment data"
-        ],
-        "citation": [
-          39
-        ]
-      },
-      {
-        "source": "DDPAUTP0",
-        "fields_used": [
-          "Database descriptors"
-        ],
-        "citation": [
-          42
-        ]
-      }
-    ],
-    "writes_to": [
-      {
-        "destination": "SYSPRINT",
-        "fields_written": [
-          "Unload listings and messages"
-        ],
-        "citation": [
-          50
-        ]
-      }
-    ],
+    "reads_from": [],
+    "writes_to": [],
     "transforms": []
   },
   "copybooks_used": [],
   "paragraphs": [
     {
-      "paragraph_name": "STEP01",
+      "paragraph_name": "UNLDGSAM",
       "summary": null,
-      "purpose": "This JCL step is the sole execution step in the UNLDGSAM job, serving as the primary orchestration point for running the IMS DFSRRC00 utility. It consumes the PARM parameter specifying the unload operation for database DBUNLDGS using DBD DLIGSAMP in DLI mode (line 27), along with input GSAM datasets PASFILOP for root segments (lines 36-37) and PADFILOP for child segments (lines 39-40). It also reads control libraries including STEPLIB concatenations (lines 28-30), DFSRESLB (31), IMS PSBLIB/DBDLIB (33-34), DDPAUTP0/ DDPAUTX0 for auth/DBD (42-43), and DFSVSAMP proclib (46-47). Outputs are produced to SYSPRINT for listings (50), SYSUDUMP for abend dumps (51), and IMSERR for errors (52), with dummies for IMSLOGR (48) and IEFRDER (49). The business logic is delegated to DFSRRC00, which unloads the GSAM database based on the inputs; JCL enforces retention of input files via KEEP disposition. No explicit conditional execution or error branching is defined, relying on default JCL return code propagation from the utility. The step ensures all required IMS runtime libraries are available via concatenations. Upon completion, input datasets are kept for potential reuse or inspection. This step controls the entire program flow as there are no subsequent steps.",
+      "purpose": "[Citadel] Paragraph identified by static analysis",
       "called_by": [],
-      "calls": [
-        "DFSRRC00"
-      ],
+      "calls": [],
       "citation": [
-        26,
-        53
+        1,
+        1
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
       "is_dead_code": false,
       "dead_code_reason": null,
       "metadata": null
-    }
-  ],
-  "error_handling": [
+    },
     {
-      "condition": "DFSRRC00 abend or non-zero RC",
-      "action": "Job terminates with sysout dumps to SYSUDUMP and IMSERR; input files kept",
+      "paragraph_name": "STEP01",
+      "summary": null,
+      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "called_by": [],
+      "calls": [],
       "citation": [
-        51,
-        52
-      ]
+        26,
+        26
+      ],
+      "outgoing_calls": [
+        {
+          "target": "DFSRRC00",
+          "call_type": "executes",
+          "line": 26
+        },
+        {
+          "target": "OEMA.IMS.IMSP.SDFSRESL",
+          "call_type": "references",
+          "line": 28
+        },
+        {
+          "target": "OEMA.IMS.IMSP.SDFSRESL.V151",
+          "call_type": "references",
+          "line": 29
+        },
+        {
+          "target": "AWS.M2.CARDDEMO.LOADLIB",
+          "call_type": "references",
+          "line": 30
+        },
+        {
+          "target": "OEMA.IMS.IMSP.SDFSRESL",
+          "call_type": "references",
+          "line": 31
+        },
+        {
+          "target": "OEM.IMS.IMSP.PSBLIB",
+          "call_type": "references",
+          "line": 33
+        },
+        {
+          "target": "OEM.IMS.IMSP.DBDLIB",
+          "call_type": "references",
+          "line": 34
+        },
+        {
+          "target": "AWS.M2.CARDDEMO.PAUTDB.ROOT.GSAM",
+          "call_type": "references",
+          "line": 36
+        },
+        {
+          "target": "AWS.M2.CARDDEMO.PAUTDB.CHILD.GSAM",
+          "call_type": "references",
+          "line": 39
+        },
+        {
+          "target": "OEM.IMS.IMSP.PAUTHDB",
+          "call_type": "references",
+          "line": 42
+        },
+        {
+          "target": "OEM.IMS.IMSP.PAUTHDBX",
+          "call_type": "references",
+          "line": 43
+        }
+      ],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
     }
   ],
+  "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "Does DFSRRC00 produce a specific sequential unload file, or is output only to SYSPRINT?",
-      "context": "No dedicated UNLOAD or output data DD is defined in the JCL",
-      "suggestion": "Review IMS DFSRRC00 documentation or execution logs for output details"
-    },
-    {
-      "question": "Exact fields/segments in PASFILOP and PADFILOP",
-      "context": "JCL does not specify copybooks or layouts",
-      "suggestion": "Examine DBD DLIGSAMP source or GSAM dataset attributes"
+      "question": "What is the purpose of the DUMMY datasets FSVSAMP, IMSLOGR, and IEFRDER?",
+      "context": "The JCL defines these datasets as DUMMY, so their exact function is unclear without more context.",
+      "suggestion": "Consult IMS documentation or related program documentation to determine their purpose."
     }
   ],
-  "dead_code": []
+  "dead_code": [],
+  "flow_diagram": null
 }

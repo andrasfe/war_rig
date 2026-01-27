@@ -1,23 +1,21 @@
 {
   "header": {
     "program_id": "CIPAUDTY",
-    "file_name": "cpy/CIPAUDTY.cpy",
+    "file_name": "CIPAUDTY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T02:41:50.175960",
+    "analyzed_at": "2026-01-27T23:03:16.694198",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This COBOL copybook defines the data structure for an IMS database segment named 'PENDING AUTHORIZATION DETAILS'. It specifies the layout starting with the group item PA-AUTHORIZATION-KEY (line 19) containing authorization date/time keys, card details, response codes, transaction amounts, merchant information, and status flags. Condition names (88-levels) are provided for key business states such as authorization approval, match status, and fraud indicators.",
-    "business_context": "Supports payment processing for credit card authorizations, including matching pending transactions, fraud detection, and merchant transaction logging in an IMS database environment.",
-    "program_type": "UTILITY",
+    "summary": "This copybook defines the data structure for the IMS segment related to pending authorization details. It includes fields for authorization keys, card details, transaction amounts, merchant information, match status, and fraud indicators.",
+    "business_context": "This copybook is used in the context of processing and managing pending authorizations, likely within a financial transaction system.",
+    "program_type": "OTHER",
     "citations": [
       2,
       19,
-      31,
-      46,
-      51
+      50
     ]
   },
   "inputs": [],
@@ -28,62 +26,42 @@
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [
-    {
-      "rule_id": "BR001",
-      "description": "Authorization response is approved when the response code is '00'",
-      "logic_summary": "88-level condition name PA-AUTH-APPROVED defined on PA-AUTH-RESP-CODE",
-      "conditions": [
-        "PA-AUTH-RESP-CODE = '00'"
-      ],
-      "citation": [
-        30,
-        31
-      ]
-    },
-    {
-      "rule_id": "BR002",
-      "description": "Match status indicates pending, declined, expired, or matched with transaction",
-      "logic_summary": "88-level conditions on PA-MATCH-STATUS field",
-      "conditions": [
-        "PA-MATCH-STATUS = 'P'",
-        "PA-MATCH-STATUS = 'D'",
-        "PA-MATCH-STATUS = 'E'",
-        "PA-MATCH-STATUS = 'M'"
-      ],
-      "citation": [
-        45,
-        46,
-        47,
-        48,
-        49
-      ]
-    },
-    {
-      "rule_id": "BR003",
-      "description": "Fraud status is confirmed or removed",
-      "logic_summary": "88-level conditions on PA-AUTH-FRAUD field",
-      "conditions": [
-        "PA-AUTH-FRAUD = 'F'",
-        "PA-AUTH-FRAUD = 'R'"
-      ],
-      "citation": [
-        50,
-        51,
-        52
-      ]
-    }
-  ],
+  "business_rules": [],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
     "transforms": []
   },
-  "copybooks_used": [],
-  "paragraphs": [],
+  "copybooks_used": [
+    {
+      "copybook_name": "CIPAUDTY",
+      "purpose": "Defines the data structure for pending authorization details within an IMS segment.",
+      "location": "FILE_SECTION",
+      "citation": 19
+    }
+  ],
+  "paragraphs": [
+    {
+      "paragraph_name": "CIPAUDTY",
+      "summary": null,
+      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1,
+        1
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    }
+  ],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
   "open_questions": [],
-  "dead_code": []
+  "dead_code": [],
+  "flow_diagram": null
 }

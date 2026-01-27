@@ -2,50 +2,46 @@
 
 **File**: `jcl/LOADPADB.JCL`
 **Type**: FileType.JCL
-**Analyzed**: 2026-01-27 02:42:21.192266
+**Analyzed**: 2026-01-27 23:05:57.417285
 
 ## Purpose
 
-This JCL job executes DFSRRC00 in BMP mode to invoke the PAUDBLOD IMS application program using PSB PSBPAUTB for loading the PAUDBLOD IMS hierarchical database. It reads root segments from INFILE1 and child segments from INFILE2 sequential unload files produced by prior jobs. The load process populates the database while directing reports and errors to SYSOUT datasets.
+This JCL job executes an IMS program (DFSRRC00) to load the PAUTDB database. It specifies the program, parameters, and required datasets for the IMS BMP region.
 
-**Business Context**: Supports the AWS.M2.CARDDEMO application by reloading the PAUTDB IMS database after an unload operation.
+**Business Context**: UNKNOWN
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| INFILE1 | IOType.FILE_SEQUENTIAL | Sequential file containing root segments unloaded from PAUTDB database |
-| INFILE2 | IOType.FILE_SEQUENTIAL | Sequential file containing child segments unloaded from PAUTDB database |
-| IMS | IOType.OTHER | IMS PSBLIB and DBDLIB for PSB and DBD definitions |
+| OEMA.IMS.IMSP.SDFSRESL | IOType.FILE_SEQUENTIAL | IMS RESLIB |
+| AWS.M2.CARDDEMO.LOADLIB | IOType.FILE_SEQUENTIAL | Application load library |
+| OEM.IMS.IMSP.PSBLIB | IOType.FILE_SEQUENTIAL | IMS PSB Library |
+| OEM.IMS.IMSP.DBDLIB | IOType.FILE_SEQUENTIAL | IMS DBD Library |
+| AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO | IOType.FILE_SEQUENTIAL | Input file for PAUTDB root segment |
+| AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO | IOType.FILE_SEQUENTIAL | Input file for PAUTDB child segment |
+| OEMPP.IMS.V15R01MB.PROCLIB(DFSVSMDB) | IOType.FILE_SEQUENTIAL | IMS VSAM Definition Parameters |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| PAUDBLOD | IOType.IMS_SEGMENT | IMS hierarchical database loaded with root and child segments from input files |
-| SYSPRINT | IOType.REPORT | Standard print output from IMS execution |
-| SYSUDUMP | IOType.REPORT | System dump output on abends |
+| SYSPRINT | IOType.REPORT | System print output |
+| SYSUDUMP | IOType.REPORT | System dump output |
+| IMSERR | IOType.REPORT | IMS error output |
 
 ## Called Programs
 
 | Program | Call Type | Purpose |
 |---------|-----------|---------|
-| DFSRRC00 | CallType.STATIC_CALL | IMS batch driver program to execute BMP application for database load |
-| PAUDBLOD | CallType.DYNAMIC_CALL | Application program that performs the actual IMS database load from input files |
-
-## Business Rules
-
-- **BR001**: Root segments must be loaded before child segments to enforce hierarchical referential integrity in the IMS database
-- **BR002**: Database load depends on successful prior unload jobs producing input files
+| DFSRRC00 | CallType.STATIC_CALL | Executes the IMS program to load the PAUTDB database. |
 
 ## Paragraphs/Procedures
 
 ### STEP01
-This is the only step in the JCL job, serving as the primary execution point for the IMS database load process. It consumes sequential input files INFILE1 for root segments and INFILE2 for child segments (lines 36,38), along with IMS libraries from STEPLIB (lines 28-30), DFSRESLB (31), IMS (33-34), and DFSVSAMP (44-45). The EXEC statement invokes PGM=DFSRRC00 with PARM='BMP,PAUDBLOD,PSBPAUTB' (lines 26-27), directing execution of the BMP application PAUDBLOD to insert data into the PAUDBLOD IMS database. Outputs include loaded database segments (implicit via application), reports to SYSPRINT (48), dumps to SYSUDUMP (49), and errors to IMSERR (50). There are no conditional decisions in the JCL; all business logic resides in the called PAUDBLOD program, which handles segment loading order and validation. Error handling relies on IMS-standard DDs: IMSLOGR DUMMY (46), SYSUDUMP, and IMSERR for diagnostics. No subordinate steps or procedures are invoked; control flows linearly through this single step. Commented DDs (40-41) suggest optional database access paths not used in this configuration.
+This step executes the IMS program DFSRRC00, which is responsible for loading the PAUTDB database. The PARM parameter specifies the execution environment as a BMP region, the database load utility (PAUDBLOD), and the PSB name (PSBPAUTB). The STEPLIB DD statements define the libraries containing the IMS RESLIB and application load modules required for execution. The DFSRESLB DD statement specifies the IMS RESLIB. The IMS DD statement defines the PSBLIB and DBDLIB datasets. INFILE1 and INFILE2 DD statements define the input datasets for the PAUTDB root and child segments, respectively. DFSVSAMP defines the VSAM parameters. Finally, SYSPRINT, SYSUDUMP, and IMSERR DD statements define the output datasets for system messages, dumps, and IMS error messages.
 
 ## Open Questions
 
-- ? What is the exact implementation logic in the PAUDBLOD application program?
-  - Context: JCL provides execution environment but no source code for the BMP application
-- ? Why are DDPAUTP0 and DDPAUTX0 commented out?
-  - Context: Possible alternate database access paths not used; unclear if required for PAUDBLOD
+- ? What is the business context for loading the PAUTDB database?
+  - Context: The JCL does not provide information about the business purpose of this database.

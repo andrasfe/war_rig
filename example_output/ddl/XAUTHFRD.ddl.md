@@ -2,29 +2,26 @@
 
 **File**: `ddl/XAUTHFRD.ddl`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-01-27 02:39:58.128148
+**Analyzed**: 2026-01-27 23:03:40.758949
 
 ## Purpose
 
-This DDL script creates a unique index named CARDDEMO.XAUTHFRD on the CARDDEMO.AUTHFRDS table. The index is defined on CARD_NUM in ascending order and AUTH_TS in descending order. It includes the COPY YES option.
+This DDL file creates a unique index named CARDDEMO.XAUTHFRD on the CARDDEMO.AUTHFRDS table, using the CARD_NUM in ascending order and AUTH_TS in descending order. It also specifies that the index should be copied.
 
-## Inputs
+## Paragraphs/Procedures
 
-| Name | Type | Description |
-|------|------|-------------|
-| CARDDEMO.AUTHFRDS | IOType.DB2_TABLE | Target table on which the unique index is created |
+### ~~XAUTHFRD~~ (Dead Code)
+*Artifact 'XAUTHFRD' (index) is never referenced by any other artifact in the dependency graph*
 
-## Outputs
+## Dead Code
 
-| Name | Type | Description |
-|------|------|-------------|
-| CARDDEMO.XAUTHFRD | IOType.OTHER | Unique index enforcing uniqueness on (CARD_NUM ASC, AUTH_TS DESC) |
+The following artifacts were identified as dead code by static analysis:
 
-## Business Rules
-
-- **BR001**: Enforces uniqueness on the composite key (CARD_NUM, AUTH_TS)
+| Artifact | Type | Line | Reason |
+|----------|------|------|--------|
+| XAUTHFRD | index | 1 | Artifact 'XAUTHFRD' (index) is never referenced by any other artifact in the dependency graph |
 
 ## Open Questions
 
-- ? Specific purpose of the COPY YES option
-  - Context: Not self-explanatory from the DDL statement alone
+- ? What is the purpose of copying the index?
+  - Context: The 'COPY YES' clause is used, but its specific function is unclear without more context.
