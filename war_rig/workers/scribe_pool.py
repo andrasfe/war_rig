@@ -1199,6 +1199,15 @@ class ScribeWorker:
                 parts.append(f"| {name} | {atype} | {line} | {reason} |")
             parts.append("")
 
+        # Flow Diagram
+        if template.flow_diagram:
+            parts.append("## Control Flow")
+            parts.append("")
+            parts.append("```mermaid")
+            parts.append(template.flow_diagram)
+            parts.append("```")
+            parts.append("")
+
         # Open Questions
         if template.open_questions:
             parts.append("## Open Questions")
@@ -2360,6 +2369,18 @@ class ScribeWorker:
                 str(source_path),
                 citadel_context,
             )
+
+        # Generate flow diagram for COBOL files
+        if result.template and self._citadel and file_type == FileType.COBOL:
+            try:
+                flow = self._citadel.get_flow_diagram(str(source_path))
+                if flow:
+                    result.template.flow_diagram = flow
+            except Exception as e:
+                logger.debug(
+                    f"Worker {self.worker_id}: Flow diagram generation failed "
+                    f"for {ticket.file_name}: {e}"
+                )
 
         # Save the template to disk
         if result.template:

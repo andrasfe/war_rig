@@ -639,6 +639,10 @@ class DocumentationTemplate(BaseModel):
         default_factory=list,
         description="Artifacts identified as dead code by static analysis",
     )
+    flow_diagram: str | None = Field(
+        default=None,
+        description="Mermaid flowchart of internal control flow (COBOL only)",
+    )
 
     @classmethod
     def load_lenient(cls, data: dict) -> "DocumentationTemplate":
