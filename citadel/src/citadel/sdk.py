@@ -34,6 +34,7 @@ from citadel.analysis.dead_code import (
     dead_code_to_dicts,
     find_dead_code,
 )
+from citadel.analysis.flow_diagram import generate_flow_diagram
 from citadel.analysis.sequence_finder import find_longest_sequences, sequences_to_mermaid
 from citadel.config import CitadelConfig, get_specs_cache_dir, load_config
 from citadel.discovery import FileDiscovery
@@ -1231,6 +1232,45 @@ class Citadel:
 
         return dead_code_to_dicts(dead_items)
 
+    def get_flow_diagram(
+        self,
+        file_path: str | Path,
+        paragraph: str | None = None,
+        include_external: bool = True,
+    ) -> str:
+        """Generate a Mermaid flow diagram for a COBOL file.
+
+        Analyzes the file and produces a Mermaid flowchart showing the
+        internal control flow (PERFORM relationships between paragraphs).
+        External calls (CALL, reads, writes, EXEC SQL, EXEC CICS, includes)
+        appear as distinctively shaped leaf nodes but are NOT recursively
+        followed.
+
+        Args:
+            file_path: Path to COBOL source file.
+            paragraph: Starting paragraph name. If ``None``, shows entire
+                file flow.
+            include_external: Whether to show external calls as leaf nodes.
+
+        Returns:
+            Mermaid flowchart string.
+
+        Raises:
+            ValueError: If the specified paragraph does not exist in the file.
+        """
+        result = self.analyze_file(file_path)
+
+        if result.error:
+            return f"flowchart TD\n    %% Error: {result.error}"
+
+        title = Path(file_path).name
+        return generate_flow_diagram(
+            result,
+            start_paragraph=paragraph,
+            include_external=include_external,
+            title=title,
+        )
+
     def _load_graph_from_json(self, json_path: Path) -> DependencyGraph:
         """
         Load a dependency graph from a JSON file.
@@ -1442,3 +1482,30 @@ def get_dead_code(
     """
     citadel = Citadel()
     return citadel.get_dead_code(path, exclude_types, include_only_types)
+
+
+def get_flow_diagram(
+    file_path: str | Path,
+    paragraph: str | None = None,
+    include_external: bool = True,
+) -> str:
+    """
+    Generate a Mermaid flow diagram for a COBOL file.
+
+    Convenience function for quick flow diagram generation.
+
+    Args:
+        file_path: Path to COBOL source file.
+        paragraph: Starting paragraph name. If None, shows entire file flow.
+        include_external: Whether to show external calls as leaf nodes.
+
+    Returns:
+        Mermaid flowchart string.
+
+    Example:
+        >>> from citadel.sdk import get_flow_diagram
+        >>> diagram = get_flow_diagram("PROGRAM.cbl")
+        >>> print(diagram)
+    """
+    citadel = Citadel()
+    return citadel.get_flow_diagram(file_path, paragraph, include_external)

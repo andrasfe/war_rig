@@ -34,6 +34,7 @@ from citadel.sdk import (
     get_function_body,
     get_callers,
     get_dead_code,
+    get_flow_diagram,
     get_sequence_diagrams,
     clear_cache,
 )
@@ -48,6 +49,7 @@ __all__ = [
     "get_function_body",
     "get_callers",
     "get_dead_code",
+    "get_flow_diagram",
     "get_sequence_diagrams",
     "clear_cache",
     "__version__",
