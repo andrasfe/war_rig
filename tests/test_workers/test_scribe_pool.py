@@ -1715,3 +1715,546 @@ class TestApplyCitadelEnrichment:
         # Verify Citadel was called with the metadata path, not input_directory
         worker._get_citadel_context.assert_called_once_with(custom_path)
         mock_citadel.get_flow_diagram.assert_called_once_with(custom_path)
+
+
+# =============================================================================
+# Bug Fix Tests: Paragraph Stub Population from Citadel
+# =============================================================================
+
+
+class TestCitadelParagraphStubPopulation:
+    """Tests for Bug 1 fix: populate paragraph stubs from Citadel when LLM
+    produces empty paragraphs (e.g., during chunked processing)."""
+
+    @pytest.mark.asyncio
+    async def test_empty_paragraphs_populated_from_citadel(
+        self, mock_config, mock_beads_client, tmp_path
+    ):
+        """When template has no paragraphs but Citadel found functions,
+        paragraph stubs should be created from Citadel data."""
+        from war_rig.models.templates import DocumentationTemplate
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            output_directory=tmp_path / "output",
+        )
+        mock_citadel = MagicMock()
+        mock_citadel.get_callers.return_value = []
+        mock_citadel.get_function_body.return_value = None
+        worker._citadel = mock_citadel
+
+        template = DocumentationTemplate()
+        assert template.paragraphs == []
+
+        citadel_context = {
+            "functions": [
+                {"name": "0000-MAIN", "type": "paragraph", "line": 100, "calls": []},
+                {"name": "1000-INIT", "type": "paragraph", "line": 200, "calls": []},
+                {"name": "2000-PROCESS", "type": "paragraph", "line": 300, "calls": [
+                    {"target": "3000-OUTPUT", "type": "performs", "line": 320},
+                ]},
+            ],
+        }
+
+        result = await worker._enrich_paragraphs_with_citadel(
+            template, "/fake/PROG.cbl", citadel_context
+        )
+
+        assert len(result.paragraphs) == 3
+        names = [p.paragraph_name for p in result.paragraphs]
+        assert "0000-MAIN" in names
+        assert "1000-INIT" in names
+        assert "2000-PROCESS" in names
+
+        # Verify stubs have citation from Citadel line info
+        main_para = next(p for p in result.paragraphs if p.paragraph_name == "0000-MAIN")
+        assert main_para.citation == (100, 100)
+        assert "[Citadel]" in main_para.purpose
+
+    @pytest.mark.asyncio
+    async def test_existing_paragraphs_not_overwritten(
+        self, mock_config, mock_beads_client, tmp_path
+    ):
+        """When template already has paragraphs, Citadel should NOT replace them."""
+        from war_rig.models.templates import DocumentationTemplate, Paragraph
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            output_directory=tmp_path / "output",
+        )
+        mock_citadel = MagicMock()
+        mock_citadel.get_callers.return_value = []
+        mock_citadel.get_function_body.return_value = None
+        worker._citadel = mock_citadel
+
+        template = DocumentationTemplate(
+            paragraphs=[
+                Paragraph(paragraph_name="0000-MAIN", purpose="Main control flow"),
+            ]
+        )
+
+        citadel_context = {
+            "functions": [
+                {"name": "0000-MAIN", "type": "paragraph", "line": 100, "calls": []},
+                {"name": "1000-INIT", "type": "paragraph", "line": 200, "calls": []},
+            ],
+        }
+
+        result = await worker._enrich_paragraphs_with_citadel(
+            template, "/fake/PROG.cbl", citadel_context
+        )
+
+        # Should keep existing paragraph, not add stubs
+        assert len(result.paragraphs) == 1
+        assert result.paragraphs[0].paragraph_name == "0000-MAIN"
+        assert result.paragraphs[0].purpose == "Main control flow"
+
+    @pytest.mark.asyncio
+    async def test_empty_paragraphs_no_citadel_functions(
+        self, mock_config, mock_beads_client, tmp_path
+    ):
+        """When template has no paragraphs and Citadel has no functions,
+        paragraphs should remain empty."""
+        from war_rig.models.templates import DocumentationTemplate
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            output_directory=tmp_path / "output",
+        )
+        mock_citadel = MagicMock()
+        worker._citadel = mock_citadel
+
+        template = DocumentationTemplate()
+        citadel_context = {"functions": []}
+
+        result = await worker._enrich_paragraphs_with_citadel(
+            template, "/fake/PROG.cbl", citadel_context
+        )
+
+        assert len(result.paragraphs) == 0
+
+    @pytest.mark.asyncio
+    async def test_no_citadel_returns_template_unchanged(
+        self, mock_config, mock_beads_client, tmp_path
+    ):
+        """When Citadel is not available, template is returned unchanged."""
+        from war_rig.models.templates import DocumentationTemplate
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            output_directory=tmp_path / "output",
+        )
+        worker._citadel = None  # No Citadel
+
+        template = DocumentationTemplate()
+        citadel_context = {
+            "functions": [
+                {"name": "0000-MAIN", "type": "paragraph", "line": 100, "calls": []},
+            ],
+        }
+
+        result = await worker._enrich_paragraphs_with_citadel(
+            template, "/fake/PROG.cbl", citadel_context
+        )
+
+        assert len(result.paragraphs) == 0
+
+    @pytest.mark.asyncio
+    async def test_stubs_get_outgoing_calls_enrichment(
+        self, mock_config, mock_beads_client, tmp_path
+    ):
+        """Citadel-populated stubs should also receive outgoing call enrichment."""
+        from war_rig.models.templates import DocumentationTemplate
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            output_directory=tmp_path / "output",
+        )
+        mock_citadel = MagicMock()
+        mock_citadel.get_callers.return_value = []
+        mock_citadel.get_function_body.return_value = None
+        worker._citadel = mock_citadel
+
+        template = DocumentationTemplate()
+        citadel_context = {
+            "functions": [
+                {
+                    "name": "2000-PROCESS",
+                    "type": "paragraph",
+                    "line": 300,
+                    "calls": [
+                        {"target": "3000-OUTPUT", "type": "performs", "line": 320},
+                        {"target": "UTIL-PROG", "type": "calls", "line": 330},
+                    ],
+                },
+            ],
+        }
+
+        result = await worker._enrich_paragraphs_with_citadel(
+            template, "/fake/PROG.cbl", citadel_context
+        )
+
+        assert len(result.paragraphs) == 1
+        para = result.paragraphs[0]
+        assert para.paragraph_name == "2000-PROCESS"
+        assert len(para.outgoing_calls) == 2
+        assert para.outgoing_calls[0].target == "3000-OUTPUT"
+        assert para.outgoing_calls[1].target == "UTIL-PROG"
+
+
+# =============================================================================
+# Bug Fix Tests: PERFORM THRU Dead Code False Positives
+# =============================================================================
+
+
+class TestPerformThruDeadCodeFilter:
+    """Tests for Bug 2 fix: EXIT paragraphs used as PERFORM THRU range
+    endpoints should not be flagged as dead code."""
+
+    def test_find_perform_thru_targets_basic(
+        self, mock_config, mock_beads_client, tmp_path
+    ):
+        """Test extraction of PERFORM THRU target paragraph names."""
+        source = """\
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. TESTPROG.
+       PROCEDURE DIVISION.
+       0000-MAIN.
+           PERFORM 1000-INITIALIZE THRU 1000-EXIT.
+           PERFORM 2000-PROCESS THRU 2000-EXIT.
+           STOP RUN.
+       1000-INITIALIZE.
+           DISPLAY 'INIT'.
+       1000-EXIT.
+           EXIT.
+       2000-PROCESS.
+           DISPLAY 'PROCESS'.
+       2000-EXIT.
+           EXIT.
+"""
+        source_file = tmp_path / "TESTPROG.cbl"
+        source_file.write_text(source)
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            output_directory=tmp_path / "output",
+        )
+
+        targets = worker._find_perform_thru_targets(str(source_file))
+
+        assert "1000-EXIT" in targets
+        assert "2000-EXIT" in targets
+        assert "1000-INITIALIZE" not in targets
+        assert "2000-PROCESS" not in targets
+
+    def test_find_perform_thru_targets_through_keyword(
+        self, mock_config, mock_beads_client, tmp_path
+    ):
+        """Test extraction with THROUGH keyword (synonym for THRU)."""
+        source = """\
+       PROCEDURE DIVISION.
+       0000-MAIN.
+           PERFORM 1000-INIT THROUGH 1000-EXIT.
+"""
+        source_file = tmp_path / "TESTPROG.cbl"
+        source_file.write_text(source)
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            output_directory=tmp_path / "output",
+        )
+
+        targets = worker._find_perform_thru_targets(str(source_file))
+
+        assert "1000-EXIT" in targets
+
+    def test_find_perform_thru_targets_case_insensitive(
+        self, mock_config, mock_beads_client, tmp_path
+    ):
+        """Test that THRU pattern matching is case-insensitive."""
+        source = """\
+       PROCEDURE DIVISION.
+           perform 1000-init thru 1000-exit.
+"""
+        source_file = tmp_path / "TESTPROG.cbl"
+        source_file.write_text(source)
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            output_directory=tmp_path / "output",
+        )
+
+        targets = worker._find_perform_thru_targets(str(source_file))
+
+        # Should be uppercased in the result set
+        assert "1000-EXIT" in targets
+
+    def test_find_perform_thru_targets_nonexistent_file(
+        self, mock_config, mock_beads_client, tmp_path
+    ):
+        """Test graceful handling of missing file."""
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            output_directory=tmp_path / "output",
+        )
+
+        targets = worker._find_perform_thru_targets("/nonexistent/file.cbl")
+
+        assert targets == set()
+
+    def test_find_perform_thru_targets_no_thru(
+        self, mock_config, mock_beads_client, tmp_path
+    ):
+        """Test file with PERFORM but no THRU."""
+        source = """\
+       PROCEDURE DIVISION.
+       0000-MAIN.
+           PERFORM 1000-INIT.
+           PERFORM 2000-PROCESS.
+"""
+        source_file = tmp_path / "TESTPROG.cbl"
+        source_file.write_text(source)
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            output_directory=tmp_path / "output",
+        )
+
+        targets = worker._find_perform_thru_targets(str(source_file))
+
+        assert targets == set()
+
+    @pytest.mark.asyncio
+    async def test_dead_code_exit_paragraphs_filtered(
+        self, mock_config, mock_beads_client, tmp_path
+    ):
+        """EXIT paragraphs in PERFORM THRU should not be marked as dead code."""
+        from war_rig.models.templates import DocumentationTemplate, Paragraph
+
+        # Create source with PERFORM THRU
+        source = """\
+       PROCEDURE DIVISION.
+       0000-MAIN.
+           PERFORM 1000-INIT THRU 1000-EXIT.
+           PERFORM 2000-PROCESS THRU 2000-EXIT.
+       1000-INIT.
+           DISPLAY 'INIT'.
+       1000-EXIT.
+           EXIT.
+       2000-PROCESS.
+           DISPLAY 'PROCESS'.
+       2000-EXIT.
+           EXIT.
+       9999-UNUSED.
+           DISPLAY 'NEVER CALLED'.
+"""
+        source_file = tmp_path / "TESTPROG.cbl"
+        source_file.write_text(source)
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            output_directory=tmp_path / "output",
+        )
+        mock_citadel = MagicMock()
+        mock_citadel.get_callers.return_value = []
+        mock_citadel.get_function_body.return_value = None
+        worker._citadel = mock_citadel
+
+        template = DocumentationTemplate(
+            paragraphs=[
+                Paragraph(paragraph_name="0000-MAIN", purpose="Main entry"),
+                Paragraph(paragraph_name="1000-INIT", purpose="Initialize"),
+                Paragraph(paragraph_name="1000-EXIT", purpose="Exit init"),
+                Paragraph(paragraph_name="2000-PROCESS", purpose="Process"),
+                Paragraph(paragraph_name="2000-EXIT", purpose="Exit process"),
+                Paragraph(paragraph_name="9999-UNUSED", purpose="Unused"),
+            ]
+        )
+
+        citadel_context = {
+            "functions": [
+                {"name": "0000-MAIN", "type": "paragraph", "line": 3, "calls": []},
+                {"name": "1000-INIT", "type": "paragraph", "line": 6, "calls": []},
+                {"name": "1000-EXIT", "type": "paragraph", "line": 8, "calls": []},
+                {"name": "2000-PROCESS", "type": "paragraph", "line": 10, "calls": []},
+                {"name": "2000-EXIT", "type": "paragraph", "line": 12, "calls": []},
+                {"name": "9999-UNUSED", "type": "paragraph", "line": 14, "calls": []},
+            ],
+            "dead_code": [
+                {
+                    "name": "1000-EXIT",
+                    "type": "paragraph",
+                    "line": 8,
+                    "reason": "Paragraph '1000-EXIT' is never PERFORMed",
+                },
+                {
+                    "name": "2000-EXIT",
+                    "type": "paragraph",
+                    "line": 12,
+                    "reason": "Paragraph '2000-EXIT' is never PERFORMed",
+                },
+                {
+                    "name": "9999-UNUSED",
+                    "type": "paragraph",
+                    "line": 14,
+                    "reason": "Paragraph '9999-UNUSED' is never PERFORMed",
+                },
+            ],
+        }
+
+        result = await worker._enrich_paragraphs_with_citadel(
+            template, str(source_file), citadel_context
+        )
+
+        # EXIT paragraphs should NOT be flagged as dead code
+        exit_1000 = next(p for p in result.paragraphs if p.paragraph_name == "1000-EXIT")
+        assert exit_1000.is_dead_code is False
+        assert exit_1000.dead_code_reason is None
+
+        exit_2000 = next(p for p in result.paragraphs if p.paragraph_name == "2000-EXIT")
+        assert exit_2000.is_dead_code is False
+        assert exit_2000.dead_code_reason is None
+
+        # Truly unused paragraph SHOULD still be flagged
+        unused = next(p for p in result.paragraphs if p.paragraph_name == "9999-UNUSED")
+        assert unused.is_dead_code is True
+        assert unused.dead_code_reason is not None
+
+        # Dead code section should only contain 9999-UNUSED
+        assert len(result.dead_code) == 1
+        assert result.dead_code[0].name == "9999-UNUSED"
+
+    @pytest.mark.asyncio
+    async def test_dead_code_no_thru_keeps_all_dead_items(
+        self, mock_config, mock_beads_client, tmp_path
+    ):
+        """When no PERFORM THRU in source, all dead code items should remain."""
+        from war_rig.models.templates import DocumentationTemplate, Paragraph
+
+        source = """\
+       PROCEDURE DIVISION.
+       0000-MAIN.
+           PERFORM 1000-INIT.
+       1000-INIT.
+           DISPLAY 'INIT'.
+       9999-UNUSED.
+           EXIT.
+"""
+        source_file = tmp_path / "TESTPROG.cbl"
+        source_file.write_text(source)
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            output_directory=tmp_path / "output",
+        )
+        mock_citadel = MagicMock()
+        mock_citadel.get_callers.return_value = []
+        mock_citadel.get_function_body.return_value = None
+        worker._citadel = mock_citadel
+
+        template = DocumentationTemplate(
+            paragraphs=[
+                Paragraph(paragraph_name="0000-MAIN", purpose="Main"),
+                Paragraph(paragraph_name="1000-INIT", purpose="Init"),
+                Paragraph(paragraph_name="9999-UNUSED", purpose="Unused"),
+            ]
+        )
+
+        citadel_context = {
+            "functions": [
+                {"name": "0000-MAIN", "type": "paragraph", "line": 3, "calls": []},
+                {"name": "1000-INIT", "type": "paragraph", "line": 5, "calls": []},
+                {"name": "9999-UNUSED", "type": "paragraph", "line": 7, "calls": []},
+            ],
+            "dead_code": [
+                {
+                    "name": "9999-UNUSED",
+                    "type": "paragraph",
+                    "line": 7,
+                    "reason": "Paragraph '9999-UNUSED' is never PERFORMed",
+                },
+            ],
+        }
+
+        result = await worker._enrich_paragraphs_with_citadel(
+            template, str(source_file), citadel_context
+        )
+
+        # 9999-UNUSED should still be dead code
+        unused = next(p for p in result.paragraphs if p.paragraph_name == "9999-UNUSED")
+        assert unused.is_dead_code is True
+
+        assert len(result.dead_code) == 1
+        assert result.dead_code[0].name == "9999-UNUSED"
+
+    @pytest.mark.asyncio
+    async def test_dead_code_missing_source_file_still_works(
+        self, mock_config, mock_beads_client, tmp_path
+    ):
+        """When source file is missing, dead code items are kept (no crash)."""
+        from war_rig.models.templates import DocumentationTemplate, Paragraph
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            output_directory=tmp_path / "output",
+        )
+        mock_citadel = MagicMock()
+        mock_citadel.get_callers.return_value = []
+        mock_citadel.get_function_body.return_value = None
+        worker._citadel = mock_citadel
+
+        template = DocumentationTemplate(
+            paragraphs=[
+                Paragraph(paragraph_name="1000-EXIT", purpose="Exit marker"),
+            ]
+        )
+
+        citadel_context = {
+            "functions": [
+                {"name": "1000-EXIT", "type": "paragraph", "line": 8, "calls": []},
+            ],
+            "dead_code": [
+                {
+                    "name": "1000-EXIT",
+                    "type": "paragraph",
+                    "line": 8,
+                    "reason": "Paragraph '1000-EXIT' is never PERFORMed",
+                },
+            ],
+        }
+
+        # Source file doesn't exist - _find_perform_thru_targets returns empty set
+        result = await worker._enrich_paragraphs_with_citadel(
+            template, "/nonexistent/PROG.cbl", citadel_context
+        )
+
+        # Should still mark as dead code since we can't verify THRU usage
+        exit_para = result.paragraphs[0]
+        assert exit_para.is_dead_code is True
+        assert len(result.dead_code) == 1

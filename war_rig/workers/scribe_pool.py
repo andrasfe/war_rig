@@ -61,19 +61,21 @@ from war_rig.chunking import (
 from war_rig.config import WarRigConfig
 from war_rig.models.templates import (
     CallerReference,
+    DeadCodeItem,
     DocumentationTemplate,
     FileType,
     FunctionCall,
-)
-from war_rig.workers.source_preparer import (
-    PreparationContext,
-    PreparedSource,
-    SourceCodePreparer,
+    Paragraph,
 )
 from war_rig.models.tickets import ChallengerQuestion, ChromeTicket
 from war_rig.utils import log_error
 from war_rig.utils.exceptions import FatalWorkerError
 from war_rig.utils.file_lock import FileLockManager
+from war_rig.workers.source_preparer import (
+    PreparationContext,
+    PreparedSource,
+    SourceCodePreparer,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -429,6 +431,40 @@ class ScribeWorker:
 
         return chunks
 
+    def _find_perform_thru_targets(self, file_path: str) -> set[str]:
+        """Find paragraph names used as PERFORM THRU range endpoints.
+
+        Reads the source file and extracts all paragraph names that appear
+        as the second operand in PERFORM ... THRU/THROUGH statements. These
+        paragraphs serve as range markers and should not be flagged as dead
+        code even if they have no other incoming references.
+
+        Args:
+            file_path: Path to the COBOL source file.
+
+        Returns:
+            Set of paragraph names (uppercased) used as THRU endpoints.
+        """
+        thru_targets: set[str] = set()
+        try:
+            source = Path(file_path).read_text(encoding="utf-8", errors="replace")
+            # Match PERFORM <name> THRU/THROUGH <name>
+            # The second capture group is the THRU target paragraph
+            pattern = re.compile(
+                r"\bPERFORM\s+[A-Z0-9][A-Z0-9-]*"
+                r"\s+(?:THRU|THROUGH)\s+"
+                r"([A-Z0-9][A-Z0-9-]*)",
+                re.IGNORECASE,
+            )
+            for match in pattern.finditer(source):
+                thru_targets.add(match.group(1).upper())
+        except Exception as e:
+            logger.debug(
+                f"Worker {self.worker_id}: Could not read {file_path} for "
+                f"PERFORM THRU analysis: {e}"
+            )
+        return thru_targets
+
     async def _enrich_paragraphs_with_citadel(
         self,
         template: DocumentationTemplate,
@@ -441,6 +477,11 @@ class ScribeWorker:
         function, adds structured outgoing_calls and incoming_calls references.
         These are programmatic (from static analysis), not LLM-generated.
 
+        When the template has no paragraphs (e.g., after chunked processing
+        where the LLM did not produce paragraph documentation), this method
+        populates paragraph stubs from Citadel's static analysis so that the
+        output always includes the structural skeleton of the program.
+
         Args:
             template: The documentation template to enrich.
             file_path: Path to the source file (used for caller lookup).
@@ -449,15 +490,39 @@ class ScribeWorker:
         Returns:
             The template with enriched paragraphs (modified in place).
         """
-        if not template.paragraphs or not self._citadel:
+        if not self._citadel:
             return template
 
-        # Build lookup of function name -> outgoing calls (case-insensitive)
+        # Build lookup of function name -> function info (case-insensitive)
         func_calls: dict[str, list[dict]] = {}
+        func_info: dict[str, dict] = {}
         for func in citadel_context.get("functions", []):
             name = func.get("name", "")
             if name:
                 func_calls[name.lower()] = func.get("calls", [])
+                func_info[name.lower()] = func
+
+        # Bug fix: When the template has no paragraphs but Citadel found
+        # functions/paragraphs in the file, populate paragraph stubs from
+        # static analysis. This ensures chunked processing (where the LLM
+        # may fail to produce paragraphs for procedure chunks) still yields
+        # a complete structural skeleton.
+        if not template.paragraphs and func_info:
+            logger.info(
+                f"Worker {self.worker_id}: Template has no paragraphs but Citadel "
+                f"found {len(func_info)} functions - populating stubs from "
+                f"static analysis"
+            )
+            for name_lower, func in func_info.items():
+                func_name = func.get("name", name_lower.upper())
+                func_line = func.get("line")
+                template.paragraphs.append(
+                    Paragraph(
+                        paragraph_name=func_name,
+                        purpose="[Citadel] Paragraph identified by static analysis",
+                        citation=(func_line, func_line) if func_line else None,
+                    )
+                )
 
         for para in template.paragraphs:
             para_name = para.paragraph_name
@@ -514,7 +579,25 @@ class ScribeWorker:
         # Mark dead code paragraphs and build dead_code section
         dead_code_items = citadel_context.get("dead_code", [])
         if dead_code_items:
-            from war_rig.models.templates import DeadCodeItem
+            # Bug fix: Filter out EXIT paragraphs that are PERFORM THRU range
+            # endpoints. In COBOL, PERFORM X THRU Y executes paragraphs from X
+            # through Y. The Y paragraph (typically an EXIT paragraph like
+            # 1000-EXIT) is used as a range marker but may not have explicit
+            # incoming PERFORM edges in the dependency graph. Without this
+            # filter, such paragraphs are incorrectly flagged as dead code.
+            thru_targets = self._find_perform_thru_targets(file_path)
+            if thru_targets:
+                original_count = len(dead_code_items)
+                dead_code_items = [
+                    item for item in dead_code_items
+                    if item.get("name", "").upper() not in thru_targets
+                ]
+                filtered_count = original_count - len(dead_code_items)
+                if filtered_count > 0:
+                    logger.info(
+                        f"Worker {self.worker_id}: Filtered {filtered_count} "
+                        f"PERFORM THRU endpoint(s) from dead code results"
+                    )
 
             # Build lookup of dead paragraph names (case-insensitive)
             dead_names = {}
