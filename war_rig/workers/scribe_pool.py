@@ -2582,7 +2582,7 @@ class ScribeWorker:
         logger.info(
             f"Worker {self.worker_id}: Processing clarification for {ticket.file_name} "
             f"with {len(challenger_questions)} questions"
-            + (f" (with feedback context)" if feedback_context else "")
+            + (" (with feedback context)" if feedback_context else "")
         )
         output = await self.scribe_agent.ainvoke(scribe_input)
 
@@ -2808,7 +2808,7 @@ class ScribeWorker:
         logger.info(
             f"Worker {self.worker_id}: Processing chrome for {ticket.file_name} "
             f"with {len(chrome_tickets_list)} issues"
-            + (f" (with feedback context)" if feedback_context else "")
+            + (" (with feedback context)" if feedback_context else "")
         )
         output = await self.scribe_agent.ainvoke(scribe_input)
 

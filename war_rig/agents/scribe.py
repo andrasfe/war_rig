@@ -16,8 +16,6 @@ Responsibilities:
 import json
 import logging
 import re
-from typing import Any
-
 from pydantic import Field, ValidationError
 
 from war_rig.agents.base import AgentInput, AgentOutput, BaseAgent
