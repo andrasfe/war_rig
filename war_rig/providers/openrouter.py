@@ -382,16 +382,17 @@ class OpenRouterProvider:
             ) from e
 
         except APIError as e:
+            status_code = getattr(e, "status_code", None)
             logger.error(f"OpenRouter API error: {e}")
             log_error(
                 e,
-                context={"provider": "openrouter", "model": resolved_model, "error_type": "api_error", "status_code": e.status_code},
+                context={"provider": "openrouter", "model": resolved_model, "error_type": "api_error", "status_code": status_code},
                 request={"model": resolved_model, "message_count": len(messages)},
                 response={"body": getattr(e, "body", None), "response": str(getattr(e, "response", None)), "message": getattr(e, "message", None)},
             )
             raise OpenRouterProviderError(
                 message=f"OpenRouter API error: {e.message}",
-                status_code=e.status_code,
+                status_code=status_code,
                 original_error=e,
             ) from e
 

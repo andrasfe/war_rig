@@ -467,50 +467,39 @@ class CallGraphAnalyzer:
         self,
         dependency_graph_path: Path | None = None,
     ) -> CallGraphAnalysis:
-        """Perform call graph analysis.
+        """Perform call graph analysis using the Citadel dependency graph.
 
-        This method supports two data sources:
-        1. Citadel dependency_graph.json (preferred) - Uses accurate static analysis
-        2. .doc.json files (fallback) - Parses documentation for call relationships
-
-        When dependency_graph_path is provided and exists, the Citadel graph is used
-        to supplement or replace the doc.json-based analysis. The Citadel graph
-        provides more accurate call relationships from static analysis.
+        Requires a valid Citadel dependency_graph.json. Documentation files
+        (.doc.json) are loaded for supplementary metadata (summaries, file types)
+        but are not used as the primary source of call relationships.
 
         Args:
-            dependency_graph_path: Optional path to Citadel dependency_graph.json.
-                If provided and exists, loads call relationships from static analysis.
-                Falls back to doc.json parsing if not available.
+            dependency_graph_path: Path to Citadel dependency_graph.json.
 
         Returns:
-            CallGraphAnalysis with all findings
-        """
-        # Try to load Citadel graph if path provided
-        use_citadel = False
-        if dependency_graph_path and dependency_graph_path.exists():
-            try:
-                self.load_from_citadel_graph(dependency_graph_path)
-                use_citadel = self._citadel_loaded
-                if use_citadel:
-                    logger.info("Using Citadel dependency graph for call analysis")
-            except (json.JSONDecodeError, IOError, KeyError) as e:
-                logger.warning(f"Failed to load Citadel graph, falling back to doc.json: {e}")
-                use_citadel = False
+            CallGraphAnalysis with all findings.
 
-        # Load documentation files (needed for program summaries even with Citadel)
+        Raises:
+            ValueError: If dependency_graph_path is not provided or does not exist.
+            RuntimeError: If the Citadel graph cannot be loaded.
+        """
+        if not dependency_graph_path or not dependency_graph_path.exists():
+            raise ValueError(
+                f"Citadel dependency graph required but not found: {dependency_graph_path}"
+            )
+
+        self.load_from_citadel_graph(dependency_graph_path)
+        if not self._citadel_loaded:
+            raise RuntimeError(
+                f"Failed to load Citadel dependency graph from {dependency_graph_path}"
+            )
+
+        logger.info("Using Citadel dependency graph for call analysis")
+
+        # Load documentation files for supplementary metadata (summaries, file types)
         docs = self._load_documentation()
 
-        if use_citadel and self._citadel_loaded:
-            # Use Citadel graph for call relationships, docs for metadata
-            return self._analyze_with_citadel(docs)
-
-        # Fallback: analyze from doc.json files only
-        if not docs:
-            logger.warning(f"No documentation files found in {self.doc_directory}")
-            return self._empty_analysis()
-
-        logger.info(f"Analyzing {len(docs)} documentation files (doc.json fallback)")
-        return self._analyze_from_docs(docs)
+        return self._analyze_with_citadel(docs)
 
     def _analyze_with_citadel(self, docs: list[dict[str, Any]]) -> CallGraphAnalysis:
         """Analyze using Citadel graph with doc.json for supplementary metadata.

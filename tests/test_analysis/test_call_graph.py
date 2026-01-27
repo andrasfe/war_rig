@@ -121,7 +121,7 @@ class TestCallGraphAnalyzer:
 
     @pytest.fixture
     def temp_output_dir(self):
-        """Create a temporary output directory with test documentation."""
+        """Create a temporary output directory with test documentation and Citadel graph."""
         with tempfile.TemporaryDirectory() as tmpdir:
             output_dir = Path(tmpdir)
 
@@ -161,12 +161,89 @@ class TestCallGraphAnalyzer:
             doc2_path = output_dir / "SUBPGM1.doc.json"
             doc2_path.write_text(json.dumps(doc2), encoding="utf-8")
 
-            yield output_dir
+            # Create Citadel dependency graph matching the doc.json data
+            graph = {
+                "version": "1.0",
+                "generated_at": "2026-01-25T00:00:00",
+                "source_root": str(output_dir),
+                "artifacts": {
+                    "procedure::MAINPGM": {
+                        "id": "procedure::MAINPGM",
+                        "artifact_type": "procedure",
+                        "category": "code",
+                        "canonical_name": "MAINPGM",
+                        "defined_in": {
+                            "file_path": str(output_dir / "MAINPGM.cbl"),
+                            "line_start": 1,
+                            "line_end": 100,
+                        },
+                        "language": "COBOL",
+                    },
+                    "procedure::SUBPGM1": {
+                        "id": "procedure::SUBPGM1",
+                        "artifact_type": "procedure",
+                        "category": "code",
+                        "canonical_name": "SUBPGM1",
+                        "defined_in": {
+                            "file_path": str(output_dir / "SUBPGM1.cbl"),
+                            "line_start": 1,
+                            "line_end": 50,
+                        },
+                        "language": "COBOL",
+                    },
+                },
+                "relationships": [
+                    {
+                        "id": "rel-1",
+                        "from_artifact": "procedure::MAINPGM",
+                        "to_artifact": "procedure::SUBPGM1",
+                        "relationship_type": "calls",
+                        "location": {
+                            "file_path": str(output_dir / "MAINPGM.cbl"),
+                            "line_start": 50,
+                        },
+                        "confidence": 1.0,
+                    },
+                    {
+                        "id": "rel-2",
+                        "from_artifact": "procedure::MAINPGM",
+                        "to_artifact": "procedure::SUBPGM2",
+                        "relationship_type": "calls",
+                        "location": {
+                            "file_path": str(output_dir / "MAINPGM.cbl"),
+                            "line_start": 60,
+                        },
+                        "confidence": 1.0,
+                    },
+                    {
+                        "id": "rel-3",
+                        "from_artifact": "procedure::MAINPGM",
+                        "to_artifact": "procedure::IEFBR14",
+                        "relationship_type": "calls",
+                        "location": {
+                            "file_path": str(output_dir / "MAINPGM.cbl"),
+                            "line_start": 70,
+                        },
+                        "confidence": 1.0,
+                    },
+                ],
+                "unresolved": [],
+                "statistics": {
+                    "files_analyzed": 2,
+                    "artifacts_total": 2,
+                    "relationships_total": 3,
+                },
+            }
+            graph_path = output_dir / "dependency_graph.json"
+            graph_path.write_text(json.dumps(graph), encoding="utf-8")
+
+            yield output_dir, graph_path
 
     def test_analyze_finds_programs(self, temp_output_dir):
         """Test that analyze finds documented programs."""
-        analyzer = CallGraphAnalyzer(doc_directory=temp_output_dir)
-        analysis = analyzer.analyze()
+        output_dir, graph_path = temp_output_dir
+        analyzer = CallGraphAnalyzer(doc_directory=output_dir)
+        analysis = analyzer.analyze(dependency_graph_path=graph_path)
 
         assert len(analysis.documented_programs) == 2
         assert "MAINPGM" in analysis.documented_programs
@@ -174,8 +251,9 @@ class TestCallGraphAnalyzer:
 
     def test_analyze_finds_calls(self, temp_output_dir):
         """Test that analyze extracts call relationships."""
-        analyzer = CallGraphAnalyzer(doc_directory=temp_output_dir)
-        analysis = analyzer.analyze()
+        output_dir, graph_path = temp_output_dir
+        analyzer = CallGraphAnalyzer(doc_directory=output_dir)
+        analysis = analyzer.analyze(dependency_graph_path=graph_path)
 
         # Should have calls from MAINPGM
         mainpgm = analysis.documented_programs.get("MAINPGM")
@@ -184,8 +262,9 @@ class TestCallGraphAnalyzer:
 
     def test_analyze_classifies_system_utilities(self, temp_output_dir):
         """Test that analyze correctly classifies system utilities."""
-        analyzer = CallGraphAnalyzer(doc_directory=temp_output_dir)
-        analysis = analyzer.analyze()
+        output_dir, graph_path = temp_output_dir
+        analyzer = CallGraphAnalyzer(doc_directory=output_dir)
+        analysis = analyzer.analyze(dependency_graph_path=graph_path)
 
         # IEFBR14 should be classified as system utility
         assert "IEFBR14" in analysis.system_utilities
@@ -193,8 +272,9 @@ class TestCallGraphAnalyzer:
 
     def test_analyze_identifies_missing_custom(self, temp_output_dir):
         """Test that analyze identifies missing custom programs."""
-        analyzer = CallGraphAnalyzer(doc_directory=temp_output_dir)
-        analysis = analyzer.analyze()
+        output_dir, graph_path = temp_output_dir
+        analyzer = CallGraphAnalyzer(doc_directory=output_dir)
+        analysis = analyzer.analyze(dependency_graph_path=graph_path)
 
         # SUBPGM2 is called but not documented and not a system utility
         assert "SUBPGM2" in analysis.custom_missing
@@ -203,40 +283,46 @@ class TestCallGraphAnalyzer:
     def test_analyze_finds_dynamic_calls(self, temp_output_dir):
         """Test that analyze tracks dynamic calls (variable program names).
 
-        Note: 'dynamic' in this context means calls where the program name
-        is a variable like (WS-PROGRAM-NAME), not just calls with DYNAMIC_CALL type.
+        Dynamic calls are detected from the Citadel graph's unresolved references
+        when the callee name matches a variable pattern like (WS-PROGRAM-NAME).
         """
-        # Add a doc with a truly dynamic call (variable name)
-        doc3 = {
-            "header": {
-                "program_id": "DISPATCH",
-                "file_name": "DISPATCH.cbl",
-                "file_type": "COBOL",
-            },
-            "purpose": {
-                "summary": "Dispatch program",
-                "program_type": "BATCH",
-            },
-            "called_programs": [
-                {"program_name": "(WS-PROGRAM-NAME)", "call_type": "DYNAMIC_CALL"},
-            ],
-        }
-        import json
-        doc3_path = temp_output_dir / "DISPATCH.doc.json"
-        doc3_path.write_text(json.dumps(doc3), encoding="utf-8")
+        output_dir, graph_path = temp_output_dir
 
-        analyzer = CallGraphAnalyzer(doc_directory=temp_output_dir)
-        analysis = analyzer.analyze()
+        # Add a DISPATCH program and an unresolved dynamic call to the graph
+        graph = json.loads(graph_path.read_text(encoding="utf-8"))
+        graph["artifacts"]["procedure::DISPATCH"] = {
+            "id": "procedure::DISPATCH",
+            "artifact_type": "procedure",
+            "category": "code",
+            "canonical_name": "DISPATCH",
+            "defined_in": {
+                "file_path": str(output_dir / "DISPATCH.cbl"),
+                "line_start": 1,
+                "line_end": 50,
+            },
+            "language": "COBOL",
+        }
+        graph["unresolved"].append({
+            "reference_text": "(WS-PROGRAM-NAME)",
+            "expected_type": "procedure",
+            "containing_artifact": "procedure::DISPATCH",
+            "location": {"line_start": 25},
+        })
+        graph_path.write_text(json.dumps(graph), encoding="utf-8")
+
+        analyzer = CallGraphAnalyzer(doc_directory=output_dir)
+        analysis = analyzer.analyze(dependency_graph_path=graph_path)
 
         # Should track the dynamic call with variable name
         assert len(analysis.dynamic_calls) > 0
         dynamic_callees = [c.callee for c in analysis.dynamic_calls]
-        assert "(WS-PROGRAM-NAME)" in dynamic_callees or "WS-PROGRAM-NAME" in dynamic_callees
+        assert any("WS-PROGRAM-NAME" in c for c in dynamic_callees)
 
     def test_entry_and_leaf_classification(self, temp_output_dir):
         """Test entry point and leaf node classification."""
-        analyzer = CallGraphAnalyzer(doc_directory=temp_output_dir)
-        analysis = analyzer.analyze()
+        output_dir, graph_path = temp_output_dir
+        analyzer = CallGraphAnalyzer(doc_directory=output_dir)
+        analysis = analyzer.analyze(dependency_graph_path=graph_path)
 
         # MAINPGM has no callers -> entry point
         assert "MAINPGM" in analysis.entry_points
@@ -246,8 +332,9 @@ class TestCallGraphAnalyzer:
 
     def test_generate_markdown_report(self, temp_output_dir):
         """Test markdown report generation."""
-        analyzer = CallGraphAnalyzer(doc_directory=temp_output_dir)
-        analysis = analyzer.analyze()
+        output_dir, graph_path = temp_output_dir
+        analyzer = CallGraphAnalyzer(doc_directory=output_dir)
+        analysis = analyzer.analyze(dependency_graph_path=graph_path)
 
         report = analyzer.generate_markdown_report(analysis)
 
@@ -258,8 +345,9 @@ class TestCallGraphAnalyzer:
 
     def test_generate_system_design_md(self, temp_output_dir):
         """Test SYSTEM_DESIGN.md generation."""
-        analyzer = CallGraphAnalyzer(doc_directory=temp_output_dir)
-        analysis = analyzer.analyze()
+        output_dir, graph_path = temp_output_dir
+        analyzer = CallGraphAnalyzer(doc_directory=output_dir)
+        analysis = analyzer.analyze(dependency_graph_path=graph_path)
 
         system_design = analyzer.generate_system_design_md(analysis)
 
@@ -268,8 +356,9 @@ class TestCallGraphAnalyzer:
 
     def test_generate_system_design_md_with_sequence_diagrams(self, temp_output_dir):
         """Test SYSTEM_DESIGN.md generation with sequence diagrams."""
-        analyzer = CallGraphAnalyzer(doc_directory=temp_output_dir)
-        analysis = analyzer.analyze()
+        output_dir, graph_path = temp_output_dir
+        analyzer = CallGraphAnalyzer(doc_directory=output_dir)
+        analysis = analyzer.analyze(dependency_graph_path=graph_path)
 
         # Sample sequence diagrams (Mermaid format)
         sequence_diagrams = [
@@ -297,8 +386,9 @@ class TestCallGraphAnalyzer:
 
     def test_generate_system_design_md_without_sequence_diagrams(self, temp_output_dir):
         """Test SYSTEM_DESIGN.md generation without sequence diagrams skips Flows section."""
-        analyzer = CallGraphAnalyzer(doc_directory=temp_output_dir)
-        analysis = analyzer.analyze()
+        output_dir, graph_path = temp_output_dir
+        analyzer = CallGraphAnalyzer(doc_directory=output_dir)
+        analysis = analyzer.analyze(dependency_graph_path=graph_path)
 
         # Call without sequence_diagrams parameter
         system_design = analyzer.generate_system_design_md(analysis)
@@ -309,8 +399,9 @@ class TestCallGraphAnalyzer:
 
     def test_generate_system_design_md_with_empty_sequence_diagrams(self, temp_output_dir):
         """Test SYSTEM_DESIGN.md generation with empty sequence diagrams list."""
-        analyzer = CallGraphAnalyzer(doc_directory=temp_output_dir)
-        analysis = analyzer.analyze()
+        output_dir, graph_path = temp_output_dir
+        analyzer = CallGraphAnalyzer(doc_directory=output_dir)
+        analysis = analyzer.analyze(dependency_graph_path=graph_path)
 
         # Pass empty list
         system_design = analyzer.generate_system_design_md(
@@ -325,15 +416,13 @@ class TestCallGraphAnalyzer:
 class TestCallGraphAnalyzerEmpty:
     """Tests for CallGraphAnalyzer with no documentation."""
 
-    def test_analyze_empty_directory(self):
-        """Test analysis of empty directory."""
+    def test_analyze_raises_without_graph(self):
+        """Test that analyze raises ValueError when no graph is provided."""
         with tempfile.TemporaryDirectory() as tmpdir:
             analyzer = CallGraphAnalyzer(doc_directory=Path(tmpdir))
-            analysis = analyzer.analyze()
 
-            assert len(analysis.documented_programs) == 0
-            assert analysis.total_calls == 0
-            assert not analysis.has_gaps()
+            with pytest.raises(ValueError, match="Citadel dependency graph required"):
+                analyzer.analyze()
 
 
 class TestCitadelGraphLoading:
@@ -467,28 +556,22 @@ class TestCitadelGraphLoading:
         assert analysis.total_calls == 2
         assert "MAINPGM" in analysis.entry_points  # No callers
 
-    def test_analyze_falls_back_to_docs_when_no_graph(self, temp_output_dir):
-        """Test that analyze falls back to doc.json when no graph path."""
-        analyzer = CallGraphAnalyzer(doc_directory=temp_output_dir)
+    def test_analyze_raises_when_no_graph_path(self, citadel_graph_fixture):
+        """Test that analyze raises ValueError when no graph path provided."""
+        output_dir, _ = citadel_graph_fixture
+        analyzer = CallGraphAnalyzer(doc_directory=output_dir)
 
-        # No dependency_graph_path provided
-        analysis = analyzer.analyze()
+        with pytest.raises(ValueError, match="Citadel dependency graph required"):
+            analyzer.analyze()
 
-        # Should still work using doc.json files
-        assert len(analysis.documented_programs) == 2
-        assert "MAINPGM" in analysis.documented_programs
+    def test_analyze_raises_when_graph_missing(self, citadel_graph_fixture):
+        """Test that analyze raises ValueError when graph file does not exist."""
+        output_dir, _ = citadel_graph_fixture
+        analyzer = CallGraphAnalyzer(doc_directory=output_dir)
 
-    def test_analyze_falls_back_when_graph_missing(self, temp_output_dir):
-        """Test that analyze falls back to doc.json when graph file missing."""
-        analyzer = CallGraphAnalyzer(doc_directory=temp_output_dir)
-
-        # Provide a non-existent path
-        fake_path = temp_output_dir / "nonexistent_graph.json"
-        analysis = analyzer.analyze(dependency_graph_path=fake_path)
-
-        # Should fall back to doc.json parsing
-        assert len(analysis.documented_programs) == 2
-        assert "MAINPGM" in analysis.documented_programs
+        fake_path = output_dir / "nonexistent_graph.json"
+        with pytest.raises(ValueError, match="Citadel dependency graph required"):
+            analyzer.analyze(dependency_graph_path=fake_path)
 
     def test_analyze_merges_doc_metadata_with_citadel(self, citadel_graph_fixture):
         """Test that analyze merges doc.json metadata with Citadel graph."""
@@ -563,46 +646,3 @@ class TestCitadelGraphLoading:
             assert call.caller == "CALLER"
             assert call.callee == "TARGET"
 
-    @pytest.fixture
-    def temp_output_dir(self):
-        """Re-use the temp_output_dir fixture from parent class."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            output_dir = Path(tmpdir)
-
-            # Create a sample documentation file
-            doc = {
-                "header": {
-                    "program_id": "MAINPGM",
-                    "file_name": "MAINPGM.cbl",
-                    "file_type": "COBOL",
-                },
-                "purpose": {
-                    "summary": "Main batch program",
-                    "program_type": "BATCH",
-                },
-                "called_programs": [
-                    {"program_name": "SUBPGM1", "call_type": "STATIC_CALL"},
-                    {"program_name": "SUBPGM2", "call_type": "DYNAMIC_CALL"},
-                    {"program_name": "IEFBR14", "call_type": "EXEC"},
-                ],
-            }
-            doc_path = output_dir / "MAINPGM.doc.json"
-            doc_path.write_text(json.dumps(doc), encoding="utf-8")
-
-            # Create another documented program
-            doc2 = {
-                "header": {
-                    "program_id": "SUBPGM1",
-                    "file_name": "SUBPGM1.cbl",
-                    "file_type": "COBOL",
-                },
-                "purpose": {
-                    "summary": "Sub program 1",
-                    "program_type": "SUBROUTINE",
-                },
-                "called_programs": [],
-            }
-            doc2_path = output_dir / "SUBPGM1.doc.json"
-            doc2_path.write_text(json.dumps(doc2), encoding="utf-8")
-
-            yield output_dir

@@ -420,8 +420,12 @@ class TestTicketOrchestratorRunBatch:
         # Mock beads client to return completed tickets
         mock_beads_client.get_tickets_by_state.return_value = sample_pm_tickets
 
-        # Mock worker pools
+        # Mock Citadel graph generation and upfront artifacts
         with patch.object(
+            orchestrator, "_generate_citadel_graph", new_callable=AsyncMock
+        ), patch.object(
+            orchestrator, "_generate_upfront_artifacts"
+        ), patch.object(
             orchestrator, "_run_worker_cycle", new_callable=AsyncMock
         ):
             # Mock holistic review to be satisfied
@@ -471,8 +475,12 @@ class TestTicketOrchestratorRunBatch:
         # Mock beads client
         mock_beads_client.get_tickets_by_state.return_value = sample_pm_tickets
 
-        # Mock worker cycles
+        # Mock Citadel graph generation, upfront artifacts, and worker cycles
         with patch.object(
+            orchestrator, "_generate_citadel_graph", new_callable=AsyncMock
+        ), patch.object(
+            orchestrator, "_generate_upfront_artifacts"
+        ), patch.object(
             orchestrator, "_run_worker_cycle", new_callable=AsyncMock
         ):
             # First cycle: needs clarification (must have actual issues to avoid SATISFIED shortcut)

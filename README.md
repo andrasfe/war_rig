@@ -137,12 +137,14 @@ Each file type has a tailored validation skip matrix - the system knows which do
 ## Installation
 
 ```bash
-# Install in development mode
-pip install -e .
+# Install everything (war_rig + citadel) with dev dependencies
+./scripts/setup.sh
 
-# Install with dev dependencies
-pip install -e ".[dev]"
+# Production only (no dev dependencies)
+./scripts/setup.sh --prod
 ```
+
+Requires [uv](https://docs.astral.sh/uv/) for package management.
 
 ## Configuration
 
@@ -320,13 +322,16 @@ output/
 
 ```bash
 # Run tests
-pytest
+uv run pytest tests/ -x
 
 # Type checking
-mypy war_rig
+uv run mypy war_rig
 
 # Linting
-ruff check war_rig
+uv run ruff check .
+
+# Formatting
+uv run ruff format .
 ```
 
 ## Project Structure
@@ -360,10 +365,15 @@ war_rig/
 └── cli.py              # Command-line interface
 
 scripts/
+├── setup.sh            # Install all projects (war_rig + citadel)
 ├── human_feedback.py   # Human-in-the-loop feedback injection
 ├── ticket_manager.py   # CLI for managing tickets
 ├── war_rig_status.py   # Real-time status monitor
 └── run_carddemo.py     # CardDemo batch processor
+
+citadel/                # Dependency graph extraction tool (path dependency)
+├── src/citadel/        # Source code
+└── tests/              # Tests
 ```
 
 ## Technical Features
