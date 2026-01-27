@@ -1391,30 +1391,62 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
             # Parse file feedback (Chrome tickets per file)
             # Build set of valid file names from input documentation
             valid_file_names = {doc.file_name for doc in input_data.file_documentation}
+            # Build basename→full path lookup for normalizing LLM output
+            # The LLM may output bare filenames (e.g., "PROG.cbl") instead of
+            # relative paths (e.g., "cbl/PROG.cbl"). This maps basenames to
+            # their full relative paths so we can correct them.
+            basename_to_full: dict[str, str] = {}
+            for vfn in valid_file_names:
+                basename = Path(vfn).name
+                # Only use unambiguous mappings (if multiple files share a
+                # basename, we can't resolve and must skip)
+                if basename in basename_to_full:
+                    basename_to_full[basename] = ""  # Mark ambiguous
+                else:
+                    basename_to_full[basename] = vfn
+
+            def _normalize_file_name(name: str) -> str | None:
+                """Normalize an LLM-provided file name to a valid relative path.
+
+                Returns the normalized name, or None if unresolvable.
+                """
+                if name in valid_file_names:
+                    return name
+                resolved = basename_to_full.get(name, "")
+                if resolved:
+                    logger.debug(f"Normalized LLM file name '{name}' -> '{resolved}'")
+                    return resolved
+                return None
 
             file_feedback: dict[str, list[ChromeTicket]] = {}
             if "file_feedback" in data:
-                for file_name, tickets in data["file_feedback"].items():
-                    # Skip Chrome tickets for files not in our documentation batch
-                    # The LLM might create tickets for referenced files (like copybooks)
-                    # that weren't actually documented
-                    if file_name not in valid_file_names:
-                        logger.warning(
-                            f"Skipping Chrome tickets for {file_name}: "
-                            f"not in documented files list"
-                        )
-                        continue
+                if not isinstance(data["file_feedback"], dict):
+                    logger.warning(
+                        f"LLM returned file_feedback as {type(data['file_feedback']).__name__} "
+                        f"instead of dict, skipping"
+                    )
+                else:
+                    for file_name, tickets in data["file_feedback"].items():
+                        # Normalize LLM file name to valid relative path
+                        resolved_name = _normalize_file_name(file_name)
+                        if not resolved_name:
+                            logger.warning(
+                                f"Skipping Chrome tickets for {file_name}: "
+                                f"not in documented files list"
+                            )
+                            continue
+                        file_name = resolved_name
 
-                    file_feedback[file_name] = []
-                    for t in tickets:
-                        # Find program_id from file documentation
-                        program_id = file_name
-                        for doc in input_data.file_documentation:
-                            if doc.file_name == file_name:
-                                program_id = doc.program_id
-                                break
-                        t["program_id"] = program_id
-                        file_feedback[file_name].append(ChromeTicket.model_validate(t))
+                        file_feedback[file_name] = []
+                        for t in tickets:
+                            # Find program_id from file documentation
+                            program_id = file_name
+                            for doc in input_data.file_documentation:
+                                if doc.file_name == file_name:
+                                    program_id = doc.program_id
+                                    break
+                            t["program_id"] = program_id
+                            file_feedback[file_name].append(ChromeTicket.model_validate(t))
 
             # Parse consistency issues
             consistency_issues = []
@@ -1427,6 +1459,17 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
             if "clarification_requests" in data:
                 for req in data["clarification_requests"]:
                     req["cycle_asked"] = input_data.cycle
+                    # Normalize file_name from LLM output
+                    if "file_name" in req:
+                        resolved = _normalize_file_name(req["file_name"])
+                        if resolved:
+                            req["file_name"] = resolved
+                        else:
+                            logger.warning(
+                                f"Skipping clarification request for "
+                                f"{req['file_name']}: not in documented files list"
+                            )
+                            continue
                     clarification_requests.append(ClarificationRequest.model_validate(req))
 
             # Parse assumptions
@@ -2497,6 +2540,10 @@ This creates a navigable documentation web.
             # Call LLM
             response = await self._call_llm(system_prompt, user_prompt)
 
+            # Strip outer code fence wrapper if the LLM wrapped its response
+            # in ```markdown ... ``` (which breaks inner mermaid blocks)
+            response = self._strip_outer_code_fence(response)
+
             # Append Flows section with sequence diagrams if provided
             final_markdown = response
             if sequence_diagrams:
@@ -2615,6 +2662,49 @@ This creates a navigable documentation web.
             sections.append(match.group(1).strip())
 
         return sections
+
+    @staticmethod
+    def _strip_outer_code_fence(text: str) -> str:
+        """Strip an outer markdown/text code fence wrapping the LLM response.
+
+        LLMs sometimes wrap their entire response in a code fence like:
+
+            ```markdown
+            # Actual Content
+            ...inner ```mermaid blocks...
+            ```
+
+        This causes inner fenced blocks (e.g. mermaid diagrams) to be treated
+        as literal text instead of being rendered. This method strips only the
+        outermost fence, preserving all inner content intact.
+
+        Recognized fence tags: ``markdown``, ``md``, ``text``, or bare ``````.
+
+        Args:
+            text: The raw LLM response string.
+
+        Returns:
+            The content with the outer code fence removed, or the original
+            text unchanged if no outer fence was detected.
+        """
+        stripped = text.strip()
+        # Match opening fence: ``` optionally followed by markdown/md/text
+        # The opening fence must be at the very start of the (stripped) text.
+        match = re.match(
+            r"^```(?:markdown|md|text)?[ \t]*\r?\n", stripped, re.IGNORECASE
+        )
+        if not match:
+            return text
+
+        # The closing fence must be at the very end (possibly with trailing whitespace)
+        if not re.search(r"\n```[ \t]*$", stripped):
+            return text
+
+        # Remove the first line (opening fence) and the last closing fence line
+        inner = stripped[match.end():]
+        # Remove trailing ``` (last occurrence at end of string)
+        inner = re.sub(r"\n```[ \t]*$", "", inner)
+        return inner
 
     def _format_flows_section(self, sequence_diagrams: list[str]) -> str:
         """Format sequence diagrams as a Flows section for SYSTEM_DESIGN.md.

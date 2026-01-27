@@ -756,6 +756,117 @@ Final content
         assert sections == []
 
 
+class TestStripOuterCodeFence:
+    """Tests for the _strip_outer_code_fence static method."""
+
+    def test_strips_markdown_fence(self, imperator_agent: ImperatorAgent):
+        """Test stripping ```markdown wrapper."""
+        text = "```markdown\n# Title\n\nSome content\n```"
+        result = ImperatorAgent._strip_outer_code_fence(text)
+        assert result == "# Title\n\nSome content"
+
+    def test_strips_md_fence(self, imperator_agent: ImperatorAgent):
+        """Test stripping ```md wrapper."""
+        text = "```md\n# Title\n\nContent here\n```"
+        result = ImperatorAgent._strip_outer_code_fence(text)
+        assert result == "# Title\n\nContent here"
+
+    def test_strips_text_fence(self, imperator_agent: ImperatorAgent):
+        """Test stripping ```text wrapper."""
+        text = "```text\nPlain text content\n```"
+        result = ImperatorAgent._strip_outer_code_fence(text)
+        assert result == "Plain text content"
+
+    def test_strips_bare_fence(self, imperator_agent: ImperatorAgent):
+        """Test stripping bare ``` wrapper with no language tag."""
+        text = "```\n# Title\n\nContent\n```"
+        result = ImperatorAgent._strip_outer_code_fence(text)
+        assert result == "# Title\n\nContent"
+
+    def test_preserves_inner_mermaid_blocks(self, imperator_agent: ImperatorAgent):
+        """Test that inner ```mermaid blocks are preserved when outer fence is stripped."""
+        text = (
+            "```markdown\n"
+            "# System Design\n"
+            "\n"
+            "## Architecture\n"
+            "\n"
+            "```mermaid\n"
+            "graph TD\n"
+            "    A --> B\n"
+            "```\n"
+            "\n"
+            "## Data Flow\n"
+            "\n"
+            "```mermaid\n"
+            "sequenceDiagram\n"
+            "    A->>B: call\n"
+            "```\n"
+            "```"
+        )
+        result = ImperatorAgent._strip_outer_code_fence(text)
+        assert result.startswith("# System Design")
+        assert "```mermaid\ngraph TD" in result
+        assert "```mermaid\nsequenceDiagram" in result
+        # The inner closing ``` for mermaid blocks should still be present
+        assert result.count("```") == 4  # 2 mermaid opens + 2 mermaid closes
+
+    def test_no_fence_returns_unchanged(self, imperator_agent: ImperatorAgent):
+        """Test that content without outer fence is returned unchanged."""
+        text = "# Title\n\nRegular markdown content\n"
+        result = ImperatorAgent._strip_outer_code_fence(text)
+        assert result == text
+
+    def test_only_opening_fence_returns_unchanged(
+        self, imperator_agent: ImperatorAgent
+    ):
+        """Test that content with only opening fence is returned unchanged."""
+        text = "```markdown\n# Title\n\nContent without closing fence"
+        result = ImperatorAgent._strip_outer_code_fence(text)
+        assert result == text
+
+    def test_only_closing_fence_returns_unchanged(
+        self, imperator_agent: ImperatorAgent
+    ):
+        """Test that content with only closing fence is returned unchanged."""
+        text = "# Title\n\nContent\n```"
+        result = ImperatorAgent._strip_outer_code_fence(text)
+        assert result == text
+
+    def test_handles_leading_trailing_whitespace(
+        self, imperator_agent: ImperatorAgent
+    ):
+        """Test that leading/trailing whitespace around the fence is handled."""
+        text = "\n  ```markdown\n# Title\n\nContent\n```  \n"
+        result = ImperatorAgent._strip_outer_code_fence(text)
+        assert result == "# Title\n\nContent"
+
+    def test_non_markdown_fence_not_stripped(self, imperator_agent: ImperatorAgent):
+        """Test that code fences with non-markdown languages are not stripped."""
+        text = "```python\nprint('hello')\n```"
+        result = ImperatorAgent._strip_outer_code_fence(text)
+        assert result == text
+
+    def test_case_insensitive_tag(self, imperator_agent: ImperatorAgent):
+        """Test that the fence tag matching is case-insensitive."""
+        text = "```Markdown\n# Title\n\nContent\n```"
+        result = ImperatorAgent._strip_outer_code_fence(text)
+        assert result == "# Title\n\nContent"
+
+    def test_empty_string(self, imperator_agent: ImperatorAgent):
+        """Test handling of empty string."""
+        result = ImperatorAgent._strip_outer_code_fence("")
+        assert result == ""
+
+    def test_fence_with_trailing_spaces_on_lines(
+        self, imperator_agent: ImperatorAgent
+    ):
+        """Test fences that have trailing spaces on the fence lines."""
+        text = "```markdown   \n# Title\n```   "
+        result = ImperatorAgent._strip_outer_code_fence(text)
+        assert result == "# Title"
+
+
 class TestGenerateSystemDesign:
     """Tests for the generate_system_design method."""
 

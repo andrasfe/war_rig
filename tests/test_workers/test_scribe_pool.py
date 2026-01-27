@@ -1521,3 +1521,197 @@ class TestLockSkippedTickets:
 
         # Cleanup
         await lock_manager.release(output_file, "other-worker")
+
+
+# =============================================================================
+# Citadel Enrichment Tests
+# =============================================================================
+
+
+class TestApplyCitadelEnrichment:
+    """Tests for _apply_citadel_enrichment helper method."""
+
+    async def test_returns_template_unchanged_when_citadel_not_available(
+        self, mock_config, mock_beads_client, sample_pm_ticket, tmp_path
+    ):
+        """When Citadel SDK is not initialized, template is returned as-is."""
+        from war_rig.models.templates import DocumentationTemplate
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            output_directory=tmp_path / "output",
+        )
+        # Ensure citadel is not available
+        worker._citadel = None
+
+        template = DocumentationTemplate()
+        result = await worker._apply_citadel_enrichment(
+            template, sample_pm_ticket, FileType.COBOL
+        )
+        assert result is template
+        assert result.flow_diagram is None
+
+    async def test_generates_flow_diagram_for_cobol(
+        self, mock_config, mock_beads_client, sample_pm_ticket, tmp_path
+    ):
+        """When Citadel is available and file is COBOL, flow diagram is set."""
+        from war_rig.models.templates import DocumentationTemplate
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            output_directory=tmp_path / "output",
+        )
+
+        mock_citadel = MagicMock()
+        mock_citadel.get_flow_diagram.return_value = "flowchart TD\n    A --> B"
+        worker._citadel = mock_citadel
+
+        # Mock _get_citadel_context to return None (no enrichment, just flow diagram)
+        worker._get_citadel_context = MagicMock(return_value=None)
+
+        template = DocumentationTemplate()
+        result = await worker._apply_citadel_enrichment(
+            template, sample_pm_ticket, FileType.COBOL
+        )
+        assert result.flow_diagram == "flowchart TD\n    A --> B"
+        mock_citadel.get_flow_diagram.assert_called_once()
+
+    async def test_skips_flow_diagram_for_non_cobol(
+        self, mock_config, mock_beads_client, tmp_path
+    ):
+        """Flow diagram is not generated for non-COBOL file types."""
+        from war_rig.models.templates import DocumentationTemplate
+
+        ticket = ProgramManagerTicket(
+            ticket_id="war_rig-jcl1",
+            ticket_type=TicketType.DOCUMENTATION,
+            state=TicketState.CREATED,
+            file_name="TEST.jcl",
+            program_id="TEST",
+            cycle_number=1,
+            metadata={},
+        )
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            output_directory=tmp_path / "output",
+        )
+
+        mock_citadel = MagicMock()
+        worker._citadel = mock_citadel
+        worker._get_citadel_context = MagicMock(return_value=None)
+
+        template = DocumentationTemplate()
+        result = await worker._apply_citadel_enrichment(
+            template, ticket, FileType.JCL
+        )
+        assert result.flow_diagram is None
+        mock_citadel.get_flow_diagram.assert_not_called()
+
+    async def test_enriches_paragraphs_with_citadel_context(
+        self, mock_config, mock_beads_client, sample_pm_ticket, tmp_path
+    ):
+        """When citadel context is available, paragraphs are enriched."""
+        from war_rig.models.templates import DocumentationTemplate, HeaderSection
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            output_directory=tmp_path / "output",
+        )
+
+        mock_citadel = MagicMock()
+        mock_citadel.get_flow_diagram.return_value = "flowchart TD\n    A --> B"
+        worker._citadel = mock_citadel
+
+        citadel_context = {"functions": [], "includes": []}
+        worker._get_citadel_context = MagicMock(return_value=citadel_context)
+
+        enriched_template = DocumentationTemplate(
+            header=HeaderSection(file_name="ENRICHED.cbl")
+        )
+        worker._enrich_paragraphs_with_citadel = AsyncMock(
+            return_value=enriched_template
+        )
+
+        template = DocumentationTemplate()
+        result = await worker._apply_citadel_enrichment(
+            template, sample_pm_ticket, FileType.COBOL
+        )
+
+        worker._enrich_paragraphs_with_citadel.assert_called_once()
+        # The enriched template should have been returned (with flow diagram added)
+        assert result.header is not None
+        assert result.header.file_name == "ENRICHED.cbl"
+        assert result.flow_diagram == "flowchart TD\n    A --> B"
+
+    async def test_handles_flow_diagram_exception_gracefully(
+        self, mock_config, mock_beads_client, sample_pm_ticket, tmp_path
+    ):
+        """Flow diagram generation errors are caught, template still returned."""
+        from war_rig.models.templates import DocumentationTemplate
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            output_directory=tmp_path / "output",
+        )
+
+        mock_citadel = MagicMock()
+        mock_citadel.get_flow_diagram.side_effect = RuntimeError("parse error")
+        worker._citadel = mock_citadel
+        worker._get_citadel_context = MagicMock(return_value=None)
+
+        template = DocumentationTemplate()
+        result = await worker._apply_citadel_enrichment(
+            template, sample_pm_ticket, FileType.COBOL
+        )
+        # Should still return template despite error
+        assert result.flow_diagram is None
+        assert result is template
+
+    async def test_uses_metadata_file_path_when_available(
+        self, mock_config, mock_beads_client, tmp_path
+    ):
+        """When ticket metadata has file_path, it is used for Citadel."""
+        from war_rig.models.templates import DocumentationTemplate
+
+        custom_path = "/custom/path/PROG.cbl"
+        ticket = ProgramManagerTicket(
+            ticket_id="war_rig-meta1",
+            ticket_type=TicketType.DOCUMENTATION,
+            state=TicketState.CREATED,
+            file_name="PROG.cbl",
+            program_id="PROG",
+            cycle_number=1,
+            metadata={"file_path": custom_path},
+        )
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            output_directory=tmp_path / "output",
+        )
+
+        mock_citadel = MagicMock()
+        mock_citadel.get_flow_diagram.return_value = "flowchart TD\n    X --> Y"
+        worker._citadel = mock_citadel
+        worker._get_citadel_context = MagicMock(return_value=None)
+
+        template = DocumentationTemplate()
+        await worker._apply_citadel_enrichment(
+            template, ticket, FileType.COBOL
+        )
+
+        # Verify Citadel was called with the metadata path, not input_directory
+        worker._get_citadel_context.assert_called_once_with(custom_path)
+        mock_citadel.get_flow_diagram.assert_called_once_with(custom_path)

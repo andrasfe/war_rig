@@ -821,7 +821,7 @@ class TicketOrchestrator:
                     ]
                     for candidate in candidates:
                         if candidate.exists():
-                            file_name = candidate.name
+                            file_name = str(candidate.relative_to(self._input_directory))
                             file_exists = True
                             break
                     if file_exists:

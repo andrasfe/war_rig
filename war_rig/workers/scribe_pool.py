@@ -546,6 +546,60 @@ class ScribeWorker:
 
         return template
 
+    async def _apply_citadel_enrichment(
+        self,
+        template: DocumentationTemplate,
+        ticket: ProgramManagerTicket,
+        file_type: FileType,
+    ) -> DocumentationTemplate:
+        """Enrich a template with Citadel call references and flow diagram.
+
+        Resolves the source file path, gathers Citadel analysis context,
+        enriches paragraph call references, and generates a Mermaid flow
+        diagram for COBOL files. This method is safe to call even when
+        Citadel is not available -- it returns the template unchanged.
+
+        Args:
+            template: The documentation template to enrich.
+            ticket: The ticket being processed (used to resolve file path).
+            file_type: The detected file type.
+
+        Returns:
+            The enriched template (may be the same object if no enrichment
+            was applied).
+        """
+        if not self._citadel:
+            return template
+
+        # Resolve the source file path for Citadel analysis
+        source_path = self.input_directory / ticket.file_name
+        metadata_path = ticket.metadata.get("file_path")
+        if metadata_path:
+            source_path = Path(metadata_path)
+
+        # Enrich paragraphs with Citadel call references
+        citadel_context = self._get_citadel_context(str(source_path))
+        if citadel_context:
+            template = await self._enrich_paragraphs_with_citadel(
+                template,
+                str(source_path),
+                citadel_context,
+            )
+
+        # Generate flow diagram for COBOL files
+        if file_type == FileType.COBOL:
+            try:
+                flow = self._citadel.get_flow_diagram(str(source_path))
+                if flow:
+                    template.flow_diagram = flow
+            except Exception as e:
+                logger.debug(
+                    f"Worker {self.worker_id}: Flow diagram generation failed "
+                    f"for {ticket.file_name}: {e}"
+                )
+
+        return template
+
     async def run(self) -> None:
         """Main worker loop.
 
@@ -1675,8 +1729,11 @@ class ScribeWorker:
                 formatting_strict=formatting_strict,
                 chunking_result=prepared.chunking_result,
             )
-            # Save the template if successful
+            # Enrich chunked output with Citadel analysis and flow diagram
             if output.success and output.template:
+                output.template = await self._apply_citadel_enrichment(
+                    output.template, ticket, file_type,
+                )
                 self._save_template(ticket.file_name, output.template)
             return output
 
@@ -1733,6 +1790,12 @@ class ScribeWorker:
                         error=f"Critical sections are empty: {', '.join(empty_sections)}",
                         template=output.template,  # Include template for debugging
                     )
+
+        # Enrich with Citadel analysis and flow diagram
+        if output.success and output.template:
+            output.template = await self._apply_citadel_enrichment(
+                output.template, ticket, file_type,
+            )
 
         # Save the template if successful
         if output.success and output.template:
@@ -2612,6 +2675,12 @@ class ScribeWorker:
                         template=output.template,
                     )
 
+        # Enrich with Citadel analysis and flow diagram
+        if output.success and output.template:
+            output.template = await self._apply_citadel_enrichment(
+                output.template, ticket, file_type,
+            )
+
         # Save updated template if successful
         if output.success and output.template:
             self._save_template(ticket.file_name, output.template)
@@ -2837,6 +2906,12 @@ class ScribeWorker:
                         error=f"Critical sections are empty: {', '.join(empty_sections)}",
                         template=output.template,
                     )
+
+        # Enrich with Citadel analysis and flow diagram
+        if output.success and output.template:
+            output.template = await self._apply_citadel_enrichment(
+                output.template, ticket, file_type,
+            )
 
         # Save updated template if successful
         if output.success and output.template:
