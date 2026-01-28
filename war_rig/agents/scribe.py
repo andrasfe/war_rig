@@ -74,6 +74,10 @@ class ScribeInput(AgentInput):
         default=None,
         description="FeedbackContext from Imperator review with quality notes to address",
     )
+    citadel_outline: list[dict] | None = Field(
+        default=None,
+        description="Citadel paragraph outline with names, line ranges, and calls for guided documentation",
+    )
 
 
 class ScribeOutput(AgentOutput):
@@ -385,6 +389,26 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
             parts.append("```json")
             parts.append(input_data.preprocessor_result.model_dump_json(indent=2))
             parts.append("```")
+            parts.append("")
+
+        # Citadel paragraph outline (if provided)
+        if input_data.citadel_outline:
+            parts.append("## Paragraph Outline (from static analysis)")
+            parts.append("")
+            parts.append("The following paragraphs were identified by static analysis.")
+            parts.append("You MUST document ALL listed paragraphs. Do not skip any.")
+            parts.append("")
+            for para in input_data.citadel_outline:
+                name = para.get("name", "UNKNOWN")
+                line_start = para.get("line_start", "?")
+                line_end = para.get("line_end", "?")
+                calls = para.get("calls", [])
+                call_targets = ", ".join(
+                    c.get("target", "") for c in calls if c.get("target")
+                )
+                line_range = f"lines {line_start}-{line_end}" if line_start and line_end else ""
+                calls_str = f" → calls: {call_targets}" if call_targets else ""
+                parts.append(f"- **{name}** ({line_range}){calls_str}")
             parts.append("")
 
         # Source code

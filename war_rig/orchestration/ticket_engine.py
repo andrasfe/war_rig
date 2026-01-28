@@ -590,6 +590,7 @@ class TicketOrchestrator:
             upstream_active_check=self._is_documentation_in_progress,
             file_lock_manager=self._file_lock_manager,
             exit_on_error=self.config.exit_on_error,
+            dependency_graph_path=self._state.dependency_graph_path,
         )
 
         # Start both pools simultaneously
@@ -987,6 +988,7 @@ class TicketOrchestrator:
             upstream_active_check=lambda: not scribe_pool.is_done(),
             file_lock_manager=self._file_lock_manager,
             exit_on_error=self.config.exit_on_error,
+            dependency_graph_path=self._state.dependency_graph_path,
         )
 
         # Start both pools
@@ -1222,6 +1224,7 @@ class TicketOrchestrator:
                     poll_interval=2.0,
                     file_lock_manager=self._file_lock_manager,
                     exit_on_error=self.config.exit_on_error,
+                    dependency_graph_path=self._state.dependency_graph_path,
                 )
 
             await self._challenger_pool.start()

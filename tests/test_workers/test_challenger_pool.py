@@ -1839,3 +1839,282 @@ class TestStructuralPrecheckIntegration:
         # IMPORTANT issues are not prepended to blocking_questions
         # (only BLOCKING structural issues are)
         assert result.is_valid is True
+
+
+# =============================================================================
+# Challenger Citadel Wiring Tests (D5)
+# =============================================================================
+
+
+class TestChallengerCitadelWiring:
+    """Test that ChallengerWorkerPool receives dependency_graph_path."""
+
+    def test_pool_passes_dependency_graph_path(self, mock_config, mock_beads_client, tmp_path):
+        """Verify pool passes dependency_graph_path to workers."""
+        graph_path = tmp_path / "dep_graph.json"
+        graph_path.write_text("{}")
+
+        pool = ChallengerWorkerPool(
+            num_workers=1,
+            config=mock_config,
+            beads_client=mock_beads_client,
+            exit_on_error=False,
+            dependency_graph_path=graph_path,
+        )
+
+        # Pool passes dependency_graph_path to workers
+        assert len(pool.workers) == 1
+        assert pool.workers[0]._dependency_graph_path == graph_path
+
+    def test_worker_initializes_citadel_with_graph_path(self, mock_config, mock_beads_client, tmp_path):
+        """Verify worker initializes Citadel when dependency graph provided."""
+        graph_path = tmp_path / "dep_graph.json"
+        graph_path.write_text("{}")
+
+        worker = ChallengerWorker(
+            worker_id="challenger-test",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            exit_on_error=False,
+            dependency_graph_path=graph_path,
+        )
+
+        # Citadel should be initialized (if installed)
+        # The _dependency_graph_path should be set regardless
+        assert worker._dependency_graph_path == graph_path
+
+    def test_worker_no_citadel_without_graph_path(self, mock_config, mock_beads_client):
+        """Verify worker does not initialize Citadel without graph path."""
+        worker = ChallengerWorker(
+            worker_id="challenger-test",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            exit_on_error=False,
+        )
+
+        assert worker._dependency_graph_path is None
+        assert worker._citadel is None
+
+    def test_resolve_source_path_from_metadata(self, mock_config, mock_beads_client):
+        """Verify _resolve_source_path uses metadata file_path when available."""
+        worker = ChallengerWorker(
+            worker_id="challenger-test",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            exit_on_error=False,
+        )
+
+        ticket = ProgramManagerTicket(
+            ticket_id="war_rig-test001",
+            ticket_type=TicketType.VALIDATION,
+            state=TicketState.CREATED,
+            file_name="TESTPROG.cbl",
+            program_id="TESTPROG",
+            cycle_number=1,
+            metadata={"file_path": "/custom/path/TESTPROG.cbl"},
+        )
+
+        from pathlib import Path
+        resolved = worker._resolve_source_path(ticket)
+        assert resolved == Path("/custom/path/TESTPROG.cbl")
+
+    def test_resolve_source_path_fallback(self, mock_config, mock_beads_client):
+        """Verify _resolve_source_path falls back to input_directory."""
+        worker = ChallengerWorker(
+            worker_id="challenger-test",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            exit_on_error=False,
+        )
+
+        ticket = ProgramManagerTicket(
+            ticket_id="war_rig-test001",
+            ticket_type=TicketType.VALIDATION,
+            state=TicketState.CREATED,
+            file_name="TESTPROG.cbl",
+            program_id="TESTPROG",
+            cycle_number=1,
+            metadata={},
+        )
+
+        resolved = worker._resolve_source_path(ticket)
+        assert resolved == worker._input_directory / "TESTPROG.cbl"
+
+
+# =============================================================================
+# Challenger LLM Validation with Bodies Tests (D6)
+# =============================================================================
+
+
+class TestChallengerLLMValidationWithBodies:
+    """Test that Challenger validation passes Citadel bodies to ChallengerInput."""
+
+    @pytest.fixture
+    def worker_with_citadel(self, mock_config, mock_beads_client, tmp_path):
+        """Create a ChallengerWorker with a mocked Citadel instance."""
+        graph_path = tmp_path / "dep_graph.json"
+        graph_path.write_text("{}")
+
+        worker = ChallengerWorker(
+            worker_id="challenger-test",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            exit_on_error=False,
+            dependency_graph_path=graph_path,
+        )
+
+        # Mock the Citadel SDK
+        mock_citadel = MagicMock()
+        mock_citadel.get_function_bodies.return_value = {
+            "0000-MAIN": "       0000-MAIN.\n           DISPLAY 'HELLO'.\n           STOP RUN.",
+        }
+        worker._citadel = mock_citadel
+        return worker
+
+    async def test_bodies_passed_to_challenger_input(
+        self, worker_with_citadel, sample_template, sample_validation_ticket
+    ):
+        """Test that function bodies are passed to ChallengerInput citadel_context."""
+        worker = worker_with_citadel
+
+        # Add a paragraph to the template so bodies can be fetched
+        from war_rig.models.templates import Paragraph
+        sample_template.paragraphs = [
+            Paragraph(paragraph_name="0000-MAIN", purpose="Main entry point"),
+        ]
+
+        # Build validation state directly
+        state = {
+            "template": sample_template,
+            "source_code": "       0000-MAIN.\n           STOP RUN.",
+            "file_name": "TESTPROG.cbl",
+            "file_type": FileType.COBOL,
+            "iteration": 1,
+        }
+
+        # Mock challenger agent to capture the input
+        captured_inputs = []
+
+        async def capture_input(input_data):
+            captured_inputs.append(input_data)
+            return ChallengerOutput(success=True)
+
+        worker.challenger.ainvoke = capture_input
+
+        await worker._validate_documentation(state, sample_validation_ticket)
+
+        # Verify citadel_context was passed
+        assert len(captured_inputs) == 1
+        challenger_input = captured_inputs[0]
+        assert challenger_input.citadel_context is not None
+        assert "paragraph_bodies" in challenger_input.citadel_context
+        bodies = challenger_input.citadel_context["paragraph_bodies"]
+        assert "0000-MAIN" in bodies
+
+    async def test_validation_works_without_citadel(
+        self, mock_config, mock_beads_client, sample_template, sample_validation_ticket
+    ):
+        """Test backward compatibility: validation works without Citadel."""
+        worker = ChallengerWorker(
+            worker_id="challenger-test",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            exit_on_error=False,
+        )
+
+        assert worker._citadel is None
+
+        # Build validation state directly
+        state = {
+            "template": sample_template,
+            "source_code": "       0000-MAIN.\n           STOP RUN.",
+            "file_name": "TESTPROG.cbl",
+            "file_type": FileType.COBOL,
+            "iteration": 1,
+        }
+
+        # Mock challenger agent
+        async def mock_invoke(input_data):
+            # citadel_context should be None when Citadel is not available
+            assert input_data.citadel_context is None
+            return ChallengerOutput(success=True)
+
+        worker.challenger.ainvoke = mock_invoke
+
+        result = await worker._validate_documentation(state, sample_validation_ticket)
+        assert result.success is True
+
+    def test_citadel_context_in_prompt(self):
+        """Test that ChallengerAgent renders citadel_context in prompt."""
+        from war_rig.agents.challenger import ChallengerAgent, ChallengerInput
+        from war_rig.config import ChallengerConfig, APIConfig
+
+        agent = ChallengerAgent(
+            config=ChallengerConfig(model="test-model"),
+            api_config=APIConfig(
+                provider="mock",
+                api_key="test",
+            ),
+        )
+
+        input_data = ChallengerInput(
+            template=sample_template_for_prompt(),
+            source_code="       0000-MAIN.\n           STOP RUN.",
+            file_name="TEST.cbl",
+            file_type=FileType.COBOL,
+            citadel_context={
+                "paragraph_bodies": {
+                    "0000-MAIN": "       0000-MAIN.\n           DISPLAY 'HELLO'.\n           STOP RUN.",
+                }
+            },
+        )
+
+        prompt = agent._build_user_prompt(input_data)
+
+        assert "Paragraph Source Code (from static analysis)" in prompt
+        assert "0000-MAIN" in prompt
+        assert "DISPLAY 'HELLO'" in prompt
+        assert "Cross-reference" in prompt
+
+    def test_no_citadel_section_without_context(self):
+        """Test that prompt has no Citadel section without citadel_context."""
+        from war_rig.agents.challenger import ChallengerAgent, ChallengerInput
+        from war_rig.config import ChallengerConfig, APIConfig
+
+        agent = ChallengerAgent(
+            config=ChallengerConfig(model="test-model"),
+            api_config=APIConfig(
+                provider="mock",
+                api_key="test",
+            ),
+        )
+
+        input_data = ChallengerInput(
+            template=sample_template_for_prompt(),
+            source_code="       0000-MAIN.\n           STOP RUN.",
+            file_name="TEST.cbl",
+            file_type=FileType.COBOL,
+        )
+
+        prompt = agent._build_user_prompt(input_data)
+        assert "Paragraph Source Code (from static analysis)" not in prompt
+
+
+def sample_template_for_prompt() -> DocumentationTemplate:
+    """Helper to create a template for prompt tests."""
+    return DocumentationTemplate(
+        header=HeaderSection(
+            program_id="TEST",
+            file_name="TEST.cbl",
+            file_type=FileType.COBOL,
+            analyzed_by="TEST",
+            analyzed_at=datetime(2024, 1, 1),
+            iteration_count=1,
+        ),
+        purpose=PurposeSection(
+            summary="Test program",
+            business_context="Test",
+            program_type=ProgramType.BATCH,
+            citations=[1],
+        ),
+    )

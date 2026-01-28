@@ -324,6 +324,24 @@ class WarRigConfig(BaseSettings):
         description="Maximum retry attempts per ticket (including Super-Scribe) before fatal exit",
     )
 
+    # Citadel-guided documentation thresholds
+    citadel_guided_threshold_lines: int = Field(
+        default=2000,
+        ge=100,
+        description="Files with more lines than this use batched per-paragraph processing",
+    )
+    citadel_guided_threshold_paragraphs: int = Field(
+        default=15,
+        ge=1,
+        description="Files with more paragraphs than this use batched processing",
+    )
+    citadel_batch_size: int = Field(
+        default=5,
+        ge=1,
+        le=20,
+        description="Number of paragraphs per batch in Citadel-guided processing",
+    )
+
     # Beads integration
     # Disabled by default - War Rig uses in-memory ticket tracking
     # Enable only if you have a separate beads instance configured

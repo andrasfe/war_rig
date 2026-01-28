@@ -251,6 +251,21 @@ class ChallengerWorker:
 
         return self.output_directory / doc_filename
 
+    def _resolve_source_path(self, ticket: ProgramManagerTicket) -> Path:
+        """Resolve the source file path from ticket metadata or input directory.
+
+        Args:
+            ticket: The ticket to resolve the path for.
+
+        Returns:
+            Resolved Path to the source file.
+        """
+        if ticket.metadata:
+            file_path = ticket.metadata.get("file_path")
+            if file_path:
+                return Path(file_path)
+        return self._input_directory / ticket.file_name
+
     def _get_citadel_context(self, file_path: str) -> dict[str, Any] | None:
         """Get Citadel analysis context for a file.
 
@@ -1255,6 +1270,29 @@ class ChallengerWorker:
             # Extract feedback context from ticket metadata (IMPFB-006)
             feedback_context = ticket.metadata.get("feedback_context") if ticket.metadata else None
 
+            # Build Citadel context with paragraph bodies for cross-reference
+            citadel_ctx = None
+            if self._citadel and state.get("template"):
+                try:
+                    template = state["template"]
+                    para_names = [
+                        p.paragraph_name
+                        for p in template.paragraphs
+                        if p.paragraph_name
+                    ]
+                    if para_names:
+                        # Resolve source file path
+                        source_path = self._resolve_source_path(ticket)
+                        bodies = self._citadel.get_function_bodies(
+                            str(source_path), para_names
+                        )
+                        citadel_ctx = {"paragraph_bodies": bodies}
+                except Exception as e:
+                    logger.debug(
+                        f"Worker {self.worker_id}: Failed to get Citadel bodies "
+                        f"for challenger: {e}"
+                    )
+
             # Build ChallengerInput
             challenger_input = ChallengerInput(
                 template=state["template"],
@@ -1266,6 +1304,7 @@ class ChallengerWorker:
                 max_questions=self.config.max_questions_per_round,
                 formatting_strict=formatting_strict,
                 feedback_context=feedback_context,
+                citadel_context=citadel_ctx,
             )
 
             # Invoke the ChallengerAgent

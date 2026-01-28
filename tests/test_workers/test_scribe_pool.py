@@ -2258,3 +2258,355 @@ class TestPerformThruDeadCodeFilter:
         exit_para = result.paragraphs[0]
         assert exit_para.is_dead_code is True
         assert len(result.dead_code) == 1
+
+
+# =============================================================================
+# Citadel-Guided Hybrid Processing Tests (D4)
+# =============================================================================
+
+
+class TestCitadelGuidedEligibility:
+    """Tests for _is_citadel_guided_eligible."""
+
+    def test_eligible_cobol_with_citadel(self, mock_config, mock_beads_client, tmp_path):
+        """COBOL files with Citadel available should be eligible."""
+        worker = ScribeWorker(
+            worker_id="scribe-test",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            input_directory=tmp_path,
+            output_directory=tmp_path / "output",
+            exit_on_error=False,
+        )
+        # Mock Citadel
+        worker._citadel = MagicMock()
+
+        assert worker._is_citadel_guided_eligible(FileType.COBOL, "source") is True
+
+    def test_not_eligible_without_citadel(self, mock_config, mock_beads_client, tmp_path):
+        """Without Citadel, no file should be eligible."""
+        worker = ScribeWorker(
+            worker_id="scribe-test",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            input_directory=tmp_path,
+            output_directory=tmp_path / "output",
+            exit_on_error=False,
+        )
+
+        assert worker._citadel is None
+        assert worker._is_citadel_guided_eligible(FileType.COBOL, "source") is False
+
+    def test_not_eligible_non_cobol(self, mock_config, mock_beads_client, tmp_path):
+        """Non-COBOL files should not be eligible even with Citadel."""
+        worker = ScribeWorker(
+            worker_id="scribe-test",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            input_directory=tmp_path,
+            output_directory=tmp_path / "output",
+            exit_on_error=False,
+        )
+        worker._citadel = MagicMock()
+
+        assert worker._is_citadel_guided_eligible(FileType.JCL, "source") is False
+        assert worker._is_citadel_guided_eligible(FileType.PLI, "source") is False
+        assert worker._is_citadel_guided_eligible(FileType.ASM, "source") is False
+
+
+class TestCitadelGuidedDocumentation:
+    """Tests for _process_citadel_guided_documentation."""
+
+    @pytest.fixture
+    def citadel_worker(self, mock_config, mock_beads_client, tmp_path):
+        """Create a ScribeWorker with mocked Citadel."""
+        # Add config fields needed for Citadel-guided processing
+        mock_config.citadel_guided_threshold_lines = 2000
+        mock_config.citadel_guided_threshold_paragraphs = 15
+        mock_config.citadel_batch_size = 5
+
+        worker = ScribeWorker(
+            worker_id="scribe-test",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            input_directory=tmp_path,
+            output_directory=tmp_path / "output",
+            exit_on_error=False,
+        )
+
+        # Mock Citadel SDK
+        mock_citadel = MagicMock()
+        mock_citadel.get_file_stats.return_value = {
+            "total_lines": 100,
+            "paragraph_count": 3,
+            "language": "cobol",
+            "paragraphs": [
+                {"name": "0000-MAIN", "line_start": 10, "line_end": 20, "line_count": 11},
+                {"name": "1000-PROCESS", "line_start": 22, "line_end": 40, "line_count": 19},
+                {"name": "9999-EXIT", "line_start": 42, "line_end": 45, "line_count": 4},
+            ],
+        }
+        mock_citadel.get_functions.return_value = [
+            {"name": "0000-MAIN", "type": "paragraph", "line": 10, "line_end": 20, "calls": [
+                {"target": "1000-PROCESS", "type": "performs", "line": 15},
+            ]},
+            {"name": "1000-PROCESS", "type": "paragraph", "line": 22, "line_end": 40, "calls": []},
+            {"name": "9999-EXIT", "type": "paragraph", "line": 42, "line_end": 45, "calls": []},
+        ]
+        mock_citadel.get_includes.return_value = []
+        mock_citadel.get_function_bodies.return_value = {
+            "0000-MAIN": "       0000-MAIN.\n           PERFORM 1000-PROCESS.\n           STOP RUN.",
+            "1000-PROCESS": "       1000-PROCESS.\n           DISPLAY 'PROCESSING'.",
+            "9999-EXIT": "       9999-EXIT.\n           EXIT.",
+        }
+        mock_citadel.get_callers.return_value = []
+        mock_citadel.get_flow_diagram.return_value = None
+        mock_citadel.get_dead_code.return_value = []
+        worker._citadel = mock_citadel
+
+        return worker
+
+    async def test_small_file_single_pass(self, citadel_worker, sample_pm_ticket):
+        """Test small file gets single-pass processing with outline."""
+        worker = citadel_worker
+
+        # Mock scribe agent to capture input
+        from war_rig.models.templates import DocumentationTemplate, Paragraph
+        captured_inputs = []
+
+        async def mock_ainvoke(input_data):
+            captured_inputs.append(input_data)
+            template = DocumentationTemplate()
+            template.paragraphs = [
+                Paragraph(paragraph_name="0000-MAIN", purpose="Main entry"),
+                Paragraph(paragraph_name="1000-PROCESS", purpose="Processing"),
+                Paragraph(paragraph_name="9999-EXIT", purpose="Exit point"),
+            ]
+            return ScribeOutput(success=True, template=template)
+
+        worker._scribe_agent = MagicMock()
+        worker._scribe_agent.ainvoke = mock_ainvoke
+
+        result = await worker._process_citadel_guided_documentation(
+            sample_pm_ticket, "source code", FileType.COBOL,
+        )
+
+        assert result.success is True
+        assert result.template is not None
+        # Should have been called (single pass)
+        assert len(captured_inputs) >= 1
+        # First call should include citadel_outline
+        assert captured_inputs[0].citadel_outline is not None
+        assert len(captured_inputs[0].citadel_outline) == 3
+
+    async def test_large_file_batched(self, citadel_worker, sample_pm_ticket):
+        """Test large file gets batched processing."""
+        worker = citadel_worker
+
+        # Make file appear large
+        worker._citadel.get_file_stats.return_value = {
+            "total_lines": 3000,
+            "paragraph_count": 20,
+            "language": "cobol",
+            "paragraphs": [
+                {"name": f"PARA-{i}", "line_start": i * 100, "line_end": (i + 1) * 100 - 1, "line_count": 100}
+                for i in range(20)
+            ],
+        }
+        worker._citadel.get_functions.return_value = [
+            {"name": f"PARA-{i}", "type": "paragraph", "line": i * 100, "line_end": (i + 1) * 100 - 1, "calls": []}
+            for i in range(20)
+        ]
+        worker._citadel.get_function_bodies.return_value = {
+            f"PARA-{i}": f"       PARA-{i}.\n           DISPLAY 'PARA {i}'."
+            for i in range(20)
+        }
+
+        from war_rig.models.templates import DocumentationTemplate, Paragraph
+        call_count = 0
+
+        async def mock_ainvoke(input_data):
+            nonlocal call_count
+            call_count += 1
+            template = DocumentationTemplate()
+            if input_data.citadel_outline:
+                template.paragraphs = [
+                    Paragraph(paragraph_name=p["name"], purpose=f"Purpose {p['name']}")
+                    for p in input_data.citadel_outline
+                ]
+            return ScribeOutput(success=True, template=template)
+
+        worker._scribe_agent = MagicMock()
+        worker._scribe_agent.ainvoke = mock_ainvoke
+
+        result = await worker._process_citadel_guided_documentation(
+            sample_pm_ticket, "source code", FileType.COBOL,
+        )
+
+        assert result.success is True
+        assert result.template is not None
+        # Should have been called multiple times (batches of 5 for 20 paragraphs)
+        assert call_count >= 4  # 20 / 5 = 4 batches
+
+    async def test_gap_fill(self, citadel_worker, sample_pm_ticket):
+        """Test gap-fill catches missing paragraphs."""
+        worker = citadel_worker
+
+        from war_rig.models.templates import DocumentationTemplate, Paragraph
+        call_count = 0
+
+        async def mock_ainvoke(input_data):
+            nonlocal call_count
+            call_count += 1
+            template = DocumentationTemplate()
+            if call_count == 1:
+                # First call: only return 2 of 3 paragraphs
+                template.paragraphs = [
+                    Paragraph(paragraph_name="0000-MAIN", purpose="Main entry"),
+                    Paragraph(paragraph_name="1000-PROCESS", purpose="Processing"),
+                ]
+            else:
+                # Gap-fill call: return the missing paragraph
+                template.paragraphs = [
+                    Paragraph(paragraph_name="9999-EXIT", purpose="Exit point"),
+                ]
+            return ScribeOutput(success=True, template=template)
+
+        worker._scribe_agent = MagicMock()
+        worker._scribe_agent.ainvoke = mock_ainvoke
+
+        result = await worker._process_citadel_guided_documentation(
+            sample_pm_ticket, "source code", FileType.COBOL,
+        )
+
+        assert result.success is True
+        assert result.template is not None
+        # All 3 paragraphs should be present after gap-fill
+        para_names = {p.paragraph_name for p in result.template.paragraphs}
+        assert "0000-MAIN" in para_names
+        assert "1000-PROCESS" in para_names
+        assert "9999-EXIT" in para_names
+
+    async def test_fallback_on_citadel_failure(self, citadel_worker, sample_pm_ticket, tmp_path):
+        """Test fallback to standard processing when Citadel fails."""
+        worker = citadel_worker
+
+        # Make Citadel stats fail
+        worker._citadel.get_file_stats.side_effect = Exception("Citadel error")
+
+        # Write a source file for the standard path
+        source_file = tmp_path / "TESTPROG.cbl"
+        source_file.write_text(sample_pm_ticket.metadata["source_code"])
+
+        from war_rig.models.templates import DocumentationTemplate
+
+        async def mock_ainvoke(input_data):
+            # No citadel_outline should be set in fallback path
+            return ScribeOutput(
+                success=True,
+                template=DocumentationTemplate(),
+            )
+
+        worker._scribe_agent = MagicMock()
+        worker._scribe_agent.ainvoke = mock_ainvoke
+
+        result = await worker._process_citadel_guided_documentation(
+            sample_pm_ticket, "source code", FileType.COBOL,
+        )
+
+        # Should have fallen back to standard processing
+        assert result.success is True
+
+    async def test_threshold_config(self, citadel_worker, sample_pm_ticket):
+        """Test that threshold config controls small vs large path selection."""
+        worker = citadel_worker
+
+        # Set very low thresholds to force batched processing
+        worker.config.citadel_guided_threshold_lines = 50
+        worker.config.citadel_guided_threshold_paragraphs = 2
+
+        from war_rig.models.templates import DocumentationTemplate, Paragraph
+        call_count = 0
+
+        async def mock_ainvoke(input_data):
+            nonlocal call_count
+            call_count += 1
+            template = DocumentationTemplate()
+            if input_data.citadel_outline:
+                template.paragraphs = [
+                    Paragraph(paragraph_name=p["name"], purpose=f"Purpose {p['name']}")
+                    for p in input_data.citadel_outline
+                ]
+            return ScribeOutput(success=True, template=template)
+
+        worker._scribe_agent = MagicMock()
+        worker._scribe_agent.ainvoke = mock_ainvoke
+
+        result = await worker._process_citadel_guided_documentation(
+            sample_pm_ticket, "source code", FileType.COBOL,
+        )
+
+        assert result.success is True
+        # With low thresholds (100 lines >= 50, 3 paragraphs >= 2),
+        # should have used batched path (multiple calls)
+        assert call_count >= 1
+
+
+class TestScribeOutlineInPrompt:
+    """Test that ScribeAgent renders citadel_outline in prompt."""
+
+    def test_outline_rendered_in_prompt(self):
+        """Test that the citadel_outline is rendered in _build_user_prompt."""
+        from war_rig.agents.scribe import ScribeAgent, ScribeInput
+        from war_rig.config import ScribeConfig, APIConfig
+
+        agent = ScribeAgent(
+            config=ScribeConfig(model="test-model"),
+            api_config=APIConfig(
+                provider="mock",
+                api_key="test",
+            ),
+        )
+
+        input_data = ScribeInput(
+            source_code="       0000-MAIN.\n           STOP RUN.",
+            file_name="TEST.cbl",
+            file_type=FileType.COBOL,
+            citadel_outline=[
+                {"name": "0000-MAIN", "line_start": 1, "line_end": 5, "calls": [
+                    {"target": "1000-PROCESS", "type": "performs"},
+                ]},
+                {"name": "1000-PROCESS", "line_start": 7, "line_end": 15, "calls": []},
+            ],
+        )
+
+        prompt = agent._build_user_prompt(input_data)
+
+        assert "Paragraph Outline (from static analysis)" in prompt
+        assert "0000-MAIN" in prompt
+        assert "1000-PROCESS" in prompt
+        assert "lines 1-5" in prompt
+        assert "You MUST document ALL listed paragraphs" in prompt
+
+    def test_no_outline_without_field(self):
+        """Test that no outline section is rendered without citadel_outline."""
+        from war_rig.agents.scribe import ScribeAgent, ScribeInput
+        from war_rig.config import ScribeConfig, APIConfig
+
+        agent = ScribeAgent(
+            config=ScribeConfig(model="test-model"),
+            api_config=APIConfig(
+                provider="mock",
+                api_key="test",
+            ),
+        )
+
+        input_data = ScribeInput(
+            source_code="       0000-MAIN.\n           STOP RUN.",
+            file_name="TEST.cbl",
+            file_type=FileType.COBOL,
+        )
+
+        prompt = agent._build_user_prompt(input_data)
+
+        assert "Paragraph Outline" not in prompt

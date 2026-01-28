@@ -373,6 +373,7 @@ class Citadel:
                 "name": artifact.name,
                 "type": artifact.type,
                 "line": artifact.line_start,
+                "line_end": artifact.line_end,
                 "calls": [
                     {
                         "target": c.target,
@@ -580,6 +581,62 @@ class Citadel:
                 languages.append(spec.language)
         return sorted(languages)
 
+    def _extract_body_from_result(
+        self,
+        artifact: FileArtifact,
+        content: str,
+        spec: ArtifactSpec,
+        all_artifacts: list[FileArtifact],
+    ) -> str | None:
+        """Extract the body text of an artifact from file content.
+
+        Shared helper used by both get_function_body() and
+        get_function_bodies().
+
+        Args:
+            artifact: The artifact to extract the body for.
+            content: The full file content.
+            spec: The artifact specification for this language.
+            all_artifacts: All artifacts in the file (for end detection).
+
+        Returns:
+            The function body text, or None if extraction fails.
+        """
+        if artifact.line_start is None:
+            logger.warning("Artifact '%s' has no line_start", artifact.name)
+            return None
+
+        lines = content.splitlines()
+
+        # Determine line_end if not already set
+        if artifact.line_end is None:
+            line_end = self._find_function_end(
+                content, artifact.line_start, spec, all_artifacts, artifact
+            )
+        else:
+            line_end = artifact.line_end
+
+        body_start = artifact.line_start
+        body_end = line_end
+
+        if body_start > len(lines) or body_end > len(lines):
+            logger.warning(
+                "Line range %d-%d exceeds file length %d",
+                body_start,
+                body_end,
+                len(lines),
+            )
+            return None
+
+        # Extract lines (convert to 0-indexed)
+        body_lines = lines[body_start - 1 : body_end]
+
+        # For COBOL, trim trailing comment blocks that belong to next paragraph
+        if spec.language.lower() == "cobol":
+            body_lines = self._trim_trailing_cobol_comments(body_lines)
+
+        return "\n".join(body_lines)
+
     def get_function_body(
         self, file_path: str | Path, function_name: str
     ) -> str | None:
@@ -619,43 +676,57 @@ class Citadel:
             logger.debug("Function '%s' not found in %s", function_name, file_path)
             return None
 
-        if artifact.line_start is None:
-            logger.warning("Artifact '%s' has no line_start", function_name)
-            return None
+        return self._extract_body_from_result(
+            artifact, content, spec, result.artifacts
+        )
 
-        # Get the lines of the file
-        lines = content.splitlines()
+    def get_function_bodies(
+        self, file_path: str | Path, function_names: list[str]
+    ) -> dict[str, str | None]:
+        """
+        Get the body text of multiple functions/paragraphs in a single parse.
 
-        # Determine line_end if not already set
-        if artifact.line_end is None:
-            line_end = self._find_function_end(
-                content, artifact.line_start, spec, result.artifacts, artifact
+        More efficient than calling get_function_body() multiple times
+        because the file is only parsed once.
+
+        Args:
+            file_path: Path to the source file.
+            function_names: Names of the functions/paragraphs to extract.
+
+        Returns:
+            Dictionary mapping function name to body text (or None if not found).
+        """
+        file_path = Path(file_path)
+        bodies: dict[str, str | None] = {name: None for name in function_names}
+
+        # Get spec for this file type
+        spec = self._get_spec_for_file(file_path)
+        if not spec:
+            logger.warning("No spec found for file extension '%s'", file_path.suffix)
+            return bodies
+
+        # Read file content
+        try:
+            content = self._read_file(file_path)
+        except Exception as e:
+            logger.warning("Failed to read file %s: %s", file_path, e)
+            return bodies
+
+        # Analyze the file once
+        result = self.analyze_file(file_path)
+
+        # Extract body for each requested function
+        for name in function_names:
+            artifact = result.get_artifact_by_name(name)
+            if artifact is None:
+                logger.debug("Function '%s' not found in %s", name, file_path)
+                continue
+
+            bodies[name] = self._extract_body_from_result(
+                artifact, content, spec, result.artifacts
             )
-        else:
-            line_end = artifact.line_end
 
-        # Extract the body (exclude the definition line, start from next line)
-        # line_start is 1-indexed
-        body_start = artifact.line_start  # Include definition line for now
-        body_end = line_end
-
-        if body_start > len(lines) or body_end > len(lines):
-            logger.warning(
-                "Line range %d-%d exceeds file length %d",
-                body_start,
-                body_end,
-                len(lines),
-            )
-            return None
-
-        # Extract lines (convert to 0-indexed)
-        body_lines = lines[body_start - 1 : body_end]
-
-        # For COBOL, trim trailing comment blocks that belong to next paragraph
-        if spec.language.lower() == "cobol":
-            body_lines = self._trim_trailing_cobol_comments(body_lines)
-
-        return "\n".join(body_lines)
+        return bodies
 
     def _trim_trailing_cobol_comments(self, lines: list[str]) -> list[str]:
         """
@@ -857,6 +928,66 @@ class Citadel:
         if next_start <= total_lines:
             return next_start - 1
         return total_lines
+
+    def get_file_stats(self, file_path: str | Path) -> dict[str, Any]:
+        """
+        Get structural statistics for a source file.
+
+        Returns line count, paragraph count, language, and paragraph details
+        including line ranges. Useful for deciding between single-pass and
+        batched documentation strategies.
+
+        Args:
+            file_path: Path to the source file.
+
+        Returns:
+            Dictionary with:
+            - total_lines: int
+            - paragraph_count: int
+            - language: str
+            - paragraphs: list of dicts with name, line_start, line_end, line_count
+        """
+        file_path = Path(file_path)
+        result = self.analyze_file(file_path)
+
+        if result.error:
+            return {
+                "total_lines": 0,
+                "paragraph_count": 0,
+                "language": result.language,
+                "paragraphs": [],
+                "error": result.error,
+            }
+
+        # Count total lines
+        try:
+            content = self._read_file(file_path)
+            total_lines = len(content.splitlines())
+        except Exception:
+            total_lines = 0
+
+        paragraphs = []
+        for artifact in result.artifacts:
+            line_start = artifact.line_start
+            line_end = artifact.line_end
+            line_count = (
+                (line_end - line_start + 1)
+                if line_start is not None and line_end is not None
+                else 0
+            )
+            paragraphs.append({
+                "name": artifact.name,
+                "line_start": line_start,
+                "line_end": line_end,
+                "line_count": line_count,
+            })
+
+        return {
+            "total_lines": total_lines,
+            "paragraph_count": len(result.artifacts),
+            "language": result.language,
+            "paragraphs": paragraphs,
+        }
 
     def get_callers(
         self,
@@ -1381,6 +1512,41 @@ def get_function_body(file_path: str | Path, function_name: str) -> str | None:
     """
     citadel = Citadel()
     return citadel.get_function_body(file_path, function_name)
+
+
+def get_function_bodies(
+    file_path: str | Path, function_names: list[str]
+) -> dict[str, str | None]:
+    """
+    Get the body text of multiple functions/paragraphs in a single parse.
+
+    Convenience function for quick batch extraction.
+
+    Args:
+        file_path: Path to the source file.
+        function_names: Names of the functions/paragraphs to extract.
+
+    Returns:
+        Dictionary mapping function name to body text (or None if not found).
+    """
+    citadel = Citadel()
+    return citadel.get_function_bodies(file_path, function_names)
+
+
+def get_file_stats(file_path: str | Path) -> dict[str, Any]:
+    """
+    Get structural statistics for a source file.
+
+    Convenience function for quick file stats extraction.
+
+    Args:
+        file_path: Path to the source file.
+
+    Returns:
+        Dictionary with total_lines, paragraph_count, language, and paragraphs.
+    """
+    citadel = Citadel()
+    return citadel.get_file_stats(file_path)
 
 
 def get_callers(

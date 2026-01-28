@@ -85,6 +85,10 @@ class ChallengerInput(AgentInput):
         default=None,
         description="FeedbackContext from Imperator with quality notes and critical sections",
     )
+    citadel_context: dict | None = Field(
+        default=None,
+        description="Citadel context with paragraph bodies and structural facts for cross-reference validation",
+    )
 
 
 class ChallengerOutput(AgentOutput):
@@ -320,6 +324,21 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                 parts.append("**CITATIONS**: All factual claims must have line number citations.")
                 parts.append("Generate questions for any claims without citations.")
                 parts.append("")
+
+        # Citadel paragraph source code for cross-reference validation
+        if input_data.citadel_context and input_data.citadel_context.get("paragraph_bodies"):
+            parts.append("## Paragraph Source Code (from static analysis)")
+            parts.append("")
+            parts.append("Cross-reference each paragraph's documented purpose against its actual source code below.")
+            parts.append("Flag any description that contradicts or omits significant logic.")
+            parts.append("")
+            for para_name, body in input_data.citadel_context["paragraph_bodies"].items():
+                if body:
+                    parts.append(f"### {para_name}")
+                    parts.append("```")
+                    parts.append(body)
+                    parts.append("```")
+                    parts.append("")
 
         # Instructions
         parts.append("## Task")

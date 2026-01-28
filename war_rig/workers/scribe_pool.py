@@ -1710,6 +1710,547 @@ class ScribeWorker:
             previous_template=previous_template,
         )
 
+    def _is_citadel_guided_eligible(
+        self, file_type: FileType, source_code: str
+    ) -> bool:
+        """Check if a file is eligible for Citadel-guided documentation.
+
+        Returns True for COBOL files when Citadel is available.
+
+        Args:
+            file_type: The detected file type.
+            source_code: The source code text.
+
+        Returns:
+            True if the file should use Citadel-guided processing.
+        """
+        return (
+            self._citadel is not None
+            and file_type == FileType.COBOL
+        )
+
+    async def _process_citadel_guided_documentation(
+        self,
+        ticket: ProgramManagerTicket,
+        source_code: str,
+        file_type: FileType,
+        formatting_strict: bool = False,
+    ) -> ScribeOutput:
+        """Process documentation using Citadel-guided hybrid approach.
+
+        For small files (below threshold), provides a Citadel paragraph
+        outline to a single LLM call. For large files, batches paragraphs
+        and processes each batch with its source code, then gap-fills any
+        missing paragraphs.
+
+        Args:
+            ticket: The DOCUMENTATION ticket to process.
+            source_code: The full source code text.
+            file_type: The detected file type.
+            formatting_strict: If True, add extra JSON formatting instructions.
+
+        Returns:
+            ScribeOutput with documentation results.
+        """
+        assert self._citadel is not None
+
+        # Resolve the source file path for Citadel
+        metadata_path = ticket.metadata.get("file_path")
+        source_path = Path(metadata_path) if metadata_path else self.input_directory / ticket.file_name
+
+        # Get file stats from Citadel
+        try:
+            stats = self._citadel.get_file_stats(str(source_path))
+        except Exception as e:
+            logger.warning(
+                f"Worker {self.worker_id}: Citadel file stats failed for "
+                f"{ticket.file_name}, falling back to standard processing: {e}"
+            )
+            return await self._process_documentation_ticket_standard(
+                ticket, source_code, file_type, formatting_strict
+            )
+
+        total_lines = stats.get("total_lines", 0)
+        paragraph_count = stats.get("paragraph_count", 0)
+        paragraphs = stats.get("paragraphs", [])
+
+        if not paragraphs:
+            logger.debug(
+                f"Worker {self.worker_id}: Citadel found no paragraphs in "
+                f"{ticket.file_name}, falling back to standard processing"
+            )
+            return await self._process_documentation_ticket_standard(
+                ticket, source_code, file_type, formatting_strict
+            )
+
+        # Build the outline with calls for each paragraph
+        citadel_context = self._get_citadel_context(str(source_path))
+        func_calls_by_name: dict[str, list[dict]] = {}
+        if citadel_context:
+            for func in citadel_context.get("functions", []):
+                name = func.get("name", "")
+                if name:
+                    func_calls_by_name[name.lower()] = func.get("calls", [])
+
+        outline = []
+        for para in paragraphs:
+            name = para.get("name", "")
+            calls = func_calls_by_name.get(name.lower(), [])
+            outline.append({
+                "name": name,
+                "line_start": para.get("line_start"),
+                "line_end": para.get("line_end"),
+                "line_count": para.get("line_count", 0),
+                "calls": calls,
+            })
+
+        is_large = (
+            total_lines >= self.config.citadel_guided_threshold_lines
+            or paragraph_count >= self.config.citadel_guided_threshold_paragraphs
+        )
+
+        if is_large:
+            logger.info(
+                f"Worker {self.worker_id}: Citadel-guided BATCHED processing for "
+                f"{ticket.file_name} ({total_lines} lines, {paragraph_count} paragraphs)"
+            )
+            return await self._process_citadel_batched(
+                ticket, source_code, file_type, formatting_strict,
+                outline, source_path, stats,
+            )
+        else:
+            logger.info(
+                f"Worker {self.worker_id}: Citadel-guided SINGLE-PASS processing for "
+                f"{ticket.file_name} ({total_lines} lines, {paragraph_count} paragraphs)"
+            )
+            return await self._process_citadel_single_pass(
+                ticket, source_code, file_type, formatting_strict, outline,
+            )
+
+    async def _process_citadel_single_pass(
+        self,
+        ticket: ProgramManagerTicket,
+        source_code: str,
+        file_type: FileType,
+        formatting_strict: bool,
+        outline: list[dict],
+    ) -> ScribeOutput:
+        """Single-pass Citadel-guided documentation for small files.
+
+        Sends the full source code with a Citadel paragraph outline to
+        guide the LLM to document all paragraphs.
+
+        Args:
+            ticket: The DOCUMENTATION ticket.
+            source_code: The full source code.
+            file_type: Detected file type.
+            formatting_strict: Whether to add strict formatting instructions.
+            outline: Citadel paragraph outline.
+
+        Returns:
+            ScribeOutput with documentation.
+        """
+        # Prepare source code using standard token limit handling
+        previous_template = None
+        if ticket.cycle_number > 1:
+            previous_template = self._load_previous_template(ticket.file_name)
+
+        prepared = self._prepare_source_for_processing(
+            source_code, ticket, previous_template
+        )
+
+        feedback_context = ticket.metadata.get("feedback_context")
+
+        scribe_input = ScribeInput(
+            source_code=prepared.source_code,
+            file_name=ticket.file_name,
+            file_type=file_type,
+            iteration=ticket.cycle_number,
+            copybook_contents=ticket.metadata.get("copybook_contents", {}),
+            previous_template=previous_template,
+            formatting_strict=formatting_strict,
+            feedback_context=feedback_context,
+            citadel_outline=outline,
+        )
+
+        output = await self.scribe_agent.ainvoke(scribe_input)
+
+        # Gap-fill: check if any paragraphs from the outline are missing
+        if output.success and output.template:
+            output = await self._citadel_gap_fill(
+                output, outline, ticket, file_type, formatting_strict,
+            )
+
+        # Enrich with Citadel analysis
+        if output.success and output.template:
+            output.template = await self._apply_citadel_enrichment(
+                output.template, ticket, file_type,
+            )
+            self._save_template(ticket.file_name, output.template)
+
+        return output
+
+    async def _process_citadel_batched(
+        self,
+        ticket: ProgramManagerTicket,
+        source_code: str,
+        file_type: FileType,
+        formatting_strict: bool,
+        outline: list[dict],
+        source_path: Path,
+        stats: dict,
+    ) -> ScribeOutput:
+        """Batched Citadel-guided documentation for large files.
+
+        Groups paragraphs into batches, fetches function bodies per batch,
+        and runs the ScribeAgent for each batch. Merges results into a
+        unified template.
+
+        Args:
+            ticket: The DOCUMENTATION ticket.
+            source_code: The full source code.
+            file_type: Detected file type.
+            formatting_strict: Whether to add strict formatting instructions.
+            outline: Citadel paragraph outline.
+            source_path: Resolved path to the source file.
+            stats: File stats from Citadel.
+
+        Returns:
+            ScribeOutput with merged documentation.
+        """
+        assert self._citadel is not None
+
+        batch_size = self.config.citadel_batch_size
+        batches = [
+            outline[i : i + batch_size]
+            for i in range(0, len(outline), batch_size)
+        ]
+
+        # First batch gets full context (purpose, header, etc.)
+        # Subsequent batches focus only on paragraphs
+        all_paragraphs: list[Paragraph] = []
+        merged_template: DocumentationTemplate | None = None
+        feedback_context = ticket.metadata.get("feedback_context")
+
+        for batch_idx, batch in enumerate(batches):
+            batch_names = [p.get("name", "") for p in batch if p.get("name")]
+            if not batch_names:
+                continue
+
+            # Fetch function bodies for this batch
+            try:
+                bodies = self._citadel.get_function_bodies(
+                    str(source_path), batch_names
+                )
+            except Exception as e:
+                logger.warning(
+                    f"Worker {self.worker_id}: Failed to get bodies for batch "
+                    f"{batch_idx}: {e}"
+                )
+                # Fall back to empty bodies
+                bodies = dict.fromkeys(batch_names)
+
+            # Assemble source code for this batch: include the function bodies
+            batch_source_parts = []
+            for name in batch_names:
+                body = bodies.get(name)
+                if body:
+                    batch_source_parts.append(body)
+                    batch_source_parts.append("")
+
+            batch_source = "\n".join(batch_source_parts) if batch_source_parts else source_code[:2000]
+
+            scribe_input = ScribeInput(
+                source_code=batch_source,
+                file_name=ticket.file_name,
+                file_type=file_type,
+                iteration=ticket.cycle_number,
+                copybook_contents=ticket.metadata.get("copybook_contents", {}),
+                formatting_strict=formatting_strict,
+                feedback_context=feedback_context if batch_idx == 0 else None,
+                citadel_outline=batch,
+            )
+
+            logger.debug(
+                f"Worker {self.worker_id}: Processing batch {batch_idx + 1}/{len(batches)} "
+                f"({len(batch_names)} paragraphs) for {ticket.file_name}"
+            )
+
+            output = await self.scribe_agent.ainvoke(scribe_input)
+
+            if output.success and output.template:
+                if merged_template is None:
+                    # First batch: use the full template
+                    merged_template = output.template
+                else:
+                    # Subsequent batches: merge paragraphs
+                    all_paragraphs.extend(output.template.paragraphs)
+            elif not output.success:
+                logger.warning(
+                    f"Worker {self.worker_id}: Batch {batch_idx + 1} failed for "
+                    f"{ticket.file_name}: {output.error}"
+                )
+
+        if merged_template is None:
+            return ScribeOutput(
+                success=False,
+                error="All batches failed in Citadel-guided processing",
+            )
+
+        # Merge paragraphs from subsequent batches
+        if all_paragraphs:
+            # Deduplicate by paragraph name
+            existing_names = {
+                p.paragraph_name.lower()
+                for p in merged_template.paragraphs
+                if p.paragraph_name
+            }
+            for para in all_paragraphs:
+                if para.paragraph_name and para.paragraph_name.lower() not in existing_names:
+                    merged_template.paragraphs.append(para)
+                    existing_names.add(para.paragraph_name.lower())
+
+        # Gap-fill any missing paragraphs
+        result = ScribeOutput(success=True, template=merged_template)
+        result = await self._citadel_gap_fill(
+            result, outline, ticket, file_type, formatting_strict,
+        )
+
+        # Enrich with Citadel analysis
+        if result.success and result.template:
+            result.template = await self._apply_citadel_enrichment(
+                result.template, ticket, file_type,
+            )
+            self._save_template(ticket.file_name, result.template)
+
+        return result
+
+    async def _citadel_gap_fill(
+        self,
+        output: ScribeOutput,
+        outline: list[dict],
+        ticket: ProgramManagerTicket,
+        file_type: FileType,
+        formatting_strict: bool,
+    ) -> ScribeOutput:
+        """Fill in any paragraphs missing from the documentation.
+
+        Compares documented paragraphs against the Citadel outline and
+        runs targeted LLM calls for any missing ones.
+
+        Args:
+            output: The current ScribeOutput.
+            outline: Citadel paragraph outline.
+            ticket: The DOCUMENTATION ticket.
+            file_type: Detected file type.
+            formatting_strict: Whether to add strict formatting instructions.
+
+        Returns:
+            Updated ScribeOutput with gap-filled paragraphs.
+        """
+        if not output.success or not output.template or not self._citadel:
+            return output
+
+        # Find documented paragraph names
+        documented = {
+            p.paragraph_name.lower()
+            for p in output.template.paragraphs
+            if p.paragraph_name
+        }
+
+        # Find missing paragraphs
+        missing = [
+            p for p in outline
+            if p.get("name", "").lower() not in documented
+        ]
+
+        if not missing:
+            return output
+
+        logger.info(
+            f"Worker {self.worker_id}: Gap-filling {len(missing)} missing paragraphs "
+            f"for {ticket.file_name}"
+        )
+
+        # Resolve source file path
+        metadata_path = ticket.metadata.get("file_path")
+        source_path = Path(metadata_path) if metadata_path else self.input_directory / ticket.file_name
+
+        # Get bodies for missing paragraphs
+        missing_names = [p.get("name", "") for p in missing if p.get("name")]
+        try:
+            bodies = self._citadel.get_function_bodies(str(source_path), missing_names)
+        except Exception as e:
+            logger.warning(
+                f"Worker {self.worker_id}: Failed to get bodies for gap-fill: {e}"
+            )
+            return output
+
+        # Build source from missing bodies
+        gap_source_parts = []
+        for name in missing_names:
+            body = bodies.get(name)
+            if body:
+                gap_source_parts.append(body)
+                gap_source_parts.append("")
+
+        if not gap_source_parts:
+            # No bodies found, create stubs from outline
+            for p in missing:
+                output.template.paragraphs.append(
+                    Paragraph(
+                        paragraph_name=p.get("name", "UNKNOWN"),
+                        purpose="[Citadel] Paragraph identified by static analysis - body not extractable",
+                    )
+                )
+            return output
+
+        gap_source = "\n".join(gap_source_parts)
+
+        scribe_input = ScribeInput(
+            source_code=gap_source,
+            file_name=ticket.file_name,
+            file_type=file_type,
+            iteration=ticket.cycle_number,
+            formatting_strict=formatting_strict,
+            citadel_outline=missing,
+        )
+
+        gap_output = await self.scribe_agent.ainvoke(scribe_input)
+
+        if gap_output.success and gap_output.template:
+            # Merge gap-filled paragraphs
+            for para in gap_output.template.paragraphs:
+                if para.paragraph_name and para.paragraph_name.lower() not in documented:
+                    output.template.paragraphs.append(para)
+                    documented.add(para.paragraph_name.lower())
+
+        # For any still-missing paragraphs, create stubs
+        still_documented = {
+            p.paragraph_name.lower()
+            for p in output.template.paragraphs
+            if p.paragraph_name
+        }
+        for p in missing:
+            name = p.get("name", "")
+            if name and name.lower() not in still_documented:
+                output.template.paragraphs.append(
+                    Paragraph(
+                        paragraph_name=name,
+                        purpose="[Citadel] Paragraph identified by static analysis",
+                    )
+                )
+
+        return output
+
+    async def _process_documentation_ticket_standard(
+        self,
+        ticket: ProgramManagerTicket,
+        source_code: str,
+        file_type: FileType,
+        formatting_strict: bool = False,
+    ) -> ScribeOutput:
+        """Standard (non-Citadel) documentation processing path.
+
+        This is the fallback path when Citadel-guided processing is not
+        available or not applicable.
+
+        Args:
+            ticket: The DOCUMENTATION ticket to process.
+            source_code: The source code to document.
+            file_type: Detected file type.
+            formatting_strict: If True, add extra JSON formatting instructions.
+
+        Returns:
+            ScribeOutput with documentation results.
+        """
+        # Load previous template
+        previous_template = None
+        feedback_context = ticket.metadata.get("feedback_context")
+        augment_existing = (
+            feedback_context.get("augment_existing", True)
+            if feedback_context else False
+        )
+
+        if ticket.cycle_number > 1 or augment_existing:
+            previous_template = self._load_previous_template(ticket.file_name)
+
+        # Prepare source code using centralized token limit handling
+        prepared = self._prepare_source_for_processing(
+            source_code, ticket, previous_template
+        )
+
+        # If chunking is needed, process each chunk separately
+        if prepared.needs_chunked_processing:
+            logger.info(
+                f"Worker {self.worker_id}: File {ticket.file_name} needs chunking "
+                f"({prepared.metadata.get('chunk_count', 0)} chunks)"
+            )
+            output = await self._process_chunked_documentation(
+                ticket=ticket,
+                source_code=source_code,
+                file_type=file_type,
+                formatting_strict=formatting_strict,
+                chunking_result=prepared.chunking_result,
+            )
+            # Enrich chunked output with Citadel analysis and flow diagram
+            if output.success and output.template:
+                output.template = await self._apply_citadel_enrichment(
+                    output.template, ticket, file_type,
+                )
+                self._save_template(ticket.file_name, output.template)
+            return output
+
+        # Log if source was sampled
+        if prepared.was_modified:
+            logger.info(
+                f"Worker {self.worker_id}: Source {prepared.strategy_used} for "
+                f"{ticket.file_name} (cycle {ticket.cycle_number})"
+            )
+
+        scribe_input = ScribeInput(
+            source_code=prepared.source_code,
+            file_name=ticket.file_name,
+            file_type=file_type,
+            iteration=ticket.cycle_number,
+            copybook_contents=ticket.metadata.get("copybook_contents", {}),
+            previous_template=previous_template,
+            formatting_strict=formatting_strict,
+            feedback_context=feedback_context,
+        )
+
+        output = await self.scribe_agent.ainvoke(scribe_input)
+
+        # Validate critical sections if feedback context provided
+        if output.success and output.template and feedback_context:
+            if prepared.was_modified and prepared.strategy_used == "sampling":
+                logger.info(
+                    f"Worker {self.worker_id}: Skipping critical section validation for "
+                    f"{ticket.file_name} - source was sampled/truncated"
+                )
+            else:
+                is_valid, empty_sections = self._validate_critical_sections(
+                    output.template, feedback_context, detected_file_type=file_type
+                )
+                if not is_valid:
+                    return ScribeOutput(
+                        success=False,
+                        error=f"Critical sections are empty: {', '.join(empty_sections)}",
+                        template=output.template,
+                    )
+
+        # Enrich with Citadel analysis and flow diagram
+        if output.success and output.template:
+            output.template = await self._apply_citadel_enrichment(
+                output.template, ticket, file_type,
+            )
+
+        # Save the template if successful
+        if output.success and output.template:
+            self._save_template(ticket.file_name, output.template)
+
+        return output
+
     async def _process_documentation_ticket(
         self,
         ticket: ProgramManagerTicket,
@@ -1719,6 +2260,8 @@ class ScribeWorker:
 
         Loads the source file and runs documentation through ScribeAgent.
         If this is iteration > 1, loads the previous template for updates.
+        When Citadel is available and the file is COBOL, uses the Citadel-guided
+        hybrid processing path.
 
         Args:
             ticket: The DOCUMENTATION ticket to process.
@@ -1768,123 +2311,19 @@ class ScribeWorker:
                     error=f"Failed to read source file: {e}",
                 )
 
-        # Load previous template - either for update iteration or augmentation (IMPFB-007)
-        previous_template = None
-        feedback_context = ticket.metadata.get("feedback_context")
-        augment_existing = (
-            feedback_context.get("augment_existing", True)
-            if feedback_context else False
-        )
-
-        # Always check for existing documentation to augment
-        if ticket.cycle_number > 1 or augment_existing:
-            previous_template = self._load_previous_template(ticket.file_name)
-            if previous_template:
-                if ticket.cycle_number == 1 and augment_existing:
-                    logger.info(
-                        f"Worker {self.worker_id}: Augmenting existing documentation for "
-                        f"{ticket.file_name} (per feedback context)"
-                    )
-                else:
-                    logger.debug(
-                        f"Worker {self.worker_id}: Loaded previous template for "
-                        f"{ticket.file_name} (iteration {ticket.cycle_number})"
-                    )
-
-        # Prepare source code using centralized token limit handling
-        prepared = self._prepare_source_for_processing(
-            source_code, ticket, previous_template
-        )
-
         # Determine file type from extension
         file_type = self._determine_file_type(ticket.file_name)
 
-        # If chunking is needed, process each chunk separately
-        if prepared.needs_chunked_processing:
-            logger.info(
-                f"Worker {self.worker_id}: File {ticket.file_name} needs chunking "
-                f"({prepared.metadata.get('chunk_count', 0)} chunks)"
-            )
-            output = await self._process_chunked_documentation(
-                ticket=ticket,
-                source_code=source_code,
-                file_type=file_type,
-                formatting_strict=formatting_strict,
-                chunking_result=prepared.chunking_result,
-            )
-            # Enrich chunked output with Citadel analysis and flow diagram
-            if output.success and output.template:
-                output.template = await self._apply_citadel_enrichment(
-                    output.template, ticket, file_type,
-                )
-                self._save_template(ticket.file_name, output.template)
-            return output
-
-        # Log if source was sampled
-        if prepared.was_modified:
-            logger.info(
-                f"Worker {self.worker_id}: Source {prepared.strategy_used} for "
-                f"{ticket.file_name} (cycle {ticket.cycle_number})"
+        # Try Citadel-guided processing for eligible files (COBOL + Citadel available)
+        if self._is_citadel_guided_eligible(file_type, source_code):
+            return await self._process_citadel_guided_documentation(
+                ticket, source_code, file_type, formatting_strict,
             )
 
-        # feedback_context already extracted above for augmentation check (IMPFB-004/007)
-
-        # Build Scribe input with prepared source
-        scribe_input = ScribeInput(
-            source_code=prepared.source_code,
-            file_name=ticket.file_name,
-            file_type=file_type,
-            iteration=ticket.cycle_number,
-            copybook_contents=ticket.metadata.get("copybook_contents", {}),
-            previous_template=previous_template,
-            formatting_strict=formatting_strict,
-            feedback_context=feedback_context,
+        # Fall through to standard processing
+        return await self._process_documentation_ticket_standard(
+            ticket, source_code, file_type, formatting_strict,
         )
-
-        # Run the Scribe agent
-        logger.debug(
-            f"Worker {self.worker_id}: Running Scribe for {ticket.file_name}"
-        )
-        output = await self.scribe_agent.ainvoke(scribe_input)
-
-        # Validate critical sections if feedback context provided (IMPFB-005)
-        # Skip validation if source was sampled/truncated - the LLM may not have
-        # seen all the code, so empty sections could be legitimate (the code for
-        # those sections wasn't in the sample). This prevents false failures.
-        if output.success and output.template and feedback_context:
-            if prepared.was_modified and prepared.strategy_used == "sampling":
-                logger.info(
-                    f"Worker {self.worker_id}: Skipping critical section validation for "
-                    f"{ticket.file_name} - source was sampled/truncated, LLM may "
-                    f"not have seen all code sections"
-                )
-            else:
-                is_valid, empty_sections = self._validate_critical_sections(
-                    output.template, feedback_context, detected_file_type=file_type
-                )
-                if not is_valid:
-                    logger.warning(
-                        f"Worker {self.worker_id}: Critical sections validation failed for "
-                        f"{ticket.file_name}: empty sections = {empty_sections}"
-                    )
-                    # Return failure so ticket can be retried or escalated
-                    return ScribeOutput(
-                        success=False,
-                        error=f"Critical sections are empty: {', '.join(empty_sections)}",
-                        template=output.template,  # Include template for debugging
-                    )
-
-        # Enrich with Citadel analysis and flow diagram
-        if output.success and output.template:
-            output.template = await self._apply_citadel_enrichment(
-                output.template, ticket, file_type,
-            )
-
-        # Save the template if successful
-        if output.success and output.template:
-            self._save_template(ticket.file_name, output.template)
-
-        return output
 
     async def _process_chunked_documentation(
         self,
