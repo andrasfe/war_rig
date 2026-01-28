@@ -35,6 +35,7 @@ from war_rig.io.writer import DocumentationWriter
 from war_rig.models.templates import FileType
 from war_rig.orchestration.graph import create_war_rig_graph
 from war_rig.orchestration.ticket_engine import TicketOrchestrator
+from war_rig.processors.datacard import process_datacards
 from war_rig.utils import setup_error_file_handler
 
 # Set up Typer app
@@ -414,6 +415,14 @@ def batch(
         console.print(f"\n[red]Batch processing failed: {e}[/red]")
         raise typer.Exit(1)
 
+    # Process datacards (utility control statements) if any exist
+    try:
+        datacard_path = process_datacards(directory, cfg.system.output_directory)
+        if datacard_path:
+            console.print(f"\n[green]Datacard catalog written to: {datacard_path}[/green]")
+    except Exception as e:
+        console.print(f"[yellow]Warning: Could not process datacards: {e}[/yellow]")
+
     # Generate system overview if we have completed documentation
     # Check total completed (current run + previously completed via --resume)
     programs_dir = cfg.system.output_directory / "final" / "programs"
@@ -624,6 +633,76 @@ def overview(
     except Exception as e:
         console.print(f"[red]Error generating overview: {e}[/red]")
         raise typer.Exit(1)
+
+
+@app.command()
+def datacards(
+    directory: Annotated[
+        Path,
+        typer.Argument(
+            help="Directory containing datacard files (.dc)",
+            exists=True,
+            file_okay=False,
+            dir_okay=True,
+            readable=True,
+        ),
+    ],
+    output: Annotated[
+        Optional[Path],
+        typer.Option(
+            "--output",
+            "-o",
+            help="Output directory (overrides config)",
+        ),
+    ] = None,
+    config: Annotated[
+        Optional[Path],
+        typer.Option(
+            "--config",
+            "-c",
+            help="Path to configuration file",
+        ),
+    ] = None,
+    verbose: Annotated[
+        bool,
+        typer.Option(
+            "--verbose",
+            "-v",
+            help="Enable verbose logging",
+        ),
+    ] = False,
+) -> None:
+    """Process datacard files and generate a catalog.
+
+    This command scans a directory for datacard files (.dc), auto-detects
+    the utility type for each file (UNLOAD, REPRO, SORT, etc.), and generates
+    a single consolidated DATACARDS.md catalog.
+
+    Example:
+        $ war-rig datacards path/to/source/
+        $ war-rig datacards path/to/source/ --output ./docs
+    """
+    setup_logging(verbose)
+
+    # Load configuration
+    cfg = load_config_with_fallback(config)
+    if output:
+        cfg.system.output_directory = output
+
+    console.print(Panel.fit(
+        f"[bold blue]War Rig[/bold blue] - Processing Datacards: {directory}",
+        border_style="blue",
+    ))
+
+    try:
+        datacard_path = process_datacards(directory, cfg.system.output_directory)
+        if datacard_path:
+            console.print(f"\n[green]Datacard catalog written to: {datacard_path}[/green]")
+        else:
+            console.print("[yellow]No datacard files (.dc) found[/yellow]")
+    except Exception as e:
+        console.print(f"[red]Error processing datacards: {e}[/red]")
+        raise typer.Exit(1) from None
 
 
 @app.command()

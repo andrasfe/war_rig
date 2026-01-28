@@ -130,7 +130,26 @@ War Rig supports documentation of various mainframe file types:
 | **EASYTRIEVE** | Report generator | .ezt, .ezy |
 | **SORT** | DFSORT control cards | .srt, .sort |
 | **DDL** | DB2 database definitions | .ddl, .sql |
+| **DB2** | DB2 DDL files | .db2 |
 | **IMS** | IMS DBD/PSB definitions | .dbd, .psb |
+| **DATACARD** | Utility control cards | .dc |
+
+### Datacards (Utility Control Cards)
+
+Datacard files (.dc) contain control statements for mainframe utilities. War Rig auto-detects the utility type and generates a consolidated catalog:
+
+| Utility Type | Description |
+|--------------|-------------|
+| **DB2 UNLOAD/LOAD** | Database unload/load operations |
+| **IDCAMS REPRO** | Copy sequential/VSAM datasets |
+| **IDCAMS DEFINE** | Create VSAM cluster/GDG |
+| **IDCAMS DELETE** | Delete dataset/cluster |
+| **DFSORT** | Sort/merge records |
+| **ICETOOL** | Advanced data transformation |
+| **IEBCOPY** | Copy PDS members |
+| **IEBGENER** | Copy sequential datasets |
+
+Unlike other file types, datacards produce a single consolidated `DATACARDS.md` catalog rather than individual documentation files.
 
 Each file type has a tailored validation skip matrix - the system knows which documentation sections are applicable for each type (e.g., COPYBOOK files skip `called_programs` and `data_flow` validation since they don't execute code).
 
@@ -221,6 +240,20 @@ war-rig batch path/to/source/ --type COBOL --limit 10
 # Resume a batch run (skip already-completed files)
 war-rig batch path/to/source/ --resume
 ```
+
+### Process Datacards
+
+Generate a consolidated catalog of utility control cards (.dc files):
+
+```bash
+# Process datacards standalone
+war-rig datacards path/to/source/
+
+# With custom output directory
+war-rig datacards path/to/source/ --output ./docs
+```
+
+Datacards are also automatically processed during `batch` runs.
 
 ### Process with Parallel Workers
 
@@ -314,6 +347,8 @@ Found 5 CREATED tickets ready for feedback injection.
 output/
 ├── PROGRAM.doc.json       # Documentation template (JSON)
 ├── PROGRAM.doc.md         # Human-readable documentation
+├── DATACARDS.md           # Consolidated datacard catalog (if .dc files present)
+├── SYSTEM_OVERVIEW.md     # System-wide overview (generated after batch)
 ├── analysis/              # Preprocessor outputs
 └── metrics/               # Processing metrics
 ```
@@ -357,6 +392,8 @@ war_rig/
 │   ├── composer.py     # WindowComposer for merging windows
 │   ├── orchestrator.py # Main entry point
 │   └── strategies/     # Sampling strategies (5 implementations)
+├── processors/         # Special file type processors
+│   └── datacard.py     # Datacard catalog generator
 ├── orchestration/      # Workflow coordination
 │   └── ticket_engine.py
 ├── utils/              # Utility modules

@@ -1,0 +1,157 @@
+# Datacard Artifact Specification
+# Handles mainframe utility control cards (UNLOAD, REPRO, SORT, etc.)
+
+spec_version: "1.0"
+spec_id: datacard
+language: DATACARD
+description: Mainframe utility control cards and statements
+
+file_extensions:
+  - .dc
+  - .DC
+
+file_patterns:
+  - "*UNLOAD*"
+  - "*REPRO*"
+  - "*SORT*"
+
+category: control
+primary_artifact_type: control_card
+create_file_artifact: true
+
+comments:
+  line_prefix: null
+  fixed_column: null
+  fixed_indicator: null
+  block_start: null
+  block_end: null
+
+strings:
+  delimiters:
+    - "'"
+    - "\""
+  escape_char: ""
+  triple_quoted: false
+
+continuation:
+  trailing_char: "-"
+  leading_char: null
+  leading_column: null
+
+scope: null
+
+# Utility type detection patterns
+definition_patterns:
+  - name: db2_unload
+    pattern: "UNLOAD\\s+(DIRECT|TABLESPACE|TABLE)"
+    capture_groups: []
+    artifact_type: unload
+    multiline: true
+
+  - name: idcams_repro
+    pattern: "REPRO\\s*-?\\s*(INFILE|OUTFILE|INDATASET|OUTDATASET)"
+    capture_groups: []
+    artifact_type: repro
+    multiline: true
+
+  - name: dfsort
+    pattern: "SORT\\s+(FIELDS|FORMAT)"
+    capture_groups: []
+    artifact_type: sort
+    multiline: true
+
+  - name: icetool
+    pattern: "ICETOOL"
+    capture_groups: []
+    artifact_type: icetool
+    multiline: true
+
+  - name: iebcopy
+    pattern: "COPY\\s+(INDD|OUTDD)"
+    capture_groups: []
+    artifact_type: copy
+    multiline: true
+
+  - name: iebgener
+    pattern: "GENERATE"
+    capture_groups: []
+    artifact_type: generate
+    multiline: true
+
+  - name: idcams_define
+    pattern: "DEFINE\\s+(CLUSTER|AIX|PATH|GDG)"
+    capture_groups: []
+    artifact_type: define
+    multiline: true
+
+  - name: idcams_delete
+    pattern: "DELETE\\s+"
+    capture_groups: []
+    artifact_type: delete
+    multiline: true
+
+  - name: idcams_listcat
+    pattern: "LISTCAT\\s+"
+    capture_groups: []
+    artifact_type: listcat
+    multiline: true
+
+  - name: idcams_alter
+    pattern: "ALTER\\s+"
+    capture_groups: []
+    artifact_type: alter
+    multiline: true
+
+  - name: idcams_print
+    pattern: "PRINT\\s+"
+    capture_groups: []
+    artifact_type: print
+    multiline: true
+
+reference_patterns:
+  - name: dataset_reference
+    pattern: "DSN=([A-Z0-9@#$.]+)"
+    capture_groups:
+      - 1
+    relationship_type: references
+    target_type_hint: dataset
+
+  - name: dataset_quoted
+    pattern: "DSN='([A-Z0-9@#$.()+-]+)'"
+    capture_groups:
+      - 1
+    relationship_type: references
+    target_type_hint: dataset
+
+  - name: infile_reference
+    pattern: "INFILE\\(([A-Z0-9@#$]+)\\)"
+    capture_groups:
+      - 1
+    relationship_type: reads
+    target_type_hint: ddname
+
+  - name: outfile_reference
+    pattern: "OUTFILE\\(([A-Z0-9@#$]+)\\)"
+    capture_groups:
+      - 1
+    relationship_type: writes
+    target_type_hint: ddname
+
+  - name: table_reference
+    pattern: "FROM\\s+([A-Z0-9_]+\\.[A-Z0-9_]+)"
+    capture_groups:
+      - 1
+    relationship_type: references
+    target_type_hint: table
+    ignore_case: true
+
+preprocessor_patterns: []
+
+naming:
+  case: upper
+  max_length: 44
+  strip_chars: ""
+  replace_map: {}
+  common_abbreviations: {}
+
+known_aliases: {}

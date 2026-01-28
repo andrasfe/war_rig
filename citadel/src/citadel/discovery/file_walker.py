@@ -84,6 +84,8 @@ EXTENSION_TO_SPEC: dict[str, str] = {
     # Python
     ".py": "python",
     ".pyw": "python",
+    # Datacards (utility control statements)
+    ".dc": "datacard",
 }
 
 
