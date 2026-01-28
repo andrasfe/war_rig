@@ -31,6 +31,8 @@ from enum import Enum
 from pathlib import Path
 from typing import Any
 
+from citadel.sdk import get_dead_code
+
 from war_rig.agents.imperator import (
     FileDocumentation,
     HolisticReviewInput,
@@ -41,11 +43,11 @@ from war_rig.agents.imperator import (
     SystemOverviewInput,
     SystemOverviewOutput,
 )
-from war_rig.analysis.call_graph import CallGraphAnalyzer, CallGraphAnalysis
 from war_rig.agents.program_manager import (
     ClarificationRequest,
     ProgramManagerAgent,
 )
+from war_rig.analysis.call_graph import CallGraphAnalysis, CallGraphAnalyzer
 from war_rig.beads import (
     BeadsClient,
     BeadsPriority,
@@ -281,7 +283,7 @@ class TicketOrchestrator:
         self._input_directory: Path | None = None
 
         # Feedback context from Imperator (distributed to new tickets)
-        self._current_feedback_context: "FeedbackContext | None" = None
+        self._current_feedback_context: FeedbackContext | None = None
 
     @property
     def state(self) -> OrchestrationState:
@@ -874,8 +876,8 @@ class TicketOrchestrator:
             logger.info(f"Created {len(created_tickets)} documentation tickets for call graph gaps")
         else:
             logger.info(
-                f"No documentation tickets created - callers of missing programs "
-                f"either already have tickets or their files don't exist"
+                "No documentation tickets created - callers of missing programs "
+                "either already have tickets or their files don't exist"
             )
 
         return created_tickets
@@ -1530,10 +1532,11 @@ class TicketOrchestrator:
         Returns:
             Imperator's ClarificationRequest model.
         """
+        from uuid import uuid4
+
         from war_rig.agents.imperator import (
             ClarificationRequest as ImperatorClarificationRequest,
         )
-        from uuid import uuid4
 
         return ImperatorClarificationRequest(
             request_id=f"CLR-{uuid4().hex[:8].upper()}",
@@ -1640,7 +1643,7 @@ class TicketOrchestrator:
     def _build_feedback_context(
         self,
         review_output: HolisticReviewOutput,
-    ) -> "FeedbackContext":
+    ) -> FeedbackContext:
         """Build FeedbackContext from Imperator review output.
 
         Extracts quality notes, identifies critical sections, and
@@ -1698,7 +1701,7 @@ class TicketOrchestrator:
             augment_existing=True,  # Per user requirement
         )
 
-    def _parse_quality_note(self, note_str: str, index: int) -> "QualityNote":
+    def _parse_quality_note(self, note_str: str, index: int) -> QualityNote:
         """Parse a quality note string into a QualityNote object.
 
         Infers category and severity from note content.
@@ -1759,7 +1762,7 @@ class TicketOrchestrator:
             cycle_identified=self._state.cycle,
         )
 
-    def _identify_critical_sections(self, notes: list["QualityNote"]) -> list[str]:
+    def _identify_critical_sections(self, notes: list[QualityNote]) -> list[str]:
         """Identify sections that must be populated based on quality notes.
 
         If a section was noted as empty or incomplete, it becomes critical.
@@ -2013,6 +2016,22 @@ class TicketOrchestrator:
                     doc_files = found
                     logger.debug(f"Found {len(found)} documentation files in {doc_dir}")
                     break
+
+        # Filter out dead code from system overview
+        if self._state.dependency_graph_path and self._state.dependency_graph_path.exists():
+            try:
+                dead_items = get_dead_code(str(self._state.dependency_graph_path))
+                dead_names = {item["name"].upper() for item in dead_items}
+                original_count = len(doc_files)
+                doc_files = [
+                    f for f in doc_files
+                    if f.stem.replace(".doc", "").upper() not in dead_names
+                ]
+                filtered_count = original_count - len(doc_files)
+                if filtered_count > 0:
+                    logger.info(f"Filtered {filtered_count} dead code files from system overview")
+            except Exception as e:
+                logger.warning(f"Could not filter dead code: {e}")
 
         for doc_file in doc_files:
                 try:
