@@ -1193,7 +1193,7 @@ class CallGraphAnalyzer:
         analysis: CallGraphAnalysis,
         sequence_diagrams: list[str] | None = None,
     ) -> str:
-        """Generate SYSTEM_DESIGN.md content documenting the architecture.
+        """Generate README.md content documenting the architecture.
 
         This method generates a basic system design document with the call graph
         mermaid diagram. The Imperator's holistic review may later enhance this
@@ -1207,7 +1207,7 @@ class CallGraphAnalyzer:
                 a "## Flows" section will be added showing key call sequences.
 
         Returns:
-            The generated SYSTEM_DESIGN.md content as a string.
+            The generated README.md content as a string.
         """
         lines = []
 

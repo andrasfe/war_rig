@@ -272,6 +272,18 @@ class ScribeWorker:
             except Exception as e:
                 logger.debug(f"Worker {worker_id}: Dead code detection failed: {e}")
 
+        # Cache callers lookup from dependency graph (keyed by "file_path:PARA_NAME")
+        # This replaces per-paragraph get_callers() calls which trigger expensive
+        # directory scans. See ticket war_rig-7831.
+        self._callers_lookup: dict[str, list[dict]] = {}
+        if dependency_graph_path and dependency_graph_path.exists():
+            self._callers_lookup = self._build_callers_lookup(dependency_graph_path)
+            if self._callers_lookup:
+                logger.debug(
+                    f"Worker {worker_id}: Built callers lookup with "
+                    f"{len(self._callers_lookup)} entries from dependency graph"
+                )
+
         # Worker state
         self._status = WorkerStatus(
             worker_id=worker_id,
@@ -319,6 +331,94 @@ class ScribeWorker:
             Current WorkerStatus with state and statistics.
         """
         return self._status
+
+    def _build_callers_lookup(
+        self, graph_path: Path
+    ) -> dict[str, list[dict]]:
+        """Build callers lookup from dependency graph.
+
+        Parses the dependency graph JSON and builds an inverted index mapping
+        each (file_path, paragraph_name) to its list of callers. This replaces
+        the expensive per-paragraph get_callers() calls which trigger full
+        directory scans.
+
+        The lookup key is "file_path:PARA_NAME" where file_path is the absolute
+        path where the paragraph is defined and PARA_NAME is uppercase.
+
+        Args:
+            graph_path: Path to the dependency_graph.json file.
+
+        Returns:
+            Dictionary mapping "file_path:PARA_NAME" to list of caller dicts.
+            Each caller dict contains: file, function, line, type.
+            Returns empty dict if graph cannot be loaded.
+        """
+        try:
+            with open(graph_path, encoding="utf-8") as f:
+                graph = json.load(f)
+        except (OSError, json.JSONDecodeError) as e:
+            logger.warning(
+                f"Worker {self.worker_id}: Failed to load dependency graph "
+                f"from {graph_path}: {e}"
+            )
+            return {}
+
+        artifacts = graph.get("artifacts", {})
+        relationships = graph.get("relationships", [])
+
+        # Build lookup: target_file_path:TARGET_NAME -> list of callers
+        lookup: dict[str, list[dict]] = {}
+
+        for rel in relationships:
+            # Skip non-call relationships (e.g., data dependencies)
+            rel_type = rel.get("relationship_type", "")
+            if rel_type not in ("performs", "calls", "includes", "invokes"):
+                continue
+
+            from_artifact_id = rel.get("from_artifact", "")
+            to_artifact_id = rel.get("to_artifact", "")
+            location = rel.get("location", {})
+
+            if not to_artifact_id:
+                continue
+
+            # Get the target artifact's definition location
+            target_artifact = artifacts.get(to_artifact_id, {})
+            target_defined_in = target_artifact.get("defined_in", {})
+            target_file = target_defined_in.get("file_path", "")
+
+            if not target_file:
+                continue
+
+            # Extract the target paragraph name from artifact ID
+            # Format: "paragraph::NAME" or "program::NAME"
+            target_name = ""
+            if "::" in to_artifact_id:
+                target_name = to_artifact_id.split("::", 1)[1]
+
+            if not target_name:
+                continue
+
+            # Build the lookup key
+            key = f"{target_file}:{target_name.upper()}"
+
+            # Extract caller function name from from_artifact_id
+            caller_name = ""
+            if "::" in from_artifact_id:
+                caller_name = from_artifact_id.split("::", 1)[1]
+
+            # Build caller entry matching get_callers() format
+            caller_entry = {
+                "file": location.get("file_path", ""),
+                "function": caller_name,
+                "line": location.get("line_start"),
+                "type": rel_type,
+            }
+
+            if caller_entry["file"]:
+                lookup.setdefault(key, []).append(caller_entry)
+
+        return lookup
 
     def _update_state(self, state: WorkerState, ticket_id: str | None = None) -> None:
         """Update worker state and record activity time.
@@ -543,22 +643,29 @@ class ScribeWorker:
                     if c.get("target")
                 ]
 
-            # Add incoming calls (callers) from cross-file analysis
-            try:
-                callers = self._citadel.get_callers(file_path, para_name)
-                para.incoming_calls = [
-                    CallerReference(
-                        file=c.get("file", ""),
-                        function=c.get("function", ""),
-                        line=c.get("line"),
-                        call_type=c.get("type", "performs"),
-                    )
-                    for c in callers
-                    if c.get("file") and c.get("function")
-                ]
-            except Exception:
-                # Skip if callers lookup fails - don't block documentation
-                pass
+            # Add incoming calls (callers) from cached dependency graph lookup.
+            # This replaces the expensive per-paragraph get_callers() calls which
+            # trigger full directory scans. See ticket war_rig-7831.
+            lookup_key = f"{file_path}:{para_name.upper()}"
+            callers = self._callers_lookup.get(lookup_key, [])
+
+            # Fallback: try with resolved path if direct lookup fails
+            if not callers and file_path:
+                resolved_path = str(Path(file_path).resolve())
+                if resolved_path != file_path:
+                    lookup_key = f"{resolved_path}:{para_name.upper()}"
+                    callers = self._callers_lookup.get(lookup_key, [])
+
+            para.incoming_calls = [
+                CallerReference(
+                    file=c.get("file", ""),
+                    function=c.get("function", ""),
+                    line=c.get("line"),
+                    call_type=c.get("type", "performs"),
+                )
+                for c in callers
+                if c.get("file") and c.get("function")
+            ]
 
             # Get function body and chunk if needed for LLM processing
             try:

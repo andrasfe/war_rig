@@ -265,11 +265,11 @@ class TestBuildSystemDesignPrompt:
         prompt = imperator_agent._build_system_design_prompt(sample_holistic_input)
 
         # Should have creation instruction
-        assert "Create a comprehensive, detailed SYSTEM_DESIGN.md document" in prompt
+        assert "Create a comprehensive, detailed README.md document" in prompt
         # Should not have update instruction
         assert "enhance and update" not in prompt.lower()
         # Should not have existing content section
-        assert "## Existing SYSTEM_DESIGN.md Content" not in prompt
+        assert "## Existing README.md Content" not in prompt
 
     def test_prompt_with_existing_content(
         self,
@@ -295,7 +295,7 @@ This is the existing system design document.
         # Should have update instruction
         assert "enhance and update" in prompt.lower()
         # Should include existing content section
-        assert "## Existing SYSTEM_DESIGN.md Content" in prompt
+        assert "## Existing README.md Content" in prompt
         assert "```markdown" in prompt
         assert "This is the existing system design document" in prompt
         # Should mention preserving content
@@ -1222,7 +1222,7 @@ class TestHolisticReviewParallelExecution:
             )
 
             # Verify file was written
-            system_design_path = tmp_path / "SYSTEM_DESIGN.md"
+            system_design_path = tmp_path / "README.md"
             assert system_design_path.exists()
             assert system_design_path.read_text() == mock_design_output.markdown
 

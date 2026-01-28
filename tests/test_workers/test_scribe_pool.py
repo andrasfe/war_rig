@@ -5,6 +5,7 @@ parallel processing of documentation tickets.
 """
 
 import asyncio
+import json
 from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -343,7 +344,9 @@ class TestScribeWorkerPool:
         await pool.stop()
 
     @pytest.mark.asyncio
-    async def test_start_raises_if_already_started(self, mock_config, mock_beads_client):
+    async def test_start_raises_if_already_started(
+        self, mock_config, mock_beads_client
+    ):
         """Test that starting an already-started pool raises error."""
         mock_beads_client.get_available_tickets.return_value = []
 
@@ -617,10 +620,13 @@ class TestCancelledErrorHandling:
 
         # Verify ticket was reset to CREATED (not left as IN_PROGRESS)
         reset_calls = [
-            call for call in mock_beads_client.update_ticket_state.call_args_list
+            call
+            for call in mock_beads_client.update_ticket_state.call_args_list
             if call[0][1] == TicketState.CREATED
         ]
-        assert len(reset_calls) >= 1, "Ticket should be reset to CREATED on cancellation"
+        assert len(reset_calls) >= 1, (
+            "Ticket should be reset to CREATED on cancellation"
+        )
 
     @pytest.mark.asyncio
     async def test_cancelled_ticket_has_retry_reason(
@@ -654,7 +660,8 @@ class TestCancelledErrorHandling:
 
         # Check the reason includes "cancel" or "retry"
         reset_calls = [
-            call for call in mock_beads_client.update_ticket_state.call_args_list
+            call
+            for call in mock_beads_client.update_ticket_state.call_args_list
             if call[0][1] == TicketState.CREATED and "reason" in call[1]
         ]
         if reset_calls:
@@ -1423,7 +1430,9 @@ class TestLockSkippedTickets:
 
         # Now ticket should be claimable again
         ticket = await worker._poll_for_ticket()
-        assert ticket is not None, "Ticket should be claimable after skip duration expires"
+        assert ticket is not None, (
+            "Ticket should be claimable after skip duration expires"
+        )
         assert ticket.ticket_id == sample_pm_ticket.ticket_id
 
     @pytest.mark.asyncio
@@ -1441,7 +1450,9 @@ class TestLockSkippedTickets:
             file_name="FILE1.cbl",
             program_id="FILE1",
             cycle_number=1,
-            metadata={"source_code": "       IDENTIFICATION DIVISION.\n       PROGRAM-ID. FILE1."},
+            metadata={
+                "source_code": "       IDENTIFICATION DIVISION.\n       PROGRAM-ID. FILE1."
+            },
         )
         ticket2 = ProgramManagerTicket(
             ticket_id="ticket-2",
@@ -1450,7 +1461,9 @@ class TestLockSkippedTickets:
             file_name="FILE2.cbl",
             program_id="FILE2",
             cycle_number=1,
-            metadata={"source_code": "       IDENTIFICATION DIVISION.\n       PROGRAM-ID. FILE2."},
+            metadata={
+                "source_code": "       IDENTIFICATION DIVISION.\n       PROGRAM-ID. FILE2."
+            },
         )
 
         lock_manager = FileLockManager()
@@ -1608,9 +1621,7 @@ class TestApplyCitadelEnrichment:
         worker._get_citadel_context = MagicMock(return_value=None)
 
         template = DocumentationTemplate()
-        result = await worker._apply_citadel_enrichment(
-            template, ticket, FileType.JCL
-        )
+        result = await worker._apply_citadel_enrichment(template, ticket, FileType.JCL)
         assert result.flow_diagram is None
         mock_citadel.get_flow_diagram.assert_not_called()
 
@@ -1708,13 +1719,241 @@ class TestApplyCitadelEnrichment:
         worker._get_citadel_context = MagicMock(return_value=None)
 
         template = DocumentationTemplate()
-        await worker._apply_citadel_enrichment(
-            template, ticket, FileType.COBOL
-        )
+        await worker._apply_citadel_enrichment(template, ticket, FileType.COBOL)
 
         # Verify Citadel was called with the metadata path, not input_directory
         worker._get_citadel_context.assert_called_once_with(custom_path)
         mock_citadel.get_flow_diagram.assert_called_once_with(custom_path)
+
+
+# =============================================================================
+# Performance Fix Tests: Callers Lookup from Dependency Graph (war_rig-7831)
+# =============================================================================
+
+
+class TestBuildCallersLookup:
+    """Tests for _build_callers_lookup - caching callers from dependency graph.
+
+    This tests the fix for war_rig-7831: instead of calling get_callers() per
+    paragraph (which triggers expensive directory scans), we build a lookup
+    table from the dependency graph at worker initialization.
+    """
+
+    def test_builds_lookup_from_valid_graph(
+        self, mock_config, mock_beads_client, tmp_path
+    ):
+        """Lookup is built correctly from a valid dependency graph."""
+        # Create a minimal dependency graph
+        graph = {
+            "version": "1.0",
+            "artifacts": {
+                "paragraph::MAIN-PARA": {
+                    "defined_in": {
+                        "file_path": "/app/src/PROGRAM.cbl",
+                    }
+                },
+                "paragraph::HELPER-PARA": {
+                    "defined_in": {
+                        "file_path": "/app/src/UTILS.cbl",
+                    }
+                },
+                "paragraph::CALLER-PARA": {
+                    "defined_in": {
+                        "file_path": "/app/src/CALLER.cbl",
+                    }
+                },
+            },
+            "relationships": [
+                {
+                    "from_artifact": "paragraph::MAIN-PARA",
+                    "to_artifact": "paragraph::HELPER-PARA",
+                    "relationship_type": "performs",
+                    "location": {
+                        "file_path": "/app/src/PROGRAM.cbl",
+                        "line_start": 100,
+                    },
+                },
+                {
+                    "from_artifact": "paragraph::CALLER-PARA",
+                    "to_artifact": "paragraph::HELPER-PARA",
+                    "relationship_type": "calls",
+                    "location": {
+                        "file_path": "/app/src/CALLER.cbl",
+                        "line_start": 50,
+                    },
+                },
+            ],
+        }
+
+        graph_path = tmp_path / "dependency_graph.json"
+        graph_path.write_text(json.dumps(graph))
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            output_directory=tmp_path / "output",
+            dependency_graph_path=graph_path,
+        )
+
+        # Check lookup was built
+        assert len(worker._callers_lookup) == 1
+
+        # HELPER-PARA in UTILS.cbl should have 2 callers
+        key = "/app/src/UTILS.cbl:HELPER-PARA"
+        assert key in worker._callers_lookup
+        callers = worker._callers_lookup[key]
+        assert len(callers) == 2
+
+        # Verify caller entries match expected format
+        caller_files = {c["file"] for c in callers}
+        assert "/app/src/PROGRAM.cbl" in caller_files
+        assert "/app/src/CALLER.cbl" in caller_files
+
+        caller_from_program = next(
+            c for c in callers if c["file"] == "/app/src/PROGRAM.cbl"
+        )
+        assert caller_from_program["function"] == "MAIN-PARA"
+        assert caller_from_program["line"] == 100
+        assert caller_from_program["type"] == "performs"
+
+    def test_returns_empty_lookup_when_graph_missing(
+        self, mock_config, mock_beads_client, tmp_path
+    ):
+        """Lookup is empty when dependency graph does not exist."""
+        graph_path = tmp_path / "nonexistent.json"
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            output_directory=tmp_path / "output",
+            dependency_graph_path=graph_path,
+        )
+
+        assert worker._callers_lookup == {}
+
+    def test_returns_empty_lookup_when_graph_invalid_json(
+        self, mock_config, mock_beads_client, tmp_path
+    ):
+        """Lookup is empty when dependency graph contains invalid JSON."""
+        graph_path = tmp_path / "invalid.json"
+        graph_path.write_text("not valid json {{{")
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            output_directory=tmp_path / "output",
+            dependency_graph_path=graph_path,
+        )
+
+        assert worker._callers_lookup == {}
+
+    def test_filters_non_call_relationships(
+        self, mock_config, mock_beads_client, tmp_path
+    ):
+        """Non-call relationship types are excluded from lookup."""
+        graph = {
+            "version": "1.0",
+            "artifacts": {
+                "paragraph::PARA1": {"defined_in": {"file_path": "/app/src/FILE1.cbl"}},
+                "data::FIELD1": {"defined_in": {"file_path": "/app/src/FILE1.cbl"}},
+            },
+            "relationships": [
+                {
+                    "from_artifact": "paragraph::PARA1",
+                    "to_artifact": "data::FIELD1",
+                    "relationship_type": "reads",  # data dependency, not call
+                    "location": {
+                        "file_path": "/app/src/FILE1.cbl",
+                        "line_start": 10,
+                    },
+                },
+            ],
+        }
+
+        graph_path = tmp_path / "dependency_graph.json"
+        graph_path.write_text(json.dumps(graph))
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            output_directory=tmp_path / "output",
+            dependency_graph_path=graph_path,
+        )
+
+        # No call relationships, so lookup should be empty
+        assert worker._callers_lookup == {}
+
+    @pytest.mark.asyncio
+    async def test_enrich_uses_cached_lookup(
+        self, mock_config, mock_beads_client, tmp_path
+    ):
+        """_enrich_paragraphs_with_citadel uses cached lookup, not get_callers."""
+        from war_rig.models.templates import DocumentationTemplate, Paragraph
+
+        graph = {
+            "version": "1.0",
+            "artifacts": {
+                "paragraph::DO-SOMETHING": {
+                    "defined_in": {"file_path": "/app/src/MAIN.cbl"}
+                },
+                "paragraph::CALLER-1": {
+                    "defined_in": {"file_path": "/app/src/OTHER.cbl"}
+                },
+            },
+            "relationships": [
+                {
+                    "from_artifact": "paragraph::CALLER-1",
+                    "to_artifact": "paragraph::DO-SOMETHING",
+                    "relationship_type": "performs",
+                    "location": {
+                        "file_path": "/app/src/OTHER.cbl",
+                        "line_start": 200,
+                    },
+                },
+            ],
+        }
+
+        graph_path = tmp_path / "dependency_graph.json"
+        graph_path.write_text(json.dumps(graph))
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            output_directory=tmp_path / "output",
+            dependency_graph_path=graph_path,
+        )
+
+        # Mock Citadel but DO NOT mock get_callers - it should not be called
+        mock_citadel = MagicMock()
+        mock_citadel.get_function_body.return_value = None
+        worker._citadel = mock_citadel
+
+        template = DocumentationTemplate(
+            paragraphs=[Paragraph(paragraph_name="DO-SOMETHING")]
+        )
+
+        citadel_context = {"functions": [], "includes": [], "dead_code": []}
+
+        result = await worker._enrich_paragraphs_with_citadel(
+            template, "/app/src/MAIN.cbl", citadel_context
+        )
+
+        # Verify incoming_calls was populated from the cached lookup
+        assert len(result.paragraphs) == 1
+        para = result.paragraphs[0]
+        assert len(para.incoming_calls) == 1
+        assert para.incoming_calls[0].file == "/app/src/OTHER.cbl"
+        assert para.incoming_calls[0].function == "CALLER-1"
+        assert para.incoming_calls[0].line == 200
+        assert para.incoming_calls[0].call_type == "performs"
+
+        # Verify get_callers was NOT called (the whole point of this fix)
+        mock_citadel.get_callers.assert_not_called()
 
 
 # =============================================================================
@@ -1752,9 +1991,14 @@ class TestCitadelParagraphStubPopulation:
             "functions": [
                 {"name": "0000-MAIN", "type": "paragraph", "line": 100, "calls": []},
                 {"name": "1000-INIT", "type": "paragraph", "line": 200, "calls": []},
-                {"name": "2000-PROCESS", "type": "paragraph", "line": 300, "calls": [
-                    {"target": "3000-OUTPUT", "type": "performs", "line": 320},
-                ]},
+                {
+                    "name": "2000-PROCESS",
+                    "type": "paragraph",
+                    "line": 300,
+                    "calls": [
+                        {"target": "3000-OUTPUT", "type": "performs", "line": 320},
+                    ],
+                },
             ],
         }
 
@@ -1769,7 +2013,9 @@ class TestCitadelParagraphStubPopulation:
         assert "2000-PROCESS" in names
 
         # Verify stubs have citation from Citadel line info
-        main_para = next(p for p in result.paragraphs if p.paragraph_name == "0000-MAIN")
+        main_para = next(
+            p for p in result.paragraphs if p.paragraph_name == "0000-MAIN"
+        )
         assert main_para.citation == (100, 100)
         assert "[Citadel]" in main_para.purpose
 
@@ -2129,11 +2375,15 @@ class TestPerformThruDeadCodeFilter:
         )
 
         # EXIT paragraphs should NOT be flagged as dead code
-        exit_1000 = next(p for p in result.paragraphs if p.paragraph_name == "1000-EXIT")
+        exit_1000 = next(
+            p for p in result.paragraphs if p.paragraph_name == "1000-EXIT"
+        )
         assert exit_1000.is_dead_code is False
         assert exit_1000.dead_code_reason is None
 
-        exit_2000 = next(p for p in result.paragraphs if p.paragraph_name == "2000-EXIT")
+        exit_2000 = next(
+            p for p in result.paragraphs if p.paragraph_name == "2000-EXIT"
+        )
         assert exit_2000.is_dead_code is False
         assert exit_2000.dead_code_reason is None
 
@@ -2268,7 +2518,9 @@ class TestPerformThruDeadCodeFilter:
 class TestCitadelGuidedEligibility:
     """Tests for _is_citadel_guided_eligible."""
 
-    def test_eligible_cobol_with_citadel(self, mock_config, mock_beads_client, tmp_path):
+    def test_eligible_cobol_with_citadel(
+        self, mock_config, mock_beads_client, tmp_path
+    ):
         """COBOL files with Citadel available should be eligible."""
         worker = ScribeWorker(
             worker_id="scribe-test",
@@ -2283,7 +2535,9 @@ class TestCitadelGuidedEligibility:
 
         assert worker._is_citadel_guided_eligible(FileType.COBOL, "source") is True
 
-    def test_not_eligible_without_citadel(self, mock_config, mock_beads_client, tmp_path):
+    def test_not_eligible_without_citadel(
+        self, mock_config, mock_beads_client, tmp_path
+    ):
         """Without Citadel, no file should be eligible."""
         worker = ScribeWorker(
             worker_id="scribe-test",
@@ -2341,17 +2595,50 @@ class TestCitadelGuidedDocumentation:
             "paragraph_count": 3,
             "language": "cobol",
             "paragraphs": [
-                {"name": "0000-MAIN", "line_start": 10, "line_end": 20, "line_count": 11},
-                {"name": "1000-PROCESS", "line_start": 22, "line_end": 40, "line_count": 19},
-                {"name": "9999-EXIT", "line_start": 42, "line_end": 45, "line_count": 4},
+                {
+                    "name": "0000-MAIN",
+                    "line_start": 10,
+                    "line_end": 20,
+                    "line_count": 11,
+                },
+                {
+                    "name": "1000-PROCESS",
+                    "line_start": 22,
+                    "line_end": 40,
+                    "line_count": 19,
+                },
+                {
+                    "name": "9999-EXIT",
+                    "line_start": 42,
+                    "line_end": 45,
+                    "line_count": 4,
+                },
             ],
         }
         mock_citadel.get_functions.return_value = [
-            {"name": "0000-MAIN", "type": "paragraph", "line": 10, "line_end": 20, "calls": [
-                {"target": "1000-PROCESS", "type": "performs", "line": 15},
-            ]},
-            {"name": "1000-PROCESS", "type": "paragraph", "line": 22, "line_end": 40, "calls": []},
-            {"name": "9999-EXIT", "type": "paragraph", "line": 42, "line_end": 45, "calls": []},
+            {
+                "name": "0000-MAIN",
+                "type": "paragraph",
+                "line": 10,
+                "line_end": 20,
+                "calls": [
+                    {"target": "1000-PROCESS", "type": "performs", "line": 15},
+                ],
+            },
+            {
+                "name": "1000-PROCESS",
+                "type": "paragraph",
+                "line": 22,
+                "line_end": 40,
+                "calls": [],
+            },
+            {
+                "name": "9999-EXIT",
+                "type": "paragraph",
+                "line": 42,
+                "line_end": 45,
+                "calls": [],
+            },
         ]
         mock_citadel.get_includes.return_value = []
         mock_citadel.get_function_bodies.return_value = {
@@ -2372,6 +2659,7 @@ class TestCitadelGuidedDocumentation:
 
         # Mock scribe agent to capture input
         from war_rig.models.templates import DocumentationTemplate, Paragraph
+
         captured_inputs = []
 
         async def mock_ainvoke(input_data):
@@ -2388,7 +2676,9 @@ class TestCitadelGuidedDocumentation:
         worker._scribe_agent.ainvoke = mock_ainvoke
 
         result = await worker._process_citadel_guided_documentation(
-            sample_pm_ticket, "source code", FileType.COBOL,
+            sample_pm_ticket,
+            "source code",
+            FileType.COBOL,
         )
 
         assert result.success is True
@@ -2409,12 +2699,23 @@ class TestCitadelGuidedDocumentation:
             "paragraph_count": 20,
             "language": "cobol",
             "paragraphs": [
-                {"name": f"PARA-{i}", "line_start": i * 100, "line_end": (i + 1) * 100 - 1, "line_count": 100}
+                {
+                    "name": f"PARA-{i}",
+                    "line_start": i * 100,
+                    "line_end": (i + 1) * 100 - 1,
+                    "line_count": 100,
+                }
                 for i in range(20)
             ],
         }
         worker._citadel.get_functions.return_value = [
-            {"name": f"PARA-{i}", "type": "paragraph", "line": i * 100, "line_end": (i + 1) * 100 - 1, "calls": []}
+            {
+                "name": f"PARA-{i}",
+                "type": "paragraph",
+                "line": i * 100,
+                "line_end": (i + 1) * 100 - 1,
+                "calls": [],
+            }
             for i in range(20)
         ]
         worker._citadel.get_function_bodies.return_value = {
@@ -2423,6 +2724,7 @@ class TestCitadelGuidedDocumentation:
         }
 
         from war_rig.models.templates import DocumentationTemplate, Paragraph
+
         call_count = 0
 
         async def mock_ainvoke(input_data):
@@ -2440,7 +2742,9 @@ class TestCitadelGuidedDocumentation:
         worker._scribe_agent.ainvoke = mock_ainvoke
 
         result = await worker._process_citadel_guided_documentation(
-            sample_pm_ticket, "source code", FileType.COBOL,
+            sample_pm_ticket,
+            "source code",
+            FileType.COBOL,
         )
 
         assert result.success is True
@@ -2453,6 +2757,7 @@ class TestCitadelGuidedDocumentation:
         worker = citadel_worker
 
         from war_rig.models.templates import DocumentationTemplate, Paragraph
+
         call_count = 0
 
         async def mock_ainvoke(input_data):
@@ -2476,7 +2781,9 @@ class TestCitadelGuidedDocumentation:
         worker._scribe_agent.ainvoke = mock_ainvoke
 
         result = await worker._process_citadel_guided_documentation(
-            sample_pm_ticket, "source code", FileType.COBOL,
+            sample_pm_ticket,
+            "source code",
+            FileType.COBOL,
         )
 
         assert result.success is True
@@ -2487,7 +2794,9 @@ class TestCitadelGuidedDocumentation:
         assert "1000-PROCESS" in para_names
         assert "9999-EXIT" in para_names
 
-    async def test_fallback_on_citadel_failure(self, citadel_worker, sample_pm_ticket, tmp_path):
+    async def test_fallback_on_citadel_failure(
+        self, citadel_worker, sample_pm_ticket, tmp_path
+    ):
         """Test fallback to standard processing when Citadel fails."""
         worker = citadel_worker
 
@@ -2511,7 +2820,9 @@ class TestCitadelGuidedDocumentation:
         worker._scribe_agent.ainvoke = mock_ainvoke
 
         result = await worker._process_citadel_guided_documentation(
-            sample_pm_ticket, "source code", FileType.COBOL,
+            sample_pm_ticket,
+            "source code",
+            FileType.COBOL,
         )
 
         # Should have fallen back to standard processing
@@ -2526,6 +2837,7 @@ class TestCitadelGuidedDocumentation:
         worker.config.citadel_guided_threshold_paragraphs = 2
 
         from war_rig.models.templates import DocumentationTemplate, Paragraph
+
         call_count = 0
 
         async def mock_ainvoke(input_data):
@@ -2543,7 +2855,9 @@ class TestCitadelGuidedDocumentation:
         worker._scribe_agent.ainvoke = mock_ainvoke
 
         result = await worker._process_citadel_guided_documentation(
-            sample_pm_ticket, "source code", FileType.COBOL,
+            sample_pm_ticket,
+            "source code",
+            FileType.COBOL,
         )
 
         assert result.success is True
@@ -2573,9 +2887,14 @@ class TestScribeOutlineInPrompt:
             file_name="TEST.cbl",
             file_type=FileType.COBOL,
             citadel_outline=[
-                {"name": "0000-MAIN", "line_start": 1, "line_end": 5, "calls": [
-                    {"target": "1000-PROCESS", "type": "performs"},
-                ]},
+                {
+                    "name": "0000-MAIN",
+                    "line_start": 1,
+                    "line_end": 5,
+                    "calls": [
+                        {"target": "1000-PROCESS", "type": "performs"},
+                    ],
+                },
                 {"name": "1000-PROCESS", "line_start": 7, "line_end": 15, "calls": []},
             ],
         )

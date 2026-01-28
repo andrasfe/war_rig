@@ -344,7 +344,7 @@ class TestCallGraphAnalyzer:
         assert "mermaid" in report  # Has mermaid diagram
 
     def test_generate_system_design_md(self, temp_output_dir):
-        """Test SYSTEM_DESIGN.md generation."""
+        """Test README.md generation."""
         output_dir, graph_path = temp_output_dir
         analyzer = CallGraphAnalyzer(doc_directory=output_dir)
         analysis = analyzer.analyze(dependency_graph_path=graph_path)
@@ -355,7 +355,7 @@ class TestCallGraphAnalyzer:
         assert "IEFBR14" in system_design  # Should document system utilities
 
     def test_generate_system_design_md_with_sequence_diagrams(self, temp_output_dir):
-        """Test SYSTEM_DESIGN.md generation with sequence diagrams."""
+        """Test README.md generation with sequence diagrams."""
         output_dir, graph_path = temp_output_dir
         analyzer = CallGraphAnalyzer(doc_directory=output_dir)
         analysis = analyzer.analyze(dependency_graph_path=graph_path)
@@ -385,7 +385,7 @@ class TestCallGraphAnalyzer:
         assert "JOBSTEP->>BUILDBAT: EXEC" in system_design
 
     def test_generate_system_design_md_without_sequence_diagrams(self, temp_output_dir):
-        """Test SYSTEM_DESIGN.md generation without sequence diagrams skips Flows section."""
+        """Test README.md generation without sequence diagrams skips Flows section."""
         output_dir, graph_path = temp_output_dir
         analyzer = CallGraphAnalyzer(doc_directory=output_dir)
         analysis = analyzer.analyze(dependency_graph_path=graph_path)
@@ -398,7 +398,7 @@ class TestCallGraphAnalyzer:
         assert "### Flow 1" not in system_design
 
     def test_generate_system_design_md_with_empty_sequence_diagrams(self, temp_output_dir):
-        """Test SYSTEM_DESIGN.md generation with empty sequence diagrams list."""
+        """Test README.md generation with empty sequence diagrams list."""
         output_dir, graph_path = temp_output_dir
         analyzer = CallGraphAnalyzer(doc_directory=output_dir)
         analysis = analyzer.analyze(dependency_graph_path=graph_path)

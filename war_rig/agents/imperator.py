@@ -439,7 +439,7 @@ class HolisticReviewOutput(AgentOutput):
     # System Design document generation results
     system_design_generated: bool = Field(
         default=False,
-        description="Whether SYSTEM_DESIGN.md was generated/updated in this cycle",
+        description="Whether README.md was generated/updated in this cycle",
     )
     system_design_questions: list[InlineQuestion] = Field(
         default_factory=list,
@@ -447,7 +447,7 @@ class HolisticReviewOutput(AgentOutput):
     )
     system_design_path: str | None = Field(
         default=None,
-        description="Path to the generated SYSTEM_DESIGN.md file",
+        description="Path to the generated README.md file",
     )
 
 
@@ -532,7 +532,7 @@ class SystemDesignInput(BaseModel):
     )
     existing_content: str | None = Field(
         default=None,
-        description="Existing SYSTEM_DESIGN.md content if any (for iterative refinement)",
+        description="Existing README.md content if any (for iterative refinement)",
     )
     call_graph: dict | None = Field(
         default=None,
@@ -1554,16 +1554,16 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
         This method is separate from the per-file review (ainvoke) and
         is intended for batch processing workflows.
 
-        If output_directory is provided, also generates/updates SYSTEM_DESIGN.md
+        If output_directory is provided, also generates/updates README.md
         in that directory.
 
         Args:
             input_data: The holistic review input containing all documentation.
             use_mock: If True, return mock output instead of calling LLM.
-            output_directory: If provided, generates SYSTEM_DESIGN.md in this
+            output_directory: If provided, generates README.md in this
                 directory. If None, skips system design generation.
             sequence_diagrams: Optional list of mermaid sequence diagram strings
-                from citadel to include in SYSTEM_DESIGN.md Flows section.
+                from citadel to include in README.md Flows section.
 
         Returns:
             HolisticReviewOutput with decision and feedback.
@@ -1581,7 +1581,7 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
             system_prompt = self._build_holistic_system_prompt()
             user_prompt = self._build_holistic_user_prompt(input_data)
 
-            # Read existing SYSTEM_DESIGN.md content before parallel execution
+            # Read existing README.md content before parallel execution
             # (file I/O is fast and needed for system design generation)
             existing_content: str | None = None
             if output_directory is not None:
@@ -1637,14 +1637,14 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                 # Handle system design result - failure should not fail holistic review
                 if isinstance(design_result_or_error, Exception):
                     logger.warning(
-                        f"Failed to generate SYSTEM_DESIGN.md: {design_result_or_error}"
+                        f"Failed to generate README.md: {design_result_or_error}"
                     )
                     review_output.system_design_generated = False
                 else:
                     design_result = design_result_or_error
                     if design_result.success:
-                        # Write the markdown to SYSTEM_DESIGN.md
-                        system_design_path = output_directory / "SYSTEM_DESIGN.md"
+                        # Write the markdown to README.md
+                        system_design_path = output_directory / "README.md"
                         system_design_path.write_text(
                             design_result.markdown, encoding="utf-8"
                         )
@@ -1655,7 +1655,7 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                         review_output.system_design_path = str(system_design_path)
 
                         logger.info(
-                            f"Generated SYSTEM_DESIGN.md at {system_design_path} "
+                            f"Generated README.md at {system_design_path} "
                             f"with {len(design_result.questions)} inline questions"
                         )
                     else:
@@ -2016,20 +2016,20 @@ and architecture after reading your overview."""
     # =========================================================================
 
     def _read_existing_system_design(self, output_dir: Path) -> str | None:
-        """Read existing SYSTEM_DESIGN.md content if it exists.
+        """Read existing README.md content if it exists.
 
         This utility method checks for an existing system design document
         and returns its content for iterative refinement.
 
         Args:
-            output_dir: Directory where SYSTEM_DESIGN.md would be located.
+            output_dir: Directory where README.md would be located.
 
         Returns:
-            The content of SYSTEM_DESIGN.md as a string, or None if:
+            The content of README.md as a string, or None if:
             - The file does not exist
             - A read error occurred (logged as warning)
         """
-        system_design_path = output_dir / "SYSTEM_DESIGN.md"
+        system_design_path = output_dir / "README.md"
 
         if not system_design_path.exists():
             return None
@@ -2038,7 +2038,7 @@ and architecture after reading your overview."""
             return system_design_path.read_text(encoding="utf-8")
         except OSError as e:
             logger.warning(
-                f"Failed to read existing SYSTEM_DESIGN.md at {system_design_path}: {e}"
+                f"Failed to read existing README.md at {system_design_path}: {e}"
             )
             return None
 
@@ -2070,7 +2070,7 @@ and architecture after reading your overview."""
         """Build the prompt for system design document generation.
 
         Creates a prompt instructing the LLM to generate a comprehensive
-        SYSTEM_DESIGN.md document based on the file documentation and
+        README.md document based on the file documentation and
         call graph information.
 
         Args:
@@ -2080,7 +2080,7 @@ and architecture after reading your overview."""
                 existing content rather than creating from scratch.
 
         Returns:
-            The user prompt for the LLM to generate SYSTEM_DESIGN.md content.
+            The user prompt for the LLM to generate README.md content.
         """
         parts = []
 
@@ -2096,7 +2096,7 @@ and architecture after reading your overview."""
         parts.append("")
         if existing_content:
             parts.append(
-                "**CRITICAL: An existing SYSTEM_DESIGN.md document is provided below.**"
+                "**CRITICAL: An existing README.md document is provided below.**"
             )
             parts.append("")
             parts.append(
@@ -2115,7 +2115,7 @@ and architecture after reading your overview."""
             )
         else:
             parts.append(
-                "Create a comprehensive, detailed SYSTEM_DESIGN.md document that describes the "
+                "Create a comprehensive, detailed README.md document that describes the"
                 "overall system architecture based on the program documentation provided below."
             )
             parts.append("")
@@ -2239,7 +2239,7 @@ and architecture after reading your overview."""
         parts.append("## Documentation File Paths (for linking)")
         parts.append("")
         parts.append(
-            "When referencing these components in the SYSTEM_DESIGN.md, use markdown links. "
+            "When referencing these components in the README.md, use markdown links."
             "Links MUST include the source file extension. Examples: "
             "`[PROG](PROG.cbl.md)`, `[JOB](JOB.jcl.md)`, `[CPY](CPY.cpy.md)`"
         )
@@ -2264,7 +2264,7 @@ and architecture after reading your overview."""
         parts.append("")
         parts.append(
             "Below is comprehensive documentation for each component. "
-            "Include ALL relevant details in the SYSTEM_DESIGN.md and link to each component."
+            "Include ALL relevant details in the README.md and link to each component."
         )
         parts.append("")
 
@@ -2435,10 +2435,10 @@ and architecture after reading your overview."""
 
         # Include existing content if provided
         if existing_content:
-            parts.append("## Existing SYSTEM_DESIGN.md Content")
+            parts.append("## Existing README.md Content")
             parts.append("")
             parts.append(
-                "Below is the current content of SYSTEM_DESIGN.md. Enhance and update "
+                "Below is the current content of README.md. Enhance and update"
                 "this document, preserving valuable content while improving it:"
             )
             parts.append("")
@@ -2451,7 +2451,7 @@ and architecture after reading your overview."""
         parts.append("## Output Format")
         parts.append("")
         parts.append(
-            "Output ONLY the markdown content for SYSTEM_DESIGN.md. "
+            "Output ONLY the markdown content for README.md."
             "Do not wrap in JSON or add any preamble."
         )
 
@@ -2464,7 +2464,7 @@ and architecture after reading your overview."""
         use_mock: bool = False,
         sequence_diagrams: list[str] | None = None,
     ) -> SystemDesignOutput:
-        """Generate a SYSTEM_DESIGN.md document from batch documentation.
+        """Generate a README.md document from batch documentation.
 
         This method synthesizes individual file documentation into a comprehensive
         system design document. It can either create a new document or enhance
@@ -2489,7 +2489,7 @@ and architecture after reading your overview."""
         try:
             system_prompt = """You are a technical architect creating a comprehensive, detailed system design document.
 
-Your task is to synthesize individual program documentation into a SYSTEM_DESIGN.md
+Your task is to synthesize individual program documentation into a README.md
 document that serves as the authoritative architectural reference for this system.
 
 ## CRITICAL REQUIREMENT: Executive Summary
@@ -2707,7 +2707,7 @@ This creates a navigable documentation web.
         return inner
 
     def _format_flows_section(self, sequence_diagrams: list[str]) -> str:
-        """Format sequence diagrams as a Flows section for SYSTEM_DESIGN.md.
+        """Format sequence diagrams as a Flows section for README.md.
 
         Args:
             sequence_diagrams: List of mermaid sequence diagram strings.
