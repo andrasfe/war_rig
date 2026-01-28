@@ -15,8 +15,8 @@ file_patterns:
   - "*REPRO*"
   - "*SORT*"
 
-category: control
-primary_artifact_type: control_card
+category: code
+primary_artifact_type: procedure
 create_file_artifact: true
 
 comments:
@@ -40,73 +40,91 @@ continuation:
 
 scope: null
 
-# Utility type detection patterns
+# Utility type detection patterns - these define procedures/commands
 definition_patterns:
   - name: db2_unload
-    pattern: "UNLOAD\\s+(DIRECT|TABLESPACE|TABLE)"
+    pattern: "UNLOAD\\s+(DIRECT|TABLESPACE|TABLE|DATA)"
     capture_groups: []
-    artifact_type: unload
+    artifact_type: procedure
     multiline: true
+    ignore_case: true
+
+  - name: db2_load
+    pattern: "LOAD\\s+(DATA|INTO)"
+    capture_groups: []
+    artifact_type: procedure
+    multiline: true
+    ignore_case: true
 
   - name: idcams_repro
     pattern: "REPRO\\s*-?\\s*(INFILE|OUTFILE|INDATASET|OUTDATASET)"
     capture_groups: []
-    artifact_type: repro
+    artifact_type: procedure
     multiline: true
+    ignore_case: true
 
   - name: dfsort
     pattern: "SORT\\s+(FIELDS|FORMAT)"
     capture_groups: []
-    artifact_type: sort
+    artifact_type: procedure
     multiline: true
+    ignore_case: true
 
   - name: icetool
     pattern: "ICETOOL"
     capture_groups: []
-    artifact_type: icetool
+    artifact_type: procedure
     multiline: true
+    ignore_case: true
 
   - name: iebcopy
     pattern: "COPY\\s+(INDD|OUTDD)"
     capture_groups: []
-    artifact_type: copy
+    artifact_type: procedure
     multiline: true
+    ignore_case: true
 
   - name: iebgener
     pattern: "GENERATE"
     capture_groups: []
-    artifact_type: generate
+    artifact_type: procedure
     multiline: true
+    ignore_case: true
 
   - name: idcams_define
-    pattern: "DEFINE\\s+(CLUSTER|AIX|PATH|GDG)"
+    pattern: "DEFINE\\s+(CLUSTER|AIX|PATH|GDG|ALIAS)"
     capture_groups: []
-    artifact_type: define
+    artifact_type: procedure
     multiline: true
+    ignore_case: true
 
   - name: idcams_delete
     pattern: "DELETE\\s+"
     capture_groups: []
-    artifact_type: delete
+    artifact_type: procedure
     multiline: true
+    ignore_case: true
 
   - name: idcams_listcat
     pattern: "LISTCAT\\s+"
     capture_groups: []
-    artifact_type: listcat
+    artifact_type: procedure
     multiline: true
+    ignore_case: true
 
   - name: idcams_alter
     pattern: "ALTER\\s+"
     capture_groups: []
-    artifact_type: alter
+    artifact_type: procedure
     multiline: true
+    ignore_case: true
 
   - name: idcams_print
     pattern: "PRINT\\s+"
     capture_groups: []
-    artifact_type: print
+    artifact_type: procedure
     multiline: true
+    ignore_case: true
 
 reference_patterns:
   - name: dataset_reference
@@ -115,6 +133,7 @@ reference_patterns:
       - 1
     relationship_type: references
     target_type_hint: dataset
+    ignore_case: true
 
   - name: dataset_quoted
     pattern: "DSN='([A-Z0-9@#$.()+-]+)'"
@@ -122,26 +141,37 @@ reference_patterns:
       - 1
     relationship_type: references
     target_type_hint: dataset
+    ignore_case: true
 
   - name: infile_reference
     pattern: "INFILE\\(([A-Z0-9@#$]+)\\)"
     capture_groups:
       - 1
     relationship_type: reads
-    target_type_hint: ddname
+    target_type_hint: file
+    ignore_case: true
 
   - name: outfile_reference
     pattern: "OUTFILE\\(([A-Z0-9@#$]+)\\)"
     capture_groups:
       - 1
     relationship_type: writes
-    target_type_hint: ddname
+    target_type_hint: file
+    ignore_case: true
 
   - name: table_reference
     pattern: "FROM\\s+([A-Z0-9_]+\\.[A-Z0-9_]+)"
     capture_groups:
       - 1
     relationship_type: references
+    target_type_hint: table
+    ignore_case: true
+
+  - name: into_table_reference
+    pattern: "INTO\\s+([A-Z0-9_]+\\.[A-Z0-9_]+)"
+    capture_groups:
+      - 1
+    relationship_type: writes
     target_type_hint: table
     ignore_case: true
 
