@@ -146,7 +146,7 @@ def analyze(
     # Load configuration
     cfg = load_config_with_fallback(config)
     if output:
-        cfg.system.output_directory = output
+        cfg.output_directory = output
 
     console.print(Panel.fit(
         f"[bold blue]War Rig[/bold blue] - Analyzing: {file_path.name}",
@@ -191,7 +191,7 @@ def analyze(
     outputs = writer.write_result(result)
 
     # Update ticket state to COMPLETED if we have a ticket for this file
-    tickets_file = cfg.system.output_directory / ".war_rig_tickets.json"
+    tickets_file = cfg.output_directory / ".war_rig_tickets.json"
     if tickets_file.exists():
         beads_client = get_beads_client(
             enabled=cfg.beads_enabled if hasattr(cfg, 'beads_enabled') else True,
@@ -237,12 +237,12 @@ def analyze(
         console.print(f"  {name}: {path}")
 
     # Generate system overview if we have completed documentation
-    programs_dir = cfg.system.output_directory / "final" / "programs"
+    programs_dir = cfg.output_directory / "final" / "programs"
     if programs_dir.exists() and list(programs_dir.glob("*.json")):
         console.print("\n[cyan]Generating system overview...[/cyan]")
         try:
             _generate_overview_internal(cfg, mock=mock)
-            console.print(f"[green]System overview written to: {cfg.system.output_directory / 'SYSTEM_OVERVIEW.md'}[/green]")
+            console.print(f"[green]System overview written to: {cfg.output_directory / 'SYSTEM_OVERVIEW.md'}[/green]")
         except Exception as e:
             console.print(f"[yellow]Warning: Could not generate overview: {e}[/yellow]")
 
@@ -331,7 +331,7 @@ def batch(
     # Load configuration
     cfg = load_config_with_fallback(config)
     if output:
-        cfg.system.output_directory = output
+        cfg.output_directory = output
 
     console.print(Panel.fit(
         f"[bold blue]War Rig[/bold blue] - Batch Processing: {directory}",
@@ -354,7 +354,7 @@ def batch(
 
     # Filter out already-processed files if --resume is enabled
     if resume:
-        output_dir = cfg.system.output_directory
+        output_dir = cfg.output_directory
         programs_dir = output_dir / "final" / "programs"
         if programs_dir.exists():
             completed = {p.stem for p in programs_dir.glob("*.json")}
@@ -417,7 +417,7 @@ def batch(
 
     # Process datacards (utility control statements) if any exist
     try:
-        datacard_path = process_datacards(directory, cfg.system.output_directory)
+        datacard_path = process_datacards(directory, cfg.output_directory)
         if datacard_path:
             console.print(f"\n[green]Datacard catalog written to: {datacard_path}[/green]")
     except Exception as e:
@@ -425,14 +425,14 @@ def batch(
 
     # Generate system overview if we have completed documentation
     # Check total completed (current run + previously completed via --resume)
-    programs_dir = cfg.system.output_directory / "final" / "programs"
+    programs_dir = cfg.output_directory / "final" / "programs"
     if programs_dir.exists():
         all_completed = list(programs_dir.glob("*.json"))
         if all_completed:
             console.print("\n[cyan]Generating system overview...[/cyan]")
             try:
                 _generate_overview_internal(cfg, mock=mock)
-                console.print(f"[green]System overview written to: {cfg.system.output_directory / 'SYSTEM_OVERVIEW.md'}[/green]")
+                console.print(f"[green]System overview written to: {cfg.output_directory / 'SYSTEM_OVERVIEW.md'}[/green]")
             except Exception as e:
                 console.print(f"[yellow]Warning: Could not generate overview: {e}[/yellow]")
 
@@ -468,9 +468,9 @@ def status(
     # Load configuration
     cfg = load_config_with_fallback(config)
     if output:
-        cfg.system.output_directory = output
+        cfg.output_directory = output
 
-    output_dir = cfg.system.output_directory
+    output_dir = cfg.output_directory
 
     console.print(Panel.fit(
         f"[bold blue]War Rig[/bold blue] - Status: {output_dir}",
@@ -538,10 +538,10 @@ def init(
     # Load configuration
     cfg = load_config_with_fallback(config)
     if output:
-        cfg.system.output_directory = output
+        cfg.output_directory = output
 
     console.print(Panel.fit(
-        f"[bold blue]War Rig[/bold blue] - Initializing: {cfg.system.output_directory}",
+        f"[bold blue]War Rig[/bold blue] - Initializing: {cfg.output_directory}",
         border_style="blue",
     ))
 
@@ -549,7 +549,7 @@ def init(
     writer = DocumentationWriter(cfg.system)
 
     console.print("[green]Output directories initialized successfully[/green]")
-    console.print(f"\nOutput directory: {cfg.system.output_directory}")
+    console.print(f"\nOutput directory: {cfg.output_directory}")
 
 
 @app.command()
@@ -611,14 +611,14 @@ def overview(
     # Load configuration
     cfg = load_config_with_fallback(config)
     if output:
-        cfg.system.output_directory = output
+        cfg.output_directory = output
 
     console.print(Panel.fit(
         f"[bold blue]War Rig[/bold blue] - Generating System Overview",
         border_style="blue",
     ))
 
-    programs_dir = cfg.system.output_directory / "final" / "programs"
+    programs_dir = cfg.output_directory / "final" / "programs"
     if not programs_dir.exists():
         console.print(f"[red]No documentation found at {programs_dir}[/red]")
         raise typer.Exit(1)
@@ -629,7 +629,7 @@ def overview(
 
     try:
         _generate_overview_internal(cfg, system_name=system_name, mock=mock)
-        console.print(f"[green]System overview written to: {cfg.system.output_directory / 'SYSTEM_OVERVIEW.md'}[/green]")
+        console.print(f"[green]System overview written to: {cfg.output_directory / 'SYSTEM_OVERVIEW.md'}[/green]")
     except Exception as e:
         console.print(f"[red]Error generating overview: {e}[/red]")
         raise typer.Exit(1)
@@ -687,7 +687,7 @@ def datacards(
     # Load configuration
     cfg = load_config_with_fallback(config)
     if output:
-        cfg.system.output_directory = output
+        cfg.output_directory = output
 
     console.print(Panel.fit(
         f"[bold blue]War Rig[/bold blue] - Processing Datacards: {directory}",
@@ -695,7 +695,7 @@ def datacards(
     ))
 
     try:
-        datacard_path = process_datacards(directory, cfg.system.output_directory)
+        datacard_path = process_datacards(directory, cfg.output_directory)
         if datacard_path:
             console.print(f"\n[green]Datacard catalog written to: {datacard_path}[/green]")
         else:
@@ -736,7 +736,7 @@ def _generate_overview_internal(
         SystemOverviewInput,
     )
 
-    output_dir = cfg.system.output_directory
+    output_dir = cfg.output_directory
     programs_dir = output_dir / "final" / "programs"
 
     if not programs_dir.exists():
