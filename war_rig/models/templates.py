@@ -95,6 +95,8 @@ class ProgramType(str, Enum):
     ASSEMBLER = "ASSEMBLER"
     REXX = "REXX"
     PLI = "PLI"
+    SQL = "SQL"
+    DB2 = "DB2"
 
 
 class IOType(str, Enum):

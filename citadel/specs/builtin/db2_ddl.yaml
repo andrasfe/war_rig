@@ -9,8 +9,10 @@ description: DB2 Data Definition Language
 file_extensions:
   - .sql
   - .ddl
+  - .db2
   - .SQL
   - .DDL
+  - .DB2
 
 file_patterns:
   - "**/ddl/**"

@@ -50,6 +50,14 @@ DEFAULT_EXCLUDES: list[str] = [
     "**/.vscode/**",
     "**/.DS_Store",
     "**/Thumbs.db",
+    # Office documents
+    "**/*.docx",
+    "**/*.doc",
+    "**/*.xlsx",
+    "**/*.xls",
+    "**/*.pptx",
+    "**/*.ppt",
+    "**/*.pdf",
 ]
 
 
@@ -70,6 +78,7 @@ EXTENSION_TO_SPEC: dict[str, str] = {
     # DB2 DDL
     ".sql": "db2_ddl",
     ".ddl": "db2_ddl",
+    ".db2": "db2_ddl",
     # BMS (CICS maps)
     ".bms": "bms",
     # Python
