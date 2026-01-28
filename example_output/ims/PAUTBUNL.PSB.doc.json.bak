@@ -4,12 +4,12 @@
     "file_name": "PAUTBUNL.PSB",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T23:03:49.248341",
+    "analyzed_at": "2026-01-28T14:55:19.699475",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This PSB (Program Specification Block) defines the database access characteristics for an IMS (Information Management System) application. It specifies the database (DBPAUTP0), the processing options (GOTP), key length, and the segment hierarchy (PAUTSUM0, PAUTDTL1) that the program will use. The PSB is generated for COBOL and is named PAUTBUNL.",
+    "summary": "This PSB (Program Specification Block) defines the database access parameters for an IMS (Information Management System) application. It specifies the database (DBPAUTP0), the processing options (PROCOPT=GOTP), key length, and the segments (PAUTSUM0, PAUTDTL1) that the program can access. The PSB is designed for COBOL and is named PAUTBUNL.",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
@@ -19,8 +19,64 @@
       21
     ]
   },
-  "inputs": [],
-  "outputs": [],
+  "inputs": [
+    {
+      "name": "DBPAUTP0",
+      "io_type": "IMS_SEGMENT",
+      "description": "The IMS database accessed by the program, as defined by DBDNAME.",
+      "copybook": null,
+      "citation": [
+        18
+      ]
+    },
+    {
+      "name": "PAUTSUM0",
+      "io_type": "IMS_SEGMENT",
+      "description": "The PAUTSUM0 segment within the DBPAUTP0 database.",
+      "copybook": null,
+      "citation": [
+        19
+      ]
+    },
+    {
+      "name": "PAUTDTL1",
+      "io_type": "IMS_SEGMENT",
+      "description": "The PAUTDTL1 segment within the DBPAUTP0 database, a child segment of PAUTSUM0.",
+      "copybook": null,
+      "citation": [
+        20
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "DBPAUTP0",
+      "io_type": "IMS_SEGMENT",
+      "description": "The IMS database accessed by the program. Due to PROCOPT=GOTP, updates are possible.",
+      "copybook": null,
+      "citation": [
+        18
+      ]
+    },
+    {
+      "name": "PAUTSUM0",
+      "io_type": "IMS_SEGMENT",
+      "description": "The PAUTSUM0 segment within the DBPAUTP0 database. Updates are possible due to PROCOPT=GOTP.",
+      "copybook": null,
+      "citation": [
+        19
+      ]
+    },
+    {
+      "name": "PAUTDTL1",
+      "io_type": "IMS_SEGMENT",
+      "description": "The PAUTDTL1 segment within the DBPAUTP0 database, a child segment of PAUTSUM0. Updates are possible due to PROCOPT=GOTP.",
+      "copybook": null,
+      "citation": [
+        20
+      ]
+    }
+  ],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
@@ -29,8 +85,52 @@
   },
   "business_rules": [],
   "data_flow": {
-    "reads_from": [],
-    "writes_to": [],
+    "reads_from": [
+      {
+        "source": "DBPAUTP0",
+        "fields_used": [],
+        "citation": [
+          18
+        ]
+      },
+      {
+        "source": "PAUTSUM0",
+        "fields_used": [],
+        "citation": [
+          19
+        ]
+      },
+      {
+        "source": "PAUTDTL1",
+        "fields_used": [],
+        "citation": [
+          20
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "DBPAUTP0",
+        "fields_written": [],
+        "citation": [
+          18
+        ]
+      },
+      {
+        "destination": "PAUTSUM0",
+        "fields_written": [],
+        "citation": [
+          19
+        ]
+      },
+      {
+        "destination": "PAUTDTL1",
+        "fields_written": [],
+        "citation": [
+          20
+        ]
+      }
+    ],
     "transforms": []
   },
   "copybooks_used": [],
@@ -40,9 +140,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the purpose of the 'PRINT NOGEN' statement?",
-      "context": "The meaning of this assembler directive is unclear without further context.",
-      "suggestion": "Consult IMS documentation or a subject matter expert."
+      "question": "What is the specific purpose of this PSB within the broader application context?",
+      "context": "The PSB definition provides technical details but lacks information on its role in the overall business process.",
+      "suggestion": "Review application documentation or consult with developers to understand the PSB's function."
     }
   ],
   "dead_code": [],

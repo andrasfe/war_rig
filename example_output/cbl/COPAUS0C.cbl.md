@@ -1,43 +1,89 @@
 # COPAUS0C
 
 **File**: `cbl/COPAUS0C.cbl`
-**Type**: FileType.COBOL
-**Analyzed**: 2026-01-27 23:02:42.304736
+**Type**: COBOL
+**Analyzed**: 2026-01-28 14:55:35.475090
 
 ## Purpose
 
-COPAUS0C is a CICS COBOL program that displays a summary view of authorization messages. It retrieves and presents pending authorization information, potentially interacting with IMS segments and VSAM files to gather the necessary data for the summary display. The program also allows navigation to detailed authorization information via program COPAUS1C.
-
-**Business Context**: CardDemo - Authorization Module (lines 3, 4)
+This COBOL program's purpose is currently unknown due to the lack of source code provided. Without code, its functionality, business context, and specific operations cannot be determined.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| ACCTDAT | IOType.FILE_VSAM | Account data file |
-| CUSTDAT | IOType.FILE_VSAM | Customer data file |
-| CARDDAT | IOType.FILE_VSAM | Card data file |
-| CXACAIX | IOType.FILE_VSAM | Card XREF file |
-| CCXREF | IOType.FILE_VSAM | Card Cross-Reference file |
-| DFHCOMMAREA | IOType.CICS_COMMAREA | CICS Commarea for passing data between programs |
+| UNKNOWN | UNKNOWN | The inputs to this program are unknown. |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| COPAU00 | IOType.CICS_MAP | BMS map for displaying the authorization summary screen |
-
-## Called Programs
-
-| Program | Call Type | Purpose |
-|---------|-----------|---------|
-| COPAUS1C | CallType.CICS_XCTL | Display detailed authorization information |
-| COMEN01C | CallType.CICS_XCTL | Navigate to the menu program |
+| UNKNOWN | UNKNOWN | The outputs of this program are unknown. |
 
 ## Paragraphs/Procedures
 
-### UNKNOWN
-Due to the limited code provided, the program's paragraphs and their specific functionalities cannot be determined. Without the PROCEDURE DIVISION, the control flow, data processing logic, and interactions with other modules remain unclear. The program likely contains paragraphs for initialization, data retrieval, screen formatting, user interaction, and termination. Initialization would involve setting up working storage variables and potentially connecting to IMS. Data retrieval paragraphs would read VSAM files and IMS segments based on user input or program logic. Screen formatting paragraphs would populate the BMS map (COPAU00) with the retrieved data. User interaction paragraphs would handle input from the CICS terminal and navigate to other programs (COPAUS1C, COMEN01C). Finally, termination paragraphs would release resources and return control to CICS. Error handling would likely be implemented within each paragraph to manage file I/O errors, IMS segment not found conditions, and invalid user input.
+### COPAUS0C
+[Citadel] Paragraph identified by static analysis
+
+### MAIN-PARA
+[Citadel] Paragraph identified by static analysis
+
+### PROCESS-ENTER-KEY
+[Citadel] Paragraph identified by static analysis
+
+### GATHER-DETAILS
+[Citadel] Paragraph identified by static analysis
+
+### PROCESS-PF7-KEY
+[Citadel] Paragraph identified by static analysis
+
+### PROCESS-PF8-KEY
+[Citadel] Paragraph identified by static analysis
+
+### PROCESS-PAGE-FORWARD
+[Citadel] Paragraph identified by static analysis
+
+### GET-AUTHORIZATIONS
+[Citadel] Paragraph identified by static analysis
+
+### REPOSITION-AUTHORIZATIONS
+[Citadel] Paragraph identified by static analysis
+
+### POPULATE-AUTH-LIST
+[Citadel] Paragraph identified by static analysis
+
+### INITIALIZE-AUTH-DATA
+[Citadel] Paragraph identified by static analysis
+
+### RETURN-TO-PREV-SCREEN
+[Citadel] Paragraph identified by static analysis
+
+### SEND-PAULST-SCREEN
+[Citadel] Paragraph identified by static analysis
+
+### RECEIVE-PAULST-SCREEN
+[Citadel] Paragraph identified by static analysis
+
+### POPULATE-HEADER-INFO
+[Citadel] Paragraph identified by static analysis
+
+### GATHER-ACCOUNT-DETAILS
+[Citadel] Paragraph identified by static analysis
+
+### GETCARDXREF-BYACCT
+[Citadel] Paragraph identified by static analysis
+
+### GETACCTDATA-BYACCT
+[Citadel] Paragraph identified by static analysis
+
+### GETCUSTDATA-BYCUST
+[Citadel] Paragraph identified by static analysis
+
+### GET-AUTH-SUMMARY
+[Citadel] Paragraph identified by static analysis
+
+### SCHEDULE-PSB
+[Citadel] Paragraph identified by static analysis
 
 ## Control Flow
 
@@ -111,9 +157,5 @@ flowchart TD
 
 ## Open Questions
 
-- ? What is the program's control flow and processing logic?
-  - Context: From chunk SOURCE-chunk-1-header (lines 1-174)
-- ? How does the program interact with IMS?
-  - Context: From chunk SOURCE-chunk-1-header (lines 1-174)
-- ? What are the specific fields used from each input file and segment?
-  - Context: From chunk SOURCE-chunk-1-header (lines 1-174)
+- ? What is the purpose of this program?
+  - Context: The source code is missing, making it impossible to determine the program's functionality.

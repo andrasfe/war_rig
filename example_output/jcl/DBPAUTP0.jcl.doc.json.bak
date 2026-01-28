@@ -1,21 +1,21 @@
 {
   "header": {
     "program_id": "DBPAUTP0",
-    "file_name": "DBPAUTP0.jcl",
+    "file_name": "jcl/DBPAUTP0.jcl",
     "file_type": "JCL",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T23:06:24.734816",
+    "analyzed_at": "2026-01-28T14:55:57.668269",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This JCL job unloads the DBD (Database Description) for DBPAUTP0. It first deletes the output dataset if it exists, then executes the IMS program DFSRRC00 to perform the unload, and finally catalogs the output dataset.",
+    "summary": "This JCL job unloads the DBD DBPAUTP0 from an IMS database. It first deletes the output dataset if it exists, then executes the DFSRRC00 program with the ULU parameter to perform the unload. It allocates necessary datasets for IMS processing, including RESLIB, PSBLIB, DBDLIB, and RECON datasets.",
     "business_context": null,
     "program_type": "BATCH",
     "citations": [
       1,
       13,
-      26
+      15
     ]
   },
   "inputs": [
@@ -58,7 +58,7 @@
     {
       "name": "OEMPP.IMS.V15R01MB.PROCLIB(DFSVSMDB)",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "DFSVSMDB member from the OEMPP.IMS.V15R01MB.PROCLIB",
+      "description": "DFSVSMDB proc",
       "copybook": null,
       "citation": [
         33
@@ -94,7 +94,7 @@
     {
       "name": "OEMA.IMS.IMSP.SDFSRESL",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS SDFSRESL",
+      "description": "IMS RESLIB",
       "copybook": null,
       "citation": [
         18,
@@ -114,11 +114,31 @@
   "outputs": [
     {
       "name": "AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "Output dataset containing the unloaded DBD data for DBPAUTP0.",
+      "io_type": "FILE_VSAM",
+      "description": "Output dataset containing the unloaded DBD DBPAUTP0 data.",
       "copybook": null,
       "citation": [
+        9,
         25
+      ]
+    },
+    {
+      "name": "SYSUDUMP",
+      "io_type": "REPORT",
+      "description": "System dump output.",
+      "copybook": null,
+      "citation": [
+        36
+      ]
+    },
+    {
+      "name": "SYSPRINT",
+      "io_type": "REPORT",
+      "description": "System print output.",
+      "copybook": null,
+      "citation": [
+        8,
+        23
       ]
     }
   ],
@@ -133,7 +153,7 @@
     {
       "program_name": "DFSRRC00",
       "call_type": "STATIC_CALL",
-      "purpose": "Unloads the DBD for DBPAUTP0 using the ULU function and DFSURGU0 parameters.",
+      "purpose": "Unloads the DBD DBPAUTP0 using the ULU parameter.",
       "parameters": [
         "ULU",
         "DFSURGU0",
@@ -147,19 +167,7 @@
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [
-    {
-      "rule_id": "BR001",
-      "description": "Specifies conditional activation using SBPARM.",
-      "logic_summary": "The DFSCTL DD statement includes SBPARM ACTIV=COND, which likely configures conditional activation of some IMS feature.",
-      "conditions": [
-        "ACTIV=COND"
-      ],
-      "citation": [
-        35
-      ]
-    }
-  ],
+  "business_rules": [],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
@@ -170,7 +178,7 @@
     {
       "paragraph_name": "STEPDEL",
       "summary": null,
-      "purpose": "This step deletes the output dataset AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0 if it already exists. It uses the IEFBR14 program, a standard IBM utility for dataset management. The SYSPRINT DD statement directs the output of the deletion process to the job log. The SYSUT1 DD statement defines the dataset to be deleted, specifying its name, disposition (MOD,DELETE), unit (SYSDA), and space allocation (TRK,0). This step ensures that the subsequent unload process can create a new dataset without encountering a pre-existing dataset error. It consumes the dataset name and disposition parameters from the SYSUT1 DD statement. It produces no direct output other than messages to the job log. It does not call any other programs or paragraphs.",
+      "purpose": "This step deletes the output dataset AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0 before the unload process. It executes the IEFBR14 program, a utility used for dataset allocation and deletion. The SYSUT1 DD statement defines the dataset to be deleted, specifying a disposition of MOD and DELETE. This ensures that if the dataset already exists, it will be deleted. The SYSPRINT DD statement directs the output of the deletion process to the system output. This step prepares the environment for the subsequent unload step by ensuring a clean slate for the output data.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -197,7 +205,7 @@
     {
       "paragraph_name": "UNLOAD",
       "summary": null,
-      "purpose": "This step unloads the DBD for DBPAUTP0. It executes the IMS program DFSRRC00 with specific parameters to initiate the unload process. The STEPLIB and DFSRESLB DD statements define the libraries required for the IMS execution environment. The IMS DD statement specifies the PSBLIB and DBDLIB datasets. The DFSURGU1 DD statement defines the output dataset where the unloaded DBD data will be stored. The DDPAUTP0 and DDPAUTX0 DD statements define the PAUTHDB datasets. The DFSVSAMP DD statement points to the DFSVSMDB member in the PROCLIB. The DFSCTL DD statement includes SBPARM ACTIV=COND. The RECON* DD statements define the RECON datasets. The DFSWRK01 and DFSSRT01 DD statements are dummy datasets. It consumes the DBD name (DBPAUTP0) and control parameters (ULU, DFSURGU0). It produces the unloaded DBD data in the AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0 dataset. It calls the DFSRRC00 program.",
+      "purpose": "This step performs the actual unload of the DBD DBPAUTP0. It executes the DFSRRC00 program, which is a generic IMS resource control program. The PARM parameter specifies ULU (Unload Utility), DFSURGU0 (Unload control statements), and DBPAUTP0 (the database to unload). The STEPLIB and DFSRESLB DD statements define the IMS RESLIB, providing access to the necessary IMS modules. The IMS DD statement defines the PSBLIB and DBDLIB. The DFSURGU1 DD statement defines the output dataset where the unloaded data will be stored. The DDPAUTP0 and DDPAUTX0 DD statements define the input database datasets. The DFSVSAMP DD statement points to the DFSVSMDB proc, which contains buffer pool parameters. The DFSCTL DD statement contains control parameters, in this case SBPARM ACTIV=COND. The SYSUDUMP DD statement defines the system dump dataset. The RECON* DD statements define the RECON datasets required for IMS database access. DFSWRK01 and DFSSRT01 are dummy datasets.",
       "called_by": [],
       "calls": [],
       "citation": [

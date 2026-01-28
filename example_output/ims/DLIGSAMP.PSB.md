@@ -2,7 +2,7 @@
 
 **File**: `ims/DLIGSAMP.PSB`
 **Type**: OTHER
-**Analyzed**: 2026-01-27 23:05:45.249565
+**Analyzed**: 2026-01-28 14:52:49.593060
 
 ## Purpose
 
@@ -10,5 +10,7 @@ This PSB (Program Specification Block) defines the database access characteristi
 
 ## Open Questions
 
-- ? What is the specific purpose of the PAUTSUM0 and PAUTDTL1 segments?
-  - Context: The code defines these segments as SENSEG but doesn't provide enough context to understand their role in the database structure.
+- ? What is the specific purpose of the DBPAUTP0, PASFLDBD, and PADFLDBD databases?
+  - Context: The DBDNAME values are provided, but the function of the databases is not clear from this PSB.
+- ? What is the significance of the PROCOPT values (GOTP, LS) for each PCB?
+  - Context: The PROCOPT values are defined, but their impact on program behavior is unclear.

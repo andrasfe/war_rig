@@ -4,14 +4,14 @@
     "file_name": "PSBPAUTB.psb",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T23:05:40.583535",
+    "analyzed_at": "2026-01-28T14:55:06.437000",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This PSB defines the program view for accessing the DBPAUTP0 database. It specifies the program's access rights (PROCOPT=AP), key length (KEYLEN=14), and the segments it can access (PAUTSUM0, PAUTDTL1). The PSBGEN statement indicates it's designed for COBOL and compatibility is enabled.",
+    "summary": "This file defines a Program Specification Block (PSB) named PSBPAUTB for an IMS database application. It specifies the database (DBPAUTP0), processing options (AP), key length (14), and defines two segments (PAUTSUM0 and PAUTDTL1) with their parent-child relationship. The PSB is configured for COBOL language compatibility.",
     "business_context": null,
-    "program_type": "BATCH",
+    "program_type": "UTILITY",
     "citations": [
       17,
       18,
@@ -19,17 +19,7 @@
       20
     ]
   },
-  "inputs": [
-    {
-      "name": "DBPAUTP0",
-      "io_type": "IMS_SEGMENT",
-      "description": "The DBPAUTP0 database, accessed via the PCB.",
-      "copybook": null,
-      "citation": [
-        17
-      ]
-    }
-  ],
+  "inputs": [],
   "outputs": [],
   "called_programs": [],
   "calling_context": {
@@ -39,15 +29,7 @@
   },
   "business_rules": [],
   "data_flow": {
-    "reads_from": [
-      {
-        "source": "DBPAUTP0",
-        "fields_used": [],
-        "citation": [
-          17
-        ]
-      }
-    ],
+    "reads_from": [],
     "writes_to": [],
     "transforms": []
   },
@@ -58,9 +40,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the purpose of the PAUTSUM0 and PAUTDTL1 segments?",
-      "context": "The code only defines the segments, but not their content or relationship.",
-      "suggestion": "Examine the DBD for DBPAUTP0."
+      "question": "What is the specific purpose of the DBPAUTP0 database and the PAUTSUM0 and PAUTDTL1 segments within the broader application context?",
+      "context": "The PSB definition provides the structure but lacks context on how these database elements are used.",
+      "suggestion": "Review related application code or database documentation to understand the data stored in these segments and how they contribute to the application's functionality."
     }
   ],
   "dead_code": [],

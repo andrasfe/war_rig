@@ -4,17 +4,17 @@
     "file_name": "COPAU01.bms",
     "file_type": "BMS",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T23:03:36.278432",
+    "analyzed_at": "2026-01-28T14:54:17.485481",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This BMS map defines the screen layout for displaying pending authorization details in the CardDemo application. It includes fields for transaction details, card information, authorization responses, amounts, merchant details, and function key options.",
-    "business_context": "This screen is used to view and manage pending card authorizations within the CardDemo application.",
+    "summary": "This BMS map defines the screen layout for displaying pending authorization details in the CardDemo application. It includes fields for transaction information, card details, authorization responses, amounts, merchant information, and navigation options.",
+    "business_context": "This screen is used to view and manage pending card authorizations, likely as part of a fraud detection or transaction monitoring system.",
     "program_type": "ONLINE_CICS",
     "citations": [
       2,
-      26,
+      79,
       292
     ]
   },
@@ -35,9 +35,25 @@
   "copybooks_used": [],
   "paragraphs": [
     {
+      "paragraph_name": "COPAU01 DFHMSD",
+      "summary": null,
+      "purpose": "This DFHMSD macro defines the BMS map set named COPAU01. It specifies various attributes for the map set, including control options (ALARM, FREEKB), extended attributes (EXTATT=YES), the programming language (LANG=COBOL), input/output mode (MODE=INOUT), storage allocation (STORAGE=AUTO), the presence of a TIOA prefix (TIOAPFX=YES), and the map type (TYPE=&&SYSPARM). The CTRL parameter enables the alarm and releases the keyboard after input. EXTATT enables extended attributes. LANG specifies COBOL as the programming language. MODE specifies that the map can be used for both input and output. STORAGE specifies automatic storage allocation. TIOAPFX indicates that a terminal input/output area (TIOA) prefix is used. TYPE specifies the map type, which is determined by the system parameter &&SYSPARM. This macro essentially sets up the overall environment and characteristics for the BMS map set.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        19,
+        25
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
       "paragraph_name": "COPAU1A DFHMDI",
       "summary": null,
-      "purpose": "This DFHMDI macro defines the map's dimensions and position on the screen. It specifies that the map will occupy the entire screen, starting at line 1, column 1, and spanning 24 lines and 80 columns. The map is the primary container for all the fields defined within it. It sets the overall size and location of the screen display. The SIZE parameter defines the screen dimensions as 24 rows by 80 columns, which is a standard terminal size. The COLUMN and LINE parameters specify the starting position of the map on the screen. No specific business logic or error handling is directly associated with this macro. It serves as a structural element for organizing the screen layout.",
+      "purpose": "This DFHMDI macro defines a map named COPAU1A within the COPAU01 mapset. It sets the column and line position to start at the top-left corner of the screen (COLUMN=1, LINE=1) and defines the screen size as 24 rows by 80 columns (SIZE=(24,80)). This macro defines the overall dimensions and placement of the screen display.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -51,477 +67,13 @@
       "metadata": null
     },
     {
-      "paragraph_name": "TRNNAME DFHMDF",
+      "paragraph_name": "Field Definitions (DFHMDF)",
       "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the transaction name. It is positioned at line 1, column 7, with a length of 4 characters. The field's attributes are set to ASKIP and NORM, meaning the user cannot input data into this field, and it displays with normal intensity. The color is set to BLUE. The primary purpose of this field is to display the transaction identifier. It consumes no input data directly from other parts of the program but receives its value from the application logic. It outputs the transaction name to the screen. There is no business logic or error handling directly associated with this field definition. It is a static display field and does not call any other paragraphs or programs.",
+      "purpose": "These DFHMDF macros define the individual fields that make up the screen layout. Each field definition specifies attributes such as display characteristics (ATTRB), color (COLOR), length (LENGTH), position (POS), and initial value (INITIAL). The fields are arranged to display transaction details, card information, authorization responses, merchant details, and navigation prompts. For example, TRNNAME displays the transaction name, CARDNUM displays the card number, and AUTHRSP displays the authorization response. The ERRMSG field is used to display error messages in red. The final fields display function key options for navigation. The ATTRB parameter controls field attributes like ASKIP (auto-skip), NORM (normal intensity), BRT (bright intensity), and FSET (modified data tag). The COLOR parameter sets the color of the field. The LENGTH parameter specifies the field length. The POS parameter defines the field position on the screen. The INITIAL parameter sets the initial value of the field.",
       "called_by": [],
       "calls": [],
       "citation": [
-        34,
-        37
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "TITLE01 DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the first title line on the screen. It is positioned at line 1, column 21, with a length of 40 characters. The field's attributes are set to ASKIP and NORM, meaning the user cannot input data into this field, and it displays with normal intensity. The color is set to YELLOW. The primary purpose of this field is to display a descriptive title for the screen. It consumes no input data directly from other parts of the program but receives its value from the application logic. It outputs the title to the screen. There is no business logic or error handling directly associated with this field definition. It is a static display field and does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        38,
-        41
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "CURDATE DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the current date. It is positioned at line 1, column 71, with a length of 8 characters. The field's attributes are set to ASKIP and NORM, meaning the user cannot input data into this field, and it displays with normal intensity. The color is set to BLUE. The field is initialized with the string 'mm/dd/yy'. The primary purpose of this field is to display the current date. It consumes no input data directly from other parts of the program but receives its value from the system or application logic. It outputs the date to the screen. There is no business logic or error handling directly associated with this field definition. It is a static display field and does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        47,
-        51
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "PGMNAME DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the program name. It is positioned at line 2, column 7, with a length of 8 characters. The field's attributes are set to ASKIP and NORM, meaning the user cannot input data into this field, and it displays with normal intensity. The color is set to BLUE. The primary purpose of this field is to display the name of the currently executing program. It consumes no input data directly from other parts of the program but receives its value from the application logic. It outputs the program name to the screen. There is no business logic or error handling directly associated with this field definition. It is a static display field and does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        57,
-        60
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "TITLE02 DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the second title line on the screen. It is positioned at line 2, column 21, with a length of 40 characters. The field's attributes are set to ASKIP and NORM, meaning the user cannot input data into this field, and it displays with normal intensity. The color is set to YELLOW. The primary purpose of this field is to display a descriptive title for the screen. It consumes no input data directly from other parts of the program but receives its value from the application logic. It outputs the title to the screen. There is no business logic or error handling directly associated with this field definition. It is a static display field and does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        61,
-        64
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "CURTIME DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the current time. It is positioned at line 2, column 71, with a length of 8 characters. The field's attributes are set to ASKIP and NORM, meaning the user cannot input data into this field, and it displays with normal intensity. The color is set to BLUE. The field is initialized with the string 'hh:mm:ss'. The primary purpose of this field is to display the current time. It consumes no input data directly from other parts of the program but receives its value from the system or application logic. It outputs the time to the screen. There is no business logic or error handling directly associated with this field definition. It is a static display field and does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        70,
-        74
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "View Authorization Details",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the main screen title. It is positioned at line 4, column 27, with a length of 26 characters. The field's attributes are set to ASKIP and BRT, meaning the user cannot input data into this field, and it displays with bright intensity. The color is set to NEUTRAL. The field is initialized with the string 'View Authorization Details'. The primary purpose of this field is to display the main title of the screen. It consumes no input data directly from other parts of the program but receives its value from the application logic. It outputs the title to the screen. There is no business logic or error handling directly associated with this field definition. It is a static display field and does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        75,
-        79
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "CARDNUM DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the card number. It is positioned at line 7, column 11, with a length of 16 characters. The field's attributes are set to ASKIP and NORM, meaning the user cannot input data into this field, and it displays with normal intensity. The color is set to PINK. The primary purpose of this field is to display the card number. It consumes no input data directly from other parts of the program but receives its value from the application logic. It outputs the card number to the screen. There is no business logic or error handling directly associated with this field definition. It is a static display field and does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        85,
-        88
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "AUTHDT DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the authorization date. It is positioned at line 7, column 43, with a length of 10 characters. The field's attributes are set to ASKIP and NORM, meaning the user cannot input data into this field, and it displays with normal intensity. The color is set to PINK. The field is initialized with a space. The primary purpose of this field is to display the authorization date. It consumes no input data directly from other parts of the program but receives its value from the application logic. It outputs the authorization date to the screen. There is no business logic or error handling directly associated with this field definition. It is a static display field and does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        94,
-        98
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "AUTHTM DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the authorization time. It is positioned at line 7, column 68, with a length of 10 characters. The field's attributes are set to ASKIP and NORM, meaning the user cannot input data into this field, and it displays with normal intensity. The color is set to PINK. The field is initialized with a space. The primary purpose of this field is to display the authorization time. It consumes no input data directly from other parts of the program but receives its value from the application logic. It outputs the authorization time to the screen. There is no business logic or error handling directly associated with this field definition. It is a static display field and does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        104,
-        108
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "AUTHRSP DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the authorization response code. It is positioned at line 9, column 14, with a length of 1 character. The field's attributes are set to ASKIP and NORM, meaning the user cannot input data into this field, and it displays with normal intensity. The color is set to PINK. The field is initialized with a space. The primary purpose of this field is to display the authorization response code. It consumes no input data directly from other parts of the program but receives its value from the application logic. It outputs the authorization response code to the screen. There is no business logic or error handling directly associated with this field definition. It is a static display field and does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        114,
-        118
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "AUTHRSN DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the authorization response reason. It is positioned at line 9, column 32, with a length of 20 characters. The field's attributes are set to ASKIP and NORM, meaning the user cannot input data into this field, and it displays with normal intensity. The color is set to BLUE. The field is initialized with a space. The primary purpose of this field is to display the authorization response reason. It consumes no input data directly from other parts of the program but receives its value from the application logic. It outputs the authorization response reason to the screen. There is no business logic or error handling directly associated with this field definition. It is a static display field and does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        124,
-        128
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "AUTHCD DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the authorization code. It is positioned at line 9, column 68, with a length of 6 characters. The field's attributes are set to ASKIP and NORM, meaning the user cannot input data into this field, and it displays with normal intensity. The color is set to BLUE. The field is initialized with a space. The primary purpose of this field is to display the authorization code. It consumes no input data directly from other parts of the program but receives its value from the application logic. It outputs the authorization code to the screen. There is no business logic or error handling directly associated with this field definition. It is a static display field and does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        134,
-        138
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "AUTHAMT DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the authorization amount. It is positioned at line 11, column 11, with a length of 12 characters. The field's attributes are set to ASKIP and NORM, meaning the user cannot input data into this field, and it displays with normal intensity. The color is set to BLUE. The field is initialized with a space. The primary purpose of this field is to display the authorization amount. It consumes no input data directly from other parts of the program but receives its value from the application logic. It outputs the authorization amount to the screen. There is no business logic or error handling directly associated with this field definition. It is a static display field and does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        144,
-        148
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "POSEMD DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the POS entry mode. It is positioned at line 11, column 46, with a length of 4 characters. The field's attributes are set to ASKIP and NORM, meaning the user cannot input data into this field, and it displays with normal intensity. The color is set to BLUE. The field is initialized with a space. The primary purpose of this field is to display the POS entry mode. It consumes no input data directly from other parts of the program but receives its value from the application logic. It outputs the POS entry mode to the screen. There is no business logic or error handling directly associated with this field definition. It is a static display field and does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        154,
-        158
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "AUTHSRC DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the authorization source. It is positioned at line 11, column 68, with a length of 10 characters. The field's attributes are set to ASKIP and NORM, meaning the user cannot input data into this field, and it displays with normal intensity. The color is set to BLUE. The field is initialized with a space. The primary purpose of this field is to display the authorization source. It consumes no input data directly from other parts of the program but receives its value from the application logic. It outputs the authorization source to the screen. There is no business logic or error handling directly associated with this field definition. It is a static display field and does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        164,
-        168
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "MCCCD DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the Merchant Category Code (MCC). It is positioned at line 13, column 13, with a length of 4 characters. The field's attributes are set to ASKIP and NORM, meaning the user cannot input data into this field, and it displays with normal intensity. The color is set to BLUE. The field is initialized with a space. The primary purpose of this field is to display the MCC code. It consumes no input data directly from other parts of the program but receives its value from the application logic. It outputs the MCC code to the screen. There is no business logic or error handling directly associated with this field definition. It is a static display field and does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        174,
-        178
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "CRDEXP DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the card expiration date. It is positioned at line 13, column 42, with a length of 5 characters. The field's attributes are set to ASKIP and NORM, meaning the user cannot input data into this field, and it displays with normal intensity. The color is set to BLUE. The field is initialized with a space. The primary purpose of this field is to display the card expiration date. It consumes no input data directly from other parts of the program but receives its value from the application logic. It outputs the card expiration date to the screen. There is no business logic or error handling directly associated with this field definition. It is a static display field and does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        184,
-        188
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "AUTHTYP DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the authorization type. It is positioned at line 13, column 64, with a length of 14 characters. The field's attributes are set to ASKIP and NORM, meaning the user cannot input data into this field, and it displays with normal intensity. The color is set to BLUE. The field is initialized with a space. The primary purpose of this field is to display the authorization type. It consumes no input data directly from other parts of the program but receives its value from the application logic. It outputs the authorization type to the screen. There is no business logic or error handling directly associated with this field definition. It is a static display field and does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        194,
-        198
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "TRNID DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the transaction ID. It is positioned at line 15, column 12, with a length of 15 characters. The field's attributes are set to ASKIP and NORM, meaning the user cannot input data into this field, and it displays with normal intensity. The color is set to BLUE. The field is initialized with a space. The primary purpose of this field is to display the transaction ID. It consumes no input data directly from other parts of the program but receives its value from the application logic. It outputs the transaction ID to the screen. There is no business logic or error handling directly associated with this field definition. It is a static display field and does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        204,
-        208
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "AUTHMTC DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the match status. It is positioned at line 15, column 46, with a length of 1 character. The field's attributes are set to ASKIP and NORM, meaning the user cannot input data into this field, and it displays with normal intensity. The color is set to RED. The field is initialized with a space. The primary purpose of this field is to display the match status. It consumes no input data directly from other parts of the program but receives its value from the application logic. It outputs the match status to the screen. There is no business logic or error handling directly associated with this field definition. It is a static display field and does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        214,
-        218
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "AUTHFRD DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the fraud status. It is positioned at line 15, column 67, with a length of 10 characters. The field's attributes are set to ASKIP and NORM, meaning the user cannot input data into this field, and it displays with normal intensity. The color is set to RED. The field is initialized with a space. The primary purpose of this field is to display the fraud status. It consumes no input data directly from other parts of the program but receives its value from the application logic. It outputs the fraud status to the screen. There is no business logic or error handling directly associated with this field definition. It is a static display field and does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        224,
-        228
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "Merchant Details Line",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a static text line to visually separate the merchant details section on the screen. It is positioned at line 17, column 2, with a length of 76 characters. The color is set to NEUTRAL. The field is initialized with the string 'Merchant Details ------------------------------- -----------------------------'. The primary purpose of this field is to provide a visual separation for the merchant details section. It consumes no input data directly from other parts of the program. It outputs the separator line to the screen. There is no business logic or error handling directly associated with this field definition. It is a static display field and does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        229,
-        233
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "MERNAME DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the merchant name. It is positioned at line 19, column 9, with a length of 25 characters. The field's attributes are set to ASKIP and NORM, meaning the user cannot input data into this field, and it displays with normal intensity. The color is set to BLUE. The field is initialized with a space. The primary purpose of this field is to display the merchant name. It consumes no input data directly from other parts of the program but receives its value from the application logic. It outputs the merchant name to the screen. There is no business logic or error handling directly associated with this field definition. It is a static display field and does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        239,
-        243
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "MERID DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the merchant ID. It is positioned at line 19, column 55, with a length of 15 characters. The field's attributes are set to ASKIP and NORM, meaning the user cannot input data into this field, and it displays with normal intensity. The color is set to BLUE. The field is initialized with a space. The primary purpose of this field is to display the merchant ID. It consumes no input data directly from other parts of the program but receives its value from the application logic. It outputs the merchant ID to the screen. There is no business logic or error handling directly associated with this field definition. It is a static display field and does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        249,
-        253
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "MERCITY DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the merchant city. It is positioned at line 21, column 9, with a length of 25 characters. The field's attributes are set to ASKIP and NORM, meaning the user cannot input data into this field, and it displays with normal intensity. The color is set to BLUE. The field is initialized with a space. The primary purpose of this field is to display the merchant city. It consumes no input data directly from other parts of the program but receives its value from the application logic. It outputs the merchant city to the screen. There is no business logic or error handling directly associated with this field definition. It is a static display field and does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        259,
-        263
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "MERST DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the merchant state. It is positioned at line 21, column 49, with a length of 2 characters. The field's attributes are set to ASKIP and NORM, meaning the user cannot input data into this field, and it displays with normal intensity. The color is set to BLUE. The field is initialized with a space. The primary purpose of this field is to display the merchant state. It consumes no input data directly from other parts of the program but receives its value from the application logic. It outputs the merchant state to the screen. There is no business logic or error handling directly associated with this field definition. It is a static display field and does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        269,
-        273
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "MERZIP DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the merchant zip code. It is positioned at line 21, column 61, with a length of 10 characters. The field's attributes are set to ASKIP and NORM, meaning the user cannot input data into this field, and it displays with normal intensity. The color is set to BLUE. The field is initialized with a space. The primary purpose of this field is to display the merchant zip code. It consumes no input data directly from other parts of the program but receives its value from the application logic. It outputs the merchant zip code to the screen. There is no business logic or error handling directly associated with this field definition. It is a static display field and does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        279,
-        283
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "ERRMSG DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for error messages. It is positioned at line 23, column 1, with a length of 78 characters. The field's attributes are set to ASKIP, BRT, and FSET, meaning the user cannot input data into this field, it displays with bright intensity, and the field is initially set. The color is set to RED. The primary purpose of this field is to display error messages to the user. It consumes error messages generated by the application logic. It outputs the error message to the screen. There is no business logic directly associated with this field definition, but it is used to display error conditions. It does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        284,
-        287
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "Function Key Options",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for function key options. It is positioned at line 24, column 1, with a length of 45 characters. The field's attributes are set to ASKIP and NORM, meaning the user cannot input data into this field, and it displays with normal intensity. The color is set to YELLOW. The field is initialized with the string ' F3=Back  F5=Mark/Remove Fraud  F8=Next Auth'. The primary purpose of this field is to display the available function key options to the user. It consumes no input data directly from other parts of the program. It outputs the function key options to the screen. There is no business logic or error handling directly associated with this field definition. It is a static display field and does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        288,
+        29,
         292
       ],
       "outgoing_calls": [],
@@ -536,9 +88,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "How are the fields populated with data?",
-      "context": "The BMS map only defines the screen layout, not the data population logic.",
-      "suggestion": "Analyze the COBOL program that uses this BMS map to understand how the fields are populated."
+      "question": "What is the value of &&SYSPARM?",
+      "context": "The TYPE parameter in the DFHMSD macro uses &&SYSPARM to determine the map type, but the value of this parameter is not defined in the BMS map.",
+      "suggestion": "Check the JCL or CICS system definition for the COPAU01 map to determine the value of &&SYSPARM."
     }
   ],
   "dead_code": [

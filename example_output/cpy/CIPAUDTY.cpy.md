@@ -2,7 +2,7 @@
 
 **File**: `cpy/CIPAUDTY.cpy`
 **Type**: COPYBOOK
-**Analyzed**: 2026-01-27 23:03:16.694198
+**Analyzed**: 2026-01-28 14:52:16.577193
 
 ## Purpose
 

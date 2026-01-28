@@ -4,13 +4,13 @@
     "file_name": "CBPAUP0J.jcl",
     "file_type": "JCL",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T23:06:14.375641",
+    "analyzed_at": "2026-01-28T14:55:41.693454",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This JCL executes an IMS program (CBPAUP0C) to delete expired authorizations. It defines the execution environment for the IMS program, including necessary libraries and input parameters.",
-    "business_context": "UNKNOWN",
+    "summary": "This JCL executes an IMS program (DFSRRC00) to delete expired authorizations, using the BMP region controller. It specifies the program CBPAUP0C and PSB PSBPAUTB for the IMS execution.",
+    "business_context": "This job likely supports security and compliance by removing outdated access privileges.",
     "program_type": "BATCH",
     "citations": [
       21,
@@ -20,9 +20,56 @@
   },
   "inputs": [
     {
+      "name": "IMS.SDFSRESL",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS RESLIB library containing IMS modules.",
+      "copybook": null,
+      "citation": [
+        26,
+        28,
+        31
+      ]
+    },
+    {
+      "name": "XXXXXXXX.PROD.LOADLIB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Application load library, likely containing CBPAUP0C.",
+      "copybook": null,
+      "citation": [
+        27
+      ]
+    },
+    {
+      "name": "IMS.PROCLIB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS procedure library.",
+      "copybook": null,
+      "citation": [
+        29
+      ]
+    },
+    {
+      "name": "IMS.PSBLIB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS PSB library containing PSBPAUTB.",
+      "copybook": null,
+      "citation": [
+        33
+      ]
+    },
+    {
+      "name": "IMS.DBDLIB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS DBD library.",
+      "copybook": null,
+      "citation": [
+        34
+      ]
+    },
+    {
       "name": "SYSIN",
-      "io_type": "PARAMETER",
-      "description": "Control input for the IMS program, likely containing parameters related to authorization expiration criteria. The example shows '00,00001,00001,Y' as input.",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Control input for the IMS program. Contains parameters '00,00001,00001,Y'.",
       "copybook": null,
       "citation": [
         36,
@@ -43,7 +90,7 @@
     {
       "name": "SYSOUT",
       "io_type": "REPORT",
-      "description": "Standard system output.",
+      "description": "System output.",
       "copybook": null,
       "citation": [
         40
@@ -61,7 +108,7 @@
     {
       "name": "ABENDAID",
       "io_type": "REPORT",
-      "description": "System output for ABEND debugging.",
+      "description": "System output for ABEND aid.",
       "copybook": null,
       "citation": [
         42
@@ -79,7 +126,7 @@
     {
       "name": "SYSUDUMP",
       "io_type": "REPORT",
-      "description": "System dump output.",
+      "description": "System user dump output.",
       "copybook": null,
       "citation": [
         46
@@ -95,19 +142,7 @@
       ]
     }
   ],
-  "called_programs": [
-    {
-      "program_name": "DFSRRC00",
-      "call_type": "STATIC_CALL",
-      "purpose": "Executes the IMS control region to run the specified BMP program.",
-      "parameters": [
-        "BMP",
-        "CBPAUP0C",
-        "PSBPAUTB"
-      ],
-      "citation": 24
-    }
-  ],
+  "called_programs": [],
   "calling_context": {
     "called_by": [],
     "entry_points": [],
@@ -122,14 +157,30 @@
   "copybooks_used": [],
   "paragraphs": [
     {
+      "paragraph_name": "CBPAUP0J",
+      "summary": null,
+      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1,
+        1
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
       "paragraph_name": "STEP01",
       "summary": null,
-      "purpose": "This step executes the IMS program CBPAUP0C within the IMS control region. It uses the DFSRRC00 program to initiate the IMS environment and specifies 'BMP' as the execution type, indicating a Batch Message Processing program. The PSBPAUTB parameter likely identifies the Program Specification Block (PSB) to be used for this execution, defining the program's access to IMS databases. The STEPLIB DD statements define the load libraries required for the execution, including the IMS.SDFSRESL and XXXXXXXX.PROD.LOADLIB. The DFSRESLB DD statement specifies the IMS resident library. The SYSIN DD statement provides input parameters to the CBPAUP0C program, potentially controlling the criteria for deleting expired authorizations. Several SYSOUT DD statements define output datasets for various system and program messages, including standard output, ABEND information, and IMS error messages. IEFRDER and IMSLOGR are DUMMY datasets, likely placeholders for log data that is not being captured in this execution.",
+      "purpose": "[Citadel] Paragraph identified by static analysis",
       "called_by": [],
       "calls": [],
       "citation": [
         24,
-        47
+        24
       ],
       "outgoing_calls": [
         {
@@ -184,14 +235,14 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the exact purpose of the input parameters provided via SYSIN?",
-      "context": "The meaning of '00,00001,00001,Y' is unclear without further documentation or the source code of CBPAUP0C.",
-      "suggestion": "Review the CBPAUP0C program's documentation or source code to understand the SYSIN parameters."
+      "question": "What is the purpose of the SYSIN input parameters '00,00001,00001,Y'?",
+      "context": "The meaning of these parameters is not clear from the JCL itself.",
+      "suggestion": "Review the CBPAUP0C program documentation or source code to understand how these parameters are used."
     },
     {
-      "question": "What specific business process does deleting expired authorizations support?",
-      "context": "The JCL does not provide enough information to determine the business context.",
-      "suggestion": "Consult with business stakeholders or review related documentation to understand the business purpose."
+      "question": "What is the DSN for XXXXXXXX.PROD.LOADLIB?",
+      "context": "The DSN is masked with XXXXXXXX.",
+      "suggestion": "Check the system documentation or contact the system administrator to determine the actual DSN."
     }
   ],
   "dead_code": [],

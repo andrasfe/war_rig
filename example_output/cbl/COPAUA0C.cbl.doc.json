@@ -4,41 +4,84 @@
     "file_name": "COPAUA0C.cbl",
     "file_type": "COBOL",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T23:05:46.053388",
+    "analyzed_at": "2026-01-28T14:56:29.552612",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This COBOL program, COPAUA0C, is a Card Authorization Decision Program designed for a CICS COBOL IMS MQ environment. It handles card authorization requests, interacts with IMS databases, and uses MQ for messaging. The program extracts request messages, processes authorization logic, and sends responses via MQ.",
-    "business_context": "Card authorization processing within a financial transaction system.",
+    "summary": "This COBOL program processes authorization requests, retrieves account and customer information, makes authorization decisions based on available credit and transaction amount, and sends a response. It reads card details, retrieves account and customer data from CICS files and IMS database, and updates the pending authorization summary in IMS. The program also logs errors and warnings to an error log.",
+    "business_context": "This program is likely part of a credit card authorization system, responsible for validating transactions and updating account information.",
     "program_type": "ONLINE_CICS",
     "citations": [
-      14,
-      15,
-      16
+      400,
+      477,
+      620,
+      738
     ]
   },
   "inputs": [
     {
       "name": "W01-GET-BUFFER",
       "io_type": "CICS_QUEUE",
-      "description": "Input message from MQ containing card authorization request details.",
+      "description": "Contains the authorization request message received from the MQ queue.",
       "copybook": null,
       "citation": [
-        180,
         405
       ]
     },
     {
-      "name": "IMS Database",
-      "io_type": "IMS_SEGMENT",
-      "description": "IMS database segments containing cardholder account and profile data.",
+      "name": "WS-CCXREF-FILE",
+      "io_type": "FILE_VSAM",
+      "description": "Card Cross-Reference file, used to retrieve account and customer IDs based on the card number.",
       "copybook": null,
       "citation": [
-        451,
-        452,
-        454,
-        456
+        478
+      ]
+    },
+    {
+      "name": "WS-ACCTFILENAME",
+      "io_type": "FILE_VSAM",
+      "description": "Account master file, used to retrieve account details such as credit limit and current balance.",
+      "copybook": null,
+      "citation": [
+        526
+      ]
+    },
+    {
+      "name": "WS-CUSTFILENAME",
+      "io_type": "FILE_VSAM",
+      "description": "Customer master file, used to retrieve customer details.",
+      "copybook": null,
+      "citation": [
+        574
+      ]
+    },
+    {
+      "name": "PENDING-AUTH-SUMMARY",
+      "io_type": "IMS_SEGMENT",
+      "description": "IMS segment PAUTSUM0 containing pending authorization summary data.",
+      "copybook": null,
+      "citation": [
+        622,
+        837
+      ]
+    },
+    {
+      "name": "PA-RQ-CARD-NUM",
+      "io_type": "CICS_COMMAREA",
+      "description": "Card number from the request.",
+      "copybook": null,
+      "citation": [
+        85
+      ]
+    },
+    {
+      "name": "PA-RQ-TRANSACTION-AMT",
+      "io_type": "CICS_COMMAREA",
+      "description": "Transaction amount from the request.",
+      "copybook": null,
+      "citation": [
+        694
       ]
     }
   ],
@@ -46,32 +89,27 @@
     {
       "name": "W02-PUT-BUFFER",
       "io_type": "CICS_QUEUE",
-      "description": "Output message to MQ containing the card authorization response.",
+      "description": "Contains the authorization response message sent to the MQ queue.",
       "copybook": null,
       "citation": [
-        763
+        737
+      ]
+    },
+    {
+      "name": "PENDING-AUTH-SUMMARY",
+      "io_type": "IMS_SEGMENT",
+      "description": "Updated pending authorization summary segment in IMS.",
+      "copybook": null,
+      "citation": [
+        827
       ]
     }
   ],
   "called_programs": [
     {
-      "program_name": "MQOPEN",
-      "call_type": "STATIC_CALL",
-      "purpose": "Opens the request queue for reading messages.",
-      "parameters": [
-        "W01-HCONN-REQUEST",
-        "MQM-OD-REQUEST",
-        "WS-OPTIONS",
-        "W01-HOBJ-REQUEST",
-        "WS-COMPCODE",
-        "WS-REASON"
-      ],
-      "citation": 262
-    },
-    {
       "program_name": "MQGET",
       "call_type": "STATIC_CALL",
-      "purpose": "Retrieves a message from the request queue.",
+      "purpose": "Retrieves a message from the MQ queue.",
       "parameters": [
         "W01-HCONN-REQUEST",
         "W01-HOBJ-REQUEST",
@@ -88,7 +126,7 @@
     {
       "program_name": "MQPUT1",
       "call_type": "STATIC_CALL",
-      "purpose": "Sends a reply message to the reply queue.",
+      "purpose": "Sends a response message to the MQ queue.",
       "parameters": [
         "W02-HCONN-REPLY",
         "MQM-OD-REPLY",
@@ -110,42 +148,27 @@
   "business_rules": [
     {
       "rule_id": "BR001",
-      "description": "If the MQOPEN call fails, log an error.",
-      "logic_summary": "Checks WS-COMPCODE after MQOPEN. If not MQCC-OK, sets error flags and performs 9500-LOG-ERROR.",
+      "description": "Decline authorization if the transaction amount exceeds the available credit.",
+      "logic_summary": "Compares WS-TRANSACTION-AMT with WS-AVAILABLE-AMT. If the transaction amount is greater, the authorization is declined.",
       "conditions": [
-        "IF WS-COMPCODE = MQCC-OK"
+        "IF WS-TRANSACTION-AMT > WS-AVAILABLE-AMT"
       ],
       "citation": [
-        270,
-        271,
-        272,
-        282
+        678,
+        686
       ]
     },
     {
       "rule_id": "BR002",
-      "description": "If the MQGET call fails due to no message available, set the NO-MORE-MSG-AVAILABLE flag.",
-      "logic_summary": "Checks WS-REASON after MQGET. If MQRC-NO-MSG-AVAILABLE, sets NO-MORE-MSG-AVAILABLE to TRUE.",
+      "description": "If no authorization summary is found, use account data to determine available credit.",
+      "logic_summary": "If FOUND-PAUT-SMRY-SEG is false, the program uses ACCT-CREDIT-LIMIT and ACCT-CURR-BAL to calculate available credit.",
       "conditions": [
-        "IF WS-REASON = MQRC-NO-MSG-AVAILABLE"
+        "IF FOUND-PAUT-SMRY-SEG",
+        "IF FOUND-ACCT-IN-MSTR"
       ],
       "citation": [
-        416,
-        417
-      ]
-    },
-    {
-      "rule_id": "BR003",
-      "description": "If the MQPUT1 call fails, log an error.",
-      "logic_summary": "Checks WS-COMPCODE after MQPUT1. If not MQCC-OK, sets error flags and performs 9500-LOG-ERROR.",
-      "conditions": [
-        "IF WS-COMPCODE NOT = MQCC-OK"
-      ],
-      "citation": [
-        767,
-        768,
-        770,
-        773
+        675,
+        684
       ]
     }
   ],
@@ -154,45 +177,45 @@
       {
         "source": "W01-GET-BUFFER",
         "fields_used": [
-          "PA-RQ-AUTH-DATE",
-          "PA-RQ-AUTH-TIME",
-          "PA-RQ-CARD-NUM",
-          "PA-RQ-AUTH-TYPE",
-          "PA-RQ-CARD-EXPIRY-DATE",
-          "PA-RQ-MESSAGE-TYPE",
-          "PA-RQ-MESSAGE-SOURCE",
-          "PA-RQ-PROCESSING-CODE",
-          "WS-TRANSACTION-AMT-AN",
-          "PA-RQ-MERCHANT-CATAGORY-CODE",
-          "PA-RQ-ACQR-COUNTRY-CODE",
-          "PA-RQ-POS-ENTRY-MODE",
-          "PA-RQ-MERCHANT-ID",
-          "PA-RQ-MERCHANT-NAME",
-          "PA-RQ-MERCHANT-CITY",
-          "PA-RQ-MERCHANT-STATE",
-          "PA-RQ-MERCHANT-ZIP",
-          "PA-RQ-TRANSACTION-ID"
+          "MQMD-CORRELID",
+          "MQMD-REPLYTOQ"
         ],
         "citation": [
-          354,
-          356,
-          357,
-          358,
-          359,
-          360,
-          361,
-          362,
-          363,
-          364,
-          365,
-          366,
-          367,
-          368,
-          369,
-          370,
-          371,
-          372,
-          373
+          411,
+          413
+        ]
+      },
+      {
+        "source": "CARD-XREF-RECORD",
+        "fields_used": [
+          "XREF-ACCT-ID",
+          "XREF-CUST-ID"
+        ],
+        "citation": [
+          523,
+          571
+        ]
+      },
+      {
+        "source": "ACCOUNT-RECORD",
+        "fields_used": [
+          "ACCT-CREDIT-LIMIT",
+          "ACCT-CURR-BAL"
+        ],
+        "citation": [
+          674,
+          675
+        ]
+      },
+      {
+        "source": "PENDING-AUTH-SUMMARY",
+        "fields_used": [
+          "PA-CREDIT-LIMIT",
+          "PA-CREDIT-BALANCE"
+        ],
+        "citation": [
+          676,
+          677
         ]
       }
     ],
@@ -200,234 +223,65 @@
       {
         "destination": "W02-PUT-BUFFER",
         "fields_written": [
-          "Authorization Response Data"
+          "PA-RL-CARD-NUM",
+          "PA-RL-TRANSACTION-ID",
+          "PA-RL-AUTH-ID-CODE",
+          "PA-RL-AUTH-RESP-CODE",
+          "PA-RL-AUTH-RESP-REASON",
+          "WS-APPROVED-AMT-DIS"
         ],
         "citation": [
-          763
+          722,
+          723,
+          724,
+          725,
+          726,
+          727
+        ]
+      },
+      {
+        "destination": "PENDING-AUTH-SUMMARY",
+        "fields_written": [
+          "PA-APPROVED-AUTH-CNT",
+          "PA-APPROVED-AUTH-AMT",
+          "PA-CREDIT-BALANCE",
+          "PA-DECLINED-AUTH-CNT",
+          "PA-DECLINED-AUTH-AMT"
+        ],
+        "citation": [
+          814,
+          815,
+          817,
+          820,
+          821
         ]
       }
     ],
     "transforms": [
       {
-        "input_field": "WS-TRANSACTION-AMT-AN",
-        "output_field": "PA-RQ-TRANSACTION-AMT",
-        "transformation_description": "Converts alphanumeric transaction amount to numeric.",
+        "input_field": "PA-RQ-TRANSACTION-AMT",
+        "output_field": "WS-TRANSACTION-AMT",
+        "transformation_description": "Moves the transaction amount from the request to a working storage variable for processing.",
         "citation": [
-          376,
-          377
+          678
         ]
       },
       {
-        "input_field": "WS-CUR-DATE-X6",
-        "output_field": "PA-AUTH-DATE-9C",
-        "transformation_description": "Calculates the authorization date by subtracting the Julian date from 99999.",
+        "input_field": "ACCT-CREDIT-LIMIT",
+        "output_field": "PA-CREDIT-LIMIT",
+        "transformation_description": "Moves the account credit limit to the pending authorization summary.",
         "citation": [
-          874
-        ]
-      },
-      {
-        "input_field": "WS-CUR-TIME-N6, WS-CUR-TIME-MS",
-        "output_field": "PA-AUTH-TIME-9C",
-        "transformation_description": "Calculates the authorization time by subtracting the time with milliseconds from 999999999.",
-        "citation": [
-          875
-        ]
-      },
-      {
-        "input_field": "PA-RL-AUTH-ID-CODE",
-        "output_field": "PA-AUTH-ID-CODE",
-        "transformation_description": "Moves authorization ID code to the PA structure.",
-        "citation": [
-          897
-        ]
-      },
-      {
-        "input_field": "PA-RL-AUTH-RESP-CODE",
-        "output_field": "PA-AUTH-RESP-CODE",
-        "transformation_description": "Moves authorization response code to the PA structure.",
-        "citation": [
-          898
+          810
         ]
       }
     ]
   },
-  "copybooks_used": [
-    {
-      "copybook_name": "UNKNOWN",
-      "purpose": "Defines the structure of the MQ request message (MQM-OD-REQUEST).",
-      "location": "WORKING_STORAGE",
-      "citation": 257
-    },
-    {
-      "copybook_name": "UNKNOWN",
-      "purpose": "Defines the structure of the MQ reply message (MQM-OD-REPLY).",
-      "location": "WORKING_STORAGE",
-      "citation": 759
-    },
-    {
-      "copybook_name": "UNKNOWN",
-      "purpose": "Defines the structure of the MQ message descriptor for the request (MQM-MD-REQUEST).",
-      "location": "WORKING_STORAGE",
-      "citation": 395
-    },
-    {
-      "copybook_name": "UNKNOWN",
-      "purpose": "Defines the structure of the MQ message descriptor for the reply (MQM-MD-REPLY).",
-      "location": "WORKING_STORAGE",
-      "citation": 744
-    },
-    {
-      "copybook_name": "UNKNOWN",
-      "purpose": "Defines the structure of the MQ Get Message Options (MQM-GET-MESSAGE-OPTIONS).",
-      "location": "WORKING_STORAGE",
-      "citation": 403
-    },
-    {
-      "copybook_name": "UNKNOWN",
-      "purpose": "Defines the structure of the MQ Put Message Options (MQM-PUT-MESSAGE-OPTIONS).",
-      "location": "WORKING_STORAGE",
-      "citation": 761
-    }
-  ],
+  "copybooks_used": [],
   "paragraphs": [
-    {
-      "paragraph_name": "1100-OPEN-REQUEST-QUEUE",
-      "summary": null,
-      "purpose": "This paragraph opens the MQ request queue, enabling the program to receive authorization requests. It moves the queue name (WS-REQUEST-QNAME) and object type (MQOT-Q) into the MQ object descriptor (MQM-OD-REQUEST). It then computes the options for opening the queue, setting it to input-shared mode. The MQOPEN call is then made, using the connection handle, object descriptor, options, object handle, completion code, and reason code. If the MQOPEN call is successful (WS-COMPCODE = MQCC-OK), the WS-REQUEST-MQ-OPEN flag is set to TRUE. If the call fails, an error is logged using paragraph 9500-LOG-ERROR, including the completion code and reason code. The paragraph consumes WS-REQUEST-QNAME and MQOT-Q as inputs, and produces either a successful queue opening or an error log entry. It calls the MQOPEN program and potentially the 9500-LOG-ERROR paragraph.",
-      "called_by": [],
-      "calls": [
-        "MQOPEN",
-        "9500-LOG-ERROR"
-      ],
-      "citation": [
-        255,
-        287
-      ],
-      "outgoing_calls": [
-        {
-          "target": "MQOPEN",
-          "call_type": "calls",
-          "line": 262
-        },
-        {
-          "target": "9500-LOG-ERROR",
-          "call_type": "performs",
-          "line": 282
-        }
-      ],
-      "incoming_calls": [
-        {
-          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
-          "function": "1000-INITIALIZE",
-          "line": 244,
-          "call_type": "performs"
-        }
-      ],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "1200-SCHEDULE-PSB",
-      "summary": null,
-      "purpose": "This paragraph schedules a PSB (Program Specification Block) for IMS database interaction. It uses the EXEC DLI SCHD command with the PSB-NAME. If the PSB has been scheduled more than once (PSB-SCHEDULED-MORE-THAN-ONCE), it terminates the PSB using EXEC DLI TERM and then reschedules it. The IMS-RETURN-CODE is updated with the DIBSTAT value after each scheduling attempt. This paragraph ensures the program can access the necessary IMS database resources. The paragraph consumes PSB-NAME as input and updates IMS-RETURN-CODE. It calls EXEC DLI SCHD and EXEC DLI TERM. The purpose of scheduling the PSB is to prepare the IMS environment for subsequent database operations related to card authorization processing. Error handling is implicit in the IMS environment, with DIBSTAT providing status information.",
-      "called_by": [
-        "5000-PROCESS-AUTH"
-      ],
-      "calls": [],
-      "citation": [
-        292,
-        307
-      ],
-      "outgoing_calls": [
-        {
-          "target": "9500-LOG-ERROR",
-          "call_type": "performs",
-          "line": 316
-        }
-      ],
-      "incoming_calls": [
-        {
-          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
-          "function": "5000-PROCESS-AUTH",
-          "line": 443,
-          "call_type": "performs"
-        }
-      ],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "2100-EXTRACT-REQUEST-MSG",
-      "summary": null,
-      "purpose": "This paragraph extracts the card authorization request message from the W01-GET-BUFFER. It uses the UNSTRING statement to parse the message, which is delimited by commas. The extracted data elements are moved into corresponding fields within the PA-RQ-* data structure, such as PA-RQ-AUTH-DATE, PA-RQ-CARD-NUM, and PA-RQ-TRANSACTION-AMT. The alphanumeric transaction amount (WS-TRANSACTION-AMT-AN) is converted to a numeric value (PA-RQ-TRANSACTION-AMT) using the FUNCTION NUMVAL. This paragraph consumes W01-GET-BUFFER and produces the parsed data elements in the PA-RQ-* fields. The purpose is to prepare the request data for subsequent authorization processing. No explicit error handling is shown in the provided code snippet for the UNSTRING operation, but it is assumed that the message format is validated elsewhere.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        351,
-        377
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [
-        {
-          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
-          "function": "2000-MAIN-PROCESS",
-          "line": 328,
-          "call_type": "performs"
-        }
-      ],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "3100-READ-REQUEST-MQ",
-      "summary": null,
-      "purpose": "This paragraph reads a message from the MQ request queue. It sets the MQGMO-OPTIONS for the MQGET call, including MQGMO-NO-SYNCPOINT, MQGMO-WAIT, MQGMO-CONVERT, and MQGMO-FAIL-IF-QUIESCING. It also sets the MQMD fields, such as MSGID and CORRELID. The MQGET call is then made, using the connection handle, object handle, message descriptor, get message options, buffer length, buffer, data length, completion code, and reason code. If the MQGET call is successful (WS-COMPCODE = MQCC-OK), the correlation ID and reply queue name are saved. If the call fails and the reason code is MQRC-NO-MSG-AVAILABLE, the NO-MORE-MSG-AVAILABLE flag is set to TRUE. Otherwise, an error is logged using paragraph 9500-LOG-ERROR. This paragraph consumes the MQ request queue and produces a message in W01-GET-BUFFER. It calls the MQGET program and potentially the 9500-LOG-ERROR paragraph.",
-      "called_by": [],
-      "calls": [
-        "MQGET",
-        "9500-LOG-ERROR"
-      ],
-      "citation": [
-        386,
-        435
-      ],
-      "outgoing_calls": [
-        {
-          "target": "MQGET",
-          "call_type": "calls",
-          "line": 400
-        },
-        {
-          "target": "9500-LOG-ERROR",
-          "call_type": "performs",
-          "line": 429
-        }
-      ],
-      "incoming_calls": [
-        {
-          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
-          "function": "1000-INITIALIZE",
-          "line": 246,
-          "call_type": "performs"
-        },
-        {
-          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
-          "function": "2000-MAIN-PROCESS",
-          "line": 342,
-          "call_type": "performs"
-        }
-      ],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
     {
       "paragraph_name": "5000-PROCESS-AUTH",
       "summary": null,
-      "purpose": "This paragraph orchestrates the authorization processing. It first sets the APPROVE-AUTH flag to TRUE. It then schedules the PSB using paragraph 1200-SCHEDULE-PSB. After scheduling the PSB, it sets CARD-FOUND-XREF and FOUND-ACCT-IN-MSTR to TRUE. It then calls several paragraphs to read data: 5100-READ-XREF-RECORD, 5200-READ-ACCT-RECORD, 5300-READ-CUST-RECORD, 5500-READ-AUTH-SUMMRY, and 5600-READ-PROFILE-DATA. These read operations are performed only if CARD-FOUND-XREF is TRUE. This paragraph consumes the request data and produces the authorization decision. It calls 1200-SCHEDULE-PSB and several read paragraphs. The purpose is to gather all necessary data for making an authorization decision based on card and account information. The paragraph assumes that the called paragraphs will handle their own error conditions.",
+      "purpose": "This paragraph is the main processing unit for authorizing a transaction. It orchestrates the retrieval of necessary data, makes an authorization decision, sends a response, and writes the authorization to the database. It starts by scheduling a PSB (Program Specification Block) for IMS access using 1200-SCHEDULE-PSB. Then, it attempts to read the card cross-reference record using 5100-READ-XREF-RECORD. If the card is found in the cross-reference, it reads the account record using 5200-READ-ACCT-RECORD, the customer record using 5300-READ-CUST-RECORD, the authorization summary using 5500-READ-AUTH-SUMMRY, and the profile data using 5600-READ-PROFILE-DATA. After retrieving the data, it calls 6000-MAKE-DECISION to determine whether to approve or decline the authorization. Finally, it sends the response using 7100-SEND-RESPONSE and writes the authorization to the database using 8000-WRITE-AUTH-TO-DB if the card was found in the cross-reference file. Error handling is performed within the called paragraphs, and flags are set to indicate whether records were found or not found.",
       "called_by": [],
       "calls": [
         "1200-SCHEDULE-PSB",
@@ -435,11 +289,14 @@
         "5200-READ-ACCT-RECORD",
         "5300-READ-CUST-RECORD",
         "5500-READ-AUTH-SUMMRY",
-        "5600-READ-PROFILE-DATA"
+        "5600-READ-PROFILE-DATA",
+        "6000-MAKE-DECISION",
+        "7100-SEND-RESPONSE",
+        "8000-WRITE-AUTH-TO-DB"
       ],
       "citation": [
         438,
-        458
+        476
       ],
       "outgoing_calls": [
         {
@@ -499,63 +356,476 @@
       "is_dead_code": false,
       "dead_code_reason": null,
       "metadata": null
+    },
+    {
+      "paragraph_name": "5100-READ-XREF-RECORD",
+      "summary": null,
+      "purpose": "This paragraph reads the card cross-reference record from the VSAM file WS-CCXREF-FILE. It moves the card number from the request (PA-RQ-CARD-NUM) to the key field (XREF-CARD-NUM) and then executes a CICS READ command to retrieve the CARD-XREF-RECORD. The paragraph checks the CICS response code (WS-RESP-CD) to determine the outcome of the read operation. If the record is found (DFHRESP(NORMAL)), it sets CARD-FOUND-XREF to TRUE. If the record is not found (DFHRESP(NOTFND)), it sets CARD-NFOUND-XREF and NFOUND-ACCT-IN-MSTR to TRUE and logs a warning message. If any other error occurs, it logs a critical error message with the CICS response codes. The paragraph uses EVALUATE statement for error handling based on the CICS response code. The error logging is done by calling 9500-LOG-ERROR.",
+      "called_by": [
+        "5000-PROCESS-AUTH"
+      ],
+      "calls": [
+        "9500-LOG-ERROR"
+      ],
+      "citation": [
+        472,
+        517
+      ],
+      "outgoing_calls": [
+        {
+          "target": "9500-LOG-ERROR",
+          "call_type": "performs",
+          "line": 500
+        },
+        {
+          "target": "9500-LOG-ERROR",
+          "call_type": "performs",
+          "line": 512
+        },
+        {
+          "target": "WS-CCXREF-FILE",
+          "call_type": "reads",
+          "line": 477
+        }
+      ],
+      "incoming_calls": [
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+          "function": "5000-PROCESS-AUTH",
+          "line": 448,
+          "call_type": "performs"
+        }
+      ],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "5200-READ-ACCT-RECORD",
+      "summary": null,
+      "purpose": "This paragraph reads the account record from the VSAM file WS-ACCTFILENAME. It moves the account ID from the cross-reference record (XREF-ACCT-ID) to the key field (WS-CARD-RID-ACCT-ID) and then executes a CICS READ command to retrieve the ACCOUNT-RECORD. The paragraph checks the CICS response code (WS-RESP-CD) to determine the outcome of the read operation. If the record is found (DFHRESP(NORMAL)), it sets FOUND-ACCT-IN-MSTR to TRUE. If the record is not found (DFHRESP(NOTFND)), it sets NFOUND-ACCT-IN-MSTR to TRUE and logs a warning message. If any other error occurs, it logs a critical error message with the CICS response codes. The paragraph uses EVALUATE statement for error handling based on the CICS response code. The error logging is done by calling 9500-LOG-ERROR.",
+      "called_by": [
+        "5000-PROCESS-AUTH"
+      ],
+      "calls": [
+        "9500-LOG-ERROR"
+      ],
+      "citation": [
+        520,
+        565
+      ],
+      "outgoing_calls": [
+        {
+          "target": "9500-LOG-ERROR",
+          "call_type": "performs",
+          "line": 547
+        },
+        {
+          "target": "9500-LOG-ERROR",
+          "call_type": "performs",
+          "line": 560
+        },
+        {
+          "target": "WS-ACCTFILENAME",
+          "call_type": "reads",
+          "line": 525
+        }
+      ],
+      "incoming_calls": [
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+          "function": "5000-PROCESS-AUTH",
+          "line": 451,
+          "call_type": "performs"
+        }
+      ],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "5300-READ-CUST-RECORD",
+      "summary": null,
+      "purpose": "This paragraph reads the customer record from the VSAM file WS-CUSTFILENAME. It moves the customer ID from the cross-reference record (XREF-CUST-ID) to the key field (WS-CARD-RID-CUST-ID) and then executes a CICS READ command to retrieve the CUSTOMER-RECORD. The paragraph checks the CICS response code (WS-RESP-CD) to determine the outcome of the read operation. If the record is found (DFHRESP(NORMAL)), it sets FOUND-CUST-IN-MSTR to TRUE. If the record is not found (DFHRESP(NOTFND)), it sets NFOUND-CUST-IN-MSTR to TRUE and logs a warning message. If any other error occurs, it logs a critical error message with the CICS response codes. The paragraph uses EVALUATE statement for error handling based on the CICS response code. The error logging is done by calling 9500-LOG-ERROR.",
+      "called_by": [
+        "5000-PROCESS-AUTH"
+      ],
+      "calls": [
+        "9500-LOG-ERROR"
+      ],
+      "citation": [
+        568,
+        613
+      ],
+      "outgoing_calls": [
+        {
+          "target": "9500-LOG-ERROR",
+          "call_type": "performs",
+          "line": 595
+        },
+        {
+          "target": "9500-LOG-ERROR",
+          "call_type": "performs",
+          "line": 608
+        },
+        {
+          "target": "WS-CUSTFILENAME",
+          "call_type": "reads",
+          "line": 573
+        }
+      ],
+      "incoming_calls": [
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+          "function": "5000-PROCESS-AUTH",
+          "line": 452,
+          "call_type": "performs"
+        }
+      ],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "5500-READ-AUTH-SUMMRY",
+      "summary": null,
+      "purpose": "This paragraph reads the pending authorization summary segment (PAUTSUM0) from the IMS database. It moves the account ID from the cross-reference record (XREF-ACCT-ID) to the PA-ACCT-ID field and then executes an IMS DLI GU (Get Unique) command to retrieve the segment. The paragraph checks the IMS return code (DIBSTAT) to determine the outcome of the read operation. If the segment is found (STATUS-OK), it sets FOUND-PAUT-SMRY-SEG to TRUE. If the segment is not found (SEGMENT-NOT-FOUND), it sets NFOUND-PAUT-SMRY-SEG to TRUE. If any other error occurs, it logs a critical error message with the IMS return code. The paragraph uses EVALUATE statement for error handling based on the IMS return code. The error logging is done by calling 9500-LOG-ERROR.",
+      "called_by": [
+        "5000-PROCESS-AUTH"
+      ],
+      "calls": [
+        "9500-LOG-ERROR"
+      ],
+      "citation": [
+        616,
+        644
+      ],
+      "outgoing_calls": [
+        {
+          "target": "9500-LOG-ERROR",
+          "call_type": "performs",
+          "line": 639
+        }
+      ],
+      "incoming_calls": [
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+          "function": "5000-PROCESS-AUTH",
+          "line": 454,
+          "call_type": "performs"
+        }
+      ],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "5600-READ-PROFILE-DATA",
+      "summary": null,
+      "purpose": "This paragraph is a placeholder and currently contains only a CONTINUE statement. It does not perform any specific action. It is called by 5000-PROCESS-AUTH. It might be intended for future implementation to read profile data, but currently, it serves as a no-op. There is no error handling or data manipulation performed in this paragraph.",
+      "called_by": [
+        "5000-PROCESS-AUTH"
+      ],
+      "calls": [],
+      "citation": [
+        647,
+        654
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+          "function": "5000-PROCESS-AUTH",
+          "line": 456,
+          "call_type": "performs"
+        }
+      ],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "6000-MAKE-DECISION",
+      "summary": null,
+      "purpose": "This paragraph determines whether to approve or decline the authorization request based on the available credit and the transaction amount. It first moves the request data to the response fields. If a pending authorization summary segment is found (FOUND-PAUT-SMRY-SEG), it calculates the available amount based on the credit limit and balance from the summary. Otherwise, if an account record is found (FOUND-ACCT-IN-MSTR), it calculates the available amount based on the credit limit and balance from the account record. If neither is found, the authorization is declined. If the transaction amount exceeds the available amount, the authorization is declined and INSUFFICIENT-FUND is set to TRUE. Based on the decision, the appropriate authorization response code and amount are moved to the response fields. Finally, it sets the authorization response reason based on various conditions such as card not found, insufficient funds, or other errors. The paragraph constructs the response message to be sent back.",
+      "called_by": [
+        "5000-PROCESS-AUTH"
+      ],
+      "calls": [],
+      "citation": [
+        657,
+        735
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+          "function": "5000-PROCESS-AUTH",
+          "line": 459,
+          "call_type": "performs"
+        }
+      ],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "7100-SEND-RESPONSE",
+      "summary": null,
+      "purpose": "This paragraph sends the authorization response message to the MQ queue. It first sets the MQ object descriptor (MQOD) and message descriptor (MQMD) fields with the appropriate values, including the reply queue name and correlation ID. It then computes the MQPMO-OPTIONS for the MQPUT1 call. The paragraph moves the response length to W02-BUFFLEN and calls the MQPUT1 program to send the message. If the MQPUT1 call fails, it logs a critical error message with the MQ completion and reason codes. The paragraph uses an IF statement to check the MQ completion code and perform error handling. The error logging is done by calling 9500-LOG-ERROR.",
+      "called_by": [
+        "5000-PROCESS-AUTH"
+      ],
+      "calls": [
+        "MQPUT1",
+        "9500-LOG-ERROR"
+      ],
+      "citation": [
+        738,
+        793
+      ],
+      "outgoing_calls": [
+        {
+          "target": "MQPUT1",
+          "call_type": "calls",
+          "line": 758
+        },
+        {
+          "target": "9500-LOG-ERROR",
+          "call_type": "performs",
+          "line": 778
+        }
+      ],
+      "incoming_calls": [
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+          "function": "5000-PROCESS-AUTH",
+          "line": 461,
+          "call_type": "performs"
+        }
+      ],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "8000-WRITE-AUTH-TO-DB",
+      "summary": null,
+      "purpose": "This paragraph writes the authorization information to the database. It calls 8400-UPDATE-SUMMARY to update the pending authorization summary in IMS and 8500-INSERT-AUTH to insert the authorization details. This paragraph is called only if the card is found in the cross-reference file. It orchestrates the update of the IMS summary and the insertion of the authorization record. No specific error handling is done in this paragraph; it relies on the called paragraphs to handle errors.",
+      "called_by": [
+        "5000-PROCESS-AUTH"
+      ],
+      "calls": [
+        "8400-UPDATE-SUMMARY",
+        "8500-INSERT-AUTH"
+      ],
+      "citation": [
+        786,
+        795
+      ],
+      "outgoing_calls": [
+        {
+          "target": "8400-UPDATE-SUMMARY",
+          "call_type": "performs",
+          "line": 790
+        },
+        {
+          "target": "8500-INSERT-AUTH",
+          "call_type": "performs",
+          "line": 791
+        }
+      ],
+      "incoming_calls": [
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+          "function": "5000-PROCESS-AUTH",
+          "line": 464,
+          "call_type": "performs"
+        }
+      ],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "8400-UPDATE-SUMMARY",
+      "summary": null,
+      "purpose": "This paragraph updates the pending authorization summary in the IMS database. If a summary segment is not found (NFOUND-PAUT-SMRY-SEG), it initializes the PENDING-AUTH-SUMMARY and moves the account and customer IDs from the cross-reference record. It then moves the account credit limits. If the authorization is approved (AUTH-RESP-APPROVED), it increments the approved authorization count and amount and updates the credit balance. Otherwise, it increments the declined authorization count and amount. Finally, it either replaces the existing segment (EXEC DLI REPL) if a summary segment was found or inserts a new segment (EXEC DLI ISRT) if a summary segment was not found. The paragraph checks the IMS return code (DIBSTAT) and logs an error if the update fails. The error logging is done by calling 9500-LOG-ERROR.",
+      "called_by": [
+        "8000-WRITE-AUTH-TO-DB"
+      ],
+      "calls": [
+        "9500-LOG-ERROR"
+      ],
+      "citation": [
+        798,
+        861
+      ],
+      "outgoing_calls": [
+        {
+          "target": "9500-LOG-ERROR",
+          "call_type": "performs",
+          "line": 846
+        }
+      ],
+      "incoming_calls": [
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+          "function": "8000-WRITE-AUTH-TO-DB",
+          "line": 790,
+          "call_type": "performs"
+        }
+      ],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "8500-INSERT-AUTH",
+      "summary": null,
+      "purpose": "This paragraph inserts the authorization details into the database. It retrieves the current date and time using CICS ASKTIME and FORMATTIME commands. It then calculates the authorization date and time as 9C packed decimal values. The paragraph moves the request data to the authorization record fields. This paragraph prepares the data and inserts the authorization record. No specific error handling is done in this paragraph.",
+      "called_by": [
+        "8000-WRITE-AUTH-TO-DB"
+      ],
+      "calls": [],
+      "citation": [
+        854,
+        891
+      ],
+      "outgoing_calls": [
+        {
+          "target": "9500-LOG-ERROR",
+          "call_type": "performs",
+          "line": 931
+        }
+      ],
+      "incoming_calls": [
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+          "function": "8000-WRITE-AUTH-TO-DB",
+          "line": 791,
+          "call_type": "performs"
+        }
+      ],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
     }
   ],
   "error_handling": [
     {
-      "condition": "WS-COMPCODE not equal to MQCC-OK after MQOPEN",
-      "action": "Log error with location 'M001', set error flags, and perform 9500-LOG-ERROR.",
-      "citation": [
-        270,
-        272,
-        282
-      ]
-    },
-    {
-      "condition": "WS-REASON = MQRC-NO-MSG-AVAILABLE after MQGET",
-      "action": "Set NO-MORE-MSG-AVAILABLE to TRUE.",
+      "condition": "WS-REASON = MQRC-NO-MSG-AVAILABLE",
+      "action": "SET NO-MORE-MSG-AVAILABLE TO TRUE",
       "citation": [
         416,
         417
       ]
     },
     {
-      "condition": "WS-COMPCODE not equal to MQCC-OK after MQGET",
-      "action": "Log error with location 'M003', set error flags, and perform 9500-LOG-ERROR.",
+      "condition": "WS-COMPCODE NOT = MQCC-OK (MQGET)",
+      "action": "MOVE 'M003' TO ERR-LOCATION, SET ERR-CRITICAL TO TRUE, PERFORM 9500-LOG-ERROR",
       "citation": [
-        410,
-        419,
-        423
+        420,
+        429
       ]
     },
     {
-      "condition": "WS-COMPCODE not equal to MQCC-OK after MQPUT1",
-      "action": "Log error with location 'M004', set error flags, and perform 9500-LOG-ERROR.",
+      "condition": "WS-RESP-CD NOT = DFHRESP(NORMAL) (XREF READ)",
+      "action": "MOVE 'C001' TO ERR-LOCATION, SET ERR-CRITICAL TO TRUE, PERFORM 9500-LOG-ERROR",
       "citation": [
-        767,
-        768,
-        770,
-        773
+        502,
+        512
+      ]
+    },
+    {
+      "condition": "WS-RESP-CD NOT = DFHRESP(NORMAL) (ACCT READ)",
+      "action": "MOVE 'C002' TO ERR-LOCATION, SET ERR-CRITICAL TO TRUE, PERFORM 9500-LOG-ERROR",
+      "citation": [
+        160,
+        170
+      ]
+    },
+    {
+      "condition": "WS-RESP-CD NOT = DFHRESP(NORMAL) (CUST READ)",
+      "action": "MOVE 'C003' TO ERR-LOCATION, SET ERR-CRITICAL TO TRUE, PERFORM 9500-LOG-ERROR",
+      "citation": [
+        598,
+        608
+      ]
+    },
+    {
+      "condition": "DIBSTAT NOT = STATUS-OK (IMS GET SUMMARY)",
+      "action": "MOVE 'I002' TO ERR-LOCATION, SET ERR-CRITICAL TO TRUE, PERFORM 9500-LOG-ERROR",
+      "citation": [
+        633,
+        639
+      ]
+    },
+    {
+      "condition": "WS-COMPCODE NOT = MQCC-OK (MQPUT1)",
+      "action": "MOVE 'M004' TO ERR-LOCATION, SET ERR-CRITICAL TO TRUE, PERFORM 9500-LOG-ERROR",
+      "citation": [
+        777,
+        788
+      ]
+    },
+    {
+      "condition": "DIBSTAT NOT = STATUS-OK (IMS UPDATE SUMMARY)",
+      "action": "MOVE 'I003' TO ERR-LOCATION, SET ERR-CRITICAL TO TRUE, PERFORM 9500-LOG-ERROR",
+      "citation": [
+        840,
+        846
       ]
     }
   ],
   "sql_operations": [],
-  "cics_operations": [],
+  "cics_operations": [
+    {
+      "command": "READ",
+      "resource": "WS-CCXREF-FILE",
+      "purpose": "Read card cross-reference record.",
+      "citation": 477
+    },
+    {
+      "command": "READ",
+      "resource": "WS-ACCTFILENAME",
+      "purpose": "Read account record.",
+      "citation": 525
+    },
+    {
+      "command": "READ",
+      "resource": "WS-CUSTFILENAME",
+      "purpose": "Read customer record.",
+      "citation": 573
+    },
+    {
+      "command": "ASKTIME",
+      "resource": null,
+      "purpose": "Get current system time.",
+      "citation": 857
+    },
+    {
+      "command": "FORMATTIME",
+      "resource": null,
+      "purpose": "Format system time into usable formats.",
+      "citation": 871
+    }
+  ],
   "open_questions": [
     {
-      "question": "What are the exact structures of the MQ message descriptors and options copybooks?",
-      "context": "The copybook names are not provided, making it impossible to determine the precise layout of the MQ structures.",
-      "suggestion": "Locate the copybooks (e.g., MQM-MD-REQUEST, MQM-OD-REQUEST, MQM-GET-MESSAGE-OPTIONS) to understand the message formats."
+      "question": "What is the purpose of the 1200-SCHEDULE-PSB paragraph?",
+      "context": "The code only shows a PERFORM THRU, but the contents of the paragraph are not included in the sample.",
+      "suggestion": "Examine the complete source code to determine the function of 1200-SCHEDULE-PSB."
     },
     {
-      "question": "What is the purpose and implementation of the 9500-LOG-ERROR paragraph?",
-      "context": "This paragraph is called in several error handling routines, but its code is not included in the sampled source.",
-      "suggestion": "Examine the full source code to understand how errors are logged and handled."
+      "question": "What is the complete structure of the input and output messages (W01-GET-BUFFER and W02-PUT-BUFFER)?",
+      "context": "The code references these buffers but does not define their structure.",
+      "suggestion": "Examine the copybooks or data definitions associated with these buffers."
     },
     {
-      "question": "What are the specific IMS database segments accessed by the read paragraphs (5100-5600)?",
-      "context": "The code only shows the paragraph calls, not the actual IMS database operations.",
-      "suggestion": "Examine the full source code to determine the IMS segment names and access patterns."
+      "question": "What is the purpose of the 9500-LOG-ERROR paragraph?",
+      "context": "The code calls this paragraph for error logging, but the implementation is not included in the sample.",
+      "suggestion": "Examine the complete source code to determine the function of 9500-LOG-ERROR."
     }
   ],
   "dead_code": [

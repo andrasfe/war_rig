@@ -2,46 +2,48 @@
 
 **File**: `jcl/CBPAUP0J.jcl`
 **Type**: FileType.JCL
-**Analyzed**: 2026-01-27 23:06:14.375641
+**Analyzed**: 2026-01-28 14:55:41.693454
 
 ## Purpose
 
-This JCL executes an IMS program (CBPAUP0C) to delete expired authorizations. It defines the execution environment for the IMS program, including necessary libraries and input parameters.
+This JCL executes an IMS program (DFSRRC00) to delete expired authorizations, using the BMP region controller. It specifies the program CBPAUP0C and PSB PSBPAUTB for the IMS execution.
 
-**Business Context**: UNKNOWN
+**Business Context**: This job likely supports security and compliance by removing outdated access privileges.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| SYSIN | IOType.PARAMETER | Control input for the IMS program, likely containing parameters related to authorization expiration criteria. The example shows '00,00001,00001,Y' as input. |
+| IMS.SDFSRESL | IOType.FILE_SEQUENTIAL | IMS RESLIB library containing IMS modules. |
+| XXXXXXXX.PROD.LOADLIB | IOType.FILE_SEQUENTIAL | Application load library, likely containing CBPAUP0C. |
+| IMS.PROCLIB | IOType.FILE_SEQUENTIAL | IMS procedure library. |
+| IMS.PSBLIB | IOType.FILE_SEQUENTIAL | IMS PSB library containing PSBPAUTB. |
+| IMS.DBDLIB | IOType.FILE_SEQUENTIAL | IMS DBD library. |
+| SYSIN | IOType.FILE_SEQUENTIAL | Control input for the IMS program. Contains parameters '00,00001,00001,Y'. |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
 | SYSOUX | IOType.REPORT | System output. |
-| SYSOUT | IOType.REPORT | Standard system output. |
+| SYSOUT | IOType.REPORT | System output. |
 | SYSABOUT | IOType.REPORT | System output for ABEND information. |
-| ABENDAID | IOType.REPORT | System output for ABEND debugging. |
+| ABENDAID | IOType.REPORT | System output for ABEND aid. |
 | SYSPRINT | IOType.REPORT | System print output. |
-| SYSUDUMP | IOType.REPORT | System dump output. |
+| SYSUDUMP | IOType.REPORT | System user dump output. |
 | IMSERR | IOType.REPORT | IMS error output. |
-
-## Called Programs
-
-| Program | Call Type | Purpose |
-|---------|-----------|---------|
-| DFSRRC00 | CallType.STATIC_CALL | Executes the IMS control region to run the specified BMP program. |
 
 ## Paragraphs/Procedures
 
+### CBPAUP0J
+[Citadel] Paragraph identified by static analysis
+
 ### STEP01
-This step executes the IMS program CBPAUP0C within the IMS control region. It uses the DFSRRC00 program to initiate the IMS environment and specifies 'BMP' as the execution type, indicating a Batch Message Processing program. The PSBPAUTB parameter likely identifies the Program Specification Block (PSB) to be used for this execution, defining the program's access to IMS databases. The STEPLIB DD statements define the load libraries required for the execution, including the IMS.SDFSRESL and XXXXXXXX.PROD.LOADLIB. The DFSRESLB DD statement specifies the IMS resident library. The SYSIN DD statement provides input parameters to the CBPAUP0C program, potentially controlling the criteria for deleting expired authorizations. Several SYSOUT DD statements define output datasets for various system and program messages, including standard output, ABEND information, and IMS error messages. IEFRDER and IMSLOGR are DUMMY datasets, likely placeholders for log data that is not being captured in this execution.
+[Citadel] Paragraph identified by static analysis
 
 ## Open Questions
 
-- ? What is the exact purpose of the input parameters provided via SYSIN?
-  - Context: The meaning of '00,00001,00001,Y' is unclear without further documentation or the source code of CBPAUP0C.
-- ? What specific business process does deleting expired authorizations support?
-  - Context: The JCL does not provide enough information to determine the business context.
+- ? What is the purpose of the SYSIN input parameters '00,00001,00001,Y'?
+  - Context: The meaning of these parameters is not clear from the JCL itself.
+- ? What is the DSN for XXXXXXXX.PROD.LOADLIB?
+  - Context: The DSN is masked with XXXXXXXX.

@@ -1,14 +1,26 @@
-# UNKNOWN
+# COPAU00
 
 **File**: `cpy-bms/COPAU00.cpy`
 **Type**: COPYBOOK
-**Analyzed**: 2026-01-27 23:06:02.727038
+**Analyzed**: 2026-01-28 14:55:24.290509
 
 ## Purpose
 
-This copybook appears to be empty. It likely serves as a placeholder or is intended to be populated with data structures related to screen definitions, possibly for CICS BMS.
+This copybook defines the data structure COPAU0AI, which appears to be used for screen mapping in a CICS environment. It contains fields for transaction names, titles, dates, times, account IDs, customer information, addresses, phone numbers, and error messages. It also redefines COPAU0AI as COPAU0AO, providing an alternate layout for the same data.
 
 **Business Context**: UNKNOWN
+
+## Inputs
+
+| Name | Type | Description |
+|------|------|-------------|
+| COPAU0AI | CICS_MAP | Data structure for screen input/output, containing fields for transaction name, titles, current date and time, account ID, customer name, customer ID, address, account status, phone number, and amounts. |
+
+## Outputs
+
+| Name | Type | Description |
+|------|------|-------------|
+| COPAU0AI | CICS_MAP | Data structure for screen input/output, containing fields for transaction name, titles, current date and time, account ID, customer name, customer ID, address, account status, phone number, and amounts. |
 
 ## Paragraphs/Procedures
 
@@ -28,5 +40,7 @@ The following artifacts were identified as dead code by static analysis:
 
 ## Open Questions
 
-- ? What is the intended purpose of this copybook?
-  - Context: The copybook is empty, so its purpose cannot be determined from the code itself.
+- ? What is the specific purpose of each field within the COPAU0AI and COPAU0AO structures?
+  - Context: The code only defines the data structures, not their usage.
+- ? What CICS transactions or programs use this copybook?
+  - Context: The copybook itself does not provide this information.

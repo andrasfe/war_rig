@@ -4,18 +4,19 @@
     "file_name": "DBPAUTX0.dbd",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T23:05:34.453132",
+    "analyzed_at": "2026-01-28T14:55:06.798525",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This DBD (Database Description) file defines the structure and access methods for the DBPAUTX0 database, which uses an index and VSAM for data storage. It defines a single segment, PAUTINDX, and a dataset group DSG001, specifying the DD name and size. It also defines a logical child relationship to PAUTSUM0 in database DBPAUTP0.",
+    "summary": "This file defines the Database Description (DBD) for DBPAUTX0, an IMS database. It specifies the database structure, including dataset groups, segments, fields, and indexing, using the INDEX access method with VSAM and password protection disabled.",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
+      17,
       18,
-      23,
       27,
+      29,
       30
     ]
   },
@@ -34,15 +35,32 @@
     "transforms": []
   },
   "copybooks_used": [],
-  "paragraphs": [],
+  "paragraphs": [
+    {
+      "paragraph_name": "DBD Definition",
+      "summary": null,
+      "purpose": "This section defines the structure of the IMS database DBPAUTX0. It starts by declaring the DBD name, access method (INDEX, VSAM, PROT), and password protection status (NO) on line 18. The VERSION parameter is also present but has no specified value. The definition proceeds to define a single dataset group (DSG001) on line 23, specifying the DD name (DDPAUTX0) and size (4096). Following this, the segment PAUTINDX is defined on line 27, specifying its name, parent (0 indicating root segment), byte size (6), and frequency. The segment contains a single field, INDXSEQ, defined as a packed decimal (TYPE=P) sequence field, starting at position 1 with a length of 6 bytes. Finally, a logical child relationship is defined on line 30, linking PAUTINDX to PAUTSUM0 in database DBPAUTP0, using ACCNTID as the index.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        18,
+        31
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    }
+  ],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the purpose of the VERSION parameter in the DBD macro?",
-      "context": "The code includes VERSION= without a value, and its significance is unclear.",
-      "suggestion": "Consult IMS documentation to determine the meaning and usage of the VERSION parameter."
+      "question": "What is the purpose of the VERSION parameter on line 19?",
+      "context": "The value is missing, and its significance is unclear without further context.",
+      "suggestion": "Consult IMS documentation or related system documentation to understand the VERSION parameter's role in DBD definition."
     }
   ],
   "dead_code": [],

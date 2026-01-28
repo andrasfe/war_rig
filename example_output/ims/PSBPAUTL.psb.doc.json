@@ -4,12 +4,12 @@
     "file_name": "PSBPAUTL.psb",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T23:03:46.552896",
+    "analyzed_at": "2026-01-28T14:52:42.623855",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This PSB (Program Specification Block) defines the interface for an IMS (Information Management System) application. It specifies the database (DBPAUTP0) and the segments (PAUTSUM0, PAUTDTL1) that the application can access, along with their hierarchical relationships.",
+    "summary": "This file defines a Program Specification Block (PSB) for IMS database access. It specifies the database (DBPAUTP0), processing options, and sensitive segments (PAUTSUM0, PAUTDTL1) that the program is authorized to access. The PSB is generated using the ASSEM language.",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
@@ -38,13 +38,7 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
-    {
-      "question": "What is the specific purpose of the DBPAUTP0 database and the PAUTSUM0 and PAUTDTL1 segments?",
-      "context": "The PSB defines the database and segments, but their specific function within the application is unclear.",
-      "suggestion": "Review related documentation or code that uses this PSB to understand the data stored in these segments."
-    }
-  ],
+  "open_questions": [],
   "dead_code": [],
   "flow_diagram": null
 }

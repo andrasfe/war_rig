@@ -1,23 +1,46 @@
 {
   "header": {
-    "program_id": "UNKNOWN",
+    "program_id": "COPAU00",
     "file_name": "COPAU00.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T23:06:02.727038",
+    "analyzed_at": "2026-01-28T14:55:24.290509",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook appears to be empty. It likely serves as a placeholder or is intended to be populated with data structures related to screen definitions, possibly for CICS BMS.",
+    "summary": "This copybook defines the data structure COPAU0AI, which appears to be used for screen mapping in a CICS environment. It contains fields for transaction names, titles, dates, times, account IDs, customer information, addresses, phone numbers, and error messages. It also redefines COPAU0AI as COPAU0AO, providing an alternate layout for the same data.",
     "business_context": "UNKNOWN",
     "program_type": "UNKNOWN",
     "citations": [
-      1
+      24,
+      391
     ]
   },
-  "inputs": [],
-  "outputs": [],
+  "inputs": [
+    {
+      "name": "COPAU0AI",
+      "io_type": "CICS_MAP",
+      "description": "Data structure for screen input/output, containing fields for transaction name, titles, current date and time, account ID, customer name, customer ID, address, account status, phone number, and amounts.",
+      "copybook": null,
+      "citation": [
+        24,
+        391
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "COPAU0AI",
+      "io_type": "CICS_MAP",
+      "description": "Data structure for screen input/output, containing fields for transaction name, titles, current date and time, account ID, customer name, customer ID, address, account status, phone number, and amounts.",
+      "copybook": null,
+      "citation": [
+        24,
+        391
+      ]
+    }
+  ],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
@@ -72,9 +95,14 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the intended purpose of this copybook?",
-      "context": "The copybook is empty, so its purpose cannot be determined from the code itself.",
-      "suggestion": "Consult the program(s) that include this copybook to understand how it's used or intended to be used. Check related documentation or contact the developers."
+      "question": "What is the specific purpose of each field within the COPAU0AI and COPAU0AO structures?",
+      "context": "The code only defines the data structures, not their usage.",
+      "suggestion": "Examine the programs that use this copybook to understand how each field is used."
+    },
+    {
+      "question": "What CICS transactions or programs use this copybook?",
+      "context": "The copybook itself does not provide this information.",
+      "suggestion": "Search for instances where this copybook is included in other programs."
     }
   ],
   "dead_code": [

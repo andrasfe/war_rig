@@ -4,13 +4,13 @@
     "file_name": "COPAU00.bms",
     "file_type": "BMS",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T23:05:09.274267",
+    "analyzed_at": "2026-01-28T14:54:49.526333",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This BMS map defines the screen layout for the CardDemo Pending Authorization screen. It displays a list of pending authorizations for a given account ID, along with customer details and credit information. The screen allows the user to select a transaction to view its details.",
-    "business_context": "This screen is used in a card authorization application to display and manage pending authorizations.",
+    "summary": "This BMS map defines the screen layout for the CardDemo Pending Authorization screen. It displays customer account information and a list of pending transactions, allowing the user to select a transaction for further details.",
+    "business_context": "This screen is used to view and manage pending authorizations for credit card transactions.",
     "program_type": "ONLINE_CICS",
     "citations": [
       2,
@@ -31,7 +31,7 @@
     {
       "name": "SEL0001 - SEL0005",
       "io_type": "CICS_MAP",
-      "description": "Selection fields for each transaction, allowing the user to select a transaction for viewing details.",
+      "description": "Selection fields for each transaction displayed on the screen. User enters a value to select a specific transaction.",
       "copybook": null,
       "citation": [
         277,
@@ -46,7 +46,7 @@
     {
       "name": "COPAU0A",
       "io_type": "CICS_MAP",
-      "description": "The entire screen layout, including customer information, transaction details, and messages.",
+      "description": "The entire screen layout, including labels, data fields, and messages. Displays customer information and pending transactions.",
       "copybook": null,
       "citation": [
         26
@@ -55,7 +55,7 @@
     {
       "name": "TRNNAME",
       "io_type": "CICS_MAP",
-      "description": "Transaction name",
+      "description": "Transaction Name",
       "copybook": null,
       "citation": [
         34
@@ -235,7 +235,7 @@
     {
       "name": "TRNID01 - TRNID05",
       "io_type": "CICS_MAP",
-      "description": "Transaction IDs for the displayed transactions.",
+      "description": "Transaction ID for each of the 5 transactions displayed.",
       "copybook": null,
       "citation": [
         286,
@@ -248,7 +248,7 @@
     {
       "name": "PDATE01 - PDATE05",
       "io_type": "CICS_MAP",
-      "description": "Transaction Dates for the displayed transactions.",
+      "description": "Transaction Date for each of the 5 transactions displayed.",
       "copybook": null,
       "citation": [
         291,
@@ -261,7 +261,7 @@
     {
       "name": "PTIME01 - PTIME05",
       "io_type": "CICS_MAP",
-      "description": "Transaction Times for the displayed transactions.",
+      "description": "Transaction Time for each of the 5 transactions displayed.",
       "copybook": null,
       "citation": [
         296,
@@ -274,7 +274,7 @@
     {
       "name": "PTYPE01 - PTYPE05",
       "io_type": "CICS_MAP",
-      "description": "Transaction Types for the displayed transactions.",
+      "description": "Transaction Type for each of the 5 transactions displayed.",
       "copybook": null,
       "citation": [
         301,
@@ -287,7 +287,7 @@
     {
       "name": "PAPRV01 - PAPRV05",
       "io_type": "CICS_MAP",
-      "description": "Transaction Approval indicators for the displayed transactions.",
+      "description": "Transaction Approval indicator for each of the 5 transactions displayed.",
       "copybook": null,
       "citation": [
         306,
@@ -300,7 +300,7 @@
     {
       "name": "PSTAT01 - PSTAT05",
       "io_type": "CICS_MAP",
-      "description": "Transaction Statuses for the displayed transactions.",
+      "description": "Transaction Status for each of the 5 transactions displayed.",
       "copybook": null,
       "citation": [
         311,
@@ -313,7 +313,7 @@
     {
       "name": "PAMT001 - PAMT005",
       "io_type": "CICS_MAP",
-      "description": "Transaction Amounts for the displayed transactions.",
+      "description": "Transaction Amount for each of the 5 transactions displayed.",
       "copybook": null,
       "citation": [
         316,
@@ -326,7 +326,7 @@
     {
       "name": "ERRMSG",
       "io_type": "CICS_MAP",
-      "description": "Error message displayed on the screen.",
+      "description": "Error message field to display error conditions to the user.",
       "copybook": null,
       "citation": [
         503
@@ -349,6 +349,51 @@
         ],
         "citation": [
           84
+        ]
+      },
+      {
+        "source": "SEL0001",
+        "fields_used": [
+          "SEL0001"
+        ],
+        "citation": [
+          277
+        ]
+      },
+      {
+        "source": "SEL0002",
+        "fields_used": [
+          "SEL0002"
+        ],
+        "citation": [
+          321
+        ]
+      },
+      {
+        "source": "SEL0003",
+        "fields_used": [
+          "SEL0003"
+        ],
+        "citation": [
+          365
+        ]
+      },
+      {
+        "source": "SEL0004",
+        "fields_used": [
+          "SEL0004"
+        ],
+        "citation": [
+          409
+        ]
+      },
+      {
+        "source": "SEL0005",
+        "fields_used": [
+          "SEL0005"
+        ],
+        "citation": [
+          488
         ]
       }
     ],
@@ -414,63 +459,7 @@
           "ERRMSG"
         ],
         "citation": [
-          26,
-          34,
-          38,
-          47,
-          57,
-          61,
-          70,
-          96,
-          103,
-          107,
-          114,
-          118,
-          125,
-          132,
-          139,
-          147,
-          156,
-          165,
-          174,
-          183,
-          192,
-          286,
-          291,
-          296,
-          301,
-          306,
-          311,
-          316,
-          330,
-          335,
-          340,
-          345,
-          350,
-          355,
-          360,
-          374,
-          379,
-          384,
-          389,
-          394,
-          399,
-          404,
-          418,
-          423,
-          428,
-          433,
-          438,
-          443,
-          448,
-          453,
-          458,
-          463,
-          468,
-          473,
-          478,
-          483,
-          503
+          26
         ]
       }
     ],
@@ -479,45 +468,49 @@
   "copybooks_used": [],
   "paragraphs": [
     {
-      "paragraph_name": "MAP DEFINITION",
+      "paragraph_name": "COPAU0A",
       "summary": null,
-      "purpose": "This section defines the BMS map COPAU0A, which represents the 'CardDemo - Pending Authorization Screen' (lines 1-513). It specifies the overall screen characteristics, such as the control options (ALARM, FREEKB), extended attributes (EXTATT=YES), programming language (LANG=COBOL), input/output mode (MODE=INOUT), storage type (STORAGE=AUTO), terminal I/O area prefix (TIOAPFX=YES), and the map type (TYPE=&&SYSPARM). The map is divided into fields (DFHMDF) that define the position, size, attributes, and initial values of text and input areas on the screen. These fields are used to display labels, data, and allow user input for searching account IDs and selecting transactions. The map includes fields for displaying customer information (name, address, account status), credit limits and balances, and a list of pending transactions with details like transaction ID, date, time, type, approval status, and amount. The ERRMSG field (line 503) is used to display error messages to the user. The final line (513) indicates the end of the map definition.",
+      "purpose": "This paragraph defines the overall structure and attributes of the CICS map COPAU0A, which represents the Pending Authorization screen. It specifies the screen size as 24 lines by 80 columns (line 28). It sets various control options, including enabling the alarm, freeing the keyboard after input, enabling extended attributes, specifying COBOL as the programming language, setting the mode to INOUT for both input and output, using automatic storage, and enabling the TIOAPFX option (lines 19-24). The TYPE=&&SYSPARM indicates that the map type (e.g., MAP or DSECT) is determined by a system parameter at compile time (line 25). This paragraph essentially acts as the container for all the individual fields and labels that make up the screen, defining the overall environment in which they will be displayed. It doesn't directly process data or implement business logic but sets the stage for the interaction between the user and the application.",
       "called_by": [],
       "calls": [],
       "citation": [
-        1,
-        513
+        26,
+        28
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
+      "is_dead_code": true,
+      "dead_code_reason": "Screen/Map 'COPAU0A' is never sent to or received from by any program",
+      "metadata": {
+        "body_chunks": 5
+      }
     }
   ],
-  "error_handling": [],
+  "error_handling": [
+    {
+      "condition": "Error condition",
+      "action": "Display error message in ERRMSG field",
+      "citation": [
+        503
+      ]
+    }
+  ],
   "sql_operations": [],
   "cics_operations": [
     {
       "command": "SEND MAP",
       "resource": "COPAU0A",
-      "purpose": "Display the pending authorization screen to the user.",
+      "purpose": "Display the Pending Authorization screen to the user.",
       "citation": 26
     },
     {
       "command": "RECEIVE MAP",
       "resource": "COPAU0A",
-      "purpose": "Receive input from the user, such as the account ID and transaction selection.",
-      "citation": 26
+      "purpose": "Receive input from the user, such as the account ID or a transaction selection.",
+      "citation": 84
     }
   ],
-  "open_questions": [
-    {
-      "question": "What is the purpose of the TYPE=&&SYSPARM parameter in the DFHMSD macro?",
-      "context": "The meaning of &&SYSPARM is unclear without additional context or JCL.",
-      "suggestion": "Review the JCL or build process to determine the value passed to SYSPARM."
-    }
-  ],
+  "open_questions": [],
   "dead_code": [
     {
       "name": "COPAU00",

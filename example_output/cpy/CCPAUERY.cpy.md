@@ -2,11 +2,11 @@
 
 **File**: `cpy/CCPAUERY.cpy`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-01-27 23:05:19.083984
+**Analyzed**: 2026-01-28 14:54:50.385976
 
 ## Purpose
 
-This copybook defines the structure of an error log record, used for logging errors and warnings within an application. It includes fields for date, time, application name, program name, location, error level, subsystem, error codes, message, and event key. The copybook also defines 88-level condition names for error levels and subsystems.
+This copybook defines the data structure for an error log record, used for logging errors and warnings within an application. The record includes fields for date, time, application, program, location, error level, subsystem, error codes, message, and event key. It provides a standardized format for capturing error information.
 
 ## Paragraphs/Procedures
 

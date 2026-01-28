@@ -4,13 +4,13 @@
     "file_name": "AUTHFRDS.ddl",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T23:05:19.831168",
+    "analyzed_at": "2026-01-28T14:54:55.096485",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This DDL file defines the CARDDEMO.AUTHFRDS table, which stores authorization and fraud-related data for card transactions. The table includes fields for card number, authorization timestamp, transaction details, merchant information, fraud indicators, and customer identifiers. It establishes a primary key on CARD_NUM and AUTH_TS.",
-    "business_context": "This table likely supports fraud detection and authorization processes within a card transaction system.",
+    "summary": "This DDL file defines the CARDDEMO.AUTHFRDS table, specifying its columns, data types, constraints, and primary key. The table appears to be designed for storing authorization and fraud-related data for card transactions.",
+    "business_context": "UNKNOWN",
     "program_type": "UTILITY",
     "citations": [
       1,
@@ -19,17 +19,7 @@
     ]
   },
   "inputs": [],
-  "outputs": [
-    {
-      "name": "CARDDEMO.AUTHFRDS",
-      "io_type": "DB2_TABLE",
-      "description": "Table definition for storing card authorization and fraud data.",
-      "copybook": null,
-      "citation": [
-        1
-      ]
-    }
-  ],
+  "outputs": [],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
@@ -64,7 +54,13 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [],
+  "open_questions": [
+    {
+      "question": "What is the business context for this table?",
+      "context": "The DDL file does not provide information about the specific business processes that use this table.",
+      "suggestion": "Consult with the database administrators or application developers who use this table."
+    }
+  ],
   "dead_code": [
     {
       "name": "AUTHFRDS",

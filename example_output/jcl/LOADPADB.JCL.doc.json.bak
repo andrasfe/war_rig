@@ -1,28 +1,29 @@
 {
   "header": {
     "program_id": "LOADPADB",
-    "file_name": "LOADPADB.JCL",
+    "file_name": "jcl/LOADPADB.JCL",
     "file_type": "JCL",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T23:05:57.417285",
+    "analyzed_at": "2026-01-28T14:55:30.595680",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This JCL job executes an IMS program (DFSRRC00) to load the PAUTDB database. It specifies the program, parameters, and required datasets for the IMS BMP region.",
-    "business_context": "UNKNOWN",
+    "summary": "This JCL job executes an IMS program (DFSRRC00) to load the PAUTDB database using a BMP (Batch Message Processing) region. It specifies the program, PSB, and input files required for the database load process.",
+    "business_context": "Database maintenance and loading.",
     "program_type": "BATCH",
     "citations": [
       26,
       27,
-      36
+      36,
+      38
     ]
   },
   "inputs": [
     {
       "name": "OEMA.IMS.IMSP.SDFSRESL",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS RESLIB",
+      "description": "IMS RESLIB library.",
       "copybook": null,
       "citation": [
         28,
@@ -33,7 +34,7 @@
     {
       "name": "AWS.M2.CARDDEMO.LOADLIB",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "Application load library",
+      "description": "Application load library.",
       "copybook": null,
       "citation": [
         30
@@ -42,7 +43,7 @@
     {
       "name": "OEM.IMS.IMSP.PSBLIB",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS PSB Library",
+      "description": "IMS PSB library.",
       "copybook": null,
       "citation": [
         33
@@ -51,7 +52,7 @@
     {
       "name": "OEM.IMS.IMSP.DBDLIB",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS DBD Library",
+      "description": "IMS DBD library.",
       "copybook": null,
       "citation": [
         34
@@ -60,7 +61,7 @@
     {
       "name": "AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "Input file for PAUTDB root segment",
+      "description": "Input file for the PAUTDB root segment.",
       "copybook": null,
       "citation": [
         36
@@ -69,7 +70,7 @@
     {
       "name": "AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "Input file for PAUTDB child segment",
+      "description": "Input file for the PAUTDB child segment.",
       "copybook": null,
       "citation": [
         38
@@ -78,10 +79,9 @@
     {
       "name": "OEMPP.IMS.V15R01MB.PROCLIB(DFSVSMDB)",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS VSAM Definition Parameters",
+      "description": "IMS VSAM definition.",
       "copybook": null,
       "citation": [
-        44,
         45
       ]
     }
@@ -90,7 +90,7 @@
     {
       "name": "SYSPRINT",
       "io_type": "REPORT",
-      "description": "System print output",
+      "description": "System print output.",
       "copybook": null,
       "citation": [
         48
@@ -99,7 +99,7 @@
     {
       "name": "SYSUDUMP",
       "io_type": "REPORT",
-      "description": "System dump output",
+      "description": "System dump output.",
       "copybook": null,
       "citation": [
         49
@@ -108,7 +108,7 @@
     {
       "name": "IMSERR",
       "io_type": "REPORT",
-      "description": "IMS error output",
+      "description": "IMS error output.",
       "copybook": null,
       "citation": [
         50
@@ -119,7 +119,7 @@
     {
       "program_name": "DFSRRC00",
       "call_type": "STATIC_CALL",
-      "purpose": "Executes the IMS program to load the PAUTDB database.",
+      "purpose": "Execute the IMS BMP region to load the PAUTDB database.",
       "parameters": [
         "BMP",
         "PAUDBLOD",
@@ -135,7 +135,22 @@
   },
   "business_rules": [],
   "data_flow": {
-    "reads_from": [],
+    "reads_from": [
+      {
+        "source": "AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO",
+        "fields_used": [],
+        "citation": [
+          36
+        ]
+      },
+      {
+        "source": "AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO",
+        "fields_used": [],
+        "citation": [
+          38
+        ]
+      }
+    ],
     "writes_to": [],
     "transforms": []
   },
@@ -144,12 +159,12 @@
     {
       "paragraph_name": "STEP01",
       "summary": null,
-      "purpose": "This step executes the IMS program DFSRRC00, which is responsible for loading the PAUTDB database. The PARM parameter specifies the execution environment as a BMP region, the database load utility (PAUDBLOD), and the PSB name (PSBPAUTB). The STEPLIB DD statements define the libraries containing the IMS RESLIB and application load modules required for execution. The DFSRESLB DD statement specifies the IMS RESLIB. The IMS DD statement defines the PSBLIB and DBDLIB datasets. INFILE1 and INFILE2 DD statements define the input datasets for the PAUTDB root and child segments, respectively. DFSVSAMP defines the VSAM parameters. Finally, SYSPRINT, SYSUDUMP, and IMSERR DD statements define the output datasets for system messages, dumps, and IMS error messages.",
+      "purpose": "This step executes the IMS program DFSRRC00 in a BMP region to load the PAUTDB database. It defines the necessary libraries (STEPLIB, DFSRESLB, IMS) and input files (INFILE1, INFILE2) required for the database load process. The PARM parameter specifies the execution environment as BMP, the transaction PAUDBLOD, and the PSB PSBPAUTB. The STEPLIB DD statements define the libraries containing the IMS modules and the application load library. The DFSRESLB DD statement defines the IMS RESLIB library. The IMS DD statements define the PSB and DBD libraries. INFILE1 and INFILE2 DD statements define the input files for the root and child segments of the PAUTDB database, respectively. DFSVSAMP defines the VSAM parameters. The SYSPRINT, SYSUDUMP, and IMSERR DD statements define the output datasets for system messages, dumps, and IMS error messages, respectively.",
       "called_by": [],
       "calls": [],
       "citation": [
         26,
-        51
+        50
       ],
       "outgoing_calls": [
         {
@@ -209,9 +224,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the business context for loading the PAUTDB database?",
-      "context": "The JCL does not provide information about the business purpose of this database.",
-      "suggestion": "Consult related documentation or subject matter experts to understand the business context."
+      "question": "What is the exact format and content of the PAUTDB database input files?",
+      "context": "The JCL defines the input files but does not specify the record layouts or data types.",
+      "suggestion": "Examine the PSBPAUTB PSB and the DBDs associated with the PAUTDB database."
     }
   ],
   "dead_code": [],

@@ -2,13 +2,13 @@
 
 **File**: `ims/PASFLDBD.DBD`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-01-27 23:05:29.812853
+**Analyzed**: 2026-01-28 14:52:48.240852
 
 ## Purpose
 
-This file contains the Database Description (DBD) for PASFLDBD, defining its access method as GSAM/BSAM and specifying the datasets PASFILIP and PASFILOP with a record length of 100 and RECFM=F. It was generated on 04/21/2023 for IMS version 15.1.
+This file contains the Data Base Description (DBD) for PASFLDBD, defining its structure and access methods. It specifies the database name, access method (GSAM, BSAM), dataset names (PASFILIP, PASFILOP), record length (100), and record format (F).
 
 ## Open Questions
 
-- ? What is the purpose of the PASFLDBD database and how is it used within the IMS system?
-  - Context: The DBD file defines the structure and access methods, but the specific application and data stored are unclear.
+- ? What is the purpose of the OEM.IMS.IMSP.DBDLIB dataset mentioned in line 18?
+  - Context: The file mentions a DSNAME but does not explain its usage.

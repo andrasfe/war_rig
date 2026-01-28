@@ -4,12 +4,12 @@
     "file_name": "PASFLPCB.CPY",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T23:05:15.767596",
+    "analyzed_at": "2026-01-28T14:54:35.951929",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the structure of the PASFLPCB, which appears to be related to IMS PCB (Program Communication Block). It contains fields for DBD name, segment level, PCB status, processing options, segment name, key feedback name, number of sensitive segments, and key feedback area. The copybook is likely used to access and manipulate data within an IMS database environment.",
+    "summary": "This copybook defines the structure of the PASFLPCB, which appears to be a PCB (Program Communication Block) used for IMS database communication. It contains fields related to database name, segment level, status, processing options, segment name, key feedback, number of sensitive segments, and key feedback area.",
     "business_context": null,
     "program_type": "SUBROUTINE",
     "citations": [
@@ -35,26 +35,26 @@
   "copybooks_used": [
     {
       "copybook_name": "PASFLPCB",
-      "purpose": "Defines the structure of the PASFLPCB, likely used for IMS database communication.",
+      "purpose": "Defines the structure of the PASFLPCB, likely a PCB for IMS database communication.",
       "location": "WORKING_STORAGE",
       "citation": 17
     }
   ],
   "paragraphs": [
     {
-      "paragraph_name": "N/A",
+      "paragraph_name": "PASFLPCB",
       "summary": null,
-      "purpose": "This copybook does not contain any paragraphs. It is a data structure definition. Therefore, there are no control flow, input consumption, output production, business logic, error handling, or calls to describe.",
+      "purpose": "[Citadel] Paragraph identified by static analysis",
       "called_by": [],
       "calls": [],
       "citation": [
-        17,
-        27
+        1,
+        1
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
+      "is_dead_code": true,
+      "dead_code_reason": "Record layout 'PASFLPCB' is never used by any program",
       "metadata": null
     }
   ],

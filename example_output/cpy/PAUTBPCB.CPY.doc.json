@@ -4,12 +4,12 @@
     "file_name": "PAUTBPCB.CPY",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-27T23:03:20.772026",
+    "analyzed_at": "2026-01-28T14:54:35.809967",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the structure of PAUTBPCB, which appears to be a PCB (Program Communication Block) used in IMS (Information Management System) database interaction. It contains fields related to database name, segment level, PCB status, processing options, segment name, key feedback, number of sensitive segments, and key feedback area.",
+    "summary": "This copybook defines the structure of the PAUTBPCB data area, which appears to be related to IMS PCB (Program Communication Block) information. It includes fields for database name, segment level, PCB status, processing options, segment name, key feedback length, number of sensitive segments, and key feedback area.",
     "business_context": null,
     "program_type": "SUBROUTINE",
     "citations": [
@@ -35,7 +35,7 @@
   "copybooks_used": [
     {
       "copybook_name": "PAUTBPCB",
-      "purpose": "Defines the structure of the PAUTBPCB data area, likely used for IMS PCB communication.",
+      "purpose": "Defines the structure of the PAUTBPCB data area, likely used for IMS PCB information.",
       "location": "WORKING_STORAGE",
       "citation": 17
     }

@@ -2,19 +2,13 @@
 
 **File**: `ims/PSBPAUTB.psb`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-01-27 23:05:40.583535
+**Analyzed**: 2026-01-28 14:55:06.437000
 
 ## Purpose
 
-This PSB defines the program view for accessing the DBPAUTP0 database. It specifies the program's access rights (PROCOPT=AP), key length (KEYLEN=14), and the segments it can access (PAUTSUM0, PAUTDTL1). The PSBGEN statement indicates it's designed for COBOL and compatibility is enabled.
-
-## Inputs
-
-| Name | Type | Description |
-|------|------|-------------|
-| DBPAUTP0 | IOType.IMS_SEGMENT | The DBPAUTP0 database, accessed via the PCB. |
+This file defines a Program Specification Block (PSB) named PSBPAUTB for an IMS database application. It specifies the database (DBPAUTP0), processing options (AP), key length (14), and defines two segments (PAUTSUM0 and PAUTDTL1) with their parent-child relationship. The PSB is configured for COBOL language compatibility.
 
 ## Open Questions
 
-- ? What is the purpose of the PAUTSUM0 and PAUTDTL1 segments?
-  - Context: The code only defines the segments, but not their content or relationship.
+- ? What is the specific purpose of the DBPAUTP0 database and the PAUTSUM0 and PAUTDTL1 segments within the broader application context?
+  - Context: The PSB definition provides the structure but lacks context on how these database elements are used.

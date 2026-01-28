@@ -2,16 +2,16 @@
 
 **File**: `cpy/PASFLPCB.CPY`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-01-27 23:05:15.767596
+**Analyzed**: 2026-01-28 14:54:35.951929
 
 ## Purpose
 
-This copybook defines the structure of the PASFLPCB, which appears to be related to IMS PCB (Program Communication Block). It contains fields for DBD name, segment level, PCB status, processing options, segment name, key feedback name, number of sensitive segments, and key feedback area. The copybook is likely used to access and manipulate data within an IMS database environment.
+This copybook defines the structure of the PASFLPCB, which appears to be a PCB (Program Communication Block) used for IMS database communication. It contains fields related to database name, segment level, status, processing options, segment name, key feedback, number of sensitive segments, and key feedback area.
 
 ## Paragraphs/Procedures
 
-### N/A
-This copybook does not contain any paragraphs. It is a data structure definition. Therefore, there are no control flow, input consumption, output production, business logic, error handling, or calls to describe.
+### ~~PASFLPCB~~ (Dead Code)
+*Record layout 'PASFLPCB' is never used by any program*
 
 ## Dead Code
 
