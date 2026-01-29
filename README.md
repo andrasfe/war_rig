@@ -257,7 +257,7 @@ Datacards are also automatically processed during `batch` runs.
 
 ### Generate Agent Skills
 
-Convert War Rig documentation into Agent Skills format for AI agent discovery:
+Convert War Rig documentation into [Agent Skills format](https://agentskills.io/specification) for progressive AI agent discovery:
 
 ```bash
 # Generate skills from documentation output
@@ -272,6 +272,31 @@ war-rig batch ./source --skills
 # With custom skills output directory
 war-rig batch ./source --skills --skills-output ./my-skills
 ```
+
+**Output Structure:**
+```
+skills-output/
+├── system-overview/
+│   └── SKILL.md              # Index skill - start here for discovery
+├── call-graph/
+│   └── SKILL.md              # Program call relationships
+├── datacards/
+│   └── SKILL.md              # Utility control cards (if present)
+└── programs/
+    ├── cbact01c/
+    │   ├── SKILL.md          # Summary, business rules, when to use
+    │   └── references/
+    │       └── REFERENCE.md  # Full technical details
+    └── ...
+```
+
+**What Each Skill Contains:**
+- **system-overview**: High-level system description, program catalog grouped by type, architecture diagram
+- **call-graph**: Mermaid diagram showing program call relationships
+- **program skills**: Purpose, business rules, inputs/outputs, copybooks, "When to Use" guidance
+- **references**: Detailed paragraphs, data flow, error handling, SQL/CICS operations
+
+Skills follow the Agent Skills spec for progressive disclosure - agents load metadata first (~100 tokens), then full instructions (<5000 tokens), then references as needed.
 
 ### Process with Parallel Workers
 
@@ -412,6 +437,13 @@ war_rig/
 │   └── strategies/     # Sampling strategies (5 implementations)
 ├── processors/         # Special file type processors
 │   └── datacard.py     # Datacard catalog generator
+├── skills/             # Agent Skills format converter
+│   ├── generator.py    # Main SkillsGenerator class
+│   ├── naming.py       # Skill name normalization
+│   ├── program_skill.py    # Program documentation → skill
+│   ├── overview_skill.py   # System overview → index skill
+│   ├── call_graph_skill.py # Call graph → skill
+│   └── datacard_skill.py   # Datacards → skill
 ├── orchestration/      # Workflow coordination
 │   └── ticket_engine.py
 ├── utils/              # Utility modules
@@ -421,6 +453,7 @@ war_rig/
 
 scripts/
 ├── setup.sh            # Install all projects (war_rig + citadel)
+├── generate_skills.py  # Standalone Agent Skills generator
 ├── human_feedback.py   # Human-in-the-loop feedback injection
 ├── ticket_manager.py   # CLI for managing tickets
 ├── war_rig_status.py   # Real-time status monitor
