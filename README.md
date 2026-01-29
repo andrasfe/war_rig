@@ -255,6 +255,24 @@ war-rig datacards path/to/source/ --output ./docs
 
 Datacards are also automatically processed during `batch` runs.
 
+### Generate Agent Skills
+
+Convert War Rig documentation into Agent Skills format for AI agent discovery:
+
+```bash
+# Generate skills from documentation output
+war-rig skills ./output
+
+# Custom output directory
+war-rig skills ./output --output ./my-skills
+
+# Generate skills automatically during batch processing
+war-rig batch ./source --skills
+
+# With custom skills output directory
+war-rig batch ./source --skills --skills-output ./my-skills
+```
+
 ### Process with Parallel Workers
 
 ```bash

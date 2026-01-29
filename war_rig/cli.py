@@ -8,11 +8,13 @@ Commands:
     batch: Process a directory of source files
     status: Show processing status
     init: Initialize output directories
+    skills: Generate Agent Skills from documentation output
 
 Example:
     $ war-rig analyze path/to/PROGRAM.cbl
     $ war-rig batch path/to/source/directory
     $ war-rig status
+    $ war-rig skills ./output
 """
 
 import asyncio
@@ -315,6 +317,20 @@ def batch(
             help="Enable verbose logging",
         ),
     ] = False,
+    skills_output: Annotated[
+        bool,
+        typer.Option(
+            "--skills",
+            help="Generate Agent Skills after batch processing",
+        ),
+    ] = False,
+    skills_dir: Annotated[
+        Optional[Path],
+        typer.Option(
+            "--skills-output",
+            help="Output directory for skills (default: skills-{output_name})",
+        ),
+    ] = None,
 ) -> None:
     """Process a directory of source files.
 
@@ -325,6 +341,7 @@ def batch(
         $ war-rig batch path/to/source/
         $ war-rig batch path/to/source/ --type COBOL --limit 10
         $ war-rig batch path/to/source/ --resume  # Skip already-processed files
+        $ war-rig batch path/to/source/ --skills  # Generate Agent Skills after processing
     """
     setup_logging(verbose)
 
@@ -435,6 +452,22 @@ def batch(
                 console.print(f"[green]System overview written to: {cfg.output_directory / 'SYSTEM_OVERVIEW.md'}[/green]")
             except Exception as e:
                 console.print(f"[yellow]Warning: Could not generate overview: {e}[/yellow]")
+
+    # Generate Agent Skills if --skills flag is set
+    if skills_output:
+        programs_dir = cfg.output_directory / "final" / "programs"
+        if programs_dir.exists() and list(programs_dir.glob("*.json")):
+            console.print("\n[cyan]Generating Agent Skills...[/cyan]")
+            try:
+                from war_rig.skills import SkillsGenerator
+
+                generator = SkillsGenerator(cfg.output_directory, skills_dir)
+                skills_path = generator.generate()
+                console.print(f"[green]Skills generated at: {skills_path}[/green]")
+            except Exception as e:
+                console.print(f"[yellow]Warning: Could not generate skills: {e}[/yellow]")
+        else:
+            console.print("[yellow]Skipping skills generation: no completed documentation[/yellow]")
 
 
 @app.command()
@@ -702,6 +735,62 @@ def datacards(
             console.print("[yellow]No datacard files (.dc) found[/yellow]")
     except Exception as e:
         console.print(f"[red]Error processing datacards: {e}[/red]")
+        raise typer.Exit(1) from None
+
+
+@app.command()
+def skills(
+    directory: Annotated[
+        Path,
+        typer.Argument(
+            help="Path to War Rig output directory",
+            exists=True,
+            file_okay=False,
+            dir_okay=True,
+            readable=True,
+        ),
+    ],
+    output: Annotated[
+        Optional[Path],
+        typer.Option(
+            "--output",
+            "-o",
+            help="Output directory for skills (default: skills-{input_name})",
+        ),
+    ] = None,
+    verbose: Annotated[
+        bool,
+        typer.Option(
+            "--verbose",
+            "-v",
+            help="Enable verbose logging",
+        ),
+    ] = False,
+) -> None:
+    """Generate Agent Skills from War Rig documentation.
+
+    This command converts War Rig documentation output into Agent Skills format
+    for progressive discovery by AI agents.
+
+    Example:
+        $ war-rig skills ./output
+        $ war-rig skills ./output --output ./my-skills
+    """
+    setup_logging(verbose)
+
+    console.print(Panel.fit(
+        f"[bold blue]War Rig[/bold blue] - Generating Agent Skills: {directory}",
+        border_style="blue",
+    ))
+
+    try:
+        from war_rig.skills import SkillsGenerator
+
+        generator = SkillsGenerator(directory, output)
+        skills_path = generator.generate()
+        console.print(f"\n[green]Skills generated at: {skills_path}[/green]")
+    except Exception as e:
+        console.print(f"[red]Error generating skills: {e}[/red]")
         raise typer.Exit(1) from None
 
 
