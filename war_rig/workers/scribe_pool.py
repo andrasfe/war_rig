@@ -1561,7 +1561,102 @@ class ScribeWorker:
                     parts.append(f"  - Context: {q.context}")
             parts.append("")
 
+        # Sequence Diagram (if paragraphs with calls exist)
+        sequence_diagram = self._render_sequence_diagram(template)
+        if sequence_diagram:
+            parts.append("## Sequence Diagram")
+            parts.append("")
+            parts.append(sequence_diagram)
+            parts.append("")
+
         return "\n".join(parts)
+
+    def _render_sequence_diagram(self, template: DocumentationTemplate) -> str:
+        """Generate Mermaid sequence diagram with data flow annotations.
+
+        If call_semantics is populated, shows inputs on forward arrows
+        and outputs on return arrows. Falls back to basic "performs"
+        labels if no semantics available.
+
+        Args:
+            template: The documentation template containing paragraphs and call semantics.
+
+        Returns:
+            Mermaid sequence diagram as a string, or empty string if no calls exist.
+        """
+        # Check if there are any paragraphs with outgoing calls
+        has_calls = any(
+            para.outgoing_calls for para in template.paragraphs if para.outgoing_calls
+        )
+        if not has_calls:
+            return ""
+
+        lines = ["```mermaid", "sequenceDiagram"]
+
+        # Build lookup from call_semantics
+        semantics_map = {
+            (cs.caller, cs.callee): cs for cs in template.call_semantics
+        }
+
+        # Get call edges from paragraphs
+        for para in template.paragraphs:
+            if not para.outgoing_calls:
+                continue
+            caller = para.paragraph_name
+            if not caller:
+                continue
+
+            for call in para.outgoing_calls:
+                # FunctionCall has a 'target' attribute, but may be dict from JSON
+                if hasattr(call, "target"):
+                    target = call.target
+                elif isinstance(call, dict):
+                    target = call.get("target")
+                else:
+                    target = str(call)
+                if not target:
+                    continue
+
+                sem = semantics_map.get((caller, target))
+
+                if sem and (sem.inputs or sem.outputs):
+                    # Enhanced: show data flow
+                    if sem.inputs:
+                        in_label = self._truncate_label(sem.inputs)
+                        lines.append(f"    {caller}->>{target}: {in_label}")
+                    else:
+                        lines.append(f"    {caller}->>{target}: performs")
+
+                    if sem.outputs:
+                        out_label = self._truncate_label(sem.outputs)
+                        lines.append(f"    {target}-->>{caller}: {out_label}")
+                else:
+                    # Fallback: basic label
+                    lines.append(f"    {caller}->>{target}: performs")
+
+        lines.append("```")
+
+        # Only return diagram if we have actual content beyond the header/footer
+        if len(lines) <= 3:  # Just header, footer, no content
+            return ""
+
+        return "\n".join(lines)
+
+    def _truncate_label(self, items: list[str], max_items: int = 3) -> str:
+        """Truncate a list of items for use as a diagram label.
+
+        Args:
+            items: List of variable/field names.
+            max_items: Maximum items to show before truncating.
+
+        Returns:
+            Comma-separated string, truncated with "..." if needed.
+        """
+        if not items:
+            return ""
+        if len(items) <= max_items:
+            return ", ".join(items)
+        return ", ".join(items[:max_items]) + ", ..."
 
     def _save_template(self, file_name: str, template: DocumentationTemplate) -> None:
         """Save the documentation template to the output directory.
