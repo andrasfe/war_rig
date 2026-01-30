@@ -860,17 +860,27 @@ def generate_readme(
         border_style="blue",
     ))
 
-    programs_dir = cfg.output_directory / "final" / "programs"
-    if not programs_dir.exists():
-        console.print(f"[red]No documentation found at {programs_dir}[/red]")
+    # Check for documentation in various locations
+    output_dir = cfg.output_directory
+    doc_count = 0
+
+    # Check final/programs first
+    programs_dir = output_dir / "final" / "programs"
+    if programs_dir.exists():
+        doc_count = len(list(programs_dir.glob("*.json")))
+    else:
+        # Check type-organized structure
+        for subdir in ["cbl", "cpy", "ims", "jcl", "bms", "ddl", "asm", "pli"]:
+            type_dir = output_dir / subdir
+            if type_dir.exists():
+                doc_count += len(list(type_dir.glob("*.doc.json")))
+
+    if doc_count == 0:
+        console.print(f"[red]No documentation found in {output_dir}[/red]")
+        console.print("[dim]Checked: final/programs/, cbl/, cpy/, ims/, jcl/, etc.[/dim]")
         raise typer.Exit(1)
 
-    doc_files = list(programs_dir.glob("*.json"))
-    if not doc_files:
-        console.print("[red]No documentation files found[/red]")
-        raise typer.Exit(1)
-
-    console.print(f"Found {len(doc_files)} documented programs")
+    console.print(f"Found {doc_count} documented programs")
     console.print("Building README.md...")
 
     try:
@@ -1030,34 +1040,61 @@ def _generate_readme_internal(
     from war_rig.models.templates import DocumentationTemplate
 
     output_dir = cfg.output_directory
-    programs_dir = output_dir / "final" / "programs"
 
-    if not programs_dir.exists():
-        raise FileNotFoundError(f"No documentation found at {programs_dir}")
+    # Find documentation files - check multiple possible structures:
+    # 1. final/programs/*.json (standard structure)
+    # 2. cbl/*.doc.json, cpy/*.doc.json, etc. (type-organized structure)
+    # 3. *.doc.json in root (flat structure)
+    doc_files: list[Path] = []
+
+    programs_dir = output_dir / "final" / "programs"
+    if programs_dir.exists():
+        doc_files = list(programs_dir.glob("*.doc.json")) + list(programs_dir.glob("*.json"))
+    else:
+        # Try type-organized structure (cbl/, cpy/, ims/, jcl/, etc.)
+        for subdir in ["cbl", "cpy", "ims", "jcl", "bms", "ddl", "asm", "pli"]:
+            type_dir = output_dir / subdir
+            if type_dir.exists():
+                doc_files.extend(type_dir.glob("*.doc.json"))
+
+        # Also check root for flat structure
+        if not doc_files:
+            doc_files = list(output_dir.glob("*.doc.json"))
+
+    if not doc_files:
+        raise FileNotFoundError(
+            f"No documentation found. Checked:\n"
+            f"  - {output_dir}/final/programs/\n"
+            f"  - {output_dir}/cbl/, cpy/, ims/, jcl/, etc.\n"
+            f"  - {output_dir}/*.doc.json"
+        )
 
     # Collect file documentation
     file_docs: list[FileDocumentation] = []
     per_file_confidence: dict[str, ConfidenceLevel] = {}
 
-    doc_files = list(programs_dir.glob("*.doc.json")) + list(programs_dir.glob("*.json"))
     # Deduplicate by stem
     seen_stems: set[str] = set()
     unique_files = []
     for f in doc_files:
-        stem = f.stem.replace(".doc", "")
+        # Handle stems like "PROGRAM.cbl.doc" -> "PROGRAM.cbl"
+        stem = f.stem
+        if stem.endswith(".doc"):
+            stem = stem[:-4]
         if stem not in seen_stems:
             seen_stems.add(stem)
             unique_files.append(f)
-
-    if not unique_files:
-        raise FileNotFoundError("No documentation files found")
 
     for doc_file in unique_files:
         try:
             doc_data = json.loads(doc_file.read_text(encoding="utf-8"))
 
-            # Load template from JSON
-            template = DocumentationTemplate.model_construct(**doc_data)
+            # Load template from JSON - use model_validate for proper nested object hydration
+            try:
+                template = DocumentationTemplate.model_validate(doc_data)
+            except Exception:
+                # Fall back to lenient construction if validation fails
+                template = DocumentationTemplate.model_construct(**doc_data)
 
             header = doc_data.get("header", {})
             file_name = header.get("file_name", doc_file.stem)
