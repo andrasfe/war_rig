@@ -854,6 +854,9 @@ class ScribeWorker:
                 model=self.config.scribe.model,
             )
 
+            # Extract WORKING-STORAGE section for context
+            working_storage = self._extract_working_storage(source_path)
+
             # Run the analysis
             logger.info(
                 f"Worker {self.worker_id}: Running call semantics analysis for "
@@ -862,7 +865,7 @@ class ScribeWorker:
             call_semantics = await analyzer.analyze_file(
                 source_path=source_path,
                 citadel_context=functions,
-                working_storage=None,  # Could extract from source if needed
+                working_storage=working_storage,
             )
 
             # Store the results on the template
@@ -887,6 +890,55 @@ class ScribeWorker:
             # Template is returned unchanged with empty call_semantics
 
         return template
+
+    def _extract_working_storage(self, source_path: Path) -> str | None:
+        """Extract WORKING-STORAGE SECTION from a COBOL source file.
+
+        Args:
+            source_path: Path to the COBOL source file.
+
+        Returns:
+            The WORKING-STORAGE section text, or None if not found.
+        """
+        try:
+            content = source_path.read_text(encoding="utf-8", errors="replace")
+        except Exception as e:
+            logger.debug(f"Could not read source file for working storage: {e}")
+            return None
+
+        lines = content.split("\n")
+        ws_lines: list[str] = []
+        in_ws = False
+
+        for line in lines:
+            upper_line = line.upper()
+
+            # Check for start of WORKING-STORAGE SECTION
+            if "WORKING-STORAGE" in upper_line and "SECTION" in upper_line:
+                in_ws = True
+                ws_lines.append(line)
+                continue
+
+            # Check for end of WORKING-STORAGE (next section or division)
+            if in_ws:
+                if any(
+                    marker in upper_line
+                    for marker in [
+                        "LINKAGE SECTION",
+                        "PROCEDURE DIVISION",
+                        "LOCAL-STORAGE SECTION",
+                        "FILE SECTION",
+                        "SCREEN SECTION",
+                        "REPORT SECTION",
+                    ]
+                ):
+                    break
+                ws_lines.append(line)
+
+        if not ws_lines:
+            return None
+
+        return "\n".join(ws_lines)
 
     async def run(self) -> None:
         """Main worker loop.
@@ -1584,6 +1636,12 @@ class ScribeWorker:
         Returns:
             Mermaid sequence diagram as a string, or empty string if no calls exist.
         """
+        # Helper to get attribute from object or dict
+        def _get_attr(obj: Any, attr: str, default: Any = None) -> Any:
+            if isinstance(obj, dict):
+                return obj.get(attr, default)
+            return getattr(obj, attr, default)
+
         # Check if there are any paragraphs with outgoing calls
         has_calls = any(
             para.outgoing_calls for para in template.paragraphs if para.outgoing_calls
@@ -1593,10 +1651,13 @@ class ScribeWorker:
 
         lines = ["```mermaid", "sequenceDiagram"]
 
-        # Build lookup from call_semantics
-        semantics_map = {
-            (cs.caller, cs.callee): cs for cs in template.call_semantics
-        }
+        # Build lookup from call_semantics (handle both dict and object)
+        semantics_map: dict[tuple[str, str], Any] = {}
+        for cs in template.call_semantics:
+            caller_name = _get_attr(cs, "caller")
+            callee_name = _get_attr(cs, "callee")
+            if caller_name and callee_name:
+                semantics_map[(caller_name, callee_name)] = cs
 
         # Get call edges from paragraphs
         for para in template.paragraphs:
@@ -1619,17 +1680,25 @@ class ScribeWorker:
 
                 sem = semantics_map.get((caller, target))
 
-                if sem and (sem.inputs or sem.outputs):
-                    # Enhanced: show data flow
-                    if sem.inputs:
-                        in_label = self._truncate_label(sem.inputs)
-                        lines.append(f"    {caller}->>{target}: {in_label}")
-                    else:
-                        lines.append(f"    {caller}->>{target}: performs")
+                if sem:
+                    # Get inputs/outputs (handle both dict and object)
+                    inputs = _get_attr(sem, "inputs") or []
+                    outputs = _get_attr(sem, "outputs") or []
 
-                    if sem.outputs:
-                        out_label = self._truncate_label(sem.outputs)
-                        lines.append(f"    {target}-->>{caller}: {out_label}")
+                    if inputs or outputs:
+                        # Enhanced: show data flow
+                        if inputs:
+                            in_label = self._truncate_label(inputs)
+                            lines.append(f"    {caller}->>{target}: {in_label}")
+                        else:
+                            lines.append(f"    {caller}->>{target}: performs")
+
+                        if outputs:
+                            out_label = self._truncate_label(outputs)
+                            lines.append(f"    {target}-->>{caller}: {out_label}")
+                    else:
+                        # Semantics exist but no data flow info
+                        lines.append(f"    {caller}->>{target}: performs")
                 else:
                     # Fallback: basic label
                     lines.append(f"    {caller}->>{target}: performs")
