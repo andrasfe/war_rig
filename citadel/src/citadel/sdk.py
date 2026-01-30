@@ -29,25 +29,23 @@ from pathlib import Path
 from typing import Any
 
 from citadel.analysis.dead_code import (
-    DeadCodeItem,
-    dead_code_summary,
     dead_code_to_dicts,
     find_dead_code,
 )
 from citadel.analysis.flow_diagram import generate_flow_diagram
-from citadel.analysis.sequence_finder import find_longest_sequences, sequences_to_mermaid
+from citadel.analysis.sequence_finder import (
+    find_longest_sequences,
+    sequences_to_mermaid,
+)
 from citadel.config import CitadelConfig, get_specs_cache_dir, load_config
 from citadel.discovery import FileDiscovery
-from citadel.graph.model import Artifact, DependencyGraph, SourceLocation
+from citadel.graph.model import DependencyGraph
 from citadel.parser import (
-    AnalysisMatch,
     AnalysisPatternResult,
-    AnalysisPatternStats,
     FileParseResult,
     ParserEngine,
-    RawReference,
 )
-from citadel.specs import ArtifactSpec, ArtifactType, RelationshipType, SpecManager
+from citadel.specs import ArtifactSpec, SpecManager
 
 logger = logging.getLogger(__name__)
 
@@ -357,7 +355,7 @@ class Citadel:
                 file_path=str(file_path),
                 language="unknown",
                 artifacts=[],
-                error=f"No spec found for file extension '{file_path.suffix}'"
+                error=f"No spec found for file extension '{file_path.suffix}'",
             )
 
         # Read file content
@@ -368,7 +366,7 @@ class Citadel:
                 file_path=str(file_path),
                 language=spec.language,
                 artifacts=[],
-                error=f"Failed to read file: {e}"
+                error=f"Failed to read file: {e}",
             )
 
         # Parse the file
@@ -379,7 +377,7 @@ class Citadel:
                 file_path=str(file_path),
                 language=spec.language,
                 artifacts=[],
-                error=f"Failed to parse file: {e}"
+                error=f"Failed to parse file: {e}",
             )
 
         # Convert to SDK result format
@@ -393,12 +391,10 @@ class Citadel:
                 return file_path.read_text(encoding=encoding)
             except UnicodeDecodeError:
                 continue
-        raise ValueError(f"Could not decode file with any supported encoding")
+        raise ValueError("Could not decode file with any supported encoding")
 
     def _convert_parse_result(
-        self,
-        parse_result: FileParseResult,
-        spec: ArtifactSpec
+        self, parse_result: FileParseResult, spec: ArtifactSpec
     ) -> FileAnalysisResult:
         """Convert internal parse result to SDK format."""
 
@@ -411,7 +407,9 @@ class Citadel:
                 name=artifact.canonical_name,
                 type=artifact.artifact_type.value,
                 category=artifact.category.value,
-                line_start=artifact.defined_in.line_start if artifact.defined_in else None,
+                line_start=artifact.defined_in.line_start
+                if artifact.defined_in
+                else None,
                 line_end=artifact.defined_in.line_end if artifact.defined_in else None,
                 callouts=[],
             )
@@ -424,7 +422,9 @@ class Citadel:
         for ref in parse_result.references_found:
             callout = Callout(
                 target=ref.raw_text,
-                relationship=ref.relationship_type.value if ref.relationship_type else "references",
+                relationship=ref.relationship_type.value
+                if ref.relationship_type
+                else "references",
                 target_type=ref.expected_type.value if ref.expected_type else None,
                 line=ref.location.line_start if ref.location else None,
                 raw_text=ref.raw_text,
@@ -483,20 +483,22 @@ class Citadel:
 
         functions = []
         for artifact in result.artifacts:
-            functions.append({
-                "name": artifact.name,
-                "type": artifact.type,
-                "line": artifact.line_start,
-                "line_end": artifact.line_end,
-                "calls": [
-                    {
-                        "target": c.target,
-                        "type": c.relationship,
-                        "line": c.line,
-                    }
-                    for c in artifact.callouts
-                ],
-            })
+            functions.append(
+                {
+                    "name": artifact.name,
+                    "type": artifact.type,
+                    "line": artifact.line_start,
+                    "line_end": artifact.line_end,
+                    "calls": [
+                        {
+                            "target": c.target,
+                            "type": c.relationship,
+                            "line": c.line,
+                        }
+                        for c in artifact.callouts
+                    ],
+                }
+            )
 
         return functions
 
@@ -540,26 +542,32 @@ class Citadel:
 
         # File-level callouts
         for c in result.file_level_callouts:
-            callouts.append({
-                "from": file_stem,
-                "to": c.target,
-                "type": c.relationship,
-                "line": c.line,
-            })
+            callouts.append(
+                {
+                    "from": file_stem,
+                    "to": c.target,
+                    "type": c.relationship,
+                    "line": c.line,
+                }
+            )
 
         # Artifact callouts (includes preprocessor directives with line numbers)
         for artifact in result.artifacts:
             for c in artifact.callouts:
-                callouts.append({
-                    "from": artifact.name,
-                    "to": c.target,
-                    "type": c.relationship,
-                    "line": c.line,
-                })
+                callouts.append(
+                    {
+                        "from": artifact.name,
+                        "to": c.target,
+                        "type": c.relationship,
+                        "line": c.line,
+                    }
+                )
 
         return callouts
 
-    def _get_callouts_from_directory(self, directory_path: Path) -> list[dict[str, Any]]:
+    def _get_callouts_from_directory(
+        self, directory_path: Path
+    ) -> list[dict[str, Any]]:
         """
         Get callouts from all files in a directory with resolution status.
 
@@ -582,14 +590,20 @@ class Citadel:
 
         # First pass: analyze all files and collect artifacts
         all_artifacts: list[FileArtifact] = []
-        all_callouts_data: list[tuple[str, str | None, Callout]] = []  # (file_stem, artifact_name, callout)
+        all_callouts_data: list[
+            tuple[str, str | None, Callout]
+        ] = []  # (file_stem, artifact_name, callout)
 
         for source_file in files_to_analyze:
             try:
                 analysis = self.analyze_file(source_file)
 
                 if analysis.error:
-                    logger.debug("Skipping file with analysis error: %s - %s", source_file, analysis.error)
+                    logger.debug(
+                        "Skipping file with analysis error: %s - %s",
+                        source_file,
+                        analysis.error,
+                    )
                     continue
 
                 # Store artifacts
@@ -632,13 +646,15 @@ class Citadel:
             target_lower = callout.target.lower() if callout.target else ""
             resolved = target_lower in known_artifacts or target_lower in known_files
 
-            callouts.append({
-                "from": artifact_name,
-                "to": callout.target,
-                "type": callout.relationship,
-                "line": callout.line,
-                "resolved": resolved,
-            })
+            callouts.append(
+                {
+                    "from": artifact_name,
+                    "to": callout.target,
+                    "type": callout.relationship,
+                    "line": callout.line,
+                    "resolved": resolved,
+                }
+            )
 
         return callouts
 
@@ -790,9 +806,7 @@ class Citadel:
             logger.debug("Function '%s' not found in %s", function_name, file_path)
             return None
 
-        return self._extract_body_from_result(
-            artifact, content, spec, result.artifacts
-        )
+        return self._extract_body_from_result(artifact, content, spec, result.artifacts)
 
     def get_function_bodies(
         self, file_path: str | Path, function_names: list[str]
@@ -811,7 +825,7 @@ class Citadel:
             Dictionary mapping function name to body text (or None if not found).
         """
         file_path = Path(file_path)
-        bodies: dict[str, str | None] = {name: None for name in function_names}
+        bodies: dict[str, str | None] = dict.fromkeys(function_names)
 
         # Get spec for this file type
         spec = self._get_spec_for_file(file_path)
@@ -869,7 +883,7 @@ class Citadel:
                 continue
 
             # Check if it's a comment line (column 7 has * or /)
-            if len(line) >= 7 and line[6] in ('*', '/'):
+            if len(line) >= 7 and line[6] in ("*", "/"):
                 last_content_idx -= 1
                 continue
 
@@ -943,9 +957,7 @@ class Citadel:
         # Must handle both fixed-format (80 cols) and trimmed format files.
         # A section name is a word followed by SECTION and a period.
         # Use a flexible pattern that handles variable line lengths.
-        section_pattern = re.compile(
-            r"^.{7}([A-Z0-9-]+)\s+SECTION\s*\.", re.IGNORECASE
-        )
+        section_pattern = re.compile(r"^.{7}([A-Z0-9-]+)\s+SECTION\s*\.", re.IGNORECASE)
 
         # Pattern for paragraph names in COBOL.
         # A paragraph name starts in Area A (columns 8-11, 0-indexed 7-10) and is
@@ -956,9 +968,7 @@ class Citadel:
         # - Allows optional whitespace after the name
         # - Requires a period
         # - Allows anything after the period (for fixed-format trailing content)
-        paragraph_pattern = re.compile(
-            r"^.{7}([A-Z0-9-]+)\s*\.(?:\s|$)", re.IGNORECASE
-        )
+        paragraph_pattern = re.compile(r"^.{7}([A-Z0-9-]+)\s*\.(?:\s|$)", re.IGNORECASE)
 
         end_patterns = re.compile(
             r"^\s*(END-PROGRAM|END\s+PROGRAM|IDENTIFICATION\s+DIVISION|DATA\s+DIVISION)",
@@ -978,7 +988,9 @@ class Citadel:
 
             # Check for end markers
             if end_patterns.search(line):
-                return i  # Return previous line (i is 0-indexed, so i is the line before)
+                return (
+                    i  # Return previous line (i is 0-indexed, so i is the line before)
+                )
 
             # Check for next paragraph or section (but not the current one)
             if i > start_line - 1:  # Skip the starting line itself
@@ -1112,12 +1124,14 @@ class Citadel:
                 if line_start is not None and line_end is not None
                 else 0
             )
-            paragraphs.append({
-                "name": artifact.name,
-                "line_start": line_start,
-                "line_end": line_end,
-                "line_count": line_count,
-            })
+            paragraphs.append(
+                {
+                    "name": artifact.name,
+                    "line_start": line_start,
+                    "line_end": line_end,
+                    "line_count": line_count,
+                }
+            )
 
         return {
             "total_lines": total_lines,
@@ -1212,23 +1226,27 @@ class Citadel:
                 # Check file-level callouts (e.g., COPY statements at file level)
                 for callout in analysis.file_level_callouts:
                     if self._matches_target(callout.target, function_name_lower):
-                        callers.append({
-                            "file": str(source_file),
-                            "function": None,  # File-level callout
-                            "line": callout.line,
-                            "type": callout.relationship,
-                        })
+                        callers.append(
+                            {
+                                "file": str(source_file),
+                                "function": None,  # File-level callout
+                                "line": callout.line,
+                                "type": callout.relationship,
+                            }
+                        )
 
                 # Check each artifact's callouts
                 for artifact in analysis.artifacts:
                     for callout in artifact.callouts:
                         if self._matches_target(callout.target, function_name_lower):
-                            callers.append({
-                                "file": str(source_file),
-                                "function": artifact.name,
-                                "line": callout.line,
-                                "type": callout.relationship,
-                            })
+                            callers.append(
+                                {
+                                    "file": str(source_file),
+                                    "function": artifact.name,
+                                    "line": callout.line,
+                                    "type": callout.relationship,
+                                }
+                            )
 
             except Exception as e:
                 logger.warning("Error analyzing file %s: %s", source_file, e)
@@ -1285,6 +1303,8 @@ class Citadel:
         path: str | Path,
         max_diagrams: int = 5,
         min_sequence_length: int = 2,
+        call_semantics: dict[str, dict] | None = None,
+        max_variables: int = 5,
     ) -> list[str]:
         """
         Generate Mermaid sequence diagrams showing call chains.
@@ -1301,6 +1321,12 @@ class Citadel:
             min_sequence_length: Minimum number of calls (edges) in a sequence.
                 Sequences shorter than this are excluded. Default is 2,
                 meaning at least 3 participants.
+            call_semantics: Optional dictionary mapping "CALLER->CALLEE" to
+                semantics including inputs and outputs. When provided, sequence
+                diagrams show data flow on arrows (inputs on forward arrows,
+                outputs on return arrows).
+            max_variables: Maximum number of variables to show in diagram labels.
+                Longer lists are truncated with ellipsis.
 
         Returns:
             List of Mermaid sequence diagram strings, one per call chain.
@@ -1319,6 +1345,10 @@ class Citadel:
 
             >>> # Or from a pre-computed graph
             >>> diagrams = citadel.get_sequence_diagrams("./output/graph.json")
+
+            >>> # With call semantics for data flow
+            >>> semantics = {"MAIN->PROCESS": {"inputs": ["X", "Y"], "outputs": ["RESULT"]}}
+            >>> diagrams = citadel.get_sequence_diagrams("./src", call_semantics=semantics)
         """
         path = Path(path)
 
@@ -1331,9 +1361,7 @@ class Citadel:
         elif path.is_dir():
             graph = self._analyze_directory_for_graph(path)
         else:
-            raise ValueError(
-                f"Path must be a directory or a JSON file, got: {path}"
-            )
+            raise ValueError(f"Path must be a directory or a JSON file, got: {path}")
 
         # Extract artifacts and edges for sequence finding
         artifacts_dict = {
@@ -1375,11 +1403,13 @@ class Citadel:
                 else:
                     rel_type = "calls"
 
-                edges_list.append({
-                    "source": unres.containing_artifact,
-                    "target": unres.reference_text,
-                    "relationship_type": rel_type,
-                })
+                edges_list.append(
+                    {
+                        "source": unres.containing_artifact,
+                        "target": unres.reference_text,
+                        "relationship_type": rel_type,
+                    }
+                )
                 # Add the target as a pseudo-artifact if not already known
                 if unres.reference_text not in artifacts_dict:
                     artifacts_dict[unres.reference_text] = {
@@ -1401,9 +1431,7 @@ class Citadel:
         )
 
         if not sequences:
-            logger.info(
-                "No sequences found with min_length=%d", min_sequence_length
-            )
+            logger.info("No sequences found with min_length=%d", min_sequence_length)
             return []
 
         # Convert each sequence to a separate Mermaid diagram
@@ -1414,6 +1442,8 @@ class Citadel:
                 [sequence],
                 artifacts=artifacts_dict,
                 title=title,
+                call_semantics=call_semantics,
+                max_variables=max_variables,
             )
             diagrams.append(diagram)
 
@@ -1481,9 +1511,7 @@ class Citadel:
         elif path.is_dir():
             graph = self._analyze_directory_for_graph(path)
         else:
-            raise ValueError(
-                f"Path must be a directory or a JSON file, got: {path}"
-            )
+            raise ValueError(f"Path must be a directory or a JSON file, got: {path}")
 
         # Run dead code detection.
         dead_items = find_dead_code(
@@ -1697,7 +1725,7 @@ class Citadel:
             ValueError: If the JSON file is not a valid dependency graph.
         """
         try:
-            with open(json_path, "r", encoding="utf-8") as f:
+            with open(json_path, encoding="utf-8") as f:
                 data = json.load(f)
 
             return DependencyGraph.model_validate(data)
@@ -1734,9 +1762,7 @@ class Citadel:
             import concurrent.futures
 
             with concurrent.futures.ThreadPoolExecutor() as executor:
-                future = executor.submit(
-                    asyncio.run, orchestrator.analyze(directory)
-                )
+                future = executor.submit(asyncio.run, orchestrator.analyze(directory))
                 return future.result()
         else:
             # We're in a sync context, just run it

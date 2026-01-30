@@ -30,8 +30,8 @@ memoization cache.
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Iterator
 from dataclasses import dataclass, field
-from typing import Iterator
 
 
 @dataclass
@@ -397,6 +397,8 @@ def sequences_to_mermaid(
     sequences: list[list[tuple[str, str, str]]],
     artifacts: dict[str, dict] | None = None,
     title: str | None = None,
+    call_semantics: dict[str, dict] | None = None,
+    max_variables: int = 5,
 ) -> str:
     """
     Convert call sequences to Mermaid sequence diagram syntax.
@@ -409,6 +411,13 @@ def sequences_to_mermaid(
         artifacts: Optional artifact dictionary for display names.
             If provided, uses 'name' or 'display_name' instead of IDs.
         title: Optional title for the sequence diagram.
+        call_semantics: Optional dictionary mapping "CALLER->CALLEE" to
+            {"inputs": [...], "outputs": [...], "purpose": ...} for
+            rendering data flow in sequence diagrams. When provided,
+            arrows show input variables and return arrows (-->>)
+            show output variables.
+        max_variables: Maximum number of variables to show on arrows.
+            Default is 5 to keep diagrams readable.
 
     Returns:
         Mermaid sequence diagram as a string.
@@ -420,6 +429,14 @@ def sequences_to_mermaid(
             title Call Flow
             A->>B: calls
             B->>C: executes
+
+    Example with call semantics:
+        >>> semantics = {"A->B": {"inputs": ["VAR1"], "outputs": ["RESULT"]}}
+        >>> sequences = [[('A', 'B', 'calls')]]
+        >>> print(sequences_to_mermaid(sequences, call_semantics=semantics))
+        sequenceDiagram
+            A->>B: VAR1
+            B-->>A: RESULT
     """
     if not sequences:
         return "sequenceDiagram\n    Note right of Start: No sequences found"
@@ -433,7 +450,9 @@ def sequences_to_mermaid(
         """Get a display-friendly name for an artifact."""
         if artifacts and artifact_id in artifacts:
             art = artifacts[artifact_id]
-            name = art.get("display_name") or art.get("name") or art.get("canonical_name")
+            name = (
+                art.get("display_name") or art.get("name") or art.get("canonical_name")
+            )
             if name:
                 return name
         # Extract name from ID (e.g., "program::FOO" -> "FOO")
@@ -467,22 +486,64 @@ def sequences_to_mermaid(
         label = get_participant_label(artifact_id)
         lines.append(f"    participant {safe_name} as {label}")
 
+    def _make_semantics_key(caller_id: str, callee_id: str) -> str:
+        """Create a lookup key for call semantics."""
+        caller_display = get_display_name(caller_id).upper()
+        callee_display = get_display_name(callee_id).upper()
+        return f"{caller_display}->{callee_display}"
+
+    def _format_variables(vars_list: list[str], limit: int) -> str:
+        """Format variable list for arrow label."""
+        if not vars_list:
+            return ""
+        truncated = vars_list[:limit]
+        result = ", ".join(truncated)
+        if len(vars_list) > limit:
+            result += f", +{len(vars_list) - limit}"
+        return result
+
     # Add sequence arrows
     for i, sequence in enumerate(sequences):
         if i > 0:
             lines.append("")  # Blank line between sequences
-            lines.append(f"    Note over {get_display_name(sequence[0][0])}: New sequence")
+            lines.append(
+                f"    Note over {get_display_name(sequence[0][0])}: New sequence"
+            )
 
         for caller, callee, rel_type in sequence:
             caller_name = "".join(
-                c if c.isalnum() or c == "_" else "_"
-                for c in get_display_name(caller)
+                c if c.isalnum() or c == "_" else "_" for c in get_display_name(caller)
             )
             callee_name = "".join(
-                c if c.isalnum() or c == "_" else "_"
-                for c in get_display_name(callee)
+                c if c.isalnum() or c == "_" else "_" for c in get_display_name(callee)
             )
-            lines.append(f"    {caller_name}->>{callee_name}: {rel_type}")
+
+            # Check if we have call semantics for this edge
+            sem = None
+            if call_semantics:
+                sem_key = _make_semantics_key(caller, callee)
+                sem = call_semantics.get(sem_key)
+
+            if sem:
+                # Use call semantics for arrow labels
+                inputs = sem.get("inputs", [])
+                outputs = sem.get("outputs", [])
+
+                # Forward arrow with inputs
+                if inputs:
+                    input_label = _format_variables(inputs, max_variables)
+                    lines.append(f"    {caller_name}->>{callee_name}: {input_label}")
+                else:
+                    # Fall back to relationship type if no inputs
+                    lines.append(f"    {caller_name}->>{callee_name}: {rel_type}")
+
+                # Return arrow with outputs (dashed line)
+                if outputs:
+                    output_label = _format_variables(outputs, max_variables)
+                    lines.append(f"    {callee_name}-->>{caller_name}: {output_label}")
+            else:
+                # No semantics, use relationship type
+                lines.append(f"    {caller_name}->>{callee_name}: {rel_type}")
 
     return "\n".join(lines)
 

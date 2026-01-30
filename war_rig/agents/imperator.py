@@ -337,6 +337,11 @@ class HolisticReviewInput(AgentInput):
         default=None,
         description="Full CALL_GRAPH.md content from Citadel static analysis (contains Mermaid diagram)",
     )
+    cross_file_call_semantics: dict[str, dict] | None = Field(
+        default=None,
+        description="Call semantics for cross-file flows (inputs/outputs per call pair). "
+        "Format: {'CALLER->CALLEE': {'inputs': [...], 'outputs': [...], 'purpose': ...}}",
+    )
 
     # Quality metrics
     per_file_confidence: dict[str, ConfidenceLevel] = Field(

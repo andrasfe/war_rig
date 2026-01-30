@@ -24,6 +24,7 @@ Example:
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -48,6 +49,7 @@ from war_rig.agents.program_manager import (
     ProgramManagerAgent,
 )
 from war_rig.analysis.call_graph import CallGraphAnalysis, CallGraphAnalyzer
+from war_rig.analysis.cross_file_semantics import CrossFileCallSemanticsAggregator
 from war_rig.beads import (
     BeadsClient,
     BeadsPriority,
@@ -141,7 +143,9 @@ class BatchResult:
                 k: str(v) for k, v in self.documentation_outputs.items()
             },
             "started_at": self.started_at.isoformat() if self.started_at else None,
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "completed_at": self.completed_at.isoformat()
+            if self.completed_at
+            else None,
             "duration_seconds": self.duration_seconds,
             "success": self.success,
             "quality_notes": self.quality_notes,
@@ -247,7 +251,9 @@ class TicketOrchestrator:
             tickets_file = self.config.output_directory / ".war_rig_tickets.json"
             # When beads is enabled, use output_directory as isolated beads_dir
             # This keeps War Rig's beads instance separate from the project's .beads/
-            beads_dir = self.config.output_directory if self.config.beads_enabled else None
+            beads_dir = (
+                self.config.output_directory if self.config.beads_enabled else None
+            )
             self.beads_client = get_beads_client(
                 enabled=self.config.beads_enabled,
                 dry_run=self.config.beads_dry_run,
@@ -350,7 +356,9 @@ class TicketOrchestrator:
 
             self._state.batch_id = self.program_manager.batch_id or ""
             self._state.total_files = len(tickets)
-            logger.info(f"Batch {self._state.batch_id}: {len(tickets)} files to process")
+            logger.info(
+                f"Batch {self._state.batch_id}: {len(tickets)} files to process"
+            )
 
             # Generate Citadel dependency graph for the input directory
             await self._generate_citadel_graph(input_dir)
@@ -418,29 +426,39 @@ class TicketOrchestrator:
                     result.quality_notes = review_result.quality_notes
                     break
 
-                elif review_result.decision == ImperatorHolisticDecision.FORCED_COMPLETE:
+                elif (
+                    review_result.decision == ImperatorHolisticDecision.FORCED_COMPLETE
+                ):
                     logger.info("Forced completion at max cycles")
                     result.final_decision = review_result.decision.value
                     result.quality_notes = review_result.quality_notes
                     break
 
-                elif review_result.decision == ImperatorHolisticDecision.NEEDS_CLARIFICATION:
+                elif (
+                    review_result.decision
+                    == ImperatorHolisticDecision.NEEDS_CLARIFICATION
+                ):
                     # Check if there are actually any issues to address
-                    total_issues = (
-                        len(review_result.clarification_requests) +
-                        sum(len(tickets) for tickets in review_result.file_feedback.values())
+                    total_issues = len(review_result.clarification_requests) + sum(
+                        len(tickets) for tickets in review_result.file_feedback.values()
                     )
 
                     if total_issues == 0:
                         # No actual issues - treat as satisfied
-                        logger.info("Imperator said NEEDS_CLARIFICATION but no issues - completing")
-                        result.final_decision = ImperatorHolisticDecision.SATISFIED.value
+                        logger.info(
+                            "Imperator said NEEDS_CLARIFICATION but no issues - completing"
+                        )
+                        result.final_decision = (
+                            ImperatorHolisticDecision.SATISFIED.value
+                        )
                         result.quality_notes = review_result.quality_notes
                         break
 
                     if self._state.cycle >= max_cycles:
                         logger.info("Max cycles reached, forcing completion")
-                        result.final_decision = ImperatorHolisticDecision.FORCED_COMPLETE.value
+                        result.final_decision = (
+                            ImperatorHolisticDecision.FORCED_COMPLETE.value
+                        )
                         break
 
                     # Log that we're continuing with clarification work
@@ -533,7 +551,8 @@ class TicketOrchestrator:
         # Check for in-progress tickets of any Scribe type
         # These are actively being worked on
         in_progress = [
-            t for t in self.beads_client._pm_ticket_cache.values()
+            t
+            for t in self.beads_client._pm_ticket_cache.values()
             if t.ticket_type in scribe_ticket_types
             and t.state == TicketState.IN_PROGRESS
         ]
@@ -605,10 +624,14 @@ class TicketOrchestrator:
         # Scribes will finish when no more DOCUMENTATION tickets
         # Challengers will finish when no more VALIDATION tickets AND no upstream activity
         scribe_wait = asyncio.create_task(self._scribe_pool.wait())
-        challenger_wait = asyncio.create_task(self._challenger_pool.wait_for_completion())
+        challenger_wait = asyncio.create_task(
+            self._challenger_pool.wait_for_completion()
+        )
 
         # Gather results and check for FatalWorkerError
-        results = await asyncio.gather(scribe_wait, challenger_wait, return_exceptions=True)
+        results = await asyncio.gather(
+            scribe_wait, challenger_wait, return_exceptions=True
+        )
 
         # Re-raise FatalWorkerError if any worker encountered a fatal error
         for result in results:
@@ -638,7 +661,9 @@ class TicketOrchestrator:
             ticket_type=TicketType.DOCUMENTATION
         )
         stuck_created.extend(
-            self.beads_client.get_available_tickets(ticket_type=TicketType.CLARIFICATION)
+            self.beads_client.get_available_tickets(
+                ticket_type=TicketType.CLARIFICATION
+            )
         )
         stuck_created.extend(
             self.beads_client.get_available_tickets(ticket_type=TicketType.CHROME)
@@ -700,7 +725,9 @@ class TicketOrchestrator:
             )
 
             if analysis.custom_missing:
-                logger.info(f"Missing custom programs: {', '.join(analysis.custom_missing)}")
+                logger.info(
+                    f"Missing custom programs: {', '.join(analysis.custom_missing)}"
+                )
 
             # README.md is generated by the Imperator during holistic review.
             # The call graph analysis data (external deps, program inventory) is passed
@@ -745,7 +772,9 @@ class TicketOrchestrator:
         if diagrams:
             logger.info(f"Generated {len(diagrams)} sequence diagrams for README.md")
         else:
-            logger.debug("No sequence diagrams generated (no qualifying call sequences)")
+            logger.debug(
+                "No sequence diagrams generated (no qualifying call sequences)"
+            )
 
         return diagrams if diagrams else None
 
@@ -779,7 +808,9 @@ class TicketOrchestrator:
 
         # Build a set of callers that need documentation tickets
         # For each missing callee, find which documented callers call it
-        callers_needing_tickets: dict[str, set[str]] = {}  # caller -> set of missing callees it calls
+        callers_needing_tickets: dict[
+            str, set[str]
+        ] = {}  # caller -> set of missing callees it calls
 
         for missing_callee in missing_programs:
             # Find all documented programs that call this missing callee
@@ -793,14 +824,22 @@ class TicketOrchestrator:
         for caller_id, missing_callees in callers_needing_tickets.items():
             # Check if ticket already exists for this caller
             existing = [
-                t for t in self.beads_client._pm_ticket_cache.values()
+                t
+                for t in self.beads_client._pm_ticket_cache.values()
                 if t.program_id == caller_id
                 and t.ticket_type == TicketType.DOCUMENTATION
-                and t.state not in (TicketState.COMPLETED, TicketState.BLOCKED, TicketState.CANCELLED)
+                and t.state
+                not in (
+                    TicketState.COMPLETED,
+                    TicketState.BLOCKED,
+                    TicketState.CANCELLED,
+                )
             ]
 
             if existing:
-                logger.debug(f"Documentation ticket already exists for caller {caller_id}")
+                logger.debug(
+                    f"Documentation ticket already exists for caller {caller_id}"
+                )
                 continue
 
             # Get file name from the documented program info
@@ -816,7 +855,17 @@ class TicketOrchestrator:
             if self._input_directory:
                 # Try common extensions
                 file_exists = False
-                for ext in [".cbl", ".CBL", ".cob", ".COB", ".jcl", ".JCL", ".prc", ".PRC", ""]:
+                for ext in [
+                    ".cbl",
+                    ".CBL",
+                    ".cob",
+                    ".COB",
+                    ".jcl",
+                    ".JCL",
+                    ".prc",
+                    ".PRC",
+                    "",
+                ]:
                     # Check both the exact file_name and program_id with extension
                     candidates = [
                         self._input_directory / file_name,
@@ -824,7 +873,9 @@ class TicketOrchestrator:
                     ]
                     for candidate in candidates:
                         if candidate.exists():
-                            file_name = str(candidate.relative_to(self._input_directory))
+                            file_name = str(
+                                candidate.relative_to(self._input_directory)
+                            )
                             file_exists = True
                             break
                     if file_exists:
@@ -845,12 +896,16 @@ class TicketOrchestrator:
                 "discovery": False,  # We know the file exists
                 "created_at": datetime.utcnow().isoformat(),
                 "priority": "high",  # Gap-filling is high priority
-                "missing_callees": sorted(missing_callees),  # Document what calls are missing
+                "missing_callees": sorted(
+                    missing_callees
+                ),  # Document what calls are missing
             }
 
             # Embed feedback context if available (IMPFB-002)
             if self._current_feedback_context is not None:
-                metadata["feedback_context"] = self._current_feedback_context.model_dump()
+                metadata["feedback_context"] = (
+                    self._current_feedback_context.model_dump()
+                )
 
             ticket = ProgramManagerTicket(
                 ticket_id=ticket_id,
@@ -873,7 +928,9 @@ class TicketOrchestrator:
         # Save to disk
         if created_tickets:
             self.beads_client._save_to_disk()
-            logger.info(f"Created {len(created_tickets)} documentation tickets for call graph gaps")
+            logger.info(
+                f"Created {len(created_tickets)} documentation tickets for call graph gaps"
+            )
         else:
             logger.info(
                 "No documentation tickets created - callers of missing programs "
@@ -882,7 +939,9 @@ class TicketOrchestrator:
 
         return created_tickets
 
-    async def _validate_cycle_complete(self, max_retries: int = 3, retry_count: int = 0) -> None:
+    async def _validate_cycle_complete(
+        self, max_retries: int = 3, retry_count: int = 0
+    ) -> None:
         """Ensure all tickets are in terminal states before proceeding.
 
         This keeps retrying the worker cycle until all tickets are either
@@ -902,7 +961,10 @@ class TicketOrchestrator:
 
         # Collect all non-terminal tickets (excluding Imperator-handled types)
         # SYSTEM_OVERVIEW and HOLISTIC_REVIEW are processed by Imperator, not Scribe/Challenger
-        imperator_ticket_types = {TicketType.SYSTEM_OVERVIEW, TicketType.HOLISTIC_REVIEW}
+        imperator_ticket_types = {
+            TicketType.SYSTEM_OVERVIEW,
+            TicketType.HOLISTIC_REVIEW,
+        }
         stuck_tickets = []
         for state in non_terminal_states:
             tickets = self.beads_client.get_tickets_by_state(state)
@@ -954,7 +1016,9 @@ class TicketOrchestrator:
         await self._run_worker_pools_only()
 
         # Recursively validate (will check if all complete now)
-        await self._validate_cycle_complete(max_retries=max_retries, retry_count=retry_count + 1)
+        await self._validate_cycle_complete(
+            max_retries=max_retries, retry_count=retry_count + 1
+        )
 
     async def _run_worker_pools_only(self) -> None:
         """Run worker pools without the full cycle overhead.
@@ -1000,7 +1064,9 @@ class TicketOrchestrator:
         # Wait for completion
         scribe_wait = asyncio.create_task(scribe_pool.wait())
         challenger_wait = asyncio.create_task(challenger_pool.wait_for_completion())
-        results = await asyncio.gather(scribe_wait, challenger_wait, return_exceptions=True)
+        results = await asyncio.gather(
+            scribe_wait, challenger_wait, return_exceptions=True
+        )
 
         # Stop pools
         await scribe_pool.stop()
@@ -1103,7 +1169,9 @@ class TicketOrchestrator:
             # Build metadata updates with retry count and feedback context (IMPFB-005)
             metadata_updates: dict = {"retry_count": current_retries}
             if self._current_feedback_context is not None:
-                metadata_updates["feedback_context"] = self._current_feedback_context.model_dump()
+                metadata_updates["feedback_context"] = (
+                    self._current_feedback_context.model_dump()
+                )
             success = self.beads_client.update_ticket_state(
                 ticket.ticket_id,
                 TicketState.CREATED,
@@ -1379,9 +1447,14 @@ class TicketOrchestrator:
         if call_graph_path.exists():
             try:
                 call_graph_markdown = call_graph_path.read_text(encoding="utf-8")
-                logger.debug(f"Loaded CALL_GRAPH.md for holistic review ({len(call_graph_markdown)} chars)")
+                logger.debug(
+                    f"Loaded CALL_GRAPH.md for holistic review ({len(call_graph_markdown)} chars)"
+                )
             except Exception as e:
                 logger.warning(f"Failed to load CALL_GRAPH.md: {e}")
+
+        # Aggregate call semantics from completed documentation
+        cross_file_semantics = self._aggregate_call_semantics()
 
         return HolisticReviewInput(
             batch_id=self._state.batch_id,
@@ -1401,6 +1474,7 @@ class TicketOrchestrator:
             previous_chrome_tickets=[],
             resolution_status={},
             max_cycles=self.config.pm_max_cycles,
+            cross_file_call_semantics=cross_file_semantics,
         )
 
     def _build_cross_file_analysis(
@@ -1476,6 +1550,82 @@ class TicketOrchestrator:
             logger.warning(f"Cross-file analysis failed: {e}")
 
         return shared_copybooks, call_graph, data_flow
+
+    def _aggregate_call_semantics(self) -> dict[str, dict] | None:
+        """Aggregate call semantics from all documented files.
+
+        Reads call_semantics from completed documentation templates and
+        aggregates them into a format suitable for cross-file sequence diagrams.
+
+        Returns:
+            Dictionary mapping "CALLER->CALLEE" to semantics dict with inputs,
+            outputs, and purpose. Returns None if no semantics found.
+        """
+        from war_rig.models.templates import CallSemantics
+
+        aggregator = CrossFileCallSemanticsAggregator()
+
+        # Check multiple locations for documentation files
+        doc_dirs = [
+            self.config.output_directory / "final" / "programs",
+            self.config.output_directory / "final",
+            self.config.output_directory,
+        ]
+
+        doc_files: list[Path] = []
+        for doc_dir in doc_dirs:
+            if doc_dir.exists():
+                found = list(doc_dir.glob("*.doc.json"))
+                if found:
+                    doc_files = found
+                    break
+
+        if not doc_files:
+            logger.debug("No documentation files found for call semantics aggregation")
+            return None
+
+        for doc_file in doc_files:
+            try:
+                doc_data = json.loads(doc_file.read_text(encoding="utf-8"))
+
+                # Extract call_semantics from the template
+                raw_semantics = doc_data.get("call_semantics", [])
+                if not raw_semantics:
+                    continue
+
+                # Convert raw dicts to CallSemantics objects
+                call_semantics_list: list[CallSemantics] = []
+                for sem in raw_semantics:
+                    try:
+                        call_semantics_list.append(
+                            CallSemantics(
+                                caller=sem.get("caller", ""),
+                                callee=sem.get("callee", ""),
+                                inputs=sem.get("inputs", []),
+                                outputs=sem.get("outputs", []),
+                                purpose=sem.get("purpose"),
+                            )
+                        )
+                    except Exception as e:
+                        logger.debug(f"Skipping invalid call semantics: {e}")
+                        continue
+
+                if call_semantics_list:
+                    aggregator.add_file_semantics(doc_file.name, call_semantics_list)
+
+            except Exception as e:
+                logger.debug(f"Failed to read call semantics from {doc_file}: {e}")
+                continue
+
+        if len(aggregator) == 0:
+            logger.debug("No call semantics found in documentation files")
+            return None
+
+        result = aggregator.to_flow_diagram_format()
+        logger.info(
+            f"Aggregated {len(result)} call semantics entries from {len(aggregator.get_files_with_semantics())} files"
+        )
+        return result
 
     def _get_template_for_ticket(
         self,
@@ -1743,10 +1893,21 @@ class TicketOrchestrator:
         # Extract affected sections from note
         affected_sections = []
         section_keywords = [
-            "inputs", "outputs", "data_flow", "data flow", "copybooks",
-            "sql_operations", "sql operations", "cics_operations", "cics operations",
-            "business_rules", "business rules", "error_handling", "error handling",
-            "purpose", "summary",
+            "inputs",
+            "outputs",
+            "data_flow",
+            "data flow",
+            "copybooks",
+            "sql_operations",
+            "sql operations",
+            "cics_operations",
+            "cics operations",
+            "business_rules",
+            "business rules",
+            "error_handling",
+            "error handling",
+            "purpose",
+            "summary",
         ]
         for section in section_keywords:
             if section in note_lower:
@@ -1845,13 +2006,15 @@ class TicketOrchestrator:
         # Collect assumptions from review history
         for review in self._state.review_history:
             for assumption in review.assumptions:
-                result.assumptions_made.append({
-                    "assumption_id": assumption.assumption_id,
-                    "description": assumption.description,
-                    "affected_files": assumption.affected_files,
-                    "confidence": assumption.confidence.value,
-                    "needs_verification": assumption.needs_verification,
-                })
+                result.assumptions_made.append(
+                    {
+                        "assumption_id": assumption.assumption_id,
+                        "description": assumption.description,
+                        "affected_files": assumption.affected_files,
+                        "confidence": assumption.confidence.value,
+                        "needs_verification": assumption.needs_verification,
+                    }
+                )
 
         return result
 
@@ -1927,11 +2090,14 @@ class TicketOrchestrator:
         """
         # Check if overview ticket already exists
         existing = [
-            t for t in self.beads_client._pm_ticket_cache.values()
+            t
+            for t in self.beads_client._pm_ticket_cache.values()
             if t.ticket_type == TicketType.SYSTEM_OVERVIEW
         ]
         if existing:
-            logger.debug(f"System overview ticket already exists: {existing[0].ticket_id}")
+            logger.debug(
+                f"System overview ticket already exists: {existing[0].ticket_id}"
+            )
             return existing[0]
 
         # Create the ticket
@@ -1973,7 +2139,8 @@ class TicketOrchestrator:
 
         # Find the overview ticket
         overview_tickets = [
-            t for t in self.beads_client._pm_ticket_cache.values()
+            t
+            for t in self.beads_client._pm_ticket_cache.values()
             if t.ticket_type == TicketType.SYSTEM_OVERVIEW
         ]
 
@@ -2018,40 +2185,52 @@ class TicketOrchestrator:
                     break
 
         # Filter out dead code from system overview
-        if self._state.dependency_graph_path and self._state.dependency_graph_path.exists():
+        if (
+            self._state.dependency_graph_path
+            and self._state.dependency_graph_path.exists()
+        ):
             try:
                 dead_items = get_dead_code(str(self._state.dependency_graph_path))
                 dead_names = {item["name"].upper() for item in dead_items}
                 original_count = len(doc_files)
                 doc_files = [
-                    f for f in doc_files
+                    f
+                    for f in doc_files
                     if f.stem.replace(".doc", "").upper() not in dead_names
                 ]
                 filtered_count = original_count - len(doc_files)
                 if filtered_count > 0:
-                    logger.info(f"Filtered {filtered_count} dead code files from system overview")
+                    logger.info(
+                        f"Filtered {filtered_count} dead code files from system overview"
+                    )
             except Exception as e:
                 logger.warning(f"Could not filter dead code: {e}")
 
         for doc_file in doc_files:
-                try:
-                    doc_data = json.loads(doc_file.read_text(encoding="utf-8"))
+            try:
+                doc_data = json.loads(doc_file.read_text(encoding="utf-8"))
 
-                    # Extract relevant fields
-                    header = doc_data.get("header", {})
-                    purpose = doc_data.get("purpose", {})
-                    called_programs = doc_data.get("called_programs", [])
-                    inputs = doc_data.get("inputs", [])
-                    outputs = doc_data.get("outputs", [])
+                # Extract relevant fields
+                header = doc_data.get("header", {})
+                purpose = doc_data.get("purpose", {})
+                called_programs = doc_data.get("called_programs", [])
+                inputs = doc_data.get("inputs", [])
+                outputs = doc_data.get("outputs", [])
 
-                    # Build call lists
-                    calls = [cp.get("program_name", "") for cp in called_programs if cp.get("program_name")]
-                    input_names = [i.get("name", "") for i in inputs if i.get("name")][:5]
-                    output_names = [o.get("name", "") for o in outputs if o.get("name")][:5]
+                # Build call lists
+                calls = [
+                    cp.get("program_name", "")
+                    for cp in called_programs
+                    if cp.get("program_name")
+                ]
+                input_names = [i.get("name", "") for i in inputs if i.get("name")][:5]
+                output_names = [o.get("name", "") for o in outputs if o.get("name")][:5]
 
-                    programs.append(ProgramSummary(
+                programs.append(
+                    ProgramSummary(
                         file_name=header.get("file_name") or doc_file.stem,
-                        program_id=header.get("program_id") or doc_file.stem.replace(".doc", ""),
+                        program_id=header.get("program_id")
+                        or doc_file.stem.replace(".doc", ""),
                         program_type=purpose.get("program_type") or "UNKNOWN",
                         summary=purpose.get("summary") or "No summary available",
                         business_context=purpose.get("business_context") or "",
@@ -2060,10 +2239,11 @@ class TicketOrchestrator:
                         inputs=input_names,
                         outputs=output_names,
                         json_path=f"./programs/{doc_file.name}",
-                    ))
+                    )
+                )
 
-                except Exception as e:
-                    logger.warning(f"Failed to read documentation {doc_file}: {e}")
+            except Exception as e:
+                logger.warning(f"Failed to read documentation {doc_file}: {e}")
 
         if not programs:
             logger.warning("No completed documentation found for system overview")

@@ -496,3 +496,174 @@ class TestEntryPointIdentification:
         starts = {seq[0][0] for seq in sequences}
         assert "prog::A" in starts
         assert "prog::X" in starts
+
+
+class TestMermaidWithCallSemantics:
+    """Tests for Mermaid generation with call semantics (data flow)."""
+
+    def test_call_semantics_with_inputs_and_outputs(self):
+        """Should show inputs on forward arrow and outputs on return arrow."""
+        sequences = [[("prog::MAIN", "prog::PROCESS", "calls")]]
+        artifacts = {
+            "prog::MAIN": {"name": "MAIN"},
+            "prog::PROCESS": {"name": "PROCESS"},
+        }
+        call_semantics = {
+            "MAIN->PROCESS": {
+                "inputs": ["WS-INPUT-1", "WS-INPUT-2"],
+                "outputs": ["WS-RESULT"],
+                "purpose": "Process data",
+            }
+        }
+
+        mermaid = sequences_to_mermaid(
+            sequences, artifacts=artifacts, call_semantics=call_semantics
+        )
+
+        assert "sequenceDiagram" in mermaid
+        # Forward arrow with inputs
+        assert "MAIN->>PROCESS: WS-INPUT-1, WS-INPUT-2" in mermaid
+        # Return arrow with outputs (dashed)
+        assert "PROCESS-->>MAIN: WS-RESULT" in mermaid
+
+    def test_call_semantics_inputs_only(self):
+        """Should show inputs on forward arrow when no outputs."""
+        sequences = [[("prog::A", "prog::B", "calls")]]
+        artifacts = {"prog::A": {"name": "A"}, "prog::B": {"name": "B"}}
+        call_semantics = {
+            "A->B": {
+                "inputs": ["VAR1"],
+                "outputs": [],
+            }
+        }
+
+        mermaid = sequences_to_mermaid(
+            sequences, artifacts=artifacts, call_semantics=call_semantics
+        )
+
+        assert "A->>B: VAR1" in mermaid
+        # Should NOT have return arrow
+        assert "B-->>A" not in mermaid
+
+    def test_call_semantics_outputs_only(self):
+        """Should fall back to rel_type when no inputs, show outputs on return."""
+        sequences = [[("prog::A", "prog::B", "calls")]]
+        artifacts = {"prog::A": {"name": "A"}, "prog::B": {"name": "B"}}
+        call_semantics = {
+            "A->B": {
+                "inputs": [],
+                "outputs": ["RESULT"],
+            }
+        }
+
+        mermaid = sequences_to_mermaid(
+            sequences, artifacts=artifacts, call_semantics=call_semantics
+        )
+
+        # Forward arrow with relationship type (no inputs)
+        assert "A->>B: calls" in mermaid
+        # Return arrow with outputs
+        assert "B-->>A: RESULT" in mermaid
+
+    def test_call_semantics_none_defaults_to_rel_type(self):
+        """Without call_semantics, should use relationship type."""
+        sequences = [[("prog::A", "prog::B", "calls")]]
+        artifacts = {"prog::A": {"name": "A"}, "prog::B": {"name": "B"}}
+
+        mermaid = sequences_to_mermaid(sequences, artifacts=artifacts)
+
+        assert "A->>B: calls" in mermaid
+        # No return arrow
+        assert "-->>A" not in mermaid
+
+    def test_call_semantics_truncates_long_lists(self):
+        """Should truncate variable lists when exceeding max_variables."""
+        sequences = [[("prog::A", "prog::B", "calls")]]
+        artifacts = {"prog::A": {"name": "A"}, "prog::B": {"name": "B"}}
+        call_semantics = {
+            "A->B": {
+                "inputs": [f"VAR{i}" for i in range(10)],
+                "outputs": [f"OUT{i}" for i in range(8)],
+            }
+        }
+
+        mermaid = sequences_to_mermaid(
+            sequences, artifacts=artifacts, call_semantics=call_semantics, max_variables=3
+        )
+
+        # Should show first 3 inputs plus count
+        assert "VAR0, VAR1, VAR2, +7" in mermaid
+        # Should show first 3 outputs plus count
+        assert "OUT0, OUT1, OUT2, +5" in mermaid
+
+    def test_call_semantics_case_insensitive_lookup(self):
+        """Call semantics lookup should be case-insensitive."""
+        sequences = [[("prog::main", "prog::process", "calls")]]
+        artifacts = {"prog::main": {"name": "MAIN"}, "prog::process": {"name": "PROCESS"}}
+        # Key uses uppercase names (from display_name)
+        call_semantics = {
+            "MAIN->PROCESS": {
+                "inputs": ["X"],
+                "outputs": ["Y"],
+            }
+        }
+
+        mermaid = sequences_to_mermaid(
+            sequences, artifacts=artifacts, call_semantics=call_semantics
+        )
+
+        # Should find semantics even with different cases
+        assert "MAIN->>PROCESS: X" in mermaid
+        assert "PROCESS-->>MAIN: Y" in mermaid
+
+    def test_call_semantics_multi_sequence(self):
+        """Should apply call semantics across multiple sequences."""
+        sequences = [
+            [("prog::A", "prog::B", "calls"), ("prog::B", "prog::C", "calls")],
+        ]
+        artifacts = {
+            "prog::A": {"name": "A"},
+            "prog::B": {"name": "B"},
+            "prog::C": {"name": "C"},
+        }
+        call_semantics = {
+            "A->B": {"inputs": ["IN1"], "outputs": ["MID"]},
+            "B->C": {"inputs": ["MID"], "outputs": ["OUT"]},
+        }
+
+        mermaid = sequences_to_mermaid(
+            sequences, artifacts=artifacts, call_semantics=call_semantics
+        )
+
+        # First call
+        assert "A->>B: IN1" in mermaid
+        assert "B-->>A: MID" in mermaid
+        # Second call
+        assert "B->>C: MID" in mermaid
+        assert "C-->>B: OUT" in mermaid
+
+    def test_call_semantics_partial_match(self):
+        """Should use rel_type for edges without matching semantics."""
+        sequences = [
+            [("prog::A", "prog::B", "calls"), ("prog::B", "prog::C", "executes")],
+        ]
+        artifacts = {
+            "prog::A": {"name": "A"},
+            "prog::B": {"name": "B"},
+            "prog::C": {"name": "C"},
+        }
+        # Only have semantics for A->B, not B->C
+        call_semantics = {
+            "A->B": {"inputs": ["X"], "outputs": ["Y"]},
+        }
+
+        mermaid = sequences_to_mermaid(
+            sequences, artifacts=artifacts, call_semantics=call_semantics
+        )
+
+        # A->B has semantics
+        assert "A->>B: X" in mermaid
+        assert "B-->>A: Y" in mermaid
+        # B->C uses relationship type
+        assert "B->>C: executes" in mermaid
+        assert "C-->>B" not in mermaid
