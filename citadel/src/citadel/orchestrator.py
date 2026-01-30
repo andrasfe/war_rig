@@ -41,7 +41,13 @@ from citadel.graph import (
 )
 from citadel.parser import FileParseResult, ParserEngine, RawReference
 from citadel.resolver import AliasResolver, ArtifactRegistry, CrossReferenceResolver
-from citadel.specs import AliasRule, ArtifactSpec, ArtifactType, RelationshipType, SpecManager
+from citadel.specs import (
+    AliasRule,
+    ArtifactSpec,
+    ArtifactType,
+    RelationshipType,
+    SpecManager,
+)
 
 if TYPE_CHECKING:
     pass
@@ -97,7 +103,7 @@ KNOWN_SYSTEM_UTILITIES: frozenset[str] = frozenset({
     "ADRDSSU",   # DFDSS data set services
     "AMASPZAP",  # Superzap - patch programs/datasets
     # Catalog utilities
-    "IDCAMS",    # Already listed but critical
+    # Already listed but critical
     # Common batch utilities
     "FTP",       # File transfer
     "FTPBATCH",  # Batch FTP
@@ -397,9 +403,7 @@ class Orchestrator:
         # Register existing artifacts not in changed files
         changed_file_paths = {str(f.resolve()) for f in changed_files}
         for artifact in existing_graph.artifacts.values():
-            if artifact.defined_in is None:
-                self.registry.register(artifact)
-            elif artifact.defined_in.file_path not in changed_file_paths:
+            if artifact.defined_in is None or artifact.defined_in.file_path not in changed_file_paths:
                 self.registry.register(artifact)
 
         # Register newly parsed artifacts

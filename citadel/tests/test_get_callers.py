@@ -4,11 +4,7 @@ Tests for the get_callers() method in the Citadel SDK.
 
 from __future__ import annotations
 
-import tempfile
-from pathlib import Path
 from textwrap import dedent
-
-import pytest
 
 from citadel import get_callers
 

@@ -54,8 +54,8 @@ from war_rig.models.templates import (
 )
 from war_rig.models.tickets import (
     ActionTaken,
-    ChromeTicket,
     ChallengerQuestion,
+    ChromeTicket,
     IssuePriority,
     IssueType,
     QuestionSeverity,

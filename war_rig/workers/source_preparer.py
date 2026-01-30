@@ -53,8 +53,8 @@ from typing import TYPE_CHECKING, Any, Literal
 from war_rig.beads import TicketType
 from war_rig.chunking import (
     ChunkingResult,
-    CodeChunk,
     COBOLChunker,
+    CodeChunk,
     GenericChunker,
     TokenEstimator,
 )
@@ -206,7 +206,7 @@ class SourceCodePreparer:
 
     def __init__(
         self,
-        config: "ScribeConfig",
+        config: ScribeConfig,
         estimator: TokenEstimator | None = None,
     ):
         """Initialize the source code preparer.
@@ -243,8 +243,8 @@ class SourceCodePreparer:
         self,
         source_code: str,
         context: PreparationContext,
-        challenger_questions: list["ChallengerQuestion"] | None = None,
-        chrome_tickets: list["ChromeTicket"] | None = None,
+        challenger_questions: list[ChallengerQuestion] | None = None,
+        chrome_tickets: list[ChromeTicket] | None = None,
         previous_template: DocumentationTemplate | None = None,
     ) -> PreparedSource:
         """Prepare source code for Scribe processing.
@@ -350,8 +350,8 @@ class SourceCodePreparer:
         source_code: str,
         source_tokens: int,
         context: PreparationContext | None = None,
-        challenger_questions: list["ChallengerQuestion"] | None = None,
-        chrome_tickets: list["ChromeTicket"] | None = None,
+        challenger_questions: list[ChallengerQuestion] | None = None,
+        chrome_tickets: list[ChromeTicket] | None = None,
         previous_template: DocumentationTemplate | None = None,
     ) -> PreparedSource:
         """Apply sampling strategy (extract representative portion).
@@ -392,8 +392,8 @@ class SourceCodePreparer:
         self,
         source_code: str,
         context: PreparationContext,
-        challenger_questions: list["ChallengerQuestion"] | None = None,
-        chrome_tickets: list["ChromeTicket"] | None = None,
+        challenger_questions: list[ChallengerQuestion] | None = None,
+        chrome_tickets: list[ChromeTicket] | None = None,
         previous_template: DocumentationTemplate | None = None,
     ) -> PreparedSource:
         """Apply intelligent sampling using relevance hints.

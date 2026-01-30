@@ -4,11 +4,11 @@ Tests the ability to extract line numbers, identifiers, and section
 references from ChallengerQuestion and ChromeTicket objects.
 """
 
+
 import pytest
-from unittest.mock import MagicMock
 
 from war_rig.beads import TicketType
-from war_rig.models.templates import FileType, DocumentationTemplate, PurposeSection
+from war_rig.models.templates import DocumentationTemplate, FileType, PurposeSection
 from war_rig.models.tickets import ChallengerQuestion, ChromeTicket
 from war_rig.sampling.analyzer import RelevanceAnalyzer, RelevanceHints
 from war_rig.sampling.context import SamplingContext

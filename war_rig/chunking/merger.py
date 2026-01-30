@@ -13,7 +13,6 @@ The merger handles:
 from __future__ import annotations
 
 import logging
-from collections import defaultdict
 from typing import Any
 
 from war_rig.agents.scribe import ScribeOutput

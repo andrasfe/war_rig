@@ -14,7 +14,7 @@ input/output types and prompt templates.
 
 import logging
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Generic, TypeVar
+from typing import Any, Generic, TypeVar
 
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -453,7 +453,6 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
         try:
             loop = asyncio.get_running_loop()
             # We're in an async context, need to use run_coroutine_threadsafe
-            import concurrent.futures
             future = asyncio.run_coroutine_threadsafe(
                 self.ainvoke(input_data),
                 loop,

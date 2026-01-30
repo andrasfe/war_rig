@@ -3,37 +3,36 @@
 This module provides shared fixtures used across all test modules.
 """
 
-import pytest
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
-from war_rig.config import WarRigConfig, ScribeConfig, ChallengerConfig, ImperatorConfig
-from war_rig.models.templates import (
-    DocumentationTemplate,
-    HeaderSection,
-    PurposeSection,
-    FileType,
-    ProgramType,
-    FinalStatus,
-)
+import pytest
+
+from war_rig.config import ChallengerConfig, ImperatorConfig, ScribeConfig, WarRigConfig
 from war_rig.models.assessments import (
-    ConfidenceAssessment,
     ChallengerAssessment,
-    SectionAssessment,
+    ConfidenceAssessment,
     ConfidenceLevel,
+    SectionAssessment,
     ValidationLevel,
 )
-from war_rig.models.tickets import (
-    ChromeTicket,
-    ChallengerQuestion,
-    ScribeResponse,
-    IssueType,
-    IssuePriority,
-    QuestionType,
-    QuestionSeverity,
-    ActionTaken,
+from war_rig.models.templates import (
+    DocumentationTemplate,
+    FileType,
+    HeaderSection,
+    ProgramType,
+    PurposeSection,
 )
-
+from war_rig.models.tickets import (
+    ActionTaken,
+    ChallengerQuestion,
+    ChromeTicket,
+    IssuePriority,
+    IssueType,
+    QuestionSeverity,
+    QuestionType,
+    ScribeResponse,
+)
 
 # =============================================================================
 # Sample Source Code Fixtures

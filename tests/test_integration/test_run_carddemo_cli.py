@@ -4,14 +4,12 @@ These tests verify the CLI argument parsing and PM mode functions work correctly
 """
 
 import argparse
-from datetime import datetime
-from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
 
 # Import from the script
 import sys
+from datetime import datetime
+from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
 
 from run_carddemo import (
@@ -19,6 +17,7 @@ from run_carddemo import (
     print_batch_result,
     print_cycle_summary,
 )
+
 from war_rig.orchestration.ticket_engine import BatchResult
 
 
@@ -203,8 +202,6 @@ class TestCLIArgumentParsing:
     def test_pm_mode_args_exist(self) -> None:
         """Test that PM mode arguments are available."""
         # Import the main function to trigger parser creation
-        from run_carddemo import main
-        import argparse
 
         # Create a test parser with the same arguments
         parser = argparse.ArgumentParser()
@@ -225,7 +222,6 @@ class TestCLIArgumentParsing:
 
     def test_default_values(self) -> None:
         """Test default argument values."""
-        import argparse
 
         parser = argparse.ArgumentParser()
         parser.add_argument("--pm-mode", action="store_true")

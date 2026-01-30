@@ -13,7 +13,7 @@ from pathlib import Path
 from pydantic import BaseModel, Field
 
 from citadel.graph.model import Artifact, SourceLocation
-from citadel.parser.preprocessor import Preprocessor, PreprocessedSource
+from citadel.parser.preprocessor import Preprocessor
 from citadel.specs.schema import (
     AnalysisPattern,
     ArtifactCategory,

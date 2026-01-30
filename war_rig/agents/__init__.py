@@ -25,23 +25,23 @@ Example:
     tickets = pm.initialize_batch(Path("./input"))
 """
 
-from war_rig.agents.base import BaseAgent, AgentInput, AgentOutput
-from war_rig.agents.scribe import ScribeAgent, ScribeInput, ScribeOutput
+from war_rig.agents.base import AgentInput, AgentOutput, BaseAgent
 from war_rig.agents.challenger import ChallengerAgent, ChallengerInput, ChallengerOutput
 from war_rig.agents.imperator import (
     ImperatorAgent,
+    ImperatorDecision,
     ImperatorInput,
     ImperatorOutput,
-    ImperatorDecision,
 )
 from war_rig.agents.program_manager import (
+    BatchTicketSummary,
+    ClarificationRequest,
+    CycleSummary,
     ProgramManagerAgent,
     ProgramManagerInput,
     ProgramManagerOutput,
-    ClarificationRequest,
-    CycleSummary,
-    BatchTicketSummary,
 )
+from war_rig.agents.scribe import ScribeAgent, ScribeInput, ScribeOutput
 
 __all__ = [
     "AgentInput",

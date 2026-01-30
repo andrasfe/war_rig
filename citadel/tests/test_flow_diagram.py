@@ -17,7 +17,6 @@ from citadel.analysis.flow_diagram import (
 )
 from citadel.sdk import Callout, FileAnalysisResult, FileArtifact
 
-
 # ---------------------------------------------------------------------------
 # Helper factories
 # ---------------------------------------------------------------------------

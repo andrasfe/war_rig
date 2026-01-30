@@ -1,7 +1,8 @@
 """Tests for TokenEstimator."""
 
 import pytest
-from war_rig.chunking.estimator import TokenEstimator, PromptTokenEstimate
+
+from war_rig.chunking.estimator import PromptTokenEstimate, TokenEstimator
 
 
 class TestTokenEstimator:

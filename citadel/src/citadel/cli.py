@@ -32,7 +32,6 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
-import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -204,6 +203,7 @@ def analyze(
             # The orchestrator currently returns a dict stub
             # Create a minimal graph for demonstration
             from datetime import datetime
+
             from citadel.graph.model import GraphStatistics
 
             graph = DependencyGraph(
@@ -371,7 +371,7 @@ def spec_show(ctx: click.Context, spec_id: str, as_yaml: bool) -> None:
         raise SystemExit(1)
 
 
-def _display_spec_details(spec: "ArtifactSpec", spec_id: str, manager: SpecManager) -> None:
+def _display_spec_details(spec: ArtifactSpec, spec_id: str, manager: SpecManager) -> None:
     """Display formatted spec details."""
     # Header
     console.print(Panel.fit(

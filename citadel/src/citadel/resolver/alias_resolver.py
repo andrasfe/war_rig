@@ -8,7 +8,7 @@ resolution cascade: exact match -> alias match -> transformation match -> fuzzy 
 
 import logging
 import re
-from typing import Callable
+from collections.abc import Callable
 
 from citadel.parser.engine import RawReference
 from citadel.resolver.registry import ArtifactRegistry

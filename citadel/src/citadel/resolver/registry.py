@@ -7,7 +7,7 @@ Provides exact matching, alias resolution, and fuzzy matching capabilities.
 
 import logging
 from collections import defaultdict
-from typing import Iterator
+from collections.abc import Iterator
 
 from rapidfuzz import fuzz, process
 

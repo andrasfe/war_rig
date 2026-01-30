@@ -70,7 +70,7 @@ class SourceWindow:
         """
         return self.end_line - self.start_line + 1
 
-    def overlaps(self, other: "SourceWindow") -> bool:
+    def overlaps(self, other: SourceWindow) -> bool:
         """Check if this window overlaps with another.
 
         Two windows overlap if they share any lines, including adjacent
@@ -89,7 +89,7 @@ class SourceWindow:
             or other.end_line < self.start_line - 1
         )
 
-    def merge(self, other: "SourceWindow") -> "SourceWindow":
+    def merge(self, other: SourceWindow) -> SourceWindow:
         """Merge this window with another overlapping window.
 
         Creates a new window spanning both windows, taking the higher
@@ -131,7 +131,7 @@ class SourceWindow:
             relevance_score=max(self.relevance_score, other.relevance_score),
         )
 
-    def clamp(self, max_line: int) -> "SourceWindow":
+    def clamp(self, max_line: int) -> SourceWindow:
         """Return a new window clamped to valid line bounds.
 
         Args:
@@ -208,8 +208,8 @@ class SamplingStrategy(Protocol):
 
     def can_apply(
         self,
-        hints: "RelevanceHints",
-        context: "SamplingContext",
+        hints: RelevanceHints,
+        context: SamplingContext,
     ) -> bool:
         """Check if this strategy can be applied given the hints.
 
@@ -224,8 +224,8 @@ class SamplingStrategy(Protocol):
 
     def generate_windows(
         self,
-        hints: "RelevanceHints",
-        context: "SamplingContext",
+        hints: RelevanceHints,
+        context: SamplingContext,
     ) -> list[SourceWindow]:
         """Generate source windows based on hints.
 

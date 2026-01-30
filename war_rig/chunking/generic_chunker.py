@@ -9,15 +9,13 @@ from __future__ import annotations
 
 import logging
 import re
-from dataclasses import dataclass
 
+from war_rig.chunking.estimator import TokenEstimator
 from war_rig.chunking.models import (
-    ChunkContext,
     ChunkContextType,
     ChunkingResult,
     CodeChunk,
 )
-from war_rig.chunking.estimator import TokenEstimator
 
 logger = logging.getLogger(__name__)
 

@@ -111,8 +111,8 @@ class SemanticRegionStrategy:
 
     def can_apply(
         self,
-        hints: "RelevanceHints",
-        context: "SamplingContext",
+        hints: RelevanceHints,
+        context: SamplingContext,
     ) -> bool:
         """Check if this strategy can be applied.
 
@@ -141,8 +141,8 @@ class SemanticRegionStrategy:
 
     def generate_windows(
         self,
-        hints: "RelevanceHints",
-        context: "SamplingContext",
+        hints: RelevanceHints,
+        context: SamplingContext,
     ) -> list[SourceWindow]:
         """Generate windows for relevant COBOL divisions.
 
@@ -199,7 +199,7 @@ class SemanticRegionStrategy:
 
     def _find_division_boundaries(
         self,
-        context: "SamplingContext",
+        context: SamplingContext,
     ) -> dict[str, tuple[int, int]]:
         """Find the line boundaries of each COBOL division.
 

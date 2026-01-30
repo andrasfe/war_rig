@@ -163,7 +163,7 @@ def load_tickets(path: Path) -> dict[str, Any] | None:
         return None
 
     try:
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             return json.load(f)
     except json.JSONDecodeError:
         return None
@@ -685,16 +685,16 @@ def build_summary_header(summary: TicketSummary, path: Path) -> Panel:
     # Add batch info and cycle number
     # current_cycle is read from JSON (set by orchestrator), or computed from max ticket cycle
     if summary.batch_id:
-        header_text.append(f"\nBatch: ", style="bold")
+        header_text.append("\nBatch: ", style="bold")
         header_text.append(f"{summary.batch_id}", style="cyan")
-        header_text.append(f"  |  Cycle: ", style="bold")
+        header_text.append("  |  Cycle: ", style="bold")
         header_text.append(f"{summary.max_cycle}\n", style="cyan")
     else:
-        header_text.append(f"\nCycle: ", style="bold")
+        header_text.append("\nCycle: ", style="bold")
         header_text.append(f"{summary.max_cycle}\n", style="cyan")
 
     # Ticket count breakdown
-    header_text.append(f"Total Tickets: ", style="bold")
+    header_text.append("Total Tickets: ", style="bold")
     header_text.append(f"{summary.total}", style="white")
 
     # State breakdown inline
@@ -707,8 +707,8 @@ def build_summary_header(summary: TicketSummary, path: Path) -> Panel:
     incomplete = summary.total - completed
     if incomplete > 0 and summary.total > 0:
         pct_complete = (completed / summary.total) * 100
-        header_text.append(f"  |  ", style="dim")
-        header_text.append(f"Progress: ", style="bold")
+        header_text.append("  |  ", style="dim")
+        header_text.append("Progress: ", style="bold")
         header_text.append(f"{pct_complete:.0f}%", style="green" if pct_complete > 80 else "yellow" if pct_complete > 50 else "red")
         header_text.append(f" ({incomplete} pending)", style="dim")
 
@@ -728,7 +728,7 @@ def build_summary_header(summary: TicketSummary, path: Path) -> Panel:
 
     # Total size
     if summary.total_size_bytes > 0:
-        header_text.append(f"Total Size: ", style="bold")
+        header_text.append("Total Size: ", style="bold")
         header_text.append(f"{format_bytes(summary.total_size_bytes)}\n", style="white")
 
     return Panel(header_text, border_style="magenta")

@@ -3,11 +3,12 @@
 Tests the full intelligent sampling pipeline integration.
 """
 
-import pytest
 from unittest.mock import MagicMock
 
+import pytest
+
 from war_rig.beads import TicketType
-from war_rig.models.templates import FileType, DocumentationTemplate, PurposeSection
+from war_rig.models.templates import DocumentationTemplate, FileType, PurposeSection
 from war_rig.models.tickets import ChallengerQuestion, ChromeTicket
 from war_rig.sampling import SamplingOrchestrator, SamplingResult
 

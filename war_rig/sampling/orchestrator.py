@@ -11,7 +11,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from war_rig.sampling.analyzer import RelevanceAnalyzer
-from war_rig.sampling.composer import ComposedSample, WindowComposer
+from war_rig.sampling.composer import WindowComposer
 from war_rig.sampling.context import SamplingContext
 from war_rig.sampling.strategies import (
     IdentifierMentionStrategy,
@@ -94,7 +94,7 @@ class SamplingOrchestrator:
         ... )
     """
 
-    def __init__(self, estimator: "TokenEstimator"):
+    def __init__(self, estimator: TokenEstimator):
         """Initialize the sampling orchestrator.
 
         Args:
@@ -117,12 +117,12 @@ class SamplingOrchestrator:
         self,
         source_code: str,
         file_name: str,
-        file_type: "FileType",
+        file_type: FileType,
         max_tokens: int,
-        ticket_type: "TicketType",
-        challenger_questions: list["ChallengerQuestion"] | None = None,
-        chrome_tickets: list["ChromeTicket"] | None = None,
-        previous_template: "DocumentationTemplate | None" = None,
+        ticket_type: TicketType,
+        challenger_questions: list[ChallengerQuestion] | None = None,
+        chrome_tickets: list[ChromeTicket] | None = None,
+        previous_template: DocumentationTemplate | None = None,
     ) -> SamplingResult:
         """Prepare an intelligent source code sample.
 
@@ -212,7 +212,7 @@ class SamplingOrchestrator:
             hints_found=hints_found,
         )
 
-    def to_prepared_source(self, result: SamplingResult) -> "PreparedSource":
+    def to_prepared_source(self, result: SamplingResult) -> PreparedSource:
         """Convert SamplingResult to PreparedSource for compatibility.
 
         This method creates a PreparedSource object compatible with the

@@ -30,8 +30,8 @@ Example:
 import logging
 from importlib.metadata import entry_points
 
-from war_rig.providers.protocol import LLMProvider
 from war_rig.providers.openrouter import OpenRouterProvider
+from war_rig.providers.protocol import LLMProvider
 
 logger = logging.getLogger(__name__)
 

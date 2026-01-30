@@ -23,7 +23,6 @@ from war_rig.validation.document_criteria import (
     get_criteria_for_type,
 )
 
-
 # Type alias for template types
 TemplateType = Union[DocumentationTemplate, JCLTemplate, CopybookTemplate]
 

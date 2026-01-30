@@ -133,7 +133,7 @@ class RelevanceAnalyzer:
         "YES", "NO", "TRUE", "FALSE", "NULL", "NONE",
     })
 
-    def analyze(self, context: "SamplingContext") -> RelevanceHints:
+    def analyze(self, context: SamplingContext) -> RelevanceHints:
         """Analyze context to extract relevance hints.
 
         Examines challenger questions, chrome tickets, and previous template
@@ -176,9 +176,9 @@ class RelevanceAnalyzer:
 
     def _extract_from_question(
         self,
-        question: "ChallengerQuestion",
+        question: ChallengerQuestion,
         hints: RelevanceHints,
-        context: "SamplingContext",
+        context: SamplingContext,
     ) -> None:
         """Extract hints from a ChallengerQuestion.
 
@@ -187,7 +187,6 @@ class RelevanceAnalyzer:
             hints: Hints object to populate.
             context: The sampling context for template lookup.
         """
-        from war_rig.models.tickets import ChallengerQuestion
 
         # Extract line numbers from evidence field
         if hasattr(question, "evidence") and question.evidence:
@@ -213,9 +212,9 @@ class RelevanceAnalyzer:
 
     def _extract_from_chrome_ticket(
         self,
-        ticket: "ChromeTicket",
+        ticket: ChromeTicket,
         hints: RelevanceHints,
-        context: "SamplingContext",
+        context: SamplingContext,
     ) -> None:
         """Extract hints from a ChromeTicket.
 
@@ -224,7 +223,6 @@ class RelevanceAnalyzer:
             hints: Hints object to populate.
             context: The sampling context for template lookup.
         """
-        from war_rig.models.tickets import ChromeTicket
 
         # Extract section name
         if hasattr(ticket, "section") and ticket.section:
@@ -245,7 +243,7 @@ class RelevanceAnalyzer:
         self,
         text: str,
         hints: RelevanceHints,
-        context: "SamplingContext",
+        context: SamplingContext,
     ) -> None:
         """Extract line number references from text.
 
@@ -292,7 +290,7 @@ class RelevanceAnalyzer:
         self,
         section_name: str,
         hints: RelevanceHints,
-        context: "SamplingContext",
+        context: SamplingContext,
     ) -> None:
         """Add line citations from template section.
 

@@ -25,18 +25,18 @@ __version__ = "0.1.0"
 
 # SDK exports
 from citadel.sdk import (
+    Callout,
     Citadel,
     FileAnalysisResult,
     FileArtifact,
-    Callout,
     analyze_file,
-    get_functions,
-    get_function_body,
+    clear_cache,
     get_callers,
     get_dead_code,
     get_flow_diagram,
+    get_function_body,
+    get_functions,
     get_sequence_diagrams,
-    clear_cache,
 )
 
 __all__ = [

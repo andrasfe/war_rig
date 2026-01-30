@@ -1,9 +1,7 @@
 """Tests for COBOLChunker."""
 
-import pytest
-from war_rig.chunking.cobol_chunker import COBOLChunker, COBOLStructure
+from war_rig.chunking.cobol_chunker import COBOLChunker
 from war_rig.chunking.models import ChunkContextType
-
 
 # Sample COBOL code for testing
 SMALL_COBOL = """

@@ -395,9 +395,7 @@ class GraphBuilder:
         results: list[Relationship] = []
 
         for rel in self._relationships:
-            if direction in ("outgoing", "both") and rel.from_artifact == artifact_id:
-                results.append(rel)
-            elif direction in ("incoming", "both") and rel.to_artifact == artifact_id:
+            if direction in ("outgoing", "both") and rel.from_artifact == artifact_id or direction in ("incoming", "both") and rel.to_artifact == artifact_id:
                 results.append(rel)
 
         return results

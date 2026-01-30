@@ -8,7 +8,7 @@ a final sample that fits within the token budget.
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from war_rig.sampling.strategies.protocol import SourceWindow
@@ -73,7 +73,7 @@ class WindowComposer:
 
     CONTEXT_MARGIN: int = 5
 
-    def __init__(self, estimator: "TokenEstimator"):
+    def __init__(self, estimator: TokenEstimator):
         """Initialize the window composer.
 
         Args:

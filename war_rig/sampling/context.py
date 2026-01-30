@@ -7,7 +7,7 @@ CLARIFICATION and CHROME tickets.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -56,28 +56,28 @@ class SamplingContext:
     source_code: str
     source_lines: list[str]
     file_name: str
-    file_type: "FileType"
+    file_type: FileType
     total_lines: int
     max_tokens: int
     estimated_source_tokens: int
-    ticket_type: "TicketType"
-    challenger_questions: list["ChallengerQuestion"] | None = None
-    chrome_tickets: list["ChromeTicket"] | None = None
-    previous_template: "DocumentationTemplate | None" = None
+    ticket_type: TicketType
+    challenger_questions: list[ChallengerQuestion] | None = None
+    chrome_tickets: list[ChromeTicket] | None = None
+    previous_template: DocumentationTemplate | None = None
 
     @classmethod
     def create(
         cls,
         source_code: str,
         file_name: str,
-        file_type: "FileType",
+        file_type: FileType,
         max_tokens: int,
         estimated_source_tokens: int,
-        ticket_type: "TicketType",
-        challenger_questions: list["ChallengerQuestion"] | None = None,
-        chrome_tickets: list["ChromeTicket"] | None = None,
-        previous_template: "DocumentationTemplate | None" = None,
-    ) -> "SamplingContext":
+        ticket_type: TicketType,
+        challenger_questions: list[ChallengerQuestion] | None = None,
+        chrome_tickets: list[ChromeTicket] | None = None,
+        previous_template: DocumentationTemplate | None = None,
+    ) -> SamplingContext:
         """Factory method to create a SamplingContext.
 
         Handles splitting source into lines and computing total_lines.

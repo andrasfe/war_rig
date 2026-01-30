@@ -6,7 +6,6 @@ for various graph topologies including linear chains, trees, DAGs,
 cycles, and disconnected components.
 """
 
-import pytest
 
 from citadel.analysis.sequence_finder import (
     find_longest_sequences,

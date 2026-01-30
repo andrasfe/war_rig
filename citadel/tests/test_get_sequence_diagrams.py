@@ -6,10 +6,11 @@ including loading from JSON files and analyzing directories.
 """
 
 import json
-import pytest
 from pathlib import Path
 
-from citadel.sdk import Citadel, get_sequence_diagrams
+import pytest
+
+from citadel.sdk import get_sequence_diagrams
 
 
 class TestGetSequenceDiagramsFromJson:

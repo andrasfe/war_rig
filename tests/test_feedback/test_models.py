@@ -7,13 +7,11 @@ Tests:
 - Conversion to QualityNote format
 """
 
-import pytest
-from datetime import datetime
 
 from war_rig.feedback.models import (
     HumanFeedbackCategory,
-    HumanFeedbackNote,
     HumanFeedbackContext,
+    HumanFeedbackNote,
     HumanFeedbackSeverity,
 )
 

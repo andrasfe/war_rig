@@ -7,11 +7,11 @@ from pathlib import Path
 import pytest
 
 from war_rig.analysis.call_graph import (
-    CallGraphAnalyzer,
+    SYSTEM_UTILITIES,
     CallGraphAnalysis,
+    CallGraphAnalyzer,
     CallRelationship,
     ProgramInfo,
-    SYSTEM_UTILITIES,
 )
 
 

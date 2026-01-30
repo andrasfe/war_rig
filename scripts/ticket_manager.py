@@ -48,7 +48,6 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 
 def load_tickets_file(json_path: Path) -> dict:
@@ -61,7 +60,7 @@ def load_tickets_file(json_path: Path) -> dict:
             "current_cycle": 1,
             "tickets": []
         }
-    with open(json_path, 'r') as f:
+    with open(json_path) as f:
         return json.load(f)
 
 
@@ -73,7 +72,7 @@ def save_tickets_file(json_path: Path, data: dict) -> None:
         json.dump(data, f, indent=2)
 
 
-def find_ticket(tickets: list[dict], ticket_id: str) -> tuple[int, Optional[dict]]:
+def find_ticket(tickets: list[dict], ticket_id: str) -> tuple[int, dict | None]:
     """Find a ticket by ID. Returns (index, ticket) or (-1, None) if not found."""
     for i, ticket in enumerate(tickets):
         if ticket.get('ticket_id') == ticket_id:
@@ -241,7 +240,7 @@ def cmd_reset(args, data: dict, json_path: Path) -> int:
 
     old_state = ticket.get('state')
     if old_state == 'created' and not args.force:
-        print(f"Ticket is already in 'created' state.")
+        print("Ticket is already in 'created' state.")
         return 0
 
     if not args.force:
@@ -272,7 +271,7 @@ def cmd_delete(args, data: dict, json_path: Path) -> int:
         return 1
 
     if not args.force:
-        print(f"About to delete ticket:")
+        print("About to delete ticket:")
         print(format_ticket(ticket, verbose=True))
         response = input("\nAre you sure? (y/N): ")
         if response.lower() != 'y':
@@ -291,8 +290,8 @@ def cmd_stats(args, data: dict) -> int:
     """Show statistics about tickets."""
     tickets = data.get('tickets', [])
 
-    print(f"War Rig Tickets Statistics")
-    print(f"=" * 40)
+    print("War Rig Tickets Statistics")
+    print("=" * 40)
     print(f"File:          {args.json_file}")
     print(f"Saved at:      {data.get('saved_at', 'N/A')}")
     print(f"Current cycle: {data.get('current_cycle', 'N/A')}")

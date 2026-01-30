@@ -8,20 +8,17 @@ Tests:
 """
 
 import json
-import os
-import pytest
-import tempfile
 from datetime import datetime
-from pathlib import Path
 
-from war_rig.feedback.injector import FeedbackInjector, InjectionResult
+import pytest
+
+from war_rig.feedback.injector import FeedbackInjector
 from war_rig.feedback.models import (
     HumanFeedbackCategory,
     HumanFeedbackContext,
     HumanFeedbackNote,
     HumanFeedbackSeverity,
 )
-from war_rig.models.tickets import FeedbackContext, QualityNote
 
 
 @pytest.fixture

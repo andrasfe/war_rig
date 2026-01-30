@@ -13,11 +13,9 @@ The state is designed to be:
 from datetime import datetime
 from typing import Annotated, Any, TypedDict
 
-from langgraph.graph.message import add_messages
-
 from war_rig.models.assessments import ChallengerAssessment, ConfidenceAssessment
 from war_rig.models.templates import DocumentationTemplate, FileType
-from war_rig.models.tickets import ChromeTicket, ChallengerQuestion, ScribeResponse
+from war_rig.models.tickets import ChallengerQuestion, ChromeTicket, ScribeResponse
 from war_rig.preprocessors.base import PreprocessorResult
 
 

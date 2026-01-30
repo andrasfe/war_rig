@@ -14,15 +14,15 @@ Each strategy implements the SamplingStrategy protocol and produces
 SourceWindow objects that the WindowComposer merges into a final sample.
 """
 
+from war_rig.sampling.strategies.identifier_mention import IdentifierMentionStrategy
+from war_rig.sampling.strategies.line_citation import LineCitationStrategy
 from war_rig.sampling.strategies.protocol import (
     SamplingStrategy,
     SourceWindow,
 )
-from war_rig.sampling.strategies.line_citation import LineCitationStrategy
-from war_rig.sampling.strategies.section_reference import SectionReferenceStrategy
-from war_rig.sampling.strategies.identifier_mention import IdentifierMentionStrategy
-from war_rig.sampling.strategies.semantic_region import SemanticRegionStrategy
 from war_rig.sampling.strategies.random_fallback import RandomFallbackStrategy
+from war_rig.sampling.strategies.section_reference import SectionReferenceStrategy
+from war_rig.sampling.strategies.semantic_region import SemanticRegionStrategy
 
 __all__ = [
     "SamplingStrategy",

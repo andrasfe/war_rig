@@ -10,7 +10,7 @@ import logging
 import uuid
 from collections import defaultdict
 
-from citadel.graph.model import Relationship, SourceLocation, UnresolvedReference
+from citadel.graph.model import Relationship, UnresolvedReference
 from citadel.parser.engine import RawReference
 from citadel.resolver.alias_resolver import AliasResolver
 from citadel.resolver.registry import ArtifactRegistry

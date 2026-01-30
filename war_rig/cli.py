@@ -19,9 +19,8 @@ Example:
 
 import asyncio
 import logging
-import sys
 from pathlib import Path
-from typing import Annotated, Optional
+from typing import Annotated
 
 import typer
 from rich.console import Console
@@ -70,7 +69,7 @@ def setup_logging(verbose: bool = False) -> None:
     setup_error_file_handler()
 
 
-def load_config_with_fallback(config_path: Optional[Path]) -> WarRigConfig:
+def load_config_with_fallback(config_path: Path | None) -> WarRigConfig:
     """Load configuration with fallback to defaults.
 
     Args:
@@ -102,7 +101,7 @@ def analyze(
         ),
     ],
     config: Annotated[
-        Optional[Path],
+        Path | None,
         typer.Option(
             "--config",
             "-c",
@@ -110,7 +109,7 @@ def analyze(
         ),
     ] = None,
     output: Annotated[
-        Optional[Path],
+        Path | None,
         typer.Option(
             "--output",
             "-o",
@@ -263,7 +262,7 @@ def batch(
         ),
     ],
     config: Annotated[
-        Optional[Path],
+        Path | None,
         typer.Option(
             "--config",
             "-c",
@@ -271,7 +270,7 @@ def batch(
         ),
     ] = None,
     output: Annotated[
-        Optional[Path],
+        Path | None,
         typer.Option(
             "--output",
             "-o",
@@ -279,7 +278,7 @@ def batch(
         ),
     ] = None,
     file_type: Annotated[
-        Optional[str],
+        str | None,
         typer.Option(
             "--type",
             "-t",
@@ -287,7 +286,7 @@ def batch(
         ),
     ] = None,
     limit: Annotated[
-        Optional[int],
+        int | None,
         typer.Option(
             "--limit",
             "-l",
@@ -326,7 +325,7 @@ def batch(
         ),
     ] = False,
     skills_dir: Annotated[
-        Optional[Path],
+        Path | None,
         typer.Option(
             "--skills-output",
             help="Output directory for skills (default: skills-{output_name})",
@@ -474,7 +473,7 @@ def batch(
 @app.command()
 def status(
     output: Annotated[
-        Optional[Path],
+        Path | None,
         typer.Option(
             "--output",
             "-o",
@@ -482,7 +481,7 @@ def status(
         ),
     ] = None,
     config: Annotated[
-        Optional[Path],
+        Path | None,
         typer.Option(
             "--config",
             "-c",
@@ -545,7 +544,7 @@ def status(
 @app.command()
 def init(
     output: Annotated[
-        Optional[Path],
+        Path | None,
         typer.Option(
             "--output",
             "-o",
@@ -553,7 +552,7 @@ def init(
         ),
     ] = None,
     config: Annotated[
-        Optional[Path],
+        Path | None,
         typer.Option(
             "--config",
             "-c",
@@ -589,7 +588,7 @@ def init(
 @app.command()
 def overview(
     config: Annotated[
-        Optional[Path],
+        Path | None,
         typer.Option(
             "--config",
             "-c",
@@ -597,7 +596,7 @@ def overview(
         ),
     ] = None,
     output: Annotated[
-        Optional[Path],
+        Path | None,
         typer.Option(
             "--output",
             "-o",
@@ -648,7 +647,7 @@ def overview(
         cfg.output_directory = output
 
     console.print(Panel.fit(
-        f"[bold blue]War Rig[/bold blue] - Generating System Overview",
+        "[bold blue]War Rig[/bold blue] - Generating System Overview",
         border_style="blue",
     ))
 
@@ -682,7 +681,7 @@ def datacards(
         ),
     ],
     output: Annotated[
-        Optional[Path],
+        Path | None,
         typer.Option(
             "--output",
             "-o",
@@ -690,7 +689,7 @@ def datacards(
         ),
     ] = None,
     config: Annotated[
-        Optional[Path],
+        Path | None,
         typer.Option(
             "--config",
             "-c",
@@ -752,7 +751,7 @@ def skills(
         ),
     ],
     output: Annotated[
-        Optional[Path],
+        Path | None,
         typer.Option(
             "--output",
             "-o",

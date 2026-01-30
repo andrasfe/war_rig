@@ -6,8 +6,6 @@ import tempfile
 from pathlib import Path
 from textwrap import dedent
 
-import pytest
-
 
 class TestGetFileStatsPython:
     """Tests for Python file stats extraction."""

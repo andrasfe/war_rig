@@ -26,8 +26,8 @@ Example:
     })
 """
 
+from war_rig.orchestration.graph import WarRigGraph, create_war_rig_graph
 from war_rig.orchestration.state import WarRigState
-from war_rig.orchestration.graph import create_war_rig_graph, WarRigGraph
 
 __all__ = [
     "create_war_rig_graph",

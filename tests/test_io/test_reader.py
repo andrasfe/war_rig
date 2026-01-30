@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from war_rig.config import SystemConfig, FileExtensionsConfig
+from war_rig.config import FileExtensionsConfig, SystemConfig
 from war_rig.io.reader import SourceFile, SourceReader
 from war_rig.models.templates import FileType
 
@@ -132,8 +132,9 @@ class TestOutputPathMirroring:
 
     def test_get_doc_output_path_nested(self):
         """Test output path for nested input files."""
-        from war_rig.workers.scribe_pool import ScribeWorker
         from unittest.mock import MagicMock
+
+        from war_rig.workers.scribe_pool import ScribeWorker
 
         # Create a mock worker to test the path generation
         config = MagicMock()

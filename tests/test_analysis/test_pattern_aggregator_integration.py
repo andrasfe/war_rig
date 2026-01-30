@@ -100,7 +100,7 @@ class TestPatternAggregatorIntegration:
         assert "complexity_indicators" in file_summary
 
         # Log results for debugging
-        print(f"\nScribe aggregation results:")
+        print("\nScribe aggregation results:")
         print(f"  Key variables: {len(file_summary.get('key_variables', []))}")
         print(f"  Paragraph hints: {len(result['paragraph_hints'])}")
         print(f"  Critical patterns: {len(result['critical_patterns'])}")
@@ -145,7 +145,7 @@ class TestPatternAggregatorIntegration:
             assert "error_handling_count" in fact
 
         # Log results for debugging
-        print(f"\nChallenger aggregation results:")
+        print("\nChallenger aggregation results:")
         print(f"  Paragraph facts: {len(result['paragraph_facts'])}")
         print(f"  Validation cues: {len(result['validation_cues'])}")
         print(f"  Expected coverage entries: {len(result['expected_coverage'])}")
@@ -253,7 +253,7 @@ class TestPatternAggregatorIntegration:
         complex_paras = [p for p in para_hints if p.get("complexity") == "complex"]
         moderate_paras = [p for p in para_hints if p.get("complexity") == "moderate"]
 
-        print(f"\nParagraph complexity distribution:")
+        print("\nParagraph complexity distribution:")
         print(f"  Complex: {len(complex_paras)}")
         print(f"  Moderate: {len(moderate_paras)}")
         print(f"  Simple: {len(para_hints) - len(complex_paras) - len(moderate_paras)}")
@@ -280,7 +280,7 @@ class TestPatternAggregatorIntegration:
         assert "control_flow" in categories, "Expected control_flow category"
 
         # Log category details
-        print(f"\nPattern categories found:")
+        print("\nPattern categories found:")
         for cat_name, cat_result in pattern_result.categories.items():
             print(f"  {cat_name}:")
             print(f"    Total matches: {cat_result.match_count}")

@@ -4,7 +4,6 @@ This module tests the aggregation of call semantics from multiple files
 for cross-file sequence diagram data flow.
 """
 
-import pytest
 
 from war_rig.analysis.cross_file_semantics import (
     AggregatedSemantics,

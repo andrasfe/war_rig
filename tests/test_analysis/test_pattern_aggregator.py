@@ -12,9 +12,6 @@ Tests cover:
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any
-
-import pytest
 
 from war_rig.analysis.pattern_aggregator import (
     PatternAggregator,

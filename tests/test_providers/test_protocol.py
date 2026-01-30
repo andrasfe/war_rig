@@ -6,13 +6,14 @@ This module tests the core protocol definitions including:
 - LLMProvider protocol isinstance() checks
 """
 
-import pytest
 from typing import Any
 
+import pytest
+
 from war_rig.providers import (
-    Message,
     CompletionResponse,
     LLMProvider,
+    Message,
 )
 
 

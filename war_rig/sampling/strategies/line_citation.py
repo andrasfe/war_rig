@@ -55,8 +55,8 @@ class LineCitationStrategy:
 
     def can_apply(
         self,
-        hints: "RelevanceHints",
-        context: "SamplingContext",
+        hints: RelevanceHints,
+        context: SamplingContext,
     ) -> bool:
         """Check if there are line numbers to create windows around.
 
@@ -71,8 +71,8 @@ class LineCitationStrategy:
 
     def generate_windows(
         self,
-        hints: "RelevanceHints",
-        context: "SamplingContext",
+        hints: RelevanceHints,
+        context: SamplingContext,
     ) -> list[SourceWindow]:
         """Generate windows around cited line numbers.
 

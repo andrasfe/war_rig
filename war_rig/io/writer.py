@@ -19,10 +19,8 @@ from typing import Any
 from war_rig.config import SystemConfig
 from war_rig.models.assessments import QualityMetrics
 from war_rig.models.templates import (
-    CopybookTemplate,
     DocumentationTemplate,
     FileType,
-    JCLTemplate,
 )
 from war_rig.orchestration.state import WarRigState
 

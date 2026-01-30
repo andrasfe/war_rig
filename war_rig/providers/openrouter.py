@@ -27,7 +27,7 @@ import logging
 from typing import Any
 
 from httpx import Timeout
-from openai import AsyncOpenAI, APIError, APIConnectionError, RateLimitError
+from openai import APIConnectionError, APIError, AsyncOpenAI, RateLimitError
 
 from war_rig.providers.protocol import CompletionResponse, Message
 from war_rig.utils.error_logging import log_error
@@ -272,7 +272,7 @@ class OpenRouterProvider:
                         yield chunk
                     except StopAsyncIteration:
                         break
-                    except asyncio.TimeoutError:
+                    except TimeoutError:
                         raise OpenRouterProviderError(
                             message=f"Stream stalled: no chunk received for {timeout_seconds}s (network-level timeout)",
                             original_error=None,
@@ -396,7 +396,7 @@ class OpenRouterProvider:
                 original_error=e,
             ) from e
 
-        except asyncio.TimeoutError as e:
+        except TimeoutError as e:
             elapsed = time.time() - start_time
             logger.error(f"OpenRouter stream timeout after {elapsed:.1f}s: {e}")
             log_error(

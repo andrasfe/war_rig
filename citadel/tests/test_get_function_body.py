@@ -8,8 +8,6 @@ import tempfile
 from pathlib import Path
 from textwrap import dedent
 
-import pytest
-
 
 class TestGetFunctionBodyPython:
     """Tests for Python function body extraction."""

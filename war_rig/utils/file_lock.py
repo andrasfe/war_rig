@@ -43,7 +43,6 @@ import logging
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -270,7 +269,7 @@ class FileLockManager:
             # File is locked - check if it's by someone else
             return self._locks[normalized].worker_id != worker_id
 
-    async def get_lock_holder(self, file_path: str) -> Optional[str]:
+    async def get_lock_holder(self, file_path: str) -> str | None:
         """Get the worker ID holding a lock on a file.
 
         Args:

@@ -5,9 +5,8 @@ parallel validation of documentation tickets.
 """
 
 import asyncio
-import json
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -19,13 +18,13 @@ from war_rig.beads import (
     TicketState,
     TicketType,
 )
-from war_rig.config import WarRigConfig, ChallengerConfig
+from war_rig.config import ChallengerConfig, WarRigConfig
 from war_rig.models.templates import (
     DocumentationTemplate,
     FileType,
     HeaderSection,
-    PurposeSection,
     ProgramType,
+    PurposeSection,
 )
 from war_rig.models.tickets import (
     ChallengerQuestion,
@@ -39,7 +38,6 @@ from war_rig.workers.challenger_pool import (
     WorkerState,
     WorkerStatus,
 )
-
 
 # =============================================================================
 # Fixtures
@@ -67,7 +65,6 @@ def mock_beads_client() -> MagicMock:
 @pytest.fixture
 def mock_config(tmp_path) -> MagicMock:
     """Create a mock WarRigConfig."""
-    from pathlib import Path
 
     config = MagicMock(spec=WarRigConfig)
     config.num_challengers = 3
@@ -1326,14 +1323,14 @@ class TestRunStructuralPrecheck:
             **kwargs: Extra fields passed to DocumentationTemplate.
         """
         from war_rig.models.templates import (
+            BusinessRule,
             CopybookReference,
+            FileType,
             HeaderSection,
             InputOutput,
-            BusinessRule,
             Paragraph,
-            PurposeSection,
             ProgramType,
-            FileType,
+            PurposeSection,
         )
 
         paragraphs = []
@@ -2047,7 +2044,7 @@ class TestChallengerLLMValidationWithBodies:
     def test_citadel_context_in_prompt(self):
         """Test that ChallengerAgent renders citadel_context in prompt."""
         from war_rig.agents.challenger import ChallengerAgent, ChallengerInput
-        from war_rig.config import ChallengerConfig, APIConfig
+        from war_rig.config import APIConfig, ChallengerConfig
 
         agent = ChallengerAgent(
             config=ChallengerConfig(model="test-model"),
@@ -2079,7 +2076,7 @@ class TestChallengerLLMValidationWithBodies:
     def test_no_citadel_section_without_context(self):
         """Test that prompt has no Citadel section without citadel_context."""
         from war_rig.agents.challenger import ChallengerAgent, ChallengerInput
-        from war_rig.config import ChallengerConfig, APIConfig
+        from war_rig.config import APIConfig, ChallengerConfig
 
         agent = ChallengerAgent(
             config=ChallengerConfig(model="test-model"),

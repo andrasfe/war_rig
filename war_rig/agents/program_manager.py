@@ -975,7 +975,6 @@ class ProgramManagerAgent(BaseAgent[ProgramManagerInput, ProgramManagerOutput]):
 
         try:
             loop = asyncio.get_running_loop()
-            import concurrent.futures
             future = asyncio.run_coroutine_threadsafe(
                 self.ainvoke(input_data),
                 loop,

@@ -5,11 +5,11 @@ and relationships between programs.
 """
 
 from war_rig.analysis.call_graph import (
-    CallGraphAnalyzer,
+    SYSTEM_UTILITIES,
     CallGraphAnalysis,
+    CallGraphAnalyzer,
     CallRelationship,
     ProgramInfo,
-    SYSTEM_UTILITIES,
 )
 from war_rig.analysis.call_semantics import CallSemanticsAnalyzer
 from war_rig.analysis.pattern_aggregator import PatternAggregator

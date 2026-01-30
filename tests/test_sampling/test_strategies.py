@@ -3,19 +3,19 @@
 Tests each strategy's can_apply() and generate_windows() methods.
 """
 
+
 import pytest
-from unittest.mock import MagicMock
 
 from war_rig.beads import TicketType
 from war_rig.models.templates import FileType
 from war_rig.sampling.analyzer import RelevanceHints
 from war_rig.sampling.context import SamplingContext
 from war_rig.sampling.strategies import (
-    LineCitationStrategy,
-    SectionReferenceStrategy,
     IdentifierMentionStrategy,
-    SemanticRegionStrategy,
+    LineCitationStrategy,
     RandomFallbackStrategy,
+    SectionReferenceStrategy,
+    SemanticRegionStrategy,
     SourceWindow,
 )
 

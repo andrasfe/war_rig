@@ -10,12 +10,12 @@ from a directory structure, with support for:
 """
 
 import logging
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Iterator
 
 from pydantic import BaseModel, Field
 
-from war_rig.config import FileExtensionsConfig, SystemConfig
+from war_rig.config import SystemConfig
 from war_rig.models.templates import FileType
 
 logger = logging.getLogger(__name__)

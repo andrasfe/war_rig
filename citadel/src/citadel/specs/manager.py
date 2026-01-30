@@ -287,7 +287,7 @@ class SpecManager:
         return errors
 
     def _validate_extraction_pattern(
-        self, pattern: "ExtractionPattern", pattern_type: str
+        self, pattern: ExtractionPattern, pattern_type: str
     ) -> list[str]:
         """
         Validate a single extraction pattern.
@@ -299,7 +299,6 @@ class SpecManager:
         Returns:
             List of error messages.
         """
-        from citadel.specs.schema import ExtractionPattern
 
         errors: list[str] = []
         prefix = f"{pattern_type} pattern '{pattern.name}'"
@@ -353,7 +352,7 @@ class SpecManager:
 
         return errors
 
-    def _validate_scope_syntax(self, scope: "ScopeSyntax") -> list[str]:
+    def _validate_scope_syntax(self, scope: ScopeSyntax) -> list[str]:
         """
         Validate scope syntax patterns.
 
@@ -363,7 +362,6 @@ class SpecManager:
         Returns:
             List of error messages.
         """
-        from citadel.specs.schema import ScopeSyntax
 
         errors: list[str] = []
 

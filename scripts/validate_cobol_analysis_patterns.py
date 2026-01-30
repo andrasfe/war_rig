@@ -6,10 +6,10 @@ This script tests the analysis pattern extraction on all COBOL files in the
 CardDemo repository and reports statistics on pattern coverage and accuracy.
 """
 
-import sys
-from pathlib import Path
-from collections import defaultdict
 import random
+import sys
+from collections import defaultdict
+from pathlib import Path
 
 # Add the citadel src directory to the path
 citadel_src = Path(__file__).parent.parent / "citadel" / "src"

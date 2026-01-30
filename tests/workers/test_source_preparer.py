@@ -5,8 +5,9 @@ ensuring the correct strategy (passthrough, sampling, chunking) is selected
 based on source size and processing context.
 """
 
+from unittest.mock import MagicMock
+
 import pytest
-from unittest.mock import MagicMock, patch
 
 from war_rig.beads import TicketType
 from war_rig.models.templates import FileType

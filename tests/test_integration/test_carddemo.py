@@ -4,13 +4,14 @@ These tests verify the War Rig system works end-to-end with real
 mainframe source code from the AWS CardDemo sample application.
 """
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 from war_rig.config import SystemConfig, WarRigConfig
 from war_rig.io.reader import SourceReader
 from war_rig.io.writer import DocumentationWriter
-from war_rig.orchestration.graph import create_war_rig_graph, analyze_file
+from war_rig.orchestration.graph import analyze_file, create_war_rig_graph
 from war_rig.preprocessors.cobol import COBOLPreprocessor
 
 CARDDEMO_PATH = Path("aws-mainframe-modernization-carddemo/app")
@@ -45,7 +46,7 @@ class TestCOBOLPreprocessing:
     def test_preprocess_cbact04c(self, carddemo_available):
         """Test preprocessing CBACT04C (interest calculator)."""
         source_path = carddemo_available / "cbl" / "CBACT04C.cbl"
-        assert source_path.exists(), f"CBACT04C.cbl not found"
+        assert source_path.exists(), "CBACT04C.cbl not found"
 
         source = source_path.read_text()
         preprocessor = COBOLPreprocessor()
@@ -59,7 +60,7 @@ class TestCOBOLPreprocessing:
     def test_preprocess_cbstm03b(self, carddemo_available):
         """Test preprocessing CBSTM03B (statement subroutine)."""
         source_path = carddemo_available / "cbl" / "CBSTM03B.cbl"
-        assert source_path.exists(), f"CBSTM03B.cbl not found"
+        assert source_path.exists(), "CBSTM03B.cbl not found"
 
         source = source_path.read_text()
         preprocessor = COBOLPreprocessor()

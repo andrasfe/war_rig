@@ -10,12 +10,12 @@ Main components:
 - FeedbackInjector: Service class for injecting feedback into tickets
 """
 
+from war_rig.feedback.injector import FeedbackInjector
 from war_rig.feedback.models import (
     HumanFeedbackCategory,
-    HumanFeedbackNote,
     HumanFeedbackContext,
+    HumanFeedbackNote,
 )
-from war_rig.feedback.injector import FeedbackInjector
 
 __all__ = [
     "HumanFeedbackCategory",

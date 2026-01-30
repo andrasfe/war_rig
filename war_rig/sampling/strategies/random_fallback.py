@@ -57,8 +57,8 @@ class RandomFallbackStrategy:
 
     def can_apply(
         self,
-        hints: "RelevanceHints",
-        context: "SamplingContext",
+        hints: RelevanceHints,
+        context: SamplingContext,
     ) -> bool:
         """Check if random fallback should be used.
 
@@ -75,8 +75,8 @@ class RandomFallbackStrategy:
 
     def generate_windows(
         self,
-        hints: "RelevanceHints",
-        context: "SamplingContext",
+        hints: RelevanceHints,
+        context: SamplingContext,
     ) -> list[SourceWindow]:
         """Generate a random sample window.
 

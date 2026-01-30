@@ -17,8 +17,8 @@ from pathlib import Path
 from typing import Any
 
 from war_rig.beads import TicketState
-from war_rig.feedback.models import HumanFeedbackContext, HumanFeedbackNote
-from war_rig.models.tickets import FeedbackContext, QualityNote
+from war_rig.feedback.models import HumanFeedbackContext
+from war_rig.models.tickets import FeedbackContext
 
 logger = logging.getLogger(__name__)
 

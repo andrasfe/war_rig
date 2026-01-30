@@ -27,12 +27,11 @@ Example:
 """
 
 import logging
-from typing import Any
 
 from langgraph.graph import END, StateGraph
 
 from war_rig.config import APIConfig, WarRigConfig
-from war_rig.orchestration.nodes import WarRigNodes, should_continue, has_template
+from war_rig.orchestration.nodes import WarRigNodes, has_template, should_continue
 from war_rig.orchestration.state import WarRigState, create_initial_state
 
 logger = logging.getLogger(__name__)

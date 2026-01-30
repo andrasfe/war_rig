@@ -10,7 +10,6 @@ that should be added to the documentation workflow.
 import json
 import logging
 import re
-from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
@@ -64,7 +63,7 @@ SYSTEM_UTILITIES = frozenset({
     "DSNTEP2",      # DB2 SPUFI
     "DSNTEP4",      # DB2 SPUFI
     "DSNTIAD",      # DB2 interactive
-    "IKJEFT01",     # TSO (DB2 access)
+    # TSO (DB2 access)
     # Other system facilities
     "SDSF",         # System Display Search Facility
     "ISPF",         # Interactive System Productivity Facility
@@ -685,7 +684,7 @@ class CallGraphAnalyzer:
                 data["_source_file"] = doc_file.name
                 data["_source_path"] = str(doc_file)
                 docs.append(data)
-            except (json.JSONDecodeError, IOError) as e:
+            except (OSError, json.JSONDecodeError) as e:
                 logger.warning(f"Could not load {doc_file}: {e}")
         return docs
 
@@ -1218,9 +1217,9 @@ class CallGraphAnalyzer:
 
         lines.append("## Overview")
         lines.append("")
-        lines.append(f"This document describes the architecture of the analyzed codebase,")
+        lines.append("This document describes the architecture of the analyzed codebase,")
         lines.append(f"including {len(analysis.documented_programs)} documented programs ")
-        lines.append(f"and their dependencies.")
+        lines.append("and their dependencies.")
         lines.append("")
 
         # Architecture diagram (same as in CALL_GRAPH.md for consistency)

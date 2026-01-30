@@ -17,7 +17,6 @@ The extracted information serves as hints for the Scribe agent.
 """
 
 import re
-from typing import Any
 
 from pydantic import Field
 

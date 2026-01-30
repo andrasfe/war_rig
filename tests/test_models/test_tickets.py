@@ -7,18 +7,11 @@ Tests:
 - get_critical_notes filtering
 """
 
-import pytest
 from war_rig.models.tickets import (
+    FeedbackContext,
     QualityNote,
     QualityNoteCategory,
     QualityNoteSeverity,
-    FeedbackContext,
-    ChromeTicket,
-    IssueType,
-    IssuePriority,
-    ChallengerQuestion,
-    QuestionType,
-    QuestionSeverity,
 )
 
 

@@ -1,18 +1,18 @@
 """Tests for ChunkMerger."""
 
-import pytest
-from unittest.mock import MagicMock
 from datetime import datetime
 
-from war_rig.chunking.merger import ChunkMerger
-from war_rig.chunking.models import CodeChunk, ChunkContext, ChunkContextType
+import pytest
+
 from war_rig.agents.scribe import ScribeOutput
+from war_rig.chunking.merger import ChunkMerger
+from war_rig.chunking.models import ChunkContextType, CodeChunk
 from war_rig.models.templates import (
     DocumentationTemplate,
     FileType,
     HeaderSection,
-    PurposeSection,
     ProgramType,
+    PurposeSection,
 )
 
 

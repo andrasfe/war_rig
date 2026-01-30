@@ -20,9 +20,9 @@ from pathlib import Path
 from typing import Any
 
 from war_rig.agents.challenger import ChallengerAgent, ChallengerInput
-from war_rig.analysis.call_semantics import CallSemanticsAnalyzer
 from war_rig.agents.imperator import ImperatorAgent, ImperatorDecision, ImperatorInput
 from war_rig.agents.scribe import ScribeAgent, ScribeInput
+from war_rig.analysis.call_semantics import CallSemanticsAnalyzer
 from war_rig.chunking import TokenEstimator
 from war_rig.config import APIConfig, WarRigConfig
 from war_rig.models.templates import FileType

@@ -8,14 +8,15 @@ This module tests:
 """
 
 import os
-import pytest
-from unittest.mock import patch
 from typing import Any
+from unittest.mock import patch
+
+import pytest
 
 from war_rig.providers import (
-    Message,
     CompletionResponse,
     LLMProvider,
+    Message,
     OpenRouterProvider,
     create_provider,
     get_provider_from_env,

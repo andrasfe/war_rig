@@ -27,11 +27,11 @@ See Also:
     - war_rig.workers.scribe_pool: Integration point
 """
 
-from war_rig.chunking.models import CodeChunk, ChunkContext, ChunkingResult
-from war_rig.chunking.estimator import TokenEstimator
 from war_rig.chunking.cobol_chunker import COBOLChunker
+from war_rig.chunking.estimator import TokenEstimator
 from war_rig.chunking.generic_chunker import GenericChunker
 from war_rig.chunking.merger import ChunkMerger
+from war_rig.chunking.models import ChunkContext, ChunkingResult, CodeChunk
 
 __all__ = [
     "CodeChunk",

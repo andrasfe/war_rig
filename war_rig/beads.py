@@ -860,7 +860,7 @@ class BeadsClient:
         args = [
             "create",
             f"--title={title}",
-            f"--type=task",
+            "--type=task",
             f"--priority={priority.value}",
         ]
 

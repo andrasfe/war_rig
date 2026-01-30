@@ -57,8 +57,8 @@ class IdentifierMentionStrategy:
 
     def can_apply(
         self,
-        hints: "RelevanceHints",
-        context: "SamplingContext",
+        hints: RelevanceHints,
+        context: SamplingContext,
     ) -> bool:
         """Check if there are identifiers to search for.
 
@@ -73,8 +73,8 @@ class IdentifierMentionStrategy:
 
     def generate_windows(
         self,
-        hints: "RelevanceHints",
-        context: "SamplingContext",
+        hints: RelevanceHints,
+        context: SamplingContext,
     ) -> list[SourceWindow]:
         """Generate windows around identifier occurrences in source.
 

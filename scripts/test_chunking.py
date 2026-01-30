@@ -4,7 +4,6 @@
 Tests that large files are properly chunked and processed.
 """
 
-import asyncio
 import logging
 import sys
 from pathlib import Path
@@ -12,7 +11,7 @@ from pathlib import Path
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from war_rig.chunking import COBOLChunker, GenericChunker, TokenEstimator, ChunkMerger
+from war_rig.chunking import COBOLChunker, GenericChunker, TokenEstimator
 from war_rig.models.templates import FileType
 
 logging.basicConfig(level=logging.INFO, format='%(levelname)s: %(message)s')
@@ -73,7 +72,7 @@ def test_chunking(file_path: str, max_prompt_tokens: int = 21000):
     result = chunker.chunk(source_code, max_source_tokens, file_name)
 
     logger.info("")
-    logger.info(f"Chunking result:")
+    logger.info("Chunking result:")
     logger.info(f"  Strategy: {result.chunking_strategy}")
     logger.info(f"  Total chunks: {result.chunk_count}")
     logger.info(f"  Original lines: {result.original_line_count:,}")

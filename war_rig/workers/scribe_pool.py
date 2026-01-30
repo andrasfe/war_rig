@@ -4170,7 +4170,7 @@ class ScribeWorkerPool:
                     asyncio.gather(*self._tasks, return_exceptions=True),
                     timeout=60.0,
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.warning("ScribeWorkerPool: Timeout waiting for workers, cancelling")
                 for task in self._tasks:
                     if not task.done():

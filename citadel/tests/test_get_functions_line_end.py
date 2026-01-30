@@ -6,8 +6,6 @@ import tempfile
 from pathlib import Path
 from textwrap import dedent
 
-import pytest
-
 
 class TestGetFunctionsLineEnd:
     """Tests that get_functions() includes line_end in output."""

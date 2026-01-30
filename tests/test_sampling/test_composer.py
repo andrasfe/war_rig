@@ -3,10 +3,11 @@
 Tests window merging, budget fitting, and sample generation.
 """
 
-import pytest
 from unittest.mock import MagicMock
 
-from war_rig.sampling.composer import WindowComposer, ComposedSample
+import pytest
+
+from war_rig.sampling.composer import WindowComposer
 from war_rig.sampling.strategies import SourceWindow
 
 

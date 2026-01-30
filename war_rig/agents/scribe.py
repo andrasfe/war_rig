@@ -16,13 +16,14 @@ Responsibilities:
 import json
 import logging
 import re
+
 from pydantic import Field, ValidationError
 
 from war_rig.agents.base import AgentInput, AgentOutput, BaseAgent
 from war_rig.config import APIConfig, ScribeConfig
 from war_rig.models.assessments import ConfidenceAssessment, ConfidenceLevel
 from war_rig.models.templates import DocumentationTemplate, FileType
-from war_rig.models.tickets import ChromeTicket, ChallengerQuestion, ScribeResponse
+from war_rig.models.tickets import ChallengerQuestion, ChromeTicket, ScribeResponse
 from war_rig.preprocessors.base import PreprocessorResult
 
 logger = logging.getLogger(__name__)

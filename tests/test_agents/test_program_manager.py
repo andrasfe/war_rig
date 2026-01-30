@@ -4,18 +4,19 @@ Tests for ProgramManagerAgent class that orchestrates batch documentation
 workflows through the beads ticket system.
 """
 
-import pytest
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from war_rig.agents.program_manager import (
-    ProgramManagerAgent,
-    ProgramManagerInput,
-    ProgramManagerOutput,
     BatchTicketSummary,
     ClarificationRequest,
     CycleSummary,
+    ProgramManagerAgent,
+    ProgramManagerInput,
+    ProgramManagerOutput,
 )
 from war_rig.beads import (
     BeadsClient,
@@ -25,14 +26,13 @@ from war_rig.beads import (
     TicketType,
 )
 from war_rig.config import (
-    WarRigConfig,
-    ScribeConfig,
     ChallengerConfig,
     ImperatorConfig,
+    ScribeConfig,
+    WarRigConfig,
 )
 from war_rig.io.reader import SourceFile
 from war_rig.models.templates import FileType
-
 
 # =============================================================================
 # Fixtures

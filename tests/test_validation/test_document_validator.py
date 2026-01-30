@@ -26,8 +26,7 @@ from war_rig.models.templates import (
     UsageType,
 )
 from war_rig.models.tickets import IssueType
-from war_rig.validation.document_validator import DocumentValidator, ValidationResult
-
+from war_rig.validation.document_validator import DocumentValidator
 
 # =============================================================================
 # Test Fixtures

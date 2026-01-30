@@ -7,8 +7,6 @@ from pathlib import Path
 from textwrap import dedent
 from unittest.mock import patch
 
-import pytest
-
 
 class TestGetFunctionBodiesPython:
     """Tests for batch Python function body extraction."""

@@ -20,7 +20,7 @@ def load_documentation(doc_dir: Path) -> list[dict]:
             data = json.loads(doc_file.read_text())
             data["_source_file"] = doc_file.name
             docs.append(data)
-        except (json.JSONDecodeError, IOError) as e:
+        except (OSError, json.JSONDecodeError) as e:
             print(f"Warning: Could not load {doc_file}: {e}")
     return docs
 

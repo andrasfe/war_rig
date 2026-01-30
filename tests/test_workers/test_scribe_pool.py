@@ -7,14 +7,13 @@ parallel processing of documentation tickets.
 import asyncio
 import json
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from war_rig.agents.scribe import ScribeOutput
 from war_rig.beads import (
     BeadsClient,
-    BeadsPriority,
     ProgramManagerTicket,
     TicketState,
     TicketType,
@@ -27,7 +26,6 @@ from war_rig.workers.scribe_pool import (
     WorkerState,
     WorkerStatus,
 )
-
 
 # =============================================================================
 # Fixtures
@@ -882,8 +880,8 @@ class TestCriticalSectionValidation:
         """Test validation skips called_programs for copybook files."""
         from war_rig.models.templates import (
             DocumentationTemplate,
-            HeaderSection,
             FileType,
+            HeaderSection,
         )
 
         worker = ScribeWorker(
@@ -916,8 +914,8 @@ class TestCriticalSectionValidation:
         """Test validation still checks purpose for copybook files."""
         from war_rig.models.templates import (
             DocumentationTemplate,
-            HeaderSection,
             FileType,
+            HeaderSection,
             PurposeSection,
         )
 
@@ -951,8 +949,8 @@ class TestCriticalSectionValidation:
         """Test validation skips called_programs for JCL files."""
         from war_rig.models.templates import (
             DocumentationTemplate,
-            HeaderSection,
             FileType,
+            HeaderSection,
         )
 
         worker = ScribeWorker(
@@ -984,8 +982,8 @@ class TestCriticalSectionValidation:
         """Test validation checks all sections for COBOL programs."""
         from war_rig.models.templates import (
             DocumentationTemplate,
-            HeaderSection,
             FileType,
+            HeaderSection,
         )
 
         worker = ScribeWorker(
@@ -1021,8 +1019,8 @@ class TestCriticalSectionValidation:
         """
         from war_rig.models.templates import (
             DocumentationTemplate,
-            HeaderSection,
             FileType,
+            HeaderSection,
         )
 
         worker = ScribeWorker(
@@ -1095,8 +1093,8 @@ class TestCriticalSectionValidation:
         """
         from war_rig.models.templates import (
             DocumentationTemplate,
-            HeaderSection,
             FileType,
+            HeaderSection,
             PurposeSection,
         )
 
@@ -1155,8 +1153,8 @@ class TestCriticalSectionValidation:
         """
         from war_rig.models.templates import (
             DocumentationTemplate,
-            HeaderSection,
             FileType,
+            HeaderSection,
             PurposeSection,
         )
 
@@ -1210,8 +1208,8 @@ class TestCriticalSectionValidation:
         """
         from war_rig.models.templates import (
             DocumentationTemplate,
-            HeaderSection,
             FileType,
+            HeaderSection,
             PurposeSection,
         )
 
@@ -1260,11 +1258,11 @@ class TestCriticalSectionValidation:
         """
         from war_rig.models.templates import (
             DocumentationTemplate,
-            HeaderSection,
             FileType,
-            PurposeSection,
+            HeaderSection,
             InputOutput,
             IOType,
+            PurposeSection,
         )
 
         worker = ScribeWorker(
@@ -2872,7 +2870,7 @@ class TestScribeOutlineInPrompt:
     def test_outline_rendered_in_prompt(self):
         """Test that the citadel_outline is rendered in _build_user_prompt."""
         from war_rig.agents.scribe import ScribeAgent, ScribeInput
-        from war_rig.config import ScribeConfig, APIConfig
+        from war_rig.config import APIConfig, ScribeConfig
 
         agent = ScribeAgent(
             config=ScribeConfig(model="test-model"),
@@ -2910,7 +2908,7 @@ class TestScribeOutlineInPrompt:
     def test_no_outline_without_field(self):
         """Test that no outline section is rendered without citadel_outline."""
         from war_rig.agents.scribe import ScribeAgent, ScribeInput
-        from war_rig.config import ScribeConfig, APIConfig
+        from war_rig.config import APIConfig, ScribeConfig
 
         agent = ScribeAgent(
             config=ScribeConfig(model="test-model"),

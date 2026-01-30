@@ -6,7 +6,6 @@ all components correctly through the batch documentation workflow.
 
 from __future__ import annotations
 
-import asyncio
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -30,7 +29,6 @@ from war_rig.orchestration.ticket_engine import (
     OrchestrationStatus,
     TicketOrchestrator,
 )
-
 
 # =============================================================================
 # Fixtures
@@ -689,8 +687,7 @@ class TestFeedbackContextBuilding:
         mock_beads_client: MagicMock,
     ) -> None:
         """Test _build_feedback_context creates proper context from review."""
-        from typing import Any
-        from war_rig.models.tickets import ChromeTicket, IssueType, IssuePriority
+        from war_rig.models.tickets import ChromeTicket, IssuePriority, IssueType
 
         # Rebuild the model to resolve forward references
         HolisticReviewOutput.model_rebuild()

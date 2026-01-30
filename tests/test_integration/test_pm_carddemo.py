@@ -24,10 +24,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from war_rig.agents.program_manager import (
-    ClarificationRequest,
     ProgramManagerAgent,
     ProgramManagerInput,
-    ProgramManagerOutput,
 )
 from war_rig.agents.scribe import ScribeOutput
 from war_rig.beads import (
@@ -54,15 +52,13 @@ from war_rig.orchestration.ticket_engine import (
 from war_rig.workers.challenger_pool import (
     ChallengerWorker,
     ChallengerWorkerPool,
-    ValidationResult,
+)
+from war_rig.workers.challenger_pool import (
     WorkerState as ChallengerWorkerState,
 )
 from war_rig.workers.scribe_pool import (
-    ScribeWorker,
     ScribeWorkerPool,
-    WorkerState as ScribeWorkerState,
 )
-
 
 # =============================================================================
 # Constants and Configuration

@@ -7,15 +7,15 @@ This module tests the OpenRouterProvider including:
 - Error handling for various failure scenarios
 """
 
-import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
-from openai import APIError, APIConnectionError, RateLimitError
+import pytest
+from openai import APIConnectionError, APIError, RateLimitError
 
 from war_rig.providers import (
-    Message,
     CompletionResponse,
     LLMProvider,
+    Message,
     OpenRouterProvider,
     OpenRouterProviderError,
 )

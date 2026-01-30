@@ -147,7 +147,7 @@ class TokenEstimator:
         )
         return self.estimate_tokens(source_code, is_cobol=is_cobol)
 
-    def estimate_prompt_tokens(self, scribe_input: "ScribeInput") -> PromptTokenEstimate:
+    def estimate_prompt_tokens(self, scribe_input: ScribeInput) -> PromptTokenEstimate:
         """Estimate total tokens for a complete Scribe prompt.
 
         Breaks down the estimate by component to help identify what's
@@ -205,7 +205,7 @@ class TokenEstimator:
     def calculate_available_source_tokens(
         self,
         max_total_tokens: int,
-        scribe_input: "ScribeInput",
+        scribe_input: ScribeInput,
     ) -> int:
         """Calculate how many tokens are available for source code.
 

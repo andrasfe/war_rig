@@ -16,7 +16,7 @@ Example:
     writer.write_documentation(result)
 """
 
-from war_rig.io.reader import SourceReader, SourceFile
+from war_rig.io.reader import SourceFile, SourceReader
 from war_rig.io.writer import DocumentationWriter
 
 __all__ = [

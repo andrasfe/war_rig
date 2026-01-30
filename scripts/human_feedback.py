@@ -29,7 +29,6 @@ from __future__ import annotations
 
 import argparse
 import sys
-from datetime import datetime
 from pathlib import Path
 
 # Add parent directory to path for imports
@@ -41,14 +40,13 @@ from rich.prompt import Confirm, Prompt
 from rich.table import Table
 from rich.text import Text
 
-from war_rig.feedback.injector import FeedbackInjector, InjectionResult
+from war_rig.feedback.injector import FeedbackInjector
 from war_rig.feedback.models import (
     HumanFeedbackCategory,
     HumanFeedbackContext,
     HumanFeedbackNote,
     HumanFeedbackSeverity,
 )
-from war_rig.models.tickets import FeedbackContext
 
 # Available template sections for feedback targeting
 TEMPLATE_SECTIONS = [
@@ -419,14 +417,14 @@ class HumanFeedbackConsole:
             )
 
         # Settings
-        self.console.print(f"\n[bold cyan]Settings:[/bold cyan]")
+        self.console.print("\n[bold cyan]Settings:[/bold cyan]")
         self.console.print(f"  Required citations: {feedback_ctx.required_citations}")
         self.console.print(f"  Cross-reference required: {feedback_ctx.cross_reference_required}")
         self.console.print(f"  Augment existing: {feedback_ctx.augment_existing}")
 
         # Previous cycle issues
         if feedback_ctx.previous_cycle_issues:
-            self.console.print(f"\n[bold cyan]Previous Cycle Issues:[/bold cyan]")
+            self.console.print("\n[bold cyan]Previous Cycle Issues:[/bold cyan]")
             for fname, issues in feedback_ctx.previous_cycle_issues.items():
                 self.console.print(f"  {fname}:")
                 for issue in issues:
@@ -508,7 +506,7 @@ class HumanFeedbackConsole:
             self.console.print("[yellow]No feedback to inject. Exiting.[/yellow]")
             return 0
 
-        self.console.print(f"Summary:")
+        self.console.print("Summary:")
         self.console.print(f"  Quality notes: {total_notes}")
         self.console.print(f"  Files to skip: {total_skip}")
         self.console.print(f"  Files to prioritize: {total_priority}")

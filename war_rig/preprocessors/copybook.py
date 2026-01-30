@@ -12,7 +12,6 @@ The extracted information serves as hints for the Scribe agent.
 """
 
 import re
-from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -20,7 +19,6 @@ from war_rig.models.templates import FileType, UsageType
 from war_rig.preprocessors.base import (
     BasePreprocessor,
     PreprocessorResult,
-    SourceLocation,
 )
 
 
