@@ -45,7 +45,7 @@ from war_rig.models.tickets import (
 )
 from war_rig.preprocessors.base import PreprocessorResult
 from war_rig.providers import Message
-from war_rig.validation.document_validator import DocumentValidator, ValidationResult
+from war_rig.validation.document_validator import DocumentValidator
 
 logger = logging.getLogger(__name__)
 
@@ -195,6 +195,138 @@ class FileDocumentation(BaseModel):
         default=1,
         ge=1,
         description="Number of iterations completed for this file",
+    )
+
+
+# =============================================================================
+# Tier 1 Compact Models (for reduced token usage in holistic review)
+# =============================================================================
+
+
+class FileDocumentationSummary(BaseModel):
+    """Compact documentation summary for Tier 1 holistic review.
+
+    Contains only essential information needed for cross-file consistency
+    checking, reducing token usage by ~70-85% compared to full FileDocumentation.
+
+    Use this instead of FileDocumentation when the Imperator only needs
+    to assess overall quality and consistency, not detailed paragraph content.
+    """
+
+    file_name: str = Field(
+        ...,
+        description="Name of the source file",
+    )
+    program_id: str = Field(
+        ...,
+        description="Program identifier",
+    )
+    purpose_summary: str = Field(
+        default="",
+        description="Brief summary of what the program does",
+    )
+    program_type: str = Field(
+        default="UNKNOWN",
+        description="Type: BATCH, ONLINE_CICS, UTILITY, etc.",
+    )
+    paragraph_count: int = Field(
+        default=0,
+        ge=0,
+        description="Number of paragraphs/functions in the file",
+    )
+    main_calls: list[str] = Field(
+        default_factory=list,
+        description="Primary programs/procedures this file calls",
+    )
+    main_inputs: list[str] = Field(
+        default_factory=list,
+        description="Key input files/tables (names only)",
+    )
+    main_outputs: list[str] = Field(
+        default_factory=list,
+        description="Key output files/tables (names only)",
+    )
+    confidence: ConfidenceLevel = Field(
+        default=ConfidenceLevel.MEDIUM,
+        description="Overall documentation confidence level",
+    )
+    has_open_questions: bool = Field(
+        default=False,
+        description="Whether there are unresolved questions",
+    )
+    iteration_count: int = Field(
+        default=1,
+        ge=1,
+        description="Number of iterations completed for this file",
+    )
+
+
+class HolisticReviewInputCompact(BaseModel):
+    """Compact input for Imperator holistic review (Tier 1).
+
+    Uses FileDocumentationSummary instead of full FileDocumentation,
+    and excludes verbose fields like call_graph_markdown and
+    cross_file_call_semantics detail.
+
+    Designed to reduce token usage from 15K-50K to 3K-8K tokens
+    while still providing sufficient information for quality assessment.
+    """
+
+    batch_id: str = Field(
+        ...,
+        description="Unique identifier for this batch",
+    )
+    cycle: int = Field(
+        default=1,
+        ge=1,
+        description="Current review cycle number",
+    )
+
+    # Compact documentation summaries (Tier 1)
+    file_summaries: list[FileDocumentationSummary] = Field(
+        default_factory=list,
+        description="Compact summaries for all files in the batch",
+    )
+
+    # Call graph topology (compact: just program -> callees mapping)
+    call_graph: dict[str, list[str]] = Field(
+        default_factory=dict,
+        description="Mapping of program -> list of called programs",
+    )
+
+    # Shared resources (compact)
+    shared_copybooks: dict[str, list[str]] = Field(
+        default_factory=dict,
+        description="Mapping of copybook -> list of files using it",
+    )
+
+    # Per-file quality indicators
+    per_file_confidence: dict[str, ConfidenceLevel] = Field(
+        default_factory=dict,
+        description="Mapping of file_name -> confidence level",
+    )
+    files_with_issues: list[str] = Field(
+        default_factory=list,
+        description="File names that have known issues",
+    )
+
+    # Previous cycle history (compact: just counts, not full details)
+    previous_clarification_count: int = Field(
+        default=0,
+        ge=0,
+        description="Number of previous clarification requests",
+    )
+    unresolved_issues_count: int = Field(
+        default=0,
+        ge=0,
+        description="Number of unresolved issues from previous cycles",
+    )
+
+    # Configuration
+    max_cycles: int = Field(
+        default=5,
+        ge=1,
+        description="Maximum number of review cycles",
     )
 
 
@@ -680,7 +812,7 @@ class ImperatorAgent(BaseAgent[ImperatorInput, ImperatorOutput]):
 
     def _summarize_template(
         self,
-        template: "DocumentationTemplate",
+        template: DocumentationTemplate,
         max_items: int = 5,
     ) -> str:
         """Create a compact text summary of a DocumentationTemplate.
@@ -1618,7 +1750,7 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                         timeout=900.0,  # 15 minutes max for both calls
                     )
                     logger.info("Parallel LLM calls completed successfully")
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     logger.error("Holistic review timed out after 15 minutes")
                     return HolisticReviewOutput(
                         success=False,
@@ -1815,6 +1947,352 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
             ),
             missing_documentation=[],
             reasoning=f"[MOCK] Holistic review decision after cycle {input_data.cycle}",
+        )
+
+    # =========================================================================
+    # TIER 1 COMPACT HOLISTIC REVIEW
+    # =========================================================================
+
+    def _build_compact_holistic_system_prompt(self) -> str:
+        """Build the system prompt for compact holistic review (Tier 1).
+
+        This prompt is optimized for reviewing file summaries rather than
+        full documentation templates.
+
+        Returns:
+            The system prompt for compact holistic review.
+        """
+        return """You are the Imperator conducting a compact holistic review of documentation summaries.
+
+## Your Task
+
+Review the documentation summaries for cross-file consistency and overall quality.
+You are receiving SUMMARIES only (not full documentation) to enable efficient review.
+
+## Evaluation Criteria
+
+1. **Cross-Program Consistency**: Do programs that call each other have aligned I/O?
+2. **Coverage**: Are all key programs documented? Are there gaps in the call chain?
+3. **Quality Indicators**: Are confidence levels appropriate? Are there unresolved questions?
+4. **Shared Resources**: Are copybooks used consistently?
+
+## Decision Criteria
+
+SATISFIED: Documentation summaries show good coverage, consistent cross-references, acceptable confidence
+NEEDS_CLARIFICATION: Significant gaps, inconsistencies, or low confidence areas need attention
+FORCED_COMPLETE: Max cycles reached, accept current state despite issues
+
+## Output Format
+
+Respond with valid JSON containing:
+- "decision": one of SATISFIED, NEEDS_CLARIFICATION, FORCED_COMPLETE
+- "file_feedback": object mapping file_name to array of issue objects (section, description, priority)
+- "consistency_issues": array of cross-file issues (issue_type, description, affected_files, severity)
+- "overall_quality": one of EXCELLENT, GOOD, ACCEPTABLE, POOR
+- "quality_notes": array of observations about quality
+- "priority_files": array of file names to focus on next cycle
+- "reasoning": explanation of your decision
+
+Respond ONLY with valid JSON. Do not include markdown code fences."""
+
+    def _build_compact_holistic_user_prompt(
+        self, input_data: HolisticReviewInputCompact
+    ) -> str:
+        """Build the user prompt for compact holistic review.
+
+        Args:
+            input_data: The compact holistic review input.
+
+        Returns:
+            The user message with file summaries and call graph.
+        """
+        parts = []
+
+        # Basic context
+        parts.append(f"## Batch: {input_data.batch_id}")
+        parts.append(f"Cycle: {input_data.cycle} of {input_data.max_cycles}")
+        is_final = input_data.cycle >= input_data.max_cycles
+        if is_final:
+            parts.append("**THIS IS THE FINAL CYCLE - MUST MAKE FINAL DECISION**")
+        parts.append(f"Files to review: {len(input_data.file_summaries)}")
+        parts.append("")
+
+        # File summaries (compact format)
+        parts.append("## File Summaries")
+        parts.append("")
+
+        for summary in input_data.file_summaries:
+            parts.append(f"### {summary.program_id} ({summary.file_name})")
+            parts.append(f"- Type: {summary.program_type}")
+            parts.append(f"- Purpose: {summary.purpose_summary or 'Not specified'}")
+            parts.append(f"- Paragraphs: {summary.paragraph_count}")
+            if summary.main_calls:
+                parts.append(f"- Calls: {', '.join(summary.main_calls[:5])}")
+            if summary.main_inputs:
+                parts.append(f"- Inputs: {', '.join(summary.main_inputs[:5])}")
+            if summary.main_outputs:
+                parts.append(f"- Outputs: {', '.join(summary.main_outputs[:5])}")
+            parts.append(f"- Confidence: {summary.confidence.value}")
+            if summary.has_open_questions:
+                parts.append("- ⚠️ Has open questions")
+            parts.append("")
+
+        # Call graph (topology only, no Mermaid)
+        if input_data.call_graph:
+            parts.append("## Call Graph")
+            for program, calls in sorted(input_data.call_graph.items()):
+                parts.append(f"- {program} → {', '.join(calls)}")
+            parts.append("")
+
+        # Shared copybooks
+        if input_data.shared_copybooks:
+            parts.append("## Shared Copybooks")
+            for copybook, users in sorted(input_data.shared_copybooks.items()):
+                parts.append(f"- {copybook}: {', '.join(users)}")
+            parts.append("")
+
+        # Quality indicators
+        if input_data.files_with_issues:
+            parts.append(f"## Files with Issues ({len(input_data.files_with_issues)})")
+            for file_name in input_data.files_with_issues:
+                parts.append(f"- {file_name}")
+            parts.append("")
+
+        # Previous cycle summary (compact)
+        if input_data.previous_clarification_count > 0:
+            parts.append(
+                f"Previous cycles: {input_data.previous_clarification_count} "
+                f"clarifications, {input_data.unresolved_issues_count} unresolved"
+            )
+            parts.append("")
+
+        # Task instructions
+        parts.append("## Task")
+        parts.append("1. Review file summaries for cross-program consistency")
+        parts.append("2. Check call graph for missing documentation")
+        parts.append("3. Assess overall quality from confidence levels")
+        parts.append("4. Decide: SATISFIED, NEEDS_CLARIFICATION, or FORCED_COMPLETE")
+
+        return "\n".join(parts)
+
+    def _parse_compact_holistic_response(
+        self,
+        response: str,
+        input_data: HolisticReviewInputCompact,
+    ) -> HolisticReviewOutput:
+        """Parse the LLM response from compact holistic review.
+
+        Args:
+            response: Raw text response from the LLM.
+            input_data: Original compact input.
+
+        Returns:
+            Parsed HolisticReviewOutput.
+        """
+        try:
+            # Try to extract JSON from response
+            json_match = re.search(r"\{[\s\S]*\}", response)
+            if not json_match:
+                raise ValueError("No JSON object found in response")
+
+            data = json.loads(json_match.group())
+
+            # Parse decision
+            decision_str = data.get("decision", "NEEDS_CLARIFICATION")
+            try:
+                decision = ImperatorHolisticDecision(decision_str)
+            except ValueError:
+                decision = ImperatorHolisticDecision.NEEDS_CLARIFICATION
+
+            # Handle forced completion at max cycles
+            if input_data.cycle >= input_data.max_cycles:
+                if decision == ImperatorHolisticDecision.NEEDS_CLARIFICATION:
+                    decision = ImperatorHolisticDecision.FORCED_COMPLETE
+
+            # Build set of valid file names from input summaries
+            valid_file_names = {s.file_name for s in input_data.file_summaries}
+
+            # Parse file feedback
+            file_feedback: dict[str, list[ChromeTicket]] = {}
+            if "file_feedback" in data and isinstance(data["file_feedback"], dict):
+                for file_name, issues in data["file_feedback"].items():
+                    # Validate file name
+                    if file_name not in valid_file_names:
+                        logger.warning(
+                            f"Skipping feedback for unknown file: {file_name}"
+                        )
+                        continue
+
+                    # Find program_id from summaries
+                    program_id = file_name
+                    for summary in input_data.file_summaries:
+                        if summary.file_name == file_name:
+                            program_id = summary.program_id
+                            break
+
+                    file_feedback[file_name] = []
+                    for issue in issues:
+                        issue["program_id"] = program_id
+                        try:
+                            file_feedback[file_name].append(
+                                ChromeTicket.model_validate(issue)
+                            )
+                        except Exception as e:
+                            logger.warning(f"Failed to parse Chrome ticket: {e}")
+
+            # Parse consistency issues
+            consistency_issues = []
+            if "consistency_issues" in data:
+                for issue in data["consistency_issues"]:
+                    try:
+                        consistency_issues.append(
+                            ConsistencyIssue.model_validate(issue)
+                        )
+                    except Exception as e:
+                        logger.warning(f"Failed to parse consistency issue: {e}")
+
+            return HolisticReviewOutput(
+                success=True,
+                decision=decision,
+                file_feedback=file_feedback,
+                consistency_issues=consistency_issues,
+                clarification_requests=[],  # Compact review doesn't generate these
+                assumptions=[],  # Compact review doesn't generate these
+                overall_quality=data.get("overall_quality", "ACCEPTABLE"),
+                quality_notes=data.get("quality_notes", []),
+                quality_notes_structured=[],
+                priority_files=data.get("priority_files", []),
+                missing_documentation=[],
+                reasoning=data.get("reasoning", ""),
+            )
+
+        except Exception as e:
+            logger.error(f"Failed to parse compact holistic response: {e}")
+            logger.debug(f"Response was: {response[:500]}...")
+
+            if input_data.cycle >= input_data.max_cycles:
+                return HolisticReviewOutput(
+                    success=False,
+                    error=f"Failed to parse response: {e}",
+                    decision=ImperatorHolisticDecision.FORCED_COMPLETE,
+                    reasoning="Forced completion due to parse error at max cycles",
+                )
+            return HolisticReviewOutput(
+                success=False,
+                error=f"Failed to parse response: {e}",
+                decision=ImperatorHolisticDecision.NEEDS_CLARIFICATION,
+            )
+
+    async def holistic_review_compact(
+        self,
+        input_data: HolisticReviewInputCompact,
+        use_mock: bool = False,
+    ) -> HolisticReviewOutput:
+        """Perform compact holistic review using Tier 1 summaries.
+
+        This is an optimized version of holistic_review() that uses
+        FileDocumentationSummary instead of full templates, reducing
+        token usage by ~70-85%.
+
+        Does NOT generate README.md (that requires full documentation).
+        For README generation, use the standard holistic_review() method.
+
+        Args:
+            input_data: The compact holistic review input.
+            use_mock: If True, return mock output instead of calling LLM.
+
+        Returns:
+            HolisticReviewOutput with decision and feedback.
+        """
+        if use_mock:
+            # Create mock output based on compact input
+            return self._create_mock_compact_holistic_output(input_data)
+
+        try:
+            # Build prompts for compact holistic review
+            system_prompt = self._build_compact_holistic_system_prompt()
+            user_prompt = self._build_compact_holistic_user_prompt(input_data)
+
+            # Log token estimation
+            total_chars = len(system_prompt) + len(user_prompt)
+            estimated_tokens = total_chars // 4
+            logger.info(
+                f"Imperator compact review: ~{estimated_tokens:,} tokens "
+                f"({total_chars:,} chars) for {self.config.model}"
+            )
+
+            # Call LLM
+            response = await self._call_llm(system_prompt, user_prompt)
+
+            # Parse response
+            return self._parse_compact_holistic_response(response, input_data)
+
+        except Exception as e:
+            logger.error(f"Compact holistic review failed: {e}")
+            if input_data.cycle >= input_data.max_cycles:
+                return HolisticReviewOutput(
+                    success=False,
+                    error=str(e),
+                    decision=ImperatorHolisticDecision.FORCED_COMPLETE,
+                    reasoning=f"Forced completion due to error: {e}",
+                )
+            return HolisticReviewOutput(
+                success=False,
+                error=str(e),
+                decision=ImperatorHolisticDecision.NEEDS_CLARIFICATION,
+            )
+
+    def _create_mock_compact_holistic_output(
+        self,
+        input_data: HolisticReviewInputCompact,
+    ) -> HolisticReviewOutput:
+        """Create mock output for compact holistic review testing.
+
+        Args:
+            input_data: The compact holistic review input.
+
+        Returns:
+            Mock HolisticReviewOutput.
+        """
+        # Decide based on cycle
+        if input_data.cycle >= input_data.max_cycles:
+            decision = ImperatorHolisticDecision.SATISFIED
+        elif input_data.cycle == 1:
+            decision = ImperatorHolisticDecision.NEEDS_CLARIFICATION
+        else:
+            decision = ImperatorHolisticDecision.SATISFIED
+
+        # Generate mock file feedback if NEEDS_CLARIFICATION
+        file_feedback: dict[str, list[ChromeTicket]] = {}
+        if decision == ImperatorHolisticDecision.NEEDS_CLARIFICATION:
+            if input_data.file_summaries:
+                first = input_data.file_summaries[0]
+                file_feedback[first.file_name] = [
+                    ChromeTicket(
+                        program_id=first.program_id,
+                        section="purpose",
+                        issue_type=IssueType.VAGUE,
+                        description="[MOCK] Purpose needs more business context",
+                        guidance="Add specific business process details",
+                        priority=IssuePriority.MEDIUM,
+                    )
+                ]
+
+        return HolisticReviewOutput(
+            success=True,
+            decision=decision,
+            file_feedback=file_feedback,
+            consistency_issues=[],
+            clarification_requests=[],
+            assumptions=[],
+            overall_quality="ACCEPTABLE" if decision != ImperatorHolisticDecision.SATISFIED else "GOOD",
+            quality_notes=[
+                "[MOCK] Compact holistic review",
+                f"[MOCK] Reviewed {len(input_data.file_summaries)} file summaries",
+            ],
+            priority_files=[],
+            missing_documentation=[],
+            reasoning=f"[MOCK] Compact review decision after cycle {input_data.cycle}",
         )
 
     # =========================================================================

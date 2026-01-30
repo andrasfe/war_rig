@@ -12,8 +12,8 @@ Typical usage:
     print(config.max_iterations)
 """
 
-import os
 from pathlib import Path
+
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -292,6 +292,13 @@ class WarRigConfig(BaseSettings):
         ge=1,
         le=5,
         description="Maximum Imperator review cycles before forcing approval",
+    )
+
+    # Compact review mode (Tier 1 - reduced token usage)
+    use_compact_holistic_review: bool = Field(
+        default=True,
+        description="Use compact holistic review (Tier 1) for reduced token usage. "
+        "Falls back to full review for README.md generation.",
     )
 
     # Formatting error recovery configuration

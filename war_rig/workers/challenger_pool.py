@@ -36,7 +36,6 @@ from typing import Any
 
 from war_rig.agents.challenger import ChallengerAgent, ChallengerInput, ChallengerOutput
 from war_rig.analysis.pattern_aggregator import PatternAggregator
-from war_rig.chunking import TokenEstimator
 from war_rig.beads import (
     BeadsClient,
     BeadsPriority,
@@ -44,6 +43,7 @@ from war_rig.beads import (
     TicketState,
     TicketType,
 )
+from war_rig.chunking import TokenEstimator
 from war_rig.config import WarRigConfig
 from war_rig.models.templates import DocumentationTemplate, FileType
 from war_rig.models.tickets import (
@@ -371,7 +371,11 @@ class ChallengerWorker:
             return None
 
         try:
-            pattern_result = self._citadel.get_analysis_patterns(file_path)
+            # Use summary_only=True to reduce token usage by ~50-60%
+            # Challenger only needs pattern counts for validation, not full match details
+            pattern_result = self._citadel.get_analysis_patterns(
+                file_path, summary_only=True
+            )
 
             if pattern_result.error:
                 logger.debug(
@@ -682,7 +686,7 @@ class ChallengerWorker:
         if self._task is not None:
             try:
                 await asyncio.wait_for(self._task, timeout=30.0)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.warning(f"Worker {self.worker_id} did not stop in time, cancelling")
                 self._task.cancel()
                 try:
@@ -1129,7 +1133,7 @@ class ChallengerWorker:
             doc_file = self._get_doc_path(ticket.file_name)
             if doc_file.exists():
                 try:
-                    with open(doc_file, "r", encoding="utf-8") as f:
+                    with open(doc_file, encoding="utf-8") as f:
                         template_data = json.load(f)
                     state["template"] = DocumentationTemplate.load_lenient(template_data)
                     logger.info(f"Loaded template from disk: {doc_file}")
@@ -1150,7 +1154,7 @@ class ChallengerWorker:
                 source_path = Path(file_path)
                 if source_path.exists():
                     try:
-                        with open(source_path, "r", encoding="utf-8", errors="replace") as f:
+                        with open(source_path, encoding="utf-8", errors="replace") as f:
                             state["source_code"] = f.read()
                         logger.info(f"Loaded source code from disk: {file_path}")
                     except Exception as e:
@@ -1523,7 +1527,7 @@ class ChallengerWorker:
                 else:
                     # Verify the symbol is mentioned in the parent doc
                     try:
-                        with open(parent_doc_path, "r", encoding="utf-8") as f:
+                        with open(parent_doc_path, encoding="utf-8") as f:
                             parent_content = f.read()
                         if program_id.upper() not in parent_content.upper():
                             issues.append(

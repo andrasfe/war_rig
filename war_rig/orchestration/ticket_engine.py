@@ -36,7 +36,9 @@ from citadel.sdk import get_dead_code
 
 from war_rig.agents.imperator import (
     FileDocumentation,
+    FileDocumentationSummary,
     HolisticReviewInput,
+    HolisticReviewInputCompact,
     HolisticReviewOutput,
     ImperatorAgent,
     ImperatorHolisticDecision,
@@ -60,6 +62,7 @@ from war_rig.beads import (
 )
 from war_rig.config import WarRigConfig, load_config
 from war_rig.models.assessments import ConfidenceLevel
+from war_rig.models.tickets import FeedbackContext, QualityNote
 from war_rig.utils.exceptions import FatalWorkerError, MaxTicketRetriesExceeded
 from war_rig.utils.file_lock import FileLockManager
 from war_rig.workers.challenger_pool import ChallengerWorkerPool
@@ -1377,6 +1380,36 @@ class TicketOrchestrator:
 
         logger.info("Triggering holistic review")
 
+        # Use compact review (Tier 1) if configured, for reduced token usage
+        # Note: Compact review does NOT generate README.md - that requires full review
+        if self.config.use_compact_holistic_review:
+            logger.info("Using compact holistic review (Tier 1) for reduced token usage")
+            compact_input = self._build_compact_review_input()
+
+            if not compact_input.file_summaries:
+                logger.warning("No completed documentation to review")
+                return HolisticReviewOutput(
+                    success=False,
+                    error="No documentation to review",
+                    decision=ImperatorHolisticDecision.NEEDS_CLARIFICATION,
+                )
+
+            try:
+                output = await self.imperator.holistic_review_compact(
+                    compact_input,
+                    use_mock=self.use_mock,
+                )
+                return output
+
+            except Exception as e:
+                logger.error(f"Compact holistic review failed: {e}")
+                return HolisticReviewOutput(
+                    success=False,
+                    error=str(e),
+                    decision=ImperatorHolisticDecision.NEEDS_CLARIFICATION,
+                )
+
+        # Full review with README.md generation (fallback or when compact disabled)
         # Build review input from completed documentation
         review_input = self._build_holistic_review_input()
 
@@ -1481,6 +1514,152 @@ class TicketOrchestrator:
             resolution_status={},
             max_cycles=self.config.pm_max_cycles,
             cross_file_call_semantics=cross_file_semantics,
+        )
+
+    def _build_compact_review_input(self) -> HolisticReviewInputCompact:
+        """Build compact input for Imperator holistic review (Tier 1).
+
+        Uses FileDocumentationSummary instead of full templates and Citadel
+        get_file_summary() and get_callouts_compact() for reduced token usage.
+
+        Returns:
+            HolisticReviewInputCompact ready for the Imperator.
+        """
+        # Get completed documentation tickets
+        completed_docs = self.beads_client.get_tickets_by_state(
+            state=TicketState.COMPLETED,
+            ticket_type=TicketType.DOCUMENTATION,
+        )
+
+        # Build file summaries using Citadel's compact methods
+        file_summaries: list[FileDocumentationSummary] = []
+        per_file_confidence: dict[str, ConfidenceLevel] = {}
+        files_with_issues: list[str] = []
+
+        # Try to use Citadel for file summaries
+        try:
+            from citadel import Citadel
+
+            citadel = Citadel()
+        except ImportError:
+            citadel = None
+            logger.debug("Citadel not available for compact review")
+
+        for ticket in completed_docs:
+            program_id = ticket.program_id or ticket.file_name.split(".")[0]
+
+            # Try to get summary from Citadel
+            citadel_summary = None
+            if citadel and self._input_directory:
+                file_path = self._input_directory / ticket.file_name
+                if file_path.exists():
+                    citadel_summary = citadel.get_file_summary(file_path)
+
+            # Build summary from template if available, falling back to citadel
+            template = self._get_template_for_ticket(ticket)
+
+            # Extract purpose summary
+            purpose_summary = ""
+            program_type = "UNKNOWN"
+            if template and template.purpose:
+                purpose_summary = template.purpose.summary or ""
+                if template.purpose.program_type:
+                    program_type = template.purpose.program_type.value
+
+            # Extract main calls from template or citadel
+            main_calls: list[str] = []
+            if template and template.called_programs:
+                main_calls = [cp.program_name for cp in template.called_programs[:5]]
+            elif citadel_summary and citadel_summary.get("main_calls"):
+                main_calls = citadel_summary["main_calls"][:5]
+
+            # Extract inputs/outputs from template
+            main_inputs: list[str] = []
+            main_outputs: list[str] = []
+            if template:
+                if template.inputs:
+                    main_inputs = [inp.name for inp in template.inputs[:5]]
+                if template.outputs:
+                    main_outputs = [out.name for out in template.outputs[:5]]
+
+            # Determine paragraph count
+            paragraph_count = 0
+            if citadel_summary:
+                paragraph_count = citadel_summary.get("paragraph_count", 0)
+
+            # Check for open questions
+            has_open_questions = False
+            if template and template.open_questions:
+                has_open_questions = len(template.open_questions) > 0
+
+            summary = FileDocumentationSummary(
+                file_name=ticket.file_name,
+                program_id=program_id,
+                purpose_summary=purpose_summary,
+                program_type=program_type,
+                paragraph_count=paragraph_count,
+                main_calls=main_calls,
+                main_inputs=main_inputs,
+                main_outputs=main_outputs,
+                confidence=ConfidenceLevel.MEDIUM,  # Default
+                has_open_questions=has_open_questions,
+                iteration_count=ticket.cycle_number,
+            )
+            file_summaries.append(summary)
+            per_file_confidence[ticket.file_name] = ConfidenceLevel.MEDIUM
+
+        # Build compact call graph using Citadel
+        call_graph: dict[str, list[str]] = {}
+        shared_copybooks: dict[str, list[str]] = {}
+
+        if citadel and self._input_directory:
+            try:
+                # Use compact callouts for efficiency
+                compact_callouts = citadel.get_callouts_compact(self._input_directory)
+
+                for callout in compact_callouts:
+                    from_artifact = callout.get("from_artifact", "").upper()
+                    to_target = callout.get("to_target", "").upper()
+                    call_type = callout.get("call_type", "")
+
+                    if not from_artifact or not to_target:
+                        continue
+
+                    if call_type in ("calls", "executes", "performs"):
+                        if from_artifact not in call_graph:
+                            call_graph[from_artifact] = []
+                        if to_target not in call_graph[from_artifact]:
+                            call_graph[from_artifact].append(to_target)
+
+                    elif call_type == "includes":
+                        if to_target not in shared_copybooks:
+                            shared_copybooks[to_target] = []
+                        if from_artifact not in shared_copybooks[to_target]:
+                            shared_copybooks[to_target].append(from_artifact)
+
+            except Exception as e:
+                logger.warning(f"Compact call graph analysis failed: {e}")
+
+        # Count previous clarification requests
+        previous_clarification_count = len(self._state.clarification_history)
+
+        # Count unresolved issues (tickets in non-complete states)
+        unresolved_issues_count = 0
+        for state in [TicketState.CREATED, TicketState.IN_PROGRESS, TicketState.BLOCKED]:
+            tickets = self.beads_client.get_tickets_by_state(state)
+            unresolved_issues_count += len(tickets)
+
+        return HolisticReviewInputCompact(
+            batch_id=self._state.batch_id,
+            cycle=self._state.cycle,
+            file_summaries=file_summaries,
+            call_graph=call_graph,
+            shared_copybooks=shared_copybooks,
+            per_file_confidence=per_file_confidence,
+            files_with_issues=files_with_issues,
+            previous_clarification_count=previous_clarification_count,
+            unresolved_issues_count=unresolved_issues_count,
+            max_cycles=self.config.pm_max_cycles,
         )
 
     def _build_cross_file_analysis(
@@ -2263,7 +2442,6 @@ class TicketOrchestrator:
         logger.info(f"Found {len(programs)} documented programs for overview")
 
         # Build cross-references (called_by)
-        program_ids = {p.program_id for p in programs}
         for prog in programs:
             for called in prog.calls:
                 # Find the called program and add this one to its called_by

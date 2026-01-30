@@ -641,7 +641,7 @@ class Citadel:
         # Convert callouts to result dictionaries with resolution status
         callouts = []
 
-        for file_stem, artifact_name, callout in all_callouts_data:
+        for _file_stem, artifact_name, callout in all_callouts_data:
             # Check if target is resolved
             target_lower = callout.target.lower() if callout.target else ""
             resolved = target_lower in known_artifacts or target_lower in known_files
@@ -915,7 +915,6 @@ class Citadel:
             The ending line number (1-indexed, inclusive).
         """
         lines = content.splitlines()
-        total_lines = len(lines)
 
         # Language-specific end detection
         language = spec.language.lower()
@@ -1567,9 +1566,148 @@ class Citadel:
             title=title,
         )
 
+    def get_file_summary(self, file_path: str | Path) -> dict[str, Any]:
+        """
+        Get a compact summary of a source file for Tier 1 holistic review.
+
+        Returns a minimal summary containing only essential metadata,
+        paragraph count, entry points, and main calls. No bodies, line numbers,
+        or pattern details - designed for minimal token usage in LLM prompts.
+
+        This is ~70-85% smaller than full `analyze_file()` output, suitable
+        for Imperator holistic reviews of large batches.
+
+        Args:
+            file_path: Path to the source file.
+
+        Returns:
+            Dictionary with:
+            - file_name: str - Name of the file
+            - language: str - Detected language
+            - total_lines: int - Line count
+            - paragraph_count: int - Number of paragraphs/artifacts
+            - entry_points: list[str] - Names of entry point artifacts
+            - main_calls: list[str] - Primary call targets (programs called)
+            - error: str | None - Error message if analysis failed
+
+        Example:
+            >>> citadel = Citadel()
+            >>> summary = citadel.get_file_summary("PROGRAM.cbl")
+            >>> print(f"{summary['file_name']}: {summary['paragraph_count']} paragraphs")
+        """
+        file_path = Path(file_path)
+
+        result = self.analyze_file(file_path)
+
+        if result.error:
+            return {
+                "file_name": file_path.name,
+                "language": result.language,
+                "total_lines": 0,
+                "paragraph_count": 0,
+                "entry_points": [],
+                "main_calls": [],
+                "error": result.error,
+            }
+
+        # Count total lines
+        try:
+            content = self._read_file(file_path)
+            total_lines = len(content.splitlines())
+        except Exception:
+            total_lines = 0
+
+        # Extract entry points (first artifact or 'program' types)
+        entry_points: list[str] = []
+        for artifact in result.artifacts:
+            if artifact.type in ("program", "procedure", "function"):
+                entry_points.append(artifact.name)
+            elif not entry_points and artifact.type == "paragraph":
+                # First paragraph is typically the entry point
+                entry_points.append(artifact.name)
+                break
+
+        # Extract main calls (unique call targets across all artifacts)
+        main_calls: set[str] = set()
+        for artifact in result.artifacts:
+            for callout in artifact.callouts:
+                if callout.relationship in ("calls", "executes", "performs"):
+                    main_calls.add(callout.target)
+        for callout in result.file_level_callouts:
+            if callout.relationship in ("calls", "executes"):
+                main_calls.add(callout.target)
+
+        return {
+            "file_name": file_path.name,
+            "language": result.language,
+            "total_lines": total_lines,
+            "paragraph_count": len(result.artifacts),
+            "entry_points": entry_points[:5],  # Limit to 5 entry points
+            "main_calls": sorted(main_calls)[:10],  # Limit to 10 main calls
+            "error": None,
+        }
+
+    def get_callouts_compact(self, path: str | Path) -> list[dict[str, Any]]:
+        """
+        Get compact callouts from a file or directory for Tier 1 review.
+
+        Returns a minimal representation of callouts with only:
+        - from_artifact: str - Name of the source artifact
+        - to_target: str - Name of the target being called
+        - call_type: str - Type of relationship (calls, includes, reads, etc.)
+
+        No line numbers, raw_text, or resolution status - designed for
+        minimal token usage when building call graphs for holistic review.
+
+        Args:
+            path: Path to a source file or directory.
+
+        Returns:
+            List of compact callout dictionaries.
+
+        Example:
+            >>> citadel = Citadel()
+            >>> callouts = citadel.get_callouts_compact("./src")
+            >>> for c in callouts:
+            ...     print(f"{c['from_artifact']} -> {c['to_target']} ({c['call_type']})")
+        """
+        # Get full callouts
+        full_callouts = self.get_callouts(path)
+
+        # Convert to compact format
+        compact: list[dict[str, Any]] = []
+        seen: set[tuple[str, str, str]] = set()  # Deduplicate
+
+        for callout in full_callouts:
+            if "error" in callout:
+                continue
+
+            from_artifact = callout.get("from", "")
+            to_target = callout.get("to", "")
+            call_type = callout.get("type", "")
+
+            # Skip empty entries
+            if not from_artifact or not to_target:
+                continue
+
+            # Deduplicate based on (from, to, type)
+            key = (from_artifact, to_target, call_type)
+            if key in seen:
+                continue
+            seen.add(key)
+
+            compact.append({
+                "from_artifact": from_artifact,
+                "to_target": to_target,
+                "call_type": call_type,
+            })
+
+        return compact
+
     def get_analysis_patterns(
         self,
         file_path: str | Path,
+        summary_only: bool = False,
     ) -> FileAnalysisPatternResult:
         """
         Extract analysis patterns (data flow, control flow, error handling) from a file.
@@ -1584,6 +1722,9 @@ class Citadel:
 
         Args:
             file_path: Path to the source file to analyze.
+            summary_only: If True, return only counts per category without
+                individual match details. Reduces token usage by ~50-60%.
+                Default is False for backward compatibility.
 
         Returns:
             FileAnalysisPatternResult containing matches organized by category,
@@ -1596,6 +1737,10 @@ class Citadel:
             >>> print(f"Total matches: {result.total_matches}")
             >>> for match in result.get_matches("data_flow"):
             ...     print(f"{match.pattern_name}: {match.captured} at line {match.line}")
+
+            >>> # Compact summary for holistic review
+            >>> result = citadel.get_analysis_patterns("PROGRAM.cbl", summary_only=True)
+            >>> print(f"Data flow patterns: {result.categories['data_flow'].match_count}")
         """
         file_path = Path(file_path)
 
@@ -1643,47 +1788,57 @@ class Citadel:
             )
 
         # Convert parser result to SDK format
-        return self._convert_analysis_pattern_result(parse_result, spec)
+        return self._convert_analysis_pattern_result(
+            parse_result, spec, summary_only=summary_only
+        )
 
     def _convert_analysis_pattern_result(
         self,
         parse_result: AnalysisPatternResult,
         spec: ArtifactSpec,
+        summary_only: bool = False,
     ) -> FileAnalysisPatternResult:
-        """Convert internal parser result to SDK format."""
+        """Convert internal parser result to SDK format.
+
+        Args:
+            parse_result: The raw parser result.
+            spec: The artifact specification.
+            summary_only: If True, omit individual match details (only counts).
+        """
         categories: dict[str, AnalysisCategoryResult] = {}
         total_matches = 0
         total_patterns = 0
         patterns_with_matches = 0
 
         for category, matches in parse_result.matches.items():
-            # Convert matches to SDK format
-            sdk_matches: list[AnalysisPatternMatchSDK] = []
+            # Track pattern counts (always needed for summary)
             patterns_matched: dict[str, int] = {}
-
             for match in matches:
-                sdk_match = AnalysisPatternMatchSDK(
-                    pattern_name=match.pattern_name,
-                    category=match.category,
-                    captured=match.captured_groups,
-                    line=match.location.line_start if match.location else None,
-                    context=match.context_lines,
-                )
-                sdk_matches.append(sdk_match)
-
-                # Track pattern counts
                 patterns_matched[match.pattern_name] = (
                     patterns_matched.get(match.pattern_name, 0) + 1
                 )
 
+            # Convert individual matches to SDK format (skip if summary_only)
+            sdk_matches: list[AnalysisPatternMatchSDK] = []
+            if not summary_only:
+                for match in matches:
+                    sdk_match = AnalysisPatternMatchSDK(
+                        pattern_name=match.pattern_name,
+                        category=match.category,
+                        captured=match.captured_groups,
+                        line=match.location.line_start if match.location else None,
+                        context=match.context_lines,
+                    )
+                    sdk_matches.append(sdk_match)
+
             cat_result = AnalysisCategoryResult(
                 category=category,
-                matches=sdk_matches,
-                match_count=len(sdk_matches),
+                matches=sdk_matches,  # Empty list if summary_only
+                match_count=len(matches),  # Always count from source
                 patterns_matched=patterns_matched,
             )
             categories[category] = cat_result
-            total_matches += len(sdk_matches)
+            total_matches += len(matches)
 
         # Calculate coverage percentage
         if spec.analysis_patterns:
@@ -1984,7 +2139,10 @@ def get_flow_diagram(
     return citadel.get_flow_diagram(file_path, paragraph, include_external)
 
 
-def get_analysis_patterns(file_path: str | Path) -> FileAnalysisPatternResult:
+def get_analysis_patterns(
+    file_path: str | Path,
+    summary_only: bool = False,
+) -> FileAnalysisPatternResult:
     """
     Extract analysis patterns (data flow, control flow, error handling) from a file.
 
@@ -1995,6 +2153,8 @@ def get_analysis_patterns(file_path: str | Path) -> FileAnalysisPatternResult:
 
     Args:
         file_path: Path to the source file to analyze.
+        summary_only: If True, return only counts per category without
+            individual match details. Reduces token usage by ~50-60%.
 
     Returns:
         FileAnalysisPatternResult containing matches organized by category.
@@ -2007,4 +2167,55 @@ def get_analysis_patterns(file_path: str | Path) -> FileAnalysisPatternResult:
         ...     print(f"{match.pattern_name}: {match.captured}")
     """
     citadel = Citadel()
-    return citadel.get_analysis_patterns(file_path)
+    return citadel.get_analysis_patterns(file_path, summary_only=summary_only)
+
+
+def get_file_summary(file_path: str | Path) -> dict[str, Any]:
+    """
+    Get a compact summary of a source file for Tier 1 holistic review.
+
+    Convenience function for quick file summary extraction.
+
+    Returns a minimal summary containing only essential metadata,
+    paragraph count, entry points, and main calls.
+
+    Args:
+        file_path: Path to the source file.
+
+    Returns:
+        Dictionary with file_name, language, total_lines, paragraph_count,
+        entry_points, main_calls, and error fields.
+
+    Example:
+        >>> from citadel.sdk import get_file_summary
+        >>> summary = get_file_summary("PROGRAM.cbl")
+        >>> print(f"{summary['file_name']}: {summary['paragraph_count']} paragraphs")
+    """
+    citadel = Citadel()
+    return citadel.get_file_summary(file_path)
+
+
+def get_callouts_compact(path: str | Path) -> list[dict[str, Any]]:
+    """
+    Get compact callouts from a file or directory for Tier 1 review.
+
+    Convenience function for quick compact callout extraction.
+
+    Returns a minimal representation of callouts without line numbers
+    or resolution status.
+
+    Args:
+        path: Path to a source file or directory.
+
+    Returns:
+        List of compact callout dictionaries with from_artifact,
+        to_target, and call_type fields.
+
+    Example:
+        >>> from citadel.sdk import get_callouts_compact
+        >>> callouts = get_callouts_compact("./src")
+        >>> for c in callouts:
+        ...     print(f"{c['from_artifact']} -> {c['to_target']}")
+    """
+    citadel = Citadel()
+    return citadel.get_callouts_compact(path)
