@@ -74,8 +74,9 @@ class Preprocessor:
         1. Strip fixed-column comments (COBOL-style column 7)
         2. Strip line comments (// or # style)
         3. Strip block comments (/* */ style)
-        4. Mask string literals with unique placeholders
-        5. Join continuation lines
+        4. Join continuation lines (must happen BEFORE string masking
+           so that strings spanning multiple lines are complete)
+        5. Mask string literals with unique placeholders
 
         Args:
             content: The original source code content.
@@ -111,12 +112,14 @@ class Preprocessor:
         if self._spec.comments.block_start and self._spec.comments.block_end:
             content = self._strip_block_comments(content)
 
-        # Step 4: Mask string literals
-        content, masked_strings = self._mask_strings(content)
-
-        # Step 5: Join continued lines (if applicable)
+        # Step 4: Join continued lines (if applicable)
+        # This must happen BEFORE string masking so that strings spanning
+        # multiple lines (e.g., COBOL continuation) are complete when masked.
         if self._spec.continuation:
             content, line_map = self._join_continuations(content)
+
+        # Step 5: Mask string literals
+        content, masked_strings = self._mask_strings(content)
 
         return PreprocessedSource(
             cleaned=content,
@@ -498,6 +501,13 @@ class Preprocessor:
         For COBOL fixed format, a '-' in column 7 indicates that the
         current line continues the previous line.
 
+        Special handling for COBOL string continuation:
+        When a string literal spans multiple lines, the previous line ends
+        with an unclosed string, and the continuation line starts with a
+        quote character. That leading quote is NOT a new string delimiter -
+        it marks where the continued string content begins. We detect this
+        case and strip the leading quote from the continuation text.
+
         Args:
             content: Source content to process.
 
@@ -517,6 +527,16 @@ class Preprocessor:
         current_line = ""
         original_line_start: int | None = None
 
+        # Get string delimiters for detecting string continuation
+        string_delimiters = self._spec.strings.delimiters if self._spec.strings else []
+
+        # Helper to check if a line is a leading-style continuation
+        def is_leading_continuation(line: str) -> bool:
+            if not (continuation.leading_char and continuation.leading_column is not None):
+                return False
+            col_idx = continuation.leading_column - 1 - self._get_stripped_column_count()
+            return len(line) > col_idx and line[col_idx] == continuation.leading_char
+
         for i, line in enumerate(lines):
             original_line_num = i + 1
 
@@ -532,17 +552,37 @@ class Preprocessor:
                 continue
 
             # Check for leading continuation character at specific column (COBOL-style)
-            if continuation.leading_char and continuation.leading_column is not None:
+            if is_leading_continuation(line):
                 col_idx = continuation.leading_column - 1 - self._get_stripped_column_count()
-                if len(line) > col_idx and line[col_idx] == continuation.leading_char:
-                    # This is a continuation of the previous line
-                    # In COBOL, continuation starts at column 12 (Area B starts at 12)
-                    # The content after column 7 is appended to the previous line
-                    continuation_text = line[col_idx + 1 :]
-                    if original_line_start is None:
-                        original_line_start = original_line_num
-                    current_line += continuation_text
-                    continue
+                # This is a continuation of the previous line
+                continuation_text = line[col_idx + 1 :]
+
+                # For leading-style continuation, the previous line was already
+                # added to result_lines if current_line was empty. We need to
+                # pop it back and include it in the continuation.
+                if not current_line and result_lines:
+                    # Pop the previous line back - it continues onto this line
+                    current_line = result_lines.pop()
+                    # Adjust original_line_start to match the popped line
+                    popped_line_num = line_map.pop(len(result_lines) + 1)
+                    original_line_start = popped_line_num
+
+                # Handle COBOL string continuation: if previous line ends with
+                # an unclosed string and continuation starts with a quote,
+                # that quote is a continuation marker, not a delimiter.
+                if current_line and string_delimiters:
+                    if self._ends_with_unclosed_string(current_line, string_delimiters):
+                        # Strip leading whitespace and the continuation quote
+                        stripped = continuation_text.lstrip()
+                        for delim in string_delimiters:
+                            if stripped.startswith(delim):
+                                continuation_text = stripped[len(delim) :]
+                                break
+
+                if original_line_start is None:
+                    original_line_start = original_line_num
+                current_line += continuation_text
+                continue
 
             # Not a continuation line - flush current accumulated line
             if current_line:
@@ -565,6 +605,51 @@ class Preprocessor:
             )
 
         return "\n".join(result_lines), line_map
+
+    def _ends_with_unclosed_string(
+        self, text: str, delimiters: list[str]
+    ) -> bool:
+        """
+        Check if text ends with an unclosed string literal.
+
+        Counts quote characters to determine if a string is open.
+        Handles doubled quotes as escapes (e.g., '' in COBOL/SQL).
+
+        Args:
+            text: The text to check.
+            delimiters: List of string delimiter characters.
+
+        Returns:
+            True if text ends inside an unclosed string.
+        """
+        # Track whether we're inside a string for each delimiter type
+        in_string: str | None = None
+        i = 0
+
+        while i < len(text):
+            if in_string is None:
+                # Not in a string - look for opening delimiter
+                for delim in delimiters:
+                    if text[i:].startswith(delim):
+                        in_string = delim
+                        i += len(delim)
+                        break
+                else:
+                    i += 1
+            else:
+                # Inside a string - look for closing or doubled delimiter
+                delim_len = len(in_string)
+                if text[i:].startswith(in_string + in_string):
+                    # Doubled delimiter = escape, skip both
+                    i += 2 * delim_len
+                elif text[i:].startswith(in_string):
+                    # Closing delimiter
+                    in_string = None
+                    i += delim_len
+                else:
+                    i += 1
+
+        return in_string is not None
 
     def unmask_strings(
         self, content: str, masked_strings: list[tuple[int, int, str]]

@@ -819,13 +819,33 @@ class Citadel:
         2. A SECTION is encountered
         3. END-PROGRAM or end of PROCEDURE DIVISION is hit
         4. End of file is reached
+
+        Handles both 80-column fixed format (with sequence numbers in columns 73-80)
+        and trimmed/free format COBOL files.
         """
         total_lines = len(lines)
 
-        # Pattern for paragraph/section names in COBOL (Area A starts at column 8, 0-indexed: 7)
-        # A paragraph name is a word in columns 8-11 followed by a period
-        paragraph_pattern = re.compile(r"^.{7}([A-Z0-9-]+)\s*\.$", re.IGNORECASE)
-        section_pattern = re.compile(r"^.{7}([A-Z0-9-]+)\s+SECTION\s*\.", re.IGNORECASE)
+        # Pattern for section names in COBOL (Area A starts at column 8, 0-indexed: 7)
+        # Must handle both fixed-format (80 cols) and trimmed format files.
+        # A section name is a word followed by SECTION and a period.
+        # Use a flexible pattern that handles variable line lengths.
+        section_pattern = re.compile(
+            r"^.{7}([A-Z0-9-]+)\s+SECTION\s*\.", re.IGNORECASE
+        )
+
+        # Pattern for paragraph names in COBOL.
+        # A paragraph name starts in Area A (columns 8-11, 0-indexed 7-10) and is
+        # followed by a period. The period may or may not be at end of line.
+        # This pattern:
+        # - Requires exactly 7 chars in columns 1-7 (sequence area + indicator)
+        # - Captures the paragraph name (letters, digits, hyphens)
+        # - Allows optional whitespace after the name
+        # - Requires a period
+        # - Allows anything after the period (for fixed-format trailing content)
+        paragraph_pattern = re.compile(
+            r"^.{7}([A-Z0-9-]+)\s*\.(?:\s|$)", re.IGNORECASE
+        )
+
         end_patterns = re.compile(
             r"^\s*(END-PROGRAM|END\s+PROGRAM|IDENTIFICATION\s+DIVISION|DATA\s+DIVISION)",
             re.IGNORECASE,
@@ -848,6 +868,9 @@ class Citadel:
 
             # Check for next paragraph or section (but not the current one)
             if i > start_line - 1:  # Skip the starting line itself
+                # For trimmed files, lines may be shorter than 8 chars.
+                # Only check for paragraph/section if line is long enough to have
+                # content in Area A (need at least 8 chars: 7 for cols 1-7 + 1 for name)
                 if len(line) >= 8:
                     # Check for section first
                     if section_pattern.match(line):

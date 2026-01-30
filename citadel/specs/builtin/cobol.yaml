@@ -61,7 +61,12 @@ definition_patterns:
     dotall: true
 
   - name: paragraph
-    pattern: "^\\s{1,2}([A-Z0-9-]+)\\s*\\."
+    # Match paragraph names in Area A (columns 8-11 in original source).
+    # After stripping columns 1-6 (sequence numbers), Area A starts at column 2.
+    # Column 7 (indicator) becomes column 1 in cleaned content.
+    # Use [ \t] instead of \s to avoid matching newlines, which would cause
+    # the match to include the previous line's trailing newline.
+    pattern: "^[ \\t]{0,2}([A-Z0-9-]+)\\s*\\."
     capture_groups:
       - 1
     artifact_type: paragraph
@@ -69,7 +74,9 @@ definition_patterns:
     must_be_in_scope: PROCEDURE DIVISION
 
   - name: section
-    pattern: "^\\s{1,2}([A-Z0-9-]+)\\s+SECTION\\."
+    # Match SECTION declarations in Area A.
+    # Use [ \t] instead of \s to avoid matching newlines.
+    pattern: "^[ \\t]{0,2}([A-Z0-9-]+)\\s+SECTION\\."
     capture_groups:
       - 1
     artifact_type: paragraph

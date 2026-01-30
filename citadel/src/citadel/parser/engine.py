@@ -543,12 +543,28 @@ class ParserEngine:
         3. END-PROGRAM or division marker is hit
         4. Next artifact starts
         5. End of file
+
+        Handles both 80-column fixed format (with sequence numbers in columns 73-80)
+        and trimmed/free format COBOL files.
         """
         total_lines = len(lines)
 
-        # Pattern for paragraph/section names in COBOL
-        paragraph_pattern = re.compile(r"^.{7}([A-Z0-9-]+)\s*\.$", re.IGNORECASE)
-        section_pattern = re.compile(r"^.{7}([A-Z0-9-]+)\s+SECTION\s*\.", re.IGNORECASE)
+        # Pattern for paragraph names in COBOL (Area A starts at column 8, 0-indexed: 7)
+        # A paragraph name is a word in columns 8-11 followed by a period.
+        # The period may NOT be at end of line (fixed-format has trailing sequence numbers).
+        # Pattern:
+        # - Requires exactly 7 chars in columns 1-7 (sequence area + indicator)
+        # - Captures the paragraph name (letters, digits, hyphens)
+        # - Allows optional whitespace after the name
+        # - Requires a period
+        # - Allows anything after the period (for fixed-format trailing content)
+        #   OR end of line (for trimmed format)
+        paragraph_pattern = re.compile(
+            r"^.{7}([A-Z0-9-]+)\s*\.(?:\s|$)", re.IGNORECASE
+        )
+        section_pattern = re.compile(
+            r"^.{7}([A-Z0-9-]+)\s+SECTION\s*\.", re.IGNORECASE
+        )
         end_markers = re.compile(
             r"^\s*(END-PROGRAM|END\s+PROGRAM|IDENTIFICATION\s+DIVISION|"
             r"DATA\s+DIVISION|ENVIRONMENT\s+DIVISION|PROCEDURE\s+DIVISION)",
