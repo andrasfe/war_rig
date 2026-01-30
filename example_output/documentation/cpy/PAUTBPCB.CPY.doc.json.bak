@@ -1,0 +1,99 @@
+{
+  "header": {
+    "program_id": "PAUTBPCB",
+    "file_name": "cpy/PAUTBPCB.CPY",
+    "file_type": "COPYBOOK",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-30T19:48:44.774204",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This copybook defines the data structure PAUTBPCB (line 17), which is the Program Communication Block (PCB) for the PAUT IMS database. It includes fields for database name (PAUT-DBDNAME, line 18), current segment level (PAUT-SEG-LEVEL, line 19), PCB status code (PAUT-PCB-STATUS, line 20), processing options (PAUT-PCB-PROCOPT, line 21), segment name (PAUT-SEG-NAME, line 23), key feedback name offset (PAUT-KEYFB-NAME, line 24), number of sensitive segments (PAUT-NUM-SENSEGS, line 25), and a 255-byte key feedback buffer (PAUT-KEYFB, line 26). This structure is used by IMS DL/I programs to manage database calls and retrieve status and positioning information.",
+    "business_context": "IMS DL/I hierarchical database navigation and access for the PAUT database",
+    "program_type": "UTILITY",
+    "citations": [
+      17,
+      18,
+      19,
+      20,
+      21,
+      23,
+      24,
+      25,
+      26
+    ]
+  },
+  "inputs": [],
+  "outputs": [],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [],
+  "data_flow": {
+    "reads_from": [],
+    "writes_to": [],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [
+    {
+      "paragraph_name": "PAUTBPCB",
+      "summary": null,
+      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1,
+        1
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+          "function": "PAUDBLOD",
+          "line": 161,
+          "call_type": "includes"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "function": "DBUNLDGS",
+          "line": 154,
+          "call_type": "includes"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+          "function": "PAUDBUNL",
+          "line": 150,
+          "call_type": "includes"
+        }
+      ],
+      "is_dead_code": true,
+      "dead_code_reason": "Record layout 'PAUTBPCB' is never used by any program",
+      "metadata": null
+    }
+  ],
+  "error_handling": [],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "Which specific IMS programs include this copybook?",
+      "context": "The copybook file does not reference including programs",
+      "suggestion": "Search for COPY PAUTBPCB statements in COBOL sources"
+    }
+  ],
+  "dead_code": [
+    {
+      "name": "PAUTBPCB",
+      "artifact_type": "record_layout",
+      "line": 1,
+      "reason": "Record layout 'PAUTBPCB' is never used by any program"
+    }
+  ],
+  "call_semantics": [],
+  "flow_diagram": null
+}

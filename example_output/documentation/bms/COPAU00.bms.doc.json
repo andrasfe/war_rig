@@ -1,0 +1,231 @@
+{
+  "header": {
+    "program_id": "COPAU00",
+    "file_name": "COPAU00.bms",
+    "file_type": "BMS",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-30T19:40:27.088006",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This BMS mapset defines the Pending Authorization Screen (COPAU0A) for the CardDemo application. It provides a user interface to search pending authorizations by Account ID, display customer details including name, address, status, phone, limits, balances, approval/decline counts, and a scrollable list of up to 5 transactions with fields for selection, transaction ID, date, time, type, A/D, status, and amount. Users interact via input fields and PF keys for navigation.",
+    "business_context": "Serves credit card authorization processing by allowing operators to view, select, and navigate pending authorization transactions for an account.",
+    "program_type": "ONLINE_CICS",
+    "citations": [
+      2,
+      19,
+      26,
+      78,
+      501,
+      511
+    ]
+  },
+  "inputs": [
+    {
+      "name": "ACCTID",
+      "io_type": "CICS_MAP",
+      "description": "Unprotected input field for entering Account ID to search for pending authorizations",
+      "copybook": null,
+      "citation": [
+        84
+      ]
+    },
+    {
+      "name": "SEL0001",
+      "io_type": "CICS_MAP",
+      "description": "Unprotected selection field (Sel) for first transaction in list",
+      "copybook": null,
+      "citation": [
+        277
+      ]
+    },
+    {
+      "name": "SEL0002",
+      "io_type": "CICS_MAP",
+      "description": "Unprotected selection field (Sel) for second transaction in list",
+      "copybook": null,
+      "citation": [
+        321
+      ]
+    },
+    {
+      "name": "SEL0003",
+      "io_type": "CICS_MAP",
+      "description": "Unprotected selection field (Sel) for third transaction in list",
+      "copybook": null,
+      "citation": [
+        365
+      ]
+    },
+    {
+      "name": "SEL0004",
+      "io_type": "CICS_MAP",
+      "description": "Unprotected selection field (Sel) for fourth transaction in list",
+      "copybook": null,
+      "citation": [
+        409
+      ]
+    },
+    {
+      "name": "SEL0005",
+      "io_type": "CICS_MAP",
+      "description": "Unprotected selection field (Sel) for fifth transaction in list",
+      "copybook": null,
+      "citation": [
+        488
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "COPAU0A",
+      "io_type": "CICS_MAP",
+      "description": "Primary map displaying screen header (Tran, Date, Prog, Time), title, search prompt, customer info (name, ID, address, status, phone), limits/balances/amounts (credit/cash lim/bal, appr/decl amt), transaction list headers and data rows, instructions, error message, and PF key help",
+      "copybook": null,
+      "citation": [
+        26
+      ]
+    },
+    {
+      "name": "ERRMSG",
+      "io_type": "CICS_MAP",
+      "description": "Error message display field with bright and red attributes",
+      "copybook": null,
+      "citation": [
+        503
+      ]
+    }
+  ],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "User must type 'S' in one of the SEL fields to select and view details of a specific authorization from the transaction list",
+      "logic_summary": "Instruction explicitly displayed on screen to guide user interaction",
+      "conditions": [
+        "User enters 'S' in SEL0001-SEL0005"
+      ],
+      "citation": [
+        277,
+        321,
+        365,
+        409,
+        488,
+        501
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Screen navigation uses PF keys: ENTER to continue, F3 to go back, F7 for backward scroll, F8 for forward scroll",
+      "logic_summary": "PF key help displayed at bottom of screen",
+      "conditions": [
+        "PF3 pressed",
+        "PF7 pressed",
+        "PF8 pressed"
+      ],
+      "citation": [
+        511
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [],
+    "writes_to": [],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [
+    {
+      "paragraph_name": "COPAU00",
+      "summary": null,
+      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        19,
+        19
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": true,
+      "dead_code_reason": "Artifact 'COPAU00' (map) is never referenced by any other artifact in the dependency graph",
+      "metadata": null
+    },
+    {
+      "paragraph_name": "COPAU0A",
+      "summary": null,
+      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        26,
+        26
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": true,
+      "dead_code_reason": "Screen/Map 'COPAU0A' is never sent to or received from by any program",
+      "metadata": {
+        "body_chunks": 5
+      }
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "Application errors",
+      "action": "Display message in ERRMSG field (bright, red, FSET)",
+      "citation": [
+        503
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [
+    {
+      "command": "SEND MAP",
+      "resource": "COPAU0A",
+      "purpose": "Display pending authorization screen to user",
+      "citation": 26
+    },
+    {
+      "command": "RECEIVE MAP",
+      "resource": "COPAU0A",
+      "purpose": "Receive user inputs from ACCTID and SEL fields",
+      "citation": 84
+    }
+  ],
+  "open_questions": [
+    {
+      "question": "Which CICS COBOL program(s) use this BMS mapset?",
+      "context": "BMS file defines the map but does not reference calling programs",
+      "suggestion": "Search for COPY COPAU00 or DFHMDI COPAU0A in associated COBOL source files"
+    },
+    {
+      "question": "What is the associated CICS transaction ID for this screen?",
+      "context": "Not defined in BMS file",
+      "suggestion": "Check CICS transaction definitions or calling program"
+    }
+  ],
+  "dead_code": [
+    {
+      "name": "COPAU00",
+      "artifact_type": "map",
+      "line": 19,
+      "reason": "Artifact 'COPAU00' (map) is never referenced by any other artifact in the dependency graph"
+    },
+    {
+      "name": "COPAU0A",
+      "artifact_type": "screen",
+      "line": 26,
+      "reason": "Screen/Map 'COPAU0A' is never sent to or received from by any program"
+    }
+  ],
+  "call_semantics": [],
+  "flow_diagram": null
+}

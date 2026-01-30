@@ -1,0 +1,136 @@
+{
+  "header": {
+    "program_id": "COPAU01",
+    "file_name": "COPAU01.bms",
+    "file_type": "BMS",
+    "analyzed_by": "Scribe",
+    "analyzed_at": "2026-01-30T19:45:36.664528",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "Defines BMS mapset COPAU01 with map COPAU1A for the 'Pending Authorization Details Screen' in CardDemo application. Displays authorization details including card number, auth date/time/response, amount, merchant info, fraud status, and supports function keys for navigation and actions like marking fraud. Used in CICS online transactions for viewing/acting on pending credit card authorizations.",
+    "business_context": "Credit card processing demonstration (CardDemo), specifically for reviewing pending authorization details to detect/support fraud management.",
+    "program_type": "ONLINE_CICS",
+    "citations": [
+      2,
+      19,
+      26,
+      78,
+      292
+    ]
+  },
+  "inputs": [
+    {
+      "name": "COPAU1A",
+      "io_type": "CICS_MAP",
+      "description": "CICS map for receiving user input such as function key presses (F3=Back, F5=Mark/Remove Fraud, F8=Next Auth) and any modifiable fields",
+      "copybook": null,
+      "citation": [
+        26,
+        292
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "COPAU1A",
+      "io_type": "CICS_MAP",
+      "description": "CICS map for sending screen data including transaction details, auth info (AUTHDT, AUTHTM, AUTHRSP, etc.), merchant details (MERNAME, MERID, etc.), and error messages",
+      "copybook": null,
+      "citation": [
+        26,
+        284,
+        292
+      ]
+    }
+  ],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [],
+  "data_flow": {
+    "reads_from": [],
+    "writes_to": [],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [
+    {
+      "paragraph_name": "COPAU01",
+      "summary": null,
+      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        19,
+        19
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": true,
+      "dead_code_reason": "Artifact 'COPAU01' (map) is never referenced by any other artifact in the dependency graph",
+      "metadata": null
+    },
+    {
+      "paragraph_name": "COPAU1A",
+      "summary": null,
+      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        26,
+        26
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": true,
+      "dead_code_reason": "Screen/Map 'COPAU1A' is never sent to or received from by any program",
+      "metadata": {
+        "body_chunks": 3
+      }
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "Application errors",
+      "action": "Display message in ERRMSG field (bright, reverse, set attribute)",
+      "citation": [
+        284
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "Which specific CICS transaction/program uses this mapset COPAU01?",
+      "context": "BMS file references CardDemo (line 2) but does not name the calling program or transaction ID",
+      "suggestion": "Search COBOL/CICS sources for 'COPAU01' or 'COPAU1A' in SEND/RECEIVE MAP statements"
+    },
+    {
+      "question": "Are data fields (e.g., CARDNUM, AUTHDT) intended as input (unprotected) or display-only?",
+      "context": "No explicit PROT attribute on data fields (e.g., lines 85-87 for CARDNUM); labels use ASKIP but data fields do not specify PROT",
+      "suggestion": "Review calling program's usage of SEND MAP with FRSET/MODIFY or RECEIVE MAP"
+    }
+  ],
+  "dead_code": [
+    {
+      "name": "COPAU01",
+      "artifact_type": "map",
+      "line": 19,
+      "reason": "Artifact 'COPAU01' (map) is never referenced by any other artifact in the dependency graph"
+    },
+    {
+      "name": "COPAU1A",
+      "artifact_type": "screen",
+      "line": 26,
+      "reason": "Screen/Map 'COPAU1A' is never sent to or received from by any program"
+    }
+  ],
+  "call_semantics": [],
+  "flow_diagram": null
+}

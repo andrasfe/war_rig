@@ -1,0 +1,101 @@
+{
+  "header": {
+    "program_id": "PASFLPCB",
+    "file_name": "cpy/PASFLPCB.CPY",
+    "file_type": "COPYBOOK",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-30T19:48:15.953397",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This COBOL copybook defines the data structure for the PASFL Program Communication Block (PCB) used in IMS DL/I application programs. It specifies fields including the database name, segment level, PCB status, processing options, segment name, key feedback name, number of sensitive segments, and the key feedback buffer. The structure facilitates communication between the application and the IMS PASFL database for segment search and access.",
+    "business_context": "IMS hierarchical database (DL/I) access for the PASFL database",
+    "program_type": "UTILITY",
+    "citations": [
+      17,
+      18,
+      19,
+      20,
+      21,
+      23,
+      24,
+      25,
+      26
+    ]
+  },
+  "inputs": [],
+  "outputs": [],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": [
+      "PASFLPCB"
+    ]
+  },
+  "business_rules": [],
+  "data_flow": {
+    "reads_from": [],
+    "writes_to": [],
+    "transforms": []
+  },
+  "copybooks_used": [
+    {
+      "copybook_name": "PASFLPCB",
+      "purpose": "Defines the IMS PCB structure for accessing the PASFL database, including DBD name, status, segment info, and key feedback",
+      "location": "LINKAGE",
+      "citation": 17
+    }
+  ],
+  "paragraphs": [
+    {
+      "paragraph_name": "PASFLPCB",
+      "summary": null,
+      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1,
+        1
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "function": "DBUNLDGS",
+          "line": 155,
+          "call_type": "includes"
+        }
+      ],
+      "is_dead_code": true,
+      "dead_code_reason": "Record layout 'PASFLPCB' is never used by any program",
+      "metadata": null
+    }
+  ],
+  "error_handling": [],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "Which specific IMS application programs include and use this PASFLPCB copybook?",
+      "context": "The copybook file does not reference any calling programs or PSBs",
+      "suggestion": "Search mainframe source code repositories for 'COPY PASFLPCB' statements to identify including programs"
+    },
+    {
+      "question": "What is the exact PSB (Program Specification Block) associated with this PCB?",
+      "context": "File contains only the PCB definition, no PSB name or full PSB context",
+      "suggestion": "Review IMS PSB definitions or application program headers for matching DBDNAME 'PASFL'"
+    }
+  ],
+  "dead_code": [
+    {
+      "name": "PASFLPCB",
+      "artifact_type": "record_layout",
+      "line": 1,
+      "reason": "Record layout 'PASFLPCB' is never used by any program"
+    }
+  ],
+  "call_semantics": [],
+  "flow_diagram": null
+}

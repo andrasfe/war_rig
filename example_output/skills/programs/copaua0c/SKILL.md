@@ -1,40 +1,34 @@
 ---
 name: copaua0c
-description: "This COBOL program processes authorization requests, retrieves account and customer information, makes authorization decisions based on available credit and transaction amount, and sends a response. It reads card details, retrieves account and customer data from CICS files and IMS database, and updates the pending authorization summary in IMS. The program also logs errors and warnings to an error log."
+description: "COPAUA0C is a CICS COBOL program that processes payment authorization requests triggered via IBM MQ. It initializes by retrieving MQ trigger message data from CICS, configures and opens the request queue using MQOPEN, and sets up for reading and processing messages in a loop. The program orchestrates initialization, main processing, and termination before returning to CICS."
 ---
 
 # COPAUA0C
 
 **Type:** COBOL (ONLINE_CICS)
-**Context:** This program is likely part of a credit card authorization system, responsible for validating transactions and updating account information.
+**Context:** Payment card authorization processing, involving queue-based request handling, account validation, and response generation
 
 ## Purpose
 
-This COBOL program processes authorization requests, retrieves account and customer information, makes authorization decisions based on available credit and transaction amount, and sends a response. It reads card details, retrieves account and customer data from CICS files and IMS database, and updates the pending authorization summary in IMS. The program also logs errors and warnings to an error log.
+COPAUA0C is a CICS COBOL program that processes payment authorization requests triggered via IBM MQ. It initializes by retrieving MQ trigger message data from CICS, configures and opens the request queue using MQOPEN, and sets up for reading and processing messages in a loop. The program orchestrates initialization, main processing, and termination before returning to CICS.
 
 ## Business Rules
 
-- **BR001**: Decline authorization if the transaction amount exceeds the available credit.
-- **BR002**: If no authorization summary is found, use account data to determine available credit.
+- **BR001**: Only use retrieved MQTM data if CICS RETRIEVE response is normal
+- **BR002**: Set request queue open flag only if MQOPEN compcode is OK, otherwise treat as critical error
 
 ## Called Programs
 
-- MQGET (STATIC_CALL)
-- MQPUT1 (STATIC_CALL)
+- MQOPEN (STATIC_CALL)
 
 ## Inputs
 
-- **W01-GET-BUFFER** (CICS_QUEUE): Contains the authorization request message received from the MQ queue.
-- **WS-CCXREF-FILE** (FILE_VSAM): Card Cross-Reference file, used to retrieve account and customer IDs based on the card number.
-- **WS-ACCTFILENAME** (FILE_VSAM): Account master file, used to retrieve account details such as credit limit and current balance.
-- **WS-CUSTFILENAME** (FILE_VSAM): Customer master file, used to retrieve customer details.
-- **PENDING-AUTH-SUMMARY** (IMS_SEGMENT): IMS segment PAUTSUM0 containing pending authorization summary data.
-- *(+2 more inputs)*
+- **MQTM** (CICS_COMMAREA): CICS input containing MQ trigger message with queue name and trigger data
+- **REQUEST-QUEUE** (OTHER): IBM MQ queue named in WS-REQUEST-QNAME for reading authorization requests
 
 ## Outputs
 
-- **W02-PUT-BUFFER** (CICS_QUEUE): Contains the authorization response message sent to the MQ queue.
-- **PENDING-AUTH-SUMMARY** (IMS_SEGMENT): Updated pending authorization summary segment in IMS.
+- **ERROR-LOG** (OTHER): Error details logged via 9500-LOG-ERROR on MQOPEN failure
 
 ## When to Use This Skill
 

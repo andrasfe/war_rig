@@ -5,17 +5,17 @@
 ## Program Header
 
 - **Program ID:** CCPAUERY
-- **File Name:** CCPAUERY.cpy
+- **File Name:** cpy/CCPAUERY.cpy
 - **File Type:** COPYBOOK
 - **Analyzed By:** WAR_RIG
-- **Analyzed At:** 2026-01-28T14:54:50.385976
+- **Analyzed At:** 2026-01-30T19:48:19.986718
 
 ## Purpose
 
-**Summary:** This copybook defines the data structure for an error log record, used for logging errors and warnings within an application. The record includes fields for date, time, application, program, location, error level, subsystem, error codes, message, and event key. It provides a standardized format for capturing error information.
+**Summary:** This COBOL copybook defines the ERROR-LOG-RECORD structure for capturing details of errors in pending authorization processes. It includes fields for timestamp (ERR-DATE, ERR-TIME), application and program identifiers (ERR-APPLICATION, ERR-PROGRAM), error location (ERR-LOCATION), severity level (ERR-LEVEL with 88-level condition names for LOG, INFO, WARNING, CRITICAL), subsystem type (ERR-SUBSYSTEM with 88-levels for APP, CICS, IMS, DB2, MQ, FILE), error codes (ERR-CODE-1, ERR-CODE-2), message text (ERR-MESSAGE), and an event key (ERR-EVENT-KEY). The copybook is licensed under Apache License 2.0 and copyrighted by Amazon.com.
 
-**Business Context:** None
-**Program Type:** COPYBOOK
+**Business Context:** Supports error logging in Amazon's mainframe applications handling pending authorizations, across subsystems like CICS, IMS, DB2, MQ, and files.
+**Program Type:** UTILITY
 
 ## Paragraphs
 

@@ -1,0 +1,4268 @@
+{
+  "version": 1,
+  "saved_at": "2026-01-30T19:52:30.843000",
+  "ticket_count": 165,
+  "current_cycle": 1,
+  "tickets": [
+    {
+      "ticket_id": "mem-000001",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "jcl/LOADPADB.JCL",
+      "program_id": "LOADPADB",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/LOADPADB.JCL",
+        "file_type": "JCL",
+        "size_bytes": 1974,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.708688",
+      "updated_at": "2026-01-30T19:27:37.307537",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000002",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "jcl/DBPAUTP0.jcl",
+      "program_id": "DBPAUTP0",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/DBPAUTP0.jcl",
+        "file_type": "JCL",
+        "size_bytes": 3412,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.709424",
+      "updated_at": "2026-01-30T19:27:48.633564",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000003",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "jcl/UNLDGSAM.JCL",
+      "program_id": "UNLDGSAM",
+      "cycle_number": 1,
+      "worker_id": "scribe-3",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDGSAM.JCL",
+        "file_type": "JCL",
+        "size_bytes": 1996,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.709914",
+      "updated_at": "2026-01-30T19:27:37.696170",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000004",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "jcl/CBPAUP0J.jcl",
+      "program_id": "CBPAUP0J",
+      "cycle_number": 1,
+      "worker_id": "scribe-4",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/CBPAUP0J.jcl",
+        "file_type": "JCL",
+        "size_bytes": 1732,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.710372",
+      "updated_at": "2026-01-30T19:27:20.086798",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000005",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "jcl/UNLDPADB.JCL",
+      "program_id": "UNLDPADB",
+      "cycle_number": 1,
+      "worker_id": "scribe-5",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDPADB.JCL",
+        "file_type": "JCL",
+        "size_bytes": 2626,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.710864",
+      "updated_at": "2026-01-30T19:27:45.548371",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000006",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "cpy-bms/COPAU01.cpy",
+      "program_id": "COPAU01",
+      "cycle_number": 1,
+      "worker_id": "scribe-4",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy-bms/COPAU01.cpy",
+        "file_type": "COPYBOOK",
+        "size_bytes": 27352,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.711376",
+      "updated_at": "2026-01-30T19:27:43.903267",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000007",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "cpy-bms/COPAU00.cpy",
+      "program_id": "COPAU00",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy-bms/COPAU00.cpy",
+        "file_type": "COPYBOOK",
+        "size_bytes": 61372,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.711963",
+      "updated_at": "2026-01-30T19:28:08.531006",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000008",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "ddl/XAUTHFRD.ddl",
+      "program_id": "XAUTHFRD",
+      "cycle_number": 1,
+      "worker_id": "scribe-3",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ddl/XAUTHFRD.ddl",
+        "file_type": "DDL",
+        "size_bytes": 110,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.712578",
+      "updated_at": "2026-01-30T19:27:52.870355",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000009",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "ddl/AUTHFRDS.ddl",
+      "program_id": "AUTHFRDS",
+      "cycle_number": 1,
+      "worker_id": "scribe-4",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ddl/AUTHFRDS.ddl",
+        "file_type": "DDL",
+        "size_bytes": 1351,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.713269",
+      "updated_at": "2026-01-30T19:28:03.613810",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000010",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "bms/COPAU00.bms",
+      "program_id": "COPAU00",
+      "cycle_number": 1,
+      "worker_id": "scribe-5",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/bms/COPAU00.bms",
+        "file_type": "BMS",
+        "size_bytes": 40988,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.714018",
+      "updated_at": "2026-01-30T19:28:13.131168",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000011",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "bms/COPAU01.bms",
+      "program_id": "COPAU01",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/bms/COPAU01.bms",
+        "file_type": "BMS",
+        "size_bytes": 23272,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.714729",
+      "updated_at": "2026-01-30T19:28:38.444815",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000012",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "cbl/PAUDBLOD.CBL",
+      "program_id": "PAUDBLOD",
+      "cycle_number": 1,
+      "worker_id": "scribe-3",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+        "file_type": "COBOL",
+        "size_bytes": 29438,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.715467",
+      "updated_at": "2026-01-30T19:32:38.962062",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000013",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "cbl/COPAUS2C.cbl",
+      "program_id": "COPAUS2C",
+      "cycle_number": 1,
+      "worker_id": "scribe-4",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
+        "file_type": "COBOL",
+        "size_bytes": 19050,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.716221",
+      "updated_at": "2026-01-30T19:28:53.081982",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000014",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "cbl/COPAUA0C.cbl",
+      "program_id": "COPAUA0C",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "file_type": "COBOL",
+        "size_bytes": 81437,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.716859",
+      "updated_at": "2026-01-30T19:43:20.203768",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000015",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "cbl/DBUNLDGS.CBL",
+      "program_id": "DBUNLDGS",
+      "cycle_number": 1,
+      "worker_id": "scribe-5",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "file_type": "COBOL",
+        "size_bytes": 29195,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.717483",
+      "updated_at": "2026-01-30T19:32:35.672793",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000016",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "cbl/CBPAUP0C.cbl",
+      "program_id": "CBPAUP0C",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+        "file_type": "COBOL",
+        "size_bytes": 14832,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.718075",
+      "updated_at": "2026-01-30T19:33:47.153496",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000017",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "cbl/PAUDBUNL.CBL",
+      "program_id": "PAUDBUNL",
+      "cycle_number": 1,
+      "worker_id": "scribe-4",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+        "file_type": "COBOL",
+        "size_bytes": 25226,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.718681",
+      "updated_at": "2026-01-30T19:31:44.702539",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000018",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "cbl/COPAUS1C.cbl",
+      "program_id": "COPAUS1C",
+      "cycle_number": 1,
+      "worker_id": "scribe-4",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "file_type": "COBOL",
+        "size_bytes": 23000,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.719294",
+      "updated_at": "2026-01-30T19:40:06.405229",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000019",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "cbl/COPAUS0C.cbl",
+      "program_id": "COPAUS0C",
+      "cycle_number": 1,
+      "worker_id": "scribe-5",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "file_type": "COBOL",
+        "size_bytes": 44043,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.719921",
+      "updated_at": "2026-01-30T19:45:48.805164",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000020",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "ims/PADFLDBD.DBD",
+      "program_id": "PADFLDBD",
+      "cycle_number": 1,
+      "worker_id": "scribe-3",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PADFLDBD.DBD",
+        "file_type": "IMS",
+        "size_bytes": 1386,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.720569",
+      "updated_at": "2026-01-30T19:32:56.468452",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000021",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "ims/DBPAUTP0.dbd",
+      "program_id": "DBPAUTP0",
+      "cycle_number": 1,
+      "worker_id": "scribe-3",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/DBPAUTP0.dbd",
+        "file_type": "IMS",
+        "size_bytes": 2168,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.721214",
+      "updated_at": "2026-01-30T19:33:15.600265",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000022",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "ims/PSBPAUTB.psb",
+      "program_id": "PSBPAUTB",
+      "cycle_number": 1,
+      "worker_id": "scribe-3",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PSBPAUTB.psb",
+        "file_type": "IMS",
+        "size_bytes": 1144,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.721869",
+      "updated_at": "2026-01-30T19:33:44.023377",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000023",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "ims/PSBPAUTL.psb",
+      "program_id": "PSBPAUTL",
+      "cycle_number": 1,
+      "worker_id": "scribe-3",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PSBPAUTL.psb",
+        "file_type": "IMS",
+        "size_bytes": 1143,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.722538",
+      "updated_at": "2026-01-30T19:34:02.255903",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000024",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "ims/PASFLDBD.DBD",
+      "program_id": "PASFLDBD",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PASFLDBD.DBD",
+        "file_type": "IMS",
+        "size_bytes": 1386,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.723251",
+      "updated_at": "2026-01-30T19:34:04.193363",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000025",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "ims/DLIGSAMP.PSB",
+      "program_id": "DLIGSAMP",
+      "cycle_number": 1,
+      "worker_id": "scribe-3",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/DLIGSAMP.PSB",
+        "file_type": "IMS",
+        "size_bytes": 1103,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.723952",
+      "updated_at": "2026-01-30T19:34:33.387863",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000026",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "ims/DBPAUTX0.dbd",
+      "program_id": "DBPAUTX0",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/DBPAUTX0.dbd",
+        "file_type": "IMS",
+        "size_bytes": 1676,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.724858",
+      "updated_at": "2026-01-30T19:34:55.873119",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000027",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "ims/PAUTBUNL.PSB",
+      "program_id": "PAUTBUNL",
+      "cycle_number": 1,
+      "worker_id": "scribe-3",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PAUTBUNL.PSB",
+        "file_type": "IMS",
+        "size_bytes": 997,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.725788",
+      "updated_at": "2026-01-30T19:34:55.374912",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000028",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "cpy/CCPAURLY.cpy",
+      "program_id": "CCPAURLY",
+      "cycle_number": 1,
+      "worker_id": "scribe-3",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAURLY.cpy",
+        "file_type": "COPYBOOK",
+        "size_bytes": 1492,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.726730",
+      "updated_at": "2026-01-30T19:35:13.152624",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000029",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "cpy/CIPAUSMY.cpy",
+      "program_id": "CIPAUSMY",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CIPAUSMY.cpy",
+        "file_type": "COPYBOOK",
+        "size_bytes": 2050,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.727626",
+      "updated_at": "2026-01-30T19:35:18.223196",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000030",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "cpy/PASFLPCB.CPY",
+      "program_id": "PASFLPCB",
+      "cycle_number": 1,
+      "worker_id": "scribe-3",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/PASFLPCB.CPY",
+        "file_type": "COPYBOOK",
+        "size_bytes": 1334,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.728515",
+      "updated_at": "2026-01-30T19:35:31.206798",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000031",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "cpy/IMSFUNCS.cpy",
+      "program_id": "IMSFUNCS",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/IMSFUNCS.cpy",
+        "file_type": "COPYBOOK",
+        "size_bytes": 1545,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.729418",
+      "updated_at": "2026-01-30T19:35:36.872356",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000032",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "cpy/PAUTBPCB.CPY",
+      "program_id": "PAUTBPCB",
+      "cycle_number": 1,
+      "worker_id": "scribe-3",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/PAUTBPCB.CPY",
+        "file_type": "COPYBOOK",
+        "size_bytes": 1334,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.730213",
+      "updated_at": "2026-01-30T19:35:57.379596",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000033",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "cpy/CIPAUDTY.cpy",
+      "program_id": "CIPAUDTY",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CIPAUDTY.cpy",
+        "file_type": "COPYBOOK",
+        "size_bytes": 3887,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.730991",
+      "updated_at": "2026-01-30T19:35:59.308998",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000034",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "cpy/CCPAURQY.cpy",
+      "program_id": "CCPAURQY",
+      "cycle_number": 1,
+      "worker_id": "scribe-3",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAURQY.cpy",
+        "file_type": "COPYBOOK",
+        "size_bytes": 2448,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.731797",
+      "updated_at": "2026-01-30T19:36:15.304844",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000035",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "cpy/CCPAUERY.cpy",
+      "program_id": "CCPAUERY",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAUERY.cpy",
+        "file_type": "COPYBOOK",
+        "size_bytes": 2779,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.732910",
+      "updated_at": "2026-01-30T19:36:11.867104",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000036",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "cpy/PADFLPCB.CPY",
+      "program_id": "PADFLPCB",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/PADFLPCB.CPY",
+        "file_type": "COPYBOOK",
+        "size_bytes": 1334,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-01-30T19:26:43.733705",
+      "updated_at": "2026-01-30T19:36:38.306810",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000037",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/CBPAUP0J.jcl",
+      "program_id": "CBPAUP0J",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000004",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000004",
+        "scribe_worker": "scribe-4",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/CBPAUP0J.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-30T19:27:20.090605",
+      "updated_at": "2026-01-30T19:27:53.937099",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000038",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/LOADPADB.JCL",
+      "program_id": "LOADPADB",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000001",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000001",
+        "scribe_worker": "scribe-1",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/LOADPADB.JCL",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-30T19:27:37.310944",
+      "updated_at": "2026-01-30T19:28:09.356899",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000039",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/UNLDGSAM.JCL",
+      "program_id": "UNLDGSAM",
+      "cycle_number": 1,
+      "worker_id": "challenger-3",
+      "parent_ticket_id": "mem-000003",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000003",
+        "scribe_worker": "scribe-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDGSAM.JCL",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-30T19:27:37.699632",
+      "updated_at": "2026-01-30T19:28:09.578863",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000040",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy-bms/COPAU01.cpy",
+      "program_id": "COPAU01",
+      "cycle_number": 1,
+      "worker_id": "challenger-4",
+      "parent_ticket_id": "mem-000006",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000006",
+        "scribe_worker": "scribe-4",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy-bms/COPAU01.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:27:43.906067",
+      "updated_at": "2026-01-30T19:28:17.966818",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000041",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/UNLDPADB.JCL",
+      "program_id": "UNLDPADB",
+      "cycle_number": 1,
+      "worker_id": "challenger-5",
+      "parent_ticket_id": "mem-000005",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000005",
+        "scribe_worker": "scribe-5",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDPADB.JCL",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-30T19:27:45.551364",
+      "updated_at": "2026-01-30T19:28:26.185646",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000042",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/DBPAUTP0.jcl",
+      "program_id": "DBPAUTP0",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000002",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000002",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/DBPAUTP0.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-30T19:27:48.636464",
+      "updated_at": "2026-01-30T19:28:36.687931",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000043",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "ddl/XAUTHFRD.ddl",
+      "program_id": "XAUTHFRD",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000008",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000008",
+        "scribe_worker": "scribe-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ddl/XAUTHFRD.ddl",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-30T19:27:52.874280",
+      "updated_at": "2026-01-30T19:28:41.120431",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000044",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "jcl/CBPAUP0J.jcl",
+      "program_id": "CBPAUP0J",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": "mem-000037",
+      "metadata": {
+        "parent_validation_ticket": "mem-000037",
+        "issues_found": [
+          "Inputs section incomplete: omits essential IMS library DDs (DFSRESLB, PROCLIB, DFSSEL) required for program execution.",
+          "Typo in business_rules: 'PSB PAUTB' instead of 'PSBPAUTB' from line 25.",
+          "Unverified SYSIN parameter breakdown may be speculative without IMS/ program-specific confirmation.",
+          "Outputs citations include non-output DUMMY DDs.",
+          "called_programs inaccurately describes SYSIN as direct parameter to CBPAUP0C."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-DCD29721",
+            "section": "paragraphs",
+            "question_type": "COMPLETENESS",
+            "question": "Paragraph 'CBPAUP0J' exists in the source code (per static analysis) but is not documented in the template for jcl/CBPAUP0J.jcl. Please add documentation for this paragraph.",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-1",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/CBPAUP0J.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-30T19:27:53.933262",
+      "updated_at": "2026-01-30T19:38:54.683327",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000045",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "ddl/AUTHFRDS.ddl",
+      "program_id": "AUTHFRDS",
+      "cycle_number": 1,
+      "worker_id": "challenger-3",
+      "parent_ticket_id": "mem-000009",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000009",
+        "scribe_worker": "scribe-4",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ddl/AUTHFRDS.ddl",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-30T19:28:03.616997",
+      "updated_at": "2026-01-30T19:28:35.966994",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000046",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy-bms/COPAU00.cpy",
+      "program_id": "COPAU00",
+      "cycle_number": 1,
+      "worker_id": "challenger-4",
+      "parent_ticket_id": "mem-000007",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000007",
+        "scribe_worker": "scribe-1",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy-bms/COPAU00.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:28:08.533055",
+      "updated_at": "2026-01-30T19:28:58.608583",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000047",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "jcl/LOADPADB.JCL",
+      "program_id": "LOADPADB",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": "mem-000038",
+      "metadata": {
+        "parent_validation_ticket": "mem-000038",
+        "issues_found": [
+          "Business rules completely missing, violating critical section requirement",
+          "Inconsistent database references: PAUTDB (active), PAUTHDB (commented), PAUDBLOD (PARM)",
+          "Missing input DDs: DFSRESLB (31), IMSLOGR (46), IEFRDER (47)",
+          "Data flow shows no writes_to, omitting database load destination",
+          "Vague purpose of DFSRRC00 ('load/reorg') without specific utility mode confirmation",
+          "Paragraph purposes are generic '[Citadel]' placeholders, not descriptive"
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-924C65F9",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Business rules section is empty, but critical sections require at least one with citation. What are the key business rules for this IMS load, such as segment loading order or prerequisites for PAUTDB?",
+            "severity": "BLOCKING",
+            "evidence": [
+              27,
+              36,
+              38
+            ]
+          },
+          {
+            "question_id": "Q-371388AA",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Purpose states 'load or process data into an IMS database' and references PAUTDB/PAUTHDB, but PARM specifies PAUDBLOD (line 27), active inputs use PAUTDB (lines 36/38), and PAUTHDB is commented (lines 40/41). Is PAUDBLOD the target DBD name, and what is the exact function (load vs. reorg)?",
+            "severity": "BLOCKING",
+            "evidence": [
+              27,
+              36,
+              38,
+              40,
+              41
+            ]
+          }
+        ],
+        "challenger_worker": "challenger-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/LOADPADB.JCL",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-30T19:28:09.354905",
+      "updated_at": "2026-01-30T19:37:34.252169",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000048",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "jcl/UNLDGSAM.JCL",
+      "program_id": "UNLDGSAM",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": "mem-000039",
+      "metadata": {
+        "parent_validation_ticket": "mem-000039",
+        "issues_found": [
+          "Business rules section is completely empty, missing critical documentation of PARM logic (line 27).",
+          "Inputs may misclassify GSAM DDs as pure inputs given unload context and DISP=OLD (lines 36-40).",
+          "Dummy DDs (lines 48-49) undocumented in core inputs/outputs sections.",
+          "io_type 'IMS_SEGMENT' potentially inaccurate for dataset-level DDs like DDPAUTP0 (line 42)."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-4A0A4A17",
+            "section": "paragraphs",
+            "question_type": "COMPLETENESS",
+            "question": "Paragraph 'UNLDGSAM' exists in the source code (per static analysis) but is not documented in the template for jcl/UNLDGSAM.JCL. Please add documentation for this paragraph.",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-1862B399",
+            "section": "business_rules",
+            "question_type": "CLARIFICATION",
+            "question": "",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDGSAM.JCL",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-30T19:28:09.577144",
+      "updated_at": "2026-01-30T19:38:12.105212",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000049",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "bms/COPAU00.bms",
+      "program_id": "COPAU00",
+      "cycle_number": 1,
+      "worker_id": "challenger-5",
+      "parent_ticket_id": "mem-000010",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000010",
+        "scribe_worker": "scribe-5",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/bms/COPAU00.bms",
+        "file_type": "BMS"
+      },
+      "created_at": "2026-01-30T19:28:13.133125",
+      "updated_at": "2026-01-30T19:28:55.203000",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000050",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "cpy-bms/COPAU01.cpy",
+      "program_id": "COPAU01",
+      "cycle_number": 1,
+      "worker_id": "scribe-3",
+      "parent_ticket_id": "mem-000040",
+      "metadata": {
+        "parent_validation_ticket": "mem-000040",
+        "issues_found": [
+          "Business rules section is completely empty, violating critical section requirement for at least one cited rule.",
+          "Paragraphs section misidentifies record layouts (COPAU1AI, COPAU1AO) as paragraphs; copybooks define data structures, not executable paragraphs.",
+          "Dead code analysis incorrectly flags COPAU1AI as unused despite inclusion in COPAUS1C.cbl and active redefine usage.",
+          "Inputs/outputs descriptions are incomplete, omitting several fields while using 'etc.'",
+          "Minor typo in inputs: 'MERNAMESI' instead of 'MERNAMEI'."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-2966192E",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-4",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy-bms/COPAU01.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:28:17.963490",
+      "updated_at": "2026-01-30T19:38:21.504090",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000051",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "jcl/UNLDPADB.JCL",
+      "program_id": "UNLDPADB",
+      "cycle_number": 1,
+      "worker_id": "scribe-3",
+      "parent_ticket_id": "mem-000041",
+      "metadata": {
+        "parent_validation_ticket": "mem-000041",
+        "issues_found": [
+          "Inconsistent database naming: 'PAUTDB' in purpose/outputs vs 'PAUTHDB/PAUTHDBX' in source lines 58-59.",
+          "STEP01 incorrectly flagged as dead code in paragraphs and dead_code array; JCL steps execute sequentially.",
+          "error_handling section empty despite presence of SYSUDUMP (67), IMSERR (68), and other diagnostic DDs.",
+          "Paragraph descriptions accurate but STEP01 dead_code reason references 'PERFORMed' (COBOL term inapplicable to JCL).",
+          "Inputs include cleanup DDs (DD1/DD2) as FILE_SEQUENTIAL, potentially misleading as no data I/O occurs."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-6A55D95F",
+            "section": "paragraphs",
+            "question_type": "COMPLETENESS",
+            "question": "Paragraph 'UNLDPADB' exists in the source code (per static analysis) but is not documented in the template for jcl/UNLDPADB.JCL. Please add documentation for this paragraph.",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-FA466583",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "STEP01 in paragraphs and dead_code is marked as dead code ('never PERFORMed or referenced'), but JCL executes steps sequentially without COND parameters. Are you sure this is dead code rather than a standard sequential step?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-5",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDPADB.JCL",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-30T19:28:26.182367",
+      "updated_at": "2026-01-30T19:39:11.479908",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000052",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "jcl/DBPAUTP0.jcl",
+      "program_id": "DBPAUTP0",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": "mem-000042",
+      "metadata": {
+        "parent_validation_ticket": "mem-000042",
+        "issues_found": [
+          "UNLOAD JCL step incorrectly flagged as dead code using COBOL-specific 'PERFORM' logic; JCL steps run sequentially.",
+          "Inputs incomplete: omits essential DD statements for IMS libraries, VSAM samples, RECON datasets, and dummies.",
+          "SYSUT1 misclassified as FILE_SEQUENTIAL input; used solely for pre-unload dataset deletion, no data read.",
+          "data_flow.reads_from incomplete; misses multiple library/recon DD references required for utility.",
+          "dead_code array erroneously includes UNLOAD step."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-91345CCC",
+            "section": "paragraphs",
+            "question_type": "COMPLETENESS",
+            "question": "Paragraph 'DBPAUTP0' exists in the source code (per static analysis) but is not documented in the template for jcl/DBPAUTP0.jcl. Please add documentation for this paragraph.",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-619F39FC",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Why is the UNLOAD step marked as dead code (paragraphs.UNLOAD.is_dead_code=true and dead_code array entry)? JCL steps execute sequentially by default, not via PERFORM statements as in COBOL.",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-1",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/DBPAUTP0.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-30T19:28:36.684586",
+      "updated_at": "2026-01-30T19:39:26.635693",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000053",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "bms/COPAU01.bms",
+      "program_id": "COPAU01",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000011",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000011",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/bms/COPAU01.bms",
+        "file_type": "BMS"
+      },
+      "created_at": "2026-01-30T19:28:38.446898",
+      "updated_at": "2026-01-30T19:29:02.739444",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000054",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cbl/COPAUS2C.cbl",
+      "program_id": "COPAUS2C",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000013",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000013",
+        "scribe_worker": "scribe-4",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-01-30T19:28:53.087596",
+      "updated_at": "2026-01-30T19:30:04.643701",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000055",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "bms/COPAU00.bms",
+      "program_id": "COPAU00",
+      "cycle_number": 1,
+      "worker_id": "scribe-3",
+      "parent_ticket_id": "mem-000049",
+      "metadata": {
+        "parent_validation_ticket": "mem-000049",
+        "issues_found": [
+          "business_rules section is completely empty, missing critical documentation with at least one cited rule (e.g., selection mechanism).",
+          "outputs section is incomplete, listing only 5 fields while dozens of FSET/NORM display fields exist (e.g., balances, counts, full transaction rows).",
+          "open_questions are present but do not address BMS-specific details like generated copybook name.",
+          "paragraphs correctly identified as dead code with reasons, but generic '[Citadel]' purpose placeholder."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-9533DBDD",
+            "section": null,
+            "question_type": "COMPLETENESS",
+            "question": "The business_rules section is empty, but line 501 contains an explicit instruction 'Type ''S'' to View Authorization details from the list', indicating a key business rule for user selection. Why is this not documented with a citation?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-5",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/bms/COPAU00.bms",
+        "file_type": "BMS"
+      },
+      "created_at": "2026-01-30T19:28:55.198191",
+      "updated_at": "2026-01-30T19:40:27.262527",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000056",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "cpy-bms/COPAU00.cpy",
+      "program_id": "COPAU00",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": "mem-000046",
+      "metadata": {
+        "parent_validation_ticket": "mem-000046",
+        "issues_found": [
+          "Business rules section is completely empty, missing at least one rule with citation (critical for approval).",
+          "COPAU0AI incorrectly flagged as dead code despite copybook usage.",
+          "Purpose citations (17, 391) point to non-defining lines (FILLER and a specific field).",
+          "Calling context omits known includer (COPAUS0C.cbl).",
+          "'V' attribute in outputs unclear but already noted in open_questions."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-C0413FA0",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "What about business rules for this map, such as field length validations or required fields for transaction selection (e.g., SEL0001I to SEL0005I)?",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-B18A156B",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Paragraph COPAU0AI is marked as dead code ('never used by any program'), but the copybook COPAU00 is included in COPAUS0C.cbl at line 129, and COPAU0AI is the primary input structure at the start of the copybook. Is this assessment accurate?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-4",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy-bms/COPAU00.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:28:58.603055",
+      "updated_at": "2026-01-30T19:40:09.878262",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000057",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "bms/COPAU01.bms",
+      "program_id": "COPAU01",
+      "cycle_number": 1,
+      "worker_id": "scribe-4",
+      "parent_ticket_id": "mem-000053",
+      "metadata": {
+        "parent_validation_ticket": "mem-000053",
+        "issues_found": [
+          "business_rules section is empty, violating critical section requirement for at least one rule with citation.",
+          "Inputs section assumes only function key inputs, but MODE=INOUT suggests potential for data field inputs without explicit PROT attributes.",
+          "Paragraphs incorrectly flagged as dead code; BMS usage is runtime via CICS commands, not static references.",
+          "data_flow, called_programs, copybooks_used, sql_operations, cics_operations all empty without justification.",
+          "open_questions already note key gaps (calling programs, field modifiability), but not resolved in core sections."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-78FDB523",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "The business_rules section is completely empty, but critical sections require at least one with citation. What business rules govern field population or validation, such as error display in ERRMSG?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-1",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/bms/COPAU01.bms",
+        "file_type": "BMS"
+      },
+      "created_at": "2026-01-30T19:29:02.736472",
+      "updated_at": "2026-01-30T19:40:30.914542",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000058",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cbl/PAUDBUNL.CBL",
+      "program_id": "PAUDBUNL",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000017",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000017",
+        "scribe_worker": "scribe-4",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-01-30T19:31:44.705767",
+      "updated_at": "2026-01-30T19:32:10.350662",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000059",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cbl/DBUNLDGS.CBL",
+      "program_id": "DBUNLDGS",
+      "cycle_number": 1,
+      "worker_id": "challenger-3",
+      "parent_ticket_id": "mem-000015",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000015",
+        "scribe_worker": "scribe-5",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-01-30T19:32:35.676458",
+      "updated_at": "2026-01-30T19:33:12.786504",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000060",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cbl/PAUDBLOD.CBL",
+      "program_id": "PAUDBLOD",
+      "cycle_number": 1,
+      "worker_id": "challenger-5",
+      "parent_ticket_id": "mem-000012",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000012",
+        "scribe_worker": "scribe-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-01-30T19:32:38.965936",
+      "updated_at": "2026-01-30T19:33:11.118641",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000061",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "ims/PADFLDBD.DBD",
+      "program_id": "PADFLDBD",
+      "cycle_number": 1,
+      "worker_id": "challenger-4",
+      "parent_ticket_id": "mem-000020",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000020",
+        "scribe_worker": "scribe-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PADFLDBD.DBD",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-30T19:32:56.471752",
+      "updated_at": "2026-01-30T19:33:27.019119",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000062",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "cbl/PAUDBLOD.CBL",
+      "program_id": "PAUDBLOD",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": "mem-000060",
+      "metadata": {
+        "parent_validation_ticket": "mem-000060",
+        "issues_found": [
+          "Numerous inaccurate citations across sections (e.g., purpose [1,9,11,14,23], inputs INFILE1 [34,57], BR002 [59,63], data_flow writes [60,64]) do not point to relevant code lines.",
+          "copybooks_used empty despite explicit COPY IMSFUNCS (142), CIPAUSMY (149), CIPAUDTY (153), PAUTBPCB (161) defining key structures like PENDING-AUTH-SUMMARY.",
+          "Business rules incomplete: missing child key numeric validation (275), multiple IMS status checks/abends (e.g., 253-262 root insert, 310-314 GU fail).",
+          "Outputs citations imprecise (e.g., IMS [5,61] \u2013 5 license, 61 var decl; actual calls 244,296,321).",
+          "data_flow citations wrong (e.g., reads INFIL1-REC [57] wrong, actual 226; END-ROOT-SEG-FILE [64] wrong, actual 233).",
+          "open_questions outdated: references 'snippet ends at line 70' and 'unshown paragraphs', but full source provided.",
+          "Paragraph PAUDBLOD doc treats PROGRAM-ID (18) as paragraph with calls, but it's not; COPYs are includes, not calls; minor as descriptions accurate overall."
+        ],
+        "challenger_questions": [],
+        "challenger_worker": "challenger-5",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-01-30T19:33:11.115562",
+      "updated_at": "2026-01-30T19:40:09.888322",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000063",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "cbl/DBUNLDGS.CBL",
+      "program_id": "DBUNLDGS",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": "mem-000059",
+      "metadata": {
+        "parent_validation_ticket": "mem-000059",
+        "issues_found": [
+          "FILE-CONTROL SELECTs for OPFILE1/OPFILE2 are commented (26-35), no OPEN/WRITE/CLOSE executed (commented 195-209,340-353), so no sequential file I/O despite record defs at 53-56 and moves at 236/280.",
+          "Purpose citations (1,3,9,11,37) are license/comments, not specific to logic (e.g., MAIN-PARA 164, loop 172-173).",
+          "Data_flow writes/transforms reference OPFIL1-REC/ROOT-SEG-KEY but ignore IMS inserts as primary outputs.",
+          "In 3000-FIND-NEXT-AUTH-DTL (278-279), increments summary counters WS-NO-SUMRY-READ/WS-AUTH-SMRY-PROC-CNT on child reads, inconsistent naming.",
+          "4000-FILE-CLOSE only DISPLAY (339), no CLOSE executed (commented 340+)."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-E6700E6B",
+            "section": "outputs",
+            "question_type": "CLARIFICATION",
+            "question": "Outputs section lists only OPFIL1-REC as FILE_SEQUENTIAL with citation 57 (WS-VARIABLES definition), but line 236 moves data to OPFIL1-REC and line 281 to CHILD-SEG-REC portion of OPFIL2-REC with no executed WRITE statements (commented at 242 and 281); primary outputs are IMS ISRT calls to GSAM PCBs at lines 302 (PASFLPCB parent) and 321 (PADFLPCB child). Does this make the outputs documentation incomplete or incorrect?",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-00EE1116",
+            "section": "copybooks_used",
+            "question_type": "CLARIFICATION",
+            "question": "Copybooks_used is empty [], but code includes COPY IMSFUNCS (136), CIPAUSMY (143), CIPAUDTY (147), PAUTBPCB (154), PASFLPCB (155), PADFLPCB (156). Why missing?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-01-30T19:33:12.782814",
+      "updated_at": "2026-01-30T19:41:59.325278",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000064",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "ims/DBPAUTP0.dbd",
+      "program_id": "DBPAUTP0",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000021",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000021",
+        "scribe_worker": "scribe-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/DBPAUTP0.dbd",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-30T19:33:15.603580",
+      "updated_at": "2026-01-30T19:33:55.445071",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000065",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "ims/PSBPAUTB.psb",
+      "program_id": "PSBPAUTB",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000022",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000022",
+        "scribe_worker": "scribe-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PSBPAUTB.psb",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-30T19:33:44.028521",
+      "updated_at": "2026-01-30T19:34:18.609967",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000066",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cbl/CBPAUP0C.cbl",
+      "program_id": "CBPAUP0C",
+      "cycle_number": 1,
+      "worker_id": "challenger-5",
+      "parent_ticket_id": "mem-000016",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000016",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-01-30T19:33:47.157472",
+      "updated_at": "2026-01-30T19:34:09.230141",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000067",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "ims/DBPAUTP0.dbd",
+      "program_id": "DBPAUTP0",
+      "cycle_number": 1,
+      "worker_id": "scribe-3",
+      "parent_ticket_id": "mem-000064",
+      "metadata": {
+        "parent_validation_ticket": "mem-000064",
+        "issues_found": [
+          "Critical sections (Inputs, Outputs, Business Rules) are empty, despite DBDGEN context and explicit key/hierarchy rules.",
+          "Purpose summary is accurate but incomplete: misses EXIT (line 19), segment POINTER/RULES (lines 28-29), DSG size/scan (line 24).",
+          "Purpose citations omit lines 31-32 for referenced LCHILD/index details.",
+          "No documentation of VSAM dataset specifics beyond name (e.g., DD1=DDPAUTP0)."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-71FCD4B2",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Inputs and outputs are documented as empty arrays, but this is a source input file to the IMS DBDGEN utility (line 39) that generates a DBD control block (lines 17-18). Are inputs and outputs truly none?",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-27A7DEB9",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Business rules section is empty. What about the unique sequence key rules for root segment ACCNTID (line 30, SEQ,U) and child segment PAUT9CTS (line 37, SEQ,U), plus the parent-child hierarchy (line 36)?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-1",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/DBPAUTP0.dbd",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-30T19:33:55.441881",
+      "updated_at": "2026-01-30T19:40:55.369290",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000068",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "ims/PSBPAUTL.psb",
+      "program_id": "PSBPAUTL",
+      "cycle_number": 1,
+      "worker_id": "challenger-3",
+      "parent_ticket_id": "mem-000023",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000023",
+        "scribe_worker": "scribe-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PSBPAUTL.psb",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-30T19:34:02.259288",
+      "updated_at": "2026-01-30T19:34:46.746105",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000069",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "ims/PASFLDBD.DBD",
+      "program_id": "PASFLDBD",
+      "cycle_number": 1,
+      "worker_id": "challenger-4",
+      "parent_ticket_id": "mem-000024",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000024",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PASFLDBD.DBD",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-30T19:34:04.197070",
+      "updated_at": "2026-01-30T19:34:41.135576",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000070",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "cbl/CBPAUP0C.cbl",
+      "program_id": "CBPAUP0C",
+      "cycle_number": 1,
+      "worker_id": "scribe-4",
+      "parent_ticket_id": "mem-000066",
+      "metadata": {
+        "parent_validation_ticket": "mem-000066",
+        "issues_found": [
+          "Business rules have incorrect citations not matching code locations (e.g., BR001 cites WS flag defs instead of IF at 196-200).",
+          "Called programs incorrectly documented as STATIC_CALL; actually COPYBOOKs for IMS layouts (117,121).",
+          "Inputs/Outputs citations inaccurate (e.g., SYSIN cites 55 - counter var; IMS deletes cites 16 - license).",
+          "Missing explicit detail segment input PAUTDTL1 (GNP line 255).",
+          "Copybooks: 'PENDING-AUTH-SUMMARY' cites 90 (flag), but actual COPY CIPAUSMY (117) for summaries, CIPAUDTY (121) for details.",
+          "Paragraph CBPAUP0C description fabricates calls and flow not present in source.",
+          "Open questions claim missing code (e.g., beyond 108), but full source provided resolves them.",
+          "Data flow misses detail reads/writes; transforms accurate but incomplete.",
+          "Outputs 'IMS Deletes' lacks specific DLET calls (310,335)."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-6B3D5342",
+            "section": "business_rules",
+            "question_type": "CLARIFICATION",
+            "question": "Business rule BR001 cites lines 62 and 65 (WS-ERR-FLG and WS-END-OF-AUTHDB-FLAG definitions), but the actual logic for defaulting WS-EXPIRY-DAYS to 5 if P-EXPIRY-DAYS not numeric is at lines 196-200. Why the mismatch?",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-32B6DFEC",
+            "section": "business_rules",
+            "question_type": "CLARIFICATION",
+            "question": "Business rule BR002 cites lines 67 and 68 (WS-MORE-AUTHS-FLAG definition), but defaulting P-CHKP-FREQ to 5 is at lines 201-203. Similarly mismatched for other rules (BR003 cites 27,30 - empty config; BR004 cites 23 - PROGRAM-ID). Are citations inaccurate?",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-5B4A5D84",
+            "section": "called_programs",
+            "question_type": "CLARIFICATION",
+            "question": "Called programs CIPAUSMY and CIPAUDTY listed as STATIC_CALL at line 23 (PROGRAM-ID), but source shows COPY CIPAUSMY (line 117) and COPY CIPAUDTY (line 121) in WORKING-STORAGE for segment layouts, not CALL or PERFORM. Are these copybooks mistaken for called programs?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-5",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-01-30T19:34:09.225925",
+      "updated_at": "2026-01-30T19:42:43.470800",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000071",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "ims/DLIGSAMP.PSB",
+      "program_id": "DLIGSAMP",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000025",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000025",
+        "scribe_worker": "scribe-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/DLIGSAMP.PSB",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-30T19:34:33.391216",
+      "updated_at": "2026-01-30T19:35:03.450428",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000072",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "ims/PSBPAUTL.psb",
+      "program_id": "PSBPAUTL",
+      "cycle_number": 1,
+      "worker_id": "scribe-3",
+      "parent_ticket_id": "mem-000068",
+      "metadata": {
+        "parent_validation_ticket": "mem-000068",
+        "issues_found": [
+          "business_rules section is completely empty, omitting critical details like PROCOPT=L access mode and segment parenting.",
+          "Inputs classify database sense segments (SENSSEG) as 'inputs', which may mislead; they define accessible data structures, not program inputs.",
+          "No documentation of PSBGEN LANG=ASSEM, relevant for application compatibility.",
+          "data_flow is empty despite clear database read access via PROCOPT=L."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-40559D48",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Why is the business_rules section empty? Key access constraints like PROCOPT=L (locate/browse only) should be documented there.",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-4647A01A",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "What about documenting the segment hierarchy rules (PARENT=0 for root, PARENT=PAUTSUM0 for child) in business_rules?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PSBPAUTL.psb",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-30T19:34:46.742745",
+      "updated_at": "2026-01-30T19:41:31.285832",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000073",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "ims/PAUTBUNL.PSB",
+      "program_id": "PAUTBUNL",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000027",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000027",
+        "scribe_worker": "scribe-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PAUTBUNL.PSB",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-30T19:34:55.379724",
+      "updated_at": "2026-01-30T19:35:17.191579",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000074",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "ims/DBPAUTX0.dbd",
+      "program_id": "DBPAUTX0",
+      "cycle_number": 1,
+      "worker_id": "challenger-3",
+      "parent_ticket_id": "mem-000026",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000026",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/DBPAUTX0.dbd",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-30T19:34:55.877008",
+      "updated_at": "2026-01-30T19:35:29.252938",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000075",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "ims/DLIGSAMP.PSB",
+      "program_id": "DLIGSAMP",
+      "cycle_number": 1,
+      "worker_id": "scribe-3",
+      "parent_ticket_id": "mem-000071",
+      "metadata": {
+        "parent_validation_ticket": "mem-000071",
+        "issues_found": [
+          "business_rules section is completely empty, missing at least one rule with citation as required for critical sections.",
+          "purpose program_type 'BATCH' lacks source code evidence.",
+          "inputs io_type 'IMS_SEGMENT' for PAUTBPCB may misrepresent PCB vs. segment access.",
+          "data_flow, called_programs, and copybooks_used are empty with no citations explaining absence."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-1348C130",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "The business_rules section is empty. What business rules govern the PCB access, such as PROCOPT=GOTP allowing random GET UNIQUE on PAUTBPCB and PROCOPT=LS for sequential access on GSAM PCBs?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-1",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/DLIGSAMP.PSB",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-30T19:35:03.447203",
+      "updated_at": "2026-01-30T19:42:46.603951",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000076",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy/CCPAURLY.cpy",
+      "program_id": "CCPAURLY",
+      "cycle_number": 1,
+      "worker_id": "challenger-4",
+      "parent_ticket_id": "mem-000028",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000028",
+        "scribe_worker": "scribe-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAURLY.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:35:13.156884",
+      "updated_at": "2026-01-30T19:35:47.512988",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000077",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "ims/PAUTBUNL.PSB",
+      "program_id": "PAUTBUNL",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": "mem-000073",
+      "metadata": {
+        "parent_validation_ticket": "mem-000073",
+        "issues_found": [
+          "Business rules section is completely empty, missing critical documentation of access controls (PROCOPT, segment sensing) which is required to be SOLID.",
+          "Inputs section description lacks PROCOPT=GOTP and KEYLEN=14 details present in line 18.",
+          "Purpose program_type 'UTILITY' is speculative and not directly supported by cited lines 18-21.",
+          "No business_context provided, leaving purpose incomplete despite open_questions addressing it."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-6E7F92B1",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PAUTBUNL.PSB",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-30T19:35:17.188101",
+      "updated_at": "2026-01-30T19:42:22.410963",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000078",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy/CIPAUSMY.cpy",
+      "program_id": "CIPAUSMY",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000029",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000029",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CIPAUSMY.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:35:18.227468",
+      "updated_at": "2026-01-30T19:35:42.013001",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000079",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "ims/DBPAUTX0.dbd",
+      "program_id": "DBPAUTX0",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": "mem-000074",
+      "metadata": {
+        "parent_validation_ticket": "mem-000074",
+        "issues_found": [
+          "business_rules section empty despite critical structural rules evident in source.",
+          "purpose.program_type 'UTILITY' inaccurate for DBD definition source.",
+          "purpose summary omits FREQ=100000 (line 28), PASSWD=NO (line 18), VERSION= (line 19).",
+          "Outputs classifies dataset as FILE_VSAM 'output' without clarifying DL/I access context.",
+          "No documentation of DD1 in dataset definition (line 23)."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-CB96DA3B",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Why is the business_rules section empty? Critical rules are present, e.g., unique sequential key INDXSEQ (line 29 'U',SEQ), segment frequency=100000 (line 28), logical child via INDEX=ACCNTID (lines 30-31).",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/DBPAUTX0.dbd",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-30T19:35:29.250053",
+      "updated_at": "2026-01-30T19:42:53.035380",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000080",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy/PASFLPCB.CPY",
+      "program_id": "PASFLPCB",
+      "cycle_number": 1,
+      "worker_id": "challenger-3",
+      "parent_ticket_id": "mem-000030",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000030",
+        "scribe_worker": "scribe-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/PASFLPCB.CPY",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:35:31.210495",
+      "updated_at": "2026-01-30T19:36:11.589807",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000081",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy/IMSFUNCS.cpy",
+      "program_id": "IMSFUNCS",
+      "cycle_number": 1,
+      "worker_id": "challenger-5",
+      "parent_ticket_id": "mem-000031",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000031",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/IMSFUNCS.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:35:36.876221",
+      "updated_at": "2026-01-30T19:36:00.709751",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000082",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "cpy/CIPAUSMY.cpy",
+      "program_id": "CIPAUSMY",
+      "cycle_number": 1,
+      "worker_id": "scribe-4",
+      "parent_ticket_id": "mem-000078",
+      "metadata": {
+        "parent_validation_ticket": "mem-000078",
+        "issues_found": [
+          "Incorrect program_type 'UTILITY' for a copybook (line 2).",
+          "Empty inputs/outputs despite defining IMS segment fields (lines 19-31).",
+          "No business rules despite implicit constraints in PIC clauses (lines 19-31).",
+          "Paragraphs section misclassifies data fields as paragraphs and incorrectly flags PA-ACCT-ID as dead code.",
+          "Dead_code analysis overlooks usage via copybook includes in 7 programs."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-63354E06",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Inputs section is empty, but lines 19-31 define the data structure fields used as input for IMS segment storage/retrieval.",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-3785CCED",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Outputs section is empty, but lines 19-31 define fields retrieved as output from the IMS segment.",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-4651284F",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Business rules section is empty, but PIC clauses on lines 19-31 imply data validation rules (e.g., signed COMP-3 for PA-ACCT-ID, OCCURS 5 for PA-ACCOUNT-STATUS).",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CIPAUSMY.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:35:42.007378",
+      "updated_at": "2026-01-30T19:43:13.110235",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000083",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "cpy/CCPAURLY.cpy",
+      "program_id": "CCPAURLY",
+      "cycle_number": 1,
+      "worker_id": "scribe-3",
+      "parent_ticket_id": "mem-000076",
+      "metadata": {
+        "parent_validation_ticket": "mem-000076",
+        "issues_found": [
+          "Factual error: No explicit 'PA-RL' group level-05; fields are independent level-05 items.",
+          "Critical section business_rules completely empty.",
+          "Incorrect program_type 'UTILITY' for a copybook.",
+          "Paragraphs section erroneously treats data fields as procedural paragraphs.",
+          "Dead code detection flawed; ignores copybook inclusion as usage evidence.",
+          "Purpose citations include header comments (1-3) but core content starts at 19."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-499D8FF1",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "The purpose describes a 'level-05 group structure named PA-RL', but lines 19-24 define six individual level-05 fields (PA-RL-CARD-NUM, etc.) with no explicit grouping under a 05 PA-RL level. Where is the PA-RL group defined?",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-7CBF0298",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Business rules section is empty, but critical sections require at least one rule with citation. What business rules or validations apply to fields like PA-RL-APPROVED-AMT (signed numeric)?",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-8CC54147",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Paragraphs section lists data definition items like 'CCPAURLY' and '05:PA-RL-CARD-NUM' as paragraphs with calls and dead code status, but copybooks contain data descriptions, not PROCEDURE DIVISION paragraphs. Is this a misanalysis of static parsing?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-4",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAURLY.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:35:47.510235",
+      "updated_at": "2026-01-30T19:43:13.426445",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000084",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy/PAUTBPCB.CPY",
+      "program_id": "PAUTBPCB",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000032",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000032",
+        "scribe_worker": "scribe-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/PAUTBPCB.CPY",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:35:57.383263",
+      "updated_at": "2026-01-30T19:36:17.110988",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000085",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy/CIPAUDTY.cpy",
+      "program_id": "CIPAUDTY",
+      "cycle_number": 1,
+      "worker_id": "challenger-4",
+      "parent_ticket_id": "mem-000033",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000033",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CIPAUDTY.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:35:59.313328",
+      "updated_at": "2026-01-30T19:36:29.490850",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000086",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "cpy/IMSFUNCS.cpy",
+      "program_id": "IMSFUNCS",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": "mem-000081",
+      "metadata": {
+        "parent_validation_ticket": "mem-000081",
+        "issues_found": [
+          "Incorrect 'program_type': 'SUBROUTINE' in purpose; this is a COPYBOOK defining constants.",
+          "Critical sections (inputs, outputs, business_rules) are empty, lacking description of defined fields and usage rules.",
+          "FUNC-CODES incorrectly flagged as dead code despite copybook inclusions in active programs.",
+          "Paragraphs section misidentifies data structures as paragraphs with vague purposes.",
+          "Purpose summary accurately lists functions but omits exact spacing in values (e.g., 'GU  ' vs 'GU')."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-E34AB981",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "The purpose section states 'program_type': 'SUBROUTINE', but the header specifies 'file_type': 'COPYBOOK' and this is a data definition copybook, not executable code. Is this accurate?",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-9644AC93",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Business rules section is empty, but critical usage rules for IMS functions exist, such as PARMCOUNT value of 4 at line 27. What business rules govern the selection and use of these function codes?",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-D13A0677",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Inputs and outputs sections are empty, but this copybook defines specific data fields (FUNC-GU at line 18, etc.) used as constants in IMS calls. Should these be documented as provided data structures?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-5",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/IMSFUNCS.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:36:00.706721",
+      "updated_at": "2026-01-30T19:43:22.896697",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000087",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "cpy/PASFLPCB.CPY",
+      "program_id": "PASFLPCB",
+      "cycle_number": 1,
+      "worker_id": "scribe-4",
+      "parent_ticket_id": "mem-000080",
+      "metadata": {
+        "parent_validation_ticket": "mem-000080",
+        "issues_found": [
+          "Incorrect 'program_type': 'UTILITY' in purpose; copybooks are not programs.",
+          "Empty inputs and outputs fail to describe PCB fields used in IMS navigation.",
+          "Empty business_rules section lacks at least one cited rule, violating critical requirements.",
+          "Paragraphs misclassifies level-01 record layout as a 'paragraph'; incorrect citations and contradictory dead code status.",
+          "Dead_code marked true despite documented inclusion in DBUNLDGS.CBL.",
+          "Purpose summary omits FILLER field at line 22."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-04FBB831",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Inputs and outputs sections are empty. Should the PCB fields like PASFL-DBDNAME (line 18) and PASFL-PCB-STATUS (line 20), which are used in IMS DL/I calls, be documented here as structure components?",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-A3DB9723",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Business rules section is empty, which is critical. What rules apply to fields like PASFL-PCB-PROCOPT (line 21) or PASFL-PCB-STATUS (line 20) in IMS processing?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/PASFLPCB.CPY",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:36:11.584794",
+      "updated_at": "2026-01-30T19:44:07.783908",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000088",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy/CCPAUERY.cpy",
+      "program_id": "CCPAUERY",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000035",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000035",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAUERY.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:36:11.871259",
+      "updated_at": "2026-01-30T19:36:55.386973",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000089",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy/CCPAURQY.cpy",
+      "program_id": "CCPAURQY",
+      "cycle_number": 1,
+      "worker_id": "challenger-3",
+      "parent_ticket_id": "mem-000034",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000034",
+        "scribe_worker": "scribe-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAURQY.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:36:15.309107",
+      "updated_at": "2026-01-30T19:36:41.311891",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000090",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "cpy/PAUTBPCB.CPY",
+      "program_id": "PAUTBPCB",
+      "cycle_number": 1,
+      "worker_id": "scribe-3",
+      "parent_ticket_id": "mem-000084",
+      "metadata": {
+        "parent_validation_ticket": "mem-000084",
+        "issues_found": [
+          "Inputs and Outputs sections are empty, omitting standard IMS PCB field directions (e.g., PROCOPT input, STATUS output).",
+          "Business Rules empty, missing critical IMS PCB usage rules.",
+          "Paragraphs section incorrectly classifies record layout as paragraph; wrong citation [1,1] instead of 17; contradicts incoming_calls by marking dead.",
+          "program_type 'SUBROUTINE' inaccurate for a copybook with no executable code.",
+          "Purpose citations skip line 22 (FILLER), though not critical."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-418512AF",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "What about the input fields like PAUT-PCB-PROCOPT at line 21, which specifies IMS processing options provided by the program?",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-E8636720",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "What about the output fields like PAUT-PCB-STATUS at line 20, which returns IMS status codes to the program?",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-2FF95483",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "What business rules govern the use of this PCB, such as valid status codes in PAUT-PCB-STATUS (line 20) or how PAUT-KEYFB (line 26) is populated by IMS?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-1",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/PAUTBPCB.CPY",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:36:17.106958",
+      "updated_at": "2026-01-30T19:44:17.489005",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000091",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "cpy/CIPAUDTY.cpy",
+      "program_id": "CIPAUDTY",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": "mem-000085",
+      "metadata": {
+        "parent_validation_ticket": "mem-000085",
+        "issues_found": [
+          "Incorrect program_type 'UTILITY' in purpose; it's an IMS segment copybook (lines 1-3).",
+          "Field name inconsistency in BR006/BR007: 'PA-FRAUD' vs actual 'PA-AUTH-FRAUD' (line 50).",
+          "Inputs and Outputs completely empty despite defining IMS segment structure (line 19).",
+          "Paragraphs misclassifies the entire copybook as a 'paragraph' with null summary.",
+          "No documentation of FILLER field (line 54) or full field list beyond summary."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-443C0E2C",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Purpose documents program_type as 'UTILITY', but lines 1-3 and 19 describe it as an IMS segment data structure copybook, not a utility program. Is this accurate?",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-D86CD001",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Business rules BR006 and BR007 use condition 'PA-FRAUD = 'F'' and 'PA-FRAUD = 'R'', but line 50 defines the field as PA-AUTH-FRAUD PIC X(01) with 88-levels at lines 51-52. Does this mismatch represent an error?",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-D805E54E",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Inputs section is empty, but this copybook defines the primary data structure PA-AUTHORIZATION-KEY (line 19) and fields like PA-CARD-NUM (line 24) used as input for IMS segment storage/retrieval. Should inputs document the structure/fields?",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-8266F8B0",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Outputs section is empty, but the structure supports IMS segment output including fields like PA-MATCH-STATUS (line 45) and PA-TRANSACTION-AMT (line 34). Should outputs reference these?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-4",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CIPAUDTY.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:36:29.487004",
+      "updated_at": "2026-01-30T19:43:48.563230",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000092",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy/PADFLPCB.CPY",
+      "program_id": "PADFLPCB",
+      "cycle_number": 1,
+      "worker_id": "challenger-5",
+      "parent_ticket_id": "mem-000036",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000036",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/PADFLPCB.CPY",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:36:38.311704",
+      "updated_at": "2026-01-30T19:36:59.444309",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000093",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "cpy/CCPAURQY.cpy",
+      "program_id": "CCPAURQY",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": "mem-000089",
+      "metadata": {
+        "parent_validation_ticket": "mem-000089",
+        "issues_found": [
+          "program_type incorrectly set to 'UTILITY' in purpose; copybooks are data definitions, not programs.",
+          "Inputs and outputs empty despite defining 18 level 05 fields (lines 19-36) critical for payment authorization.",
+          "Business rules empty; data PIC clauses imply validation rules (e.g., numeric fields).",
+          "Paragraphs misclassify data items as procedural paragraphs.",
+          "Dead code flags only one field; usage in COPAUA0C.cbl suggests further analysis needed.",
+          "No fields or structure documented explicitly; relies on open_questions."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-FAFAC0A5",
+            "section": "inputs",
+            "question_type": "CLARIFICATION",
+            "question": "What about documenting the defined fields (lines 19-36) in inputs or outputs, as they represent the data structure used for pending authorization requests?",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-D15E621B",
+            "section": "business_rules",
+            "question_type": "CLARIFICATION",
+            "question": "What about the error handling or business rules for fields like PA-RQ-PROCESSING-CODE (PIC 9(06) at line 26) or PA-RQ-TRANSACTION-AMT (PIC +9(10).99 at line 27)?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAURQY.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:36:41.306521",
+      "updated_at": "2026-01-30T19:43:52.582364",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000094",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "cpy/CCPAUERY.cpy",
+      "program_id": "CCPAUERY",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": "mem-000088",
+      "metadata": {
+        "parent_validation_ticket": "mem-000088",
+        "issues_found": [
+          "Paragraphs incorrectly classifies copybook elements (header and level 01 record) as executable paragraphs",
+          "Dead code analysis wrongly flags ERROR-LOG-RECORD as unused despite copybook inclusion in other programs",
+          "Inputs and Outputs empty despite defining a complete record structure for error logging",
+          "Program_type 'UTILITY' inappropriate for a non-executable copybook",
+          "Field PIC sizes and precise formats not detailed beyond summary"
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-B14B295D",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Paragraphs section lists 'CCPAUERY' and 'ERROR-LOG-RECORD' as paragraphs with citations [1,1], but line 1 is a comment header and line 19 defines a level 01 record structure, not PROCEDURE DIVISION paragraphs. Is this accurate for a copybook?",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-40B5D181",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "ERROR-LOG-RECORD is marked as dead code ('never used by any program') in paragraphs and dead_code sections, but the copybook CCPAUERY.cpy has incoming_calls from COPAUA0C.cbl. Does this contradict the usage evidence?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAUERY.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:36:55.382730",
+      "updated_at": "2026-01-30T19:44:21.638979",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000095",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/LOADPADB.JCL",
+      "program_id": "LOADPADB",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000047",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000047",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/LOADPADB.JCL",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-30T19:37:34.257295",
+      "updated_at": "2026-01-30T19:37:58.397083",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000096",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "jcl/LOADPADB.JCL",
+      "program_id": "LOADPADB",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": "mem-000095",
+      "metadata": {
+        "parent_validation_ticket": "mem-000095",
+        "issues_found": [
+          "Inputs incomplete: DFSRESLB (line 31) not listed, though referenced in business_rules BR003.",
+          "Inputs/Outputs incomplete: DFSVSAMP (44-45), IMSLOGR (46), IEFRDER (47) DDs undocumented.",
+          "Outputs incomplete: IMSERR (line 50) SYSOUT=* missing, despite mentions elsewhere.",
+          "All citations verified accurate against source lines."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-F0CF1B11",
+            "section": "paragraphs",
+            "question_type": "COMPLETENESS",
+            "question": "Paragraph 'LOADPADB' exists in the source code (per static analysis) but is not documented in the template for jcl/LOADPADB.JCL. Please add documentation for this paragraph.",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-1",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/LOADPADB.JCL",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-30T19:37:58.390959",
+      "updated_at": "2026-01-30T19:44:41.808286",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000097",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/UNLDGSAM.JCL",
+      "program_id": "UNLDGSAM",
+      "cycle_number": 1,
+      "worker_id": "challenger-3",
+      "parent_ticket_id": "mem-000048",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000048",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDGSAM.JCL",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-30T19:38:12.109628",
+      "updated_at": "2026-01-30T19:38:46.994136",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000098",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy-bms/COPAU01.cpy",
+      "program_id": "COPAU01",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000050",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000050",
+        "scribe_worker": "scribe-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy-bms/COPAU01.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:38:21.508378",
+      "updated_at": "2026-01-30T19:38:55.301461",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000099",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "jcl/UNLDGSAM.JCL",
+      "program_id": "UNLDGSAM",
+      "cycle_number": 1,
+      "worker_id": "scribe-4",
+      "parent_ticket_id": "mem-000097",
+      "metadata": {
+        "parent_validation_ticket": "mem-000097",
+        "issues_found": [
+          "business_rules section is completely empty, missing critical documentation of PARM-enforced rules (line 27).",
+          "inputs omits STEPLIB (28-30) and DFSRESLB (31), which are necessary library inputs.",
+          "data_flow reads_from incomplete, missing several DD references like IMS (33-34) and DFSVSAMP (46-47).",
+          "Purpose hedges on 'unloading or recovery' without precise DFSRRC00 function clarification.",
+          "DISP=(OLD,KEEP,KEEP) for GSAM inputs (37,40) simplified to 'OLD disposition' without noting retention."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-CA3FEDF3",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "The business_rules section is empty, but line 27 defines critical PARM='DLI,DBUNLDGS,DLIGSAMP,,,,,,,,,,,N' which enforces business rules such as DLI access mode, target DBD (DBUNLDGS), PSB (DLIGSAMP), and other utility controls. Why is this not documented as at least one business rule?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDGSAM.JCL",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-30T19:38:46.990717",
+      "updated_at": "2026-01-30T19:44:54.528662",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000100",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/CBPAUP0J.jcl",
+      "program_id": "CBPAUP0J",
+      "cycle_number": 1,
+      "worker_id": "challenger-3",
+      "parent_ticket_id": "mem-000044",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000044",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/CBPAUP0J.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-30T19:38:54.688091",
+      "updated_at": "2026-01-30T19:39:16.673168",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000101",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "cpy-bms/COPAU01.cpy",
+      "program_id": "COPAU01",
+      "cycle_number": 1,
+      "worker_id": "scribe-3",
+      "parent_ticket_id": "mem-000098",
+      "metadata": {
+        "parent_validation_ticket": "mem-000098",
+        "issues_found": [
+          "business_rules is empty, lacking any rules with citations; critical section.",
+          "paragraphs misidentifies 01-level records as paragraphs; COPAU1AI wrongly flagged as dead code despite copybook usage.",
+          "dead_code incorrectly lists COPAU1AI (line 17) as unused.",
+          "calling_context omits known inclusion by COPAUS1C.cbl from static analysis.",
+          "Minor inconsistencies in filler descriptions for inputs/outputs."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-43929E46",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy-bms/COPAU01.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:38:55.297999",
+      "updated_at": "2026-01-30T19:44:31.530856",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000102",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/UNLDPADB.JCL",
+      "program_id": "UNLDPADB",
+      "cycle_number": 1,
+      "worker_id": "challenger-5",
+      "parent_ticket_id": "mem-000051",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000051",
+        "scribe_worker": "scribe-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDPADB.JCL",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-30T19:39:11.484708",
+      "updated_at": "2026-01-30T19:39:31.667383",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000103",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/DBPAUTP0.jcl",
+      "program_id": "DBPAUTP0",
+      "cycle_number": 1,
+      "worker_id": "challenger-3",
+      "parent_ticket_id": "mem-000052",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000052",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/DBPAUTP0.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-30T19:39:26.639660",
+      "updated_at": "2026-01-30T19:39:59.516813",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000104",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "jcl/UNLDPADB.JCL",
+      "program_id": "UNLDPADB",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": "mem-000102",
+      "metadata": {
+        "parent_validation_ticket": "mem-000102",
+        "issues_found": [
+          "business_rules array is empty, missing critical documentation on PARM-driven unload logic (line 39).",
+          "Paragraph STEP01 incorrectly flagged as dead_code (is_dead_code: true) despite being a sequential JCL EXEC step (line 38).",
+          "Inputs include DD1/DD2 as FILE_SEQUENTIAL inputs, but they are deletion targets with no read access.",
+          "Data_flow fields_used are vague 'UNKNOWN (all root segments)' without segment details.",
+          "Paragraph STEP01 outgoing_calls correctly lists DDs but purpose claims 'is_dead_code: true' contradicting execution flow.",
+          "Dead_code array lists STEP01 despite sequential execution."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-D32177BD",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-8BA7E577",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-5",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDPADB.JCL",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-30T19:39:31.663845",
+      "updated_at": "2026-01-30T19:44:59.004301",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000105",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "jcl/DBPAUTP0.jcl",
+      "program_id": "DBPAUTP0",
+      "cycle_number": 1,
+      "worker_id": "scribe-3",
+      "parent_ticket_id": "mem-000103",
+      "metadata": {
+        "parent_validation_ticket": "mem-000103",
+        "issues_found": [
+          "UNLOAD step incorrectly flagged as dead code in paragraphs and dead_code array; JCL steps execute sequentially (no COND parameters on lines 7 or 15).",
+          "Inputs section incomplete: omits STEPLIB, DFSRESLB, IMS (PSBLIB/DBDLIB), DFSWRK01, DFSSRT01 DDs essential for IMS utility execution.",
+          "Outputs section incomplete: omits SYSPRINT and SYSUDUMP, which capture messages and dumps.",
+          "SYSUT1 documented as input but primarily used for deletion of the prospective output DSN.",
+          "Data_flow reads_from vaguely references 'DBPAUTP0 (IMS database via DBD libs)' without distinguishing DDPAUTP0 library (line 31) from DBD name in PARM (line 16).",
+          "Paragraphs.UNLOAD citations include line 47 (irrelevant version comment)."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-C5C85348",
+            "section": "paragraphs",
+            "question_type": "COMPLETENESS",
+            "question": "Paragraph 'DBPAUTP0' exists in the source code (per static analysis) but is not documented in the template for jcl/DBPAUTP0.jcl. Please add documentation for this paragraph.",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-CD57D39D",
+            "section": "paragraphs",
+            "question_type": "CLARIFICATION",
+            "question": "Are you sure the UNLOAD paragraph/step is dead code (paragraphs.UNLOAD.is_dead_code=true and dead_code array)? JCL job steps like STEPDEL (line 7) and UNLOAD (line 15) execute sequentially with no COND parameters to skip UNLOAD.",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/DBPAUTP0.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-30T19:39:59.511795",
+      "updated_at": "2026-01-30T19:45:19.072211",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000106",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cbl/COPAUS1C.cbl",
+      "program_id": "COPAUS1C",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000018",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000018",
+        "scribe_worker": "scribe-4",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-01-30T19:40:06.410955",
+      "updated_at": "2026-01-30T19:40:42.964824",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000107",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy-bms/COPAU00.cpy",
+      "program_id": "COPAU00",
+      "cycle_number": 1,
+      "worker_id": "challenger-4",
+      "parent_ticket_id": "mem-000056",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000056",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy-bms/COPAU00.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:40:09.881191",
+      "updated_at": "2026-01-30T19:40:37.377542",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000108",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cbl/PAUDBLOD.CBL",
+      "program_id": "PAUDBLOD",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000062",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000062",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-01-30T19:40:09.891223",
+      "updated_at": "2026-01-30T19:40:53.202688",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000109",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "bms/COPAU00.bms",
+      "program_id": "COPAU00",
+      "cycle_number": 1,
+      "worker_id": "challenger-3",
+      "parent_ticket_id": "mem-000055",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000055",
+        "scribe_worker": "scribe-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/bms/COPAU00.bms",
+        "file_type": "BMS"
+      },
+      "created_at": "2026-01-30T19:40:27.265346",
+      "updated_at": "2026-01-30T19:41:14.290137",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000110",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "bms/COPAU01.bms",
+      "program_id": "COPAU01",
+      "cycle_number": 1,
+      "worker_id": "challenger-5",
+      "parent_ticket_id": "mem-000057",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000057",
+        "scribe_worker": "scribe-4",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/bms/COPAU01.bms",
+        "file_type": "BMS"
+      },
+      "created_at": "2026-01-30T19:40:30.917400",
+      "updated_at": "2026-01-30T19:41:12.250941",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000111",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "cbl/COPAUS1C.cbl",
+      "program_id": "COPAUS1C",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": "mem-000106",
+      "metadata": {
+        "parent_validation_ticket": "mem-000106",
+        "issues_found": [
+          "Factual error in inputs: COPAU1AO documented as receive map, but code receives into COPAU1AI (line 403).",
+          "Paragraphs section riddled with errors: COPY statements misrepresented as program calls (e.g., line 109 COPY as call), incorrect citations (e.g., POPULATE-AUTH-DETAILS [1,68]), and speculative purposes referencing non-existent logic.",
+          "Inaccurate citations throughout, e.g., purpose [1,3,11,26,76] not directly tied to function; data_flow [8,42] points to comments.",
+          "Missing IMS-specific error handling in business_rules/error_handling, e.g., DLI status evaluation in READ-AUTH-RECORD (lines 445-488).",
+          "Data_flow transforms cite non-existent lines, e.g., [59,77,116] for CDEMO-ACCT-ID to WS-ACCT-ID (actual lines 213,231,270)."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-B79BA871",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "In the 'inputs' section, COPAU1AO is described as the 'Receive map for authorization view screen inputs' with citations [56,57,58], but line 403 shows EXEC CICS RECEIVE INTO(COPAU1AI) and COPAU1AO is used exclusively for SEND FROM (e.g., lines 377,392). Does the documentation incorrectly name the input map?",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-EAE897A9",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "The 'paragraphs' section for COPAUS1C lists multiple 'calls' to programs like COCOM01Y (line 109), COPAU01 (122), etc., documented as 'includes' with specific lines, but these are COPY statements (lines 109,122,126,129,132,135,142,146,148,149), not PERFORM, LINK, or XCTL. Why are COPYs documented as program calls?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-1",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-01-30T19:40:42.958793",
+      "updated_at": "2026-01-30T19:49:22.101314",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000112",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "cbl/PAUDBLOD.CBL",
+      "program_id": "PAUDBLOD",
+      "cycle_number": 1,
+      "worker_id": "scribe-4",
+      "parent_ticket_id": "mem-000108",
+      "metadata": {
+        "parent_validation_ticket": "mem-000108",
+        "issues_found": [
+          "Misrepresentation of COPY statements as 'calls' or 'includes' in paragraphs (e.g., PAUDBLOD outgoing_calls).",
+          "Empty copybooks_used despite multiple COPY statements defining critical structures like PENDING-AUTH-SUMMARY.",
+          "Inaccurate line citations in outputs console (e.g., 7,29,38,46,66 not DISPLAYs).",
+          "Incomplete business rules omitting child file processing and IMS status validation/abend logic.",
+          "Fabricated or misidentified 'PAUDBLOD' paragraph; no such PD paragraph exists.",
+          "Paragraph descriptions for exits (e.g., 1000-EXIT, 2000-EXIT) overstate purpose as 'best practice' without code evidence; they are simple EXIT.",
+          "Unused counters initialized (lines 64-69 WS-*-CNT) not documented in data_flow or business_rules.",
+          "Open_questions reference 'unshown paragraphs' and 'snippet ends at 70', but full source provided up to 370."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-4C288825",
+            "section": "business_rules",
+            "question_type": "CLARIFICATION",
+            "question": "",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-01-30T19:40:53.195778",
+      "updated_at": "2026-01-30T19:47:48.712491",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000113",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "ims/DBPAUTP0.dbd",
+      "program_id": "DBPAUTP0",
+      "cycle_number": 1,
+      "worker_id": "challenger-4",
+      "parent_ticket_id": "mem-000067",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000067",
+        "scribe_worker": "scribe-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/DBPAUTP0.dbd",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-30T19:40:55.375540",
+      "updated_at": "2026-01-30T19:41:34.245857",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000114",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "bms/COPAU01.bms",
+      "program_id": "COPAU01",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": "mem-000110",
+      "metadata": {
+        "parent_validation_ticket": "mem-000110",
+        "issues_found": [
+          "Paragraphs section uses generic '[Citadel]' purposes instead of specific descriptions of mapset/map definitions.",
+          "Duplicate citations in paragraphs section.",
+          "Missing coverage of DFHMSD control options (ALARM, FREEKB, MODE=INOUT) which affect runtime behavior.",
+          "Function key instructions in footer not addressed in any section.",
+          "Potential contradiction between dead code flags and purpose assuming operational use.",
+          "Inputs/outputs examples incomplete; many fields omitted from descriptions."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-7F05ACBA",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Paragraphs section lists COPAU01 and COPAU1A as dead code never referenced, yet purpose describes it as actively used in CardDemo for terminal interactions (citing lines 2,19,26,78). Does this create a factual inconsistency?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-5",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/bms/COPAU01.bms",
+        "file_type": "BMS"
+      },
+      "created_at": "2026-01-30T19:41:12.246645",
+      "updated_at": "2026-01-30T19:45:36.756902",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000115",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "ims/PSBPAUTL.psb",
+      "program_id": "PSBPAUTL",
+      "cycle_number": 1,
+      "worker_id": "challenger-5",
+      "parent_ticket_id": "mem-000072",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000072",
+        "scribe_worker": "scribe-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PSBPAUTL.psb",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-30T19:41:31.290338",
+      "updated_at": "2026-01-30T19:41:50.811454",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000116",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cbl/DBUNLDGS.CBL",
+      "program_id": "DBUNLDGS",
+      "cycle_number": 1,
+      "worker_id": "challenger-4",
+      "parent_ticket_id": "mem-000063",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000063",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-01-30T19:41:59.329669",
+      "updated_at": "2026-01-30T19:43:04.939007",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000117",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "ims/PAUTBUNL.PSB",
+      "program_id": "PAUTBUNL",
+      "cycle_number": 1,
+      "worker_id": "challenger-5",
+      "parent_ticket_id": "mem-000077",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000077",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PAUTBUNL.PSB",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-30T19:42:22.416788",
+      "updated_at": "2026-01-30T19:42:59.036208",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000118",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cbl/CBPAUP0C.cbl",
+      "program_id": "CBPAUP0C",
+      "cycle_number": 1,
+      "worker_id": "challenger-3",
+      "parent_ticket_id": "mem-000070",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000070",
+        "scribe_worker": "scribe-4",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-01-30T19:42:43.475358",
+      "updated_at": "2026-01-30T19:43:24.355587",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000119",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "ims/DLIGSAMP.PSB",
+      "program_id": "DLIGSAMP",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000075",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000075",
+        "scribe_worker": "scribe-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/DLIGSAMP.PSB",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-30T19:42:46.608445",
+      "updated_at": "2026-01-30T19:43:21.143932",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000120",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "ims/DBPAUTX0.dbd",
+      "program_id": "DBPAUTX0",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000079",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000079",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/DBPAUTX0.dbd",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-30T19:42:53.041399",
+      "updated_at": "2026-01-30T19:43:31.846773",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000121",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "cbl/DBUNLDGS.CBL",
+      "program_id": "DBUNLDGS",
+      "cycle_number": 1,
+      "worker_id": "scribe-3",
+      "parent_ticket_id": "mem-000116",
+      "metadata": {
+        "parent_validation_ticket": "mem-000116",
+        "issues_found": [
+          "data_flow.transforms inaccurately describes ROOT-SEG-KEY as 'GSAM root key field'; it is moved to a WS legacy field (OPFIL2-REC) but unused in actual ISRT call which uses segment directly.",
+          "Child processing (3000-FIND-NEXT-AUTH-DTL) increments root summary counters (line 278) instead of detail counters; noted in para summary but missing from business_rules or data_flow.",
+          "error_handling conditions use ambiguous phrasing e.g. 'NOT SPACES OR 'GE'' which does not clearly match code logic NOT EQUAL TO SPACES AND 'GE'.",
+          "Counters tracked (e.g. lines 234,278) but never displayed or output, contradicting 'tracking counts' in purpose without qualification.",
+          "Defined detail counters WS-NO-DTL-READ/DELETED (72,73) are dead code, not mentioned despite open_questions on intermediates."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-2C1D6FA8",
+            "section": "paragraphs",
+            "question_type": "COMPLETENESS",
+            "question": "Paragraph 'DBUNLDGS' exists in the source code (per static analysis) but is not documented in the template for cbl/DBUNLDGS.CBL. Please add documentation for this paragraph.",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-1FB087FE",
+            "section": "paragraphs",
+            "question_type": "COMPLETENESS",
+            "question": "Paragraph '9999-EXIT' exists in the source code (per static analysis) but is not documented in the template for cbl/DBUNLDGS.CBL. Please add documentation for this paragraph.",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-4",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-01-30T19:43:04.933683",
+      "updated_at": "2026-01-30T19:48:53.341287",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000122",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy/CIPAUSMY.cpy",
+      "program_id": "CIPAUSMY",
+      "cycle_number": 1,
+      "worker_id": "challenger-4",
+      "parent_ticket_id": "mem-000082",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000082",
+        "scribe_worker": "scribe-4",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CIPAUSMY.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:43:13.116538",
+      "updated_at": "2026-01-30T19:43:39.726685",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000123",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy/CCPAURLY.cpy",
+      "program_id": "CCPAURLY",
+      "cycle_number": 1,
+      "worker_id": "challenger-5",
+      "parent_ticket_id": "mem-000083",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000083",
+        "scribe_worker": "scribe-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAURLY.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:43:13.430938",
+      "updated_at": "2026-01-30T19:43:51.295883",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000124",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cbl/COPAUA0C.cbl",
+      "program_id": "COPAUA0C",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000014",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000014",
+        "scribe_worker": "scribe-1",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-01-30T19:43:20.213203",
+      "updated_at": "2026-01-30T19:43:46.626195",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000125",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "ims/DLIGSAMP.PSB",
+      "program_id": "DLIGSAMP",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": "mem-000119",
+      "metadata": {
+        "parent_validation_ticket": "mem-000119",
+        "issues_found": [
+          "io_type 'IMS_SEGMENT' incorrectly applied to PCB definitions rather than segments",
+          "program_type 'BATCH' lacks supporting evidence from source code",
+          "PSBGEN details (LANG=COBOL, PSBNAME=DLIGSAMP, CMPAT=NO) on line 23 omitted",
+          "data_flow fields_used lists segment names instead of actual fields"
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-79DA4F6B",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-1",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/DLIGSAMP.PSB",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-30T19:43:21.137616",
+      "updated_at": "2026-01-30T19:46:07.379455",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000126",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy/IMSFUNCS.cpy",
+      "program_id": "IMSFUNCS",
+      "cycle_number": 1,
+      "worker_id": "challenger-3",
+      "parent_ticket_id": "mem-000086",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000086",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/IMSFUNCS.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:43:22.901554",
+      "updated_at": "2026-01-30T19:43:56.923679",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000127",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "cbl/CBPAUP0C.cbl",
+      "program_id": "CBPAUP0C",
+      "cycle_number": 1,
+      "worker_id": "scribe-5",
+      "parent_ticket_id": "mem-000118",
+      "metadata": {
+        "parent_validation_ticket": "mem-000118",
+        "issues_found": [
+          "Outputs incorrectly claim database updates to PAUTSUM0 counters; adjustments at 287-292 are memory-only and lost for non-deleted summaries (no GU/ISRT before next GN at 165).",
+          "Data flow 'writes_to' lists counter fields for PAUTSUM0 citing memory ops; no actual DB writes.",
+          "Purpose summary implies persistent 'adjusts counters in parent summary segments', but changes not saved unless deleted.",
+          "BR007 accurately flags code bug at 156 (duplicated condition ignores declined count).",
+          "ERR-FLG-ON in main loop (142) is dead/unused as noted."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-D1341790",
+            "section": "paragraphs",
+            "question_type": "COMPLETENESS",
+            "question": "Paragraph 'CBPAUP0C' exists in the source code (per static analysis) but is not documented in the template for cbl/CBPAUP0C.cbl. Please add documentation for this paragraph.",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-3FD8E3CE",
+            "section": "paragraphs",
+            "question_type": "COMPLETENESS",
+            "question": "Paragraph '9999-EXIT' exists in the source code (per static analysis) but is not documented in the template for cbl/CBPAUP0C.cbl. Please add documentation for this paragraph.",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-B71FBD44",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "In outputs for PAUTSUM0, you state 'updates counters in summaries during expiry checks' citing 287,289,291, but lines 287-292 perform in-memory subtractions on PENDING-AUTH-SUMMARY without any IMS GU/ISRT/CHG call to persist changes to non-deleted summaries. Where is the write-back call for updated counters?",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-AFE00417",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "What about persistence of adjusted counters (PA-APPROVED-AUTH-CNT etc.) in non-deleted PAUTSUM0 segments after processing expired details? Code adjusts at line 287+ but performs no update call before next GN at line 165.",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-8B447F2F",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Are you sure summary counters are 'updated' as an output (implying database persistence), given no IMS update call exists outside DLET for zero-count cases?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-01-30T19:43:24.350100",
+      "updated_at": "2026-01-30T19:48:18.181596",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000128",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "cpy/CIPAUSMY.cpy",
+      "program_id": "CIPAUSMY",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": "mem-000122",
+      "metadata": {
+        "parent_validation_ticket": "mem-000122",
+        "issues_found": [
+          "program_type 'UTILITY' in purpose is inaccurate for a COPYBOOK.",
+          "PA-AUTH-STATUS (line 21) omitted from inputs/outputs and business rules.",
+          "FILLER (line 31) cited but not explained.",
+          "Paragraphs section treats data fields like '05:PA-ACCT-ID' as paragraphs and incorrectly flags as dead code.",
+          "Dead_code array incorrectly identifies used field PA-ACCT-ID as unused.",
+          "No total segment length or layout summary (e.g., compute from PIC clauses)."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-814B26CB",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "What about the PA-AUTH-STATUS field at line 21? It is not covered in inputs, outputs descriptions, or business rules.",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-D3EF305D",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Paragraph '05:PA-ACCT-ID' is marked as dead code, but the copybook CIPAUSMY (containing it) has multiple incoming includes from programs like PAUDBLOD.CBL line 149. Are individual fields incorrectly flagged as dead?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-4",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CIPAUSMY.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:43:39.721519",
+      "updated_at": "2026-01-30T19:46:36.144942",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000129",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy/CIPAUDTY.cpy",
+      "program_id": "CIPAUDTY",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000091",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000091",
+        "scribe_worker": "scribe-1",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CIPAUDTY.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:43:48.569719",
+      "updated_at": "2026-01-30T19:44:25.281158",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000130",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy/CCPAURQY.cpy",
+      "program_id": "CCPAURQY",
+      "cycle_number": 1,
+      "worker_id": "challenger-5",
+      "parent_ticket_id": "mem-000093",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000093",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAURQY.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:43:52.585913",
+      "updated_at": "2026-01-30T19:44:26.739451",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000131",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "cpy/IMSFUNCS.cpy",
+      "program_id": "IMSFUNCS",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": "mem-000126",
+      "metadata": {
+        "parent_validation_ticket": "mem-000126",
+        "issues_found": [
+          "program_type 'UTILITY' inaccurate for non-executable copybook.",
+          "Inputs and outputs empty despite defining key data constants.",
+          "Business rules assume usage without citing including program logic.",
+          "FUNC-CODES incorrectly flagged as dead_code despite inclusions.",
+          "Paragraphs section misinterprets data definitions as paragraphs with incorrect dead_code status.",
+          "PARMCOUNT PIC confirmed as S9(05) COMP-5, but usage not detailed."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-1994AE99",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Inputs and outputs sections are empty, but this copybook defines FUNC-CODES group items (lines 17-27) used as parameters in IMS calls. Should these data definitions be documented as inputs/outputs or data structures?",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-B006760F",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "FUNC-CODES is listed as dead_code (paragraphs and dead_code sections) with reason 'never used by any program', but IMSFUNCS paragraph shows incoming_calls from PAUDBLOD.CBL (line 142), DBUNLDGS.CBL (136), PAUDBUNL.CBL (132). Are you sure it's dead?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/IMSFUNCS.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:43:56.917046",
+      "updated_at": "2026-01-30T19:47:11.426334",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000132",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy/PASFLPCB.CPY",
+      "program_id": "PASFLPCB",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000087",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000087",
+        "scribe_worker": "scribe-4",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/PASFLPCB.CPY",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:44:07.790714",
+      "updated_at": "2026-01-30T19:44:41.356057",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000133",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy/PAUTBPCB.CPY",
+      "program_id": "PAUTBPCB",
+      "cycle_number": 1,
+      "worker_id": "challenger-4",
+      "parent_ticket_id": "mem-000090",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000090",
+        "scribe_worker": "scribe-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/PAUTBPCB.CPY",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:44:17.494470",
+      "updated_at": "2026-01-30T19:44:54.264535",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000134",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy/CCPAUERY.cpy",
+      "program_id": "CCPAUERY",
+      "cycle_number": 1,
+      "worker_id": "challenger-3",
+      "parent_ticket_id": "mem-000094",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000094",
+        "scribe_worker": "scribe-1",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAUERY.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:44:21.644274",
+      "updated_at": "2026-01-30T19:44:45.969368",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000135",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "cpy/CIPAUDTY.cpy",
+      "program_id": "CIPAUDTY",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": "mem-000129",
+      "metadata": {
+        "parent_validation_ticket": "mem-000129",
+        "issues_found": [
+          "Purpose incorrectly classifies program_type as 'SUBROUTINE' instead of 'COPYBOOK'.",
+          "Inputs description does not explicitly name PA-AUTH-ID-CODE (line 29).",
+          "Paragraphs purpose uses vague placeholder text instead of describing the IMS segment structure.",
+          "No mention of FILLER field (line 54) in inputs/outputs."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-35861576",
+            "section": null,
+            "question_type": "VERIFICATION",
+            "question": "",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-1",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CIPAUDTY.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:44:25.277493",
+      "updated_at": "2026-01-30T19:47:38.800010",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000136",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "cpy/CCPAURQY.cpy",
+      "program_id": "CCPAURQY",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": "mem-000130",
+      "metadata": {
+        "parent_validation_ticket": "mem-000130",
+        "issues_found": [
+          "program_type 'UTILITY' is inaccurate for a copybook data structure.",
+          "Inputs and Outputs completely empty despite defining interface fields.",
+          "Business Rules empty, violating critical section requirement.",
+          "Paragraphs misclassifies level 01/05 data items as executable paragraphs.",
+          "Dead code analysis questionable given documented inclusion in COPAUA0C."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-6A5EF53E",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Inputs and Outputs are empty, but the copybook defines a complete structure of fields (lines 19-36) used for pending authorization requests. Should these fields be listed as the structure's inputs/outputs?",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-7D2055A8",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Business Rules is empty, but this is a critical section requiring at least one rule with citation. What about rules implied by PIC clauses, e.g., PA-RQ-TRANSACTION-AMT as positive amount (line 27)?",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-4475A66F",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "Paragraphs section treats data items like 'CCPAURQY' (implied 01) and '05:PA-RQ-AUTH-DATE' (line 19) as paragraphs with calls/citations, but copybooks define data structures, not PROCEDURE DIVISION paragraphs. Why this classification?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-5",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAURQY.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:44:26.734687",
+      "updated_at": "2026-01-30T19:48:06.114556",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000137",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy-bms/COPAU01.cpy",
+      "program_id": "COPAU01",
+      "cycle_number": 1,
+      "worker_id": "challenger-5",
+      "parent_ticket_id": "mem-000101",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000101",
+        "scribe_worker": "scribe-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy-bms/COPAU01.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:44:31.534697",
+      "updated_at": "2026-01-30T19:44:54.551720",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000138",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "cpy/PASFLPCB.CPY",
+      "program_id": "PASFLPCB",
+      "cycle_number": 1,
+      "worker_id": "scribe-4",
+      "parent_ticket_id": "mem-000132",
+      "metadata": {
+        "parent_validation_ticket": "mem-000132",
+        "issues_found": [
+          "Inputs and outputs sections are completely empty, omitting documentation of PCB fields populated by IMS.",
+          "Purpose incorrectly classifies as 'program_type': 'UTILITY' instead of copybook.",
+          "Paragraphs section misidentifies 01-level record (line 17) as a paragraph and incorrectly flags as dead code despite usage.",
+          "Business rules incomplete, covering only 3 of 9 fields.",
+          "Calling_context linkage_section omits FILLER (22), KEYFB-NAME (24), NUM-SENSEGS (25).",
+          "Dead_code incorrectly claims 'never used by any program' despite inclusion in DBUNLDGS.CBL."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-5967D56C",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-B4DA0777",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/PASFLPCB.CPY",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:44:41.349547",
+      "updated_at": "2026-01-30T19:48:15.956737",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000139",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/LOADPADB.JCL",
+      "program_id": "LOADPADB",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000096",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000096",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/LOADPADB.JCL",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-30T19:44:41.814389",
+      "updated_at": "2026-01-30T19:45:08.282303",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000140",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "cpy/CCPAUERY.cpy",
+      "program_id": "CCPAUERY",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": "mem-000134",
+      "metadata": {
+        "parent_validation_ticket": "mem-000134",
+        "issues_found": [
+          "Business rules empty despite clear validation logic in 88 levels (lines 25-36).",
+          "Inputs/Outputs empty; fields (lines 20-40) should be classified.",
+          "Program_type 'UTILITY' inaccurate for a copybook.",
+          "ERROR-LOG-RECORD incorrectly flagged as dead code despite copybook usage in COPAUA0C.cbl.",
+          "'CCPAUERY' paragraph misidentified; line 1 is a comment."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-CDC57824",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-73B4426F",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAUERY.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:44:45.961289",
+      "updated_at": "2026-01-30T19:48:19.993977",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000141",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "cpy/PAUTBPCB.CPY",
+      "program_id": "PAUTBPCB",
+      "cycle_number": 1,
+      "worker_id": "scribe-4",
+      "parent_ticket_id": "mem-000133",
+      "metadata": {
+        "parent_validation_ticket": "mem-000133",
+        "issues_found": [
+          "Business rules section is completely empty, missing critical information like status code handling.",
+          "FILLER field at line 22 (PIC S9(05) COMP, likely reserved) is not documented in inputs or outputs.",
+          "Purpose incorrectly classifies as 'UTILITY' program_type; it's a copybook data structure.",
+          "Dead code analysis contradicts evidence: record layout is included in 3 programs but marked unused.",
+          "Paragraphs section misidentifies data structure (01 level at line 17) as a 'paragraph'.",
+          "PAUT-KEYFB-NAME (line 24) description 'offset or length indicator' is vague; standard IMS PCB uses it for key feedback length."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-457B38D4",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "The purpose section lists program_type as 'UTILITY', but this is a copybook defining a data structure (line 17), not an executable program. Is this accurate?",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-3D9F096B",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "The business_rules section is empty. Are there no business rules, such as validation of PAUT-PCB-STATUS codes after DL/I calls (line 20)?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-4",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/PAUTBPCB.CPY",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:44:54.260344",
+      "updated_at": "2026-01-30T19:48:44.780934",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000142",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/UNLDGSAM.JCL",
+      "program_id": "UNLDGSAM",
+      "cycle_number": 1,
+      "worker_id": "challenger-5",
+      "parent_ticket_id": "mem-000099",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000099",
+        "scribe_worker": "scribe-4",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDGSAM.JCL",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-30T19:44:54.534160",
+      "updated_at": "2026-01-30T19:45:32.909932",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000143",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/UNLDPADB.JCL",
+      "program_id": "UNLDPADB",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000104",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000104",
+        "scribe_worker": "scribe-1",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDPADB.JCL",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-30T19:44:59.010041",
+      "updated_at": "2026-01-30T19:45:24.150289",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000144",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/DBPAUTP0.jcl",
+      "program_id": "DBPAUTP0",
+      "cycle_number": 1,
+      "worker_id": "challenger-3",
+      "parent_ticket_id": "mem-000105",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000105",
+        "scribe_worker": "scribe-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/DBPAUTP0.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-01-30T19:45:19.078297",
+      "updated_at": "2026-01-30T19:45:56.254626",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000145",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "bms/COPAU01.bms",
+      "program_id": "COPAU01",
+      "cycle_number": 1,
+      "worker_id": "challenger-5",
+      "parent_ticket_id": "mem-000114",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000114",
+        "scribe_worker": "scribe-1",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/bms/COPAU01.bms",
+        "file_type": "BMS"
+      },
+      "created_at": "2026-01-30T19:45:36.760158",
+      "updated_at": "2026-01-30T19:45:56.244748",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000146",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cbl/COPAUS0C.cbl",
+      "program_id": "COPAUS0C",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000019",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000019",
+        "scribe_worker": "scribe-5",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-01-30T19:45:48.812100",
+      "updated_at": "2026-01-30T19:46:26.857191",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000147",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "ims/DLIGSAMP.PSB",
+      "program_id": "DLIGSAMP",
+      "cycle_number": 1,
+      "worker_id": "challenger-5",
+      "parent_ticket_id": "mem-000125",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000125",
+        "scribe_worker": "scribe-1",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/DLIGSAMP.PSB",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-01-30T19:46:07.384144",
+      "updated_at": "2026-01-30T19:46:42.353092",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000148",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "cbl/COPAUS0C.cbl",
+      "program_id": "COPAUS0C",
+      "cycle_number": 1,
+      "worker_id": "scribe-5",
+      "parent_ticket_id": "mem-000146",
+      "metadata": {
+        "parent_validation_ticket": "mem-000146",
+        "issues_found": [
+          "Numerous inaccurate line citations throughout (e.g., inputs [87] not ACCTIDI, BR003 [184] not PF7 check, paragraphs like PROCESS-PF8-KEY [1,25] vs actual 388).",
+          "Paragraphs section has incorrect citations (e.g., MAIN-PARA [3,82] vs 178-257) and spurious incoming_calls from COPAUS1C.cbl which is a different program.",
+          "COPAUS0C paragraph documented as 'UNKNOWN' with copy calls at lines 116+ but lists many non-existent outgoing_calls like COCOM01Y at 116 (actual COPY not PERFORM).",
+          "Data_flow citations wrong (e.g., writes_to CARDDEMO [107,139] are WS-SWITCHES and copybook, not updates).",
+          "Open_questions claim code snippet ends at 205 and missing subordinates, but full source to 1033 includes all (e.g., GATHER-ACCOUNT-DETAILS at 750)."
+        ],
+        "challenger_questions": [],
+        "challenger_worker": "challenger-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-01-30T19:46:26.852130",
+      "updated_at": "2026-01-30T19:48:18.205496",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000149",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy/CIPAUSMY.cpy",
+      "program_id": "CIPAUSMY",
+      "cycle_number": 1,
+      "worker_id": "challenger-3",
+      "parent_ticket_id": "mem-000128",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000128",
+        "scribe_worker": "scribe-1",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CIPAUSMY.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:46:36.149670",
+      "updated_at": "2026-01-30T19:46:59.579672",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000150",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy/IMSFUNCS.cpy",
+      "program_id": "IMSFUNCS",
+      "cycle_number": 1,
+      "worker_id": "challenger-3",
+      "parent_ticket_id": "mem-000131",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000131",
+        "scribe_worker": "scribe-1",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/IMSFUNCS.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:47:11.430720",
+      "updated_at": "2026-01-30T19:47:30.494148",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000151",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy/CIPAUDTY.cpy",
+      "program_id": "CIPAUDTY",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000135",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000135",
+        "scribe_worker": "scribe-1",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CIPAUDTY.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:47:38.804628",
+      "updated_at": "2026-01-30T19:48:08.500200",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000152",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cbl/PAUDBLOD.CBL",
+      "program_id": "PAUDBLOD",
+      "cycle_number": 1,
+      "worker_id": "challenger-5",
+      "parent_ticket_id": "mem-000112",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000112",
+        "scribe_worker": "scribe-4",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-01-30T19:47:48.717008",
+      "updated_at": "2026-01-30T19:48:48.892214",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000153",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy/CCPAURQY.cpy",
+      "program_id": "CCPAURQY",
+      "cycle_number": 1,
+      "worker_id": "challenger-3",
+      "parent_ticket_id": "mem-000136",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000136",
+        "scribe_worker": "scribe-1",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAURQY.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:48:06.121244",
+      "updated_at": "2026-01-30T19:48:31.612724",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000154",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy/PASFLPCB.CPY",
+      "program_id": "PASFLPCB",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000138",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000138",
+        "scribe_worker": "scribe-4",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/PASFLPCB.CPY",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:48:15.961417",
+      "updated_at": "2026-01-30T19:48:34.225055",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000155",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cbl/CBPAUP0C.cbl",
+      "program_id": "CBPAUP0C",
+      "cycle_number": 1,
+      "worker_id": "challenger-4",
+      "parent_ticket_id": "mem-000127",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000127",
+        "scribe_worker": "scribe-5",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-01-30T19:48:18.189994",
+      "updated_at": "2026-01-30T19:48:55.018116",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000156",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cbl/COPAUS0C.cbl",
+      "program_id": "COPAUS0C",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000148",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000148",
+        "scribe_worker": "scribe-5",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-01-30T19:48:18.211388",
+      "updated_at": "2026-01-30T19:48:58.001581",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000157",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy/CCPAUERY.cpy",
+      "program_id": "CCPAUERY",
+      "cycle_number": 1,
+      "worker_id": "challenger-3",
+      "parent_ticket_id": "mem-000140",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000140",
+        "scribe_worker": "scribe-1",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAUERY.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:48:20.000134",
+      "updated_at": "2026-01-30T19:49:09.831435",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000158",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy/PAUTBPCB.CPY",
+      "program_id": "PAUTBPCB",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000141",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000141",
+        "scribe_worker": "scribe-4",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/PAUTBPCB.CPY",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-01-30T19:48:44.788149",
+      "updated_at": "2026-01-30T19:49:19.305866",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000159",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cbl/DBUNLDGS.CBL",
+      "program_id": "DBUNLDGS",
+      "cycle_number": 1,
+      "worker_id": "challenger-5",
+      "parent_ticket_id": "mem-000121",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000121",
+        "scribe_worker": "scribe-3",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-01-30T19:48:53.345705",
+      "updated_at": "2026-01-30T19:49:41.505081",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000160",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "cbl/COPAUS0C.cbl",
+      "program_id": "COPAUS0C",
+      "cycle_number": 1,
+      "worker_id": "scribe-4",
+      "parent_ticket_id": "mem-000156",
+      "metadata": {
+        "parent_validation_ticket": "mem-000156",
+        "issues_found": [
+          "paragraphs section fabricates non-existent COPAUS0C paragraph and misclassifies COPY statements (lines 116-169) as runtime calls/includes.",
+          "Multiple paragraphs have incorrect/mismatched citations (e.g., PROCESS-PF8-KEY [1,25] vs actual 388; incoming_calls reference wrong file COPAUS1C.cbl).",
+          "called_programs incomplete: misses XCTL to COSGN00C in RETURN-TO-PREV-SCREEN (lines 668-677).",
+          "error_handling omits major cases like VSAM READ NOTFND/ERROR (e.g., lines 828-861) and full IMS statuses.",
+          "cics_operations citations inaccurate (RETURN 254 not 79; XCTL 322/674 not 145).",
+          "open_questions claim missing code but full source provided; outdated.",
+          "copybooks_used citations off (e.g., COPAU0AI 87 vs COPY COPAU00 at 129)."
+        ],
+        "challenger_questions": [],
+        "challenger_worker": "challenger-1",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-01-30T19:48:57.996004",
+      "updated_at": "2026-01-30T19:48:58.812294",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000161",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cbl/COPAUS0C.cbl",
+      "program_id": "COPAUS0C",
+      "cycle_number": 1,
+      "worker_id": "challenger-4",
+      "parent_ticket_id": "mem-000160",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000160",
+        "scribe_worker": "scribe-4",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-01-30T19:48:58.818615",
+      "updated_at": "2026-01-30T19:49:29.089995",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000162",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cbl/COPAUS1C.cbl",
+      "program_id": "COPAUS1C",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000111",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000111",
+        "scribe_worker": "scribe-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-01-30T19:49:22.108499",
+      "updated_at": "2026-01-30T19:50:12.884740",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000163",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "cbl/COPAUS1C.cbl",
+      "program_id": "COPAUS1C",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": "mem-000162",
+      "metadata": {
+        "parent_validation_ticket": "mem-000162",
+        "issues_found": [
+          "Inputs section classifies IMS segments (PENDING-AUTH-SUMMARY, PENDING-AUTH-DETAILS) as inputs, but they are internal DB reads via DLI (lines 439 GU, 465 GNP), potentially misleading vs. true inputs like commarea/map.",
+          "Data_flow.reads_from for PENDING-AUTH-SUMMARY lists key fields as 'used' (436), but they are qualifiers moved before read; no post-read usage from summary evident.",
+          "Calling_context.called_by lacks source citations; inferred but unverified in this file.",
+          "Error_handling incomplete for PSB duplicate schedule (TC status) handling via TERM/SCHD (580-588)."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-6E1EA5C8",
+            "section": "paragraphs",
+            "question_type": "COMPLETENESS",
+            "question": "Paragraph 'COPAUS1C' exists in the source code (per static analysis) but is not documented in the template for cbl/COPAUS1C.cbl. Please add documentation for this paragraph.",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-2",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "file_type": "COBOL",
+        "retry_count": 1
+      },
+      "created_at": "2026-01-30T19:50:12.877601",
+      "updated_at": "2026-01-30T19:51:36.170525",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000164",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cbl/COPAUS1C.cbl",
+      "program_id": "COPAUS1C",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000163",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000163",
+        "scribe_worker": "scribe-1",
+        "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-01-30T19:51:36.175696",
+      "updated_at": "2026-01-30T19:52:06.376630",
+      "decision": null
+    },
+    {
+      "ticket_id": "OVW-C6B0A1C8",
+      "ticket_type": "system_overview",
+      "state": "blocked",
+      "file_name": "SYSTEM_OVERVIEW.md",
+      "program_id": "SYSTEM_OVERVIEW",
+      "cycle_number": 1,
+      "worker_id": null,
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260130-192643",
+        "system_name": "CardDemo",
+        "created_at": "2026-01-30T19:52:30.782318"
+      },
+      "created_at": "2026-01-30T19:52:30.782323",
+      "updated_at": "2026-01-30T19:52:30.842736",
+      "decision": null
+    }
+  ]
+}

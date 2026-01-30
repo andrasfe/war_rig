@@ -1,24 +1,24 @@
 ---
 name: copau01
-description: "This copybook defines the input and output data structures for a CICS BMS map named COPAU1. It contains field definitions for transaction details, dates, times, card numbers, authorization information, merchant details, and error messages, used for both input (COPAU1AI) and output (COPAU1AO) layouts."
+description: "This copybook defines the COBOL data structures for the COPAU01 BMS map used in CICS online transactions. It provides the input area COPAU1AI with length, format/attribute, and data fields for screen elements including transaction names, titles, dates, times, card numbers, authorization details, merchant information, and error messages. The output area COPAU1AO redefines COPAU1AI with BMS attribute fields (C/P/H/V) and output data fields for screen rendering."
 ---
 
 # COPAU01
 
-**Type:** COPYBOOK (BMS)
-**Context:** UNKNOWN
+**Type:** COPYBOOK (ONLINE_CICS)
+**Context:** Supports credit card authorization screens in payment processing, displaying and capturing transaction, card, authorization response, and merchant details.
 
 ## Purpose
 
-This copybook defines the input and output data structures for a CICS BMS map named COPAU1. It contains field definitions for transaction details, dates, times, card numbers, authorization information, merchant details, and error messages, used for both input (COPAU1AI) and output (COPAU1AO) layouts.
+This copybook defines the COBOL data structures for the COPAU01 BMS map used in CICS online transactions. It provides the input area COPAU1AI with length, format/attribute, and data fields for screen elements including transaction names, titles, dates, times, card numbers, authorization details, merchant information, and error messages. The output area COPAU1AO redefines COPAU1AI with BMS attribute fields (C/P/H/V) and output data fields for screen rendering.
 
 ## Inputs
 
-- **COPAU1AI** (CICS_MAP): Input data structure for the COPAU1 CICS BMS map, containing fields for transaction name, titles, current date and time, card number, authorization details, merchant information, and error messages.
+- **COPAU1AI** (CICS_MAP): Input map structure containing length (L), format/attribute (F/A), and input data (I) fields for all screen elements
 
 ## Outputs
 
-- **COPAU1AO** (CICS_MAP): Output data structure for the COPAU1 CICS BMS map, containing fields for transaction name, titles, current date and time, card number, authorization details, merchant information, and error messages, formatted for display.
+- **COPAU1AO** (CICS_MAP): Output map structure redefining input, with changed/protected/highlighted/unprotected attributes (C/P/H/V) and output data (O) fields for screen display
 
 ## When to Use This Skill
 

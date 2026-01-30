@@ -1,42 +1,39 @@
 ---
 name: paudbunl
-description: "The COBOL program PAUDBUNL unloads pending authorization summary and detail segments from an IMS database to two sequential output files. It reads PAUTSUM0 root segments and PAUTDTL1 child segments from the IMS database and writes them to OPFILE1 and OPFILE2 respectively, provided the PA-ACCT-ID is numeric."
+description: "PAUDBUNL unloads authorization summary records from an IMS database by performing DL/I GN calls on root segments, writing each summary to OPFILE1 after extracting account ID, and then processing child detail segments via a subordinate paragraph until no more children. It initializes by opening output files OPFILE1 and OPFILE2 with status checks, loops until end of root segments (IMS status 'GB'), and closes files at termination. The program displays startup information including current date."
 ---
 
 # PAUDBUNL
 
 **Type:** COBOL (BATCH)
-**Context:** This program is likely used for data extraction or migration of pending authorization data from an IMS system.
+**Context:** Unloading IMS authorization database (summary and detail records) to sequential output files for reporting or archiving
 
 ## Purpose
 
-The COBOL program PAUDBUNL unloads pending authorization summary and detail segments from an IMS database to two sequential output files. It reads PAUTSUM0 root segments and PAUTDTL1 child segments from the IMS database and writes them to OPFILE1 and OPFILE2 respectively, provided the PA-ACCT-ID is numeric.
+PAUDBUNL unloads authorization summary records from an IMS database by performing DL/I GN calls on root segments, writing each summary to OPFILE1 after extracting account ID, and then processing child detail segments via a subordinate paragraph until no more children. It initializes by opening output files OPFILE1 and OPFILE2 with status checks, loops until end of root segments (IMS status 'GB'), and closes files at termination. The program displays startup information including current date.
 
 ## Business Rules
 
-- **BR001**: Only write summary and detail records to output files if the PA-ACCT-ID is numeric.
+- **BR001**: Validate OPFILE1 open status before proceeding
+- **BR002**: Validate OPFILE2 open status before proceeding
+- **BR003**: Process IMS root segment only on successful read (status spaces)
+- **BR004**: Detect end of IMS root segments
+- **BR005**: Abort on IMS read error (neither spaces nor 'GB')
 
 ## Called Programs
 
-- CBLTDLI (STATIC_CALL)
-- CBLTDLI (STATIC_CALL)
+- CBLTDLI (DYNAMIC_CALL)
+- 9999-ABEND (STATIC_CALL)
 
 ## Inputs
 
-- **IMS Database (PAUTSUM0, PAUTDTL1 Segments)** (IMS_SEGMENT): Pending authorization summary (PAUTSUM0) and detail (PAUTDTL1) segments from an IMS database.
-- **PAUTBPCB** (PARAMETER): PCB mask for IMS calls.
+- **PAUTBPCB** (IMS_SEGMENT): IMS PCB used for DL/I calls to read authorization summary root segments and child details from AUTHDB database
+- **ROOT-UNQUAL-SSA** (IMS_SEGMENT): Unqualified SSA for IMS root segment access
 
 ## Outputs
 
-- **OPFILE1** (FILE_SEQUENTIAL): Sequential file containing pending authorization summary records (PAUTSUM0) extracted from the IMS database.  Each record is 100 bytes long.
-- **OPFILE2** (FILE_SEQUENTIAL): Sequential file containing pending authorization detail records (PAUTDTL1) extracted from the IMS database. Each record contains a ROOT-SEG-KEY (PA-ACCT-ID) and the CHILD-SEG-REC.
-
-## Copybooks Used
-
-- **IMSFUNCS**: Contains definitions for IMS function codes (e.g., FUNC-GN, FUNC-GNP).
-- **CIPAUSMY**: Defines the layout of the PENDING-AUTH-SUMMARY segment (root segment).
-- **CIPAUDTY**: Defines the layout of the PENDING-AUTH-DETAILS segment (child segment).
-- **PAUTBPCB**: Defines the PCB mask used for IMS calls.
+- **OPFILE1** (FILE_SEQUENTIAL): Sequential output file containing authorization summary records (moved from PENDING-AUTH-SUMMARY) and potentially child details
+- **OPFILE2** (FILE_SEQUENTIAL): Sequential output file opened but not written in provided code snippet; purpose unclear
 
 ## When to Use This Skill
 

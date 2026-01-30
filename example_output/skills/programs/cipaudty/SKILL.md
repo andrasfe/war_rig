@@ -1,25 +1,28 @@
 ---
 name: cipaudty
-description: "This copybook defines the data structure for the IMS segment related to pending authorization details. It includes fields for authorization keys, card details, transaction amounts, merchant information, match status, and fraud indicators."
+description: "This copybook defines the data structure for an IMS segment named 'PENDING AUTHORIZATION DETAILS'. It specifies fields for authorization keys, dates, times, card details, merchant information, transaction amounts, response codes, and status indicators for matching and fraud detection. The structure supports payment authorization processing in a financial transaction system."
 ---
 
 # CIPAUDTY
 
-**Type:** COPYBOOK (OTHER)
-**Context:** This copybook is used in the context of processing and managing pending authorizations, likely within a financial transaction system.
+**Type:** COPYBOOK (UTILITY)
+**Context:** Serves payment authorization workflows, storing pending auth details for transaction matching, fraud monitoring, and response tracking in an IMS database within Amazon's financial systems.
 
 ## Purpose
 
-This copybook defines the data structure for the IMS segment related to pending authorization details. It includes fields for authorization keys, card details, transaction amounts, merchant information, match status, and fraud indicators.
+This copybook defines the data structure for an IMS segment named 'PENDING AUTHORIZATION DETAILS'. It specifies fields for authorization keys, dates, times, card details, merchant information, transaction amounts, response codes, and status indicators for matching and fraud detection. The structure supports payment authorization processing in a financial transaction system.
 
-## Copybooks Used
+## Business Rules
 
-- **CIPAUDTY**: Defines the data structure for pending authorization details within an IMS segment.
+- **BR001**: Authorization response is approved when the response code is '00'
+- **BR002**: Match status can be Pending ('P'), Declined ('D'), Expired ('E'), or Matched ('M')
+- **BR003**: Fraud status is Confirmed ('F') or Removed ('R')
 
 ## When to Use This Skill
 
 Use this skill when you need to:
 - Understand the purpose and functionality of CIPAUDTY
+- Understand business rules implemented in CIPAUDTY
 - Maintain or modify CIPAUDTY
 
 ## Additional Details

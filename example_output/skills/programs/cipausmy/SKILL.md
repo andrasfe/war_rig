@@ -1,19 +1,16 @@
 ---
 name: cipausmy
-description: "This copybook defines the data structure for the IMS segment 'PENDING AUTHORIZATION SUMMARY'. It contains fields related to account identification, authorization status, credit and cash limits/balances, and authorization counts/amounts. The copybook is used for representing pending authorization information within an IMS database."
+description: "This copybook defines the data structure for the IMS segment 'PENDING AUTHORIZATION SUMMARY'. It includes fields for account ID (PA-ACCT-ID), customer ID (PA-CUST-ID), authorization status (PA-AUTH-STATUS), an array of account statuses (PA-ACCOUNT-STATUS OCCURS 5 TIMES), credit and cash limits and balances, counts of approved/declined authorizations, and corresponding amounts. A filler field pads the structure to the required length."
 ---
 
 # CIPAUSMY
 
-**Type:** COPYBOOK (SUBROUTINE)
+**Type:** COPYBOOK (UTILITY)
+**Context:** Supports management of pending authorizations for customer accounts in an IMS database, tracking statuses, limits, balances, and authorization history for credit and cash transactions.
 
 ## Purpose
 
-This copybook defines the data structure for the IMS segment 'PENDING AUTHORIZATION SUMMARY'. It contains fields related to account identification, authorization status, credit and cash limits/balances, and authorization counts/amounts. The copybook is used for representing pending authorization information within an IMS database.
-
-## Copybooks Used
-
-- **CIPAUSMY**: Defines the data structure for the IMS segment 'PENDING AUTHORIZATION SUMMARY'.
+This copybook defines the data structure for the IMS segment 'PENDING AUTHORIZATION SUMMARY'. It includes fields for account ID (PA-ACCT-ID), customer ID (PA-CUST-ID), authorization status (PA-AUTH-STATUS), an array of account statuses (PA-ACCOUNT-STATUS OCCURS 5 TIMES), credit and cash limits and balances, counts of approved/declined authorizations, and corresponding amounts. A filler field pads the structure to the required length.
 
 ## When to Use This Skill
 

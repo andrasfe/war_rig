@@ -1,39 +1,39 @@
 ---
 name: cbpaup0j
-description: "This JCL executes an IMS program (DFSRRC00) to delete expired authorizations, using the BMP region controller. It specifies the program CBPAUP0C and PSB PSBPAUTB for the IMS execution."
+description: "This JCL job CBPAUP0J executes the IMS batch message processing (BMP) program CBPAUP0C via the DFSRRC00 region controller to delete expired authorizations. It configures IMS libraries, PSB/DBD libraries, and provides inline SYSIN parameters. Standard IMS batch DD statements are defined for inputs, outputs, and dumps."
 ---
 
 # CBPAUP0J
 
 **Type:** JCL (BATCH)
-**Context:** This job likely supports security and compliance by removing outdated access privileges.
+**Context:** Manages authorizations in the CARDDEMO system by deleting expired entries from an IMS database using PSBPAUTB.
 
 ## Purpose
 
-This JCL executes an IMS program (DFSRRC00) to delete expired authorizations, using the BMP region controller. It specifies the program CBPAUP0C and PSB PSBPAUTB for the IMS execution.
+This JCL job CBPAUP0J executes the IMS batch message processing (BMP) program CBPAUP0C via the DFSRRC00 region controller to delete expired authorizations. It configures IMS libraries, PSB/DBD libraries, and provides inline SYSIN parameters. Standard IMS batch DD statements are defined for inputs, outputs, and dumps.
+
+## Called Programs
+
+- DFSRRC00 (STATIC_CALL)
+- CBPAUP0C (DYNAMIC_CALL)
 
 ## Inputs
 
-- **IMS.SDFSRESL** (FILE_SEQUENTIAL): IMS RESLIB library containing IMS modules.
-- **XXXXXXXX.PROD.LOADLIB** (FILE_SEQUENTIAL): Application load library, likely containing CBPAUP0C.
-- **IMS.PROCLIB** (FILE_SEQUENTIAL): IMS procedure library.
-- **IMS.PSBLIB** (FILE_SEQUENTIAL): IMS PSB library containing PSBPAUTB.
-- **IMS.DBDLIB** (FILE_SEQUENTIAL): IMS DBD library.
-- *(+1 more inputs)*
+- **SYSIN** (PARAMETER): Inline control parameters '00,00001,00001,Y' passed to DFSRRC00 for IMS program execution (likely PCB/segment/position flags).
+- **IMS.PSBLIB** (OTHER): IMS PSB library containing PSBPAUTB definition.
+- **IMS.DBDLIB** (OTHER): IMS DBD library for database definitions accessed via PSBPAUTB.
 
 ## Outputs
 
-- **SYSOUX** (REPORT): System output.
-- **SYSOUT** (REPORT): System output.
-- **SYSABOUT** (REPORT): System output for ABEND information.
-- **ABENDAID** (REPORT): System output for ABEND aid.
-- **SYSPRINT** (REPORT): System print output.
-- *(+2 more outputs)*
+- **SYSPRINT** (REPORT): Standard print output from DFSRRC00 and CBPAUP0C execution.
+- **SYSUDUMP** (REPORT): System dump output on program abend.
+- **SYSOUT** (REPORT): General job and IMS output listings.
 
 ## When to Use This Skill
 
 Use this skill when you need to:
 - Understand the purpose and functionality of CBPAUP0J
+- Trace program calls from CBPAUP0J
 - Identify inputs/outputs for CBPAUP0J
 - Maintain or modify CBPAUP0J
 

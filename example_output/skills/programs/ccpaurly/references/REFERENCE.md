@@ -8,14 +8,14 @@
 - **File Name:** cpy/CCPAURLY.cpy
 - **File Type:** COPYBOOK
 - **Analyzed By:** WAR_RIG
-- **Analyzed At:** 2026-01-28T14:54:41.209966
+- **Analyzed At:** 2026-01-30T19:43:13.422702
 
 ## Purpose
 
-**Summary:** This copybook defines the data structure for a pending authorization response related to card transactions. It includes fields for card number, transaction ID, authorization codes, response codes, reason codes, and the approved amount.
+**Summary:** This COBOL copybook defines data structures at level 05 for a Pending Authorization Response record. It includes elementary fields for card number (PIC X(16)), transaction ID (PIC X(15)), authorization ID code (PIC X(06)), authorization response code (PIC X(02)), response reason (PIC X(04)), and approved amount (PIC +9(10).99). The fields share a 'PA-RL-' prefix, logically grouping them for use in payment authorization processing.
 
-**Business Context:** This copybook is used in the context of processing card payments and handling authorization responses, likely within a financial transaction system.
-**Program Type:** COPYBOOK
+**Business Context:** Payment card authorization processing, capturing response details from authorization requests
+**Program Type:** UTILITY
 
 ## Paragraphs
 

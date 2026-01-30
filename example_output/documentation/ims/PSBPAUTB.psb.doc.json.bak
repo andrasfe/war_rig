@@ -1,0 +1,75 @@
+{
+  "header": {
+    "program_id": "PSBPAUTB",
+    "file_name": "ims/PSBPAUTB.psb",
+    "file_type": "OTHER",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-30T19:33:44.020090",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "Defines the Program Specification Block (PSB) PSBPAUTB for a COBOL application program using IMS DL/I calls. Specifies a single database PCB named PAUTBPCB for accessing DBD DBPAUTP0 with PROCOPT=AP and KEYLEN=14. Includes root segment PAUTSUM0 (PARENT=0) and child segment PAUTDTL1 under PAUTSUM0.",
+    "business_context": "IMS database access configuration for batch DL/I programs interacting with the PAUTP0 database hierarchy",
+    "program_type": "BATCH",
+    "citations": [
+      17,
+      18,
+      19,
+      20
+    ]
+  },
+  "inputs": [
+    {
+      "name": "PAUTSUM0",
+      "io_type": "IMS_SEGMENT",
+      "description": "Root segment (PARENT=0) accessible via PAUTBPCB PCB",
+      "copybook": null,
+      "citation": [
+        18
+      ]
+    },
+    {
+      "name": "PAUTDTL1",
+      "io_type": "IMS_SEGMENT",
+      "description": "Child segment with PARENT=PAUTSUM0 accessible via PAUTBPCB PCB",
+      "copybook": null,
+      "citation": [
+        19
+      ]
+    }
+  ],
+  "outputs": [],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [],
+  "data_flow": {
+    "reads_from": [],
+    "writes_to": [],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [],
+  "error_handling": [],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "What is the exact meaning of PROCOPT=AP in this PSB PCB definition?",
+      "context": "PROCOPT=AP is specified but not a standard single PROCOPT value like G, I, R; may indicate combined options for insert/retrieve or application-specific processing",
+      "suggestion": "Refer to IMS/ESA or IMS Version documentation for PROCOPT codes and combinations"
+    },
+    {
+      "question": "What application programs use this PSB, and what business data do PAUTSUM0 and PAUTDTL1 represent?",
+      "context": "PSB is infrastructure; no calling programs or segment field details provided in source",
+      "suggestion": "Examine COBOL programs with PSB=PSBPAUTB in JCL or DBD definitions for DBPAUTP0"
+    }
+  ],
+  "dead_code": [],
+  "call_semantics": [],
+  "flow_diagram": null
+}

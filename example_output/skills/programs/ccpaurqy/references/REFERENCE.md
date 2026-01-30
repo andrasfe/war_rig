@@ -5,17 +5,17 @@
 ## Program Header
 
 - **Program ID:** CCPAURQY
-- **File Name:** CCPAURQY.cpy
+- **File Name:** cpy/CCPAURQY.cpy
 - **File Type:** COPYBOOK
 - **Analyzed By:** WAR_RIG
-- **Analyzed At:** 2026-01-28T14:54:28.746713
+- **Analyzed At:** 2026-01-30T19:48:06.106215
 
 ## Purpose
 
-**Summary:** This copybook defines the data structure for a pending authorization request. It includes fields for transaction details such as card number, amount, merchant information, and date/time of the authorization request.
+**Summary:** This COBOL copybook defines a level 05 group structure for Pending Authorization Request data (PA-RQ-* fields), to be subordinated under a level 01 record in including programs. It includes fields for authorization timestamp, card details, transaction amount, merchant information, and transaction ID, supporting credit card processing workflows. No executable logic is present; it serves solely as a data layout definition.
 
-**Business Context:** This copybook is used in systems that process credit card transactions and require authorization before completing the transaction.
-**Program Type:** COPYBOOK
+**Business Context:** Payment authorization processing for card transactions, capturing details from POS or acquirer requests (inferred from field names like PA-RQ-CARD-NUM, PA-RQ-TRANSACTION-AMT, PA-RQ-MERCHANT-ID on lines 21,27,31).
+**Program Type:** UTILITY
 
 ## Paragraphs
 

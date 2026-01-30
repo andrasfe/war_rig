@@ -5,36 +5,36 @@
 ## Program Header
 
 - **Program ID:** COPAUS1C
-- **File Name:** COPAUS1C.cbl
+- **File Name:** cbl/COPAUS1C.cbl
 - **File Type:** COBOL
 - **Analyzed By:** WAR_RIG
-- **Analyzed At:** 2026-01-28T14:55:16.220421
+- **Analyzed At:** 2026-01-30T19:50:53.258245
 
 ## Purpose
 
-**Summary:** COPAUS1C is a CICS COBOL program that displays detailed information about an authorization message. It retrieves authorization details from an IMS database, allows users to mark authorizations as fraudulent, and links to another program (COPAUS2C) to handle fraud updates.
+**Summary:** This program provides a detailed view of a specific pending authorization message within the CardDemo application. It allows users to view transaction details, navigate to the next authorization record, and toggle the fraud status of a transaction.
 
-**Business Context:** This program is part of a card authorization demo application, providing a detailed view of authorization messages for review and potential fraud flagging.
+**Business Context:** CardDemo Authorization Module - enables administrators or investigators to review flagged or pending credit card authorizations for potential fraud.
 **Program Type:** ONLINE_CICS
 
 ## Inputs
 
-### CARDDEMO-COMMAREA
+### DFHCOMMAREA
 
 - **Type:** CICS_COMMAREA
-- **Description:** Communication area passed between CICS programs, containing account ID, authorization keys, and other relevant data.
+- **Description:** Contains session data including account ID and the selected authorization key from the summary screen.
 - **Copybook:** COCOM01Y
 
-### PENDING-AUTH-SUMMARY
+### PAUTSUM0
 
 - **Type:** IMS_SEGMENT
-- **Description:** IMS segment containing summary information about a pending authorization.
+- **Description:** Pending Authorization Summary root segment, accessed by Account ID.
 - **Copybook:** CIPAUSMY
 
-### PENDING-AUTH-DETAILS
+### PAUTDTL1
 
 - **Type:** IMS_SEGMENT
-- **Description:** IMS segment containing detailed information about a pending authorization.
+- **Description:** Pending Authorization Details child segment, containing specific transaction data.
 - **Copybook:** CIPAUDTY
 
 ## Outputs
@@ -42,148 +42,102 @@
 ### COPAU1A
 
 - **Type:** CICS_MAP
-- **Description:** BMS map displaying authorization details to the user.
+- **Description:** The Detail View screen displaying authorization details like card number, amount, merchant info, and fraud status.
 - **Copybook:** COPAU01
 
-### WS-FRAUD-DATA
+### PAUTDTL1
 
-- **Type:** CICS_COMMAREA
-- **Description:** Communication area passed to COPAUS2C containing fraud related data.
+- **Type:** IMS_SEGMENT
+- **Description:** Updated detail segment when fraud status is toggled.
+- **Copybook:** CIPAUDTY
 
 ## Business Rules
 
 ### BR001
 
-**Description:** Authorization response codes are translated to 'A' (Approved) or 'D' (Declined) for display.
+**Description:** Fraud Status Toggle
 
-**Logic:** If PA-AUTH-RESP-CODE is '00', AUTHRSPO is set to 'A' and the color is set to green. Otherwise, AUTHRSPO is set to 'D' and the color is set to red.
+**Logic:** If the record is already marked as fraud, it is toggled to removed; otherwise, it is marked as confirmed fraud.
 
 **Conditions:**
-- `IF PA-AUTH-RESP-CODE = '00'`
+- `IF PA-FRAUD-CONFIRMED`
+- `SET PA-FRAUD-REMOVED TO TRUE`
+- `SET PA-FRAUD-CONFIRMED TO TRUE`
 
 ### BR002
 
-**Description:** Decline reason codes are translated to a user-friendly description using a table lookup.
+**Description:** Authorization Response Mapping
 
-**Logic:** The program searches WS-DECLINE-REASON-TAB for a matching DECL-CODE. If found, the corresponding DECL-DESC is displayed. If not found, a default error message is displayed.
+**Logic:** Maps response codes to 'A' (Approved/Green) or 'D' (Declined/Red) for display.
 
 **Conditions:**
-- `WHEN DECL-CODE(WS-DECL-RSN-IDX) = PA-AUTH-RESP-REASON`
+- `IF PA-AUTH-RESP-CODE = '00'`
 
 ## Paragraphs
 
 ### MAIN-PARA
 
-This is the main paragraph that controls the program's overall flow. It first initializes variables and checks if the program is being called for the first time or re-entered. If it's the first time, it initializes the CARDDEMO-COMMAREA and returns to the previous screen (COPAUS0C). If it's a re-entry, it receives the screen input, evaluates the EIBAID (CICS attention identifier) to determine the user's action (ENTER, PF3, PF5, PF8, or other), and performs the corresponding action. Based on the AID key pressed, it will either process the enter key, return to the previous screen, mark the authorization as fraud, process the PF8 key to read the next authorization record, or display an error message for an invalid key. Finally, it returns control to CICS with the updated COMMAREA.
+This is the primary orchestration paragraph for the CICS program. It initializes program flags and checks the EIBCALEN to determine if the program was started fresh or re-entered. If the COMMAREA is empty, it redirects to the summary screen. If valid data exists, it evaluates the user's input (EIBAID) to determine whether to process the Enter key (view details), PF3 (return), PF5 (mark fraud), or PF8 (next record). It ensures the CICS session is maintained by returning with the transaction ID and COMMAREA.
 
 **Calls:** RETURN-TO-PREV-SCREEN, PROCESS-ENTER-KEY, SEND-AUTHVIEW-SCREEN, RECEIVE-AUTHVIEW-SCREEN, MARK-AUTH-FRAUD, PROCESS-PF8-KEY
 
 ### PROCESS-ENTER-KEY
 
-This paragraph processes the ENTER key press. It initializes the COPAU1AO map and checks if the account ID and authorization key are valid (numeric and not spaces/low-values). If valid, it moves the account ID and authorization key to working storage variables and performs READ-AUTH-RECORD to retrieve the authorization details from the IMS database. If the PSB is scheduled, it takes a syncpoint. If the account ID or authorization key are invalid, it sets the error flag. Finally, it calls POPULATE-AUTH-DETAILS to populate the screen fields with the retrieved data.
+This paragraph handles the logic when the Enter key is pressed or when the program is first entered with a selection. It clears the output map and validates that the Account ID and Authorization Key are present in the COMMAREA. If valid, it calls READ-AUTH-RECORD to fetch data from the IMS database. It manages the IMS PSB state by checking if it was scheduled and then taking a syncpoint to release resources. Finally, it calls POPULATE-AUTH-DETAILS to prepare the data for the screen.
 
-**Calls:** READ-AUTH-RECORD, POPULATE-AUTH-DETAILS, TAKE-SYNCPOINT
+**Calls:** READ-AUTH-RECORD, TAKE-SYNCPOINT, POPULATE-AUTH-DETAILS
 
 ### MARK-AUTH-FRAUD
 
-This paragraph handles the process of marking or unmarking an authorization as fraudulent. It moves the account ID and authorization key to working storage and calls READ-AUTH-RECORD to retrieve the authorization details. It then checks if the authorization is already marked as fraud. If it is, it removes the fraud flag; otherwise, it sets the fraud flag. It moves the PENDING-AUTH-DETAILS to WS-FRAUD-AUTH-RECORD, the account ID to WS-FRD-ACCT-ID, and the customer ID to WS-FRD-CUST-ID. It then links to the COPAUS2C program to update the fraud status. Based on the return from COPAUS2C, it either updates the authorization details and takes a syncpoint or rolls back the changes and displays an error message. Finally, it calls POPULATE-AUTH-DETAILS to refresh the screen with the updated information.
+This paragraph implements the business logic for toggling the fraud status of a transaction. It retrieves the current record from the database and checks the existing fraud flag. It then flips the flag (Confirmed to Removed or vice versa) and prepares the WS-FRAUD-DATA structure. It performs a CICS LINK to COPAUS2C to process the fraud update logic. If the link is successful and the update succeeds, it calls UPDATE-AUTH-DETAILS to commit the change to the IMS database; otherwise, it performs a rollback.
 
-**Calls:** READ-AUTH-RECORD, POPULATE-AUTH-DETAILS, UPDATE-AUTH-DETAILS, ROLL-BACK
+**Calls:** READ-AUTH-RECORD, UPDATE-AUTH-DETAILS, ROLL-BACK, POPULATE-AUTH-DETAILS
 
 ### PROCESS-PF8-KEY
 
-This paragraph handles the processing when the PF8 key is pressed, which is intended to display the next authorization record. It moves the account ID and authorization key to working storage and calls READ-AUTH-RECORD to retrieve the current authorization details. It then calls READ-NEXT-AUTH-RECORD to retrieve the next authorization record from the IMS database. If the PSB is scheduled, it takes a syncpoint. If the end of the authorization records is reached (AUTHS-EOF), it sets a flag to prevent screen erasure and displays a message indicating that the last authorization has been reached. Otherwise, it moves the authorization key of the next record to CDEMO-CPVD-PAU-SELECTED and calls POPULATE-AUTH-DETAILS to display the details of the next authorization record.
+This paragraph facilitates sequential navigation through authorization records for a specific account. It first reads the current record to establish position in the IMS database and then calls READ-NEXT-AUTH-RECORD to fetch the subsequent child segment. If the end of the database is reached, it sets a message for the user. If a record is found, it updates the selection key in the COMMAREA and calls POPULATE-AUTH-DETAILS to refresh the screen with the new record's data.
 
-**Calls:** READ-AUTH-RECORD, READ-NEXT-AUTH-RECORD, POPULATE-AUTH-DETAILS, TAKE-SYNCPOINT
+**Calls:** READ-AUTH-RECORD, READ-NEXT-AUTH-RECORD, TAKE-SYNCPOINT, POPULATE-AUTH-DETAILS
 
 ### POPULATE-AUTH-DETAILS
 
-This paragraph populates the authorization details on the screen (COPAU1AO) based on the data retrieved from the IMS database. It checks if there are any errors (ERR-FLG-OFF). If no errors, it moves various fields from the PENDING-AUTH-DETAILS segment to the corresponding output fields on the screen, formatting the date and time as needed. It translates the authorization response code to 'A' (Approved) or 'D' (Declined) and sets the corresponding color. It also searches the WS-DECLINE-REASON-TAB to find the description for the decline reason code. It handles fraud confirmation status and populates the merchant information. If there are errors, it skips populating the screen fields.
-
-### RETURN-TO-PREV-SCREEN
-
-This paragraph prepares the COMMAREA for returning to the previous screen (COPAUS0C) and then transfers control to that program using CICS XCTL. It moves the current transaction ID and program ID to the CARDDEMO-COMMAREA, sets the program context to zero, and sets the program enter flag to true. It then executes the CICS XCTL command to transfer control to the program specified in CDEMO-TO-PROGRAM, passing the CARDDEMO-COMMAREA.
-
-### SEND-AUTHVIEW-SCREEN
-
-This paragraph sends the authorization view screen (COPAU1A) to the terminal. It first calls POPULATE-HEADER-INFO to populate the header information on the screen. It then moves any error messages to the ERRMSGO field on the screen. It checks the SEND-ERASE-FLG to determine whether to erase the screen before sending the map. If SEND-ERASE-YES is true, it sends the map with the ERASE option; otherwise, it sends the map without erasing the screen. The CURSOR option is used to position the cursor on the screen.
-
-**Calls:** POPULATE-HEADER-INFO
-
-### RECEIVE-AUTHVIEW-SCREEN
-
-This paragraph receives data from the authorization view screen (COPAU1A) when the user interacts with it. It executes the CICS RECEIVE command to receive the data from the specified map and mapset into the COPAU1AI structure. The NOHANDLE option is used to prevent CICS from handling any exceptions that may occur during the receive operation.
-
-### POPULATE-HEADER-INFO
-
-This paragraph populates the header information on the authorization view screen (COPAU1AO). It moves the current date and time to working storage variables. It then moves the title, transaction name, program name, current date, and current time to the corresponding output fields on the screen.
+This paragraph maps the raw data from the IMS PENDING-AUTH-DETAILS segment into the BMS map fields for display. It performs several data transformations, including formatting dates (YYMMDD to MM/DD/YY) and times (HHMMSS to HH:MM:SS). It also includes logic to set screen attributes, such as coloring the response code green for approvals and red for declines. It uses a SEARCH ALL statement against a hardcoded reason table to translate numeric decline codes into human-readable descriptions.
 
 ### READ-AUTH-RECORD
 
-This paragraph reads the authorization summary and detail records from the IMS database. It first calls SCHEDULE-PSB to schedule the PSB. It then moves the account ID and authorization key to the corresponding fields in the PENDING-AUTH-SUMMARY segment. It executes a DLI GU (Get Unique) command to retrieve the PENDING-AUTH-SUMMARY segment based on the account ID. If the segment is found, it executes a DLI GNP (Get Next within Parent) command to retrieve the PENDING-AUTH-DETAILS segment based on the authorization key. Error handling is performed by checking the DIBSTAT value after each DLI call. If an error occurs, an error message is constructed and displayed on the screen.
+This paragraph performs the physical I/O to the IMS database to retrieve a specific authorization. It first ensures the PSB is scheduled. It then issues a 'GU' (Get Unique) call to the root segment (PAUTSUM0) using the Account ID. If the root is found, it issues a 'GNP' (Get Next within Parent) call to find the specific child segment (PAUTDTL1) matching the Authorization Key. It handles various IMS status codes, setting EOF flags or error messages as appropriate.
 
 **Calls:** SCHEDULE-PSB, SEND-AUTHVIEW-SCREEN
 
-### READ-NEXT-AUTH-RECORD
-
-This paragraph reads the next authorization detail record from the IMS database. It executes a DLI GNP (Get Next within Parent) command to retrieve the next PENDING-AUTH-DETAILS segment. Error handling is performed by checking the DIBSTAT value after the DLI call. If an error occurs, an error message is constructed and displayed on the screen. The AUTHS-EOF flag is set if the end of the database is reached.
-
-**Calls:** SEND-AUTHVIEW-SCREEN
-
 ### UPDATE-AUTH-DETAILS
 
-This paragraph updates the PENDING-AUTH-DETAILS segment in the IMS database with the fraud information. It moves the WS-FRAUD-AUTH-RECORD to the PENDING-AUTH-DETAILS segment. It then executes a DLI REPL (Replace) command to update the segment in the database. Error handling is performed by checking the DIBSTAT value after the DLI call. If the update is successful, it takes a syncpoint and displays a message indicating whether the authorization was marked or removed as fraud. If an error occurs, it rolls back the changes and displays an error message.
+This paragraph updates an existing authorization record in the IMS database. It moves the updated fraud information into the segment layout and issues an IMS 'REPL' (Replace) command for the PAUTDTL1 segment. If the update is successful, it calls TAKE-SYNCPOINT to commit the transaction and sets a success message. If the update fails for any reason, it triggers a ROLL-BACK to ensure data integrity and reports the system error to the user.
 
 **Calls:** TAKE-SYNCPOINT, ROLL-BACK, SEND-AUTHVIEW-SCREEN
-
-### TAKE-SYNCPOINT
-
-This paragraph takes a CICS syncpoint to commit the changes made to the database. It executes the CICS SYNCPOINT command.
-
-### ROLL-BACK
-
-This paragraph rolls back any uncommitted changes made to the database. It executes the CICS SYNCPOINT ROLLBACK command.
-
-### SCHEDULE-PSB
-
-This paragraph schedules the PSB (Program Specification Block) for IMS database access. It executes a DLI SCHD (Schedule) command to schedule the PSB named in PSB-NAME. It checks the DIBSTAT value after the DLI call. If the PSB was already scheduled, it terminates the PSB and schedules it again. If an error occurs during scheduling, an error message is constructed and displayed on the screen.
-
-**Calls:** SEND-AUTHVIEW-SCREEN
 
 ## Data Flow
 
 ### Reads From
 
-- **CARDDEMO-COMMAREA:** CDEMO-ACCT-ID, CDEMO-CPVD-PAU-SELECTED, CDEMO-PGM-REENTER, CDEMO-TO-PROGRAM, CDEMO-CUST-ID
-- **PENDING-AUTH-SUMMARY:** PA-ACCT-ID, PA-AUTHORIZATION-KEY
-- **PENDING-AUTH-DETAILS:** PA-CARD-NUM, PA-AUTH-ORIG-DATE, PA-AUTH-ORIG-TIME, PA-APPROVED-AMT, PA-AUTH-RESP-CODE, PA-AUTH-RESP-REASON, PA-PROCESSING-CODE, PA-POS-ENTRY-MODE, PA-MESSAGE-SOURCE, PA-MERCHANT-CATAGORY-CODE, PA-CARD-EXPIRY-DATE, PA-AUTH-TYPE, PA-TRANSACTION-ID, PA-MATCH-STATUS, PA-AUTH-FRAUD, PA-FRAUD-RPT-DATE, PA-MERCHANT-NAME, PA-MERCHANT-ID, PA-MERCHANT-CITY, PA-MERCHANT-STATE, PA-MERCHANT-ZIP, PA-FRAUD-CONFIRMED, PA-FRAUD-REMOVED
+- **PAUTDTL1:** PA-CARD-NUM, PA-APPROVED-AMT, PA-MERCHANT-NAME
 
 ### Writes To
 
-- **COPAU1AO:** CARDNUMO, AUTHDTO, AUTHTMO, AUTHAMTO, AUTHRSPO, AUTHRSPC, AUTHRSNO, AUTHCDO, POSEMDO, AUTHSRCO, MCCCDO, CRDEXPO, AUTHTYPO, TRNIDO, AUTHMTCO, AUTHFRDO, MERNAMEO, MERIDO, MERCITYO, MERSTO, MERZIPO, TITLE01O, TITLE02O, TRNNAMEO, PGMNAMEO, CURDATEO, CURTIMEO, ERRMSGO
-- **WS-FRAUD-DATA:** WS-FRD-ACCT-ID, WS-FRD-CUST-ID, WS-FRAUD-AUTH-RECORD
+- **COPAU1AO:** CARDNUMO, AUTHDTO, AUTHAMTO
 
 ### Transforms
 
-- `PA-AUTH-ORIG-DATE` -> `AUTHDTO`: Formats the authorization date from YYMMDD to MM/DD/YY.
-- `PA-AUTH-ORIG-TIME` -> `AUTHTMO`: Formats the authorization time from HHMMSS to HH:MM:SS.
-- `PA-APPROVED-AMT` -> `AUTHAMTO`: Moves the approved amount to the output field.
+- `PA-AUTH-ORIG-DATE` -> `AUTHDTO`: Reformatting YYMMDD to MM/DD/YY for display.
 
 ## Error Handling
 
-- **EIBCALEN = 0:** Initializes CARDDEMO-COMMAREA and returns to the previous screen.
-- **CDEMO-ACCT-ID is not NUMERIC or CDEMO-CPVD-PAU-SELECTED is SPACES or LOW-VALUES:** Sets ERR-FLG-ON to TRUE.
-- **EIBRESP not equal to DFHRESP(NORMAL) during LINK to COPAUS2C:** Performs ROLL-BACK.
-- **WS-FRD-UPDT-SUCCESS is false after LINK to COPAUS2C:** Moves WS-FRD-ACT-MSG to WS-MESSAGE and performs ROLL-BACK.
-- **DIBSTAT indicates an error during IMS operations (READ-AUTH-RECORD, READ-NEXT-AUTH-RECORD, UPDATE-AUTH-DETAILS, SCHEDULE-PSB):** Sets WS-ERR-FLG to 'Y', constructs an error message, and displays it on the screen.
+- **IMS Status Code NOT OK:** Set error flag, format error message with status code, and display on screen.
+- **CICS Link Failure or Fraud Update Failure:** Perform SYNCPOINT ROLLBACK to undo database changes.
 
 ## CICS Operations
 
-- RETURN
-- XCTL
-- SEND MAP
-- RECEIVE MAP
 - LINK
+- SEND MAP
 - SYNCPOINT
 - SYNCPOINT ROLLBACK
 

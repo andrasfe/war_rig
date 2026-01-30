@@ -1,40 +1,40 @@
 ---
 name: cbpaup0c
-description: "This batch COBOL IMS program deletes expired pending authorization messages from the IMS database. It reads pending authorization summary and detail segments, checks if they are expired based on a configurable expiry period, and deletes the expired detail segments. It also deletes the summary segment if all its detail segments have been deleted. [2, 5]"
+description: "Batch IMS program that traverses the authorization database, reads pending authorization summary segments (PAUTSUM0), and for each, reads child detail segments (PAUTDTL1). It checks each detail for expiry based on days since authorization date exceeding a parameter-driven threshold, deletes expired details via DLI DLET, adjusts in-memory summary counters accordingly, and deletes the parent summary if both approved and declined auth counts reach zero after processing all details. Periodically takes IMS checkpoints and displays processing statistics at end."
 ---
 
 # CBPAUP0C
 
 **Type:** COBOL (BATCH)
-**Context:** CardDemo - Authorization Module [3]
+**Context:** CardDemo Authorization Module: Cleanup of expired pending authorization messages to maintain database hygiene by removing stale transaction details and empty summaries.
 
 ## Purpose
 
-This batch COBOL IMS program deletes expired pending authorization messages from the IMS database. It reads pending authorization summary and detail segments, checks if they are expired based on a configurable expiry period, and deletes the expired detail segments. It also deletes the summary segment if all its detail segments have been deleted. [2, 5]
+Batch IMS program that traverses the authorization database, reads pending authorization summary segments (PAUTSUM0), and for each, reads child detail segments (PAUTDTL1). It checks each detail for expiry based on days since authorization date exceeding a parameter-driven threshold, deletes expired details via DLI DLET, adjusts in-memory summary counters accordingly, and deletes the parent summary if both approved and declined auth counts reach zero after processing all details. Periodically takes IMS checkpoints and displays processing statistics at end.
 
 ## Business Rules
 
-- **BR001**: Determine if a pending authorization detail is expired. If the difference between the current date and the authorization date is greater than or equal to the expiry days, the authorization is considered expired.
-- **BR002**: Adjust approved/declined authorization counts and amounts based on authorization response code before deleting an expired authorization detail.
-- **BR003**: Delete the authorization summary if both approved and declined authorization counts are zero. [156]
+- **BR001**: Delete detail segment if days elapsed since authorization date (CURRENT-YYDDD - (99999 - PA-AUTH-DATE-9C)) >= P-EXPIRY-DAYS (default 5)
+- **BR002**: Delete summary segment after all details processed if PA-APPROVED-AUTH-CNT <= 0 (note: code has duplicate condition, likely intended PA-DECLINED-AUTH-CNT <=0 also)
+- **BR003**: Take IMS checkpoint every P-CHKP-FREQ (default 5) summaries processed; display status every P-CHKP-DIS-FREQ (default 10) checkpoints
 
 ## Inputs
 
-- **SYSIN** (PARAMETER): Contains parameters for expiry days, checkpoint frequency, checkpoint display frequency, and debug flag. [98-108, 189]
-- **IMS Database - PAUTSUM0 (Pending Authorization Summary)** (IMS_SEGMENT): Contains summary information about pending authorizations. [116, 224]
-- **IMS Database - PAUTDTL1 (Pending Authorization Details)** (IMS_SEGMENT): Contains detailed information about pending authorizations. [120, 256]
+- **PRM-INFO** (PARAMETER): Command line parameters from SYSIN containing expiry days (P-EXPIRY-DAYS), checkpoint frequency (P-CHKP-FREQ), display frequency (P-CHKP-DIS-FREQ), and debug flag (P-DEBUG-FLAG)
+- **PENDING-AUTH-SUMMARY** (IMS_SEGMENT): Root segment PAUTSUM0 containing summary data like PA-ACCT-ID, PA-APPROVED-AUTH-CNT, PA-DECLINED-AUTH-CNT, etc., read via GN calls
+- **PENDING-AUTH-DETAILS** (IMS_SEGMENT): Child segment PAUTDTL1 under current summary, containing details like PA-AUTH-DATE-9C, PA-AUTH-RESP-CODE, PA-TRANSACTION-AMT, read via GNP calls
 
 ## Outputs
 
-- **DISPLAY** (REPORT): Displays program start message, parameter values, date, summary counts (read, deleted), and checkpoint messages. [171-178, 190-194, 362-363, 366-368]
-- **IMS Database - PAUTSUM0 (Pending Authorization Summary)** (IMS_SEGMENT): Pending Authorization Summary segment is deleted if all detail segments are deleted. [156-158, 335-338]
-- **IMS Database - PAUTDTL1 (Pending Authorization Details)** (IMS_SEGMENT): Pending Authorization Detail segment is deleted if it is expired. [149-151, 310-313]
-- **RETURN-CODE** (RETURN_CODE): Set to 16 if the program abends. [382]
+- **PENDING-AUTH-DETAILS** (IMS_SEGMENT): Deletion of expired PAUTDTL1 segments via DLI DLET (no inserts/updates)
+- **PENDING-AUTH-SUMMARY** (IMS_SEGMENT): Deletion of PAUTSUM0 segments with zero counts after detail processing via DLI DLET (no inserts/updates to counters; adjustments are in-memory only for delete decision)
+- **CHECKPOINT** (OTHER): IMS checkpoints taken periodically via DLI CHKP to ensure transaction integrity
+- **PROCESSING STATISTICS** (REPORT): Console DISPLAY of counts: summaries read/deleted, details read/deleted
 
 ## Copybooks Used
 
-- **CIPAUSMY**: Defines the layout of the PENDING-AUTH-SUMMARY segment.
-- **CIPAUDTY**: Defines the layout of the PENDING-AUTH-DETAILS segment.
+- **CIPAUSMY**: Defines layout of PENDING-AUTH-SUMMARY (PAUTSUM0 root segment) including PA-ACCT-ID, counters for approved/declined auths
+- **CIPAUDTY**: Defines layout of PENDING-AUTH-DETAILS (PAUTDTL1 child segment) including PA-AUTH-DATE-9C, PA-AUTH-RESP-CODE, amounts
 
 ## When to Use This Skill
 

@@ -1,31 +1,38 @@
 ---
 name: copaus2c
-description: The COPAUS2C program is a CICS COBOL program that marks an authorization message as fraudulent by inserting or updating a record in the CARDDEMO.AUTHFRDS table. It receives transaction details via the CICS COMMAREA and uses this data to populate the AUTHFRDS table with information about the potentially fraudulent transaction.
+description: "This CICS COBOL program marks an authorization message as fraud by inserting a record into the CARDDEMO.AUTHFRDS DB2 table using data from the commarea. If the insert fails due to a duplicate key error (SQLCODE -803), it performs an update on the existing record to set the fraud flag and report date. Upon completion, it sets status messages in the commarea and returns to CICS."
 ---
 
 # COPAUS2C
 
 **Type:** COBOL (ONLINE_CICS)
-**Context:** This program is part of an authorization module within the CardDemo application, likely used to flag suspicious transactions for further investigation and prevent future fraudulent activities. 
+**Context:** CardDemo Authorization Module: Handles fraud reporting for authorization transactions by logging or updating fraud indicators in the AUTHFRDS table.
 
 ## Purpose
 
-The COPAUS2C program is a CICS COBOL program that marks an authorization message as fraudulent by inserting or updating a record in the CARDDEMO.AUTHFRDS table. It receives transaction details via the CICS COMMAREA and uses this data to populate the AUTHFRDS table with information about the potentially fraudulent transaction.
+This CICS COBOL program marks an authorization message as fraud by inserting a record into the CARDDEMO.AUTHFRDS DB2 table using data from the commarea. If the insert fails due to a duplicate key error (SQLCODE -803), it performs an update on the existing record to set the fraud flag and report date. Upon completion, it sets status messages in the commarea and returns to CICS.
 
 ## Business Rules
 
-- **BR001**: If a record with the same CARD_NUM and AUTH_TS already exists in the AUTHFRDS table, update the AUTH_FRAUD and FRAUD_RPT_DATE columns. Otherwise, insert a new record.
+- **BR001**: If fraud action is to report fraud (WS-FRD-ACTION='F'), insert new record into AUTHFRDS; if duplicate (-803), update existing record to set AUTH_FRAUD='F' and current FRAUD_RPT_DATE.
+- **BR002**: On SQL error not zero or -803 (insert) or not zero (update), set failure flag and build error message with SQLCODE/SQLSTATE.
 
 ## Inputs
 
-- **DFHCOMMAREA** (CICS_COMMAREA): Contains transaction details including account ID (WS-ACCT-ID), customer ID (WS-CUST-ID), and fraud report data (WS-FRAUD-AUTH-RECORD) based on CIPAUDTY copybook, and fraud status record (WS-FRAUD-STATUS-RECORD).
+- **DFHCOMMAREA** (CICS_COMMAREA): Contains WS-ACCT-ID, WS-CUST-ID, WS-FRAUD-AUTH-RECORD (from CIPAUDTY copybook with PA- fields like PA-AUTH-ORIG-DATE, PA-CARD-NUM), and WS-FRAUD-STATUS-RECORD (WS-FRD-ACTION, etc.) providing authorization details and fraud action flag.
+- **SQLCA** (OTHER): SQL communication area for DB2 error codes and states (SQLCODE, SQLSTATE).
+
+## Outputs
+
+- **DFHCOMMAREA** (CICS_COMMAREA): Updated with WS-FRD-UPDT-SUCCESS/FAILED flags and WS-FRD-ACT-MSG status message before CICS RETURN.
+- **CARDDEMO.AUTHFRDS** (DB2_TABLE): Fraud authorization records inserted or updated with fields like CARD_NUM, AUTH_TS, AUTH_FRAUD='F', FRAUD_RPT_DATE.
 
 ## Copybooks Used
 
-- **DFHBMSCA**: Defines BMS control blocks (commented out)
-- **SQLCA**: SQL Communication Area for DB2 interaction
-- **AUTHFRDS**: Defines the structure of the AUTHFRDS table
-- **CIPAUDTY**: Defines the structure of the fraud report data
+- **CIPAUDTY**: Defines WS-FRAUD-AUTH-RECORD structure with PA- fields (e.g., PA-CARD-NUM, PA-AUTH-ORIG-DATE, PA-AUTH-TYPE) for authorization data from commarea.
+- **AUTHFRDS**: SQL INCLUDE defining host variables (e.g., CARD-NUM, AUTH-TS) matching CARDDEMO.AUTHFRDS table columns.
+- **DFHBMSCA**: CICS BMS symbolic map copybook, unused in visible code.
+- **SQLCA**: SQL communication area for error handling (SQLCODE, SQLSTATE).
 
 ## When to Use This Skill
 

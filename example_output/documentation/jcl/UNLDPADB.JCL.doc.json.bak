@@ -1,0 +1,283 @@
+{
+  "header": {
+    "program_id": "UNLDPADB",
+    "file_name": "jcl/UNLDPADB.JCL",
+    "file_type": "JCL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-30T19:44:58.994672",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This JCL job first deletes any existing sequential output files from prior runs using IEFBR14, then executes the IMS Database Unload utility DFSRRC00 to unload the PAUTHDB and PAUTHDBX IMS databases into sequential files ROOT.FILEO and CHILD.FILEO. The unload targets root and child segments based on output file naming and PARM specifications (PAUDBUNL, PAUTBUNL). It supports the CARDDEMO application by creating flat files from the hierarchical IMS database.",
+    "business_context": "Unloading IMS PAUTDB/PAUTHDB database for backup, migration, or processing in the AWS.M2.CARDDEMO application",
+    "program_type": "BATCH",
+    "citations": [
+      23,
+      25,
+      38,
+      48,
+      53
+    ]
+  },
+  "inputs": [
+    {
+      "name": "DDPAUTP0",
+      "io_type": "IMS_SEGMENT",
+      "description": "IMS PAUTHDB database (primary/root segments for unload)",
+      "copybook": null,
+      "citation": [
+        58
+      ]
+    },
+    {
+      "name": "DDPAUTX0",
+      "io_type": "IMS_SEGMENT",
+      "description": "IMS PAUTHDBX database (secondary/child segments for unload)",
+      "copybook": null,
+      "citation": [
+        59
+      ]
+    },
+    {
+      "name": "DD1",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Prior ROOT.FILEO for deletion if exists",
+      "copybook": null,
+      "citation": [
+        33
+      ]
+    },
+    {
+      "name": "DD2",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Prior CHILD.FILEO for deletion if exists",
+      "copybook": null,
+      "citation": [
+        35
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "OUTFIL1",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Unloaded root segments from PAUTHDB in fixed-block format (LRECL=100)",
+      "copybook": null,
+      "citation": [
+        48
+      ]
+    },
+    {
+      "name": "OUTFIL2",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Unloaded child segments from PAUTHDBX in fixed-block format (LRECL=206)",
+      "copybook": null,
+      "citation": [
+        53
+      ]
+    }
+  ],
+  "called_programs": [
+    {
+      "program_name": "IEFBR14",
+      "call_type": "STATIC_CALL",
+      "purpose": "Trigger deletion of prior output files via DISP parameters",
+      "parameters": [],
+      "citation": 25
+    },
+    {
+      "program_name": "DFSRRC00",
+      "call_type": "STATIC_CALL",
+      "purpose": "IMS Database Unload utility to extract segments to sequential files",
+      "parameters": [
+        "'DLI,PAUDBUNL,PAUTBUNL,,,,,,,,,,,N'"
+      ],
+      "citation": 38
+    }
+  ],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "DDPAUTP0 (PAUTHDB)",
+        "fields_used": [],
+        "citation": [
+          58
+        ]
+      },
+      {
+        "source": "DDPAUTX0 (PAUTHDBX)",
+        "fields_used": [],
+        "citation": [
+          59
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "OUTFIL1 (ROOT.FILEO)",
+        "fields_written": [],
+        "citation": [
+          48
+        ]
+      },
+      {
+        "destination": "OUTFIL2 (CHILD.FILEO)",
+        "fields_written": [],
+        "citation": [
+          53
+        ]
+      }
+    ],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [
+    {
+      "paragraph_name": "STEP0",
+      "summary": null,
+      "purpose": "This step serves as a cleanup procedure to ensure no residual output files from previous job executions interfere with the current run. It executes the no-op utility IEFBR14, which triggers file deletions based on DISP=(OLD,DELETE,DELETE) parameters for DD1 and DD2. Inputs are references to potential existing files AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO and AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO; if present, they are deleted, otherwise the step succeeds without action. No data is read or processed beyond existence checks implicit in DISP processing. Outputs are the deletion of those files to provide a clean slate. There are no business decisions, conditions, or validations explicitly coded; it relies on standard JCL file disposition behavior. No subordinate calls or error branches are present. Logging is directed to SYSPRINT, SYSOUT, and SYSDUMP on SYSOUT* for any issues. This step prevents catalog conflicts or overwrites in the subsequent unload step.",
+      "called_by": [],
+      "calls": [
+        "IEFBR14"
+      ],
+      "citation": [
+        25,
+        37
+      ],
+      "outgoing_calls": [
+        {
+          "target": "IEFBR14",
+          "call_type": "executes",
+          "line": 25
+        },
+        {
+          "target": "AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO",
+          "call_type": "references",
+          "line": 33
+        },
+        {
+          "target": "AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO",
+          "call_type": "references",
+          "line": 35
+        }
+      ],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "STEP01",
+      "summary": null,
+      "purpose": "This is the primary processing step that performs the IMS database unload using the DFSRRC00 utility. It consumes IMS database datasets from DDPAUTP0 (PAUTHDB) and DDPAUTX0 (PAUTHDBX), along with control libraries from STEPLIB, DFSRESLB, IMS (PSBLIB/DBDLIB), and DFSVSAMP (DBD definition). The PARM specifies DLI access, DBD names PAUDBUNL/PAUTBUNL, and other unload options ending with 'N'. Outputs are written to newly created and cataloged sequential files OUTFIL1 (root segments) and OUTFIL2 (child segments) with defined DCB (RECFM=FB, LRECLs 100/206) and space allocations. Business logic is encapsulated in the utility: hierarchical IMS segments are unloaded to flat sequential format without specified field-level transforms. No explicit conditions or decisions in JCL; the utility handles EOF, errors internally. Error handling relies on dummy DDs (IMSLOGR, IEFRDER) to suppress logs and SYSUDUMP/IMSERR for diagnostics on SYSOUT*. It calls no other programs or paragraphs. Upon success, the output files contain all database records ready for reload or further processing.",
+      "called_by": [],
+      "calls": [
+        "DFSRRC00"
+      ],
+      "citation": [
+        38,
+        70
+      ],
+      "outgoing_calls": [
+        {
+          "target": "DFSRRC00",
+          "call_type": "executes",
+          "line": 38
+        },
+        {
+          "target": "OEMA.IMS.IMSP.SDFSRESL",
+          "call_type": "references",
+          "line": 40
+        },
+        {
+          "target": "OEMA.IMS.IMSP.SDFSRESL.V151",
+          "call_type": "references",
+          "line": 41
+        },
+        {
+          "target": "AWS.M2.CARDDEMO.LOADLIB",
+          "call_type": "references",
+          "line": 42
+        },
+        {
+          "target": "OEMA.IMS.IMSP.SDFSRESL",
+          "call_type": "references",
+          "line": 43
+        },
+        {
+          "target": "OEM.IMS.IMSP.PSBLIB",
+          "call_type": "references",
+          "line": 45
+        },
+        {
+          "target": "OEM.IMS.IMSP.DBDLIB",
+          "call_type": "references",
+          "line": 46
+        },
+        {
+          "target": "AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO",
+          "call_type": "references",
+          "line": 48
+        },
+        {
+          "target": "AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO",
+          "call_type": "references",
+          "line": 53
+        },
+        {
+          "target": "OEM.IMS.IMSP.PAUTHDB",
+          "call_type": "references",
+          "line": 58
+        },
+        {
+          "target": "OEM.IMS.IMSP.PAUTHDBX",
+          "call_type": "references",
+          "line": 59
+        }
+      ],
+      "incoming_calls": [],
+      "is_dead_code": true,
+      "dead_code_reason": "Paragraph 'STEP01' is never PERFORMed or referenced by any other paragraph or program",
+      "metadata": null
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "File not found or I/O errors in STEP0 deletes",
+      "action": "JCL DISP processing continues successfully (OLD,DELETE tolerates non-existence)",
+      "citation": [
+        34,
+        36
+      ]
+    },
+    {
+      "condition": "IMS unload errors or abends",
+      "action": "Dumps to SYSUDUMP and IMSERR on SYSOUT*; dummy logs prevent interference",
+      "citation": [
+        64,
+        67,
+        68
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [],
+  "dead_code": [
+    {
+      "name": "STEP01",
+      "artifact_type": "paragraph",
+      "line": 38,
+      "reason": "Paragraph 'STEP01' is never PERFORMed or referenced by any other paragraph or program"
+    }
+  ],
+  "call_semantics": [],
+  "flow_diagram": null
+}

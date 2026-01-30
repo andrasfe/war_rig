@@ -8,13 +8,13 @@
 - **File Name:** COPAU00.bms
 - **File Type:** BMS
 - **Analyzed By:** WAR_RIG
-- **Analyzed At:** 2026-01-28T14:54:49.526333
+- **Analyzed At:** 2026-01-30T19:40:27.088006
 
 ## Purpose
 
-**Summary:** This BMS map defines the screen layout for the CardDemo Pending Authorization screen. It displays customer account information and a list of pending transactions, allowing the user to select a transaction for further details.
+**Summary:** This BMS mapset defines the Pending Authorization Screen (COPAU0A) for the CardDemo application. It provides a user interface to search pending authorizations by Account ID, display customer details including name, address, status, phone, limits, balances, approval/decline counts, and a scrollable list of up to 5 transactions with fields for selection, transaction ID, date, time, type, A/D, status, and amount. Users interact via input fields and PF keys for navigation.
 
-**Business Context:** This screen is used to view and manage pending authorizations for credit card transactions.
+**Business Context:** Serves credit card authorization processing by allowing operators to view, select, and navigate pending authorization transactions for an account.
 **Program Type:** ONLINE_CICS
 
 ## Inputs
@@ -22,186 +22,86 @@
 ### ACCTID
 
 - **Type:** CICS_MAP
-- **Description:** Account ID entered by the user to search for pending authorizations.
+- **Description:** Unprotected input field for entering Account ID to search for pending authorizations
 
-### SEL0001 - SEL0005
+### SEL0001
 
 - **Type:** CICS_MAP
-- **Description:** Selection fields for each transaction displayed on the screen. User enters a value to select a specific transaction.
+- **Description:** Unprotected selection field (Sel) for first transaction in list
+
+### SEL0002
+
+- **Type:** CICS_MAP
+- **Description:** Unprotected selection field (Sel) for second transaction in list
+
+### SEL0003
+
+- **Type:** CICS_MAP
+- **Description:** Unprotected selection field (Sel) for third transaction in list
+
+### SEL0004
+
+- **Type:** CICS_MAP
+- **Description:** Unprotected selection field (Sel) for fourth transaction in list
+
+### SEL0005
+
+- **Type:** CICS_MAP
+- **Description:** Unprotected selection field (Sel) for fifth transaction in list
 
 ## Outputs
 
 ### COPAU0A
 
 - **Type:** CICS_MAP
-- **Description:** The entire screen layout, including labels, data fields, and messages. Displays customer information and pending transactions.
-
-### TRNNAME
-
-- **Type:** CICS_MAP
-- **Description:** Transaction Name
-
-### TITLE01
-
-- **Type:** CICS_MAP
-- **Description:** Title 1
-
-### CURDATE
-
-- **Type:** CICS_MAP
-- **Description:** Current Date
-
-### PGMNAME
-
-- **Type:** CICS_MAP
-- **Description:** Program Name
-
-### TITLE02
-
-- **Type:** CICS_MAP
-- **Description:** Title 2
-
-### CURTIME
-
-- **Type:** CICS_MAP
-- **Description:** Current Time
-
-### CNAME
-
-- **Type:** CICS_MAP
-- **Description:** Customer Name
-
-### CUSTID
-
-- **Type:** CICS_MAP
-- **Description:** Customer ID
-
-### ADDR001
-
-- **Type:** CICS_MAP
-- **Description:** Address Line 1
-
-### ACCSTAT
-
-- **Type:** CICS_MAP
-- **Description:** Account Status
-
-### ADDR002
-
-- **Type:** CICS_MAP
-- **Description:** Address Line 2
-
-### PHONE1
-
-- **Type:** CICS_MAP
-- **Description:** Phone Number
-
-### APPRCNT
-
-- **Type:** CICS_MAP
-- **Description:** Approval Count
-
-### DECLCNT
-
-- **Type:** CICS_MAP
-- **Description:** Decline Count
-
-### CREDLIM
-
-- **Type:** CICS_MAP
-- **Description:** Credit Limit
-
-### CASHLIM
-
-- **Type:** CICS_MAP
-- **Description:** Cash Limit
-
-### APPRAMT
-
-- **Type:** CICS_MAP
-- **Description:** Approved Amount
-
-### CREDBAL
-
-- **Type:** CICS_MAP
-- **Description:** Credit Balance
-
-### CASHBAL
-
-- **Type:** CICS_MAP
-- **Description:** Cash Balance
-
-### DECLAMT
-
-- **Type:** CICS_MAP
-- **Description:** Declined Amount
-
-### TRNID01 - TRNID05
-
-- **Type:** CICS_MAP
-- **Description:** Transaction ID for each of the 5 transactions displayed.
-
-### PDATE01 - PDATE05
-
-- **Type:** CICS_MAP
-- **Description:** Transaction Date for each of the 5 transactions displayed.
-
-### PTIME01 - PTIME05
-
-- **Type:** CICS_MAP
-- **Description:** Transaction Time for each of the 5 transactions displayed.
-
-### PTYPE01 - PTYPE05
-
-- **Type:** CICS_MAP
-- **Description:** Transaction Type for each of the 5 transactions displayed.
-
-### PAPRV01 - PAPRV05
-
-- **Type:** CICS_MAP
-- **Description:** Transaction Approval indicator for each of the 5 transactions displayed.
-
-### PSTAT01 - PSTAT05
-
-- **Type:** CICS_MAP
-- **Description:** Transaction Status for each of the 5 transactions displayed.
-
-### PAMT001 - PAMT005
-
-- **Type:** CICS_MAP
-- **Description:** Transaction Amount for each of the 5 transactions displayed.
+- **Description:** Primary map displaying screen header (Tran, Date, Prog, Time), title, search prompt, customer info (name, ID, address, status, phone), limits/balances/amounts (credit/cash lim/bal, appr/decl amt), transaction list headers and data rows, instructions, error message, and PF key help
 
 ### ERRMSG
 
 - **Type:** CICS_MAP
-- **Description:** Error message field to display error conditions to the user.
+- **Description:** Error message display field with bright and red attributes
+
+## Business Rules
+
+### BR001
+
+**Description:** User must type 'S' in one of the SEL fields to select and view details of a specific authorization from the transaction list
+
+**Logic:** Instruction explicitly displayed on screen to guide user interaction
+
+**Conditions:**
+- `User enters 'S' in SEL0001-SEL0005`
+
+### BR002
+
+**Description:** Screen navigation uses PF keys: ENTER to continue, F3 to go back, F7 for backward scroll, F8 for forward scroll
+
+**Logic:** PF key help displayed at bottom of screen
+
+**Conditions:**
+- `PF3 pressed`
+- `PF7 pressed`
+- `PF8 pressed`
 
 ## Paragraphs
+
+### COPAU00
+
+**(Dead Code)**
+
+[Citadel] Paragraph identified by static analysis
 
 ### COPAU0A
 
 **(Dead Code)**
 
-This paragraph defines the overall structure and attributes of the CICS map COPAU0A, which represents the Pending Authorization screen. It specifies the screen size as 24 lines by 80 columns (line 28). It sets various control options, including enabling the alarm, freeing the keyboard after input, enabling extended attributes, specifying COBOL as the programming language, setting the mode to INOUT for both input and output, using automatic storage, and enabling the TIOAPFX option (lines 19-24). The TYPE=&&SYSPARM indicates that the map type (e.g., MAP or DSECT) is determined by a system parameter at compile time (line 25). This paragraph essentially acts as the container for all the individual fields and labels that make up the screen, defining the overall environment in which they will be displayed. It doesn't directly process data or implement business logic but sets the stage for the interaction between the user and the application.
+[Citadel] Paragraph identified by static analysis
 
 ## Data Flow
 
-### Reads From
-
-- **ACCTID:** ACCTID
-- **SEL0001:** SEL0001
-- **SEL0002:** SEL0002
-- **SEL0003:** SEL0003
-- **SEL0004:** SEL0004
-- **SEL0005:** SEL0005
-
-### Writes To
-
-- **COPAU0A:** TRNNAME, TITLE01, CURDATE, PGMNAME, TITLE02, CURTIME, CNAME, CUSTID, ADDR001, ACCSTAT, ADDR002, PHONE1, APPRCNT, DECLCNT, CREDLIM, CASHLIM, APPRAMT, CREDBAL, CASHBAL, DECLAMT, TRNID01, PDATE01, PTIME01, PTYPE01, PAPRV01, PSTAT01, PAMT001, TRNID02, PDATE02, PTIME02, PTYPE02, PAPRV02, PSTAT02, PAMT002, TRNID03, PDATE03, PTIME03, PTYPE03, PAPRV03, PSTAT03, PAMT003, TRNID04, PDATE04, PTIME04, PTYPE04, PAPRV04, PSTAT04, PAMT004, TRNID05, PDATE05, PTIME05, PTYPE05, PAPRV05, PSTAT05, PAMT005, ERRMSG
-
 ## Error Handling
 
-- **Error condition:** Display error message in ERRMSG field
+- **Application errors:** Display message in ERRMSG field (bright, red, FSET)
 
 ## CICS Operations
 

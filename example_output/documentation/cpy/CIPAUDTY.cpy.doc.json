@@ -1,0 +1,154 @@
+{
+  "header": {
+    "program_id": "CIPAUDTY",
+    "file_name": "cpy/CIPAUDTY.cpy",
+    "file_type": "COPYBOOK",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-30T19:47:38.794636",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This copybook defines the data structure for an IMS segment named 'PENDING AUTHORIZATION DETAILS'. It specifies fields for authorization keys, dates, times, card details, merchant information, transaction amounts, response codes, and status indicators for matching and fraud detection. The structure supports payment authorization processing in a financial transaction system.",
+    "business_context": "Serves payment authorization workflows, storing pending auth details for transaction matching, fraud monitoring, and response tracking in an IMS database within Amazon's financial systems.",
+    "program_type": "UTILITY",
+    "citations": [
+      2,
+      19
+    ]
+  },
+  "inputs": [],
+  "outputs": [],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Authorization response is approved when the response code is '00'",
+      "logic_summary": "Defined via 88-level condition name PA-AUTH-APPROVED",
+      "conditions": [
+        "PA-AUTH-RESP-CODE = '00'"
+      ],
+      "citation": [
+        30,
+        31
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Match status can be Pending ('P'), Declined ('D'), Expired ('E'), or Matched ('M')",
+      "logic_summary": "88-level conditions on PA-MATCH-STATUS field",
+      "conditions": [
+        "PA-MATCH-STATUS = 'P'",
+        "PA-MATCH-STATUS = 'D'",
+        "PA-MATCH-STATUS = 'E'",
+        "PA-MATCH-STATUS = 'M'"
+      ],
+      "citation": [
+        45,
+        46,
+        47,
+        48,
+        49
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "Fraud status is Confirmed ('F') or Removed ('R')",
+      "logic_summary": "88-level conditions on PA-AUTH-FRAUD field",
+      "conditions": [
+        "PA-AUTH-FRAUD = 'F'",
+        "PA-AUTH-FRAUD = 'R'"
+      ],
+      "citation": [
+        50,
+        51,
+        52
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [],
+    "writes_to": [],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [
+    {
+      "paragraph_name": "CIPAUDTY",
+      "summary": null,
+      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1,
+        1
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+          "function": "PAUDBLOD",
+          "line": 153,
+          "call_type": "includes"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
+          "function": "COPAUS2C",
+          "line": 78,
+          "call_type": "includes"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+          "function": "COPAUA0C",
+          "line": 197,
+          "call_type": "includes"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "function": "DBUNLDGS",
+          "line": 147,
+          "call_type": "includes"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+          "function": "CBPAUP0C",
+          "line": 121,
+          "call_type": "includes"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+          "function": "PAUDBUNL",
+          "line": 143,
+          "call_type": "includes"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+          "function": "COPAUS1C",
+          "line": 146,
+          "call_type": "includes"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+          "function": "COPAUS0C",
+          "line": 165,
+          "call_type": "includes"
+        }
+      ],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    }
+  ],
+  "error_handling": [],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [],
+  "dead_code": [],
+  "call_semantics": [],
+  "flow_diagram": null
+}

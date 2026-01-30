@@ -1,0 +1,68 @@
+{
+  "header": {
+    "program_id": "PAUTBUNL",
+    "file_name": "ims/PAUTBUNL.PSB",
+    "file_type": "OTHER",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-01-30T19:42:22.408833",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This file defines an IMS Program Specification Block (PSB) named PAUTBUNL for a COBOL language program. It specifies a single PCB named PAUTBPCB providing access to the IMS database DBDNAME=DBPAUTP0 with PROCOPT=GOTP and KEYLEN=14. The PCB defines two sensegments: PAUTSUM0 as the root segment (PARENT=0) and PAUTDTL1 as a child segment under PAUTSUM0.",
+    "business_context": null,
+    "program_type": "BATCH",
+    "citations": [
+      18,
+      19,
+      20,
+      21
+    ]
+  },
+  "inputs": [
+    {
+      "name": "DBPAUTP0",
+      "io_type": "IMS_SEGMENT",
+      "description": "IMS database referenced by the PCB, accessible via segments PAUTSUM0 (root) and PAUTDTL1 (child)",
+      "copybook": null,
+      "citation": [
+        18,
+        19,
+        20
+      ]
+    }
+  ],
+  "outputs": [],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [],
+  "data_flow": {
+    "reads_from": [],
+    "writes_to": [],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [],
+  "error_handling": [],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "What is the business purpose of the DBPAUTP0 database and its segments PAUTSUM0/PAUTDTL1?",
+      "context": "No descriptive comments or names indicate business meaning beyond technical IMS structure",
+      "suggestion": "Review associated DBD definitions or calling COBOL programs for context"
+    },
+    {
+      "question": "Is this PSB used in batch DL/I, MPP, BMP, or IFP region?",
+      "context": "PROCOPT=GOTP suggests possible TP usage, but no explicit region type specified",
+      "suggestion": "Check JCL or IMS region definitions for the PAUTBUNL program"
+    }
+  ],
+  "dead_code": [],
+  "call_semantics": [],
+  "flow_diagram": null
+}

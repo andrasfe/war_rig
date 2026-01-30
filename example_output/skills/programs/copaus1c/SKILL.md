@@ -1,50 +1,44 @@
 ---
 name: copaus1c
-description: "COPAUS1C is a CICS COBOL program that displays detailed information about an authorization message. It retrieves authorization details from an IMS database, allows users to mark authorizations as fraudulent, and links to another program (COPAUS2C) to handle fraud updates."
+description: "This program provides a detailed view of a specific pending authorization message within the CardDemo application. It allows users to view transaction details, navigate to the next authorization record, and toggle the fraud status of a transaction."
 ---
 
 # COPAUS1C
 
 **Type:** COBOL (ONLINE_CICS)
-**Context:** This program is part of a card authorization demo application, providing a detailed view of authorization messages for review and potential fraud flagging.
+**Context:** CardDemo Authorization Module - enables administrators or investigators to review flagged or pending credit card authorizations for potential fraud.
 
 ## Purpose
 
-COPAUS1C is a CICS COBOL program that displays detailed information about an authorization message. It retrieves authorization details from an IMS database, allows users to mark authorizations as fraudulent, and links to another program (COPAUS2C) to handle fraud updates.
+This program provides a detailed view of a specific pending authorization message within the CardDemo application. It allows users to view transaction details, navigate to the next authorization record, and toggle the fraud status of a transaction.
 
 ## Business Rules
 
-- **BR001**: Authorization response codes are translated to 'A' (Approved) or 'D' (Declined) for display.
-- **BR002**: Decline reason codes are translated to a user-friendly description using a table lookup.
+- **BR001**: Fraud Status Toggle
+- **BR002**: Authorization Response Mapping
 
 ## Called Programs
 
-- COPAUS0C (CICS_XCTL)
 - COPAUS2C (CICS_LINK)
+- CDEMO-TO-PROGRAM (STATIC_CALL)
 
 ## Inputs
 
-- **CARDDEMO-COMMAREA** (CICS_COMMAREA): Communication area passed between CICS programs, containing account ID, authorization keys, and other relevant data.
-- **PENDING-AUTH-SUMMARY** (IMS_SEGMENT): IMS segment containing summary information about a pending authorization.
-- **PENDING-AUTH-DETAILS** (IMS_SEGMENT): IMS segment containing detailed information about a pending authorization.
+- **DFHCOMMAREA** (CICS_COMMAREA): Contains session data including account ID and the selected authorization key from the summary screen.
+- **PAUTSUM0** (IMS_SEGMENT): Pending Authorization Summary root segment, accessed by Account ID.
+- **PAUTDTL1** (IMS_SEGMENT): Pending Authorization Details child segment, containing specific transaction data.
 
 ## Outputs
 
-- **COPAU1A** (CICS_MAP): BMS map displaying authorization details to the user.
-- **WS-FRAUD-DATA** (CICS_COMMAREA): Communication area passed to COPAUS2C containing fraud related data.
+- **COPAU1A** (CICS_MAP): The Detail View screen displaying authorization details like card number, amount, merchant info, and fraud status.
+- **PAUTDTL1** (IMS_SEGMENT): Updated detail segment when fraud status is toggled.
 
 ## Copybooks Used
 
-- **COCOM01Y**: Defines the CARDDEMO-COMMAREA structure for inter-program communication.
-- **COPAU01**: Defines the BMS map structure for the authorization view screen.
-- **COTTL01Y**: Defines screen titles.
-- **CSDAT01Y**: Defines current date variables.
-- **CSMSG01Y**: Defines common messages.
-- **CSMSG02Y**: Defines abend variables.
-- **CIPAUSMY**: Defines the PENDING-AUTH-SUMMARY IMS segment layout.
-- **CIPAUDTY**: Defines the PENDING-AUTH-DETAILS IMS segment layout.
-- **DFHAID**: Defines CICS AID keys.
-- **DFHBMSCA**: Defines BMS communication area.
+- **COCOM01Y**: Common Commarea for CardDemo
+- **COPAU01**: BMS Mapset for Authorization screens
+- **CIPAUSMY**: IMS Segment Layout for Auth Summary
+- **CIPAUDTY**: IMS Segment Layout for Auth Details
 
 ## When to Use This Skill
 

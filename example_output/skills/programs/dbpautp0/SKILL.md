@@ -1,15 +1,20 @@
 ---
 name: dbpautp0
-description: "This JCL job unloads the DBD DBPAUTP0 from an IMS database. It first deletes the output dataset if it exists, then executes the DFSRRC00 program with the ULU parameter to perform the unload. It allocates necessary datasets for IMS processing, including RESLIB, PSBLIB, DBDLIB, and RECON datasets."
+description: "This JCL job first deletes any existing unload dataset AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0 using IEFBR14 in STEPDEL, then unloads the IMS database DBPAUTP0 using DFSRRC00 utility with PARM=(ULU,DFSURGU0,DBPAUTP0) into a new sequential VB dataset. It supports IMS database export for backup or processing in the CardDemo environment."
 ---
 
 # DBPAUTP0
 
 **Type:** JCL (BATCH)
+**Context:** IMS database management for CardDemo application, unloading DBPAUTP0 (authorization database PAUTHDB) to flat file.
 
 ## Purpose
 
-This JCL job unloads the DBD DBPAUTP0 from an IMS database. It first deletes the output dataset if it exists, then executes the DFSRRC00 program with the ULU parameter to perform the unload. It allocates necessary datasets for IMS processing, including RESLIB, PSBLIB, DBDLIB, and RECON datasets.
+This JCL job first deletes any existing unload dataset AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0 using IEFBR14 in STEPDEL, then unloads the IMS database DBPAUTP0 using DFSRRC00 utility with PARM=(ULU,DFSURGU0,DBPAUTP0) into a new sequential VB dataset. It supports IMS database export for backup or processing in the CardDemo environment.
+
+## Business Rules
+
+- **BR001**: Perform database unload only under conditional activation
 
 ## Called Programs
 
@@ -18,23 +23,22 @@ This JCL job unloads the DBD DBPAUTP0 from an IMS database. It first deletes the
 
 ## Inputs
 
-- **OEM.IMS.IMSP.PSBLIB** (FILE_SEQUENTIAL): IMS PSB Library
-- **OEM.IMS.IMSP.DBDLIB** (FILE_SEQUENTIAL): IMS DBD Library
-- **OEM.IMS.IMSP.PAUTHDB** (FILE_SEQUENTIAL): IMS PAUTHDB
-- **OEM.IMS.IMSP.PAUTHDBX** (FILE_SEQUENTIAL): IMS PAUTHDBX
-- **OEMPP.IMS.V15R01MB.PROCLIB(DFSVSMDB)** (FILE_SEQUENTIAL): DFSVSMDB proc
-- *(+5 more inputs)*
+- **PARM** (PARAMETER): Parameters directing IMS unload: ULU (unload), DFSURGU0 (user routine), DBPAUTP0 (database DBD name)
+- **DDPAUTP0** (IMS_SEGMENT): Primary IMS PAUTHDB dataset for DBPAUTP0 unload
+- **DDPAUTX0** (IMS_SEGMENT): Secondary IMS PAUTHDBX dataset for DBPAUTP0 unload
+- **DFSVSAMP** (OTHER): IMS sample proclib macro DFSVSMDB for database definition
+- **DFSCTL** (OTHER): Control statements for IMS utility including SBPARM ACTIV=COND
 
 ## Outputs
 
-- **AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0** (FILE_VSAM): Output dataset containing the unloaded DBD DBPAUTP0 data.
-- **SYSUDUMP** (REPORT): System dump output.
-- **SYSPRINT** (REPORT): System print output.
+- **DFSURGU1** (FILE_SEQUENTIAL): Sequential VB unload file containing all DBPAUTP0 database segments
+- **SYSUT1** (FILE_SEQUENTIAL): Target dataset for deletion (same DSN as DFSURGU1)
 
 ## When to Use This Skill
 
 Use this skill when you need to:
 - Understand the purpose and functionality of DBPAUTP0
+- Understand business rules implemented in DBPAUTP0
 - Trace program calls from DBPAUTP0
 - Identify inputs/outputs for DBPAUTP0
 - Maintain or modify DBPAUTP0

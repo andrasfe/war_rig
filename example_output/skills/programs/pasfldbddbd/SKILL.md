@@ -1,6 +1,6 @@
 ---
 name: pasfldbddbd
-description: "This file contains the Data Base Description (DBD) for PASFLDBD, defining its structure and access methods. It specifies the database name, access method (GSAM, BSAM), dataset names (PASFILIP, PASFILOP), record length (100), and record format (F)."
+description: "This DBDGEN source file defines the IMS database named PASFLDBD using GSAM and BSAM access methods without password protection. It specifies a single dataset group DSG001 with input dataset DD1=PASFILIP and output dataset DD2=PASFILOP, both using fixed-length records (RECFM=F) of 100 bytes. The definition was generated on 04/21/2023 for IMS version 15.1."
 ---
 
 # PASFLDBD
@@ -9,12 +9,21 @@ description: "This file contains the Data Base Description (DBD) for PASFLDBD, d
 
 ## Purpose
 
-This file contains the Data Base Description (DBD) for PASFLDBD, defining its structure and access methods. It specifies the database name, access method (GSAM, BSAM), dataset names (PASFILIP, PASFILOP), record length (100), and record format (F).
+This DBDGEN source file defines the IMS database named PASFLDBD using GSAM and BSAM access methods without password protection. It specifies a single dataset group DSG001 with input dataset DD1=PASFILIP and output dataset DD2=PASFILOP, both using fixed-length records (RECFM=F) of 100 bytes. The definition was generated on 04/21/2023 for IMS version 15.1.
+
+## Inputs
+
+- **PASFILIP** (FILE_SEQUENTIAL): Input dataset (DD1) for the PASFLDBD GSAM database, referenced in dataset group DSG001
+
+## Outputs
+
+- **PASFILOP** (FILE_SEQUENTIAL): Output dataset (DD2) for the PASFLDBD GSAM database, referenced in dataset group DSG001
 
 ## When to Use This Skill
 
 Use this skill when you need to:
 - Understand the purpose and functionality of PASFLDBD
+- Identify inputs/outputs for PASFLDBD
 - Maintain or modify PASFLDBD
 
 ## Additional Details

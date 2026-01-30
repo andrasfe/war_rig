@@ -1,16 +1,16 @@
 ---
 name: ccpaurly
-description: "This copybook defines the data structure for a pending authorization response related to card transactions. It includes fields for card number, transaction ID, authorization codes, response codes, reason codes, and the approved amount."
+description: "This COBOL copybook defines data structures at level 05 for a Pending Authorization Response record. It includes elementary fields for card number (PIC X(16)), transaction ID (PIC X(15)), authorization ID code (PIC X(06)), authorization response code (PIC X(02)), response reason (PIC X(04)), and approved amount (PIC +9(10).99). The fields share a 'PA-RL-' prefix, logically grouping them for use in payment authorization processing."
 ---
 
 # CCPAURLY
 
-**Type:** COPYBOOK (COPYBOOK)
-**Context:** This copybook is used in the context of processing card payments and handling authorization responses, likely within a financial transaction system.
+**Type:** COPYBOOK (UTILITY)
+**Context:** Payment card authorization processing, capturing response details from authorization requests
 
 ## Purpose
 
-This copybook defines the data structure for a pending authorization response related to card transactions. It includes fields for card number, transaction ID, authorization codes, response codes, reason codes, and the approved amount.
+This COBOL copybook defines data structures at level 05 for a Pending Authorization Response record. It includes elementary fields for card number (PIC X(16)), transaction ID (PIC X(15)), authorization ID code (PIC X(06)), authorization response code (PIC X(02)), response reason (PIC X(04)), and approved amount (PIC +9(10).99). The fields share a 'PA-RL-' prefix, logically grouping them for use in payment authorization processing.
 
 ## When to Use This Skill
 

@@ -1,16 +1,16 @@
 ---
 name: loadpadb
-description: "This JCL job executes an IMS program (DFSRRC00) to load the PAUTDB database using a BMP (Batch Message Processing) region. It specifies the program, PSB, and input files required for the database load process."
+description: This JCL job executes the IMS utility program DFSRRC00 in BMP mode to load the PAUTDB IMS database using PSBPAUTB and database reference PAUDBLOD. It reads root and child segment data from sequential input files INFILE1 and INFILE2. Standard IMS libraries and control datasets are referenced for execution.
 ---
 
 # LOADPADB
 
 **Type:** JCL (BATCH)
-**Context:** Database maintenance and loading.
+**Context:** Loads data into the PAUTDB IMS database as part of the AWS M2 Card Demo application
 
 ## Purpose
 
-This JCL job executes an IMS program (DFSRRC00) to load the PAUTDB database using a BMP (Batch Message Processing) region. It specifies the program, PSB, and input files required for the database load process.
+This JCL job executes the IMS utility program DFSRRC00 in BMP mode to load the PAUTDB IMS database using PSBPAUTB and database reference PAUDBLOD. It reads root and child segment data from sequential input files INFILE1 and INFILE2. Standard IMS libraries and control datasets are referenced for execution.
 
 ## Called Programs
 
@@ -18,18 +18,17 @@ This JCL job executes an IMS program (DFSRRC00) to load the PAUTDB database usin
 
 ## Inputs
 
-- **OEMA.IMS.IMSP.SDFSRESL** (FILE_SEQUENTIAL): IMS RESLIB library.
-- **AWS.M2.CARDDEMO.LOADLIB** (FILE_SEQUENTIAL): Application load library.
-- **OEM.IMS.IMSP.PSBLIB** (FILE_SEQUENTIAL): IMS PSB library.
-- **OEM.IMS.IMSP.DBDLIB** (FILE_SEQUENTIAL): IMS DBD library.
-- **AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO** (FILE_SEQUENTIAL): Input file for the PAUTDB root segment.
-- *(+2 more inputs)*
+- **INFILE1** (FILE_SEQUENTIAL): Root segment unload file for PAUTDB database load
+- **INFILE2** (FILE_SEQUENTIAL): Child segment unload file for PAUTDB database load
+- **IMS** (OTHER): IMS PSBLIB and DBDLIB for PSB and DBD definitions
+- **STEPLIB** (OTHER): Load libraries including IMS SDFSRESL and application LOADLIB
 
 ## Outputs
 
-- **SYSPRINT** (REPORT): System print output.
-- **SYSUDUMP** (REPORT): System dump output.
-- **IMSERR** (REPORT): IMS error output.
+- **SYSPRINT** (REPORT): Standard print output for job logs
+- **SYSUDUMP** (REPORT): System dump output for abends
+- **IMSERR** (REPORT): IMS error output
+- **PAUTDB** (IMS_SEGMENT): Target IMS database loaded with root and child segments (inferred from PARM and inputs)
 
 ## When to Use This Skill
 

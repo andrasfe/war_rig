@@ -1,6 +1,6 @@
 ---
 name: padfldbddbd
-description: "This file contains the DBD (Database Description) for PADFLDBD, defining its access method as GSAM/BSAM and specifying the datasets PADFILIP and PADFILOP. It also includes copyright and licensing information related to Amazon.com. The DBDGEN was created on 04/21/2023 for IMS version 15.1."
+description: "This DBD source file defines the IMS database PADFLDBD as a GSAM database with BSAM access method and no password protection. It specifies Dataset Group 1 (DSG001) with input dataset DD1=PADFILIP and output dataset DD2=PADFILOP, both using fixed-length records of 200 bytes (RECFM=F). The definition was prepared for DBDGEN processing on IMS version 15.1."
 ---
 
 # PADFLDBD
@@ -9,15 +9,15 @@ description: "This file contains the DBD (Database Description) for PADFLDBD, de
 
 ## Purpose
 
-This file contains the DBD (Database Description) for PADFLDBD, defining its access method as GSAM/BSAM and specifying the datasets PADFILIP and PADFILOP. It also includes copyright and licensing information related to Amazon.com. The DBDGEN was created on 04/21/2023 for IMS version 15.1.
+This DBD source file defines the IMS database PADFLDBD as a GSAM database with BSAM access method and no password protection. It specifies Dataset Group 1 (DSG001) with input dataset DD1=PADFILIP and output dataset DD2=PADFILOP, both using fixed-length records of 200 bytes (RECFM=F). The definition was prepared for DBDGEN processing on IMS version 15.1.
 
 ## Inputs
 
-- **PADFILIP** (FILE_SEQUENTIAL): Input dataset for PADFLDBD, part of dataset group DSG001.
+- **PADFILIP** (FILE_SEQUENTIAL): Input dataset (DD1) associated with Dataset Group 1 of the PADFLDBD GSAM database, fixed 200-byte records
 
 ## Outputs
 
-- **PADFILOP** (FILE_SEQUENTIAL): Output dataset for PADFLDBD, part of dataset group DSG001.
+- **PADFILOP** (FILE_SEQUENTIAL): Output dataset (DD2) associated with Dataset Group 1 of the PADFLDBD GSAM database, fixed 200-byte records
 
 ## When to Use This Skill
 

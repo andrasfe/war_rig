@@ -1,19 +1,20 @@
 ---
 name: pasflpcb
-description: "This copybook defines the structure of the PASFLPCB, which appears to be a PCB (Program Communication Block) used for IMS database communication. It contains fields related to database name, segment level, status, processing options, segment name, key feedback, number of sensitive segments, and key feedback area."
+description: "This COBOL copybook defines the data structure for the PASFL Program Communication Block (PCB) used in IMS DL/I application programs. It specifies fields including the database name, segment level, PCB status, processing options, segment name, key feedback name, number of sensitive segments, and the key feedback buffer. The structure facilitates communication between the application and the IMS PASFL database for segment search and access."
 ---
 
 # PASFLPCB
 
-**Type:** COPYBOOK (SUBROUTINE)
+**Type:** COPYBOOK (UTILITY)
+**Context:** IMS hierarchical database (DL/I) access for the PASFL database
 
 ## Purpose
 
-This copybook defines the structure of the PASFLPCB, which appears to be a PCB (Program Communication Block) used for IMS database communication. It contains fields related to database name, segment level, status, processing options, segment name, key feedback, number of sensitive segments, and key feedback area.
+This COBOL copybook defines the data structure for the PASFL Program Communication Block (PCB) used in IMS DL/I application programs. It specifies fields including the database name, segment level, PCB status, processing options, segment name, key feedback name, number of sensitive segments, and the key feedback buffer. The structure facilitates communication between the application and the IMS PASFL database for segment search and access.
 
 ## Copybooks Used
 
-- **PASFLPCB**: Defines the structure of the PASFLPCB, likely a PCB for IMS database communication.
+- **PASFLPCB**: Defines the IMS PCB structure for accessing the PASFL database, including DBD name, status, segment info, and key feedback
 
 ## When to Use This Skill
 

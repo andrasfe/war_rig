@@ -1,16 +1,16 @@
 ---
 name: unldpadb
-description: This JCL unloads the PAUTDB IMS database to sequential files. It executes the IMS program DFSRRC00 with the PARM parameter specifying the DLI function and the PAUDBUNL application program. It also deletes and recreates the output files.
+description: "This JCL job first deletes any existing sequential output files from prior runs using IEFBR14, then executes the IMS Database Unload utility DFSRRC00 to unload the PAUTHDB and PAUTHDBX IMS databases into sequential files ROOT.FILEO and CHILD.FILEO. The unload targets root and child segments based on output file naming and PARM specifications (PAUDBUNL, PAUTBUNL). It supports the CARDDEMO application by creating flat files from the hierarchical IMS database."
 ---
 
 # UNLDPADB
 
 **Type:** JCL (BATCH)
-**Context:** UNKNOWN
+**Context:** Unloading IMS PAUTDB/PAUTHDB database for backup, migration, or processing in the AWS.M2.CARDDEMO application
 
 ## Purpose
 
-This JCL unloads the PAUTDB IMS database to sequential files. It executes the IMS program DFSRRC00 with the PARM parameter specifying the DLI function and the PAUDBUNL application program. It also deletes and recreates the output files.
+This JCL job first deletes any existing sequential output files from prior runs using IEFBR14, then executes the IMS Database Unload utility DFSRRC00 to unload the PAUTHDB and PAUTHDBX IMS databases into sequential files ROOT.FILEO and CHILD.FILEO. The unload targets root and child segments based on output file naming and PARM specifications (PAUDBUNL, PAUTBUNL). It supports the CARDDEMO application by creating flat files from the hierarchical IMS database.
 
 ## Called Programs
 
@@ -19,17 +19,15 @@ This JCL unloads the PAUTDB IMS database to sequential files. It executes the IM
 
 ## Inputs
 
-- **OEM.IMS.IMSP.SDFSRESL** (FILE_SEQUENTIAL): IMS RESLIB
-- **OEM.IMS.IMSP.PSBLIB** (FILE_SEQUENTIAL): IMS PSBLIB
-- **OEM.IMS.IMSP.DBDLIB** (FILE_SEQUENTIAL): IMS DBDLIB
-- **OEM.IMS.IMSP.PAUTHDB** (FILE_SEQUENTIAL): PAUTHDB IMS database
-- **OEM.IMS.IMSP.PAUTHDBX** (FILE_SEQUENTIAL): PAUTHDBX IMS database
-- *(+1 more inputs)*
+- **DDPAUTP0** (IMS_SEGMENT): IMS PAUTHDB database (primary/root segments for unload)
+- **DDPAUTX0** (IMS_SEGMENT): IMS PAUTHDBX database (secondary/child segments for unload)
+- **DD1** (FILE_SEQUENTIAL): Prior ROOT.FILEO for deletion if exists
+- **DD2** (FILE_SEQUENTIAL): Prior CHILD.FILEO for deletion if exists
 
 ## Outputs
 
-- **AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO** (FILE_SEQUENTIAL): Unloaded PAUTDB root segment data
-- **AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO** (FILE_SEQUENTIAL): Unloaded PAUTDB child segment data
+- **OUTFIL1** (FILE_SEQUENTIAL): Unloaded root segments from PAUTHDB in fixed-block format (LRECL=100)
+- **OUTFIL2** (FILE_SEQUENTIAL): Unloaded child segments from PAUTHDBX in fixed-block format (LRECL=206)
 
 ## When to Use This Skill
 

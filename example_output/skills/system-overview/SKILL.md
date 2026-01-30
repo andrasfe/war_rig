@@ -1,6 +1,6 @@
 ---
 name: system-overview
-description: "This system, driven by batch JCL jobs and COBOL programs, addresses the critical business need of managing and processing authorization data, likely related to financial transactions or access control. The primary mission of the system is to ensure the integrity and validity of authorization requests, facilitating secure and compliant operations. The users of this system are likely internal operations staff, database administrators, and potentially auditors who rely on the processed data for reporting and compliance purposes. The system handles authorization requests, validates them against various data sources, and ultimately persists the authorization details in a database. Key workflows involve reading authorization requests from a message queue, validating the request against customer, account, and cross-reference data, making a decision based on predefined rules, and then writing the authorization details to a database."
+description: "The CardDemo Authorization System is a mission-critical financial middleware platform designed to manage the lifecycle of credit card transaction authorizations. Its primary purpose is to provide a robust, high-availability bridge between real-time transaction requests and the permanent financial records of an organization. The system serves bank administrators, fraud investigators, and automated payment gateways by ensuring that every pending authorization is tracked, validated, and eventually reconciled or purged. At its core, the system solves the business problem of \"stale\" authorizations—transactions that are approved but never fully cleared—which can tie up customer credit lines and create financial reporting inaccuracies. By maintaining an accurate view of pending transactions, the system ensures that a customer's available credit is always reflective of their true financial standing."
 ---
 
 # System Overview
@@ -19,27 +19,34 @@ Use this skill when you need to:
 
 ## System Documentation
 
-### 1. Executive Summary
+## 1. Executive Summary
 
-This system, driven by batch JCL jobs and COBOL programs, addresses the critical business need of managing and processing authorization data, likely related to financial transactions or access control. The primary mission of the system is to ensure the integrity and validity of authorization requests, facilitating secure and compliant operations. The users of this system are likely internal operations staff, database administrators, and potentially auditors who rely on the processed data for reporting and compliance purposes. The system handles authorization requests, validates them against various data sources, and ultimately persists the authorization details in a database. Key workflows involve reading authorization requests from a message queue, validating the request against customer, account, and cross-reference data, making a decision based on predefined rules, and then writing the authorization details to a database.
+The CardDemo Authorization System is a mission-critical financial middleware platform designed to manage the lifecycle of credit card transaction authorizations. Its primary purpose is to provide a robust, high-availability bridge between real-time transaction requests and the permanent financial records of an organization. The system serves bank administrators, fraud investigators, and automated payment gateways by ensuring that every pending authorization is tracked, validated, and eventually reconciled or purged. At its core, the system solves the business problem of "stale" authorizations—transactions that are approved but never fully cleared—which can tie up customer credit lines and create financial reporting inaccuracies. By maintaining an accurate view of pending transactions, the system ensures that a customer's available credit is always reflective of their true financial standing.
 
-The technical foundation of this system is built upon COBOL programs executing within a z/OS environment, leveraging JCL for batch processing and IMS for database management. COBOL programs such as [COPAUA0C](cbl/COPAUA0C.cbl.md) and [CBPAUP0C](cbl/CBPAUP0C.cbl.md) perform the core business logic, interacting with IMS databases through CBLTDLI calls. JCL jobs like [CBPAUP0J](jcl/CBPAUP0J.jcl.md) schedule and execute these COBOL programs, managing the flow of data and resources. Message queuing (MQ) is used for asynchronous communication, allowing external systems to submit authorization requests and receive responses. The system also utilizes copybooks like [CIPAUDTY](cpy/CIPAUDTY.cpy.md) and [CIPAUSMY](cpy/CIPAUSMY.cpy.md) to define common data structures and ensure consistency across programs.
+The functional scope of the system is comprehensive, covering real-time MQ-based request ingestion, online inquiry and maintenance via CICS screens, and large-scale batch maintenance. Key workflows include the ingestion of authorization requests through [COPAUA0C](cbl/COPAUA0C.cbl.md), the online review of pending transactions via [COPAUS0C](cbl/COPAUS0C.cbl.md), and the critical fraud-marking capability provided by [COPAUS2C](cbl/COPAUS2C.cbl.md). The system handles complex hierarchical data relationships, linking high-level account summaries to granular transaction details. Users can browse lists of authorizations by account ID, drill down into specific transaction metadata, and manually override fraud statuses. Batch processes like [CBPAUP0C](cbl/CBPAUP0C.cbl.md) ensure the system remains performant by automatically deleting expired records based on configurable business rules.
 
-The system's inputs include authorization requests received via MQ and data from various VSAM files and IMS databases containing customer, account, and cross-reference information. The outputs consist of updated IMS databases with authorization details and responses sent back to the requesting systems via MQ. The system integrates with external systems through MQ for receiving authorization requests and sending responses. It also interacts with IMS databases and VSAM files for data retrieval and persistence. The system is crucial for maintaining the security and integrity of authorization processes within the organization. If the system were to fail, authorization requests could not be processed, leading to potential disruptions in business operations, financial losses, and compliance violations. The system supports business metrics related to authorization processing volume, response times, and error rates, providing insights into the efficiency and effectiveness of the authorization process.
+Technically, the system is built on a classic Mainframe-to-Cloud-Ready foundation, utilizing COBOL for business logic, CICS for online transaction processing, and IMS (Information Management System) for hierarchical data storage. It leverages IBM MQ for asynchronous messaging and DB2 for relational fraud reporting. The integration of these technologies allows the system to handle the high-concurrency requirements of financial services while maintaining strict ACID compliance. Data flows from external MQ queues into IMS databases, is surfaced through BMS maps, and is archived or reported via JCL-driven batch utilities. The use of GSAM (Generalized Sequential Access Method) databases like [PASFLDBD](ims/PASFLDBD.DBD.md) allows the system to bridge the gap between hierarchical database structures and sequential file processing.
 
-### 2. Architecture Overview
+The system boundaries are well-defined: it accepts inputs from MQ request queues and user terminal entries, while producing outputs in the form of updated IMS segments, DB2 fraud records, and sequential flat files for downstream reporting. It integrates externally with payment networks (via MQ) and internal reporting systems (via GSAM and sequential unloads). The system relies on standard IMS control blocks, including DBDs like [DBPAUTP0](ims/DBPAUTP0.dbd.md) and PSBs like [PSBPAUTB](ims/PSBPAUTB.psb.md), to define its data universe. The business value of this system is immense; it directly supports credit limit accuracy and fraud mitigation. If this system were unavailable, the organization would face significant financial risk due to unmonitored credit exposure and an inability to respond to fraudulent activity in real-time, directly impacting customer trust and regulatory compliance.
 
-The system architecture is a hybrid of batch and online processing, centered around IMS database management and MQ messaging. Batch jobs, scheduled via JCL, perform database maintenance and data extraction. Online COBOL programs handle real-time authorization requests received via MQ. The system follows a layered architecture, with presentation logic (BMS screens), business logic (COBOL programs), and data access layers (IMS and VSAM).
+## 2. Architecture Overview
 
-The primary entry point for online authorization processing is likely the [COPAUA0C](cbl/COPAUA0C.cbl.md) program, which receives requests from MQ. Batch processing is initiated through JCL jobs such as [CBPAUP0J](jcl/CBPAUP0J.jcl.md), which executes COBOL programs like [CBPAUP0C](cbl/CBPAUP0C.cbl.md) for database unloading and loading. The system uses a combination of batch and online integration patterns. Batch jobs perform periodic data updates and maintenance, while online programs handle real-time transactions. The system leverages IMS databases for persistent storage and VSAM files for auxiliary data.
+The system follows a multi-tier architecture designed for high-volume transaction processing and data integrity. It is divided into three primary layers: the **Ingestion/Interface Layer**, the **Processing/Business Logic Layer**, and the **Data Persistence Layer**.
 
+### Integration Patterns
+- **Asynchronous Messaging**: Real-time authorization requests are ingested via IBM MQ using [COPAUA0C](cbl/COPAUA0C.cbl.md).
+- **Online Transactional (OLTP)**: CICS-based screens ([COPAU00](COPAU00.bms.md), [COPAU01](COPAU01.bms.md)) provide immediate access to IMS data for human operators.
+- **Batch Processing**: JCL-driven jobs handle bulk data movement (unloads/loads) and scheduled database maintenance.
+- **Hierarchical-to-Relational Bridge**: The system synchronizes specific fraud events from the IMS hierarchical store to DB2 relational tables via [COPAUS2C](cbl/COPAUS2C.cbl.md).
+- **Sequential Data Exchange**: Uses GSAM databases ([PASFLDBD](ims/PASFLDBD.DBD.md), [PADFLDBD](ims/PADFLDBD.DBD.md)) and sequential files to interface with external reporting tools.
+
+### Actual System Call Graph
 ```mermaid
 flowchart TD
 
     subgraph jobs[" "]
-        CBPAUP0J([CBPAUP0J])
         DBPAUTP0([DBPAUTP0])
-        PAUDBUNL([PAUDBUNL])
+        UNLDPADB([UNLDPADB])
     end
 
     subgraph procs[" "]
@@ -60,6 +67,7 @@ flowchart TD
         PADFLPCB[/PADFLPCB/]
         PASFLPCB[/PASFLPCB/]
         PAUDBLOD[PAUDBLOD]
+        PAUDBUNL[PAUDBUNL]
         PAUTBPCB[/PAUTBPCB/]
     end
 
@@ -75,26 +83,10 @@ flowchart TD
     end
 
     %% Call relationships
-    CBPAUP0C --> CBPAUP0C
-    CBPAUP0C --> CBPAUP0C
-    CBPAUP0C --> CBPAUP0C
-    CBPAUP0C --> CBPAUP0C
-    CBPAUP0C --> COPAUA0C
-    CBPAUP0C --> COPAUA0C
-    CBPAUP0C --> DBUNLDGS
-    CBPAUP0C --> DBUNLDGS
-    CBPAUP0C --> CBPAUP0C
-    CBPAUP0C --> CBPAUP0C
-    CBPAUP0C --> CBPAUP0C
+    CBPAUP0C --> PAUDBUNL
+    CBPAUP0C --> PAUDBUNL
+    CBPAUP0C --> PAUDBUNL
     CBPAUP0C -.->|COPY| COPYBOOKS
-    CBPAUP0C --> CBLTDLI
-    CBPAUP0C --> CBLTDLI
-    CBPAUP0C --> CBLTDLI
-    CBPAUP0C --> CBLTDLI
-    CBPAUP0J --> DFSRRC00
-    CBPAUP0J --> DFSRRC00
-    CBPAUP0J --> DFSRRC00
-    CBPAUP0J --> DFSRRC00
     COPAUA0C --> COPAUA0C
     COPAUA0C --> COPAUA0C
     COPAUA0C --> COPAUA0C
@@ -128,6 +120,25 @@ flowchart TD
     COPAUA0C --> MQGET
     COPAUA0C --> MQPUT1
     COPAUA0C --> MQCLOSE
+    COPAUS0C --> PAUDBUNL
+    COPAUS0C --> PAUDBLOD
+    COPAUS0C --> PAUDBLOD
+    COPAUS0C --> PAUDBUNL
+    COPAUS0C --> COPAUS2C
+    COPAUS0C --> COPAUA0C
+    COPAUS0C --> COPAUA0C
+    COPAUS0C --> PAUDBUNL
+    COPAUS0C --> PAUDBUNL
+    COPAUS0C --> CBPAUP0C
+    COPAUS0C --> CBPAUP0C
+    COPAUS0C --> CBPAUP0C
+    COPAUS0C --> CBPAUP0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS1C
+    COPAUS0C --> COPAUS1C
+    COPAUS0C --> COPAUS1C
+    COPAUS0C --> COPAUS0C
     COPAUS0C --> COPAUS1C
     COPAUS0C --> COPAUS1C
     COPAUS0C --> COPAUS1C
@@ -136,6 +147,9 @@ flowchart TD
     COPAUS0C --> COPAUS1C
     COPAUS0C --> COPAUS1C
     COPAUS0C --> COPAUS1C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS0C
     COPAUS0C --> COPAUS0C
     COPAUS0C --> COPAUS0C
     COPAUS0C --> COPAUS0C
@@ -181,153 +195,151 @@ flowchart TD
     COPAUS1C --> COPAUS1C
     COPAUS1C -.->|COPY| COPYBOOKS
     COPAUS1C --> WS_PGM_AUTH_FRAUD
-    COPAUS2C --> CBPAUP0C
-    COPAUS2C --> CBPAUP0C
-    COPAUS2C --> DBUNLDGS
-    COPAUS2C --> COPAUS0C
-    COPAUS2C --> COPAUS0C
-    COPAUS2C --> COPAUS1C
-    COPAUS2C --> COPAUS1C
-    COPAUS2C --> COPAUS1C
-    COPAUS2C --> COPAUS0C
-    COPAUS2C --> COPAUA0C
-    COPAUS2C --> COPAUA0C
-    COPAUS2C --> PAUDBLOD
-    COPAUS2C --> PAUDBLOD
-    COPAUS2C --> CBPAUP0C
-    COPAUS2C --> CBPAUP0C
-    COPAUS2C --> CBPAUP0C
-    COPAUS2C --> CBPAUP0C
-    COPAUS2C --> CBPAUP0C
-    COPAUS2C --> COPAUS0C
-    COPAUS2C --> COPAUS0C
-    COPAUS2C --> COPAUS0C
-    COPAUS2C --> COPAUS0C
-    COPAUS2C --> COPAUS2C
     COPAUS2C -.->|COPY| COPYBOOKS
     DBPAUTP0 --> DFSRRC00
-    DBUNLDGS --> CBPAUP0C
-    DBUNLDGS --> CBPAUP0C
+    DBUNLDGS --> PAUDBUNL
+    DBUNLDGS --> PAUDBUNL
     DBUNLDGS -.->|COPY| COPYBOOKS
     DBUNLDGS --> CBLTDLI
     DBUNLDGS --> CBLTDLI
     PAUDBLOD --> PAUDBLOD
-    PAUDBLOD --> CBPAUP0C
+    PAUDBLOD --> PAUDBUNL
     PAUDBLOD --> PAUDBLOD
     PAUDBLOD --> PAUDBLOD
-    PAUDBLOD --> CBPAUP0C
-    PAUDBLOD --> CBPAUP0C
+    PAUDBLOD --> PAUDBUNL
+    PAUDBLOD --> PAUDBUNL
     PAUDBLOD -.->|COPY| COPYBOOKS
     PAUDBLOD --> CBLTDLI
     PAUDBLOD --> CBLTDLI
     PAUDBLOD --> CBLTDLI
+    PAUDBUNL --> PAUDBUNL
+    PAUDBUNL --> COPAUA0C
+    PAUDBUNL --> COPAUA0C
+    PAUDBUNL --> DBUNLDGS
+    PAUDBUNL --> PAUDBUNL
+    PAUDBUNL --> PAUDBUNL
+    PAUDBUNL --> DBUNLDGS
+    PAUDBUNL --> PAUDBUNL
     PAUDBUNL -.->|COPY| COPYBOOKS
-
-    %% Styling
-    classDef entryPoint fill:#90EE90,stroke:#228B22
-    class CBPAUP0J,DBPAUTP0,LOADPADB,PAUDBUNL,UNLDGSAM,UNLDPADB entryPoint
-    classDef missing fill:#1E3A5F,stroke:#2E5A8F,color:#FFFFFF
-    class CBLTDLI,CDEMO_TO_PROGRAM,DFSRRC00,MQCLOSE,MQGET,MQOPEN,MQPUT1,WS_PGM_AUTH_FRAUD missing
+    PAUDBUNL --> CBLTDLI
+    PAUDBUNL --> CBLTDLI
+    PAUDBUNL --> CBLTDLI
+    PAUDBUNL --> CBLTDLI
+    UNLDPADB --> DFSRRC00
+    UNLDPADB --> DFSRRC00
+    UNLDPADB --> DFSRRC00
+    UNLDPADB --> DFSRRC00
 ```
 
-### 3. Component Catalog
+## 3. Component Catalog
 
 | Component | Type | Purpose | Dependencies | Doc Link |
 |-----------|------|---------|--------------|----------|
-| [PAUDBUNL](cbl/PAUDBUNL.CBL.md) | COBOL | Unloads data from a database | [CIPAUDTY](cpy/CIPAUDTY.cpy.md), [CIPAUSMY](cpy/CIPAUSMY.cpy.md), [IMSFUNCS](cpy/IMSFUNCS.cpy.md), [PAUTBPCB](cpy/PAUTBPCB.CPY.md) | [PAUDBUNL](cbl/PAUDBUNL.CBL.md) |
-| [COPAUS1C](cbl/COPAUS1C.cbl.md) | COBOL | Processes authorization requests | [CIPAUDTY](cpy/CIPAUDTY.cpy.md), [CIPAUSMY](cpy/CIPAUSMY.cpy.md), [COCOM01Y](cpy/COCOM01Y.cpy.md), [COTTL01Y](cpy/COTTL01Y.cpy.md), [CSDAT01Y](cpy/CSDAT01Y.cpy.md), [CSMSG01Y](cpy/CSMSG01Y.cpy.md), [CSMSG02Y](cpy/CSMSG02Y.cpy.md), [DFHAID](cpy/DFHAID.cpy.md), [DFHBMSCA](cpy/DFHBMSCA.cpy.md) | [COPAUS1C](cbl/COPAUS1C.cbl.md) |
-| [COPAUA0C](cbl/COPAUA0C.cbl.md) | COBOL | Handles user interface and MQ interactions | [CIPAUDTY](cpy/CIPAUDTY.cpy.md), [CIPAUSMY](cpy/CIPAUSMY.cpy.md), [CVACT01Y](cpy/CVACT01Y.cpy.md), [CVACT03Y](cpy/CVACT03Y.cpy.md), [CVCUS01Y](cpy/CVCUS01Y.cpy.md) | [COPAUA0C](cbl/COPAUA0C.cbl.md) |
-| [PAUDBLOD](cbl/PAUDBLOD.CBL.md) | COBOL | Loads data into a database | [CIPAUDTY](cpy/CIPAUDTY.cpy.md), [CIPAUSMY](cpy/CIPAUSMY.cpy.md), [IMSFUNCS](cpy/IMSFUNCS.cpy.md), [PAUTBPCB](cpy/PAUTBPCB.CPY.md) | [PAUDBLOD](cbl/PAUDBLOD.CBL.md) |
-| [DBUNLDGS](cbl/DBUNLDGS.CBL.md) | COBOL | Unloads data from a GSAM database | [CIPAUDTY](cpy/CIPAUDTY.cpy.md), [CIPAUSMY](cpy/CIPAUSMY.cpy.md), [IMSFUNCS](cpy/IMSFUNCS.cpy.md), [PAUTBPCB](cpy/PAUTBPCB.CPY.md) | [DBUNLDGS](cbl/DBUNLDGS.CBL.md) |
-| [CBPAUP0C](cbl/CBPAUP0C.cbl.md) | COBOL | Processes database updates | [CIPAUDTY](cpy/CIPAUDTY.cpy.md), [CIPAUSMY](cpy/CIPAUSMY.cpy.md) | [CBPAUP0C](cbl/CBPAUP0C.cbl.md) |
-| [COPAUS0C](cbl/COPAUS0C.cbl.md) | COBOL | CICS transaction program | [CIPAUDTY](cpy/CIPAUDTY.cpy.md), [CIPAUSMY](cpy/CIPAUSMY.cpy.md), [COCOM01Y](cpy/COCOM01Y.cpy.md), [COTTL01Y](cpy/COTTL01Y.cpy.md), [CSDAT01Y](cpy/CSDAT01Y.cpy.md), [CSMSG01Y](cpy/CSMSG01Y.cpy.md), [CSMSG02Y](cpy/CSMSG02Y.cpy.md), [CVACT01Y](cpy/CVACT01Y.cpy.md), [CVACT03Y](cpy/CVACT03Y.cpy.md), [CVCUS01Y](cpy/CVCUS01Y.cpy.md), [DFHAID](cpy/DFHAID.cpy.md), [DFHBMSCA](cpy/DFHBMSCA.cpy.md) | [COPAUS0C](cbl/COPAUS0C.cbl.md) |
-| [COPAUS2C](cbl/COPAUS2C.cbl.md) | COBOL | Main driver program | [CIPAUDTY](cpy/CIPAUDTY.cpy.md), [CIPAUSMY](cpy/CIPAUSMY.cpy.md) | [COPAUS2C](cbl/COPAUS2C.cbl.md) |
-| [COPAU00](bms/COPAU00.bms.md) | BMS | BMS map definition | - | [COPAU00](bms/COPAU00.bms.md) |
-| [COPAU01](bms/COPAU01.bms.md) | BMS | BMS map definition | - | [COPAU01](bms/COPAU01.bms.md) |
-| [PADFLPCB](cpy/PADFLPCB.CPY.md) | COPY | PCB definition | - | [PADFLPCB](cpy/PADFLPCB.CPY.md) |
-| [CIPAUSMY](cpy/CIPAUSMY.cpy.md) | COPY | Copybook for authorization data | - | [CIPAUSMY](cpy/CIPAUSMY.cpy.md) |
-| [CCPAURQY](cpy/CCPAURQY.cpy.md) | COPY | Copybook for request data | - | [CCPAURQY](cpy/CCPAURQY.cpy.md) |
-| [CIPAUDTY](cpy/CIPAUDTY.cpy.md) | COPY | Copybook for database fields | - | [CIPAUDTY](cpy/CIPAUDTY.cpy.md) |
-| [PAUTBPCB](cpy/PAUTBPCB.CPY.md) | COPY | PCB definition | - | [PAUTBPCB](cpy/PAUTBPCB.CPY.md) |
-| [PASFLPCB](cpy/PASFLPCB.CPY.md) | COPY | PCB definition | - | [PASFLPCB](cpy/PASFLPCB.CPY.md) |
-| [IMSFUNCS](cpy/IMSFUNCS.cpy.md) | COPY | IMS function codes | - | [IMSFUNCS](cpy/IMSFUNCS.cpy.md) |
-| [CCPAUERY](cpy/CCPAUERY.cpy.md) | COPY | Copybook for error messages | - | [CCPAUERY](cpy/CCPAUERY.cpy.md) |
-| [CCPAURLY](cpy/CCPAURLY.cpy.md) | COPY | Copybook for list data | - | [CCPAURLY](cpy/CCPAURLY.cpy.md) |
-| [XAUTHFRD](ddl/XAUTHFRD.ddl.md) | DDL | Table definition | - | [XAUTHFRD](ddl/XAUTHFRD.ddl.md) |
-| [AUTHFRDS](ddl/AUTHFRDS.ddl.md) | DDL | Table definition | - | [AUTHFRDS](ddl/AUTHFRDS.ddl.md) |
-| [DBPAUTP0](ims/DBPAUTP0.dbd.md) | DBD | IMS database definition | - | [DBPAUTP0](ims/DBPAUTP0.dbd.md) |
-| [DBPAUTX0](ims/DBPAUTX0.dbd.md) | DBD | IMS database definition | - | [DBPAUTX0](ims/DBPAUTX0.dbd.md) |
-| [PADFLDBD](ims/PADFLDBD.DBD.md) | DBD | IMS database definition | - | [PADFLDBD](ims/PADFLDBD.DBD.md) |
-| [PSBPAUTL](ims/PSBPAUTL.psb.md) | PSB | IMS program specification block | - | [PSBPAUTL](ims/PSBPAUTL.psb.md) |
-| [PSBPAUTB](ims/PSBPAUTB.psb.md) | PSB | IMS program specification block | - | [PSBPAUTB](ims/PSBPAUTB.psb.md) |
-| [PASFLDBD](ims/PASFLDBD.DBD.md) | DBD | IMS database definition | - | [PASFLDBD](ims/PASFLDBD.DBD.md) |
-| [PAUTBUNL](ims/PAUTBUNL.PSB.md) | PSB | IMS program specification block | - | [PAUTBUNL](ims/PAUTBUNL.PSB.md) |
-| [DLIGSAMP](ims/DLIGSAMP.PSB.md) | PSB | IMS program specification block | - | [DLIGSAMP](ims/DLIGSAMP.PSB.md) |
-| [COPAU00](cpy-bms/COPAU00.cpy.md) | COPY | Copy of BMS map | - | [COPAU00](cpy-bms/COPAU00.cpy.md) |
-| [COPAU01](cpy-bms/COPAU01.cpy.md) | COPY | Copy of BMS map | - | [COPAU01](cpy-bms/COPAU01.cpy.md) |
-| [UNLDPADB](jcl/UNLDPADB.JCL.md) | JCL | Unloads database | [PAUDBUNL](cbl/PAUDBUNL.CBL.md) | [UNLDPADB](jcl/UNLDPADB.JCL.md) |
-| [LOADPADB](jcl/LOADPADB.JCL.md) | JCL | Loads database | [PAUDBLOD](cbl/PAUDBLOD.CBL.md) | [LOADPADB](jcl/LOADPADB.JCL.md) |
-| [UNLDGSAM](jcl/UNLDGSAM.JCL.md) | JCL | Unloads GSAM database | [DBUNLDGS](cbl/DBUNLDGS.CBL.md) | [UNLDGSAM](jcl/UNLDGSAM.JCL.md) |
-| [DBPAUTP0](jcl/DBPAUTP0.jcl.md) | JCL | Executes IMS program | - | [DBPAUTP0](jcl/DBPAUTP0.jcl.md) |
-| [CBPAUP0J](jcl/CBPAUP0J.jcl.md) | JCL | Executes database update program | [CBPAUP0C](cbl/CBPAUP0C.cbl.md) | [CBPAUP0J](jcl/CBPAUP0J.jcl.md) |
+| [PAUDBUNL](cbl/PAUDBUNL.CBL.md) | COBOL | Unloads IMS auth summary/detail to sequential files | [PAUTBPCB](cpy/PAUTBPCB.CPY.md), CBLTDLI | [Link](cbl/PAUDBUNL.CBL.md) |
+| [DBUNLDGS](cbl/DBUNLDGS.CBL.md) | COBOL | Unloads IMS segments to GSAM databases | [PASFLPCB](cpy/PASFLPCB.CPY.md), [PADFLPCB](cpy/PADFLPCB.CPY.md) | [Link](cbl/DBUNLDGS.CBL.md) |
+| [PAUDBLOD](cbl/PAUDBLOD.CBL.md) | COBOL | Sequential file to IMS database loader | [CIPAUSMY](cpy/CIPAUSMY.cpy.md), [CIPAUDTY](cpy/CIPAUDTY.cpy.md) | [Link](cbl/PAUDBLOD.CBL.md) |
+| [CBPAUP0C](cbl/CBPAUP0C.cbl.md) | COBOL | Batch cleanup of expired authorizations | [CIPAUSMY](cpy/CIPAUSMY.cpy.md), [CIPAUDTY](cpy/CIPAUDTY.cpy.md) | [Link](cbl/CBPAUP0C.cbl.md) |
+| [COPAUS2C](cbl/COPAUS2C.cbl.md) | COBOL | DB2 Fraud reporting logic | [AUTHFRDS](ddl/AUTHFRDS.ddl.md), [CIPAUDTY](cpy/CIPAUDTY.cpy.md) | [Link](cbl/COPAUS2C.cbl.md) |
+| [COPAUA0C](cbl/COPAUA0C.cbl.md) | COBOL | MQ-triggered authorization request handler | MQOPEN, MQGET, [CCPAUERY](cpy/CCPAUERY.cpy.md) | [Link](cbl/COPAUA0C.cbl.md) |
+| [COPAUS1C](cbl/COPAUS1C.cbl.md) | COBOL | Online Detail View & Fraud Toggle | [COPAU01](COPAU01.bms.md), [COPAUS2C](cbl/COPAUS2C.cbl.md) | [Link](cbl/COPAUS1C.cbl.md) |
+| [COPAUS0C](cbl/COPAUS0C.cbl.md) | COBOL | Online Summary List & Navigation | [COPAU00](COPAU00.bms.md), [COPAUS1C](cbl/COPAUS1C.cbl.md) | [Link](cbl/COPAUS0C.cbl.md) |
+| [UNLDPADB](jcl/UNLDPADB.JCL.md) | JCL | Job to unload PAUTHDB to flat files | DFSRRC00, [PAUDBUNL](cbl/PAUDBUNL.CBL.md) | [Link](jcl/UNLDPADB.JCL.md) |
+| [LOADPADB](jcl/LOADPADB.JCL.md) | JCL | Job to load PAUTDB from flat files | DFSRRC00, [PAUDBLOD](cbl/PAUDBLOD.CBL.md) | [Link](jcl/LOADPADB.JCL.md) |
+| [CBPAUP0J](jcl/CBPAUP0J.jcl.md) | JCL | Job to execute expired auth cleanup | [CBPAUP0C](cbl/CBPAUP0C.cbl.md) | [Link](jcl/CBPAUP0J.jcl.md) |
+| [UNLDGSAM](jcl/UNLDGSAM.JCL.md) | JCL | Job to unload GSAM databases | [DBUNLDGS](cbl/DBUNLDGS.CBL.md), [DLIGSAMP](ims/DLIGSAMP.PSB.md) | [Link](jcl/UNLDGSAM.JCL.md) |
+| [DBPAUTP0](ims/DBPAUTP0.dbd.md) | DBD | Primary Authorization Database Definition | - | [Link](ims/DBPAUTP0.dbd.md) |
+| [DBPAUTX0](ims/DBPAUTX0.dbd.md) | DBD | Secondary Index for Authorization Database | - | [Link](ims/DBPAUTX0.dbd.md) |
+| [PASFLDBD](ims/PASFLDBD.DBD.md) | DBD | GSAM Summary Database Definition | - | [Link](ims/PASFLDBD.DBD.md) |
+| [PADFLDBD](ims/PADFLDBD.DBD.md) | DBD | GSAM Detail Database Definition | - | [Link](ims/PADFLDBD.DBD.md) |
+| [PSBPAUTB](ims/PSBPAUTB.psb.md) | PSB | Program Specification for Batch Access | [DBPAUTP0](ims/DBPAUTP0.dbd.md) | [Link](ims/PSBPAUTB.psb.md) |
+| [PSBPAUTL](ims/PSBPAUTL.psb.md) | PSB | PSB for Browse-only Access | [DBPAUTP0](ims/DBPAUTP0.dbd.md) | [Link](ims/PSBPAUTL.psb.md) |
+| [AUTHFRDS](ddl/AUTHFRDS.ddl.md) | DDL | DB2 Fraud Reporting Table Schema | - | [Link](ddl/AUTHFRDS.ddl.md) |
+| [XAUTHFRD](ddl/XAUTHFRD.ddl.md) | DDL | Unique Index for Fraud Table | - | [Link](ddl/XAUTHFRD.ddl.md) |
+| [IMSFUNCS](cpy/IMSFUNCS.cpy.md) | COPY | IMS DL/I Function Codes | - | [Link](cpy/IMSFUNCS.cpy.md) |
+| [CIPAUSMY](cpy/CIPAUSMY.cpy.md) | COPY | IMS Summary Segment Layout | - | [Link](cpy/CIPAUSMY.cpy.md) |
+| [CIPAUDTY](cpy/CIPAUDTY.cpy.md) | COPY | IMS Detail Segment Layout | - | [Link](cpy/CIPAUDTY.cpy.md) |
+| [CCPAUERY](cpy/CCPAUERY.cpy.md) | COPY | Standardized Error Log Record | - | [Link](cpy/CCPAUERY.cpy.md) |
 
-### 4. Subsystem Breakdown
+## 4. Subsystem Breakdown
 
-*   **IMS Database Maintenance Subsystem**: This subsystem is responsible for maintaining the integrity and availability of the IMS databases. It includes the following components:
-    *   [UNLDPADB](jcl/UNLDPADB.JCL.md): JCL job to unload the database.
-    *   [PAUDBUNL](cbl/PAUDBUNL.CBL.md): COBOL program to unload the database.
-    *   [LOADPADB](jcl/LOADPADB.JCL.md): JCL job to load the database.
-    *   [PAUDBLOD](cbl/PAUDBLOD.CBL.md): COBOL program to load the database.
-    *   [UNLDGSAM](jcl/UNLDGSAM.JCL.md): JCL job to unload the GSAM database.
-    *   [DBUNLDGS](cbl/DBUNLDGS.CBL.md): COBOL program to unload the GSAM database.
-*   **Online Authorization Processing Subsystem**: This subsystem handles real-time authorization requests. It includes the following components:
-    *   [COPAUA0C](cbl/COPAUA0C.cbl.md): COBOL program to handle user interface and MQ interactions.
-    *   [COPAUS0C](cbl/COPAUS0C.cbl.md): COBOL program for CICS transaction processing.
-    *   [COPAUS1C](cbl/COPAUS1C.cbl.md): COBOL program to process authorization requests.
-    *   [COPAUS2C](cbl/COPAUS2C.cbl.md): COBOL program that acts as a main driver.
-    *   [COPAU00](bms/COPAU00.bms.md): BMS map definition for screen display.
-    *   [COPAU01](bms/COPAU01.bms.md): BMS map definition for screen display.
-*   **Batch Update Subsystem**: This subsystem handles batch updates to the database.
-    *   [CBPAUP0J](jcl/CBPAUP0J.jcl.md): JCL job to execute the database update program.
-    *   [CBPAUP0C](cbl/CBPAUP0C.cbl.md): COBOL program to process database updates.
-*   **IMS Control Subsystem**: This subsystem manages the execution of IMS programs.
-    *   [DBPAUTP0](jcl/DBPAUTP0.jcl.md): JCL job to execute IMS program.
+### Authorization Ingestion Subsystem
+This subsystem is responsible for the entry of new authorization requests into the system.
+- **Key Program**: [COPAUA0C](cbl/COPAUA0C.cbl.md)
+- **Function**: Listens to MQ queues, parses incoming requests using [CCPAURQY](cpy/CCPAURQY.cpy.md), and initiates the IMS database insertion.
+- **Integration**: Uses IBM MQ for external connectivity and [CCPAUERY](cpy/CCPAUERY.cpy.md) for logging ingestion errors.
 
-### 5. Data Architecture
+### Online Inquiry & Maintenance Subsystem
+Provides the user interface for bank staff to monitor and manage pending authorizations.
+- **Summary Screen**: [COPAUS0C](cbl/COPAUS0C.cbl.md) displays a paginated list of authorizations for an account using map [COPAU00](COPAU00.bms.md).
+- **Detail Screen**: [COPAUS1C](cbl/COPAUS1C.cbl.md) allows deep-dive into a single transaction using map [COPAU01](COPAU01.bms.md).
+- **Fraud Action**: [COPAUS2C](cbl/COPAUS2C.cbl.md) is called to persist fraud flags to DB2 relational table [AUTHFRDS](ddl/AUTHFRDS.ddl.md).
 
-The system utilizes both IMS databases and VSAM files for data storage. IMS databases, defined by DBDs such as [DBPAUTP0](ims/DBPAUTP0.dbd.md), [DBPAUTX0](ims/DBPAUTX0.dbd.md), [PADFLDBD](ims/PADFLDBD.DBD.md), and [PASFLDBD](ims/PASFLDBD.DBD.md), store authorization details and related information. VSAM files are used for storing customer, account, and cross-reference data.
+### Batch Maintenance & Data Utility Subsystem
+Handles the "heavy lifting" of data lifecycle management.
+- **Cleanup**: [CBPAUP0C](cbl/CBPAUP0C.cbl.md) (executed via [CBPAUP0J](jcl/CBPAUP0J.jcl.md)) purges stale records based on expiry days.
+- **Migration/Backup**: [PAUDBUNL](cbl/PAUDBUNL.CBL.md) and [PAUDBLOD](cbl/PAUDBLOD.CBL.md) facilitate moving data between IMS and sequential files.
+- **GSAM Archiving**: [DBUNLDGS](cbl/DBUNLDGS.CBL.md) unloads data to GSAM databases [PASFLDBD](ims/PASFLDBD.DBD.md) and [PADFLDBD](ims/PADFLDBD.DBD.md) for long-term storage or reporting.
 
-Data flows from external systems via MQ to the [COPAUA0C](cbl/COPAUA0C.cbl.md) program. This program then interacts with IMS databases and VSAM files to validate the authorization request. The validated authorization details are then written to the IMS database using CBLTDLI calls. Batch jobs such as [UNLDPADB](jcl/UNLDPADB.JCL.md) and [LOADPADB](jcl/LOADPADB.JCL.md) extract data from and load data into the IMS databases, respectively. The copybooks, such as [CIPAUDTY](cpy/CIPAUDTY.cpy.md) and [CIPAUSMY](cpy/CIPAUSMY.cpy.md), define the structure of the data being processed.
+## 5. Data Architecture
 
-The input sources include MQ messages containing authorization requests and VSAM files containing customer, account, and cross-reference data. The output destinations include IMS databases containing authorization details and MQ messages containing responses to the authorization requests.
+### Data Stores
+1.  **IMS HIDAM Database ([DBPAUTP0](ims/DBPAUTP0.dbd.md))**:
+    *   **Root Segment ([PAUTSUM0](ims/DBPAUTP0.dbd.md))**: Account-level summary (limits, balances, status). Keyed by `ACCNTID`.
+    *   **Child Segment ([PAUTDTL1](ims/DBPAUTP0.dbd.md))**: Transaction-level details (amounts, merchant info, fraud flags). Keyed by `PAUT9CTS`.
+2.  **IMS Secondary Index ([DBPAUTX0](ims/DBPAUTX0.dbd.md))**: Provides alternative access paths to the authorization data.
+3.  **DB2 Relational Table ([AUTHFRDS](ddl/AUTHFRDS.ddl.md))**: Stores fraud-specific records for reporting and cross-system analysis. Indexed by [XAUTHFRD](ddl/XAUTHFRD.ddl.md).
+4.  **GSAM Databases**: [PASFLDBD](ims/PASFLDBD.DBD.md) (Summary) and [PADFLDBD](ims/PADFLDBD.DBD.md) (Details) used for sequential-access IMS data.
 
-### 6. Integration Points
+### Data Flow Narrative
+1.  **Ingestion**: MQ Message -> [COPAUA0C](cbl/COPAUA0C.cbl.md) -> IMS [PAUTSUM0](ims/DBPAUTP0.dbd.md)/[PAUTDTL1](ims/DBPAUTP0.dbd.md).
+2.  **Online Review**: IMS -> [COPAUS0C](cbl/COPAUS0C.cbl.md) -> BMS Map -> User.
+3.  **Fraud Reporting**: User Action -> [COPAUS1C](cbl/COPAUS1C.cbl.md) -> [COPAUS2C](cbl/COPAUS2C.cbl.md) -> DB2 [AUTHFRDS](ddl/AUTHFRDS.ddl.md).
+4.  **Maintenance**: IMS -> [CBPAUP0C](cbl/CBPAUP0C.cbl.md) -> (Conditional Delete based on [CIPAUDTY](cpy/CIPAUDTY.cpy.md) date fields).
+5.  **Unload/Load**: IMS -> [PAUDBUNL](cbl/PAUDBUNL.CBL.md) -> Sequential Files -> [PAUDBLOD](cbl/PAUDBLOD.CBL.md) -> IMS.
 
-*   **MQ Messaging**: The system integrates with external systems via MQ for receiving authorization requests and sending responses. The [COPAUA0C](cbl/COPAUA0C.cbl.md) program interacts with MQ using MQOPEN, MQGET, MQPUT1, and MQCLOSE calls.
-*   **IMS Database**: The system interacts with IMS databases for persistent storage of authorization details. COBOL programs use CBLTDLI calls to access and update the IMS databases.
-*   **VSAM Files**: The system reads customer, account, and cross-reference data from VSAM files.
-*   **Batch Job Scheduling**: Batch jobs are scheduled using JCL and are dependent on the successful completion of previous jobs. For example, the [LOADPADB](jcl/LOADPADB.JCL.md) job is dependent on the successful completion of the [UNLDPADB](jcl/UNLDPADB.JCL.md) job.
+## 6. Integration Points
 
-### 7. Business Rules Summary
+-   **IBM MQ**: The system integrates with external payment gateways via MQ. [COPAUA0C](cbl/COPAUA0C.cbl.md) uses `MQOPEN` and `MQGET` to process these requests.
+-   **CICS-to-CICS**: Programs use `XCTL` (via [CDEMO-TO-PROGRAM](CDEMO-TO-PROGRAM.md)) to navigate between screens while maintaining state in the `DFHCOMMAREA`.
+-   **Batch-to-IMS**: Batch jobs use the `DFSRRC00` region controller to interface with IMS databases in BMP or DLI modes.
+-   **DB2 Integration**: [COPAUS2C](cbl/COPAUS2C.cbl.md) performs SQL operations to bridge hierarchical IMS data to relational DB2 storage for fraud reporting.
 
-*   Authorization requests must be validated against customer, account, and cross-reference data. (Source: Implied by the data access patterns in [COPAUA0C](cbl/COPAUA0C.cbl.md) and [COPAUS0C](cbl/COPAUS0C.cbl.md))
-*   Authorization details must be persisted in the IMS database. (Source: Implied by the CBLTDLI calls in various COBOL programs)
-*   Responses must be sent back to the requesting systems via MQ. (Source: Implied by the MQPUT1 calls in [COPAUA0C](cbl/COPAUA0C.cbl.md))
-*   Database maintenance must be performed regularly to ensure data integrity and availability. (Source: Implied by the existence of [UNLDPADB](jcl/UNLDPADB.JCL.md) and [LOADPADB](jcl/LOADPADB.JCL.md) jobs)
+## 7. Business Rules Summary
 
-### 8. Error Handling Patterns
+### Expiry Logic
+- **Rule**: A detail segment is considered expired if `Current Date - Auth Date >= P-EXPIRY-DAYS` (Default: 5 days).
+- **Source**: [CBPAUP0C](cbl/CBPAUP0C.cbl.md)
 
-The system uses a combination of error logging and recovery procedures. COBOL programs use the [CCPAUERY](cpy/CCPAUERY.cpy.md) copybook to define error messages. Error messages are logged to a system log or console. Recovery procedures include restarting batch jobs and resubmitting authorization requests. The `9500-LOG-ERROR` routine is used to log errors. ❓ QUESTION: What specific error codes are handled and what are the corresponding recovery actions?
+### Summary Deletion Logic
+- **Rule**: A root summary segment is deleted if all its child details are gone and approved/declined counts are zero.
+- **Source**: [CBPAUP0C](cbl/CBPAUP0C.cbl.md)
 
-### 9. Open Questions and Uncertainties
+### Fraud Reporting Logic
+- **Rule**: If a fraud record exists (SQLCODE -803), update the existing record; otherwise, insert a new one.
+- **Source**: [COPAUS2C](cbl/COPAUS2C.cbl.md)
 
-*   ❓ QUESTION: What specific error codes are handled and what are the corresponding recovery actions?
-*   ❓ QUESTION: What are the specific business rules used to validate authorization requests?
-*   ❓ QUESTION: What are the performance requirements for the online authorization processing subsystem?
-*   ❓ QUESTION: What are the security requirements for the system?
-*   ❓ QUESTION: What are the data retention policies for the IMS databases?
-*   ❓ QUESTION: What are the specific VSAM files used by the system and what data do they contain?
-*   ❓ QUESTION: What are the specific MQ queues used by the system and what is the message format?
+### Data Validation
+- **Rule**: Account IDs must be numeric and non-blank before database lookup.
+- **Source**: [COPAUS0C](cbl/COPAUS0C.cbl.md), [PAUDBLOD](cbl/PAUDBLOD.CBL.md)
+
+### Duplicate Handling
+- **Rule**: During database loading, if a segment already exists (IMS status 'II'), skip the insertion without abending.
+- **Source**: [PAUDBLOD](cbl/PAUDBLOD.CBL.md)
+
+## 8. Error Handling Patterns
+
+-   **IMS Status Codes**: Programs consistently check `PCB-STATUS` (defined in [PAUTBPCB](cpy/PAUTBPCB.CPY.md)). 'GB' (End of database) and 'GE' (Segment not found) are handled as logic flow, while others trigger `9999-ABEND`.
+-   **DB2 SQL Codes**: [COPAUS2C](cbl/COPAUS2C.cbl.md) specifically handles `-803` (Duplicate Key) to switch from INSERT to UPDATE mode.
+-   **CICS Abends**: Online programs use `NOHANDLE` on certain commands but perform manual `EIBRESP` checks to provide user-friendly error messages on the BMS maps.
+-   **Centralized Logging**: [CCPAUERY](cpy/CCPAUERY.cpy.md) provides a standardized structure for error log records, including severity levels (INFO, WARNING, CRITICAL) and subsystem identifiers (IMS, MQ, DB2).
+-   **File Status Codes**: Batch programs like [PAUDBUNL](cbl/PAUDBUNL.CBL.md) check file status codes (e.g., '00' or spaces) before proceeding with I/O.
+
+## 9. Open Questions and Uncertainties
+
+- ❓ **QUESTION**: In [CBPAUP0C](cbl/CBPAUP0C.cbl.md), the summary deletion logic checks `PA-APPROVED-AUTH-CNT <= 0` twice. Is this a bug where it should have checked `PA-DECLINED-AUTH-CNT` for the second condition?
+- ❓ **QUESTION**: [PAUDBUNL](cbl/PAUDBUNL.CBL.md) opens `OPFILE2` but never writes to it. Is this a placeholder for future child-segment separation that was never implemented?
+- ❓ **QUESTION**: The MQ trigger logic in [COPAUA0C](cbl/COPAUA0C.cbl.md) uses `NOHANDLE` on `RETRIEVE`. If the retrieve fails, the program continues with potentially uninitialized queue names. Is there a fallback mechanism?
+- ❓ **QUESTION**: [DBUNLDGS](cbl/DBUNLDGS.CBL.md) skips root segments where `PA-ACCT-ID` is not numeric. Are these "bad" records logged anywhere for reconciliation?
 
 ## Flows
 
@@ -338,7 +350,7 @@ The following sequence diagrams illustrate key call sequences identified in the 
 ```mermaid
 sequenceDiagram
     title Call Chain 1
-    participant MAIN_PARA as MAIN-PARA (COPAUS2C.cbl)
+    participant MAIN_PARA as MAIN-PARA (COPAUS0C.cbl)
     participant 2000_MAIN_PROCESS as 2000-MAIN-PROCESS (COPAUA0C.cbl)
     participant 5000_PROCESS_AUTH as 5000-PROCESS-AUTH (COPAUA0C.cbl)
     participant 8000_WRITE_AUTH_TO_DB as 8000-WRITE-AUTH-TO-DB (COPAUA0C.cbl)
@@ -364,7 +376,7 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
     title Call Chain 2
-    participant 1000_INITIALIZE as 1000-INITIALIZE (CBPAUP0C.cbl)
+    participant 1000_INITIALIZE as 1000-INITIALIZE (PAUDBUNL.CBL)
     participant 1100_OPEN_REQUEST_QUEUE as 1100-OPEN-REQUEST-QUEUE (COPAUA0C.cbl)
     participant 9500_LOG_ERROR as 9500-LOG-ERROR (COPAUA0C.cbl)
     participant 9990_END_ROUTINE as 9990-END-ROUTINE (COPAUA0C.cbl)
@@ -435,6 +447,96 @@ sequenceDiagram
     9100_CLOSE_REQUEST_QUEUE->>MQCLOSE: calls
 ```
 
+### Flow 6
+
+```mermaid
+sequenceDiagram
+    title Call Chain 6
+    participant 5100_READ_XREF_RECORD as 5100-READ-XREF-RECORD (COPAUA0C.cbl)
+    participant 9500_LOG_ERROR as 9500-LOG-ERROR (COPAUA0C.cbl)
+    participant 9990_END_ROUTINE as 9990-END-ROUTINE (COPAUA0C.cbl)
+    participant 9000_TERMINATE as 9000-TERMINATE (COPAUA0C.cbl)
+    participant 9100_CLOSE_REQUEST_QUEUE as 9100-CLOSE-REQUEST-QUEUE (COPAUA0C.cbl)
+    participant MQCLOSE as MQCLOSE
+    5100_READ_XREF_RECORD->>9500_LOG_ERROR: performs
+    9500_LOG_ERROR->>9990_END_ROUTINE: performs
+    9990_END_ROUTINE->>9000_TERMINATE: performs
+    9000_TERMINATE->>9100_CLOSE_REQUEST_QUEUE: performs
+    9100_CLOSE_REQUEST_QUEUE->>MQCLOSE: calls
+```
+
+### Flow 7
+
+```mermaid
+sequenceDiagram
+    title Call Chain 7
+    participant 5200_READ_ACCT_RECORD as 5200-READ-ACCT-RECORD (COPAUA0C.cbl)
+    participant 9500_LOG_ERROR as 9500-LOG-ERROR (COPAUA0C.cbl)
+    participant 9990_END_ROUTINE as 9990-END-ROUTINE (COPAUA0C.cbl)
+    participant 9000_TERMINATE as 9000-TERMINATE (COPAUA0C.cbl)
+    participant 9100_CLOSE_REQUEST_QUEUE as 9100-CLOSE-REQUEST-QUEUE (COPAUA0C.cbl)
+    participant MQCLOSE as MQCLOSE
+    5200_READ_ACCT_RECORD->>9500_LOG_ERROR: performs
+    9500_LOG_ERROR->>9990_END_ROUTINE: performs
+    9990_END_ROUTINE->>9000_TERMINATE: performs
+    9000_TERMINATE->>9100_CLOSE_REQUEST_QUEUE: performs
+    9100_CLOSE_REQUEST_QUEUE->>MQCLOSE: calls
+```
+
+### Flow 8
+
+```mermaid
+sequenceDiagram
+    title Call Chain 8
+    participant 5300_READ_CUST_RECORD as 5300-READ-CUST-RECORD (COPAUA0C.cbl)
+    participant 9500_LOG_ERROR as 9500-LOG-ERROR (COPAUA0C.cbl)
+    participant 9990_END_ROUTINE as 9990-END-ROUTINE (COPAUA0C.cbl)
+    participant 9000_TERMINATE as 9000-TERMINATE (COPAUA0C.cbl)
+    participant 9100_CLOSE_REQUEST_QUEUE as 9100-CLOSE-REQUEST-QUEUE (COPAUA0C.cbl)
+    participant MQCLOSE as MQCLOSE
+    5300_READ_CUST_RECORD->>9500_LOG_ERROR: performs
+    9500_LOG_ERROR->>9990_END_ROUTINE: performs
+    9990_END_ROUTINE->>9000_TERMINATE: performs
+    9000_TERMINATE->>9100_CLOSE_REQUEST_QUEUE: performs
+    9100_CLOSE_REQUEST_QUEUE->>MQCLOSE: calls
+```
+
+### Flow 9
+
+```mermaid
+sequenceDiagram
+    title Call Chain 9
+    participant 5500_READ_AUTH_SUMMRY as 5500-READ-AUTH-SUMMRY (COPAUA0C.cbl)
+    participant 9500_LOG_ERROR as 9500-LOG-ERROR (COPAUA0C.cbl)
+    participant 9990_END_ROUTINE as 9990-END-ROUTINE (COPAUA0C.cbl)
+    participant 9000_TERMINATE as 9000-TERMINATE (COPAUA0C.cbl)
+    participant 9100_CLOSE_REQUEST_QUEUE as 9100-CLOSE-REQUEST-QUEUE (COPAUA0C.cbl)
+    participant MQCLOSE as MQCLOSE
+    5500_READ_AUTH_SUMMRY->>9500_LOG_ERROR: performs
+    9500_LOG_ERROR->>9990_END_ROUTINE: performs
+    9990_END_ROUTINE->>9000_TERMINATE: performs
+    9000_TERMINATE->>9100_CLOSE_REQUEST_QUEUE: performs
+    9100_CLOSE_REQUEST_QUEUE->>MQCLOSE: calls
+```
+
+### Flow 10
+
+```mermaid
+sequenceDiagram
+    title Call Chain 10
+    participant 7100_SEND_RESPONSE as 7100-SEND-RESPONSE (COPAUA0C.cbl)
+    participant 9500_LOG_ERROR as 9500-LOG-ERROR (COPAUA0C.cbl)
+    participant 9990_END_ROUTINE as 9990-END-ROUTINE (COPAUA0C.cbl)
+    participant 9000_TERMINATE as 9000-TERMINATE (COPAUA0C.cbl)
+    participant 9100_CLOSE_REQUEST_QUEUE as 9100-CLOSE-REQUEST-QUEUE (COPAUA0C.cbl)
+    participant MQCLOSE as MQCLOSE
+    7100_SEND_RESPONSE->>9500_LOG_ERROR: performs
+    9500_LOG_ERROR->>9990_END_ROUTINE: performs
+    9990_END_ROUTINE->>9000_TERMINATE: performs
+    9000_TERMINATE->>9100_CLOSE_REQUEST_QUEUE: performs
+    9100_CLOSE_REQUEST_QUEUE->>MQCLOSE: calls
+```
+
 ## Program Catalog
 
 The following programs are documented. Use the program name to load its specific skill for detailed information.
@@ -443,77 +545,52 @@ The following programs are documented. Use the program name to load its specific
 
 | Program | Skill | Description |
 |---------|-------|-------------|
-| CBPAUP0C | `cbpaup0c` | This batch COBOL IMS program deletes expired pending authorization messages from the IMS database. It reads pending authorization summary and detail segments, checks if they are expired based on a... |
-| CBPAUP0J | `cbpaup0j` | This JCL executes an IMS program (DFSRRC00) to delete expired authorizations, using the BMP region controller. It specifies the program CBPAUP0C and PSB PSBPAUTB for the IMS execution. |
-| DBPAUTP0 | `dbpautp0` | This JCL job unloads the DBD DBPAUTP0 from an IMS database. It first deletes the output dataset if it exists, then executes the DFSRRC00 program with the ULU parameter to perform the unload. It... |
-| DBUNLDGS | `dbunldgs` | This COBOL program, named DBUNLDGS, extracts data related to pending authorizations from an IMS database. It retrieves pending authorization summary and detail segments and writes them to GSAM... |
-| LOADPADB | `loadpadb` | This JCL job executes an IMS program (DFSRRC00) to load the PAUTDB database using a BMP (Batch Message Processing) region. It specifies the program, PSB, and input files required for the database... |
-| PAUDBLOD | `paudblod` | The COBOL program PAUDBLOD reads two sequential files, INFILE1 and INFILE2, and inserts data from these files into an IMS database. INFILE1 contains root segment data for 'PAUTSUM0', and INFILE2... |
-| PAUDBUNL | `paudbunl` | The COBOL program PAUDBUNL unloads pending authorization summary and detail segments from an IMS database to two sequential output files. It reads PAUTSUM0 root segments and PAUTDTL1 child... |
-| UNLDGSAM | `unldgsam` | This JCL job executes the IMS program DFSRRC00 to unload a GSAM database. It specifies the program parameters, required libraries, and input/output datasets for the IMS database unload process. |
-| UNLDPADB | `unldpadb` | This JCL unloads the PAUTDB IMS database to sequential files. It executes the IMS program DFSRRC00 with the PARM parameter specifying the DLI function and the PAUDBUNL application program. It also... |
-
-### BMS Programs
-
-| Program | Skill | Description |
-|---------|-------|-------------|
-| COPAU01 | `copau01` | This copybook defines the input and output data structures for a CICS BMS map named COPAU1. It contains field definitions for transaction details, dates, times, card numbers, authorization... |
-
-### COPYBOOK Programs
-
-| Program | Skill | Description |
-|---------|-------|-------------|
-| CCPAUERY | `ccpauery` | This copybook defines the data structure for an error log record, used for logging errors and warnings within an application. The record includes fields for date, time, application, program,... |
-| CCPAURLY | `ccpaurly` | This copybook defines the data structure for a pending authorization response related to card transactions. It includes fields for card number, transaction ID, authorization codes, response codes,... |
-| CCPAURQY | `ccpaurqy` | This copybook defines the data structure for a pending authorization request. It includes fields for transaction details such as card number, amount, merchant information, and date/time of the... |
+| CBPAUP0C | `cbpaup0c` | Batch IMS program that traverses the authorization database, reads pending authorization summary segments (PAUTSUM0), and for each, reads child detail segments (PAUTDTL1). It checks each detail... |
+| CBPAUP0J | `cbpaup0j` | This JCL job CBPAUP0J executes the IMS batch message processing (BMP) program CBPAUP0C via the DFSRRC00 region controller to delete expired authorizations. It configures IMS libraries, PSB/DBD... |
+| DBPAUTP0 | `dbpautp0` | This JCL job first deletes any existing unload dataset AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0 using IEFBR14 in STEPDEL, then unloads the IMS database DBPAUTP0 using DFSRRC00 utility with... |
+| DBUNLDGS | `dbunldgs` | DBUNLDGS is an IMS batch utility that browses and unloads root Pending Authorization Summary segments (PAUTSUM0) and their child Pending Authorization Detail segments (PAUTDTL1) from the PAUT IMS... |
+| LOADPADB | `loadpadb` | This JCL job executes the IMS utility program DFSRRC00 in BMP mode to load the PAUTDB IMS database using PSBPAUTB and database reference PAUDBLOD. It reads root and child segment data from... |
+| PAUDBLOD | `paudblod` | PAUDBLOD is an IMS database loader utility that sequentially reads root segment records from INFILE1 and inserts them as PAUTSUM0 segments into the IMS database using unqualified ISRT calls. It... |
+| PAUDBUNL | `paudbunl` | PAUDBUNL unloads authorization summary records from an IMS database by performing DL/I GN calls on root segments, writing each summary to OPFILE1 after extracting account ID, and then processing... |
+| PAUTBUNL | `pautbunl` | This file defines an IMS Program Specification Block (PSB) named PAUTBUNL for a COBOL language program. It specifies a single PCB named PAUTBPCB providing access to the IMS database... |
+| PSBPAUTB | `psbpautb` | Defines the Program Specification Block (PSB) PSBPAUTB for a COBOL application program using IMS DL/I calls. Specifies a single database PCB named PAUTBPCB for accessing DBD DBPAUTP0 with... |
+| UNLDGSAM | `unldgsam` | This JCL submits a batch job to execute the IMS database reorganization utility DFSRRC00 in unload mode for the GSAM database DBUNLDGS using DLI access method and PSB DLIGSAMP. It provides access... |
+| UNLDPADB | `unldpadb` | This JCL job first deletes any existing sequential output files from prior runs using IEFBR14, then executes the IMS Database Unload utility DFSRRC00 to unload the PAUTHDB and PAUTHDBX IMS... |
 
 ### ONLINE_CICS Programs
 
 | Program | Skill | Description |
 |---------|-------|-------------|
-| COPAU00 | `copau00` | This BMS map defines the screen layout for the CardDemo Pending Authorization screen. It displays customer account information and a list of pending transactions, allowing the user to select a... |
-| COPAU01 | `copau01` | This BMS map defines the screen layout for displaying pending authorization details in the CardDemo application. It includes fields for transaction information, card details, authorization... |
-| COPAUA0C | `copaua0c` | This COBOL program processes authorization requests, retrieves account and customer information, makes authorization decisions based on available credit and transaction amount, and sends a... |
-| COPAUS1C | `copaus1c` | COPAUS1C is a CICS COBOL program that displays detailed information about an authorization message. It retrieves authorization details from an IMS database, allows users to mark authorizations as... |
-| COPAUS2C | `copaus2c` | The COPAUS2C program is a CICS COBOL program that marks an authorization message as fraudulent by inserting or updating a record in the CARDDEMO.AUTHFRDS table. It receives transaction details via... |
-
-### OTHER Programs
-
-| Program | Skill | Description |
-|---------|-------|-------------|
-| CIPAUDTY | `cipaudty` | This copybook defines the data structure for the IMS segment related to pending authorization details. It includes fields for authorization keys, card details, transaction amounts, merchant... |
-| DLIGSAMP | `dligsamp` | This PSB (Program Specification Block) defines the database access characteristics for an IMS application program. It specifies the PCBs (Program Communication Blocks) that the program will use to... |
-| PADFLPCB | `padflpcb` | This copybook defines the structure of PADFLPCB, which appears to be related to IMS PCB (Program Communication Block) information. It contains fields for DBD name, segment level, PCB status,... |
-
-### SUBROUTINE Programs
-
-| Program | Skill | Description |
-|---------|-------|-------------|
-| CIPAUSMY | `cipausmy` | This copybook defines the data structure for the IMS segment 'PENDING AUTHORIZATION SUMMARY'. It contains fields related to account identification, authorization status, credit and cash... |
-| IMSFUNCS | `imsfuncs` | This copybook defines a set of constant values representing IMS function codes and a parameter count used in IMS database interactions. These codes are used to specify the type of operation to be... |
-| PASFLPCB | `pasflpcb` | This copybook defines the structure of the PASFLPCB, which appears to be a PCB (Program Communication Block) used for IMS database communication. It contains fields related to database name,... |
-| PAUTBPCB | `pautbpcb` | This copybook defines the structure of the PAUTBPCB data area, which appears to be related to IMS PCB (Program Communication Block) information. It includes fields for database name, segment... |
-
-### UNKNOWN Programs
-
-| Program | Skill | Description |
-|---------|-------|-------------|
-| COPAU00 | `copau00` | This copybook defines the data structure COPAU0AI, which appears to be used for screen mapping in a CICS environment. It contains fields for transaction names, titles, dates, times, account IDs,... |
-| COPAUS0C | `copaus0c` | This COBOL program's purpose is currently unknown due to the lack of source code provided. Without code, its functionality, business context, and specific operations cannot be determined. |
+| COPAU00 | `copau00` | This BMS mapset defines the Pending Authorization Screen (COPAU0A) for the CardDemo application. It provides a user interface to search pending authorizations by Account ID, display customer... |
+| COPAU00 | `copau00` | This COBOL copybook defines the BMS (Basic Mapping Support) map structure COPAU0AI for CICS online screens, supporting display and input of customer account information including account ID, name,... |
+| COPAU01 | `copau01` | Defines BMS mapset COPAU01 with map COPAU1A for the 'Pending Authorization Details Screen' in CardDemo application. Displays authorization details including card number, auth date/time/response,... |
+| COPAU01 | `copau01` | This copybook defines the COBOL data structures for the COPAU01 BMS map used in CICS online transactions. It provides the input area COPAU1AI with length, format/attribute, and data fields for... |
+| COPAUA0C | `copaua0c` | COPAUA0C is a CICS COBOL program that processes payment authorization requests triggered via IBM MQ. It initializes by retrieving MQ trigger message data from CICS, configures and opens the... |
+| COPAUS0C | `copaus0c` | COPAUS0C is a CICS online program that displays a paginated list of authorizations for a specified account ID on the PAULST screen. It handles first-time invocation by initializing data and... |
+| COPAUS1C | `copaus1c` | This program provides a detailed view of a specific pending authorization message within the CardDemo application. It allows users to view transaction details, navigate to the next authorization... |
+| COPAUS2C | `copaus2c` | This CICS COBOL program marks an authorization message as fraud by inserting a record into the CARDDEMO.AUTHFRDS DB2 table using data from the commarea. If the insert fails due to a duplicate key... |
 
 ### UTILITY Programs
 
 | Program | Skill | Description |
 |---------|-------|-------------|
-| AUTHFRDS | `authfrds` | This DDL file defines the CARDDEMO.AUTHFRDS table, specifying its columns, data types, constraints, and primary key. The table appears to be designed for storing authorization and fraud-related... |
-| DBPAUTP0 | `dbpautp0` | This DBD (Database Description) defines the structure and characteristics of the DBPAUTP0 database for IMS (Information Management System). It specifies the database organization as HIDAM with... |
-| DBPAUTX0 | `dbpautx0` | This file defines the Database Description (DBD) for DBPAUTX0, an IMS database. It specifies the database structure, including dataset groups, segments, fields, and indexing, using the INDEX... |
-| PADFLDBD | `padfldbd` | This file contains the DBD (Database Description) for PADFLDBD, defining its access method as GSAM/BSAM and specifying the datasets PADFILIP and PADFILOP. It also includes copyright and licensing... |
-| PASFLDBD | `pasfldbd` | This file contains the Data Base Description (DBD) for PASFLDBD, defining its structure and access methods. It specifies the database name, access method (GSAM, BSAM), dataset names (PASFILIP,... |
-| PAUTBUNL | `pautbunl` | This PSB (Program Specification Block) defines the database access parameters for an IMS (Information Management System) application. It specifies the database (DBPAUTP0), the processing options... |
-| PSBPAUTB | `psbpautb` | This file defines a Program Specification Block (PSB) named PSBPAUTB for an IMS database application. It specifies the database (DBPAUTP0), processing options (AP), key length (14), and defines... |
-| PSBPAUTL | `psbpautl` | This file defines a Program Specification Block (PSB) for IMS database access. It specifies the database (DBPAUTP0), processing options, and sensitive segments (PAUTSUM0, PAUTDTL1) that the... |
-| XAUTHFRD | `xauthfrd` | This DDL file creates a unique index named CARDDEMO.XAUTHFRD on the CARDDEMO.AUTHFRDS table, using CARD_NUM in ascending order and AUTH_TS in descending order. The index allows copies. |
+| AUTHFRDS | `authfrds` | This DDL script creates a DB2 table named CARDDEMO.AUTHFRDS to store authorization and fraud-related details for card transactions. The table includes fields for card details, authorization... |
+| CCPAUERY | `ccpauery` | This COBOL copybook defines the ERROR-LOG-RECORD structure for capturing details of errors in pending authorization processes. It includes fields for timestamp (ERR-DATE, ERR-TIME), application... |
+| CCPAURLY | `ccpaurly` | This COBOL copybook defines data structures at level 05 for a Pending Authorization Response record. It includes elementary fields for card number (PIC X(16)), transaction ID (PIC X(15)),... |
+| CCPAURQY | `ccpaurqy` | This COBOL copybook defines a level 05 group structure for Pending Authorization Request data (PA-RQ-* fields), to be subordinated under a level 01 record in including programs. It includes fields... |
+| CIPAUDTY | `cipaudty` | This copybook defines the data structure for an IMS segment named 'PENDING AUTHORIZATION DETAILS'. It specifies fields for authorization keys, dates, times, card details, merchant information,... |
+| CIPAUSMY | `cipausmy` | This copybook defines the data structure for the IMS segment 'PENDING AUTHORIZATION SUMMARY'. It includes fields for account ID (PA-ACCT-ID), customer ID (PA-CUST-ID), authorization status... |
+| DBPAUTP0 | `dbpautp0` | This DBD source file defines the IMS HIDAM database DBPAUTP0 using VSAM access for pending authorization data. It specifies dataset DDPAUTP0, root segment PAUTSUM0 (100 bytes) with unique... |
+| DBPAUTX0 | `dbpautx0` | This file contains the source for the IMS Database Definition (DBD) of DBPAUTX0, an indexed VSAM-protected database. It defines one dataset group DSG001 with dataset DDPAUTX0 of size 4096. It... |
+| DLIGSAMP | `dligsamp` | This file is the source for generating the IMS Program Specification Block (PSB) named DLIGSAMP for use in a COBOL program. It defines a database PCB (PAUTBPCB) for the hierarchical IMS database... |
+| IMSFUNCS | `imsfuncs` | This COBOL copybook defines the 01-level group FUNC-CODES containing multiple 05-level elementary items, each a PIC X(04) field initialized with specific 4-character values representing IMS... |
+| PADFLDBD | `padfldbd` | This DBD source file defines the IMS database PADFLDBD as a GSAM database with BSAM access method and no password protection. It specifies Dataset Group 1 (DSG001) with input dataset DD1=PADFILIP... |
+| PADFLPCB | `padflpcb` | This copybook defines the PADFLPCB data structure, which represents the Program Communication Block (PCB) for the PADFL database in an IMS (Information Management System) environment. It includes... |
+| PASFLDBD | `pasfldbd` | This DBDGEN source file defines the IMS database named PASFLDBD using GSAM and BSAM access methods without password protection. It specifies a single dataset group DSG001 with input dataset... |
+| PASFLPCB | `pasflpcb` | This COBOL copybook defines the data structure for the PASFL Program Communication Block (PCB) used in IMS DL/I application programs. It specifies fields including the database name, segment... |
+| PAUTBPCB | `pautbpcb` | This copybook defines the data structure PAUTBPCB (line 17), which is the Program Communication Block (PCB) for the PAUT IMS database. It includes fields for database name (PAUT-DBDNAME, line 18),... |
+| PSBPAUTL | `psbpautl` | This file is an IMS PSB (Program Specification Block) definition that generates PSBPAUTL in Assembler language for accessing the DBPAUTP0 database. It defines a single PCB named PAUTLPCB with... |
+| XAUTHFRD | `xauthfrd` | This DDL script creates a unique index named CARDDEMO.XAUTHFRD on the CARDDEMO.AUTHFRDS table. The index keys on CARD_NUM in ascending order and AUTH_TS in descending order. The COPY YES option is... |
 
 ## Related Skills
 

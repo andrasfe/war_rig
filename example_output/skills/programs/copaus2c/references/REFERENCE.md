@@ -5,16 +5,16 @@
 ## Program Header
 
 - **Program ID:** COPAUS2C
-- **File Name:** COPAUS2C.cbl
+- **File Name:** cbl/COPAUS2C.cbl
 - **File Type:** COBOL
 - **Analyzed By:** WAR_RIG
-- **Analyzed At:** 2026-01-28T14:54:08.127541
+- **Analyzed At:** 2026-01-30T19:28:37.160519
 
 ## Purpose
 
-**Summary:** The COPAUS2C program is a CICS COBOL program that marks an authorization message as fraudulent by inserting or updating a record in the CARDDEMO.AUTHFRDS table. It receives transaction details via the CICS COMMAREA and uses this data to populate the AUTHFRDS table with information about the potentially fraudulent transaction.
+**Summary:** This CICS COBOL program marks an authorization message as fraud by inserting a record into the CARDDEMO.AUTHFRDS DB2 table using data from the commarea. If the insert fails due to a duplicate key error (SQLCODE -803), it performs an update on the existing record to set the fraud flag and report date. Upon completion, it sets status messages in the commarea and returns to CICS.
 
-**Business Context:** This program is part of an authorization module within the CardDemo application, likely used to flag suspicious transactions for further investigation and prevent future fraudulent activities. 
+**Business Context:** CardDemo Authorization Module: Handles fraud reporting for authorization transactions by logging or updating fraud indicators in the AUTHFRDS table.
 **Program Type:** ONLINE_CICS
 
 ## Inputs
@@ -22,54 +22,89 @@
 ### DFHCOMMAREA
 
 - **Type:** CICS_COMMAREA
-- **Description:** Contains transaction details including account ID (WS-ACCT-ID), customer ID (WS-CUST-ID), and fraud report data (WS-FRAUD-AUTH-RECORD) based on CIPAUDTY copybook, and fraud status record (WS-FRAUD-STATUS-RECORD).
+- **Description:** Contains WS-ACCT-ID, WS-CUST-ID, WS-FRAUD-AUTH-RECORD (from CIPAUDTY copybook with PA- fields like PA-AUTH-ORIG-DATE, PA-CARD-NUM), and WS-FRAUD-STATUS-RECORD (WS-FRD-ACTION, etc.) providing authorization details and fraud action flag.
 - **Copybook:** CIPAUDTY
+
+### SQLCA
+
+- **Type:** OTHER
+- **Description:** SQL communication area for DB2 error codes and states (SQLCODE, SQLSTATE).
+
+## Outputs
+
+### DFHCOMMAREA
+
+- **Type:** CICS_COMMAREA
+- **Description:** Updated with WS-FRD-UPDT-SUCCESS/FAILED flags and WS-FRD-ACT-MSG status message before CICS RETURN.
+
+### CARDDEMO.AUTHFRDS
+
+- **Type:** DB2_TABLE
+- **Description:** Fraud authorization records inserted or updated with fields like CARD_NUM, AUTH_TS, AUTH_FRAUD='F', FRAUD_RPT_DATE.
+- **Copybook:** AUTHFRDS
 
 ## Business Rules
 
 ### BR001
 
-**Description:** If a record with the same CARD_NUM and AUTH_TS already exists in the AUTHFRDS table, update the AUTH_FRAUD and FRAUD_RPT_DATE columns. Otherwise, insert a new record.
+**Description:** If fraud action is to report fraud (WS-FRD-ACTION='F'), insert new record into AUTHFRDS; if duplicate (-803), update existing record to set AUTH_FRAUD='F' and current FRAUD_RPT_DATE.
 
-**Logic:** The program first attempts to insert a new record. If the insert fails due to a duplicate key (SQLCODE = -803), it updates the existing record.
+**Logic:** MOVE WS-FRD-ACTION TO AUTH-FRAUD then INSERT; on SQLCODE=-803 PERFORM FRAUD-UPDATE which does targeted UPDATE on CARD_NUM and AUTH_TS.
 
 **Conditions:**
-- `SQLCODE = ZERO (Insert successful)`
-- `SQLCODE = -803 (Duplicate key, update required)`
+- `IF SQLCODE = ZERO`
+- `IF SQLCODE = -803`
+
+### BR002
+
+**Description:** On SQL error not zero or -803 (insert) or not zero (update), set failure flag and build error message with SQLCODE/SQLSTATE.
+
+**Logic:** SET WS-FRD-UPDT-FAILED TRUE and STRING error into WS-FRD-ACT-MSG.
+
+**Conditions:**
+- `IF SQLCODE NOT = ZERO`
+- `IF SQLCODE NOT = -803`
 
 ## Paragraphs
 
+### COPAUS2C
+
+This is the program entry point defined by PROGRAM-ID, serving as the CICS transaction entry for the fraud marking function. It has no explicit code body visible, implying direct flow to MAIN-PARA as the primary procedure division start. No inputs are consumed directly here; control passes to MAIN-PARA which reads from DFHCOMMAREA linkage. No outputs produced directly; defers to MAIN-PARA for DB2 operations and commarea updates. No business logic or decisions implemented in this single line. No error handling performed. It effectively calls or transfers to MAIN-PARA implicitly in standard COBOL CICS structure, and static analysis notes includes like CIPAUDTY, SQLCA, AUTHFRDS which are loaded at compile time.
+
+**Calls:** MAIN-PARA
+
 ### MAIN-PARA
 
-The MAIN-PARA paragraph is the primary control flow for the COPAUS2C program. It begins by retrieving the current date and time using CICS ASKTIME and FORMATTIME commands and storing the current date in WS-CUR-DATE, which is then moved to PA-FRAUD-RPT-DATE. The paragraph then extracts date and time components from the input COMMAREA (PA-AUTH-ORIG-DATE and PA-AUTH-TIME-9C) and transforms them into a timestamp format suitable for insertion into the AUTHFRDS table. It moves data from the COMMAREA into corresponding fields defined in the AUTHFRDS copybook. The paragraph then executes an SQL INSERT statement to add a new record to the CARDDEMO.AUTHFRDS table with the provided transaction details, marking it as potentially fraudulent. If the insert fails due to a duplicate key, the FRAUD-UPDATE paragraph is performed to update the existing record. Finally, the program returns control to CICS.
+This is the main orchestration paragraph controlling the entire program flow for marking authorization as fraud. It begins by consuming CICS ABSTIME via ASKTIME and formatting current date into WS-CUR-DATE using FORMATTIME, then moves it to PA-FRAUD-RPT-DATE (91-101). It reads PA- fields from WS-FRAUD-AUTH-RECORD in linkage (e.g., PA-AUTH-ORIG-DATE, PA-CARD-NUM) and transforms date/time: substrings to WS-AUTH-YY/MM/DD and computes WS-AUTH-TIME as 999999999 minus PA-AUTH-TIME-9C, parsing to WS-AUTH-TS (103-111). It then moves ~25 fields from PA- linkage to SQL host variables (e.g., CARD-NUM, AUTH-TS, AUTH-FRAUD from WS-FRD-ACTION) (113-139). The core business logic is EXEC SQL INSERT into CARDDEMO.AUTHFRDS with fraud details and CURRENT DATE for FRAUD_RPT_DATE (141-198). It checks SQLCODE: if 0, sets success and 'ADD SUCCESS' message; if -803 (duplicate), PERFORM FRAUD-UPDATE; else sets failure, builds error string with SQLCODE/SQLSTATE into WS-FRD-ACT-MSG (199-216). Error handling uses NOHANDLE on CICS calls and SQLCODE checks with abend avoidance via status messages. Finally, EXEC CICS RETURN with updated commarea (218). No loops; linear flow with 4 decision points on SQLCODE.
 
 **Calls:** FRAUD-UPDATE
 
 ### FRAUD-UPDATE
 
-The FRAUD-UPDATE paragraph is executed when the initial INSERT statement in MAIN-PARA fails due to a duplicate key violation, indicating that a record with the same CARD_NUM and AUTH_TS already exists in the CARDDEMO.AUTHFRDS table. This paragraph constructs an SQL UPDATE statement to modify the existing record, setting the AUTH_FRAUD column to the value of WS-FRD-ACTION and updating the FRAUD_RPT_DATE to the current date. The WHERE clause ensures that only the record matching the CARD_NUM and AUTH_TS from the input COMMAREA is updated. After the update, the paragraph checks the SQLCODE to determine if the update was successful. If SQLCODE is ZERO, WS-FRD-UPDT-SUCCESS is set to TRUE, and a success message is moved to WS-FRD-ACT-MSG. Otherwise, WS-FRD-UPDT-FAILED is set to TRUE, and an error message containing the SQLCODE and SQLSTATE is constructed and moved to WS-FRD-ACT-MSG. This paragraph does not call any other paragraphs or programs.
+This paragraph handles the fallback update for existing fraud records when INSERT detects duplicate key (SQLCODE -803). It consumes host variables set in MAIN-PARA: AUTH-FRAUD ('F' from WS-FRD-ACTION), CARD-NUM, AUTH-TS for WHERE clause. It produces an UPDATE to CARDDEMO.AUTHFRDS setting AUTH_FRAUD = :AUTH-FRAUD and FRAUD_RPT_DATE = CURRENT DATE, matching on CARD_NUM and AUTH_TS (222-229). Business logic targets precise record update without affecting others. It checks SQLCODE post-update: if 0, sets WS-FRD-UPDT-SUCCESS and 'UPDT SUCCESS' in WS-FRD-ACT-MSG; else sets failure and builds error string with SQLCODE/SQLSTATE (230-243). Error handling mirrors MAIN-PARA: status flags and messages, no abend. Called only from MAIN-PARA on duplicate error. Returns control to caller after update attempt.
 
 ## Data Flow
 
 ### Reads From
 
-- **DFHCOMMAREA:** PA-CARD-NUM, PA-AUTH-ORIG-DATE, PA-AUTH-TIME-9C, PA-AUTH-TYPE, PA-CARD-EXPIRY-DATE, PA-MESSAGE-TYPE, PA-MESSAGE-SOURCE, PA-AUTH-ID-CODE, PA-AUTH-RESP-CODE, PA-AUTH-RESP-REASON, PA-PROCESSING-CODE, PA-TRANSACTION-AMT, PA-APPROVED-AMT, PA-MERCHANT-CATAGORY-CODE, PA-ACQR-COUNTRY-CODE, PA-POS-ENTRY-MODE, PA-MERCHANT-ID, PA-MERCHANT-NAME, PA-MERCHANT-CITY, PA-MERCHANT-STATE, PA-MERCHANT-ZIP, PA-TRANSACTION-ID, PA-MATCH-STATUS
+- **DFHCOMMAREA:** WS-FRD-ACTION, WS-ACCT-ID, WS-CUST-ID, PA-AUTH-ORIG-DATE, PA-CARD-NUM, PA-AUTH-TYPE
 
 ### Writes To
 
-- **CARDDEMO.AUTHFRDS:** CARD_NUM, AUTH_TS, AUTH_TYPE, CARD_EXPIRY_DATE, MESSAGE_TYPE, MESSAGE_SOURCE, AUTH_ID_CODE, AUTH_RESP_CODE, AUTH_RESP_REASON, PROCESSING_CODE, TRANSACTION_AMT, APPROVED_AMT, MERCHANT_CATAGORY_CODE, ACQR_COUNTRY_CODE, POS_ENTRY_MODE, MERCHANT_ID, MERCHANT_NAME, MERCHANT_CITY, MERCHANT_STATE, MERCHANT_ZIP, TRANSACTION_ID, MATCH_STATUS, AUTH_FRAUD, FRAUD_RPT_DATE, ACCT_ID, CUST_ID
+- **CARDDEMO.AUTHFRDS:** AUTH_FRAUD, FRAUD_RPT_DATE, CARD_NUM, AUTH_TS
+- **DFHCOMMAREA:** WS-FRD-ACT-MSG, WS-FRD-UPDT-SUCCESS, WS-FRD-UPDT-FAILED
 
 ### Transforms
 
-- `PA-AUTH-ORIG-DATE` -> `WS-AUTH-TS (parts)`: Extracts year, month, and day from PA-AUTH-ORIG-DATE and moves them to WS-AUTH-YY, WS-AUTH-MM, and WS-AUTH-DD respectively.
-- `PA-AUTH-TIME-9C` -> `WS-AUTH-TIME`: Calculates WS-AUTH-TIME by subtracting PA-AUTH-TIME-9C from 999999999.
-- `WS-AUTH-TIME-AN` -> `WS-AUTH-TS (parts)`: Extracts hour, minute, second, and milliseconds from WS-AUTH-TIME-AN and moves them to WS-AUTH-HH, WS-AUTH-MI, WS-AUTH-SS and WS-AUTH-SSS respectively.
-- `PA-MERCHANT-NAME` -> `MERCHANT-NAME-TEXT`: Moves PA-MERCHANT-NAME to MERCHANT-NAME-TEXT after setting MERCHANT-NAME-LEN to the length of PA-MERCHANT-NAME.
+- `WS-ABS-TIME` -> `WS-CUR-DATE`: CICS FORMATTIME converts ABSTIME to MMDDYY format in WS-CUR-DATE, then moved to PA-FRAUD-RPT-DATE.
+- `PA-AUTH-TIME-9C` -> `WS-AUTH-TIME`: COMPUTE WS-AUTH-TIME = 999999999 - PA-AUTH-TIME-9C, then parse to WS-AUTH-TS components (YY-MM-DD HH:MI:SSSSS).
+- `PA-AUTH-ORIG-DATE` -> `WS-AUTH-YY, WS-AUTH-MM, WS-AUTH-DD`: Substring moves: (1:2) to YY, (3:2) MM, (5:2) DD.
 
 ## Error Handling
 
-- **SQLCODE not equal to ZERO after INSERT:** If SQLCODE is -803, perform FRAUD-UPDATE. Otherwise, set WS-FRD-UPDT-FAILED to TRUE and construct an error message with SQLCODE and SQLSTATE.
-- **SQLCODE not equal to ZERO after UPDATE:** Set WS-FRD-UPDT-FAILED to TRUE and construct an error message with SQLCODE and SQLSTATE.
+- **SQLCODE NOT = ZERO after INSERT:** If SQLCODE = -803, PERFORM FRAUD-UPDATE; else SET WS-FRD-UPDT-FAILED TRUE and STRING 'SYSTEM ERROR DB2: CODE:nnn, STATE: nnn' into WS-FRD-ACT-MSG.
+- **SQLCODE NOT = ZERO after UPDATE:** SET WS-FRD-UPDT-FAILED TRUE and STRING 'UPDT ERROR DB2: CODE:nnn, STATE: nnn' into WS-FRD-ACT-MSG.
+- **CICS ASKTIME/FORMATTIME errors:** NOHANDLE suppresses errors, program continues.
 
 ## SQL Operations
 

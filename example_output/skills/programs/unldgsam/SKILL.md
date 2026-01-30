@@ -1,15 +1,20 @@
 ---
 name: unldgsam
-description: "This JCL job executes the IMS program DFSRRC00 to unload a GSAM database. It specifies the program parameters, required libraries, and input/output datasets for the IMS database unload process."
+description: "This JCL submits a batch job to execute the IMS database reorganization utility DFSRRC00 in unload mode for the GSAM database DBUNLDGS using DLI access method and PSB DLIGSAMP. It provides access to required IMS libraries, PSB/DBD libraries, PAUTDB GSAM datasets (root and child), and directs utility output to SYSOUT datasets. The job is part of the AWS M2 Card Demo application dataset maintenance."
 ---
 
 # UNLDGSAM
 
 **Type:** JCL (BATCH)
+**Context:** Unloading IMS PAUTDB GSAM databases (root and child) for the AWS M2 Card Demo application, likely for backup, reorg preparation, or data extraction.
 
 ## Purpose
 
-This JCL job executes the IMS program DFSRRC00 to unload a GSAM database. It specifies the program parameters, required libraries, and input/output datasets for the IMS database unload process.
+This JCL submits a batch job to execute the IMS database reorganization utility DFSRRC00 in unload mode for the GSAM database DBUNLDGS using DLI access method and PSB DLIGSAMP. It provides access to required IMS libraries, PSB/DBD libraries, PAUTDB GSAM datasets (root and child), and directs utility output to SYSOUT datasets. The job is part of the AWS M2 Card Demo application dataset maintenance.
+
+## Business Rules
+
+- **BR001**: Executes IMS database unload using DLI access method on target database DBUNLDGS with PSB DLIGSAMP and specific utility flags
 
 ## Called Programs
 
@@ -17,23 +22,24 @@ This JCL job executes the IMS program DFSRRC00 to unload a GSAM database. It spe
 
 ## Inputs
 
-- **AWS.M2.CARDDEMO.PAUTDB.ROOT.GSAM** (FILE_SEQUENTIAL): Input GSAM database root segment to be unloaded.
-- **AWS.M2.CARDDEMO.PAUTDB.CHILD.GSAM** (FILE_SEQUENTIAL): Input GSAM database child segment to be unloaded.
-- **OEM.IMS.IMSP.PAUTHDB** (FILE_SEQUENTIAL): Input IMS PAUTHDB dataset.
-- **OEM.IMS.IMSP.PAUTHDBX** (FILE_SEQUENTIAL): Input IMS PAUTHDBX dataset.
-- **OEMA.IMS.IMSP.SDFSRESL** (FILE_SEQUENTIAL): IMS RESLIB
-- *(+5 more inputs)*
+- **PARM** (PARAMETER): IMS utility control parameters specifying DLI access mode, database name DBUNLDGS, PSB name DLIGSAMP, and additional flags
+- **PASFILOP** (IMS_SEGMENT): Input GSAM dataset for PAUTDB.ROOT containing IMS database segments to unload
+- **PADFILOP** (IMS_SEGMENT): Input GSAM dataset for PAUTDB.CHILD containing IMS database segments to unload
+- **IMS** (OTHER): IMS PSBLIB and DBDLIB for program specification block and database description library
+- **DDPAUTP0** (OTHER): IMS PAUTHDB library reference
+- *(+2 more inputs)*
 
 ## Outputs
 
-- **SYSPRINT** (REPORT): System print output for the job.
-- **SYSUDUMP** (REPORT): System dump output for the job.
-- **IMSERR** (REPORT): IMS error output for the job.
+- **SYSPRINT** (REPORT): Utility execution reports and listings
+- **SYSUDUMP** (REPORT): System dump output on abends
+- **IMSERR** (REPORT): IMS-specific error messages
 
 ## When to Use This Skill
 
 Use this skill when you need to:
 - Understand the purpose and functionality of UNLDGSAM
+- Understand business rules implemented in UNLDGSAM
 - Trace program calls from UNLDGSAM
 - Identify inputs/outputs for UNLDGSAM
 - Maintain or modify UNLDGSAM

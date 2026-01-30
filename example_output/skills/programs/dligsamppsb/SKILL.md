@@ -1,20 +1,27 @@
 ---
 name: dligsamppsb
-description: "This PSB (Program Specification Block) defines the database access characteristics for an IMS application program. It specifies the PCBs (Program Communication Blocks) that the program will use to interact with IMS databases, including DB PCBs for DBPAUTP0 and GSAM PCBs for PASFLDBD and PADFLDBD."
+description: "This file is the source for generating the IMS Program Specification Block (PSB) named DLIGSAMP for use in a COBOL program. It defines a database PCB (PAUTBPCB) for the hierarchical IMS database DBPAUTP0 with PROCOPT=GOTP and KEYLEN=14, providing access to root segment PAUTSUM0 (PARENT=0) and child segment PAUTDTL1 (PARENT=PAUTSUM0). It also defines two GSAM PCBs for databases PASFLDBD and PADFLDBD, both with PROCOPT=LS."
 ---
 
 # DLIGSAMP
 
-**Type:** OTHER (OTHER)
+**Type:** OTHER (UTILITY)
 
 ## Purpose
 
-This PSB (Program Specification Block) defines the database access characteristics for an IMS application program. It specifies the PCBs (Program Communication Blocks) that the program will use to interact with IMS databases, including DB PCBs for DBPAUTP0 and GSAM PCBs for PASFLDBD and PADFLDBD.
+This file is the source for generating the IMS Program Specification Block (PSB) named DLIGSAMP for use in a COBOL program. It defines a database PCB (PAUTBPCB) for the hierarchical IMS database DBPAUTP0 with PROCOPT=GOTP and KEYLEN=14, providing access to root segment PAUTSUM0 (PARENT=0) and child segment PAUTDTL1 (PARENT=PAUTSUM0). It also defines two GSAM PCBs for databases PASFLDBD and PADFLDBD, both with PROCOPT=LS.
+
+## Inputs
+
+- **DBPAUTP0** (IMS_SEGMENT): Hierarchical IMS database accessed via PCB PAUTBPCB with segments PAUTSUM0 (root) and PAUTDTL1
+- **PASFLDBD** (IMS_SEGMENT): GSAM IMS database accessed via unnamed PCB
+- **PADFLDBD** (IMS_SEGMENT): GSAM IMS database accessed via unnamed PCB
 
 ## When to Use This Skill
 
 Use this skill when you need to:
 - Understand the purpose and functionality of DLIGSAMP
+- Identify inputs/outputs for DLIGSAMP
 - Maintain or modify DLIGSAMP
 
 ## Additional Details
