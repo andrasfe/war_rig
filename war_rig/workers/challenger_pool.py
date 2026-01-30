@@ -35,6 +35,7 @@ from pathlib import Path
 from typing import Any
 
 from war_rig.agents.challenger import ChallengerAgent, ChallengerInput, ChallengerOutput
+from war_rig.analysis.pattern_aggregator import PatternAggregator
 from war_rig.chunking import TokenEstimator
 from war_rig.beads import (
     BeadsClient,
@@ -343,6 +344,67 @@ class ChallengerWorker:
         except Exception as e:
             logger.debug(
                 f"Worker {self.worker_id}: Citadel analysis failed for "
+                f"{file_path}: {e}"
+            )
+            return None
+
+    def _get_pattern_facts(
+        self,
+        file_path: str,
+        citadel_context: dict | None,
+    ) -> dict | None:
+        """Get aggregated pattern facts for Challenger validation.
+
+        Uses Citadel's get_analysis_patterns() to extract data_flow, control_flow,
+        and error_handling patterns, then aggregates them into ground-truth facts
+        for the Challenger agent to use during validation.
+
+        Args:
+            file_path: Path to the source file to analyze.
+            citadel_context: Citadel context with paragraphs list.
+
+        Returns:
+            Dictionary with paragraph_facts, validation_cues, expected_coverage.
+            Returns None if Citadel is not available or analysis fails.
+        """
+        if not self._citadel:
+            return None
+
+        try:
+            pattern_result = self._citadel.get_analysis_patterns(file_path)
+
+            if pattern_result.error:
+                logger.debug(
+                    f"Worker {self.worker_id}: Pattern analysis error for "
+                    f"{file_path}: {pattern_result.error}"
+                )
+                return None
+
+            # Build outline from citadel_context
+            outline = []
+            if citadel_context and citadel_context.get("paragraphs"):
+                for para in citadel_context["paragraphs"]:
+                    outline.append({
+                        "name": para.get("name", ""),
+                        "line_start": para.get("line_start"),
+                        "line_end": para.get("line_end"),
+                    })
+
+            # Aggregate patterns for Challenger
+            aggregator = PatternAggregator()
+            facts = aggregator.aggregate_for_challenger(pattern_result, outline)
+
+            if facts:
+                logger.debug(
+                    f"Worker {self.worker_id}: Generated pattern facts for "
+                    f"{file_path} ({pattern_result.total_matches} matches)"
+                )
+
+            return facts if facts else None
+
+        except Exception as e:
+            logger.warning(
+                f"Worker {self.worker_id}: Pattern analysis failed for "
                 f"{file_path}: {e}"
             )
             return None
@@ -1272,6 +1334,7 @@ class ChallengerWorker:
 
             # Build Citadel context with paragraph bodies for cross-reference
             citadel_ctx = None
+            pattern_facts = None
             if self._citadel and state.get("template"):
                 try:
                     template = state["template"]
@@ -1287,6 +1350,12 @@ class ChallengerWorker:
                             str(source_path), para_names
                         )
                         citadel_ctx = {"paragraph_bodies": bodies}
+
+                        # Get pattern facts for validation
+                        citadel_analysis_ctx = self._get_citadel_context(str(source_path))
+                        pattern_facts = self._get_pattern_facts(
+                            str(source_path), citadel_analysis_ctx
+                        )
                 except Exception as e:
                     logger.debug(
                         f"Worker {self.worker_id}: Failed to get Citadel bodies "
@@ -1305,6 +1374,7 @@ class ChallengerWorker:
                 formatting_strict=formatting_strict,
                 feedback_context=feedback_context,
                 citadel_context=citadel_ctx,
+                pattern_facts=pattern_facts,
             )
 
             # Invoke the ChallengerAgent

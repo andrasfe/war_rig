@@ -78,6 +78,10 @@ class ScribeInput(AgentInput):
         default=None,
         description="Citadel paragraph outline with names, line ranges, and calls for guided documentation",
     )
+    pattern_insights: dict | None = Field(
+        default=None,
+        description="Aggregated analysis pattern insights to guide documentation (from PatternAggregator)",
+    )
 
 
 class ScribeOutput(AgentOutput):
@@ -410,6 +414,43 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                 calls_str = f" → calls: {call_targets}" if call_targets else ""
                 parts.append(f"- **{name}** ({line_range}){calls_str}")
             parts.append("")
+
+        # Pattern insights for documentation guidance
+        if input_data.pattern_insights:
+            parts.append("## Analysis Pattern Insights")
+            parts.append("")
+
+            # File-level summary
+            summary = input_data.pattern_insights.get("file_summary", {})
+            if summary.get("key_variables"):
+                vars_list = ", ".join(summary["key_variables"][:10])
+                parts.append(f"**Key Variables**: {vars_list}")
+            if summary.get("complexity_indicators"):
+                indicators = summary["complexity_indicators"]
+                parts.append(f"**Complexity**: {indicators}")
+            parts.append("")
+
+            # Per-paragraph hints
+            para_hints = input_data.pattern_insights.get("paragraph_hints", [])
+            if para_hints:
+                parts.append("### Paragraph Documentation Hints")
+                parts.append("")
+                for hint_item in para_hints[:20]:  # Limit to 20 paragraphs
+                    para_name = hint_item.get("paragraph_name", "?")
+                    hints = hint_item.get("hints", [])
+                    complexity = hint_item.get("complexity", "")
+                    parts.append(f"**{para_name}** ({complexity}):")
+                    for hint in hints[:4]:  # Max 4 hints per paragraph
+                        parts.append(f"  - {hint}")
+                parts.append("")
+
+            # Critical patterns
+            critical = input_data.pattern_insights.get("critical_patterns", [])
+            if critical:
+                parts.append("### Critical Patterns (MUST Document)")
+                for pattern in critical[:10]:
+                    parts.append(f"- {pattern}")
+                parts.append("")
 
         # Source code
         parts.append("## Source Code")

@@ -89,6 +89,10 @@ class ChallengerInput(AgentInput):
         default=None,
         description="Citadel context with paragraph bodies and structural facts for cross-reference validation",
     )
+    pattern_facts: dict | None = Field(
+        default=None,
+        description="Ground-truth pattern facts for validation cross-reference (from PatternAggregator)",
+    )
 
 
 class ChallengerOutput(AgentOutput):
@@ -339,6 +343,39 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                     parts.append(body)
                     parts.append("```")
                     parts.append("")
+
+        # Pattern facts for validation
+        if input_data.pattern_facts:
+            parts.append("## Analysis Pattern Facts (Ground Truth)")
+            parts.append("")
+            parts.append("Cross-reference documentation against these static analysis facts:")
+            parts.append("")
+
+            # Per-paragraph facts
+            para_facts = input_data.pattern_facts.get("paragraph_facts", [])
+            if para_facts:
+                for fact in para_facts[:20]:
+                    para = fact.get("paragraph_name", "?")
+                    df_count = fact.get("data_flow_count", 0)
+                    cf_count = fact.get("control_flow_count", 0)
+                    eh_count = fact.get("error_handling_count", 0)
+                    parts.append(
+                        f"- **{para}**: {df_count} data ops, {cf_count} control ops, "
+                        f"{eh_count} error handlers"
+                    )
+                    key_ops = fact.get("key_operations", [])
+                    if key_ops:
+                        ops_str = "; ".join(key_ops[:3])
+                        parts.append(f"  Key operations: {ops_str}")
+                parts.append("")
+
+            # Validation cues
+            cues = input_data.pattern_facts.get("validation_cues", [])
+            if cues:
+                parts.append("### Validation Checkpoints")
+                for cue in cues[:10]:
+                    parts.append(f"- {cue}")
+                parts.append("")
 
         # Instructions
         parts.append("## Task")

@@ -45,6 +45,7 @@ from typing import Any
 
 from war_rig.agents.scribe import ScribeAgent, ScribeInput, ScribeOutput
 from war_rig.analysis.call_semantics import CallSemanticsAnalyzer
+from war_rig.analysis.pattern_aggregator import PatternAggregator
 from war_rig.beads import (
     BeadsClient,
     BeadsPriority,
@@ -479,6 +480,57 @@ class ScribeWorker:
         except Exception as e:
             logger.debug(
                 f"Worker {self.worker_id}: Citadel analysis failed for {file_path}: {e}"
+            )
+            return None
+
+    def _get_pattern_insights(
+        self,
+        file_path: str,
+        citadel_outline: list[dict] | None,
+    ) -> dict | None:
+        """Get aggregated pattern insights for Scribe documentation guidance.
+
+        Uses Citadel's get_analysis_patterns() to extract data_flow, control_flow,
+        and error_handling patterns, then aggregates them into actionable insights
+        for the Scribe agent.
+
+        Args:
+            file_path: Path to the source file to analyze.
+            citadel_outline: Citadel paragraph outline with names and line ranges.
+
+        Returns:
+            Dictionary with file_summary, paragraph_hints, critical_patterns.
+            Returns None if Citadel is not available or analysis fails.
+        """
+        if not self._citadel:
+            return None
+
+        try:
+            pattern_result = self._citadel.get_analysis_patterns(file_path)
+
+            if pattern_result.error:
+                logger.debug(
+                    f"Worker {self.worker_id}: Pattern analysis error for "
+                    f"{file_path}: {pattern_result.error}"
+                )
+                return None
+
+            # Aggregate patterns for Scribe
+            aggregator = PatternAggregator()
+            insights = aggregator.aggregate_for_scribe(pattern_result, citadel_outline)
+
+            if insights:
+                logger.debug(
+                    f"Worker {self.worker_id}: Generated pattern insights for "
+                    f"{file_path} ({pattern_result.total_matches} matches)"
+                )
+
+            return insights if insights else None
+
+        except Exception as e:
+            logger.warning(
+                f"Worker {self.worker_id}: Pattern analysis failed for "
+                f"{file_path}: {e}"
             )
             return None
 
@@ -2178,6 +2230,9 @@ class ScribeWorker:
             or paragraph_count >= self.config.citadel_guided_threshold_paragraphs
         )
 
+        # Get pattern insights for documentation guidance
+        pattern_insights = self._get_pattern_insights(str(source_path), outline)
+
         if is_large:
             logger.info(
                 f"Worker {self.worker_id}: Citadel-guided BATCHED processing for "
@@ -2185,7 +2240,7 @@ class ScribeWorker:
             )
             return await self._process_citadel_batched(
                 ticket, source_code, file_type, formatting_strict,
-                outline, source_path, stats,
+                outline, source_path, stats, pattern_insights,
             )
         else:
             logger.info(
@@ -2194,6 +2249,7 @@ class ScribeWorker:
             )
             return await self._process_citadel_single_pass(
                 ticket, source_code, file_type, formatting_strict, outline,
+                pattern_insights,
             )
 
     async def _process_citadel_single_pass(
@@ -2203,6 +2259,7 @@ class ScribeWorker:
         file_type: FileType,
         formatting_strict: bool,
         outline: list[dict],
+        pattern_insights: dict | None = None,
     ) -> ScribeOutput:
         """Single-pass Citadel-guided documentation for small files.
 
@@ -2215,6 +2272,7 @@ class ScribeWorker:
             file_type: Detected file type.
             formatting_strict: Whether to add strict formatting instructions.
             outline: Citadel paragraph outline.
+            pattern_insights: Aggregated pattern insights for documentation guidance.
 
         Returns:
             ScribeOutput with documentation.
@@ -2240,6 +2298,7 @@ class ScribeWorker:
             formatting_strict=formatting_strict,
             feedback_context=feedback_context,
             citadel_outline=outline,
+            pattern_insights=pattern_insights,
         )
 
         output = await self.scribe_agent.ainvoke(scribe_input)
@@ -2272,6 +2331,7 @@ class ScribeWorker:
         outline: list[dict],
         source_path: Path,
         stats: dict,
+        pattern_insights: dict | None = None,
     ) -> ScribeOutput:
         """Batched Citadel-guided documentation for large files.
 
@@ -2287,6 +2347,7 @@ class ScribeWorker:
             outline: Citadel paragraph outline.
             source_path: Resolved path to the source file.
             stats: File stats from Citadel.
+            pattern_insights: Aggregated pattern insights for documentation guidance.
 
         Returns:
             ScribeOutput with merged documentation.
@@ -2342,6 +2403,8 @@ class ScribeWorker:
                 formatting_strict=formatting_strict,
                 feedback_context=feedback_context if batch_idx == 0 else None,
                 citadel_outline=batch,
+                # Only pass pattern_insights for the first batch (file-level context)
+                pattern_insights=pattern_insights if batch_idx == 0 else None,
             )
 
             logger.debug(
