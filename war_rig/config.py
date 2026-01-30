@@ -343,9 +343,9 @@ class WarRigConfig(BaseSettings):
         description="Files with more paragraphs than this use batched processing",
     )
     citadel_batch_size: int = Field(
-        default=5,
+        default=30,
         ge=1,
-        le=20,
+        le=100,
         description="Number of paragraphs per batch in Citadel-guided processing",
     )
 
