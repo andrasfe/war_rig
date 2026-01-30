@@ -848,8 +848,11 @@ class ScribeWorker:
                 )
                 return template
 
-            # Create the analyzer with the worker's API config
-            analyzer = CallSemanticsAnalyzer(api_config=self.config.api)
+            # Create the analyzer with the worker's API config and model
+            analyzer = CallSemanticsAnalyzer(
+                api_config=self.config.api,
+                model=self.config.scribe.model,
+            )
 
             # Run the analysis
             logger.info(

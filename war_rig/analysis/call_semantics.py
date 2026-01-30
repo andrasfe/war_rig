@@ -63,6 +63,7 @@ class CallSemanticsAnalyzer:
     def __init__(
         self,
         api_config: APIConfig,
+        model: str | None = None,
         provider: LLMProvider | None = None,
         batch_size: int = DEFAULT_BATCH_SIZE,
     ):
@@ -70,12 +71,15 @@ class CallSemanticsAnalyzer:
 
         Args:
             api_config: API configuration for the LLM provider.
+            model: Model identifier to use for LLM calls. If not provided,
+                defaults to Claude Sonnet.
             provider: Optional LLM provider instance. If not provided,
                 creates one from environment variables.
             batch_size: Number of call edges to process per LLM request.
                 Defaults to 5 for a good balance of efficiency and context.
         """
         self.api_config = api_config
+        self.model = model or "anthropic/claude-sonnet-4-20250514"
         self._provider = provider or get_provider_from_env()
         self.batch_size = batch_size
 
@@ -283,7 +287,7 @@ class CallSemanticsAnalyzer:
 
         response = await self._provider.complete(
             messages=messages,
-            model=self.api_config.api_key and "anthropic/claude-sonnet-4-20250514",
+            model=self.model,
             temperature=0.3,
         )
 
