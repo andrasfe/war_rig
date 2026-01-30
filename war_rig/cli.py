@@ -794,6 +794,98 @@ def skills(
         raise typer.Exit(1) from None
 
 
+@app.command(name="generate-readme")
+def generate_readme(
+    config: Annotated[
+        Path | None,
+        typer.Option(
+            "--config",
+            "-c",
+            help="Path to configuration file",
+        ),
+    ] = None,
+    output: Annotated[
+        Path | None,
+        typer.Option(
+            "--output",
+            "-o",
+            help="Output directory (overrides config)",
+        ),
+    ] = None,
+    source: Annotated[
+        Path | None,
+        typer.Option(
+            "--source",
+            "-s",
+            help="Source directory for Citadel analysis (optional)",
+        ),
+    ] = None,
+    mock: Annotated[
+        bool,
+        typer.Option(
+            "--mock",
+            "-m",
+            help="Use mock output (for testing)",
+        ),
+    ] = False,
+    verbose: Annotated[
+        bool,
+        typer.Option(
+            "--verbose",
+            "-v",
+            help="Enable verbose logging",
+        ),
+    ] = False,
+) -> None:
+    """Generate README.md from existing documentation.
+
+    This command reads completed documentation from output/final/programs/
+    and generates a comprehensive README.md system design document using
+    Imperator's generate_system_design method.
+
+    Example:
+        $ war-rig generate-readme
+        $ war-rig generate-readme --output ./docs
+        $ war-rig generate-readme --source ./src  # Include call graph from source
+    """
+    setup_logging(verbose)
+
+    # Load configuration
+    cfg = load_config_with_fallback(config)
+    if output:
+        cfg.output_directory = output
+
+    console.print(Panel.fit(
+        "[bold blue]War Rig[/bold blue] - Generating README.md",
+        border_style="blue",
+    ))
+
+    programs_dir = cfg.output_directory / "final" / "programs"
+    if not programs_dir.exists():
+        console.print(f"[red]No documentation found at {programs_dir}[/red]")
+        raise typer.Exit(1)
+
+    doc_files = list(programs_dir.glob("*.json"))
+    if not doc_files:
+        console.print("[red]No documentation files found[/red]")
+        raise typer.Exit(1)
+
+    console.print(f"Found {len(doc_files)} documented programs")
+    console.print("Building README.md...")
+
+    try:
+        _generate_readme_internal(
+            cfg,
+            source_dir=source,
+            mock=mock,
+        )
+        readme_path = cfg.output_directory / "README.md"
+        console.print(f"[green]README.md written to: {readme_path}[/green]")
+    except Exception as e:
+        console.print(f"[red]Error generating README: {e}[/red]")
+        raise typer.Exit(1) from None
+
+
 @app.command()
 def version() -> None:
     """Show War Rig version information."""
@@ -910,6 +1002,190 @@ def _generate_overview_internal(
         overview_path.write_text(result.markdown, encoding="utf-8")
     else:
         raise RuntimeError(f"Failed to generate overview: {result.error}")
+
+
+def _generate_readme_internal(
+    cfg: WarRigConfig,
+    source_dir: Path | None = None,
+    mock: bool = False,
+) -> None:
+    """Internal helper to generate README.md from existing documentation.
+
+    Args:
+        cfg: War Rig configuration.
+        source_dir: Optional source directory for Citadel analysis.
+        mock: Whether to use mock output.
+
+    Raises:
+        Exception: If README generation fails.
+    """
+    import json
+
+    from war_rig.agents.imperator import (
+        FileDocumentation,
+        HolisticReviewInput,
+        ImperatorAgent,
+    )
+    from war_rig.models.assessments import ConfidenceLevel
+    from war_rig.models.templates import DocumentationTemplate
+
+    output_dir = cfg.output_directory
+    programs_dir = output_dir / "final" / "programs"
+
+    if not programs_dir.exists():
+        raise FileNotFoundError(f"No documentation found at {programs_dir}")
+
+    # Collect file documentation
+    file_docs: list[FileDocumentation] = []
+    per_file_confidence: dict[str, ConfidenceLevel] = {}
+
+    doc_files = list(programs_dir.glob("*.doc.json")) + list(programs_dir.glob("*.json"))
+    # Deduplicate by stem
+    seen_stems: set[str] = set()
+    unique_files = []
+    for f in doc_files:
+        stem = f.stem.replace(".doc", "")
+        if stem not in seen_stems:
+            seen_stems.add(stem)
+            unique_files.append(f)
+
+    if not unique_files:
+        raise FileNotFoundError("No documentation files found")
+
+    for doc_file in unique_files:
+        try:
+            doc_data = json.loads(doc_file.read_text(encoding="utf-8"))
+
+            # Load template from JSON
+            template = DocumentationTemplate.model_construct(**doc_data)
+
+            header = doc_data.get("header", {})
+            file_name = header.get("file_name", doc_file.stem)
+            program_id = header.get("program_id", doc_file.stem.replace(".doc", ""))
+
+            file_docs.append(
+                FileDocumentation(
+                    file_name=file_name,
+                    program_id=program_id,
+                    template=template,
+                    iteration_count=header.get("iteration_count", 1),
+                )
+            )
+            per_file_confidence[file_name] = ConfidenceLevel.MEDIUM
+
+        except Exception as e:
+            console.print(f"[yellow]Warning: Skipping {doc_file.name}: {e}[/yellow]")
+
+    if not file_docs:
+        raise ValueError("No valid documentation found")
+
+    # Build cross-file analysis using Citadel (if source_dir provided)
+    shared_copybooks: dict[str, list[str]] = {}
+    call_graph: dict[str, list[str]] = {}
+    data_flow: dict[str, list[str]] = {}
+    call_graph_markdown: str | None = None
+
+    # Load CALL_GRAPH.md if it exists
+    call_graph_path = output_dir / "CALL_GRAPH.md"
+    if call_graph_path.exists():
+        try:
+            call_graph_markdown = call_graph_path.read_text(encoding="utf-8")
+            console.print(f"[dim]Loaded CALL_GRAPH.md ({len(call_graph_markdown)} chars)[/dim]")
+        except Exception:
+            pass
+
+    # Run Citadel analysis if source directory provided
+    if source_dir and source_dir.exists():
+        try:
+            from citadel import Citadel
+
+            citadel = Citadel()
+            callouts = citadel.get_callouts(source_dir)
+
+            for callout in callouts:
+                if "error" in callout:
+                    continue
+
+                from_prog = callout.get("from", "").upper()
+                to_target = callout.get("to", "").upper()
+                rel_type = callout.get("type", "")
+
+                if not from_prog or not to_target:
+                    continue
+
+                if rel_type == "includes":
+                    if to_target not in shared_copybooks:
+                        shared_copybooks[to_target] = []
+                    if from_prog not in shared_copybooks[to_target]:
+                        shared_copybooks[to_target].append(from_prog)
+
+                elif rel_type in ("calls", "executes", "performs"):
+                    if from_prog not in call_graph:
+                        call_graph[from_prog] = []
+                    if to_target not in call_graph[from_prog]:
+                        call_graph[from_prog].append(to_target)
+
+                elif rel_type in ("reads", "writes", "updates", "deletes"):
+                    if from_prog not in data_flow:
+                        data_flow[from_prog] = []
+                    if to_target not in data_flow[from_prog]:
+                        data_flow[from_prog].append(to_target)
+
+            console.print(
+                f"[dim]Citadel: {len(shared_copybooks)} copybooks, "
+                f"{len(call_graph)} callers[/dim]"
+            )
+
+        except ImportError:
+            console.print("[dim]Citadel not available for cross-file analysis[/dim]")
+        except Exception as e:
+            console.print(f"[yellow]Warning: Citadel analysis failed: {e}[/yellow]")
+
+    # Build HolisticReviewInput
+    review_input = HolisticReviewInput(
+        batch_id="cli-readme",
+        cycle=1,
+        file_documentation=file_docs,
+        shared_copybooks=shared_copybooks,
+        call_graph=call_graph,
+        call_graph_markdown=call_graph_markdown,
+        data_flow=data_flow,
+        per_file_confidence=per_file_confidence,
+        per_file_issues={},
+        previous_clarification_requests=[],
+        previous_chrome_tickets=[],
+        resolution_status={},
+        max_cycles=5,
+    )
+
+    # Generate README using Imperator
+    imperator = ImperatorAgent(
+        config=cfg.imperator,
+        api_config=cfg.api,
+    )
+
+    # Check for existing README to enhance
+    existing_readme: str | None = None
+    readme_path = output_dir / "README.md"
+    if readme_path.exists():
+        try:
+            existing_readme = readme_path.read_text(encoding="utf-8")
+            console.print("[dim]Found existing README.md - will enhance[/dim]")
+        except Exception:
+            pass
+
+    result = asyncio.run(
+        imperator.generate_system_design(
+            review_input,
+            existing_content=existing_readme,
+            use_mock=mock,
+        )
+    )
+
+    if result.success:
+        readme_path.write_text(result.markdown, encoding="utf-8")
+    else:
+        raise RuntimeError(f"Failed to generate README: {result.error}")
 
 
 def main() -> None:
