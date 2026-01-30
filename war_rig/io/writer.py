@@ -494,9 +494,10 @@ class DocumentationWriter:
     def _render_sequence_diagram(self, template: DocumentationTemplate) -> str:
         """Generate Mermaid sequence diagram with data flow annotations.
 
-        If call_semantics is populated, shows inputs on forward arrows
-        and outputs on return arrows. Falls back to basic "performs"
-        labels if no semantics available.
+        Uses call_semantics for enhanced labels when available, falling back to
+        basic "performs" labels. Supports two modes:
+        1. If paragraphs have outgoing_calls, iterate through them and look up semantics
+        2. If paragraphs don't have outgoing_calls but call_semantics exist, use them directly
 
         Args:
             template: The documentation template containing paragraphs and call semantics.
@@ -505,54 +506,98 @@ class DocumentationWriter:
             Mermaid sequence diagram as a string, or empty string if no calls exist.
         """
         # Check if there are any paragraphs with outgoing calls
-        has_calls = any(
+        has_outgoing_calls = any(
             para.outgoing_calls for para in template.paragraphs if para.outgoing_calls
         )
-        if not has_calls:
+
+        # If no outgoing_calls and no call_semantics, no diagram to render
+        if not has_outgoing_calls and not template.call_semantics:
             return ""
 
         lines = ["```mermaid", "sequenceDiagram"]
 
-        # Build lookup from call_semantics
-        semantics_map = {
-            (cs.caller, cs.callee): cs for cs in template.call_semantics
-        }
+        # Build lookup from call_semantics (handle both dict and object)
+        semantics_map: dict[tuple[str, str], Any] = {}
+        for cs in template.call_semantics:
+            if isinstance(cs, dict):
+                caller = cs.get("caller")
+                callee = cs.get("callee")
+            else:
+                caller = cs.caller
+                callee = cs.callee
+            if caller and callee:
+                semantics_map[(caller, callee)] = cs
 
-        # Get call edges from paragraphs
-        for para in template.paragraphs:
-            if not para.outgoing_calls:
-                continue
-            caller = para.paragraph_name
-            if not caller:
-                continue
-
-            for call in para.outgoing_calls:
-                # FunctionCall has a 'target' attribute, but may be dict from JSON
-                if hasattr(call, "target"):
-                    target = call.target
-                elif isinstance(call, dict):
-                    target = call.get("target")
-                else:
-                    target = str(call)
-                if not target:
+        if has_outgoing_calls:
+            # Mode 1: Iterate through paragraphs.outgoing_calls, look up semantics
+            for para in template.paragraphs:
+                if not para.outgoing_calls:
+                    continue
+                caller = para.paragraph_name
+                if not caller:
                     continue
 
-                sem = semantics_map.get((caller, target))
-
-                if sem and (sem.inputs or sem.outputs):
-                    # Enhanced: show data flow
-                    if sem.inputs:
-                        in_label = self._truncate_label(sem.inputs)
-                        lines.append(f"    {caller}->>{target}: {in_label}")
+                for call in para.outgoing_calls:
+                    # FunctionCall has a 'target' attribute, but may be dict from JSON
+                    if hasattr(call, "target"):
+                        target = call.target
+                    elif isinstance(call, dict):
+                        target = call.get("target")
                     else:
-                        lines.append(f"    {caller}->>{target}: performs")
+                        target = str(call)
+                    if not target:
+                        continue
 
-                    if sem.outputs:
-                        out_label = self._truncate_label(sem.outputs)
-                        lines.append(f"    {target}-->>{caller}: {out_label}")
+                    sem = semantics_map.get((caller, target))
+                    if sem:
+                        # Get inputs/outputs from semantics
+                        if isinstance(sem, dict):
+                            inputs = sem.get("inputs", [])
+                            outputs = sem.get("outputs", [])
+                        else:
+                            inputs = sem.inputs or []
+                            outputs = sem.outputs or []
+
+                        if inputs:
+                            in_label = self._truncate_label(inputs)
+                            lines.append(f"    {caller}->>{target}: {in_label}")
+                        else:
+                            lines.append(f"    {caller}->>{target}: performs")
+
+                        if outputs:
+                            out_label = self._truncate_label(outputs)
+                            lines.append(f"    {target}-->>{caller}: {out_label}")
+                    else:
+                        # Fallback: basic label
+                        lines.append(f"    {caller}->>{target}: performs")
+        else:
+            # Mode 2: No outgoing_calls but call_semantics exist, use them directly
+            for cs in template.call_semantics:
+                if isinstance(cs, dict):
+                    caller = cs.get("caller")
+                    callee = cs.get("callee")
+                    inputs = cs.get("inputs", [])
+                    outputs = cs.get("outputs", [])
                 else:
-                    # Fallback: basic label
-                    lines.append(f"    {caller}->>{target}: performs")
+                    caller = cs.caller
+                    callee = cs.callee
+                    inputs = cs.inputs or []
+                    outputs = cs.outputs or []
+
+                if not caller or not callee:
+                    continue
+
+                # Show forward call with inputs or "performs"
+                if inputs:
+                    in_label = self._truncate_label(inputs)
+                    lines.append(f"    {caller}->>{callee}: {in_label}")
+                else:
+                    lines.append(f"    {caller}->>{callee}: performs")
+
+                # Show return with outputs if available
+                if outputs:
+                    out_label = self._truncate_label(outputs)
+                    lines.append(f"    {callee}-->>{caller}: {out_label}")
 
         lines.append("```")
 

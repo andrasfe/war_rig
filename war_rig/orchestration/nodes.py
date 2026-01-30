@@ -16,9 +16,11 @@ Nodes are designed to be:
 import logging
 import random
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 from war_rig.agents.challenger import ChallengerAgent, ChallengerInput
+from war_rig.analysis.call_semantics import CallSemanticsAnalyzer
 from war_rig.agents.imperator import ImperatorAgent, ImperatorDecision, ImperatorInput
 from war_rig.agents.scribe import ScribeAgent, ScribeInput
 from war_rig.chunking import TokenEstimator
@@ -121,6 +123,113 @@ class WarRigNodes:
             GenericPreprocessor(),  # Fallback for any file type
         ]
 
+        # Initialize Citadel for call semantics analysis
+        try:
+            from citadel.sdk import Citadel  # type: ignore[import-not-found]
+            self._citadel = Citadel()
+        except ImportError:
+            self._citadel = None
+            logger.debug("Citadel not available for call semantics")
+
+    async def _enrich_call_semantics(
+        self,
+        template: Any,
+        file_name: str,
+        file_path: str | None = None,
+    ) -> Any:
+        """Enrich template with call semantics for COBOL files.
+
+        Uses Citadel for call graph and LLM to infer data flow between paragraphs.
+
+        Args:
+            template: The documentation template to enrich.
+            file_name: Name of the source file.
+            file_path: Optional full path to source file.
+
+        Returns:
+            The enriched template (or original if enrichment fails).
+        """
+        if not self._citadel:
+            return template
+
+        try:
+            # Resolve source path
+            source_path = Path(file_path) if file_path else Path(file_name)
+            if not source_path.exists():
+                logger.debug(f"Source file not found for call semantics: {source_path}")
+                return template
+
+            # Get Citadel context
+            from citadel.sdk import get_functions  # type: ignore[import-not-found]
+            functions = get_functions(source_path)
+            if not functions:
+                return template
+
+            # Extract WORKING-STORAGE for context
+            working_storage = self._extract_working_storage(source_path)
+
+            # Create analyzer and run
+            analyzer = CallSemanticsAnalyzer(
+                api_config=self.api_config,
+                model=self.config.scribe.model,
+            )
+
+            logger.info(f"Enriching call semantics for {file_name}")
+            call_semantics = await analyzer.analyze_file(
+                source_path=source_path,
+                citadel_context=functions,
+                working_storage=working_storage,
+            )
+
+            if call_semantics:
+                template.call_semantics = call_semantics
+                logger.info(
+                    f"Enriched {file_name} with {len(call_semantics)} call semantics"
+                )
+
+        except Exception as e:
+            logger.warning(f"Call semantics enrichment failed for {file_name}: {e}")
+
+        return template
+
+    def _extract_working_storage(self, source_path: Path) -> str | None:
+        """Extract WORKING-STORAGE SECTION from a COBOL source file.
+
+        Args:
+            source_path: Path to the COBOL source file.
+
+        Returns:
+            The WORKING-STORAGE section text, or None if not found.
+        """
+        try:
+            content = source_path.read_text(encoding="utf-8", errors="replace")
+        except Exception:
+            return None
+
+        lines = content.split("\n")
+        ws_lines: list[str] = []
+        in_ws = False
+
+        for line in lines:
+            upper_line = line.upper()
+            if "WORKING-STORAGE" in upper_line and "SECTION" in upper_line:
+                in_ws = True
+                ws_lines.append(line)
+                continue
+            if in_ws:
+                if any(
+                    marker in upper_line
+                    for marker in [
+                        "LINKAGE SECTION",
+                        "PROCEDURE DIVISION",
+                        "LOCAL-STORAGE SECTION",
+                    ]
+                ):
+                    break
+                ws_lines.append(line)
+
+        return "\n".join(ws_lines) if ws_lines else None
+
     async def preprocess(self, state: WarRigState) -> dict[str, Any]:
         """Preprocess node: Extract structural information from source code.
 
@@ -210,8 +319,24 @@ class WarRigNodes:
             logger.error(f"Scribe failed: {output.error}")
             return {"error": output.error}
 
+        # Enrich template with call semantics for COBOL files
+        template = output.template
+        file_type = state.get("file_type") or FileType.OTHER
+        if template and file_type == FileType.COBOL:
+            # Try to get file_path from state, or use file_name if it's a path
+            file_path = state.get("file_path") or state.get("source_file_path")
+            file_name = state["file_name"]
+            if not file_path:
+                # Check if file_name is actually a path
+                potential_path = Path(file_name)
+                if potential_path.exists():
+                    file_path = str(potential_path)
+            template = await self._enrich_call_semantics(
+                template, file_name, file_path
+            )
+
         return {
-            "current_template": output.template,
+            "current_template": template,
             "current_confidence": output.confidence,
             "current_round_responses": output.responses,
             "scribe_responses": output.responses,

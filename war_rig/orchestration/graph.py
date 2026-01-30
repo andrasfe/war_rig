@@ -126,6 +126,7 @@ class WarRigGraph:
         source_code: str,
         file_name: str,
         copybook_contents: dict[str, str] | None = None,
+        source_file_path: str | None = None,
         use_mock: bool = False,
     ) -> WarRigState:
         """Asynchronously run the War Rig workflow.
@@ -134,6 +135,7 @@ class WarRigGraph:
             source_code: The source code to analyze.
             file_name: Name of the source file.
             copybook_contents: Resolved copybook contents.
+            source_file_path: Full path to source file (for call semantics).
             use_mock: Whether to use mock agents (for testing).
 
         Returns:
@@ -146,6 +148,7 @@ class WarRigGraph:
             source_code=source_code,
             file_name=file_name,
             copybook_contents=copybook_contents,
+            source_file_path=source_file_path,
             rig_id=self.config.rig_id,
             max_iterations=self.config.max_iterations,
             use_mock=use_mock,
@@ -165,6 +168,7 @@ class WarRigGraph:
         source_code: str,
         file_name: str,
         copybook_contents: dict[str, str] | None = None,
+        source_file_path: str | None = None,
         use_mock: bool = False,
     ) -> WarRigState:
         """Synchronously run the War Rig workflow.
@@ -175,6 +179,7 @@ class WarRigGraph:
             source_code: The source code to analyze.
             file_name: Name of the source file.
             copybook_contents: Resolved copybook contents.
+            source_file_path: Full path to source file (for call semantics).
             use_mock: Whether to use mock agents (for testing).
 
         Returns:
@@ -183,7 +188,9 @@ class WarRigGraph:
         import asyncio
 
         return asyncio.run(
-            self.ainvoke(source_code, file_name, copybook_contents, use_mock)
+            self.ainvoke(
+                source_code, file_name, copybook_contents, source_file_path, use_mock
+            )
         )
 
     async def run(
@@ -191,6 +198,7 @@ class WarRigGraph:
         source_code: str,
         file_name: str,
         copybook_contents: dict[str, str] | None = None,
+        source_file_path: str | None = None,
         use_mock: bool = False,
     ) -> WarRigState:
         """Alias for ainvoke for more intuitive API.
@@ -199,12 +207,15 @@ class WarRigGraph:
             source_code: The source code to analyze.
             file_name: Name of the source file.
             copybook_contents: Resolved copybook contents.
+            source_file_path: Full path to source file (for call semantics).
             use_mock: Whether to use mock agents (for testing).
 
         Returns:
             Final state after workflow completion.
         """
-        return await self.ainvoke(source_code, file_name, copybook_contents, use_mock)
+        return await self.ainvoke(
+            source_code, file_name, copybook_contents, source_file_path, use_mock
+        )
 
 
 def create_war_rig_graph(
@@ -234,6 +245,7 @@ async def analyze_file(
     file_name: str,
     config: WarRigConfig | None = None,
     copybook_contents: dict[str, str] | None = None,
+    source_file_path: str | None = None,
     use_mock: bool = False,
 ) -> WarRigState:
     """Convenience function to analyze a single file.
@@ -246,6 +258,7 @@ async def analyze_file(
         file_name: Name of the source file.
         config: War Rig configuration.
         copybook_contents: Resolved copybook contents.
+        source_file_path: Full path to source file (for call semantics).
         use_mock: Whether to use mock agents.
 
     Returns:
@@ -256,4 +269,6 @@ async def analyze_file(
         print(result["final_template"])
     """
     graph = create_war_rig_graph(config)
-    return await graph.ainvoke(source_code, file_name, copybook_contents, use_mock)
+    return await graph.ainvoke(
+        source_code, file_name, copybook_contents, source_file_path, use_mock
+    )

@@ -178,6 +178,7 @@ def analyze(
                 graph.ainvoke(
                     source_code=source_code,
                     file_name=file_path.name,
+                    source_file_path=str(file_path.resolve()),
                     use_mock=mock,
                 )
             )

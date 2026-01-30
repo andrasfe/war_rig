@@ -108,6 +108,9 @@ class WarRigState(TypedDict, total=False):
     file_type: FileType | None
     """Type of source file (COBOL, JCL, etc.)."""
 
+    source_file_path: str | None
+    """Full path to the source file (for call semantics enrichment)."""
+
     copybook_contents: dict[str, str]
     """Resolved copybook contents (name -> content)."""
 
@@ -226,6 +229,7 @@ def create_initial_state(
     file_name: str,
     file_type: FileType | None = None,
     copybook_contents: dict[str, str] | None = None,
+    source_file_path: str | None = None,
     rig_id: str = "ALPHA",
     max_iterations: int = 3,
     use_mock: bool = False,
@@ -243,6 +247,7 @@ def create_initial_state(
         file_name: Name of the source file.
         file_type: Type of source file (auto-detected if None).
         copybook_contents: Resolved copybook contents.
+        source_file_path: Full path to source file (for call semantics).
         rig_id: War Rig identifier.
         max_iterations: Maximum allowed iterations.
         use_mock: Whether to use mock agents.
@@ -258,6 +263,7 @@ def create_initial_state(
         source_code=source_code,
         file_name=file_name,
         file_type=file_type,
+        source_file_path=source_file_path,
         copybook_contents=copybook_contents or {},
         # Processing
         iteration=0,  # Will be incremented to 1 at start
