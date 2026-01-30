@@ -444,6 +444,31 @@ class CallerReference(BaseModel):
     )
 
 
+class CallSemantics(BaseModel):
+    """Data flow semantics for a paragraph call.
+
+    Captures the data flow between caller and callee paragraphs,
+    including what variables are passed in and what gets modified.
+    This is LLM-inferred documentation about the semantic meaning
+    of inter-paragraph calls.
+    """
+
+    caller: str = Field(..., description="Name of the calling paragraph")
+    callee: str = Field(..., description="Name of the called paragraph")
+    inputs: list[str] = Field(
+        default_factory=list,
+        description="Variables/data passed into the call",
+    )
+    outputs: list[str] = Field(
+        default_factory=list,
+        description="Variables/data returned or modified",
+    )
+    purpose: str | None = Field(
+        default=None,
+        description="Brief description of what the call accomplishes",
+    )
+
+
 class Paragraph(BaseModel):
     """Description of a key paragraph/function in the program.
 
@@ -650,6 +675,10 @@ class DocumentationTemplate(BaseModel):
         default_factory=list,
         description="Artifacts identified as dead code by static analysis",
     )
+    call_semantics: list[CallSemantics] = Field(
+        default_factory=list,
+        description="Data flow semantics for paragraph calls (LLM-inferred)",
+    )
     flow_diagram: str | None = Field(
         default=None,
         description="Mermaid flowchart of internal control flow (COBOL only)",
@@ -706,6 +735,8 @@ class DocumentationTemplate(BaseModel):
                 constructed[key] = [OpenQuestion.model_construct(**v) if isinstance(v, dict) else v for v in value]
             elif key == "dead_code" and isinstance(value, list):
                 constructed[key] = [DeadCodeItem.model_construct(**v) if isinstance(v, dict) else v for v in value]
+            elif key == "call_semantics" and isinstance(value, list):
+                constructed[key] = [CallSemantics.model_construct(**v) if isinstance(v, dict) else v for v in value]
             else:
                 constructed[key] = value
         return cls.model_construct(**constructed)

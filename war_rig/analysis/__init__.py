@@ -11,11 +11,13 @@ from war_rig.analysis.call_graph import (
     ProgramInfo,
     SYSTEM_UTILITIES,
 )
+from war_rig.analysis.call_semantics import CallSemanticsAnalyzer
 
 __all__ = [
     "CallGraphAnalyzer",
     "CallGraphAnalysis",
     "CallRelationship",
+    "CallSemanticsAnalyzer",
     "ProgramInfo",
     "SYSTEM_UTILITIES",
 ]

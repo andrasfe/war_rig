@@ -44,6 +44,7 @@ from pathlib import Path
 from typing import Any
 
 from war_rig.agents.scribe import ScribeAgent, ScribeInput, ScribeOutput
+from war_rig.analysis.call_semantics import CallSemanticsAnalyzer
 from war_rig.beads import (
     BeadsClient,
     BeadsPriority,
@@ -787,6 +788,100 @@ class ScribeWorker:
                     f"Worker {self.worker_id}: Flow diagram generation failed "
                     f"for {ticket.file_name}: {e}"
                 )
+
+        return template
+
+    async def _enrich_call_semantics(
+        self,
+        template: DocumentationTemplate,
+        ticket: ProgramManagerTicket,
+        file_type: FileType,
+    ) -> DocumentationTemplate:
+        """Enrich a template with call semantics for paragraph calls.
+
+        Uses the CallSemanticsAnalyzer to infer data flow between paragraphs
+        in COBOL files. The analyzer uses Citadel for call graph information
+        and an LLM to infer what data flows in/out of each PERFORM call.
+
+        This method is safe to call for any file type -- it returns the
+        template unchanged for non-COBOL files or if analysis fails.
+
+        Args:
+            template: The documentation template to enrich.
+            ticket: The ticket being processed (used to resolve file path).
+            file_type: The detected file type.
+
+        Returns:
+            The enriched template with call_semantics populated (or original
+            template if enrichment was not applicable or failed).
+        """
+        # Only run for COBOL files
+        if file_type != FileType.COBOL:
+            return template
+
+        # Only run if Citadel is available (needed for call graph)
+        if not self._citadel:
+            return template
+
+        try:
+            # Resolve the source file path
+            source_path = self.input_directory / ticket.file_name
+            metadata_path = ticket.metadata.get("file_path")
+            if metadata_path:
+                source_path = Path(metadata_path)
+
+            # Get Citadel context for call graph
+            citadel_context = self._get_citadel_context(str(source_path))
+            if not citadel_context:
+                logger.debug(
+                    f"Worker {self.worker_id}: No Citadel context for call semantics "
+                    f"enrichment of {ticket.file_name}"
+                )
+                return template
+
+            # Extract the functions list from citadel context
+            functions = citadel_context.get("functions", [])
+            if not functions:
+                logger.debug(
+                    f"Worker {self.worker_id}: No functions in Citadel context for "
+                    f"call semantics enrichment of {ticket.file_name}"
+                )
+                return template
+
+            # Create the analyzer with the worker's API config
+            analyzer = CallSemanticsAnalyzer(api_config=self.config.api)
+
+            # Run the analysis
+            logger.info(
+                f"Worker {self.worker_id}: Running call semantics analysis for "
+                f"{ticket.file_name}"
+            )
+            call_semantics = await analyzer.analyze_file(
+                source_path=source_path,
+                citadel_context=functions,
+                working_storage=None,  # Could extract from source if needed
+            )
+
+            # Store the results on the template
+            if call_semantics:
+                template.call_semantics = call_semantics
+                logger.info(
+                    f"Worker {self.worker_id}: Enriched {ticket.file_name} with "
+                    f"{len(call_semantics)} call semantics"
+                )
+            else:
+                logger.debug(
+                    f"Worker {self.worker_id}: No call semantics inferred for "
+                    f"{ticket.file_name}"
+                )
+
+        except Exception as e:
+            # Log warning but don't fail - call semantics is optional enrichment
+            logger.warning(
+                f"Worker {self.worker_id}: Call semantics analysis failed for "
+                f"{ticket.file_name}: {e}"
+            )
+            # Template is returned unchanged with empty call_semantics
 
         return template
 
@@ -1993,6 +2088,10 @@ class ScribeWorker:
             output.template = await self._apply_citadel_enrichment(
                 output.template, ticket, file_type,
             )
+            # Enrich with call semantics (COBOL only)
+            output.template = await self._enrich_call_semantics(
+                output.template, ticket, file_type,
+            )
             self._save_template(ticket.file_name, output.template)
 
         return output
@@ -2126,6 +2225,10 @@ class ScribeWorker:
         # Enrich with Citadel analysis
         if result.success and result.template:
             result.template = await self._apply_citadel_enrichment(
+                result.template, ticket, file_type,
+            )
+            # Enrich with call semantics (COBOL only)
+            result.template = await self._enrich_call_semantics(
                 result.template, ticket, file_type,
             )
             self._save_template(ticket.file_name, result.template)
@@ -2305,6 +2408,10 @@ class ScribeWorker:
                 output.template = await self._apply_citadel_enrichment(
                     output.template, ticket, file_type,
                 )
+                # Enrich with call semantics (COBOL only)
+                output.template = await self._enrich_call_semantics(
+                    output.template, ticket, file_type,
+                )
                 self._save_template(ticket.file_name, output.template)
             return output
 
@@ -2349,6 +2456,10 @@ class ScribeWorker:
         # Enrich with Citadel analysis and flow diagram
         if output.success and output.template:
             output.template = await self._apply_citadel_enrichment(
+                output.template, ticket, file_type,
+            )
+            # Enrich with call semantics (COBOL only)
+            output.template = await self._enrich_call_semantics(
                 output.template, ticket, file_type,
             )
 
@@ -3309,6 +3420,10 @@ class ScribeWorker:
             output.template = await self._apply_citadel_enrichment(
                 output.template, ticket, file_type,
             )
+            # Enrich with call semantics (COBOL only)
+            output.template = await self._enrich_call_semantics(
+                output.template, ticket, file_type,
+            )
 
         # Save updated template if successful
         if output.success and output.template:
@@ -3539,6 +3654,10 @@ class ScribeWorker:
         # Enrich with Citadel analysis and flow diagram
         if output.success and output.template:
             output.template = await self._apply_citadel_enrichment(
+                output.template, ticket, file_type,
+            )
+            # Enrich with call semantics (COBOL only)
+            output.template = await self._enrich_call_semantics(
                 output.template, ticket, file_type,
             )
 
