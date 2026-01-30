@@ -1322,43 +1322,49 @@ class TicketOrchestrator:
         challenger_types = [TicketType.VALIDATION]
 
         # Collect pending/in-progress counts for all relevant ticket types
+        # Must check ALL non-terminal states: CREATED, CLAIMED, IN_PROGRESS, REWORK
+        non_terminal_states = [
+            TicketState.CREATED,
+            TicketState.CLAIMED,
+            TicketState.IN_PROGRESS,
+            TicketState.REWORK,
+        ]
+
         pending_scribe = []
-        in_progress_scribe = []
         for ticket_type in scribe_types:
-            pending_scribe.extend(
-                self.beads_client.get_tickets_by_state(
-                    state=TicketState.CREATED,
-                    ticket_type=ticket_type,
+            for state in non_terminal_states:
+                pending_scribe.extend(
+                    self.beads_client.get_tickets_by_state(
+                        state=state,
+                        ticket_type=ticket_type,
+                    )
                 )
-            )
-            in_progress_scribe.extend(
-                self.beads_client.get_tickets_by_state(
-                    state=TicketState.IN_PROGRESS,
-                    ticket_type=ticket_type,
-                )
-            )
 
         pending_val = []
-        in_progress_val = []
         for ticket_type in challenger_types:
-            pending_val.extend(
-                self.beads_client.get_tickets_by_state(
-                    state=TicketState.CREATED,
-                    ticket_type=ticket_type,
+            for state in non_terminal_states:
+                pending_val.extend(
+                    self.beads_client.get_tickets_by_state(
+                        state=state,
+                        ticket_type=ticket_type,
+                    )
                 )
-            )
-            in_progress_val.extend(
-                self.beads_client.get_tickets_by_state(
-                    state=TicketState.IN_PROGRESS,
-                    ticket_type=ticket_type,
-                )
-            )
 
-        if pending_scribe or in_progress_scribe or pending_val or in_progress_val:
+        if pending_scribe or pending_val:
+            # Group by state for detailed logging
+            scribe_by_state = {}
+            for t in pending_scribe:
+                scribe_by_state.setdefault(t.state.value, []).append(t)
+            val_by_state = {}
+            for t in pending_val:
+                val_by_state.setdefault(t.state.value, []).append(t)
+
+            scribe_summary = ", ".join(f"{len(v)} {k}" for k, v in scribe_by_state.items())
+            val_summary = ", ".join(f"{len(v)} {k}" for k, v in val_by_state.items())
+
             logger.info(
                 f"Skipping holistic review - work still pending: "
-                f"{len(pending_scribe)} scribe pending, {len(in_progress_scribe)} scribe in progress, "
-                f"{len(pending_val)} val pending, {len(in_progress_val)} val in progress"
+                f"scribe [{scribe_summary or 'none'}], challenger [{val_summary or 'none'}]"
             )
             return HolisticReviewOutput(
                 success=True,
