@@ -1399,6 +1399,14 @@ class TicketOrchestrator:
                     compact_input,
                     use_mock=self.use_mock,
                 )
+
+                # If compact review succeeded with SATISFIED, generate README.md
+                if (
+                    output.success
+                    and output.decision == ImperatorHolisticDecision.SATISFIED
+                ):
+                    await self._generate_readme_after_compact_review()
+
                 return output
 
             except Exception as e:
@@ -1439,6 +1447,42 @@ class TicketOrchestrator:
                 error=str(e),
                 decision=ImperatorHolisticDecision.NEEDS_CLARIFICATION,
             )
+
+    async def _generate_readme_after_compact_review(self) -> None:
+        """Generate README.md after compact holistic review succeeds.
+
+        Compact review (Tier 1) doesn't generate README.md for token efficiency.
+        This method generates it separately using the full HolisticReviewInput
+        when the compact review is SATISFIED.
+        """
+        logger.info("Generating README.md after compact review approval")
+
+        # Build full review input for README generation
+        review_input = self._build_holistic_review_input()
+
+        if not review_input.file_documentation:
+            logger.warning("No documentation available for README generation")
+            return
+
+        try:
+            # Generate system design document (README.md)
+            design_output = await self.imperator.generate_system_design(
+                review_input,
+                use_mock=self.use_mock,
+            )
+
+            if design_output.success and design_output.markdown:
+                # Write README.md to output directory
+                readme_path = self.config.output_directory / "README.md"
+                readme_path.write_text(design_output.markdown, encoding="utf-8")
+                logger.info(f"Generated README.md at {readme_path}")
+            else:
+                logger.warning(
+                    f"README generation failed: {design_output.error or 'Unknown error'}"
+                )
+
+        except Exception as e:
+            logger.error(f"Failed to generate README.md: {e}")
 
     def _build_holistic_review_input(self) -> HolisticReviewInput:
         """Build input for Imperator holistic review.
