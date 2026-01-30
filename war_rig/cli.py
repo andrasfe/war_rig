@@ -1178,6 +1178,26 @@ def _generate_readme_internal(
         except Exception as e:
             console.print(f"[yellow]Warning: Citadel analysis failed: {e}[/yellow]")
 
+    # Generate sequence diagrams from dependency graph
+    sequence_diagrams: list[str] = []
+    dep_graph_path = output_dir / "dependency_graph.json"
+    if dep_graph_path.exists():
+        try:
+            from citadel import Citadel
+
+            citadel = Citadel()
+            sequence_diagrams = citadel.get_sequence_diagrams(
+                dep_graph_path,
+                min_sequence_length=2,  # At least 2 calls in sequence
+                max_diagrams=10,  # Limit to top 10 flows
+            )
+            if sequence_diagrams:
+                console.print(f"[dim]Generated {len(sequence_diagrams)} sequence diagrams[/dim]")
+        except ImportError:
+            console.print("[dim]Citadel not available for sequence diagrams[/dim]")
+        except Exception as e:
+            console.print(f"[yellow]Warning: Sequence diagram generation failed: {e}[/yellow]")
+
     # Build HolisticReviewInput
     review_input = HolisticReviewInput(
         batch_id="cli-readme",
@@ -1216,6 +1236,7 @@ def _generate_readme_internal(
             review_input,
             existing_content=existing_readme,
             use_mock=mock,
+            sequence_diagrams=sequence_diagrams if sequence_diagrams else None,
         )
     )
 
