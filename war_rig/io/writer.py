@@ -527,8 +527,13 @@ class DocumentationWriter:
                 continue
 
             for call in para.outgoing_calls:
-                # FunctionCall has a 'target' attribute
-                target = call.target if hasattr(call, "target") else str(call)
+                # FunctionCall has a 'target' attribute, but may be dict from JSON
+                if hasattr(call, "target"):
+                    target = call.target
+                elif isinstance(call, dict):
+                    target = call.get("target")
+                else:
+                    target = str(call)
                 if not target:
                     continue
 
