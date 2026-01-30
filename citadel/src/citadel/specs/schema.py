@@ -165,6 +165,32 @@ class NamingConvention(BaseModel):
     )  # CUSTOMER -> [CUST, CUSTMR]
 
 
+class AnalysisPattern(BaseModel):
+    """
+    A pattern for extracting analysis insights (data flow, control flow, etc.).
+
+    Unlike ExtractionPattern which focuses on artifacts and relationships,
+    AnalysisPattern captures code-level patterns for deeper analysis.
+    """
+
+    name: str  # Descriptive name for the pattern
+    pattern: str  # Regex pattern
+
+    # Capture group handling
+    capture_groups: list[int] = Field(default_factory=list)  # Which groups to extract
+
+    # Documentation
+    description: str | None = None  # Human-readable description
+
+    # Validation
+    required: bool = False  # If True and no match found, log warning
+
+    # Regex flags
+    ignore_case: bool = True  # COBOL is case-insensitive by default
+    multiline: bool = False
+    dotall: bool = False
+
+
 class ArtifactSpec(BaseModel):
     """
     Complete specification for analyzing one artifact type.
@@ -211,6 +237,10 @@ class ArtifactSpec(BaseModel):
 
     # Known aliases (manually maintained)
     known_aliases: dict[str, str] = Field(default_factory=dict)  # alias -> canonical
+
+    # Analysis patterns for deeper code analysis
+    # Maps category name (data_flow, control_flow, error_handling) to patterns
+    analysis_patterns: dict[str, list[AnalysisPattern]] = Field(default_factory=dict)
 
 
 class AliasRule(BaseModel):

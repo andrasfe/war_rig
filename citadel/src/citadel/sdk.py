@@ -39,7 +39,14 @@ from citadel.analysis.sequence_finder import find_longest_sequences, sequences_t
 from citadel.config import CitadelConfig, get_specs_cache_dir, load_config
 from citadel.discovery import FileDiscovery
 from citadel.graph.model import Artifact, DependencyGraph, SourceLocation
-from citadel.parser import FileParseResult, ParserEngine, RawReference
+from citadel.parser import (
+    AnalysisMatch,
+    AnalysisPatternResult,
+    AnalysisPatternStats,
+    FileParseResult,
+    ParserEngine,
+    RawReference,
+)
 from citadel.specs import ArtifactSpec, ArtifactType, RelationshipType, SpecManager
 
 logger = logging.getLogger(__name__)
@@ -165,6 +172,113 @@ class FileAnalysisResult:
             if artifact.name.lower() == name_lower:
                 return artifact
         return None
+
+
+@dataclass
+class AnalysisPatternMatchSDK:
+    """A single match from an analysis pattern."""
+
+    pattern_name: str
+    """Name of the pattern that matched."""
+
+    category: str
+    """Category (data_flow, control_flow, error_handling)."""
+
+    captured: list[str]
+    """Captured text from the pattern's capture groups."""
+
+    line: int | None = None
+    """Line number where the match was found."""
+
+    context: list[str] = field(default_factory=list)
+    """Surrounding lines of code for context."""
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary for JSON serialization."""
+        return {
+            "pattern_name": self.pattern_name,
+            "category": self.category,
+            "captured": self.captured,
+            "line": self.line,
+            "context": self.context,
+        }
+
+
+@dataclass
+class AnalysisCategoryResult:
+    """Results for a single analysis category."""
+
+    category: str
+    """Category name (data_flow, control_flow, error_handling)."""
+
+    matches: list[AnalysisPatternMatchSDK]
+    """All matches in this category."""
+
+    match_count: int
+    """Total number of matches."""
+
+    patterns_matched: dict[str, int]
+    """Count of matches per pattern name."""
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary for JSON serialization."""
+        return {
+            "category": self.category,
+            "match_count": self.match_count,
+            "patterns_matched": self.patterns_matched,
+            "matches": [m.to_dict() for m in self.matches],
+        }
+
+
+@dataclass
+class FileAnalysisPatternResult:
+    """Result of analysis pattern extraction for a file."""
+
+    file_path: str
+    """Path to the analyzed file."""
+
+    language: str
+    """Detected language/spec used."""
+
+    categories: dict[str, AnalysisCategoryResult]
+    """Results by category."""
+
+    total_matches: int = 0
+    """Total number of matches across all categories."""
+
+    coverage_pct: float = 0.0
+    """Percentage of patterns that found at least one match."""
+
+    required_missing: list[str] = field(default_factory=list)
+    """List of required patterns that had no matches."""
+
+    error: str | None = None
+    """Error message if analysis failed."""
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary for JSON serialization."""
+        return {
+            "file_path": self.file_path,
+            "language": self.language,
+            "total_matches": self.total_matches,
+            "coverage_pct": self.coverage_pct,
+            "required_missing": self.required_missing,
+            "categories": {k: v.to_dict() for k, v in self.categories.items()},
+            "error": self.error,
+        }
+
+    def get_matches(self, category: str) -> list[AnalysisPatternMatchSDK]:
+        """Get all matches for a specific category."""
+        if category in self.categories:
+            return self.categories[category].matches
+        return []
+
+    def get_pattern_count(self, pattern_name: str) -> int:
+        """Get the total count for a specific pattern across all categories."""
+        total = 0
+        for cat_result in self.categories.values():
+            total += cat_result.patterns_matched.get(pattern_name, 0)
+        return total
 
 
 class Citadel:
@@ -1425,6 +1539,150 @@ class Citadel:
             title=title,
         )
 
+    def get_analysis_patterns(
+        self,
+        file_path: str | Path,
+    ) -> FileAnalysisPatternResult:
+        """
+        Extract analysis patterns (data flow, control flow, error handling) from a file.
+
+        This method extracts code-level patterns that provide deeper insight
+        into how the code operates, beyond just artifacts and relationships.
+
+        Categories:
+        - data_flow: MOVE, COMPUTE, SET, INITIALIZE, ADD, SUBTRACT, etc.
+        - control_flow: IF/PERFORM, EVALUATE/WHEN, loops, GO TO, etc.
+        - error_handling: ON EXCEPTION, file status checks, INVALID KEY, etc.
+
+        Args:
+            file_path: Path to the source file to analyze.
+
+        Returns:
+            FileAnalysisPatternResult containing matches organized by category,
+            with statistics including total matches, coverage percentage, and
+            any required patterns that had no matches.
+
+        Example:
+            >>> citadel = Citadel()
+            >>> result = citadel.get_analysis_patterns("PROGRAM.cbl")
+            >>> print(f"Total matches: {result.total_matches}")
+            >>> for match in result.get_matches("data_flow"):
+            ...     print(f"{match.pattern_name}: {match.captured} at line {match.line}")
+        """
+        file_path = Path(file_path)
+
+        # Get spec for this file type
+        spec = self._get_spec_for_file(file_path)
+        if not spec:
+            return FileAnalysisPatternResult(
+                file_path=str(file_path),
+                language="unknown",
+                categories={},
+                error=f"No spec found for file extension '{file_path.suffix}'",
+            )
+
+        # Check if spec has analysis patterns
+        if not spec.analysis_patterns:
+            return FileAnalysisPatternResult(
+                file_path=str(file_path),
+                language=spec.language,
+                categories={},
+                error="Spec does not define analysis_patterns",
+            )
+
+        # Read file content
+        try:
+            content = self._read_file(file_path)
+        except Exception as e:
+            return FileAnalysisPatternResult(
+                file_path=str(file_path),
+                language=spec.language,
+                categories={},
+                error=f"Failed to read file: {e}",
+            )
+
+        # Extract analysis patterns using the parser engine
+        try:
+            parse_result = self.parser.extract_analysis_patterns(
+                file_path, content, spec
+            )
+        except Exception as e:
+            return FileAnalysisPatternResult(
+                file_path=str(file_path),
+                language=spec.language,
+                categories={},
+                error=f"Failed to extract analysis patterns: {e}",
+            )
+
+        # Convert parser result to SDK format
+        return self._convert_analysis_pattern_result(parse_result, spec)
+
+    def _convert_analysis_pattern_result(
+        self,
+        parse_result: AnalysisPatternResult,
+        spec: ArtifactSpec,
+    ) -> FileAnalysisPatternResult:
+        """Convert internal parser result to SDK format."""
+        categories: dict[str, AnalysisCategoryResult] = {}
+        total_matches = 0
+        total_patterns = 0
+        patterns_with_matches = 0
+
+        for category, matches in parse_result.matches.items():
+            # Convert matches to SDK format
+            sdk_matches: list[AnalysisPatternMatchSDK] = []
+            patterns_matched: dict[str, int] = {}
+
+            for match in matches:
+                sdk_match = AnalysisPatternMatchSDK(
+                    pattern_name=match.pattern_name,
+                    category=match.category,
+                    captured=match.captured_groups,
+                    line=match.location.line_start if match.location else None,
+                    context=match.context_lines,
+                )
+                sdk_matches.append(sdk_match)
+
+                # Track pattern counts
+                patterns_matched[match.pattern_name] = (
+                    patterns_matched.get(match.pattern_name, 0) + 1
+                )
+
+            cat_result = AnalysisCategoryResult(
+                category=category,
+                matches=sdk_matches,
+                match_count=len(sdk_matches),
+                patterns_matched=patterns_matched,
+            )
+            categories[category] = cat_result
+            total_matches += len(sdk_matches)
+
+        # Calculate coverage percentage
+        if spec.analysis_patterns:
+            for cat_patterns in spec.analysis_patterns.values():
+                total_patterns += len(cat_patterns)
+                for pattern in cat_patterns:
+                    pattern_key = f"{pattern.name}"
+                    for cat_result in categories.values():
+                        if pattern_key in cat_result.patterns_matched:
+                            patterns_with_matches += 1
+                            break
+
+        coverage_pct = (
+            (patterns_with_matches / total_patterns * 100.0)
+            if total_patterns > 0
+            else 0.0
+        )
+
+        return FileAnalysisPatternResult(
+            file_path=parse_result.file_path,
+            language=spec.language,
+            categories=categories,
+            total_matches=total_matches,
+            coverage_pct=coverage_pct,
+            required_missing=parse_result.stats.required_patterns_missing,
+        )
+
     def _load_graph_from_json(self, json_path: Path) -> DependencyGraph:
         """
         Load a dependency graph from a JSON file.
@@ -1698,3 +1956,29 @@ def get_flow_diagram(
     """
     citadel = Citadel()
     return citadel.get_flow_diagram(file_path, paragraph, include_external)
+
+
+def get_analysis_patterns(file_path: str | Path) -> FileAnalysisPatternResult:
+    """
+    Extract analysis patterns (data flow, control flow, error handling) from a file.
+
+    Convenience function for quick analysis pattern extraction.
+
+    This extracts code-level patterns that provide deeper insight into how
+    the code operates, beyond just artifacts and relationships.
+
+    Args:
+        file_path: Path to the source file to analyze.
+
+    Returns:
+        FileAnalysisPatternResult containing matches organized by category.
+
+    Example:
+        >>> from citadel.sdk import get_analysis_patterns
+        >>> result = get_analysis_patterns("PROGRAM.cbl")
+        >>> print(f"Total matches: {result.total_matches}")
+        >>> for match in result.get_matches("data_flow"):
+        ...     print(f"{match.pattern_name}: {match.captured}")
+    """
+    citadel = Citadel()
+    return citadel.get_analysis_patterns(file_path)

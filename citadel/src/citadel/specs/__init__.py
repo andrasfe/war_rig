@@ -10,6 +10,7 @@ Contains:
 from citadel.specs.manager import SpecManager
 from citadel.specs.schema import (
     AliasRule,
+    AnalysisPattern,
     ArtifactCategory,
     ArtifactSpec,
     ArtifactType,
@@ -24,6 +25,7 @@ from citadel.specs.schema import (
 
 __all__ = [
     "AliasRule",
+    "AnalysisPattern",
     "ArtifactCategory",
     "ArtifactSpec",
     "ArtifactType",

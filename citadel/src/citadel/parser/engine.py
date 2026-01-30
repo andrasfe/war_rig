@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 from citadel.graph.model import Artifact, SourceLocation
 from citadel.parser.preprocessor import Preprocessor, PreprocessedSource
 from citadel.specs.schema import (
+    AnalysisPattern,
     ArtifactCategory,
     ArtifactSpec,
     ArtifactType,
@@ -36,6 +37,33 @@ class RawReference(BaseModel):
     containing_artifact: str | None = None  # ID of artifact containing this
     columns_mentioned: list[str] = Field(default_factory=list)
     context_lines: list[str] = Field(default_factory=list)  # Surrounding code for LLM
+
+
+class AnalysisMatch(BaseModel):
+    """A match from an analysis pattern."""
+
+    pattern_name: str  # Name of the pattern that matched
+    category: str  # Category (data_flow, control_flow, error_handling)
+    captured_groups: list[str] = Field(default_factory=list)  # Captured text
+    location: SourceLocation
+    context_lines: list[str] = Field(default_factory=list)  # Surrounding code
+
+
+class AnalysisPatternStats(BaseModel):
+    """Statistics for analysis pattern extraction."""
+
+    total_matches: int = 0
+    matches_by_category: dict[str, int] = Field(default_factory=dict)
+    matches_by_pattern: dict[str, int] = Field(default_factory=dict)
+    required_patterns_missing: list[str] = Field(default_factory=list)
+
+
+class AnalysisPatternResult(BaseModel):
+    """Result of analysis pattern extraction for a file."""
+
+    file_path: str
+    matches: dict[str, list[AnalysisMatch]] = Field(default_factory=dict)  # category -> matches
+    stats: AnalysisPatternStats = Field(default_factory=AnalysisPatternStats)
 
 
 class FileParseResult(BaseModel):
@@ -1012,3 +1040,177 @@ class ParserEngine:
                 )
 
         return directives
+
+    def extract_analysis_patterns(
+        self,
+        file_path: Path,
+        content: str,
+        spec: ArtifactSpec,
+    ) -> AnalysisPatternResult:
+        """
+        Extract analysis patterns from a file.
+
+        This method extracts code-level patterns (data flow, control flow,
+        error handling) from preprocessed source content.
+
+        Args:
+            file_path: Path to the source file
+            content: Content of the source file
+            spec: Artifact specification for this file type
+
+        Returns:
+            AnalysisPatternResult containing all matches and statistics
+        """
+        result = AnalysisPatternResult(file_path=str(file_path))
+
+        if not spec.analysis_patterns:
+            return result
+
+        try:
+            # Preprocess the content
+            preprocessor = Preprocessor(spec)
+            preprocessed = preprocessor.process(content)
+
+            # Extract patterns for each category
+            for category, patterns in spec.analysis_patterns.items():
+                matches = self._extract_category_patterns(
+                    preprocessed.cleaned,
+                    patterns,
+                    category,
+                    file_path,
+                    preprocessed.line_map,
+                )
+                result.matches[category] = matches
+                result.stats.matches_by_category[category] = len(matches)
+                result.stats.total_matches += len(matches)
+
+                # Track per-pattern stats
+                for match in matches:
+                    pattern_key = f"{category}:{match.pattern_name}"
+                    result.stats.matches_by_pattern[pattern_key] = (
+                        result.stats.matches_by_pattern.get(pattern_key, 0) + 1
+                    )
+
+            # Check for required patterns with no matches
+            for category, patterns in spec.analysis_patterns.items():
+                for pattern in patterns:
+                    if pattern.required:
+                        pattern_key = f"{category}:{pattern.name}"
+                        if result.stats.matches_by_pattern.get(pattern_key, 0) == 0:
+                            result.stats.required_patterns_missing.append(pattern_key)
+                            logger.warning(
+                                "Required pattern '%s' had no matches in %s",
+                                pattern_key,
+                                file_path,
+                            )
+
+        except Exception as e:
+            logger.exception("Error extracting analysis patterns from %s: %s", file_path, e)
+
+        return result
+
+    def _extract_category_patterns(
+        self,
+        content: str,
+        patterns: list[AnalysisPattern],
+        category: str,
+        file_path: Path,
+        line_map: dict[int, int],
+    ) -> list[AnalysisMatch]:
+        """
+        Extract all patterns for a single category.
+
+        Args:
+            content: Preprocessed source content
+            patterns: List of analysis patterns for this category
+            category: Category name (data_flow, control_flow, error_handling)
+            file_path: Path to the source file
+            line_map: Mapping from cleaned line numbers to original
+
+        Returns:
+            List of AnalysisMatch objects
+        """
+        matches: list[AnalysisMatch] = []
+
+        for pattern in patterns:
+            try:
+                compiled = self._compile_analysis_pattern(pattern)
+
+                for match in compiled.finditer(content):
+                    # Extract captured groups
+                    captured_groups: list[str] = []
+                    for group_num in pattern.capture_groups:
+                        try:
+                            group_value = match.group(group_num)
+                            if group_value is not None:
+                                captured_groups.append(group_value.strip())
+                        except IndexError:
+                            logger.debug(
+                                "Capture group %d not found in pattern %s",
+                                group_num,
+                                pattern.name,
+                            )
+
+                    # Build source location
+                    location = self._build_source_location(
+                        file_path, content, match, line_map
+                    )
+
+                    # Get context lines
+                    line_num = self._get_line_number(content, match.start())
+                    context_lines = self._get_context_lines(content, line_num)
+
+                    analysis_match = AnalysisMatch(
+                        pattern_name=pattern.name,
+                        category=category,
+                        captured_groups=captured_groups,
+                        location=location,
+                        context_lines=context_lines,
+                    )
+                    matches.append(analysis_match)
+
+            except Exception as e:
+                # Never crash - just log and continue
+                logger.warning(
+                    "Error processing analysis pattern '%s' in category '%s': %s",
+                    pattern.name,
+                    category,
+                    e,
+                )
+
+        return matches
+
+    def _compile_analysis_pattern(self, pattern: AnalysisPattern) -> re.Pattern:
+        """
+        Compile and cache an analysis pattern.
+
+        Args:
+            pattern: AnalysisPattern to compile
+
+        Returns:
+            Compiled regex pattern
+        """
+        cache_key = f"analysis:{pattern.name}:{pattern.pattern}:{pattern.ignore_case}:{pattern.multiline}:{pattern.dotall}"
+
+        if cache_key not in self._pattern_cache:
+            flags = 0
+            if pattern.ignore_case:
+                flags |= re.IGNORECASE
+            if pattern.multiline:
+                flags |= re.MULTILINE
+            if pattern.dotall:
+                flags |= re.DOTALL
+
+            try:
+                compiled = re.compile(pattern.pattern, flags)
+                self._pattern_cache[cache_key] = compiled
+            except re.error as e:
+                logger.error(
+                    "Invalid regex pattern '%s' in analysis pattern %s: %s",
+                    pattern.pattern,
+                    pattern.name,
+                    e,
+                )
+                raise ValueError(f"Invalid regex pattern in {pattern.name}: {e}") from e
+
+        return self._pattern_cache[cache_key]

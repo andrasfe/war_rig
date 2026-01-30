@@ -7,10 +7,20 @@ Contains:
 - Scope tracking for nested artifacts (scope_tracker.py)
 """
 
-from citadel.parser.engine import FileParseResult, ParserEngine, RawReference
+from citadel.parser.engine import (
+    AnalysisMatch,
+    AnalysisPatternResult,
+    AnalysisPatternStats,
+    FileParseResult,
+    ParserEngine,
+    RawReference,
+)
 from citadel.parser.preprocessor import PreprocessedSource, Preprocessor
 
 __all__ = [
+    "AnalysisMatch",
+    "AnalysisPatternResult",
+    "AnalysisPatternStats",
     "FileParseResult",
     "ParserEngine",
     "PreprocessedSource",

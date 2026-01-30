@@ -278,3 +278,177 @@ naming:
       - MST
 
 known_aliases: {}
+
+# Analysis patterns for deeper code analysis
+analysis_patterns:
+  data_flow:
+    - name: move_simple
+      pattern: "\\bMOVE\\s+(\\S+)\\s+TO\\s+(\\S+)"
+      capture_groups: [1, 2]
+      description: "Simple MOVE from source to target"
+
+    - name: move_corresponding
+      pattern: "\\bMOVE\\s+CORRESPONDING\\s+(\\S+)\\s+TO\\s+(\\S+)"
+      capture_groups: [1, 2]
+      description: "MOVE CORRESPONDING between records"
+
+    - name: compute
+      pattern: "\\bCOMPUTE\\s+([A-Z0-9-]+)\\s*="
+      capture_groups: [1]
+      description: "COMPUTE statement assigning to variable"
+
+    - name: set_statement
+      pattern: "\\bSET\\s+([A-Z0-9-]+)\\s+TO\\s+(\\S+)"
+      capture_groups: [1, 2]
+      description: "SET statement (index, condition, pointer)"
+
+    - name: initialize
+      pattern: "\\bINITIALIZE\\s+([A-Z0-9-]+)"
+      capture_groups: [1]
+      description: "INITIALIZE statement to reset data"
+
+    - name: string_statement
+      pattern: "\\bSTRING\\s+.+?\\s+INTO\\s+([A-Z0-9-]+)"
+      capture_groups: [1]
+      description: "STRING concatenation into target"
+      dotall: true
+
+    - name: unstring_statement
+      pattern: "\\bUNSTRING\\s+(\\S+)\\s+.+?\\s+INTO\\s+"
+      capture_groups: [1]
+      description: "UNSTRING parsing from source"
+      dotall: true
+
+    - name: add_statement
+      pattern: "\\bADD\\s+.+?\\s+TO\\s+([A-Z0-9-]+)"
+      capture_groups: [1]
+      description: "ADD statement modifying target"
+
+    - name: subtract_statement
+      pattern: "\\bSUBTRACT\\s+.+?\\s+FROM\\s+([A-Z0-9-]+)"
+      capture_groups: [1]
+      description: "SUBTRACT statement modifying target"
+
+    - name: multiply_statement
+      pattern: "\\bMULTIPLY\\s+.+?\\s+(?:BY|GIVING)\\s+([A-Z0-9-]+)"
+      capture_groups: [1]
+      description: "MULTIPLY statement modifying target"
+
+    - name: divide_statement
+      pattern: "\\bDIVIDE\\s+.+?\\s+(?:INTO|GIVING)\\s+([A-Z0-9-]+)"
+      capture_groups: [1]
+      description: "DIVIDE statement modifying target"
+
+  control_flow:
+    - name: if_then
+      pattern: "\\bIF\\s+([A-Z0-9-]+(?:\\s+(?:=|NOT\\s*=|>|<|>=|<=|EQUAL|NOT\\s+EQUAL|GREATER|LESS)\\s+\\S+)?)"
+      capture_groups: [1]
+      description: "IF condition start"
+
+    - name: if_perform
+      pattern: "\\bIF\\s+.+?\\bPERFORM\\s+([A-Z0-9-]+)"
+      capture_groups: [1]
+      description: "IF with embedded PERFORM"
+      dotall: true
+
+    - name: evaluate_when
+      pattern: "\\bEVALUATE\\s+([A-Z0-9-]+(?:\\s+ALSO\\s+[A-Z0-9-]+)*)"
+      capture_groups: [1]
+      description: "EVALUATE statement (COBOL case/switch)"
+
+    - name: when_clause
+      pattern: "\\bWHEN\\s+(?!OTHER)([A-Z0-9-]+|\\d+|['\"][^'\"]+['\"])"
+      capture_groups: [1]
+      description: "WHEN clause in EVALUATE"
+
+    - name: perform_until
+      pattern: "\\bPERFORM\\s+(?:([A-Z0-9-]+)\\s+)?UNTIL\\s+(\\S+)"
+      capture_groups: [1, 2]
+      description: "PERFORM with UNTIL condition (with or without paragraph name)"
+
+    - name: perform_varying
+      pattern: "\\bPERFORM\\s+(?:([A-Z0-9-]+)\\s+)?VARYING\\s+([A-Z0-9-]+)"
+      capture_groups: [1, 2]
+      description: "PERFORM with VARYING loop counter (with or without paragraph name)"
+
+    - name: perform_times
+      pattern: "\\bPERFORM\\s+(?:([A-Z0-9-]+)\\s+)?(\\d+|[A-Z0-9-]+)\\s+TIMES"
+      capture_groups: [1, 2]
+      description: "PERFORM N TIMES (with or without paragraph name)"
+
+    - name: perform_thru
+      pattern: "\\bPERFORM\\s+([A-Z0-9-]+)\\s+THRU\\s+([A-Z0-9-]+)"
+      capture_groups: [1, 2]
+      description: "PERFORM paragraph THRU end-paragraph"
+
+    - name: go_to
+      pattern: "\\bGO\\s+TO\\s+([A-Z0-9-]+)"
+      capture_groups: [1]
+      description: "GO TO statement (unconditional branch)"
+
+    - name: go_to_depending
+      pattern: "\\bGO\\s+TO\\s+(.+?)\\s+DEPENDING\\s+ON\\s+([A-Z0-9-]+)"
+      capture_groups: [1, 2]
+      description: "GO TO DEPENDING ON (computed branch)"
+      dotall: true
+
+  error_handling:
+    - name: on_exception
+      pattern: "\\bON\\s+EXCEPTION\\b"
+      capture_groups: []
+      description: "ON EXCEPTION handler"
+
+    - name: not_on_exception
+      pattern: "\\bNOT\\s+ON\\s+EXCEPTION\\b"
+      capture_groups: []
+      description: "NOT ON EXCEPTION handler"
+
+    - name: file_status_check
+      pattern: "\\bIF\\s+([A-Z0-9-]+(?:-STATUS|-STAT|-FILE-STATUS))\\s*(?:=|NOT\\s*=|EQUAL|NOT\\s+EQUAL)"
+      capture_groups: [1]
+      description: "File status code check"
+
+    - name: invalid_key
+      pattern: "\\bINVALID\\s+KEY\\b"
+      capture_groups: []
+      description: "INVALID KEY handler for file I/O"
+
+    - name: not_invalid_key
+      pattern: "\\bNOT\\s+INVALID\\s+KEY\\b"
+      capture_groups: []
+      description: "NOT INVALID KEY handler"
+
+    - name: at_end
+      pattern: "\\bAT\\s+END\\b"
+      capture_groups: []
+      description: "AT END handler for file reads"
+
+    - name: not_at_end
+      pattern: "\\bNOT\\s+AT\\s+END\\b"
+      capture_groups: []
+      description: "NOT AT END handler"
+
+    - name: on_size_error
+      pattern: "\\bON\\s+SIZE\\s+ERROR\\b"
+      capture_groups: []
+      description: "ON SIZE ERROR handler for arithmetic"
+
+    - name: not_on_size_error
+      pattern: "\\bNOT\\s+ON\\s+SIZE\\s+ERROR\\b"
+      capture_groups: []
+      description: "NOT ON SIZE ERROR handler"
+
+    - name: on_overflow
+      pattern: "\\bON\\s+OVERFLOW\\b"
+      capture_groups: []
+      description: "ON OVERFLOW handler for STRING/UNSTRING"
+
+    - name: sqlcode_check
+      pattern: "\\bIF\\s+SQLCODE\\s*(?:=|NOT\\s*=|>|<|>=|<=|EQUAL|NOT\\s+EQUAL)"
+      capture_groups: []
+      description: "SQLCODE check for SQL error handling"
+
+    - name: resp_check
+      pattern: "\\bIF\\s+(?:EIBRESP|WS-RESP)\\s*(?:=|NOT\\s*=|EQUAL|NOT\\s+EQUAL)"
+      capture_groups: []
+      description: "CICS RESP code check"
