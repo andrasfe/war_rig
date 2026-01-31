@@ -2353,12 +2353,23 @@ class ScribeWorker:
         outline = []
         for para in paragraphs:
             name = para.get("name", "")
+            line_count = para.get("line_count", 0)
+            line_start = para.get("line_start", 0)
+
+            # Skip PROGRAM-ID entries (typically 1 line at start of file, not real paragraphs)
+            if line_count <= 1 and line_start and line_start < 10:
+                logger.debug(
+                    f"Worker {self.worker_id}: Skipping PROGRAM-ID entry '{name}' "
+                    f"from outline (line {line_start})"
+                )
+                continue
+
             calls = func_calls_by_name.get(name.lower(), [])
             outline.append({
                 "name": name,
-                "line_start": para.get("line_start"),
+                "line_start": line_start,
                 "line_end": para.get("line_end"),
-                "line_count": para.get("line_count", 0),
+                "line_count": line_count,
                 "calls": calls,
             })
 

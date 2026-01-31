@@ -408,11 +408,15 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                 line_start = para.get("line_start", "?")
                 line_end = para.get("line_end", "?")
                 calls = para.get("calls", [])
-                call_targets = ", ".join(
-                    c.get("target", "") for c in calls if c.get("target")
-                )
+                # Limit calls to 5 to avoid overwhelming the prompt with copybook refs
+                call_targets = [c.get("target", "") for c in calls[:5] if c.get("target")]
+                calls_str = ""
+                if call_targets:
+                    targets_str = ", ".join(call_targets)
+                    if len(calls) > 5:
+                        targets_str += f", ... (+{len(calls) - 5} more)"
+                    calls_str = f" → calls: {targets_str}"
                 line_range = f"lines {line_start}-{line_end}" if line_start and line_end else ""
-                calls_str = f" → calls: {call_targets}" if call_targets else ""
                 parts.append(f"- **{name}** ({line_range}){calls_str}")
             parts.append("")
 
