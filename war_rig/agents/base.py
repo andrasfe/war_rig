@@ -245,9 +245,21 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
         if self._api_config.site_name:
             default_headers["X-Title"] = self._api_config.site_name
 
+        # Some models require specific temperature settings
+        # o3 and other reasoning models require temperature=1.0
+        temperature = self.config.temperature
+        model_lower = self.config.model.lower()
+        if any(m in model_lower for m in ["o3", "o1-", "o1/"]):
+            if temperature != 1.0:
+                logger.info(
+                    f"{self.name}: Model {self.config.model} requires temperature=1.0, "
+                    f"overriding configured value {temperature}"
+                )
+                temperature = 1.0
+
         kwargs: dict[str, Any] = {
             "model": self.config.model,
-            "temperature": self.config.temperature,
+            "temperature": temperature,
             "base_url": self._api_config.base_url,
         }
 
@@ -392,10 +404,21 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
                 f"({len(messages)} messages)"
             )
 
+            # Some models require specific temperature settings
+            # o3 and other reasoning models require temperature=1.0
+            temperature = self.config.temperature
+            model_lower = self.config.model.lower()
+            if any(m in model_lower for m in ["o3", "o1-", "o1/"]):
+                if temperature != 1.0:
+                    logger.debug(
+                        f"{self.name}: Model {self.config.model} requires temperature=1.0"
+                    )
+                    temperature = 1.0
+
             response = await self._provider.complete(
                 messages=messages,
                 model=self.config.model,
-                temperature=self.config.temperature,
+                temperature=temperature,
             )
 
             content = response.content
