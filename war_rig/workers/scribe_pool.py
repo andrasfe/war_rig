@@ -2470,6 +2470,93 @@ class ScribeWorker:
 
         return output
 
+    def _calculate_dynamic_batches(
+        self,
+        outline: list[dict],
+        source_path: Path,
+    ) -> list[list[dict]]:
+        """Calculate batches based on token budget, not fixed paragraph count.
+
+        Groups paragraphs into batches that fit within the max prompt token limit,
+        maximizing context per LLM call while staying within bounds.
+
+        Args:
+            outline: Citadel paragraph outline with names and line counts.
+            source_path: Path to source file for fetching function bodies.
+
+        Returns:
+            List of batches, where each batch is a list of paragraph dicts.
+        """
+        # Calculate token budget
+        # Reserve tokens for: system prompt (~2000), outline section (~500 per para in batch),
+        # pattern insights (~1000), response overhead (~2000)
+        max_tokens = self.config.scribe.max_prompt_tokens
+        overhead_tokens = 6000  # System prompt + patterns + response buffer
+        available_tokens = max_tokens - overhead_tokens
+
+        # Estimate tokens per character (COBOL is verbose, ~3.5 chars per token)
+        chars_per_token = 3.5
+        available_chars = int(available_tokens * chars_per_token)
+
+        logger.debug(
+            f"Worker {self.worker_id}: Dynamic batching with {max_tokens} max tokens, "
+            f"{available_chars} chars available for source code"
+        )
+
+        batches: list[list[dict]] = []
+        current_batch: list[dict] = []
+        current_chars = 0
+
+        # Get all paragraph names for body size estimation
+        all_names = [p.get("name", "") for p in outline if p.get("name")]
+
+        # Fetch all bodies upfront for size estimation (cached by Citadel)
+        try:
+            all_bodies = self._citadel.get_function_bodies(str(source_path), all_names)
+        except Exception as e:
+            logger.warning(f"Worker {self.worker_id}: Failed to get bodies for sizing: {e}")
+            all_bodies = {}
+
+        for para in outline:
+            name = para.get("name", "")
+            if not name:
+                continue
+
+            # Estimate size of this paragraph
+            body = all_bodies.get(name, "")
+            para_chars = len(body) if body else para.get("line_count", 10) * 40  # Fallback estimate
+
+            # Add outline overhead per paragraph (~100 chars for the outline entry)
+            para_chars += 100
+
+            # If adding this paragraph would exceed budget, start new batch
+            if current_batch and (current_chars + para_chars > available_chars):
+                batches.append(current_batch)
+                logger.debug(
+                    f"Worker {self.worker_id}: Batch {len(batches)} has "
+                    f"{len(current_batch)} paragraphs, ~{current_chars} chars"
+                )
+                current_batch = []
+                current_chars = 0
+
+            current_batch.append(para)
+            current_chars += para_chars
+
+        # Don't forget the last batch
+        if current_batch:
+            batches.append(current_batch)
+            logger.debug(
+                f"Worker {self.worker_id}: Final batch {len(batches)} has "
+                f"{len(current_batch)} paragraphs, ~{current_chars} chars"
+            )
+
+        logger.info(
+            f"Worker {self.worker_id}: Dynamic batching created {len(batches)} batches "
+            f"from {len(outline)} paragraphs (avg {len(outline) // max(len(batches), 1)} per batch)"
+        )
+
+        return batches
+
     async def _process_citadel_batched(
         self,
         ticket: ProgramManagerTicket,
@@ -2483,9 +2570,9 @@ class ScribeWorker:
     ) -> ScribeOutput:
         """Batched Citadel-guided documentation for large files.
 
-        Groups paragraphs into batches, fetches function bodies per batch,
-        and runs the ScribeAgent for each batch. Merges results into a
-        unified template.
+        Groups paragraphs into batches based on token budget (not fixed count),
+        fetches function bodies per batch, and runs the ScribeAgent for each batch.
+        Merges results into a unified template.
 
         Chunks are saved after each batch completes, allowing resumption if
         the process crashes mid-way through.
@@ -2505,11 +2592,8 @@ class ScribeWorker:
         """
         assert self._citadel is not None
 
-        batch_size = self.config.citadel_batch_size
-        batches = [
-            outline[i : i + batch_size]
-            for i in range(0, len(outline), batch_size)
-        ]
+        # Use dynamic batching based on token budget instead of fixed paragraph count
+        batches = self._calculate_dynamic_batches(outline, source_path)
         total_batches = len(batches)
 
         # Load any existing chunks (for resumption after crash)
