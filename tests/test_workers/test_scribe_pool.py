@@ -54,6 +54,7 @@ def mock_config(tmp_path) -> MagicMock:
     config.scribe.model = "claude-sonnet-4-20250514"
     config.scribe.temperature = 0.3
     config.scribe.max_prompt_tokens = 15000  # Required for SourceCodePreparer
+    config.scribe.citadel_max_paragraphs_per_batch = 20  # Max paragraphs per batch
     config.api = MagicMock()
     config.api.provider = "openrouter"
     config.api.api_key = "test-key"
@@ -2576,6 +2577,8 @@ class TestCitadelGuidedDocumentation:
         mock_config.citadel_guided_threshold_lines = 2000
         mock_config.citadel_guided_threshold_paragraphs = 15
         mock_config.citadel_batch_size = 5
+        # Use small batch size for testing batched processing
+        mock_config.scribe.citadel_max_paragraphs_per_batch = 5
 
         worker = ScribeWorker(
             worker_id="scribe-test",

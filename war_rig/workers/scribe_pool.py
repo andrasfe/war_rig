@@ -2528,8 +2528,8 @@ class ScribeWorker:
             List of batches, where each batch is a list of paragraph dicts.
         """
         # Maximum paragraphs per batch - LLM can't effectively document more than
-        # ~40-50 paragraphs in a single response, regardless of token budget
-        max_paragraphs_per_batch = 40
+        # ~20-40 paragraphs in a single response, regardless of token budget
+        max_paragraphs_per_batch = self.config.scribe.citadel_max_paragraphs_per_batch
 
         # Calculate token budget
         # Reserve tokens for: system prompt (~2000), outline section (~100 per para in batch),

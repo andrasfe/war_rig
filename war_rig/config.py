@@ -78,6 +78,12 @@ class ScribeConfig(ModelConfig):
         default=8192,
         description="Maximum tokens for response (limits output generation time)",
     )
+    citadel_max_paragraphs_per_batch: int = Field(
+        default=20,
+        ge=5,
+        le=100,
+        description="Maximum paragraphs per batch in Citadel-guided processing (LLM output limit)",
+    )
 
 
 class ChallengerConfig(ModelConfig):
