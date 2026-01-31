@@ -2512,10 +2512,13 @@ class ScribeWorker:
         outline: list[dict],
         source_path: Path,
     ) -> list[list[dict]]:
-        """Calculate batches based on token budget, not fixed paragraph count.
+        """Calculate batches based on token budget AND paragraph limit.
 
         Groups paragraphs into batches that fit within the max prompt token limit,
-        maximizing context per LLM call while staying within bounds.
+        while also respecting a maximum paragraph count per batch. This dual
+        constraint ensures:
+        1. We don't exceed context window (token limit)
+        2. LLM can actually document all paragraphs in one response (paragraph limit)
 
         Args:
             outline: Citadel paragraph outline with names and line counts.
@@ -2524,8 +2527,12 @@ class ScribeWorker:
         Returns:
             List of batches, where each batch is a list of paragraph dicts.
         """
+        # Maximum paragraphs per batch - LLM can't effectively document more than
+        # ~40-50 paragraphs in a single response, regardless of token budget
+        max_paragraphs_per_batch = 40
+
         # Calculate token budget
-        # Reserve tokens for: system prompt (~2000), outline section (~500 per para in batch),
+        # Reserve tokens for: system prompt (~2000), outline section (~100 per para in batch),
         # pattern insights (~1000), response overhead (~2000)
         max_tokens = self.config.scribe.max_prompt_tokens
         overhead_tokens = 6000  # System prompt + patterns + response buffer
@@ -2566,12 +2573,16 @@ class ScribeWorker:
             # Add outline overhead per paragraph (~100 chars for the outline entry)
             para_chars += 100
 
-            # If adding this paragraph would exceed budget, start new batch
-            if current_batch and (current_chars + para_chars > available_chars):
+            # If adding this paragraph would exceed budget OR paragraph limit, start new batch
+            would_exceed_chars = current_chars + para_chars > available_chars
+            would_exceed_count = len(current_batch) >= max_paragraphs_per_batch
+
+            if current_batch and (would_exceed_chars or would_exceed_count):
                 batches.append(current_batch)
+                reason = "token limit" if would_exceed_chars else "paragraph limit"
                 logger.debug(
                     f"Worker {self.worker_id}: Batch {len(batches)} has "
-                    f"{len(current_batch)} paragraphs, ~{current_chars} chars"
+                    f"{len(current_batch)} paragraphs, ~{current_chars} chars ({reason})"
                 )
                 current_batch = []
                 current_chars = 0
