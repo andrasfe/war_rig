@@ -1840,6 +1840,143 @@ class ScribeWorker:
                 except Exception:
                     pass
 
+    def _get_chunks_dir(self, file_name: str) -> Path:
+        """Get the directory for storing intermediate chunk files.
+
+        Args:
+            file_name: Source file name or relative path.
+
+        Returns:
+            Path to the chunks directory for this file.
+        """
+        doc_path = self._get_doc_output_path(file_name)
+        # Create .chunks directory alongside the doc file
+        # e.g., output/PROG.cbl.doc.json -> output/.chunks/PROG.cbl/
+        chunks_dir = doc_path.parent / ".chunks" / doc_path.stem.replace(".doc", "")
+        return chunks_dir
+
+    def _save_chunk(
+        self,
+        file_name: str,
+        batch_idx: int,
+        template: DocumentationTemplate,
+        total_batches: int,
+    ) -> None:
+        """Save an intermediate chunk from batched processing.
+
+        Args:
+            file_name: Source file name.
+            batch_idx: Index of this batch (0-based).
+            template: The template from this batch.
+            total_batches: Total number of batches expected.
+        """
+        chunks_dir = self._get_chunks_dir(file_name)
+        try:
+            chunks_dir.mkdir(parents=True, exist_ok=True)
+
+            # Save chunk data
+            chunk_path = chunks_dir / f"chunk_{batch_idx:04d}.json"
+            chunk_data = {
+                "batch_idx": batch_idx,
+                "total_batches": total_batches,
+                "template": template.model_dump(mode="json"),
+                "saved_at": datetime.now().isoformat(),
+            }
+            with open(chunk_path, "w") as f:
+                json.dump(chunk_data, f, indent=2, default=str)
+
+            logger.debug(
+                f"Worker {self.worker_id}: Saved chunk {batch_idx + 1}/{total_batches} "
+                f"for {file_name}"
+            )
+        except Exception as e:
+            logger.warning(
+                f"Worker {self.worker_id}: Failed to save chunk {batch_idx} for "
+                f"{file_name}: {e}"
+            )
+
+    def _load_chunks(
+        self,
+        file_name: str,
+        total_batches: int,
+    ) -> dict[int, DocumentationTemplate]:
+        """Load existing chunks for resuming batched processing.
+
+        Args:
+            file_name: Source file name.
+            total_batches: Total number of batches expected.
+
+        Returns:
+            Dict mapping batch_idx to loaded template.
+        """
+        chunks_dir = self._get_chunks_dir(file_name)
+        loaded: dict[int, DocumentationTemplate] = {}
+
+        if not chunks_dir.exists():
+            return loaded
+
+        try:
+            for chunk_file in chunks_dir.glob("chunk_*.json"):
+                try:
+                    with open(chunk_file) as f:
+                        chunk_data = json.load(f)
+
+                    batch_idx = chunk_data.get("batch_idx")
+                    stored_total = chunk_data.get("total_batches")
+
+                    # Validate chunk is from same batch configuration
+                    if stored_total != total_batches:
+                        logger.warning(
+                            f"Worker {self.worker_id}: Chunk {chunk_file.name} has "
+                            f"different total_batches ({stored_total} vs {total_batches}), "
+                            f"skipping"
+                        )
+                        continue
+
+                    template = DocumentationTemplate(**chunk_data["template"])
+                    loaded[batch_idx] = template
+                    logger.debug(
+                        f"Worker {self.worker_id}: Loaded chunk {batch_idx + 1}/{total_batches} "
+                        f"for {file_name}"
+                    )
+                except Exception as e:
+                    logger.warning(
+                        f"Worker {self.worker_id}: Failed to load chunk {chunk_file}: {e}"
+                    )
+        except Exception as e:
+            logger.warning(
+                f"Worker {self.worker_id}: Failed to scan chunks for {file_name}: {e}"
+            )
+
+        if loaded:
+            logger.info(
+                f"Worker {self.worker_id}: Resuming with {len(loaded)}/{total_batches} "
+                f"chunks for {file_name}"
+            )
+
+        return loaded
+
+    def _cleanup_chunks(self, file_name: str) -> None:
+        """Remove chunk files after successful merge.
+
+        Args:
+            file_name: Source file name.
+        """
+        chunks_dir = self._get_chunks_dir(file_name)
+        if not chunks_dir.exists():
+            return
+
+        try:
+            import shutil
+            shutil.rmtree(chunks_dir)
+            logger.debug(
+                f"Worker {self.worker_id}: Cleaned up chunks for {file_name}"
+            )
+        except Exception as e:
+            logger.warning(
+                f"Worker {self.worker_id}: Failed to clean up chunks for {file_name}: {e}"
+            )
+
     def _validate_critical_sections(
         self,
         template: DocumentationTemplate,
@@ -2339,6 +2476,9 @@ class ScribeWorker:
         and runs the ScribeAgent for each batch. Merges results into a
         unified template.
 
+        Chunks are saved after each batch completes, allowing resumption if
+        the process crashes mid-way through.
+
         Args:
             ticket: The DOCUMENTATION ticket.
             source_code: The full source code.
@@ -2359,16 +2499,36 @@ class ScribeWorker:
             outline[i : i + batch_size]
             for i in range(0, len(outline), batch_size)
         ]
+        total_batches = len(batches)
+
+        # Load any existing chunks (for resumption after crash)
+        existing_chunks = self._load_chunks(ticket.file_name, total_batches)
 
         # First batch gets full context (purpose, header, etc.)
         # Subsequent batches focus only on paragraphs
         all_paragraphs: list[Paragraph] = []
         merged_template: DocumentationTemplate | None = None
         feedback_context = ticket.metadata.get("feedback_context")
+        batches_processed = 0
+        batches_skipped = 0
 
         for batch_idx, batch in enumerate(batches):
             batch_names = [p.get("name", "") for p in batch if p.get("name")]
             if not batch_names:
+                continue
+
+            # Check if this batch was already processed (resumption)
+            if batch_idx in existing_chunks:
+                template = existing_chunks[batch_idx]
+                if batch_idx == 0:
+                    merged_template = template
+                else:
+                    all_paragraphs.extend(template.paragraphs)
+                batches_skipped += 1
+                logger.debug(
+                    f"Worker {self.worker_id}: Skipping batch {batch_idx + 1}/{total_batches} "
+                    f"(already completed) for {ticket.file_name}"
+                )
                 continue
 
             # Fetch function bodies for this batch
@@ -2407,14 +2567,20 @@ class ScribeWorker:
                 pattern_insights=pattern_insights if batch_idx == 0 else None,
             )
 
-            logger.debug(
-                f"Worker {self.worker_id}: Processing batch {batch_idx + 1}/{len(batches)} "
+            logger.info(
+                f"Worker {self.worker_id}: Processing batch {batch_idx + 1}/{total_batches} "
                 f"({len(batch_names)} paragraphs) for {ticket.file_name}"
             )
 
             output = await self.scribe_agent.ainvoke(scribe_input)
 
             if output.success and output.template:
+                # Save chunk immediately after successful processing
+                self._save_chunk(
+                    ticket.file_name, batch_idx, output.template, total_batches
+                )
+                batches_processed += 1
+
                 if merged_template is None:
                     # First batch: use the full template
                     merged_template = output.template
@@ -2426,6 +2592,12 @@ class ScribeWorker:
                     f"Worker {self.worker_id}: Batch {batch_idx + 1} failed for "
                     f"{ticket.file_name}: {output.error}"
                 )
+
+        if batches_skipped > 0:
+            logger.info(
+                f"Worker {self.worker_id}: Resumed {ticket.file_name} - "
+                f"{batches_skipped} chunks loaded, {batches_processed} newly processed"
+            )
 
         if merged_template is None:
             return ScribeOutput(
@@ -2445,6 +2617,9 @@ class ScribeWorker:
                 if para.paragraph_name and para.paragraph_name.lower() not in existing_names:
                     merged_template.paragraphs.append(para)
                     existing_names.add(para.paragraph_name.lower())
+
+        # Clean up chunk files after successful merge
+        self._cleanup_chunks(ticket.file_name)
 
         # Gap-fill any missing paragraphs
         result = ScribeOutput(success=True, template=merged_template)
