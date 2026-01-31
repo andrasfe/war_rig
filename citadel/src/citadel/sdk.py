@@ -1923,6 +1923,103 @@ class Citadel:
             # We're in a sync context, just run it
             return asyncio.run(orchestrator.analyze(directory))
 
+    def get_chunk_summaries(
+        self,
+        chunks_dir: str | Path,
+    ) -> list[dict[str, Any]]:
+        """
+        Extract summaries from chunk files for efficient synthesis.
+
+        Reads chunk files from a `.chunks/` directory and extracts just the
+        summary information (purpose, paragraph summaries) from each chunk's
+        template. This enables merging many chunks without exceeding context
+        limits by passing only summaries rather than full templates.
+
+        Args:
+            chunks_dir: Path to the `.chunks/` directory containing chunk files.
+                This is typically `output/.chunks/FILENAME/` where chunk files
+                are stored during batched processing.
+
+        Returns:
+            List of summary dictionaries, one per chunk, sorted by batch_idx.
+            Each dictionary contains:
+            - batch_idx: The batch index (0-based)
+            - total_batches: Total number of batches in the processing run
+            - purpose_summary: The purpose.summary from the template (if present)
+            - paragraph_summaries: List of dicts with paragraph_name and summary
+            - saved_at: Timestamp when the chunk was saved
+
+        Example:
+            >>> citadel = Citadel()
+            >>> summaries = citadel.get_chunk_summaries("output/.chunks/TESTLARGE.cbl")
+            >>> for s in summaries:
+            ...     print(f"Batch {s['batch_idx']}: {len(s['paragraph_summaries'])} paragraphs")
+        """
+        chunks_dir = Path(chunks_dir)
+
+        if not chunks_dir.exists():
+            logger.warning("Chunks directory does not exist: %s", chunks_dir)
+            return []
+
+        summaries: list[dict[str, Any]] = []
+
+        try:
+            for chunk_file in sorted(chunks_dir.glob("chunk_*.json")):
+                try:
+                    with open(chunk_file, encoding="utf-8") as f:
+                        chunk_data = json.load(f)
+
+                    batch_idx = chunk_data.get("batch_idx", 0)
+                    total_batches = chunk_data.get("total_batches", 0)
+                    saved_at = chunk_data.get("saved_at")
+                    template = chunk_data.get("template", {})
+
+                    # Extract purpose summary
+                    purpose = template.get("purpose", {})
+                    purpose_summary = purpose.get("summary") if purpose else None
+
+                    # Extract paragraph summaries
+                    paragraphs = template.get("paragraphs", [])
+                    paragraph_summaries = []
+                    for para in paragraphs:
+                        para_name = para.get("paragraph_name")
+                        para_summary = para.get("summary")
+                        para_purpose = para.get("purpose")
+                        if para_name:
+                            paragraph_summaries.append({
+                                "paragraph_name": para_name,
+                                "summary": para_summary,
+                                "purpose": para_purpose,
+                            })
+
+                    summaries.append({
+                        "batch_idx": batch_idx,
+                        "total_batches": total_batches,
+                        "purpose_summary": purpose_summary,
+                        "paragraph_summaries": paragraph_summaries,
+                        "saved_at": saved_at,
+                    })
+
+                except Exception as e:
+                    logger.warning(
+                        "Failed to load chunk summary from %s: %s",
+                        chunk_file,
+                        e,
+                    )
+        except Exception as e:
+            logger.warning("Failed to scan chunks directory %s: %s", chunks_dir, e)
+
+        # Sort by batch_idx
+        summaries.sort(key=lambda x: x.get("batch_idx", 0))
+
+        logger.debug(
+            "Loaded %d chunk summaries from %s",
+            len(summaries),
+            chunks_dir,
+        )
+
+        return summaries
+
 
 # Convenience function for one-off analysis
 def analyze_file(file_path: str | Path) -> FileAnalysisResult:

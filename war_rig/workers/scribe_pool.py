@@ -1977,6 +1977,43 @@ class ScribeWorker:
                 f"Worker {self.worker_id}: Failed to clean up chunks for {file_name}: {e}"
             )
 
+    def _get_chunk_summaries(self, file_name: str) -> list[dict]:
+        """Get summaries from chunk files for efficient synthesis.
+
+        Uses the Citadel SDK to extract just the summary information from
+        each chunk, enabling context-efficient operations like LLM-based
+        synthesis without loading full templates.
+
+        Args:
+            file_name: Source file name.
+
+        Returns:
+            List of summary dictionaries sorted by batch_idx, each containing:
+            - batch_idx: The batch index (0-based)
+            - total_batches: Total number of batches
+            - purpose_summary: The purpose.summary from the template
+            - paragraph_summaries: List of {paragraph_name, summary, purpose}
+            - saved_at: Timestamp when chunk was saved
+        """
+        if not self._citadel:
+            logger.debug(
+                f"Worker {self.worker_id}: Citadel not available for chunk summaries"
+            )
+            return []
+
+        chunks_dir = self._get_chunks_dir(file_name)
+        if not chunks_dir.exists():
+            return []
+
+        try:
+            return self._citadel.get_chunk_summaries(str(chunks_dir))
+        except Exception as e:
+            logger.warning(
+                f"Worker {self.worker_id}: Failed to get chunk summaries for "
+                f"{file_name}: {e}"
+            )
+            return []
+
     def _validate_critical_sections(
         self,
         template: DocumentationTemplate,
@@ -2713,9 +2750,6 @@ class ScribeWorker:
                     merged_template.paragraphs.append(para)
                     existing_names.add(para.paragraph_name.lower())
 
-        # Clean up chunk files after successful merge
-        self._cleanup_chunks(ticket.file_name)
-
         # Gap-fill any missing paragraphs
         result = ScribeOutput(success=True, template=merged_template)
         result = await self._citadel_gap_fill(
@@ -2732,6 +2766,10 @@ class ScribeWorker:
                 result.template, ticket, file_type,
             )
             self._save_template(ticket.file_name, result.template)
+
+            # Clean up chunk files only after successful save to disk
+            # This ensures chunks persist on crash/cancel for resume capability
+            self._cleanup_chunks(ticket.file_name)
 
         return result
 
