@@ -474,13 +474,17 @@ class TicketOrchestrator:
             # Collect final results
             result = self._collect_results(result)
 
-            # Generate system overview if documentation was successful
+            # Generate README.md and system overview if documentation was successful
             if result.completed_files and result.final_decision in (
                 "SATISFIED",
                 "FORCED_COMPLETE",
                 ImperatorHolisticDecision.SATISFIED.value,
                 ImperatorHolisticDecision.FORCED_COMPLETE.value,
             ):
+                # Generate README.md at the end (not during holistic review cycles)
+                self._state.status_message = "Generating README.md..."
+                await self._generate_final_readme()
+
                 self._state.status_message = "Generating system overview..."
                 self._create_system_overview_ticket()
                 await self._process_system_overview()
@@ -1475,6 +1479,47 @@ class TicketOrchestrator:
             if design_output.success and design_output.markdown:
                 # Write README.md to output directory
                 readme_path = self.config.output_directory / "README.md"
+                readme_path.write_text(design_output.markdown, encoding="utf-8")
+                logger.info(f"Generated README.md at {readme_path}")
+            else:
+                logger.warning(
+                    f"README generation failed: {design_output.error or 'Unknown error'}"
+                )
+
+        except Exception as e:
+            logger.error(f"Failed to generate README.md: {e}")
+
+    async def _generate_final_readme(self) -> None:
+        """Generate README.md at the end of batch processing.
+
+        Called after all cycles complete, regardless of whether there are
+        pending rework tickets. This ensures README is always generated
+        when the batch succeeds.
+        """
+        # Check if README already exists (generated during holistic review)
+        readme_path = self.config.output_directory / "README.md"
+        if readme_path.exists():
+            logger.debug("README.md already exists, skipping generation")
+            return
+
+        logger.info("Generating final README.md")
+
+        # Build review input for README generation
+        review_input = self._build_holistic_review_input()
+
+        if not review_input.file_documentation:
+            logger.warning("No documentation available for README generation")
+            return
+
+        try:
+            # Generate system design document (README.md)
+            design_output = await self.imperator.generate_system_design(
+                review_input,
+                use_mock=self.use_mock,
+                sequence_diagrams=self._state.sequence_diagrams,
+            )
+
+            if design_output.success and design_output.markdown:
                 readme_path.write_text(design_output.markdown, encoding="utf-8")
                 logger.info(f"Generated README.md at {readme_path}")
             else:
