@@ -230,6 +230,12 @@ class WarRigConfig(BaseSettings):
         default=8192,
         description="Maximum tokens for Scribe response (limits output generation time)",
     )
+    citadel_max_paragraphs_per_batch: int = Field(
+        default=20,
+        ge=5,
+        le=100,
+        description="Maximum paragraphs per batch in Citadel-guided processing",
+    )
 
     challenger_model: str = Field(
         default="anthropic/claude-sonnet-4-20250514",
@@ -401,6 +407,7 @@ class WarRigConfig(BaseSettings):
             model=self.scribe_model,
             temperature=self.scribe_temperature,
             max_prompt_tokens=self.scribe_max_prompt_tokens,
+            citadel_max_paragraphs_per_batch=self.citadel_max_paragraphs_per_batch,
         )
 
     @property
