@@ -1469,6 +1469,7 @@ class TicketOrchestrator:
             design_output = await self.imperator.generate_system_design(
                 review_input,
                 use_mock=self.use_mock,
+                sequence_diagrams=self._state.sequence_diagrams,
             )
 
             if design_output.success and design_output.markdown:
