@@ -803,10 +803,17 @@ class ImperatorAgent(BaseAgent[ImperatorInput, ImperatorOutput]):
                 f"({total_chars:,} chars) to {self.config.model}"
             )
 
+        # Some models require specific temperature settings
+        # o3 and other reasoning models require temperature=1.0
+        temperature = self.config.temperature
+        model_lower = self.config.model.lower()
+        if any(m in model_lower for m in ["o3", "o1-", "o1/"]):
+            temperature = 1.0
+
         response = await self._provider.complete(
             messages=messages,
             model=self.config.model,
-            temperature=self.config.temperature,
+            temperature=temperature,
         )
         return response.content
 

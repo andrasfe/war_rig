@@ -285,10 +285,17 @@ class CallSemanticsAnalyzer:
             Message(role="user", content=prompt),
         ]
 
+        # Some models require specific temperature settings
+        # o3 and other reasoning models require temperature=1.0
+        temperature = 0.3
+        model_lower = self.model.lower()
+        if any(m in model_lower for m in ["o3", "o1-", "o1/"]):
+            temperature = 1.0
+
         response = await self._provider.complete(
             messages=messages,
             model=self.model,
-            temperature=0.3,
+            temperature=temperature,
         )
 
         # Parse the response
