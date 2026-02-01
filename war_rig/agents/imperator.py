@@ -1731,41 +1731,43 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
             if output_directory is not None:
                 existing_content = self._read_existing_system_design(output_directory)
 
-            # Run holistic review and system design generation in parallel
-            # Both operations are independent: they use the same input_data (read-only)
-            # and neither depends on the other's output
+            # Run holistic review and system design generation sequentially
+            # to avoid HTTP 429 rate limit errors from too many concurrent requests
             if output_directory is not None:
-                # Run both LLM calls in parallel for significant time savings
-                # (each call can take 3-5 minutes)
-                logger.info("Starting parallel holistic review and system design LLM calls...")
-                holistic_task = self._call_llm(system_prompt, user_prompt)
-                design_task = self.generate_system_design(
-                    input_data,
-                    existing_content=existing_content,
-                    use_mock=use_mock,
-                    sequence_diagrams=sequence_diagrams,
-                )
+                # Run LLM calls SEQUENTIALLY
+                logger.info("Starting sequential holistic review and system design LLM calls...")
 
-                # Wrap in timeout to prevent indefinite hangs (15 min = 900s)
+                # First: holistic review
                 try:
-                    results = await asyncio.wait_for(
-                        asyncio.gather(
-                            holistic_task,
-                            design_task,
-                            return_exceptions=True,
-                        ),
-                        timeout=900.0,  # 15 minutes max for both calls
+                    response = await asyncio.wait_for(
+                        self._call_llm(system_prompt, user_prompt),
+                        timeout=600.0,  # 10 minutes for holistic review
                     )
-                    logger.info("Parallel LLM calls completed successfully")
+                    response_or_error = response
                 except TimeoutError:
-                    logger.error("Holistic review timed out after 15 minutes")
-                    return HolisticReviewOutput(
-                        success=False,
-                        error="Holistic review timed out after 15 minutes",
-                        decision=ImperatorHolisticDecision.FORCED_COMPLETE
-                        if input_data.cycle >= input_data.max_cycles
-                        else ImperatorHolisticDecision.NEEDS_CLARIFICATION,
+                    response_or_error = TimeoutError("Holistic review timed out")
+                except Exception as e:
+                    response_or_error = e
+
+                # Second: system design (README generation)
+                try:
+                    design_result = await asyncio.wait_for(
+                        self.generate_system_design(
+                            input_data,
+                            existing_content=existing_content,
+                            use_mock=use_mock,
+                            sequence_diagrams=sequence_diagrams,
+                        ),
+                        timeout=300.0,  # 5 minutes for README
                     )
+                    design_result_or_error = design_result
+                except TimeoutError:
+                    design_result_or_error = TimeoutError("System design timed out")
+                except Exception as e:
+                    design_result_or_error = e
+
+                results = [response_or_error, design_result_or_error]
+                logger.info("Sequential LLM calls completed")
 
                 response_or_error = results[0]
                 design_result_or_error = results[1]
