@@ -261,6 +261,23 @@ ScribeWorkerPool
 
 You still get paragraph documentation, call graphs, and all other analysis - just without the "what data flows in/out of each PERFORM" detail.
 
+### Challenger Paragraph Sampling
+
+For large files with many paragraphs, Challenger validation can consume 40-50K tokens. To reduce this, Challenger samples a subset of paragraphs using a hybrid strategy:
+
+1. **Entry point** - Always includes main entry (0000-/0100-/MAIN)
+2. **High-complexity** - Paragraphs with SQL, CICS, or many calls
+3. **Random** - Additional random paragraphs for coverage
+
+```bash
+# Number of paragraphs to sample for validation (default: 5)
+CHALLENGER_PARAGRAPH_SAMPLE_SIZE=5
+```
+
+This reduces Challenger context from ~48K to ~5K tokens (~90% reduction). The Challenger validates the sampled paragraphs deeply, and any issues found are fixed by the Scribe for those paragraphs only.
+
+**Trade-off:** Issues in non-sampled paragraphs won't be caught. For critical files, increase the sample size or set to a high value to validate more.
+
 ### Max Ticket Retries (Endless Loop Prevention)
 
 The `MAX_TICKET_RETRIES` setting (default: 5) prevents endless retry loops when a ticket repeatedly fails to process. This safeguard applies to:
