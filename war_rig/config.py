@@ -55,10 +55,10 @@ class ModelConfig(BaseModel):
         description="Model identifier for the LLM (required)",
     )
     temperature: float = Field(
-        default=0.3,
+        default=1.0,
         ge=0.0,
         le=2.0,
-        description="Sampling temperature for generation",
+        description="Sampling temperature for generation (1.0 required for o3/o1 models)",
     )
 
 
@@ -66,10 +66,10 @@ class ScribeConfig(ModelConfig):
     """Configuration specific to the Scribe agent.
 
     The Scribe analyzes source code and fills out documentation templates.
-    Lower temperature (0.3) encourages more deterministic, factual output.
+    Temperature 1.0 is required for o3/o1 reasoning models.
     """
 
-    temperature: float = Field(default=0.3)
+    temperature: float = Field(default=1.0)
     max_prompt_tokens: int = Field(
         default=15000,
         description="Maximum approximate tokens for the prompt (will truncate content to fit)",
@@ -90,10 +90,10 @@ class ChallengerConfig(ModelConfig):
     """Configuration specific to the Challenger agent.
 
     The Challenger validates documentation and asks probing questions.
-    Slightly higher temperature (0.5) allows for more creative questioning.
+    Temperature 1.0 is required for o3/o1 reasoning models.
     """
 
-    temperature: float = Field(default=0.5)
+    temperature: float = Field(default=1.0)
     max_prompt_tokens: int = Field(
         default=15000,
         description="Maximum approximate tokens for the prompt",
@@ -108,10 +108,10 @@ class ImperatorConfig(ModelConfig):
     """Configuration specific to the Imperator agent.
 
     The Imperator reviews documentation and makes approval decisions.
-    Lower temperature (0.2) ensures consistent, decisive output.
+    Temperature 1.0 is required for o3/o1 reasoning models.
     """
 
-    temperature: float = Field(default=0.2)
+    temperature: float = Field(default=1.0)
     max_prompt_tokens: int = Field(
         default=15000,
         description="Maximum approximate tokens for the prompt",
@@ -221,7 +221,7 @@ class WarRigConfig(BaseSettings):
         default="anthropic/claude-sonnet-4-20250514",
         description="Model for Scribe agent",
     )
-    scribe_temperature: float = Field(default=0.3)
+    scribe_temperature: float = Field(default=1.0)
     scribe_max_prompt_tokens: int = Field(
         default=15000,
         description="Maximum tokens for Scribe prompt (will truncate to fit)",
@@ -241,7 +241,7 @@ class WarRigConfig(BaseSettings):
         default="anthropic/claude-sonnet-4-20250514",
         description="Model for Challenger agent",
     )
-    challenger_temperature: float = Field(default=0.5)
+    challenger_temperature: float = Field(default=1.0)
     challenger_max_prompt_tokens: int = Field(
         default=15000,
         description="Maximum tokens for Challenger prompt",
@@ -255,7 +255,7 @@ class WarRigConfig(BaseSettings):
         default="anthropic/claude-sonnet-4-20250514",
         description="Model for Imperator agent",
     )
-    imperator_temperature: float = Field(default=0.2)
+    imperator_temperature: float = Field(default=1.0)
     imperator_max_prompt_tokens: int = Field(
         default=15000,
         description="Maximum tokens for Imperator prompt",
