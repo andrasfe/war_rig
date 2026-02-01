@@ -1600,6 +1600,51 @@ class ScribeWorker:
             )
             return None
 
+    def _merge_clarification_template(
+        self,
+        new_template: DocumentationTemplate,
+        previous_template: DocumentationTemplate,
+    ) -> DocumentationTemplate:
+        """Merge a new template with the previous template, preserving paragraphs.
+
+        When processing CLARIFICATION tickets, the LLM may only see sampled source
+        code and thus only regenerate paragraphs for what it saw. This method
+        preserves paragraphs from the previous template that are not present in
+        the new template, preventing paragraph loss.
+
+        Args:
+            new_template: The template returned by the Scribe (may have fewer paragraphs).
+            previous_template: The previous template with all paragraphs.
+
+        Returns:
+            Merged template with all paragraphs preserved.
+        """
+        # Build set of paragraph names in the new template (case-insensitive)
+        new_para_names: set[str] = {
+            p.paragraph_name.upper()
+            for p in new_template.paragraphs
+            if p.paragraph_name
+        }
+
+        # Find paragraphs in previous that are missing from new
+        preserved_count = 0
+        for prev_para in previous_template.paragraphs:
+            if not prev_para.paragraph_name:
+                continue
+            if prev_para.paragraph_name.upper() not in new_para_names:
+                # Preserve this paragraph from the previous template
+                new_template.paragraphs.append(prev_para)
+                preserved_count += 1
+
+        if preserved_count > 0:
+            logger.info(
+                f"Worker {self.worker_id}: Preserved {preserved_count} paragraphs from "
+                f"previous template that were not in the LLM output "
+                f"(total: {len(new_template.paragraphs)} paragraphs)"
+            )
+
+        return new_template
+
     def _generate_markdown_from_template(
         self,
         template: DocumentationTemplate,
@@ -3064,6 +3109,19 @@ class ScribeWorker:
 
         output = await self.scribe_agent.ainvoke(scribe_input)
 
+        # Merge with previous template to preserve paragraphs when source was sampled
+        # The LLM may only regenerate paragraphs for the sampled code, losing others
+        if (
+            output.success
+            and output.template
+            and previous_template
+            and prepared.was_modified
+            and prepared.strategy_used == "sampling"
+        ):
+            output.template = self._merge_clarification_template(
+                output.template, previous_template
+            )
+
         # Validate critical sections if feedback context provided
         if output.success and output.template and feedback_context:
             if prepared.was_modified and prepared.strategy_used == "sampling":
@@ -4018,6 +4076,14 @@ class ScribeWorker:
         )
         output = await self.scribe_agent.ainvoke(scribe_input)
 
+        # Merge with previous template to preserve paragraphs when source was sampled
+        # The LLM may only regenerate paragraphs for the sampled code, losing others
+        if output.success and output.template and prepared.was_modified:
+            if prepared.strategy_used == "sampling":
+                output.template = self._merge_clarification_template(
+                    output.template, previous_template
+                )
+
         # Validate critical sections if feedback context provided (IMPFB-005)
         # Skip validation if source was sampled/truncated - the LLM may not have
         # seen all the code, so empty sections could be legitimate (the code for
@@ -4253,6 +4319,14 @@ class ScribeWorker:
             + (" (with feedback context)" if feedback_context else "")
         )
         output = await self.scribe_agent.ainvoke(scribe_input)
+
+        # Merge with previous template to preserve paragraphs when source was sampled
+        # The LLM may only regenerate paragraphs for the sampled code, losing others
+        if output.success and output.template and prepared.was_modified:
+            if prepared.strategy_used == "sampling":
+                output.template = self._merge_clarification_template(
+                    output.template, previous_template
+                )
 
         # Validate critical sections if feedback context provided (IMPFB-005)
         # Skip validation if source was sampled/truncated - the LLM may not have

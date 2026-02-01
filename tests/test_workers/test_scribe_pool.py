@@ -3064,3 +3064,138 @@ class TestSharedMinionScribePool:
 
         assert pool._minion_pool is not None
         assert pool._minion_pool.beads_client is mock_beads_client
+
+
+# =============================================================================
+# Template Merge Tests
+# =============================================================================
+
+
+class TestMergeClarificationTemplate:
+    """Tests for _merge_clarification_template method.
+
+    This method preserves paragraphs from the previous template that are not
+    present in the new template (returned by the LLM). This prevents paragraph
+    loss when source code is sampled for CLARIFICATION tickets.
+    """
+
+    @pytest.fixture
+    def worker(self, mock_config, mock_beads_client):
+        """Create a ScribeWorker for testing."""
+        return ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+    def test_preserves_paragraphs_from_previous(self, worker):
+        """Test that paragraphs from previous_template are preserved."""
+        from war_rig.models.templates import DocumentationTemplate, Paragraph
+
+        # Previous template has 5 paragraphs
+        previous_template = DocumentationTemplate()
+        previous_template.paragraphs = [
+            Paragraph(paragraph_name="0000-MAIN", purpose="Entry point"),
+            Paragraph(paragraph_name="1000-PROCESS", purpose="Process data"),
+            Paragraph(paragraph_name="2000-VALIDATE", purpose="Validate input"),
+            Paragraph(paragraph_name="3000-OUTPUT", purpose="Generate output"),
+            Paragraph(paragraph_name="9999-EXIT", purpose="Exit paragraph"),
+        ]
+
+        # New template only has 2 paragraphs (LLM only saw sampled source)
+        new_template = DocumentationTemplate()
+        new_template.paragraphs = [
+            Paragraph(paragraph_name="0000-MAIN", purpose="Updated entry point"),
+            Paragraph(paragraph_name="1000-PROCESS", purpose="Updated process"),
+        ]
+
+        # Merge should add the 3 missing paragraphs
+        merged = worker._merge_clarification_template(new_template, previous_template)
+
+        # Should have all 5 paragraphs
+        assert len(merged.paragraphs) == 5
+        para_names = {p.paragraph_name for p in merged.paragraphs}
+        assert para_names == {
+            "0000-MAIN",
+            "1000-PROCESS",
+            "2000-VALIDATE",
+            "3000-OUTPUT",
+            "9999-EXIT",
+        }
+
+    def test_updated_paragraphs_take_precedence(self, worker):
+        """Test that updated paragraphs from new_template take precedence."""
+        from war_rig.models.templates import DocumentationTemplate, Paragraph
+
+        previous_template = DocumentationTemplate()
+        previous_template.paragraphs = [
+            Paragraph(paragraph_name="0000-MAIN", purpose="Old purpose"),
+        ]
+
+        new_template = DocumentationTemplate()
+        new_template.paragraphs = [
+            Paragraph(paragraph_name="0000-MAIN", purpose="New purpose"),
+        ]
+
+        merged = worker._merge_clarification_template(new_template, previous_template)
+
+        # Should have 1 paragraph with the new purpose
+        assert len(merged.paragraphs) == 1
+        assert merged.paragraphs[0].purpose == "New purpose"
+
+    def test_case_insensitive_matching(self, worker):
+        """Test that paragraph name matching is case-insensitive."""
+        from war_rig.models.templates import DocumentationTemplate, Paragraph
+
+        previous_template = DocumentationTemplate()
+        previous_template.paragraphs = [
+            Paragraph(paragraph_name="main-para", purpose="Lower case"),
+        ]
+
+        new_template = DocumentationTemplate()
+        new_template.paragraphs = [
+            Paragraph(paragraph_name="MAIN-PARA", purpose="Upper case"),
+        ]
+
+        merged = worker._merge_clarification_template(new_template, previous_template)
+
+        # Should have 1 paragraph (not 2) due to case-insensitive matching
+        assert len(merged.paragraphs) == 1
+        assert merged.paragraphs[0].purpose == "Upper case"
+
+    def test_empty_new_template_preserves_all(self, worker):
+        """Test that empty new_template preserves all from previous."""
+        from war_rig.models.templates import DocumentationTemplate, Paragraph
+
+        previous_template = DocumentationTemplate()
+        previous_template.paragraphs = [
+            Paragraph(paragraph_name="PARA-1", purpose="First"),
+            Paragraph(paragraph_name="PARA-2", purpose="Second"),
+        ]
+
+        new_template = DocumentationTemplate()
+        new_template.paragraphs = []
+
+        merged = worker._merge_clarification_template(new_template, previous_template)
+
+        # Should have all 2 paragraphs from previous
+        assert len(merged.paragraphs) == 2
+
+    def test_identical_templates_no_change(self, worker):
+        """Test that identical templates result in no additions."""
+        from war_rig.models.templates import DocumentationTemplate, Paragraph
+
+        previous_template = DocumentationTemplate()
+        previous_template.paragraphs = [
+            Paragraph(paragraph_name="PARA-1", purpose="First"),
+        ]
+
+        new_template = DocumentationTemplate()
+        new_template.paragraphs = [
+            Paragraph(paragraph_name="PARA-1", purpose="Updated first"),
+        ]
+
+        merged = worker._merge_clarification_template(new_template, previous_template)
+
+        # Should have 1 paragraph
+        assert len(merged.paragraphs) == 1
