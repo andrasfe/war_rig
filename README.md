@@ -222,6 +222,45 @@ CITADEL_MAX_PARAGRAPHS_PER_BATCH=10      # Max paragraphs per LLM call (default:
 
 **Reasoning models (o3, o1):** These models are slower and may timeout or produce incomplete output with large batches. Set `CITADEL_MAX_PARAGRAPHS_PER_BATCH=5` for best results. Temperature is automatically set to 1.0 for these models (required by the API).
 
+### Call Semantics and Minion Scribes
+
+Call semantics analysis infers **data flow between paragraphs** - what variables are passed into each PERFORM call and what gets modified. This requires additional LLM calls per file.
+
+For large files with many PERFORM calls, this can mean 20+ sequential LLM calls. To speed this up, War Rig uses a **Minion Scribe Pool** - a pool of fast, cheap LLMs (Haiku by default) that process call semantics batches in parallel.
+
+```bash
+# Enable/disable call semantics (default: true)
+ENABLE_CALL_SEMANTICS=true
+
+# Minion scribe pool configuration
+MINION_SCRIBE_MODEL=anthropic/claude-3-haiku-20240307  # Fast, cheap model
+NUM_MINION_SCRIBES=4                                    # Parallel workers (1-10)
+MINION_SCRIBE_BATCH_SIZE=5                              # Call edges per LLM request
+```
+
+**Architecture:**
+
+```
+ScribeWorkerPool
+    └── MinionScribePool (shared across all ScribeWorkers)
+            │
+    ┌───────┼───────┬───────┐
+    │       │       │       │
+  Minion1 Minion2 Minion3 Minion4  (process batches in parallel)
+```
+
+**Sub-ticket tracking:** Each call semantics batch creates a `CALL_SEMANTICS` sub-ticket linked to the parent `DOCUMENTATION` ticket. This provides:
+- Full observability of minion work
+- Retry capability for failed batches
+- Duration and token usage tracking per batch
+
+**When to disable:** Set `ENABLE_CALL_SEMANTICS=false` if you:
+- Don't need data flow analysis between paragraphs
+- Want faster processing with fewer LLM calls
+- Are hitting rate limits
+
+You still get paragraph documentation, call graphs, and all other analysis - just without the "what data flows in/out of each PERFORM" detail.
+
 ### Max Ticket Retries (Endless Loop Prevention)
 
 The `MAX_TICKET_RETRIES` setting (default: 5) prevents endless retry loops when a ticket repeatedly fails to process. This safeguard applies to:
