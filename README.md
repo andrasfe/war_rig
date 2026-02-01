@@ -200,6 +200,28 @@ OUTPUT_DIRECTORY=./output
 
 When `EXIT_ON_ERROR=true` (the default), War Rig will stop processing immediately when any error occurs. This is useful for debugging and ensuring issues are addressed before continuing. Set to `false` for batch processing where you want to continue despite individual file failures.
 
+### Citadel-Guided Processing (Large Files)
+
+For large COBOL files, War Rig uses Citadel-guided batched processing to document paragraphs in smaller chunks:
+
+```bash
+# Thresholds for triggering batched processing
+CITADEL_GUIDED_THRESHOLD_LINES=2000      # Files > this use batched processing (default: 2000)
+CITADEL_GUIDED_THRESHOLD_PARAGRAPHS=15   # Files > this use batched processing (default: 15)
+
+# Batch size control
+CITADEL_MAX_PARAGRAPHS_PER_BATCH=10      # Max paragraphs per LLM call (default: 10)
+```
+
+**When to adjust these settings:**
+
+| Setting | When to Change |
+|---------|----------------|
+| `CITADEL_GUIDED_THRESHOLD_*` | Lower to force batching on smaller files; raise to process more in single pass |
+| `CITADEL_MAX_PARAGRAPHS_PER_BATCH` | Lower for slower models (o3: try 5); raise for faster models with large context |
+
+**Reasoning models (o3, o1):** These models are slower and may timeout or produce incomplete output with large batches. Set `CITADEL_MAX_PARAGRAPHS_PER_BATCH=5` for best results. Temperature is automatically set to 1.0 for these models (required by the API).
+
 ### Max Ticket Retries (Endless Loop Prevention)
 
 The `MAX_TICKET_RETRIES` setting (default: 5) prevents endless retry loops when a ticket repeatedly fails to process. This safeguard applies to:
