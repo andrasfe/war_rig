@@ -73,6 +73,7 @@ from war_rig.models.tickets import ChallengerQuestion, ChromeTicket
 from war_rig.utils import log_error
 from war_rig.utils.exceptions import FatalWorkerError
 from war_rig.utils.file_lock import FileLockManager
+from war_rig.workers.minion_scribe_pool import MinionScribePool
 from war_rig.workers.source_preparer import (
     PreparationContext,
     PreparedSource,
@@ -209,6 +210,7 @@ class ScribeWorker:
         file_lock_manager: FileLockManager | None = None,
         exit_on_error: bool = True,
         dependency_graph_path: Path | None = None,
+        minion_pool: MinionScribePool | None = None,
     ):
         """Initialize the Scribe worker.
 
@@ -228,6 +230,9 @@ class ScribeWorker:
             dependency_graph_path: Optional path to Citadel dependency graph JSON.
                 When provided, workers can use Citadel to enrich documentation
                 with function call references and cross-file relationships.
+            minion_pool: Optional shared MinionScribePool for parallel call semantics
+                processing. When provided, this pool is used instead of creating
+                a per-worker pool. This enables resource sharing across workers.
         """
         self.worker_id = worker_id
         self.config = config
@@ -310,6 +315,24 @@ class ScribeWorker:
 
         # Initialize source code preparer for centralized token limit handling
         self._source_preparer = SourceCodePreparer(config.scribe)
+
+        # Initialize minion scribe pool for parallel call semantics processing
+        # Use shared pool if provided, otherwise create per-worker pool
+        self._minion_scribe_pool: MinionScribePool | None = None
+        if config.enable_call_semantics:
+            if minion_pool is not None:
+                self._minion_scribe_pool = minion_pool
+                logger.debug(
+                    f"Worker {worker_id}: Using shared MinionScribePool"
+                )
+            else:
+                self._minion_scribe_pool = MinionScribePool(
+                    config, beads_client=beads_client
+                )
+                logger.debug(
+                    f"Worker {worker_id}: MinionScribePool initialized with "
+                    f"{config.num_minion_scribes} workers"
+                )
 
     @property
     def scribe_agent(self) -> ScribeAgent:
@@ -904,25 +927,35 @@ class ScribeWorker:
                 )
                 return template
 
-            # Create the analyzer with the worker's API config and model
-            analyzer = CallSemanticsAnalyzer(
-                api_config=self.config.api,
-                model=self.config.scribe.model,
-            )
-
             # Extract WORKING-STORAGE section for context
             working_storage = self._extract_working_storage(source_path)
 
-            # Run the analysis
+            # Run the analysis using MinionScribePool for parallel processing
             logger.info(
                 f"Worker {self.worker_id}: Running call semantics analysis for "
                 f"{ticket.file_name}"
             )
-            call_semantics = await analyzer.analyze_file(
-                source_path=source_path,
-                citadel_context=functions,
-                working_storage=working_storage,
-            )
+
+            if self._minion_scribe_pool:
+                # Use the minion scribe pool for parallel processing
+                # Pass ticket_id for sub-ticket tracking
+                call_semantics = await self._minion_scribe_pool.analyze_file(
+                    source_path=source_path,
+                    citadel_context=functions,
+                    working_storage=working_storage,
+                    parent_ticket_id=ticket.ticket_id,
+                )
+            else:
+                # Fallback to single-threaded analyzer if pool not initialized
+                analyzer = CallSemanticsAnalyzer(
+                    api_config=self.config.api,
+                    model=self.config.scribe.model,
+                )
+                call_semantics = await analyzer.analyze_file(
+                    source_path=source_path,
+                    citadel_context=functions,
+                    working_storage=working_storage,
+                )
 
             # Store the results on the template
             if call_semantics:
@@ -4425,6 +4458,16 @@ class ScribeWorkerPool:
         self.exit_on_error = exit_on_error if exit_on_error is not None else config.exit_on_error
         self.dependency_graph_path = dependency_graph_path
 
+        # Create shared MinionScribePool for call semantics processing
+        # This pool is shared across all ScribeWorkers for resource efficiency
+        self._minion_pool: MinionScribePool | None = None
+        if config.enable_call_semantics:
+            self._minion_pool = MinionScribePool(config, beads_client=beads_client)
+            logger.info(
+                f"ScribeWorkerPool: Created shared MinionScribePool with "
+                f"{config.num_minion_scribes} workers"
+            )
+
         # Worker instances (created on start)
         self._workers: list[ScribeWorker] = []
         self._tasks: list[asyncio.Task[None]] = []
@@ -4446,7 +4489,7 @@ class ScribeWorkerPool:
         logger.info(f"ScribeWorkerPool: Starting {self.num_workers} workers")
         self._started = True
 
-        # Create worker instances
+        # Create worker instances with shared minion pool
         self._workers = [
             ScribeWorker(
                 worker_id=f"scribe-{i + 1}",
@@ -4459,6 +4502,7 @@ class ScribeWorkerPool:
                 file_lock_manager=self.file_lock_manager,
                 exit_on_error=self.exit_on_error,
                 dependency_graph_path=self.dependency_graph_path,
+                minion_pool=self._minion_pool,
             )
             for i in range(self.num_workers)
         ]

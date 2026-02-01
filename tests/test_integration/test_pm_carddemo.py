@@ -259,6 +259,9 @@ def mock_war_rig_config(tmp_path, carddemo_path) -> MagicMock:
     config.max_ticket_retries = 5
     config.use_mock = True
     config.enable_call_semantics = True
+    config.minion_scribe_model = "anthropic/claude-3-haiku-20240307"
+    config.num_minion_scribes = 4
+    config.minion_scribe_batch_size = 5
 
     # Beads settings
     config.beads_enabled = False  # Use mock client

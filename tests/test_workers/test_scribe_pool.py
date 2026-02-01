@@ -60,6 +60,10 @@ def mock_config(tmp_path) -> MagicMock:
     config.api.api_key = "test-key"
     config.api.base_url = "https://test.api.com"
     config.enable_call_semantics = True
+    # Minion scribe pool config
+    config.num_minion_scribes = 4
+    config.minion_scribe_batch_size = 5
+    config.minion_scribe_model = "anthropic/claude-3-haiku-20240307"
     return config
 
 
@@ -2930,3 +2934,133 @@ class TestScribeOutlineInPrompt:
         prompt = agent._build_user_prompt(input_data)
 
         assert "Paragraph Outline" not in prompt
+
+
+# =============================================================================
+# Shared MinionScribePool Tests
+# =============================================================================
+
+
+class TestSharedMinionScribePool:
+    """Tests for shared MinionScribePool across ScribeWorkers."""
+
+    def test_pool_creates_shared_minion_pool(self, mock_config, mock_beads_client):
+        """Test that ScribeWorkerPool creates a shared MinionScribePool."""
+        pool = ScribeWorkerPool(
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        # With enable_call_semantics=True, a shared minion pool should be created
+        assert pool._minion_pool is not None
+
+    def test_pool_no_minion_pool_when_disabled(self, mock_config, mock_beads_client):
+        """Test that no minion pool is created when call_semantics is disabled."""
+        mock_config.enable_call_semantics = False
+
+        pool = ScribeWorkerPool(
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        assert pool._minion_pool is None
+
+    @pytest.mark.asyncio
+    async def test_workers_receive_shared_minion_pool(
+        self, mock_config, mock_beads_client
+    ):
+        """Test that all workers receive the same shared MinionScribePool."""
+        mock_beads_client.get_available_tickets.return_value = []
+
+        pool = ScribeWorkerPool(
+            config=mock_config,
+            beads_client=mock_beads_client,
+            num_workers=3,
+            idle_timeout=0.1,
+        )
+
+        await pool.start()
+
+        # All workers should have the same minion pool reference
+        assert len(pool._workers) == 3
+        for worker in pool._workers:
+            assert worker._minion_scribe_pool is pool._minion_pool
+
+        await pool.wait()
+        await pool.stop()
+
+    @pytest.mark.asyncio
+    async def test_workers_no_minion_pool_when_disabled(
+        self, mock_config, mock_beads_client
+    ):
+        """Test that workers have no minion pool when disabled."""
+        mock_config.enable_call_semantics = False
+        mock_beads_client.get_available_tickets.return_value = []
+
+        pool = ScribeWorkerPool(
+            config=mock_config,
+            beads_client=mock_beads_client,
+            num_workers=2,
+            idle_timeout=0.1,
+        )
+
+        await pool.start()
+
+        # Workers should have no minion pool
+        for worker in pool._workers:
+            assert worker._minion_scribe_pool is None
+
+        await pool.wait()
+        await pool.stop()
+
+    def test_worker_accepts_minion_pool_parameter(self, mock_config, mock_beads_client):
+        """Test that ScribeWorker accepts minion_pool parameter."""
+        from war_rig.workers.minion_scribe_pool import MinionScribePool
+
+        # Create a mock minion pool
+        minion_pool = MagicMock(spec=MinionScribePool)
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            minion_pool=minion_pool,
+        )
+
+        assert worker._minion_scribe_pool is minion_pool
+
+    def test_worker_creates_own_pool_when_not_provided(
+        self, mock_config, mock_beads_client
+    ):
+        """Test that ScribeWorker creates its own pool when not provided."""
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            # No minion_pool parameter
+        )
+
+        # With enable_call_semantics=True, worker creates its own pool
+        assert worker._minion_scribe_pool is not None
+
+    def test_worker_no_pool_when_disabled(self, mock_config, mock_beads_client):
+        """Test that ScribeWorker has no pool when call_semantics is disabled."""
+        mock_config.enable_call_semantics = False
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        assert worker._minion_scribe_pool is None
+
+    def test_shared_minion_pool_has_beads_client(self, mock_config, mock_beads_client):
+        """Test that the shared MinionScribePool has the BeadsClient."""
+        pool = ScribeWorkerPool(
+            config=mock_config,
+            beads_client=mock_beads_client,
+        )
+
+        assert pool._minion_pool is not None
+        assert pool._minion_pool.beads_client is mock_beads_client

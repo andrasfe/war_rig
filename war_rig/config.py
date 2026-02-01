@@ -298,6 +298,24 @@ class WarRigConfig(BaseSettings):
         description="Enable call semantics analysis (adds LLM calls to infer data flow between paragraphs)",
     )
 
+    # Minion Scribe pool configuration (for parallel call semantics processing)
+    minion_scribe_model: str = Field(
+        default="anthropic/claude-3-haiku-20240307",
+        description="Model for Minion Scribe workers (fast, cheap model for call semantics)",
+    )
+    num_minion_scribes: int = Field(
+        default=4,
+        ge=1,
+        le=10,
+        description="Number of parallel Minion Scribe workers for call semantics analysis",
+    )
+    minion_scribe_batch_size: int = Field(
+        default=5,
+        ge=1,
+        le=20,
+        description="Number of call edges per Minion Scribe LLM request",
+    )
+
     # Cycle limits for agents
     max_challenger_cycles: int = Field(
         default=2,

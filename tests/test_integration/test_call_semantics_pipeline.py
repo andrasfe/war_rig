@@ -666,6 +666,10 @@ class TestFileTypeFiltering:
         mock_config.input_directory = cobol_source_file.parent
         mock_config.output_directory = cobol_source_file.parent / "output"
         mock_config.exit_on_error = True
+        mock_config.enable_call_semantics = True
+        mock_config.minion_scribe_model = "anthropic/claude-3-haiku-20240307"
+        mock_config.num_minion_scribes = 4
+        mock_config.minion_scribe_batch_size = 5
         mock_config.scribe = MagicMock()
         mock_config.scribe.model = "claude-sonnet-4-20250514"
         mock_config.scribe.temperature = 0.3
@@ -695,6 +699,10 @@ class TestFileTypeFiltering:
         mock_config = MagicMock(spec=WarRigConfig)
         mock_config.input_directory = temp_dir
         mock_config.output_directory = temp_dir / "output"
+        mock_config.enable_call_semantics = True
+        mock_config.minion_scribe_model = "anthropic/claude-3-haiku-20240307"
+        mock_config.num_minion_scribes = 4
+        mock_config.minion_scribe_batch_size = 5
         mock_config.scribe = MagicMock()
         mock_config.scribe.max_prompt_tokens = 15000
         mock_config.api = MagicMock()
@@ -718,6 +726,10 @@ class TestFileTypeFiltering:
         mock_config = MagicMock(spec=WarRigConfig)
         mock_config.input_directory = temp_dir
         mock_config.output_directory = temp_dir / "output"
+        mock_config.enable_call_semantics = True
+        mock_config.minion_scribe_model = "anthropic/claude-3-haiku-20240307"
+        mock_config.num_minion_scribes = 4
+        mock_config.minion_scribe_batch_size = 5
         mock_config.scribe = MagicMock()
         mock_config.scribe.max_prompt_tokens = 15000
         mock_config.api = MagicMock()
@@ -751,6 +763,9 @@ class TestEnrichCallSemanticsMethod:
         mock_config.api.provider = "openrouter"
         mock_config.api.api_key = "test-key"
         mock_config.enable_call_semantics = True
+        mock_config.minion_scribe_model = "anthropic/claude-3-haiku-20240307"
+        mock_config.num_minion_scribes = 4
+        mock_config.minion_scribe_batch_size = 5
 
         mock_beads = MagicMock(spec=BeadsClient)
 
@@ -802,6 +817,9 @@ class TestEnrichCallSemanticsMethod:
         mock_config.api.provider = "openrouter"
         mock_config.api.api_key = "test-key"
         mock_config.enable_call_semantics = True
+        mock_config.minion_scribe_model = "anthropic/claude-3-haiku-20240307"
+        mock_config.num_minion_scribes = 4
+        mock_config.minion_scribe_batch_size = 5
 
         mock_beads = MagicMock(spec=BeadsClient)
 
