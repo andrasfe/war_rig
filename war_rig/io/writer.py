@@ -428,6 +428,32 @@ class DocumentationWriter:
                     lines.append(f"- Lines: {para.citation[0]}-{para.citation[1]}")
                 lines.append("")
 
+        # Inter-Paragraph Data Flow (from call_semantics)
+        if template.call_semantics:
+            lines.append("## Inter-Paragraph Data Flow")
+            lines.append("")
+            lines.append("| Caller | Callee | Inputs | Outputs | Purpose |")
+            lines.append("|--------|--------|--------|---------|---------|")
+            for cs in template.call_semantics:
+                # Handle both dict and object (from lenient model_construct)
+                if isinstance(cs, dict):
+                    caller = cs.get("caller", "")
+                    callee = cs.get("callee", "")
+                    inputs = cs.get("inputs", [])
+                    outputs = cs.get("outputs", [])
+                    purpose = cs.get("purpose", "")
+                else:
+                    caller = cs.caller or ""
+                    callee = cs.callee or ""
+                    inputs = cs.inputs or []
+                    outputs = cs.outputs or []
+                    purpose = cs.purpose or ""
+                inputs_str = ", ".join(inputs) if inputs else "-"
+                outputs_str = ", ".join(outputs) if outputs else "-"
+                purpose_str = purpose or "-"
+                lines.append(f"| {caller} | {callee} | {inputs_str} | {outputs_str} | {purpose_str} |")
+            lines.append("")
+
         # Error Handling
         if template.error_handling:
             lines.append("## Error Handling")
