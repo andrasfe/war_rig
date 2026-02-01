@@ -59,6 +59,7 @@ def mock_config(tmp_path) -> MagicMock:
     config.api.provider = "openrouter"
     config.api.api_key = "test-key"
     config.api.base_url = "https://test.api.com"
+    config.enable_call_semantics = True
     return config
 
 

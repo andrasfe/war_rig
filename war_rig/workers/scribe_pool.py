@@ -867,6 +867,10 @@ class ScribeWorker:
             The enriched template with call_semantics populated (or original
             template if enrichment was not applicable or failed).
         """
+        # Check if call semantics is enabled
+        if not self.config.enable_call_semantics:
+            return template
+
         # Only run for COBOL files
         if file_type != FileType.COBOL:
             return template

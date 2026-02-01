@@ -258,6 +258,7 @@ def mock_war_rig_config(tmp_path, carddemo_path) -> MagicMock:
     config.exit_on_error = True
     config.max_ticket_retries = 5
     config.use_mock = True
+    config.enable_call_semantics = True
 
     # Beads settings
     config.beads_enabled = False  # Use mock client

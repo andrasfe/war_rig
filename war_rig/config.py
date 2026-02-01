@@ -292,6 +292,12 @@ class WarRigConfig(BaseSettings):
         description="Number of parallel Super-Scribe workers (typically 1 due to cost)",
     )
 
+    # Call semantics enrichment (makes additional LLM calls per file)
+    enable_call_semantics: bool = Field(
+        default=True,
+        description="Enable call semantics analysis (adds LLM calls to infer data flow between paragraphs)",
+    )
+
     # Cycle limits for agents
     max_challenger_cycles: int = Field(
         default=2,

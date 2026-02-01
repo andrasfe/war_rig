@@ -750,6 +750,7 @@ class TestEnrichCallSemanticsMethod:
         mock_config.api = MagicMock()
         mock_config.api.provider = "openrouter"
         mock_config.api.api_key = "test-key"
+        mock_config.enable_call_semantics = True
 
         mock_beads = MagicMock(spec=BeadsClient)
 
@@ -800,6 +801,7 @@ class TestEnrichCallSemanticsMethod:
         mock_config.api = MagicMock()
         mock_config.api.provider = "openrouter"
         mock_config.api.api_key = "test-key"
+        mock_config.enable_call_semantics = True
 
         mock_beads = MagicMock(spec=BeadsClient)
 
