@@ -1249,6 +1249,104 @@ class ChallengerWorker:
 
         return header + sampled_code, True
 
+    def _sample_paragraphs(
+        self,
+        template: DocumentationTemplate,
+        sample_size: int,
+    ) -> tuple[DocumentationTemplate, list[str]]:
+        """Sample paragraphs for Challenger validation using hybrid strategy.
+
+        Sampling strategy:
+        1. Always include entry point (first paragraph or 0000-/0100-)
+        2. Include high-complexity paragraphs (most SQL/CICS/calls)
+        3. Fill remaining slots with random paragraphs
+
+        Args:
+            template: The full documentation template.
+            sample_size: Number of paragraphs to sample.
+
+        Returns:
+            Tuple of (sampled_template, sampled_paragraph_names) where
+            sampled_template has only the sampled paragraphs.
+        """
+        if not template.paragraphs or len(template.paragraphs) <= sample_size:
+            # No sampling needed
+            para_names = [p.paragraph_name for p in template.paragraphs if p.paragraph_name]
+            return template, para_names
+
+        paragraphs = list(template.paragraphs)
+        sampled: list = []
+        sampled_names: set[str] = set()
+
+        # 1. Find entry point (first paragraph or one starting with 0000-/0100-)
+        entry_point = None
+        for p in paragraphs:
+            if p.paragraph_name and (
+                p.paragraph_name.startswith("0000-") or
+                p.paragraph_name.startswith("0100-") or
+                p.paragraph_name.upper().startswith("MAIN")
+            ):
+                entry_point = p
+                break
+        if not entry_point and paragraphs:
+            entry_point = paragraphs[0]
+
+        if entry_point and entry_point.paragraph_name:
+            sampled.append(entry_point)
+            sampled_names.add(entry_point.paragraph_name)
+
+        # 2. Score paragraphs by complexity (SQL, CICS, calls)
+        def complexity_score(p) -> int:
+            score = 0
+            # Count outgoing calls
+            if p.outgoing_calls:
+                score += len(p.outgoing_calls)
+            # Check for SQL/CICS mentions in summary
+            if p.summary:
+                summary_upper = p.summary.upper()
+                if "SQL" in summary_upper or "SELECT" in summary_upper or "INSERT" in summary_upper:
+                    score += 3
+                if "CICS" in summary_upper or "EXEC" in summary_upper:
+                    score += 3
+                if "ERROR" in summary_upper or "EXCEPTION" in summary_upper:
+                    score += 2
+            return score
+
+        # Sort by complexity, take top ones (excluding already sampled)
+        remaining = [p for p in paragraphs if p.paragraph_name not in sampled_names]
+        remaining.sort(key=complexity_score, reverse=True)
+
+        # Take top complex paragraphs (up to half of remaining slots)
+        complex_slots = (sample_size - len(sampled)) // 2
+        for p in remaining[:complex_slots]:
+            if p.paragraph_name and p.paragraph_name not in sampled_names:
+                sampled.append(p)
+                sampled_names.add(p.paragraph_name)
+
+        # 3. Fill rest with random paragraphs
+        remaining = [p for p in paragraphs if p.paragraph_name not in sampled_names]
+        random.shuffle(remaining)
+        for p in remaining:
+            if len(sampled) >= sample_size:
+                break
+            if p.paragraph_name and p.paragraph_name not in sampled_names:
+                sampled.append(p)
+                sampled_names.add(p.paragraph_name)
+
+        # Create a new template with only sampled paragraphs
+        sampled_template = template.model_copy(deep=True)
+        sampled_template.paragraphs = sampled
+
+        # Clear call_semantics (not needed for validation)
+        sampled_template.call_semantics = []
+
+        logger.info(
+            f"Worker {self.worker_id}: Sampled {len(sampled)}/{len(paragraphs)} "
+            f"paragraphs for validation: {list(sampled_names)}"
+        )
+
+        return sampled_template, list(sampled_names)
+
     async def _validate_documentation(
         self,
         state: dict[str, Any],
@@ -1320,55 +1418,79 @@ class ChallengerWorker:
             )
 
         try:
-            # Check if source code needs sampling due to token limits
-            source_code = state["source_code"]
-            max_prompt_tokens = self.config.challenger.max_prompt_tokens
-            # Reserve tokens for template, system prompt, etc.
-            max_source_tokens = max_prompt_tokens - 6000  # More overhead for template
-
-            sampled_code, was_sampled = self._sample_source_code(source_code, max_source_tokens)
-            if was_sampled:
-                logger.info(
-                    f"Worker {self.worker_id}: Source code sampled for validation "
-                    f"({ticket.file_name})"
-                )
-
             # Extract feedback context from ticket metadata (IMPFB-006)
             feedback_context = ticket.metadata.get("feedback_context") if ticket.metadata else None
 
-            # Build Citadel context with paragraph bodies for cross-reference
+            # Sample paragraphs for validation (reduces context significantly)
+            template = state["template"]
+            sample_size = self.config.challenger_paragraph_sample_size
+            sampled_template, sampled_para_names = self._sample_paragraphs(template, sample_size)
+
+            # Track if we actually sampled (fewer paragraphs than original)
+            was_sampled = len(sampled_para_names) < len(template.paragraphs)
+
+            # Build Citadel context with ONLY sampled paragraph bodies
             citadel_ctx = None
             pattern_facts = None
-            if self._citadel and state.get("template"):
-                try:
-                    template = state["template"]
-                    para_names = [
-                        p.paragraph_name
-                        for p in template.paragraphs
-                        if p.paragraph_name
-                    ]
-                    if para_names:
-                        # Resolve source file path
-                        source_path = self._resolve_source_path(ticket)
-                        bodies = self._citadel.get_function_bodies(
-                            str(source_path), para_names
-                        )
-                        citadel_ctx = {"paragraph_bodies": bodies}
+            sampled_code = ""
 
-                        # Get pattern facts for validation
-                        citadel_analysis_ctx = self._get_citadel_context(str(source_path))
-                        pattern_facts = self._get_pattern_facts(
-                            str(source_path), citadel_analysis_ctx
-                        )
+            if self._citadel and sampled_para_names:
+                try:
+                    # Resolve source file path
+                    source_path = self._resolve_source_path(ticket)
+
+                    # Get bodies ONLY for sampled paragraphs
+                    bodies = self._citadel.get_function_bodies(
+                        str(source_path), sampled_para_names
+                    )
+                    citadel_ctx = {"paragraph_bodies": bodies}
+
+                    # Build sampled source code from paragraph bodies (not full source)
+                    # This replaces sending the full source_code
+                    body_parts = []
+                    for name in sampled_para_names:
+                        if name in bodies and bodies[name]:
+                            body_parts.append(f"* PARAGRAPH: {name}")
+                            body_parts.append(bodies[name])
+                            body_parts.append("")
+                    sampled_code = "\n".join(body_parts)
+
+                    # Get pattern facts for sampled paragraphs only
+                    citadel_analysis_ctx = self._get_citadel_context(str(source_path))
+                    pattern_facts = self._get_pattern_facts(
+                        str(source_path), citadel_analysis_ctx
+                    )
+                    # Filter pattern_facts to sampled paragraphs
+                    if pattern_facts and pattern_facts.get("paragraph_facts"):
+                        pattern_facts["paragraph_facts"] = [
+                            pf for pf in pattern_facts["paragraph_facts"]
+                            if pf.get("paragraph_name") in sampled_para_names
+                        ]
                 except Exception as e:
                     logger.debug(
                         f"Worker {self.worker_id}: Failed to get Citadel bodies "
                         f"for challenger: {e}"
                     )
+                    # Fallback to sampled source code if Citadel fails
+                    source_code = state["source_code"]
+                    max_prompt_tokens = self.config.challenger.max_prompt_tokens
+                    max_source_tokens = max_prompt_tokens - 6000
+                    sampled_code, _ = self._sample_source_code(source_code, max_source_tokens)
+            else:
+                # No Citadel - fallback to sampled source code
+                source_code = state["source_code"]
+                max_prompt_tokens = self.config.challenger.max_prompt_tokens
+                max_source_tokens = max_prompt_tokens - 6000
+                sampled_code, _ = self._sample_source_code(source_code, max_source_tokens)
 
-            # Build ChallengerInput
+            # Don't send paragraph_bodies in citadel_ctx since we're using sampled_code
+            # This avoids duplication
+            if citadel_ctx:
+                citadel_ctx = None  # Bodies are already in sampled_code
+
+            # Build ChallengerInput with sampled template
             challenger_input = ChallengerInput(
-                template=state["template"],
+                template=sampled_template,
                 source_code=sampled_code,
                 file_name=state["file_name"],
                 file_type=state["file_type"],

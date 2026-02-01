@@ -83,6 +83,7 @@ def mock_config(tmp_path) -> MagicMock:
     config.api.provider = "openrouter"
     config.api.api_key = "test-key"
     config.api.base_url = "https://test.api.com"
+    config.challenger_paragraph_sample_size = 5
     return config
 
 
@@ -2000,13 +2001,14 @@ class TestChallengerLLMValidationWithBodies:
 
         await worker._validate_documentation(state, sample_validation_ticket)
 
-        # Verify citadel_context was passed
+        # Verify paragraph bodies were included in source_code (not citadel_context)
+        # With paragraph sampling, bodies are sent as source_code to avoid duplication
         assert len(captured_inputs) == 1
         challenger_input = captured_inputs[0]
-        assert challenger_input.citadel_context is not None
-        assert "paragraph_bodies" in challenger_input.citadel_context
-        bodies = challenger_input.citadel_context["paragraph_bodies"]
-        assert "0000-MAIN" in bodies
+        # citadel_context is now None to avoid duplication
+        assert challenger_input.citadel_context is None
+        # Bodies should be in source_code instead
+        assert "0000-MAIN" in challenger_input.source_code
 
     async def test_validation_works_without_citadel(
         self, mock_config, mock_beads_client, sample_template, sample_validation_ticket

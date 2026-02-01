@@ -271,6 +271,14 @@ class WarRigConfig(BaseSettings):
     max_questions_per_round: int = Field(default=5, ge=1, le=20)
     max_chrome_tickets: int = Field(default=5, ge=1, le=20)
 
+    # Challenger sampling (reduces context by validating only a sample of paragraphs)
+    challenger_paragraph_sample_size: int = Field(
+        default=5,
+        ge=1,
+        le=20,
+        description="Number of paragraphs to sample for Challenger validation (0 = all)",
+    )
+
     # Parallel worker pools
     num_scribes: int = Field(default=3, ge=1, le=10, description="Number of parallel Scribe workers")
     num_challengers: int = Field(default=2, ge=1, le=10, description="Number of parallel Challenger workers")
