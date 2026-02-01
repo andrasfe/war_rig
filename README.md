@@ -254,6 +254,18 @@ ScribeWorkerPool
 - Retry capability for failed batches
 - Duration and token usage tracking per batch
 
+**Caching for resume:** Call semantics results are cached to `output/cache/call_semantics/{PROGRAM_ID}.json`. If processing crashes and you re-run, cached results are loaded automatically, skipping the LLM calls. To clear the cache: `rm -rf output/cache/call_semantics/`
+
+**Output:** Call semantics appear in the markdown output as an **Inter-Paragraph Data Flow** table:
+
+```markdown
+## Inter-Paragraph Data Flow
+
+| Caller | Callee | Inputs | Outputs | Purpose |
+|--------|--------|--------|---------|---------|
+| 0100-MAIN | 2000-VALIDATE | WS-ACCT-ID | WS-STATUS | Validates account |
+```
+
 **When to disable:** Set `ENABLE_CALL_SEMANTICS=false` if you:
 - Don't need data flow analysis between paragraphs
 - Want faster processing with fewer LLM calls
