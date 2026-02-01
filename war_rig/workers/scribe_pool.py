@@ -902,6 +902,31 @@ class ScribeWorker:
         if not self._citadel:
             return template
 
+        # Check for cached call semantics
+        program_id = template.header.program_id if template.header else ticket.program_id
+        cache_dir = self.output_directory / "cache" / "call_semantics"
+        cache_file = cache_dir / f"{program_id}.json"
+
+        if cache_file.exists():
+            try:
+                import json
+                with cache_file.open() as f:
+                    cached_data = json.load(f)
+                if cached_data:
+                    from war_rig.models.templates import CallSemantics
+                    template.call_semantics = [
+                        CallSemantics(**cs) for cs in cached_data
+                    ]
+                    logger.info(
+                        f"Worker {self.worker_id}: Loaded {len(template.call_semantics)} "
+                        f"cached call semantics for {ticket.file_name}"
+                    )
+                    return template
+            except Exception as e:
+                logger.warning(
+                    f"Worker {self.worker_id}: Failed to load cached call semantics: {e}"
+                )
+
         try:
             # Resolve the source file path
             source_path = self.input_directory / ticket.file_name
@@ -957,13 +982,31 @@ class ScribeWorker:
                     working_storage=working_storage,
                 )
 
-            # Store the results on the template
+            # Store the results on the template and cache to disk
             if call_semantics:
                 template.call_semantics = call_semantics
                 logger.info(
                     f"Worker {self.worker_id}: Enriched {ticket.file_name} with "
                     f"{len(call_semantics)} call semantics"
                 )
+
+                # Persist to cache for resume capability
+                try:
+                    import json
+                    cache_dir.mkdir(parents=True, exist_ok=True)
+                    with cache_file.open("w") as f:
+                        json.dump(
+                            [cs.model_dump() for cs in call_semantics],
+                            f,
+                            indent=2,
+                        )
+                    logger.debug(
+                        f"Worker {self.worker_id}: Cached call semantics to {cache_file}"
+                    )
+                except Exception as cache_err:
+                    logger.warning(
+                        f"Worker {self.worker_id}: Failed to cache call semantics: {cache_err}"
+                    )
             else:
                 logger.debug(
                     f"Worker {self.worker_id}: No call semantics inferred for "
