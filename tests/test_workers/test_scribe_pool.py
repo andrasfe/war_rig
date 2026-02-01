@@ -2576,7 +2576,6 @@ class TestCitadelGuidedDocumentation:
         # Add config fields needed for Citadel-guided processing
         mock_config.citadel_guided_threshold_lines = 2000
         mock_config.citadel_guided_threshold_paragraphs = 15
-        mock_config.citadel_batch_size = 5
         # Use small batch size for testing batched processing
         mock_config.scribe.citadel_max_paragraphs_per_batch = 5
 

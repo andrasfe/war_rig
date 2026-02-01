@@ -354,12 +354,6 @@ class WarRigConfig(BaseSettings):
         ge=1,
         description="Files with more paragraphs than this use batched processing",
     )
-    citadel_batch_size: int = Field(
-        default=30,
-        ge=1,
-        le=100,
-        description="Number of paragraphs per batch in Citadel-guided processing",
-    )
 
     # Beads integration
     # Disabled by default - War Rig uses in-memory ticket tracking
