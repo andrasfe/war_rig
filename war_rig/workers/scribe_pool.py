@@ -2920,7 +2920,9 @@ class ScribeWorker:
         """Fill in any paragraphs missing from the documentation.
 
         Compares documented paragraphs against the Citadel outline and
-        runs targeted LLM calls for any missing ones.
+        runs targeted LLM calls for any missing ones. For large numbers
+        of missing paragraphs, processes them in batches to avoid
+        overwhelming the LLM.
 
         Args:
             output: The current ScribeOutput.
@@ -2960,54 +2962,89 @@ class ScribeWorker:
         metadata_path = ticket.metadata.get("file_path")
         source_path = Path(metadata_path) if metadata_path else self.input_directory / ticket.file_name
 
-        # Get bodies for missing paragraphs
+        # Get bodies for ALL missing paragraphs upfront
         missing_names = [p.get("name", "") for p in missing if p.get("name")]
         try:
-            bodies = self._citadel.get_function_bodies(str(source_path), missing_names)
+            all_bodies = self._citadel.get_function_bodies(str(source_path), missing_names)
         except Exception as e:
             logger.warning(
                 f"Worker {self.worker_id}: Failed to get bodies for gap-fill: {e}"
             )
             return output
 
-        # Build source from missing bodies
-        gap_source_parts = []
-        for name in missing_names:
-            body = bodies.get(name)
-            if body:
-                gap_source_parts.append(body)
-                gap_source_parts.append("")
+        # Filter to paragraphs that have bodies
+        missing_with_bodies = [
+            p for p in missing
+            if p.get("name") and all_bodies.get(p.get("name"))
+        ]
+        missing_without_bodies = [
+            p for p in missing
+            if p.get("name") and not all_bodies.get(p.get("name"))
+        ]
 
-        if not gap_source_parts:
-            # No bodies found, create stubs from outline
-            for p in missing:
-                output.template.paragraphs.append(
-                    Paragraph(
-                        paragraph_name=p.get("name", "UNKNOWN"),
-                        purpose="[Citadel] Paragraph identified by static analysis - body not extractable",
-                    )
+        # Add stubs for paragraphs without extractable bodies
+        for p in missing_without_bodies:
+            output.template.paragraphs.append(
+                Paragraph(
+                    paragraph_name=p.get("name", "UNKNOWN"),
+                    purpose="[Citadel] Paragraph identified by static analysis - body not extractable",
                 )
+            )
+            documented.add(p.get("name", "").lower())
+
+        if not missing_with_bodies:
             return output
 
-        gap_source = "\n".join(gap_source_parts)
+        # Process missing paragraphs in batches (same limit as main batching)
+        max_per_batch = self.config.scribe.citadel_max_paragraphs_per_batch
+        batches = [
+            missing_with_bodies[i:i + max_per_batch]
+            for i in range(0, len(missing_with_bodies), max_per_batch)
+        ]
 
-        scribe_input = ScribeInput(
-            source_code=gap_source,
-            file_name=ticket.file_name,
-            file_type=file_type,
-            iteration=ticket.cycle_number,
-            formatting_strict=formatting_strict,
-            citadel_outline=missing,
+        logger.info(
+            f"Worker {self.worker_id}: Processing {len(missing_with_bodies)} missing "
+            f"paragraphs in {len(batches)} gap-fill batches"
         )
 
-        gap_output = await self.scribe_agent.ainvoke(scribe_input)
+        for batch_idx, batch in enumerate(batches):
+            batch_names = [p.get("name", "") for p in batch]
 
-        if gap_output.success and gap_output.template:
-            # Merge gap-filled paragraphs
-            for para in gap_output.template.paragraphs:
-                if para.paragraph_name and para.paragraph_name.lower() not in documented:
-                    output.template.paragraphs.append(para)
-                    documented.add(para.paragraph_name.lower())
+            # Build source from batch bodies
+            gap_source_parts = []
+            for name in batch_names:
+                body = all_bodies.get(name)
+                if body:
+                    gap_source_parts.append(body)
+                    gap_source_parts.append("")
+
+            if not gap_source_parts:
+                continue
+
+            gap_source = "\n".join(gap_source_parts)
+
+            scribe_input = ScribeInput(
+                source_code=gap_source,
+                file_name=ticket.file_name,
+                file_type=file_type,
+                iteration=ticket.cycle_number,
+                formatting_strict=formatting_strict,
+                citadel_outline=batch,
+            )
+
+            logger.debug(
+                f"Worker {self.worker_id}: Gap-fill batch {batch_idx + 1}/{len(batches)} "
+                f"with {len(batch_names)} paragraphs"
+            )
+
+            gap_output = await self.scribe_agent.ainvoke(scribe_input)
+
+            if gap_output.success and gap_output.template:
+                # Merge gap-filled paragraphs
+                for para in gap_output.template.paragraphs:
+                    if para.paragraph_name and para.paragraph_name.lower() not in documented:
+                        output.template.paragraphs.append(para)
+                        documented.add(para.paragraph_name.lower())
 
         # For any still-missing paragraphs, create stubs
         still_documented = {
