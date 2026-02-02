@@ -320,6 +320,9 @@ class Citadel:
         self._extension_to_spec: dict[str, str] = {}
         self._build_extension_map()
 
+        # Track extensions we've warned about to avoid log spam
+        self._warned_extensions: set[str] = set()
+
     def _build_extension_map(self) -> None:
         """Build mapping from file extensions to spec IDs."""
         for spec_id in self.spec_manager.list_available_specs():
@@ -788,7 +791,10 @@ class Citadel:
         # Get spec for this file type
         spec = self._get_spec_for_file(file_path)
         if not spec:
-            logger.warning("No spec found for file extension '%s'", file_path.suffix)
+            ext = file_path.suffix.lower()
+            if ext not in self._warned_extensions:
+                self._warned_extensions.add(ext)
+                logger.debug("No spec found for file extension '%s' (skipping)", ext)
             return None
 
         # Read file content
@@ -830,7 +836,10 @@ class Citadel:
         # Get spec for this file type
         spec = self._get_spec_for_file(file_path)
         if not spec:
-            logger.warning("No spec found for file extension '%s'", file_path.suffix)
+            ext = file_path.suffix.lower()
+            if ext not in self._warned_extensions:
+                self._warned_extensions.add(ext)
+                logger.debug("No spec found for file extension '%s' (skipping)", ext)
             return bodies
 
         # Read file content
