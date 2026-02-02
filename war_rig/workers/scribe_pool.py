@@ -3872,6 +3872,12 @@ class ScribeWorker:
                     f"for {ticket.file_name}: {e}"
                 )
 
+        # Enrich with call semantics (COBOL only)
+        if result.template:
+            result.template = await self._enrich_call_semantics(
+                result.template, ticket, file_type,
+            )
+
         # Save the template to disk
         if result.template:
             self._save_template(ticket.file_name, result.template)
