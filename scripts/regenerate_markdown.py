@@ -33,6 +33,13 @@ from war_rig.io.writer import DocumentationWriter
 from war_rig.models.templates import DocumentationTemplate
 
 
+class MinimalConfig:
+    """Minimal config for DocumentationWriter."""
+
+    def __init__(self, output_dir: Path):
+        self.output_directory = output_dir
+
+
 def regenerate_markdown(
     output_dir: Path,
     dry_run: bool = False,
@@ -48,7 +55,8 @@ def regenerate_markdown(
     Returns:
         Tuple of (files_processed, files_with_call_semantics).
     """
-    writer = DocumentationWriter()
+    config = MinimalConfig(output_dir)
+    writer = DocumentationWriter(config)
     count = 0
     with_call_semantics = 0
 
@@ -62,7 +70,7 @@ def regenerate_markdown(
                 data = json.load(f)
 
             template = DocumentationTemplate.load_lenient(data)
-            md_content = writer.template_to_markdown(template)
+            md_content = writer._template_to_markdown(template)
             md_file = doc_file.with_suffix("").with_suffix(".md")
 
             para_count = len(template.paragraphs) if template.paragraphs else 0
