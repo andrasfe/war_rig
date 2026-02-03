@@ -13,7 +13,7 @@ import pytest
 
 from codewhisper.agent.minion import (
     DEFAULT_MINION_MODEL,
-    MINION_THRESHOLD,
+    DEFAULT_MINION_THRESHOLD_TOKENS,
     MinionProcessor,
     ToolResultSummary,
 )
@@ -39,13 +39,15 @@ class TestMinionProcessorInit:
 
     def test_init_defaults(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test initialization with defaults."""
-        # Clear env var to test fallback
+        # Clear env vars to test fallback
         monkeypatch.delenv("MINION_SCRIBE_MODEL", raising=False)
+        monkeypatch.delenv("MINION_CONTEXT_THRESHOLD", raising=False)
 
         processor = MinionProcessor()
 
         assert processor.model_name == DEFAULT_MINION_MODEL
-        assert processor.threshold == MINION_THRESHOLD
+        # Default threshold: 8000 tokens * 4 chars/token = 32000 chars
+        assert processor.threshold == DEFAULT_MINION_THRESHOLD_TOKENS * 4
 
     def test_init_from_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test initialization from environment variable."""

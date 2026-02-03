@@ -25,8 +25,21 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# Character threshold above which to summarize tool results
-MINION_THRESHOLD = 2000
+# Default threshold: 8000 tokens (suitable for claude-3-haiku)
+DEFAULT_MINION_THRESHOLD_TOKENS = 8000
+
+
+def _get_minion_threshold() -> int:
+    """Get minion context threshold from env var.
+
+    Returns threshold in characters (~4 chars per token).
+    Reads MINION_CONTEXT_THRESHOLD env var (in tokens).
+    Default: 8000 tokens = 32000 chars.
+    """
+    tokens = int(
+        os.environ.get("MINION_CONTEXT_THRESHOLD", str(DEFAULT_MINION_THRESHOLD_TOKENS))
+    )
+    return tokens * 4  # Convert tokens to approximate chars
 
 # Default model if MINION_SCRIBE_MODEL is not set
 DEFAULT_MINION_MODEL = "anthropic/claude-3-haiku-20240307"
@@ -81,7 +94,7 @@ class MinionProcessor:
     def __init__(
         self,
         model_name: str | None = None,
-        threshold: int = MINION_THRESHOLD,
+        threshold: int | None = None,
     ):
         """Initialize the minion processor.
 
@@ -95,7 +108,7 @@ class MinionProcessor:
             "MINION_SCRIBE_MODEL",
             DEFAULT_MINION_MODEL,
         )
-        self.threshold = threshold
+        self.threshold = threshold if threshold is not None else _get_minion_threshold()
         self._llm: Runnable[str, ToolResultSummary] | None = None
 
         logger.debug(f"MinionProcessor initialized: model={self.model_name}")
