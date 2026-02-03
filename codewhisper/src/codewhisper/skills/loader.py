@@ -96,23 +96,27 @@ class Skill:
 class SkillsLoader:
     """Loader for skill files from a directory.
 
-    Recursively finds and loads all SKILL.md files from the given
-    directory and its subdirectories.
+    By default, only loads the root SKILL.md file for progressive disclosure.
+    Category skills can be loaded on-demand using load_category().
 
     Attributes:
         skills_dir: Base directory containing skills.
 
     Example:
         loader = SkillsLoader(Path("./example_output/skills"))
-        skills = loader.load_all()
 
-        # Or iterate lazily
-        for skill in loader.iter_skills():
-            print(skill.name)
+        # Load only root skill (default)
+        root_skill = loader.load_root()
+
+        # Load a specific category when needed
+        cobol_skill = loader.load_category("cobol")
+
+        # Or load all (not recommended for large skill sets)
+        all_skills = loader.load_all(recursive=True)
     """
 
     # File patterns to search for
-    SKILL_PATTERNS = ["SKILL.md", "skill.md", "*.skill.md"]
+    SKILL_PATTERNS = ["SKILL.md", "skill.md"]
 
     def __init__(self, skills_dir: Path):
         """Initialize the loader.
@@ -133,57 +137,127 @@ class SkillsLoader:
 
         logger.debug(f"SkillsLoader initialized: {skills_dir}")
 
-    def iter_skills(self) -> Iterator[Skill]:
-        """Iterate over all skills in the directory.
+    def load_root(self) -> Skill | None:
+        """Load only the root SKILL.md file.
 
-        Yields skills as they are loaded, allowing for lazy processing.
+        This is the preferred method for initial loading - provides
+        the overview without loading all category details.
+
+        Returns:
+            The root skill, or None if not found.
+        """
+        for pattern in self.SKILL_PATTERNS:
+            root_path = self.skills_dir / pattern
+            if root_path.exists():
+                skill = Skill.from_file(root_path)
+                if skill:
+                    logger.info(f"Loaded root skill: {skill.name}")
+                    return skill
+
+        logger.warning(f"No root SKILL.md found in {self.skills_dir}")
+        return None
+
+    def load_category(self, category: str) -> Skill | None:
+        """Load a specific category's SKILL.md.
+
+        Use this for on-demand loading when user asks about a category.
+
+        Args:
+            category: Category name (e.g., "cobol", "jcl").
+
+        Returns:
+            The category skill, or None if not found.
+        """
+        category_dir = self.skills_dir / category
+
+        if not category_dir.is_dir():
+            logger.warning(f"Category directory not found: {category}")
+            return None
+
+        for pattern in self.SKILL_PATTERNS:
+            skill_path = category_dir / pattern
+            if skill_path.exists():
+                skill = Skill.from_file(skill_path)
+                if skill:
+                    logger.info(f"Loaded category skill: {skill.name}")
+                    return skill
+
+        logger.warning(f"No SKILL.md found in category: {category}")
+        return None
+
+    def list_categories(self) -> list[str]:
+        """List available category directories.
+
+        Returns:
+            List of category names that have SKILL.md files.
+        """
+        categories = []
+        for subdir in self.skills_dir.iterdir():
+            if not subdir.is_dir() or subdir.name.startswith("."):
+                continue
+            # Check if it has a skill file
+            for pattern in self.SKILL_PATTERNS:
+                if (subdir / pattern).exists():
+                    categories.append(subdir.name)
+                    break
+        return sorted(categories)
+
+    def iter_skills(self, recursive: bool = False) -> Iterator[Skill]:
+        """Iterate over skills in the directory.
+
+        Args:
+            recursive: If False (default), only yields root skill.
+                      If True, yields all skills recursively.
 
         Yields:
             Loaded Skill objects.
-
-        TODO: Add progress logging for large skill sets
         """
-        # Find all skill files
-        skill_files = self._find_skill_files()
+        skill_files = self._find_skill_files(recursive=recursive)
 
         for file_path in skill_files:
             skill = Skill.from_file(file_path)
             if skill is not None:
                 yield skill
 
-    def load_all(self) -> list[Skill]:
-        """Load all skills from the directory.
+    def load_all(self, recursive: bool = False) -> list[Skill]:
+        """Load skills from the directory.
+
+        Args:
+            recursive: If False (default), only loads root skill.
+                      If True, loads all skills recursively.
 
         Returns:
-            List of all loaded skills.
+            List of loaded skills.
         """
-        skills = list(self.iter_skills())
+        skills = list(self.iter_skills(recursive=recursive))
         logger.info(f"Loaded {len(skills)} skills from {self.skills_dir}")
         return skills
 
     def load_by_name(self, name: str) -> Skill | None:
         """Load a specific skill by name.
 
-        Searches for a skill matching the given name.
+        Searches all skills (recursive) for a matching name.
 
         Args:
             name: Skill name to find.
 
         Returns:
             The skill if found, None otherwise.
-
-        TODO: Optimize with caching or pre-indexing
         """
         name_lower = name.lower()
 
-        for skill in self.iter_skills():
+        for skill in self.iter_skills(recursive=True):
             if skill.name.lower() == name_lower:
                 return skill
 
         return None
 
-    def _find_skill_files(self) -> list[Path]:
-        """Find all skill files in the directory.
+    def _find_skill_files(self, recursive: bool = False) -> list[Path]:
+        """Find skill files in the directory.
+
+        Args:
+            recursive: If False, only finds root-level skill files.
+                      If True, finds all skill files recursively.
 
         Returns:
             List of paths to skill files.
@@ -191,27 +265,34 @@ class SkillsLoader:
         skill_files: list[Path] = []
 
         for pattern in self.SKILL_PATTERNS:
-            skill_files.extend(self.skills_dir.rglob(pattern))
+            if recursive:
+                skill_files.extend(self.skills_dir.rglob(pattern))
+            else:
+                # Only root level
+                root_file = self.skills_dir / pattern
+                if root_file.exists():
+                    skill_files.append(root_file)
 
         # Deduplicate and sort
         unique_files = sorted(set(skill_files))
-        logger.debug(f"Found {len(unique_files)} skill files")
+        logger.debug(f"Found {len(unique_files)} skill files (recursive={recursive})")
 
         return unique_files
 
-    def get_skill_paths(self) -> dict[str, Path]:
+    def get_skill_paths(self, recursive: bool = True) -> dict[str, Path]:
         """Get a mapping of skill names to file paths.
 
         This is useful for building an index without loading full content.
 
+        Args:
+            recursive: If True, includes all skills. If False, only root.
+
         Returns:
             Dictionary mapping skill names to file paths.
-
-        TODO: Implement efficient metadata-only loading
         """
         result: dict[str, Path] = {}
 
-        for skill in self.iter_skills():
+        for skill in self.iter_skills(recursive=recursive):
             result[skill.name] = skill.file_path
 
         return result

@@ -4,18 +4,22 @@ This module provides indexing and search capabilities for skills,
 allowing the agent to quickly find relevant documentation based
 on keywords and semantic similarity.
 
+The index supports lazy loading - it starts with just the root skill
+and loads category skills on-demand when requested. This enables
+progressive disclosure without loading all skills upfront.
+
 Example:
     from codewhisper.skills.loader import SkillsLoader
     from codewhisper.skills.index import SkillsIndex
 
     loader = SkillsLoader(Path("./skills"))
-    skills = loader.load_all()
-    index = SkillsIndex(skills)
+    index = SkillsIndex.from_loader(loader)  # Only loads root skill
 
-    # Search for relevant skills
-    results = index.search("authorization cleanup")
-    for result in results:
-        print(f"{result.skill.name}: {result.score}")
+    # Category skills are loaded on-demand
+    skill = index.get("cobol")  # Loads cobol/SKILL.md if not cached
+
+    # Search still works (searches root + cached skills)
+    results = index.search("authorization")
 """
 
 from __future__ import annotations
@@ -26,7 +30,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from codewhisper.skills.loader import Skill
+    from codewhisper.skills.loader import Skill, SkillsLoader
 
 logger = logging.getLogger(__name__)
 
@@ -47,36 +51,66 @@ class SearchResult:
 
 
 class SkillsIndex:
-    """Index for searching skills.
+    """Index for searching skills with lazy loading support.
 
     Provides keyword-based search over skill names, descriptions,
     and content. Uses simple TF-IDF-like scoring.
+
+    The index supports two modes:
+    1. Eager: Pass a list of skills (loads all into memory)
+    2. Lazy: Use from_loader() to start with root and load on-demand
 
     Attributes:
         skills: List of indexed skills.
 
     Example:
+        # Lazy loading (preferred for hierarchical skills)
+        loader = SkillsLoader(Path("./skills"))
+        index = SkillsIndex.from_loader(loader)
+
+        # Eager loading (for small skill sets)
+        skills = loader.load_all(recursive=True)
         index = SkillsIndex(skills)
-        results = index.search("COBOL authorization")
 
     TODO: Add vector-based semantic search
     TODO: Implement caching for repeated searches
     """
 
-    def __init__(self, skills: list[Skill]):
+    def __init__(self, skills: list[Skill], loader: SkillsLoader | None = None):
         """Initialize the index with skills.
 
         Args:
-            skills: List of skills to index.
+            skills: List of skills to index initially.
+            loader: Optional loader for on-demand category loading.
         """
         self._skills = {skill.name.lower(): skill for skill in skills}
-        self._skill_list = skills
+        self._skill_list = list(skills)
+        self._loader = loader
 
         # Build inverted index for keyword search
         self._inverted_index: dict[str, set[str]] = {}
         self._build_inverted_index()
 
         logger.info(f"SkillsIndex built with {len(skills)} skills")
+
+    @classmethod
+    def from_loader(cls, loader: SkillsLoader) -> SkillsIndex:
+        """Create an index with lazy loading support.
+
+        Only loads the root skill initially. Category skills are
+        loaded on-demand when get() is called.
+
+        Args:
+            loader: The skills loader to use.
+
+        Returns:
+            SkillsIndex configured for lazy loading.
+        """
+        # Load only the root skill
+        root_skill = loader.load_root()
+        initial_skills = [root_skill] if root_skill else []
+
+        return cls(initial_skills, loader=loader)
 
     def _build_inverted_index(self) -> None:
         """Build an inverted index for keyword search.
@@ -117,6 +151,10 @@ class SkillsIndex:
         limit: int = 5,
     ) -> list[SearchResult]:
         """Search for skills matching the query.
+
+        Only searches skills currently in the index. For progressive
+        discovery, the LLM should use reasoning to navigate from
+        root -> category -> specific documentation.
 
         Args:
             query: Search query (keywords).
@@ -177,7 +215,10 @@ class SkillsIndex:
         return results
 
     def get(self, name: str) -> Skill | None:
-        """Get a skill by exact name or fuzzy match.
+        """Get a skill by exact name, with lazy loading support.
+
+        If the skill is not in the index but a loader is configured,
+        attempts to load it as a category skill.
 
         Args:
             name: Skill name (case-insensitive).
@@ -185,18 +226,47 @@ class SkillsIndex:
         Returns:
             The skill if found, None otherwise.
         """
+        name_lower = name.lower()
+
         # Try exact match first
-        result = self._skills.get(name.lower())
+        result = self._skills.get(name_lower)
         if result:
             return result
 
         # Try partial match (name contains query or query contains name)
-        name_lower = name.lower()
         for skill_name, skill in self._skills.items():
             if name_lower in skill_name or skill_name in name_lower:
                 return skill
 
+        # Try lazy loading as a category
+        if self._loader is not None:
+            skill = self._loader.load_category(name_lower)
+            if skill:
+                # Add to index for future lookups
+                self._add_skill(skill)
+                logger.info(f"Lazy-loaded category skill: {skill.name}")
+                return skill
+
         return None
+
+    def _add_skill(self, skill: Skill) -> None:
+        """Add a skill to the index.
+
+        Args:
+            skill: Skill to add.
+        """
+        skill_key = skill.name.lower()
+        if skill_key not in self._skills:
+            self._skills[skill_key] = skill
+            self._skill_list.append(skill)
+
+            # Update inverted index
+            text = f"{skill.name} {skill.description} {skill.content}"
+            tokens = self._tokenize(text)
+            for token in tokens:
+                if token not in self._inverted_index:
+                    self._inverted_index[token] = set()
+                self._inverted_index[token].add(skill_key)
 
     def get_all(self) -> list[Skill]:
         """Get all indexed skills.

@@ -14,11 +14,73 @@ from codewhisper.config import AgentConfig, SearchResult, SkillMetadata
 
 @pytest.fixture
 def tmp_skills_dir(tmp_path: Path) -> Path:
-    """Create a temporary skills directory with sample skills."""
+    """Create a temporary skills directory with sample skills.
+
+    Structure mirrors the hierarchical skill layout:
+    - Root SKILL.md (overview)
+    - cobol/SKILL.md (category)
+    - jcl/SKILL.md (category)
+    """
     skills_dir = tmp_path / "skills"
     skills_dir.mkdir()
 
-    # Create a sample skill file
+    # Create root SKILL.md (loaded by default)
+    root_skill = skills_dir / "SKILL.md"
+    root_skill.write_text(
+        """---
+name: system-overview
+description: High-level overview of the test system
+---
+
+# System Overview
+
+This skill provides an overview of the system architecture.
+
+## Categories
+
+- [COBOL](cobol/SKILL.md) - COBOL programs (2 files)
+- [JCL](jcl/SKILL.md) - JCL jobs (1 file)
+"""
+    )
+
+    # Create cobol category skill
+    cobol_dir = skills_dir / "cobol"
+    cobol_dir.mkdir()
+    cobol_skill = cobol_dir / "SKILL.md"
+    cobol_skill.write_text(
+        """---
+name: cobol
+description: COBOL program documentation
+---
+
+# COBOL Programs
+
+| Program | Description |
+|---------|-------------|
+| TESTPROG | Batch processing program |
+| AUTHPROC | Authorization processor |
+"""
+    )
+
+    # Create jcl category skill
+    jcl_dir = skills_dir / "jcl"
+    jcl_dir.mkdir()
+    jcl_skill = jcl_dir / "SKILL.md"
+    jcl_skill.write_text(
+        """---
+name: jcl
+description: JCL job documentation
+---
+
+# JCL Jobs
+
+| Job | Description |
+|-----|-------------|
+| TESTJOB | Test batch job |
+"""
+    )
+
+    # Keep legacy nested structure for backward compatibility tests
     program_skill = skills_dir / "programs"
     program_skill.mkdir()
     program_subdir = program_skill / "test-program"
@@ -47,28 +109,6 @@ The test program processes batch records and performs validation.
 ## Outputs
 
 - OUTPUT-FILE: Processed output file
-"""
-    )
-
-    # Create another skill
-    overview_dir = skills_dir / "system-overview"
-    overview_dir.mkdir()
-    overview_file = overview_dir / "SKILL.md"
-    overview_file.write_text(
-        """---
-name: system-overview
-description: High-level overview of the test system
----
-
-# System Overview
-
-This skill provides an overview of the system architecture.
-
-## Components
-
-- Batch Processing
-- Online Transaction Processing
-- Database Access
 """
     )
 

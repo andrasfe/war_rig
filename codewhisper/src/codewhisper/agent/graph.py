@@ -432,6 +432,10 @@ def create_agent(config: AgentConfig) -> CodeWhisperAgent:
 
     This is the main entry point for creating an agent instance.
 
+    Uses lazy loading for skills - only the root skill is loaded initially,
+    and category skills are loaded on-demand when the LLM requests them.
+    This enables progressive disclosure for large skill sets.
+
     Args:
         config: Agent configuration.
 
@@ -458,15 +462,15 @@ def create_agent(config: AgentConfig) -> CodeWhisperAgent:
     if not config.code_dir.exists():
         raise ValueError(f"Code directory does not exist: {config.code_dir}")
 
-    # Load skills
+    # Create loader and index with lazy loading
     logger.info(f"Loading skills from {config.skills_dir}")
     loader = SkillsLoader(config.skills_dir)
-    skills = loader.load_all()
 
-    if not skills:
-        logger.warning(f"No skills found in {config.skills_dir}")
-
-    skills_index = SkillsIndex(skills)
-    logger.info(f"Loaded {len(skills)} skills into index")
+    # Use lazy loading - only root skill loaded initially
+    skills_index = SkillsIndex.from_loader(loader)
+    logger.info(
+        f"Skills index created with lazy loading "
+        f"({len(skills_index)} root skill(s), categories load on-demand)"
+    )
 
     return CodeWhisperAgent(config, skills_index)

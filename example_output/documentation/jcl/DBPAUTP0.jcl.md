@@ -1,106 +1,61 @@
 # DBPAUTP0
 
-**File:** jcl/DBPAUTP0.jcl
-**Type:** JCL
-**Status:** In Progress
-**Iterations:** 1
-**Analyzed:** 2026-01-30 19:45:19.057101
+**File**: `jcl/DBPAUTP0.jcl`
+**Type**: FileType.JCL
+**Analyzed**: 2026-02-03 21:08:28.703859
 
 ## Purpose
 
-This JCL job first deletes any existing unload dataset AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0 using IEFBR14 in STEPDEL, then unloads the IMS database DBPAUTP0 using DFSRRC00 utility with PARM=(ULU,DFSURGU0,DBPAUTP0) into a new sequential VB dataset. It supports IMS database export for backup or processing in the CardDemo environment.
+This JCL job unloads the DBD DBPAUTP0 from an IMS database. It first deletes the output dataset if it exists, then executes the IMS Database Image Copy utility (DFSRRC00) to unload the DBD to a sequential dataset.
 
-**Business Context:** IMS database management for CardDemo application, unloading DBPAUTP0 (authorization database PAUTHDB) to flat file.
-**Program Type:** BATCH
-**Citations:** Lines 1, 7, 15
+**Business Context**: UNKNOWN
 
 ## Inputs
 
-### PARM
-- **Type:** PARAMETER
-- **Description:** Parameters directing IMS unload: ULU (unload), DFSURGU0 (user routine), DBPAUTP0 (database DBD name)
-- **Lines:** 16
-
-### DDPAUTP0
-- **Type:** IMS_SEGMENT
-- **Description:** Primary IMS PAUTHDB dataset for DBPAUTP0 unload
-- **Lines:** 31
-
-### DDPAUTX0
-- **Type:** IMS_SEGMENT
-- **Description:** Secondary IMS PAUTHDBX dataset for DBPAUTP0 unload
-- **Lines:** 32
-
-### DFSVSAMP
-- **Type:** OTHER
-- **Description:** IMS sample proclib macro DFSVSMDB for database definition
-- **Lines:** 33
-
-### DFSCTL
-- **Type:** OTHER
-- **Description:** Control statements for IMS utility including SBPARM ACTIV=COND
-- **Lines:** 34
+| Name | Type | Description |
+|------|------|-------------|
+| AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0 | IOType.FILE_SEQUENTIAL | Output dataset that will be deleted if it exists. |
+| OEMA.IMS.IMSP.SDFSRESL | IOType.FILE_SEQUENTIAL | IMS RESLIB |
+| AWS.M2.CARDDEMO.LOADLIB | IOType.FILE_SEQUENTIAL | Load library. |
+| OEM.IMS.IMSP.PSBLIB | IOType.FILE_SEQUENTIAL | IMS PSBLIB |
+| OEM.IMS.IMSP.DBDLIB | IOType.FILE_SEQUENTIAL | IMS DBDLIB |
+| OEM.IMS.IMSP.PAUTHDB | IOType.FILE_SEQUENTIAL | PAUTHDB dataset |
+| OEM.IMS.IMSP.PAUTHDBX | IOType.FILE_SEQUENTIAL | PAUTHDBX dataset |
+| OEMPP.IMS.V15R01MB.PROCLIB(DFSVSMDB) | IOType.FILE_SEQUENTIAL | DFSVSMDB proc |
+| OEM.IMS.IMSP.RECON1 | IOType.FILE_SEQUENTIAL | RECON1 dataset |
+| OEM.IMS.IMSP.RECON2 | IOType.FILE_SEQUENTIAL | RECON2 dataset |
+| OEM.IMS.IMSP.RECON3 | IOType.FILE_SEQUENTIAL | RECON3 dataset |
 
 ## Outputs
 
-### DFSURGU1
-- **Type:** FILE_SEQUENTIAL
-- **Description:** Sequential VB unload file containing all DBPAUTP0 database segments
-- **Lines:** 25
-
-### SYSUT1
-- **Type:** FILE_SEQUENTIAL
-- **Description:** Target dataset for deletion (same DSN as DFSURGU1)
-- **Lines:** 9
+| Name | Type | Description |
+|------|------|-------------|
+| AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0 | IOType.FILE_SEQUENTIAL | Output dataset containing the unloaded DBD DBPAUTP0. |
+| SYSPRINT | IOType.REPORT | System print output for job execution messages and utility output. |
+| SYSUDUMP | IOType.REPORT | System dump output. |
 
 ## Called Programs
 
-| Program | Call Type | Purpose | Line |
-|---------|-----------|---------|------|
-| [IEFBR14](./IEFBR14.cbl.md) | STATIC_CALL | Delete existing output dataset prior to unload | 7 |
-| [DFSRRC00](./DFSRRC00.cbl.md) | STATIC_CALL | Execute IMS unload utility for DBPAUTP0 database | 15 |
+| Program | Call Type | Purpose |
+|---------|-----------|---------|
+| IEFBR14 | CallType.STATIC_CALL | Deletes the output dataset AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0 if it exists. |
+| DFSRRC00 | CallType.STATIC_CALL | Unloads the DBD DBPAUTP0. |
 
-## Business Rules
-
-### BR001: Perform database unload only under conditional activation
-**Logic:** IMS utility governed by SBPARM ACTIV=COND
-**Conditions:** ACTIV=COND
-**Lines:** 35
-
-## Data Flow
-
-### Reads From
-- **DDPAUTP0**: All database segments
-  (Lines: 31)
-- **DDPAUTX0**: All database segments
-  (Lines: 32)
-
-### Writes To
-- **DFSURGU1**: Unloaded database records
-  (Lines: 25)
-
-### Transformations
-- **IMS DBPAUTP0 segments** → **Sequential VB records**: Direct unload of IMS hierarchical database to flat sequential file via DFSRRC00 ULU
-  (Lines: 15)
-
-## Key Paragraphs
+## Paragraphs/Procedures
 
 ### STEPDEL
-**Purpose:** The STEPDEL step is the first execution unit in the DBPAUTP0 job, defined by EXEC PGM=IEFBR14 on line 7. Its primary purpose is to unconditionally delete any existing cataloged dataset AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0 via SYSUT1 DD with DISP=(MOD,DELETE) to prepare a clean output for the subsequent unload step (lines 9-10). It consumes no business data inputs, only referencing the target dataset DSN in SYSUT1. It produces minimal output limited to SYSPRINT DD SYSOUT=* for any JCL messages (line 8). There is no business logic, validations, or conditional processing; it performs a standard delete operation. Error handling relies on default JCL behavior, such as abend if the delete fails due to authority or locks. This step calls no subordinate paragraphs or programs. Completion transfers control sequentially to the UNLOAD step with no intervening COND parameters.
-- Lines: 7-10
+This step deletes the output dataset AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0 before the unload process to ensure a clean execution. It uses the IEFBR14 program, a standard IBM utility for dataset management, to perform the deletion. The step defines the dataset to be deleted in the SYSUT1 DD statement, specifying DISP=(MOD,DELETE) to delete the dataset if it exists. SYSPRINT DD defines the output for system messages related to the deletion process. This step ensures that any previous versions of the output dataset are removed, preventing potential conflicts or errors during the subsequent unload operation. No specific business logic or error handling is implemented in this step, as IEFBR14 handles the dataset deletion process internally. The step does not call any other programs or paragraphs.
 
-### UNLOAD
-**Purpose:** The UNLOAD step is the core processing unit, executing DFSRRC00 IMS utility on line 15 with PARM=(ULU,DFSURGU0,DBPAUTP0) to unload the entire DBPAUTP0 database. Its primary role is to read all segments from input IMS datasets (DDPAUTP0, DDPAUTX0, etc.) and serialize them into the output DFSURGU1 sequential file (lines 25-29). It consumes libraries via STEPLIB/DFSRESLB/IMS (18-22), database datasets (31-33), recon files (40-42), and inline control DFSCTL with SBPARM ACTIV=COND for conditional execution (34-35). Outputs include the unload dataset, SYSPRINT for logs (23), and SYSUDUMP for diagnostics (36-38). Business logic is encapsulated in the IMS utility, enforcing conditional activation and user routine DFSURGU0 processing. Errors trigger standard IMS abends with dumps; dummy DDs handle optional sort/work (44-45). No subordinate paragraphs are called; all logic is utility-driven. This step completes the job after STEPDEL, producing the final unload file.
-- Lines: 15-45
+### ~~UNLOAD~~ (Dead Code)
+*Paragraph 'UNLOAD' is never PERFORMed or referenced by any other paragraph or program*
 
-## Error Handling
+## Dead Code
 
-- **Prior output dataset exists:** Delete via IEFBR14 in STEPDEL
-  (Lines: 7)
-- **IMS unload failure or exception:** Utility abend with SYSUDUMP capture
-  (Lines: 36)
-- **Unload activation not met:** Skip processing per SBPARM ACTIV=COND
-  (Lines: 35)
+The following artifacts were identified as dead code by static analysis:
+
+| Artifact | Type | Line | Reason |
+|----------|------|------|--------|
+| UNLOAD | paragraph | 15 | Paragraph 'UNLOAD' is never PERFORMed or referenced by any other paragraph or program |
 
 ## Sequence Diagram
 
@@ -122,6 +77,3 @@ sequenceDiagram
     UNLOAD->>OEM.IMS.IMSP.RECON2: performs
     UNLOAD->>OEM.IMS.IMSP.RECON3: performs
 ```
-
----
-*Generated by War Rig WAR_RIG*

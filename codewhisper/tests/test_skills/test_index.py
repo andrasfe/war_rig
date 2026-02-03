@@ -305,3 +305,67 @@ class TestSkillsIndexListNames:
         names = index.list_names()
 
         assert names == sorted(names)
+
+
+class TestSkillsIndexLazyLoading:
+    """Tests for lazy loading support."""
+
+    def test_from_loader_creates_index(self, tmp_skills_dir: Path) -> None:
+        """Test creating index from loader with lazy loading."""
+        from codewhisper.skills.loader import SkillsLoader
+
+        loader = SkillsLoader(tmp_skills_dir)
+        index = SkillsIndex.from_loader(loader)
+
+        # Should only have root skill initially
+        assert len(index) == 1
+        assert "system-overview" in index
+
+    def test_get_loads_category_on_demand(self, tmp_skills_dir: Path) -> None:
+        """Test that get() lazy-loads category skills."""
+        from codewhisper.skills.loader import SkillsLoader
+
+        loader = SkillsLoader(tmp_skills_dir)
+        index = SkillsIndex.from_loader(loader)
+
+        # Initially only root
+        assert len(index) == 1
+
+        # Request category skill - should lazy load
+        skill = index.get("cobol")
+
+        assert skill is not None
+        assert skill.name == "cobol"
+        # Now index should have 2 skills
+        assert len(index) == 2
+
+    def test_lazy_loaded_skill_is_searchable(self, tmp_skills_dir: Path) -> None:
+        """Test that lazy-loaded skills become searchable."""
+        from codewhisper.skills.loader import SkillsLoader
+
+        loader = SkillsLoader(tmp_skills_dir)
+        index = SkillsIndex.from_loader(loader)
+
+        # Load the category
+        index.get("cobol")
+
+        # Search should find it
+        results = index.search("COBOL")
+        assert len(results) >= 1
+        skill_names = [r.skill.name for r in results]
+        assert "cobol" in skill_names
+
+    def test_get_nonexistent_category_returns_none(
+        self, tmp_skills_dir: Path
+    ) -> None:
+        """Test that getting nonexistent category returns None."""
+        from codewhisper.skills.loader import SkillsLoader
+
+        loader = SkillsLoader(tmp_skills_dir)
+        index = SkillsIndex.from_loader(loader)
+
+        skill = index.get("nonexistent-category")
+
+        assert skill is None
+        # Index should still only have root
+        assert len(index) == 1

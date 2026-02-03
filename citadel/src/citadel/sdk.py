@@ -28,6 +28,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 from citadel.analysis.dead_code import (
     dead_code_to_dicts,
     find_dead_code,
@@ -2029,6 +2031,306 @@ class Citadel:
 
         return summaries
 
+    def get_markdown_summary(
+        self, file_path: str | Path, max_chars: int = 500
+    ) -> dict[str, Any]:
+        """Extract summary information from a markdown documentation file.
+
+        Parses the markdown file and extracts:
+        - Title (first H1)
+        - First meaningful paragraph (skipping metadata, badges, etc.)
+        - YAML frontmatter if present
+
+        Args:
+            file_path: Path to the markdown file.
+            max_chars: Maximum characters for the summary paragraph.
+
+        Returns:
+            dict with keys:
+            - title: str - The document title (H1 or filename)
+            - summary: str - First meaningful paragraph, truncated to max_chars
+            - frontmatter: dict | None - YAML frontmatter if present
+            - file_path: str - Original file path
+        """
+        file_path = Path(file_path)
+
+        # Default result
+        result: dict[str, Any] = {
+            "title": file_path.stem,
+            "summary": "",
+            "frontmatter": None,
+            "file_path": str(file_path),
+        }
+
+        # Check if file exists
+        if not file_path.exists():
+            logger.warning("Markdown file does not exist: %s", file_path)
+            return result
+
+        # Read file content
+        try:
+            content = self._read_file(file_path)
+        except Exception as e:
+            logger.warning("Failed to read markdown file %s: %s", file_path, e)
+            return result
+
+        # Parse YAML frontmatter if present
+        frontmatter, content_without_frontmatter = self._parse_yaml_frontmatter(content)
+        result["frontmatter"] = frontmatter
+
+        # Extract title from first H1 heading
+        title = self._extract_markdown_title(content_without_frontmatter)
+        if title:
+            result["title"] = title
+
+        # Extract first meaningful paragraph
+        summary = self._extract_first_paragraph(content_without_frontmatter, max_chars)
+        result["summary"] = summary
+
+        return result
+
+    def _parse_yaml_frontmatter(self, content: str) -> tuple[dict | None, str]:
+        """Parse YAML frontmatter from markdown content.
+
+        Args:
+            content: The full markdown content.
+
+        Returns:
+            Tuple of (frontmatter dict or None, content without frontmatter).
+        """
+        # Check for frontmatter (must start with ---)
+        if not content.startswith("---"):
+            return None, content
+
+        # Find the closing ---
+        lines = content.split("\n")
+        end_index = None
+        for i, line in enumerate(lines[1:], start=1):
+            if line.strip() == "---":
+                end_index = i
+                break
+
+        if end_index is None:
+            # No closing ---, treat as no frontmatter
+            return None, content
+
+        # Extract frontmatter YAML
+        frontmatter_lines = lines[1:end_index]
+        frontmatter_text = "\n".join(frontmatter_lines)
+
+        try:
+            frontmatter = yaml.safe_load(frontmatter_text)
+            if not isinstance(frontmatter, dict):
+                frontmatter = None
+        except yaml.YAMLError as e:
+            logger.debug("Failed to parse YAML frontmatter: %s", e)
+            frontmatter = None
+
+        # Content without frontmatter
+        content_without = "\n".join(lines[end_index + 1 :])
+
+        return frontmatter, content_without
+
+    def _extract_markdown_title(self, content: str) -> str | None:
+        """Extract the first H1 heading from markdown content.
+
+        Args:
+            content: The markdown content (without frontmatter).
+
+        Returns:
+            The title text, or None if no H1 found.
+        """
+        # Pattern for H1 heading: # Title or Title\n===
+        # Look for ATX-style H1 (# Title)
+        atx_pattern = re.compile(r"^#\s+(.+?)(?:\s*#*\s*)?$", re.MULTILINE)
+        match = atx_pattern.search(content)
+        if match:
+            return match.group(1).strip()
+
+        # Look for Setext-style H1 (Title\n===)
+        setext_pattern = re.compile(r"^(.+?)\n=+\s*$", re.MULTILINE)
+        match = setext_pattern.search(content)
+        if match:
+            return match.group(1).strip()
+
+        return None
+
+    def _extract_first_paragraph(self, content: str, max_chars: int) -> str:
+        """Extract the first meaningful paragraph from markdown content.
+
+        Skips:
+        - Empty lines
+        - Headings (lines starting with #, or setext-style underlines)
+        - Code blocks (fenced with ``` or indented)
+        - Images/badges (lines starting with ! or [! or containing badge URLs)
+        - Very short paragraphs (less than 50 chars)
+
+        Args:
+            content: The markdown content (without frontmatter).
+            max_chars: Maximum characters for the summary.
+
+        Returns:
+            The first meaningful paragraph, truncated to max_chars.
+        """
+        lines = content.split("\n")
+        in_code_block = False
+        paragraph_lines: list[str] = []
+        collecting = False
+
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+
+            # Handle fenced code blocks
+            if stripped.startswith("```"):
+                in_code_block = not in_code_block
+                if collecting and paragraph_lines:
+                    # End the current paragraph if we were collecting
+                    break
+                continue
+
+            # Skip content inside code blocks
+            if in_code_block:
+                continue
+
+            # Skip empty lines
+            if not stripped:
+                if collecting and paragraph_lines:
+                    # Empty line ends the paragraph
+                    break
+                continue
+
+            # Skip headings (ATX style)
+            if stripped.startswith("#"):
+                if collecting and paragraph_lines:
+                    break
+                continue
+
+            # Skip setext-style heading underlines (=== or ---)
+            if re.match(r"^[=\-]{2,}\s*$", stripped):
+                # Also remove the previous line from paragraph_lines if it was added
+                # (it was likely the setext heading title)
+                if paragraph_lines:
+                    paragraph_lines.pop()
+                    if not paragraph_lines:
+                        collecting = False
+                continue
+
+            # Check if this line is a setext heading title (next line is === or ---)
+            if i + 1 < len(lines):
+                next_line = lines[i + 1].strip()
+                if re.match(r"^[=\-]{2,}\s*$", next_line):
+                    # This is a setext heading title, skip it
+                    if collecting and paragraph_lines:
+                        break
+                    continue
+
+            # Skip images and badges (including linked images like [![...])
+            if stripped.startswith("!") or stripped.startswith("[!"):
+                continue
+            if self._is_badge_line(stripped):
+                continue
+
+            # Skip indented code blocks (4 spaces or 1 tab)
+            if line.startswith("    ") or line.startswith("\t"):
+                if collecting and paragraph_lines:
+                    break
+                continue
+
+            # Skip HTML comments
+            if stripped.startswith("<!--"):
+                continue
+
+            # Skip horizontal rules
+            if re.match(r"^[-*_]{3,}\s*$", stripped):
+                continue
+
+            # Skip list markers at the start (we want prose paragraphs)
+            if re.match(r"^[-*+]\s+", stripped) or re.match(r"^\d+\.\s+", stripped):
+                if collecting and paragraph_lines:
+                    break
+                continue
+
+            # Skip metadata-like lines (bold key-value pairs like **File**: ...)
+            if re.match(r"^\*\*[^*]+\*\*:\s*.+", stripped):
+                if collecting and paragraph_lines:
+                    break
+                continue
+
+            # This looks like a paragraph line
+            collecting = True
+            paragraph_lines.append(stripped)
+
+        # Join the paragraph
+        paragraph = " ".join(paragraph_lines)
+
+        # Check if it's too short to be meaningful
+        if len(paragraph) < 50 and paragraph_lines:
+            # Try to find a longer paragraph by continuing
+            # For now, just use what we have
+            pass
+
+        # Truncate to max_chars at word boundary
+        if len(paragraph) > max_chars:
+            paragraph = self._truncate_at_word_boundary(paragraph, max_chars)
+
+        return paragraph
+
+    def _is_badge_line(self, line: str) -> bool:
+        """Check if a line is likely a badge or shield.
+
+        A badge line typically contains a markdown image (standalone or linked)
+        with a URL from a known badge service.
+
+        Args:
+            line: The line to check.
+
+        Returns:
+            True if the line appears to be a badge.
+        """
+        line_lower = line.lower()
+
+        # Must look like an image or linked image to be a badge line
+        if not (line.startswith("![") or line.startswith("[![")):
+            return False
+
+        # Check for common badge service URLs
+        badge_url_patterns = [
+            r"shields\.io",
+            r"img\.shields",
+            r"badge\.fury",
+            r"coveralls\.io",
+            r"travis-ci",
+            r"circleci",
+            r"github\.com.*workflows.*badge",
+            r"codecov\.io",
+            r"david-dm\.org",
+            r"snyk\.io",
+        ]
+        return any(re.search(pattern, line_lower) for pattern in badge_url_patterns)
+
+    def _truncate_at_word_boundary(self, text: str, max_chars: int) -> str:
+        """Truncate text at a word boundary, adding ellipsis.
+
+        Args:
+            text: The text to truncate.
+            max_chars: Maximum characters (including ellipsis).
+
+        Returns:
+            Truncated text ending with '...' if truncated.
+        """
+        if len(text) <= max_chars:
+            return text
+
+        # Find the last space before max_chars - 3 (room for ...)
+        truncate_at = max_chars - 3
+        last_space = text.rfind(" ", 0, truncate_at)
+
+        if last_space > 0:
+            return text[:last_space] + "..."
+        else:
+            # No space found, just hard truncate
+            return text[:truncate_at] + "..."
+
 
 # Convenience function for one-off analysis
 def analyze_file(file_path: str | Path) -> FileAnalysisResult:
@@ -2325,3 +2627,34 @@ def get_callouts_compact(path: str | Path) -> list[dict[str, Any]]:
     """
     citadel = Citadel()
     return citadel.get_callouts_compact(path)
+
+
+def get_markdown_summary(file_path: str | Path, max_chars: int = 500) -> dict[str, Any]:
+    """
+    Extract summary information from a markdown documentation file.
+
+    Convenience function for quick markdown summary extraction.
+
+    Parses the markdown file and extracts:
+    - Title (first H1)
+    - First meaningful paragraph (skipping metadata, badges, etc.)
+    - YAML frontmatter if present
+
+    Args:
+        file_path: Path to the markdown file.
+        max_chars: Maximum characters for the summary paragraph.
+
+    Returns:
+        dict with keys:
+        - title: str - The document title (H1 or filename)
+        - summary: str - First meaningful paragraph, truncated to max_chars
+        - frontmatter: dict | None - YAML frontmatter if present
+        - file_path: str - Original file path
+
+    Example:
+        >>> from citadel.sdk import get_markdown_summary
+        >>> summary = get_markdown_summary("docs/README.md")
+        >>> print(f"{summary['title']}: {summary['summary']}")
+    """
+    citadel = Citadel()
+    return citadel.get_markdown_summary(file_path, max_chars)

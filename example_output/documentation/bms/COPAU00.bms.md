@@ -1,105 +1,68 @@
 # COPAU00
 
-**File:** COPAU00.bms
-**Type:** BMS
-**Status:** In Progress
-**Iterations:** 1
-**Analyzed:** 2026-01-30 19:40:27.088006
+**File**: `bms/COPAU00.bms`
+**Type**: FileType.BMS
+**Analyzed**: 2026-02-03 21:04:20.405397
 
 ## Purpose
 
-This BMS mapset defines the Pending Authorization Screen (COPAU0A) for the CardDemo application. It provides a user interface to search pending authorizations by Account ID, display customer details including name, address, status, phone, limits, balances, approval/decline counts, and a scrollable list of up to 5 transactions with fields for selection, transaction ID, date, time, type, A/D, status, and amount. Users interact via input fields and PF keys for navigation.
+This BMS map defines the screen layout for the CardDemo Pending Authorization Screen. It displays a list of pending authorizations for a given account ID, along with customer details and credit/cash limits and balances. The screen allows the user to select a transaction to view its details.
 
-**Business Context:** Serves credit card authorization processing by allowing operators to view, select, and navigate pending authorization transactions for an account.
-**Program Type:** ONLINE_CICS
-**Citations:** Lines 2, 19, 26, 78, 501, 511
+**Business Context**: This screen is used to view and manage pending card authorizations within the CardDemo application.
 
 ## Inputs
 
-### ACCTID
-- **Type:** CICS_MAP
-- **Description:** Unprotected input field for entering Account ID to search for pending authorizations
-- **Lines:** 84
-
-### SEL0001
-- **Type:** CICS_MAP
-- **Description:** Unprotected selection field (Sel) for first transaction in list
-- **Lines:** 277
-
-### SEL0002
-- **Type:** CICS_MAP
-- **Description:** Unprotected selection field (Sel) for second transaction in list
-- **Lines:** 321
-
-### SEL0003
-- **Type:** CICS_MAP
-- **Description:** Unprotected selection field (Sel) for third transaction in list
-- **Lines:** 365
-
-### SEL0004
-- **Type:** CICS_MAP
-- **Description:** Unprotected selection field (Sel) for fourth transaction in list
-- **Lines:** 409
-
-### SEL0005
-- **Type:** CICS_MAP
-- **Description:** Unprotected selection field (Sel) for fifth transaction in list
-- **Lines:** 488
+| Name | Type | Description |
+|------|------|-------------|
+| ACCTID | IOType.CICS_MAP | Account ID to search for pending authorizations (input field). |
+| SEL0001 - SEL0005 | IOType.CICS_MAP | Selection fields for each transaction (input field). |
 
 ## Outputs
 
-### COPAU0A
-- **Type:** CICS_MAP
-- **Description:** Primary map displaying screen header (Tran, Date, Prog, Time), title, search prompt, customer info (name, ID, address, status, phone), limits/balances/amounts (credit/cash lim/bal, appr/decl amt), transaction list headers and data rows, instructions, error message, and PF key help
-- **Lines:** 26
+| Name | Type | Description |
+|------|------|-------------|
+| TRNNAME | IOType.CICS_MAP | Transaction Name |
+| CURDATE | IOType.CICS_MAP | Current Date |
+| PGMNAME | IOType.CICS_MAP | Program Name |
+| CURTIME | IOType.CICS_MAP | Current Time |
+| CNAME | IOType.CICS_MAP | Customer Name |
+| CUSTID | IOType.CICS_MAP | Customer ID |
+| ADDR001 | IOType.CICS_MAP | Customer Address Line 1 |
+| ACCSTAT | IOType.CICS_MAP | Account Status |
+| ADDR002 | IOType.CICS_MAP | Customer Address Line 2 |
+| PHONE1 | IOType.CICS_MAP | Customer Phone Number |
+| APPRCNT | IOType.CICS_MAP | Approval Count |
+| DECLCNT | IOType.CICS_MAP | Decline Count |
+| CREDLIM | IOType.CICS_MAP | Credit Limit |
+| CASHLIM | IOType.CICS_MAP | Cash Limit |
+| APPRAMT | IOType.CICS_MAP | Approved Amount |
+| CREDBAL | IOType.CICS_MAP | Credit Balance |
+| CASHBAL | IOType.CICS_MAP | Cash Balance |
+| DECLAMT | IOType.CICS_MAP | Declined Amount |
+| TRNID01 - TRNID05 | IOType.CICS_MAP | Transaction IDs for the list of pending authorizations. |
+| PDATE01 - PDATE05 | IOType.CICS_MAP | Transaction Dates for the list of pending authorizations. |
+| PTIME01 - PTIME05 | IOType.CICS_MAP | Transaction Times for the list of pending authorizations. |
+| PTYPE01 - PTYPE05 | IOType.CICS_MAP | Transaction Types for the list of pending authorizations. |
+| PAPRV01 - PAPRV05 | IOType.CICS_MAP | Transaction Approval Status for the list of pending authorizations. |
+| PSTAT01 - PSTAT05 | IOType.CICS_MAP | Transaction Status for the list of pending authorizations. |
+| PAMT001 - PAMT005 | IOType.CICS_MAP | Transaction Amounts for the list of pending authorizations. |
+| ERRMSG | IOType.CICS_MAP | Error Message Displayed on the Screen |
 
-### ERRMSG
-- **Type:** CICS_MAP
-- **Description:** Error message display field with bright and red attributes
-- **Lines:** 503
+## Paragraphs/Procedures
 
-## Business Rules
+### COPAU0A DFHMDI
+This paragraph defines the map's overall structure and attributes. It specifies the screen size as 24 lines by 80 columns (line 28). It sets the column and line position to 1 (lines 26, 27). It includes control options such as ALARM and FREEKB (line 19), indicating that the screen can trigger an alarm and that the keyboard is initially unlocked. The EXTATT=YES attribute (line 20) enables extended attributes like color and highlighting. LANG=COBOL (line 21) specifies the programming language. MODE=INOUT (line 22) indicates that the map is used for both input and output. STORAGE=AUTO (line 23) means storage is automatically allocated. TIOAPFX=YES (line 24) includes the terminal I/O area prefix. TYPE=&&SYSPARM (line 25) allows specifying the map type during assembly.
 
-### BR001: User must type 'S' in one of the SEL fields to select and view details of a specific authorization from the transaction list
-**Logic:** Instruction explicitly displayed on screen to guide user interaction
-**Conditions:** User enters 'S' in SEL0001-SEL0005
-**Lines:** 277, 321, 365, 409, 488, 501
+## Dead Code
 
-### BR002: Screen navigation uses PF keys: ENTER to continue, F3 to go back, F7 for backward scroll, F8 for forward scroll
-**Logic:** PF key help displayed at bottom of screen
-**Conditions:** PF3 pressed, PF7 pressed, PF8 pressed
-**Lines:** 511
+The following artifacts were identified as dead code by static analysis:
 
-## Key Paragraphs
-
-### COPAU00
-**Purpose:** [Citadel] Paragraph identified by static analysis
-- Lines: 19-19
-
-### COPAU0A
-**Purpose:** [Citadel] Paragraph identified by static analysis
-- Lines: 26-26
-
-## Error Handling
-
-- **Application errors:** Display message in ERRMSG field (bright, red, FSET)
-  (Lines: 503)
-
-## CICS Operations
-
-| Command | Resource | Purpose | Line |
-|---------|----------|---------|------|
-| SEND MAP | COPAU0A | Display pending authorization screen to user | 26 |
-| RECEIVE MAP | COPAU0A | Receive user inputs from ACCTID and SEL fields | 84 |
+| Artifact | Type | Line | Reason |
+|----------|------|------|--------|
+| COPAU00 | map | 19 | Artifact 'COPAU00' (map) is never referenced by any other artifact in the dependency graph |
+| COPAU0A | screen | 26 | Screen/Map 'COPAU0A' is never sent to or received from by any program |
 
 ## Open Questions
 
-- **Which CICS COBOL program(s) use this BMS mapset?**
-  - Context: BMS file defines the map but does not reference calling programs
-  - Suggestion: Search for COPY COPAU00 or DFHMDI COPAU0A in associated COBOL source files
-- **What is the associated CICS transaction ID for this screen?**
-  - Context: Not defined in BMS file
-  - Suggestion: Check CICS transaction definitions or calling program
-
----
-*Generated by War Rig WAR_RIG*
+- ? How are the transaction details (date, time, type, A/D, STS, Amount) populated for each of the five transactions displayed?
+  - Context: The BMS map defines the fields, but the logic for populating them is not present in this file.

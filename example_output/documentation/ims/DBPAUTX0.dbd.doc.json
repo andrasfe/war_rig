@@ -1,38 +1,24 @@
 {
   "header": {
     "program_id": "DBPAUTX0",
-    "file_name": "ims/DBPAUTX0.dbd",
+    "file_name": "DBPAUTX0.dbd",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-30T19:42:53.031631",
+    "analyzed_at": "2026-02-03T21:07:52.007003",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This file contains the source for the IMS Database Definition (DBD) of DBPAUTX0, an indexed VSAM-protected database. It defines one dataset group DSG001 with dataset DDPAUTX0 of size 4096. It specifies a single root segment PAUTINDX (6 bytes) with unique sequential packed key INDXSEQ and a logical child to PAUTSUM0 in DBPAUTP0 via index ACCNTID.",
+    "summary": "This file defines the Database Description (DBD) for DBPAUTX0, specifying the database structure, access method, segment definitions, and field definitions. It defines an INDEX database with VSAM access and protection, including a segment named PAUTINDX and a logical child relationship to PAUTSUM0 in DBPAUTP0.",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
-      17,
       18,
-      23,
       27,
-      29,
-      30,
-      31
+      30
     ]
   },
-  "inputs": [
-    {
-      "name": "DDPAUTX0",
-      "io_type": "FILE_VSAM",
-      "description": "Primary dataset referenced in dataset group DSG001 with size 4096",
-      "copybook": null,
-      "citation": [
-        23
-      ]
-    }
-  ],
+  "inputs": [],
   "outputs": [],
   "called_programs": [],
   "calling_context": {
@@ -40,36 +26,7 @@
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [
-    {
-      "rule_id": "BR001",
-      "description": "Unique sequential key INDXSEQ ensures each PAUTINDX segment is uniquely identified and maintained in sequence order",
-      "logic_summary": "Defined via FIELD NAME=(INDXSEQ,SEQ,U)",
-      "conditions": [],
-      "citation": [
-        29
-      ]
-    },
-    {
-      "rule_id": "BR002",
-      "description": "Segment PAUTINDX has an expected frequency of 100000 occurrences for performance and space planning",
-      "logic_summary": "Specified by FREQ=100000",
-      "conditions": [],
-      "citation": [
-        28
-      ]
-    },
-    {
-      "rule_id": "BR003",
-      "description": "Logical child relationship to PAUTSUM0 segment in database DBPAUTP0 accessed via index ACCNTID",
-      "logic_summary": "Defined via LCHILD NAME=(PAUTSUM0,DBPAUTP0), INDEX=ACCNTID",
-      "conditions": [],
-      "citation": [
-        30,
-        31
-      ]
-    }
-  ],
+  "business_rules": [],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
@@ -78,14 +35,14 @@
   "copybooks_used": [],
   "paragraphs": [
     {
-      "paragraph_name": "SEGM PAUTINDX",
+      "paragraph_name": "DBD Definition",
       "summary": null,
-      "purpose": "This section defines the primary (and only) segment structure for the DBPAUTX0 database. It declares PAUTINDX as a root segment (PARENT=0) with a total length of 6 bytes and expected frequency of 100000. It consumes no runtime inputs but structurally references the dataset from DSG001 for storage. It defines the key field INDXSEQ as a 6-byte packed unique sequential field starting at position 1, which serves as the primary ordering and uniqueness mechanism. It establishes a logical child pointer to PAUTSUM0 in another database DBPAUTP0 using the ACCNTID index for hierarchical navigation. No explicit business decisions or validations are coded here as this is a static definition. Error handling is not applicable in the DBD source itself. It culminates in DBDGEN to generate the database description and FINISH to end the definition. This segment definition enables DL/I application programs to insert, retrieve, and traverse PAUTINDX records and their logical children.",
+      "purpose": "This section defines the database characteristics. It starts with the DBD statement (line 18) specifying the database name (DBPAUTX0), access method (INDEX, VSAM, PROT), and password protection (NO). It also includes a VERSION parameter (line 19) whose value is not specified in this snippet. The DATASET group (DSG001) is defined with DD name DDPAUTX0 and a size of 4096 (line 23). The segment PAUTINDX is defined with a length of 6 bytes and a frequency of 100000 (lines 27-28). The field INDXSEQ is defined as a packed decimal field of 6 bytes starting at position 1 (line 29). Finally, a logical child relationship is established with PAUTSUM0 in database DBPAUTP0, using ACCNTID as the index (lines 30-31). The DBDGEN and FINISH statements (lines 32-33) mark the end of the DBD definition.",
       "called_by": [],
       "calls": [],
       "citation": [
-        27,
-        32
+        18,
+        33
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
@@ -99,9 +56,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the specific business purpose of the PAUTINDX segment and its relationship to PAUTSUM0?",
-      "context": "DBD source provides structural definition only; no descriptive comments on business usage",
-      "suggestion": "Review calling DL/I application programs or IMS system documentation"
+      "question": "What is the purpose of the VERSION parameter on line 19?",
+      "context": "The value of the VERSION parameter is not specified in the provided code snippet.",
+      "suggestion": "Consult the IMS documentation or other related DBD definitions to understand the valid values and impact of this parameter."
     }
   ],
   "dead_code": [],

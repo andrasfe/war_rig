@@ -1,46 +1,24 @@
 {
   "header": {
     "program_id": "PADFLDBD",
-    "file_name": "ims/PADFLDBD.DBD",
+    "file_name": "PADFLDBD.DBD",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-30T19:32:56.466873",
+    "analyzed_at": "2026-02-03T21:07:52.125263",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This DBD source file defines the IMS database PADFLDBD as a GSAM database with BSAM access method and no password protection. It specifies Dataset Group 1 (DSG001) with input dataset DD1=PADFILIP and output dataset DD2=PADFILOP, both using fixed-length records of 200 bytes (RECFM=F). The definition was prepared for DBDGEN processing on IMS version 15.1.",
+    "summary": "This file defines the Database Description (DBD) for PADFLDBD, specifying its access method (GSAM, BSAM), dataset names (PADFILIP, PADFILOP), record length (200), and record format (F). It also includes copyright and licensing information.",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
-      17,
-      20,
       22,
       27
     ]
   },
-  "inputs": [
-    {
-      "name": "PADFILIP",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "Input dataset (DD1) associated with Dataset Group 1 of the PADFLDBD GSAM database, fixed 200-byte records",
-      "copybook": null,
-      "citation": [
-        27
-      ]
-    }
-  ],
-  "outputs": [
-    {
-      "name": "PADFILOP",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "Output dataset (DD2) associated with Dataset Group 1 of the PADFLDBD GSAM database, fixed 200-byte records",
-      "copybook": null,
-      "citation": [
-        27
-      ]
-    }
-  ],
+  "inputs": [],
+  "outputs": [],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
@@ -60,9 +38,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "Specific business purpose of the PADFLDBD database",
-      "context": "DBD source defines structure but not application-level usage",
-      "suggestion": "Review IMS application programs or PCBs that reference this DBD"
+      "question": "What is the purpose of PADFILIP and PADFILOP datasets?",
+      "context": "The code defines these datasets but doesn't explain their usage.",
+      "suggestion": "Check related documentation or programs that use this DBD."
     }
   ],
   "dead_code": [],

@@ -1,6 +1,6 @@
 # Call Graph Analysis
 
-*Generated: 2026-01-30 12:26:43*
+*Generated: 2026-02-03 14:28:40*
 
 **Programs Analyzed:** 24
 
@@ -10,31 +10,22 @@
 flowchart TD
 
     subgraph jobs[" "]
+        CBPAUP0J([CBPAUP0J])
         DBPAUTP0([DBPAUTP0])
-        UNLDPADB([UNLDPADB])
+        PAUDBUNL([PAUDBUNL])
     end
 
     subgraph procs[" "]
         CBPAUP0C[CBPAUP0C]
-        CCPAUERY[/CCPAUERY/]
-        CCPAURLY[/CCPAURLY/]
-        CCPAURQY[/CCPAURQY/]
-        CIPAUDTY[/CIPAUDTY/]
-        CIPAUSMY[/CIPAUSMY/]
-        COPAU00[/COPAU00/]
-        COPAU01[/COPAU01/]
         COPAUA0C[COPAUA0C]
         COPAUS0C[COPAUS0C]
         COPAUS1C[COPAUS1C]
         COPAUS2C[COPAUS2C]
         DBUNLDGS[DBUNLDGS]
-        IMSFUNCS[/IMSFUNCS/]
-        PADFLPCB[/PADFLPCB/]
-        PASFLPCB[/PASFLPCB/]
         PAUDBLOD[PAUDBLOD]
-        PAUDBUNL[PAUDBUNL]
-        PAUTBPCB[/PAUTBPCB/]
     end
+
+    COPYBOOKS[/CCPAUERY<br>CCPAURLY<br>CCPAURQY<br>CIPAUDTY<br>CIPAUSMY<br>COPAU00<br>COPAU01<br>IMSFUNCS<br>PADFLPCB<br>PASFLPCB<br>PAUTBPCB/]
 
     subgraph external[" "]
         CBLTDLI>CBLTDLI]
@@ -48,10 +39,26 @@ flowchart TD
     end
 
     %% Call relationships
-    CBPAUP0C --> PAUDBUNL
-    CBPAUP0C --> PAUDBUNL
-    CBPAUP0C --> PAUDBUNL
+    CBPAUP0C --> CBPAUP0C
+    CBPAUP0C --> CBPAUP0C
+    CBPAUP0C --> CBPAUP0C
+    CBPAUP0C --> CBPAUP0C
+    CBPAUP0C --> COPAUA0C
+    CBPAUP0C --> COPAUA0C
+    CBPAUP0C --> DBUNLDGS
+    CBPAUP0C --> DBUNLDGS
+    CBPAUP0C --> CBPAUP0C
+    CBPAUP0C --> CBPAUP0C
+    CBPAUP0C --> CBPAUP0C
     CBPAUP0C -.->|COPY| COPYBOOKS
+    CBPAUP0C --> CBLTDLI
+    CBPAUP0C --> CBLTDLI
+    CBPAUP0C --> CBLTDLI
+    CBPAUP0C --> CBLTDLI
+    CBPAUP0J --> DFSRRC00
+    CBPAUP0J --> DFSRRC00
+    CBPAUP0J --> DFSRRC00
+    CBPAUP0J --> DFSRRC00
     COPAUA0C --> COPAUA0C
     COPAUA0C --> COPAUA0C
     COPAUA0C --> COPAUA0C
@@ -85,25 +92,6 @@ flowchart TD
     COPAUA0C --> MQGET
     COPAUA0C --> MQPUT1
     COPAUA0C --> MQCLOSE
-    COPAUS0C --> PAUDBUNL
-    COPAUS0C --> PAUDBLOD
-    COPAUS0C --> PAUDBLOD
-    COPAUS0C --> PAUDBUNL
-    COPAUS0C --> COPAUS2C
-    COPAUS0C --> COPAUA0C
-    COPAUS0C --> COPAUA0C
-    COPAUS0C --> PAUDBUNL
-    COPAUS0C --> PAUDBUNL
-    COPAUS0C --> CBPAUP0C
-    COPAUS0C --> CBPAUP0C
-    COPAUS0C --> CBPAUP0C
-    COPAUS0C --> CBPAUP0C
-    COPAUS0C --> COPAUS0C
-    COPAUS0C --> COPAUS0C
-    COPAUS0C --> COPAUS1C
-    COPAUS0C --> COPAUS1C
-    COPAUS0C --> COPAUS1C
-    COPAUS0C --> COPAUS0C
     COPAUS0C --> COPAUS1C
     COPAUS0C --> COPAUS1C
     COPAUS0C --> COPAUS1C
@@ -112,10 +100,6 @@ flowchart TD
     COPAUS0C --> COPAUS1C
     COPAUS0C --> COPAUS1C
     COPAUS0C --> COPAUS1C
-    COPAUS0C --> COPAUS0C
-    COPAUS0C --> COPAUS0C
-    COPAUS0C --> COPAUS0C
-    COPAUS0C --> COPAUS0C
     COPAUS0C --> COPAUS0C
     COPAUS0C --> COPAUS0C
     COPAUS0C --> COPAUS0C
@@ -160,55 +144,65 @@ flowchart TD
     COPAUS1C --> COPAUS1C
     COPAUS1C -.->|COPY| COPYBOOKS
     COPAUS1C --> WS_PGM_AUTH_FRAUD
+    COPAUS2C --> CBPAUP0C
+    COPAUS2C --> CBPAUP0C
+    COPAUS2C --> DBUNLDGS
+    COPAUS2C --> COPAUS0C
+    COPAUS2C --> COPAUS0C
+    COPAUS2C --> COPAUS1C
+    COPAUS2C --> COPAUS1C
+    COPAUS2C --> COPAUS1C
+    COPAUS2C --> COPAUS0C
+    COPAUS2C --> COPAUA0C
+    COPAUS2C --> COPAUA0C
+    COPAUS2C --> PAUDBLOD
+    COPAUS2C --> PAUDBLOD
+    COPAUS2C --> CBPAUP0C
+    COPAUS2C --> CBPAUP0C
+    COPAUS2C --> CBPAUP0C
+    COPAUS2C --> CBPAUP0C
+    COPAUS2C --> CBPAUP0C
+    COPAUS2C --> COPAUS0C
+    COPAUS2C --> COPAUS0C
+    COPAUS2C --> COPAUS0C
+    COPAUS2C --> COPAUS0C
+    COPAUS2C --> COPAUS2C
     COPAUS2C -.->|COPY| COPYBOOKS
     DBPAUTP0 --> DFSRRC00
-    DBUNLDGS --> PAUDBUNL
-    DBUNLDGS --> PAUDBUNL
+    DBUNLDGS --> CBPAUP0C
+    DBUNLDGS --> CBPAUP0C
     DBUNLDGS -.->|COPY| COPYBOOKS
     DBUNLDGS --> CBLTDLI
     DBUNLDGS --> CBLTDLI
     PAUDBLOD --> PAUDBLOD
-    PAUDBLOD --> PAUDBUNL
+    PAUDBLOD --> CBPAUP0C
     PAUDBLOD --> PAUDBLOD
     PAUDBLOD --> PAUDBLOD
-    PAUDBLOD --> PAUDBUNL
-    PAUDBLOD --> PAUDBUNL
+    PAUDBLOD --> CBPAUP0C
+    PAUDBLOD --> CBPAUP0C
     PAUDBLOD -.->|COPY| COPYBOOKS
     PAUDBLOD --> CBLTDLI
     PAUDBLOD --> CBLTDLI
     PAUDBLOD --> CBLTDLI
-    PAUDBUNL --> PAUDBUNL
-    PAUDBUNL --> COPAUA0C
-    PAUDBUNL --> COPAUA0C
-    PAUDBUNL --> DBUNLDGS
-    PAUDBUNL --> PAUDBUNL
-    PAUDBUNL --> PAUDBUNL
-    PAUDBUNL --> DBUNLDGS
-    PAUDBUNL --> PAUDBUNL
     PAUDBUNL -.->|COPY| COPYBOOKS
-    PAUDBUNL --> CBLTDLI
-    PAUDBUNL --> CBLTDLI
-    PAUDBUNL --> CBLTDLI
-    PAUDBUNL --> CBLTDLI
-    UNLDPADB --> DFSRRC00
-    UNLDPADB --> DFSRRC00
-    UNLDPADB --> DFSRRC00
-    UNLDPADB --> DFSRRC00
 
     %% Styling
     classDef entryPoint fill:#90EE90,stroke:#228B22
-    class CBPAUP0J,DBPAUTP0,LOADPADB,UNLDGSAM,UNLDPADB entryPoint
+    class CBPAUP0J,DBPAUTP0,LOADPADB,PAUDBUNL,UNLDGSAM,UNLDPADB entryPoint
+    classDef copybook fill:#E8F5E9,stroke:#4CAF50
+    class COPYBOOKS copybook
     classDef missing fill:#1E3A5F,stroke:#2E5A8F,color:#FFFFFF
     class CBLTDLI,CDEMO_TO_PROGRAM,DFSRRC00,MQCLOSE,MQGET,MQOPEN,MQPUT1,WS_PGM_AUTH_FRAUD missing
 ```
 
 ## Entry Points
 
-- ✓ **CBPAUP0J**: No summary
-- ✓ **DBPAUTP0**: No summary
-- ✓ **LOADPADB**: No summary
-- ✓ **UNLDGSAM**: No summary
-- ✓ **UNLDPADB**: No summary
+- ✓ **CBPAUP0J**: This JCL executes the IMS program DFSRRC00 to delete expired authorizations usin...
+- ✓ **DBPAUTP0**: This JCL job unloads the DBD DBPAUTP0 from an IMS database. It first deletes the...
+- ✓ **LOADPADB**: This JCL job executes an IMS program (DFSRRC00) to load the PAUTDB database usin...
+- ✓ **PAUDBUNL**: The COBOL program PAUDBUNL extracts authorization summary and detail information...
+- ✓ **UNLDGSAM**: This JCL job unloads a GSAM database using the IMS program DFSRRC00. It specifie...
+- ✓ **UNLDPADB**: This JCL job unloads an IMS database (PAUTDB) using the IMS Database Utility (DF...
 
 ## External Dependencies
 
@@ -218,9 +212,9 @@ flowchart TD
 
 ### Custom Programs (Need Documentation)
 
-- **CBLTDLI**: Called by PAUDBLOD (EXEC), PAUDBLOD (EXEC), PAUDBLOD (EXEC), DBUNLDGS (EXEC), DBUNLDGS (EXEC), PAUDBUNL (EXEC), PAUDBUNL (EXEC), PAUDBUNL (EXEC), PAUDBUNL (EXEC)
+- **CBLTDLI**: Called by PAUDBLOD (EXEC), PAUDBLOD (EXEC), PAUDBLOD (EXEC), DBUNLDGS (EXEC), DBUNLDGS (EXEC), CBPAUP0C (EXEC), CBPAUP0C (EXEC), CBPAUP0C (EXEC), CBPAUP0C (EXEC)
 - **CDEMO-TO-PROGRAM**: Called by COPAUS0C (EXEC), COPAUS0C (EXEC), COPAUS0C (EXEC)
-- **DFSRRC00**: Called by DBPAUTP0 (EXEC), UNLDPADB (EXEC), UNLDPADB (EXEC), UNLDPADB (EXEC), UNLDPADB (EXEC)
+- **DFSRRC00**: Called by DBPAUTP0 (EXEC), CBPAUP0J (EXEC), CBPAUP0J (EXEC), CBPAUP0J (EXEC), CBPAUP0J (EXEC)
 - **MQCLOSE**: Called by COPAUA0C (EXEC)
 - **MQGET**: Called by COPAUA0C (EXEC)
 - **MQOPEN**: Called by COPAUA0C (EXEC)
@@ -232,7 +226,7 @@ flowchart TD
 | Metric | Count |
 |--------|-------|
 | Documented Programs | 24 |
-| Entry Points | 5 |
+| Entry Points | 6 |
 | Leaf Nodes | 16 |
 | External Dependencies | 8 |
 | System Utilities | 0 |

@@ -1,37 +1,23 @@
 {
   "header": {
     "program_id": "PAUTBUNL",
-    "file_name": "ims/PAUTBUNL.PSB",
+    "file_name": "PAUTBUNL.PSB",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-30T19:42:22.408833",
+    "analyzed_at": "2026-02-03T21:05:12.269369",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This file defines an IMS Program Specification Block (PSB) named PAUTBUNL for a COBOL language program. It specifies a single PCB named PAUTBPCB providing access to the IMS database DBDNAME=DBPAUTP0 with PROCOPT=GOTP and KEYLEN=14. The PCB defines two sensegments: PAUTSUM0 as the root segment (PARENT=0) and PAUTDTL1 as a child segment under PAUTSUM0.",
+    "summary": "This file defines a Program Specification Block (PSB) named PAUTBUNL for an IMS database application. It specifies the database characteristics, segment hierarchy, and processing options for accessing the DBPAUTP0 database. The PSB is configured for COBOL language compatibility.",
     "business_context": null,
-    "program_type": "BATCH",
+    "program_type": "UTILITY",
     "citations": [
       18,
-      19,
-      20,
       21
     ]
   },
-  "inputs": [
-    {
-      "name": "DBPAUTP0",
-      "io_type": "IMS_SEGMENT",
-      "description": "IMS database referenced by the PCB, accessible via segments PAUTSUM0 (root) and PAUTDTL1 (child)",
-      "copybook": null,
-      "citation": [
-        18,
-        19,
-        20
-      ]
-    }
-  ],
+  "inputs": [],
   "outputs": [],
   "called_programs": [],
   "calling_context": {
@@ -52,14 +38,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the business purpose of the DBPAUTP0 database and its segments PAUTSUM0/PAUTDTL1?",
-      "context": "No descriptive comments or names indicate business meaning beyond technical IMS structure",
-      "suggestion": "Review associated DBD definitions or calling COBOL programs for context"
-    },
-    {
-      "question": "Is this PSB used in batch DL/I, MPP, BMP, or IFP region?",
-      "context": "PROCOPT=GOTP suggests possible TP usage, but no explicit region type specified",
-      "suggestion": "Check JCL or IMS region definitions for the PAUTBUNL program"
+      "question": "What specific application uses this PSB?",
+      "context": "The code only defines the PSB structure but doesn't provide information on its usage.",
+      "suggestion": "Review application documentation or related COBOL programs that reference this PSB."
     }
   ],
   "dead_code": [],
