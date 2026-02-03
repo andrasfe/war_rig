@@ -1,42 +1,35 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project]
-name = "war-rig"
+name = "llm-providers"
 version = "0.1.0"
-description = "Multi-agent mainframe documentation system using LangGraph"
+description = "Provider-agnostic LLM abstraction layer supporting OpenRouter, Anthropic, and OpenAI"
 readme = "README.md"
 requires-python = ">=3.11"
-license = {text = "MIT"}
+license = { text = "MIT" }
 authors = [
-    {name = "War Rig Team", email = "team@warrig.dev"}
+    { name = "War Rig Team", email = "team@warrig.dev" }
 ]
-keywords = ["mainframe", "documentation", "cobol", "jcl", "langgraph", "agents"]
+keywords = ["llm", "openai", "anthropic", "openrouter", "providers", "ai"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
-    "Topic :: Documentation",
-    "Topic :: Software Development :: Documentation",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Typing :: Typed",
 ]
 
 dependencies = [
-    "langgraph>=0.2.0",
-    "langchain-anthropic>=0.2.0",
-    "langchain-openai>=0.2.0",
-    "langchain-core>=0.3.0",
     "pydantic>=2.0.0",
     "pydantic-settings>=2.0.0",
-    "python-dotenv>=1.0.0",
-    "pyyaml>=6.0",
-    "rich>=13.0.0",
-    "typer>=0.12.0",
     "openai>=1.0.0",
+    "anthropic>=0.39.0",
     "httpx>=0.25.0",
-    "citadel",
 ]
 
 [project.optional-dependencies]
@@ -44,29 +37,19 @@ dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
     "pytest-cov>=4.0.0",
+    "pytest-mock>=3.12.0",
+    "respx>=0.20.0",
     "mypy>=1.8.0",
     "ruff>=0.3.0",
-    "pre-commit>=3.6.0",
 ]
-atlas = [
-    # Install atlas separately if needed for chunking support
-    # pip install -e ../atlas
-]
-
-[project.scripts]
-war-rig = "war_rig.cli:main"
 
 [project.urls]
 Homepage = "https://github.com/andrasfe/war_rig"
 Repository = "https://github.com/andrasfe/war_rig"
 Issues = "https://github.com/andrasfe/war_rig/issues"
 
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["war_rig*"]
-
-[tool.setuptools.package-data]
-war_rig = ["py.typed"]
+[tool.hatch.build.targets.wheel]
+packages = ["src/llm_providers"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
@@ -74,14 +57,6 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short"
-markers = [
-    "integration: marks tests as integration tests requiring external resources (like CardDemo)",
-]
-
-[tool.uv.sources]
-citadel = { path = "citadel", editable = true }
-llm-providers = { path = "llm-providers", editable = true }
-codewhisper = { path = "codewhisper", editable = true }
 
 [tool.ruff]
 line-length = 88
@@ -97,10 +72,10 @@ select = [
     "C4",  # flake8-comprehensions
     "UP",  # pyupgrade
 ]
-ignore = ["E501"]  # line too long (handled by formatter)
+ignore = ["E501"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["war_rig"]
+known-first-party = ["llm_providers"]
 
 [tool.mypy]
 python_version = "3.11"

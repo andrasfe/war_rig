@@ -661,6 +661,109 @@ When source code exceeds token limits for CLARIFICATION/CHROME tickets, War Rig 
 
 This ensures the LLM sees the relevant code to answer questions, rather than random portions.
 
+### Custom LLM Providers
+
+War Rig uses the `llm-providers` package for LLM connectivity. You can add custom providers by implementing the `LLMProvider` protocol.
+
+**1. Implement the Protocol**
+
+```python
+from llm_providers import LLMProvider, Message, CompletionResponse
+
+class MyCustomProvider:
+    """Custom provider for my LLM backend."""
+
+    def __init__(self, api_key: str, default_model: str = "my-model"):
+        self._api_key = api_key
+        self._default_model = default_model
+
+    @property
+    def default_model(self) -> str:
+        return self._default_model
+
+    async def complete(
+        self,
+        messages: list[Message],
+        model: str | None = None,
+        temperature: float = 0.7,
+        **kwargs,
+    ) -> CompletionResponse:
+        resolved_model = model or self._default_model
+
+        # Your API call logic here
+        content = await self._call_api(messages, resolved_model, temperature)
+
+        return CompletionResponse(
+            content=content,
+            model=resolved_model,
+            tokens_used=0,  # Optional: track token usage
+            raw_response={},  # Optional: include raw API response
+        )
+```
+
+**2. Register Your Provider**
+
+```python
+from llm_providers import register_provider
+
+# Register at runtime
+register_provider("myprovider", MyCustomProvider)
+
+# Now use it
+provider = create_provider("myprovider", api_key="...")
+```
+
+**3. Plugin Registration (Entry Points)**
+
+For automatic discovery, register via `pyproject.toml`:
+
+```toml
+[project.entry-points."llm_providers.providers"]
+myprovider = "mypackage.provider:MyCustomProvider"
+```
+
+The provider will be automatically available:
+
+```python
+from llm_providers import create_provider, get_available_providers
+
+# See all providers including your custom one
+print(get_available_providers())  # ['openrouter', 'anthropic', 'openai', 'myprovider']
+
+# Create your provider
+provider = create_provider("myprovider", api_key="...")
+```
+
+**4. Use in War Rig**
+
+Set your provider in `.env`:
+
+```bash
+API_PROVIDER=myprovider
+MYPROVIDER_API_KEY=your-key-here
+```
+
+**Built-in Providers:**
+
+| Provider | Models | Key Variable |
+|----------|--------|--------------|
+| `openrouter` | Any model via OpenRouter | `OPENROUTER_API_KEY` |
+| `anthropic` | Claude models direct | `ANTHROPIC_API_KEY` |
+| `openai` | GPT models direct | `OPENAI_API_KEY` |
+
+**Streaming Support:**
+
+For best results, implement streaming in your provider to enable stall detection (the system monitors for hung API calls):
+
+```python
+async def complete(self, messages, model=None, temperature=0.7, **kwargs):
+    # Use streaming for progress visibility
+    content_chunks = []
+    async for chunk in self._stream_api(messages, model, temperature):
+        content_chunks.append(chunk)
+    return CompletionResponse(content="".join(content_chunks), ...)
+```
+
 ## License
 
 MIT License
