@@ -21,7 +21,7 @@ import os
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ProviderType = Literal["openrouter", "anthropic", "openai"]
@@ -38,6 +38,11 @@ def _get_default_model() -> str:
         "SCRIBE_MODEL",
         os.environ.get("LLM_DEFAULT_MODEL", "anthropic/claude-sonnet-4-20250514"),
     )
+
+
+def _get_use_minions_default() -> bool:
+    """Default to True if minion model is available."""
+    return bool(os.environ.get("MINION_SCRIBE_MODEL"))
 
 
 class AgentConfig(BaseSettings):
@@ -116,6 +121,11 @@ class AgentConfig(BaseSettings):
     verbose: bool = Field(
         default=False,
         description="Enable verbose logging",
+    )
+
+    use_minions: bool = Field(
+        default_factory=_get_use_minions_default,
+        description="Use minions for processing large tool results",
     )
 
     @field_validator("skills_dir", "code_dir", mode="before")

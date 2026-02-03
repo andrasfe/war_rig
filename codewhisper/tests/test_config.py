@@ -136,6 +136,64 @@ class TestAgentConfig:
         """Test that environment prefix is CODEWHISPER_."""
         assert AgentConfig.model_config.get("env_prefix") == "CODEWHISPER_"
 
+    def test_use_minions_defaults_false_without_env(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test that use_minions defaults to False when MINION_SCRIBE_MODEL is not set."""
+        monkeypatch.delenv("MINION_SCRIBE_MODEL", raising=False)
+        monkeypatch.delenv("CODEWHISPER_USE_MINIONS", raising=False)
+
+        skills_dir = tmp_path / "skills"
+        skills_dir.mkdir()
+        code_dir = tmp_path / "code"
+        code_dir.mkdir()
+
+        config = AgentConfig(
+            skills_dir=skills_dir,
+            code_dir=code_dir,
+        )
+
+        assert config.use_minions is False
+
+    def test_use_minions_defaults_true_with_env(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test that use_minions defaults to True when MINION_SCRIBE_MODEL is set."""
+        monkeypatch.setenv("MINION_SCRIBE_MODEL", "test/model")
+        monkeypatch.delenv("CODEWHISPER_USE_MINIONS", raising=False)
+
+        skills_dir = tmp_path / "skills"
+        skills_dir.mkdir()
+        code_dir = tmp_path / "code"
+        code_dir.mkdir()
+
+        config = AgentConfig(
+            skills_dir=skills_dir,
+            code_dir=code_dir,
+        )
+
+        assert config.use_minions is True
+
+    def test_use_minions_can_be_overridden(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test that use_minions can be explicitly set."""
+        monkeypatch.setenv("MINION_SCRIBE_MODEL", "test/model")
+
+        skills_dir = tmp_path / "skills"
+        skills_dir.mkdir()
+        code_dir = tmp_path / "code"
+        code_dir.mkdir()
+
+        # Explicitly disable even though model is set
+        config = AgentConfig(
+            skills_dir=skills_dir,
+            code_dir=code_dir,
+            use_minions=False,
+        )
+
+        assert config.use_minions is False
+
 
 class TestSkillMetadata:
     """Tests for the SkillMetadata model."""

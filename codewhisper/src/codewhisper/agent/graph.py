@@ -27,10 +27,11 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING, Any, Literal
 
-from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 from langgraph.graph import END, START, StateGraph
 from langgraph.prebuilt import ToolNode
 
+from codewhisper.agent.minion import MinionProcessor
 from codewhisper.agent.state import AgentState
 from codewhisper.agent.tools import configure_tools, get_all_tools
 
@@ -150,6 +151,12 @@ class CodeWhisperAgent:
         self._llm = llm
         self._graph: CompiledStateGraph | None = None
         self._conversation_state: AgentState | None = None
+        self._minion_processor: MinionProcessor | None = None
+
+        # Initialize minion processor if enabled
+        if config.use_minions:
+            self._minion_processor = MinionProcessor()
+            logger.info("Minion processor enabled for tool result summarization")
 
         # Configure tools with dependencies
         configure_tools(skills_index, config)
@@ -292,18 +299,54 @@ class CodeWhisperAgent:
 
             return {"messages": [response]}
 
+        # Minion processor node: summarizes large tool results
+        minion = self._minion_processor
+
+        async def minion_processor_node(state: AgentState) -> dict[str, Any]:
+            """Process tool messages through minion for summarization."""
+            if minion is None:
+                # Minions disabled, pass through
+                return {"messages": []}
+
+            # Find ToolMessage instances in the recent messages
+            processed_messages = []
+            for msg in state.messages:
+                if isinstance(msg, ToolMessage):
+                    # Summarize the tool result content
+                    tool_name = getattr(msg, "name", "tool")
+                    original_content = msg.content
+                    if isinstance(original_content, str):
+                        summarized = await minion.summarize_result(
+                            tool_name,
+                            original_content,
+                        )
+                        if summarized != original_content:
+                            # Create new ToolMessage with summarized content
+                            processed_messages.append(
+                                ToolMessage(
+                                    content=summarized,
+                                    tool_call_id=msg.tool_call_id,
+                                    name=tool_name,
+                                )
+                            )
+
+            return {"messages": processed_messages}
+
         # Add nodes
         graph_builder.add_node("agent", agent_node)
         graph_builder.add_node("tools", ToolNode(tools))
+        graph_builder.add_node("minion_processor", minion_processor_node)
 
         # Add edges
+        # Flow: START -> agent -> tools -> minion_processor -> agent
         graph_builder.add_edge(START, "agent")
         graph_builder.add_conditional_edges(
             "agent",
             self._should_continue,
             {"tools": "tools", "end": END},
         )
-        graph_builder.add_edge("tools", "agent")
+        graph_builder.add_edge("tools", "minion_processor")
+        graph_builder.add_edge("minion_processor", "agent")
 
         return graph_builder.compile()
 
