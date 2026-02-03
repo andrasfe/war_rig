@@ -160,10 +160,11 @@ class TestGetAllTools:
         tools = get_all_tools()
 
         assert isinstance(tools, list)
-        assert len(tools) == 4  # search_skills, load_skill, search_code, read_file
+        # 4 knowledge tools + 13 citadel tools = 17 total
+        assert len(tools) == 17
 
-    def test_get_all_tools_contains_expected_tools(self) -> None:
-        """Test that all expected tools are returned."""
+    def test_get_all_tools_contains_expected_knowledge_tools(self) -> None:
+        """Test that all expected knowledge tools are returned."""
         tools = get_all_tools()
         tool_names = [t.name for t in tools]
 
@@ -171,6 +172,30 @@ class TestGetAllTools:
         assert "load_skill" in tool_names
         assert "search_code" in tool_names
         assert "read_file" in tool_names
+
+    def test_get_all_tools_contains_expected_citadel_tools(self) -> None:
+        """Test that all expected citadel analysis tools are returned."""
+        tools = get_all_tools()
+        tool_names = [t.name for t in tools]
+
+        # All 13 citadel tools should be present
+        expected_citadel_tools = [
+            "citadel_analyze_file",
+            "citadel_get_functions",
+            "citadel_get_callouts",
+            "citadel_get_includes",
+            "citadel_get_function_body",
+            "citadel_get_function_bodies",
+            "citadel_get_file_stats",
+            "citadel_get_callers",
+            "citadel_get_sequence_diagrams",
+            "citadel_get_dead_code",
+            "citadel_get_flow_diagram",
+            "citadel_get_file_summary",
+            "citadel_get_analysis_patterns",
+        ]
+        for tool_name in expected_citadel_tools:
+            assert tool_name in tool_names, f"Missing citadel tool: {tool_name}"
 
 
 class TestSearchSkillsTool:
@@ -290,7 +315,9 @@ class TestReadFileTool:
 
         # Create a test file
         test_file = tmp_path / "test.cbl"
-        test_file.write_text("       IDENTIFICATION DIVISION.\n       PROGRAM-ID. TEST.")
+        test_file.write_text(
+            "       IDENTIFICATION DIVISION.\n       PROGRAM-ID. TEST."
+        )
 
         mock_config = MagicMock()
         mock_config.code_dir = tmp_path

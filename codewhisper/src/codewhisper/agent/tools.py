@@ -3,11 +3,26 @@
 This module defines the tools available to the LangGraph agent for
 exploring codebases and accessing skill-based knowledge.
 
-Tools:
+Knowledge Tools:
     - search_skills: Find relevant skills by keyword
     - load_skill: Load a specific skill into context
     - search_code: Search for patterns in the codebase
     - read_file: Read the contents of a source file
+
+Analysis Tools (Citadel):
+    - citadel_analyze_file: Full structural analysis
+    - citadel_get_functions: List functions/paragraphs
+    - citadel_get_callouts: Get references/calls
+    - citadel_get_includes: Get preprocessor includes
+    - citadel_get_function_body: Extract function source
+    - citadel_get_function_bodies: Batch extract functions
+    - citadel_get_file_stats: Structural statistics
+    - citadel_get_callers: Find callers of a function
+    - citadel_get_sequence_diagrams: Generate sequence diagrams
+    - citadel_get_dead_code: Find dead code
+    - citadel_get_flow_diagram: Generate flow diagram
+    - citadel_get_file_summary: Compact summary
+    - citadel_get_analysis_patterns: Extract patterns
 
 Example:
     # Tools are used by the agent automatically
@@ -45,6 +60,11 @@ def configure_tools(skills_index: SkillsIndex, config: AgentConfig) -> None:
     global _skills_index, _config
     _skills_index = skills_index
     _config = config
+
+    # Also configure citadel tools
+    from codewhisper.agent.citadel_tools import configure_citadel_tools
+
+    configure_citadel_tools(config)
 
 
 class SkillSearchInput(BaseModel):
@@ -134,7 +154,11 @@ def search_skills(query: str, limit: int = 5) -> str:
     for result in results:
         skill = result.skill
         # Truncate description for display
-        desc = skill.description[:150] + "..." if len(skill.description) > 150 else skill.description
+        desc = (
+            skill.description[:150] + "..."
+            if len(skill.description) > 150
+            else skill.description
+        )
         lines.append(f"- **{skill.name}** (score: {result.score:.1f})")
         lines.append(f"  {desc}")
         lines.append("")
@@ -296,15 +320,15 @@ def read_file(file_path: str, max_lines: int = 500) -> str:
             truncated = False
 
         # Format with line numbers
-        numbered_lines = [
-            f"{i+1:4d} | {line}" for i, line in enumerate(lines)
-        ]
+        numbered_lines = [f"{i + 1:4d} | {line}" for i, line in enumerate(lines)]
 
         header = f"# File: {file_path}\n# Lines: {total_lines}\n\n"
         result = header + "\n".join(numbered_lines)
 
         if truncated:
-            result += f"\n\n... (truncated, showing first {max_lines} of {total_lines} lines)"
+            result += (
+                f"\n\n... (truncated, showing first {max_lines} of {total_lines} lines)"
+            )
 
         return result
 
@@ -316,12 +340,23 @@ def read_file(file_path: str, max_lines: int = 500) -> str:
 def get_all_tools() -> list:
     """Get all available tools for the agent.
 
+    Includes both knowledge tools (skills, code search) and
+    Citadel analysis tools.
+
     Returns:
         List of tool functions.
     """
-    return [
+    from codewhisper.agent.citadel_tools import get_citadel_tools
+
+    # Knowledge tools
+    knowledge_tools = [
         search_skills,
         load_skill,
         search_code,
         read_file,
     ]
+
+    # Analysis tools (Citadel)
+    citadel_tools = get_citadel_tools()
+
+    return knowledge_tools + citadel_tools

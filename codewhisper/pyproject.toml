@@ -31,6 +31,7 @@ dependencies = [
     "langchain-anthropic>=0.2.0",
     "langchain-openai>=0.2.0",
     "llm-providers",
+    "citadel",
     "pydantic>=2.0.0",
     "pydantic-settings>=2.0.0",
     "typer>=0.12.0",
@@ -61,6 +62,7 @@ Issues = "https://github.com/andrasfe/war_rig/issues"
 
 [tool.uv.sources]
 llm-providers = { path = "../llm-providers", editable = true }
+citadel = { path = "../citadel", editable = true }
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/codewhisper"]
