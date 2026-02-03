@@ -4,6 +4,9 @@ This module defines Pydantic models for configuring the CodeWhisper agent,
 including paths to skills and code directories, model selection, and
 behavioral settings.
 
+Configuration is compatible with war_rig's .env file - it reads API_PROVIDER,
+SCRIBE_MODEL, and OPENROUTER_API_KEY directly.
+
 Example:
     from codewhisper.config import AgentConfig
 
@@ -14,20 +17,39 @@ Example:
     )
 """
 
+import os
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 ProviderType = Literal["openrouter", "anthropic", "openai"]
 
 
+def _get_default_provider() -> str:
+    """Get default provider from war_rig's API_PROVIDER env var."""
+    return os.environ.get("API_PROVIDER", "openrouter")
+
+
+def _get_default_model() -> str:
+    """Get default model from war_rig's SCRIBE_MODEL env var."""
+    return os.environ.get(
+        "SCRIBE_MODEL",
+        os.environ.get("LLM_DEFAULT_MODEL", "anthropic/claude-sonnet-4-20250514"),
+    )
+
+
 class AgentConfig(BaseSettings):
     """Configuration for the CodeWhisper agent.
 
-    This configuration can be loaded from environment variables with the
-    CODEWHISPER_ prefix.
+    This configuration is compatible with war_rig's .env file:
+    - Reads API_PROVIDER for the provider setting
+    - Reads SCRIBE_MODEL for the default model
+    - Reads OPENROUTER_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY
+
+    Can also be configured with CODEWHISPER_ prefixed env vars which
+    take precedence.
 
     Attributes:
         skills_dir: Path to the directory containing skill files.
@@ -40,16 +62,15 @@ class AgentConfig(BaseSettings):
         verbose: Enable verbose logging.
 
     Example:
-        # From environment
-        export CODEWHISPER_SKILLS_DIR=./skills
-        export CODEWHISPER_CODE_DIR=./src
-        config = AgentConfig()
-
-        # Or direct
+        # Works with war_rig's .env (API_PROVIDER, SCRIBE_MODEL, etc.)
         config = AgentConfig(
             skills_dir="./skills",
             code_dir="./src",
         )
+
+        # Or with CODEWHISPER_ prefix
+        export CODEWHISPER_MODEL=openai/gpt-4o
+        config = AgentConfig()
     """
 
     model_config = SettingsConfigDict(
@@ -68,11 +89,11 @@ class AgentConfig(BaseSettings):
         description="Path to the source code directory to explore",
     )
     model: str = Field(
-        default="anthropic/claude-sonnet-4-20250514",
+        default_factory=_get_default_model,
         description="LLM model identifier",
     )
     provider: ProviderType = Field(
-        default="openrouter",
+        default_factory=_get_default_provider,
         description="LLM provider (openrouter, anthropic, openai)",
     )
     temperature: float = Field(
