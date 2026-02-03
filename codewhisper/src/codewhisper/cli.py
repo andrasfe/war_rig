@@ -26,6 +26,28 @@ from rich.prompt import Prompt
 
 from codewhisper.config import AgentConfig
 
+
+def _load_dotenv() -> None:
+    """Load .env file from current directory or parent directories."""
+    try:
+        from dotenv import load_dotenv
+
+        # Try current directory first, then walk up to find .env
+        cwd = Path.cwd()
+        for parent in [cwd, *cwd.parents]:
+            env_file = parent / ".env"
+            if env_file.exists():
+                load_dotenv(env_file)
+                return
+        # Fallback to default behavior (looks in cwd)
+        load_dotenv()
+    except ImportError:
+        pass  # python-dotenv not installed, skip
+
+
+# Load .env on module import
+_load_dotenv()
+
 if TYPE_CHECKING:
     from codewhisper.skills.index import SkillsIndex
 
