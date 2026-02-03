@@ -22,7 +22,7 @@ class TestAgentConfig:
     ) -> None:
         """Test creating agent config with defaults (no env vars)."""
         # Clear war_rig env vars to test hardcoded defaults
-        monkeypatch.delenv("SCRIBE_MODEL", raising=False)
+        monkeypatch.delenv("IMPERATOR_MODEL", raising=False)
         monkeypatch.delenv("LLM_DEFAULT_MODEL", raising=False)
         monkeypatch.delenv("API_PROVIDER", raising=False)
 
@@ -48,7 +48,7 @@ class TestAgentConfig:
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
     ) -> None:
         """Test that config reads from war_rig env vars."""
-        monkeypatch.setenv("SCRIBE_MODEL", "test/model-from-env")
+        monkeypatch.setenv("IMPERATOR_MODEL", "test/model-from-env")
         monkeypatch.setenv("API_PROVIDER", "anthropic")
 
         skills_dir = tmp_path / "skills"

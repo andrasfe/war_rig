@@ -5,7 +5,7 @@ including paths to skills and code directories, model selection, and
 behavioral settings.
 
 Configuration is compatible with war_rig's .env file - it reads API_PROVIDER,
-SCRIBE_MODEL, and OPENROUTER_API_KEY directly.
+IMPERATOR_MODEL, and OPENROUTER_API_KEY directly.
 
 Example:
     from codewhisper.config import AgentConfig
@@ -33,9 +33,13 @@ def _get_default_provider() -> str:
 
 
 def _get_default_model() -> str:
-    """Get default model from war_rig's SCRIBE_MODEL env var."""
+    """Get default model from war_rig's IMPERATOR_MODEL env var.
+
+    Uses IMPERATOR (judgment/decision model) for the chat CLI since it
+    needs reasoning and decision-making capabilities.
+    """
     return os.environ.get(
-        "SCRIBE_MODEL",
+        "IMPERATOR_MODEL",
         os.environ.get("LLM_DEFAULT_MODEL", "anthropic/claude-sonnet-4-20250514"),
     )
 
@@ -50,7 +54,7 @@ class AgentConfig(BaseSettings):
 
     This configuration is compatible with war_rig's .env file:
     - Reads API_PROVIDER for the provider setting
-    - Reads SCRIBE_MODEL for the default model
+    - Reads IMPERATOR_MODEL for the default model (judgment/decision model)
     - Reads OPENROUTER_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY
 
     Can also be configured with CODEWHISPER_ prefixed env vars which
