@@ -17,8 +17,15 @@ from codewhisper.config import AgentConfig, SearchResult, SkillMetadata
 class TestAgentConfig:
     """Tests for the AgentConfig model."""
 
-    def test_create_agent_config_defaults(self, tmp_path: Path) -> None:
-        """Test creating agent config with defaults."""
+    def test_create_agent_config_defaults(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test creating agent config with defaults (no env vars)."""
+        # Clear war_rig env vars to test hardcoded defaults
+        monkeypatch.delenv("SCRIBE_MODEL", raising=False)
+        monkeypatch.delenv("LLM_DEFAULT_MODEL", raising=False)
+        monkeypatch.delenv("API_PROVIDER", raising=False)
+
         skills_dir = tmp_path / "skills"
         skills_dir.mkdir()
         code_dir = tmp_path / "code"
@@ -36,6 +43,26 @@ class TestAgentConfig:
         assert config.temperature == 0.3
         assert config.max_history == 20
         assert config.verbose is False
+
+    def test_create_agent_config_from_env(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """Test that config reads from war_rig env vars."""
+        monkeypatch.setenv("SCRIBE_MODEL", "test/model-from-env")
+        monkeypatch.setenv("API_PROVIDER", "anthropic")
+
+        skills_dir = tmp_path / "skills"
+        skills_dir.mkdir()
+        code_dir = tmp_path / "code"
+        code_dir.mkdir()
+
+        config = AgentConfig(
+            skills_dir=skills_dir,
+            code_dir=code_dir,
+        )
+
+        assert config.model == "test/model-from-env"
+        assert config.provider == "anthropic"
 
     def test_create_agent_config_custom(self, tmp_path: Path) -> None:
         """Test creating agent config with custom values."""
