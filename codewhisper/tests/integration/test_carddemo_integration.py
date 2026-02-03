@@ -220,9 +220,12 @@ class TestEndToEndWithMockedLLM:
         not SKILLS_DIR.exists() or not CARDDEMO_DIR.exists(),
         reason="Skills or CardDemo not available",
     )
-    async def test_create_agent_with_real_skills(self) -> None:
+    async def test_create_agent_with_real_skills(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test creating agent with real skills."""
         from codewhisper.agent.graph import create_agent
+
+        # Set mock API key for test
+        monkeypatch.setenv("OPENROUTER_API_KEY", "test-key-for-integration")
 
         config = AgentConfig(
             skills_dir=SKILLS_DIR,

@@ -122,34 +122,57 @@ class CodeWhisperAgent:
         Returns:
             Configured chat model.
         """
+        import os
+
         # Use langchain's chat model wrappers based on provider
         if self.config.provider == "anthropic":
             from langchain_anthropic import ChatAnthropic
+
+            api_key = os.environ.get("ANTHROPIC_API_KEY", "")
+            if not api_key:
+                raise ValueError(
+                    "ANTHROPIC_API_KEY environment variable not set. "
+                    "Please set it to use the anthropic provider."
+                )
 
             return ChatAnthropic(
                 model=self.config.model,
                 temperature=self.config.temperature,
                 max_tokens=self.config.max_tokens,
+                api_key=api_key,
             )
         elif self.config.provider == "openai":
             from langchain_openai import ChatOpenAI
 
+            api_key = os.environ.get("OPENAI_API_KEY", "")
+            if not api_key:
+                raise ValueError(
+                    "OPENAI_API_KEY environment variable not set. "
+                    "Please set it to use the openai provider."
+                )
+
             return ChatOpenAI(
                 model=self.config.model,
                 temperature=self.config.temperature,
                 max_tokens=self.config.max_tokens,
+                api_key=api_key,
             )
         else:  # openrouter (default)
-            import os
-
             from langchain_openai import ChatOpenAI
+
+            api_key = os.environ.get("OPENROUTER_API_KEY", "")
+            if not api_key:
+                raise ValueError(
+                    "OPENROUTER_API_KEY environment variable not set. "
+                    "Please set it to use the openrouter provider."
+                )
 
             return ChatOpenAI(
                 model=self.config.model,
                 temperature=self.config.temperature,
                 max_tokens=self.config.max_tokens,
-                openai_api_base="https://openrouter.ai/api/v1",
-                openai_api_key=os.environ.get("OPENROUTER_API_KEY", ""),
+                base_url="https://openrouter.ai/api/v1",
+                api_key=api_key,
             )
 
     @property
