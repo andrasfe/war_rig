@@ -173,7 +173,6 @@ dependencies = [
     { name = "langchain-core" },
     { name = "langchain-openai" },
     { name = "langgraph" },
-    { name = "llm-providers" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "python-dotenv" },
@@ -181,6 +180,7 @@ dependencies = [
     { name = "pyyaml" },
     { name = "rich" },
     { name = "typer" },
+    { name = "war-rig" },
 ]
 
 [package.optional-dependencies]
@@ -201,7 +201,6 @@ requires-dist = [
     { name = "langchain-core", specifier = ">=0.3.0" },
     { name = "langchain-openai", specifier = ">=0.2.0" },
     { name = "langgraph", specifier = ">=0.2.0" },
-    { name = "llm-providers", editable = "../llm-providers" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.8.0" },
     { name = "pydantic", specifier = ">=2.0.0" },
     { name = "pydantic-settings", specifier = ">=2.0.0" },
@@ -216,6 +215,7 @@ requires-dist = [
     { name = "rich", specifier = ">=13.0.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.3.0" },
     { name = "typer", specifier = ">=0.12.0" },
+    { name = "war-rig", editable = "../" },
 ]
 provides-extras = ["dev"]
 
@@ -684,35 +684,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/24/d4/7e4be20993dc6a782639625bd2f97f3c66125c7aa80c82426956811cfccf/librt-0.7.8-cp314-cp314t-win_amd64.whl", hash = "sha256:445b7304145e24c60288a2f172b5ce2ca35c0f81605f5299f3fa567e189d2e32", size = 47668, upload-time = "2026-01-14T12:56:00.261Z" },
     { url = "https://files.pythonhosted.org/packages/fc/85/69f92b2a7b3c0f88ffe107c86b952b397004b5b8ea5a81da3d9c04c04422/librt-0.7.8-cp314-cp314t-win_arm64.whl", hash = "sha256:8766ece9de08527deabcd7cb1b4f1a967a385d26e33e536d6d8913db6ef74f06", size = 40550, upload-time = "2026-01-14T12:56:01.542Z" },
 ]
-
-[[package]]
-name = "llm-providers"
-version = "0.1.0"
-source = { editable = "../llm-providers" }
-dependencies = [
-    { name = "anthropic" },
-    { name = "httpx" },
-    { name = "openai" },
-    { name = "pydantic" },
-    { name = "pydantic-settings" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "anthropic", specifier = ">=0.39.0" },
-    { name = "httpx", specifier = ">=0.25.0" },
-    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.8.0" },
-    { name = "openai", specifier = ">=1.0.0" },
-    { name = "pydantic", specifier = ">=2.0.0" },
-    { name = "pydantic-settings", specifier = ">=2.0.0" },
-    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
-    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.23.0" },
-    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.0.0" },
-    { name = "pytest-mock", marker = "extra == 'dev'", specifier = ">=3.12.0" },
-    { name = "respx", marker = "extra == 'dev'", specifier = ">=0.20.0" },
-    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.3.0" },
-]
-provides-extras = ["dev"]
 
 [[package]]
 name = "markdown-it-py"
@@ -1692,6 +1663,50 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/8e/a0/27d7daa1bfed7163f4ccaf52d7d2f4ad7bb1002a85b45077938b91ee584f/uuid_utils-0.14.0-pp311-pypy311_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:eff57e8a5d540006ce73cf0841a643d445afe78ba12e75ac53a95ca2924a56be", size = 333298, upload-time = "2026-01-20T20:37:07.271Z" },
     { url = "https://files.pythonhosted.org/packages/63/d4/acad86ce012b42ce18a12f31ee2aa3cbeeb98664f865f05f68c882945913/uuid_utils-0.14.0-pp311-pypy311_pp73-manylinux_2_5_i686.manylinux1_i686.whl", hash = "sha256:3fd9112ca96978361201e669729784f26c71fecc9c13a7f8a07162c31bd4d1e2", size = 359217, upload-time = "2026-01-20T20:36:59.687Z" },
 ]
+
+[[package]]
+name = "war-rig"
+version = "0.1.0"
+source = { editable = "../" }
+dependencies = [
+    { name = "citadel" },
+    { name = "httpx" },
+    { name = "langchain-anthropic" },
+    { name = "langchain-core" },
+    { name = "langchain-openai" },
+    { name = "langgraph" },
+    { name = "openai" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+    { name = "python-dotenv" },
+    { name = "pyyaml" },
+    { name = "rich" },
+    { name = "typer" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "citadel", editable = "../citadel" },
+    { name = "httpx", specifier = ">=0.25.0" },
+    { name = "langchain-anthropic", specifier = ">=0.2.0" },
+    { name = "langchain-core", specifier = ">=0.3.0" },
+    { name = "langchain-openai", specifier = ">=0.2.0" },
+    { name = "langgraph", specifier = ">=0.2.0" },
+    { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.8.0" },
+    { name = "openai", specifier = ">=1.0.0" },
+    { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.6.0" },
+    { name = "pydantic", specifier = ">=2.0.0" },
+    { name = "pydantic-settings", specifier = ">=2.0.0" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0.0" },
+    { name = "pytest-asyncio", marker = "extra == 'dev'", specifier = ">=0.23.0" },
+    { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.0.0" },
+    { name = "python-dotenv", specifier = ">=1.0.0" },
+    { name = "pyyaml", specifier = ">=6.0" },
+    { name = "rich", specifier = ">=13.0.0" },
+    { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.3.0" },
+    { name = "typer", specifier = ">=0.12.0" },
+]
+provides-extras = ["dev", "atlas"]
 
 [[package]]
 name = "xxhash"

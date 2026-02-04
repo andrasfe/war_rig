@@ -31,8 +31,8 @@ dependencies = [
     "langchain-core>=0.3.0",
     "langchain-anthropic>=0.2.0",
     "langchain-openai>=0.2.0",
-    # LLM configuration (NOT for tool calling - only provides API keys, models, etc.)
-    "llm-providers",
+    # LLM configuration (uses war_rig.providers for API keys, models, etc.)
+    "war-rig",
     # Code analysis
     "citadel",
     # Data validation and config
@@ -68,7 +68,7 @@ Repository = "https://github.com/andrasfe/war_rig"
 Issues = "https://github.com/andrasfe/war_rig/issues"
 
 [tool.uv.sources]
-llm-providers = { path = "../llm-providers", editable = true }
+war-rig = { path = "..", editable = true }
 citadel = { path = "../citadel", editable = true }
 
 [tool.hatch.build.targets.wheel]

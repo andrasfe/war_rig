@@ -1,19 +1,19 @@
 """LangChain model factory for CodeWhisper.
 
 This module provides factory functions for creating LangChain chat models
-using the llm_providers package for environment-based configuration.
+using the war_rig.providers package for environment-based configuration.
 
-It delegates ALL provider and API key resolution to llm_providers, avoiding
-duplication of configuration logic. The llm_providers package handles:
+It delegates ALL provider and API key resolution to war_rig.providers, avoiding
+duplication of configuration logic. The war_rig.providers package handles:
 - Reading LLM_PROVIDER from environment
 - Looking up the correct API key for that provider
 - Creating properly configured providers
 
-This module extracts the configuration from llm_providers and creates
+This module extracts the configuration from war_rig.providers and creates
 corresponding LangChain models.
 
 IMPORTANT: This module NEVER checks environment variables for API keys
-directly. It always goes through llm_providers.get_provider_from_env(),
+directly. It always goes through war_rig.providers.get_provider_from_env(),
 which handles all provider configuration including API key lookup.
 
 Example:
@@ -43,21 +43,21 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
-def _get_provider_info_from_llm_providers(
+def _get_provider_info_from_war_rig(
     provider_name: str | None = None,
 ) -> tuple[str, str, str | None, dict[str, Any]]:
-    """Get provider info by delegating entirely to llm_providers.
+    """Get provider info by delegating entirely to war_rig.providers.
 
-    This function uses llm_providers.get_provider_from_env() to handle all
+    This function uses war_rig.providers.get_provider_from_env() to handle all
     provider/API key resolution, then extracts the configuration needed
     to create a corresponding LangChain model.
 
     CRITICAL: We NEVER check environment variables for API keys directly.
-    llm_providers handles everything - LLM_PROVIDER, API keys, base URLs, etc.
+    war_rig.providers handles everything - LLM_PROVIDER, API keys, base URLs, etc.
 
     Args:
-        provider_name: Optional provider name override. If None, reads from
-            LLM_PROVIDER environment variable (via llm_providers).
+        provider_name: Optional provider name override. If provided, temporarily
+            sets LLM_PROVIDER env var before calling get_provider_from_env().
 
     Returns:
         Tuple of (provider_type, api_key, base_url, extra_config).
@@ -68,14 +68,26 @@ def _get_provider_info_from_llm_providers(
 
     Raises:
         KeyError: If required API key environment variable is not set
-            (raised by llm_providers, not us).
-        ValueError: If provider is not supported by llm_providers.
+            (raised by war_rig.providers, not us).
+        ValueError: If provider is not supported by war_rig.providers.
     """
-    from llm_providers import get_provider_from_env
+    from war_rig.providers import get_provider_from_env
 
-    # Get provider from llm_providers - it handles all env resolution
-    # This is the ONLY place we interact with llm_providers for config
-    provider = get_provider_from_env(provider_name=provider_name)
+    # If provider_name is specified, temporarily override LLM_PROVIDER
+    original_provider = os.environ.get("LLM_PROVIDER")
+    if provider_name:
+        os.environ["LLM_PROVIDER"] = provider_name
+
+    try:
+        # Get provider from war_rig.providers - it handles all env resolution
+        provider = get_provider_from_env()
+    finally:
+        # Restore original LLM_PROVIDER
+        if provider_name:
+            if original_provider is not None:
+                os.environ["LLM_PROVIDER"] = original_provider
+            else:
+                os.environ.pop("LLM_PROVIDER", None)
 
     # Extract API key from the provider instance
     api_key = provider._api_key
@@ -141,7 +153,7 @@ def _create_anthropic_model(
         model: Model identifier (e.g., "claude-3-opus-20240229")
         temperature: Sampling temperature
         max_tokens: Maximum tokens in response
-        default_model: Default model from llm_providers config
+        default_model: Default model from war_rig.providers config
         **kwargs: Additional arguments passed to ChatAnthropic
 
     Returns:
@@ -181,7 +193,7 @@ def _create_openai_model(
         model: Model identifier (e.g., "gpt-4o")
         temperature: Sampling temperature
         max_tokens: Maximum tokens in response
-        default_model: Default model from llm_providers config
+        default_model: Default model from war_rig.providers config
         **kwargs: Additional arguments passed to ChatOpenAI
 
     Returns:
@@ -223,7 +235,7 @@ def _create_openai_compatible_model(
         model: Model identifier
         temperature: Sampling temperature
         max_tokens: Maximum tokens in response
-        default_model: Default model from llm_providers config
+        default_model: Default model from war_rig.providers config
         **kwargs: Additional arguments passed to ChatOpenAI
 
     Returns:
@@ -252,12 +264,12 @@ def _create_openai_compatible_model(
 def get_available_providers() -> list[str]:
     """Get list of all available provider names.
 
-    Delegates to llm_providers for the authoritative list.
+    Delegates to war_rig.providers for the authoritative list.
 
     Returns:
         List of provider names.
     """
-    from llm_providers import get_available_providers as llm_get_providers
+    from war_rig.providers import get_available_providers as llm_get_providers
 
     return list(llm_get_providers())
 
@@ -271,15 +283,15 @@ def get_langchain_model(
 ) -> "BaseChatModel":
     """Create a LangChain model based on provider configuration.
 
-    Delegates ALL provider and API key resolution to llm_providers package.
+    Delegates ALL provider and API key resolution to war_rig.providers package.
     This ensures consistent behavior with other war_rig components.
 
     IMPORTANT: This function NEVER checks environment variables for API keys
-    directly. If LLM_PROVIDER is set, llm_providers handles everything.
+    directly. If LLM_PROVIDER is set, war_rig.providers handles everything.
     You will NEVER see "OPENROUTER_API_KEY not found" errors when using
     a different provider via LLM_PROVIDER.
 
-    The llm_providers package handles:
+    The war_rig.providers package handles:
     - Reading LLM_PROVIDER to determine which provider to use
     - Using the appropriate API key for that provider
     - Applying provider-specific defaults and configuration
@@ -298,9 +310,9 @@ def get_langchain_model(
         KeyError: If required API key environment variable is not set.
         ValueError: If provider is not supported.
     """
-    # Delegate to llm_providers for provider resolution and API key lookup
+    # Delegate to war_rig.providers for provider resolution and API key lookup
     # This is the ONLY place we get API keys from - never directly from env
-    provider_type, api_key, base_url, extra_config = _get_provider_info_from_llm_providers(
+    provider_type, api_key, base_url, extra_config = _get_provider_info_from_war_rig(
         provider_name=provider
     )
 
