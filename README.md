@@ -398,24 +398,29 @@ After generating documentation and skills, use CodeWhisper to interactively expl
 
 ```bash
 # Start interactive chat session
-codewhisper --skills-dir ./output/code-skills --code-dir ./input
+codewhisper --skills-dir <skills-dir> --code-dir <source-code-dir>
+
+# Example with typical paths:
+codewhisper -s ./example_output/code-skills -c ./example_input
 
 # Single query mode
-codewhisper -s ./output/code-skills -c ./input -q "How does fraud marking work?"
+codewhisper -s ./example_output/code-skills -c ./example_input -q "How does fraud marking work?"
 ```
+
+**Path arguments:**
+- `--skills-dir`: Generated skills directory (contains `SKILL.md` files)
+- `--code-dir`: Original source code directory (COBOL, JCL, etc. files for citadel to parse)
 
 **Example session:**
 ```
 You> What does CBPAUP0C do?
 
 CodeWhisper> CBPAUP0C is a batch IMS program that handles cleanup of expired
-authorizations. It traverses the authorization database, reads pending
-authorization summary segments, and deletes expired detail records based
-on a configurable expiry period...
+authorizations...
 
 You> Show me the main processing loop
 
-CodeWhisper> [loads skill, fetches paragraph code via citadel_get_function_body]
+CodeWhisper> [fetches paragraph code via citadel_get_function_body]
 The main loop is in paragraph 2000-PROCESS-RECORDS...
 ```
 
