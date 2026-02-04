@@ -351,42 +351,46 @@ Convert War Rig documentation into [Agent Skills format](https://agentskills.io/
 
 ```bash
 # Generate skills from documentation output
-war-rig skills ./output
+python scripts/generate_skills.py ./output/documentation
 
 # Custom output directory
-war-rig skills ./output --output ./my-skills
+python scripts/generate_skills.py ./output/documentation --output-dir ./my-skills
 
-# Generate skills automatically during batch processing
-war-rig batch ./source --skills
-
-# With custom skills output directory
-war-rig batch ./source --skills --skills-output ./my-skills
+# With custom system name
+python scripts/generate_skills.py ./output/documentation --system-name "CardDemo"
 ```
 
 **Output Structure:**
 ```
 skills-output/
-├── system-overview/
-│   └── SKILL.md              # Index skill - start here for discovery
-├── call-graph/
-│   └── SKILL.md              # Program call relationships
-├── datacards/
-│   └── SKILL.md              # Utility control cards (if present)
-└── programs/
-    ├── cbact01c/
-    │   ├── SKILL.md          # Summary, business rules, when to use
-    │   └── references/
-    │       └── REFERENCE.md  # Full technical details
-    └── ...
+├── SKILL.md                  # Top-level skill - executive summary + category links
+├── cobol/
+│   └── SKILL.md              # COBOL programs table with summaries + doc links
+├── jcl/
+│   └── SKILL.md              # JCL jobs table with summaries + doc links
+├── ims/
+│   └── SKILL.md              # IMS DBD/PSB definitions
+├── copybook/
+│   └── SKILL.md              # Copybook documentation
+├── bms/
+│   └── SKILL.md              # BMS screen maps
+├── bms-copybook/
+│   └── SKILL.md              # BMS copybooks (screen mappings)
+└── ddl/
+    └── SKILL.md              # DDL database definitions
 ```
 
 **What Each Skill Contains:**
-- **system-overview**: High-level system description, program catalog grouped by type, architecture diagram
-- **call-graph**: Mermaid diagram showing program call relationships
-- **program skills**: Purpose, business rules, inputs/outputs, copybooks, "When to Use" guidance
-- **references**: Detailed paragraphs, data flow, error handling, SQL/CICS operations
+- **Top-level SKILL.md**: Executive summary extracted from README, links to all categories
+- **Category skills**: Markdown table with program/file summaries and links to full documentation
 
-Skills follow the Agent Skills spec for progressive disclosure - agents load metadata first (~100 tokens), then full instructions (<5000 tokens), then references as needed.
+**How Agents Use Skills:**
+1. Agent loads top-level SKILL.md (~1KB) to understand system overview
+2. Agent navigates to relevant category (e.g., `cobol/SKILL.md`) for program list
+3. Agent follows "Full docs" link to read complete documentation for specific program
+4. Agent uses `citadel_get_function_body()` to fetch only the specific paragraph code needed
+
+This progressive disclosure minimizes context usage - agents never load entire COBOL files, just the specific paragraphs they need.
 
 ### Process with Parallel Workers
 
@@ -528,12 +532,8 @@ war_rig/
 ├── processors/         # Special file type processors
 │   └── datacard.py     # Datacard catalog generator
 ├── skills/             # Agent Skills format converter
-│   ├── generator.py    # Main SkillsGenerator class
-│   ├── naming.py       # Skill name normalization
-│   ├── program_skill.py    # Program documentation → skill
-│   ├── overview_skill.py   # System overview → index skill
-│   ├── call_graph_skill.py # Call graph → skill
-│   └── datacard_skill.py   # Datacards → skill
+│   ├── generator.py    # Category-based SkillsGenerator
+│   └── naming.py       # Skill name normalization
 ├── orchestration/      # Workflow coordination
 │   └── ticket_engine.py
 ├── utils/              # Utility modules

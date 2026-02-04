@@ -455,19 +455,26 @@ def batch(
 
     # Generate Agent Skills if --skills flag is set
     if skills_output:
-        programs_dir = cfg.output_directory / "final" / "programs"
-        if programs_dir.exists() and list(programs_dir.glob("*.json")):
+        # New generator expects documentation directory with cbl/, jcl/, etc. subdirs
+        docs_dir = cfg.output_directory / "documentation"
+        if not docs_dir.exists():
+            docs_dir = cfg.output_directory  # Fall back to output dir itself
+
+        # Check if there are any .md documentation files
+        has_docs = any(docs_dir.glob("*/*.md"))
+        if has_docs:
             console.print("\n[cyan]Generating Agent Skills...[/cyan]")
             try:
                 from war_rig.skills import SkillsGenerator
 
-                generator = SkillsGenerator(cfg.output_directory, skills_dir)
-                skills_path = generator.generate()
-                console.print(f"[green]Skills generated at: {skills_path}[/green]")
+                generator = SkillsGenerator(docs_dir, skills_dir)
+                result = generator.generate_with_result()
+                console.print(f"[green]Skills generated at: {result.output_dir}[/green]")
+                console.print(f"  Categories: {len(result.categories_created)}, Files: {result.files_processed}")
             except Exception as e:
                 console.print(f"[yellow]Warning: Could not generate skills: {e}[/yellow]")
         else:
-            console.print("[yellow]Skipping skills generation: no completed documentation[/yellow]")
+            console.print("[yellow]Skipping skills generation: no documentation files found[/yellow]")
 
 
 @app.command()
@@ -743,7 +750,7 @@ def skills(
     directory: Annotated[
         Path,
         typer.Argument(
-            help="Path to War Rig output directory",
+            help="Path to War Rig documentation directory (or parent output dir)",
             exists=True,
             file_okay=False,
             dir_okay=True,
@@ -758,6 +765,14 @@ def skills(
             help="Output directory for skills (default: skills-{input_name})",
         ),
     ] = None,
+    system_name: Annotated[
+        str,
+        typer.Option(
+            "--system-name",
+            "-n",
+            help="System name for top-level skill title",
+        ),
+    ] = "System",
     verbose: Annotated[
         bool,
         typer.Option(
@@ -770,25 +785,40 @@ def skills(
     """Generate Agent Skills from War Rig documentation.
 
     This command converts War Rig documentation output into Agent Skills format
-    for progressive discovery by AI agents.
+    for progressive discovery by AI agents. Skills are organized by category
+    (COBOL, JCL, IMS, etc.) with program summaries and links to full docs.
 
     Example:
-        $ war-rig skills ./output
-        $ war-rig skills ./output --output ./my-skills
+        $ war-rig skills ./output/documentation
+        $ war-rig skills ./output  # Auto-detects documentation/ subdir
+        $ war-rig skills ./output --output ./my-skills --system-name "CardDemo"
     """
     setup_logging(verbose)
 
+    # If user passed parent output dir, look for documentation subdir
+    input_dir = directory.resolve()
+    doc_subdir = input_dir / "documentation"
+    if doc_subdir.exists() and doc_subdir.is_dir():
+        console.print(f"[dim]Found documentation subdirectory, using: {doc_subdir}[/dim]")
+        input_dir = doc_subdir
+
     console.print(Panel.fit(
-        f"[bold blue]War Rig[/bold blue] - Generating Agent Skills: {directory}",
+        f"[bold blue]War Rig[/bold blue] - Generating Agent Skills: {input_dir}",
         border_style="blue",
     ))
 
     try:
         from war_rig.skills import SkillsGenerator
 
-        generator = SkillsGenerator(directory, output)
-        skills_path = generator.generate()
-        console.print(f"\n[green]Skills generated at: {skills_path}[/green]")
+        generator = SkillsGenerator(input_dir, output, system_name=system_name)
+        result = generator.generate_with_result()
+
+        console.print(f"\n[green]Skills generated at: {result.output_dir}[/green]")
+        console.print(f"  Categories: {len(result.categories_created)}")
+        console.print(f"  Files processed: {result.files_processed}")
+
+        if result.errors:
+            console.print(f"[yellow]  Warnings: {len(result.errors)}[/yellow]")
     except Exception as e:
         console.print(f"[red]Error generating skills: {e}[/red]")
         raise typer.Exit(1) from None
