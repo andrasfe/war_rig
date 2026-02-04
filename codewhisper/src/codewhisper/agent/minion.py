@@ -7,7 +7,7 @@ context efficiency.
 The minion uses a smaller, faster model (configured via MINION_SCRIBE_MODEL)
 to extract key information from tool results that exceed a size threshold.
 
-Uses llm_providers directly instead of LangChain.
+Uses langchain_factory for LLM access (same as the main agent).
 
 Example:
     from codewhisper.agent.minion import MinionProcessor
@@ -24,14 +24,13 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from dotenv import load_dotenv
-
-from llm_providers import Message, get_provider_from_env
+from langchain_core.messages import HumanMessage, SystemMessage
 
 # Load .env file from current directory or parent directories
 load_dotenv()
 
 if TYPE_CHECKING:
-    from llm_providers import LLMProvider
+    from langchain_core.language_models import BaseChatModel
 
 logger = logging.getLogger(__name__)
 
@@ -127,7 +126,7 @@ class MinionProcessor:
     This reduces token usage in the main agent while preserving essential
     information.
 
-    Uses llm_providers directly instead of LangChain.
+    Uses langchain_factory for LLM access (same pattern as the main agent).
 
     Attributes:
         model_name: The model identifier to use for summarization.
@@ -153,7 +152,7 @@ class MinionProcessor:
         self,
         model_name: str | None = None,
         threshold: int | None = None,
-        provider: "LLMProvider | None" = None,
+        llm: "BaseChatModel | None" = None,
     ):
         """Initialize the minion processor.
 
@@ -162,14 +161,14 @@ class MinionProcessor:
                 reads from MINION_SCRIBE_MODEL env var, falling back to
                 claude-3-haiku.
             threshold: Character count above which to trigger summarization.
-            provider: Optional LLM provider. If None, creates from environment.
+            llm: Optional LangChain model. If None, creates from environment.
         """
         self.model_name = model_name or os.environ.get(
             "MINION_SCRIBE_MODEL",
             DEFAULT_MINION_MODEL,
         )
         self.threshold = threshold if threshold is not None else _get_minion_threshold()
-        self._provider = provider
+        self._llm = llm
 
         logger.debug(
             f"MinionProcessor initialized: model={self.model_name}, "
@@ -177,15 +176,21 @@ class MinionProcessor:
         )
 
     @property
-    def provider(self) -> "LLMProvider":
-        """Get the LLM provider, creating if needed.
+    def llm(self) -> "BaseChatModel":
+        """Get the LLM, creating if needed via langchain_factory.
 
         Returns:
-            Configured LLM provider.
+            Configured LangChain model.
         """
-        if self._provider is None:
-            self._provider = get_provider_from_env()
-        return self._provider
+        if self._llm is None:
+            from codewhisper.agent.langchain_factory import get_langchain_model
+
+            self._llm = get_langchain_model(
+                model=self.model_name,
+                temperature=0.0,
+                max_tokens=1024,
+            )
+        return self._llm
 
     async def summarize_result(self, tool_name: str, result: str) -> str:
         """Summarize a tool result if it exceeds the threshold.
@@ -229,20 +234,16 @@ Tool output:
 {result}"""
 
             messages = [
-                Message(role="system", content="You are a helpful assistant that summarizes tool outputs concisely."),
-                Message(role="user", content=prompt),
+                SystemMessage(content="You are a helpful assistant that summarizes tool outputs concisely."),
+                HumanMessage(content=prompt),
             ]
 
-            # Call the LLM
-            response = await self.provider.complete(
-                messages=messages,
-                model=self.model_name,
-                temperature=0.0,
-                max_tokens=1024,
-            )
+            # Call the LLM via LangChain
+            response = await self.llm.ainvoke(messages)
 
-            # Parse the response
-            summary_result = ToolResultSummary.parse_from_text(response.content)
+            # Parse the response (LangChain returns AIMessage with content attribute)
+            response_text = response.content if isinstance(response.content, str) else str(response.content)
+            summary_result = ToolResultSummary.parse_from_text(response_text)
 
             # Format the summary
             key_points_text = "\n".join(

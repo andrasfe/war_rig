@@ -157,7 +157,7 @@ class TestMinionProcessorSummarize:
         processor: MinionProcessor,
     ) -> None:
         """Test that large results are summarized."""
-        # Create mock provider response
+        # Create mock LLM response (LangChain AIMessage-like)
         mock_response = MagicMock()
         mock_response.content = """KEY POINTS:
 - Point 1
@@ -166,18 +166,18 @@ class TestMinionProcessorSummarize:
 SUMMARY:
 This is the summary."""
 
-        mock_provider = MagicMock()
-        mock_provider.complete = AsyncMock(return_value=mock_response)
+        mock_llm = MagicMock()
+        mock_llm.ainvoke = AsyncMock(return_value=mock_response)
 
-        # Inject mock provider
-        processor._provider = mock_provider
+        # Inject mock LLM
+        processor._llm = mock_llm
 
         large_result = "x" * 200  # Above threshold
 
         result = await processor.summarize_result("read_file", large_result)
 
-        # Verify complete was called
-        mock_provider.complete.assert_called_once()
+        # Verify ainvoke was called
+        mock_llm.ainvoke.assert_called_once()
 
         # Verify result contains summary
         assert "[Summarized from 200 chars]" in result
@@ -190,11 +190,11 @@ This is the summary."""
         processor: MinionProcessor,
     ) -> None:
         """Test graceful fallback on summarization error."""
-        # Create mock provider that raises an error
-        mock_provider = MagicMock()
-        mock_provider.complete = AsyncMock(side_effect=Exception("API error"))
+        # Create mock LLM that raises an error
+        mock_llm = MagicMock()
+        mock_llm.ainvoke = AsyncMock(side_effect=Exception("API error"))
 
-        processor._provider = mock_provider
+        processor._llm = mock_llm
 
         large_result = "x" * 200
 
@@ -204,60 +204,60 @@ This is the summary."""
         assert result == large_result
 
 
-class TestMinionProcessorProvider:
-    """Tests for provider creation and caching."""
+class TestMinionProcessorLLM:
+    """Tests for LLM creation and caching."""
 
-    def test_provider_property_creates_on_first_access(
+    def test_llm_property_creates_on_first_access(
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """Test that provider is created on first access."""
+        """Test that LLM is created on first access."""
         # Set up provider config - default is openrouter
         monkeypatch.delenv("LLM_PROVIDER", raising=False)
         monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
 
         processor = MinionProcessor()
-        assert processor._provider is None
+        assert processor._llm is None
 
-        # Access provider property
-        with patch("codewhisper.agent.minion.get_provider_from_env") as mock_get_provider:
-            mock_provider = MagicMock()
-            mock_get_provider.return_value = mock_provider
+        # Access llm property
+        with patch("codewhisper.agent.langchain_factory.get_langchain_model") as mock_get_model:
+            mock_llm = MagicMock()
+            mock_get_model.return_value = mock_llm
 
-            provider = processor.provider
+            llm = processor.llm
 
-            assert provider is not None
-            mock_get_provider.assert_called_once()
+            assert llm is not None
+            mock_get_model.assert_called_once()
 
-    def test_provider_property_caches_result(
+    def test_llm_property_caches_result(
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """Test that provider is cached after first creation."""
+        """Test that LLM is cached after first creation."""
         # Set up provider config - default is openrouter
         monkeypatch.delenv("LLM_PROVIDER", raising=False)
         monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
 
         processor = MinionProcessor()
 
-        with patch("codewhisper.agent.minion.get_provider_from_env") as mock_get_provider:
-            mock_provider = MagicMock()
-            mock_get_provider.return_value = mock_provider
+        with patch("codewhisper.agent.langchain_factory.get_langchain_model") as mock_get_model:
+            mock_llm = MagicMock()
+            mock_get_model.return_value = mock_llm
 
             # First access creates
-            provider1 = processor.provider
+            llm1 = processor.llm
             # Second access returns cached
-            provider2 = processor.provider
+            llm2 = processor.llm
 
             # Should only create once
-            mock_get_provider.assert_called_once()
-            assert provider1 is provider2
+            mock_get_model.assert_called_once()
+            assert llm1 is llm2
 
-    def test_init_with_explicit_provider(self) -> None:
-        """Test initialization with explicit provider."""
-        mock_provider = MagicMock()
+    def test_init_with_explicit_llm(self) -> None:
+        """Test initialization with explicit LLM."""
+        mock_llm = MagicMock()
 
-        processor = MinionProcessor(provider=mock_provider)
+        processor = MinionProcessor(llm=mock_llm)
 
-        assert processor._provider is mock_provider
-        assert processor.provider is mock_provider
+        assert processor._llm is mock_llm
+        assert processor.llm is mock_llm
