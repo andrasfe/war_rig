@@ -114,7 +114,7 @@ class MinionProcessor:
         logger.debug(f"MinionProcessor initialized: model={self.model_name}")
 
     def _create_llm(self) -> "Runnable[str, ToolResultSummary]":
-        """Create the LLM for summarization based on API_PROVIDER.
+        """Create the LLM for summarization based on LLM_PROVIDER.
 
         Respects the same provider configuration as the main agent.
 
@@ -123,7 +123,7 @@ class MinionProcessor:
         """
         from langchain_core.language_models import BaseChatModel
 
-        provider = os.environ.get("API_PROVIDER", "openrouter")
+        provider = os.environ.get("LLM_PROVIDER", "openrouter")
 
         llm: BaseChatModel
         if provider == "anthropic":

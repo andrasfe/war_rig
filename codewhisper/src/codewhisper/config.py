@@ -4,7 +4,7 @@ This module defines Pydantic models for configuring the CodeWhisper agent,
 including paths to skills and code directories, model selection, and
 behavioral settings.
 
-Configuration is compatible with war_rig's .env file - it reads API_PROVIDER,
+Configuration is compatible with war_rig's .env file - it reads LLM_PROVIDER,
 IMPERATOR_MODEL, and OPENROUTER_API_KEY directly.
 
 Example:
@@ -28,8 +28,8 @@ ProviderType = Literal["openrouter", "anthropic", "openai"]
 
 
 def _get_default_provider() -> str:
-    """Get default provider from war_rig's API_PROVIDER env var."""
-    return os.environ.get("API_PROVIDER", "openrouter")
+    """Get default provider from war_rig's LLM_PROVIDER env var."""
+    return os.environ.get("LLM_PROVIDER", "openrouter")
 
 
 def _get_default_model() -> str:
@@ -53,7 +53,7 @@ class AgentConfig(BaseSettings):
     """Configuration for the CodeWhisper agent.
 
     This configuration is compatible with war_rig's .env file:
-    - Reads API_PROVIDER for the provider setting
+    - Reads LLM_PROVIDER for the provider setting
     - Reads IMPERATOR_MODEL for the default model (judgment/decision model)
     - Reads OPENROUTER_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY
 
@@ -71,7 +71,7 @@ class AgentConfig(BaseSettings):
         verbose: Enable verbose logging.
 
     Example:
-        # Works with war_rig's .env (API_PROVIDER, SCRIBE_MODEL, etc.)
+        # Works with war_rig's .env (LLM_PROVIDER, SCRIBE_MODEL, etc.)
         config = AgentConfig(
             skills_dir="./skills",
             code_dir="./src",
