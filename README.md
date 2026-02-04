@@ -397,14 +397,14 @@ This progressive disclosure minimizes context usage - agents never load entire C
 After generating documentation and skills, use CodeWhisper to interactively explore the codebase:
 
 ```bash
-# Start interactive chat session
-codewhisper --skills-dir <skills-dir> --code-dir <source-code-dir>
+# Start interactive chat session (run from repo root)
+uv run --package codewhisper codewhisper --skills-dir <skills-dir> --code-dir <source-code-dir>
 
 # Example with typical paths:
-codewhisper -s ./example_output/code-skills -c ./example_input
+uv run --package codewhisper codewhisper -s ./example_output/code-skills -c ./example_input
 
 # Single query mode
-codewhisper -s ./example_output/code-skills -c ./example_input -q "How does fraud marking work?"
+uv run --package codewhisper codewhisper -s ./example_output/code-skills -c ./example_input -q "How does fraud marking work?"
 ```
 
 **Path arguments:**
