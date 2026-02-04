@@ -73,10 +73,20 @@ def _get_provider_config() -> tuple[str, str]:
                 "Required for openai provider (LLM_PROVIDER=openai)."
             )
     else:
-        raise ValueError(
-            f"Unknown provider '{provider}'. "
-            "Set LLM_PROVIDER to one of: openrouter, anthropic, openai"
-        )
+        # For unknown providers, try to find an API key with the provider name
+        # e.g., LLM_PROVIDER=azure -> look for AZURE_API_KEY
+        env_key = f"{provider.upper()}_API_KEY"
+        api_key = os.environ.get(env_key, "")
+        if not api_key:
+            # Fall back to OPENROUTER_API_KEY for routing through OpenRouter
+            api_key = os.environ.get("OPENROUTER_API_KEY", "")
+            if api_key:
+                logger.info(f"Unknown provider '{provider}', using OpenRouter")
+                return "openrouter", api_key
+            raise KeyError(
+                f"No API key found for provider '{provider}'. "
+                f"Set {env_key} or OPENROUTER_API_KEY environment variable."
+            )
 
     return provider, api_key
 
@@ -250,10 +260,19 @@ def get_langchain_model(
                     "Required for openai provider."
                 )
         else:
-            raise ValueError(
-                f"Unknown provider '{provider}'. "
-                "Available: openrouter, anthropic, openai"
-            )
+            # For unknown providers, try provider-specific key or fall back to OpenRouter
+            env_key = f"{resolved_provider.upper()}_API_KEY"
+            api_key = os.environ.get(env_key, "")
+            if not api_key:
+                api_key = os.environ.get("OPENROUTER_API_KEY", "")
+                if api_key:
+                    logger.info(f"Unknown provider '{provider}', using OpenRouter")
+                    resolved_provider = "openrouter"
+                else:
+                    raise KeyError(
+                        f"No API key found for provider '{provider}'. "
+                        f"Set {env_key} or OPENROUTER_API_KEY environment variable."
+                    )
     else:
         # Use llm_providers-style resolution from LLM_PROVIDER env var
         resolved_provider, api_key = _get_provider_config()
@@ -286,5 +305,15 @@ def get_langchain_model(
             **kwargs,
         )
     else:
-        # This shouldn't happen given the checks above, but for safety
-        raise ValueError(f"Unknown provider '{resolved_provider}'")
+        # For other providers with their own API key, try OpenAI-compatible API
+        # Many providers (Azure, local LLMs, etc.) use OpenAI-compatible APIs
+        logger.info(f"Using OpenAI-compatible API for provider: {resolved_provider}")
+        base_url = os.environ.get(f"{resolved_provider.upper()}_BASE_URL")
+        return _create_openai_model(
+            api_key=api_key,
+            model=model,
+            temperature=temperature,
+            max_tokens=max_tokens,
+            base_url=base_url,
+            **kwargs,
+        )
