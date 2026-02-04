@@ -31,6 +31,7 @@ from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, Tool
 from langgraph.graph import END, START, StateGraph
 from langgraph.prebuilt import ToolNode
 
+from codewhisper.agent.langchain_factory import get_langchain_model
 from codewhisper.agent.minion import MinionProcessor
 from codewhisper.agent.state import AgentState
 from codewhisper.agent.tools import configure_tools, get_all_tools
@@ -171,63 +172,20 @@ class CodeWhisperAgent:
         )
 
     def _create_llm(self) -> BaseChatModel:
-        """Create LLM from configuration using llm-providers.
+        """Create LLM from configuration using langchain_factory.
+
+        Uses the same environment-based provider discovery pattern as
+        war_rig.providers, supporting plugins via entry points.
 
         Returns:
             Configured chat model.
         """
-        import os
-
-        # Use langchain's chat model wrappers based on provider
-        if self.config.provider == "anthropic":
-            from langchain_anthropic import ChatAnthropic
-
-            api_key = os.environ.get("ANTHROPIC_API_KEY", "")
-            if not api_key:
-                raise ValueError(
-                    "ANTHROPIC_API_KEY environment variable not set. "
-                    "Please set it to use the anthropic provider."
-                )
-
-            return ChatAnthropic(
-                model=self.config.model,
-                temperature=self.config.temperature,
-                max_tokens=self.config.max_tokens,
-                api_key=api_key,
-            )
-        elif self.config.provider == "openai":
-            from langchain_openai import ChatOpenAI
-
-            api_key = os.environ.get("OPENAI_API_KEY", "")
-            if not api_key:
-                raise ValueError(
-                    "OPENAI_API_KEY environment variable not set. "
-                    "Please set it to use the openai provider."
-                )
-
-            return ChatOpenAI(
-                model=self.config.model,
-                temperature=self.config.temperature,
-                max_tokens=self.config.max_tokens,
-                api_key=api_key,
-            )
-        else:  # openrouter (default)
-            from langchain_openai import ChatOpenAI
-
-            api_key = os.environ.get("OPENROUTER_API_KEY", "")
-            if not api_key:
-                raise ValueError(
-                    "OPENROUTER_API_KEY environment variable not set. "
-                    "Please set it to use the openrouter provider."
-                )
-
-            return ChatOpenAI(
-                model=self.config.model,
-                temperature=self.config.temperature,
-                max_tokens=self.config.max_tokens,
-                base_url="https://openrouter.ai/api/v1",
-                api_key=api_key,
-            )
+        return get_langchain_model(
+            provider=self.config.provider,
+            model=self.config.model,
+            temperature=self.config.temperature,
+            max_tokens=self.config.max_tokens,
+        )
 
     @property
     def llm(self) -> BaseChatModel:

@@ -107,6 +107,8 @@ class TestMinionProcessorSummarize:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test that large results are summarized."""
+        # Set up provider config - default is openrouter
+        monkeypatch.delenv("LLM_PROVIDER", raising=False)
         monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
 
         # Create mock LLM response
@@ -140,6 +142,8 @@ class TestMinionProcessorSummarize:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test graceful fallback on summarization error."""
+        # Set up provider config - default is openrouter
+        monkeypatch.delenv("LLM_PROVIDER", raising=False)
         monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
 
         # Create mock LLM that raises an error
@@ -164,6 +168,8 @@ class TestMinionProcessorLLM:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test that LLM is created on first access."""
+        # Set up provider config - default is openrouter
+        monkeypatch.delenv("LLM_PROVIDER", raising=False)
         monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
 
         processor = MinionProcessor()
@@ -186,12 +192,17 @@ class TestMinionProcessorLLM:
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """Test that LLM creation requires API key."""
+        """Test that LLM creation requires API key based on LLM_PROVIDER."""
+        # Clear all API keys and ensure no LLM_PROVIDER is set (defaults to openrouter)
+        monkeypatch.delenv("LLM_PROVIDER", raising=False)
         monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
 
         processor = MinionProcessor()
 
-        with pytest.raises(ValueError, match="OPENROUTER_API_KEY"):
+        # Should raise KeyError for missing API key (openrouter by default)
+        with pytest.raises(KeyError, match="OPENROUTER_API_KEY"):
             _ = processor.llm
 
     def test_llm_property_caches_result(
@@ -199,6 +210,8 @@ class TestMinionProcessorLLM:
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test that LLM is cached after first creation."""
+        # Set up provider config - default is openrouter
+        monkeypatch.delenv("LLM_PROVIDER", raising=False)
         monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
 
         processor = MinionProcessor()

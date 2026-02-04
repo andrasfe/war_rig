@@ -22,36 +22,17 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Annotated
 
 import typer
+from dotenv import load_dotenv
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.prompt import Prompt
 from rich.table import Table
 
+# Load .env file from current directory or parent directories
+load_dotenv()
+
 from codewhisper.config import AgentConfig
-
-
-def _load_dotenv() -> None:
-    """Load .env file from current directory or parent directories."""
-    try:
-        from dotenv import load_dotenv
-
-        # Try current directory first, then walk up to find .env
-        cwd = Path.cwd()
-        for parent in [cwd, *cwd.parents]:
-            env_file = parent / ".env"
-            if env_file.exists():
-                load_dotenv(env_file)
-                return
-        # Fallback to default behavior (looks in cwd)
-        load_dotenv()
-    except ImportError:
-        import sys
-        print("Warning: python-dotenv not installed, .env file not loaded", file=sys.stderr)
-
-
-# Load .env on module import
-_load_dotenv()
 
 if TYPE_CHECKING:
     from codewhisper.skills.index import SkillsIndex

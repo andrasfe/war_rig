@@ -24,7 +24,7 @@ class TestAgentConfig:
         # Clear war_rig env vars to test hardcoded defaults
         monkeypatch.delenv("IMPERATOR_MODEL", raising=False)
         monkeypatch.delenv("LLM_DEFAULT_MODEL", raising=False)
-        monkeypatch.delenv("API_PROVIDER", raising=False)
+        monkeypatch.delenv("LLM_PROVIDER", raising=False)
 
         skills_dir = tmp_path / "skills"
         skills_dir.mkdir()
@@ -49,7 +49,7 @@ class TestAgentConfig:
     ) -> None:
         """Test that config reads from war_rig env vars."""
         monkeypatch.setenv("IMPERATOR_MODEL", "test/model-from-env")
-        monkeypatch.setenv("API_PROVIDER", "anthropic")
+        monkeypatch.setenv("LLM_PROVIDER", "anthropic")
 
         skills_dir = tmp_path / "skills"
         skills_dir.mkdir()

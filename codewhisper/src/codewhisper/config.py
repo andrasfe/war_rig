@@ -19,17 +19,23 @@ Example:
 
 import os
 from pathlib import Path
-from typing import Literal
 
+from dotenv import load_dotenv
 from pydantic import BaseModel, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Load .env file from current directory or parent directories
+load_dotenv()
 
 ProviderType = str  # Any provider supported by the system
 
 
 def _get_default_provider() -> str:
-    """Get default provider from war_rig's LLM_PROVIDER env var."""
-    return os.environ.get("LLM_PROVIDER", "openrouter")
+    """Get default provider from war_rig's LLM_PROVIDER or API_PROVIDER env var."""
+    return os.environ.get(
+        "LLM_PROVIDER",
+        os.environ.get("API_PROVIDER", "openrouter"),
+    )
 
 
 def _get_default_model() -> str:

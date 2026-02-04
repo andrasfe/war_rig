@@ -17,6 +17,7 @@ from codewhisper.agent.graph import (
     CodeWhisperAgent,
     create_agent,
 )
+from codewhisper.agent.langchain_factory import get_langchain_model
 from codewhisper.config import AgentConfig
 from codewhisper.skills.index import SkillsIndex
 from codewhisper.skills.loader import Skill
@@ -80,14 +81,18 @@ class TestCodeWhisperAgentInit:
         mock_skills_index: SkillsIndex,
     ) -> None:
         """Test agent initialization."""
-        agent = CodeWhisperAgent(mock_config, mock_skills_index)
+        with patch(
+            "codewhisper.agent.graph.get_langchain_model"
+        ) as mock_get_model:
+            mock_get_model.return_value = MagicMock()
+            agent = CodeWhisperAgent(mock_config, mock_skills_index)
 
-        assert agent.config is mock_config
-        assert agent.skills_index is mock_skills_index
-        # LLM is eagerly initialized if not provided
-        assert agent._llm is not None
-        # Graph is lazily built
-        assert agent._graph is None
+            assert agent.config is mock_config
+            assert agent.skills_index is mock_skills_index
+            # LLM is eagerly initialized if not provided
+            assert agent._llm is not None
+            # Graph is lazily built
+            assert agent._graph is None
 
     def test_agent_init_with_llm(
         self,
@@ -108,7 +113,11 @@ class TestCodeWhisperAgentInit:
     ) -> None:
         """Test that agent initialization configures tools."""
         with patch("codewhisper.agent.graph.configure_tools") as mock_configure:
-            CodeWhisperAgent(mock_config, mock_skills_index)
+            with patch(
+                "codewhisper.agent.graph.get_langchain_model"
+            ) as mock_get_model:
+                mock_get_model.return_value = MagicMock()
+                CodeWhisperAgent(mock_config, mock_skills_index)
 
         mock_configure.assert_called_once_with(mock_skills_index, mock_config)
 
@@ -138,7 +147,11 @@ class TestCodeWhisperAgentGraph:
         ]
         index = SkillsIndex(skills)
 
-        return CodeWhisperAgent(config, index)
+        # Create a mock LLM with bind_tools support
+        mock_llm = MagicMock()
+        mock_llm.bind_tools = MagicMock(return_value=mock_llm)
+
+        return CodeWhisperAgent(config, index, llm=mock_llm)
 
     def test_graph_property_builds_on_first_access(
         self,
@@ -293,12 +306,16 @@ class TestCreateAgent:
             code_dir=tmp_code_dir,
         )
 
-        agent = create_agent(config)
+        with patch(
+            "codewhisper.agent.graph.get_langchain_model"
+        ) as mock_get_model:
+            mock_get_model.return_value = MagicMock()
+            agent = create_agent(config)
 
-        assert agent is not None
-        assert isinstance(agent, CodeWhisperAgent)
-        # Skills should be loaded
-        assert len(agent.skills_index) > 0
+            assert agent is not None
+            assert isinstance(agent, CodeWhisperAgent)
+            # Skills should be loaded
+            assert len(agent.skills_index) > 0
 
     def test_create_agent_returns_agent_instance(
         self, tmp_skills_dir: Path, tmp_code_dir: Path
@@ -309,7 +326,11 @@ class TestCreateAgent:
             code_dir=tmp_code_dir,
         )
 
-        agent = create_agent(config)
+        with patch(
+            "codewhisper.agent.graph.get_langchain_model"
+        ) as mock_get_model:
+            mock_get_model.return_value = MagicMock()
+            agent = create_agent(config)
 
-        assert isinstance(agent, CodeWhisperAgent)
-        assert agent.config is config
+            assert isinstance(agent, CodeWhisperAgent)
+            assert agent.config is config

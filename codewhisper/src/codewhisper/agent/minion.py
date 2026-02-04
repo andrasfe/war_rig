@@ -18,7 +18,11 @@ import logging
 import os
 from typing import TYPE_CHECKING
 
+from dotenv import load_dotenv
 from pydantic import BaseModel, Field
+
+# Load .env file from current directory or parent directories
+load_dotenv()
 
 if TYPE_CHECKING:
     from langchain_core.runnables import Runnable
@@ -114,67 +118,21 @@ class MinionProcessor:
         logger.debug(f"MinionProcessor initialized: model={self.model_name}")
 
     def _create_llm(self) -> "Runnable[str, ToolResultSummary]":
-        """Create the LLM for summarization based on LLM_PROVIDER.
+        """Create the LLM for summarization using langchain_factory.
 
-        Respects the same provider configuration as the main agent.
+        Uses the same environment-based provider discovery pattern as
+        war_rig.providers, supporting plugins via entry points.
 
         Returns:
             Configured runnable with structured output.
         """
-        from langchain_core.language_models import BaseChatModel
+        from codewhisper.agent.langchain_factory import get_langchain_model
 
-        provider = os.environ.get("LLM_PROVIDER", "openrouter")
-
-        llm: BaseChatModel
-        if provider == "anthropic":
-            from langchain_anthropic import ChatAnthropic
-
-            api_key = os.environ.get("ANTHROPIC_API_KEY", "")
-            if not api_key:
-                raise ValueError(
-                    "ANTHROPIC_API_KEY environment variable not set. "
-                    "Required for minion processing with anthropic provider."
-                )
-
-            llm = ChatAnthropic(
-                model=self.model_name,
-                temperature=0.0,
-                max_tokens=1024,
-                api_key=api_key,
-            )
-        elif provider == "openai":
-            from langchain_openai import ChatOpenAI
-
-            api_key = os.environ.get("OPENAI_API_KEY", "")
-            if not api_key:
-                raise ValueError(
-                    "OPENAI_API_KEY environment variable not set. "
-                    "Required for minion processing with openai provider."
-                )
-
-            llm = ChatOpenAI(
-                model=self.model_name,
-                temperature=0.0,
-                max_completion_tokens=1024,
-                api_key=api_key,
-            )
-        else:  # openrouter (default)
-            from langchain_openai import ChatOpenAI
-
-            api_key = os.environ.get("OPENROUTER_API_KEY", "")
-            if not api_key:
-                raise ValueError(
-                    "OPENROUTER_API_KEY environment variable not set. "
-                    "Required for minion processing with openrouter provider."
-                )
-
-            llm = ChatOpenAI(
-                model=self.model_name,
-                temperature=0.0,
-                max_completion_tokens=1024,
-                base_url="https://openrouter.ai/api/v1",
-                api_key=api_key,
-            )
+        llm = get_langchain_model(
+            model=self.model_name,
+            temperature=0.0,
+            max_tokens=1024,
+        )
 
         return llm.with_structured_output(ToolResultSummary)  # type: ignore[return-value]
 
