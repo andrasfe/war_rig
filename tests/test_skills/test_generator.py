@@ -4,8 +4,8 @@ Tests:
 - SkillsGenerator initialization
 - Input directory validation
 - Output directory naming
-- Directory structure creation
-- Documentation file discovery
+- Category discovery
+- Skill generation
 """
 
 from pathlib import Path
@@ -13,10 +13,13 @@ from pathlib import Path
 import pytest
 
 from war_rig.skills import (
+    CATEGORY_MAPPING,
+    GenerationResult,
     InputDirectoryNotFoundError,
     InvalidInputDirectoryError,
     SkillsGenerator,
     SkillsGeneratorError,
+    get_markdown_summary,
 )
 
 
@@ -24,11 +27,11 @@ class TestSkillsGeneratorInit:
     """Tests for SkillsGenerator initialization."""
 
     def test_init_with_valid_directory(self, tmp_path: Path):
-        """Test initialization with a valid War Rig output directory."""
-        # Create minimal War Rig output structure
-        programs_dir = tmp_path / "final" / "programs"
-        programs_dir.mkdir(parents=True)
-        (programs_dir / "TESTPROG.cbl.doc.json").write_text("{}")
+        """Test initialization with a valid documentation directory."""
+        # Create minimal documentation structure
+        cbl_dir = tmp_path / "cbl"
+        cbl_dir.mkdir()
+        (cbl_dir / "TESTPROG.cbl.md").write_text("# TESTPROG\n\nTest program.")
 
         generator = SkillsGenerator(tmp_path)
 
@@ -37,13 +40,13 @@ class TestSkillsGeneratorInit:
 
     def test_init_with_custom_output_dir(self, tmp_path: Path):
         """Test initialization with custom output directory."""
-        input_dir = tmp_path / "input"
-        output_dir = tmp_path / "custom-output"
+        input_dir = tmp_path / "documentation"
+        output_dir = tmp_path / "custom-skills"
 
         # Create minimal structure
-        programs_dir = input_dir / "final" / "programs"
-        programs_dir.mkdir(parents=True)
-        (programs_dir / "TEST.cbl.doc.json").write_text("{}")
+        cbl_dir = input_dir / "cbl"
+        cbl_dir.mkdir(parents=True)
+        (cbl_dir / "TEST.cbl.md").write_text("# TEST\n\nTest.")
 
         generator = SkillsGenerator(input_dir, output_dir=output_dir)
 
@@ -64,24 +67,15 @@ class TestSkillsGeneratorInit:
         with pytest.raises(InvalidInputDirectoryError, match="not a directory"):
             SkillsGenerator(file_path)
 
-    def test_init_empty_directory_raises(self, tmp_path: Path):
-        """Test that empty directory without War Rig structure raises error."""
-        with pytest.raises(InvalidInputDirectoryError, match="lacks War Rig output"):
-            SkillsGenerator(tmp_path)
+    def test_init_with_system_name(self, tmp_path: Path):
+        """Test initialization with custom system name."""
+        cbl_dir = tmp_path / "cbl"
+        cbl_dir.mkdir()
+        (cbl_dir / "TEST.cbl.md").write_text("# TEST\n\nTest.")
 
-    def test_init_with_system_overview_only(self, tmp_path: Path):
-        """Test initialization with only SYSTEM_OVERVIEW.md present."""
-        (tmp_path / "SYSTEM_OVERVIEW.md").write_text("# System Overview")
+        generator = SkillsGenerator(tmp_path, system_name="CardDemo")
 
-        generator = SkillsGenerator(tmp_path)
-        assert generator.input_dir == tmp_path
-
-    def test_init_with_call_graph_only(self, tmp_path: Path):
-        """Test initialization with only CALL_GRAPH.md present."""
-        (tmp_path / "CALL_GRAPH.md").write_text("# Call Graph")
-
-        generator = SkillsGenerator(tmp_path)
-        assert generator.input_dir == tmp_path
+        assert generator.system_name == "CardDemo"
 
 
 class TestSkillsGeneratorGenerate:
@@ -89,10 +83,10 @@ class TestSkillsGeneratorGenerate:
 
     def test_generate_creates_output_directory(self, tmp_path: Path):
         """Test that generate creates the output directory."""
-        input_dir = tmp_path / "input"
-        programs_dir = input_dir / "final" / "programs"
-        programs_dir.mkdir(parents=True)
-        (programs_dir / "TEST.cbl.doc.json").write_text("{}")
+        input_dir = tmp_path / "documentation"
+        cbl_dir = input_dir / "cbl"
+        cbl_dir.mkdir(parents=True)
+        (cbl_dir / "TEST.cbl.md").write_text("# TEST\n\nTest program.")
 
         generator = SkillsGenerator(input_dir)
         result = generator.generate()
@@ -100,209 +94,282 @@ class TestSkillsGeneratorGenerate:
         assert result.exists()
         assert result.is_dir()
 
-    def test_generate_creates_standard_subdirectories(self, tmp_path: Path):
-        """Test that generate creates standard subdirectories."""
-        input_dir = tmp_path / "input"
-        programs_dir = input_dir / "final" / "programs"
-        programs_dir.mkdir(parents=True)
-        (programs_dir / "TEST.cbl.doc.json").write_text("{}")
+    def test_generate_creates_category_subdirectories(self, tmp_path: Path):
+        """Test that generate creates category subdirectories."""
+        input_dir = tmp_path / "documentation"
+
+        # Create multiple category directories
+        for subdir in ["cbl", "jcl", "cpy"]:
+            cat_dir = input_dir / subdir
+            cat_dir.mkdir(parents=True)
+            (cat_dir / f"TEST.{subdir}.md").write_text(f"# TEST\n\nTest {subdir}.")
 
         generator = SkillsGenerator(input_dir)
         result = generator.generate()
 
-        assert (result / "system-overview").is_dir()
-        assert (result / "call-graph").is_dir()
-        assert (result / "programs").is_dir()
+        # Check mapped category names
+        assert (result / "cobol").is_dir()
+        assert (result / "jcl").is_dir()
+        assert (result / "copybook").is_dir()
 
-    def test_generate_creates_datacards_when_present(self, tmp_path: Path):
-        """Test that datacards directory is created when DATACARDS.md exists."""
-        input_dir = tmp_path / "input"
-        programs_dir = input_dir / "final" / "programs"
-        programs_dir.mkdir(parents=True)
-        (programs_dir / "TEST.cbl.doc.json").write_text("{}")
-        (input_dir / "DATACARDS.md").write_text("# Datacards")
-
-        generator = SkillsGenerator(input_dir)
-        result = generator.generate()
-
-        assert (result / "datacards").is_dir()
-
-    def test_generate_no_datacards_when_missing(self, tmp_path: Path):
-        """Test that datacards directory is not created when DATACARDS.md is absent."""
-        input_dir = tmp_path / "input"
-        programs_dir = input_dir / "final" / "programs"
-        programs_dir.mkdir(parents=True)
-        (programs_dir / "TEST.cbl.doc.json").write_text("{}")
+    def test_generate_creates_top_level_skill(self, tmp_path: Path):
+        """Test that generate creates top-level SKILL.md."""
+        input_dir = tmp_path / "documentation"
+        cbl_dir = input_dir / "cbl"
+        cbl_dir.mkdir(parents=True)
+        (cbl_dir / "TEST.cbl.md").write_text("# TEST\n\nTest program.")
 
         generator = SkillsGenerator(input_dir)
         result = generator.generate()
 
-        assert not (result / "datacards").exists()
+        skill_file = result / "SKILL.md"
+        assert skill_file.exists()
+        content = skill_file.read_text()
+        assert "system-overview" in content
+        assert "Categories" in content
+
+    def test_generate_creates_category_skill_files(self, tmp_path: Path):
+        """Test that generate creates SKILL.md in each category."""
+        input_dir = tmp_path / "documentation"
+        cbl_dir = input_dir / "cbl"
+        cbl_dir.mkdir(parents=True)
+        (cbl_dir / "PROG1.cbl.md").write_text("# PROG1\n\nFirst program.")
+        (cbl_dir / "PROG2.cbl.md").write_text("# PROG2\n\nSecond program.")
+
+        generator = SkillsGenerator(input_dir)
+        result = generator.generate()
+
+        skill_file = result / "cobol" / "SKILL.md"
+        assert skill_file.exists()
+        content = skill_file.read_text()
+        assert "PROG1" in content
+        assert "PROG2" in content
+        assert "Full docs" in content
 
     def test_generate_returns_output_path(self, tmp_path: Path):
         """Test that generate returns the output directory path."""
-        input_dir = tmp_path / "input"
-        programs_dir = input_dir / "final" / "programs"
-        programs_dir.mkdir(parents=True)
-        (programs_dir / "TEST.cbl.doc.json").write_text("{}")
+        input_dir = tmp_path / "documentation"
+        cbl_dir = input_dir / "cbl"
+        cbl_dir.mkdir(parents=True)
+        (cbl_dir / "TEST.cbl.md").write_text("# TEST\n\nTest.")
 
         generator = SkillsGenerator(input_dir)
         result = generator.generate()
 
         assert result == generator.output_dir
 
+    def test_generate_with_result_returns_details(self, tmp_path: Path):
+        """Test that generate_with_result returns GenerationResult."""
+        input_dir = tmp_path / "documentation"
 
-class TestSkillsGeneratorFindDocs:
-    """Tests for SkillsGenerator document finding methods."""
+        cbl_dir = input_dir / "cbl"
+        cbl_dir.mkdir(parents=True)
+        (cbl_dir / "PROG1.cbl.md").write_text("# PROG1\n\nFirst.")
+        (cbl_dir / "PROG2.cbl.md").write_text("# PROG2\n\nSecond.")
 
-    def test_find_program_docs_returns_doc_json_files(self, tmp_path: Path):
-        """Test that _find_program_docs returns .doc.json files."""
-        input_dir = tmp_path / "input"
-        programs_dir = input_dir / "final" / "programs"
-        programs_dir.mkdir(parents=True)
-
-        # Create some doc files
-        (programs_dir / "PROG1.cbl.doc.json").write_text("{}")
-        (programs_dir / "PROG2.cbl.doc.json").write_text("{}")
-        (programs_dir / "OTHER.txt").write_text("not a doc")
+        jcl_dir = input_dir / "jcl"
+        jcl_dir.mkdir(parents=True)
+        (jcl_dir / "JOB1.jcl.md").write_text("# JOB1\n\nJob.")
 
         generator = SkillsGenerator(input_dir)
-        docs = generator._find_program_docs()
+        result = generator.generate_with_result()
 
-        assert len(docs) == 2
-        assert all(p.suffix == ".json" for p in docs)
-        assert all("doc.json" in p.name for p in docs)
+        assert isinstance(result, GenerationResult)
+        assert result.top_level_created is True
+        assert "cobol" in result.categories_created
+        assert "jcl" in result.categories_created
+        assert result.files_processed == 3
+        assert result.errors == []
 
-    def test_find_program_docs_returns_sorted(self, tmp_path: Path):
-        """Test that _find_program_docs returns sorted list."""
-        input_dir = tmp_path / "input"
-        programs_dir = input_dir / "final" / "programs"
-        programs_dir.mkdir(parents=True)
+    def test_generate_skips_empty_categories(self, tmp_path: Path):
+        """Test that empty category directories are skipped."""
+        input_dir = tmp_path / "documentation"
 
-        (programs_dir / "ZEBRA.cbl.doc.json").write_text("{}")
-        (programs_dir / "ALPHA.cbl.doc.json").write_text("{}")
-        (programs_dir / "MIDDLE.cbl.doc.json").write_text("{}")
+        # Create a category with files
+        cbl_dir = input_dir / "cbl"
+        cbl_dir.mkdir(parents=True)
+        (cbl_dir / "TEST.cbl.md").write_text("# TEST\n\nTest.")
+
+        # Create an empty category
+        empty_dir = input_dir / "jcl"
+        empty_dir.mkdir()
 
         generator = SkillsGenerator(input_dir)
-        docs = generator._find_program_docs()
+        result = generator.generate_with_result()
 
-        names = [p.name for p in docs]
-        assert names == sorted(names)
+        assert "cobol" in result.categories_created
+        assert "jcl" not in result.categories_created
 
-    def test_find_program_docs_empty_when_no_programs_dir(self, tmp_path: Path):
-        """Test _find_program_docs returns empty when programs dir missing."""
-        (tmp_path / "SYSTEM_OVERVIEW.md").write_text("# Overview")
 
-        generator = SkillsGenerator(tmp_path)
-        docs = generator._find_program_docs()
+class TestCategoryDiscovery:
+    """Tests for category discovery."""
 
-        assert docs == []
-
-    def test_has_system_overview_true(self, tmp_path: Path):
-        """Test _has_system_overview returns True when file exists."""
-        (tmp_path / "SYSTEM_OVERVIEW.md").write_text("# Overview")
+    def test_discover_categories_maps_known_dirs(self, tmp_path: Path):
+        """Test that known directory names are mapped to friendly names."""
+        for docs_name, expected_name in CATEGORY_MAPPING.items():
+            cat_dir = tmp_path / docs_name
+            cat_dir.mkdir(exist_ok=True)
+            (cat_dir / "TEST.md").write_text("# TEST\n\nTest.")
 
         generator = SkillsGenerator(tmp_path)
-        assert generator._has_system_overview() is True
+        categories = generator._discover_categories()
 
-    def test_has_system_overview_false(self, tmp_path: Path):
-        """Test _has_system_overview returns False when file missing."""
-        programs_dir = tmp_path / "final" / "programs"
-        programs_dir.mkdir(parents=True)
-        (programs_dir / "TEST.cbl.doc.json").write_text("{}")
+        for docs_name, expected_name in CATEGORY_MAPPING.items():
+            assert categories.get(docs_name) == expected_name
 
-        generator = SkillsGenerator(tmp_path)
-        assert generator._has_system_overview() is False
+    def test_discover_categories_skips_hidden_dirs(self, tmp_path: Path):
+        """Test that hidden directories are skipped."""
+        hidden_dir = tmp_path / ".hidden"
+        hidden_dir.mkdir()
+        (hidden_dir / "TEST.md").write_text("# TEST\n\nTest.")
 
-    def test_has_call_graph_true(self, tmp_path: Path):
-        """Test _has_call_graph returns True when file exists."""
-        (tmp_path / "CALL_GRAPH.md").write_text("# Call Graph")
-
-        generator = SkillsGenerator(tmp_path)
-        assert generator._has_call_graph() is True
-
-    def test_has_call_graph_false(self, tmp_path: Path):
-        """Test _has_call_graph returns False when file missing."""
-        (tmp_path / "SYSTEM_OVERVIEW.md").write_text("# Overview")
+        cbl_dir = tmp_path / "cbl"
+        cbl_dir.mkdir()
+        (cbl_dir / "TEST.md").write_text("# TEST\n\nTest.")
 
         generator = SkillsGenerator(tmp_path)
-        assert generator._has_call_graph() is False
+        categories = generator._discover_categories()
 
-    def test_has_datacards_true(self, tmp_path: Path):
-        """Test _has_datacards returns True when file exists."""
-        (tmp_path / "DATACARDS.md").write_text("# Datacards")
-        (tmp_path / "SYSTEM_OVERVIEW.md").write_text(
-            "# Overview"
-        )  # Need valid structure
+        assert ".hidden" not in categories
+        assert "cbl" in categories
 
-        generator = SkillsGenerator(tmp_path)
-        assert generator._has_datacards() is True
+    def test_discover_categories_skips_cache_dir(self, tmp_path: Path):
+        """Test that cache directory is skipped."""
+        cache_dir = tmp_path / "cache"
+        cache_dir.mkdir()
+        (cache_dir / "TEST.md").write_text("# TEST\n\nTest.")
 
-    def test_has_datacards_false(self, tmp_path: Path):
-        """Test _has_datacards returns False when file missing."""
-        (tmp_path / "SYSTEM_OVERVIEW.md").write_text("# Overview")
-
-        generator = SkillsGenerator(tmp_path)
-        assert generator._has_datacards() is False
-
-
-class TestSkillsGeneratorPathAccessors:
-    """Tests for SkillsGenerator path accessor methods."""
-
-    def test_get_system_overview_path_exists(self, tmp_path: Path):
-        """Test get_system_overview_path returns path when file exists."""
-        (tmp_path / "SYSTEM_OVERVIEW.md").write_text("# Overview")
+        cbl_dir = tmp_path / "cbl"
+        cbl_dir.mkdir()
+        (cbl_dir / "TEST.md").write_text("# TEST\n\nTest.")
 
         generator = SkillsGenerator(tmp_path)
-        path = generator.get_system_overview_path()
+        categories = generator._discover_categories()
 
-        assert path is not None
-        assert path.name == "SYSTEM_OVERVIEW.md"
-        assert path.is_file()
+        assert "cache" not in categories
+        assert "cbl" in categories
 
-    def test_get_system_overview_path_missing(self, tmp_path: Path):
-        """Test get_system_overview_path returns None when file missing."""
-        programs_dir = tmp_path / "final" / "programs"
-        programs_dir.mkdir(parents=True)
-        (programs_dir / "TEST.cbl.doc.json").write_text("{}")
-
-        generator = SkillsGenerator(tmp_path)
-        assert generator.get_system_overview_path() is None
-
-    def test_get_call_graph_path_exists(self, tmp_path: Path):
-        """Test get_call_graph_path returns path when file exists."""
-        (tmp_path / "CALL_GRAPH.md").write_text("# Call Graph")
+    def test_discover_categories_uses_dir_name_for_unknown(self, tmp_path: Path):
+        """Test that unknown directories use their name as category."""
+        custom_dir = tmp_path / "custom-type"
+        custom_dir.mkdir()
+        (custom_dir / "TEST.md").write_text("# TEST\n\nTest.")
 
         generator = SkillsGenerator(tmp_path)
-        path = generator.get_call_graph_path()
+        categories = generator._discover_categories()
 
-        assert path is not None
-        assert path.name == "CALL_GRAPH.md"
+        assert categories.get("custom-type") == "custom-type"
 
-    def test_get_call_graph_path_missing(self, tmp_path: Path):
-        """Test get_call_graph_path returns None when file missing."""
-        (tmp_path / "SYSTEM_OVERVIEW.md").write_text("# Overview")
 
-        generator = SkillsGenerator(tmp_path)
-        assert generator.get_call_graph_path() is None
+class TestMarkdownSummary:
+    """Tests for get_markdown_summary function."""
 
-    def test_get_datacards_path_exists(self, tmp_path: Path):
-        """Test get_datacards_path returns path when file exists."""
-        (tmp_path / "DATACARDS.md").write_text("# Datacards")
-        (tmp_path / "SYSTEM_OVERVIEW.md").write_text("# Overview")
+    def test_extracts_first_paragraph(self, tmp_path: Path):
+        """Test that first paragraph is extracted as summary."""
+        md_file = tmp_path / "test.md"
+        md_file.write_text("# Title\n\nThis is the first paragraph.\n\nSecond paragraph.")
 
-        generator = SkillsGenerator(tmp_path)
-        path = generator.get_datacards_path()
+        summary = get_markdown_summary(md_file)
 
-        assert path is not None
-        assert path.name == "DATACARDS.md"
+        assert summary is not None
+        assert "first paragraph" in summary
 
-    def test_get_datacards_path_missing(self, tmp_path: Path):
-        """Test get_datacards_path returns None when file missing."""
-        (tmp_path / "SYSTEM_OVERVIEW.md").write_text("# Overview")
+    def test_skips_yaml_frontmatter(self, tmp_path: Path):
+        """Test that YAML frontmatter is skipped."""
+        md_file = tmp_path / "test.md"
+        md_file.write_text("---\nname: test\n---\n\n# Title\n\nActual content here.")
 
-        generator = SkillsGenerator(tmp_path)
-        assert generator.get_datacards_path() is None
+        summary = get_markdown_summary(md_file)
+
+        assert summary is not None
+        assert "name:" not in summary
+        assert "Actual content" in summary
+
+    def test_truncates_long_summaries(self, tmp_path: Path):
+        """Test that long summaries are truncated."""
+        md_file = tmp_path / "test.md"
+        long_text = "# Title\n\n" + "This is a very long paragraph. " * 50
+        md_file.write_text(long_text)
+
+        summary = get_markdown_summary(md_file, max_chars=100)
+
+        assert summary is not None
+        assert len(summary) <= 103  # max_chars + "..."
+
+    def test_returns_none_for_nonexistent_file(self, tmp_path: Path):
+        """Test that None is returned for nonexistent file."""
+        md_file = tmp_path / "nonexistent.md"
+
+        summary = get_markdown_summary(md_file)
+
+        assert summary is None
+
+
+class TestSkillContent:
+    """Tests for generated skill content."""
+
+    def test_top_level_skill_has_frontmatter(self, tmp_path: Path):
+        """Test that top-level skill has proper frontmatter."""
+        input_dir = tmp_path / "documentation"
+        cbl_dir = input_dir / "cbl"
+        cbl_dir.mkdir(parents=True)
+        (cbl_dir / "TEST.cbl.md").write_text("# TEST\n\nTest.")
+
+        generator = SkillsGenerator(input_dir, system_name="TestSystem")
+        result = generator.generate()
+
+        content = (result / "SKILL.md").read_text()
+        assert "---" in content
+        assert "name: system-overview" in content
+        assert "TestSystem" in content
+
+    def test_category_skill_has_table(self, tmp_path: Path):
+        """Test that category skill has markdown table."""
+        input_dir = tmp_path / "documentation"
+        cbl_dir = input_dir / "cbl"
+        cbl_dir.mkdir(parents=True)
+        (cbl_dir / "PROG1.cbl.md").write_text("# PROG1\n\nProgram one.")
+        (cbl_dir / "PROG2.cbl.md").write_text("# PROG2\n\nProgram two.")
+
+        generator = SkillsGenerator(input_dir)
+        result = generator.generate()
+
+        content = (result / "cobol" / "SKILL.md").read_text()
+        assert "|" in content  # Has table
+        assert "Program" in content  # Has header
+        assert "PROG1" in content
+        assert "PROG2" in content
+
+    def test_category_skill_has_doc_links(self, tmp_path: Path):
+        """Test that category skill has links to documentation."""
+        input_dir = tmp_path / "documentation"
+        cbl_dir = input_dir / "cbl"
+        cbl_dir.mkdir(parents=True)
+        (cbl_dir / "TEST.cbl.md").write_text("# TEST\n\nTest program.")
+
+        generator = SkillsGenerator(input_dir, relative_docs_path="../docs")
+        result = generator.generate()
+
+        content = (result / "cobol" / "SKILL.md").read_text()
+        assert "../docs/cbl/TEST.cbl.md" in content
+
+    def test_extracts_executive_summary_from_readme(self, tmp_path: Path):
+        """Test that executive summary is extracted from README.md."""
+        input_dir = tmp_path / "documentation"
+        cbl_dir = input_dir / "cbl"
+        cbl_dir.mkdir(parents=True)
+        (cbl_dir / "TEST.cbl.md").write_text("# TEST\n\nTest.")
+
+        readme = input_dir / "README.md"
+        readme.write_text(
+            "# System\n\n## Executive Summary\n\nThis is the executive summary.\n\n## Other Section"
+        )
+
+        generator = SkillsGenerator(input_dir)
+        result = generator.generate()
+
+        content = (result / "SKILL.md").read_text()
+        assert "executive summary" in content.lower()
 
 
 class TestSkillsGeneratorErrors:
@@ -322,53 +389,65 @@ class TestSkillsGeneratorErrors:
 
         assert str(nonexistent) in str(exc_info.value)
 
-    def test_invalid_structure_error_is_descriptive(self, tmp_path: Path):
-        """Test that invalid structure error contains guidance."""
-        with pytest.raises(InvalidInputDirectoryError) as exc_info:
-            SkillsGenerator(tmp_path)
-
-        error_msg = str(exc_info.value)
-        assert "doc.json" in error_msg or "SYSTEM_OVERVIEW" in error_msg
-
 
 class TestSkillsGeneratorIntegration:
     """Integration tests for SkillsGenerator."""
 
-    def test_full_workflow_with_all_files(self, tmp_path: Path):
-        """Test complete workflow with all documentation types."""
-        input_dir = tmp_path / "war-rig-output"
+    def test_full_workflow_with_multiple_categories(self, tmp_path: Path):
+        """Test complete workflow with multiple categories."""
+        input_dir = tmp_path / "documentation"
 
-        # Create complete War Rig output structure
-        programs_dir = input_dir / "final" / "programs"
-        programs_dir.mkdir(parents=True)
+        # Create COBOL programs
+        cbl_dir = input_dir / "cbl"
+        cbl_dir.mkdir(parents=True)
+        (cbl_dir / "CBACT01C.cbl.md").write_text("# CBACT01C\n\nAccount processing.")
+        (cbl_dir / "CBPAUP0C.cbl.md").write_text("# CBPAUP0C\n\nPayment processing.")
 
-        (programs_dir / "CBACT01C.cbl.doc.json").write_text('{"program": "CBACT01C"}')
-        (programs_dir / "CBPAUP0C.cbl.doc.json").write_text('{"program": "CBPAUP0C"}')
+        # Create JCL jobs
+        jcl_dir = input_dir / "jcl"
+        jcl_dir.mkdir()
+        (jcl_dir / "DAILYJOB.jcl.md").write_text("# DAILYJOB\n\nDaily batch job.")
 
-        (input_dir / "SYSTEM_OVERVIEW.md").write_text("# CardDemo System Overview")
-        (input_dir / "CALL_GRAPH.md").write_text("# Call Graph\n\nCBACT01C -> CBPAUP0C")
-        (input_dir / "DATACARDS.md").write_text("# Data Cards\n\nCUSTOMER-RECORD")
+        # Create IMS definitions
+        ims_dir = input_dir / "ims"
+        ims_dir.mkdir()
+        (ims_dir / "CUSTDB.dbd.md").write_text("# CUSTDB\n\nCustomer database.")
 
-        generator = SkillsGenerator(input_dir)
-        output_dir = generator.generate()
+        # Create README with executive summary
+        (input_dir / "README.md").write_text(
+            "# CardDemo\n\n## Executive Summary\n\nCardDemo is a credit card demo app.\n\n## Details"
+        )
+
+        generator = SkillsGenerator(input_dir, system_name="CardDemo")
+        result = generator.generate_with_result()
+
+        # Verify result
+        assert result.top_level_created is True
+        assert set(result.categories_created) == {"cobol", "jcl", "ims"}
+        assert result.files_processed == 4
+        assert result.errors == []
 
         # Verify output structure
-        assert output_dir.exists()
-        assert (output_dir / "system-overview").is_dir()
-        assert (output_dir / "call-graph").is_dir()
-        assert (output_dir / "datacards").is_dir()
-        assert (output_dir / "programs").is_dir()
+        output_dir = result.output_dir
+        assert output_dir is not None
+        assert (output_dir / "SKILL.md").exists()
+        assert (output_dir / "cobol" / "SKILL.md").exists()
+        assert (output_dir / "jcl" / "SKILL.md").exists()
+        assert (output_dir / "ims" / "SKILL.md").exists()
 
-        # Verify documentation was found
-        docs = generator._find_program_docs()
-        assert len(docs) == 2
+        # Verify content
+        top_content = (output_dir / "SKILL.md").read_text()
+        assert "CardDemo" in top_content
+        assert "credit card demo" in top_content.lower()
+        assert "COBOL" in top_content
+        assert "JCL" in top_content
 
     def test_idempotent_generation(self, tmp_path: Path):
         """Test that running generate twice is safe."""
-        input_dir = tmp_path / "input"
-        programs_dir = input_dir / "final" / "programs"
-        programs_dir.mkdir(parents=True)
-        (programs_dir / "TEST.cbl.doc.json").write_text("{}")
+        input_dir = tmp_path / "documentation"
+        cbl_dir = input_dir / "cbl"
+        cbl_dir.mkdir(parents=True)
+        (cbl_dir / "TEST.cbl.md").write_text("# TEST\n\nTest.")
 
         generator = SkillsGenerator(input_dir)
 

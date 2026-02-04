@@ -3,46 +3,32 @@
 This module provides utilities for converting War Rig documentation output
 into Agent Skills format for progressive discovery.
 
-The main components are:
+The main component is:
 
-- SkillsGenerator: Converts War Rig output to Agent Skills directory structure
-- ProgramSkillGenerator: Generates individual program skills from .doc.json
-- OverviewSkillGenerator: Generates system overview skill
-- CallGraphSkillGenerator: Generates call graph skill
-- DatacardSkillGenerator: Generates datacards catalog skill
-- normalize_skill_name: Converts filenames to valid skill names
-- validate_skill_name: Validates skill names against the spec
-- create_skill_frontmatter: Generates SKILL.md frontmatter
-- truncate_description: Truncates descriptions to spec limits
+- SkillsGenerator: Converts War Rig documentation to hierarchical skills
+
+The generator creates category-based skills (cobol/, jcl/, ims/, etc.)
+with program summaries and links to full documentation.
 
 Example:
-    >>> from war_rig.skills import SkillsGenerator, normalize_skill_name
+    >>> from war_rig.skills import SkillsGenerator
     >>> from pathlib import Path
     >>>
-    >>> # Convert War Rig output to skills
-    >>> generator = SkillsGenerator(Path("./output"))
+    >>> # Convert War Rig documentation to skills
+    >>> generator = SkillsGenerator(Path("./output/documentation"))
     >>> skills_dir = generator.generate()
-    >>>
-    >>> # Normalize a program name to a skill name
-    >>> skill_name = normalize_skill_name("CBACT01C.cbl.doc.json")
-    >>> print(skill_name)  # 'cbact01c'
+    >>> print(f"Skills generated at: {skills_dir}")
 """
 
-from war_rig.skills.call_graph_skill import (
-    CALL_GRAPH_SKILL_NAME,
-    CallGraphSkillGenerationError,
-    CallGraphSkillGenerator,
-)
-from war_rig.skills.datacard_skill import (
-    DATACARDS_SKILL_NAME,
-    DatacardSkillGenerationError,
-    DatacardSkillGenerator,
-)
 from war_rig.skills.generator import (
+    CATEGORY_DESCRIPTIONS,
+    CATEGORY_MAPPING,
+    GenerationResult,
     InputDirectoryNotFoundError,
     InvalidInputDirectoryError,
     SkillsGenerator,
     SkillsGeneratorError,
+    get_markdown_summary,
 )
 from war_rig.skills.naming import (
     MAX_DESCRIPTION_LENGTH,
@@ -52,15 +38,6 @@ from war_rig.skills.naming import (
     truncate_description,
     validate_skill_name,
 )
-from war_rig.skills.overview_skill import (
-    SYSTEM_OVERVIEW_SKILL_NAME,
-    OverviewSkillGenerationError,
-    OverviewSkillGenerator,
-)
-from war_rig.skills.program_skill import (
-    ProgramSkillGenerationError,
-    ProgramSkillGenerator,
-)
 
 __all__ = [
     # Main Generator
@@ -68,21 +45,12 @@ __all__ = [
     "SkillsGeneratorError",
     "InputDirectoryNotFoundError",
     "InvalidInputDirectoryError",
-    # Program Skill Generator
-    "ProgramSkillGenerator",
-    "ProgramSkillGenerationError",
-    # Overview Skill Generator
-    "OverviewSkillGenerator",
-    "OverviewSkillGenerationError",
-    "SYSTEM_OVERVIEW_SKILL_NAME",
-    # Call Graph Skill Generator
-    "CallGraphSkillGenerator",
-    "CallGraphSkillGenerationError",
-    "CALL_GRAPH_SKILL_NAME",
-    # Datacard Skill Generator
-    "DatacardSkillGenerator",
-    "DatacardSkillGenerationError",
-    "DATACARDS_SKILL_NAME",
+    "GenerationResult",
+    # Category mappings
+    "CATEGORY_MAPPING",
+    "CATEGORY_DESCRIPTIONS",
+    # Utility functions
+    "get_markdown_summary",
     # Naming utilities
     "normalize_skill_name",
     "validate_skill_name",
