@@ -398,10 +398,10 @@ After generating documentation and skills, use CodeWhisper to interactively expl
 
 ```bash
 # Start interactive chat session
-codewhisper --skills-dir ./output/skills-documentation --code-dir ./input
+codewhisper --skills-dir ./output/code-skills --code-dir ./input
 
 # Single query mode
-codewhisper -s ./output/skills-documentation -c ./input -q "How does fraud marking work?"
+codewhisper -s ./output/code-skills -c ./input -q "How does fraud marking work?"
 ```
 
 **Example session:**
