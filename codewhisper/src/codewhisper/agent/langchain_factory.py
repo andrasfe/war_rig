@@ -80,13 +80,23 @@ def _get_provider_info_from_war_rig(
 
     try:
         # Get provider from war_rig.providers - it handles all env resolution
-        provider = get_provider_from_env()
+        # If provider is unknown, fall back to openrouter (war_rig's default)
+        try:
+            provider = get_provider_from_env()
+        except ValueError as e:
+            if "Unknown provider" in str(e):
+                # Unknown provider - fall back to openrouter
+                logger.info(f"Unknown provider, falling back to openrouter: {e}")
+                os.environ["LLM_PROVIDER"] = "openrouter"
+                provider = get_provider_from_env()
+            else:
+                raise
     finally:
         # Restore original LLM_PROVIDER
-        if provider_name:
+        if provider_name or "LLM_PROVIDER" in os.environ:
             if original_provider is not None:
                 os.environ["LLM_PROVIDER"] = original_provider
-            else:
+            elif provider_name:
                 os.environ.pop("LLM_PROVIDER", None)
 
     # Extract API key from the provider instance
