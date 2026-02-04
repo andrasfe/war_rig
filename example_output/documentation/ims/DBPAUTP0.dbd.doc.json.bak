@@ -1,97 +1,32 @@
 {
   "header": {
     "program_id": "DBPAUTP0",
-    "file_name": "ims/DBPAUTP0.dbd",
+    "file_name": "DBPAUTP0.dbd",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-30T19:40:55.366051",
+    "analyzed_at": "2026-02-03T21:04:50.598426",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This DBD source file defines the IMS HIDAM database DBPAUTP0 using VSAM access for pending authorization data. It specifies dataset DDPAUTP0, root segment PAUTSUM0 (100 bytes) with unique sequential key ACCNTID, and child segment PAUTDTL1 (200 bytes) with unique sequential key PAUT9CTS parented by PAUTSUM0. The file is processed by the DBDGEN utility to generate the DBD control block.",
-    "business_context": "Stores summary and detail records for pending account authorizations, supporting hierarchical access via root account ID.",
+    "summary": "This file defines the Database Description (DBD) for the DBPAUTP0 database, which stores pending authorization summary and detail information. It specifies the database structure, access method (HIDAM, VSAM), segments, fields, and indexing.",
+    "business_context": null,
     "program_type": "UTILITY",
     "citations": [
-      17,
       18,
-      24,
-      28,
-      36,
-      39
+      26,
+      34
     ]
   },
   "inputs": [],
-  "outputs": [
-    {
-      "name": "DDPAUTP0",
-      "io_type": "FILE_VSAM",
-      "description": "VSAM dataset hosting the HIDAM database segments",
-      "copybook": null,
-      "citation": [
-        24
-      ]
-    },
-    {
-      "name": "PAUTSUM0",
-      "io_type": "IMS_SEGMENT",
-      "description": "Root segment containing pending authorization summary data, 100 bytes",
-      "copybook": null,
-      "citation": [
-        28
-      ]
-    },
-    {
-      "name": "PAUTDTL1",
-      "io_type": "IMS_SEGMENT",
-      "description": "Child segment containing pending authorization detail data, 200 bytes",
-      "copybook": null,
-      "citation": [
-        36
-      ]
-    }
-  ],
+  "outputs": [],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [
-    {
-      "rule_id": "BR001",
-      "description": "Root segment PAUTSUM0 is uniquely sequenced by ACCNTID field",
-      "logic_summary": "Defined as sequential unique (SEQ,U) key starting at byte 1",
-      "conditions": [
-        "SEQ,U key enforcement"
-      ],
-      "citation": [
-        30
-      ]
-    },
-    {
-      "rule_id": "BR002",
-      "description": "Child segment PAUTDTL1 is parented exclusively by root segment PAUTSUM0",
-      "logic_summary": "PARENT=((PAUTSUM0,)) specifies hierarchical relationship",
-      "conditions": [
-        "Parent must exist for child access"
-      ],
-      "citation": [
-        36
-      ]
-    },
-    {
-      "rule_id": "BR003",
-      "description": "Child segment PAUTDTL1 is uniquely sequenced by PAUT9CTS field",
-      "logic_summary": "Defined as sequential unique (SEQ,U) key starting at byte 1",
-      "conditions": [
-        "SEQ,U key enforcement"
-      ],
-      "citation": [
-        37
-      ]
-    }
-  ],
+  "business_rules": [],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
@@ -104,9 +39,14 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "Exact business meaning of fields ACCNTID and PAUT9CTS",
-      "context": "Fields named but data content not described in DBD",
-      "suggestion": "Review application programs using this database or data dictionary"
+      "question": "What is the purpose of the EXIT parameter in the DBD macro?",
+      "context": "The documentation does not explain the function of the EXIT parameter.",
+      "suggestion": "Consult IMS documentation for the DBD macro."
+    },
+    {
+      "question": "What is the purpose of the VERSION parameter in the DBD macro?",
+      "context": "The documentation does not explain the function of the VERSION parameter.",
+      "suggestion": "Consult IMS documentation for the DBD macro."
     }
   ],
   "dead_code": [],

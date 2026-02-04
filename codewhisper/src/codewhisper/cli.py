@@ -46,7 +46,8 @@ def _load_dotenv() -> None:
         # Fallback to default behavior (looks in cwd)
         load_dotenv()
     except ImportError:
-        pass  # python-dotenv not installed, skip
+        import sys
+        print("Warning: python-dotenv not installed, .env file not loaded", file=sys.stderr)
 
 
 # Load .env on module import

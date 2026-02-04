@@ -1,15 +1,15 @@
 {
   "header": {
     "program_id": "XAUTHFRD",
-    "file_name": "ddl/XAUTHFRD.ddl",
+    "file_name": "XAUTHFRD.ddl",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-30T19:27:52.864503",
+    "analyzed_at": "2026-02-03T21:04:46.697926",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This DDL script creates a unique index named CARDDEMO.XAUTHFRD on the CARDDEMO.AUTHFRDS table. The index keys on CARD_NUM in ascending order and AUTH_TS in descending order. The COPY YES option is specified to allow the index to participate in image copy operations.",
+    "summary": "This DDL file creates a unique index named CARDDEMO.XAUTHFRD on the CARDDEMO.AUTHFRDS table, using the CARD_NUM in ascending order and AUTH_TS in descending order. The index allows copies.",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
@@ -19,49 +19,15 @@
       4
     ]
   },
-  "inputs": [
-    {
-      "name": "CARDDEMO.AUTHFRDS",
-      "io_type": "DB2_TABLE",
-      "description": "DB2 table on which the unique index is created",
-      "copybook": null,
-      "citation": [
-        2
-      ]
-    }
-  ],
-  "outputs": [
-    {
-      "name": "CARDDEMO.XAUTHFRD",
-      "io_type": "OTHER",
-      "description": "Unique DB2 index created on AUTHFRDS table",
-      "copybook": null,
-      "citation": [
-        1
-      ]
-    }
-  ],
+  "inputs": [],
+  "outputs": [],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [
-    {
-      "rule_id": "BR001",
-      "description": "Enforces uniqueness on the combination of CARD_NUM and AUTH_TS",
-      "logic_summary": "Unique index prevents insertion of duplicate key values",
-      "conditions": [
-        "CARD_NUM ASC",
-        "AUTH_TS DESC"
-      ],
-      "citation": [
-        1,
-        3
-      ]
-    }
-  ],
+  "business_rules": [],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
@@ -87,25 +53,18 @@
     }
   ],
   "error_handling": [],
-  "sql_operations": [
-    {
-      "operation": "CREATE INDEX",
-      "table": "AUTHFRDS",
-      "purpose": "Defines a unique index for efficient access by card number and descending authorization timestamp, supporting queries for recent authorizations per card",
-      "citation": 1
-    }
-  ],
+  "sql_operations": [],
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the business purpose of the AUTHFRDS table?",
-      "context": "Table name implies authorization fraud records, but no description provided in DDL",
-      "suggestion": "Review table DDL or application documentation"
+      "question": "What is the purpose of the CARDDEMO schema?",
+      "context": "The schema is not defined in the provided code.",
+      "suggestion": "Review related documentation or database definitions."
     },
     {
-      "question": "No procedural paragraphs present",
-      "context": "This is pure DDL with no COBOL/PL/I/JCL structure",
-      "suggestion": "N/A - DDL does not contain paragraphs"
+      "question": "What is the purpose of the AUTHFRDS table?",
+      "context": "The table is not defined in the provided code.",
+      "suggestion": "Review related documentation or database definitions."
     }
   ],
   "dead_code": [

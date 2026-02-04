@@ -1,0 +1,91 @@
+[
+  {
+    "caller": "MAIN-PARA",
+    "callee": "1000-INITIALIZE",
+    "inputs": [],
+    "outputs": [
+      "CURRENT-DATE",
+      "CURRENT-YYDDD"
+    ],
+    "purpose": "Initializes the program by accepting current date and day from system and displaying startup messages."
+  },
+  {
+    "caller": "MAIN-PARA",
+    "callee": "2000-FIND-NEXT-AUTH-SUMMARY",
+    "inputs": [],
+    "outputs": [
+      "WS-END-OF-ROOT-SEG",
+      "WS-NO-SUMRY-READ",
+      "WS-AUTH-SMRY-PROC-CNT",
+      "OPFIL1-REC",
+      "ROOT-SEG-KEY",
+      "CHILD-SEG-REC"
+    ],
+    "purpose": "Reads the next root segment (authorization summary) from IMS database and processes it if found, setting end-of-segment flag when done."
+  },
+  {
+    "caller": "MAIN-PARA",
+    "callee": "4000-FILE-CLOSE",
+    "inputs": [],
+    "outputs": [],
+    "purpose": "Displays a message indicating the file closing process is starting."
+  },
+  {
+    "caller": "2000-FIND-NEXT-AUTH-SUMMARY",
+    "callee": "3100-INSERT-PARENT-SEG-GSAM",
+    "inputs": [
+      "PENDING-AUTH-SUMMARY"
+    ],
+    "outputs": [],
+    "purpose": "Inserts the parent (summary) record into the GSAM output file using IMS call, and abends if the insertion fails."
+  },
+  {
+    "caller": "2000-FIND-NEXT-AUTH-SUMMARY",
+    "callee": "3000-FIND-NEXT-AUTH-DTL",
+    "inputs": [],
+    "outputs": [
+      "WS-END-OF-CHILD-SEG",
+      "WS-NO-SUMRY-READ",
+      "WS-AUTH-SMRY-PROC-CNT",
+      "CHILD-SEG-REC"
+    ],
+    "purpose": "Retrieves the next child segment (authorization detail) from IMS database and updates processing counters, marking end of child segments when 'GE' status is received."
+  },
+  {
+    "caller": "2000-FIND-NEXT-AUTH-SUMMARY",
+    "callee": "9999-ABEND",
+    "inputs": [],
+    "outputs": [],
+    "purpose": "Abends the program with return code 16 when an unexpected IMS status code is encountered during root segment retrieval."
+  },
+  {
+    "caller": "3000-FIND-NEXT-AUTH-DTL",
+    "callee": "3200-INSERT-CHILD-SEG-GSAM",
+    "inputs": [
+      "PENDING-AUTH-DETAILS"
+    ],
+    "outputs": [],
+    "purpose": "Inserts the retrieved child segment (PENDING-AUTH-DETAILS) into the GSAM output file using IMS DL/I call."
+  },
+  {
+    "caller": "3000-FIND-NEXT-AUTH-DTL",
+    "callee": "9999-ABEND",
+    "inputs": [],
+    "outputs": [],
+    "purpose": "Abends the program with return code 16 when the GNP call for child segment fails with an unexpected IMS status code."
+  },
+  {
+    "caller": "3100-INSERT-PARENT-SEG-GSAM",
+    "callee": "9999-ABEND",
+    "inputs": [],
+    "outputs": [],
+    "purpose": "Abends the program with return code 16 if the GSAM insert operation for the parent segment fails due to a non-blank PCB status."
+  },
+  {
+    "caller": "3200-INSERT-CHILD-SEG-GSAM",
+    "callee": "9999-ABEND",
+    "inputs": [],
+    "outputs": [],
+    "purpose": "Abends the program with return code 16 if the GSAM insert operation for the child segment fails due to a non-blank PCB status."
+  }
+]

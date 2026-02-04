@@ -24,7 +24,7 @@ from typing import Literal
 from pydantic import BaseModel, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-ProviderType = Literal["openrouter", "anthropic", "openai"]
+ProviderType = str  # Any provider supported by the system
 
 
 def _get_default_provider() -> str:

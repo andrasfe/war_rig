@@ -4,93 +4,302 @@
     "file_name": "COPAU00.bms",
     "file_type": "BMS",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-30T19:40:27.088006",
+    "analyzed_at": "2026-02-03T21:04:20.405397",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This BMS mapset defines the Pending Authorization Screen (COPAU0A) for the CardDemo application. It provides a user interface to search pending authorizations by Account ID, display customer details including name, address, status, phone, limits, balances, approval/decline counts, and a scrollable list of up to 5 transactions with fields for selection, transaction ID, date, time, type, A/D, status, and amount. Users interact via input fields and PF keys for navigation.",
-    "business_context": "Serves credit card authorization processing by allowing operators to view, select, and navigate pending authorization transactions for an account.",
+    "summary": "This BMS map defines the screen layout for the CardDemo Pending Authorization Screen. It displays a list of pending authorizations for a given account ID, along with customer details and credit/cash limits and balances. The screen allows the user to select a transaction to view its details.",
+    "business_context": "This screen is used to view and manage pending card authorizations within the CardDemo application.",
     "program_type": "ONLINE_CICS",
     "citations": [
       2,
-      19,
-      26,
-      78,
-      501,
-      511
+      83,
+      501
     ]
   },
   "inputs": [
     {
       "name": "ACCTID",
       "io_type": "CICS_MAP",
-      "description": "Unprotected input field for entering Account ID to search for pending authorizations",
+      "description": "Account ID to search for pending authorizations (input field).",
       "copybook": null,
       "citation": [
         84
       ]
     },
     {
-      "name": "SEL0001",
+      "name": "SEL0001 - SEL0005",
       "io_type": "CICS_MAP",
-      "description": "Unprotected selection field (Sel) for first transaction in list",
+      "description": "Selection fields for each transaction (input field).",
       "copybook": null,
       "citation": [
-        277
-      ]
-    },
-    {
-      "name": "SEL0002",
-      "io_type": "CICS_MAP",
-      "description": "Unprotected selection field (Sel) for second transaction in list",
-      "copybook": null,
-      "citation": [
-        321
-      ]
-    },
-    {
-      "name": "SEL0003",
-      "io_type": "CICS_MAP",
-      "description": "Unprotected selection field (Sel) for third transaction in list",
-      "copybook": null,
-      "citation": [
-        365
-      ]
-    },
-    {
-      "name": "SEL0004",
-      "io_type": "CICS_MAP",
-      "description": "Unprotected selection field (Sel) for fourth transaction in list",
-      "copybook": null,
-      "citation": [
-        409
-      ]
-    },
-    {
-      "name": "SEL0005",
-      "io_type": "CICS_MAP",
-      "description": "Unprotected selection field (Sel) for fifth transaction in list",
-      "copybook": null,
-      "citation": [
+        277,
+        321,
+        365,
+        409,
         488
       ]
     }
   ],
   "outputs": [
     {
-      "name": "COPAU0A",
+      "name": "TRNNAME",
       "io_type": "CICS_MAP",
-      "description": "Primary map displaying screen header (Tran, Date, Prog, Time), title, search prompt, customer info (name, ID, address, status, phone), limits/balances/amounts (credit/cash lim/bal, appr/decl amt), transaction list headers and data rows, instructions, error message, and PF key help",
+      "description": "Transaction Name",
       "copybook": null,
       "citation": [
-        26
+        34
+      ]
+    },
+    {
+      "name": "CURDATE",
+      "io_type": "CICS_MAP",
+      "description": "Current Date",
+      "copybook": null,
+      "citation": [
+        47
+      ]
+    },
+    {
+      "name": "PGMNAME",
+      "io_type": "CICS_MAP",
+      "description": "Program Name",
+      "copybook": null,
+      "citation": [
+        57
+      ]
+    },
+    {
+      "name": "CURTIME",
+      "io_type": "CICS_MAP",
+      "description": "Current Time",
+      "copybook": null,
+      "citation": [
+        70
+      ]
+    },
+    {
+      "name": "CNAME",
+      "io_type": "CICS_MAP",
+      "description": "Customer Name",
+      "copybook": null,
+      "citation": [
+        96
+      ]
+    },
+    {
+      "name": "CUSTID",
+      "io_type": "CICS_MAP",
+      "description": "Customer ID",
+      "copybook": null,
+      "citation": [
+        103
+      ]
+    },
+    {
+      "name": "ADDR001",
+      "io_type": "CICS_MAP",
+      "description": "Customer Address Line 1",
+      "copybook": null,
+      "citation": [
+        107
+      ]
+    },
+    {
+      "name": "ACCSTAT",
+      "io_type": "CICS_MAP",
+      "description": "Account Status",
+      "copybook": null,
+      "citation": [
+        114
+      ]
+    },
+    {
+      "name": "ADDR002",
+      "io_type": "CICS_MAP",
+      "description": "Customer Address Line 2",
+      "copybook": null,
+      "citation": [
+        118
+      ]
+    },
+    {
+      "name": "PHONE1",
+      "io_type": "CICS_MAP",
+      "description": "Customer Phone Number",
+      "copybook": null,
+      "citation": [
+        125
+      ]
+    },
+    {
+      "name": "APPRCNT",
+      "io_type": "CICS_MAP",
+      "description": "Approval Count",
+      "copybook": null,
+      "citation": [
+        132
+      ]
+    },
+    {
+      "name": "DECLCNT",
+      "io_type": "CICS_MAP",
+      "description": "Decline Count",
+      "copybook": null,
+      "citation": [
+        139
+      ]
+    },
+    {
+      "name": "CREDLIM",
+      "io_type": "CICS_MAP",
+      "description": "Credit Limit",
+      "copybook": null,
+      "citation": [
+        147
+      ]
+    },
+    {
+      "name": "CASHLIM",
+      "io_type": "CICS_MAP",
+      "description": "Cash Limit",
+      "copybook": null,
+      "citation": [
+        156
+      ]
+    },
+    {
+      "name": "APPRAMT",
+      "io_type": "CICS_MAP",
+      "description": "Approved Amount",
+      "copybook": null,
+      "citation": [
+        165
+      ]
+    },
+    {
+      "name": "CREDBAL",
+      "io_type": "CICS_MAP",
+      "description": "Credit Balance",
+      "copybook": null,
+      "citation": [
+        174
+      ]
+    },
+    {
+      "name": "CASHBAL",
+      "io_type": "CICS_MAP",
+      "description": "Cash Balance",
+      "copybook": null,
+      "citation": [
+        183
+      ]
+    },
+    {
+      "name": "DECLAMT",
+      "io_type": "CICS_MAP",
+      "description": "Declined Amount",
+      "copybook": null,
+      "citation": [
+        192
+      ]
+    },
+    {
+      "name": "TRNID01 - TRNID05",
+      "io_type": "CICS_MAP",
+      "description": "Transaction IDs for the list of pending authorizations.",
+      "copybook": null,
+      "citation": [
+        286,
+        330,
+        374,
+        418,
+        453
+      ]
+    },
+    {
+      "name": "PDATE01 - PDATE05",
+      "io_type": "CICS_MAP",
+      "description": "Transaction Dates for the list of pending authorizations.",
+      "copybook": null,
+      "citation": [
+        291,
+        335,
+        379,
+        423,
+        458
+      ]
+    },
+    {
+      "name": "PTIME01 - PTIME05",
+      "io_type": "CICS_MAP",
+      "description": "Transaction Times for the list of pending authorizations.",
+      "copybook": null,
+      "citation": [
+        296,
+        340,
+        384,
+        428,
+        463
+      ]
+    },
+    {
+      "name": "PTYPE01 - PTYPE05",
+      "io_type": "CICS_MAP",
+      "description": "Transaction Types for the list of pending authorizations.",
+      "copybook": null,
+      "citation": [
+        301,
+        345,
+        389,
+        433,
+        468
+      ]
+    },
+    {
+      "name": "PAPRV01 - PAPRV05",
+      "io_type": "CICS_MAP",
+      "description": "Transaction Approval Status for the list of pending authorizations.",
+      "copybook": null,
+      "citation": [
+        306,
+        350,
+        394,
+        438,
+        473
+      ]
+    },
+    {
+      "name": "PSTAT01 - PSTAT05",
+      "io_type": "CICS_MAP",
+      "description": "Transaction Status for the list of pending authorizations.",
+      "copybook": null,
+      "citation": [
+        311,
+        355,
+        399,
+        443,
+        478
+      ]
+    },
+    {
+      "name": "PAMT001 - PAMT005",
+      "io_type": "CICS_MAP",
+      "description": "Transaction Amounts for the list of pending authorizations.",
+      "copybook": null,
+      "citation": [
+        316,
+        360,
+        404,
+        448,
+        483
       ]
     },
     {
       "name": "ERRMSG",
       "io_type": "CICS_MAP",
-      "description": "Error message display field with bright and red attributes",
+      "description": "Error Message Displayed on the Screen",
       "copybook": null,
       "citation": [
         503
@@ -103,37 +312,7 @@
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [
-    {
-      "rule_id": "BR001",
-      "description": "User must type 'S' in one of the SEL fields to select and view details of a specific authorization from the transaction list",
-      "logic_summary": "Instruction explicitly displayed on screen to guide user interaction",
-      "conditions": [
-        "User enters 'S' in SEL0001-SEL0005"
-      ],
-      "citation": [
-        277,
-        321,
-        365,
-        409,
-        488,
-        501
-      ]
-    },
-    {
-      "rule_id": "BR002",
-      "description": "Screen navigation uses PF keys: ENTER to continue, F3 to go back, F7 for backward scroll, F8 for forward scroll",
-      "logic_summary": "PF key help displayed at bottom of screen",
-      "conditions": [
-        "PF3 pressed",
-        "PF7 pressed",
-        "PF8 pressed"
-      ],
-      "citation": [
-        511
-      ]
-    }
-  ],
+  "business_rules": [],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
@@ -142,74 +321,38 @@
   "copybooks_used": [],
   "paragraphs": [
     {
-      "paragraph_name": "COPAU00",
+      "paragraph_name": "COPAU0A DFHMDI",
       "summary": null,
-      "purpose": "[Citadel] Paragraph identified by static analysis",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        19,
-        19
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": true,
-      "dead_code_reason": "Artifact 'COPAU00' (map) is never referenced by any other artifact in the dependency graph",
-      "metadata": null
-    },
-    {
-      "paragraph_name": "COPAU0A",
-      "summary": null,
-      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "purpose": "This paragraph defines the map's overall structure and attributes. It specifies the screen size as 24 lines by 80 columns (line 28). It sets the column and line position to 1 (lines 26, 27). It includes control options such as ALARM and FREEKB (line 19), indicating that the screen can trigger an alarm and that the keyboard is initially unlocked. The EXTATT=YES attribute (line 20) enables extended attributes like color and highlighting. LANG=COBOL (line 21) specifies the programming language. MODE=INOUT (line 22) indicates that the map is used for both input and output. STORAGE=AUTO (line 23) means storage is automatically allocated. TIOAPFX=YES (line 24) includes the terminal I/O area prefix. TYPE=&&SYSPARM (line 25) allows specifying the map type during assembly.",
       "called_by": [],
       "calls": [],
       "citation": [
         26,
-        26
+        28
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
-      "is_dead_code": true,
-      "dead_code_reason": "Screen/Map 'COPAU0A' is never sent to or received from by any program",
-      "metadata": {
-        "body_chunks": 5
-      }
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
     }
   ],
   "error_handling": [
     {
-      "condition": "Application errors",
-      "action": "Display message in ERRMSG field (bright, red, FSET)",
+      "condition": "An invalid selection is made",
+      "action": "Display an error message in the ERRMSG field.",
       "citation": [
         503
       ]
     }
   ],
   "sql_operations": [],
-  "cics_operations": [
-    {
-      "command": "SEND MAP",
-      "resource": "COPAU0A",
-      "purpose": "Display pending authorization screen to user",
-      "citation": 26
-    },
-    {
-      "command": "RECEIVE MAP",
-      "resource": "COPAU0A",
-      "purpose": "Receive user inputs from ACCTID and SEL fields",
-      "citation": 84
-    }
-  ],
+  "cics_operations": [],
   "open_questions": [
     {
-      "question": "Which CICS COBOL program(s) use this BMS mapset?",
-      "context": "BMS file defines the map but does not reference calling programs",
-      "suggestion": "Search for COPY COPAU00 or DFHMDI COPAU0A in associated COBOL source files"
-    },
-    {
-      "question": "What is the associated CICS transaction ID for this screen?",
-      "context": "Not defined in BMS file",
-      "suggestion": "Check CICS transaction definitions or calling program"
+      "question": "How are the transaction details (date, time, type, A/D, STS, Amount) populated for each of the five transactions displayed?",
+      "context": "The BMS map defines the fields, but the logic for populating them is not present in this file.",
+      "suggestion": "Examine the COBOL program that uses this BMS map to understand how these fields are populated."
     }
   ],
   "dead_code": [

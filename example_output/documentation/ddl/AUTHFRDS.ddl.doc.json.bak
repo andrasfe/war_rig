@@ -1,57 +1,32 @@
 {
   "header": {
     "program_id": "AUTHFRDS",
-    "file_name": "ddl/AUTHFRDS.ddl",
+    "file_name": "AUTHFRDS.ddl",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-01-30T19:28:03.606245",
+    "analyzed_at": "2026-02-03T21:05:00.080247",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This DDL script creates a DB2 table named CARDDEMO.AUTHFRDS to store authorization and fraud-related details for card transactions. The table includes fields for card details, authorization timestamps, merchant information, transaction amounts, and fraud indicators such as AUTH_FRAUD and FRAUD_RPT_DATE. It supports fraud detection and reporting in a card processing environment.",
-    "business_context": "Card authorization fraud logging and analysis for payment processing systems",
+    "summary": "This DDL file defines the CARDDEMO.AUTHFRDS table, which stores authorization and fraud related data for card transactions. The table includes fields for card number, authorization timestamp, transaction details, merchant information, fraud indicators, and customer/account identifiers.",
+    "business_context": "This table likely supports fraud detection and authorization processes within a card transaction system.",
     "program_type": "UTILITY",
     "citations": [
       1,
-      24,
-      25
+      2,
+      24
     ]
   },
   "inputs": [],
-  "outputs": [
-    {
-      "name": "CARDDEMO.AUTHFRDS",
-      "io_type": "DB2_TABLE",
-      "description": "Table storing card authorization details including fraud indicators, merchant data, and transaction information",
-      "copybook": null,
-      "citation": [
-        1
-      ]
-    }
-  ],
+  "outputs": [],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [
-    {
-      "rule_id": "BR001",
-      "description": "CARD_NUM and AUTH_TS form a composite primary key to ensure uniqueness of each authorization record per card",
-      "logic_summary": "Enforced by PRIMARY KEY constraint in DDL",
-      "conditions": [
-        "CARD_NUM NOT NULL",
-        "AUTH_TS NOT NULL"
-      ],
-      "citation": [
-        2,
-        3,
-        28
-      ]
-    }
-  ],
+  "business_rules": [],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
@@ -77,27 +52,9 @@
     }
   ],
   "error_handling": [],
-  "sql_operations": [
-    {
-      "operation": "CREATE TABLE",
-      "table": "CARDDEMO.AUTHFRDS",
-      "purpose": "Defines persistent storage for authorization fraud data with specified columns and primary key",
-      "citation": 1
-    }
-  ],
+  "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
-    {
-      "question": "Which programs or jobs execute this DDL?",
-      "context": "DDL file does not reference callers; usage depends on deployment scripts",
-      "suggestion": "Check JCL or deployment procedures referencing this DDL"
-    },
-    {
-      "question": "Detailed business validation rules for field populations (e.g., valid values for AUTH_TYPE)?",
-      "context": "DDL defines structure only, not constraints beyond NULL and PK",
-      "suggestion": "Review application code using this table"
-    }
-  ],
+  "open_questions": [],
   "dead_code": [
     {
       "name": "AUTHFRDS",
