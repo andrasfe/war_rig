@@ -73,19 +73,14 @@ def _get_provider_config() -> tuple[str, str]:
                 "Required for openai provider (LLM_PROVIDER=openai)."
             )
     else:
-        # For unknown providers, try to find an API key with the provider name
+        # For unknown providers, look for {PROVIDER}_API_KEY
         # e.g., LLM_PROVIDER=azure -> look for AZURE_API_KEY
         env_key = f"{provider.upper()}_API_KEY"
         api_key = os.environ.get(env_key, "")
         if not api_key:
-            # Fall back to OPENROUTER_API_KEY for routing through OpenRouter
-            api_key = os.environ.get("OPENROUTER_API_KEY", "")
-            if api_key:
-                logger.info(f"Unknown provider '{provider}', using OpenRouter")
-                return "openrouter", api_key
             raise KeyError(
-                f"No API key found for provider '{provider}'. "
-                f"Set {env_key} or OPENROUTER_API_KEY environment variable."
+                f"{env_key} environment variable not set. "
+                f"Required for provider '{provider}' (LLM_PROVIDER={provider})."
             )
 
     return provider, api_key
@@ -260,19 +255,14 @@ def get_langchain_model(
                     "Required for openai provider."
                 )
         else:
-            # For unknown providers, try provider-specific key or fall back to OpenRouter
+            # For unknown providers, look for {PROVIDER}_API_KEY
             env_key = f"{resolved_provider.upper()}_API_KEY"
             api_key = os.environ.get(env_key, "")
             if not api_key:
-                api_key = os.environ.get("OPENROUTER_API_KEY", "")
-                if api_key:
-                    logger.info(f"Unknown provider '{provider}', using OpenRouter")
-                    resolved_provider = "openrouter"
-                else:
-                    raise KeyError(
-                        f"No API key found for provider '{provider}'. "
-                        f"Set {env_key} or OPENROUTER_API_KEY environment variable."
-                    )
+                raise KeyError(
+                    f"{env_key} environment variable not set. "
+                    f"Required for provider '{provider}'."
+                )
     else:
         # Use llm_providers-style resolution from LLM_PROVIDER env var
         resolved_provider, api_key = _get_provider_config()

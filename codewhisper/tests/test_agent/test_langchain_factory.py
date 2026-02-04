@@ -266,9 +266,8 @@ class TestGetLangchainModelUnknownProvider:
         """Test that unknown LLM_PROVIDER without API key raises KeyError."""
         monkeypatch.setenv("LLM_PROVIDER", "unknown_provider")
         monkeypatch.delenv("UNKNOWN_PROVIDER_API_KEY", raising=False)
-        monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
 
-        with pytest.raises(KeyError, match="No API key found"):
+        with pytest.raises(KeyError, match="UNKNOWN_PROVIDER_API_KEY.*not set"):
             get_langchain_model()
 
     def test_unknown_explicit_provider_without_api_key_raises(
@@ -277,28 +276,25 @@ class TestGetLangchainModelUnknownProvider:
     ) -> None:
         """Test that unknown explicit provider without API key raises KeyError."""
         monkeypatch.delenv("NONEXISTENT_API_KEY", raising=False)
-        monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
 
-        with pytest.raises(KeyError, match="No API key found"):
+        with pytest.raises(KeyError, match="NONEXISTENT_API_KEY.*not set"):
             get_langchain_model(provider="nonexistent")
 
-    def test_unknown_provider_with_openrouter_fallback(
+    def test_unknown_provider_with_custom_api_key(
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """Test that unknown provider falls back to OpenRouter if API key available."""
+        """Test that unknown provider uses {PROVIDER}_API_KEY."""
         monkeypatch.setenv("LLM_PROVIDER", "custom")
-        monkeypatch.delenv("CUSTOM_API_KEY", raising=False)
-        monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+        monkeypatch.setenv("CUSTOM_API_KEY", "test-custom-key")
 
         with patch("langchain_openai.ChatOpenAI") as mock:
             mock.return_value = MagicMock()
             model = get_langchain_model()
             assert model is not None
-            # Should use OpenRouter base URL
             mock.assert_called_once()
             call_kwargs = mock.call_args[1]
-            assert "openrouter.ai" in call_kwargs.get("base_url", "")
+            assert call_kwargs.get("api_key") == "test-custom-key"
 
 
 class TestGetLangchainModelCustomSettings:
