@@ -26,7 +26,12 @@ classifiers = [
 ]
 
 dependencies = [
-    # LLM provider (replaces LangChain/LangGraph)
+    # Agent framework
+    "langgraph>=0.2.0",
+    "langchain-core>=0.3.0",
+    "langchain-anthropic>=0.2.0",
+    "langchain-openai>=0.2.0",
+    # LLM configuration (NOT for tool calling - only provides API keys, models, etc.)
     "llm-providers",
     # Code analysis
     "citadel",

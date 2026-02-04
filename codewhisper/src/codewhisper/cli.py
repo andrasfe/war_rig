@@ -580,7 +580,7 @@ async def run_interactive(config: AgentConfig) -> None:
     Args:
         config: Agent configuration.
     """
-    from codewhisper.agent.react_loop import create_agent
+    from codewhisper.agent.graph import create_agent
 
     console.print(
         Panel.fit(
@@ -880,7 +880,7 @@ async def run_single_query(config: AgentConfig, query: str) -> None:
         config: Agent configuration.
         query: The query to process.
     """
-    from codewhisper.agent.react_loop import create_agent
+    from codewhisper.agent.graph import create_agent
 
     # Initialize the agent
     try:
