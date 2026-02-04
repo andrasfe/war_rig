@@ -392,6 +392,43 @@ skills-output/
 
 This progressive disclosure minimizes context usage - agents never load entire COBOL files, just the specific paragraphs they need.
 
+### Interactive Codebase Exploration (CodeWhisper)
+
+After generating documentation and skills, use CodeWhisper to interactively explore the codebase:
+
+```bash
+# Start interactive chat session
+codewhisper --skills-dir ./output/skills-documentation --code-dir ./input
+
+# Single query mode
+codewhisper -s ./output/skills-documentation -c ./input -q "How does fraud marking work?"
+```
+
+**Example session:**
+```
+You> What does CBPAUP0C do?
+
+CodeWhisper> CBPAUP0C is a batch IMS program that handles cleanup of expired
+authorizations. It traverses the authorization database, reads pending
+authorization summary segments, and deletes expired detail records based
+on a configurable expiry period...
+
+You> Show me the main processing loop
+
+CodeWhisper> [loads skill, fetches paragraph code via citadel_get_function_body]
+The main loop is in paragraph 2000-PROCESS-RECORDS...
+```
+
+**Environment variables:**
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `CODEWHISPER_SKILLS_DIR` | Skills directory | `./skills` |
+| `CODEWHISPER_CODE_DIR` | Source code directory | `.` |
+| `CODEWHISPER_MODEL` | LLM model | `anthropic/claude-sonnet-4-20250514` |
+| `CODEWHISPER_PROVIDER` | LLM provider | `openrouter` |
+
+See `codewhisper/README.md` for full documentation.
+
 ### Process with Parallel Workers
 
 ```bash
