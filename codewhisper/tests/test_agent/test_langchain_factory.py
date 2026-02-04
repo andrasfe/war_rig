@@ -1,9 +1,9 @@
 """Tests for the langchain_factory module.
 
 This module tests:
-- Provider configuration resolution from LLM_PROVIDER env var
+- Provider configuration resolution via llm_providers delegation
 - LangChain model creation for each provider
-- API key requirement validation
+- API key requirement validation (via llm_providers)
 - Model selection defaults
 """
 
@@ -27,7 +27,7 @@ class TestGetAvailableProviders:
         assert "openrouter" in providers
         assert "anthropic" in providers
         assert "openai" in providers
-        assert len(providers) == 3
+        assert len(providers) >= 3  # May have more from plugins
 
 
 class TestGetLangchainModelOpenRouter:
@@ -259,42 +259,24 @@ class TestGetLangchainModelProviderOverride:
 class TestGetLangchainModelUnknownProvider:
     """Tests for unknown provider handling."""
 
-    def test_unknown_provider_without_api_key_raises(
+    def test_unknown_provider_raises_value_error(
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """Test that unknown LLM_PROVIDER without API key raises KeyError."""
+        """Test that unknown LLM_PROVIDER raises ValueError from llm_providers."""
         monkeypatch.setenv("LLM_PROVIDER", "unknown_provider")
-        monkeypatch.delenv("UNKNOWN_PROVIDER_API_KEY", raising=False)
 
-        with pytest.raises(KeyError, match="UNKNOWN_PROVIDER_API_KEY.*not set"):
+        # llm_providers raises ValueError for unknown providers
+        with pytest.raises(ValueError, match="Unknown provider"):
             get_langchain_model()
 
-    def test_unknown_explicit_provider_without_api_key_raises(
+    def test_unknown_explicit_provider_raises_value_error(
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """Test that unknown explicit provider without API key raises KeyError."""
-        monkeypatch.delenv("NONEXISTENT_API_KEY", raising=False)
-
-        with pytest.raises(KeyError, match="NONEXISTENT_API_KEY.*not set"):
+        """Test that unknown explicit provider raises ValueError."""
+        with pytest.raises(ValueError, match="Unknown provider"):
             get_langchain_model(provider="nonexistent")
-
-    def test_unknown_provider_with_custom_api_key(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        """Test that unknown provider uses {PROVIDER}_API_KEY."""
-        monkeypatch.setenv("LLM_PROVIDER", "custom")
-        monkeypatch.setenv("CUSTOM_API_KEY", "test-custom-key")
-
-        with patch("langchain_openai.ChatOpenAI") as mock:
-            mock.return_value = MagicMock()
-            model = get_langchain_model()
-            assert model is not None
-            mock.assert_called_once()
-            call_kwargs = mock.call_args[1]
-            assert call_kwargs.get("api_key") == "test-custom-key"
 
 
 class TestGetLangchainModelCustomSettings:
@@ -331,3 +313,60 @@ class TestGetLangchainModelCustomSettings:
 
             call_kwargs = mock_chat.call_args[1]
             assert call_kwargs["max_tokens"] == 8192
+
+
+class TestLlmProvidersIntegration:
+    """Tests verifying proper delegation to llm_providers."""
+
+    def test_delegates_to_llm_providers_get_provider_from_env(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Test that get_langchain_model delegates to llm_providers."""
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")
+
+        with (
+            patch("llm_providers.get_provider_from_env") as mock_get_provider,
+            patch("langchain_anthropic.ChatAnthropic") as mock_chat,
+        ):
+            # Create a mock provider that looks like AnthropicProvider
+            mock_provider = MagicMock()
+            mock_provider.__class__.__name__ = "AnthropicProvider"
+            mock_provider._api_key = "test-key"
+            mock_provider._default_model = "claude-sonnet-4-20250514"
+            mock_provider._max_tokens = 4096
+
+            mock_get_provider.return_value = mock_provider
+            mock_chat.return_value = MagicMock()
+
+            get_langchain_model(provider="anthropic")
+
+            # Verify llm_providers was called with the provider name
+            mock_get_provider.assert_called_once_with(provider_name="anthropic")
+
+    def test_api_key_from_llm_providers_used(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Test that API key from llm_providers is used for LangChain model."""
+        monkeypatch.setenv("OPENROUTER_API_KEY", "llm-providers-key")
+
+        with (
+            patch("llm_providers.get_provider_from_env") as mock_get_provider,
+            patch("langchain_openai.ChatOpenAI") as mock_chat,
+        ):
+            # Create a mock provider that looks like OpenRouterProvider
+            mock_provider = MagicMock()
+            mock_provider.__class__.__name__ = "OpenRouterProvider"
+            mock_provider._api_key = "llm-providers-key"
+            mock_provider._base_url = "https://openrouter.ai/api/v1"
+            mock_provider._default_model = "anthropic/claude-sonnet-4-20250514"
+
+            mock_get_provider.return_value = mock_provider
+            mock_chat.return_value = MagicMock()
+
+            get_langchain_model()
+
+            # Verify the API key from llm_providers was used
+            call_kwargs = mock_chat.call_args[1]
+            assert call_kwargs["api_key"] == "llm-providers-key"
