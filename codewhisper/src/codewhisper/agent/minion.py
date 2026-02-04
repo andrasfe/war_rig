@@ -7,7 +7,11 @@ context efficiency.
 The minion uses a smaller, faster model (configured via MINION_SCRIBE_MODEL)
 to extract key information from tool results that exceed a size threshold.
 
+Uses llm_providers directly instead of LangChain.
+
 Example:
+    from codewhisper.agent.minion import MinionProcessor
+
     processor = MinionProcessor()
     summary = await processor.summarize_result("read_file", large_file_content)
 """
@@ -16,21 +20,26 @@ from __future__ import annotations
 
 import logging
 import os
+from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 from dotenv import load_dotenv
-from pydantic import BaseModel, Field
+
+from llm_providers import Message, get_provider_from_env
 
 # Load .env file from current directory or parent directories
 load_dotenv()
 
 if TYPE_CHECKING:
-    from langchain_core.runnables import Runnable
+    from llm_providers import LLMProvider
 
 logger = logging.getLogger(__name__)
 
 # Default threshold: 8000 tokens (suitable for claude-3-haiku)
 DEFAULT_MINION_THRESHOLD_TOKENS = 8000
+
+# Default model if MINION_SCRIBE_MODEL is not set
+DEFAULT_MINION_MODEL = "anthropic/claude-3-haiku-20240307"
 
 
 def _get_minion_threshold() -> int:
@@ -45,11 +54,9 @@ def _get_minion_threshold() -> int:
     )
     return tokens * 4  # Convert tokens to approximate chars
 
-# Default model if MINION_SCRIBE_MODEL is not set
-DEFAULT_MINION_MODEL = "anthropic/claude-3-haiku-20240307"
 
-
-class ToolResultSummary(BaseModel):
+@dataclass
+class ToolResultSummary:
     """Structured output for tool result summarization.
 
     Attributes:
@@ -57,14 +64,59 @@ class ToolResultSummary(BaseModel):
         summary: Concise narrative summary of the tool output.
     """
 
-    key_points: list[str] = Field(
-        ...,
-        description="Key findings or important items from the tool result",
-    )
-    summary: str = Field(
-        ...,
-        description="Concise narrative summary of the tool output",
-    )
+    key_points: list[str]
+    summary: str
+
+    @classmethod
+    def parse_from_text(cls, text: str) -> "ToolResultSummary":
+        """Parse summary from LLM response text.
+
+        Expects format:
+        KEY POINTS:
+        - point 1
+        - point 2
+
+        SUMMARY:
+        summary text here
+
+        Args:
+            text: LLM response text.
+
+        Returns:
+            Parsed ToolResultSummary.
+        """
+        key_points: list[str] = []
+        summary = ""
+
+        # Split by sections
+        lines = text.strip().split("\n")
+        current_section = None
+
+        for line in lines:
+            line_stripped = line.strip()
+
+            if line_stripped.upper().startswith("KEY POINTS"):
+                current_section = "key_points"
+                continue
+            elif line_stripped.upper().startswith("SUMMARY"):
+                current_section = "summary"
+                continue
+
+            if current_section == "key_points":
+                # Extract bullet points
+                if line_stripped.startswith("-") or line_stripped.startswith("*"):
+                    point = line_stripped.lstrip("-*").strip()
+                    if point:
+                        key_points.append(point)
+            elif current_section == "summary":
+                if line_stripped:
+                    summary = summary + " " + line_stripped if summary else line_stripped
+
+        # Fallback if parsing failed
+        if not key_points and not summary:
+            summary = text[:500] + "..." if len(text) > 500 else text
+
+        return cls(key_points=key_points, summary=summary.strip())
 
 
 class MinionProcessor:
@@ -74,6 +126,8 @@ class MinionProcessor:
     threshold and uses a fast, inexpensive model to extract key information.
     This reduces token usage in the main agent while preserving essential
     information.
+
+    Uses llm_providers directly instead of LangChain.
 
     Attributes:
         model_name: The model identifier to use for summarization.
@@ -99,6 +153,7 @@ class MinionProcessor:
         self,
         model_name: str | None = None,
         threshold: int | None = None,
+        provider: "LLMProvider | None" = None,
     ):
         """Initialize the minion processor.
 
@@ -107,45 +162,30 @@ class MinionProcessor:
                 reads from MINION_SCRIBE_MODEL env var, falling back to
                 claude-3-haiku.
             threshold: Character count above which to trigger summarization.
+            provider: Optional LLM provider. If None, creates from environment.
         """
         self.model_name = model_name or os.environ.get(
             "MINION_SCRIBE_MODEL",
             DEFAULT_MINION_MODEL,
         )
         self.threshold = threshold if threshold is not None else _get_minion_threshold()
-        self._llm: Runnable[str, ToolResultSummary] | None = None
+        self._provider = provider
 
-        logger.debug(f"MinionProcessor initialized: model={self.model_name}")
-
-    def _create_llm(self) -> "Runnable[str, ToolResultSummary]":
-        """Create the LLM for summarization using langchain_factory.
-
-        Uses the same environment-based provider discovery pattern as
-        war_rig.providers, supporting plugins via entry points.
-
-        Returns:
-            Configured runnable with structured output.
-        """
-        from codewhisper.agent.langchain_factory import get_langchain_model
-
-        llm = get_langchain_model(
-            model=self.model_name,
-            temperature=0.0,
-            max_tokens=1024,
+        logger.debug(
+            f"MinionProcessor initialized: model={self.model_name}, "
+            f"threshold={self.threshold} chars"
         )
 
-        return llm.with_structured_output(ToolResultSummary)  # type: ignore[return-value]
-
     @property
-    def llm(self) -> "Runnable[str, ToolResultSummary]":
-        """Get or create the LLM instance.
+    def provider(self) -> "LLMProvider":
+        """Get the LLM provider, creating if needed.
 
         Returns:
-            Configured runnable with structured output.
+            Configured LLM provider.
         """
-        if self._llm is None:
-            self._llm = self._create_llm()
-        return self._llm
+        if self._provider is None:
+            self._provider = get_provider_from_env()
+        return self._provider
 
     async def summarize_result(self, tool_name: str, result: str) -> str:
         """Summarize a tool result if it exceeds the threshold.
@@ -172,14 +212,37 @@ class MinionProcessor:
         )
 
         try:
-            prompt = (
-                f"Summarize this {tool_name} tool output for a code exploration agent. "
-                f"Extract the most important information that would help understand "
-                f"the codebase.\n\n"
-                f"Tool output:\n{result}"
+            # Build summarization prompt
+            prompt = f"""Summarize this {tool_name} tool output for a code exploration agent.
+Extract the most important information that would help understand the codebase.
+
+Respond in this exact format:
+KEY POINTS:
+- point 1
+- point 2
+- (add more as needed)
+
+SUMMARY:
+A concise paragraph summarizing the key information.
+
+Tool output:
+{result}"""
+
+            messages = [
+                Message(role="system", content="You are a helpful assistant that summarizes tool outputs concisely."),
+                Message(role="user", content=prompt),
+            ]
+
+            # Call the LLM
+            response = await self.provider.complete(
+                messages=messages,
+                model=self.model_name,
+                temperature=0.0,
+                max_tokens=1024,
             )
 
-            summary_result = await self.llm.ainvoke(prompt)
+            # Parse the response
+            summary_result = ToolResultSummary.parse_from_text(response.content)
 
             # Format the summary
             key_points_text = "\n".join(

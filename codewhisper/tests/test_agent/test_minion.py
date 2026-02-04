@@ -33,6 +33,57 @@ class TestToolResultSummary:
         assert "3 functions" in summary.key_points[0]
         assert "authorization" in summary.summary
 
+    def test_parse_from_text_valid(self) -> None:
+        """Test parsing summary from well-formatted text."""
+        text = """KEY POINTS:
+- First key point
+- Second key point
+- Third key point
+
+SUMMARY:
+This is the summary of the tool output."""
+
+        result = ToolResultSummary.parse_from_text(text)
+
+        assert len(result.key_points) == 3
+        assert "First key point" in result.key_points[0]
+        assert "Second key point" in result.key_points[1]
+        assert "Third key point" in result.key_points[2]
+        assert "summary of the tool output" in result.summary
+
+    def test_parse_from_text_asterisk_bullets(self) -> None:
+        """Test parsing with asterisk bullets."""
+        text = """KEY POINTS:
+* Point one
+* Point two
+
+SUMMARY:
+Summary text here."""
+
+        result = ToolResultSummary.parse_from_text(text)
+
+        assert len(result.key_points) == 2
+        assert "Point one" in result.key_points[0]
+
+    def test_parse_from_text_fallback(self) -> None:
+        """Test fallback when parsing fails."""
+        text = "Some text without proper formatting"
+
+        result = ToolResultSummary.parse_from_text(text)
+
+        # Should fall back to using text as summary
+        assert result.summary == text
+        assert result.key_points == []
+
+    def test_parse_from_text_long_fallback_truncates(self) -> None:
+        """Test fallback truncates long text."""
+        text = "x" * 600
+
+        result = ToolResultSummary.parse_from_text(text)
+
+        assert len(result.summary) <= 503  # 500 + "..."
+        assert result.summary.endswith("...")
+
 
 class TestMinionProcessorInit:
     """Tests for MinionProcessor initialization."""
@@ -104,31 +155,29 @@ class TestMinionProcessorSummarize:
     async def test_large_result_triggers_summarization(
         self,
         processor: MinionProcessor,
-        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test that large results are summarized."""
-        # Set up provider config - default is openrouter
-        monkeypatch.delenv("LLM_PROVIDER", raising=False)
-        monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+        # Create mock provider response
+        mock_response = MagicMock()
+        mock_response.content = """KEY POINTS:
+- Point 1
+- Point 2
 
-        # Create mock LLM response
-        mock_summary = ToolResultSummary(
-            key_points=["Point 1", "Point 2"],
-            summary="This is the summary.",
-        )
+SUMMARY:
+This is the summary."""
 
-        mock_llm = MagicMock()
-        mock_llm.ainvoke = AsyncMock(return_value=mock_summary)
+        mock_provider = MagicMock()
+        mock_provider.complete = AsyncMock(return_value=mock_response)
 
-        # Inject mock LLM
-        processor._llm = mock_llm
+        # Inject mock provider
+        processor._provider = mock_provider
 
         large_result = "x" * 200  # Above threshold
 
         result = await processor.summarize_result("read_file", large_result)
 
-        # Verify summarization was called
-        mock_llm.ainvoke.assert_called_once()
+        # Verify complete was called
+        mock_provider.complete.assert_called_once()
 
         # Verify result contains summary
         assert "[Summarized from 200 chars]" in result
@@ -139,18 +188,13 @@ class TestMinionProcessorSummarize:
     async def test_summarization_error_returns_original(
         self,
         processor: MinionProcessor,
-        monkeypatch: pytest.MonkeyPatch,
     ) -> None:
         """Test graceful fallback on summarization error."""
-        # Set up provider config - default is openrouter
-        monkeypatch.delenv("LLM_PROVIDER", raising=False)
-        monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
+        # Create mock provider that raises an error
+        mock_provider = MagicMock()
+        mock_provider.complete = AsyncMock(side_effect=Exception("API error"))
 
-        # Create mock LLM that raises an error
-        mock_llm = MagicMock()
-        mock_llm.ainvoke = AsyncMock(side_effect=Exception("API error"))
-
-        processor._llm = mock_llm
+        processor._provider = mock_provider
 
         large_result = "x" * 200
 
@@ -160,72 +204,60 @@ class TestMinionProcessorSummarize:
         assert result == large_result
 
 
-class TestMinionProcessorLLM:
-    """Tests for LLM creation and caching."""
+class TestMinionProcessorProvider:
+    """Tests for provider creation and caching."""
 
-    def test_llm_property_creates_on_first_access(
+    def test_provider_property_creates_on_first_access(
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """Test that LLM is created on first access."""
+        """Test that provider is created on first access."""
         # Set up provider config - default is openrouter
         monkeypatch.delenv("LLM_PROVIDER", raising=False)
         monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
 
         processor = MinionProcessor()
-        assert processor._llm is None
+        assert processor._provider is None
 
-        # Access llm property - patch at langchain_openai module level
-        with patch("langchain_openai.ChatOpenAI") as mock_chat:
-            mock_instance = MagicMock()
-            mock_instance.with_structured_output = MagicMock(
-                return_value=mock_instance
-            )
-            mock_chat.return_value = mock_instance
+        # Access provider property
+        with patch("codewhisper.agent.minion.get_provider_from_env") as mock_get_provider:
+            mock_provider = MagicMock()
+            mock_get_provider.return_value = mock_provider
 
-            llm = processor.llm
+            provider = processor.provider
 
-            assert llm is not None
-            mock_chat.assert_called_once()
+            assert provider is not None
+            mock_get_provider.assert_called_once()
 
-    def test_llm_requires_api_key(
+    def test_provider_property_caches_result(
         self,
         monkeypatch: pytest.MonkeyPatch,
     ) -> None:
-        """Test that LLM creation requires API key based on LLM_PROVIDER."""
-        # Clear all API keys and ensure no LLM_PROVIDER is set (defaults to openrouter)
-        monkeypatch.delenv("LLM_PROVIDER", raising=False)
-        monkeypatch.delenv("OPENROUTER_API_KEY", raising=False)
-        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
-        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
-
-        processor = MinionProcessor()
-
-        # Should raise KeyError for missing API key (openrouter by default)
-        with pytest.raises(KeyError, match="OPENROUTER_API_KEY"):
-            _ = processor.llm
-
-    def test_llm_property_caches_result(
-        self,
-        monkeypatch: pytest.MonkeyPatch,
-    ) -> None:
-        """Test that LLM is cached after first creation."""
+        """Test that provider is cached after first creation."""
         # Set up provider config - default is openrouter
         monkeypatch.delenv("LLM_PROVIDER", raising=False)
         monkeypatch.setenv("OPENROUTER_API_KEY", "test-key")
 
         processor = MinionProcessor()
 
-        with patch("langchain_openai.ChatOpenAI") as mock_chat:
-            mock_instance = MagicMock()
-            mock_instance.with_structured_output = MagicMock(
-                return_value=mock_instance
-            )
-            mock_chat.return_value = mock_instance
+        with patch("codewhisper.agent.minion.get_provider_from_env") as mock_get_provider:
+            mock_provider = MagicMock()
+            mock_get_provider.return_value = mock_provider
 
-            llm1 = processor.llm
-            llm2 = processor.llm
+            # First access creates
+            provider1 = processor.provider
+            # Second access returns cached
+            provider2 = processor.provider
 
             # Should only create once
-            mock_chat.assert_called_once()
-            assert llm1 is llm2
+            mock_get_provider.assert_called_once()
+            assert provider1 is provider2
+
+    def test_init_with_explicit_provider(self) -> None:
+        """Test initialization with explicit provider."""
+        mock_provider = MagicMock()
+
+        processor = MinionProcessor(provider=mock_provider)
+
+        assert processor._provider is mock_provider
+        assert processor.provider is mock_provider

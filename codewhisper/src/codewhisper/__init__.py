@@ -1,11 +1,11 @@
 """CodeWhisper - Interactive chatbot for mainframe code exploration.
 
-CodeWhisper is a LangGraph-powered chatbot CLI that helps developers
+CodeWhisper is a ReAct-based chatbot CLI that helps developers
 explore and understand mainframe codebases (COBOL, PL/I, JCL, etc.)
 through natural language queries and a skills-based knowledge system.
 
 Key Components:
-    - Agent: LangGraph-based conversational agent with tool support
+    - Agent: ReAct-based conversational agent with tool support
     - Skills: Loadable knowledge units for code documentation
     - Search: Code search and file reading capabilities
     - CLI: Interactive REPL for asking questions
@@ -25,8 +25,9 @@ Example:
     response = await agent.chat("What does CBPAUP0C do?")
 """
 
-from codewhisper.agent.graph import CodeWhisperAgent, create_agent
-from codewhisper.agent.state import AgentState, ConversationMessage
+from codewhisper.agent.message import ConversationMessage
+from codewhisper.agent.protocol import AgentState
+from codewhisper.agent.react_loop import ReActAgent, create_agent
 from codewhisper.config import AgentConfig
 from codewhisper.skills.index import SkillsIndex
 from codewhisper.skills.loader import SkillsLoader
@@ -34,8 +35,8 @@ from codewhisper.skills.loader import SkillsLoader
 __all__ = [
     "AgentConfig",
     "AgentState",
-    "CodeWhisperAgent",
     "ConversationMessage",
+    "ReActAgent",
     "SkillsIndex",
     "SkillsLoader",
     "create_agent",

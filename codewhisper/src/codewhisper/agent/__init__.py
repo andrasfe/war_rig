@@ -1,30 +1,37 @@
 """Agent module for CodeWhisper.
 
-This module contains the LangGraph-based conversational agent
+This module contains the ReAct-based conversational agent
 that powers CodeWhisper's code exploration capabilities.
 
 Components:
-    - graph: The main StateGraph definition and agent logic
-    - state: State models for the agent
-    - tools: Tool definitions for skill lookup, code search, etc.
+    - react_loop: The main ReAct agent implementation
+    - protocol: Tool protocol definitions
+    - message: Conversation message types
+    - minion: Minion processor for large result summarization
+    - tools: Tool definitions and registry
 """
 
-from codewhisper.agent.graph import CodeWhisperAgent, create_agent
-from codewhisper.agent.state import AgentState, ConversationMessage
-from codewhisper.agent.tools import (
-    load_skill,
-    read_file,
-    search_code,
-    search_skills,
+from codewhisper.agent.message import Conversation, ConversationMessage
+from codewhisper.agent.minion import MinionProcessor
+from codewhisper.agent.protocol import (
+    AgentState,
+    ToolCall,
+    ToolDefinition,
+    ToolResult,
 )
+from codewhisper.agent.react_loop import ReActAgent, create_agent
+from codewhisper.agent.tools import ToolRegistry, create_tool_registry
 
 __all__ = [
     "AgentState",
-    "CodeWhisperAgent",
+    "Conversation",
     "ConversationMessage",
+    "MinionProcessor",
+    "ReActAgent",
+    "ToolCall",
+    "ToolDefinition",
+    "ToolRegistry",
+    "ToolResult",
     "create_agent",
-    "load_skill",
-    "read_file",
-    "search_code",
-    "search_skills",
+    "create_tool_registry",
 ]
