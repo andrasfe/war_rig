@@ -267,6 +267,39 @@ class ReActLoop:
             # Parse the response
             assistant_message, tool_calls = self._parse_response(response)
 
+            # Check for model outputting tool call text instead of actual tool calls
+            # Some models (like Gemini) output "[Calling tools: xyz]" as text
+            # instead of actually invoking the tool
+            if not tool_calls and assistant_message.content:
+                content_lower = assistant_message.content.lower().strip()
+                tool_text_patterns = [
+                    "[calling tools:",
+                    "[calling tool:",
+                    "i will call",
+                    "let me call",
+                    "i'll call",
+                    "calling the",
+                    "i will use the",
+                    "let me use the",
+                ]
+                if any(pattern in content_lower for pattern in tool_text_patterns):
+                    logger.warning(
+                        "Model output tool-calling text instead of making tool call: %s",
+                        assistant_message.content[:100],
+                    )
+                    # Don't add this message to history - it's useless
+                    # Instead, add a correction and re-prompt
+                    messages.append({
+                        "role": "user",
+                        "content": (
+                            "You described calling a tool but didn't actually invoke it. "
+                            "Please make the actual tool call now using the tool calling mechanism - "
+                            "don't describe it, just call it directly."
+                        ),
+                    })
+                    # Continue the loop to re-call the LLM
+                    continue
+
             # Add assistant message to tracking
             working_history.append(assistant_message)
             messages.append(assistant_message.to_dict())
