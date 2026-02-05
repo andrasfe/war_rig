@@ -557,8 +557,10 @@ This is a test skill.
         assert sdk_with_skills.documents_dir is not None
         assert sdk_with_skills.documents_dir.exists()
 
-    def test_skills_index_lazy_loaded(self, sdk_with_skills: CodeWhisper) -> None:
-        """Test that skills index is lazily loaded."""
-        # Accessing internal _skills_index should be None initially
-        # (this tests implementation detail but verifies lazy loading)
-        assert sdk_with_skills._skills_index is None
+    def test_skills_index_loaded_when_documents_dir_provided(
+        self, sdk_with_skills: CodeWhisper
+    ) -> None:
+        """Test that skills index is loaded when documents_dir is provided."""
+        # When documents_dir is provided, skills index is loaded eagerly
+        # to register knowledge tools (search_skills, load_skill)
+        assert sdk_with_skills._skills_index is not None

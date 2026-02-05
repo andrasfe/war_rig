@@ -324,11 +324,22 @@ class CodeWhisper:
         self._config = config or CodeWhisperConfig()
         self._minion_provider = minion_provider
 
-        # Initialize tool registry
-        self._tool_registry = ToolRegistry()
-
         # Initialize skills index (lazy - loaded when needed)
         self._skills_index: SkillsIndex | None = None
+
+        # Initialize tool registry with all tools
+        from codewhisper.tools.factory import create_tool_registry
+
+        # Get skills index if documents_dir is provided
+        skills_index = self._get_skills_index() if documents_dir else None
+
+        # Create registry with enabled tools filter if specified
+        enabled_tools = set(skills) if skills else None
+        self._tool_registry = create_tool_registry(
+            code_dir=self._code_dir,
+            skills_index=skills_index,
+            enabled_tools=enabled_tools,
+        )
 
         # Conversation history
         self._conversation_history: list[Message] = []
