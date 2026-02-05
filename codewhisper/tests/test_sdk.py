@@ -327,9 +327,16 @@ class TestCodeWhisperComplete:
         # Verify the context was included in the message
         assert len(provider.calls) == 1
         messages = provider.calls[0]["messages"]
-        user_message = [m for m in messages if m["role"] == "user"][0]
-        assert "Error: File not found" in user_message["content"]
-        assert "Explain this error" in user_message["content"]
+        # Handle both dict and Message object formats
+        user_messages = [
+            m for m in messages
+            if (m.role if hasattr(m, "role") else m.get("role")) == "user"
+        ]
+        assert len(user_messages) > 0
+        user_message = user_messages[0]
+        content = user_message.content if hasattr(user_message, "content") else user_message.get("content", "")
+        assert "Error: File not found" in content
+        assert "Explain this error" in content
 
     async def test_complete_builds_history(
         self, sdk_with_provider: tuple[CodeWhisper, MockLLMProvider]

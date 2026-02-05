@@ -246,8 +246,10 @@ class ReActLoop:
 
             # Call the LLM
             try:
+                # Convert messages to provider format (war_rig expects Message objects)
+                provider_messages = self._convert_for_provider(messages)
                 response = await self._llm.complete(
-                    messages=messages,
+                    messages=provider_messages,
                     tools=tool_schemas,
                     temperature=self._config.temperature,
                     max_tokens=self._config.max_tokens,
@@ -345,6 +347,70 @@ class ReActLoop:
         messages.append({"role": "user", "content": user_message})
 
         return messages
+
+    def _convert_for_provider(
+        self, messages: list[dict[str, Any]]
+    ) -> list[Any]:
+        """Convert dict messages to war_rig.providers.Message objects.
+
+        The war_rig providers expect Message objects, not dicts. This method
+        handles the conversion, including special handling for tool-related
+        messages that war_rig doesn't support (they're converted to assistant
+        messages with the tool result in the content).
+
+        Args:
+            messages: List of message dicts in OpenAI format.
+
+        Returns:
+            List of war_rig.providers.Message objects (or dicts if import fails).
+        """
+        try:
+            from war_rig.providers import Message as ProviderMessage
+        except ImportError:
+            # Fall back to dicts if war_rig not available
+            return messages
+
+        converted: list[Any] = []
+        for msg in messages:
+            role = msg.get("role", "user")
+            content = msg.get("content", "")
+
+            # Skip tool messages - war_rig doesn't support them
+            # Instead, the tool result should already be in context
+            if role == "tool":
+                # Convert tool result to user message for context
+                tool_name = msg.get("name", "tool")
+                converted.append(
+                    ProviderMessage(
+                        role="user",
+                        content=f"[Tool Result from {tool_name}]: {content}",
+                    )
+                )
+                continue
+
+            # Handle assistant messages with tool calls
+            if role == "assistant" and msg.get("tool_calls"):
+                tool_calls = msg.get("tool_calls", [])
+                tool_desc = ", ".join(
+                    tc.get("function", {}).get("name", "unknown")
+                    for tc in tool_calls
+                )
+                # Include both content and tool call info
+                full_content = content or ""
+                if tool_desc:
+                    full_content = f"{full_content}\n[Calling tools: {tool_desc}]".strip()
+                converted.append(
+                    ProviderMessage(role="assistant", content=full_content or "...")
+                )
+                continue
+
+            # Standard message
+            if role in ("system", "user", "assistant"):
+                converted.append(
+                    ProviderMessage(role=role, content=content or "")
+                )
+
+        return converted
 
     def _parse_response(self, response: Any) -> tuple[Message, list[ToolCall]]:
         """Parse the LLM response into a Message and tool calls.
