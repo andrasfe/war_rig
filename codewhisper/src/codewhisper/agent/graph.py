@@ -88,8 +88,21 @@ NEVER respond with:
 - "which system do you mean?" - This IS the system
 - "I will now try..." or "Let me search..." - Just call the tools
 - Intermediate status updates - Only respond with actual findings
+- "[Calling tools: xyz]" or similar - Make the ACTUAL tool call instead
 
-When you need information, USE THE TOOLS. Don't just say you're going to use them - actually invoke them via tool calls. Keep making tool calls until you have enough information to give a complete answer.
+## CRITICAL: Tool Calling Behavior
+
+When you need to use a tool:
+1. DO NOT output text like "[Calling tools: search_skills]"
+2. DO NOT describe what tool you're going to call
+3. ACTUALLY INVOKE THE TOOL via the tool calling mechanism
+4. Keep invoking tools until you have enough information
+
+When you need information, USE THE TOOLS via actual tool calls - not by writing text about calling them. The difference:
+- WRONG: Outputting "[Calling tools: load_skill]" as text
+- RIGHT: Actually invoking load_skill via the tool call mechanism
+
+Keep making tool calls until you have enough information to give a complete answer.
 
 ## Response Guidelines
 
@@ -244,6 +257,34 @@ class CodeWhisperAgent:
 
             logger.debug(f"Calling LLM with {len(messages)} messages")
             response = await llm_with_tools.ainvoke(messages)
+
+            # Check for model outputting tool call text instead of actual tool calls
+            # Some models (like Gemini) output "[Calling tools: xyz]" as text
+            if response.content and not response.tool_calls:
+                content_lower = response.content.lower().strip()
+                # Detect patterns like "[Calling tools: ...]" or "I will call..."
+                tool_text_patterns = [
+                    "[calling tools:",
+                    "[calling tool:",
+                    "i will call",
+                    "let me call",
+                    "i'll call",
+                    "calling the",
+                    "i will use the",
+                    "let me use the",
+                ]
+                if any(pattern in content_lower for pattern in tool_text_patterns):
+                    logger.warning(
+                        f"Model output tool-calling text instead of making tool call: {response.content[:100]}"
+                    )
+                    # Add a correction message and re-prompt
+                    messages.append(response)
+                    messages.append(HumanMessage(
+                        content="You described calling a tool but didn't actually invoke it. "
+                        "Please make the actual tool call now - don't describe it, just call it."
+                    ))
+                    response = await llm_with_tools.ainvoke(messages)
+                    logger.debug(f"Re-prompted model, got: tool_calls={bool(response.tool_calls)}")
 
             return {"messages": [response]}
 
