@@ -89,6 +89,8 @@ NEVER respond with:
 - "I will now try..." or "Let me search..." - Just call the tools
 - Intermediate status updates - Only respond with actual findings
 
+When you need information, USE THE TOOLS. Don't just say you're going to use them - actually invoke them via tool calls. Keep making tool calls until you have enough information to give a complete answer.
+
 ## Response Guidelines
 
 - **Never say "I will try" or "I will search"** - Just DO IT. Keep calling tools until you have the answer.
