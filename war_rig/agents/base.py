@@ -212,7 +212,7 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
             This method is kept for backward compatibility. New code
             should use the provider interface instead.
 
-        Supports both OpenRouter (via OpenAI-compatible API) and Anthropic.
+        Supports OpenRouter, Anthropic, and OpenAI-compatible providers.
 
         Returns:
             Configured LLM instance.
@@ -223,8 +223,13 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
             return self._create_openrouter_llm()
         elif provider == "anthropic":
             return self._create_anthropic_llm()
+        elif provider == "openai":
+            return self._create_openai_llm()
         else:
-            raise ValueError(f"Unknown API provider: {provider}")
+            # For unknown providers, try OpenAI-compatible as fallback
+            # This allows plugins that expose base_url to work
+            logger.info(f"{self.name}: Using OpenAI-compatible client for provider '{provider}'")
+            return self._create_openrouter_llm()
 
     def _create_openrouter_llm(self) -> BaseChatModel:
         """Create an OpenRouter LLM via OpenAI-compatible API.
@@ -302,6 +307,33 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
         )
 
         return ChatAnthropic(**kwargs)
+
+    def _create_openai_llm(self) -> BaseChatModel:
+        """Create an OpenAI LLM.
+
+        Deprecated:
+            This method is kept for backward compatibility. New code
+            should use the provider interface instead.
+
+        Returns:
+            Configured ChatOpenAI instance.
+        """
+        from langchain_openai import ChatOpenAI
+
+        kwargs: dict[str, Any] = {
+            "model": self.config.model,
+            "temperature": self.config.temperature,
+        }
+
+        if self._api_config.api_key:
+            kwargs["api_key"] = self._api_config.api_key
+
+        logger.debug(
+            f"{self.name}: Creating OpenAI LLM with model={self.config.model}, "
+            f"temp={self.config.temperature}"
+        )
+
+        return ChatOpenAI(**kwargs)
 
     @abstractmethod
     def _build_system_prompt(self) -> str:

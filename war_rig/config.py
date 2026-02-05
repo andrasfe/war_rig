@@ -1,7 +1,12 @@
 """Configuration management for War Rig.
 
 This module provides configuration with support for .env files via python-dotenv,
-supporting OpenRouter as the API provider with per-agent model configuration.
+with per-agent model configuration.
+
+**Provider-Agnostic Design:**
+    War Rig supports any LLM provider registered via its plugin system.
+    The provider is determined by the LLM_PROVIDER environment variable.
+    Each provider handles its own API key and configuration.
 
 Typical usage:
     # Load from .env file automatically
@@ -23,27 +28,32 @@ load_dotenv()
 
 
 class APIConfig(BaseModel):
-    """Configuration for the API provider."""
+    """Configuration for the API provider.
+
+    **Provider-Agnostic:** This configuration works with any LLM provider.
+    The provider field determines which backend is used, and each provider
+    handles its own API key lookup from environment variables.
+    """
 
     provider: str = Field(
         default="openrouter",
-        description="API provider to use (openrouter, anthropic, or custom plugin)",
+        description="API provider to use (any registered provider name)",
     )
     api_key: str | None = Field(
         default=None,
-        description="API key for the provider",
+        description="API key for the provider (optional, provider reads from env)",
     )
-    base_url: str = Field(
-        default="https://openrouter.ai/api/v1",
-        description="Base URL for the API",
+    base_url: str | None = Field(
+        default=None,
+        description="Base URL for the API (provider-specific)",
     )
     site_url: str | None = Field(
         default=None,
-        description="Site URL for OpenRouter rankings",
+        description="Site URL for provider analytics (optional)",
     )
     site_name: str | None = Field(
         default=None,
-        description="Site name for OpenRouter rankings",
+        description="Site name for provider analytics (optional)",
     )
 
 
@@ -194,6 +204,9 @@ class SystemConfig(BaseModel):
 class WarRigConfig(BaseSettings):
     """Main configuration for the War Rig system.
 
+    **Provider-Agnostic:** Configuration supports any LLM provider registered
+    in war_rig.providers. The provider is determined by LLM_PROVIDER env var.
+
     Configuration is loaded from environment variables (with .env support).
     See .env.example for all available options.
     """
@@ -206,15 +219,20 @@ class WarRigConfig(BaseSettings):
     # War Rig identification
     rig_id: str = Field(default="ALPHA")
 
-    # API configuration (REQUIRED - must be set in .env)
-    api_provider: str = Field(default="openrouter")
-    openrouter_api_key: str | None = Field(default=None, description="OpenRouter API key (required if using openrouter)")
+    # API configuration
+    # LLM_PROVIDER determines which provider to use (any registered name)
+    llm_provider: str = Field(default="openrouter", description="LLM provider name (any registered provider)")
+    api_provider: str = Field(default="openrouter", description="Deprecated: use llm_provider")
+
+    # Provider-specific configuration (for backward compatibility)
+    # New providers should read their own env vars directly
+    openrouter_api_key: str | None = Field(default=None, description="OpenRouter API key (if using openrouter)")
     openrouter_base_url: str = Field(default="https://openrouter.ai/api/v1")
     openrouter_site_url: str | None = Field(default=None)
     openrouter_site_name: str | None = Field(default=None)
 
-    # Legacy Anthropic support
-    anthropic_api_key: str | None = Field(default=None, description="Anthropic API key (required if using anthropic)")
+    # Anthropic configuration (if using anthropic provider directly)
+    anthropic_api_key: str | None = Field(default=None, description="Anthropic API key (if using anthropic)")
 
     # Agent model configurations (defaults provided, can override in .env)
     scribe_model: str = Field(
@@ -417,11 +435,27 @@ class WarRigConfig(BaseSettings):
 
     @property
     def api(self) -> APIConfig:
-        """Get API configuration."""
+        """Get API configuration.
+
+        Uses llm_provider (or api_provider for backward compatibility).
+        API keys are looked up based on the provider.
+        """
+        # Use llm_provider, fall back to api_provider for backward compat
+        provider = self.llm_provider or self.api_provider
+
+        # Look up API key based on provider
+        api_key = None
+        base_url = None
+        if provider == "openrouter":
+            api_key = self.openrouter_api_key
+            base_url = self.openrouter_base_url
+        elif provider == "anthropic":
+            api_key = self.anthropic_api_key
+
         return APIConfig(
-            provider=self.api_provider,
-            api_key=self.openrouter_api_key or self.anthropic_api_key,
-            base_url=self.openrouter_base_url,
+            provider=provider,
+            api_key=api_key,
+            base_url=base_url,
             site_url=self.openrouter_site_url,
             site_name=self.openrouter_site_name,
         )

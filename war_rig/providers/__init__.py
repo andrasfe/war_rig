@@ -1,20 +1,24 @@
 """LLM Provider abstractions for War Rig.
 
-This package provides a provider-agnostic interface for LLM providers,
+This package provides a **provider-agnostic** interface for LLM providers,
 allowing War Rig to work with any LLM backend (OpenRouter, Azure, local
 models, custom APIs) without coupling to specific SDKs.
+
+**Provider-Agnostic Design:**
+    War Rig does not assume any specific LLM provider. The provider is
+    determined by the LLM_PROVIDER environment variable, and each provider
+    handles its own configuration (API keys, base URLs, etc.).
 
 The core abstractions are:
 - Message: A single message in a conversation (system/user/assistant)
 - CompletionResponse: Response from an LLM completion request
 - LLMProvider: Protocol defining the interface all providers must implement
+- ProviderToolCall: Tool call from an LLM response (for tool-calling providers)
+- ToolCallFunction: Function details within a tool call
 
 Configuration:
 - ProviderConfig: Base configuration for any LLM provider
-- OpenRouterConfig: Configuration specific to OpenRouter
-
-Implementations:
-- OpenRouterProvider: OpenRouter implementation using the OpenAI SDK
+- OpenRouterConfig: Configuration specific to OpenRouter (built-in provider)
 
 Factory functions:
 - create_provider: Create a provider by name with explicit configuration
@@ -31,14 +35,15 @@ Plugin Discovery:
 
     The provider will be auto-discovered when war_rig loads.
 
-Example:
-    from war_rig.providers import OpenRouterProvider, OpenRouterConfig, Message
+Tool Calling:
+    Providers can optionally support tool calling. See TOOL_CALLING.md for
+    implementation details.
 
-    config = OpenRouterConfig(
-        api_key="sk-or-...",
-        default_model="anthropic/claude-sonnet-4-20250514",
-    )
-    provider = OpenRouterProvider(api_key=config.api_key)
+Example:
+    from war_rig.providers import get_provider_from_env, Message
+
+    # Create provider from LLM_PROVIDER environment variable
+    provider = get_provider_from_env()
 
     messages = [
         Message(role="system", content="You are a helpful assistant."),
@@ -47,9 +52,10 @@ Example:
     response = await provider.complete(messages)
     print(response.content)
 
-    # Or use the factory
-    from war_rig.providers import get_provider_from_env
-    provider = get_provider_from_env()
+    # Check for tool calls
+    if response.has_tool_calls:
+        for tc in response.tool_calls:
+            print(f"Tool: {tc.function.name}, Args: {tc.function.arguments}")
 """
 
 from war_rig.providers.config import (

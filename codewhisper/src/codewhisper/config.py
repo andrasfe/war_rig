@@ -4,16 +4,23 @@ This module defines Pydantic models for configuring the CodeWhisper agent,
 including paths to skills and code directories, model selection, and
 behavioral settings.
 
-Configuration is compatible with war_rig's .env file - it reads LLM_PROVIDER,
-IMPERATOR_MODEL, and OPENROUTER_API_KEY directly.
+**Provider-Agnostic Design:**
+    CodeWhisper does not assume any specific LLM provider. Configuration is
+    read from environment variables, delegating provider setup to war_rig.providers.
+    The LLM_PROVIDER env var determines which provider is used.
+
+Environment Variables:
+    - LLM_PROVIDER: Provider name (e.g., "openrouter", "anthropic", or any plugin)
+    - LLM_DEFAULT_MODEL or IMPERATOR_MODEL: Default model for completions
+    - Provider-specific keys are handled by the provider itself
 
 Example:
     from codewhisper.config import AgentConfig
 
+    # Uses LLM_PROVIDER from environment
     config = AgentConfig(
         skills_dir="./example_output/skills",
         code_dir="./src",
-        model="anthropic/claude-sonnet-4-20250514",
     )
 """
 
@@ -27,15 +34,17 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 # Load .env file from current directory or parent directories
 load_dotenv()
 
-ProviderType = str  # Any provider supported by the system
+ProviderType = str  # Any provider supported by war_rig.providers
 
 
 def _get_default_provider() -> str:
-    """Get default provider from war_rig's LLM_PROVIDER or API_PROVIDER env var."""
-    return os.environ.get(
-        "LLM_PROVIDER",
-        os.environ.get("API_PROVIDER", "openrouter"),
-    )
+    """Get provider from LLM_PROVIDER environment variable.
+
+    The provider determines how LLM calls are made. War Rig supports any
+    provider registered via its plugin system. If LLM_PROVIDER is not set,
+    falls back to "openrouter" for backward compatibility.
+    """
+    return os.environ.get("LLM_PROVIDER", "openrouter")
 
 
 def _get_default_model() -> str:
@@ -58,10 +67,14 @@ def _get_use_minions_default() -> bool:
 class AgentConfig(BaseSettings):
     """Configuration for the CodeWhisper agent.
 
-    This configuration is compatible with war_rig's .env file:
-    - Reads LLM_PROVIDER for the provider setting
-    - Reads IMPERATOR_MODEL for the default model (judgment/decision model)
-    - Reads OPENROUTER_API_KEY, ANTHROPIC_API_KEY, OPENAI_API_KEY
+    **Provider-Agnostic:** This configuration works with any LLM provider
+    registered in war_rig.providers. The provider is determined by LLM_PROVIDER
+    and handles its own API key configuration.
+
+    Environment Variables:
+        - LLM_PROVIDER: Provider name (any registered provider)
+        - LLM_DEFAULT_MODEL or IMPERATOR_MODEL: Default model
+        - Provider-specific vars handled by the provider itself
 
     Can also be configured with CODEWHISPER_ prefixed env vars which
     take precedence.
@@ -70,21 +83,21 @@ class AgentConfig(BaseSettings):
         skills_dir: Path to the directory containing skill files.
         code_dir: Path to the source code directory to explore.
         model: LLM model identifier to use for the agent.
-        provider: LLM provider name (openrouter, anthropic, openai).
+        provider: LLM provider name (from LLM_PROVIDER env var).
         temperature: Sampling temperature for the LLM.
         max_history: Maximum number of conversation turns to keep in context.
         max_tokens: Maximum tokens in LLM response.
         verbose: Enable verbose logging.
 
     Example:
-        # Works with war_rig's .env (LLM_PROVIDER, SCRIBE_MODEL, etc.)
+        # Uses LLM_PROVIDER from environment
         config = AgentConfig(
             skills_dir="./skills",
             code_dir="./src",
         )
 
         # Or with CODEWHISPER_ prefix
-        export CODEWHISPER_MODEL=openai/gpt-4o
+        export CODEWHISPER_MODEL=my-model
         config = AgentConfig()
     """
 

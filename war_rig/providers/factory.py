@@ -4,6 +4,12 @@ This module provides a factory pattern for creating LLM providers by name,
 along with a registry for custom provider implementations. It also supports
 environment-based configuration for easy deployment.
 
+**Provider-Agnostic Design:**
+    War Rig does not assume any specific LLM provider. The provider is
+    determined entirely by the LLM_PROVIDER environment variable. If not
+    set, it defaults to "openrouter" for backward compatibility, but this
+    can be any registered provider (built-in or plugin).
+
 Plugin Discovery:
     External packages can register providers without modifying war_rig by
     using Python entry points. Add to your pyproject.toml:
@@ -11,19 +17,27 @@ Plugin Discovery:
         [project.entry-points."war_rig.providers"]
         myprovider = "mypackage.provider:MyProviderClass"
 
-    The provider will be auto-discovered when war_rig loads.
+    The provider will be auto-discovered when war_rig loads. Plugin providers
+    must handle their own environment variable configuration.
+
+Environment Variables:
+    - LLM_PROVIDER: Provider name (default: "openrouter")
+    - LLM_DEFAULT_MODEL: Default model for completions
+    - LLM_REQUEST_TIMEOUT: Request timeout in seconds
+    - Provider-specific keys (e.g., OPENROUTER_API_KEY for openrouter)
 
 Example:
     from war_rig.providers.factory import create_provider, get_provider_from_env
 
     # Create a provider explicitly
     provider = create_provider(
-        "openrouter",
-        api_key="sk-or-...",
-        default_model="anthropic/claude-sonnet-4-20250514",
+        "myprovider",
+        api_key="...",
+        default_model="my-model",
     )
 
     # Or create from environment variables
+    # Uses LLM_PROVIDER to determine which provider to instantiate
     provider = get_provider_from_env()
 """
 
@@ -143,14 +157,24 @@ def create_provider(
     return provider_class(**kwargs)
 
 
-def get_provider_from_env() -> LLMProvider:
+def get_provider_from_env(provider_name: str | None = None) -> LLMProvider:
     """Create a provider based on environment variables.
 
     Automatically discovers provider plugins on first call.
 
-    Reads:
-        - LLM_PROVIDER: Provider name (default: "openrouter")
-        - Provider-specific vars like OPENROUTER_API_KEY, etc.
+    This function is **provider-agnostic**. The provider is determined by:
+    1. The provider_name argument (if provided)
+    2. The LLM_PROVIDER environment variable
+    3. Default: "openrouter" (for backward compatibility only)
+
+    Each provider handles its own environment configuration. For example:
+    - openrouter: reads OPENROUTER_API_KEY, OPENROUTER_BASE_URL
+    - anthropic: reads ANTHROPIC_API_KEY
+    - custom plugins: read their own env vars
+
+    Args:
+        provider_name: Optional provider name override. If None, reads from
+            LLM_PROVIDER environment variable.
 
     Returns:
         An instance implementing LLMProvider protocol configured from
@@ -164,10 +188,13 @@ def get_provider_from_env() -> LLMProvider:
 
     _discover_plugins()
 
-    provider_name = os.getenv("LLM_PROVIDER", "openrouter").lower()
+    # Determine provider: argument > env var > default
+    resolved_provider = provider_name or os.getenv("LLM_PROVIDER", "openrouter").lower()
+
+    logger.debug(f"Creating provider: {resolved_provider}")
 
     # Built-in openrouter provider with env configuration
-    if provider_name == "openrouter":
+    if resolved_provider == "openrouter":
         # Build timeout from env if specified (in seconds)
         # LLM_REQUEST_TIMEOUT sets the read timeout for LLM responses
         # Default is 600s (10 min) to accommodate slow models
@@ -182,13 +209,21 @@ def get_provider_from_env() -> LLMProvider:
             except ValueError:
                 logger.warning(f"Invalid LLM_REQUEST_TIMEOUT value: {timeout_env}, using default")
 
+        # Get API key - required for openrouter
+        api_key = os.environ.get("OPENROUTER_API_KEY")
+        if not api_key:
+            raise KeyError(
+                "OPENROUTER_API_KEY environment variable is required for openrouter provider. "
+                "Set LLM_PROVIDER to use a different provider."
+            )
+
         return OpenRouterProvider(
-            api_key=os.environ["OPENROUTER_API_KEY"],
+            api_key=api_key,
             base_url=os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"),
-            default_model=os.getenv("SCRIBE_MODEL", "anthropic/claude-sonnet-4-20250514"),
+            default_model=os.getenv("LLM_DEFAULT_MODEL", os.getenv("SCRIBE_MODEL", "anthropic/claude-sonnet-4-20250514")),
             timeout=timeout,
         )
 
-    # For plugins, they must handle their own env configuration
+    # For all other providers (plugins), they must handle their own env configuration
     # Pass no kwargs - plugin is responsible for reading env vars
-    return create_provider(provider_name)
+    return create_provider(resolved_provider)

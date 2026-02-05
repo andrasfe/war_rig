@@ -8,6 +8,11 @@ inheriting from a base class.
 The protocol is intentionally minimal and dependency-free - it does NOT
 depend on LangChain, OpenAI SDK, or any specific LLM library.
 
+**Tool Calling Support:**
+    Providers can optionally support tool calling by accepting `tools` via
+    kwargs and returning `ProviderToolCall` objects in the response.
+    See TOOL_CALLING.md for implementation details.
+
 Example:
     class MyProvider:
         @property
@@ -19,7 +24,7 @@ Example:
             messages: list[Message],
             model: str | None = None,
             temperature: float = 0.7,
-            **kwargs,
+            **kwargs,  # tools passed here for tool-calling providers
         ) -> CompletionResponse:
             # Implementation here
             ...

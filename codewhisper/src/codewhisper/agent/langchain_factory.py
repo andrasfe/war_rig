@@ -1,19 +1,21 @@
 """LangChain model factory for CodeWhisper.
 
 This module provides factory functions for creating LangChain chat models
-using the llm_providers package for environment-based configuration.
+using war_rig.providers for environment-based configuration.
 
-It delegates ALL provider and API key resolution to llm_providers, avoiding
-duplication of configuration logic. The llm_providers package handles:
-- Reading LLM_PROVIDER from environment
-- Looking up the correct API key for that provider
-- Creating properly configured providers
+**Provider-Agnostic Design:**
+    This module delegates ALL provider and API key resolution to
+    war_rig.providers, avoiding duplication of configuration logic.
+    The provider package handles:
+    - Reading LLM_PROVIDER from environment
+    - Looking up the correct API key for that provider
+    - Creating properly configured providers
 
-This module extracts the configuration from llm_providers and creates
-corresponding LangChain models.
+    This module extracts configuration from the provider and creates
+    corresponding LangChain models.
 
 IMPORTANT: This module NEVER checks environment variables for API keys
-directly. It always goes through llm_providers.get_provider_from_env(),
+directly. It always goes through war_rig.providers.get_provider_from_env(),
 which handles all provider configuration including API key lookup.
 
 Example:
@@ -22,8 +24,8 @@ Example:
     # Create model from environment (uses LLM_PROVIDER)
     llm = get_langchain_model()
 
-    # Create with specific provider
-    llm = get_langchain_model(provider="anthropic", model="claude-3-opus-20240229")
+    # Create with specific provider override
+    llm = get_langchain_model(provider="myprovider", model="my-model")
 """
 
 from __future__ import annotations
@@ -46,32 +48,36 @@ logger = logging.getLogger(__name__)
 def _get_provider_info_from_llm_providers(
     provider_name: str | None = None,
 ) -> tuple[str, str, str | None, dict[str, Any]]:
-    """Get provider info by delegating entirely to llm_providers.
+    """Get provider info by delegating entirely to war_rig.providers.
 
-    This function uses llm_providers.get_provider_from_env() to handle all
+    This function uses war_rig.providers.get_provider_from_env() to handle all
     provider/API key resolution, then extracts the configuration needed
     to create a corresponding LangChain model.
 
+    **Provider-Agnostic:** This function works with ANY registered provider.
+    It inspects the provider instance to determine how to create a LangChain
+    model, without hardcoding provider-specific logic.
+
     CRITICAL: We NEVER check environment variables for API keys directly.
-    llm_providers handles everything - LLM_PROVIDER, API keys, base URLs, etc.
+    war_rig.providers handles everything - LLM_PROVIDER, API keys, base URLs, etc.
 
     Args:
         provider_name: Optional provider name override. If None, reads from
-            LLM_PROVIDER environment variable (via llm_providers).
+            LLM_PROVIDER environment variable (via war_rig.providers).
 
     Returns:
         Tuple of (provider_type, api_key, base_url, extra_config).
-        - provider_type: "anthropic", "openai", or "openai_compatible"
-        - api_key: The API key from the provider
-        - base_url: Base URL if set (for OpenRouter or custom endpoints)
+        - provider_type: "langchain_native", "anthropic", "openai", or "openai_compatible"
+        - api_key: The API key from the provider (empty for langchain_native)
+        - base_url: Base URL if set (for custom endpoints)
         - extra_config: Additional provider-specific config
 
     Raises:
         KeyError: If required API key environment variable is not set
-            (raised by llm_providers, not us).
-        ValueError: If provider is not supported by llm_providers.
+            (raised by war_rig.providers, not us).
+        ValueError: If provider is not supported.
     """
-    from llm_providers import get_provider_from_env
+    from war_rig.providers import get_provider_from_env
 
     # Get provider from llm_providers - it handles all env resolution
     # This is the ONLY place we interact with llm_providers for config
@@ -119,7 +125,8 @@ def _get_provider_info_from_llm_providers(
     elif "openrouter" in provider_class_name:
         # OpenRouter uses OpenAI-compatible API
         provider_type = "openai_compatible"
-        extra_config["base_url"] = base_url or "https://openrouter.ai/api/v1"
+        if base_url:
+            extra_config["base_url"] = base_url
     elif "openai" in provider_class_name:
         # Direct OpenAI API or OpenAI-compatible
         if base_url and "api.openai.com" not in base_url:
@@ -152,7 +159,7 @@ def _create_anthropic_model(
         model: Model identifier (e.g., "claude-3-opus-20240229")
         temperature: Sampling temperature
         max_tokens: Maximum tokens in response
-        default_model: Default model from llm_providers config
+        default_model: Default model from provider config
         **kwargs: Additional arguments passed to ChatAnthropic
 
     Returns:
@@ -163,10 +170,13 @@ def _create_anthropic_model(
     # Model precedence: explicit param > IMPERATOR_MODEL > LLM_DEFAULT_MODEL > default
     resolved_model = model or os.environ.get(
         "IMPERATOR_MODEL",
-        os.environ.get(
-            "LLM_DEFAULT_MODEL", default_model or "claude-sonnet-4-20250514"
-        ),
+        os.environ.get("LLM_DEFAULT_MODEL", default_model),
     )
+    if not resolved_model:
+        raise ValueError(
+            "No model specified. Set LLM_DEFAULT_MODEL or IMPERATOR_MODEL environment variable, "
+            "or pass model parameter explicitly."
+        )
 
     return ChatAnthropic(  # type: ignore[call-arg, arg-type]
         model=resolved_model,
@@ -192,7 +202,7 @@ def _create_openai_model(
         model: Model identifier (e.g., "gpt-4o")
         temperature: Sampling temperature
         max_tokens: Maximum tokens in response
-        default_model: Default model from llm_providers config
+        default_model: Default model from provider config
         **kwargs: Additional arguments passed to ChatOpenAI
 
     Returns:
@@ -203,8 +213,13 @@ def _create_openai_model(
     # Model precedence: explicit param > IMPERATOR_MODEL > LLM_DEFAULT_MODEL > default
     resolved_model = model or os.environ.get(
         "IMPERATOR_MODEL",
-        os.environ.get("LLM_DEFAULT_MODEL", default_model or "gpt-4o"),
+        os.environ.get("LLM_DEFAULT_MODEL", default_model),
     )
+    if not resolved_model:
+        raise ValueError(
+            "No model specified. Set LLM_DEFAULT_MODEL or IMPERATOR_MODEL environment variable, "
+            "or pass model parameter explicitly."
+        )
 
     return ChatOpenAI(  # type: ignore[call-arg, arg-type]
         model=resolved_model,
@@ -226,7 +241,7 @@ def _create_openai_compatible_model(
 ) -> "BaseChatModel":
     """Create an OpenAI-compatible LangChain model.
 
-    This is used for OpenRouter, and any other OpenAI-compatible API.
+    This is used for any provider with an OpenAI-compatible API.
 
     Args:
         api_key: API key for the service.
@@ -234,7 +249,7 @@ def _create_openai_compatible_model(
         model: Model identifier
         temperature: Sampling temperature
         max_tokens: Maximum tokens in response
-        default_model: Default model from llm_providers config
+        default_model: Default model from provider config
         **kwargs: Additional arguments passed to ChatOpenAI
 
     Returns:
@@ -245,10 +260,13 @@ def _create_openai_compatible_model(
     # Model precedence: explicit param > IMPERATOR_MODEL > LLM_DEFAULT_MODEL > default
     resolved_model = model or os.environ.get(
         "IMPERATOR_MODEL",
-        os.environ.get(
-            "LLM_DEFAULT_MODEL", default_model or "anthropic/claude-sonnet-4-20250514"
-        ),
+        os.environ.get("LLM_DEFAULT_MODEL", default_model),
     )
+    if not resolved_model:
+        raise ValueError(
+            "No model specified. Set LLM_DEFAULT_MODEL or IMPERATOR_MODEL environment variable, "
+            "or pass model parameter explicitly."
+        )
 
     return ChatOpenAI(  # type: ignore[call-arg, arg-type]
         model=resolved_model,
@@ -294,14 +312,15 @@ def _create_langchain_native_model(
 def get_available_providers() -> list[str]:
     """Get list of all available provider names.
 
-    Delegates to llm_providers for the authoritative list.
+    Delegates to war_rig.providers for the authoritative list.
+    Includes both built-in providers and discovered plugins.
 
     Returns:
         List of provider names.
     """
-    from llm_providers import get_available_providers as llm_get_providers
+    from war_rig.providers import get_available_providers as wr_get_providers
 
-    return list(llm_get_providers())
+    return list(wr_get_providers())
 
 
 def get_langchain_model(
@@ -313,22 +332,22 @@ def get_langchain_model(
 ) -> "BaseChatModel":
     """Create a LangChain model based on provider configuration.
 
-    Delegates ALL provider and API key resolution to llm_providers package.
-    This ensures consistent behavior with other war_rig components.
+    **Provider-Agnostic:** Delegates ALL provider and API key resolution to
+    war_rig.providers package. This ensures consistent behavior with other
+    war_rig components and works with ANY registered provider.
 
     IMPORTANT: This function NEVER checks environment variables for API keys
-    directly. If LLM_PROVIDER is set, llm_providers handles everything.
-    You will NEVER see "OPENROUTER_API_KEY not found" errors when using
-    a different provider via LLM_PROVIDER.
+    directly. The provider (determined by LLM_PROVIDER) handles its own
+    API key lookup.
 
-    The llm_providers package handles:
+    The war_rig.providers package handles:
     - Reading LLM_PROVIDER to determine which provider to use
     - Using the appropriate API key for that provider
     - Applying provider-specific defaults and configuration
 
     Args:
         provider: Provider name override. If None, reads from LLM_PROVIDER env var.
-        model: Model identifier override. If None, uses provider-specific default.
+        model: Model identifier override. If None, uses LLM_DEFAULT_MODEL env var.
         temperature: Sampling temperature.
         max_tokens: Maximum tokens in response.
         **kwargs: Additional provider-specific arguments.
@@ -338,7 +357,7 @@ def get_langchain_model(
 
     Raises:
         KeyError: If required API key environment variable is not set.
-        ValueError: If provider is not supported.
+        ValueError: If provider is not supported or model is not specified.
     """
     # Delegate to llm_providers for provider resolution and API key lookup
     # This is the ONLY place we get API keys from - never directly from env
@@ -375,10 +394,16 @@ def get_langchain_model(
             default_model=extra_config.get("default_model"),
             **kwargs,
         )
-    else:  # openai_compatible (OpenRouter, plugins, custom endpoints)
+    else:  # openai_compatible (plugins, custom endpoints)
+        resolved_base_url = extra_config.get("base_url") or base_url
+        if not resolved_base_url:
+            raise ValueError(
+                f"Provider type '{provider_type}' requires a base_url. "
+                "Ensure your provider sets _base_url or _client.base_url."
+            )
         return _create_openai_compatible_model(
             api_key=api_key,
-            base_url=extra_config.get("base_url", base_url or "https://openrouter.ai/api/v1"),
+            base_url=resolved_base_url,
             model=model,
             temperature=temperature,
             max_tokens=max_tokens,
