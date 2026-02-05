@@ -431,7 +431,34 @@ class ReActLoop:
 
         # Extract message from response
         # Handle different response formats
-        if hasattr(response, "choices") and response.choices:
+
+        # Check for war_rig.providers.CompletionResponse (has content and tool_calls directly)
+        if hasattr(response, "has_tool_calls") and hasattr(response, "content"):
+            # war_rig.providers.CompletionResponse
+            content = response.content or ""
+
+            if response.has_tool_calls and response.tool_calls:
+                for tc in response.tool_calls:
+                    # ProviderToolCall has id, type, function (ToolCallFunction)
+                    args_str = tc.function.arguments
+                    try:
+                        args = json.loads(args_str) if args_str else {}
+                    except json.JSONDecodeError:
+                        logger.warning(
+                            "Failed to parse tool arguments as JSON: %s",
+                            args_str[:100] if args_str else "",
+                        )
+                        args = {}
+
+                    tool_calls.append(
+                        ToolCall(
+                            id=tc.id,
+                            name=tc.function.name,
+                            arguments=args,
+                        )
+                    )
+
+        elif hasattr(response, "choices") and response.choices:
             # OpenAI-style response
             message = response.choices[0].message
             content = message.content or ""

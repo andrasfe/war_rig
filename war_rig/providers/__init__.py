@@ -70,12 +70,16 @@ from war_rig.providers.protocol import (
     CompletionResponse,
     LLMProvider,
     Message,
+    ProviderToolCall,
+    ToolCallFunction,
 )
 
 __all__ = [
     "CompletionResponse",
     "LLMProvider",
     "Message",
+    "ProviderToolCall",
+    "ToolCallFunction",
     "OpenRouterConfig",
     "OpenRouterProvider",
     "OpenRouterProviderError",

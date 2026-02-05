@@ -277,8 +277,7 @@ class TestEndToEnd:
         """Test SDK complete method returns proper result."""
         from codewhisper.sdk import CodeWhisper, CodeWhisperConfig, CompletionResult
 
-        # Create mock provider that returns OpenAI-style response
-        # The ReActLoop._parse_response expects choices[0].message format
+        # Create mock provider that returns war_rig.providers.CompletionResponse format
         mock_provider = MagicMock()
 
         async def mock_complete(
@@ -286,16 +285,13 @@ class TestEndToEnd:
             tools: list[dict[str, Any]] | None = None,
             **kwargs: Any,
         ) -> Any:
-            # Create OpenAI-style response structure
-            mock_message = MagicMock()
-            mock_message.content = "The authorization system manages card transactions."
-            mock_message.tool_calls = None
-
-            mock_choice = MagicMock()
-            mock_choice.message = mock_message
-
+            # Return CompletionResponse-like mock with has_tool_calls property
             response = MagicMock()
-            response.choices = [mock_choice]
+            response.content = "The authorization system manages card transactions."
+            response.tool_calls = None
+            response.has_tool_calls = False
+            response.model = "test-model"
+            response.tokens_used = 100
             return response
 
         mock_provider.complete = mock_complete

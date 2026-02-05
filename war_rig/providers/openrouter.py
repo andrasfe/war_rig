@@ -29,7 +29,12 @@ from typing import Any
 from httpx import Timeout
 from openai import APIConnectionError, APIError, AsyncOpenAI, RateLimitError
 
-from war_rig.providers.protocol import CompletionResponse, Message
+from war_rig.providers.protocol import (
+    CompletionResponse,
+    Message,
+    ProviderToolCall,
+    ToolCallFunction,
+)
 from war_rig.utils.error_logging import log_error
 
 logger = logging.getLogger(__name__)
@@ -221,17 +226,29 @@ class OpenRouterProvider:
                     f"Large prompt detected: ~{estimated_input_tokens:,} tokens for {resolved_model}"
                 )
 
+            # Extract tools from kwargs if provided
+            tools = kwargs.pop("tools", None)
+            use_streaming = tools is None  # Disable streaming when tools are used
+
             # Build the API call parameters
             api_params: dict[str, Any] = {
                 "model": resolved_model,
                 "messages": openai_messages,
                 "temperature": temperature,
-                "stream": True,  # Enable streaming for progress visibility
+                "stream": use_streaming,
             }
+
+            # Add tools if provided
+            if tools:
+                api_params["tools"] = tools
 
             # Add any additional kwargs (top_p, stop, max_tokens, etc.)
             # Note: We do NOT set a default max_tokens - documentation should be verbose
             api_params.update(kwargs)
+
+            # If tools are provided, use non-streaming mode for simpler tool call parsing
+            if tools:
+                return await self._complete_with_tools(api_params, resolved_model, start_time)
 
             # Content timeout: fail if no CONTENT received within this time (seconds)
             # This detects stalls where the model sends keepalive chunks but no actual content.
@@ -431,6 +448,103 @@ class OpenRouterProvider:
                 context={"provider": "openrouter", "model": resolved_model, "error_type": "unexpected"},
                 request={"model": resolved_model, "message_count": len(messages)},
             )
+            raise OpenRouterProviderError(
+                message=f"Unexpected error: {e!s}",
+                original_error=e,
+            ) from e
+
+    async def _complete_with_tools(
+        self,
+        api_params: dict[str, Any],
+        resolved_model: str,
+        start_time: float,
+    ) -> CompletionResponse:
+        """Complete request with tool support (non-streaming).
+
+        When tools are provided, we use non-streaming mode to simplify
+        parsing of tool calls from the response.
+
+        Args:
+            api_params: The API call parameters (including tools).
+            resolved_model: The model being used.
+            start_time: When the request started (for timing).
+
+        Returns:
+            CompletionResponse with content and optional tool_calls.
+        """
+        import time
+
+        try:
+            response = await self._client.chat.completions.create(
+                **api_params,
+                timeout=self._timeout,
+            )
+
+            elapsed = time.time() - start_time
+
+            # Extract content and tool_calls from response
+            message = response.choices[0].message
+            content = message.content or ""
+            tool_calls: list[ProviderToolCall] | None = None
+
+            if message.tool_calls:
+                tool_calls = [
+                    ProviderToolCall(
+                        id=tc.id,
+                        type=tc.type,
+                        function=ToolCallFunction(
+                            name=tc.function.name,
+                            arguments=tc.function.arguments,
+                        ),
+                    )
+                    for tc in message.tool_calls
+                ]
+
+            # Get usage stats if available
+            tokens_used = 0
+            if response.usage:
+                tokens_used = response.usage.total_tokens
+
+            logger.info(
+                f"OpenRouter API call completed (with tools): model={resolved_model}, "
+                f"elapsed={elapsed:.1f}s, response_chars={len(content)}, "
+                f"tool_calls={len(tool_calls) if tool_calls else 0}"
+            )
+
+            return CompletionResponse(
+                content=content,
+                model=resolved_model,
+                tokens_used=tokens_used,
+                raw_response={"response": response.model_dump()},
+                tool_calls=tool_calls,
+            )
+
+        except RateLimitError as e:
+            logger.error(f"OpenRouter rate limit exceeded: {e}")
+            raise OpenRouterProviderError(
+                message="Rate limit exceeded. Please retry after a delay.",
+                status_code=429,
+                original_error=e,
+            ) from e
+
+        except APIConnectionError as e:
+            logger.error(f"OpenRouter connection error: {e}")
+            raise OpenRouterProviderError(
+                message="Failed to connect to OpenRouter API.",
+                original_error=e,
+            ) from e
+
+        except APIError as e:
+            status_code = getattr(e, "status_code", None)
+            logger.error(f"OpenRouter API error: {e}")
+            raise OpenRouterProviderError(
+                message=f"OpenRouter API error: {e.message}",
+                status_code=status_code,
+                original_error=e,
+            ) from e
+
+        except Exception as e:
+            logger.error(f"Unexpected error calling OpenRouter with tools: {e}")
             raise OpenRouterProviderError(
                 message=f"Unexpected error: {e!s}",
                 original_error=e,

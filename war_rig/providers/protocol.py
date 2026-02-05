@@ -56,6 +56,34 @@ class Message:
             )
 
 
+@dataclass(frozen=True)
+class ToolCallFunction:
+    """Function call details within a tool call.
+
+    Attributes:
+        name: The name of the function to call.
+        arguments: JSON string of the function arguments.
+    """
+
+    name: str
+    arguments: str
+
+
+@dataclass(frozen=True)
+class ProviderToolCall:
+    """A tool call from the LLM response.
+
+    Attributes:
+        id: Unique identifier for this tool call.
+        type: The type of tool call (always "function" for now).
+        function: The function call details.
+    """
+
+    id: str
+    type: str
+    function: ToolCallFunction
+
+
 @dataclass
 class CompletionResponse:
     """Response from an LLM completion request.
@@ -66,12 +94,14 @@ class CompletionResponse:
         tokens_used: Total tokens consumed (prompt + completion).
         raw_response: Optional raw response from the provider for debugging
             or accessing provider-specific fields.
+        tool_calls: Optional list of tool calls requested by the LLM.
     """
 
     content: str
     model: str
     tokens_used: int
     raw_response: dict[str, Any] | None = field(default=None)
+    tool_calls: list[ProviderToolCall] | None = field(default=None)
 
     @property
     def has_content(self) -> bool:
@@ -81,6 +111,15 @@ class CompletionResponse:
             True if content is non-empty after stripping whitespace.
         """
         return bool(self.content and self.content.strip())
+
+    @property
+    def has_tool_calls(self) -> bool:
+        """Check if the response contains tool calls.
+
+        Returns:
+            True if tool_calls is non-empty.
+        """
+        return bool(self.tool_calls)
 
 
 @runtime_checkable
