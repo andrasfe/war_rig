@@ -273,8 +273,15 @@ class SkillsLoader:
                 if root_file.exists():
                     skill_files.append(root_file)
 
-        # Deduplicate and sort
-        unique_files = sorted(set(skill_files))
+        # Deduplicate and sort - use samefile() to handle case-insensitive filesystems
+        # where SKILL.md and skill.md may refer to the same file
+        unique_files: list[Path] = []
+        for f in skill_files:
+            # Check if this file is the same as any already added (handles case-insensitive FS)
+            is_duplicate = any(f.samefile(existing) for existing in unique_files)
+            if not is_duplicate:
+                unique_files.append(f)
+        unique_files.sort()
         logger.debug(f"Found {len(unique_files)} skill files (recursive={recursive})")
 
         return unique_files

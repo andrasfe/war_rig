@@ -32,7 +32,8 @@ from rich.table import Table
 # Load .env file from current directory or parent directories
 load_dotenv()
 
-from codewhisper.config import AgentConfig
+from codewhisper.config import AgentConfig  # noqa: E402
+from codewhisper.sdk import CodeWhisper, CodeWhisperConfig  # noqa: E402
 
 if TYPE_CHECKING:
     from codewhisper.skills.index import SkillsIndex
@@ -574,14 +575,40 @@ async def _handle_citadel_command(
     return None
 
 
+def _create_sdk(config: AgentConfig) -> CodeWhisper:
+    """Create a CodeWhisper SDK instance from CLI configuration.
+
+    Args:
+        config: Agent configuration from CLI.
+
+    Returns:
+        Configured CodeWhisper SDK instance.
+    """
+    from war_rig.providers import (  # type: ignore[import-not-found]
+        get_provider_from_env,
+    )
+
+    sdk_config = CodeWhisperConfig(
+        max_history=config.max_history,
+        temperature=config.temperature,
+        max_tokens=config.max_tokens,
+        use_minion=config.use_minions,
+    )
+
+    return CodeWhisper(
+        llm_provider=get_provider_from_env(),
+        code_dir=config.code_dir,
+        documents_dir=config.skills_dir,
+        config=sdk_config,
+    )
+
+
 async def run_interactive(config: AgentConfig) -> None:
     """Run the interactive REPL loop.
 
     Args:
         config: Agent configuration.
     """
-    from codewhisper.agent.graph import create_agent
-
     console.print(
         Panel.fit(
             "[bold blue]CodeWhisper[/bold blue]\n"
@@ -594,13 +621,15 @@ async def run_interactive(config: AgentConfig) -> None:
         )
     )
 
-    # Initialize the agent
+    # Initialize the SDK
     try:
-        with console.status("[bold]Loading skills and initializing agent...[/bold]"):
-            agent = create_agent(config)
-        console.print(f"[dim]Loaded {len(agent.skills_index)} skills[/dim]")
+        with console.status("[bold]Loading skills and initializing SDK...[/bold]"):
+            sdk = _create_sdk(config)
+            skills_index = sdk._get_skills_index()
+        skill_count = len(skills_index) if skills_index else 0
+        console.print(f"[dim]Loaded {skill_count} skills[/dim]")
     except Exception as e:
-        console.print(f"[red]Failed to initialize agent:[/red] {e}")
+        console.print(f"[red]Failed to initialize SDK:[/red] {e}")
         return
 
     # Initialize conversation tracker
@@ -634,13 +663,17 @@ async def run_interactive(config: AgentConfig) -> None:
                 continue
 
             if cmd == "/reset":
-                await agent.reset()
+                sdk.reset()
                 tracker.reset()
                 console.print("[dim]Conversation reset[/dim]")
                 continue
 
             if cmd == "/skills":
-                _list_skills(agent.skills_index)
+                skills_index = sdk._get_skills_index()
+                if skills_index:
+                    _list_skills(skills_index)
+                else:
+                    console.print("[dim]No skills loaded[/dim]")
                 continue
 
             if cmd == "/status":
@@ -653,12 +686,20 @@ async def run_interactive(config: AgentConfig) -> None:
 
             if cmd.startswith("/load "):
                 skill_name = user_input.strip()[6:].strip()
-                _load_skill_interactive(agent.skills_index, skill_name)
+                skills_index = sdk._get_skills_index()
+                if skills_index:
+                    _load_skill_interactive(skills_index, skill_name)
+                else:
+                    console.print("[dim]No skills loaded[/dim]")
                 continue
 
             if cmd.startswith("/search "):
                 query = user_input.strip()[8:].strip()
-                _search_skills_interactive(agent.skills_index, query)
+                skills_index = sdk._get_skills_index()
+                if skills_index:
+                    _search_skills_interactive(skills_index, query)
+                else:
+                    console.print("[dim]No skills loaded[/dim]")
                 continue
 
             # Handle citadel quick commands
@@ -687,18 +728,21 @@ async def run_interactive(config: AgentConfig) -> None:
             tracker.increment()
             tracker.add_summary(user_input)
 
-            # Send to agent and get response with elapsed time display
+            # Send to SDK and get response with elapsed time display
             start_time = time.time()
             current_input = user_input  # Capture for closure
 
             try:
                 with console.status("[bold]Thinking...[/bold]") as status:
-                    # Create a task for the chat
-                    async def chat_with_progress(msg: str = current_input) -> str:
-                        return await agent.chat(msg)
+                    # Create a task for the completion
+                    async def complete_with_progress(
+                        msg: str = current_input,
+                    ) -> str:
+                        result = await sdk.complete(msg)
+                        return result.content
 
                     # Run the task while updating status
-                    task = asyncio.create_task(chat_with_progress())
+                    task = asyncio.create_task(complete_with_progress())
 
                     while not task.done():
                         elapsed = time.time() - start_time
@@ -709,7 +753,7 @@ async def run_interactive(config: AgentConfig) -> None:
 
             except Exception as e:
                 elapsed = time.time() - start_time
-                logger.exception("Error during chat")
+                logger.exception("Error during completion")
                 console.print(
                     f"[red]Error after {elapsed:.1f}s:[/red] {e}\n"
                     "[dim]Try rephrasing your question or use /reset to start fresh.[/dim]"
@@ -880,14 +924,12 @@ async def run_single_query(config: AgentConfig, query: str) -> None:
         config: Agent configuration.
         query: The query to process.
     """
-    from codewhisper.agent.graph import create_agent
-
-    # Initialize the agent
+    # Initialize the SDK
     try:
-        with console.status("[bold]Loading skills and initializing agent...[/bold]"):
-            agent = create_agent(config)
+        with console.status("[bold]Loading skills and initializing SDK...[/bold]"):
+            sdk = _create_sdk(config)
     except Exception as e:
-        console.print(f"[red]Failed to initialize agent:[/red] {e}")
+        console.print(f"[red]Failed to initialize SDK:[/red] {e}")
         return
 
     console.print(f"[bold]Query:[/bold] {query}\n")
@@ -897,11 +939,12 @@ async def run_single_query(config: AgentConfig, query: str) -> None:
     current_query = query  # Capture for closure
     try:
         with console.status("[bold]Thinking...[/bold]") as status:
-            # Create a task for the chat
-            async def chat_with_progress(msg: str = current_query) -> str:
-                return await agent.chat(msg)
+            # Create a task for the completion
+            async def complete_with_progress(msg: str = current_query) -> str:
+                result = await sdk.complete(msg)
+                return result.content
 
-            task = asyncio.create_task(chat_with_progress())
+            task = asyncio.create_task(complete_with_progress())
 
             while not task.done():
                 elapsed = time.time() - start_time
@@ -912,7 +955,7 @@ async def run_single_query(config: AgentConfig, query: str) -> None:
 
     except Exception as e:
         elapsed = time.time() - start_time
-        logger.exception("Error during chat")
+        logger.exception("Error during completion")
         console.print(f"[red]Error after {elapsed:.1f}s:[/red] {e}")
         return
 

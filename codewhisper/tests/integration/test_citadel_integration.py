@@ -17,10 +17,17 @@ from typing import Any
 
 import pytest
 
-# Paths to test data
-CARDDEMO_DIR = Path(
+# Paths to test data - support both Linux and macOS environments
+_LINUX_CARDDEMO_DIR = Path(
     "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq"
 )
+_MACOS_CARDDEMO_DIR = Path(
+    "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/"
+    "app/app-authorization-ims-db2-mq"
+)
+
+# Use whichever path exists
+CARDDEMO_DIR = _MACOS_CARDDEMO_DIR if _MACOS_CARDDEMO_DIR.exists() else _LINUX_CARDDEMO_DIR
 COBOL_DIR = CARDDEMO_DIR / "cbl"
 CPY_DIR = CARDDEMO_DIR / "cpy"
 JCL_DIR = CARDDEMO_DIR / "jcl"

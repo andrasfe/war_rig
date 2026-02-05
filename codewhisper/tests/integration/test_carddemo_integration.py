@@ -19,11 +19,22 @@ from codewhisper.search.code_search import CodeSearcher, search_in_directory
 from codewhisper.skills.index import SkillsIndex
 from codewhisper.skills.loader import SkillsLoader
 
-# Paths to test data
-SKILLS_DIR = Path("/home/andras/war_rig/example_output/skills")
-CARDDEMO_DIR = Path(
+# Paths to test data - support both Linux and macOS environments
+_LINUX_SKILLS_DIR = Path("/home/andras/war_rig/example_output/skills")
+_MACOS_SKILLS_DIR = Path(
+    "/Users/andraslferenczi/war_rig/example_output/code-skills"
+)
+_LINUX_CARDDEMO_DIR = Path(
     "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq"
 )
+_MACOS_CARDDEMO_DIR = Path(
+    "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/"
+    "app/app-authorization-ims-db2-mq"
+)
+
+# Use whichever path exists
+SKILLS_DIR = _MACOS_SKILLS_DIR if _MACOS_SKILLS_DIR.exists() else _LINUX_SKILLS_DIR
+CARDDEMO_DIR = _MACOS_CARDDEMO_DIR if _MACOS_CARDDEMO_DIR.exists() else _LINUX_CARDDEMO_DIR
 
 
 @pytest.fixture
@@ -222,6 +233,9 @@ class TestEndToEndWithMockedLLM:
     )
     async def test_create_agent_with_real_skills(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """Test creating agent with real skills."""
+        # Skip if llm_providers not available (replaced by war_rig.providers)
+        pytest.importorskip("llm_providers", reason="llm_providers module not available")
+
         from codewhisper.agent.graph import create_agent
 
         # Set mock API key for test
