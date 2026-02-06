@@ -1086,13 +1086,13 @@ class TestHolisticReviewParallelExecution:
             assert "LLM API error" in result.error
 
     @pytest.mark.asyncio
-    async def test_system_design_fails_holistic_review_succeeds(
+    async def test_system_design_fails_holistic_review_fails(
         self,
         imperator_agent: ImperatorAgent,
         sample_holistic_input: HolisticReviewInput,
         tmp_path,
     ):
-        """Test that if system design fails, holistic review still succeeds."""
+        """Test that if system design fails, holistic review raises an error."""
         from unittest.mock import AsyncMock, patch
 
         # Create mock response - must be valid JSON for parsing
@@ -1108,16 +1108,12 @@ class TestHolisticReviewParallelExecution:
             # System design fails
             mock_design.side_effect = RuntimeError("System design API error")
 
-            result = await imperator_agent.holistic_review(
-                sample_holistic_input,
-                use_mock=False,
-                output_directory=tmp_path,
-            )
-
-            # Verify holistic review succeeded
-            assert result.success is True
-            # But system design failed gracefully
-            assert result.system_design_generated is False
+            with pytest.raises(RuntimeError, match="README generation failed"):
+                await imperator_agent.holistic_review(
+                    sample_holistic_input,
+                    use_mock=False,
+                    output_directory=tmp_path,
+                )
 
     @pytest.mark.asyncio
     async def test_no_output_directory_skips_system_design(
@@ -1153,13 +1149,13 @@ class TestHolisticReviewParallelExecution:
             assert result.success is True
 
     @pytest.mark.asyncio
-    async def test_system_design_returns_failure_result(
+    async def test_system_design_returns_failure_result_raises(
         self,
         imperator_agent: ImperatorAgent,
         sample_holistic_input: HolisticReviewInput,
         tmp_path,
     ):
-        """Test handling when system design returns a failed result object."""
+        """Test that when system design returns a failed result, an error is raised."""
         from unittest.mock import AsyncMock, patch
 
         from war_rig.agents.imperator import SystemDesignOutput
@@ -1182,16 +1178,12 @@ class TestHolisticReviewParallelExecution:
             mock_llm.return_value = mock_holistic_response
             mock_design.return_value = mock_design_output
 
-            result = await imperator_agent.holistic_review(
-                sample_holistic_input,
-                use_mock=False,
-                output_directory=tmp_path,
-            )
-
-            # Verify holistic review succeeded
-            assert result.success is True
-            # But system design generation is marked as failed
-            assert result.system_design_generated is False
+            with pytest.raises(RuntimeError, match="README generation failed"):
+                await imperator_agent.holistic_review(
+                    sample_holistic_input,
+                    use_mock=False,
+                    output_directory=tmp_path,
+                )
 
     @pytest.mark.asyncio
     async def test_parallel_execution_writes_system_design_file(

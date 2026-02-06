@@ -1780,35 +1780,33 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                 response = response_or_error
                 review_output = self._parse_holistic_response(response, input_data)
 
-                # Handle system design result - failure should not fail holistic review
+                # Handle system design result - README generation is mandatory
                 if isinstance(design_result_or_error, Exception):
-                    logger.warning(
-                        f"Failed to generate README.md: {design_result_or_error}"
+                    raise RuntimeError(
+                        f"README generation failed: {design_result_or_error}"
+                    ) from design_result_or_error
+
+                design_result = design_result_or_error
+                if not design_result.success or not design_result.markdown:
+                    raise RuntimeError(
+                        f"README generation failed: {design_result.error or 'LLM returned empty markdown'}"
                     )
-                    review_output.system_design_generated = False
-                else:
-                    design_result = design_result_or_error
-                    if design_result.success:
-                        # Write the markdown to README.md
-                        system_design_path = output_directory / "README.md"
-                        system_design_path.write_text(
-                            design_result.markdown, encoding="utf-8"
-                        )
 
-                        # Populate the new fields in the output
-                        review_output.system_design_generated = True
-                        review_output.system_design_questions = design_result.questions
-                        review_output.system_design_path = str(system_design_path)
+                # Write the markdown to README.md
+                system_design_path = output_directory / "README.md"
+                system_design_path.write_text(
+                    design_result.markdown, encoding="utf-8"
+                )
 
-                        logger.info(
-                            f"Generated README.md at {system_design_path} "
-                            f"with {len(design_result.questions)} inline questions"
-                        )
-                    else:
-                        logger.warning(
-                            f"System design generation failed: {design_result.error}"
-                        )
-                        review_output.system_design_generated = False
+                # Populate the new fields in the output
+                review_output.system_design_generated = True
+                review_output.system_design_questions = design_result.questions
+                review_output.system_design_path = str(system_design_path)
+
+                logger.info(
+                    f"Generated README.md at {system_design_path} "
+                    f"with {len(design_result.questions)} inline questions"
+                )
             else:
                 # No output_directory, just run holistic review
                 response = await self._call_llm(system_prompt, user_prompt)
@@ -1823,6 +1821,23 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
 
             return review_output
 
+        except RuntimeError as e:
+            # README generation failures must propagate — never swallow them
+            if "README generation failed" in str(e):
+                raise
+            logger.error(f"Holistic review failed: {e}")
+            if input_data.cycle >= input_data.max_cycles:
+                return HolisticReviewOutput(
+                    success=False,
+                    error=str(e),
+                    decision=ImperatorHolisticDecision.FORCED_COMPLETE,
+                    reasoning=f"Forced completion due to error: {e}",
+                )
+            return HolisticReviewOutput(
+                success=False,
+                error=str(e),
+                decision=ImperatorHolisticDecision.NEEDS_CLARIFICATION,
+            )
         except Exception as e:
             logger.error(f"Holistic review failed: {e}")
             if input_data.cycle >= input_data.max_cycles:

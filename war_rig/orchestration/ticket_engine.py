@@ -1470,29 +1470,26 @@ class TicketOrchestrator:
         review_input = self._build_holistic_review_input()
 
         if not review_input.file_documentation:
-            logger.warning("No documentation available for README generation")
-            return
-
-        try:
-            # Generate system design document (README.md)
-            design_output = await self.imperator.generate_system_design(
-                review_input,
-                use_mock=self.use_mock,
-                sequence_diagrams=self._state.sequence_diagrams,
+            raise RuntimeError(
+                "README generation failed: no documentation available"
             )
 
-            if design_output.success and design_output.markdown:
-                # Write README.md to output directory
-                readme_path = self.config.output_directory / "README.md"
-                readme_path.write_text(design_output.markdown, encoding="utf-8")
-                logger.info(f"Generated README.md at {readme_path}")
-            else:
-                logger.warning(
-                    f"README generation failed: {design_output.error or 'Unknown error'}"
-                )
+        # Generate system design document (README.md)
+        design_output = await self.imperator.generate_system_design(
+            review_input,
+            use_mock=self.use_mock,
+            sequence_diagrams=self._state.sequence_diagrams,
+        )
 
-        except Exception as e:
-            logger.error(f"Failed to generate README.md: {e}")
+        if not design_output.success or not design_output.markdown:
+            raise RuntimeError(
+                f"README generation failed: {design_output.error or 'LLM returned empty markdown'}"
+            )
+
+        # Write README.md to output directory
+        readme_path = self.config.output_directory / "README.md"
+        readme_path.write_text(design_output.markdown, encoding="utf-8")
+        logger.info(f"Generated README.md at {readme_path}")
 
     async def _generate_final_readme(self) -> None:
         """Generate README.md at the end of batch processing.
@@ -1513,27 +1510,24 @@ class TicketOrchestrator:
         review_input = self._build_holistic_review_input()
 
         if not review_input.file_documentation:
-            logger.warning("No documentation available for README generation")
-            return
-
-        try:
-            # Generate system design document (README.md)
-            design_output = await self.imperator.generate_system_design(
-                review_input,
-                use_mock=self.use_mock,
-                sequence_diagrams=self._state.sequence_diagrams,
+            raise RuntimeError(
+                "README generation failed: no documentation available"
             )
 
-            if design_output.success and design_output.markdown:
-                readme_path.write_text(design_output.markdown, encoding="utf-8")
-                logger.info(f"Generated README.md at {readme_path}")
-            else:
-                logger.warning(
-                    f"README generation failed: {design_output.error or 'Unknown error'}"
-                )
+        # Generate system design document (README.md)
+        design_output = await self.imperator.generate_system_design(
+            review_input,
+            use_mock=self.use_mock,
+            sequence_diagrams=self._state.sequence_diagrams,
+        )
 
-        except Exception as e:
-            logger.error(f"Failed to generate README.md: {e}")
+        if not design_output.success or not design_output.markdown:
+            raise RuntimeError(
+                f"README generation failed: {design_output.error or 'LLM returned empty markdown'}"
+            )
+
+        readme_path.write_text(design_output.markdown, encoding="utf-8")
+        logger.info(f"Generated README.md at {readme_path}")
 
     def _build_holistic_review_input(self) -> HolisticReviewInput:
         """Build input for Imperator holistic review.
