@@ -205,6 +205,28 @@ class TestCollectReadmeQuestions:
         assert questions[0].question == "How are batches scheduled?"
         assert questions[1].question == "What is the retry policy?"
 
+    def test_parses_bold_question_markers(
+        self, config: QuestionResolutionConfig, output_dir: Path,
+        input_dir: Path,
+    ) -> None:
+        resolver = QuestionResolver(config, output_dir, input_dir, cycle=1)
+
+        readme = output_dir / "README.md"
+        readme.write_text(
+            "- ❓ **QUESTION**: What compiler version?\n"
+            "- ❓ **QUESTION**: What load library naming?\n",
+            encoding="utf-8",
+        )
+
+        review = HolisticReviewOutput(
+            decision=ImperatorHolisticDecision.NEEDS_CLARIFICATION,
+            system_design_questions=[],
+        )
+
+        questions = resolver._collect_readme_questions(review)
+        assert len(questions) == 2
+        assert questions[0].question == "What compiler version?"
+
     def test_includes_system_design_questions(
         self, config: QuestionResolutionConfig, output_dir: Path,
         input_dir: Path,
@@ -307,6 +329,17 @@ class TestAssessAnswerQuality:
         assert is_good is False
         assert confidence == "LOW"
 
+    def test_inconclusive_markdown_bold(
+        self, config: QuestionResolutionConfig, output_dir: Path,
+        input_dir: Path,
+    ) -> None:
+        resolver = QuestionResolver(config, output_dir, input_dir, cycle=1)
+        is_good, confidence = resolver._assess_answer_quality(
+            "**INCONCLUSIVE:** The procedure is not defined in the accessible source code."
+        )
+        assert is_good is False
+        assert confidence == "LOW"
+
     def test_hedging_language(
         self, config: QuestionResolutionConfig, output_dir: Path,
         input_dir: Path,
@@ -394,6 +427,26 @@ class TestUpdateReadme:
         content = readme.read_text(encoding="utf-8")
         assert "❓ QUESTION:" not in content
         assert "Batches run via JCL CRON at midnight." in content
+
+    def test_replaces_bold_question_marker(
+        self, config: QuestionResolutionConfig, output_dir: Path,
+        input_dir: Path,
+    ) -> None:
+        resolver = QuestionResolver(config, output_dir, input_dir, cycle=1)
+
+        readme = output_dir / "README.md"
+        readme.write_text(
+            "- ❓ **QUESTION**: What compiler version?\n",
+            encoding="utf-8",
+        )
+
+        resolver._update_readme(
+            {"What compiler version?": "IGYCRCTL V6.4"}
+        )
+
+        content = readme.read_text(encoding="utf-8")
+        assert "❓" not in content
+        assert "IGYCRCTL V6.4" in content
 
 
 # =============================================================================

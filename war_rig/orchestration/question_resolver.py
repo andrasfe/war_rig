@@ -116,13 +116,13 @@ class QuestionResolver:
             result.duration_seconds = time.monotonic() - start
             return result
 
-        # Cap total questions per cycle
+        # Cap questions per cycle (split evenly, component gets remainder)
         cap = self._config.max_questions_per_cycle
-        if len(component_questions) > cap:
-            component_questions = component_questions[:cap]
-        remaining_cap = cap - len(component_questions)
-        if len(readme_questions) > remaining_cap:
-            readme_questions = readme_questions[:remaining_cap]
+        if total > cap:
+            readme_cap = min(len(readme_questions), cap // 3)
+            component_cap = cap - readme_cap
+            component_questions = component_questions[:component_cap]
+            readme_questions = readme_questions[:readme_cap]
 
         # Sort by (file, descending index) so removals don't shift subsequent indices
         component_questions.sort(
@@ -271,7 +271,7 @@ class QuestionResolver:
             try:
                 content = readme_path.read_text(encoding="utf-8")
                 lines = content.splitlines()
-                pattern = re.compile(r"❓\s*QUESTION:\s*(.+?)(?:\n|$)")
+                pattern = re.compile(r"❓\s*\*{0,2}QUESTION\*{0,2}:\s*(.+?)(?:\n|$)")
 
                 for match in pattern.finditer(content):
                     q_text = match.group(1).strip()
@@ -448,9 +448,12 @@ class QuestionResolver:
             return (False, "LOW")
 
         lower = answer.lower()
+        # Strip markdown bold/italic for checks
+        stripped = re.sub(r"\*{1,2}([^*]+)\*{1,2}", r"\1", lower)
 
-        # Explicit inconclusive
-        if lower.startswith("inconclusive:"):
+        # Explicit inconclusive (LLM may wrap in markdown bold)
+        first_line = stripped.split("\n", 1)[0].strip()
+        if first_line.startswith("inconclusive:") or first_line.startswith("inconclusive -"):
             return (False, "LOW")
 
         # Hedging language
@@ -461,8 +464,10 @@ class QuestionResolver:
             "cannot determine",
             "no evidence found",
             "insufficient information",
+            "not defined in the accessible",
+            "not found in the",
         ]
-        if any(phrase in lower for phrase in hedging):
+        if any(phrase in stripped for phrase in hedging):
             return (False, "LOW")
 
         # High confidence indicators: specific code references
@@ -541,7 +546,7 @@ class QuestionResolver:
         for question_text, answer in resolved_questions.items():
             # Escape for regex
             escaped = re.escape(question_text)
-            pattern = rf"❓\s*QUESTION:\s*{escaped}"
+            pattern = rf"❓\s*\*{{0,2}}QUESTION\*{{0,2}}:\s*{escaped}"
             content = re.sub(pattern, answer, content)
 
         readme_path.write_text(content, encoding="utf-8")
