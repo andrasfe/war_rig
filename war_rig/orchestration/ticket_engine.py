@@ -404,6 +404,10 @@ class TicketOrchestrator:
 
                 self._state.review_history.append(review_result)
 
+                # Resolve open questions using CodeWhisper (best-effort)
+                if self.config.question_resolution.enabled:
+                    await self._resolve_open_questions(review_result)
+
                 # Always capture feedback context for next cycle (even if we have gaps)
                 # This ensures quality notes propagate to all subsequent work
                 await self._handle_imperator_feedback(review_result)
@@ -1971,6 +1975,31 @@ class TicketOrchestrator:
             related_files=[],
             cycle_asked=self._state.cycle,
         )
+
+    async def _resolve_open_questions(
+        self, review_result: HolisticReviewOutput,
+    ) -> None:
+        """Resolve open questions using CodeWhisper SDK. Best-effort, non-fatal."""
+        from war_rig.orchestration.question_resolver import QuestionResolver
+
+        self._state.status_message = "Resolving open questions..."
+        try:
+            resolver = QuestionResolver(
+                config=self.config.question_resolution,
+                output_directory=self.config.output_directory,
+                input_directory=self._input_directory,
+                cycle=self._state.cycle,
+            )
+            result = await resolver.resolve_all(review_result=review_result)
+            logger.info(
+                f"Resolved {result.component_questions_resolved}/"
+                f"{result.component_questions_found} component, "
+                f"{result.readme_questions_resolved}/"
+                f"{result.readme_questions_found} README questions "
+                f"in {result.duration_seconds:.1f}s"
+            )
+        except Exception as e:
+            logger.warning(f"Question resolution failed (non-fatal): {e}")
 
     async def _handle_imperator_feedback(
         self,

@@ -501,6 +501,17 @@ class DocumentationWriter:
                     lines.append(f"  - Suggestion: {q.suggestion}")
             lines.append("")
 
+        # Resolved Questions
+        if template.resolved_questions:
+            lines.append("## Resolved Questions")
+            lines.append("")
+            for rq in template.resolved_questions:
+                lines.append(f"- **Q:** {rq.original_question}")
+                lines.append(f"  **A:** {rq.answer}")
+                if rq.confidence != "HIGH":
+                    lines.append(f"  *Confidence: {rq.confidence}*")
+            lines.append("")
+
         # Sequence Diagram (if paragraphs with calls exist)
         sequence_diagram = self._render_sequence_diagram(template)
         if sequence_diagram:

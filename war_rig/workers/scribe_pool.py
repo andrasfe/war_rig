@@ -1790,6 +1790,15 @@ class ScribeWorker:
                     parts.append(f"  - Context: {q.context}")
             parts.append("")
 
+        # Resolved Questions
+        if template.resolved_questions:
+            parts.append("## Resolved Questions")
+            parts.append("")
+            for rq in template.resolved_questions:
+                parts.append(f"- Q: {rq.original_question or ''}")
+                parts.append(f"  A: {rq.answer or ''}")
+            parts.append("")
+
         # Sequence Diagram (if paragraphs with calls exist)
         sequence_diagram = self._render_sequence_diagram(template)
         if sequence_diagram:

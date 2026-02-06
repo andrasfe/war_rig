@@ -166,6 +166,19 @@ class FileExtensionsConfig(BaseModel):
     ims: list[str] = Field(default=[".dbd", ".DBD", ".psb", ".PSB"])
 
 
+class QuestionResolutionConfig(BaseModel):
+    """Configuration for automatic open question resolution via CodeWhisper."""
+
+    enabled: bool = Field(default=False)
+    max_questions_per_cycle: int = Field(default=10)
+    timeout_per_question: int = Field(default=120)
+    min_confidence: str = Field(default="MEDIUM")
+    codewhisper_max_iterations: int = Field(default=8)
+    codewhisper_temperature: float = Field(default=0.2)
+    codewhisper_max_tokens: int = Field(default=2048)
+    resolve_readme_questions: bool = Field(default=True)
+
+
 class LoggingConfig(BaseModel):
     """Configuration for logging."""
 
@@ -411,6 +424,16 @@ class WarRigConfig(BaseSettings):
     beads_enabled: bool = Field(default=False)
     beads_dry_run: bool = Field(default=False)
 
+    # Question resolution (automatic via CodeWhisper)
+    question_resolution_enabled: bool = Field(default=False)
+    question_resolution_max_per_cycle: int = Field(default=10)
+    question_resolution_timeout: int = Field(default=120)
+    question_resolution_min_confidence: str = Field(default="MEDIUM")
+    question_resolution_cw_max_iterations: int = Field(default=8)
+    question_resolution_cw_temperature: float = Field(default=0.2)
+    question_resolution_cw_max_tokens: int = Field(default=2048)
+    question_resolution_resolve_readme: bool = Field(default=True)
+
     # Paths
     input_directory: Path = Field(default=Path("./input"))
     output_directory: Path = Field(default=Path("./output"))
@@ -521,6 +544,20 @@ class WarRigConfig(BaseSettings):
             enabled=self.checkpoint_enabled,
             frequency=self.checkpoint_frequency,
             directory=self.checkpoint_directory,
+        )
+
+    @property
+    def question_resolution(self) -> QuestionResolutionConfig:
+        """Get question resolution configuration."""
+        return QuestionResolutionConfig(
+            enabled=self.question_resolution_enabled,
+            max_questions_per_cycle=self.question_resolution_max_per_cycle,
+            timeout_per_question=self.question_resolution_timeout,
+            min_confidence=self.question_resolution_min_confidence,
+            codewhisper_max_iterations=self.question_resolution_cw_max_iterations,
+            codewhisper_temperature=self.question_resolution_cw_temperature,
+            codewhisper_max_tokens=self.question_resolution_cw_max_tokens,
+            resolve_readme_questions=self.question_resolution_resolve_readme,
         )
 
     def get_agent_config(self, agent_name: str) -> ModelConfig:

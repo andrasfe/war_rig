@@ -599,6 +599,39 @@ class OpenQuestion(BaseModel):
     )
 
 
+class ResolvedQuestion(BaseModel):
+    """A question resolved by automated CodeWhisper analysis."""
+
+    original_question: str | None = Field(
+        default=None,
+        description="The original question text",
+    )
+    original_context: str | None = Field(
+        default=None,
+        description="Original context for why the question was asked",
+    )
+    answer: str | None = Field(
+        default=None,
+        description="The resolved answer",
+    )
+    confidence: str = Field(
+        default="MEDIUM",
+        description="Answer confidence: HIGH, MEDIUM, LOW",
+    )
+    resolved_by: str = Field(
+        default="CODEWHISPER",
+        description="What resolved this question",
+    )
+    cycle_resolved: int = Field(
+        default=1,
+        description="Which cycle this was resolved in",
+    )
+    tool_calls_used: int = Field(
+        default=0,
+        description="Number of tool calls used to resolve",
+    )
+
+
 class DeadCodeItem(BaseModel):
     """An artifact identified as dead code by static analysis."""
 
@@ -671,6 +704,10 @@ class DocumentationTemplate(BaseModel):
         default_factory=list,
         description="Unresolved questions",
     )
+    resolved_questions: list[ResolvedQuestion] = Field(
+        default_factory=list,
+        description="Questions resolved by automated analysis",
+    )
     dead_code: list[DeadCodeItem] = Field(
         default_factory=list,
         description="Artifacts identified as dead code by static analysis",
@@ -733,6 +770,11 @@ class DocumentationTemplate(BaseModel):
                 constructed[key] = [CICSOperation.model_construct(**v) if isinstance(v, dict) else v for v in value]
             elif key == "open_questions" and isinstance(value, list):
                 constructed[key] = [OpenQuestion.model_construct(**v) if isinstance(v, dict) else v for v in value]
+            elif key == "resolved_questions" and isinstance(value, list):
+                constructed[key] = [
+                    ResolvedQuestion.model_construct(**v) if isinstance(v, dict) else v
+                    for v in value
+                ]
             elif key == "dead_code" and isinstance(value, list):
                 constructed[key] = [DeadCodeItem.model_construct(**v) if isinstance(v, dict) else v for v in value]
             elif key == "call_semantics" and isinstance(value, list):
