@@ -74,6 +74,7 @@ class QuestionResolver:
         self._output_directory = output_directory
         self._input_directory = input_directory
         self._cycle = cycle
+        self._skills_dir: Path | None = None
 
     _MAX_CONCURRENCY = 5
 
@@ -297,6 +298,31 @@ class QuestionResolver:
 
         return questions
 
+    def _generate_skills(self) -> Path | None:
+        """Generate skills index from documentation for CodeWhisper.
+
+        Returns the skills directory path, or None if generation fails.
+        """
+        try:
+            from war_rig.skills import SkillsGenerator
+
+            generator = SkillsGenerator(
+                input_dir=self._output_directory,
+                system_name="System",
+            )
+            skills_dir = generator.generate()
+            logger.info(f"Generated skills index at {skills_dir}")
+            return skills_dir
+        except Exception as e:
+            logger.warning(f"Skills generation failed, SDK will lack docs context: {e}")
+            return None
+
+    def _ensure_skills(self) -> Path | None:
+        """Generate skills once and cache the path."""
+        if self._skills_dir is None:
+            self._skills_dir = self._generate_skills()
+        return self._skills_dir
+
     def _create_sdk(self) -> "CodeWhisper":
         """Create a fresh CodeWhisper SDK instance."""
         from codewhisper.sdk import CodeWhisper, CodeWhisperConfig
@@ -313,7 +339,7 @@ class QuestionResolver:
         return CodeWhisper(
             llm_provider=provider,
             code_dir=self._input_directory,
-            documents_dir=self._output_directory,
+            documents_dir=self._ensure_skills(),
             config=config,
         )
 
