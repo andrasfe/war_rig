@@ -75,10 +75,18 @@ class QuestionResolver:
         self._input_directory = input_directory
         self._cycle = cycle
 
+    _MAX_CONCURRENCY = 5
+
     async def resolve_all(
         self, review_result: "HolisticReviewOutput",
     ) -> QuestionResolutionResult:
         """Resolve open questions from component templates and README.
+
+        Questions are resolved concurrently using asyncio.gather() with a
+        semaphore to bound parallelism. Each concurrent task creates its own
+        SDK instance to avoid shared mutable state. Template updates are
+        applied sequentially after all resolutions complete (in reverse index
+        order to avoid index shifting).
 
         Args:
             review_result: The holistic review output from Imperator.
@@ -125,40 +133,75 @@ class QuestionResolver:
             f"{len(readme_questions)} README questions (cap={cap})"
         )
 
+        # Verify SDK can be created before spawning concurrent tasks
         try:
-            sdk = self._create_sdk()
+            test_sdk = self._create_sdk()
+            del test_sdk
         except Exception as e:
             logger.warning(f"Failed to create CodeWhisper SDK: {e}")
             result.errors.append(f"SDK creation failed: {e}")
             result.duration_seconds = time.monotonic() - start
             return result
 
-        # Resolve component questions
-        for ctx in component_questions:
-            try:
-                resolved = await self._resolve_component_question(sdk, ctx)
-                if resolved is not None:
-                    self._update_template(
-                        ctx.doc_path, ctx.question_index, resolved
-                    )
-                    result.component_questions_resolved += 1
-            except Exception as e:
-                msg = f"Error resolving question for {ctx.file_name}: {e}"
-                logger.warning(msg)
-                result.errors.append(msg)
+        semaphore = asyncio.Semaphore(self._MAX_CONCURRENCY)
 
-        # Resolve README questions
+        # --- Resolve component questions concurrently ---
+        async def _resolve_component(
+            ctx: ComponentQuestionContext,
+        ) -> tuple[ComponentQuestionContext, ResolvedQuestion | None, str | None]:
+            """Resolve a single component question with its own SDK."""
+            async with semaphore:
+                try:
+                    sdk = self._create_sdk()
+                    resolved = await self._resolve_component_question(sdk, ctx)
+                    return (ctx, resolved, None)
+                except Exception as e:
+                    msg = f"Error resolving question for {ctx.file_name}: {e}"
+                    logger.warning(msg)
+                    return (ctx, None, msg)
+
+        component_results = await asyncio.gather(
+            *[_resolve_component(ctx) for ctx in component_questions]
+        )
+
+        # Apply template updates sequentially in reverse index order.
+        # The component_questions list is already sorted by (file, -index),
+        # and gather preserves input order, so updates apply safely.
+        for ctx, resolved, error in component_results:
+            if error is not None:
+                result.errors.append(error)
+            elif resolved is not None:
+                self._update_template(
+                    ctx.doc_path, ctx.question_index, resolved
+                )
+                result.component_questions_resolved += 1
+
+        # --- Resolve README questions concurrently ---
+        async def _resolve_readme(
+            rq_ctx: ReadmeQuestionContext,
+        ) -> tuple[ReadmeQuestionContext, str | None, str | None]:
+            """Resolve a single README question with its own SDK."""
+            async with semaphore:
+                try:
+                    sdk = self._create_sdk()
+                    answer = await self._resolve_readme_question(sdk, rq_ctx)
+                    return (rq_ctx, answer, None)
+                except Exception as e:
+                    msg = f"Error resolving README question: {e}"
+                    logger.warning(msg)
+                    return (rq_ctx, None, msg)
+
+        readme_results = await asyncio.gather(
+            *[_resolve_readme(rq_ctx) for rq_ctx in readme_questions]
+        )
+
         readme_resolved: dict[str, str] = {}
-        for rq_ctx in readme_questions:
-            try:
-                answer = await self._resolve_readme_question(sdk, rq_ctx)
-                if answer is not None:
-                    readme_resolved[rq_ctx.question] = answer
-                    result.readme_questions_resolved += 1
-            except Exception as e:
-                msg = f"Error resolving README question: {e}"
-                logger.warning(msg)
-                result.errors.append(msg)
+        for rq_ctx, answer, error in readme_results:
+            if error is not None:
+                result.errors.append(error)
+            elif answer is not None:
+                readme_resolved[rq_ctx.question] = answer
+                result.readme_questions_resolved += 1
 
         if readme_resolved:
             try:

@@ -84,6 +84,7 @@ class OrchestrationStatus(str, Enum):
     ANALYZING_CALL_GRAPH = "analyzing_call_graph"
     REVIEWING = "reviewing"
     PROCESSING_FEEDBACK = "processing_feedback"
+    RESOLVING_QUESTIONS = "resolving_questions"
     COMPLETED = "completed"
     STOPPED = "stopped"
     FAILED = "failed"
@@ -1982,6 +1983,7 @@ class TicketOrchestrator:
         """Resolve open questions using CodeWhisper SDK. Best-effort, non-fatal."""
         from war_rig.orchestration.question_resolver import QuestionResolver
 
+        self._state.status = OrchestrationStatus.RESOLVING_QUESTIONS
         self._state.status_message = "Resolving open questions..."
         try:
             resolver = QuestionResolver(
