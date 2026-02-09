@@ -61,6 +61,7 @@ from war_rig.chunking import (
     TokenEstimator,
 )
 from war_rig.config import WarRigConfig
+from war_rig.knowledge_graph.manager import KnowledgeGraphManager
 from war_rig.models.templates import (
     CallerReference,
     DeadCodeItem,
@@ -211,6 +212,7 @@ class ScribeWorker:
         exit_on_error: bool = True,
         dependency_graph_path: Path | None = None,
         minion_pool: MinionScribePool | None = None,
+        kg_manager: KnowledgeGraphManager | None = None,
     ):
         """Initialize the Scribe worker.
 
@@ -233,6 +235,9 @@ class ScribeWorker:
             minion_pool: Optional shared MinionScribePool for parallel call semantics
                 processing. When provided, this pool is used instead of creating
                 a per-worker pool. This enables resource sharing across workers.
+            kg_manager: Optional KnowledgeGraphManager for context injection
+                and triple ingestion. When provided, workers inject graph context
+                into Scribe prompts and ingest triples from output.
         """
         self.worker_id = worker_id
         self.config = config
@@ -244,6 +249,7 @@ class ScribeWorker:
         self.poll_interval = poll_interval
         self.idle_timeout = idle_timeout
         self.file_lock_manager = file_lock_manager
+        self.kg_manager = kg_manager
 
         # Ensure output directory exists
         self.output_directory.mkdir(parents=True, exist_ok=True)
@@ -3142,6 +3148,20 @@ class ScribeWorker:
                 f"{ticket.file_name} (cycle {ticket.cycle_number})"
             )
 
+        # Get knowledge graph context for prompt injection
+        kg_context = ""
+        if self.kg_manager and self.kg_manager.enabled:
+            try:
+                program_name = ticket.program_id or ticket.file_name.split(".")[0]
+                kg_context = await self.kg_manager.get_scribe_context(program_name)
+            except Exception:
+                logger.warning(
+                    "Worker %s: Failed to get KG context for %s",
+                    self.worker_id,
+                    ticket.file_name,
+                    exc_info=True,
+                )
+
         scribe_input = ScribeInput(
             source_code=prepared.source_code,
             file_name=ticket.file_name,
@@ -3151,9 +3171,25 @@ class ScribeWorker:
             previous_template=previous_template,
             formatting_strict=formatting_strict,
             feedback_context=feedback_context,
+            knowledge_graph_context=kg_context,
         )
 
         output = await self.scribe_agent.ainvoke(scribe_input)
+
+        # Ingest triples from Scribe output into knowledge graph
+        if self.kg_manager and self.kg_manager.enabled and output.success and output.raw_response:
+            try:
+                source_pass = f"pass_{ticket.cycle_number}"
+                await self.kg_manager.ingest_scribe_output(
+                    output.raw_response, source_pass, ticket.file_name
+                )
+            except Exception:
+                logger.warning(
+                    "Worker %s: Failed to ingest KG triples for %s",
+                    self.worker_id,
+                    ticket.file_name,
+                    exc_info=True,
+                )
 
         # Merge with previous template to preserve paragraphs when source was sampled
         # The LLM may only regenerate paragraphs for the sampled code, losing others
@@ -4594,6 +4630,7 @@ class ScribeWorkerPool:
         file_lock_manager: FileLockManager | None = None,
         exit_on_error: bool | None = None,
         dependency_graph_path: Path | None = None,
+        kg_manager: KnowledgeGraphManager | None = None,
     ):
         """Initialize the Scribe worker pool.
 
@@ -4615,6 +4652,8 @@ class ScribeWorkerPool:
             dependency_graph_path: Optional path to Citadel dependency graph JSON.
                 When provided, workers can use the graph to understand code
                 relationships and improve documentation quality.
+            kg_manager: Optional KnowledgeGraphManager for context injection
+                and triple ingestion. Passed through to individual workers.
         """
         self.config = config
         self.beads_client = beads_client
@@ -4626,6 +4665,7 @@ class ScribeWorkerPool:
         self.file_lock_manager = file_lock_manager
         self.exit_on_error = exit_on_error if exit_on_error is not None else config.exit_on_error
         self.dependency_graph_path = dependency_graph_path
+        self.kg_manager = kg_manager
 
         # Create shared MinionScribePool for call semantics processing
         # This pool is shared across all ScribeWorkers for resource efficiency
@@ -4672,6 +4712,7 @@ class ScribeWorkerPool:
                 exit_on_error=self.exit_on_error,
                 dependency_graph_path=self.dependency_graph_path,
                 minion_pool=self._minion_pool,
+                kg_manager=self.kg_manager,
             )
             for i in range(self.num_workers)
         ]

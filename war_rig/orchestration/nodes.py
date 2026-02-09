@@ -25,6 +25,7 @@ from war_rig.agents.scribe import ScribeAgent, ScribeInput
 from war_rig.analysis.call_semantics import CallSemanticsAnalyzer
 from war_rig.chunking import TokenEstimator
 from war_rig.config import APIConfig, WarRigConfig
+from war_rig.knowledge_graph.manager import KnowledgeGraphManager
 from war_rig.models.templates import FileType
 from war_rig.orchestration.state import WarRigState
 from war_rig.preprocessors.cobol import COBOLPreprocessor
@@ -130,6 +131,9 @@ class WarRigNodes:
         except ImportError:
             self._citadel = None
             logger.debug("Citadel not available for call semantics")
+
+        # Knowledge graph manager (opt-in via config)
+        self._kg_manager = KnowledgeGraphManager(config)
 
     async def _enrich_call_semantics(
         self,
@@ -266,6 +270,17 @@ class WarRigNodes:
         try:
             result = preprocessor.process(source_code, file_name)
             logger.info(f"Preprocessing complete: {result.program_id}")
+
+            # Seed knowledge graph with preprocessor triples
+            try:
+                await self._kg_manager.ingest_preprocessor(result)
+            except Exception:
+                logger.warning(
+                    "Failed to ingest preprocessor triples for %s",
+                    file_name,
+                    exc_info=True,
+                )
+
             return {
                 "file_type": result.file_type,
                 "preprocessor_result": result,
@@ -296,6 +311,18 @@ class WarRigNodes:
         iteration = state.get("iteration", 1)
         logger.info(f"Scribe documenting (iteration {iteration}): {state['file_name']}")
 
+        # Get knowledge graph context for prompt injection
+        kg_context = ""
+        try:
+            program_name = state["file_name"].split(".")[0]
+            kg_context = await self._kg_manager.get_scribe_context(program_name)
+        except Exception:
+            logger.warning(
+                "Failed to get KG context for %s",
+                state["file_name"],
+                exc_info=True,
+            )
+
         # Build input
         scribe_input = ScribeInput(
             source_code=state["source_code"],
@@ -307,6 +334,7 @@ class WarRigNodes:
             challenger_questions=state.get("current_round_questions", []),
             chrome_tickets=state.get("active_chrome_tickets", []),
             iteration=iteration,
+            knowledge_graph_context=kg_context,
         )
 
         # Call agent (or mock)
@@ -318,6 +346,20 @@ class WarRigNodes:
         if not output.success:
             logger.error(f"Scribe failed: {output.error}")
             return {"error": output.error}
+
+        # Ingest triples from Scribe output into knowledge graph
+        if output.raw_response:
+            try:
+                source_pass = f"pass_{iteration}"
+                await self._kg_manager.ingest_scribe_output(
+                    output.raw_response, source_pass, state["file_name"]
+                )
+            except Exception:
+                logger.warning(
+                    "Failed to ingest KG triples for %s",
+                    state["file_name"],
+                    exc_info=True,
+                )
 
         # Enrich template with call semantics for COBOL files
         template = output.template
@@ -393,6 +435,18 @@ class WarRigNodes:
         if was_sampled:
             logger.info(f"Source code sampled for Challenger validation ({state['file_name']})")
 
+        # Get knowledge graph context for Challenger cross-checking
+        kg_context = ""
+        try:
+            program_name = state["file_name"].split(".")[0]
+            kg_context = await self._kg_manager.get_challenger_context(program_name)
+        except Exception:
+            logger.warning(
+                "Failed to get KG context for Challenger on %s",
+                state["file_name"],
+                exc_info=True,
+            )
+
         # Build input
         challenger_input = ChallengerInput(
             template=template,
@@ -404,6 +458,7 @@ class WarRigNodes:
             scribe_responses=state.get("scribe_responses", []),
             max_questions=self.config.max_questions_per_round,
             iteration=iteration,
+            knowledge_graph_context=kg_context,
         )
 
         # Call agent (or mock)

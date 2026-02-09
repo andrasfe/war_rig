@@ -38,6 +38,7 @@ dependencies = [
     "httpx>=0.25.0",
     "citadel",
     "codewhisper",
+    "aiosqlite>=0.22.1",
 ]
 
 [project.optional-dependencies]

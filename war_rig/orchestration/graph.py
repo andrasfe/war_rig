@@ -142,6 +142,9 @@ class WarRigGraph:
         """
         logger.info(f"Starting War Rig analysis: {file_name}")
 
+        # Initialize knowledge graph (opt-in via config, no-op if disabled)
+        await self.nodes._kg_manager.initialize()
+
         # Create initial state
         initial_state = create_initial_state(
             source_code=source_code,
@@ -153,8 +156,12 @@ class WarRigGraph:
             use_mock=use_mock,
         )
 
-        # Run the graph
-        result = await self.graph.ainvoke(initial_state)
+        try:
+            # Run the graph
+            result = await self.graph.ainvoke(initial_state)
+        finally:
+            # Close knowledge graph store
+            await self.nodes._kg_manager.close()
 
         logger.info(
             f"War Rig complete: {file_name} -> {result.get('decision', 'UNKNOWN')}"

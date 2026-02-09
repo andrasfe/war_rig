@@ -93,6 +93,10 @@ class ChallengerInput(AgentInput):
         default=None,
         description="Ground-truth pattern facts for validation cross-reference (from PatternAggregator)",
     )
+    knowledge_graph_context: str = Field(
+        default="",
+        description="Formatted knowledge graph context with cross-check hints for structural validation",
+    )
 
 
 class ChallengerOutput(AgentOutput):
@@ -279,6 +283,11 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
             parts.append(f"{i:5d} | {line}")
         parts.append("```")
         parts.append("")
+
+        # Knowledge graph context (cross-check hints)
+        if input_data.knowledge_graph_context:
+            parts.append(input_data.knowledge_graph_context)
+            parts.append("")
 
         # Previous questions and responses
         if input_data.previous_questions:

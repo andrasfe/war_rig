@@ -83,6 +83,10 @@ class ScribeInput(AgentInput):
         default=None,
         description="Aggregated analysis pattern insights to guide documentation (from PatternAggregator)",
     )
+    knowledge_graph_context: str = Field(
+        default="",
+        description="Formatted knowledge graph context for system-level relationship awareness",
+    )
 
 
 class ScribeOutput(AgentOutput):
@@ -456,6 +460,11 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                 for pattern in critical[:10]:
                     parts.append(f"- {pattern}")
                 parts.append("")
+
+        # Knowledge graph context (system-level relationships)
+        if input_data.knowledge_graph_context:
+            parts.append(input_data.knowledge_graph_context)
+            parts.append("")
 
         # Source code
         parts.append("## Source Code")
