@@ -1,0 +1,536 @@
+{
+  "header": {
+    "program_id": "PAUDBUNL",
+    "file_name": "PAUDBUNL.CBL",
+    "file_type": "COBOL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-02-09T15:45:19.462117",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This COBOL program, named PAUDBUNL, unloads data from an IMS database related to pending authorizations and writes it to two sequential output files. It reads pending authorization summary segments (root) and pending authorization detail segments (child) from the IMS database and writes them to OPFILE1 and OPFILE2 respectively, filtering for numeric PA-ACCT-ID.",
+    "business_context": "UNKNOWN",
+    "program_type": "BATCH",
+    "citations": [
+      18,
+      2190556,
+      247
+    ]
+  },
+  "inputs": [
+    {
+      "name": "IMS Database (PAUTSUM0/PAUTDTL1)",
+      "io_type": "IMS_SEGMENT",
+      "description": "Pending Authorization Summary (root segment PAUTSUM0) and Detail (child segment PAUTDTL1) segments from an IMS database.",
+      "copybook": "CIPAUSMY, CIPAUDTY",
+      "citation": [
+        213,
+        237
+      ]
+    },
+    {
+      "name": "PAUTBPCB",
+      "io_type": "PARAMETER",
+      "description": "PCB mask passed to the program.",
+      "copybook": "PAUTBPCB",
+      "citation": [
+        153,
+        158
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "OPFILE1",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Contains records of PENDING-AUTH-SUMMARY segments (root segments) from the IMS database where PA-ACCT-ID is numeric.",
+      "copybook": "CIPAUSMY",
+      "citation": [
+        233
+      ]
+    },
+    {
+      "name": "OPFILE2",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Contains records of PENDING-AUTH-DETAILS segments (child segments) from the IMS database, associated with the root segments written to OPFILE1.",
+      "copybook": "CIPAUDTY",
+      "citation": [
+        271
+      ]
+    }
+  ],
+  "called_programs": [
+    {
+      "program_name": "CBLTDLI",
+      "call_type": "STATIC_CALL",
+      "purpose": "Interface with IMS database to retrieve segments.",
+      "parameters": [
+        "FUNC-GN",
+        "PAUTBPCB",
+        "PENDING-AUTH-SUMMARY",
+        "ROOT-UNQUAL-SSA"
+      ],
+      "citation": 213
+    },
+    {
+      "program_name": "CBLTDLI",
+      "call_type": "STATIC_CALL",
+      "purpose": "Interface with IMS database to retrieve child segments.",
+      "parameters": [
+        "FUNC-GNP",
+        "PAUTBPCB",
+        "PENDING-AUTH-DETAILS",
+        "CHILD-UNQUAL-SSA"
+      ],
+      "citation": 237
+    }
+  ],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [
+      "DLITCBL"
+    ],
+    "linkage_section": [
+      "PAUTBPCB"
+    ]
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Only write root segments to OPFILE1 if the PA-ACCT-ID is numeric.",
+      "logic_summary": "Checks if PA-ACCT-ID is numeric before writing the PENDING-AUTH-SUMMARY segment to OPFILE1.",
+      "conditions": [
+        "IF PA-ACCT-ID IS NUMERIC"
+      ],
+      "citation": [
+        232,
+        233
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "IMS Database (PAUTSUM0)",
+        "fields_used": [
+          "PA-ACCT-ID",
+          "PENDING-AUTH-SUMMARY"
+        ],
+        "citation": [
+          213,
+          215,
+          230
+        ]
+      },
+      {
+        "source": "IMS Database (PAUTDTL1)",
+        "fields_used": [
+          "PENDING-AUTH-DETAILS"
+        ],
+        "citation": [
+          237,
+          239,
+          270
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "OPFILE1",
+        "fields_written": [
+          "OPFIL1-REC"
+        ],
+        "citation": [
+          233
+        ]
+      },
+      {
+        "destination": "OPFILE2",
+        "fields_written": [
+          "OPFIL2-REC"
+        ],
+        "citation": [
+          271
+        ]
+      }
+    ],
+    "transforms": []
+  },
+  "copybooks_used": [
+    {
+      "copybook_name": "IMSFUNCS",
+      "purpose": "Contains definitions for IMS function codes.",
+      "location": "WORKING_STORAGE",
+      "citation": 132
+    },
+    {
+      "copybook_name": "CIPAUSMY",
+      "purpose": "Defines the layout of the PENDING-AUTH-SUMMARY segment.",
+      "location": "WORKING_STORAGE",
+      "citation": 103
+    },
+    {
+      "copybook_name": "CIPAUDTY",
+      "purpose": "Defines the layout of the PENDING-AUTH-DETAILS segment.",
+      "location": "WORKING_STORAGE",
+      "citation": 107
+    },
+    {
+      "copybook_name": "PAUTBPCB",
+      "purpose": "Defines the PCB mask used for IMS calls.",
+      "location": "LINKAGE",
+      "citation": 114
+    }
+  ],
+  "paragraphs": [
+    {
+      "paragraph_name": "MAIN-PARA",
+      "summary": null,
+      "purpose": "This is the main control paragraph of the program. It first calls 1000-INITIALIZE to perform initial setup tasks such as accepting the current date and opening the output files (OPFILE1 and OPFILE2). After initialization, it enters a loop that continues until WS-END-OF-ROOT-SEG is set to 'Y', indicating the end of the root segments in the IMS database. Inside the loop, it calls 2000-FIND-NEXT-AUTH-SUMMARY to retrieve and process the next pending authorization summary segment. Once all root segments have been processed, it calls 4000-FILE-CLOSE to close the output files. The program then terminates using GOBACK. The paragraph also contains an ENTRY point 'DLITCBL' which also uses PAUTBPCB.",
+      "called_by": [],
+      "calls": [
+        "1000-INITIALIZE",
+        "2000-FIND-NEXT-AUTH-SUMMARY",
+        "4000-FILE-CLOSE"
+      ],
+      "citation": [
+        122,
+        170
+      ],
+      "outgoing_calls": [
+        {
+          "target": "1000-INITIALIZE",
+          "call_type": "performs",
+          "line": 161
+        },
+        {
+          "target": "2000-FIND-NEXT-AUTH-SUMMARY",
+          "call_type": "performs",
+          "line": 163
+        },
+        {
+          "target": "4000-FILE-CLOSE",
+          "call_type": "performs",
+          "line": 166
+        }
+      ],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "1000-INITIALIZE",
+      "summary": null,
+      "purpose": "This paragraph performs initialization tasks for the program. It accepts the current date and day from the system. It then displays the program name and current date to the console. It opens OPFILE1 and OPFILE2 for output. If either OPEN operation fails (WS-OUTFL1-STATUS or WS-OUTFL2-STATUS is not SPACES or '00'), it displays an error message and calls 9999-ABEND to terminate the program. This paragraph ensures that the output files are ready for writing before the main processing loop begins. It consumes system date and sets up output files.",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [
+        "9999-ABEND"
+      ],
+      "citation": [
+        173,
+        200
+      ],
+      "outgoing_calls": [
+        {
+          "target": "9999-ABEND",
+          "call_type": "performs",
+          "line": 191
+        },
+        {
+          "target": "9999-ABEND",
+          "call_type": "performs",
+          "line": 199
+        }
+      ],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "2000-FIND-NEXT-AUTH-SUMMARY",
+      "summary": null,
+      "purpose": "This paragraph retrieves the next pending authorization summary segment (root segment) from the IMS database. It initializes PAUT-PCB-STATUS, then calls the CBLTDLI routine with FUNC-GN to retrieve the next segment using the PAUTBPCB, PENDING-AUTH-SUMMARY, and ROOT-UNQUAL-SSA. If the PCB status is SPACES, indicating a successful read, it increments WS-NO-SUMRY-READ and WS-AUTH-SMRY-PROC-CNT, moves the PENDING-AUTH-SUMMARY to OPFIL1-REC, and writes the record to OPFILE1 if PA-ACCT-ID is numeric. It then calls 3000-FIND-NEXT-AUTH-DTL to process the child segments associated with the current root segment, continuing until WS-END-OF-CHILD-SEG is 'Y'. If the PCB status is 'GB', indicating the end of the database, it sets WS-END-OF-ROOT-SEG to 'Y'. If the PCB status is neither SPACES nor 'GB', it displays an error message and calls 9999-ABEND. This paragraph controls the retrieval and processing of root segments and their associated child segments.",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [
+        "CBLTDLI",
+        "3000-FIND-NEXT-AUTH-DTL",
+        "9999-ABEND"
+      ],
+      "citation": [
+        202,
+        249
+      ],
+      "outgoing_calls": [
+        {
+          "target": "CBLTDLI",
+          "call_type": "calls",
+          "line": 213
+        },
+        {
+          "target": "3000-FIND-NEXT-AUTH-DTL",
+          "call_type": "performs",
+          "line": 235
+        },
+        {
+          "target": "9999-ABEND",
+          "call_type": "performs",
+          "line": 246
+        }
+      ],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "3000-FIND-NEXT-AUTH-DTL",
+      "summary": null,
+      "purpose": "This paragraph retrieves the next pending authorization detail segment (child segment) from the IMS database. It calls the CBLTDLI routine with FUNC-GNP to retrieve the next child segment using PAUTBPCB, PENDING-AUTH-DETAILS and CHILD-UNQUAL-SSA. If the PCB status is SPACES, indicating a successful read, it sets MORE-AUTHS to TRUE, increments WS-NO-SUMRY-READ and WS-AUTH-SMRY-PROC-CNT, moves the PENDING-AUTH-DETAILS to CHILD-SEG-REC, and writes the record to OPFILE2. If the PCB status is 'GE', indicating that no more child segments exist for the current root, it sets WS-END-OF-CHILD-SEG to 'Y'. If the PCB status is neither SPACES nor 'GE', it displays an error message and calls 9999-ABEND. Finally, it initializes PAUT-PCB-STATUS. This paragraph is responsible for retrieving and writing the child segments associated with a root segment.",
+      "called_by": [
+        "2000-FIND-NEXT-AUTH-SUMMARY"
+      ],
+      "calls": [
+        "CBLTDLI",
+        "9999-ABEND"
+      ],
+      "citation": [
+        253,
+        286
+      ],
+      "outgoing_calls": [
+        {
+          "target": "CBLTDLI",
+          "call_type": "calls",
+          "line": 257
+        },
+        {
+          "target": "9999-ABEND",
+          "call_type": "performs",
+          "line": 282
+        }
+      ],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "4000-FILE-CLOSE",
+      "summary": null,
+      "purpose": "This paragraph closes the output files OPFILE1 and OPFILE2. It displays a message to the console indicating that the files are being closed. It then closes each file and checks the file status (WS-OUTFL1-STATUS and WS-OUTFL2-STATUS). If the file status is not SPACES or '00' for either file, it displays an error message. This paragraph ensures that the output files are properly closed after all processing is complete.",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [],
+      "citation": [
+        289,
+        306
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "9999-ABEND",
+      "summary": null,
+      "purpose": "This paragraph handles abnormal termination of the program. It displays a message indicating that the program is abending. It sets the RETURN-CODE to 16. The program then terminates using GOBACK. This paragraph is called when a critical error occurs, such as a file open or close error, or an IMS call failure.",
+      "called_by": [
+        "1000-INITIALIZE",
+        "2000-FIND-NEXT-AUTH-SUMMARY",
+        "3000-FIND-NEXT-AUTH-DTL"
+      ],
+      "calls": [],
+      "citation": [
+        308,
+        317
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "WS-OUTFL1-STATUS not equal to SPACES or '00' during OPEN",
+      "action": "DISPLAY error message and ABEND",
+      "citation": [
+        190,
+        191
+      ]
+    },
+    {
+      "condition": "WS-OUTFL2-STATUS not equal to SPACES or '00' during OPEN",
+      "action": "DISPLAY error message and ABEND",
+      "citation": [
+        198,
+        199
+      ]
+    },
+    {
+      "condition": "PAUT-PCB-STATUS not equal to SPACES or 'GB' after root segment retrieval",
+      "action": "DISPLAY error message and ABEND",
+      "citation": [
+        244,
+        246
+      ]
+    },
+    {
+      "condition": "PAUT-PCB-STATUS not equal to SPACES or 'GE' after child segment retrieval",
+      "action": "DISPLAY error message and ABEND",
+      "citation": [
+        280,
+        282
+      ]
+    },
+    {
+      "condition": "WS-OUTFL1-STATUS not equal to SPACES or '00' during CLOSE",
+      "action": "DISPLAY error message",
+      "citation": [
+        296
+      ]
+    },
+    {
+      "condition": "WS-OUTFL2-STATUS not equal to SPACES or '00' during CLOSE",
+      "action": "DISPLAY error message",
+      "citation": [
+        303
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "What is the business context of this program?",
+      "context": "The code does not provide information about the specific business process it supports.",
+      "suggestion": "Review related documentation or consult with subject matter experts to determine the business context."
+    },
+    {
+      "question": "What are the exact layouts of the IMS segments defined in CIPAUSMY and CIPAUDTY?",
+      "context": "The copybooks themselves are not provided, so the exact field definitions are unknown.",
+      "suggestion": "Obtain the CIPAUSMY and CIPAUDTY copybooks to fully understand the data structures."
+    },
+    {
+      "question": "What are the possible values and meanings of the parameters in PRM-INFO?",
+      "context": "The code comments out the ACCEPT statement for PRM-INFO, and the meaning of P-EXPIRY-DAYS, P-CHKP-FREQ, P-CHKP-DIS-FREQ, and P-DEBUG-FLAG is unclear.",
+      "suggestion": "Review related documentation or consult with subject matter experts to determine the purpose and possible values of these parameters."
+    }
+  ],
+  "resolved_questions": [],
+  "dead_code": [],
+  "call_semantics": [
+    {
+      "caller": "MAIN-PARA",
+      "callee": "1000-INITIALIZE",
+      "inputs": [],
+      "outputs": [
+        "CURRENT-DATE",
+        "CURRENT-YYDDD",
+        "WS-OUTFL1-STATUS",
+        "WS-OUTFL2-STATUS"
+      ],
+      "purpose": "Initializes the program by accepting current date and opening output files."
+    },
+    {
+      "caller": "MAIN-PARA",
+      "callee": "2000-FIND-NEXT-AUTH-SUMMARY",
+      "inputs": [
+        "WS-END-OF-ROOT-SEG"
+      ],
+      "outputs": [
+        "WS-END-OF-ROOT-SEG",
+        "WS-NO-SUMRY-READ",
+        "WS-AUTH-SMRY-PROC-CNT",
+        "OPFIL1-REC",
+        "ROOT-SEG-KEY",
+        "CHILD-SEG-REC",
+        "WS-END-OF-CHILD-SEG"
+      ],
+      "purpose": "Reads the next authorization summary segment from IMS and processes its child details if available."
+    },
+    {
+      "caller": "MAIN-PARA",
+      "callee": "4000-FILE-CLOSE",
+      "inputs": [
+        "WS-OUTFL1-STATUS",
+        "WS-OUTFL2-STATUS"
+      ],
+      "outputs": [],
+      "purpose": "Closes the output files and displays error messages if closing fails."
+    },
+    {
+      "caller": "1000-INITIALIZE",
+      "callee": "9999-ABEND",
+      "inputs": [
+        "WS-OUTFL1-STATUS",
+        "WS-OUTFL2-STATUS"
+      ],
+      "outputs": [
+        "RETURN-CODE"
+      ],
+      "purpose": "Terminates the program with a return code of 16 due to a file open error."
+    },
+    {
+      "caller": "1000-INITIALIZE",
+      "callee": "9999-ABEND",
+      "inputs": [
+        "WS-OUTFL1-STATUS",
+        "WS-OUTFL2-STATUS"
+      ],
+      "outputs": [
+        "RETURN-CODE"
+      ],
+      "purpose": "Terminates the program with a return code of 16 due to a file open error."
+    },
+    {
+      "caller": "2000-FIND-NEXT-AUTH-SUMMARY",
+      "callee": "3000-FIND-NEXT-AUTH-DTL",
+      "inputs": [
+        "WS-END-OF-CHILD-SEG",
+        "PA-ACCT-ID"
+      ],
+      "outputs": [
+        "WS-END-OF-CHILD-SEG",
+        "WS-NO-SUMRY-READ",
+        "WS-AUTH-SMRY-PROC-CNT"
+      ],
+      "purpose": "Reads and processes all child segments (authorization details) for the current root segment until no more children are found."
+    },
+    {
+      "caller": "2000-FIND-NEXT-AUTH-SUMMARY",
+      "callee": "9999-ABEND",
+      "inputs": [
+        "PAUT-PCB-STATUS",
+        "PAUT-KEYFB"
+      ],
+      "outputs": [
+        "RETURN-CODE"
+      ],
+      "purpose": "Terminates the program with a return code of 16 when an unexpected IMS status code is encountered during root segment retrieval."
+    },
+    {
+      "caller": "3000-FIND-NEXT-AUTH-DTL",
+      "callee": "9999-ABEND",
+      "inputs": [
+        "PAUT-PCB-STATUS",
+        "PAUT-KEYFB"
+      ],
+      "outputs": [
+        "RETURN-CODE"
+      ],
+      "purpose": "Terminates the program with a return code of 16 when an unexpected IMS status code is encountered during child segment retrieval."
+    }
+  ],
+  "flow_diagram": "flowchart TD\n    %% Title: PAUDBUNL.CBL\n    1000_EXIT[\"1000-EXIT\"]\n    1000_INITIALIZE[\"1000-INITIALIZE\"]\n    9999_ABEND[\"9999-ABEND\"]\n    2000_EXIT[\"2000-EXIT\"]\n    2000_FIND_NEXT_AUTH_SUMMARY[\"2000-FIND-NEXT-AUTH-SUMMARY\"]\n    3000_FIND_NEXT_AUTH_DTL[\"3000-FIND-NEXT-AUTH-DTL\"]\n    CBLTDLI__ext([\"CBLTDLI\"])\n    3000_EXIT[\"3000-EXIT\"]\n    4000_EXIT[\"4000-EXIT\"]\n    4000_FILE_CLOSE[\"4000-FILE-CLOSE\"]\n    9999_EXIT[\"9999-EXIT\"]\n    MAIN_PARA[\"MAIN-PARA\"]\n    1000_INITIALIZE --> 9999_ABEND\n    2000_FIND_NEXT_AUTH_SUMMARY --> 3000_FIND_NEXT_AUTH_DTL\n    2000_FIND_NEXT_AUTH_SUMMARY --> 9999_ABEND\n    2000_FIND_NEXT_AUTH_SUMMARY -.->|calls| CBLTDLI__ext\n    3000_FIND_NEXT_AUTH_DTL --> 9999_ABEND\n    3000_FIND_NEXT_AUTH_DTL -.->|calls| CBLTDLI__ext\n    MAIN_PARA --> 1000_INITIALIZE\n    MAIN_PARA --> 2000_FIND_NEXT_AUTH_SUMMARY\n    MAIN_PARA --> 4000_FILE_CLOSE"
+}

@@ -1,0 +1,18 @@
+[
+  {
+    "caller": "MAIN-PARA",
+    "callee": "FRAUD-UPDATE",
+    "inputs": [
+      "CARD-NUM",
+      "AUTH-TS",
+      "AUTH-FRAUD"
+    ],
+    "outputs": [
+      "WS-FRD-UPDT-SUCCESS",
+      "WS-FRD-ACT-MSG",
+      "WS-SQLCODE",
+      "WS-SQLSTATE"
+    ],
+    "purpose": "Updates the AUTHFRDS table with fraud action and report date when a duplicate key error occurs during insert."
+  }
+]

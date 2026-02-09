@@ -1,0 +1,834 @@
+{
+  "header": {
+    "program_id": "CBPAUP0C",
+    "file_name": "CBPAUP0C.cbl",
+    "file_type": "COBOL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-02-09T15:46:20.435789",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This COBOL batch IMS program, CBPAUP0C, deletes expired pending authorization messages from the IMS database. It reads pending authorization summary and detail segments, checks if the authorization has expired based on a configurable expiry period, and deletes the expired detail segments. It also deletes the summary segment if all its detail segments have been deleted, and takes checkpoints periodically.",
+    "business_context": "This program is part of the CardDemo application and is used to maintain the pending authorization database by removing expired records.",
+    "program_type": "BATCH",
+    "citations": [
+      2,
+      5,
+      140,
+      157
+    ]
+  },
+  "inputs": [
+    {
+      "name": "SYSIN",
+      "io_type": "PARAMETER",
+      "description": "Contains parameters for expiry days, checkpoint frequency, checkpoint display frequency, and debug flag.",
+      "copybook": null,
+      "citation": [
+        189
+      ]
+    },
+    {
+      "name": "PAUTSUM0",
+      "io_type": "IMS_SEGMENT",
+      "description": "Pending Authorization Summary segment from the IMS database.",
+      "copybook": "CIPAUSMY",
+      "citation": [
+        224
+      ]
+    },
+    {
+      "name": "PAUTDTL1",
+      "io_type": "IMS_SEGMENT",
+      "description": "Pending Authorization Detail segment from the IMS database.",
+      "copybook": "CIPAUDTY",
+      "citation": [
+        256
+      ]
+    }
+  ],
+  "outputs": [],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": [
+      "IO-PCB-MASK",
+      "PGM-PCB-MASK"
+    ]
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "An authorization is considered expired if the difference between the current date and the authorization date is greater than or equal to the expiry days specified in the input parameters.",
+      "logic_summary": "Calculates the difference between the current date and authorization date and compares it with the expiry days.",
+      "conditions": [
+        "WS-DAY-DIFF >= WS-EXPIRY-DAYS"
+      ],
+      "citation": [
+        280,
+        282,
+        284
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "If an expired authorization detail record has an approved authorization response code ('00'), the approved authorization count and amount in the summary record are decremented. Otherwise, the declined authorization count and amount are decremented.",
+      "logic_summary": "Checks PA-AUTH-RESP-CODE and decrements either approved or declined counts and amounts.",
+      "conditions": [
+        "PA-AUTH-RESP-CODE = '00'"
+      ],
+      "citation": [
+        287,
+        288,
+        289,
+        291,
+        292
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "SYSIN",
+        "fields_used": [
+          "P-EXPIRY-DAYS",
+          "P-CHKP-FREQ",
+          "P-CHKP-DIS-FREQ",
+          "P-DEBUG-FLAG"
+        ],
+        "citation": [
+          189
+        ]
+      },
+      {
+        "source": "PAUTSUM0",
+        "fields_used": [
+          "PA-ACCT-ID",
+          "PA-APPROVED-AUTH-CNT",
+          "PA-APPROVED-AUTH-AMT",
+          "PA-DECLINED-AUTH-CNT",
+          "PA-DECLINED-AUTH-AMT"
+        ],
+        "citation": [
+          225,
+          156
+        ]
+      },
+      {
+        "source": "PAUTDTL1",
+        "fields_used": [
+          "PA-AUTH-DATE-9C",
+          "PA-AUTH-RESP-CODE",
+          "PA-TRANSACTION-AMT"
+        ],
+        "citation": [
+          257,
+          280,
+          287,
+          292
+        ]
+      }
+    ],
+    "writes_to": [],
+    "transforms": [
+      {
+        "input_field": "PA-AUTH-DATE-9C",
+        "output_field": "WS-AUTH-DATE",
+        "transformation_description": "Calculates the authorization date by subtracting PA-AUTH-DATE-9C from 99999.",
+        "citation": [
+          280
+        ]
+      },
+      {
+        "input_field": "CURRENT-YYDDD",
+        "output_field": "WS-DAY-DIFF",
+        "transformation_description": "Calculates the difference between the current date and the calculated authorization date.",
+        "citation": [
+          282
+        ]
+      }
+    ]
+  },
+  "copybooks_used": [
+    {
+      "copybook_name": "CIPAUSMY",
+      "purpose": "Defines the layout of the PENDING-AUTH-SUMMARY segment.",
+      "location": "WORKING_STORAGE",
+      "citation": 117
+    },
+    {
+      "copybook_name": "CIPAUDTY",
+      "purpose": "Defines the layout of the PENDING-AUTH-DETAILS segment.",
+      "location": "WORKING_STORAGE",
+      "citation": 121
+    }
+  ],
+  "paragraphs": [
+    {
+      "paragraph_name": "MAIN-PARA",
+      "summary": null,
+      "purpose": "This is the main control paragraph of the program. It orchestrates the deletion of expired pending authorization messages. It first calls 1000-INITIALIZE to initialize variables and read input parameters. Then, it enters a loop that continues until either an error occurs or the end of the authorization database is reached. Inside the loop, it calls 2000-FIND-NEXT-AUTH-SUMMARY to read the next authorization summary segment. For each summary segment, it enters another loop to process the detail segments by calling 3000-FIND-NEXT-AUTH-DTL.  Within the detail loop, 4000-CHECK-IF-EXPIRED determines if a detail record is expired. If expired, 5000-DELETE-AUTH-DTL deletes the detail record. After processing all detail segments for a summary, 6000-DELETE-AUTH-SUMMARY deletes the summary if all detail records are gone.  9000-TAKE-CHECKPOINT is called periodically to establish restart points. Finally, the program displays summary statistics and terminates.",
+      "called_by": [],
+      "calls": [
+        "1000-INITIALIZE",
+        "2000-FIND-NEXT-AUTH-SUMMARY"
+      ],
+      "citation": [
+        136,
+        180
+      ],
+      "outgoing_calls": [
+        {
+          "target": "1000-INITIALIZE",
+          "call_type": "performs",
+          "line": 138
+        },
+        {
+          "target": "2000-FIND-NEXT-AUTH-SUMMARY",
+          "call_type": "performs",
+          "line": 140
+        },
+        {
+          "target": "3000-FIND-NEXT-AUTH-DTL",
+          "call_type": "performs",
+          "line": 144
+        },
+        {
+          "target": "4000-CHECK-IF-EXPIRED",
+          "call_type": "performs",
+          "line": 147
+        },
+        {
+          "target": "5000-DELETE-AUTH-DTL",
+          "call_type": "performs",
+          "line": 150
+        },
+        {
+          "target": "3000-FIND-NEXT-AUTH-DTL",
+          "call_type": "performs",
+          "line": 153
+        },
+        {
+          "target": "6000-DELETE-AUTH-SUMMARY",
+          "call_type": "performs",
+          "line": 157
+        },
+        {
+          "target": "9000-TAKE-CHECKPOINT",
+          "call_type": "performs",
+          "line": 161
+        },
+        {
+          "target": "2000-FIND-NEXT-AUTH-SUMMARY",
+          "call_type": "performs",
+          "line": 165
+        },
+        {
+          "target": "9000-TAKE-CHECKPOINT",
+          "call_type": "performs",
+          "line": 169
+        }
+      ],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "1000-INITIALIZE",
+      "summary": null,
+      "purpose": "This paragraph initializes the program by accepting the current date and parameters from SYSIN. It moves the expiry days from the parameter to WS-EXPIRY-DAYS, defaulting to 5 if the parameter is not numeric. It also sets default values for checkpoint frequency and display frequency if they are not provided in the input parameters. The debug flag is also initialized to 'N' if not set to 'Y'. Finally, it displays the starting message, parameters received, and today's date.",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [],
+      "citation": [
+        183,
+        210
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+          "function": "MAIN-PARA",
+          "line": 161,
+          "call_type": "performs"
+        }
+      ],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "2000-FIND-NEXT-AUTH-SUMMARY",
+      "summary": null,
+      "purpose": "This paragraph reads the next pending authorization summary segment from the IMS database using the GN (Get Next) command. If the DEBUG-ON flag is set, it displays the number of summary records read. It then evaluates the DIBSTAT return code. If the return code is spaces, it sets the NOT-END-OF-AUTHDB flag to TRUE, increments the summary read count and the summary process count, and moves the account ID to WS-CURR-APP-ID. If the return code is 'GB', it sets the END-OF-AUTHDB flag to TRUE. If any other return code is received, it displays an error message and calls 9999-ABEND to terminate the program.",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [
+        "9999-ABEND"
+      ],
+      "citation": [
+        216,
+        244
+      ],
+      "outgoing_calls": [
+        {
+          "target": "9999-ABEND",
+          "call_type": "performs",
+          "line": 240
+        }
+      ],
+      "incoming_calls": [
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+          "function": "MAIN-PARA",
+          "line": 163,
+          "call_type": "performs"
+        }
+      ],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "3000-FIND-NEXT-AUTH-DTL",
+      "summary": null,
+      "purpose": "This paragraph reads the next pending authorization detail segment from the IMS database using the GNP (Get Next within Parent) command. If the DEBUG-ON flag is set, it displays the number of detail records read. It then evaluates the DIBSTAT return code. If the return code is spaces, it sets the MORE-AUTHS flag to TRUE and increments the detail read count. If the return code is 'GE' or 'GB', it sets the NO-MORE-AUTHS flag to TRUE. If any other return code is received, it displays an error message and calls 9999-ABEND to terminate the program.",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [
+        "9999-ABEND"
+      ],
+      "citation": [
+        248,
+        274
+      ],
+      "outgoing_calls": [
+        {
+          "target": "9999-ABEND",
+          "call_type": "performs",
+          "line": 270
+        }
+      ],
+      "incoming_calls": [
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+          "function": "2000-FIND-NEXT-AUTH-SUMMARY",
+          "line": 235,
+          "call_type": "performs"
+        },
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+          "function": "MAIN-PARA",
+          "line": 144,
+          "call_type": "performs"
+        }
+      ],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "4000-CHECK-IF-EXPIRED",
+      "summary": null,
+      "purpose": "This paragraph checks if the current authorization detail record has expired. It calculates the authorization date by subtracting the PA-AUTH-DATE-9C from 99999 and then computes the difference between the current date and the authorization date. If the difference is greater than or equal to the expiry days, it sets the QUALIFIED-FOR-DELETE flag to TRUE. It also adjusts the approved or declined authorization counts and amounts in the summary record based on the authorization response code. If the authorization has not expired, it sets the NOT-QUALIFIED-FOR-DELETE flag to TRUE.",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [],
+      "citation": [
+        277,
+        300
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+          "function": "MAIN-PARA",
+          "line": 147,
+          "call_type": "performs"
+        }
+      ],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "5000-DELETE-AUTH-DTL",
+      "summary": null,
+      "purpose": "This paragraph deletes the current authorization detail segment from the IMS database using the DLET (Delete) command. If the DEBUG-ON flag is set, it displays the account ID. It then checks the DIBSTAT return code. If the return code is spaces, it increments the detail deleted count. If any other return code is received, it displays an error message and calls 9999-ABEND to terminate the program.",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [
+        "9999-ABEND"
+      ],
+      "citation": [
+        303,
+        325
+      ],
+      "outgoing_calls": [
+        {
+          "target": "9999-ABEND",
+          "call_type": "performs",
+          "line": 320
+        }
+      ],
+      "incoming_calls": [
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+          "function": "MAIN-PARA",
+          "line": 150,
+          "call_type": "performs"
+        }
+      ],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "6000-DELETE-AUTH-SUMMARY",
+      "summary": null,
+      "purpose": "This paragraph deletes the current authorization summary segment from the IMS database using the DLET (Delete) command. If the DEBUG-ON flag is set, it displays the account ID. It then checks the DIBSTAT return code. If the return code is spaces, it increments the summary deleted count. If any other return code is received, it displays an error message and calls 9999-ABEND to terminate the program.",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [
+        "9999-ABEND"
+      ],
+      "citation": [
+        328,
+        349
+      ],
+      "outgoing_calls": [
+        {
+          "target": "9999-ABEND",
+          "call_type": "performs",
+          "line": 345
+        }
+      ],
+      "incoming_calls": [
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+          "function": "MAIN-PARA",
+          "line": 157,
+          "call_type": "performs"
+        }
+      ],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "9000-TAKE-CHECKPOINT",
+      "summary": null,
+      "purpose": "This paragraph takes a checkpoint using the CHKP (Checkpoint) command. It then checks the DIBSTAT return code. If the return code is spaces, it increments the checkpoint count. If the checkpoint count reaches the checkpoint display frequency, it resets the checkpoint count and displays a checkpoint success message. If the DIBSTAT is not spaces, it displays a checkpoint failed message and calls 9999-ABEND to terminate the program.",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [
+        "9999-ABEND"
+      ],
+      "citation": [
+        352,
+        374
+      ],
+      "outgoing_calls": [
+        {
+          "target": "9999-ABEND",
+          "call_type": "performs",
+          "line": 369
+        }
+      ],
+      "incoming_calls": [
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+          "function": "MAIN-PARA",
+          "line": 161,
+          "call_type": "performs"
+        }
+      ],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "9999-ABEND",
+      "summary": null,
+      "purpose": "This paragraph is called when an error occurs during program execution. It displays an abending message, sets the return code to 16, and terminates the program.",
+      "called_by": [
+        "2000-FIND-NEXT-AUTH-SUMMARY",
+        "3000-FIND-NEXT-AUTH-DTL",
+        "5000-DELETE-AUTH-DTL",
+        "6000-DELETE-AUTH-SUMMARY",
+        "9000-TAKE-CHECKPOINT"
+      ],
+      "calls": [],
+      "citation": [
+        377,
+        386
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+          "function": "1000-INITIALIZE",
+          "line": 191,
+          "call_type": "performs"
+        },
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+          "function": "2000-FIND-NEXT-AUTH-SUMMARY",
+          "line": 246,
+          "call_type": "performs"
+        },
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+          "function": "3000-FIND-NEXT-AUTH-DTL",
+          "line": 282,
+          "call_type": "performs"
+        },
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+          "function": "2100-INSERT-ROOT-SEG",
+          "line": 261,
+          "call_type": "performs"
+        },
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+          "function": "3100-INSERT-CHILD-SEG",
+          "line": 313,
+          "call_type": "performs"
+        },
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+          "function": "3200-INSERT-IMS-CALL",
+          "line": 335,
+          "call_type": "performs"
+        },
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "function": "3100-INSERT-PARENT-SEG-GSAM",
+          "line": 314,
+          "call_type": "performs"
+        },
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "function": "3200-INSERT-CHILD-SEG-GSAM",
+          "line": 333,
+          "call_type": "performs"
+        },
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+          "function": "5000-DELETE-AUTH-DTL",
+          "line": 320,
+          "call_type": "performs"
+        },
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+          "function": "6000-DELETE-AUTH-SUMMARY",
+          "line": 345,
+          "call_type": "performs"
+        },
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+          "function": "9000-TAKE-CHECKPOINT",
+          "line": 369,
+          "call_type": "performs"
+        }
+      ],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "DIBSTAT not equal to spaces in 2000-FIND-NEXT-AUTH-SUMMARY",
+      "action": "DISPLAY error message and PERFORM 9999-ABEND",
+      "citation": [
+        237,
+        240
+      ]
+    },
+    {
+      "condition": "DIBSTAT not equal to spaces in 3000-FIND-NEXT-AUTH-DTL",
+      "action": "DISPLAY error message and PERFORM 9999-ABEND",
+      "citation": [
+        267,
+        270
+      ]
+    },
+    {
+      "condition": "DIBSTAT not equal to spaces in 5000-DELETE-AUTH-DTL",
+      "action": "DISPLAY error message and PERFORM 9999-ABEND",
+      "citation": [
+        318,
+        320
+      ]
+    },
+    {
+      "condition": "DIBSTAT not equal to spaces in 6000-DELETE-AUTH-SUMMARY",
+      "action": "DISPLAY error message and PERFORM 9999-ABEND",
+      "citation": [
+        343,
+        345
+      ]
+    },
+    {
+      "condition": "DIBSTAT not equal to spaces in 9000-TAKE-CHECKPOINT",
+      "action": "DISPLAY error message and PERFORM 9999-ABEND",
+      "citation": [
+        366,
+        369
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "What is the structure of the IO-PCB-MASK and PGM-PCB-MASK?",
+      "context": "The program uses IO-PCB-MASK and PGM-PCB-MASK in the PROCEDURE DIVISION USING statement, but their structure is not defined in the provided code. This information is needed to fully understand how the program interacts with the IMS database.",
+      "suggestion": "Examine the PSB (Program Specification Block) associated with this program or related documentation to determine the structure of these masks."
+    }
+  ],
+  "resolved_questions": [],
+  "dead_code": [
+    {
+      "name": "9999-EXIT",
+      "artifact_type": "paragraph",
+      "line": 385,
+      "reason": "Paragraph '9999-EXIT' is never PERFORMed or referenced by any other paragraph or program"
+    }
+  ],
+  "call_semantics": [
+    {
+      "caller": "MAIN-PARA",
+      "callee": "1000-INITIALIZE",
+      "inputs": [
+        "PRM-INFO",
+        "P-EXPIRY-DAYS",
+        "P-CHKP-FREQ",
+        "P-CHKP-DIS-FREQ",
+        "P-DEBUG-FLAG"
+      ],
+      "outputs": [
+        "CURRENT-DATE",
+        "CURRENT-YYDDD",
+        "WS-EXPIRY-DAYS",
+        "P-CHKP-FREQ",
+        "P-CHKP-DIS-FREQ",
+        "P-DEBUG-FLAG"
+      ],
+      "purpose": "Initializes program variables by accepting current date, parameters, and setting default values for expiry days, checkpoint frequency, and debug flag."
+    },
+    {
+      "caller": "MAIN-PARA",
+      "callee": "2000-FIND-NEXT-AUTH-SUMMARY",
+      "inputs": [
+        "DEBUG-ON"
+      ],
+      "outputs": [
+        "WS-NO-SUMRY-READ",
+        "WS-AUTH-SMRY-PROC-CNT",
+        "WS-CURR-APP-ID",
+        "END-OF-AUTHDB",
+        "NOT-END-OF-AUTHDB"
+      ],
+      "purpose": "Reads the next pending authorization summary record from the IMS database and updates counters and flags accordingly."
+    },
+    {
+      "caller": "MAIN-PARA",
+      "callee": "3000-FIND-NEXT-AUTH-DTL",
+      "inputs": [
+        "DEBUG-ON"
+      ],
+      "outputs": [
+        "WS-NO-DTL-READ",
+        "MORE-AUTHS",
+        "NO-MORE-AUTHS"
+      ],
+      "purpose": "Retrieves the next pending authorization detail record using IMS GNP call and sets flags based on whether more details exist."
+    },
+    {
+      "caller": "MAIN-PARA",
+      "callee": "4000-CHECK-IF-EXPIRED",
+      "inputs": [
+        "PA-AUTH-DATE-9C",
+        "CURRENT-YYDDD",
+        "WS-EXPIRY-DAYS",
+        "PA-AUTH-RESP-CODE",
+        "PA-APPROVED-AUTH-CNT",
+        "PA-APPROVED-AUTH-AMT",
+        "PA-DECLINED-AUTH-CNT",
+        "PA-DECLINED-AUTH-AMT"
+      ],
+      "outputs": [
+        "WS-AUTH-DATE",
+        "WS-DAY-DIFF",
+        "QUALIFIED-FOR-DELETE",
+        "NOT-QUALIFIED-FOR-DELETE",
+        "PA-APPROVED-AUTH-CNT",
+        "PA-APPROVED-AUTH-AMT",
+        "PA-DECLINED-AUTH-CNT",
+        "PA-DECLINED-AUTH-AMT"
+      ],
+      "purpose": "Determines if an authorization detail is expired based on date difference and updates summary counts while setting deletion qualification flag."
+    },
+    {
+      "caller": "MAIN-PARA",
+      "callee": "5000-DELETE-AUTH-DTL",
+      "inputs": [
+        "PA-ACCT-ID",
+        "DEBUG-ON"
+      ],
+      "outputs": [
+        "WS-NO-DTL-DELETED"
+      ],
+      "purpose": "Deletes the current authorization detail segment from the IMS database and increments the deletion counter if successful."
+    },
+    {
+      "caller": "MAIN-PARA",
+      "callee": "3000-FIND-NEXT-AUTH-DTL",
+      "inputs": [
+        "DEBUG-ON",
+        "PAUT-PCB-NUM",
+        "PENDING-AUTH-DETAILS"
+      ],
+      "outputs": [
+        "WS-NO-DTL-READ",
+        "WS-MORE-AUTHS-FLAG"
+      ],
+      "purpose": "Reads the next pending authorization detail record from the IMS database and updates read count and control flags."
+    },
+    {
+      "caller": "MAIN-PARA",
+      "callee": "6000-DELETE-AUTH-SUMMARY",
+      "inputs": [
+        "DEBUG-ON",
+        "PAUT-PCB-NUM",
+        "PENDING-AUTH-SUMMARY",
+        "PA-ACCT-ID"
+      ],
+      "outputs": [
+        "WS-NO-SUMRY-DELETED"
+      ],
+      "purpose": "Deletes the current pending authorization summary record from the IMS database and increments the deletion counter."
+    },
+    {
+      "caller": "MAIN-PARA",
+      "callee": "9000-TAKE-CHECKPOINT",
+      "inputs": [
+        "WK-CHKPT-ID",
+        "WS-NO-CHKP",
+        "P-CHKP-DIS-FREQ",
+        "WS-NO-SUMRY-READ",
+        "WS-CURR-APP-ID"
+      ],
+      "outputs": [
+        "WS-NO-CHKP"
+      ],
+      "purpose": "Takes an IMS checkpoint and displays progress information if the checkpoint frequency threshold is reached."
+    },
+    {
+      "caller": "MAIN-PARA",
+      "callee": "2000-FIND-NEXT-AUTH-SUMMARY",
+      "inputs": [
+        "DEBUG-ON",
+        "PAUT-PCB-NUM",
+        "PENDING-AUTH-SUMMARY"
+      ],
+      "outputs": [
+        "WS-NO-SUMRY-READ",
+        "WS-AUTH-SMRY-PROC-CNT",
+        "WS-CURR-APP-ID",
+        "WS-END-OF-AUTHDB-FLAG"
+      ],
+      "purpose": "Reads the next pending authorization summary record from the IMS database and updates counters, current app ID, and end-of-file flag."
+    },
+    {
+      "caller": "MAIN-PARA",
+      "callee": "9000-TAKE-CHECKPOINT",
+      "inputs": [
+        "WK-CHKPT-ID",
+        "WS-NO-CHKP",
+        "P-CHKP-DIS-FREQ",
+        "WS-NO-SUMRY-READ",
+        "WS-CURR-APP-ID"
+      ],
+      "outputs": [
+        "WS-NO-CHKP"
+      ],
+      "purpose": "Takes an IMS checkpoint and displays progress information if the checkpoint frequency threshold is reached."
+    },
+    {
+      "caller": "2000-FIND-NEXT-AUTH-SUMMARY",
+      "callee": "9999-ABEND",
+      "inputs": [
+        "WS-NO-SUMRY-READ",
+        "DIBSTAT"
+      ],
+      "outputs": [
+        "RETURN-CODE"
+      ],
+      "purpose": "Abends the program with return code 16 when an unexpected IMS status code is encountered during summary read."
+    },
+    {
+      "caller": "3000-FIND-NEXT-AUTH-DTL",
+      "callee": "9999-ABEND",
+      "inputs": [
+        "WS-NO-DTL-READ",
+        "PA-ACCT-ID",
+        "DIBSTAT"
+      ],
+      "outputs": [
+        "RETURN-CODE"
+      ],
+      "purpose": "Abends the program with return code 16 when an unexpected IMS status code is encountered during detail read."
+    },
+    {
+      "caller": "5000-DELETE-AUTH-DTL",
+      "callee": "9999-ABEND",
+      "inputs": [
+        "PA-ACCT-ID",
+        "DIBSTAT"
+      ],
+      "outputs": [
+        "RETURN-CODE"
+      ],
+      "purpose": "Abends the program with return code 16 when an IMS delete operation on the detail segment fails."
+    },
+    {
+      "caller": "6000-DELETE-AUTH-SUMMARY",
+      "callee": "9999-ABEND",
+      "inputs": [
+        "PA-ACCT-ID",
+        "DIBSTAT"
+      ],
+      "outputs": [
+        "RETURN-CODE"
+      ],
+      "purpose": "Abends the program with return code 1\u6e38\u620f\u526f\u672c when an IMS delete operation on the summary segment fails."
+    },
+    {
+      "caller": "9000-TAKE-CHECKPOINT",
+      "callee": "9999-ABEND",
+      "inputs": [
+        "DIBSTAT",
+        "WS-NO-SUMRY-READ",
+        "WS-CURR-APP-ID"
+      ],
+      "outputs": [
+        "RETURN-CODE"
+      ],
+      "purpose": "Abends the program with return code 16 when an IMS checkpoint operation fails."
+    }
+  ],
+  "flow_diagram": "flowchart TD\n    %% Title: CBPAUP0C.cbl\n    1000_EXIT[\"1000-EXIT\"]\n    1000_INITIALIZE[\"1000-INITIALIZE\"]\n    2000_EXIT[\"2000-EXIT\"]\n    2000_FIND_NEXT_AUTH_SUMMARY[\"2000-FIND-NEXT-AUTH-SUMMARY\"]\n    9999_ABEND[\"9999-ABEND\"]\n    3000_EXIT[\"3000-EXIT\"]\n    3000_FIND_NEXT_AUTH_DTL[\"3000-FIND-NEXT-AUTH-DTL\"]\n    4000_CHECK_IF_EXPIRED[\"4000-CHECK-IF-EXPIRED\"]\n    4000_EXIT[\"4000-EXIT\"]\n    5000_DELETE_AUTH_DTL[\"5000-DELETE-AUTH-DTL\"]\n    5000_EXIT[\"5000-EXIT\"]\n    6000_DELETE_AUTH_SUMMARY[\"6000-DELETE-AUTH-SUMMARY\"]\n    6000_EXIT[\"6000-EXIT\"]\n    9000_EXIT[\"9000-EXIT\"]\n    9000_TAKE_CHECKPOINT[\"9000-TAKE-CHECKPOINT\"]\n    9999_EXIT[\"9999-EXIT\"]\n    MAIN_PARA[\"MAIN-PARA\"]\n    2000_FIND_NEXT_AUTH_SUMMARY --> 9999_ABEND\n    3000_FIND_NEXT_AUTH_DTL --> 9999_ABEND\n    5000_DELETE_AUTH_DTL --> 9999_ABEND\n    6000_DELETE_AUTH_SUMMARY --> 9999_ABEND\n    9000_TAKE_CHECKPOINT --> 9999_ABEND\n    MAIN_PARA --> 1000_INITIALIZE\n    MAIN_PARA --> 2000_FIND_NEXT_AUTH_SUMMARY\n    MAIN_PARA --> 3000_FIND_NEXT_AUTH_DTL\n    MAIN_PARA --> 4000_CHECK_IF_EXPIRED\n    MAIN_PARA --> 5000_DELETE_AUTH_DTL\n    MAIN_PARA --> 6000_DELETE_AUTH_SUMMARY\n    MAIN_PARA --> 9000_TAKE_CHECKPOINT"
+}

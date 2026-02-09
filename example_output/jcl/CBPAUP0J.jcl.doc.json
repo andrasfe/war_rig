@@ -1,0 +1,282 @@
+{
+  "header": {
+    "program_id": "CBPAUP0J",
+    "file_name": "jcl/CBPAUP0J.jcl",
+    "file_type": "JCL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-02-09T15:49:00.931061",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This JCL executes an IMS program (CBPAUP0C) to delete expired authorizations. It defines the execution environment, including program name, parameters, libraries, and input/output datasets required for the IMS program to run.",
+    "business_context": "UNKNOWN",
+    "program_type": "BATCH",
+    "citations": [
+      21,
+      24,
+      25
+    ]
+  },
+  "inputs": [
+    {
+      "name": "SYSIN",
+      "io_type": "PARAMETER",
+      "description": "Input parameters for the IMS program, likely related to authorization expiration criteria. The example shows '00,00001,00001,Y' as input.",
+      "copybook": null,
+      "citation": [
+        36,
+        37
+      ]
+    },
+    {
+      "name": "IMS.SDFSRESL",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS RESLIB library containing IMS modules.",
+      "copybook": null,
+      "citation": [
+        26,
+        28,
+        31
+      ]
+    },
+    {
+      "name": "IMS.PSBLIB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS PSB library containing program specification blocks.",
+      "copybook": null,
+      "citation": [
+        33
+      ]
+    },
+    {
+      "name": "IMS.DBDLIB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS DBD library containing database description blocks.",
+      "copybook": null,
+      "citation": [
+        34
+      ]
+    },
+    {
+      "name": "IMS.PROCLIB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS procedure library.",
+      "copybook": null,
+      "citation": [
+        29
+      ]
+    },
+    {
+      "name": "XXXXXXXX.PROD.LOADLIB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Production load library containing the CBPAUP0C program.",
+      "copybook": null,
+      "citation": [
+        27
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "SYSOUX",
+      "io_type": "REPORT",
+      "description": "System output for user messages.",
+      "copybook": null,
+      "citation": [
+        39
+      ]
+    },
+    {
+      "name": "SYSOUT",
+      "io_type": "REPORT",
+      "description": "Standard system output.",
+      "copybook": null,
+      "citation": [
+        40
+      ]
+    },
+    {
+      "name": "SYSABOUT",
+      "io_type": "REPORT",
+      "description": "System output for ABEND information.",
+      "copybook": null,
+      "citation": [
+        41
+      ]
+    },
+    {
+      "name": "ABENDAID",
+      "io_type": "REPORT",
+      "description": "System output for ABEND aid information.",
+      "copybook": null,
+      "citation": [
+        42
+      ]
+    },
+    {
+      "name": "SYSPRINT",
+      "io_type": "REPORT",
+      "description": "System print output.",
+      "copybook": null,
+      "citation": [
+        45
+      ]
+    },
+    {
+      "name": "SYSUDUMP",
+      "io_type": "REPORT",
+      "description": "System user dump output.",
+      "copybook": null,
+      "citation": [
+        46
+      ]
+    },
+    {
+      "name": "IMSERR",
+      "io_type": "REPORT",
+      "description": "IMS error output.",
+      "copybook": null,
+      "citation": [
+        47
+      ]
+    },
+    {
+      "name": "IEFRDER",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Dummy dataset for logging.",
+      "copybook": null,
+      "citation": [
+        43
+      ]
+    },
+    {
+      "name": "IMSLOGR",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Dummy dataset for IMS logging.",
+      "copybook": null,
+      "citation": [
+        44
+      ]
+    }
+  ],
+  "called_programs": [
+    {
+      "program_name": "DFSRRC00",
+      "call_type": "STATIC_CALL",
+      "purpose": "IMS control region program that initiates the execution of the BMP region.",
+      "parameters": [
+        "BMP",
+        "CBPAUP0C",
+        "PSBPAUTB"
+      ],
+      "citation": 24
+    }
+  ],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [],
+  "data_flow": {
+    "reads_from": [],
+    "writes_to": [],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [
+    {
+      "paragraph_name": "CBPAUP0J",
+      "summary": null,
+      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1,
+        1
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "STEP01",
+      "summary": null,
+      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        24,
+        24
+      ],
+      "outgoing_calls": [
+        {
+          "target": "DFSRRC00",
+          "call_type": "executes",
+          "line": 24
+        },
+        {
+          "target": "IMS.SDFSRESL",
+          "call_type": "references",
+          "line": 26
+        },
+        {
+          "target": "XXXXXXXX.PROD.LOADLIB",
+          "call_type": "references",
+          "line": 27
+        },
+        {
+          "target": "IMS.SDFSRESL",
+          "call_type": "references",
+          "line": 28
+        },
+        {
+          "target": "IMS.PROCLIB",
+          "call_type": "references",
+          "line": 29
+        },
+        {
+          "target": "IMS.SDFSRESL",
+          "call_type": "references",
+          "line": 31
+        },
+        {
+          "target": "IMS.PSBLIB",
+          "call_type": "references",
+          "line": 33
+        },
+        {
+          "target": "IMS.DBDLIB",
+          "call_type": "references",
+          "line": 34
+        }
+      ],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    }
+  ],
+  "error_handling": [],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "What is the exact purpose of the SYSIN input? What are the meanings of the parameters '00,00001,00001,Y'?",
+      "context": "The JCL provides the SYSIN DD statement, but the meaning of the input parameters is not clear from the JCL itself.",
+      "suggestion": "Examine the CBPAUP0C program source code or related documentation to understand the SYSIN parameters."
+    },
+    {
+      "question": "What specific authorization data is being deleted by the CBPAUP0C program?",
+      "context": "The JCL indicates the deletion of expired authorizations, but the specific data being manipulated is not clear.",
+      "suggestion": "Review the CBPAUP0C program source code and the PSBPAUTB program specification block to understand the data structures involved."
+    }
+  ],
+  "resolved_questions": [],
+  "dead_code": [],
+  "call_semantics": [],
+  "flow_diagram": null
+}

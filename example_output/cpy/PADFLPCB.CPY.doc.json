@@ -1,0 +1,88 @@
+{
+  "header": {
+    "program_id": "PADFLPCB",
+    "file_name": "PADFLPCB.CPY",
+    "file_type": "COPYBOOK",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-02-09T15:47:04.781915",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This copybook defines the PADFLPCB data structure, which appears to be related to IMS PCB (Program Communication Block) information. It contains fields for DBD name, segment level, PCB status, processing options, segment name, key feedback name, number of sensitive segments, and key feedback area.",
+    "business_context": null,
+    "program_type": "SUBROUTINE",
+    "citations": [
+      17,
+      18,
+      19,
+      20,
+      21,
+      23,
+      24,
+      25,
+      26
+    ]
+  },
+  "inputs": [],
+  "outputs": [],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [],
+  "data_flow": {
+    "reads_from": [],
+    "writes_to": [],
+    "transforms": []
+  },
+  "copybooks_used": [
+    {
+      "copybook_name": "PADFLPCB",
+      "purpose": "Defines the structure of the PADFLPCB data area, likely used for IMS PCB communication.",
+      "location": "WORKING_STORAGE",
+      "citation": 17
+    }
+  ],
+  "paragraphs": [
+    {
+      "paragraph_name": "PADFLPCB Definition",
+      "summary": null,
+      "purpose": "This section defines the PADFLPCB data structure, which is likely used for interacting with IMS databases. The structure includes fields for the database name (PADFL-DBDNAME), segment level (PADFL-SEG-LEVEL), PCB status (PADFL-PCB-STATUS), processing options (PADFL-PCB-PROCOPT), segment name (PADFL-SEG-NAME), key feedback name (PADFL-KEYFB-NAME), number of sensitive segments (PADFL-NUM-SENSEGS), and key feedback area (PADFL-KEYFB). The PADFL-DBDNAME field stores the name of the IMS database being accessed. The PADFL-SEG-LEVEL indicates the hierarchical level of the segment being processed. PADFL-PCB-STATUS provides status information about the PCB. PADFL-PCB-PROCOPT specifies the processing options for the PCB. PADFL-SEG-NAME stores the name of the segment being accessed. PADFL-KEYFB-NAME stores the name of the key feedback area. PADFL-NUM-SENSEGS indicates the number of sensitive segments. PADFL-KEYFB contains the key feedback information. This copybook does not perform any business logic, error handling, or call any other paragraphs or programs.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        17,
+        27
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    }
+  ],
+  "error_handling": [],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "What is the specific purpose and usage of the PADFLPCB structure within the larger application?",
+      "context": "The copybook defines the structure, but its role in the application's logic is unclear.",
+      "suggestion": "Review the programs that include this copybook to understand how the fields are used and manipulated."
+    }
+  ],
+  "resolved_questions": [],
+  "dead_code": [
+    {
+      "name": "PADFLPCB",
+      "artifact_type": "record_layout",
+      "line": 1,
+      "reason": "Record layout 'PADFLPCB' is never used by any program"
+    }
+  ],
+  "call_semantics": [],
+  "flow_diagram": null
+}

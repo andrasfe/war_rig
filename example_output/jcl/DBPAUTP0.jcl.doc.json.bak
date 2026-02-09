@@ -1,0 +1,309 @@
+{
+  "header": {
+    "program_id": "DBPAUTP0",
+    "file_name": "jcl/DBPAUTP0.jcl",
+    "file_type": "JCL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-02-09T15:48:59.573412",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This JCL job unloads the DBD DBPAUTP0 to a sequential dataset. It first deletes the output dataset if it exists, then executes the IMS program DFSRRC00 with parameters to perform the unload. The job also defines various IMS libraries and control datasets required for the unload process.",
+    "business_context": "UNKNOWN",
+    "program_type": "BATCH",
+    "citations": [
+      1,
+      13,
+      15
+    ]
+  },
+  "inputs": [
+    {
+      "name": "OEM.IMS.IMSP.SDFSRESL",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS RESLIB library containing IMS modules.",
+      "copybook": null,
+      "citation": [
+        18,
+        20
+      ]
+    },
+    {
+      "name": "AWS.M2.CARDDEMO.LOADLIB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Application load library.",
+      "copybook": null,
+      "citation": [
+        19
+      ]
+    },
+    {
+      "name": "OEM.IMS.IMSP.PSBLIB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS PSB library.",
+      "copybook": null,
+      "citation": [
+        21
+      ]
+    },
+    {
+      "name": "OEM.IMS.IMSP.DBDLIB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS DBD library.",
+      "copybook": null,
+      "citation": [
+        22
+      ]
+    },
+    {
+      "name": "OEM.IMS.IMSP.PAUTHDB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS database dataset.",
+      "copybook": null,
+      "citation": [
+        31
+      ]
+    },
+    {
+      "name": "OEM.IMS.IMSP.PAUTHDBX",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS database index dataset.",
+      "copybook": null,
+      "citation": [
+        32
+      ]
+    },
+    {
+      "name": "OEMPP.IMS.V15R01MB.PROCLIB(DFSVSMDB)",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS VSAM parameter library.",
+      "copybook": null,
+      "citation": [
+        33
+      ]
+    },
+    {
+      "name": "OEM.IMS.IMSP.RECON1",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS RECON1 dataset.",
+      "copybook": null,
+      "citation": [
+        40
+      ]
+    },
+    {
+      "name": "OEM.IMS.IMSP.RECON2",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS RECON2 dataset.",
+      "copybook": null,
+      "citation": [
+        41
+      ]
+    },
+    {
+      "name": "OEM.IMS.IMSP.RECON3",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS RECON3 dataset.",
+      "copybook": null,
+      "citation": [
+        42
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Unloaded DBD data.",
+      "copybook": null,
+      "citation": [
+        9,
+        25
+      ]
+    },
+    {
+      "name": "SYSPRINT",
+      "io_type": "REPORT",
+      "description": "Job log and program output.",
+      "copybook": null,
+      "citation": [
+        8,
+        23
+      ]
+    },
+    {
+      "name": "SYSUDUMP",
+      "io_type": "REPORT",
+      "description": "Memory dump in case of abend.",
+      "copybook": null,
+      "citation": [
+        36
+      ]
+    }
+  ],
+  "called_programs": [
+    {
+      "program_name": "IEFBR14",
+      "call_type": "STATIC_CALL",
+      "purpose": "Deletes the output dataset AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0 if it exists.",
+      "parameters": [],
+      "citation": 7
+    },
+    {
+      "program_name": "DFSRRC00",
+      "call_type": "STATIC_CALL",
+      "purpose": "Unloads the DBD DBPAUTP0.",
+      "parameters": [
+        "ULU",
+        "DFSURGU0",
+        "DBPAUTP0"
+      ],
+      "citation": 15
+    }
+  ],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [],
+  "data_flow": {
+    "reads_from": [],
+    "writes_to": [],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [
+    {
+      "paragraph_name": "STEPDEL",
+      "summary": null,
+      "purpose": "This step deletes the existing output dataset AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0 before the unload process begins. It executes the utility program IEFBR14, which is a null program often used for dataset allocation and deletion. The SYSPRINT DD statement directs the output of the IEFBR14 program to the job log. The SYSUT1 DD statement defines the dataset to be deleted, specifying its name, disposition (MOD,DELETE), unit (SYSDA), and space allocation (TRK,0). This ensures that any previous version of the output dataset is removed, preventing potential conflicts during the subsequent unload step. The step does not consume any specific input data, but it relies on the existence of the dataset defined in the SYSUT1 DD statement. The successful execution of this step prepares the system for the creation of a new output dataset in the UNLOAD step.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        7,
+        10
+      ],
+      "outgoing_calls": [
+        {
+          "target": "IEFBR14",
+          "call_type": "executes",
+          "line": 7
+        },
+        {
+          "target": "AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0",
+          "call_type": "references",
+          "line": 9
+        }
+      ],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "UNLOAD",
+      "summary": null,
+      "purpose": "This step performs the actual DBD unload process. It executes the IMS program DFSRRC00 with the parameters ULU, DFSURGU0, and DBPAUTP0, which specify the unload utility, the unload control statement dataset, and the DBD name to be unloaded, respectively. The STEPLIB and DFSRESLB DD statements define the IMS RESLIB libraries required for the execution of DFSRRC00. The IMS DD statement defines the IMS PSB and DBD libraries. The DFSURGU1 DD statement defines the output dataset AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0, specifying its disposition, unit, space allocation, and DCB attributes. The DDPAUTP0 and DDPAUTX0 DD statements define the IMS database datasets. The DFSVSAMP DD statement defines the VSAM parameter library. The DFSCTL DD statement contains the SBPARM ACTIV=COND control statement. The SYSUDUMP DD statement defines the memory dump dataset. The RECON1, RECON2, and RECON3 DD statements define the IMS RECON datasets. The DFSWRK01 and DFSSRT01 DD statements are dummy datasets. This step reads the DBD definition from the DBDLIB and writes the unloaded data to the DFSURGU1 dataset. The successful execution of this step results in the creation of a sequential dataset containing the unloaded DBD data.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        15,
+        45
+      ],
+      "outgoing_calls": [
+        {
+          "target": "DFSRRC00",
+          "call_type": "executes",
+          "line": 15
+        },
+        {
+          "target": "OEMA.IMS.IMSP.SDFSRESL",
+          "call_type": "references",
+          "line": 18
+        },
+        {
+          "target": "AWS.M2.CARDDEMO.LOADLIB",
+          "call_type": "references",
+          "line": 19
+        },
+        {
+          "target": "OEMA.IMS.IMSP.SDFSRESL",
+          "call_type": "references",
+          "line": 20
+        },
+        {
+          "target": "OEM.IMS.IMSP.PSBLIB",
+          "call_type": "references",
+          "line": 21
+        },
+        {
+          "target": "OEM.IMS.IMSP.DBDLIB",
+          "call_type": "references",
+          "line": 22
+        },
+        {
+          "target": "AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0",
+          "call_type": "references",
+          "line": 25
+        },
+        {
+          "target": "OEM.IMS.IMSP.PAUTHDB",
+          "call_type": "references",
+          "line": 31
+        },
+        {
+          "target": "OEM.IMS.IMSP.PAUTHDBX",
+          "call_type": "references",
+          "line": 32
+        },
+        {
+          "target": "OEMPP.IMS.V15R01MB.PROCLIB",
+          "call_type": "references",
+          "line": 33
+        },
+        {
+          "target": "OEM.IMS.IMSP.RECON1",
+          "call_type": "references",
+          "line": 40
+        },
+        {
+          "target": "OEM.IMS.IMSP.RECON2",
+          "call_type": "references",
+          "line": 41
+        },
+        {
+          "target": "OEM.IMS.IMSP.RECON3",
+          "call_type": "references",
+          "line": 42
+        }
+      ],
+      "incoming_calls": [],
+      "is_dead_code": true,
+      "dead_code_reason": "Paragraph 'UNLOAD' is never PERFORMed or referenced by any other paragraph or program",
+      "metadata": null
+    }
+  ],
+  "error_handling": [],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "What is the business context of this job?",
+      "context": "The JCL does not provide information about the business process it serves.",
+      "suggestion": "Consult the application documentation or the job scheduling system."
+    }
+  ],
+  "resolved_questions": [],
+  "dead_code": [
+    {
+      "name": "UNLOAD",
+      "artifact_type": "paragraph",
+      "line": 15,
+      "reason": "Paragraph 'UNLOAD' is never PERFORMed or referenced by any other paragraph or program"
+    }
+  ],
+  "call_semantics": [],
+  "flow_diagram": null
+}

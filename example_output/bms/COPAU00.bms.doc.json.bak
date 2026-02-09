@@ -1,0 +1,399 @@
+{
+  "header": {
+    "program_id": "COPAU00",
+    "file_name": "COPAU00.bms",
+    "file_type": "BMS",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-02-09T15:46:42.326924",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This BMS map defines the screen layout for the Pending Authorization Screen in the CardDemo application. It displays a list of pending authorizations for a given account ID, along with customer details and credit information. The screen allows the user to select a transaction to view its details.",
+    "business_context": "This screen is used to view and manage pending card authorizations.",
+    "program_type": "ONLINE_CICS",
+    "citations": [
+      2,
+      83,
+      501
+    ]
+  },
+  "inputs": [
+    {
+      "name": "ACCTID",
+      "io_type": "CICS_MAP",
+      "description": "Account ID to search for pending authorizations. This is an unprotected field where the user enters the account ID.",
+      "copybook": null,
+      "citation": [
+        84
+      ]
+    },
+    {
+      "name": "SEL0001 - SEL0005",
+      "io_type": "CICS_MAP",
+      "description": "Selection fields for each transaction. User enters a value to select a transaction.",
+      "copybook": null,
+      "citation": [
+        277,
+        321,
+        365,
+        409,
+        488
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "COPAU0A",
+      "io_type": "CICS_MAP",
+      "description": "The entire screen layout, including labels, data fields, and messages. Displays customer information, account details, and a list of pending transactions.",
+      "copybook": null,
+      "citation": [
+        26
+      ]
+    },
+    {
+      "name": "TRNNAME",
+      "io_type": "CICS_MAP",
+      "description": "Transaction name",
+      "copybook": null,
+      "citation": [
+        34
+      ]
+    },
+    {
+      "name": "CURDATE",
+      "io_type": "CICS_MAP",
+      "description": "Current Date",
+      "copybook": null,
+      "citation": [
+        47
+      ]
+    },
+    {
+      "name": "PGMNAME",
+      "io_type": "CICS_MAP",
+      "description": "Program Name",
+      "copybook": null,
+      "citation": [
+        57
+      ]
+    },
+    {
+      "name": "CURTIME",
+      "io_type": "CICS_MAP",
+      "description": "Current Time",
+      "copybook": null,
+      "citation": [
+        70
+      ]
+    },
+    {
+      "name": "CNAME",
+      "io_type": "CICS_MAP",
+      "description": "Customer Name",
+      "copybook": null,
+      "citation": [
+        96
+      ]
+    },
+    {
+      "name": "CUSTID",
+      "io_type": "CICS_MAP",
+      "description": "Customer ID",
+      "copybook": null,
+      "citation": [
+        103
+      ]
+    },
+    {
+      "name": "ADDR001",
+      "io_type": "CICS_MAP",
+      "description": "Customer Address Line 1",
+      "copybook": null,
+      "citation": [
+        107
+      ]
+    },
+    {
+      "name": "ACCSTAT",
+      "io_type": "CICS_MAP",
+      "description": "Account Status",
+      "copybook": null,
+      "citation": [
+        114
+      ]
+    },
+    {
+      "name": "ADDR002",
+      "io_type": "CICS_MAP",
+      "description": "Customer Address Line 2",
+      "copybook": null,
+      "citation": [
+        118
+      ]
+    },
+    {
+      "name": "PHONE1",
+      "io_type": "CICS_MAP",
+      "description": "Customer Phone Number",
+      "copybook": null,
+      "citation": [
+        125
+      ]
+    },
+    {
+      "name": "APPRCNT",
+      "io_type": "CICS_MAP",
+      "description": "Approval Count",
+      "copybook": null,
+      "citation": [
+        132
+      ]
+    },
+    {
+      "name": "DECLCNT",
+      "io_type": "CICS_MAP",
+      "description": "Decline Count",
+      "copybook": null,
+      "citation": [
+        139
+      ]
+    },
+    {
+      "name": "CREDLIM",
+      "io_type": "CICS_MAP",
+      "description": "Credit Limit",
+      "copybook": null,
+      "citation": [
+        147
+      ]
+    },
+    {
+      "name": "CASHLIM",
+      "io_type": "CICS_MAP",
+      "description": "Cash Limit",
+      "copybook": null,
+      "citation": [
+        156
+      ]
+    },
+    {
+      "name": "APPRAMT",
+      "io_type": "CICS_MAP",
+      "description": "Approved Amount",
+      "copybook": null,
+      "citation": [
+        165
+      ]
+    },
+    {
+      "name": "CREDBAL",
+      "io_type": "CICS_MAP",
+      "description": "Credit Balance",
+      "copybook": null,
+      "citation": [
+        174
+      ]
+    },
+    {
+      "name": "CASHBAL",
+      "io_type": "CICS_MAP",
+      "description": "Cash Balance",
+      "copybook": null,
+      "citation": [
+        183
+      ]
+    },
+    {
+      "name": "DECLAMT",
+      "io_type": "CICS_MAP",
+      "description": "Declined Amount",
+      "copybook": null,
+      "citation": [
+        192
+      ]
+    },
+    {
+      "name": "TRNID01 - TRNID05",
+      "io_type": "CICS_MAP",
+      "description": "Transaction IDs for the pending authorizations.",
+      "copybook": null,
+      "citation": [
+        286,
+        330,
+        374,
+        418,
+        453
+      ]
+    },
+    {
+      "name": "PDATE01 - PDATE05",
+      "io_type": "CICS_MAP",
+      "description": "Transaction Dates for the pending authorizations.",
+      "copybook": null,
+      "citation": [
+        291,
+        335,
+        379,
+        423,
+        458
+      ]
+    },
+    {
+      "name": "PTIME01 - PTIME05",
+      "io_type": "CICS_MAP",
+      "description": "Transaction Times for the pending authorizations.",
+      "copybook": null,
+      "citation": [
+        296,
+        340,
+        384,
+        428,
+        463
+      ]
+    },
+    {
+      "name": "PTYPE01 - PTYPE05",
+      "io_type": "CICS_MAP",
+      "description": "Transaction Types for the pending authorizations.",
+      "copybook": null,
+      "citation": [
+        301,
+        345,
+        389,
+        433,
+        468
+      ]
+    },
+    {
+      "name": "PAPRV01 - PAPRV05",
+      "io_type": "CICS_MAP",
+      "description": "Approval indicators for the pending authorizations.",
+      "copybook": null,
+      "citation": [
+        306,
+        350,
+        394,
+        438,
+        473
+      ]
+    },
+    {
+      "name": "PSTAT01 - PSTAT05",
+      "io_type": "CICS_MAP",
+      "description": "Transaction Statuses for the pending authorizations.",
+      "copybook": null,
+      "citation": [
+        311,
+        355,
+        399,
+        443,
+        478
+      ]
+    },
+    {
+      "name": "PAMT001 - PAMT005",
+      "io_type": "CICS_MAP",
+      "description": "Transaction Amounts for the pending authorizations.",
+      "copybook": null,
+      "citation": [
+        316,
+        360,
+        404,
+        448,
+        483
+      ]
+    },
+    {
+      "name": "ERRMSG",
+      "io_type": "CICS_MAP",
+      "description": "Error message field to display errors to the user.",
+      "copybook": null,
+      "citation": [
+        503
+      ]
+    }
+  ],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [],
+  "data_flow": {
+    "reads_from": [],
+    "writes_to": [],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [
+    {
+      "paragraph_name": "COPAU0A",
+      "summary": null,
+      "purpose": "This paragraph defines the overall structure and attributes of the BMS map COPAU0A, which represents the Pending Authorization Screen. It specifies the screen size as 24 lines by 80 columns (line 28). It sets various control options such as ALARM and FREEKB (line 19), enables extended attributes (line 20), and specifies COBOL as the programming language (line 21). The MODE is set to INOUT, indicating that the screen is used for both input and output (line 22). STORAGE is set to AUTO, meaning CICS will automatically manage storage for the map (line 23). TIOAPFX is enabled for compatibility (line 24). The TYPE is determined by the system parameter &&SYSPARM (line 25), allowing the map to be used for different purposes such as defining the map or generating the symbolic map.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        26,
+        28
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": true,
+      "dead_code_reason": "Screen/Map 'COPAU0A' is never sent to or received from by any program",
+      "metadata": {
+        "body_chunks": 5
+      }
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "Invalid input or data errors",
+      "action": "Display error message in ERRMSG field (line 503)",
+      "citation": [
+        503
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [
+    {
+      "command": "SEND MAP",
+      "resource": "COPAU0A",
+      "purpose": "Display the Pending Authorization Screen to the user.",
+      "citation": 26
+    },
+    {
+      "command": "RECEIVE MAP",
+      "resource": "COPAU0A",
+      "purpose": "Receive input from the user on the Pending Authorization Screen, such as the account ID or a transaction selection.",
+      "citation": 26
+    }
+  ],
+  "open_questions": [
+    {
+      "question": "What is the purpose of the &&SYSPARM variable?",
+      "context": "The code uses `TYPE=&&SYSPARM` but its value and usage are unclear without more context.",
+      "suggestion": "Check the JCL or CICS definitions where this BMS map is used to determine the possible values and their impact on the map generation."
+    }
+  ],
+  "resolved_questions": [],
+  "dead_code": [
+    {
+      "name": "COPAU00",
+      "artifact_type": "map",
+      "line": 19,
+      "reason": "Artifact 'COPAU00' (map) is never referenced by any other artifact in the dependency graph"
+    },
+    {
+      "name": "COPAU0A",
+      "artifact_type": "screen",
+      "line": 26,
+      "reason": "Screen/Map 'COPAU0A' is never sent to or received from by any program"
+    }
+  ],
+  "call_semantics": [],
+  "flow_diagram": null
+}

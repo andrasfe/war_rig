@@ -1,0 +1,88 @@
+{
+  "header": {
+    "program_id": "COPAU01",
+    "file_name": "COPAU01.bms",
+    "file_type": "BMS",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-02-09T15:46:48.711315",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This BMS map defines the COPAU01 screen, which displays pending authorization details for a card transaction. The screen includes fields for transaction details, card information, authorization responses, merchant details, and function key options for navigation and fraud management.",
+    "business_context": null,
+    "program_type": "ONLINE_CICS",
+    "citations": [
+      2,
+      26,
+      292
+    ]
+  },
+  "inputs": [],
+  "outputs": [],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [],
+  "data_flow": {
+    "reads_from": [],
+    "writes_to": [],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [
+    {
+      "paragraph_name": "COPAU1A DFHMDI",
+      "summary": null,
+      "purpose": "This DFHMDI macro defines the map's characteristics, including its size and position on the screen. It specifies that the map occupies the entire screen, which is 24 lines by 80 columns. The map is positioned starting at line 1 and column 1. This macro acts as a container for the individual fields defined by the DFHMDF macros. It sets the overall dimensions and starting point for the screen layout. The attributes defined here affect the entire screen's presentation. No specific business logic or error handling is present within this macro definition. It does not call any other paragraphs or programs; it simply defines the screen's structure.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        26,
+        28
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    }
+  ],
+  "error_handling": [],
+  "sql_operations": [],
+  "cics_operations": [
+    {
+      "command": "SEND MAP",
+      "resource": "COPAU01",
+      "purpose": "Display the pending authorization details screen.",
+      "citation": 293
+    }
+  ],
+  "open_questions": [
+    {
+      "question": "How are the data fields populated on the screen?",
+      "context": "The BMS map defines the screen layout, but the program logic that populates the fields is not present in this file.",
+      "suggestion": "Examine the COBOL program that uses this BMS map to understand how the data is moved to the screen fields."
+    }
+  ],
+  "resolved_questions": [],
+  "dead_code": [
+    {
+      "name": "COPAU01",
+      "artifact_type": "map",
+      "line": 19,
+      "reason": "Artifact 'COPAU01' (map) is never referenced by any other artifact in the dependency graph"
+    },
+    {
+      "name": "COPAU1A",
+      "artifact_type": "screen",
+      "line": 26,
+      "reason": "Screen/Map 'COPAU1A' is never sent to or received from by any program"
+    }
+  ],
+  "call_semantics": [],
+  "flow_diagram": null
+}

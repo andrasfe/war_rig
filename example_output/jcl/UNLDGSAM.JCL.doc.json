@@ -1,0 +1,280 @@
+{
+  "header": {
+    "program_id": "UNLDGSAM",
+    "file_name": "UNLDGSAM.JCL",
+    "file_type": "JCL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-02-09T15:48:47.591944",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This JCL job executes the IMS program DFSRRC00 to unload a GSAM database. It specifies the IMS region, database libraries, and input/output datasets required for the unload process.",
+    "business_context": null,
+    "program_type": "BATCH",
+    "citations": [
+      26,
+      27,
+      36
+    ]
+  },
+  "inputs": [
+    {
+      "name": "AWS.M2.CARDDEMO.PAUTDB.ROOT.GSAM",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Input GSAM database root segment to be unloaded.",
+      "copybook": null,
+      "citation": [
+        36
+      ]
+    },
+    {
+      "name": "AWS.M2.CARDDEMO.PAUTDB.CHILD.GSAM",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Input GSAM database child segment to be unloaded.",
+      "copybook": null,
+      "citation": [
+        39
+      ]
+    },
+    {
+      "name": "OEM.IMS.IMSP.PAUTHDB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Input PAUTHDB dataset.",
+      "copybook": null,
+      "citation": [
+        42
+      ]
+    },
+    {
+      "name": "OEM.IMS.IMSP.PAUTHDBX",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Input PAUTHDBX dataset.",
+      "copybook": null,
+      "citation": [
+        43
+      ]
+    },
+    {
+      "name": "OEMA.IMS.IMSP.SDFSRESL",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS RESLIB library.",
+      "copybook": null,
+      "citation": [
+        28,
+        31
+      ]
+    },
+    {
+      "name": "OEMA.IMS.IMSP.SDFSRESL.V151",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS RESLIB library version 151.",
+      "copybook": null,
+      "citation": [
+        29
+      ]
+    },
+    {
+      "name": "AWS.M2.CARDDEMO.LOADLIB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Load library.",
+      "copybook": null,
+      "citation": [
+        30
+      ]
+    },
+    {
+      "name": "OEM.IMS.IMSP.PSBLIB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS PSBLIB library.",
+      "copybook": null,
+      "citation": [
+        33
+      ]
+    },
+    {
+      "name": "OEM.IMS.IMSP.DBDLIB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS DBDLIB library.",
+      "copybook": null,
+      "citation": [
+        34
+      ]
+    },
+    {
+      "name": "OEMPP.IMS.V15R01MB.PROCLIB(DFSVSMDB)",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "DFSVSAMP dataset.",
+      "copybook": null,
+      "citation": [
+        47
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "SYSPRINT",
+      "io_type": "REPORT",
+      "description": "System print output.",
+      "copybook": null,
+      "citation": [
+        50
+      ]
+    },
+    {
+      "name": "SYSUDUMP",
+      "io_type": "REPORT",
+      "description": "System dump output.",
+      "copybook": null,
+      "citation": [
+        51
+      ]
+    },
+    {
+      "name": "IMSERR",
+      "io_type": "REPORT",
+      "description": "IMS error output.",
+      "copybook": null,
+      "citation": [
+        52
+      ]
+    }
+  ],
+  "called_programs": [
+    {
+      "program_name": "DFSRRC00",
+      "call_type": "STATIC_CALL",
+      "purpose": "Executes the IMS DL/I region controller to unload the GSAM database.",
+      "parameters": [
+        "DLI",
+        "DBUNLDGS",
+        "DLIGSAMP",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "N"
+      ],
+      "citation": 26
+    }
+  ],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "AWS.M2.CARDDEMO.PAUTDB.ROOT.GSAM",
+        "fields_used": [],
+        "citation": [
+          36
+        ]
+      },
+      {
+        "source": "AWS.M2.CARDDEMO.PAUTDB.CHILD.GSAM",
+        "fields_used": [],
+        "citation": [
+          39
+        ]
+      }
+    ],
+    "writes_to": [],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [
+    {
+      "paragraph_name": "STEP01",
+      "summary": null,
+      "purpose": "This step executes the IMS program DFSRRC00 to unload a GSAM database. The PARM parameter specifies the execution parameters for the IMS DL/I region controller, including the database unload function (DBUNLDGS) and the DLIGSAMP parameter. The STEPLIB DD statements define the libraries required for the IMS execution, including the IMS RESLIB and the application load library. The DFSRESLB DD statement specifies the IMS RESLIB. The IMS DD statements define the PSBLIB and DBDLIB libraries. The PASFILOP and PADFILOP DD statements define the input GSAM database root and child segment datasets to be unloaded. The DDPAUTP0 and DDPAUTX0 DD statements define the PAUTHDB and PAUTHDBX datasets. The DFSVSAMP DD statement defines the DFSVSMDB member from the specified PROCLIB. The IMSLOGR and IEFRDER DD statements are dummied out. The SYSPRINT, SYSUDUMP, and IMSERR DD statements define the system print, system dump, and IMS error output datasets, respectively.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        26,
+        53
+      ],
+      "outgoing_calls": [
+        {
+          "target": "DFSRRC00",
+          "call_type": "executes",
+          "line": 26
+        },
+        {
+          "target": "OEMA.IMS.IMSP.SDFSRESL",
+          "call_type": "references",
+          "line": 28
+        },
+        {
+          "target": "OEMA.IMS.IMSP.SDFSRESL.V151",
+          "call_type": "references",
+          "line": 29
+        },
+        {
+          "target": "AWS.M2.CARDDEMO.LOADLIB",
+          "call_type": "references",
+          "line": 30
+        },
+        {
+          "target": "OEMA.IMS.IMSP.SDFSRESL",
+          "call_type": "references",
+          "line": 31
+        },
+        {
+          "target": "OEM.IMS.IMSP.PSBLIB",
+          "call_type": "references",
+          "line": 33
+        },
+        {
+          "target": "OEM.IMS.IMSP.DBDLIB",
+          "call_type": "references",
+          "line": 34
+        },
+        {
+          "target": "AWS.M2.CARDDEMO.PAUTDB.ROOT.GSAM",
+          "call_type": "references",
+          "line": 36
+        },
+        {
+          "target": "AWS.M2.CARDDEMO.PAUTDB.CHILD.GSAM",
+          "call_type": "references",
+          "line": 39
+        },
+        {
+          "target": "OEM.IMS.IMSP.PAUTHDB",
+          "call_type": "references",
+          "line": 42
+        },
+        {
+          "target": "OEM.IMS.IMSP.PAUTHDBX",
+          "call_type": "references",
+          "line": 43
+        }
+      ],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    }
+  ],
+  "error_handling": [],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "What is the exact format and content of the GSAM database being unloaded?",
+      "context": "The JCL only specifies the dataset names, but not the structure or data within them.",
+      "suggestion": "Examine the corresponding DBD and PSB definitions for the database."
+    }
+  ],
+  "resolved_questions": [],
+  "dead_code": [],
+  "call_semantics": [],
+  "flow_diagram": null
+}

@@ -1,0 +1,136 @@
+[
+  {
+    "caller": "MAIN-PARA",
+    "callee": "1000-INITIALIZE",
+    "inputs": [],
+    "outputs": [
+      "CURRENT-DATE",
+      "CURRENT-YYDDD",
+      "WS-INFIL1-STATUS",
+      "WS-INFIL2-STATUS",
+      "END-ROOT-SEG-FILE",
+      "END-CHILD-SEG-FILE"
+    ],
+    "purpose": "Initializes the program by accepting current date values and opening input files INFILE1 and INFILE2, setting status flags accordingly."
+  },
+  {
+    "caller": "MAIN-PARA",
+    "callee": "2000-READ-ROOT-SEG-FILE",
+    "inputs": [
+      "WS-INFIL1-STATUS"
+    ],
+    "outputs": [
+      "END-ROOT-SEG-FILE",
+      "PENDING-AUTH-SUMMARY"
+    ],
+    "purpose": "Reads a record from INFILE1 and moves it to the PENDING-AUTH-SUMMARY area if successful, otherwise sets END-ROOT-SEG-FILE flag on EOF."
+  },
+  {
+    "caller": "MAIN-PARA",
+    "callee": "3000-READ-CHILD-SEG-FILE",
+    "inputs": [
+      "WS-INFIL2-STATUS",
+      "ROOT-SEG-KEY",
+      "CHILD-SEG-REC"
+    ],
+    "outputs": [
+      "END-CHILD-SEG-FILE",
+      "QUAL-SSA-KEY-VALUE",
+      "PENDING-AUTH-DETAILS"
+    ],
+    "purpose": "Reads a record from INFILE2, validates ROOT-SEG-KEY, sets child segment data and qualification key for IMS insertion if successful, or sets end-of-file flag on EOF."
+  },
+  {
+    "caller": "MAIN-PARA",
+    "callee": "4000-FILE-CLOSE",
+    "inputs": [
+      "WS-INFIL1-STATUS",
+      "WS-INFIL2-STATUS"
+    ],
+    "outputs": [],
+    "purpose": "Closes both INFILE1 and INFILE2 and displays error messages if either file fails to close."
+  },
+  {
+    "caller": "1000-INITIALIZE",
+    "callee": "9999-ABEND",
+    "inputs": [
+      "WS-INFIL1-STATUS",
+      "WS-INFIL2-STATUS"
+    ],
+    "outputs": [
+      "RETURN-CODE"
+    ],
+    "purpose": "Terminates the program with a return code of 16 upon encountering a critical error during file opening in initialization."
+  },
+  {
+    "caller": "1000-INITIALIZE",
+    "callee": "9999-ABEND",
+    "inputs": [
+      "WS-INFIL1-STATUS",
+      "WS-INFIL2-STATUS"
+    ],
+    "outputs": [
+      "RETURN-CODE"
+    ],
+    "purpose": "Abends the program with return code 16 when an input file fails to open."
+  },
+  {
+    "caller": "2000-READ-ROOT-SEG-FILE",
+    "callee": "2100-INSERT-ROOT-SEG",
+    "inputs": [
+      "INFIL1-REC"
+    ],
+    "outputs": [
+      "PAUT-PCB-STATUS"
+    ],
+    "purpose": "Inserts a root segment into the IMS database using data read from INFILE1."
+  },
+  {
+    "caller": "2100-INSERT-ROOT-SEG",
+    "callee": "9999-ABEND",
+    "inputs": [
+      "PAUT-PCB-STATUS"
+    ],
+    "outputs": [
+      "RETURN-CODE"
+    ],
+    "purpose": "Abends the program if the root segment insertion fails with an unexpected IMS status code."
+  },
+  {
+    "caller": "3000-READ-CHILD-SEG-FILE",
+    "callee": "3100-INSERT-CHILD-SEG",
+    "inputs": [
+      "ROOT-SEG-KEY",
+      "CHILD-SEG-REC"
+    ],
+    "outputs": [
+      "PAUT-PCB-STATUS"
+    ],
+    "purpose": "Inserts a child segment into the IMS database after reading and qualifying with the root key from INFILE2."
+  },
+  {
+    "caller": "3100-INSERT-CHILD-SEG",
+    "callee": "3200-INSERT-IMS-CALL",
+    "inputs": [
+      "PENDING-AUTH-DETAILS"
+    ],
+    "outputs": [
+      "PAUT-PCB-STATUS"
+    ],
+    "purpose": "Performs an IMS insert call to insert a child segment after successfully retrieving the parent root segment."
+  },
+  {
+    "caller": "3100-INSERT-CHILD-SEG",
+    "callee": "9999-ABEND",
+    "inputs": [],
+    "outputs": [],
+    "purpose": "Abends the program with return code 16 when the GU call to the root segment fails."
+  },
+  {
+    "caller": "3200-INSERT-IMS-CALL",
+    "callee": "9999-ABEND",
+    "inputs": [],
+    "outputs": [],
+    "purpose": "Abends the program with return code 16 when the ISRT call for the child segment fails."
+  }
+]

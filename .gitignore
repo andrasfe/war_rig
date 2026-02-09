@@ -9,4 +9,5 @@ env/
 venv/
 output/
 logs/
+MagicMock/
 war_rig.egg-info/

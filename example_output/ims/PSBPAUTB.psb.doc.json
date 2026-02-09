@@ -1,0 +1,50 @@
+{
+  "header": {
+    "program_id": "PSBPAUTB",
+    "file_name": "PSBPAUTB.psb",
+    "file_type": "OTHER",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-02-09T15:44:06.117908",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This PSB (Program Specification Block) defines the interface between an application program and the IMS database DBPAUTP0. It specifies the database access characteristics, the segments that can be accessed, and the programming language used (COBOL).",
+    "business_context": null,
+    "program_type": "OTHER",
+    "citations": [
+      17,
+      20
+    ]
+  },
+  "inputs": [],
+  "outputs": [],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [],
+  "data_flow": {
+    "reads_from": [],
+    "writes_to": [],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [],
+  "error_handling": [],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "What is the purpose of CMPAT=YES in the PSBGEN statement?",
+      "context": "The meaning of CMPAT=YES is unclear without further context or IMS documentation.",
+      "suggestion": "Consult IMS documentation or subject matter experts to determine the compatibility implications."
+    }
+  ],
+  "resolved_questions": [],
+  "dead_code": [],
+  "call_semantics": [],
+  "flow_diagram": null
+}

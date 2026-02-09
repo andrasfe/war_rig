@@ -1,0 +1,76 @@
+{
+  "header": {
+    "program_id": "PASFLPCB",
+    "file_name": "PASFLPCB.CPY",
+    "file_type": "COPYBOOK",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-02-09T15:47:13.167614",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This copybook defines the data structure PASFLPCB, which appears to be related to IMS PCB (Program Communication Block) information. It contains fields for DBD name, segment level, PCB status, processing options, segment name, key feedback name, number of sensitive segments, and key feedback area. The structure likely facilitates communication and data access within an IMS environment.",
+    "business_context": null,
+    "program_type": "SUBROUTINE",
+    "citations": [
+      17,
+      18,
+      26
+    ]
+  },
+  "inputs": [],
+  "outputs": [],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [],
+  "data_flow": {
+    "reads_from": [],
+    "writes_to": [],
+    "transforms": []
+  },
+  "copybooks_used": [
+    {
+      "copybook_name": "PASFLPCB",
+      "purpose": "Defines the structure for IMS PCB related data.",
+      "location": "WORKING_STORAGE",
+      "citation": 17
+    }
+  ],
+  "paragraphs": [
+    {
+      "paragraph_name": "N/A",
+      "summary": null,
+      "purpose": "This copybook does not contain any paragraphs. It only defines a data structure. Therefore, there are no inputs consumed, outputs produced, business logic implemented, error handling performed, or calls made to other paragraphs or programs.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        17,
+        27
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    }
+  ],
+  "error_handling": [],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [],
+  "resolved_questions": [],
+  "dead_code": [
+    {
+      "name": "PASFLPCB",
+      "artifact_type": "record_layout",
+      "line": 1,
+      "reason": "Record layout 'PASFLPCB' is never used by any program"
+    }
+  ],
+  "call_semantics": [],
+  "flow_diagram": null
+}

@@ -1,0 +1,103 @@
+[
+  {
+    "caller": "MAIN-PARA",
+    "callee": "1000-INITIALIZE",
+    "inputs": [],
+    "outputs": [
+      "CURRENT-DATE",
+      "CURRENT-YYDDD",
+      "WS-OUTFL1-STATUS",
+      "WS-OUTFL2-STATUS"
+    ],
+    "purpose": "Initializes the program by accepting current date and opening output files."
+  },
+  {
+    "caller": "MAIN-PARA",
+    "callee": "2000-FIND-NEXT-AUTH-SUMMARY",
+    "inputs": [
+      "WS-END-OF-ROOT-SEG"
+    ],
+    "outputs": [
+      "WS-END-OF-ROOT-SEG",
+      "WS-NO-SUMRY-READ",
+      "WS-AUTH-SMRY-PROC-CNT",
+      "OPFIL1-REC",
+      "ROOT-SEG-KEY",
+      "CHILD-SEG-REC",
+      "WS-END-OF-CHILD-SEG"
+    ],
+    "purpose": "Reads the next authorization summary segment from IMS and processes its child details if available."
+  },
+  {
+    "caller": "MAIN-PARA",
+    "callee": "4000-FILE-CLOSE",
+    "inputs": [
+      "WS-OUTFL1-STATUS",
+      "WS-OUTFL2-STATUS"
+    ],
+    "outputs": [],
+    "purpose": "Closes the output files and displays error messages if closing fails."
+  },
+  {
+    "caller": "1000-INITIALIZE",
+    "callee": "9999-ABEND",
+    "inputs": [
+      "WS-OUTFL1-STATUS",
+      "WS-OUTFL2-STATUS"
+    ],
+    "outputs": [
+      "RETURN-CODE"
+    ],
+    "purpose": "Terminates the program with a return code of 16 due to a file open error."
+  },
+  {
+    "caller": "1000-INITIALIZE",
+    "callee": "9999-ABEND",
+    "inputs": [
+      "WS-OUTFL1-STATUS",
+      "WS-OUTFL2-STATUS"
+    ],
+    "outputs": [
+      "RETURN-CODE"
+    ],
+    "purpose": "Terminates the program with a return code of 16 due to a file open error."
+  },
+  {
+    "caller": "2000-FIND-NEXT-AUTH-SUMMARY",
+    "callee": "3000-FIND-NEXT-AUTH-DTL",
+    "inputs": [
+      "WS-END-OF-CHILD-SEG",
+      "PA-ACCT-ID"
+    ],
+    "outputs": [
+      "WS-END-OF-CHILD-SEG",
+      "WS-NO-SUMRY-READ",
+      "WS-AUTH-SMRY-PROC-CNT"
+    ],
+    "purpose": "Reads and processes all child segments (authorization details) for the current root segment until no more children are found."
+  },
+  {
+    "caller": "2000-FIND-NEXT-AUTH-SUMMARY",
+    "callee": "9999-ABEND",
+    "inputs": [
+      "PAUT-PCB-STATUS",
+      "PAUT-KEYFB"
+    ],
+    "outputs": [
+      "RETURN-CODE"
+    ],
+    "purpose": "Terminates the program with a return code of 16 when an unexpected IMS status code is encountered during root segment retrieval."
+  },
+  {
+    "caller": "3000-FIND-NEXT-AUTH-DTL",
+    "callee": "9999-ABEND",
+    "inputs": [
+      "PAUT-PCB-STATUS",
+      "PAUT-KEYFB"
+    ],
+    "outputs": [
+      "RETURN-CODE"
+    ],
+    "purpose": "Terminates the program with a return code of 16 when an unexpected IMS status code is encountered during child segment retrieval."
+  }
+]

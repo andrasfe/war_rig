@@ -1,0 +1,52 @@
+{
+  "header": {
+    "program_id": "PSBPAUTL",
+    "file_name": "PSBPAUTL.psb",
+    "file_type": "OTHER",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-02-09T15:47:36.203630",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This file defines the Program Specification Block (PSB) named PSBPAUTL, used for accessing the IMS database DBPAUTP0. It defines the database PCB (Program Communication Block) named PAUTLPCB, which specifies the database to be accessed (DBPAUTP0) and the processing options (PROCOPT=L, meaning load). It also defines two SENSEG statements, PAUTSUM0 and PAUTDTL1, which are sensitive segments within the database.",
+    "business_context": null,
+    "program_type": "UTILITY",
+    "citations": [
+      17,
+      20,
+      18,
+      19
+    ]
+  },
+  "inputs": [],
+  "outputs": [],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [],
+  "data_flow": {
+    "reads_from": [],
+    "writes_to": [],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [],
+  "error_handling": [],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "What is the purpose of the PAUTSUM0 and PAUTDTL1 segments?",
+      "context": "The code defines these segments as SENSEG but does not specify their purpose.",
+      "suggestion": "Examine related documentation or code that uses this PSB."
+    }
+  ],
+  "resolved_questions": [],
+  "dead_code": [],
+  "call_semantics": [],
+  "flow_diagram": null
+}
