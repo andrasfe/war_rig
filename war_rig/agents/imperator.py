@@ -771,15 +771,25 @@ class ImperatorAgent(BaseAgent[ImperatorInput, ImperatorOutput]):
         else:
             setattr(header, attr, value)
 
-    async def _call_llm(self, system_prompt: str, user_prompt: str) -> str:
+    async def _call_llm(
+        self,
+        system_prompt: str,
+        user_prompt: str,
+        fallback_model: str | None = None,
+    ) -> str:
         """Call the LLM with system and user prompts.
 
         Uses the provider interface which supports all configured providers
         (OpenRouter, Anthropic, Google, OpenAI, etc.).
 
+        If the primary model fails (e.g. stream stall, provider error) and
+        a fallback_model is configured, retries once with the fallback model
+        before raising the error.
+
         Args:
             system_prompt: The system message.
             user_prompt: The user message.
+            fallback_model: Optional model to retry with if primary fails.
 
         Returns:
             The LLM response content as string.
@@ -810,12 +820,39 @@ class ImperatorAgent(BaseAgent[ImperatorInput, ImperatorOutput]):
         if any(m in model_lower for m in ["o3", "o1-", "o1/"]):
             temperature = 1.0
 
-        response = await self._provider.complete(
-            messages=messages,
-            model=self.config.model,
-            temperature=temperature,
-        )
-        return response.content
+        try:
+            response = await self._provider.complete(
+                messages=messages,
+                model=self.config.model,
+                temperature=temperature,
+            )
+            return response.content
+        except Exception as primary_error:
+            if not fallback_model or fallback_model == self.config.model:
+                raise
+
+            logger.warning(
+                "Imperator: Primary model %s failed (%s), retrying with fallback %s",
+                self.config.model,
+                primary_error,
+                fallback_model,
+            )
+
+            # Adjust temperature for fallback model
+            fb_temperature = temperature
+            fb_model_lower = fallback_model.lower()
+            if any(m in fb_model_lower for m in ["o3", "o1-", "o1/"]):
+                fb_temperature = 1.0
+
+            response = await self._provider.complete(
+                messages=messages,
+                model=fallback_model,
+                temperature=fb_temperature,
+            )
+            logger.info(
+                "Imperator: Fallback model %s succeeded", fallback_model
+            )
+            return response.content
 
     def _summarize_template(
         self,
@@ -1740,7 +1777,10 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                 # First: holistic review
                 try:
                     response = await asyncio.wait_for(
-                        self._call_llm(system_prompt, user_prompt),
+                        self._call_llm(
+                            system_prompt, user_prompt,
+                            fallback_model=self.config.fallback_model,
+                        ),
                         timeout=600.0,  # 10 minutes for holistic review
                     )
                     response_or_error = response
@@ -1809,7 +1849,10 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                 )
             else:
                 # No output_directory, just run holistic review
-                response = await self._call_llm(system_prompt, user_prompt)
+                response = await self._call_llm(
+                    system_prompt, user_prompt,
+                    fallback_model=self.config.fallback_model,
+                )
                 review_output = self._parse_holistic_response(response, input_data)
 
             # Merge type-specific validation feedback into review output
@@ -2245,8 +2288,11 @@ Respond ONLY with valid JSON. Do not include markdown code fences."""
                 f"({total_chars:,} chars) for {self.config.model}"
             )
 
-            # Call LLM
-            response = await self._call_llm(system_prompt, user_prompt)
+            # Call LLM (with fallback for stream stalls)
+            response = await self._call_llm(
+                system_prompt, user_prompt,
+                fallback_model=self.config.fallback_model,
+            )
 
             # Parse response
             return self._parse_compact_holistic_response(response, input_data)
@@ -2428,8 +2474,11 @@ and architecture after reading your overview."""
 
             user_prompt = self._build_system_overview_prompt(input_data)
 
-            # Call LLM
-            response = await self._call_llm(system_prompt, user_prompt)
+            # Call LLM (with fallback for stream stalls)
+            response = await self._call_llm(
+                system_prompt, user_prompt,
+                fallback_model=self.config.fallback_model,
+            )
 
             # Extract executive summary (first few paragraphs after # header)
             lines = response.split("\n")
@@ -3044,8 +3093,11 @@ This creates a navigable documentation web.
 
             user_prompt = self._build_system_design_prompt(input_data, existing_content)
 
-            # Call LLM
-            response = await self._call_llm(system_prompt, user_prompt)
+            # Call LLM (with fallback for stream stalls)
+            response = await self._call_llm(
+                system_prompt, user_prompt,
+                fallback_model=self.config.fallback_model,
+            )
 
             # Strip outer code fence wrapper if the LLM wrapped its response
             # in ```markdown ... ``` (which breaks inner mermaid blocks)

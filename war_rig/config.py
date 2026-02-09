@@ -130,6 +130,10 @@ class ImperatorConfig(ModelConfig):
         default=8192,
         description="Maximum tokens for response (holistic review can be large)",
     )
+    fallback_model: str | None = Field(
+        default=None,
+        description="Fallback model to use when the primary model fails (e.g. stream stall)",
+    )
 
 
 class PreprocessingConfig(BaseModel):
@@ -342,6 +346,10 @@ class WarRigConfig(BaseSettings):
     imperator_max_completion_tokens: int = Field(
         default=8192,
         description="Maximum tokens for Imperator response (holistic review can be large)",
+    )
+    imperator_fallback_model: str | None = Field(
+        default=None,
+        description="Fallback model when Imperator primary model fails (stream stall, etc.)",
     )
 
     # Workflow limits
@@ -597,6 +605,7 @@ class WarRigConfig(BaseSettings):
             model=self.imperator_model,
             temperature=self.imperator_temperature,
             max_prompt_tokens=self.imperator_max_prompt_tokens,
+            fallback_model=self.imperator_fallback_model,
         )
 
     @property
