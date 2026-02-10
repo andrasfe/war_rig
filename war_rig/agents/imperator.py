@@ -322,6 +322,18 @@ class HolisticReviewInputCompact(BaseModel):
         description="Number of unresolved issues from previous cycles",
     )
 
+    # Knowledge graph health summary
+    knowledge_graph_summary: str | None = Field(
+        default=None,
+        description="Compact KG health summary for structural awareness",
+    )
+
+    # Structural validation findings
+    structural_findings: str | None = Field(
+        default=None,
+        description="Compact structural cross-check findings from KG validation",
+    )
+
     # Configuration
     max_cycles: int = Field(
         default=5,
@@ -497,6 +509,18 @@ class HolisticReviewInput(AgentInput):
     resolution_status: dict[str, bool] = Field(
         default_factory=dict,
         description="Mapping of ticket_id -> whether resolved",
+    )
+
+    # Knowledge graph health summary
+    knowledge_graph_summary: str | None = Field(
+        default=None,
+        description="Compact KG health summary for structural awareness",
+    )
+
+    # Structural validation findings
+    structural_findings: str | None = Field(
+        default=None,
+        description="Compact structural cross-check findings from KG validation",
     )
 
     # Configuration
@@ -1488,6 +1512,16 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                 parts.append(f"- {file}: {', '.join(flows)}")
             parts.append("")
 
+        # Knowledge graph health (if available)
+        if input_data.knowledge_graph_summary:
+            parts.append(input_data.knowledge_graph_summary)
+            parts.append("")
+
+        # Structural cross-check findings (if available)
+        if input_data.structural_findings:
+            parts.append(input_data.structural_findings)
+            parts.append("")
+
         # Quality metrics
         if input_data.per_file_confidence:
             parts.append("## Per-File Confidence")
@@ -1797,6 +1831,7 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                             existing_content=existing_content,
                             use_mock=use_mock,
                             sequence_diagrams=sequence_diagrams,
+                            cross_file_call_semantics=input_data.cross_file_call_semantics,
                         ),
                         timeout=300.0,  # 5 minutes for README
                     )
@@ -2131,6 +2166,16 @@ Respond ONLY with valid JSON. Do not include markdown code fences."""
                 f"Previous cycles: {input_data.previous_clarification_count} "
                 f"clarifications, {input_data.unresolved_issues_count} unresolved"
             )
+            parts.append("")
+
+        # Knowledge graph health (if available)
+        if input_data.knowledge_graph_summary:
+            parts.append(input_data.knowledge_graph_summary)
+            parts.append("")
+
+        # Structural cross-check findings (if available)
+        if input_data.structural_findings:
+            parts.append(input_data.structural_findings)
             parts.append("")
 
         # Task instructions
@@ -2598,6 +2643,48 @@ and architecture after reading your overview."""
             )
             return None
 
+    @staticmethod
+    def _format_call_semantics_table(
+        semantics: dict[str, dict],
+        max_rows: int = 20,
+    ) -> list[str]:
+        """Format cross-file call semantics as a compact markdown table.
+
+        Args:
+            semantics: Dict mapping ``"CALLER->CALLEE"`` to a dict with
+                ``inputs``, ``outputs``, and ``purpose`` keys.
+            max_rows: Maximum number of rows to include before truncating.
+
+        Returns:
+            List of prompt lines (header + table rows), or empty list if
+            no usable entries exist.
+        """
+        if not semantics:
+            return []
+
+        lines: list[str] = [
+            "## Cross-File Data Flow (call semantics)",
+            "",
+            "| Caller -> Callee | Inputs Passed | Outputs Received | Purpose |",
+            "|---|---|---|---|",
+        ]
+
+        items = list(semantics.items())
+        for key, val in items[:max_rows]:
+            inputs = ", ".join(val.get("inputs", [])[:5]) or "-"
+            outputs = ", ".join(val.get("outputs", [])[:5]) or "-"
+            purpose = val.get("purpose", "-") or "-"
+            # Truncate long purpose text
+            if len(purpose) > 60:
+                purpose = purpose[:57] + "..."
+            lines.append(f"| {key} | {inputs} | {outputs} | {purpose} |")
+
+        remaining = len(items) - max_rows
+        if remaining > 0:
+            lines.append(f"| ... and {remaining} more call pairs | | | |")
+
+        return lines
+
     def _extract_mermaid_from_markdown(self, markdown: str) -> str | None:
         """Extract the Mermaid diagram block from markdown content.
 
@@ -2622,6 +2709,10 @@ and architecture after reading your overview."""
         self,
         input_data: HolisticReviewInput,
         existing_content: str | None = None,
+        cross_file_call_semantics: dict[str, dict] | None = None,
+        kg_system_summary: str | None = None,
+        entry_points: list[str] | None = None,
+        call_chains: list[list[str]] | None = None,
     ) -> str:
         """Build the prompt for system design document generation.
 
@@ -2634,6 +2725,13 @@ and architecture after reading your overview."""
                 call graph, and other system information.
             existing_content: If provided, the LLM will enhance/update this
                 existing content rather than creating from scratch.
+            cross_file_call_semantics: Optional dict mapping
+                ``"CALLER->CALLEE"`` to semantics with inputs, outputs,
+                and purpose.
+            kg_system_summary: Optional pre-formatted knowledge graph
+                system summary.
+            entry_points: Optional list of system entry-point program names.
+            call_chains: Optional list of call chain lists.
 
         Returns:
             The user prompt for the LLM to generate README.md content.
@@ -2989,6 +3087,49 @@ and architecture after reading your overview."""
                     parts.append(f"- **{program}**: {', '.join(flows)}")
             parts.append("")
 
+        # Cross-file call semantics table (enrichment from call_semantics data)
+        if cross_file_call_semantics:
+            try:
+                sem_lines = self._format_call_semantics_table(
+                    cross_file_call_semantics
+                )
+                if sem_lines:
+                    parts.extend(sem_lines)
+                    parts.append("")
+            except Exception:
+                logger.debug(
+                    "Failed to format cross-file call semantics for README prompt"
+                )
+
+        # System entry points
+        if entry_points:
+            try:
+                parts.append("## System Entry Points")
+                parts.append("")
+                for ep in entry_points[:5]:
+                    parts.append(
+                        f"- {ep} (no callers - likely batch or CICS entry)"
+                    )
+                parts.append("")
+            except Exception:
+                logger.debug("Failed to format entry points for README prompt")
+
+        # Typical execution flows (call chains)
+        if call_chains:
+            try:
+                parts.append("## Typical Execution Flows")
+                parts.append("")
+                for idx, chain in enumerate(call_chains[:3], start=1):
+                    parts.append(f"{idx}. {' -> '.join(chain)}")
+                parts.append("")
+            except Exception:
+                logger.debug("Failed to format call chains for README prompt")
+
+        # Knowledge graph system summary (pre-formatted markdown)
+        if kg_system_summary:
+            parts.append(kg_system_summary)
+            parts.append("")
+
         # Include existing content if provided
         if existing_content:
             parts.append("## Existing README.md Content")
@@ -3019,6 +3160,10 @@ and architecture after reading your overview."""
         existing_content: str | None = None,
         use_mock: bool = False,
         sequence_diagrams: list[str] | None = None,
+        cross_file_call_semantics: dict[str, dict] | None = None,
+        kg_system_summary: str | None = None,
+        entry_points: list[str] | None = None,
+        call_chains: list[list[str]] | None = None,
     ) -> SystemDesignOutput:
         """Generate a README.md document from batch documentation.
 
@@ -3034,6 +3179,15 @@ and architecture after reading your overview."""
             use_mock: If True, return mock output without calling the LLM.
             sequence_diagrams: Optional list of mermaid sequence diagram strings
                 from citadel to append as a Flows section.
+            cross_file_call_semantics: Optional dict mapping
+                ``"CALLER->CALLEE"`` to semantics with inputs, outputs,
+                and purpose.  Injected as a compact table into the prompt.
+            kg_system_summary: Optional pre-formatted knowledge graph
+                system summary (from ``KnowledgeGraphManager.get_system_summary``).
+            entry_points: Optional list of program names that have no
+                callers (likely batch or CICS entry points).
+            call_chains: Optional list of call chain lists representing
+                typical execution flows through the system.
 
         Returns:
             SystemDesignOutput with the generated markdown and any identified
@@ -3091,7 +3245,14 @@ This creates a navigable documentation web.
 - Mark uncertainties with inline questions using the format: ❓ QUESTION: [your question]
 - Be explicit about assumptions and information gaps"""
 
-            user_prompt = self._build_system_design_prompt(input_data, existing_content)
+            user_prompt = self._build_system_design_prompt(
+                input_data,
+                existing_content,
+                cross_file_call_semantics=cross_file_call_semantics,
+                kg_system_summary=kg_system_summary,
+                entry_points=entry_points,
+                call_chains=call_chains,
+            )
 
             # Call LLM (with fallback for stream stalls)
             response = await self._call_llm(

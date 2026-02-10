@@ -286,6 +286,56 @@ class GraphQueryHelper:
         )
         return delta.change_rate < threshold
 
+    async def get_entity_breakdown(self) -> dict[str, int]:
+        """Count entities by type.
+
+        Groups all entities in the graph by their EntityType and returns
+        the count for each type.
+
+        Returns:
+            Dict mapping entity type name to count,
+            e.g. {'PROGRAM': 15, 'DATASET': 12}.
+        """
+        entities = await self._store.get_all_entities()
+        breakdown: dict[str, int] = {}
+        for entity in entities:
+            type_name = entity.entity_type.value
+            breakdown[type_name] = breakdown.get(type_name, 0) + 1
+        return breakdown
+
+    async def get_confirmation_stats(self) -> dict[str, float | int]:
+        """Get triple confirmation statistics.
+
+        Computes the confirmation rate and average corroboration count
+        across all triples in the graph.
+
+        Returns:
+            Dict with keys:
+            - confirmed_count: Number of confirmed triples.
+            - total: Total number of triples.
+            - confirmation_rate: Fraction confirmed (0.0 to 1.0).
+            - avg_corroboration: Mean corroboration count across all triples.
+        """
+        all_triples = await self._store.get_all_triples()
+        total = len(all_triples)
+        if total == 0:
+            return {
+                "confirmed_count": 0,
+                "total": 0,
+                "confirmation_rate": 0.0,
+                "avg_corroboration": 0.0,
+            }
+
+        confirmed_count = sum(1 for t in all_triples if t.confirmed)
+        avg_corroboration = sum(t.corroboration_count for t in all_triples) / total
+
+        return {
+            "confirmed_count": confirmed_count,
+            "total": total,
+            "confirmation_rate": confirmed_count / total,
+            "avg_corroboration": round(avg_corroboration, 1),
+        }
+
     async def get_unconfirmed_triples(self) -> list[Triple]:
         """Get all unconfirmed triples for manual review.
 

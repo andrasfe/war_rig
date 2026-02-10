@@ -1417,7 +1417,7 @@ class TicketOrchestrator:
         # Note: Compact review does NOT generate README.md - that requires full review
         if self.config.use_compact_holistic_review:
             logger.info("Using compact holistic review (Tier 1) for reduced token usage")
-            compact_input = self._build_compact_review_input()
+            compact_input = await self._build_compact_review_input()
 
             if not compact_input.file_summaries:
                 logger.warning("No completed documentation to review")
@@ -1452,7 +1452,7 @@ class TicketOrchestrator:
 
         # Full review with README.md generation (fallback or when compact disabled)
         # Build review input from completed documentation
-        review_input = self._build_holistic_review_input()
+        review_input = await self._build_holistic_review_input()
 
         if not review_input.file_documentation:
             logger.warning("No completed documentation to review")
@@ -1481,6 +1481,53 @@ class TicketOrchestrator:
                 decision=ImperatorHolisticDecision.NEEDS_CLARIFICATION,
             )
 
+    async def _gather_readme_enrichment_data(
+        self,
+    ) -> tuple[
+        dict[str, dict] | None,
+        str | None,
+        list[str] | None,
+        list[list[str]] | None,
+    ]:
+        """Gather optional enrichment data for README generation.
+
+        Collects cross-file call semantics, KG system summary, entry
+        points, and call chains.  Each source is individually wrapped in
+        try/except so failures never block README generation.
+
+        Returns:
+            Tuple of (cross_file_semantics, kg_system_summary,
+            entry_points, call_chains).  Any element may be None.
+        """
+        # Cross-file call semantics
+        cross_file_semantics = self._aggregate_call_semantics()
+
+        # KG system summary
+        kg_system_summary: str | None = None
+        if self._kg_manager and self._kg_manager.enabled:
+            try:
+                kg_system_summary = await self._kg_manager.get_system_summary()
+                kg_system_summary = kg_system_summary or None
+            except Exception as e:
+                logger.warning("Failed to get KG system summary: %s", e)
+
+        # Entry points and call chains from CallGraphAnalysis
+        entry_points: list[str] | None = None
+        call_chains: list[list[str]] | None = None
+        if self._state.call_graph_analysis is not None:
+            try:
+                cga = self._state.call_graph_analysis
+                if cga.entry_points:
+                    entry_points = sorted(cga.entry_points)
+                if cga.call_chains:
+                    call_chains = cga.call_chains[:5]
+            except Exception as e:
+                logger.warning(
+                    "Failed to extract entry points / call chains: %s", e
+                )
+
+        return cross_file_semantics, kg_system_summary, entry_points, call_chains
+
     async def _generate_readme_after_compact_review(self) -> None:
         """Generate README.md after compact holistic review succeeds.
 
@@ -1491,18 +1538,30 @@ class TicketOrchestrator:
         logger.info("Generating README.md after compact review approval")
 
         # Build full review input for README generation
-        review_input = self._build_holistic_review_input()
+        review_input = await self._build_holistic_review_input()
 
         if not review_input.file_documentation:
             raise RuntimeError(
                 "README generation failed: no documentation available"
             )
 
+        # Gather enrichment data for README
+        (
+            cross_file_semantics,
+            kg_system_summary,
+            entry_points,
+            call_chains,
+        ) = await self._gather_readme_enrichment_data()
+
         # Generate system design document (README.md)
         design_output = await self.imperator.generate_system_design(
             review_input,
             use_mock=self.use_mock,
             sequence_diagrams=self._state.sequence_diagrams,
+            cross_file_call_semantics=cross_file_semantics,
+            kg_system_summary=kg_system_summary,
+            entry_points=entry_points,
+            call_chains=call_chains,
         )
 
         if not design_output.success or not design_output.markdown:
@@ -1531,18 +1590,30 @@ class TicketOrchestrator:
         logger.info("Generating final README.md")
 
         # Build review input for README generation
-        review_input = self._build_holistic_review_input()
+        review_input = await self._build_holistic_review_input()
 
         if not review_input.file_documentation:
             raise RuntimeError(
                 "README generation failed: no documentation available"
             )
 
+        # Gather enrichment data for README
+        (
+            cross_file_semantics,
+            kg_system_summary,
+            entry_points,
+            call_chains,
+        ) = await self._gather_readme_enrichment_data()
+
         # Generate system design document (README.md)
         design_output = await self.imperator.generate_system_design(
             review_input,
             use_mock=self.use_mock,
             sequence_diagrams=self._state.sequence_diagrams,
+            cross_file_call_semantics=cross_file_semantics,
+            kg_system_summary=kg_system_summary,
+            entry_points=entry_points,
+            call_chains=call_chains,
         )
 
         if not design_output.success or not design_output.markdown:
@@ -1553,7 +1624,7 @@ class TicketOrchestrator:
         readme_path.write_text(design_output.markdown, encoding="utf-8")
         logger.info(f"Generated README.md at {readme_path}")
 
-    def _build_holistic_review_input(self) -> HolisticReviewInput:
+    async def _build_holistic_review_input(self) -> HolisticReviewInput:
         """Build input for Imperator holistic review.
 
         Collects all completed documentation, assessments, and cross-file
@@ -1608,6 +1679,35 @@ class TicketOrchestrator:
         # Aggregate call semantics from completed documentation
         cross_file_semantics = self._aggregate_call_semantics()
 
+        # Get KG summary for Imperator
+        kg_summary = (
+            await self._kg_manager.get_imperator_summary(
+                current_pass=f"pass_{self._state.cycle}"
+            )
+            if self._kg_manager
+            else ""
+        )
+
+        # Run structural validation against KG
+        structural_findings_text = ""
+        if self._kg_manager and self._kg_manager.enabled:
+            try:
+                from war_rig.validation.structural_validator import StructuralValidator
+
+                validator = StructuralValidator(self._kg_manager)
+                documented_programs = [doc.program_id for doc in file_docs]
+                findings = await validator.validate(
+                    documented_programs=documented_programs,
+                    call_graph=call_graph,
+                    cross_file_call_semantics=cross_file_semantics,
+                )
+                structural_findings_text = validator.format_findings(findings)
+            except Exception:
+                logger.warning(
+                    "Structural validation failed, continuing without findings",
+                    exc_info=True,
+                )
+
         return HolisticReviewInput(
             batch_id=self._state.batch_id,
             cycle=self._state.cycle,
@@ -1627,9 +1727,11 @@ class TicketOrchestrator:
             resolution_status={},
             max_cycles=self.config.pm_max_cycles,
             cross_file_call_semantics=cross_file_semantics,
+            knowledge_graph_summary=kg_summary or None,
+            structural_findings=structural_findings_text or None,
         )
 
-    def _build_compact_review_input(self) -> HolisticReviewInputCompact:
+    async def _build_compact_review_input(self) -> HolisticReviewInputCompact:
         """Build compact input for Imperator holistic review (Tier 1).
 
         Uses FileDocumentationSummary instead of full templates and Citadel
@@ -1762,6 +1864,34 @@ class TicketOrchestrator:
             tickets = self.beads_client.get_tickets_by_state(state)
             unresolved_issues_count += len(tickets)
 
+        # Get KG summary for Imperator
+        kg_summary = (
+            await self._kg_manager.get_imperator_summary(
+                current_pass=f"pass_{self._state.cycle}"
+            )
+            if self._kg_manager
+            else ""
+        )
+
+        # Run structural validation against KG
+        structural_findings_text = ""
+        if self._kg_manager and self._kg_manager.enabled:
+            try:
+                from war_rig.validation.structural_validator import StructuralValidator
+
+                validator = StructuralValidator(self._kg_manager)
+                documented_programs = [s.program_id for s in file_summaries]
+                findings = await validator.validate(
+                    documented_programs=documented_programs,
+                    call_graph=call_graph,
+                )
+                structural_findings_text = validator.format_findings(findings)
+            except Exception:
+                logger.warning(
+                    "Structural validation failed, continuing without findings",
+                    exc_info=True,
+                )
+
         return HolisticReviewInputCompact(
             batch_id=self._state.batch_id,
             cycle=self._state.cycle,
@@ -1773,6 +1903,8 @@ class TicketOrchestrator:
             previous_clarification_count=previous_clarification_count,
             unresolved_issues_count=unresolved_issues_count,
             max_cycles=self.config.pm_max_cycles,
+            knowledge_graph_summary=kg_summary or None,
+            structural_findings=structural_findings_text or None,
         )
 
     def _build_cross_file_analysis(
