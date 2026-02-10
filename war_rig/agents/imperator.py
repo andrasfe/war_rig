@@ -1604,21 +1604,20 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                     decision = ImperatorHolisticDecision.FORCED_COMPLETE
 
             # Parse file feedback (Chrome tickets per file)
-            # Build set of valid file names from input documentation
+            # Build lookups for normalizing LLM file references.
+            # The LLM may use program_id ("PAUDBUNL"), basename ("PAUDBUNL.CBL"),
+            # or full path ("cbl/PAUDBUNL.CBL") as keys in file_feedback.
             valid_file_names = {doc.file_name for doc in input_data.file_documentation}
-            # Build basename→full path lookup for normalizing LLM output
-            # The LLM may output bare filenames (e.g., "PROG.cbl") instead of
-            # relative paths (e.g., "cbl/PROG.cbl"). This maps basenames to
-            # their full relative paths so we can correct them.
             basename_to_full: dict[str, str] = {}
-            for vfn in valid_file_names:
-                basename = Path(vfn).name
-                # Only use unambiguous mappings (if multiple files share a
-                # basename, we can't resolve and must skip)
+            program_id_to_full: dict[str, str] = {}
+            for doc in input_data.file_documentation:
+                basename = Path(doc.file_name).name
                 if basename in basename_to_full:
                     basename_to_full[basename] = ""  # Mark ambiguous
                 else:
-                    basename_to_full[basename] = vfn
+                    basename_to_full[basename] = doc.file_name
+                if doc.program_id not in program_id_to_full:
+                    program_id_to_full[doc.program_id] = doc.file_name
 
             def _normalize_file_name(name: str) -> str | None:
                 """Normalize an LLM-provided file name to a valid relative path.
@@ -1627,9 +1626,13 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                 """
                 if name in valid_file_names:
                     return name
+                # Try program_id lookup
+                resolved = program_id_to_full.get(name)
+                if resolved:
+                    return resolved
+                # Try basename lookup
                 resolved = basename_to_full.get(name, "")
                 if resolved:
-                    logger.debug(f"Normalized LLM file name '{name}' -> '{resolved}'")
                     return resolved
                 return None
 
@@ -2221,17 +2224,42 @@ Respond ONLY with valid JSON. Do not include markdown code fences."""
                 if decision == ImperatorHolisticDecision.NEEDS_CLARIFICATION:
                     decision = ImperatorHolisticDecision.FORCED_COMPLETE
 
-            # Build set of valid file names from input summaries
+            # Build lookups for normalizing LLM file references.
+            # The LLM may use program_id ("PAUDBUNL"), basename ("PAUDBUNL.CBL"),
+            # or full path ("cbl/PAUDBUNL.CBL") as keys in file_feedback.
             valid_file_names = {s.file_name for s in input_data.file_summaries}
+            basename_to_file: dict[str, str] = {}
+            program_id_to_file: dict[str, str] = {}
+            for s in input_data.file_summaries:
+                basename = Path(s.file_name).name
+                if basename in basename_to_file:
+                    basename_to_file[basename] = ""  # ambiguous
+                else:
+                    basename_to_file[basename] = s.file_name
+                if s.program_id not in program_id_to_file:
+                    program_id_to_file[s.program_id] = s.file_name
+
+            def _resolve_file_name(name: str) -> str | None:
+                if name in valid_file_names:
+                    return name
+                # Try program_id lookup
+                resolved = program_id_to_file.get(name)
+                if resolved:
+                    return resolved
+                # Try basename lookup
+                resolved = basename_to_file.get(name, "")
+                if resolved:
+                    return resolved
+                return None
 
             # Parse file feedback
             file_feedback: dict[str, list[ChromeTicket]] = {}
             if "file_feedback" in data and isinstance(data["file_feedback"], dict):
-                for file_name, issues in data["file_feedback"].items():
-                    # Validate file name
-                    if file_name not in valid_file_names:
+                for raw_name, issues in data["file_feedback"].items():
+                    file_name = _resolve_file_name(raw_name)
+                    if not file_name:
                         logger.warning(
-                            f"Skipping feedback for unknown file: {file_name}"
+                            "Skipping feedback for unknown file: %s", raw_name
                         )
                         continue
 
