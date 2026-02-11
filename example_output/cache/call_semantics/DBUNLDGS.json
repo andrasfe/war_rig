@@ -7,28 +7,28 @@
       "CURRENT-DATE",
       "CURRENT-YYDDD"
     ],
-    "purpose": "Initializes system date and displays program startup information."
+    "purpose": "Initializes the program by accepting current date and day from system and displaying startup information."
   },
   {
     "caller": "MAIN-PARA",
     "callee": "2000-FIND-NEXT-AUTH-SUMMARY",
     "inputs": [],
     "outputs": [
+      "WS-END-OF-ROOT-SEG",
       "WS-NO-SUMRY-READ",
       "WS-AUTH-SMRY-PROC-CNT",
       "OPFIL1-REC",
       "ROOT-SEG-KEY",
-      "CHILD-SEG-REC",
-      "WS-END-OF-ROOT-SEG"
+      "CHILD-SEG-REC"
     ],
-    "purpose": "Reads the next authorization summary from IMS and processes it if found, setting end-of-segment flag when done."
+    "purpose": "Reads the next root segment (authorization summary) from IMS database and processes it if found, setting end-of-segment flag when done."
   },
   {
     "caller": "MAIN-PARA",
     "callee": "4000-FILE-CLOSE",
     "inputs": [],
     "outputs": [],
-    "purpose": "Displays a message indicating the file is being closed."
+    "purpose": "Displays a message indicating that the file closing process is starting."
   },
   {
     "caller": "2000-FIND-NEXT-AUTH-SUMMARY",
@@ -37,26 +37,26 @@
       "PENDING-AUTH-SUMMARY"
     ],
     "outputs": [],
-    "purpose": "Inserts the parent authorization summary segment into the GSAM database and abends if the insertion fails."
+    "purpose": "Inserts the parent authorization summary segment into the GSAM database using IMS call and abends if the insertion fails."
   },
   {
     "caller": "2000-FIND-NEXT-AUTH-SUMMARY",
     "callee": "3000-FIND-NEXT-AUTH-DTL",
     "inputs": [],
     "outputs": [
+      "WS-END-OF-CHILD-SEG",
       "WS-NO-SUMRY-READ",
       "WS-AUTH-SMRY-PROC-CNT",
-      "CHILD-SEG-REC",
-      "WS-END-OF-CHILD-SEG"
+      "CHILD-SEG-REC"
     ],
-    "purpose": "Retrieves the next authorization detail child segment from IMS and updates processing counters and records until no more children are found."
+    "purpose": "Retrieves the next child segment (authorization detail) from IMS database and updates processing counters, marking end of child segments when no more are found."
   },
   {
     "caller": "2000-FIND-NEXT-AUTH-SUMMARY",
     "callee": "9999-ABEND",
     "inputs": [],
     "outputs": [],
-    "purpose": "Abends the program with return code 16 when the IMS GN call fails for the root segment."
+    "purpose": "Terminates the program with return code 16 when an IMS call fails in the authorization summary processing."
   },
   {
     "caller": "3000-FIND-NEXT-AUTH-DTL",
@@ -64,30 +64,28 @@
     "inputs": [
       "PENDING-AUTH-DETAILS"
     ],
-    "outputs": [
-      "CHILD-SEG-REC"
-    ],
-    "purpose": "Inserts the retrieved child segment data into a GSAM file after successfully reading an IMS child segment."
+    "outputs": [],
+    "purpose": "Writes the retrieved authorization detail record to a GSAM output file using IMS ISRT call."
   },
   {
     "caller": "3000-FIND-NEXT-AUTH-DTL",
     "callee": "9999-ABEND",
     "inputs": [],
     "outputs": [],
-    "purpose": "Abends the program with return code 16 when the IMS GNP call fails for the child segment."
+    "purpose": "Terminates the program with return code 16 when the IMS GNP call for reading the next authorization detail fails."
   },
   {
     "caller": "3100-INSERT-PARENT-SEG-GSAM",
     "callee": "9999-ABEND",
     "inputs": [],
     "outputs": [],
-    "purpose": "Abends the program with return code 16 when the GSAM insert for the parent segment fails."
+    "purpose": "Terminates the program with return code 16 if the IMS ISRT call to insert a parent segment into GSAM fails."
   },
   {
     "caller": "3200-INSERT-CHILD-SEG-GSAM",
     "callee": "9999-ABEND",
     "inputs": [],
     "outputs": [],
-    "purpose": "Abends the program with return code 16 when the GSAM insert for the child segment fails."
+    "purpose": "Terminates the program with return code 16 if the IMS ISRT call to insert a child segment into GSAM fails."
   }
 ]

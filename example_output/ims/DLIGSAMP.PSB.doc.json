@@ -4,12 +4,12 @@
     "file_name": "DLIGSAMP.PSB",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-09T15:47:53.369984",
+    "analyzed_at": "2026-02-10T17:20:43.837762",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This PSB (Program Specification Block) defines the database access and processing options for an IMS (Information Management System) application. It specifies the PCBs (Program Communication Blocks) required for database interaction, including DB PCBs for accessing database segments and GSAM PCBs for accessing sequential datasets. The PSBGEN macro generates the PSB.",
+    "summary": "This PSB (Program Specification Block) defines the database access characteristics for an IMS (Information Management System) application program. It specifies the PCBs (Program Communication Blocks) that the program will use to interact with databases and GSAM (Generalized Sequential Access Method) files, defining segment names, parent-child relationships, and processing options.",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
@@ -18,35 +18,7 @@
       23
     ]
   },
-  "inputs": [
-    {
-      "name": "DBPAUTP0",
-      "io_type": "IMS_SEGMENT",
-      "description": "Database described by DBD DBPAUTP0, accessed via a DB PCB.",
-      "copybook": null,
-      "citation": [
-        18
-      ]
-    },
-    {
-      "name": "PASFLDBD",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "Sequential dataset described by DBD PASFLDBD, accessed via a GSAM PCB.",
-      "copybook": null,
-      "citation": [
-        21
-      ]
-    },
-    {
-      "name": "PADFLDBD",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "Sequential dataset described by DBD PADFLDBD, accessed via a GSAM PCB.",
-      "copybook": null,
-      "citation": [
-        22
-      ]
-    }
-  ],
+  "inputs": [],
   "outputs": [],
   "called_programs": [],
   "calling_context": {
@@ -61,37 +33,15 @@
     "transforms": []
   },
   "copybooks_used": [],
-  "paragraphs": [
-    {
-      "paragraph_name": "PSBGEN",
-      "summary": null,
-      "purpose": "The PSBGEN statement generates the Program Specification Block (PSB) for the IMS application. It specifies the programming language as COBOL and assigns the name DLIGSAMP to the PSB. The CMPAT=NO parameter indicates that compatibility checking with previous PSB versions is disabled. The PSBGEN macro is the final step in defining the PSB, creating a load module that IMS uses to manage database access for the application program. The PSBGEN statement does not directly process data or implement business logic but rather defines the structure and access methods for data used by the application. It consumes the definitions of PCBs and SENSEGs to create the PSB. The PSBGEN statement does not handle errors directly, but errors in the PCB or SENSEG definitions will cause the PSBGEN process to fail. This paragraph does not call any other paragraphs or programs; it is a declarative statement.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        23,
-        23
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    }
-  ],
+  "paragraphs": [],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the purpose of the PAUTBPCB PCB definition?",
-      "context": "The purpose is not clear from the provided code snippet.",
-      "suggestion": "Review the DBD (Database Description) named DBPAUTP0 to understand the structure and purpose of the database it defines."
-    },
-    {
-      "question": "What is the purpose of the SENSEG definitions?",
-      "context": "The purpose is not clear from the provided code snippet.",
-      "suggestion": "Review the DBD (Database Description) named DBPAUTP0 to understand the structure and purpose of the segments they define."
+      "question": "What specific application program uses this PSB?",
+      "context": "The PSBGEN statement defines the PSB name, but not the application program that uses it.",
+      "suggestion": "Review application program source code or IMS system documentation to identify the program associated with this PSB."
     }
   ],
   "resolved_questions": [],

@@ -4,16 +4,18 @@
     "file_name": "PSBPAUTB.psb",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-09T15:44:06.117908",
+    "analyzed_at": "2026-02-10T17:20:38.977321",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This PSB (Program Specification Block) defines the interface between an application program and the IMS database DBPAUTP0. It specifies the database access characteristics, the segments that can be accessed, and the programming language used (COBOL).",
+    "summary": "This file defines a Program Specification Block (PSB) named PSBPAUTB for an IMS database application. It specifies the database (DBPAUTP0), the segments (PAUTSUM0, PAUTDTL1), and the processing options. It also indicates that the PSB is designed to be used with COBOL.",
     "business_context": null,
     "program_type": "OTHER",
     "citations": [
       17,
+      18,
+      19,
       20
     ]
   },
@@ -36,13 +38,7 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
-    {
-      "question": "What is the purpose of CMPAT=YES in the PSBGEN statement?",
-      "context": "The meaning of CMPAT=YES is unclear without further context or IMS documentation.",
-      "suggestion": "Consult IMS documentation or subject matter experts to determine the compatibility implications."
-    }
-  ],
+  "open_questions": [],
   "resolved_questions": [],
   "dead_code": [],
   "call_semantics": [],

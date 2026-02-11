@@ -4,14 +4,14 @@
     "file_name": "CCPAUERY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-09T15:47:17.124393",
+    "analyzed_at": "2026-02-10T17:20:17.563466",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the structure of an error log record, used for logging errors and warnings within an application. It includes fields for date, time, application name, program name, location, error level, subsystem, error codes, message, and event key.",
+    "summary": "This copybook defines the structure of an error log record, including fields for date, time, application, program, location, error level, subsystem, error codes, message, and event key. It is intended for logging errors and warnings within an application.",
     "business_context": null,
-    "program_type": "SUBROUTINE",
+    "program_type": "COPYBOOK",
     "citations": [
       19,
       39

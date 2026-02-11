@@ -2,11 +2,11 @@
 
 **File**: `cpy-bms/COPAU01.cpy`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-02-09 15:48:13.695809
+**Analyzed**: 2026-02-10 17:20:55.005205
 
 ## Purpose
 
-This copybook defines the input and output data structures, COPAU1AI and COPAU1AO, used for a CICS BMS map. It contains fields related to transaction details, authorization information, merchant details, and error messages. The copybook includes definitions for both input/output fields (suffixed with 'I') and display attributes (suffixed with 'C', 'P', 'H', 'V', 'O').
+This copybook defines the input and output data structures, COPAU1AI and COPAU1AO, used for CICS BMS map processing. It includes fields for transaction details, titles, dates, times, card numbers, authorization details, merchant information, and error messages. The copybook uses filler fields and redefines to structure the data for screen display.
 
 **Business Context**: UNKNOWN
 
@@ -14,13 +14,13 @@ This copybook defines the input and output data structures, COPAU1AI and COPAU1A
 
 | Name | Type | Description |
 |------|------|-------------|
-| COPAU1AI | IOType.CICS_MAP | Input data structure for the CICS BMS map, containing fields for transaction name, titles, date, time, card number, authorization details, merchant information, and error messages. |
+| COPAU1AI | IOType.CICS_MAP | Input data structure for the CICS BMS map, containing fields to receive data from the screen. |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| COPAU1AO | IOType.CICS_MAP | Output data structure for the CICS BMS map, redefining COPAU1AI and containing display attributes (color, protection, highlighting, validation) for the input fields. |
+| COPAU1AO | IOType.CICS_MAP | Output data structure for the CICS BMS map, containing fields to send data to the screen. |
 
 ## Paragraphs/Procedures
 

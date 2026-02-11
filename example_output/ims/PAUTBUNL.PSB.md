@@ -2,13 +2,13 @@
 
 **File**: `ims/PAUTBUNL.PSB`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-02-09 15:47:42.454810
+**Analyzed**: 2026-02-10 17:16:33.408481
 
 ## Purpose
 
-This PSB (Program Specification Block) defines the database access characteristics for a COBOL program. It specifies the database (DBPAUTP0), the processing options (GOTP), key length, and the segments (PAUTSUM0, PAUTDTL1) that the program will access within that database. The PSB is named PAUTBUNL and is designed to be compatible with COBOL.
+This file defines a Program Specification Block (PSB) named PAUTBUNL for an IMS database application. It specifies the database characteristics, segment hierarchy, and processing options for accessing the DBPAUTP0 database. The PSB is configured for COBOL language and indicates compatibility settings.
 
 ## Open Questions
 
-- ? What is the specific purpose of this PSB within the broader application?
-  - Context: The PSB definition provides technical details but lacks context on how it's used in the application.
+- ? What is the specific purpose of the PAUTBUNL PSB within the broader IMS application?
+  - Context: The PSB definition provides structural information but lacks context on its usage.

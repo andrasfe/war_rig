@@ -2,13 +2,8 @@
 
 **File**: `ims/PASFLDBD.DBD`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-02-09 15:48:33.893267
+**Analyzed**: 2026-02-10 17:21:35.402317
 
 ## Purpose
 
-This file defines an IMS Database Description (DBD) named PASFLDBD. It specifies the database characteristics, including access method (GSAM, BSAM), dataset names (PASFILIP, PASFILOP), record length (100), and record format (F).
-
-## Open Questions
-
-- ? What is the purpose of this specific GSAM/BSAM database?
-  - Context: The DBD defines the database characteristics, but the business purpose is not evident from the code.
+This file defines a Database Description (DBD) for an IMS database named PASFLDBD. It specifies the database access method as GSAM and BSAM, defines dataset names, and record characteristics.

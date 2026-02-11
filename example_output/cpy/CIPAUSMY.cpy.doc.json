@@ -4,18 +4,18 @@
     "file_name": "CIPAUSMY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-09T15:46:56.140059",
+    "analyzed_at": "2026-02-10T17:19:42.187356",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the structure of the IMS segment for pending authorization summary data. It includes fields for account ID, customer ID, authorization status, account statuses (occurs 5 times), credit and cash limits and balances, and counts and amounts for approved and declined authorizations. The copybook is used to map the layout of the data within the IMS database.",
-    "business_context": null,
-    "program_type": "OTHER",
+    "summary": "This copybook defines the data structure for the IMS segment related to pending authorization summary information. It includes fields for account ID, customer ID, authorization status, account status, credit and cash limits/balances, and authorization counts/amounts. The copybook is used to represent the layout of data exchanged with an IMS database.",
+    "business_context": "UNKNOWN",
+    "program_type": "COPYBOOK",
     "citations": [
       2,
       19,
-      22
+      30
     ]
   },
   "inputs": [],
@@ -115,9 +115,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What programs use this copybook?",
-      "context": "The copybook defines an IMS segment, but the programs that read or write to this segment are unknown.",
-      "suggestion": "Review program xref reports to identify programs that include this copybook."
+      "question": "What is the business context for this IMS segment?",
+      "context": "The code does not provide information about the specific application or business process that uses this segment.",
+      "suggestion": "Consult the application documentation or developers to understand the purpose of this segment within the overall system."
     }
   ],
   "resolved_questions": [],

@@ -4,15 +4,16 @@
     "file_name": "DBPAUTX0.dbd",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-09T15:43:46.251356",
+    "analyzed_at": "2026-02-10T17:20:33.030295",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This file defines the Database Description (DBD) for DBPAUTX0, an IMS database. It specifies the database structure, including the segment PAUTINDX, its fields, and its relationship to another database, DBPAUTP0, via a logical child relationship.",
+    "summary": "This file defines the Database Description (DBD) for DBPAUTX0, an IMS database. It specifies the database structure, including the index segment (PAUTINDX), its fields, and its relationship to a logical child segment (PAUTSUM0) in database DBPAUTP0. The DBD uses VSAM access and includes a dataset group definition.",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
+      17,
       18,
       27,
       30

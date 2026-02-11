@@ -2,13 +2,8 @@
 
 **File**: `ims/PSBPAUTB.psb`
 **Type**: OTHER
-**Analyzed**: 2026-02-09 15:44:06.117908
+**Analyzed**: 2026-02-10 17:20:38.977321
 
 ## Purpose
 
-This PSB (Program Specification Block) defines the interface between an application program and the IMS database DBPAUTP0. It specifies the database access characteristics, the segments that can be accessed, and the programming language used (COBOL).
-
-## Open Questions
-
-- ? What is the purpose of CMPAT=YES in the PSBGEN statement?
-  - Context: The meaning of CMPAT=YES is unclear without further context or IMS documentation.
+This file defines a Program Specification Block (PSB) named PSBPAUTB for an IMS database application. It specifies the database (DBPAUTP0), the segments (PAUTSUM0, PAUTDTL1), and the processing options. It also indicates that the PSB is designed to be used with COBOL.

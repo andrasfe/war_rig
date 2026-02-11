@@ -7,26 +7,24 @@
       "CURRENT-DATE",
       "CURRENT-YYDDD",
       "WS-OUTFL1-STATUS",
-      "WS-OUTFL2-STATUS"
+      "WS-OUTFL2-STATUS",
+      "WS-END-OF-ROOT-SEG"
     ],
-    "purpose": "Initializes the program by accepting current date and opening output files."
+    "purpose": "Initializes the program by setting current date values and opening output files OPFILE1 and OPFILE2, with error handling for file open failures."
   },
   {
     "caller": "MAIN-PARA",
     "callee": "2000-FIND-NEXT-AUTH-SUMMARY",
-    "inputs": [
-      "WS-END-OF-ROOT-SEG"
-    ],
+    "inputs": [],
     "outputs": [
-      "WS-END-OF-ROOT-SEG",
       "WS-NO-SUMRY-READ",
       "WS-AUTH-SMRY-PROC-CNT",
       "OPFIL1-REC",
       "ROOT-SEG-KEY",
-      "CHILD-SEG-REC",
-      "WS-END-OF-CHILD-SEG"
+      "WS-END-OF-ROOT-SEG",
+      "CHILD-SEG-REC"
     ],
-    "purpose": "Reads the next authorization summary segment from IMS and processes its child details if available."
+    "purpose": "Reads the next authorization summary segment from IMS using a GU call, updates counters, writes to output file, and triggers detail processing if successful."
   },
   {
     "caller": "MAIN-PARA",
@@ -36,45 +34,40 @@
       "WS-OUTFL2-STATUS"
     ],
     "outputs": [],
-    "purpose": "Closes the output files and displays error messages if closing fails."
+    "purpose": "Closes the output files OPFILE1 and OPFILE2 and displays error messages if the close operation fails based on file status codes."
   },
   {
     "caller": "1000-INITIALIZE",
     "callee": "9999-ABEND",
     "inputs": [
-      "WS-OUTFL1-STATUS",
-      "WS-OUTFL2-STATUS"
+      "WS-OUTFL1-STATUS"
     ],
-    "outputs": [
-      "RETURN-CODE"
-    ],
-    "purpose": "Terminates the program with a return code of 16 due to a file open error."
+    "outputs": [],
+    "purpose": "Terminates the program with return code 16 if an error occurs during the opening of OPFILE1."
   },
   {
     "caller": "1000-INITIALIZE",
     "callee": "9999-ABEND",
     "inputs": [
-      "WS-OUTFL1-STATUS",
       "WS-OUTFL2-STATUS"
     ],
-    "outputs": [
-      "RETURN-CODE"
-    ],
-    "purpose": "Terminates the program with a return code of 16 due to a file open error."
+    "outputs": [],
+    "purpose": "Terminates the program with return code 16 if an error occurs during the opening of OPFILE2."
   },
   {
     "caller": "2000-FIND-NEXT-AUTH-SUMMARY",
     "callee": "3000-FIND-NEXT-AUTH-DTL",
     "inputs": [
-      "WS-END-OF-CHILD-SEG",
-      "PA-ACCT-ID"
+      "PA-ACCT-ID",
+      "WS-END-OF-CHILD-SEG"
     ],
     "outputs": [
       "WS-END-OF-CHILD-SEG",
       "WS-NO-SUMRY-READ",
-      "WS-AUTH-SMRY-PROC-CNT"
+      "WS-AUTH-SMRY-PROC-CNT",
+      "CHILD-SEG-REC"
     ],
-    "purpose": "Reads and processes all child segments (authorization details) for the current root segment until no more children are found."
+    "purpose": "Reads and processes child segments (authorization details) for the current root segment until no more child segments are found."
   },
   {
     "caller": "2000-FIND-NEXT-AUTH-SUMMARY",

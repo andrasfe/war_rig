@@ -4,18 +4,17 @@
     "file_name": "CIPAUDTY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-09T15:47:05.053760",
+    "analyzed_at": "2026-02-10T17:20:01.313594",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the data structure for the IMS segment related to pending authorization details. It includes fields for authorization keys, card details, transaction information, merchant details, and fraud-related information. The copybook is used for storing and processing data related to pending authorizations in an IMS database.",
+    "summary": "This copybook defines the data structure for the IMS segment related to pending authorization details. It includes fields for authorization keys, card details, transaction information, merchant details, and fraud-related flags.",
     "business_context": null,
     "program_type": "COPYBOOK",
     "citations": [
       2,
-      19,
-      53
+      19
     ]
   },
   "inputs": [],
@@ -105,9 +104,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What programs use this copybook?",
-      "context": "The copybook defines a data structure, but its usage within specific programs is unclear.",
-      "suggestion": "Search for programs that include this copybook."
+      "question": "What is the purpose of the FILLER field at line 54?",
+      "context": "The purpose of the filler field is unclear without knowing the context of the programs that use this copybook.",
+      "suggestion": "Analyze the programs that include this copybook to understand how the filler field is used, or if it is simply padding."
     }
   ],
   "resolved_questions": [],

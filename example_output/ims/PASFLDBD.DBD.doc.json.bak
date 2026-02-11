@@ -4,12 +4,12 @@
     "file_name": "PASFLDBD.DBD",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-09T15:48:33.893267",
+    "analyzed_at": "2026-02-10T17:21:35.402317",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This file defines an IMS Database Description (DBD) named PASFLDBD. It specifies the database characteristics, including access method (GSAM, BSAM), dataset names (PASFILIP, PASFILOP), record length (100), and record format (F).",
+    "summary": "This file defines a Database Description (DBD) for an IMS database named PASFLDBD. It specifies the database access method as GSAM and BSAM, defines dataset names, and record characteristics.",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
@@ -36,13 +36,7 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
-    {
-      "question": "What is the purpose of this specific GSAM/BSAM database?",
-      "context": "The DBD defines the database characteristics, but the business purpose is not evident from the code.",
-      "suggestion": "Review related application code or system documentation."
-    }
-  ],
+  "open_questions": [],
   "resolved_questions": [],
   "dead_code": [],
   "call_semantics": [],

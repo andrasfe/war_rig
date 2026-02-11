@@ -2,11 +2,11 @@
 
 **File**: `cpy-bms/COPAU00.cpy`
 **Type**: COPYBOOK
-**Analyzed**: 2026-02-09 15:47:58.951256
+**Analyzed**: 2026-02-10 17:20:48.931161
 
 ## Purpose
 
-This copybook appears to be empty. Further context is needed to determine its purpose.
+This copybook appears to be empty. Further analysis is needed to determine its intended purpose and content.
 
 **Business Context**: UNKNOWN
 
@@ -28,5 +28,5 @@ The following artifacts were identified as dead code by static analysis:
 
 ## Open Questions
 
-- ? What is the purpose of this copybook?
-  - Context: The copybook is empty, so its purpose cannot be determined from the code itself.
+- ? What is the intended purpose of this copybook?
+  - Context: The copybook is empty, so its purpose cannot be determined from the content.

@@ -1,45 +1,29 @@
 {
   "header": {
     "program_id": "LOADPADB",
-    "file_name": "LOADPADB.JCL",
+    "file_name": "jcl/LOADPADB.JCL",
     "file_type": "JCL",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-09T15:48:24.175208",
+    "analyzed_at": "2026-02-10T17:21:07.633684",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This JCL executes the IMS program DFSRRC00 to load the PAUTDB database using a BMP (Batch Message Processing) region. It specifies the program DFSRRC00, the BMP region, the load utility PAUDBLOD, and the PSB PSBPAUTB as parameters.",
-    "business_context": null,
+    "summary": "This JCL job executes an IMS program (DFSRRC00) to load the PAUTDB database using a BMP (Batch Message Processing) region. It specifies the program, PSB, and necessary datasets for the IMS environment and input files.",
+    "business_context": "Database maintenance and loading.",
     "program_type": "BATCH",
     "citations": [
       26,
-      27
+      27,
+      36,
+      38
     ]
   },
   "inputs": [
     {
-      "name": "AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "Input file for the PAUTDB root segment load.",
-      "copybook": null,
-      "citation": [
-        36
-      ]
-    },
-    {
-      "name": "AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "Input file for the PAUTDB child segment load.",
-      "copybook": null,
-      "citation": [
-        38
-      ]
-    },
-    {
       "name": "OEMA.IMS.IMSP.SDFSRESL",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS RESLIB",
+      "description": "IMS RESLIB library.",
       "copybook": null,
       "citation": [
         28,
@@ -49,7 +33,7 @@
     {
       "name": "OEMA.IMS.IMSP.SDFSRESL.V151",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS RESLIB version 151",
+      "description": "IMS RESLIB library version 151.",
       "copybook": null,
       "citation": [
         29
@@ -58,7 +42,7 @@
     {
       "name": "AWS.M2.CARDDEMO.LOADLIB",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "Load library containing the application programs.",
+      "description": "Application load library.",
       "copybook": null,
       "citation": [
         30
@@ -67,7 +51,7 @@
     {
       "name": "OEM.IMS.IMSP.PSBLIB",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS PSB Library",
+      "description": "IMS PSB library.",
       "copybook": null,
       "citation": [
         33
@@ -76,18 +60,37 @@
     {
       "name": "OEM.IMS.IMSP.DBDLIB",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS DBD Library",
+      "description": "IMS DBD library.",
       "copybook": null,
       "citation": [
         34
       ]
     },
     {
-      "name": "OEMPP.IMS.V15R01MB.PROCLIB(DFSVSMDB)",
+      "name": "AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS VSAM parameters",
+      "description": "Input file for the PAUTDB root segment.",
       "copybook": null,
       "citation": [
+        36
+      ]
+    },
+    {
+      "name": "AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Input file for the PAUTDB child segment.",
+      "copybook": null,
+      "citation": [
+        38
+      ]
+    },
+    {
+      "name": "OEMPP.IMS.V15R01MB.PROCLIB(DFSVSMDB)",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS VSAM definition.",
+      "copybook": null,
+      "citation": [
+        44,
         45
       ]
     }
@@ -125,7 +128,7 @@
     {
       "program_name": "DFSRRC00",
       "call_type": "STATIC_CALL",
-      "purpose": "Executes the IMS BMP region to load the PAUTDB database.",
+      "purpose": "IMS program execution.",
       "parameters": [
         "BMP",
         "PAUDBLOD",
@@ -141,7 +144,22 @@
   },
   "business_rules": [],
   "data_flow": {
-    "reads_from": [],
+    "reads_from": [
+      {
+        "source": "AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO",
+        "fields_used": [],
+        "citation": [
+          36
+        ]
+      },
+      {
+        "source": "AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO",
+        "fields_used": [],
+        "citation": [
+          38
+        ]
+      }
+    ],
     "writes_to": [],
     "transforms": []
   },
@@ -150,76 +168,14 @@
     {
       "paragraph_name": "LOADPADB",
       "summary": null,
-      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "purpose": "This JCL defines a job named LOADPADB to load the PAUTDB database using an IMS BMP region. The job specifies job characteristics such as class, message class, region size, notification, and time limit. It then executes the IMS program DFSRRC00 with parameters indicating a BMP region, the PAUDBLOD program, and the PSBPAUTB PSB. The STEPLIB DD statements define the libraries required for the IMS execution, including the IMS RESLIB and the application load library. The IMS DD statement specifies the PSB and DBD libraries. INFILE1 and INFILE2 define the input datasets for the PAUTDB root and child segments, respectively. DFSVSAMP defines the VSAM buffer pool parameters. Finally, SYSPRINT, SYSUDUMP, and IMSERR define the system print, system dump, and IMS error output datasets, respectively. The job's primary purpose is to load the PAUTDB database using the specified IMS configuration and input data. It consumes the input datasets defined by INFILE1 and INFILE2 and produces output reports defined by SYSPRINT, SYSUDUMP, and IMSERR. No specific business logic is implemented within the JCL itself, as it primarily defines the execution environment for the IMS program.",
       "called_by": [],
       "calls": [],
       "citation": [
         1,
-        1
+        52
       ],
       "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "STEP01",
-      "summary": null,
-      "purpose": "[Citadel] Paragraph identified by static analysis",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        26,
-        26
-      ],
-      "outgoing_calls": [
-        {
-          "target": "DFSRRC00",
-          "call_type": "executes",
-          "line": 26
-        },
-        {
-          "target": "OEMA.IMS.IMSP.SDFSRESL",
-          "call_type": "references",
-          "line": 28
-        },
-        {
-          "target": "OEMA.IMS.IMSP.SDFSRESL.V151",
-          "call_type": "references",
-          "line": 29
-        },
-        {
-          "target": "AWS.M2.CARDDEMO.LOADLIB",
-          "call_type": "references",
-          "line": 30
-        },
-        {
-          "target": "OEMA.IMS.IMSP.SDFSRESL",
-          "call_type": "references",
-          "line": 31
-        },
-        {
-          "target": "OEM.IMS.IMSP.PSBLIB",
-          "call_type": "references",
-          "line": 33
-        },
-        {
-          "target": "OEM.IMS.IMSP.DBDLIB",
-          "call_type": "references",
-          "line": 34
-        },
-        {
-          "target": "AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO",
-          "call_type": "references",
-          "line": 36
-        },
-        {
-          "target": "AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO",
-          "call_type": "references",
-          "line": 38
-        }
-      ],
       "incoming_calls": [],
       "is_dead_code": false,
       "dead_code_reason": null,
@@ -229,18 +185,7 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
-    {
-      "question": "The commented-out DD statements DDPAUTP0 and DDPAUTX0 refer to datasets OEM.IMS.IMSP.PAUTHDB and OEM.IMS.IMSP.PAUTHDBX. What is their purpose, and why are they commented out?",
-      "context": "The JCL does not provide enough information to determine the purpose of these datasets.",
-      "suggestion": "Examine related documentation or contact the application developers."
-    },
-    {
-      "question": "What is the purpose of the DUMMY DD statements for FSVSAMP, IMSLOGR, and IEFRDER?",
-      "context": "The JCL does not provide enough information to determine the purpose of these datasets.",
-      "suggestion": "Examine related documentation or contact the application developers."
-    }
-  ],
+  "open_questions": [],
   "resolved_questions": [],
   "dead_code": [],
   "call_semantics": [],

@@ -4,13 +4,13 @@
     "file_name": "COPAUS1C.cbl",
     "file_type": "COBOL",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-09T15:27:30.597490",
+    "analyzed_at": "2026-02-10T17:07:16.901366",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "The COPAUS1C program is a CICS transaction that displays authorization details and allows users to mark authorizations as fraudulent. It receives input from a calling program (CDEMO), retrieves authorization records, and displays them on a screen (COPAU1A). The program also allows navigation between authorization records and linking to a fraud processing program.",
-    "business_context": "This program is likely used in a customer service or fraud investigation context to review and manage authorization records.",
+    "summary": "The COPAUS1C program is a CICS transaction that displays authorization details and allows users to mark authorizations as fraudulent. It receives input from a calling program via the COMMAREA, displays an authorization view screen (COPAU1A), and allows the user to page through authorizations or mark them as fraudulent.",
+    "business_context": "This program is likely part of a fraud detection and prevention system, allowing users to review and flag potentially fraudulent authorization transactions.",
     "program_type": "ONLINE_CICS",
     "citations": [
       1,
@@ -20,10 +20,10 @@
   },
   "inputs": [
     {
-      "name": "DFHCOMMAREA",
+      "name": "CARDDEMO-COMMAREA",
       "io_type": "CICS_COMMAREA",
-      "description": "Communication area passed from the calling program (CDEMO). Contains account ID, authorization key, and other context information.",
-      "copybook": "CARDDEMO-COMMAREA",
+      "description": "Communication area passed from the calling program, containing account ID, authorization key, and other context information.",
+      "copybook": null,
       "citation": [
         17,
         50
@@ -32,7 +32,7 @@
     {
       "name": "COPAU1AI",
       "io_type": "CICS_MAP",
-      "description": "Input map structure for the COPAU1A screen. Contains user input such as account ID and authorization key.",
+      "description": "Input map structure received from the CICS terminal user, containing screen input values.",
       "copybook": null,
       "citation": [
         248
@@ -43,7 +43,7 @@
     {
       "name": "COPAU1AO",
       "io_type": "CICS_MAP",
-      "description": "Output map structure for the COPAU1A screen. Contains authorization details and messages to be displayed to the user.",
+      "description": "Output map structure sent to the CICS terminal user, containing authorization details and screen display information.",
       "copybook": null,
       "citation": [
         229,
@@ -53,7 +53,7 @@
     {
       "name": "CARDDEMO-COMMAREA",
       "io_type": "CICS_COMMAREA",
-      "description": "Communication area passed back to the calling program (CDEMO). Contains updated context information.",
+      "description": "Communication area passed back to the calling program, containing updated context information.",
       "copybook": null,
       "citation": [
         50
@@ -64,7 +64,7 @@
     {
       "program_name": "CDEMO-TO-PROGRAM",
       "call_type": "CICS_XCTL",
-      "purpose": "Transfers control back to the calling program (CDEMO).",
+      "purpose": "Transfers control back to the calling program.",
       "parameters": [
         "CARDDEMO-COMMAREA"
       ],
@@ -73,7 +73,7 @@
     {
       "program_name": "WS-PGM-AUTH-FRAUD",
       "call_type": "CICS_LINK",
-      "purpose": "Links to a fraud processing program to update fraud details.",
+      "purpose": "Links to a program to handle fraud processing.",
       "parameters": [
         "WS-FRAUD-DATA"
       ],
@@ -83,41 +83,27 @@
   "calling_context": {
     "called_by": [],
     "entry_points": [],
-    "linkage_section": [
-      "CARDDEMO-COMMAREA"
-    ]
+    "linkage_section": []
   },
   "business_rules": [
     {
       "rule_id": "BR001",
-      "description": "If the account ID is numeric and the authorization key is not spaces or low-values, read the authorization record.",
-      "logic_summary": "Checks if the input fields are valid before reading the authorization record.",
+      "description": "If the account ID is numeric and an authorization is selected, read the authorization record.",
+      "logic_summary": "Checks if CDEMO-ACCT-ID is numeric and CDEMO-CPVD-PAU-SELECTED is not spaces or low-values before reading the authorization record.",
       "conditions": [
         "CDEMO-ACCT-ID IS NUMERIC",
         "CDEMO-CPVD-PAU-SELECTED NOT = SPACES AND LOW-VALUES"
       ],
       "citation": [
         57,
-        58
+        58,
+        62
       ]
     },
     {
       "rule_id": "BR002",
-      "description": "If the authorization response code is '00', set the authorization response to 'A' (Approved) and the color to green. Otherwise, set the response to 'D' (Declined) and the color to red.",
-      "logic_summary": "Determines the authorization status based on the response code.",
-      "conditions": [
-        "PA-AUTH-RESP-CODE = '00'"
-      ],
-      "citation": [
-        157,
-        160,
-        162
-      ]
-    },
-    {
-      "rule_id": "BR003",
-      "description": "If the user presses PF5, mark the authorization as fraudulent by linking to the fraud processing program.",
-      "logic_summary": "Calls the fraud processing program based on user input.",
+      "description": "If the user presses PF5, mark the authorization as fraudulent.",
+      "logic_summary": "Evaluates EIBAID for DFHPF5, then performs MARK-AUTH-FRAUD to update fraud indicators.",
       "conditions": [
         "EIBAID = DFHPF5"
       ],
@@ -127,9 +113,9 @@
       ]
     },
     {
-      "rule_id": "BR004",
-      "description": "If the user presses PF8, read the next authorization record and display it.",
-      "logic_summary": "Navigates to the next authorization record based on user input.",
+      "rule_id": "BR003",
+      "description": "If the user presses PF8, page to the next authorization record.",
+      "logic_summary": "Evaluates EIBAID for DFHPF8, then performs PROCESS-PF8-KEY to read the next authorization record.",
       "conditions": [
         "EIBAID = DFHPF8"
       ],
@@ -142,25 +128,67 @@
   "data_flow": {
     "reads_from": [
       {
-        "source": "DFHCOMMAREA",
+        "source": "CARDDEMO-COMMAREA",
         "fields_used": [
           "CDEMO-ACCT-ID",
           "CDEMO-CPVD-PAU-SELECTED"
         ],
         "citation": [
-          17,
+          57,
           59,
           60
         ]
       },
       {
-        "source": "COPAU1AI",
+        "source": "PA-AUTHORIZATION-RECORD",
         "fields_used": [
-          "CARDNUML"
+          "PA-CARD-NUM",
+          "PA-AUTH-ORIG-DATE",
+          "PA-AUTH-ORIG-TIME",
+          "PA-APPROVED-AMT",
+          "PA-AUTH-RESP-CODE",
+          "PA-AUTH-RESP-REASON",
+          "PA-PROCESSING-CODE",
+          "PA-POS-ENTRY-MODE",
+          "PA-MESSAGE-SOURCE",
+          "PA-MERCHANT-CATAGORY-CODE",
+          "PA-CARD-EXPIRY-DATE",
+          "PA-AUTH-TYPE",
+          "PA-TRANSACTION-ID",
+          "PA-MATCH-STATUS",
+          "PA-FRAUD-CONFIRMED",
+          "PA-FRAUD-REMOVED",
+          "PA-AUTH-FRAUD",
+          "PA-FRAUD-RPT-DATE",
+          "PA-MERCHANT-NAME",
+          "PA-MERCHANT-ID",
+          "PA-MERCHANT-CITY",
+          "PA-MERCHANT-STATE",
+          "PA-MERCHANT-ZIP"
         ],
         "citation": [
-          248,
-          223
+          141,
+          143,
+          149,
+          154,
+          157,
+          170,
+          177,
+          178,
+          179,
+          180,
+          182,
+          186,
+          187,
+          188,
+          190,
+          191,
+          193,
+          198,
+          199,
+          200,
+          201,
+          202
         ]
       }
     ],
@@ -197,9 +225,34 @@
           "ERRMSGO"
         ],
         "citation": [
-          222,
-          227,
-          235
+          141,
+          147,
+          152,
+          155,
+          158,
+          167,
+          171,
+          177,
+          178,
+          179,
+          180,
+          182,
+          186,
+          187,
+          188,
+          191,
+          198,
+          199,
+          200,
+          201,
+          202,
+          257,
+          258,
+          259,
+          260,
+          266,
+          272,
+          222
         ]
       },
       {
@@ -220,7 +273,7 @@
       {
         "input_field": "PA-AUTH-ORIG-DATE",
         "output_field": "AUTHDTO",
-        "transformation_description": "Formats the authorization date from YYMMDD to MM/DD/YY.",
+        "transformation_description": "Transforms the authorization original date into the output format. Extracts year, month, and day components and combines them into WS-CURDATE-MM-DD-YY.",
         "citation": [
           143,
           144,
@@ -232,7 +285,7 @@
       {
         "input_field": "PA-AUTH-ORIG-TIME",
         "output_field": "AUTHTMO",
-        "transformation_description": "Formats the authorization time from HHMMSS to HH:MM:SS.",
+        "transformation_description": "Transforms the authorization original time into the output format. Extracts hour, minute, and second components and combines them into WS-AUTH-TIME.",
         "citation": [
           149,
           150,
@@ -241,9 +294,18 @@
         ]
       },
       {
+        "input_field": "PA-APPROVED-AMT",
+        "output_field": "AUTHAMTO",
+        "transformation_description": "Moves the approved amount to the output field.",
+        "citation": [
+          154,
+          155
+        ]
+      },
+      {
         "input_field": "FUNCTION CURRENT-DATE",
         "output_field": "CURDATEO",
-        "transformation_description": "Formats the current date to MM/DD/YY.",
+        "transformation_description": "Transforms the current date into the output format. Extracts month, day, and year components and combines them into WS-CURDATE-MM-DD-YY.",
         "citation": [
           255,
           262,
@@ -251,34 +313,34 @@
           264,
           266
         ]
+      },
+      {
+        "input_field": "FUNCTION CURRENT-DATE",
+        "output_field": "CURTIMEO",
+        "transformation_description": "Transforms the current time into the output format. Extracts hours, minutes, and seconds components and combines them into WS-CURTIME-HH-MM-SS.",
+        "citation": [
+          255,
+          268,
+          269,
+          270,
+          272
+        ]
       }
     ]
   },
   "copybooks_used": [
     {
-      "copybook_name": "CARDDEMO-COMMAREA",
-      "purpose": "Defines the communication area passed between CICS programs in the CARDDEMO application.",
-      "location": "LINKAGE",
-      "citation": 12
-    },
-    {
-      "copybook_name": "COPAU1AI",
-      "purpose": "Defines the input map structure for the COPAU1A screen.",
-      "location": "WORKING_STORAGE",
-      "citation": 248
-    },
-    {
-      "copybook_name": "COPAU1AO",
-      "purpose": "Defines the output map structure for the COPAU1A screen.",
-      "location": "WORKING_STORAGE",
-      "citation": 9
+      "copybook_name": "COPAU01",
+      "purpose": "Defines the input and output map structures (COPAU1AI and COPAU1AO) for the CICS screen.",
+      "location": "FILE_SECTION",
+      "citation": 228
     }
   ],
   "paragraphs": [
     {
       "paragraph_name": "COPAUS1C",
       "summary": null,
-      "purpose": "This is the program ID declaration. It doesn't contain any executable code but serves as the entry point for the program's definition. It is not directly called but is the name used to invoke the transaction within the CICS environment. It defines the scope and context for all subsequent code within this program. The program's logic starts in MAIN-PARA.",
+      "purpose": "This is the program ID declaration. It does not contain any executable code. It simply identifies the program as COPAUS1C. This paragraph serves as a placeholder and does not perform any specific function in the program's execution. It is a required element in COBOL programs but does not contribute to the program's logic or data processing. It is not called by any other paragraphs and does not call any other paragraphs. It does not handle any errors or perform any validation.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -345,15 +407,13 @@
     {
       "paragraph_name": "MAIN-PARA",
       "summary": null,
-      "purpose": "This paragraph is the main control logic for the COPAUS1C transaction. It determines the program's execution path based on whether it's the first entry or a re-entry. On the first entry (EIBCALEN = 0), it initializes the CARDDEMO-COMMAREA, sets the CDEMO-TO-PROGRAM field, and performs RETURN-TO-PREV-SCREEN to return to the calling program. On subsequent entries, it receives the COMMAREA, processes the EIBAID (AID key pressed by the user), and calls different paragraphs based on the key pressed. It calls PROCESS-ENTER-KEY for DFHENTER, RETURN-TO-PREV-SCREEN for DFHPF3, MARK-AUTH-FRAUD for DFHPF5, PROCESS-PF8-KEY for DFHPF8, and PROCESS-ENTER-KEY for other keys. It also calls SEND-AUTHVIEW-SCREEN to display the screen after processing. Finally, it returns control to CICS with the updated COMMAREA.",
+      "purpose": "This paragraph is the main control flow for the CICS transaction. It first initializes the error flag and message fields. It then checks if the COMMAREA length (EIBCALEN) is zero, indicating a first-time call. If so, it initializes the CARDDEMO-COMMAREA, sets the CDEMO-TO-PROGRAM field, and performs RETURN-TO-PREV-SCREEN to return to the calling program. Otherwise, it moves the DFHCOMMAREA to CARDDEMO-COMMAREA and checks if the program is re-entering. If not, it sets the CDEMO-PGM-REENTER flag and performs PROCESS-ENTER-KEY and SEND-AUTHVIEW-SCREEN. If re-entering, it performs RECEIVE-AUTHVIEW-SCREEN and then evaluates the EIBAID to determine the user's action (ENTER, PF3, PF5, PF8, or other). Based on the EIBAID, it performs different actions, such as processing the enter key, returning to the previous screen, marking authorization as fraud, or paging to the next authorization. Finally, it executes a CICS RETURN command to return control to CICS with the updated COMMAREA.",
       "called_by": [],
       "calls": [
         "RETURN-TO-PREV-SCREEN",
         "PROCESS-ENTER-KEY",
         "SEND-AUTHVIEW-SCREEN",
         "RECEIVE-AUTHVIEW-SCREEN",
-        "PROCESS-ENTER-KEY",
-        "RETURN-TO-PREV-SCREEN",
         "MARK-AUTH-FRAUD",
         "PROCESS-PF8-KEY"
       ],
@@ -436,10 +496,8 @@
     {
       "paragraph_name": "PROCESS-ENTER-KEY",
       "summary": null,
-      "purpose": "This paragraph processes the ENTER key press. It moves LOW-VALUES to the COPAU1AO map structure to clear the screen. It then checks if the account ID (CDEMO-ACCT-ID) is numeric and the authorization key (CDEMO-CPVD-PAU-SELECTED) is not spaces or low-values. If both conditions are met, it moves the account ID and authorization key to working storage variables (WS-ACCT-ID, WS-AUTH-KEY) and performs READ-AUTH-RECORD to retrieve the authorization details. If IMS is scheduled, it performs TAKE-SYNCPOINT. If either condition is not met, it sets the error flag (ERR-FLG-ON). Finally, it performs POPULATE-AUTH-DETAILS to populate the output map with the retrieved authorization details.",
-      "called_by": [
-        "MAIN-PARA"
-      ],
+      "purpose": "This paragraph processes the user's input when the ENTER key is pressed. It first initializes the COPAU1AO map. It then checks if the account ID (CDEMO-ACCT-ID) is numeric and an authorization is selected (CDEMO-CPVD-PAU-SELECTED). If both conditions are met, it moves the account ID and authorization key to working storage variables (WS-ACCT-ID and WS-AUTH-KEY) and performs READ-AUTH-RECORD to retrieve the authorization details. If IMS-PSB-SCHD is set, it performs TAKE-SYNCPOINT. If either condition is not met, it sets the error flag. Finally, it performs POPULATE-AUTH-DETAILS to populate the screen fields with the retrieved authorization details.",
+      "called_by": [],
       "calls": [
         "READ-AUTH-RECORD",
         "TAKE-SYNCPOINT",
@@ -474,14 +532,11 @@
     {
       "paragraph_name": "MARK-AUTH-FRAUD",
       "summary": null,
-      "purpose": "This paragraph handles the logic for marking an authorization as fraudulent. It moves the account ID and authorization key from the COMMAREA to working storage. It then performs READ-AUTH-RECORD to retrieve the authorization record. Based on whether the authorization is already marked as fraud confirmed (PA-FRAUD-CONFIRMED), it either sets the PA-FRAUD-REMOVED flag or the PA-FRAUD-CONFIRMED flag. It then moves data to WS-FRAUD-DATA and links to the WS-PGM-AUTH-FRAUD program to update the fraud details. If the link is successful and the update is successful (WS-FRD-UPDT-SUCCESS), it performs UPDATE-AUTH-DETAILS. Otherwise, it moves an error message to WS-MESSAGE and performs ROLL-BACK. If the link fails, it performs ROLL-BACK. Finally, it moves the authorization key to the COMMAREA and performs POPULATE-AUTH-DETAILS to refresh the screen.",
-      "called_by": [
-        "MAIN-PARA"
-      ],
+      "purpose": "This paragraph handles the logic for marking an authorization as fraudulent when the user presses PF5. It moves the account ID and authorization key to working storage variables. It then performs READ-AUTH-RECORD to retrieve the authorization details. It checks if the authorization is already marked as fraud confirmed. If so, it sets flags to remove the fraud indicator; otherwise, it sets flags to confirm the fraud. It then moves pending authorization details and customer information to the WS-FRAUD-DATA area and links to the WS-PGM-AUTH-FRAUD program to update the fraud information. After the link, it checks the EIBRESP for normal completion. If normal, it checks if the fraud update was successful. If successful, it performs UPDATE-AUTH-DETAILS; otherwise, it moves an error message to WS-MESSAGE and performs ROLL-BACK. If the EIBRESP is not normal, it performs ROLL-BACK. Finally, it moves the authorization key to CDEMO-CPVD-PAU-SELECTED and performs POPULATE-AUTH-DETAILS to refresh the screen.",
+      "called_by": [],
       "calls": [
         "READ-AUTH-RECORD",
         "UPDATE-AUTH-DETAILS",
-        "ROLL-BACK",
         "ROLL-BACK",
         "POPULATE-AUTH-DETAILS"
       ],
@@ -536,10 +591,8 @@
     {
       "paragraph_name": "PROCESS-PF8-KEY",
       "summary": null,
-      "purpose": "This paragraph handles the logic for processing the PF8 key, which is used to navigate to the next authorization record. It moves the account ID and authorization key from the COMMAREA to working storage. It then performs READ-AUTH-RECORD to retrieve the current authorization record and READ-NEXT-AUTH-RECORD to retrieve the next authorization record. If IMS is scheduled, it performs TAKE-SYNCPOINT. If the end of the authorization records is reached (AUTHS-EOF), it sets the SEND-ERASE-NO flag and moves a message to WS-MESSAGE. Otherwise, it moves the authorization key to the COMMAREA and performs POPULATE-AUTH-DETAILS to display the next authorization record.",
-      "called_by": [
-        "MAIN-PARA"
-      ],
+      "purpose": "This paragraph handles the logic for paging to the next authorization record when the user presses PF8. It moves the account ID and authorization key to working storage variables. It then performs READ-AUTH-RECORD to retrieve the current authorization details and READ-NEXT-AUTH-RECORD to retrieve the next authorization details. If IMS-PSB-SCHD is set, it performs TAKE-SYNCPOINT. It checks if the end of the authorization list has been reached (AUTHS-EOF). If so, it sets a flag to prevent erasing the screen and moves a message to WS-MESSAGE. Otherwise, it moves the authorization key to CDEMO-CPVD-PAU-SELECTED and performs POPULATE-AUTH-DETAILS to display the next authorization details.",
+      "called_by": [],
       "calls": [
         "READ-AUTH-RECORD",
         "READ-NEXT-AUTH-RECORD",
@@ -580,12 +633,8 @@
     {
       "paragraph_name": "POPULATE-AUTH-DETAILS",
       "summary": null,
-      "purpose": "This paragraph populates the output map (COPAU1AO) with the authorization details retrieved from the PA-AUTHORIZATION-RECORD. It moves various fields from the PA-AUTHORIZATION-RECORD to the corresponding fields in the output map, including the card number, authorization date, authorization time, approved amount, response code, decline reason, processing code, POS entry mode, message source, merchant category code, card expiry date, authorization type, transaction ID, match status, fraud information, merchant name, merchant ID, merchant city, merchant state, and merchant zip code. It also handles the formatting of the authorization date and time. If the ERR-FLG-OFF flag is set, it performs the data population. It searches the WS-DECLINE-REASON-TAB to find the description of the decline reason code.",
-      "called_by": [
-        "PROCESS-ENTER-KEY",
-        "MARK-AUTH-FRAUD",
-        "PROCESS-PF8-KEY"
-      ],
+      "purpose": "This paragraph populates the output map (COPAU1AO) with the authorization details retrieved from the PA-AUTHORIZATION-RECORD. It moves various fields from the PA-AUTHORIZATION-RECORD to the corresponding output fields in the map, including the card number, authorization date and time, approved amount, response code, decline reason, processing code, POS entry mode, message source, merchant category code, card expiry date, authorization type, transaction ID, match status, fraud information, and merchant details. It also handles formatting the authorization date and time. It searches the WS-DECLINE-REASON-TAB to find the description for the decline reason code. If the error flag is off, it populates the fields; otherwise, it skips the population. It also handles the fraud indicator display based on PA-FRAUD-CONFIRMED and PA-FRAUD-REMOVED flags.",
+      "called_by": [],
       "calls": [],
       "citation": [
         137,
@@ -619,10 +668,8 @@
     {
       "paragraph_name": "RETURN-TO-PREV-SCREEN",
       "summary": null,
-      "purpose": "This paragraph prepares to return control to the calling program (CDEMO). It moves the current transaction ID (WS-CICS-TRANID) and program ID (WS-PGM-AUTH-DTL) to the CARDDEMO-COMMAREA. It sets the CDEMO-PGM-CONTEXT to ZEROS and sets the CDEMO-PGM-ENTER flag to TRUE. Finally, it executes a CICS XCTL command to transfer control to the program specified in CDEMO-TO-PROGRAM, passing the CARDDEMO-COMMAREA.",
-      "called_by": [
-        "MAIN-PARA"
-      ],
+      "purpose": "This paragraph prepares to return control to the calling program. It moves the current transaction ID (WS-CICS-TRANID) and program ID (WS-PGM-AUTH-DTL) to the CARDDEMO-COMMAREA. It sets the program context to zeros and sets the CDEMO-PGM-ENTER flag to true. Finally, it executes a CICS XCTL command to transfer control to the program specified in CDEMO-TO-PROGRAM, passing the CARDDEMO-COMMAREA.",
+      "called_by": [],
       "calls": [
         "CDEMO-TO-PROGRAM"
       ],
@@ -645,10 +692,8 @@
     {
       "paragraph_name": "SEND-AUTHVIEW-SCREEN",
       "summary": null,
-      "purpose": "This paragraph sends the COPAU1A screen to the terminal. It first performs POPULATE-HEADER-INFO to populate the header information on the screen. It then moves the message from WS-MESSAGE to the ERRMSGO field in the output map. It moves -1 to CARDNUML. If the SEND-ERASE-YES flag is set, it executes a CICS SEND MAP command with the ERASE option to clear the screen before sending the map. Otherwise, it executes a CICS SEND MAP command without the ERASE option. The CURSOR option is used to position the cursor on the screen.",
-      "called_by": [
-        "MAIN-PARA"
-      ],
+      "purpose": "This paragraph sends the authorization view screen (COPAU1A) to the CICS terminal. It first performs POPULATE-HEADER-INFO to populate the header information on the screen. It then moves the message in WS-MESSAGE to the error message field (ERRMSGO) on the screen. It moves -1 to CARDNUML. It checks the SEND-ERASE-YES flag. If set, it executes a CICS SEND command with the ERASE option to clear the screen before sending the map. Otherwise, it executes a CICS SEND command without the ERASE option. The CURSOR option is used to position the cursor on the screen.",
+      "called_by": [],
       "calls": [
         "POPULATE-HEADER-INFO"
       ],
@@ -702,10 +747,8 @@
     {
       "paragraph_name": "RECEIVE-AUTHVIEW-SCREEN",
       "summary": null,
-      "purpose": "This paragraph receives data from the COPAU1A screen. It executes a CICS RECEIVE MAP command to receive the data entered by the user into the COPAU1AI input map. The NOHANDLE option is used to suppress CICS error handling.",
-      "called_by": [
-        "MAIN-PARA"
-      ],
+      "purpose": "This paragraph receives the input from the CICS terminal user. It executes a CICS RECEIVE command to receive the data from the COPAU1A map into the COPAU1AI structure. The NOHANDLE option is used to suppress CICS abend if an error occurs during the receive operation. The program will handle the error checking manually.",
+      "called_by": [],
       "calls": [],
       "citation": [
         243,
@@ -727,10 +770,8 @@
     {
       "paragraph_name": "POPULATE-HEADER-INFO",
       "summary": null,
-      "purpose": "This paragraph populates the header information in the output map (COPAU1AO). It moves the current date and time to working storage variables. It moves the title fields (CCDA-TITLE01, CCDA-TITLE02), transaction ID (WS-CICS-TRANID), and program name (WS-PGM-AUTH-DTL) to the corresponding fields in the output map. It formats the current date and time and moves them to the CURDATEO and CURTIMEO fields in the output map.",
-      "called_by": [
-        "SEND-AUTHVIEW-SCREEN"
-      ],
+      "purpose": "This paragraph populates the header information in the output map (COPAU1AO). It moves the current date and time to working storage variables. It moves the title fields (CCDA-TITLE01 and CCDA-TITLE02), transaction ID (WS-CICS-TRANID), and program name (WS-PGM-AUTH-DTL) to the corresponding output fields in the COPAU1AO map. It extracts the month, day, and year from the current date and moves them to working storage variables. It then moves the formatted date and time to the output fields in the COPAU1AO map.",
+      "called_by": [],
       "calls": [],
       "citation": [
         253,
@@ -745,7 +786,7 @@
     {
       "paragraph_name": "READ-AUTH-RECORD",
       "summary": null,
-      "purpose": "This paragraph retrieves pending authorization records from the IMS database. It first calls SCHEDULE-PSB to schedule the PSB. Then, it moves the account ID and authorization key from working storage to the PAUTSUM0 segment fields. It performs a GU (Get Unique) DL/I call to retrieve the PAUTSUM0 segment (Pending Authorization Summary) into PENDING-AUTH-SUMMARY based on the account ID. If the segment is found, it sets AUTHS-NOT-EOF to TRUE; otherwise, it sets AUTHS-EOF to TRUE or handles errors by setting WS-ERR-FLG and displaying an error message via SEND-AUTHVIEW-SCREEN. If a summary record is found, it then performs a GNP (Get Next within Parent) DL/I call to retrieve the PAUTDTL1 segment (Pending Authorization Details) into PENDING-AUTH-DETAILS based on the authorization key. Similar error handling is performed for the detail segment retrieval. This paragraph is the starting point for reading authorization records.",
+      "purpose": "This paragraph retrieves authorization records from the IMS database. It first calls SCHEDULE-PSB to schedule the PSB required for IMS access. It then moves the account ID (WS-ACCT-ID) and authorization key (WS-AUTH-KEY) into the corresponding fields in the PAUTSUM0 segment. An IMS 'GU' (Get Unique) call is executed to retrieve the authorization summary based on the account ID. If the summary record is found, a 'GNP' (Get Next within Parent) call is made to retrieve the authorization details based on the authorization key. Error handling is performed by checking the DIBSTAT return code after each IMS call. If an error occurs, WS-ERR-FLG is set to 'Y', an error message is constructed, and SEND-AUTHVIEW-SCREEN is called to display the error. The paragraph sets AUTHS-EOF or AUTHS-NOT-EOF based on the DIBSTAT value. It calls SCHEDULE-PSB, SEND-AUTHVIEW-SCREEN.",
       "called_by": [],
       "calls": [
         "SCHEDULE-PSB",
@@ -753,8 +794,8 @@
         "SEND-AUTHVIEW-SCREEN"
       ],
       "citation": [
-        431,
-        491
+        1,
+        61
       ],
       "outgoing_calls": [
         {
@@ -800,14 +841,14 @@
     {
       "paragraph_name": "READ-NEXT-AUTH-RECORD",
       "summary": null,
-      "purpose": "This paragraph retrieves the next pending authorization detail record from the IMS database. It performs a GNP (Get Next within Parent) DL/I call to retrieve the PAUTDTL1 segment (Pending Authorization Details) into PENDING-AUTH-DETAILS. It then checks the DIBSTAT return code to determine the status of the call. If the call is successful (STATUS-OK), it sets AUTHS-NOT-EOF to TRUE. If the segment is not found or the end of the database is reached, it sets AUTHS-EOF to TRUE. If any other error occurs, it sets WS-ERR-FLG to 'Y', constructs an error message including the IMS return code, and displays the message using the SEND-AUTHVIEW-SCREEN paragraph. This paragraph is used to iterate through the authorization details for a given account.",
+      "purpose": "This paragraph retrieves the next authorization detail record from the IMS database. It executes an IMS 'GNP' (Get Next within Parent) call to retrieve the next PAUTDTL1 segment. The retrieved data is moved into the PENDING-AUTH-DETAILS area. Error handling is performed by checking the DIBSTAT return code after the IMS call. If an error occurs, WS-ERR-FLG is set to 'Y', an error message is constructed, and SEND-AUTHVIEW-SCREEN is called to display the error. The paragraph sets AUTHS-EOF or AUTHS-NOT-EOF based on the DIBSTAT value. It calls SEND-AUTHVIEW-SCREEN.",
       "called_by": [],
       "calls": [
         "SEND-AUTHVIEW-SCREEN"
       ],
       "citation": [
-        493,
-        518
+        63,
+        88
       ],
       "outgoing_calls": [
         {
@@ -831,7 +872,7 @@
     {
       "paragraph_name": "UPDATE-AUTH-DETAILS",
       "summary": null,
-      "purpose": "This paragraph updates the pending authorization details in the IMS database. It moves the fraud authorization record from WS-FRAUD-AUTH-RECORD to PENDING-AUTH-DETAILS. It then performs a REPL (Replace) DL/I call to update the PAUTDTL1 segment (Pending Authorization Details) in the database with the data from PENDING-AUTH-DETAILS. After the update, it checks the DIBSTAT return code. If the update is successful (STATUS-OK), it calls TAKE-SYNCPOINT to commit the changes. It also sets a message indicating whether the authorization was marked or removed as fraud. If the update fails, it calls ROLL-BACK to undo the changes, sets WS-ERR-FLG to 'Y', constructs an error message including the IMS return code, and displays the message using the SEND-AUTHVIEW-SCREEN paragraph. This paragraph is responsible for marking or removing authorizations as fraudulent.",
+      "purpose": "This paragraph updates the authorization details in the IMS database. It moves the fraud authorization record (WS-FRAUD-AUTH-RECORD) into the PENDING-AUTH-DETAILS area. An IMS 'REPL' (Replace) call is executed to update the PAUTDTL1 segment in the database. After the update, the DIBSTAT return code is checked. If the update is successful (STATUS-OK), TAKE-SYNCPOINT is called to commit the changes. A message indicating whether the authorization was marked or removed as fraudulent is moved to WS-MESSAGE. If an error occurs during the update, ROLL-BACK is called to undo the changes, WS-ERR-FLG is set to 'Y', an error message is constructed, and SEND-AUTHVIEW-SCREEN is called to display the error. It calls TAKE-SYNCPOINT, ROLL-BACK, SEND-AUTHVIEW-SCREEN.",
       "called_by": [],
       "calls": [
         "TAKE-SYNCPOINT",
@@ -839,8 +880,8 @@
         "SEND-AUTHVIEW-SCREEN"
       ],
       "citation": [
-        520,
-        556
+        90,
+        122
       ],
       "outgoing_calls": [
         {
@@ -874,12 +915,12 @@
     {
       "paragraph_name": "TAKE-SYNCPOINT",
       "summary": null,
-      "purpose": "This paragraph issues a CICS SYNCPOINT command to commit any recoverable resource changes made during the current unit of work. This includes IMS database updates. It ensures that the changes made to the database are permanently saved. There are no specific inputs or outputs for this paragraph other than the implicit commitment of resources. It is called by UPDATE-AUTH-DETAILS after a successful update of the authorization details.",
+      "purpose": "This paragraph issues a CICS SYNCPOINT command to commit changes to the IMS database. This ensures that all updates made are permanently saved. There are no specific inputs or outputs for this paragraph other than the implicit effect on the IMS database. No error handling is explicitly performed within this paragraph. It does not call any other paragraphs or programs. The primary purpose of this paragraph is to ensure data consistency and durability by committing the transaction.",
       "called_by": [],
       "calls": [],
       "citation": [
-        557,
-        564
+        124,
+        127
       ],
       "outgoing_calls": [],
       "incoming_calls": [
@@ -909,12 +950,12 @@
     {
       "paragraph_name": "ROLL-BACK",
       "summary": null,
-      "purpose": "This paragraph issues a CICS SYNCPOINT ROLLBACK command to reverse any recoverable resource changes made during the current unit of work. This includes IMS database updates. It is used to undo changes in case of an error. There are no specific inputs or outputs for this paragraph other than the implicit rollback of resources. It is called by UPDATE-AUTH-DETAILS when an error occurs during the update of authorization details.",
+      "purpose": "This paragraph issues a CICS SYNCPOINT ROLLBACK command to undo any changes made to the IMS database since the last syncpoint. This is typically called when an error occurs during processing to ensure data integrity. There are no specific inputs or outputs for this paragraph other than the implicit effect on the IMS database. No explicit error handling is present within this paragraph. It does not call any other paragraphs or programs. The primary purpose is to revert the database to its previous consistent state in case of errors.",
       "called_by": [],
       "calls": [],
       "citation": [
-        565,
-        573
+        129,
+        133
       ],
       "outgoing_calls": [],
       "incoming_calls": [
@@ -938,14 +979,14 @@
     {
       "paragraph_name": "SCHEDULE-PSB",
       "summary": null,
-      "purpose": "This paragraph schedules the PSB (Program Specification Block) for accessing the IMS database. It performs a SCHD (Schedule) DL/I call to schedule the PSB specified by PSB-NAME. The NODHABEND option prevents a DHABEND abend if the PSB is already scheduled. It checks the DIBSTAT return code. If the PSB was scheduled more than once, it terminates the PSB using a TERM DL/I call and then schedules it again. If the scheduling is successful (STATUS-OK), it sets IMS-PSB-SCHD to TRUE. If an error occurs during scheduling, it sets WS-ERR-FLG to 'Y', constructs an error message including the IMS return code, and displays the message using the SEND-AUTHVIEW-SCREEN paragraph. This paragraph prepares the program to access the IMS database.",
+      "purpose": "This paragraph schedules the Program Specification Block (PSB) required for accessing the IMS database. It first issues an IMS 'SCHD' command with the PSB name obtained from PSB-NAME. The NODHABEND option is specified to prevent abnormal termination. The DIBSTAT return code is checked. If the PSB has been scheduled more than once (PSB-SCHEDULED-MORE-THAN-ONCE), the PSB is terminated and then scheduled again. If the scheduling is successful (STATUS-OK), IMS-PSB-SCHD is set to TRUE. If an error occurs during scheduling, WS-ERR-FLG is set to 'Y', an error message is constructed, and SEND-AUTHVIEW-SCREEN is called to display the error. It calls SEND-AUTHVIEW-SCREEN.",
       "called_by": [],
       "calls": [
         "SEND-AUTHVIEW-SCREEN"
       ],
       "citation": [
-        574,
-        603
+        135,
+        164
       ],
       "outgoing_calls": [
         {
@@ -962,11 +1003,20 @@
   ],
   "error_handling": [
     {
-      "condition": "EIBRESP not equal to DFHRESP(NORMAL) after CICS LINK",
-      "action": "Perform ROLL-BACK",
+      "condition": "EIBRESP NOT = DFHRESP(NORMAL) after LINK to WS-PGM-AUTH-FRAUD",
+      "action": "PERFORM ROLL-BACK",
       "citation": [
         99,
         107
+      ]
+    },
+    {
+      "condition": "WS-FRD-UPDT-SUCCESS is false after LINK to WS-PGM-AUTH-FRAUD",
+      "action": "MOVE WS-FRD-ACT-MSG TO WS-MESSAGE and PERFORM ROLL-BACK",
+      "citation": [
+        100,
+        103,
+        104
       ]
     }
   ],
@@ -985,44 +1035,39 @@
       "citation": 214
     },
     {
-      "command": "LINK",
-      "resource": "WS-PGM-AUTH-FRAUD",
-      "purpose": "Links to another CICS program.",
-      "citation": 94
-    },
-    {
       "command": "SEND MAP",
       "resource": "COPAU1A",
-      "purpose": "Sends a map to the terminal.",
-      "citation": 226
+      "purpose": "Sends the authorization view screen to the terminal.",
+      "citation": 227
     },
     {
       "command": "RECEIVE MAP",
       "resource": "COPAU1A",
-      "purpose": "Receives a map from the terminal.",
-      "citation": 245
+      "purpose": "Receives data from the authorization view screen.",
+      "citation": 246
+    },
+    {
+      "command": "LINK",
+      "resource": "WS-PGM-AUTH-FRAUD",
+      "purpose": "Links to the fraud processing program.",
+      "citation": 94
     }
   ],
   "open_questions": [
     {
-      "question": "What is the purpose of the TAKE-SYNCPOINT paragraph?",
-      "context": "The code calls TAKE-SYNCPOINT after READ-AUTH-RECORD, but the paragraph's code is not provided in the snippet.",
-      "suggestion": "Need to examine the TAKE-SYNCPOINT paragraph's code to understand its functionality."
+      "question": "What is the purpose and structure of the PA-AUTHORIZATION-RECORD?",
+      "context": "The code extensively uses fields from PA-AUTHORIZATION-RECORD, but its structure and source are not defined in the provided code snippet.",
+      "suggestion": "Examine the copybooks or database schemas associated with this program to understand the structure and source of PA-AUTHORIZATION-RECORD."
     },
     {
-      "question": "What is the purpose of the ROLL-BACK paragraph?",
-      "context": "The code calls ROLL-BACK after errors, but the paragraph's code is not provided in the snippet.",
-      "suggestion": "Need to examine the ROLL-BACK paragraph's code to understand its functionality."
+      "question": "What is the purpose of the WS-FRAUD-DATA and the WS-PGM-AUTH-FRAUD program?",
+      "context": "The code links to WS-PGM-AUTH-FRAUD with WS-FRAUD-DATA, but the details of this interaction are unclear.",
+      "suggestion": "Examine the WS-PGM-AUTH-FRAUD program and the structure of WS-FRAUD-DATA to understand the fraud processing logic."
     },
     {
-      "question": "What is the purpose of the UPDATE-AUTH-DETAILS paragraph?",
-      "context": "The code calls UPDATE-AUTH-DETAILS after linking to the fraud program, but the paragraph's code is not provided in the snippet.",
-      "suggestion": "Need to examine the UPDATE-AUTH-DETAILS paragraph's code to understand its functionality."
-    },
-    {
-      "question": "What is the purpose of the READ-AUTH-RECORD and READ-NEXT-AUTH-RECORD paragraphs?",
-      "context": "The code calls these paragraphs to read authorization records, but the paragraph's code is not provided in the snippet.",
-      "suggestion": "Need to examine the READ-AUTH-RECORD and READ-NEXT-AUTH-RECORD paragraphs' code to understand their functionality."
+      "question": "What is the purpose of the TAKE-SYNCPOINT and ROLL-BACK paragraphs?",
+      "context": "These paragraphs are called in error handling scenarios, but their exact implementation is not visible in the provided code.",
+      "suggestion": "Examine the definitions of TAKE-SYNCPOINT and ROLL-BACK to understand their transaction management behavior."
     }
   ],
   "resolved_questions": [],
@@ -1042,7 +1087,7 @@
         "CDEMO-PGM-CONTEXT",
         "CDEMO-PGM-ENTER"
       ],
-      "purpose": "Returns control to the previous screen by XCTL'ing to the program specified in CDEMO-TO-PROGRAM with updated COMMAREA context."
+      "purpose": "Returns control to the previous program using XCTL by setting commarea fields and transferring control."
     },
     {
       "caller": "MAIN-PARA",
@@ -1054,26 +1099,28 @@
       "outputs": [
         "WS-ACCT-ID",
         "WS-AUTH-KEY",
-        "ERR-FLG"
+        "ERR-FLG",
+        "COPAU1AO"
       ],
-      "purpose": "Processes the ENTER key by validating account and authorization key inputs, setting up working storage variables, and reading the authorization record."
+      "purpose": "Processes the ENTER key by validating input, setting up authorization key data, reading the authorization record, and populating details."
     },
     {
       "caller": "MAIN-PARA",
       "callee": "SEND-AUTHVIEW-SCREEN",
       "inputs": [
         "WS-MESSAGE",
-        "SEND-ERASE-YES"
+        "SEND-ERASE-YES",
+        "COPAU1AO"
       ],
       "outputs": [],
-      "purpose": "Sends the COPAU1A map to the terminal, optionally erasing the screen first based on SEND-ERASE-YES flag."
+      "purpose": "Sends the authorization view screen to the terminal, optionally erasing the screen first based on the send erase flag."
     },
     {
       "caller": "MAIN-PARA",
       "callee": "RECEIVE-AUTHVIEW-SCREEN",
       "inputs": [],
       "outputs": [],
-      "purpose": "Receives input from the COPAU1A map without handling exceptions explicitly."
+      "purpose": "Receives data from the authorization view screen into the input map COPAU1AI without handling exceptions."
     },
     {
       "caller": "MAIN-PARA",
@@ -1085,19 +1132,21 @@
       "outputs": [
         "WS-ACCT-ID",
         "WS-AUTH-KEY",
-        "ERR-FLG"
+        "ERR-FLG",
+        "COPAU1AO"
       ],
-      "purpose": "Processes the ENTER key by validating account and authorization key inputs, setting up working storage variables, and reading the authorization record."
+      "purpose": "Processes the ENTER key by validating input, setting up authorization key data, reading the authorization record, and populating details."
     },
     {
       "caller": "MAIN-PARA",
       "callee": "SEND-AUTHVIEW-SCREEN",
       "inputs": [
         "WS-MESSAGE",
-        "SEND-ERASE-YES"
+        "SEND-ERASE-YES",
+        "COPAU1AO"
       ],
       "outputs": [],
-      "purpose": "Sends the authorization view screen to the terminal, optionally erasing the screen first based on the SEND-ERASE-YES flag."
+      "purpose": "Sends the authorization view screen to the user with optional erase based on flag and populates message field."
     },
     {
       "caller": "MAIN-PARA",
@@ -1121,7 +1170,10 @@
       "inputs": [
         "CDEMO-ACCT-ID",
         "CDEMO-CPVD-PAU-SELECTED",
-        "CDEMO-CUST-ID"
+        "CDEMO-CUST-ID",
+        "PA-FRAUD-CONFIRMED",
+        "PENDING-AUTH-DETAILS",
+        "WS-PGM-AUTH-FRAUD"
       ],
       "outputs": [
         "WS-ACCT-ID",
@@ -1129,26 +1181,32 @@
         "WS-FRAUD-AUTH-RECORD",
         "WS-FRD-ACCT-ID",
         "WS-FRD-CUST-ID",
-        "CDEMO-CPVD-PAU-SELECTED"
+        "WS-FRD-ACT-MSG",
+        "WS-MESSAGE",
+        "CDEMO-CPVD-PAU-SELECTED",
+        "WS-REMOVE-FRAUD",
+        "WS-REPORT-FRAUD"
       ],
-      "purpose": "Marks or unmarks an authorization as fraudulent by updating fraud status and linking to the fraud handling program."
+      "purpose": "Marks or unmarks an authorization as fraud by updating flags, linking to fraud processing, and refreshing the authorization details."
     },
     {
       "caller": "MAIN-PARA",
       "callee": "SEND-AUTHVIEW-SCREEN",
       "inputs": [
         "WS-MESSAGE",
-        "SEND-ERASE-YES"
+        "SEND-ERASE-YES",
+        "COPAU1AO"
       ],
       "outputs": [],
-      "purpose": "Sends the authorization view screen to the terminal, optionally erasing the screen first based on the SEND-ERASE-YES flag."
+      "purpose": "Sends the authorization view screen to the user with optional erase based on flag and populates message field."
     },
     {
       "caller": "MAIN-PARA",
       "callee": "PROCESS-PF8-KEY",
       "inputs": [
         "CDEMO-ACCT-ID",
-        "CDEMO-CPVD-PAU-SELECTED"
+        "CDEMO-CPVD-PAU-SELECTED",
+        "IMS-PSB-SCHD"
       ],
       "outputs": [
         "WS-ACCT-ID",
@@ -1157,7 +1215,7 @@
         "WS-MESSAGE",
         "CDEMO-CPVD-PAU-SELECTED"
       ],
-      "purpose": "Processes the PF8 key to navigate to the next authorization record for the account and updates screen navigation state."
+      "purpose": "Processes the PF8 key to navigate to the next authorization record and updates screen message if at end of file."
     },
     {
       "caller": "MAIN-PARA",
@@ -1167,7 +1225,7 @@
         "SEND-ERASE-YES"
       ],
       "outputs": [],
-      "purpose": "Sends the authorization view screen to the terminal, optionally erasing the screen based on the SEND-ERASE-YES flag."
+      "purpose": "Sends the authorization view screen to the terminal, optionally erasing the screen based on the flag."
     },
     {
       "caller": "MAIN-PARA",
@@ -1179,10 +1237,9 @@
       "outputs": [
         "WS-ACCT-ID",
         "WS-AUTH-KEY",
-        "ERR-FLG-ON",
-        "COPAU1AO"
+        "WS-ERR-FLG"
       ],
-      "purpose": "Processes the ENTER key by validating input account and authorization key, reading the corresponding record, and populating authorization details."
+      "purpose": "Processes the ENTER key by validating input and setting up account and authorization key for further processing."
     },
     {
       "caller": "MAIN-PARA",
@@ -1192,7 +1249,7 @@
         "SEND-ERASE-YES"
       ],
       "outputs": [],
-      "purpose": "Sends the authorization view screen to the terminal, optionally erasing the screen based on the SEND-ERASE-YES flag."
+      "purpose": "Sends the authorization view screen to the terminal, optionally erasing the screen based on the flag."
     },
     {
       "caller": "PROCESS-ENTER-KEY",
@@ -1203,31 +1260,33 @@
       ],
       "outputs": [
         "IMS-RETURN-CODE",
-        "AUTHS-EOF",
-        "AUTHS-NOT-EOF",
         "WS-ERR-FLG",
-        "WS-MESSAGE"
+        "WS-MESSAGE",
+        "AUTHS-EOF"
       ],
-      "purpose": "Reads the pending authorization summary and detail records from IMS using the account ID and authorization key as search criteria."
+      "purpose": "Reads the pending authorization summary and detail records from IMS using the account ID and authorization key."
     },
     {
       "caller": "PROCESS-ENTER-KEY",
       "callee": "TAKE-SYNCPOINT",
       "inputs": [],
       "outputs": [],
-      "purpose": "Commits the current unit of work by issuing a CICS SYNCPOINT to ensure data integrity."
+      "purpose": "Performs a CICS syncpoint to commit the current unit of work."
     },
     {
       "caller": "PROCESS-ENTER-KEY",
       "callee": "POPULATE-AUTH-DETAILS",
       "inputs": [
         "ERR-FLG-ON",
+        "ERR-FLG-OFF",
         "PA-CARD-NUM",
         "PA-AUTH-ORIG-DATE",
         "PA-AUTH-ORIG-TIME",
         "PA-APPROVED-AMT",
         "PA-AUTH-RESP-CODE",
         "PA-AUTH-RESP-REASON",
+        "WS-DECLINE-REASON-TAB",
+        "WS-DECL-RSN-IDX",
         "PA-PROCESSING-CODE",
         "PA-POS-ENTRY-MODE",
         "PA-MESSAGE-SOURCE",
@@ -1244,58 +1303,34 @@
         "PA-MERCHANT-ID",
         "PA-MERCHANT-CITY",
         "PA-MERCHANT-STATE",
-        "PA-MERCHANT-ZIP",
-        "WS-CURDATE-YY",
-        "WS-CURDATE-MM",
-        "WS-CURDATE-DD",
-        "WS-AUTH-DATE",
-        "WS-AUTH-AMT",
-        "WS-DECLINE-REASON-TAB",
-        "WS-DECL-RSN-IDX"
+        "PA-MERCHANT-ZIP"
       ],
       "outputs": [
-        "CARDNUMO",
         "WS-AUTH-DATE",
-        "AUTHDTO",
         "WS-AUTH-TIME",
-        "AUTHTMO",
-        "WS-AUTH-AMT",
-        "AUTHAMTO",
-        "AUTHRSPO",
-        "AUTHRSPC",
-        "AUTHRSNO",
-        "AUTHCDO",
-        "POSEMDO",
-        "AUTHSRCO",
-        "MCCCDO",
-        "CRDEXPO",
-        "AUTHTYPO",
-        "TRNIDO",
-        "AUTHMTCO",
-        "AUTHFRDO",
-        "MERNAMEO",
-        "MERIDO",
-        "MERCITYO",
-        "MERSTO",
-        "MERZIPO"
+        "WS-AUTH-AMT"
       ],
-      "purpose": "Populates the output screen fields with authorization details from the PAUT segment after validating no error flag is set."
+      "purpose": "Populates the authorization details screen with data from the PAUT segment and formatted working storage fields if no error flag is set."
     },
     {
       "caller": "MARK-AUTH-FRAUD",
       "callee": "READ-AUTH-RECORD",
       "inputs": [
+        "CDEMO-ACCT-ID",
+        "CDEMO-CPVD-PAU-SELECTED",
         "WS-ACCT-ID",
         "WS-AUTH-KEY"
       ],
       "outputs": [
-        "PA-ACCT-ID",
-        "PA-AUTHORIZATION-KEY",
+        "WS-ACCT-ID",
+        "WS-AUTH-KEY",
         "PENDING-AUTH-SUMMARY",
+        "PENDING-AUTH-DETAILS",
         "IMS-RETURN-CODE",
         "AUTHS-EOF",
         "AUTHS-NOT-EOF",
-        "PENDING-AUTH-DETAILS"
+        "WS-ERR-FLG",
+        "WS-MESSAGE"
       ],
       "purpose": "Reads the authorization summary and detail records from IMS database using account ID and authorization key set in working storage."
     },
@@ -1309,29 +1344,30 @@
       ],
       "outputs": [
         "PENDING-AUTH-DETAILS",
+        "IMS-RETURN-CODE",
+        "WS-ERR-FLG",
         "WS-MESSAGE"
       ],
-      "purpose": "Updates the authorization details segment in IMS with fraud status changes and performs a syncpoint or rollback based on success."
+      "purpose": "Updates the authorization details segment in IMS with fraud status changes and performs syncpoint or rollback based on success."
     },
     {
       "caller": "MARK-AUTH-FRAUD",
       "callee": "ROLL-BACK",
       "inputs": [],
       "outputs": [],
-      "purpose": "Performs a CICS rollback to undo database changes when an error occurs during fraud update processing."
+      "purpose": "Performs a CICS rollback to undo database changes in case of an error during fraud update processing."
     },
     {
       "caller": "MARK-AUTH-FRAUD",
       "callee": "ROLL-BACK",
       "inputs": [],
       "outputs": [],
-      "purpose": "Performs a CICS rollback to undo database changes when an error occurs during fraud update processing."
+      "purpose": "Performs a CICS rollback to undo database changes in case of an error during fraud update processing."
     },
     {
       "caller": "MARK-AUTH-FRAUD",
       "callee": "POPULATE-AUTH-DETAILS",
       "inputs": [
-        "ERR-FLG",
         "PA-CARD-NUM",
         "PA-AUTH-ORIG-DATE",
         "PA-AUTH-ORIG-TIME",
@@ -1355,18 +1391,18 @@
         "PA-MERCHANT-CITY",
         "PA-MERCHANT-STATE",
         "PA-MERCHANT-ZIP",
-        "WS-CURDATE-MM",
-        "WS-CURDATE-DD",
-        "WS-CURDATE-YY",
-        "WS-DECLINE-REASON-TAB"
+        "ERR-FLG"
       ],
       "outputs": [
-        "WS-AUTH-DATE",
-        "WS-AUTH-TIME",
-        "WS-AUTH-AMT",
         "CARDNUMO",
+        "WS-CURDATE-YY",
+        "WS-CURDATE-MM",
+        "WS-CURDATE-DD",
+        "WS-AUTH-DATE",
         "AUTHDTO",
+        "WS-AUTH-TIME",
         "AUTHTMO",
+        "WS-AUTH-AMT",
         "AUTHAMTO",
         "AUTHRSPO",
         "AUTHRSPC",
@@ -1386,7 +1422,7 @@
         "MERSTO",
         "MERZIPO"
       ],
-      "purpose": "Populates the authorization details screen fields using data from the current pending authorization record when no error flag is set."
+      "purpose": "Populates the authorization details screen fields using data from the current authorization record when no error is flagged."
     },
     {
       "caller": "PROCESS-PF8-KEY",
@@ -1396,8 +1432,6 @@
         "WS-AUTH-KEY"
       ],
       "outputs": [
-        "PA-ACCT-ID",
-        "PA-AUTHORIZATION-KEY",
         "PENDING-AUTH-SUMMARY",
         "PENDING-AUTH-DETAILS",
         "IMS-RETURN-CODE",
@@ -1406,7 +1440,7 @@
         "WS-ERR-FLG",
         "WS-MESSAGE"
       ],
-      "purpose": "Reads the authorization summary and detail records from IMS for the given account ID and authorization key."
+      "purpose": "Reads the authorization summary and detail records from IMS for the given account and authorization key."
     },
     {
       "caller": "PROCESS-PF8-KEY",
@@ -1420,20 +1454,19 @@
         "WS-ERR-FLG",
         "WS-MESSAGE"
       ],
-      "purpose": "Reads the next authorization detail record in sequence from the IMS database using GNP call."
+      "purpose": "Reads the next authorization detail record in sequence from the IMS database."
     },
     {
       "caller": "PROCESS-PF8-KEY",
       "callee": "TAKE-SYNCPOINT",
       "inputs": [],
       "outputs": [],
-      "purpose": "Commits the current unit of work by issuing a CICS SYNCPOINT to make database changes permanent."
+      "purpose": "Commits the current unit of work by issuing a CICS syncpoint."
     },
     {
       "caller": "PROCESS-PF8-KEY",
       "callee": "POPULATE-AUTH-DETAILS",
       "inputs": [
-        "ERR-FLG",
         "PA-CARD-NUM",
         "PA-AUTH-ORIG-DATE",
         "PA-AUTH-ORIG-TIME",
@@ -1457,18 +1490,18 @@
         "PA-MERCHANT-CITY",
         "PA-MERCHANT-STATE",
         "PA-MERCHANT-ZIP",
-        "WS-CURDATE-MM",
-        "WS-CURDATE-DD",
-        "WS-CURDATE-YY",
-        "WS-DECLINE-REASON-TAB"
+        "ERR-FLG"
       ],
       "outputs": [
-        "WS-AUTH-DATE",
-        "WS-AUTH-TIME",
-        "WS-AUTH-AMT",
         "CARDNUMO",
+        "WS-CURDATE-YY",
+        "WS-CURDATE-MM",
+        "WS-CURDATE-DD",
+        "WS-AUTH-DATE",
         "AUTHDTO",
+        "WS-AUTH-TIME",
         "AUTHTMO",
+        "WS-AUTH-AMT",
         "AUTHAMTO",
         "AUTHRSPO",
         "AUTHRSPC",
@@ -1488,7 +1521,7 @@
         "MERSTO",
         "MERZIPO"
       ],
-      "purpose": "Populates the authorization details screen fields using data from the current pending authorization record when no error flag is set."
+      "purpose": "Populates the authorization details screen fields using data from the current authorization record when no error is flagged."
     },
     {
       "caller": "SEND-AUTHVIEW-SCREEN",
@@ -1498,7 +1531,7 @@
         "WS-PGM-AUTH-DTL"
       ],
       "outputs": [],
-      "purpose": "Populates the screen header with current date, time, transaction name, and program name for the authorization view."
+      "purpose": "Populates the header information on the COPAU1A map with current date, time, program name, and transaction ID."
     },
     {
       "caller": "READ-AUTH-RECORD",
@@ -1521,7 +1554,7 @@
         "SEND-ERASE-YES"
       ],
       "outputs": [],
-      "purpose": "Displays the authorization view screen with an error message when a database read operation fails."
+      "purpose": "Sends the COPAU1A screen to the user with an error message and header information when an IMS read error occurs."
     },
     {
       "caller": "READ-AUTH-RECORD",
@@ -1531,7 +1564,7 @@
         "SEND-ERASE-YES"
       ],
       "outputs": [],
-      "purpose": "Displays the authorization view screen with an error message when a database read operation for authorization details fails."
+      "purpose": "Sends the COPAU1A screen to the user with an error message and header information when an IMS read error occurs during detail record retrieval."
     },
     {
       "caller": "READ-NEXT-AUTH-RECORD",
@@ -1541,21 +1574,21 @@
         "SEND-ERASE-YES"
       ],
       "outputs": [],
-      "purpose": "Displays the authorization view screen with an error message when reading the next authorization record fails."
+      "purpose": "Sends the COPAU1A screen to the user with an error message and header information when an error occurs while reading the next authorization record."
     },
     {
       "caller": "UPDATE-AUTH-DETAILS",
       "callee": "TAKE-SYNCPOINT",
       "inputs": [],
       "outputs": [],
-      "purpose": "Commits the current transaction unit to ensure data consistency after successfully updating the authorization details in IMS."
+      "purpose": "Commits the current transaction unit of work to ensure data integrity after successfully updating an authorization detail in IMS."
     },
     {
       "caller": "UPDATE-AUTH-DETAILS",
       "callee": "ROLL-BACK",
       "inputs": [],
       "outputs": [],
-      "purpose": "Aborts the current transaction and rolls back all changes due to an error during the IMS update of authorization details."
+      "purpose": "Aborts the current transaction and rolls back all changes due to an error during the authorization update process."
     },
     {
       "caller": "UPDATE-AUTH-DETAILS",
@@ -1565,7 +1598,7 @@
         "SEND-ERASE-YES"
       ],
       "outputs": [],
-      "purpose": "Sends an error message to the terminal screen using the CICS SEND command after a failure in updating authorization details."
+      "purpose": "Sends an error message to the terminal screen after a failure in fraud tagging, using the message stored in WS-MESSAGE and applying screen erase logic if SEND-ERASE-YES is set."
     },
     {
       "caller": "SCHEDULE-PSB",
@@ -1575,7 +1608,7 @@
         "SEND-ERASE-YES"
       ],
       "outputs": [],
-      "purpose": "Displays an error message on the terminal screen when the PSB scheduling fails in IMS."
+      "purpose": "Displays an error message on the terminal when PSB scheduling fails, using the message in WS-MESSAGE and respecting the SEND-ERASE-YES flag for screen rendering."
     }
   ],
   "flow_diagram": "flowchart TD\n    %% Title: COPAUS1C.cbl\n    MAIN_PARA[\"MAIN-PARA\"]\n    MARK_AUTH_FRAUD[\"MARK-AUTH-FRAUD\"]\n    PROCESS_ENTER_KEY[\"PROCESS-ENTER-KEY\"]\n    PROCESS_PF8_KEY[\"PROCESS-PF8-KEY\"]\n    RECEIVE_AUTHVIEW_SCREEN[\"RECEIVE-AUTHVIEW-SCREEN\"]\n    RETURN_TO_PREV_SCREEN[\"RETURN-TO-PREV-SCREEN\"]\n    SEND_AUTHVIEW_SCREEN[\"SEND-AUTHVIEW-SCREEN\"]\n    POPULATE_AUTH_DETAILS[\"POPULATE-AUTH-DETAILS\"]\n    READ_AUTH_RECORD[\"READ-AUTH-RECORD\"]\n    ROLL_BACK[\"ROLL-BACK\"]\n    UPDATE_AUTH_DETAILS[\"UPDATE-AUTH-DETAILS\"]\n    WS_PGM_AUTH_FRAUD__ext([\"WS-PGM-AUTH-FRAUD\"])\n    POPULATE_HEADER_INFO[\"POPULATE-HEADER-INFO\"]\n    TAKE_SYNCPOINT[\"TAKE-SYNCPOINT\"]\n    READ_NEXT_AUTH_RECORD[\"READ-NEXT-AUTH-RECORD\"]\n    SCHEDULE_PSB[\"SCHEDULE-PSB\"]\n    CDEMO_TO_PROGRAM__ext([\"CDEMO-TO-PROGRAM\"])\n    MAIN_PARA --> MARK_AUTH_FRAUD\n    MAIN_PARA --> PROCESS_ENTER_KEY\n    MAIN_PARA --> PROCESS_PF8_KEY\n    MAIN_PARA --> RECEIVE_AUTHVIEW_SCREEN\n    MAIN_PARA --> RETURN_TO_PREV_SCREEN\n    MAIN_PARA --> SEND_AUTHVIEW_SCREEN\n    MARK_AUTH_FRAUD --> POPULATE_AUTH_DETAILS\n    MARK_AUTH_FRAUD --> READ_AUTH_RECORD\n    MARK_AUTH_FRAUD --> ROLL_BACK\n    MARK_AUTH_FRAUD --> UPDATE_AUTH_DETAILS\n    MARK_AUTH_FRAUD -.->|calls| WS_PGM_AUTH_FRAUD__ext\n    PROCESS_ENTER_KEY --> POPULATE_AUTH_DETAILS\n    PROCESS_ENTER_KEY --> READ_AUTH_RECORD\n    PROCESS_ENTER_KEY --> TAKE_SYNCPOINT\n    PROCESS_PF8_KEY --> POPULATE_AUTH_DETAILS\n    PROCESS_PF8_KEY --> READ_AUTH_RECORD\n    PROCESS_PF8_KEY --> READ_NEXT_AUTH_RECORD\n    PROCESS_PF8_KEY --> TAKE_SYNCPOINT\n    READ_AUTH_RECORD --> SCHEDULE_PSB\n    READ_AUTH_RECORD --> SEND_AUTHVIEW_SCREEN\n    READ_NEXT_AUTH_RECORD --> SEND_AUTHVIEW_SCREEN\n    RETURN_TO_PREV_SCREEN -.->|calls| CDEMO_TO_PROGRAM__ext\n    SCHEDULE_PSB --> SEND_AUTHVIEW_SCREEN\n    SEND_AUTHVIEW_SCREEN --> POPULATE_HEADER_INFO\n    UPDATE_AUTH_DETAILS --> ROLL_BACK\n    UPDATE_AUTH_DETAILS --> SEND_AUTHVIEW_SCREEN\n    UPDATE_AUTH_DETAILS --> TAKE_SYNCPOINT"

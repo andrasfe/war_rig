@@ -11,7 +11,7 @@
       "END-ROOT-SEG-FILE",
       "END-CHILD-SEG-FILE"
     ],
-    "purpose": "Initializes the program by accepting current date values and opening input files INFILE1 and INFILE2, setting status flags accordingly."
+    "purpose": "Initializes the program by accepting current date values, opening input files, and setting up initial status flags."
   },
   {
     "caller": "MAIN-PARA",
@@ -20,25 +20,24 @@
       "WS-INFIL1-STATUS"
     ],
     "outputs": [
-      "END-ROOT-SEG-FILE",
-      "PENDING-AUTH-SUMMARY"
+      "PENDING-AUTH-SUMMARY",
+      "END-ROOT-SEG-FILE"
     ],
-    "purpose": "Reads a record from INFILE1 and moves it to the PENDING-AUTH-SUMMARY area if successful, otherwise sets END-ROOT-SEG-FILE flag on EOF."
+    "purpose": "Reads a record from the first input file and moves it to the root segment for processing, or sets end-of-file flag if no more records."
   },
   {
     "caller": "MAIN-PARA",
     "callee": "3000-READ-CHILD-SEG-FILE",
     "inputs": [
       "WS-INFIL2-STATUS",
-      "ROOT-SEG-KEY",
-      "CHILD-SEG-REC"
+      "ROOT-SEG-KEY"
     ],
     "outputs": [
-      "END-CHILD-SEG-FILE",
       "QUAL-SSA-KEY-VALUE",
-      "PENDING-AUTH-DETAILS"
+      "PENDING-AUTH-DETAILS",
+      "END-CHILD-SEG-FILE"
     ],
-    "purpose": "Reads a record from INFILE2, validates ROOT-SEG-KEY, sets child segment data and qualification key for IMS insertion if successful, or sets end-of-file flag on EOF."
+    "purpose": "Reads a record from the second input file, validates the root segment key, and prepares child segment data for insertion or sets end-of-file flag."
   },
   {
     "caller": "MAIN-PARA",
@@ -48,7 +47,7 @@
       "WS-INFIL2-STATUS"
     ],
     "outputs": [],
-    "purpose": "Closes both INFILE1 and INFILE2 and displays error messages if either file fails to close."
+    "purpose": "Closes both input files and displays error messages if either file fails to close properly."
   },
   {
     "caller": "1000-INITIALIZE",
@@ -60,7 +59,7 @@
     "outputs": [
       "RETURN-CODE"
     ],
-    "purpose": "Terminates the program with a return code of 16 upon encountering a critical error during file opening in initialization."
+    "purpose": "Terminates the program abnormally by setting return code 16 and displaying an abend message when a file open error occurs."
   },
   {
     "caller": "1000-INITIALIZE",
@@ -69,10 +68,8 @@
       "WS-INFIL1-STATUS",
       "WS-INFIL2-STATUS"
     ],
-    "outputs": [
-      "RETURN-CODE"
-    ],
-    "purpose": "Abends the program with return code 16 when an input file fails to open."
+    "outputs": [],
+    "purpose": "Abends the program with return code 16 if an input file fails to open."
   },
   {
     "caller": "2000-READ-ROOT-SEG-FILE",
@@ -80,9 +77,7 @@
     "inputs": [
       "INFIL1-REC"
     ],
-    "outputs": [
-      "PAUT-PCB-STATUS"
-    ],
+    "outputs": [],
     "purpose": "Inserts a root segment into the IMS database using data read from INFILE1."
   },
   {
@@ -91,10 +86,8 @@
     "inputs": [
       "PAUT-PCB-STATUS"
     ],
-    "outputs": [
-      "RETURN-CODE"
-    ],
-    "purpose": "Abends the program if the root segment insertion fails with an unexpected IMS status code."
+    "outputs": [],
+    "purpose": "Abends the program if the root segment insertion into IMS fails with an unexpected status code."
   },
   {
     "caller": "3000-READ-CHILD-SEG-FILE",
@@ -103,21 +96,15 @@
       "ROOT-SEG-KEY",
       "CHILD-SEG-REC"
     ],
-    "outputs": [
-      "PAUT-PCB-STATUS"
-    ],
-    "purpose": "Inserts a child segment into the IMS database after reading and qualifying with the root key from INFILE2."
+    "outputs": [],
+    "purpose": "Inserts a child segment into the IMS database after qualifying the parent root segment using the root key."
   },
   {
     "caller": "3100-INSERT-CHILD-SEG",
     "callee": "3200-INSERT-IMS-CALL",
-    "inputs": [
-      "PENDING-AUTH-DETAILS"
-    ],
-    "outputs": [
-      "PAUT-PCB-STATUS"
-    ],
-    "purpose": "Performs an IMS insert call to insert a child segment after successfully retrieving the parent root segment."
+    "inputs": [],
+    "outputs": [],
+    "purpose": "Performs an IMS ISRT call to insert a child segment after successfully retrieving the parent root segment."
   },
   {
     "caller": "3100-INSERT-CHILD-SEG",

@@ -2,58 +2,58 @@
 
 **File**: `cbl/PAUDBUNL.CBL`
 **Type**: FileType.COBOL
-**Analyzed**: 2026-02-09 15:45:19.462117
+**Analyzed**: 2026-02-10 17:17:39.576155
 
 ## Purpose
 
-This COBOL program, named PAUDBUNL, unloads data from an IMS database related to pending authorizations and writes it to two sequential output files. It reads pending authorization summary segments (root) and pending authorization detail segments (child) from the IMS database and writes them to OPFILE1 and OPFILE2 respectively, filtering for numeric PA-ACCT-ID.
+This COBOL program, named PAUDBUNL, unloads data from an IMS database related to pending authorizations and writes it to two sequential output files. It reads pending authorization summary segments (root) and pending authorization detail segments (child) from the IMS database and writes them to OPFILE1 and OPFILE2 respectively, if the PA-ACCT-ID is numeric.
 
-**Business Context**: UNKNOWN
+**Business Context**: This program is likely part of a larger system for managing and processing pending authorizations, potentially for financial transactions or access control.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| IMS Database (PAUTSUM0/PAUTDTL1) | IOType.IMS_SEGMENT | Pending Authorization Summary (root segment PAUTSUM0) and Detail (child segment PAUTDTL1) segments from an IMS database. |
-| PAUTBPCB | IOType.PARAMETER | PCB mask passed to the program. |
+| IMS Database (PAUTSUM0, PAUTDTL1) | IOType.IMS_SEGMENT | Pending Authorization Summary (root segment PAUTSUM0) and Detail (child segment PAUTDTL1) segments from an IMS database. |
+| PAUTBPCB | IOType.PARAMETER | PCB mask for IMS calls. |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| OPFILE1 | IOType.FILE_SEQUENTIAL | Contains records of PENDING-AUTH-SUMMARY segments (root segments) from the IMS database where PA-ACCT-ID is numeric. |
-| OPFILE2 | IOType.FILE_SEQUENTIAL | Contains records of PENDING-AUTH-DETAILS segments (child segments) from the IMS database, associated with the root segments written to OPFILE1. |
+| OPFILE1 | IOType.FILE_SEQUENTIAL | Contains pending authorization summary records (root segments) extracted from the IMS database. |
+| OPFILE2 | IOType.FILE_SEQUENTIAL | Contains pending authorization detail records (child segments) extracted from the IMS database. |
 
 ## Called Programs
 
 | Program | Call Type | Purpose |
 |---------|-----------|---------|
-| CBLTDLI | CallType.STATIC_CALL | Interface with IMS database to retrieve segments. |
-| CBLTDLI | CallType.STATIC_CALL | Interface with IMS database to retrieve child segments. |
+| CBLTDLI | CallType.STATIC_CALL | Interface with IMS DL/I to retrieve database segments. |
+| CBLTDLI | CallType.STATIC_CALL | Interface with IMS DL/I to retrieve database segments. |
 
 ## Business Rules
 
-- **BR001**: Only write root segments to OPFILE1 if the PA-ACCT-ID is numeric.
+- **BR001**: Only write the summary and detail records to the output files if the account ID (PA-ACCT-ID) is numeric.
 
 ## Paragraphs/Procedures
 
 ### MAIN-PARA
-This is the main control paragraph of the program. It first calls 1000-INITIALIZE to perform initial setup tasks such as accepting the current date and opening the output files (OPFILE1 and OPFILE2). After initialization, it enters a loop that continues until WS-END-OF-ROOT-SEG is set to 'Y', indicating the end of the root segments in the IMS database. Inside the loop, it calls 2000-FIND-NEXT-AUTH-SUMMARY to retrieve and process the next pending authorization summary segment. Once all root segments have been processed, it calls 4000-FILE-CLOSE to close the output files. The program then terminates using GOBACK. The paragraph also contains an ENTRY point 'DLITCBL' which also uses PAUTBPCB.
+This is the main control paragraph of the PAUDBUNL program. It orchestrates the entire process of unloading data from the IMS database and writing it to sequential files. It first calls 1000-INITIALIZE to perform initial setup tasks such as accepting the current date and opening the output files (OPFILE1 and OPFILE2). After initialization, it enters a loop that continues as long as WS-END-OF-ROOT-SEG is not set to 'Y'. Inside the loop, it repeatedly calls 2000-FIND-NEXT-AUTH-SUMMARY to retrieve the next pending authorization summary segment from the IMS database. Once all summary segments have been processed (WS-END-OF-ROOT-SEG = 'Y'), the paragraph calls 4000-FILE-CLOSE to close the output files. Finally, the program terminates using GOBACK.
 
 ### 1000-INITIALIZE
-This paragraph performs initialization tasks for the program. It accepts the current date and day from the system. It then displays the program name and current date to the console. It opens OPFILE1 and OPFILE2 for output. If either OPEN operation fails (WS-OUTFL1-STATUS or WS-OUTFL2-STATUS is not SPACES or '00'), it displays an error message and calls 9999-ABEND to terminate the program. This paragraph ensures that the output files are ready for writing before the main processing loop begins. It consumes system date and sets up output files.
+This paragraph performs the initialization tasks required before processing the IMS database. It accepts the current date and day from the system. It then displays the program name and current date to the console for logging purposes. The paragraph proceeds to open the two output files, OPFILE1 and OPFILE2, for writing. It checks the file status after each OPEN operation. If the file status is not spaces or '00', indicating a successful open, an error message is displayed, and the program abends by calling 9999-ABEND. This paragraph ensures that the output files are available before the program attempts to write data to them.
 
 ### 2000-FIND-NEXT-AUTH-SUMMARY
-This paragraph retrieves the next pending authorization summary segment (root segment) from the IMS database. It initializes PAUT-PCB-STATUS, then calls the CBLTDLI routine with FUNC-GN to retrieve the next segment using the PAUTBPCB, PENDING-AUTH-SUMMARY, and ROOT-UNQUAL-SSA. If the PCB status is SPACES, indicating a successful read, it increments WS-NO-SUMRY-READ and WS-AUTH-SMRY-PROC-CNT, moves the PENDING-AUTH-SUMMARY to OPFIL1-REC, and writes the record to OPFILE1 if PA-ACCT-ID is numeric. It then calls 3000-FIND-NEXT-AUTH-DTL to process the child segments associated with the current root segment, continuing until WS-END-OF-CHILD-SEG is 'Y'. If the PCB status is 'GB', indicating the end of the database, it sets WS-END-OF-ROOT-SEG to 'Y'. If the PCB status is neither SPACES nor 'GB', it displays an error message and calls 9999-ABEND. This paragraph controls the retrieval and processing of root segments and their associated child segments.
+This paragraph retrieves the next pending authorization summary segment (root segment) from the IMS database. It first initializes the PAUT-PCB-STATUS field. Then, it calls the CBLTDLI routine with the FUNC-GN (Get Next) function code to retrieve the next summary segment. The parameters passed to CBLTDLI include the PCB mask (PAUTBPCB), the PENDING-AUTH-SUMMARY segment, and the ROOT-UNQUAL-SSA. After the IMS call, it checks the PAUT-PCB-STATUS. If the status is spaces (successful retrieval), it increments counters for summary records read and processed, moves the retrieved summary data to OPFIL1-REC, and extracts the account ID (PA-ACCT-ID) to ROOT-SEG-KEY. It then checks if the PA-ACCT-ID is numeric, and if so, writes the OPFIL1-REC to OPFILE1 and calls 3000-FIND-NEXT-AUTH-DTL to retrieve the child segments. If the PAUT-PCB-STATUS is 'GB' (end of database), it sets the END-OF-AUTHDB flag to TRUE and WS-END-OF-ROOT-SEG to 'Y'. If the status is anything else, it displays an error message and abends the program.
 
 ### 3000-FIND-NEXT-AUTH-DTL
-This paragraph retrieves the next pending authorization detail segment (child segment) from the IMS database. It calls the CBLTDLI routine with FUNC-GNP to retrieve the next child segment using PAUTBPCB, PENDING-AUTH-DETAILS and CHILD-UNQUAL-SSA. If the PCB status is SPACES, indicating a successful read, it sets MORE-AUTHS to TRUE, increments WS-NO-SUMRY-READ and WS-AUTH-SMRY-PROC-CNT, moves the PENDING-AUTH-DETAILS to CHILD-SEG-REC, and writes the record to OPFILE2. If the PCB status is 'GE', indicating that no more child segments exist for the current root, it sets WS-END-OF-CHILD-SEG to 'Y'. If the PCB status is neither SPACES nor 'GE', it displays an error message and calls 9999-ABEND. Finally, it initializes PAUT-PCB-STATUS. This paragraph is responsible for retrieving and writing the child segments associated with a root segment.
+This paragraph retrieves the next pending authorization detail segment (child segment) from the IMS database for a given summary segment. It calls CBLTDLI with FUNC-GNP (Get Next within Parent) to retrieve the next detail segment. The parameters include PAUTBPCB, PENDING-AUTH-DETAILS, and CHILD-UNQUAL-SSA. After the call, it checks PAUT-PCB-STATUS. If the status is spaces, it sets MORE-AUTHS to TRUE, increments counters, moves the detail segment to CHILD-SEG-REC, and writes it to OPFILE2. If the status is 'GE' (end of segments for the current parent), it sets WS-END-OF-CHILD-SEG to 'Y'. If the status is anything else, it displays an error message and abends. Finally, it initializes PAUT-PCB-STATUS for the next iteration.
 
 ### 4000-FILE-CLOSE
-This paragraph closes the output files OPFILE1 and OPFILE2. It displays a message to the console indicating that the files are being closed. It then closes each file and checks the file status (WS-OUTFL1-STATUS and WS-OUTFL2-STATUS). If the file status is not SPACES or '00' for either file, it displays an error message. This paragraph ensures that the output files are properly closed after all processing is complete.
+This paragraph closes the output files, OPFILE1 and OPFILE2. It displays a message indicating that the files are being closed. It then closes each file and checks the file status. If the file status is not spaces or '00' after closing, an error message is displayed to the console. This paragraph ensures that the output files are properly closed after all data has been written, preventing data loss or corruption.
 
 ### 9999-ABEND
-This paragraph handles abnormal termination of the program. It displays a message indicating that the program is abending. It sets the RETURN-CODE to 16. The program then terminates using GOBACK. This paragraph is called when a critical error occurs, such as a file open or close error, or an IMS call failure.
+This paragraph handles abnormal termination of the program. It displays a message indicating that the program is abending. It then sets the RETURN-CODE to 16, which signals an error condition to the calling environment. Finally, it terminates the program using GOBACK.
 
 ## Control Flow
 
@@ -85,12 +85,8 @@ flowchart TD
 
 ## Open Questions
 
-- ? What is the business context of this program?
-  - Context: The code does not provide information about the specific business process it supports.
-- ? What are the exact layouts of the IMS segments defined in CIPAUSMY and CIPAUDTY?
-  - Context: The copybooks themselves are not provided, so the exact field definitions are unknown.
-- ? What are the possible values and meanings of the parameters in PRM-INFO?
-  - Context: The code comments out the ACCEPT statement for PRM-INFO, and the meaning of P-EXPIRY-DAYS, P-CHKP-FREQ, P-CHKP-DIS-FREQ, and P-DEBUG-FLAG is unclear.
+- ? What is the purpose of the parameters in PRM-INFO?
+  - Context: The program contains a commented-out ACCEPT statement for PRM-INFO, suggesting it might have been intended to receive parameters from SYSIN, but it's not currently used. The meaning of P-EXPIRY-DAYS, P-CHKP-FREQ, P-CHKP-DIS-FREQ, and P-DEBUG-FLAG is unclear without further context.
 
 ## Sequence Diagram
 
@@ -98,16 +94,14 @@ flowchart TD
 sequenceDiagram
     MAIN-PARA->>1000-INITIALIZE: performs
     1000-INITIALIZE-->>MAIN-PARA: CURRENT-DATE, CURRENT-YYDDD, WS-OUTFL1-STATUS, ...
-    MAIN-PARA->>2000-FIND-NEXT-AUTH-SUMMARY: WS-END-OF-ROOT-SEG
-    2000-FIND-NEXT-AUTH-SUMMARY-->>MAIN-PARA: WS-END-OF-ROOT-SEG, WS-NO-SUMRY-READ, WS-AUTH-SMRY-PROC-CNT, ...
+    MAIN-PARA->>2000-FIND-NEXT-AUTH-SUMMARY: performs
+    2000-FIND-NEXT-AUTH-SUMMARY-->>MAIN-PARA: WS-NO-SUMRY-READ, WS-AUTH-SMRY-PROC-CNT, OPFIL1-REC, ...
     MAIN-PARA->>4000-FILE-CLOSE: WS-OUTFL1-STATUS, WS-OUTFL2-STATUS
-    1000-INITIALIZE->>9999-ABEND: WS-OUTFL1-STATUS, WS-OUTFL2-STATUS
-    9999-ABEND-->>1000-INITIALIZE: RETURN-CODE
-    1000-INITIALIZE->>9999-ABEND: WS-OUTFL1-STATUS, WS-OUTFL2-STATUS
-    9999-ABEND-->>1000-INITIALIZE: RETURN-CODE
+    1000-INITIALIZE->>9999-ABEND: WS-OUTFL2-STATUS
+    1000-INITIALIZE->>9999-ABEND: WS-OUTFL2-STATUS
     2000-FIND-NEXT-AUTH-SUMMARY->>CBLTDLI: performs
-    2000-FIND-NEXT-AUTH-SUMMARY->>3000-FIND-NEXT-AUTH-DTL: WS-END-OF-CHILD-SEG, PA-ACCT-ID
-    3000-FIND-NEXT-AUTH-DTL-->>2000-FIND-NEXT-AUTH-SUMMARY: WS-END-OF-CHILD-SEG, WS-NO-SUMRY-READ, WS-AUTH-SMRY-PROC-CNT
+    2000-FIND-NEXT-AUTH-SUMMARY->>3000-FIND-NEXT-AUTH-DTL: PA-ACCT-ID, WS-END-OF-CHILD-SEG
+    3000-FIND-NEXT-AUTH-DTL-->>2000-FIND-NEXT-AUTH-SUMMARY: WS-END-OF-CHILD-SEG, WS-NO-SUMRY-READ, WS-AUTH-SMRY-PROC-CNT, ...
     2000-FIND-NEXT-AUTH-SUMMARY->>9999-ABEND: PAUT-PCB-STATUS, PAUT-KEYFB
     9999-ABEND-->>2000-FIND-NEXT-AUTH-SUMMARY: RETURN-CODE
     3000-FIND-NEXT-AUTH-DTL->>CBLTDLI: performs

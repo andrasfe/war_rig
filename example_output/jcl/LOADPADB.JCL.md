@@ -2,24 +2,26 @@
 
 **File**: `jcl/LOADPADB.JCL`
 **Type**: FileType.JCL
-**Analyzed**: 2026-02-09 15:48:24.175208
+**Analyzed**: 2026-02-10 17:21:07.633684
 
 ## Purpose
 
-This JCL executes the IMS program DFSRRC00 to load the PAUTDB database using a BMP (Batch Message Processing) region. It specifies the program DFSRRC00, the BMP region, the load utility PAUDBLOD, and the PSB PSBPAUTB as parameters.
+This JCL job executes an IMS program (DFSRRC00) to load the PAUTDB database using a BMP (Batch Message Processing) region. It specifies the program, PSB, and necessary datasets for the IMS environment and input files.
+
+**Business Context**: Database maintenance and loading.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO | IOType.FILE_SEQUENTIAL | Input file for the PAUTDB root segment load. |
-| AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO | IOType.FILE_SEQUENTIAL | Input file for the PAUTDB child segment load. |
-| OEMA.IMS.IMSP.SDFSRESL | IOType.FILE_SEQUENTIAL | IMS RESLIB |
-| OEMA.IMS.IMSP.SDFSRESL.V151 | IOType.FILE_SEQUENTIAL | IMS RESLIB version 151 |
-| AWS.M2.CARDDEMO.LOADLIB | IOType.FILE_SEQUENTIAL | Load library containing the application programs. |
-| OEM.IMS.IMSP.PSBLIB | IOType.FILE_SEQUENTIAL | IMS PSB Library |
-| OEM.IMS.IMSP.DBDLIB | IOType.FILE_SEQUENTIAL | IMS DBD Library |
-| OEMPP.IMS.V15R01MB.PROCLIB(DFSVSMDB) | IOType.FILE_SEQUENTIAL | IMS VSAM parameters |
+| OEMA.IMS.IMSP.SDFSRESL | IOType.FILE_SEQUENTIAL | IMS RESLIB library. |
+| OEMA.IMS.IMSP.SDFSRESL.V151 | IOType.FILE_SEQUENTIAL | IMS RESLIB library version 151. |
+| AWS.M2.CARDDEMO.LOADLIB | IOType.FILE_SEQUENTIAL | Application load library. |
+| OEM.IMS.IMSP.PSBLIB | IOType.FILE_SEQUENTIAL | IMS PSB library. |
+| OEM.IMS.IMSP.DBDLIB | IOType.FILE_SEQUENTIAL | IMS DBD library. |
+| AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO | IOType.FILE_SEQUENTIAL | Input file for the PAUTDB root segment. |
+| AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO | IOType.FILE_SEQUENTIAL | Input file for the PAUTDB child segment. |
+| OEMPP.IMS.V15R01MB.PROCLIB(DFSVSMDB) | IOType.FILE_SEQUENTIAL | IMS VSAM definition. |
 
 ## Outputs
 
@@ -33,34 +35,9 @@ This JCL executes the IMS program DFSRRC00 to load the PAUTDB database using a B
 
 | Program | Call Type | Purpose |
 |---------|-----------|---------|
-| DFSRRC00 | CallType.STATIC_CALL | Executes the IMS BMP region to load the PAUTDB database. |
+| DFSRRC00 | CallType.STATIC_CALL | IMS program execution. |
 
 ## Paragraphs/Procedures
 
 ### LOADPADB
-[Citadel] Paragraph identified by static analysis
-
-### STEP01
-[Citadel] Paragraph identified by static analysis
-
-## Open Questions
-
-- ? The commented-out DD statements DDPAUTP0 and DDPAUTX0 refer to datasets OEM.IMS.IMSP.PAUTHDB and OEM.IMS.IMSP.PAUTHDBX. What is their purpose, and why are they commented out?
-  - Context: The JCL does not provide enough information to determine the purpose of these datasets.
-- ? What is the purpose of the DUMMY DD statements for FSVSAMP, IMSLOGR, and IEFRDER?
-  - Context: The JCL does not provide enough information to determine the purpose of these datasets.
-
-## Sequence Diagram
-
-```mermaid
-sequenceDiagram
-    STEP01->>DFSRRC00: performs
-    STEP01->>OEMA.IMS.IMSP.SDFSRESL: performs
-    STEP01->>OEMA.IMS.IMSP.SDFSRESL.V151: performs
-    STEP01->>AWS.M2.CARDDEMO.LOADLIB: performs
-    STEP01->>OEMA.IMS.IMSP.SDFSRESL: performs
-    STEP01->>OEM.IMS.IMSP.PSBLIB: performs
-    STEP01->>OEM.IMS.IMSP.DBDLIB: performs
-    STEP01->>AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO: performs
-    STEP01->>AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO: performs
-```
+This JCL defines a job named LOADPADB to load the PAUTDB database using an IMS BMP region. The job specifies job characteristics such as class, message class, region size, notification, and time limit. It then executes the IMS program DFSRRC00 with parameters indicating a BMP region, the PAUDBLOD program, and the PSBPAUTB PSB. The STEPLIB DD statements define the libraries required for the IMS execution, including the IMS RESLIB and the application load library. The IMS DD statement specifies the PSB and DBD libraries. INFILE1 and INFILE2 define the input datasets for the PAUTDB root and child segments, respectively. DFSVSAMP defines the VSAM buffer pool parameters. Finally, SYSPRINT, SYSUDUMP, and IMSERR define the system print, system dump, and IMS error output datasets, respectively. The job's primary purpose is to load the PAUTDB database using the specified IMS configuration and input data. It consumes the input datasets defined by INFILE1 and INFILE2 and produces output reports defined by SYSPRINT, SYSUDUMP, and IMSERR. No specific business logic is implemented within the JCL itself, as it primarily defines the execution environment for the IMS program.

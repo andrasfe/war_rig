@@ -4,12 +4,12 @@
     "file_name": "jcl/CBPAUP0J.jcl",
     "file_type": "JCL",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-09T15:49:00.931061",
+    "analyzed_at": "2026-02-10T17:21:48.697546",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This JCL executes an IMS program (CBPAUP0C) to delete expired authorizations. It defines the execution environment, including program name, parameters, libraries, and input/output datasets required for the IMS program to run.",
+    "summary": "This JCL executes an IMS program (DFSRRC00) to delete expired authorizations using the BMP region controller. It specifies the program CBPAUP0C and PSB PSBPAUTB for the IMS execution.",
     "business_context": "UNKNOWN",
     "program_type": "BATCH",
     "citations": [
@@ -20,19 +20,9 @@
   },
   "inputs": [
     {
-      "name": "SYSIN",
-      "io_type": "PARAMETER",
-      "description": "Input parameters for the IMS program, likely related to authorization expiration criteria. The example shows '00,00001,00001,Y' as input.",
-      "copybook": null,
-      "citation": [
-        36,
-        37
-      ]
-    },
-    {
       "name": "IMS.SDFSRESL",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS RESLIB library containing IMS modules.",
+      "description": "IMS RESLIB",
       "copybook": null,
       "citation": [
         26,
@@ -41,9 +31,27 @@
       ]
     },
     {
+      "name": "XXXXXXXX.PROD.LOADLIB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Production Load Library",
+      "copybook": null,
+      "citation": [
+        27
+      ]
+    },
+    {
+      "name": "IMS.PROCLIB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS PROCLIB",
+      "copybook": null,
+      "citation": [
+        29
+      ]
+    },
+    {
       "name": "IMS.PSBLIB",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS PSB library containing program specification blocks.",
+      "description": "IMS PSB Library",
       "copybook": null,
       "citation": [
         33
@@ -52,28 +60,20 @@
     {
       "name": "IMS.DBDLIB",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS DBD library containing database description blocks.",
+      "description": "IMS DBD Library",
       "copybook": null,
       "citation": [
         34
       ]
     },
     {
-      "name": "IMS.PROCLIB",
+      "name": "SYSIN",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS procedure library.",
+      "description": "Input control statements for the IMS program, containing parameters '00,00001,00001,Y'",
       "copybook": null,
       "citation": [
-        29
-      ]
-    },
-    {
-      "name": "XXXXXXXX.PROD.LOADLIB",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "Production load library containing the CBPAUP0C program.",
-      "copybook": null,
-      "citation": [
-        27
+        36,
+        37
       ]
     }
   ],
@@ -81,7 +81,7 @@
     {
       "name": "SYSOUX",
       "io_type": "REPORT",
-      "description": "System output for user messages.",
+      "description": "System output",
       "copybook": null,
       "citation": [
         39
@@ -90,7 +90,7 @@
     {
       "name": "SYSOUT",
       "io_type": "REPORT",
-      "description": "Standard system output.",
+      "description": "System output",
       "copybook": null,
       "citation": [
         40
@@ -99,7 +99,7 @@
     {
       "name": "SYSABOUT",
       "io_type": "REPORT",
-      "description": "System output for ABEND information.",
+      "description": "System output for ABEND information",
       "copybook": null,
       "citation": [
         41
@@ -108,7 +108,7 @@
     {
       "name": "ABENDAID",
       "io_type": "REPORT",
-      "description": "System output for ABEND aid information.",
+      "description": "System output for ABEND AID",
       "copybook": null,
       "citation": [
         42
@@ -117,7 +117,7 @@
     {
       "name": "SYSPRINT",
       "io_type": "REPORT",
-      "description": "System print output.",
+      "description": "System print output",
       "copybook": null,
       "citation": [
         45
@@ -126,7 +126,7 @@
     {
       "name": "SYSUDUMP",
       "io_type": "REPORT",
-      "description": "System user dump output.",
+      "description": "System user dump",
       "copybook": null,
       "citation": [
         46
@@ -135,28 +135,10 @@
     {
       "name": "IMSERR",
       "io_type": "REPORT",
-      "description": "IMS error output.",
+      "description": "IMS error output",
       "copybook": null,
       "citation": [
         47
-      ]
-    },
-    {
-      "name": "IEFRDER",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "Dummy dataset for logging.",
-      "copybook": null,
-      "citation": [
-        43
-      ]
-    },
-    {
-      "name": "IMSLOGR",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "Dummy dataset for IMS logging.",
-      "copybook": null,
-      "citation": [
-        44
       ]
     }
   ],
@@ -164,7 +146,7 @@
     {
       "program_name": "DFSRRC00",
       "call_type": "STATIC_CALL",
-      "purpose": "IMS control region program that initiates the execution of the BMP region.",
+      "purpose": "IMS program execution",
       "parameters": [
         "BMP",
         "CBPAUP0C",
@@ -187,30 +169,14 @@
   "copybooks_used": [],
   "paragraphs": [
     {
-      "paragraph_name": "CBPAUP0J",
-      "summary": null,
-      "purpose": "[Citadel] Paragraph identified by static analysis",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        1,
-        1
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
       "paragraph_name": "STEP01",
       "summary": null,
-      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "purpose": "This JCL step executes the IMS program DFSRRC00. It defines the execution parameters for the IMS BMP region, specifying CBPAUP0C as the application program and PSBPAUTB as the PSB. The STEPLIB DD statements define the load libraries required for the IMS execution, including the IMS RESLIB and a production load library. DFSRESLB defines the IMS RESLIB. PROCLIB defines the IMS procedure library. DFSSEL defines the IMS SDFSRESL dataset. The IMS DD statements define the PSBLIB and DBDLIB datasets. SYSIN provides input control statements to the IMS program. The remaining DD statements define various SYSOUT datasets for capturing program output, error messages, and dumps. IEFRDER and IMSLOGR are dummy datasets.",
       "called_by": [],
       "calls": [],
       "citation": [
         24,
-        24
+        47
       ],
       "outgoing_calls": [
         {
@@ -265,14 +231,14 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the exact purpose of the SYSIN input? What are the meanings of the parameters '00,00001,00001,Y'?",
-      "context": "The JCL provides the SYSIN DD statement, but the meaning of the input parameters is not clear from the JCL itself.",
-      "suggestion": "Examine the CBPAUP0C program source code or related documentation to understand the SYSIN parameters."
+      "question": "What is the exact purpose of the CBPAUP0C program?",
+      "context": "The JCL executes CBPAUP0C, but its specific function is not clear from the JCL alone.",
+      "suggestion": "Examine the source code or documentation for CBPAUP0C."
     },
     {
-      "question": "What specific authorization data is being deleted by the CBPAUP0C program?",
-      "context": "The JCL indicates the deletion of expired authorizations, but the specific data being manipulated is not clear.",
-      "suggestion": "Review the CBPAUP0C program source code and the PSBPAUTB program specification block to understand the data structures involved."
+      "question": "What is the purpose of the input parameters '00,00001,00001,Y' passed via SYSIN?",
+      "context": "The meaning of these parameters is not evident from the JCL.",
+      "suggestion": "Consult the documentation for the CBPAUP0C program."
     }
   ],
   "resolved_questions": [],

@@ -4,12 +4,12 @@
     "file_name": "PAUTBPCB.CPY",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-09T15:47:10.523017",
+    "analyzed_at": "2026-02-10T17:20:06.436999",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the structure of the PAUTBPCB data area, which appears to be related to IMS database processing, containing fields for database name, segment level, PCB status, processing options, segment name, key feedback, number of sensitive segments, and key feedback area. It is used to access information about a PCB (Program Communication Block) in an IMS environment.",
+    "summary": "This copybook defines the PAUTBPCB data structure, which appears to be related to IMS PCB (Program Communication Block) information based on the field names. It includes fields for DBD name, segment level, PCB status, processing options, segment name, key feedback name, number of sensitive segments, and key feedback area. The copybook is likely used to access and manipulate IMS database information within a COBOL program.",
     "business_context": null,
     "program_type": "SUBROUTINE",
     "citations": [
@@ -32,14 +32,7 @@
     "writes_to": [],
     "transforms": []
   },
-  "copybooks_used": [
-    {
-      "copybook_name": "PAUTBPCB",
-      "purpose": "Defines the structure of the PAUTBPCB data area, likely used for IMS PCB communication.",
-      "location": "WORKING_STORAGE",
-      "citation": 17
-    }
-  ],
+  "copybooks_used": [],
   "paragraphs": [
     {
       "paragraph_name": "PAUTBPCB",
@@ -80,7 +73,13 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [],
+  "open_questions": [
+    {
+      "question": "What is the specific purpose of each field within the PAUTBPCB structure?",
+      "context": "The copybook only defines the structure, not its usage.",
+      "suggestion": "Analyze the programs that use this copybook to understand how each field is used."
+    }
+  ],
   "resolved_questions": [],
   "dead_code": [
     {

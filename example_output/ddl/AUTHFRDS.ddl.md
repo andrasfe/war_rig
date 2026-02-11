@@ -2,13 +2,13 @@
 
 **File**: `ddl/AUTHFRDS.ddl`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-02-09 15:47:23.395151
+**Analyzed**: 2026-02-10 17:20:26.786644
 
 ## Purpose
 
-This DDL file defines the CARDDEMO.AUTHFRDS table, which stores authorization and fraud-related data for card transactions. The table includes columns for card number, authorization timestamp, transaction amounts, merchant details, fraud indicators, and customer identifiers.
+This DDL file defines the CARDDEMO.AUTHFRDS table, which stores authorization and fraud-related information for card transactions. The table includes fields for card number, authorization timestamp, transaction details, merchant information, and fraud indicators.
 
-**Business Context**: This table likely supports fraud detection and transaction authorization processes within a card processing system.
+**Business Context**: This table likely supports fraud detection and authorization processes within a card transaction system.
 
 ## Paragraphs/Procedures
 

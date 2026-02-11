@@ -1,56 +1,97 @@
 # CBPAUP0C
 
 **File**: `cbl/CBPAUP0C.cbl`
-**Type**: FileType.COBOL
-**Analyzed**: 2026-02-09 15:46:20.435789
+**Type**: COBOL
+**Analyzed**: 2026-02-10 17:12:47.449725
 
 ## Purpose
 
-This COBOL batch IMS program, CBPAUP0C, deletes expired pending authorization messages from the IMS database. It reads pending authorization summary and detail segments, checks if the authorization has expired based on a configurable expiry period, and deletes the expired detail segments. It also deletes the summary segment if all its detail segments have been deleted, and takes checkpoints periodically.
+This program CBPAUP0C purges expired authorization details from the IMS database. It reads authorization summary and detail segments, checks if the authorization is expired based on a configurable expiry period, and deletes the expired details. It also updates the authorization summary counts and amounts accordingly and takes checkpoints periodically.
 
-**Business Context**: This program is part of the CardDemo application and is used to maintain the pending authorization database by removing expired records.
+**Business Context**: This program is likely part of a larger authorization management system, responsible for maintaining the authorization database by removing outdated entries, thus optimizing storage and improving query performance.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| SYSIN | IOType.PARAMETER | Contains parameters for expiry days, checkpoint frequency, checkpoint display frequency, and debug flag. |
-| PAUTSUM0 | IOType.IMS_SEGMENT | Pending Authorization Summary segment from the IMS database. |
-| PAUTDTL1 | IOType.IMS_SEGMENT | Pending Authorization Detail segment from the IMS database. |
+| PENDING-AUTH-SUMMARY | IMS_SEGMENT | Contains summary information for pending authorizations, including account ID, approved/declined counts and amounts, and authorization date. |
+| PENDING-AUTH-DETAILS | IMS_SEGMENT | Contains details for individual pending authorizations, including authorization response code and transaction amount. |
+| SYSIN | PARAMETER | Contains parameter information, including expiry days, checkpoint frequency, debug flag, checkpoint display frequency. |
+
+## Outputs
+
+| Name | Type | Description |
+|------|------|-------------|
+| IMS Database | IMS_SEGMENT | The program updates and deletes authorization detail and summary segments in the IMS database. |
+| SYSOUT | REPORT | The program writes informational messages, debug messages (if enabled), and summary statistics to SYSOUT. |
+
+## Called Programs
+
+| Program | Call Type | Purpose |
+|---------|-----------|---------|
+| CIPAUSMY | UNKNOWN | UNKNOWN |
+| CIPAUDTY | UNKNOWN | UNKNOWN |
 
 ## Business Rules
 
-- **BR001**: An authorization is considered expired if the difference between the current date and the authorization date is greater than or equal to the expiry days specified in the input parameters.
-- **BR002**: If an expired authorization detail record has an approved authorization response code ('00'), the approved authorization count and amount in the summary record are decremented. Otherwise, the declined authorization count and amount are decremented.
+- **BR001**: Authorization details are considered expired if the difference between the current date and the authorization date is greater than or equal to the expiry days parameter.
+- **BR002**: The program takes a checkpoint after processing a configurable number of authorization summary records.
 
 ## Paragraphs/Procedures
 
+### CBPAUP0C
+This is the program entry point. It calls CIPAUSMY and CIPAUDTY, but the purpose of these calls is unknown. Further investigation is needed to determine the functionality of these called programs and their role in the overall process. Without more information, it's impossible to describe the paragraph's purpose in detail.
+
 ### MAIN-PARA
-This is the main control paragraph of the program. It orchestrates the deletion of expired pending authorization messages. It first calls 1000-INITIALIZE to initialize variables and read input parameters. Then, it enters a loop that continues until either an error occurs or the end of the authorization database is reached. Inside the loop, it calls 2000-FIND-NEXT-AUTH-SUMMARY to read the next authorization summary segment. For each summary segment, it enters another loop to process the detail segments by calling 3000-FIND-NEXT-AUTH-DTL.  Within the detail loop, 4000-CHECK-IF-EXPIRED determines if a detail record is expired. If expired, 5000-DELETE-AUTH-DTL deletes the detail record. After processing all detail segments for a summary, 6000-DELETE-AUTH-SUMMARY deletes the summary if all detail records are gone.  9000-TAKE-CHECKPOINT is called periodically to establish restart points. Finally, the program displays summary statistics and terminates.
+This paragraph controls the main processing loop of the program. It first calls 1000-INITIALIZE to initialize variables and read parameters. Then, it enters a loop that continues until either an error flag is set (ERR-FLG-ON) or the end of the authorization database is reached (END-OF-AUTHDB). Inside this main loop, it calls 3000-FIND-NEXT-AUTH-DTL to retrieve authorization details. Another nested loop processes these details until no more authorization details are found (NO-MORE-AUTHS). Within this nested loop, 4000-CHECK-IF-EXPIRED determines if the authorization detail is expired. If it is, 5000-DELETE-AUTH-DTL deletes the expired detail. After processing all details for a summary, the program checks if both approved and declined authorization counts are zero. If so, 6000-DELETE-AUTH-SUMMARY deletes the summary record. Finally, based on WS-AUTH-SMRY-PROC-CNT and P-CHKP-FREQ, 9000-TAKE-CHECKPOINT is called to take a checkpoint. The paragraph displays summary statistics before terminating.
 
 ### 1000-INITIALIZE
-This paragraph initializes the program by accepting the current date and parameters from SYSIN. It moves the expiry days from the parameter to WS-EXPIRY-DAYS, defaulting to 5 if the parameter is not numeric. It also sets default values for checkpoint frequency and display frequency if they are not provided in the input parameters. The debug flag is also initialized to 'N' if not set to 'Y'. Finally, it displays the starting message, parameters received, and today's date.
+This paragraph initializes the program. It accepts the current date and day from the system (lines 52-53). It then accepts parameter information from SYSIN (line 55) and displays it along with the current date. It checks if the P-EXPIRY-DAYS parameter is numeric (line 62). If it is, it moves the value to WS-EXPIRY-DAYS; otherwise, it defaults to 5 (line 65). It also checks if P-CHKP-FREQ, P-CHKP-DIS-FREQ are spaces, 0, or low-values, defaulting to 5 and 10 respectively if they are (lines 67-72). Finally, it checks if P-DEBUG-FLAG is not 'Y', and if so, moves 'N' to it (lines 73-75).
+
+### 1000-EXIT
+This paragraph simply contains the EXIT statement, marking the end of the 1000-INITIALIZE paragraph. It serves as a target for the PERFORM THRU statement in MAIN-PARA.
 
 ### 2000-FIND-NEXT-AUTH-SUMMARY
-This paragraph reads the next pending authorization summary segment from the IMS database using the GN (Get Next) command. If the DEBUG-ON flag is set, it displays the number of summary records read. It then evaluates the DIBSTAT return code. If the return code is spaces, it sets the NOT-END-OF-AUTHDB flag to TRUE, increments the summary read count and the summary process count, and moves the account ID to WS-CURR-APP-ID. If the return code is 'GB', it sets the END-OF-AUTHDB flag to TRUE. If any other return code is received, it displays an error message and calls 9999-ABEND to terminate the program.
+This paragraph retrieves the next authorization summary record from the IMS database. If the DEBUG-ON flag is set, it displays a debug message indicating the number of summary records read (lines 84-86). It then executes a DLI GN (Get Next) command to read the PAUTSUM0 segment into PENDING-AUTH-SUMMARY (lines 88-91). The DIBSTAT return code is evaluated. If it's '  ', NOT-END-OF-AUTHDB is set to TRUE, counters WS-NO-SUMRY-READ and WS-AUTH-SMRY-PROC-CNT are incremented, and PA-ACCT-ID is moved to WS-CURR-APP-ID (lines 94-98). If DIBSTAT is 'GB', END-OF-AUTHDB is set to TRUE (line 100). If DIBSTAT is any other value, an error message is displayed, along with the number of summary records read, and the program abends via 9999-ABEND (lines 102-105).
+
+### 2000-EXIT
+This paragraph simply contains the EXIT statement, marking the end of the 2000-FIND-NEXT-AUTH-SUMMARY paragraph. It serves as a target for the PERFORM THRU statement in MAIN-PARA.
 
 ### 3000-FIND-NEXT-AUTH-DTL
-This paragraph reads the next pending authorization detail segment from the IMS database using the GNP (Get Next within Parent) command. If the DEBUG-ON flag is set, it displays the number of detail records read. It then evaluates the DIBSTAT return code. If the return code is spaces, it sets the MORE-AUTHS flag to TRUE and increments the detail read count. If the return code is 'GE' or 'GB', it sets the NO-MORE-AUTHS flag to TRUE. If any other return code is received, it displays an error message and calls 9999-ABEND to terminate the program.
+This paragraph retrieves the next authorization detail record from the IMS database. If the DEBUG-ON flag is set, it displays a debug message indicating the number of detail records read (lines 115-117). It then executes a DLI GNP (Get Next within Parent) command to read the PAUTDTL1 segment into PENDING-AUTH-DETAILS (lines 119-122). The DIBSTAT return code is evaluated. If it's '  ', MORE-AUTHS is set to TRUE, and the WS-NO-DTL-READ counter is incremented (lines 124-126). If DIBSTAT is 'GE' or 'GB', NO-MORE-AUTHS is set to TRUE (lines 127-129). If DIBSTAT is any other value, an error message is displayed, along with the summary account ID and the number of detail records read, and the program abends via 9999-ABEND (lines 131-134).
+
+### 3000-EXIT
+This paragraph simply contains the EXIT statement, marking the end of the 3000-FIND-NEXT-AUTH-DTL paragraph. It serves as a target for the PERFORM THRU statement in MAIN-PARA.
 
 ### 4000-CHECK-IF-EXPIRED
-This paragraph checks if the current authorization detail record has expired. It calculates the authorization date by subtracting the PA-AUTH-DATE-9C from 99999 and then computes the difference between the current date and the authorization date. If the difference is greater than or equal to the expiry days, it sets the QUALIFIED-FOR-DELETE flag to TRUE. It also adjusts the approved or declined authorization counts and amounts in the summary record based on the authorization response code. If the authorization has not expired, it sets the NOT-QUALIFIED-FOR-DELETE flag to TRUE.
+This paragraph determines if an authorization detail record is expired. It calculates WS-AUTH-DATE by subtracting PA-AUTH-DATE-9C from 99999 (line 144). It then calculates WS-DAY-DIFF, the difference between the current date (CURRENT-YYDDD) and WS-AUTH-DATE (line 146). If WS-DAY-DIFF is greater than or equal to WS-EXPIRY-DAYS, QUALIFIED-FOR-DELETE is set to TRUE (lines 148-149). If the authorization response code (PA-AUTH-RESP-CODE) is '00', the approved authorization count and amount are decremented (lines 151-153); otherwise, the declined authorization count and amount are decremented (lines 155-156). If the authorization is not expired, NOT-QUALIFIED-FOR-DELETE is set to TRUE (line 159).
+
+### 4000-EXIT
+This paragraph simply contains the EXIT statement, marking the end of the 4000-CHECK-IF-EXPIRED paragraph. It serves as a target for the PERFORM THRU statement in MAIN-PARA.
 
 ### 5000-DELETE-AUTH-DTL
-This paragraph deletes the current authorization detail segment from the IMS database using the DLET (Delete) command. If the DEBUG-ON flag is set, it displays the account ID. It then checks the DIBSTAT return code. If the return code is spaces, it increments the detail deleted count. If any other return code is received, it displays an error message and calls 9999-ABEND to terminate the program.
+This paragraph deletes an authorization detail record from the IMS database. It first checks if debugging is enabled and displays the account ID if it is. It then executes a DLI DLET command to delete the PAUTDTL1 segment from the PENDING-AUTH-DETAILS using the PAUT-PCB-NUM. After the delete operation, it checks the DIBSTAT variable to determine if the deletion was successful. If DIBSTAT is spaces, it increments the WS-NO-DTL-DELETED counter. If the deletion fails (DIBSTAT is not spaces), it displays an error message including the DIBSTAT value and the authorization account ID, then calls the 9999-ABEND paragraph to terminate the program.
+
+### 5000-EXIT
+This paragraph simply exits the 5000-DELETE-AUTH-DTL paragraph, returning control to the calling paragraph.
 
 ### 6000-DELETE-AUTH-SUMMARY
-This paragraph deletes the current authorization summary segment from the IMS database using the DLET (Delete) command. If the DEBUG-ON flag is set, it displays the account ID. It then checks the DIBSTAT return code. If the return code is spaces, it increments the summary deleted count. If any other return code is received, it displays an error message and calls 9999-ABEND to terminate the program.
+This paragraph deletes an authorization summary record from the IMS database. It first checks if debugging is enabled and displays the account ID if it is. It then executes a DLI DLET command to delete the PAUTSUM0 segment from the PENDING-AUTH-SUMMARY using the PAUT-PCB-NUM. After the delete operation, it checks the DIBSTAT variable to determine if the deletion was successful. If DIBSTAT is spaces, it increments the WS-NO-SUMRY-DELETED counter. If the deletion fails (DIBSTAT is not spaces), it displays an error message including the DIBSTAT value and the authorization account ID, then calls the 9999-ABEND paragraph to terminate the program.
+
+### 6000-EXIT
+This paragraph simply exits the 6000-DELETE-AUTH-SUMMARY paragraph, returning control to the calling paragraph.
 
 ### 9000-TAKE-CHECKPOINT
-This paragraph takes a checkpoint using the CHKP (Checkpoint) command. It then checks the DIBSTAT return code. If the return code is spaces, it increments the checkpoint count. If the checkpoint count reaches the checkpoint display frequency, it resets the checkpoint count and displays a checkpoint success message. If the DIBSTAT is not spaces, it displays a checkpoint failed message and calls 9999-ABEND to terminate the program.
+This paragraph takes a checkpoint using the DLI CHKP command. It uses WK-CHKPT-ID as the checkpoint ID. After the checkpoint operation, it checks the DIBSTAT variable to determine if the checkpoint was successful. If DIBSTAT is spaces, it increments the WS-NO-CHKP counter. If the WS-NO-CHKP counter is greater than or equal to P-CHKP-DIS-FREQ, it resets WS-NO-CHKP to zero and displays a checkpoint success message including the authorization count (WS-NO-SUMRY-READ) and the current application ID (WS-CURR-APP-ID). If the checkpoint fails (DIBSTAT is not spaces), it displays an error message including the DIBSTAT value, the record count (WS-NO-SUMRY-READ), and the application ID (WS-CURR-APP-ID), then calls the 9999-ABEND paragraph to terminate the program.
+
+### 9000-EXIT
+This paragraph simply exits the 9000-TAKE-CHECKPOINT paragraph, returning control to the calling paragraph.
 
 ### 9999-ABEND
-This paragraph is called when an error occurs during program execution. It displays an abending message, sets the return code to 16, and terminates the program.
+This paragraph is the program's abend routine. It displays a message indicating that the program is abending, sets the RETURN-CODE to 16, and then terminates the program using the GOBACK statement.
+
+### ~~9999-EXIT~~ (Dead Code)
+*Paragraph '9999-EXIT' is never PERFORMed or referenced by any other paragraph or program*
 
 ## Dead Code
 
@@ -98,40 +139,46 @@ flowchart TD
 
 ## Open Questions
 
-- ? What is the structure of the IO-PCB-MASK and PGM-PCB-MASK?
-  - Context: The program uses IO-PCB-MASK and PGM-PCB-MASK in the PROCEDURE DIVISION USING statement, but their structure is not defined in the provided code. This information is needed to fully understand how the program interacts with the IMS database.
+- ? What is the purpose of the CIPAUSMY and CIPAUDTY programs called at the beginning of CBPAUP0C?
+  - Context: The program calls these two programs at the beginning, but their function is not clear from the provided code snippet.
+- ? What is the structure of the PRM-INFO parameter received from SYSIN?
+  - Context: The code accepts PRM-INFO from SYSIN, but the structure and meaning of the individual fields within PRM-INFO are not defined in the provided code snippet.
+- ? What is the purpose of the 9000-TAKE-CHECKPOINT paragraph?
+  - Context: The code calls 9000-TAKE-CHECKPOINT, but the implementation of this paragraph is not provided in the snippet. Therefore, it is unclear what actions are performed during the checkpoint process.
 
 ## Sequence Diagram
 
 ```mermaid
 sequenceDiagram
+    CBPAUP0C->>CIPAUSMY: performs
+    CBPAUP0C->>CIPAUDTY: performs
     MAIN-PARA->>1000-INITIALIZE: PRM-INFO, P-EXPIRY-DAYS, P-CHKP-FREQ, ...
-    1000-INITIALIZE-->>MAIN-PARA: CURRENT-DATE, CURRENT-YYDDD, WS-EXPIRY-DAYS, ...
-    MAIN-PARA->>2000-FIND-NEXT-AUTH-SUMMARY: DEBUG-ON, PAUT-PCB-NUM, PENDING-AUTH-SUMMARY
+    1000-INITIALIZE-->>MAIN-PARA: WS-EXPIRY-DAYS, P-CHKP-FREQ, P-CHKP-DIS-FREQ, ...
+    MAIN-PARA->>2000-FIND-NEXT-AUTH-SUMMARY: DEBUG-ON
     2000-FIND-NEXT-AUTH-SUMMARY-->>MAIN-PARA: WS-NO-SUMRY-READ, WS-AUTH-SMRY-PROC-CNT, WS-CURR-APP-ID, ...
-    MAIN-PARA->>3000-FIND-NEXT-AUTH-DTL: DEBUG-ON, PAUT-PCB-NUM, PENDING-AUTH-DETAILS
+    MAIN-PARA->>3000-FIND-NEXT-AUTH-DTL: DEBUG-ON
     3000-FIND-NEXT-AUTH-DTL-->>MAIN-PARA: WS-NO-DTL-READ, WS-MORE-AUTHS-FLAG
-    MAIN-PARA->>4000-CHECK-IF-EXPIRED: PA-AUTH-DATE-9C, CURRENT-YYDDD, WS-EXPIRY-DAYS, ...
+    MAIN-PARA->>4000-CHECK-IF-EXPIRED: PA-AUTH-DATE-9C, CURRENT-YYDDD, WS-EXPIRY-DAYS
     4000-CHECK-IF-EXPIRED-->>MAIN-PARA: WS-AUTH-DATE, WS-DAY-DIFF, QUALIFIED-FOR-DELETE, ...
-    MAIN-PARA->>5000-DELETE-AUTH-DTL: PA-ACCT-ID, DEBUG-ON
+    MAIN-PARA->>5000-DELETE-AUTH-DTL: DEBUG-ON, PA-ACCT-ID
     5000-DELETE-AUTH-DTL-->>MAIN-PARA: WS-NO-DTL-DELETED
-    MAIN-PARA->>3000-FIND-NEXT-AUTH-DTL: DEBUG-ON, PAUT-PCB-NUM, PENDING-AUTH-DETAILS
+    MAIN-PARA->>3000-FIND-NEXT-AUTH-DTL: DEBUG-ON
     3000-FIND-NEXT-AUTH-DTL-->>MAIN-PARA: WS-NO-DTL-READ, WS-MORE-AUTHS-FLAG
-    MAIN-PARA->>6000-DELETE-AUTH-SUMMARY: DEBUG-ON, PAUT-PCB-NUM, PENDING-AUTH-SUMMARY, ...
+    MAIN-PARA->>6000-DELETE-AUTH-SUMMARY: DEBUG-ON, PENDING-AUTH-SUMMARY
     6000-DELETE-AUTH-SUMMARY-->>MAIN-PARA: WS-NO-SUMRY-DELETED
     MAIN-PARA->>9000-TAKE-CHECKPOINT: WK-CHKPT-ID, WS-NO-CHKP, P-CHKP-DIS-FREQ, ...
     9000-TAKE-CHECKPOINT-->>MAIN-PARA: WS-NO-CHKP
-    MAIN-PARA->>2000-FIND-NEXT-AUTH-SUMMARY: DEBUG-ON, PAUT-PCB-NUM, PENDING-AUTH-SUMMARY
+    MAIN-PARA->>2000-FIND-NEXT-AUTH-SUMMARY: DEBUG-ON
     2000-FIND-NEXT-AUTH-SUMMARY-->>MAIN-PARA: WS-NO-SUMRY-READ, WS-AUTH-SMRY-PROC-CNT, WS-CURR-APP-ID, ...
     MAIN-PARA->>9000-TAKE-CHECKPOINT: WK-CHKPT-ID, WS-NO-CHKP, P-CHKP-DIS-FREQ, ...
     9000-TAKE-CHECKPOINT-->>MAIN-PARA: WS-NO-CHKP
-    2000-FIND-NEXT-AUTH-SUMMARY->>9999-ABEND: WS-NO-SUMRY-READ, DIBSTAT
+    2000-FIND-NEXT-AUTH-SUMMARY->>9999-ABEND: DIBSTAT, WS-NO-SUMRY-READ
     9999-ABEND-->>2000-FIND-NEXT-AUTH-SUMMARY: RETURN-CODE
-    3000-FIND-NEXT-AUTH-DTL->>9999-ABEND: WS-NO-DTL-READ, PA-ACCT-ID, DIBSTAT
+    3000-FIND-NEXT-AUTH-DTL->>9999-ABEND: DIBSTAT, PA-ACCT-ID, WS-NO-DTL-READ
     9999-ABEND-->>3000-FIND-NEXT-AUTH-DTL: RETURN-CODE
-    5000-DELETE-AUTH-DTL->>9999-ABEND: PA-ACCT-ID, DIBSTAT
+    5000-DELETE-AUTH-DTL->>9999-ABEND: DIBSTAT, PA-ACCT-ID
     9999-ABEND-->>5000-DELETE-AUTH-DTL: RETURN-CODE
-    6000-DELETE-AUTH-SUMMARY->>9999-ABEND: PA-ACCT-ID, DIBSTAT
+    6000-DELETE-AUTH-SUMMARY->>9999-ABEND: DIBSTAT, PA-ACCT-ID
     9999-ABEND-->>6000-DELETE-AUTH-SUMMARY: RETURN-CODE
     9000-TAKE-CHECKPOINT->>9999-ABEND: DIBSTAT, WS-NO-SUMRY-READ, WS-CURR-APP-ID
     9999-ABEND-->>9000-TAKE-CHECKPOINT: RETURN-CODE
