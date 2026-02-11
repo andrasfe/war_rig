@@ -203,16 +203,13 @@ class TestBuildSystemDesignPrompt:
         prompt = imperator_agent._build_system_design_prompt(sample_holistic_input)
 
         # Check program documentation section
-        assert "## Program Documentation (Full Details)" in prompt
+        assert "## Program Documentation" in prompt
 
-        # Check BATCH programs (now "Components")
-        assert "### BATCH Components" in prompt
+        # Check programs are included
         assert "#### MAINPGM" in prompt
         assert "MAINPGM.CBL" in prompt
         assert "Main batch program that orchestrates daily processing" in prompt
 
-        # Check ONLINE_CICS programs (now "Components")
-        assert "### ONLINE_CICS Components" in prompt
         assert "#### INQPGM" in prompt
         assert "Online inquiry program for account lookup" in prompt
 

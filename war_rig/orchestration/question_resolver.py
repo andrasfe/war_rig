@@ -456,6 +456,19 @@ class QuestionResolver:
         if first_line.startswith("inconclusive:") or first_line.startswith("inconclusive -"):
             return (False, "LOW")
 
+        # CodeWhisper meta-output / failure patterns
+        codewhisper_noise = [
+            "maximum number of iterations",
+            "i reached the maximum",
+            "tool calls using:",
+            "follow-up question to continue",
+            "i made " ,  # "I made 5 tool calls..."
+            "processing your request",
+            "during my analysis",
+        ]
+        if any(phrase in stripped for phrase in codewhisper_noise):
+            return (False, "LOW")
+
         # Hedging language
         hedging = [
             "could not find",

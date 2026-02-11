@@ -2941,113 +2941,144 @@ and architecture after reading your overview."""
                 parts.append(f"| {doc.program_id} | `{doc_path}` |")
         parts.append("")
 
-        # Include detailed file documentation
-        parts.append("## Program Documentation (Full Details)")
-        parts.append("")
-        parts.append(
-            "Below is comprehensive documentation for each component. "
-            "Include ALL relevant details in the README.md and link to each component."
+        # Include file documentation with token budget enforcement
+        # Reserve tokens for: preamble (~3000), call graph & enrichment (~3000),
+        # output instructions, and response headroom.
+        preamble_tokens = len("\n".join(parts)) // 4
+        max_doc_tokens = max(
+            self.config.max_prompt_tokens - preamble_tokens - 4000, 4000
         )
+
+        parts.append("## Program Documentation")
         parts.append("")
 
         if input_data.file_documentation:
-            # Group by program type for better organization
-            by_type: dict[str, list[FileDocumentation]] = {}
+            from pathlib import Path as PathLib
+
+            # Build compact + full blocks per file, pick the best fit
+            doc_blocks: list[tuple[str, str]] = []  # (compact, full)
             for doc in input_data.file_documentation:
-                ptype = (
-                    doc.template.purpose.program_type.value
-                    if doc.template.purpose.program_type
-                    else "UNKNOWN"
+                rel_path = PathLib(doc.file_name)
+                if rel_path.parent != PathLib("."):
+                    doc_path = f"{rel_path.parent}/{rel_path.name}.md"
+                else:
+                    doc_path = f"{rel_path.name}.md"
+
+                # --- compact block: always included ---
+                compact_lines = [
+                    f"#### {doc.program_id}",
+                    f"- **File**: `{doc.file_name}` | **Doc**: [{doc.program_id}]({doc_path})",
+                    f"- **Summary**: {doc.template.purpose.summary}",
+                ]
+                if doc.template.called_programs:
+                    names = ", ".join(
+                        cp.program_name for cp in doc.template.called_programs
+                    )
+                    compact_lines.append(f"- **Calls**: {names}")
+                if doc.template.calling_context.called_by:
+                    compact_lines.append(
+                        f"- **Called By**: {', '.join(doc.template.calling_context.called_by)}"
+                    )
+                compact_lines.append("")
+
+                # --- full block: added when budget allows ---
+                full_lines = list(compact_lines)  # starts with compact
+                if doc.template.purpose.business_context:
+                    full_lines.append(
+                        f"**Business Context**: {doc.template.purpose.business_context}"
+                    )
+                    full_lines.append("")
+
+                if doc.template.called_programs:
+                    full_lines.append("**Programs Called**:")
+                    for cp in doc.template.called_programs:
+                        purpose = f" - {cp.purpose}" if cp.purpose else ""
+                        full_lines.append(f"  - `{cp.program_name}`{purpose}")
+                    full_lines.append("")
+
+                if doc.template.inputs:
+                    full_lines.append("**Inputs**:")
+                    for inp in doc.template.inputs:
+                        io_type = inp.io_type.value if inp.io_type else "unknown"
+                        desc = f" - {inp.description}" if inp.description else ""
+                        full_lines.append(f"  - `{inp.name}` ({io_type}){desc}")
+                    full_lines.append("")
+
+                if doc.template.outputs:
+                    full_lines.append("**Outputs**:")
+                    for out in doc.template.outputs:
+                        io_type = out.io_type.value if out.io_type else "unknown"
+                        desc = f" - {out.description}" if out.description else ""
+                        full_lines.append(f"  - `{out.name}` ({io_type}){desc}")
+                    full_lines.append("")
+
+                if doc.template.business_rules:
+                    full_lines.append("**Business Rules**:")
+                    for rule in doc.template.business_rules:
+                        rule_desc = rule.description or "No description"
+                        full_lines.append(f"  - {rule_desc}")
+                    full_lines.append("")
+
+                if doc.template.copybooks_used:
+                    full_lines.append("**Copybooks Used**:")
+                    for cb in doc.template.copybooks_used:
+                        purpose = f" - {cb.purpose}" if cb.purpose else ""
+                        full_lines.append(f"  - `{cb.copybook_name}`{purpose}")
+                    full_lines.append("")
+
+                if doc.template.error_handling:
+                    full_lines.append("**Error Handling**:")
+                    for eh in doc.template.error_handling:
+                        condition = eh.condition or "Unknown condition"
+                        action = eh.action or "Unknown action"
+                        full_lines.append(f"  - **{condition}**: {action}")
+                    full_lines.append("")
+
+                full_lines.append("---")
+                full_lines.append("")
+
+                doc_blocks.append(
+                    ("\n".join(compact_lines), "\n".join(full_lines))
                 )
-                if ptype not in by_type:
-                    by_type[ptype] = []
-                by_type[ptype].append(doc)
 
-            for ptype, docs in sorted(by_type.items()):
-                parts.append(f"### {ptype} Components ({len(docs)})")
-                parts.append("")
+            # Phase 1: all compact summaries (guaranteed to fit)
+            compact_total = sum(len(c) for c, _ in doc_blocks)
+            full_total = sum(len(f) for _, f in doc_blocks)
 
-                for doc in docs:
-                    # Compute doc path for this file
-                    from pathlib import Path as PathLib
-                    rel_path = PathLib(doc.file_name)
-                    if rel_path.parent != PathLib("."):
-                        doc_path = f"{rel_path.parent}/{rel_path.name}.md"
+            if full_total // 4 <= max_doc_tokens:
+                # Everything fits — use full details
+                for _, full in doc_blocks:
+                    parts.append(full)
+            elif compact_total // 4 <= max_doc_tokens:
+                # Partial fit — full details until budget, then compact
+                remaining = max_doc_tokens * 4  # char budget
+                for compact, full in doc_blocks:
+                    if len(full) <= remaining:
+                        parts.append(full)
+                        remaining -= len(full)
                     else:
-                        doc_path = f"{rel_path.name}.md"
-
-                    parts.append(f"#### {doc.program_id}")
-                    parts.append(f"- **Source File**: `{doc.file_name}`")
-                    parts.append(f"- **Documentation**: `{doc_path}`")
-                    parts.append(f"- **Link Format**: `[{doc.program_id}]({doc_path})`")
-                    parts.append("")
-                    parts.append(f"**Summary**: {doc.template.purpose.summary}")
-                    parts.append("")
-
-                    if doc.template.purpose.business_context:
-                        parts.append(f"**Business Context**: {doc.template.purpose.business_context}")
-                        parts.append("")
-
-                    # Called programs - show ALL
-                    if doc.template.called_programs:
-                        parts.append("**Programs Called**:")
-                        for cp in doc.template.called_programs:
-                            purpose = f" - {cp.purpose}" if cp.purpose else ""
-                            parts.append(f"  - `{cp.program_name}`{purpose}")
-                        parts.append("")
-
-                    # Calling context - show ALL
-                    if doc.template.calling_context.called_by:
-                        parts.append(f"**Called By**: {', '.join(doc.template.calling_context.called_by)}")
-                        parts.append("")
-
-                    # Inputs - show ALL with descriptions
-                    if doc.template.inputs:
-                        parts.append("**Inputs**:")
-                        for inp in doc.template.inputs:
-                            io_type = inp.io_type.value if inp.io_type else "unknown"
-                            desc = f" - {inp.description}" if inp.description else ""
-                            parts.append(f"  - `{inp.name}` ({io_type}){desc}")
-                        parts.append("")
-
-                    # Outputs - show ALL with descriptions
-                    if doc.template.outputs:
-                        parts.append("**Outputs**:")
-                        for out in doc.template.outputs:
-                            io_type = out.io_type.value if out.io_type else "unknown"
-                            desc = f" - {out.description}" if out.description else ""
-                            parts.append(f"  - `{out.name}` ({io_type}){desc}")
-                        parts.append("")
-
-                    # Business rules - show ALL
-                    if doc.template.business_rules:
-                        parts.append("**Business Rules**:")
-                        for rule in doc.template.business_rules:
-                            rule_desc = rule.description or "No description"
-                            parts.append(f"  - {rule_desc}")
-                            if rule.logic_summary:
-                                parts.append(f"    *Logic: {rule.logic_summary}*")
-                        parts.append("")
-
-                    # Copybooks - show ALL
-                    if doc.template.copybooks_used:
-                        parts.append("**Copybooks Used**:")
-                        for cb in doc.template.copybooks_used:
-                            purpose = f" - {cb.purpose}" if cb.purpose else ""
-                            parts.append(f"  - `{cb.copybook_name}`{purpose}")
-                        parts.append("")
-
-                    # Error handling
-                    if doc.template.error_handling:
-                        parts.append("**Error Handling**:")
-                        for eh in doc.template.error_handling:
-                            condition = eh.condition or "Unknown condition"
-                            action = eh.action or "Unknown action"
-                            parts.append(f"  - **{condition}**: {action}")
-                        parts.append("")
-
-                    parts.append("---")
-                    parts.append("")
+                        parts.append(compact)
+                        remaining -= len(compact)
+                parts.append(
+                    f"*({len(doc_blocks)} components total — "
+                    f"some shown in compact form due to context budget)*"
+                )
+                parts.append("")
+            else:
+                # Even compact doesn't fit — truncate list
+                remaining = max_doc_tokens * 4
+                included = 0
+                for compact, _ in doc_blocks:
+                    if len(compact) > remaining:
+                        break
+                    parts.append(compact)
+                    remaining -= len(compact)
+                    included += 1
+                parts.append(
+                    f"*({included} of {len(doc_blocks)} components shown — "
+                    f"context budget exceeded)*"
+                )
+                parts.append("")
         else:
             parts.append("*No file documentation available.*")
             parts.append("")

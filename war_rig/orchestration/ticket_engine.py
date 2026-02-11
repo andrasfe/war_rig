@@ -510,6 +510,9 @@ class TicketOrchestrator:
                 self._state.status_message = "Generating README.md..."
                 await self._generate_final_readme()
 
+                # Chunks are safe to clean up now that README is complete
+                self._cleanup_all_chunks()
+
                 self._state.status_message = "Generating system overview..."
                 self._create_system_overview_ticket()
                 await self._process_system_overview()
@@ -1573,6 +1576,9 @@ class TicketOrchestrator:
         readme_path = self.config.output_directory / "README.md"
         readme_path.write_text(design_output.markdown, encoding="utf-8")
         logger.info(f"Generated README.md at {readme_path}")
+
+        # Chunks are safe to clean up now that README is complete
+        self._cleanup_all_chunks()
 
     async def _generate_final_readme(self) -> None:
         """Generate README.md at the end of batch processing.
@@ -2815,6 +2821,25 @@ class TicketOrchestrator:
 
         # Generate sequence diagrams
         self._state.sequence_diagrams = self._get_sequence_diagrams()
+
+    def _cleanup_all_chunks(self) -> None:
+        """Remove all chunk directories after README generation completes.
+
+        Chunk files are kept during processing so that interrupted runs can
+        resume without re-processing files. Once the README is successfully
+        generated the batch is considered complete and chunks can be removed.
+        """
+        import shutil
+
+        chunks_root = self.config.output_directory / ".chunks"
+        if not chunks_root.exists():
+            return
+
+        try:
+            shutil.rmtree(chunks_root)
+            logger.info("Cleaned up .chunks directory after README generation")
+        except Exception as e:
+            logger.warning(f"Failed to clean up .chunks directory: {e}")
 
     async def stop(self) -> None:
         """Gracefully stop the orchestrator.

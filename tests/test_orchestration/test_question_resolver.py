@@ -360,6 +360,44 @@ class TestAssessAnswerQuality:
         assert is_good is False
         assert confidence == "LOW"
 
+    def test_codewhisper_max_iterations_rejected(
+        self, config: QuestionResolutionConfig, output_dir: Path,
+        input_dir: Path,
+    ) -> None:
+        resolver = QuestionResolver(config, output_dir, input_dir, cycle=1)
+        is_good, confidence = resolver._assess_answer_quality(
+            "I reached the maximum number of iterations (8) while processing "
+            "your request. During my analysis, I made 5 tool calls using: "
+            "load_skill, search_skills. You may want to ask a more specific "
+            "follow-up question to continue the analysis."
+        )
+        assert is_good is False
+        assert confidence == "LOW"
+
+    def test_codewhisper_tool_calls_noise_rejected(
+        self, config: QuestionResolutionConfig, output_dir: Path,
+        input_dir: Path,
+    ) -> None:
+        resolver = QuestionResolver(config, output_dir, input_dir, cycle=1)
+        is_good, confidence = resolver._assess_answer_quality(
+            "During my analysis, I made 3 tool calls using: search_skills, "
+            "load_skill. Unfortunately I could not complete the investigation."
+        )
+        assert is_good is False
+        assert confidence == "LOW"
+
+    def test_codewhisper_followup_noise_rejected(
+        self, config: QuestionResolutionConfig, output_dir: Path,
+        input_dir: Path,
+    ) -> None:
+        resolver = QuestionResolver(config, output_dir, input_dir, cycle=1)
+        is_good, confidence = resolver._assess_answer_quality(
+            "You may want to ask a more specific follow-up question to "
+            "continue the analysis."
+        )
+        assert is_good is False
+        assert confidence == "LOW"
+
 
 # =============================================================================
 # Tests: _update_template

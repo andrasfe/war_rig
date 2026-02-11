@@ -2918,9 +2918,9 @@ class ScribeWorker:
             )
             self._save_template(ticket.file_name, result.template)
 
-            # Clean up chunk files only after successful save to disk
-            # This ensures chunks persist on crash/cancel for resume capability
-            self._cleanup_chunks(ticket.file_name)
+            # NOTE: Chunk cleanup is deferred to ticket_engine after README
+            # generation completes. This ensures chunks persist for resume
+            # across restarts until the batch is fully done.
 
         return result
 
