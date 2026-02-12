@@ -1778,12 +1778,20 @@ class ScribeWorker:
 
         # Flow Diagram
         if template.flow_diagram:
-            parts.append("## Control Flow")
-            parts.append("")
-            parts.append("```mermaid")
-            parts.append(template.flow_diagram)
-            parts.append("```")
-            parts.append("")
+            from war_rig.validation.mermaid_validator import is_valid_mermaid
+
+            if is_valid_mermaid(template.flow_diagram):
+                parts.append("## Control Flow")
+                parts.append("")
+                parts.append("```mermaid")
+                parts.append(template.flow_diagram)
+                parts.append("```")
+                parts.append("")
+            else:
+                logger.warning(
+                    "Skipping invalid flow diagram for template: %.80s",
+                    template.flow_diagram.replace("\n", " "),
+                )
 
         # Open Questions
         if template.open_questions:

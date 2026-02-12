@@ -3335,6 +3335,11 @@ This creates a navigable documentation web.
             # Identify which sections were updated (look for main headers)
             sections_updated = self._extract_sections(final_markdown)
 
+            # Sanitize any invalid mermaid blocks before output
+            from war_rig.validation.mermaid_validator import sanitize_mermaid_blocks
+
+            final_markdown = sanitize_mermaid_blocks(final_markdown)
+
             return SystemDesignOutput(
                 success=True,
                 markdown=final_markdown,
@@ -3507,16 +3512,24 @@ This creates a navigable documentation web.
         )
         lines.append("")
 
+        from war_rig.validation.mermaid_validator import is_valid_mermaid
+
         for idx, diagram in enumerate(sequence_diagrams, start=1):
-            lines.append(f"### Flow {idx}")
-            lines.append("")
-            lines.append("```mermaid")
             # The diagram may already have mermaid fence, strip if so
             diagram_content = diagram.strip()
             if diagram_content.startswith("```mermaid"):
                 diagram_content = diagram_content[len("```mermaid"):].strip()
             if diagram_content.endswith("```"):
                 diagram_content = diagram_content[:-3].strip()
+            if not is_valid_mermaid(diagram_content):
+                logger.warning(
+                    "Skipping invalid mermaid diagram in flows section: %.80s",
+                    diagram_content.replace("\n", " "),
+                )
+                continue
+            lines.append(f"### Flow {idx}")
+            lines.append("")
+            lines.append("```mermaid")
             lines.append(diagram_content)
             lines.append("```")
             lines.append("")

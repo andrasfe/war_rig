@@ -539,6 +539,11 @@ class AgenticReadmeGenerator:
             except Exception as e:
                 logger.warning("Merge pass failed, using unmerged output: %s", e)
 
+        # Sanitize any invalid mermaid blocks before output
+        from war_rig.validation.mermaid_validator import sanitize_mermaid_blocks
+
+        final_markdown = sanitize_mermaid_blocks(final_markdown)
+
         # Parse inline questions
         questions = _parse_inline_questions(final_markdown, cycle=1)
         sections_updated = [s.name for s in SECTIONS if s.name in generated_sections]
@@ -739,15 +744,23 @@ Do NOT summarize or truncate — output the full document."""
         )
         lines.append("")
 
+        from war_rig.validation.mermaid_validator import is_valid_mermaid
+
         for idx, diagram in enumerate(sequence_diagrams, start=1):
-            lines.append(f"### Flow {idx}")
-            lines.append("")
-            lines.append("```mermaid")
             diagram_content = diagram.strip()
             if diagram_content.startswith("```mermaid"):
                 diagram_content = diagram_content[len("```mermaid"):].strip()
             if diagram_content.endswith("```"):
                 diagram_content = diagram_content[:-3].strip()
+            if not is_valid_mermaid(diagram_content):
+                logger.warning(
+                    "Skipping invalid mermaid diagram in flows section: %.80s",
+                    diagram_content.replace("\n", " "),
+                )
+                continue
+            lines.append(f"### Flow {idx}")
+            lines.append("")
+            lines.append("```mermaid")
             lines.append(diagram_content)
             lines.append("```")
             lines.append("")

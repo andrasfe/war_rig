@@ -1641,9 +1641,14 @@ class TicketOrchestrator:
                 f"README generation failed: {design_output.error or 'LLM returned empty markdown'}"
             )
 
+        # Sanitize invalid mermaid blocks before writing
+        from war_rig.validation.mermaid_validator import sanitize_mermaid_blocks
+
+        sanitized_md = sanitize_mermaid_blocks(design_output.markdown)
+
         # Write README.md to output directory
         readme_path = self.config.output_directory / "README.md"
-        readme_path.write_text(design_output.markdown, encoding="utf-8")
+        readme_path.write_text(sanitized_md, encoding="utf-8")
         logger.info(f"Generated README.md at {readme_path}")
 
         # Chunks are safe to clean up now that README is complete
@@ -1679,7 +1684,12 @@ class TicketOrchestrator:
                 f"README generation failed: {design_output.error or 'LLM returned empty markdown'}"
             )
 
-        readme_path.write_text(design_output.markdown, encoding="utf-8")
+        # Sanitize invalid mermaid blocks before writing
+        from war_rig.validation.mermaid_validator import sanitize_mermaid_blocks
+
+        sanitized_md = sanitize_mermaid_blocks(design_output.markdown)
+
+        readme_path.write_text(sanitized_md, encoding="utf-8")
         logger.info(f"Generated README.md at {readme_path}")
 
     async def _build_holistic_review_input(self) -> HolisticReviewInput:

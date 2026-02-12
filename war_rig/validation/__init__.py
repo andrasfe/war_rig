@@ -18,6 +18,10 @@ from war_rig.validation.document_criteria import (
     get_criteria_for_type,
 )
 from war_rig.validation.document_validator import DocumentValidator, ValidationResult
+from war_rig.validation.mermaid_validator import (
+    is_valid_mermaid,
+    sanitize_mermaid_blocks,
+)
 
 __all__ = [
     # Criteria classes
@@ -37,4 +41,7 @@ __all__ = [
     # Validator
     "DocumentValidator",
     "ValidationResult",
+    # Mermaid
+    "is_valid_mermaid",
+    "sanitize_mermaid_blocks",
 ]
