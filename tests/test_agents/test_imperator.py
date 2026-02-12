@@ -1629,3 +1629,193 @@ class TestCompactReviewTokenReduction:
 
         # Summary should be significantly smaller (at least 50% smaller)
         assert len(summary_json) < len(template_json) * 0.5
+
+
+class TestBuildDocPathTable:
+    """Tests for the _build_doc_path_table static method."""
+
+    def test_basic_table(
+        self,
+        imperator_agent: ImperatorAgent,
+        sample_holistic_input: HolisticReviewInput,
+    ):
+        """Test doc path table generation."""
+        table = ImperatorAgent._build_doc_path_table(sample_holistic_input)
+        assert "| Component | Doc Path |" in table
+        assert "MAINPGM" in table
+        assert "INQPGM" in table
+
+    def test_empty_documentation(self, imperator_agent: ImperatorAgent):
+        """Test with no file documentation."""
+        input_data = HolisticReviewInput(batch_id="empty")
+        table = ImperatorAgent._build_doc_path_table(input_data)
+        assert "| Component | Doc Path |" in table
+        # Should just have the header rows
+        lines = table.strip().split("\n")
+        assert len(lines) == 2  # header + separator
+
+
+class TestGenerateSystemDesignAgentic:
+    """Tests for the generate_system_design_agentic method."""
+
+    @pytest.mark.asyncio
+    async def test_fallback_on_exception(
+        self,
+        imperator_agent: ImperatorAgent,
+        sample_holistic_input: HolisticReviewInput,
+    ):
+        """Test that agentic method falls back to monolithic on error."""
+        from pathlib import Path
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        # Mock AgenticReadmeGenerator to raise an error
+        with patch(
+            "war_rig.agents.agentic_readme.AgenticReadmeGenerator",
+            side_effect=RuntimeError("SDK init failed"),
+        ):
+            # Mock the fallback method to return a known output
+            mock_output = MagicMock()
+            mock_output.success = True
+            mock_output.markdown = "# Fallback README"
+            mock_output.questions = []
+            mock_output.sections_updated = ["Executive Summary"]
+
+            with patch.object(
+                imperator_agent,
+                "generate_system_design",
+                new_callable=AsyncMock,
+                return_value=mock_output,
+            ) as mock_fallback:
+                result = await imperator_agent.generate_system_design_agentic(
+                    sample_holistic_input,
+                    code_dir=Path("/tmp/code"),
+                )
+
+                mock_fallback.assert_called_once()
+                assert result.success is True
+                assert result.markdown == "# Fallback README"
+
+    @pytest.mark.asyncio
+    async def test_successful_agentic_generation(
+        self,
+        imperator_agent: ImperatorAgent,
+        sample_holistic_input: HolisticReviewInput,
+    ):
+        """Test successful agentic README generation."""
+        from pathlib import Path
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        from war_rig.agents.imperator import SystemDesignOutput
+
+        mock_result = SystemDesignOutput(
+            success=True,
+            markdown="# Agentic README\n\nContent here.",
+            questions=[],
+            sections_updated=["Executive Summary", "Architecture Overview"],
+        )
+
+        mock_generator = MagicMock()
+        mock_generator.generate = AsyncMock(return_value=mock_result)
+
+        with patch(
+            "war_rig.agents.agentic_readme.AgenticReadmeGenerator",
+            return_value=mock_generator,
+        ):
+            result = await imperator_agent.generate_system_design_agentic(
+                sample_holistic_input,
+                code_dir=Path("/tmp/code"),
+                skills_dir=Path("/tmp/skills"),
+            )
+
+        assert result.success is True
+        assert result.markdown == "# Agentic README\n\nContent here."
+        assert len(result.sections_updated) == 2
+
+    @pytest.mark.asyncio
+    async def test_fallback_on_empty_result(
+        self,
+        imperator_agent: ImperatorAgent,
+        sample_holistic_input: HolisticReviewInput,
+    ):
+        """Test fallback when agentic generation returns empty markdown."""
+        from pathlib import Path
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        from war_rig.agents.imperator import SystemDesignOutput
+
+        # Agentic returns success but empty markdown
+        mock_result = SystemDesignOutput(
+            success=True,
+            markdown="",
+        )
+        mock_generator = MagicMock()
+        mock_generator.generate = AsyncMock(return_value=mock_result)
+
+        # Monolithic fallback
+        mock_fallback = SystemDesignOutput(
+            success=True,
+            markdown="# Fallback",
+        )
+
+        with patch(
+            "war_rig.agents.agentic_readme.AgenticReadmeGenerator",
+            return_value=mock_generator,
+        ), patch.object(
+            imperator_agent,
+            "generate_system_design",
+            new_callable=AsyncMock,
+            return_value=mock_fallback,
+        ):
+            result = await imperator_agent.generate_system_design_agentic(
+                sample_holistic_input,
+                code_dir=Path("/tmp/code"),
+            )
+
+        assert result.markdown == "# Fallback"
+
+    @pytest.mark.asyncio
+    async def test_passes_structural_context(
+        self,
+        imperator_agent: ImperatorAgent,
+        sample_holistic_input: HolisticReviewInput,
+    ):
+        """Test that structural context is built and passed correctly."""
+        from pathlib import Path
+        from unittest.mock import AsyncMock, MagicMock, patch
+
+        from war_rig.agents.imperator import SystemDesignOutput
+
+        mock_result = SystemDesignOutput(
+            success=True,
+            markdown="# README",
+        )
+        mock_generator = MagicMock()
+        mock_generator.generate = AsyncMock(return_value=mock_result)
+
+        captured_args = {}
+
+        def capture_init(**kwargs):
+            captured_args.update(kwargs)
+            return mock_generator
+
+        with patch(
+            "war_rig.agents.agentic_readme.AgenticReadmeGenerator",
+            side_effect=capture_init,
+        ):
+            await imperator_agent.generate_system_design_agentic(
+                sample_holistic_input,
+                code_dir=Path("/tmp/code"),
+                skills_dir=Path("/tmp/skills"),
+                entry_points=["MAINPGM"],
+                call_chains=[["MAINPGM", "SUBPGM1"]],
+            )
+
+        assert captured_args["code_dir"] == Path("/tmp/code")
+        assert captured_args["skills_dir"] == Path("/tmp/skills")
+
+        # Verify generate was called with structural context
+        generate_call = mock_generator.generate.call_args
+        structural_ctx = generate_call.kwargs.get(
+            "structural_context", generate_call.args[0] if generate_call.args else None
+        )
+        assert structural_ctx is not None

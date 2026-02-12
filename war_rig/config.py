@@ -514,6 +514,22 @@ class WarRigConfig(BaseSettings):
         description="Enable Challenger structural cross-check against graph",
     )
 
+    # Agentic README generation (via CodeWhisper SDK)
+    agentic_readme_enabled: bool = Field(
+        default=True,
+        description="Use agentic investigative flow for README generation instead of monolithic prompt",
+    )
+    agentic_readme_max_iterations: int = Field(
+        default=10,
+        ge=1,
+        le=30,
+        description="Maximum tool-calling iterations per README section",
+    )
+    agentic_readme_merge_pass: bool = Field(
+        default=True,
+        description="Enable merge pass to fix cross-references and deduplicate after section generation",
+    )
+
     # Beads integration
     # Disabled by default - War Rig uses in-memory ticket tracking
     # Enable only if you have a separate beads instance configured

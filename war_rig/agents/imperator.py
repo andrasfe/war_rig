@@ -3632,3 +3632,150 @@ This creates a navigable documentation web.
                 "Subsystem Breakdown",
             ],
         )
+
+    @staticmethod
+    def _build_doc_path_table(input_data: HolisticReviewInput) -> str:
+        """Build a markdown table mapping components to documentation paths.
+
+        Extracted from ``_build_system_design_prompt`` for reuse by the
+        agentic README generator.
+
+        Args:
+            input_data: Holistic review input containing file documentation.
+
+        Returns:
+            Markdown table string with Component and Doc Path columns.
+        """
+        lines = [
+            "| Component | Doc Path |",
+            "|-----------|----------|",
+        ]
+
+        if input_data.file_documentation:
+            for doc in input_data.file_documentation:
+                rel_path = Path(doc.file_name)
+                if rel_path.parent != Path("."):
+                    doc_path = f"{rel_path.parent}/{rel_path.name}.md"
+                else:
+                    doc_path = f"{rel_path.name}.md"
+                lines.append(f"| {doc.program_id} | `{doc_path}` |")
+
+        return "\n".join(lines)
+
+    async def generate_system_design_agentic(
+        self,
+        input_data: HolisticReviewInput,
+        code_dir: Path,
+        skills_dir: Path | None = None,
+        existing_content: str | None = None,
+        sequence_diagrams: list[str] | None = None,
+        cross_file_call_semantics: dict[str, dict] | None = None,
+        kg_manager=None,
+        kg_system_summary: str | None = None,
+        entry_points: list[str] | None = None,
+        call_chains: list[list[str]] | None = None,
+    ) -> SystemDesignOutput:
+        """Generate README.md using agentic investigation via CodeWhisper.
+
+        Instead of stuffing all documentation into a single prompt, this
+        method creates a CodeWhisper SDK instance and generates each README
+        section through focused tool-based investigation.
+
+        On any exception, falls back to the monolithic
+        ``generate_system_design()`` method.
+
+        Args:
+            input_data: Holistic review input with file documentation.
+            code_dir: Path to source code directory.
+            skills_dir: Path to skills directory (documentation).
+            existing_content: Existing README.md content if any.
+            sequence_diagrams: Mermaid sequence diagrams to append.
+            cross_file_call_semantics: Call semantics enrichment data.
+            kg_manager: Optional knowledge graph manager.
+            kg_system_summary: Pre-formatted KG system summary.
+            entry_points: Programs with no callers.
+            call_chains: Typical execution flow chains.
+
+        Returns:
+            SystemDesignOutput with the generated markdown.
+        """
+        from war_rig.agents.agentic_readme import (
+            AgenticReadmeConfig,
+            AgenticReadmeGenerator,
+            StructuralContext,
+        )
+
+        try:
+            # Build structural context from pre-computed data
+            call_graph_mermaid = ""
+            if input_data.call_graph_markdown:
+                mermaid = self._extract_mermaid_from_markdown(
+                    input_data.call_graph_markdown
+                )
+                if mermaid:
+                    call_graph_mermaid = mermaid
+
+            doc_path_table = self._build_doc_path_table(input_data)
+
+            structural_context = StructuralContext(
+                call_graph_mermaid=call_graph_mermaid,
+                entry_points=entry_points or [],
+                call_chains=call_chains or [],
+                shared_copybooks=input_data.shared_copybooks,
+                kg_summary=kg_system_summary or "",
+                doc_path_table=doc_path_table,
+            )
+
+            # Configure generator
+            config = AgenticReadmeConfig(
+                max_iterations_per_section=10,
+                temperature=0.3,
+                max_tokens=4096,
+                use_minion=True,
+                merge_pass_enabled=True,
+            )
+
+            generator = AgenticReadmeGenerator(
+                code_dir=code_dir,
+                skills_dir=skills_dir,
+                kg_manager=kg_manager,
+                config=config,
+            )
+
+            result = await generator.generate(
+                structural_context=structural_context,
+                sequence_diagrams=sequence_diagrams,
+            )
+
+            if result.success and result.markdown:
+                logger.info(
+                    "Agentic README generation succeeded: %d chars, "
+                    "%d questions, %d sections",
+                    len(result.markdown),
+                    len(result.questions),
+                    len(result.sections_updated),
+                )
+                return result
+
+            logger.warning(
+                "Agentic README generation returned empty/failed result, "
+                "falling back to monolithic"
+            )
+
+        except Exception as e:
+            logger.warning(
+                "Agentic README generation failed (%s), "
+                "falling back to monolithic generate_system_design()",
+                e,
+            )
+
+        # Fallback to monolithic approach
+        return await self.generate_system_design(
+            input_data,
+            existing_content=existing_content,
+            sequence_diagrams=sequence_diagrams,
+            cross_file_call_semantics=cross_file_call_semantics,
+            kg_system_summary=kg_system_summary,
+            entry_points=entry_points,
+            call_chains=call_chains,
+        )

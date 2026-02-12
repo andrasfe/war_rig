@@ -43,6 +43,7 @@ from war_rig.agents.imperator import (
     ImperatorAgent,
     ImperatorHolisticDecision,
     ProgramSummary,
+    SystemDesignOutput,
     SystemOverviewInput,
     SystemOverviewOutput,
 )
@@ -1531,6 +1532,91 @@ class TicketOrchestrator:
 
         return cross_file_semantics, kg_system_summary, entry_points, call_chains
 
+    def _ensure_skills_for_readme(self) -> Path | None:
+        """Ensure skills are generated for agentic README generation.
+
+        Generates skills from the output documentation directory if not
+        already present. Skills provide the knowledge base for the
+        CodeWhisper agent.
+
+        Returns:
+            Path to the skills directory, or None if generation fails.
+        """
+        skills_dir = self.config.output_directory / "skills"
+        if skills_dir.exists() and any(skills_dir.iterdir()):
+            logger.debug("Skills directory already exists at %s", skills_dir)
+            return skills_dir
+
+        try:
+            from war_rig.skills import SkillsGenerator
+
+            generator = SkillsGenerator(
+                input_dir=self.config.output_directory,
+                output_dir=skills_dir,
+                system_name="System",
+            )
+            result_path = generator.generate()
+            logger.info("Generated skills for README at %s", result_path)
+            return result_path
+        except Exception as e:
+            logger.warning(
+                "Skills generation failed for agentic README: %s", e
+            )
+            return None
+
+    async def _generate_readme_core(
+        self,
+        review_input: HolisticReviewInput,
+    ) -> SystemDesignOutput:
+        """Core README generation logic shared by both call sites.
+
+        Tries agentic generation first (if enabled), then falls back to
+        monolithic. Returns the SystemDesignOutput.
+
+        Args:
+            review_input: Holistic review input with file documentation.
+
+        Returns:
+            SystemDesignOutput with the generated markdown.
+        """
+        # Gather enrichment data for README
+        (
+            cross_file_semantics,
+            kg_system_summary,
+            entry_points,
+            call_chains,
+        ) = await self._gather_readme_enrichment_data()
+
+        # Try agentic generation if enabled and not mock mode
+        if self.config.agentic_readme_enabled and not self.use_mock:
+            skills_dir = self._ensure_skills_for_readme()
+            code_dir = self._input_directory or self.config.input_directory
+
+            design_output = await self.imperator.generate_system_design_agentic(
+                review_input,
+                code_dir=code_dir,
+                skills_dir=skills_dir,
+                sequence_diagrams=self._state.sequence_diagrams,
+                cross_file_call_semantics=cross_file_semantics,
+                kg_manager=self._kg_manager,
+                kg_system_summary=kg_system_summary,
+                entry_points=entry_points,
+                call_chains=call_chains,
+            )
+        else:
+            # Monolithic fallback (or mock mode)
+            design_output = await self.imperator.generate_system_design(
+                review_input,
+                use_mock=self.use_mock,
+                sequence_diagrams=self._state.sequence_diagrams,
+                cross_file_call_semantics=cross_file_semantics,
+                kg_system_summary=kg_system_summary,
+                entry_points=entry_points,
+                call_chains=call_chains,
+            )
+
+        return design_output
+
     async def _generate_readme_after_compact_review(self) -> None:
         """Generate README.md after compact holistic review succeeds.
 
@@ -1548,24 +1634,7 @@ class TicketOrchestrator:
                 "README generation failed: no documentation available"
             )
 
-        # Gather enrichment data for README
-        (
-            cross_file_semantics,
-            kg_system_summary,
-            entry_points,
-            call_chains,
-        ) = await self._gather_readme_enrichment_data()
-
-        # Generate system design document (README.md)
-        design_output = await self.imperator.generate_system_design(
-            review_input,
-            use_mock=self.use_mock,
-            sequence_diagrams=self._state.sequence_diagrams,
-            cross_file_call_semantics=cross_file_semantics,
-            kg_system_summary=kg_system_summary,
-            entry_points=entry_points,
-            call_chains=call_chains,
-        )
+        design_output = await self._generate_readme_core(review_input)
 
         if not design_output.success or not design_output.markdown:
             raise RuntimeError(
@@ -1603,24 +1672,7 @@ class TicketOrchestrator:
                 "README generation failed: no documentation available"
             )
 
-        # Gather enrichment data for README
-        (
-            cross_file_semantics,
-            kg_system_summary,
-            entry_points,
-            call_chains,
-        ) = await self._gather_readme_enrichment_data()
-
-        # Generate system design document (README.md)
-        design_output = await self.imperator.generate_system_design(
-            review_input,
-            use_mock=self.use_mock,
-            sequence_diagrams=self._state.sequence_diagrams,
-            cross_file_call_semantics=cross_file_semantics,
-            kg_system_summary=kg_system_summary,
-            entry_points=entry_points,
-            call_chains=call_chains,
-        )
+        design_output = await self._generate_readme_core(review_input)
 
         if not design_output.success or not design_output.markdown:
             raise RuntimeError(
