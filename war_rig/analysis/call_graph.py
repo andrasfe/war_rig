@@ -1121,10 +1121,10 @@ class CallGraphAnalyzer:
                 lines.append(f"        {node_id}>{prog}]")
             lines.append("    end")
 
-        # Edges
+        # Edges (deduplicate to avoid bloated diagrams)
         lines.append("")
         lines.append("    %% Call relationships")
-        copy_edges_emitted: set[str] = set()
+        emitted_edges: set[tuple[str, str, str]] = set()
         for prog_id, info in sorted(analysis.documented_programs.items()):
             caller_id = sanitize_id(prog_id)
             for call in info.calls:
@@ -1133,10 +1133,18 @@ class CallGraphAnalyzer:
                     continue
                 callee_id = sanitize_id(call.callee)
                 if call.call_type == "COPY":
-                    # One edge per caller to the shared COPYBOOKS node
-                    if caller_id not in copy_edges_emitted:
-                        copy_edges_emitted.add(caller_id)
-                        lines.append(f"    {caller_id} -.->|COPY| COPYBOOKS")
+                    edge_key = (caller_id, "COPYBOOKS", "COPY")
+                elif "XCTL" in call.call_type:
+                    edge_key = (caller_id, callee_id, "XCTL")
+                elif "LINK" in call.call_type:
+                    edge_key = (caller_id, callee_id, "LINK")
+                else:
+                    edge_key = (caller_id, callee_id, "")
+                if edge_key in emitted_edges:
+                    continue
+                emitted_edges.add(edge_key)
+                if call.call_type == "COPY":
+                    lines.append(f"    {caller_id} -.->|COPY| COPYBOOKS")
                 elif "XCTL" in call.call_type:
                     lines.append(f"    {caller_id} -.->|XCTL| {callee_id}")
                 elif "LINK" in call.call_type:
