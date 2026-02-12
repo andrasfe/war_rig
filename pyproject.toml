@@ -68,7 +68,7 @@ where = ["."]
 include = ["war_rig*"]
 
 [tool.setuptools.package-data]
-war_rig = ["py.typed"]
+war_rig = ["py.typed", "validation/_mermaid_parse.mjs", "validation/package.json"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
