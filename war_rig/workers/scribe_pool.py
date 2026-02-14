@@ -2501,6 +2501,13 @@ class ScribeWorker:
         metadata_path = ticket.metadata.get("file_path")
         source_path = Path(metadata_path) if metadata_path else self.input_directory / ticket.file_name
 
+        if not source_path.exists():
+            logger.warning(
+                f"Worker {self.worker_id}: Source path {source_path} does not "
+                f"exist. Citadel body extraction will fail. Falling back to "
+                f"raw source."
+            )
+
         # Get file stats from Citadel
         try:
             stats = self._citadel.get_file_stats(str(source_path))
@@ -2640,6 +2647,7 @@ class ScribeWorker:
         if output.success and output.template:
             output = await self._citadel_gap_fill(
                 output, outline, ticket, file_type, formatting_strict,
+                source_code=source_code,
             )
 
         # Enrich with Citadel analysis
@@ -2843,7 +2851,44 @@ class ScribeWorker:
                     batch_source_parts.append(body)
                     batch_source_parts.append("")
 
-            batch_source = "\n".join(batch_source_parts) if batch_source_parts else source_code[:2000]
+            if not batch_source_parts:
+                # Fallback: extract source lines using outline line ranges
+                logger.warning(
+                    f"Worker {self.worker_id}: All {len(batch_names)} body "
+                    f"extractions failed for batch {batch_idx}, attempting "
+                    f"line-range fallback"
+                )
+                source_lines = source_code.split("\n")
+                for para_info in batch:
+                    line_start = para_info.get("line_start")
+                    line_end = para_info.get("line_end")
+                    para_name = para_info.get("name", "UNKNOWN")
+                    if (
+                        line_start
+                        and line_end
+                        and line_start <= len(source_lines)
+                    ):
+                        extracted = source_lines[
+                            line_start - 1 : min(line_end, len(source_lines))
+                        ]
+                        batch_source_parts.append(
+                            f"* Paragraph: {para_name} "
+                            f"(lines {line_start}-{line_end})"
+                        )
+                        batch_source_parts.extend(extracted)
+                        batch_source_parts.append("")
+                if batch_source_parts:
+                    logger.info(
+                        f"Worker {self.worker_id}: Used line-range fallback "
+                        f"for {len(batch)} paragraphs in batch "
+                        f"{batch_idx} (bodies not extractable)"
+                    )
+
+            batch_source = (
+                "\n".join(batch_source_parts)
+                if batch_source_parts
+                else source_code[:2000]
+            )
 
             scribe_input = ScribeInput(
                 source_code=batch_source,
@@ -2913,6 +2958,7 @@ class ScribeWorker:
         result = ScribeOutput(success=True, template=merged_template)
         result = await self._citadel_gap_fill(
             result, outline, ticket, file_type, formatting_strict,
+            source_code=source_code,
         )
 
         # Enrich with Citadel analysis
@@ -2939,6 +2985,7 @@ class ScribeWorker:
         ticket: ProgramManagerTicket,
         file_type: FileType,
         formatting_strict: bool,
+        source_code: str = "",
     ) -> ScribeOutput:
         """Fill in any paragraphs missing from the documentation.
 
@@ -2953,6 +3000,7 @@ class ScribeWorker:
             ticket: The DOCUMENTATION ticket.
             file_type: Detected file type.
             formatting_strict: Whether to add strict formatting instructions.
+            source_code: Full source code text for line-range fallback.
 
         Returns:
             Updated ScribeOutput with gap-filled paragraphs.
@@ -2985,15 +3033,40 @@ class ScribeWorker:
         metadata_path = ticket.metadata.get("file_path")
         source_path = Path(metadata_path) if metadata_path else self.input_directory / ticket.file_name
 
+        if not source_path.exists():
+            logger.warning(
+                f"Worker {self.worker_id}: Source path {source_path} does not "
+                f"exist. Citadel body extraction will fail. Falling back to "
+                f"raw source."
+            )
+
         # Get bodies for ALL missing paragraphs upfront
         missing_names = [p.get("name", "") for p in missing if p.get("name")]
         try:
             all_bodies = self._citadel.get_function_bodies(str(source_path), missing_names)
         except Exception as e:
             logger.warning(
-                f"Worker {self.worker_id}: Failed to get bodies for gap-fill: {e}"
+                f"Worker {self.worker_id}: Failed to get bodies for gap-fill: "
+                f"{e}. Falling back to line-range extraction."
             )
-            return output
+            # Build bodies from source line ranges as fallback
+            all_bodies = {}
+            if source_code:
+                source_lines = source_code.split("\n")
+                for p in missing:
+                    name = p.get("name", "")
+                    line_start = p.get("line_start")
+                    line_end = p.get("line_end")
+                    if (
+                        name
+                        and line_start
+                        and line_end
+                        and line_start <= len(source_lines)
+                    ):
+                        extracted = source_lines[
+                            line_start - 1 : min(line_end, len(source_lines))
+                        ]
+                        all_bodies[name] = "\n".join(extracted)
 
         # Filter to paragraphs that have bodies
         missing_with_bodies = [
@@ -3005,7 +3078,42 @@ class ScribeWorker:
             if p.get("name") and not all_bodies.get(p.get("name"))
         ]
 
-        # Add stubs for paragraphs without extractable bodies
+        # Try line-range extraction for paragraphs without Citadel bodies
+        if missing_without_bodies and source_code:
+            source_lines = source_code.split("\n")
+            for p in missing_without_bodies:
+                name = p.get("name", "")
+                line_start = p.get("line_start")
+                line_end = p.get("line_end")
+                if (
+                    name
+                    and line_start
+                    and line_end
+                    and line_start <= len(source_lines)
+                ):
+                    extracted = "\n".join(
+                        source_lines[
+                            line_start - 1 : min(line_end, len(source_lines))
+                        ]
+                    )
+                    if extracted.strip():
+                        all_bodies[name] = extracted
+                        logger.debug(
+                            f"Worker {self.worker_id}: Recovered body "
+                            f"for {name} via line-range"
+                        )
+
+            # Recategorize after line-range recovery
+            missing_with_bodies = [
+                p for p in missing
+                if p.get("name") and all_bodies.get(p.get("name"))
+            ]
+            missing_without_bodies = [
+                p for p in missing
+                if p.get("name") and not all_bodies.get(p.get("name"))
+            ]
+
+        # Add stubs only for truly unrecoverable paragraphs
         for p in missing_without_bodies:
             output.template.paragraphs.append(
                 Paragraph(
