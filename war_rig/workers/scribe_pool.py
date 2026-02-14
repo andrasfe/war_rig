@@ -2573,6 +2573,23 @@ class ScribeWorker:
         # Get pattern insights for documentation guidance
         pattern_insights = self._get_pattern_insights(str(source_path), outline)
 
+        # --- Resume mode: if a previous template exists with incomplete stubs,
+        # only re-process the stub paragraphs and keep already-documented ones.
+        previous_template = self._load_previous_template(ticket.file_name)
+        if previous_template is not None:
+            stub_names = self._find_stub_paragraph_names(previous_template)
+            if stub_names:
+                logger.info(
+                    f"Worker {self.worker_id}: RESUME mode for "
+                    f"{ticket.file_name} — {len(stub_names)} incomplete "
+                    f"stub paragraphs to process"
+                )
+                return await self._process_citadel_resume(
+                    ticket, source_code, file_type, formatting_strict,
+                    outline, source_path, stats, pattern_insights,
+                    previous_template, stub_names,
+                )
+
         if is_large:
             logger.info(
                 f"Worker {self.worker_id}: Citadel-guided BATCHED processing for "
@@ -2591,6 +2608,163 @@ class ScribeWorker:
                 ticket, source_code, file_type, formatting_strict, outline,
                 pattern_insights,
             )
+
+    @staticmethod
+    def _find_stub_paragraph_names(
+        template: DocumentationTemplate,
+    ) -> set[str]:
+        """Return lowercased names of paragraphs that are still Citadel stubs.
+
+        A paragraph is considered a stub when its ``purpose`` starts with the
+        well-known Citadel static-analysis placeholder.
+
+        Args:
+            template: Previously-saved documentation template.
+
+        Returns:
+            Set of lowercased paragraph names that are stubs.
+        """
+        stub_prefix = "[Citadel] Paragraph identified by static analysis"
+        names: set[str] = set()
+        for p in template.paragraphs:
+            if (
+                p.paragraph_name
+                and p.purpose
+                and p.purpose.startswith(stub_prefix)
+            ):
+                names.add(p.paragraph_name.lower())
+        return names
+
+    async def _process_citadel_resume(
+        self,
+        ticket: ProgramManagerTicket,
+        source_code: str,
+        file_type: FileType,
+        formatting_strict: bool,
+        outline: list[dict],
+        source_path: Path,
+        stats: dict,
+        pattern_insights: dict | None,
+        previous_template: DocumentationTemplate,
+        stub_names: set[str],
+    ) -> ScribeOutput:
+        """Resume processing by documenting only the incomplete stub paragraphs.
+
+        Keeps already-documented paragraphs from the previous template and
+        runs the Scribe only on the stubs.  Uses batched or single-pass
+        depending on the number of stubs.
+
+        Args:
+            ticket: The DOCUMENTATION ticket.
+            source_code: The full source code.
+            file_type: Detected file type.
+            formatting_strict: Whether to add strict formatting instructions.
+            outline: Full Citadel paragraph outline.
+            source_path: Resolved path to the source file.
+            stats: File stats from Citadel.
+            pattern_insights: Aggregated pattern insights.
+            previous_template: Template loaded from a prior run.
+            stub_names: Lowercased names of incomplete stub paragraphs.
+
+        Returns:
+            ScribeOutput with merged documentation.
+        """
+        # Filter outline to only stub paragraphs
+        stub_outline = [
+            p for p in outline
+            if p.get("name", "").lower() in stub_names
+        ]
+
+        if not stub_outline:
+            # No stubs in the outline (shouldn't happen, but be safe)
+            logger.info(
+                f"Worker {self.worker_id}: No stub paragraphs matched the "
+                f"outline for {ticket.file_name}, returning previous template"
+            )
+            return ScribeOutput(success=True, template=previous_template)
+
+        logger.info(
+            f"Worker {self.worker_id}: Resume processing "
+            f"{len(stub_outline)}/{len(outline)} stub paragraphs for "
+            f"{ticket.file_name}"
+        )
+
+        # Decide single-pass vs. batched based on stub count
+        stub_is_large = len(stub_outline) >= self.config.citadel_guided_threshold_paragraphs
+
+        if stub_is_large:
+            stub_output = await self._process_citadel_batched(
+                ticket, source_code, file_type, formatting_strict,
+                stub_outline, source_path, stats, pattern_insights,
+            )
+        else:
+            stub_output = await self._process_citadel_single_pass(
+                ticket, source_code, file_type, formatting_strict,
+                stub_outline, pattern_insights,
+            )
+
+        if not stub_output.success or not stub_output.template:
+            logger.warning(
+                f"Worker {self.worker_id}: Resume processing failed for "
+                f"{ticket.file_name}, returning previous template as-is"
+            )
+            return ScribeOutput(success=True, template=previous_template)
+
+        # Merge: keep all good paragraphs from previous template,
+        # replace stubs with newly documented paragraphs.
+        new_para_by_name: dict[str, Paragraph] = {}
+        for p in stub_output.template.paragraphs:
+            if p.paragraph_name:
+                new_para_by_name[p.paragraph_name.lower()] = p
+
+        merged_paragraphs: list[Paragraph] = []
+        for p in previous_template.paragraphs:
+            key = p.paragraph_name.lower() if p.paragraph_name else ""
+            if key in new_para_by_name:
+                # Replace stub with newly documented paragraph
+                merged_paragraphs.append(new_para_by_name.pop(key))
+            else:
+                # Keep existing good paragraph
+                merged_paragraphs.append(p)
+
+        # Append any paragraphs from stub_output that weren't in the previous
+        # template at all (e.g. new outline entries).
+        for p in new_para_by_name.values():
+            merged_paragraphs.append(p)
+
+        # Use the first batch's shell sections (purpose, inputs, outputs) from
+        # the stub_output if they are non-empty, otherwise keep previous.
+        merged = stub_output.template.model_copy(deep=True)
+        if not merged.purpose or (
+            merged.purpose.summary
+            and merged.purpose.summary.startswith("[Citadel]")
+        ):
+            merged.purpose = previous_template.purpose
+        if not merged.inputs and previous_template.inputs:
+            merged.inputs = previous_template.inputs
+        if not merged.outputs and previous_template.outputs:
+            merged.outputs = previous_template.outputs
+        if not merged.business_rules and previous_template.business_rules:
+            merged.business_rules = previous_template.business_rules
+        if not merged.resolved_questions and previous_template.resolved_questions:
+            merged.resolved_questions = previous_template.resolved_questions
+        if not merged.call_semantics and previous_template.call_semantics:
+            merged.call_semantics = previous_template.call_semantics
+        if not merged.flow_diagram and previous_template.flow_diagram:
+            merged.flow_diagram = previous_template.flow_diagram
+
+        merged.paragraphs = merged_paragraphs
+
+        # Persist and return
+        self._save_template(ticket.file_name, merged)
+
+        logger.info(
+            f"Worker {self.worker_id}: Resume complete for "
+            f"{ticket.file_name} — {len(new_para_by_name)} stubs replaced, "
+            f"{len(merged_paragraphs)} total paragraphs"
+        )
+
+        return ScribeOutput(success=True, template=merged)
 
     async def _process_citadel_single_pass(
         self,
