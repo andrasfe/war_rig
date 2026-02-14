@@ -16,6 +16,7 @@ This agent follows the architecture defined in:
     docs/program_manager_architecture.md
 """
 
+import json
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -388,8 +389,18 @@ class ProgramManagerAgent(BaseAgent[ProgramManagerInput, ProgramManagerOutput]):
             doc_file = output_dir / rel_path.parent / f"{rel_path.name}.doc.json"
             has_existing_doc = doc_file.exists()
 
-            # Create VALIDATION ticket if doc exists, DOCUMENTATION if not
-            if has_existing_doc:
+            # Create VALIDATION ticket if doc exists and is complete,
+            # DOCUMENTATION if doc doesn't exist or has incomplete stubs.
+            if has_existing_doc and self._doc_has_incomplete_stubs(doc_file):
+                # Existing doc has Citadel stubs — Scribe needs to resume
+                ticket_type = TicketType.DOCUMENTATION
+                doc_count += 1
+                logger.info(
+                    f"Found existing doc with incomplete stubs for "
+                    f"{file_identifier}, creating DOCUMENTATION ticket "
+                    f"for Scribe resume"
+                )
+            elif has_existing_doc:
                 ticket_type = TicketType.VALIDATION
                 val_count += 1
                 logger.debug(f"Found existing doc for {file_identifier}, creating VALIDATION ticket")
@@ -442,6 +453,28 @@ class ProgramManagerAgent(BaseAgent[ProgramManagerInput, ProgramManagerOutput]):
             )
 
         return self.created_tickets
+
+    @staticmethod
+    def _doc_has_incomplete_stubs(doc_file: Path) -> bool:
+        """Check whether a .doc.json file contains incomplete Citadel stubs.
+
+        Args:
+            doc_file: Path to the .doc.json file.
+
+        Returns:
+            True if at least one paragraph still has the Citadel
+            static-analysis stub as its purpose.
+        """
+        stub_prefix = "[Citadel] Paragraph identified by static analysis"
+        try:
+            data = json.loads(doc_file.read_text(encoding="utf-8"))
+            for para in data.get("paragraphs", []):
+                purpose = para.get("purpose", "")
+                if isinstance(purpose, str) and purpose.startswith(stub_prefix):
+                    return True
+        except Exception:
+            pass
+        return False
 
     def get_batch_status(self) -> dict[str, int]:
         """Get counts of tickets by state.
