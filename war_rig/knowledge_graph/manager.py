@@ -93,7 +93,11 @@ class KnowledgeGraphManager:
             return
 
         try:
-            db_path = self._config.knowledge_graph_db_path
+            # Place the knowledge graph DB inside the output directory
+            # so it stays with the project output (not the repo root).
+            db_path = str(
+                self._config.output_directory / "knowledge_graph.db"
+            )
             # Ensure parent directory exists
             db_dir = Path(db_path).parent
             db_dir.mkdir(parents=True, exist_ok=True)

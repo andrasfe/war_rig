@@ -26,10 +26,9 @@ def _make_config(
     max_context_tokens: int = 500,
 ) -> WarRigConfig:
     """Create a WarRigConfig for testing with KG settings."""
-    db_path = str(tmp_path / "test_manager.db")
     return WarRigConfig(
+        output_directory=tmp_path,
         knowledge_graph_enabled=enabled,
-        knowledge_graph_db_path=db_path,
         knowledge_graph_extract_from_preprocessors=extract_from_preprocessors,
         knowledge_graph_emit_triples_from_scribe=emit_triples_from_scribe,
         knowledge_graph_challenger_cross_check=challenger_cross_check,
