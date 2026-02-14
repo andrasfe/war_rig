@@ -54,6 +54,7 @@ _MERMAID_BLOCK_RE = re.compile(
     re.DOTALL,
 )
 
+
 # ---------------------------------------------------------------------------
 # Node.js availability (cached)
 # ---------------------------------------------------------------------------
@@ -89,12 +90,26 @@ def _check_mermaid_node() -> bool:
         _mermaid_node_available = False
         return False
 
-    # 3. node_modules
+    # 3. node_modules — auto-install if package.json exists
     node_modules = _SCRIPT_PATH.parent / "node_modules"
     if not node_modules.is_dir():
-        logger.debug("mermaid node validation: node_modules not installed")
-        _mermaid_node_available = False
-        return False
+        package_json = _SCRIPT_PATH.parent / "package.json"
+        if package_json.is_file() and shutil.which("npm") is not None:
+            logger.info("mermaid node validation: auto-installing node_modules")
+            try:
+                subprocess.run(
+                    ["npm", "install", "--no-audit", "--no-fund"],
+                    cwd=str(_SCRIPT_PATH.parent),
+                    capture_output=True,
+                    text=True,
+                    timeout=60,
+                )
+            except Exception:
+                logger.debug("npm install failed", exc_info=True)
+        if not node_modules.is_dir():
+            logger.debug("mermaid node validation: node_modules not installed")
+            _mermaid_node_available = False
+            return False
 
     # 4. smoke test
     try:
@@ -191,6 +206,55 @@ def is_valid_mermaid(content: str) -> bool:
     return _is_valid_mermaid_regex(content)
 
 
+def _fix_flowchart_labels(diagram: str) -> str:
+    """Fix common LLM-generated mermaid flowchart label issues.
+
+    Mermaid interprets ``(`` inside node labels like ``[A<br/>(B)]`` as
+    shape delimiters, causing parse errors.  This function wraps such
+    labels in double-quotes so Mermaid treats them as literal text.
+
+    Also replaces ``<br/>`` with ``<br>`` (the form Mermaid prefers)
+    and escapes bare parentheses inside quoted labels.
+    """
+    lines = diagram.splitlines()
+    fixed: list[str] = []
+
+    # Pattern: NodeId[label with <br> or <br/> that also has parens]
+    # We need to quote the label to prevent Mermaid misinterpreting parens.
+    label_pattern = re.compile(
+        r'(\s*\S+)\[([^\]"]*<br\s*/?>.*?)\]',
+        re.IGNORECASE,
+    )
+    # Already-quoted labels with <br> — just normalize <br/>
+    quoted_label_pattern = re.compile(
+        r'(\s*\S+)\["([^"]*<br\s*/?>.*?)"\]',
+        re.IGNORECASE,
+    )
+
+    for line in lines:
+        # First normalize already-quoted labels
+        def _fix_quoted(m: re.Match[str]) -> str:
+            prefix = m.group(1)
+            inner = m.group(2).replace("<br/>", "<br>").replace("<BR/>", "<br>")
+            return f'{prefix}["{inner}"]'
+
+        line = quoted_label_pattern.sub(_fix_quoted, line)
+
+        # Then fix unquoted labels that have <br> + parens
+        def _fix_unquoted(m: re.Match[str]) -> str:
+            prefix = m.group(1)
+            inner = m.group(2).replace("<br/>", "<br>").replace("<BR/>", "<br>")
+            # Escape inner double-quotes if any
+            inner = inner.replace('"', "#quot;")
+            return f'{prefix}["{inner}"]'
+
+        line = label_pattern.sub(_fix_unquoted, line)
+
+        fixed.append(line)
+
+    return "\n".join(fixed)
+
+
 def sanitize_mermaid_blocks(markdown: str) -> str:
     """Remove invalid mermaid code blocks from *markdown*.
 
@@ -213,6 +277,9 @@ def sanitize_mermaid_blocks(markdown: str) -> str:
 
     diagrams = [m.group(1) for m in matches]
 
+    # Fix common LLM-generated flowchart label issues before validation
+    diagrams = [_fix_flowchart_labels(d) for d in diagrams]
+
     # Try batch validation via Node
     if _check_mermaid_node():
         try:
@@ -225,16 +292,27 @@ def sanitize_mermaid_blocks(markdown: str) -> str:
     else:
         valids = [_is_valid_mermaid_regex(d) for d in diagrams]
 
-    # Replace invalid blocks in reverse order to preserve offsets
+    # Replace blocks in reverse order to preserve offsets:
+    # - Invalid blocks → HTML comment
+    # - Valid blocks that were fixed → write back the fixed version
     result = markdown
-    for match, valid in reversed(list(zip(matches, valids, strict=True))):
+    for match, fixed, valid in reversed(
+        list(zip(matches, diagrams, valids, strict=True))
+    ):
         if not valid:
-            inner = match.group(1)
-            preview = inner.strip()[:80].replace("\n", " ")
+            preview = fixed.strip()[:80].replace("\n", " ")
             logger.warning("Removing invalid mermaid block: %s", preview)
             result = (
                 result[: match.start()]
                 + "<!-- Invalid mermaid diagram removed -->"
+                + result[match.end() :]
+            )
+        elif fixed != match.group(1):
+            # Diagram was fixed — write back the sanitized version
+            body = fixed if fixed.endswith("\n") else fixed + "\n"
+            result = (
+                result[: match.start()]
+                + f"```mermaid\n{body}```"
                 + result[match.end() :]
             )
 

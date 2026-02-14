@@ -6,15 +6,17 @@
  */
 
 import { JSDOM } from "jsdom";
-import mermaid from "mermaid";
 
-// jsdom globals required by mermaid's browser-oriented code
+// Set up minimal jsdom globals BEFORE importing mermaid.
+// mermaid.parse() only needs syntax validation (no rendering/DOMPurify).
 const dom = new JSDOM("<!DOCTYPE html><html><body></body></html>");
 global.document = dom.window.document;
 global.window = dom.window;
 global.DOMParser = dom.window.DOMParser;
 
-mermaid.initialize({ startOnLoad: false });
+// Dynamic import so globals are visible at module-load time
+const { default: mermaid } = await import("mermaid");
+mermaid.initialize({ startOnLoad: false, suppressErrorRendering: true });
 
 const chunks = [];
 for await (const chunk of process.stdin) {
