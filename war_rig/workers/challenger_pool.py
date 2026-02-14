@@ -1300,6 +1300,20 @@ class ChallengerWorker:
             sampled.append(entry_point)
             sampled_names.add(entry_point.paragraph_name)
 
+        # 1b. Always include incomplete Citadel stub paragraphs so the
+        # Challenger flags them for the Scribe to document properly.
+        stub_prefix = "[Citadel] Paragraph identified by static analysis"
+        for p in paragraphs:
+            if (
+                p.paragraph_name
+                and p.paragraph_name not in sampled_names
+                and p.purpose
+                and p.purpose.startswith(stub_prefix)
+                and len(sampled) < sample_size
+            ):
+                sampled.append(p)
+                sampled_names.add(p.paragraph_name)
+
         # 2. Score paragraphs by complexity (SQL, CICS, calls)
         def complexity_score(p) -> int:
             score = 0

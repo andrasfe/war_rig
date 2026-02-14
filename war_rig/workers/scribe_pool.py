@@ -2843,26 +2843,22 @@ class ScribeWorker:
                 # Fall back to empty bodies
                 bodies = dict.fromkeys(batch_names)
 
-            # Assemble source code for this batch: include the function bodies
+            # Assemble source code for this batch: include the function bodies.
+            # For any paragraph where Citadel body extraction returned None,
+            # fall back to line-range extraction so the Scribe sees all source.
             batch_source_parts = []
-            for name in batch_names:
-                body = bodies.get(name)
+            source_lines = source_code.split("\n") if source_code else []
+            fallback_count = 0
+            for para_info in batch:
+                name = para_info.get("name", "")
+                body = bodies.get(name) if name else None
                 if body:
                     batch_source_parts.append(body)
                     batch_source_parts.append("")
-
-            if not batch_source_parts:
-                # Fallback: extract source lines using outline line ranges
-                logger.warning(
-                    f"Worker {self.worker_id}: All {len(batch_names)} body "
-                    f"extractions failed for batch {batch_idx}, attempting "
-                    f"line-range fallback"
-                )
-                source_lines = source_code.split("\n")
-                for para_info in batch:
+                elif source_lines:
+                    # Line-range fallback for this specific paragraph
                     line_start = para_info.get("line_start")
                     line_end = para_info.get("line_end")
-                    para_name = para_info.get("name", "UNKNOWN")
                     if (
                         line_start
                         and line_end
@@ -2872,17 +2868,18 @@ class ScribeWorker:
                             line_start - 1 : min(line_end, len(source_lines))
                         ]
                         batch_source_parts.append(
-                            f"* Paragraph: {para_name} "
+                            f"* Paragraph: {name} "
                             f"(lines {line_start}-{line_end})"
                         )
                         batch_source_parts.extend(extracted)
                         batch_source_parts.append("")
-                if batch_source_parts:
-                    logger.info(
-                        f"Worker {self.worker_id}: Used line-range fallback "
-                        f"for {len(batch)} paragraphs in batch "
-                        f"{batch_idx} (bodies not extractable)"
-                    )
+                        fallback_count += 1
+            if fallback_count > 0:
+                logger.info(
+                    f"Worker {self.worker_id}: Used line-range fallback "
+                    f"for {fallback_count}/{len(batch)} paragraphs in batch "
+                    f"{batch_idx} (bodies not extractable)"
+                )
 
             batch_source = (
                 "\n".join(batch_source_parts)
@@ -3177,15 +3174,67 @@ class ScribeWorker:
                         output.template.paragraphs.append(para)
                         documented.add(para.paragraph_name.lower())
 
-        # For any still-missing paragraphs, create stubs
+        # Retry any still-missing paragraphs one-at-a-time before creating stubs
         still_documented = {
             p.paragraph_name.lower()
             for p in output.template.paragraphs
             if p.paragraph_name
         }
-        for p in missing:
-            name = p.get("name", "")
-            if name and name.lower() not in still_documented:
+        truly_missing = [
+            p for p in missing
+            if p.get("name") and p["name"].lower() not in still_documented
+        ]
+
+        if truly_missing:
+            logger.info(
+                f"Worker {self.worker_id}: {len(truly_missing)} paragraphs still "
+                f"missing after gap-fill batches, retrying individually"
+            )
+            source_lines = source_code.split("\n") if source_code else []
+            for p in truly_missing:
+                name = p.get("name", "")
+                body = all_bodies.get(name, "")
+                if not body and source_lines:
+                    line_start = p.get("line_start")
+                    line_end = p.get("line_end")
+                    if line_start and line_end and line_start <= len(source_lines):
+                        body = "\n".join(
+                            source_lines[line_start - 1 : min(line_end, len(source_lines))]
+                        )
+                if not body:
+                    output.template.paragraphs.append(
+                        Paragraph(
+                            paragraph_name=name,
+                            purpose="[Citadel] Paragraph identified by static analysis",
+                        )
+                    )
+                    continue
+
+                try:
+                    solo_input = ScribeInput(
+                        source_code=body,
+                        file_name=ticket.file_name,
+                        file_type=file_type,
+                        iteration=ticket.cycle_number,
+                        formatting_strict=formatting_strict,
+                        citadel_outline=[p],
+                    )
+                    solo_output = await self.scribe_agent.ainvoke(solo_input)
+                    if solo_output.success and solo_output.template:
+                        added = False
+                        for para in solo_output.template.paragraphs:
+                            if para.paragraph_name:
+                                output.template.paragraphs.append(para)
+                                documented.add(para.paragraph_name.lower())
+                                added = True
+                        if added:
+                            continue
+                except Exception as e:
+                    logger.debug(
+                        f"Worker {self.worker_id}: Solo retry for {name} failed: {e}"
+                    )
+
+                # Final fallback: create stub
                 output.template.paragraphs.append(
                     Paragraph(
                         paragraph_name=name,
