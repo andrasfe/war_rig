@@ -610,23 +610,43 @@ class WarRigNodes:
         if output.decision == ImperatorDecision.CHROME:
             new_chrome_count = imperator_chrome_count + 1
 
+        # Check for incomplete Citadel paragraph stubs
+        has_incomplete_paragraphs = False
+        if template and hasattr(template, "paragraphs"):
+            has_incomplete_paragraphs = any(
+                p.purpose
+                and p.purpose.startswith(
+                    "[Citadel] Paragraph identified by static analysis"
+                )
+                for p in template.paragraphs
+                if hasattr(p, "purpose")
+            )
+
         # Force approval if Imperator cycle limit exceeded
+        # Exception: never force approval while template has incomplete Citadel
+        # paragraph stubs — keep cycling so the Scribe documents them.
         if output.decision == ImperatorDecision.CHROME and new_chrome_count > max_imperator_cycles:
-            logger.info(
-                f"Imperator cycle limit reached ({imperator_chrome_count}/{max_imperator_cycles}), "
-                f"forcing approval for {state['file_name']}"
-            )
-            output.decision = ImperatorDecision.FORCED
-            output.reasoning = (
-                f"{output.reasoning} [FORCED: Imperator cycle limit reached "
-                f"({max_imperator_cycles} CHROME decisions)]"
-            )
-            # Set final template since we're approving
-            if output.final_template is None and template is not None:
-                from war_rig.models.templates import FinalStatus
-                output.final_template = template.model_copy(deep=True)
-                output.final_template.header.iteration_count = iteration
-                output.final_template.header.final_status = FinalStatus.FORCED
+            if has_incomplete_paragraphs:
+                logger.info(
+                    f"Imperator cycle limit reached but template has incomplete "
+                    f"Citadel paragraphs - continuing review for {state['file_name']}"
+                )
+            else:
+                logger.info(
+                    f"Imperator cycle limit reached ({imperator_chrome_count}/{max_imperator_cycles}), "
+                    f"forcing approval for {state['file_name']}"
+                )
+                output.decision = ImperatorDecision.FORCED
+                output.reasoning = (
+                    f"{output.reasoning} [FORCED: Imperator cycle limit reached "
+                    f"({max_imperator_cycles} CHROME decisions)]"
+                )
+                # Set final template since we're approving
+                if output.final_template is None and template is not None:
+                    from war_rig.models.templates import FinalStatus
+                    output.final_template = template.model_copy(deep=True)
+                    output.final_template.header.iteration_count = iteration
+                    output.final_template.header.final_status = FinalStatus.FORCED
 
         # Determine if we should continue
         should_continue = output.decision == ImperatorDecision.CHROME

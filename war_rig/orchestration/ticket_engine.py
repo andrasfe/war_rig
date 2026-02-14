@@ -449,19 +449,35 @@ class TicketOrchestrator:
                         continue
 
                 # Check review decision for completion
+                # Exception: never accept completion while any template has
+                # incomplete Citadel paragraph stubs.
+                has_incomplete = self._has_incomplete_citadel_paragraphs()
+
                 if review_result.decision == ImperatorHolisticDecision.SATISFIED:
-                    logger.info("Imperator satisfied - batch complete")
-                    result.final_decision = review_result.decision.value
-                    result.quality_notes = review_result.quality_notes
-                    break
+                    if has_incomplete and self._state.cycle < max_cycles:
+                        logger.info(
+                            "Imperator satisfied but templates have incomplete "
+                            "Citadel paragraphs - continuing to next cycle"
+                        )
+                    else:
+                        logger.info("Imperator satisfied - batch complete")
+                        result.final_decision = review_result.decision.value
+                        result.quality_notes = review_result.quality_notes
+                        break
 
                 elif (
                     review_result.decision == ImperatorHolisticDecision.FORCED_COMPLETE
                 ):
-                    logger.info("Forced completion at max cycles")
-                    result.final_decision = review_result.decision.value
-                    result.quality_notes = review_result.quality_notes
-                    break
+                    if has_incomplete and self._state.cycle < max_cycles:
+                        logger.info(
+                            "Forced completion requested but templates have "
+                            "incomplete Citadel paragraphs - continuing"
+                        )
+                    else:
+                        logger.info("Forced completion at max cycles")
+                        result.final_decision = review_result.decision.value
+                        result.quality_notes = review_result.quality_notes
+                        break
 
                 elif (
                     review_result.decision
@@ -2048,6 +2064,48 @@ class TicketOrchestrator:
             logger.warning(f"Cross-file analysis failed: {e}")
 
         return shared_copybooks, call_graph, data_flow
+
+    def _has_incomplete_citadel_paragraphs(self) -> bool:
+        """Check if any documented template has incomplete Citadel paragraph stubs.
+
+        Scans .doc.json files in the output directory for paragraphs whose
+        purpose starts with "[Citadel] Paragraph identified by static analysis".
+        These are placeholder stubs that the Scribe hasn't yet documented.
+
+        Returns:
+            True if any incomplete Citadel paragraphs exist.
+        """
+        stub_prefix = "[Citadel] Paragraph identified by static analysis"
+
+        doc_dirs = [
+            self.config.output_directory / "final" / "programs",
+            self.config.output_directory / "final",
+            self.config.output_directory,
+        ]
+
+        doc_files: list[Path] = []
+        for doc_dir in doc_dirs:
+            if doc_dir.exists():
+                found = list(doc_dir.glob("*.doc.json"))
+                if found:
+                    doc_files = found
+                    break
+
+        for doc_file in doc_files:
+            try:
+                doc_data = json.loads(doc_file.read_text(encoding="utf-8"))
+                for para in doc_data.get("paragraphs", []):
+                    purpose = para.get("purpose", "")
+                    if isinstance(purpose, str) and purpose.startswith(stub_prefix):
+                        logger.info(
+                            f"Found incomplete Citadel paragraph in "
+                            f"{doc_file.name}: {purpose!r}"
+                        )
+                        return True
+            except Exception as e:
+                logger.debug(f"Error reading {doc_file} for stub check: {e}")
+
+        return False
 
     def _aggregate_call_semantics(self) -> dict[str, dict] | None:
         """Aggregate call semantics from all documented files.
