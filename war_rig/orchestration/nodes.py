@@ -409,7 +409,21 @@ class WarRigNodes:
         )
 
         # Check if we've exceeded the Challenger cycle limit
-        if challenger_cycle >= max_challenger_cycles:
+        # Exception: if template still has incomplete Citadel stub paragraphs,
+        # continue challenging to push the Scribe to document them properly.
+        has_incomplete_paragraphs = False
+        template = state.get("current_template")
+        if template and hasattr(template, "paragraphs"):
+            has_incomplete_paragraphs = any(
+                p.purpose
+                and p.purpose.startswith(
+                    "[Citadel] Paragraph identified by static analysis"
+                )
+                for p in template.paragraphs
+                if hasattr(p, "purpose")
+            )
+
+        if challenger_cycle >= max_challenger_cycles and not has_incomplete_paragraphs:
             logger.info(
                 f"Challenger cycle limit reached ({challenger_cycle}/{max_challenger_cycles}), "
                 f"skipping validation for {state['file_name']}"
@@ -420,6 +434,12 @@ class WarRigNodes:
                 "challenger_assessment": None,
                 "challenger_cycle_count": challenger_cycle,
             }
+
+        if has_incomplete_paragraphs:
+            logger.info(
+                f"Challenger cycle limit reached but template has incomplete "
+                f"Citadel paragraphs - continuing validation for {state['file_name']}"
+            )
 
         logger.info(f"Challenger validating (iteration {iteration}): {state['file_name']}")
 
