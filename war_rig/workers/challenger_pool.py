@@ -482,6 +482,30 @@ class ChallengerWorker:
         if thru_targets is None:
             thru_targets = set()
 
+        # --- (0) Incomplete Citadel stub paragraphs ---
+        # Detect paragraphs present in the template but still carrying only the
+        # static-analysis placeholder.  These are BLOCKING because the Scribe
+        # never actually documented them.
+        stub_prefix = "[Citadel] Paragraph identified by static analysis"
+        for p in template.paragraphs:
+            if (
+                p.paragraph_name
+                and p.purpose
+                and p.purpose.startswith(stub_prefix)
+            ):
+                issues.append(ChallengerQuestion(
+                    question_id=generate_question_id(),
+                    section="paragraphs",
+                    question_type=QuestionType.COMPLETENESS,
+                    question=(
+                        f"Paragraph '{p.paragraph_name}' still contains only the "
+                        f"Citadel static-analysis stub and has not been documented "
+                        f"by the Scribe.  Please provide full documentation for "
+                        f"this paragraph in {file_name}."
+                    ),
+                    severity=QuestionSeverity.BLOCKING,
+                ))
+
         # Build sets of dead code paragraph names (uppercased) for exclusion
         dead_code_names: set[str] = set()
         for dc_item in citadel_context.get("dead_code", []):
@@ -983,6 +1007,49 @@ class ChallengerWorker:
                             ticket.file_name,
                             thru_targets,
                         )
+
+            # Always check for incomplete Citadel stub paragraphs, even
+            # when the full Citadel pre-check was skipped (no citadel context).
+            template = state.get("template")
+            if template is not None and isinstance(template, DocumentationTemplate):
+                stub_prefix = "[Citadel] Paragraph identified by static analysis"
+                stub_issues: list[ChallengerQuestion] = []
+                for p in template.paragraphs:
+                    if (
+                        p.paragraph_name
+                        and p.purpose
+                        and p.purpose.startswith(stub_prefix)
+                    ):
+                        stub_issues.append(ChallengerQuestion(
+                            question_id=generate_question_id(),
+                            section="paragraphs",
+                            question_type=QuestionType.COMPLETENESS,
+                            question=(
+                                f"Paragraph '{p.paragraph_name}' still contains "
+                                f"only the Citadel static-analysis stub and has "
+                                f"not been documented by the Scribe. Please "
+                                f"provide full documentation for this paragraph "
+                                f"in {ticket.file_name}."
+                            ),
+                            severity=QuestionSeverity.BLOCKING,
+                        ))
+                if stub_issues:
+                    logger.info(
+                        f"Worker {self.worker_id}: Found {len(stub_issues)} "
+                        f"incomplete Citadel stub paragraphs in "
+                        f"{ticket.file_name}"
+                    )
+                    if structural_issues is None:
+                        structural_issues = stub_issues
+                    else:
+                        # Avoid duplicates — the Citadel pre-check may have
+                        # already flagged the same stubs.
+                        existing_names = {
+                            q.question for q in structural_issues
+                        }
+                        for si in stub_issues:
+                            if si.question not in existing_names:
+                                structural_issues.append(si)
 
             # Run validation
             result = await self._validate_documentation(
