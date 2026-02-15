@@ -372,6 +372,35 @@ class ProgramManagerAgent(BaseAgent[ProgramManagerInput, ProgramManagerOutput]):
             # Check if ticket already exists for this file
             if file_identifier in existing_tickets:
                 existing = existing_tickets[file_identifier]
+
+                # If the existing doc has incomplete Citadel stubs, reset the
+                # ticket so the Scribe re-processes it instead of skipping.
+                rel_path_chk = Path(file_identifier)
+                doc_file_chk = (
+                    output_dir / rel_path_chk.parent
+                    / f"{rel_path_chk.name}.doc.json"
+                )
+                if (
+                    doc_file_chk.exists()
+                    and self._doc_has_incomplete_stubs(doc_file_chk)
+                ):
+                    existing.ticket_type = TicketType.DOCUMENTATION
+                    existing.state = TicketState.CREATED
+                    existing.worker_id = None
+                    self.beads.update_ticket_state(
+                        existing.ticket_id,
+                        TicketState.CREATED,
+                        reason="Reset for Scribe resume — incomplete stubs",
+                    )
+                    doc_count += 1
+                    logger.info(
+                        f"Reset ticket {existing.ticket_id} for "
+                        f"{file_identifier} to DOCUMENTATION/CREATED "
+                        f"(incomplete Citadel stubs)"
+                    )
+                    self.created_tickets.append(existing)
+                    continue
+
                 self.created_tickets.append(existing)
                 skipped_count += 1
                 logger.debug(
