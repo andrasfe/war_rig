@@ -1549,19 +1549,17 @@ class TicketOrchestrator:
         return cross_file_semantics, kg_system_summary, entry_points, call_chains
 
     def _ensure_skills_for_readme(self) -> Path | None:
-        """Ensure skills are generated for agentic README generation.
+        """Generate (or regenerate) skills from the documentation output.
 
-        Generates skills from the output documentation directory if not
-        already present. Skills provide the knowledge base for the
-        CodeWhisper agent.
+        Skills are rebuilt every time because the underlying .md
+        documentation files may have been updated by the latest Scribe
+        cycle.  The generation is cheap (no LLM calls, just file reads)
+        so always refreshing is safe.
 
         Returns:
             Path to the skills directory, or None if generation fails.
         """
         skills_dir = self.config.output_directory / "skills"
-        if skills_dir.exists() and any(skills_dir.iterdir()):
-            logger.debug("Skills directory already exists at %s", skills_dir)
-            return skills_dir
 
         try:
             from war_rig.skills import SkillsGenerator
@@ -1572,7 +1570,7 @@ class TicketOrchestrator:
                 system_name="System",
             )
             result_path = generator.generate()
-            logger.info("Generated skills for README at %s", result_path)
+            logger.info("Refreshed skills at %s", result_path)
             return result_path
         except Exception as e:
             logger.warning(
