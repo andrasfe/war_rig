@@ -22,6 +22,7 @@ from war_rig.providers import (
     get_provider_from_env,
     register_provider,
 )
+from war_rig.providers.circuit_breaker import CircuitBreakerProvider
 from war_rig.providers.factory import _PROVIDERS
 
 
@@ -183,7 +184,8 @@ class TestGetProviderFromEnv:
         with patch.dict(os.environ, env_vars, clear=True):
             provider = get_provider_from_env()
 
-        assert isinstance(provider, OpenRouterProvider)
+        assert isinstance(provider, CircuitBreakerProvider)
+        assert isinstance(provider._inner, OpenRouterProvider)
 
     def test_openrouter_provider_from_env(self) -> None:
         """Test creating OpenRouter provider from environment variables."""
@@ -195,8 +197,9 @@ class TestGetProviderFromEnv:
         with patch.dict(os.environ, env_vars, clear=True):
             provider = get_provider_from_env()
 
-        assert isinstance(provider, OpenRouterProvider)
-        assert provider._api_key == "sk-or-test-key"
+        assert isinstance(provider, CircuitBreakerProvider)
+        assert isinstance(provider._inner, OpenRouterProvider)
+        assert provider._inner._api_key == "sk-or-test-key"
 
     def test_openrouter_custom_base_url_from_env(self) -> None:
         """Test OpenRouter with custom base URL from environment."""
@@ -209,7 +212,8 @@ class TestGetProviderFromEnv:
         with patch.dict(os.environ, env_vars, clear=True):
             provider = get_provider_from_env()
 
-        assert provider._base_url == "https://custom.openrouter.ai/api/v1"
+        assert isinstance(provider, CircuitBreakerProvider)
+        assert provider._inner._base_url == "https://custom.openrouter.ai/api/v1"
 
     def test_openrouter_custom_model_from_env(self) -> None:
         """Test OpenRouter with custom model from SCRIBE_MODEL env var."""
@@ -258,7 +262,8 @@ class TestGetProviderFromEnv:
         with patch.dict(os.environ, env_vars, clear=True):
             provider = get_provider_from_env()
 
-        assert isinstance(provider, OpenRouterProvider)
+        assert isinstance(provider, CircuitBreakerProvider)
+        assert isinstance(provider._inner, OpenRouterProvider)
 
     def test_provider_name_mixed_case(self) -> None:
         """Test that LLM_PROVIDER handles mixed case."""
@@ -270,7 +275,8 @@ class TestGetProviderFromEnv:
         with patch.dict(os.environ, env_vars, clear=True):
             provider = get_provider_from_env()
 
-        assert isinstance(provider, OpenRouterProvider)
+        assert isinstance(provider, CircuitBreakerProvider)
+        assert isinstance(provider._inner, OpenRouterProvider)
 
     def test_unknown_provider_from_env_raises_value_error(self) -> None:
         """Test that unknown provider in env raises ValueError."""

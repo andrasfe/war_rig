@@ -257,6 +257,10 @@ def mock_war_rig_config(tmp_path, carddemo_path) -> MagicMock:
     config.pm_max_cycles = 3
     config.exit_on_error = True
     config.max_ticket_retries = 5
+    config.circuit_breaker_threshold = 3
+    config.circuit_breaker_cooldown = 120.0
+    config.circuit_breaker_max_trips = 50
+    config.circuit_breaker_per_call_delay = 3.0
     config.use_mock = True
     config.enable_call_semantics = True
     config.minion_scribe_model = "anthropic/claude-3-haiku-20240307"

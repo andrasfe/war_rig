@@ -462,6 +462,32 @@ class WarRigConfig(BaseSettings):
         description="Maximum retry attempts per ticket (including Super-Scribe) before fatal exit",
     )
 
+    # Circuit breaker for provider 401 errors
+    circuit_breaker_threshold: int = Field(
+        default=3,
+        ge=1,
+        le=20,
+        description="Consecutive 401 errors before tripping the circuit breaker",
+    )
+    circuit_breaker_cooldown: float = Field(
+        default=120.0,
+        ge=10.0,
+        le=600.0,
+        description="Seconds to pause all LLM calls when circuit breaker trips",
+    )
+    circuit_breaker_max_trips: int = Field(
+        default=50,
+        ge=1,
+        le=200,
+        description="Maximum circuit breaker trips before raising fatal error",
+    )
+    circuit_breaker_per_call_delay: float = Field(
+        default=3.0,
+        ge=0.0,
+        le=30.0,
+        description="Seconds to sleep after each auth error before retrying",
+    )
+
     # Citadel-guided documentation thresholds
     citadel_guided_threshold_lines: int = Field(
         default=2000,

@@ -65,6 +65,7 @@ from war_rig.config import WarRigConfig, load_config
 from war_rig.knowledge_graph.manager import KnowledgeGraphManager
 from war_rig.models.assessments import ConfidenceLevel
 from war_rig.models.tickets import FeedbackContext, QualityNote
+from war_rig.providers.circuit_breaker import ProviderCircuitBreaker
 from war_rig.utils.exceptions import FatalWorkerError, MaxTicketRetriesExceeded
 from war_rig.utils.file_lock import FileLockManager
 from war_rig.workers.challenger_pool import ChallengerWorkerPool
@@ -336,6 +337,14 @@ class TicketOrchestrator:
 
         # Store input directory for worker pools
         self._input_directory = input_dir
+
+        # Configure process-wide circuit breaker for provider 401 errors
+        ProviderCircuitBreaker.configure(
+            consecutive_threshold=self.config.circuit_breaker_threshold,
+            cooldown_seconds=self.config.circuit_breaker_cooldown,
+            max_trips=self.config.circuit_breaker_max_trips,
+            per_call_delay=self.config.circuit_breaker_per_call_delay,
+        )
 
         # Initialize result
         result = BatchResult(

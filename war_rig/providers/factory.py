@@ -44,6 +44,7 @@ Example:
 import logging
 from importlib.metadata import entry_points
 
+from war_rig.providers.circuit_breaker import CircuitBreakerProvider
 from war_rig.providers.openrouter import OpenRouterProvider
 from war_rig.providers.protocol import LLMProvider
 
@@ -217,13 +218,15 @@ def get_provider_from_env(provider_name: str | None = None) -> LLMProvider:
                 "Set LLM_PROVIDER to use a different provider."
             )
 
-        return OpenRouterProvider(
-            api_key=api_key,
-            base_url=os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"),
-            default_model=os.getenv("LLM_DEFAULT_MODEL", os.getenv("SCRIBE_MODEL", "anthropic/claude-sonnet-4-20250514")),
-            timeout=timeout,
+        return CircuitBreakerProvider(
+            OpenRouterProvider(
+                api_key=api_key,
+                base_url=os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"),
+                default_model=os.getenv("LLM_DEFAULT_MODEL", os.getenv("SCRIBE_MODEL", "anthropic/claude-sonnet-4-20250514")),
+                timeout=timeout,
+            )
         )
 
     # For all other providers (plugins), they must handle their own env configuration
     # Pass no kwargs - plugin is responsible for reading env vars
-    return create_provider(resolved_provider)
+    return CircuitBreakerProvider(create_provider(resolved_provider))
