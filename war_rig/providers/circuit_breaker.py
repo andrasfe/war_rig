@@ -1,9 +1,10 @@
-"""Circuit breaker for LLM provider 401 errors.
+"""Circuit breaker for LLM provider errors (auth and connection).
 
-When a provider returns consecutive HTTP 401 (authentication) errors,
-the circuit breaker trips and pauses all LLM calls process-wide for a
-cooldown period. This avoids hammering the provider with requests that
-will certainly fail, and gives transient auth issues time to resolve.
+When a provider returns consecutive HTTP 401 (authentication) errors or
+connection errors, the circuit breaker trips and pauses all LLM calls
+process-wide for a cooldown period. This avoids hammering the provider
+with requests that will certainly fail, and gives transient issues time
+to resolve.
 
 The circuit breaker is a process-wide singleton shared across all worker
 provider instances. It is configured once at orchestration startup via
@@ -96,21 +97,81 @@ def is_auth_error(exc: BaseException) -> bool:
     return False
 
 
+# Keywords that indicate a connection-level failure (case-insensitive).
+_CONNECTION_ERROR_KEYWORDS = (
+    "connection error",
+    "connection refused",
+    "connection reset",
+    "connection timed out",
+    "connect timeout",
+    "connection aborted",
+    "name resolution",
+    "name or service not known",
+    "no route to host",
+    "network is unreachable",
+    "timed out",
+    "timeout",
+    "eof occurred",
+    "broken pipe",
+    "ssl",
+    "certificate",
+)
+
+
+def is_connection_error(exc: BaseException) -> bool:
+    """Check whether an exception represents a connection-level failure.
+
+    Detects connection errors, timeouts, DNS failures, and SSL errors
+    across different provider SDKs and HTTP libraries.
+
+    Args:
+        exc: The exception to inspect.
+
+    Returns:
+        True if the exception represents a connection error.
+    """
+    # Common connection exception base classes.
+    exc_type_name = type(exc).__name__.lower()
+    connection_type_names = (
+        "connectionerror",
+        "connecttimeout",
+        "timeout",
+        "timeouterror",
+        "connecterror",
+        "apierror",
+        "apiconnectionerror",
+        "remotedisconnected",
+        "readtimeout",
+        "socketerror",
+        "sslerror",
+    )
+    if exc_type_name in connection_type_names:
+        return True
+
+    # Check the exception message for connection-related keywords.
+    try:
+        msg = str(exc).lower()
+    except Exception:
+        return False
+
+    return any(kw in msg for kw in _CONNECTION_ERROR_KEYWORDS)
+
+
 class ProviderCircuitBreaker:
-    """Process-wide circuit breaker for LLM provider auth errors.
+    """Process-wide circuit breaker for LLM provider errors.
 
     The singleton is created via :meth:`configure` and shared by all
     ``CircuitBreakerProvider`` instances in the process.
 
     State machine:
-        CLOSED  -> (consecutive 401s reach threshold) -> OPEN
-        OPEN    -> (cooldown elapses)                 -> HALF_OPEN
-        HALF_OPEN -> (probe succeeds)                 -> CLOSED
-        HALF_OPEN -> (probe fails)                    -> OPEN
-        *       -> (max_trips exceeded)               -> EXHAUSTED (fatal)
+        CLOSED  -> (consecutive errors reach threshold) -> OPEN
+        OPEN    -> (cooldown elapses)                   -> HALF_OPEN
+        HALF_OPEN -> (probe succeeds)                   -> CLOSED
+        HALF_OPEN -> (probe fails)                      -> OPEN
+        *       -> (max_trips exceeded)                 -> EXHAUSTED (fatal)
 
     Key design decisions for concurrent workers:
-    - ``on_auth_error()`` is a no-op when the circuit is already open.
+    - ``on_error()`` is a no-op when the circuit is already open.
       This prevents in-flight requests (started before the trip) from
       cascading into extra trips.
     - After cooldown the circuit enters HALF_OPEN: a semaphore allows
@@ -129,11 +190,13 @@ class ProviderCircuitBreaker:
         cooldown_seconds: float = 120.0,
         max_trips: int = 50,
         per_call_delay: float = 3.0,
+        call_timeout: float = 300.0,
     ) -> None:
         self._consecutive_threshold = consecutive_threshold
         self._base_cooldown_seconds = cooldown_seconds
         self._max_trips = max_trips
         self._per_call_delay = per_call_delay
+        self._call_timeout = call_timeout
 
         self._consecutive_errors: int = 0
         self._trip_count: int = 0
@@ -157,17 +220,21 @@ class ProviderCircuitBreaker:
         cooldown_seconds: float = 120.0,
         max_trips: int = 50,
         per_call_delay: float = 3.0,
+        call_timeout: float = 300.0,
     ) -> ProviderCircuitBreaker:
         """Create or reconfigure the process-wide singleton.
 
         Args:
-            consecutive_threshold: Number of consecutive 401s to trip.
+            consecutive_threshold: Number of consecutive errors to trip.
             cooldown_seconds: Base seconds to pause when tripped
                 (doubles on each successive trip, capped at 8x).
             max_trips: Maximum trips before raising fatal error.
-            per_call_delay: Seconds to sleep after each auth error
+            per_call_delay: Seconds to sleep after each provider error
                 before re-raising. Slows down the caller's retry loop
                 so errors don't pile up faster than the circuit can react.
+            call_timeout: Maximum seconds to wait for a single LLM call
+                before raising ``asyncio.TimeoutError``. Prevents
+                indefinite hangs when the provider endpoint is down.
 
         Returns:
             The singleton instance.
@@ -177,6 +244,7 @@ class ProviderCircuitBreaker:
             cooldown_seconds=cooldown_seconds,
             max_trips=max_trips,
             per_call_delay=per_call_delay,
+            call_timeout=call_timeout,
         )
         logger.info(
             "Circuit breaker configured: threshold=%d, cooldown=%.1fs, max_trips=%d",
@@ -238,11 +306,12 @@ class ProviderCircuitBreaker:
             # Release the semaphore so blocked workers proceed normally.
             self._probe_semaphore.release()
 
-    def on_auth_error(self) -> None:
-        """Record a 401 error and trip the circuit if threshold reached.
+    def on_error(self) -> None:
+        """Record a provider error and trip the circuit if threshold reached.
 
-        No-op when the circuit is already open — in-flight requests that
-        started before the trip should not cascade into extra trips.
+        Handles both auth errors (401) and connection errors. No-op when
+        the circuit is already open — in-flight requests that started
+        before the trip should not cascade into extra trips.
         """
         if self.is_open:
             # Circuit is already open; this is an in-flight straggler.
@@ -257,18 +326,21 @@ class ProviderCircuitBreaker:
 
         self._consecutive_errors += 1
         logger.warning(
-            "Circuit breaker: auth error %d/%d",
+            "Circuit breaker: provider error %d/%d",
             self._consecutive_errors,
             self._consecutive_threshold,
         )
         if self._consecutive_errors >= self._consecutive_threshold:
             self._trip()
 
+    # Backwards-compatible alias.
+    on_auth_error = on_error
+
     # ── internal state transitions ────────────────────────────────────
 
     def _cooldown_for_trip(self) -> float:
         """Compute the cooldown with exponential backoff, capped."""
-        multiplier = min(2 ** (self._trip_count - 1), _MAX_BACKOFF_MULTIPLIER)
+        multiplier: int = min(2 ** (self._trip_count - 1), _MAX_BACKOFF_MULTIPLIER)
         return self._base_cooldown_seconds * multiplier
 
     def _trip(self) -> None:
@@ -345,6 +417,13 @@ class CircuitBreakerProvider:
     provider and calling the singleton circuit breaker before/after each
     request.
 
+    Protection includes:
+    - Auth errors (401): counted toward consecutive threshold, trips circuit.
+    - Connection errors: also counted toward threshold, trips circuit.
+    - Timeout: ``asyncio.wait_for`` wraps each call so a hung provider
+      doesn't block the worker indefinitely. Timeouts are treated as
+      connection errors for circuit-breaker purposes.
+
     Note: We intentionally do NOT disable the OpenAI SDK's built-in
     retry logic. The SDK retries connection errors and rate limits with
     backoff, which is desirable for transient failures. The SDK does not
@@ -371,26 +450,41 @@ class CircuitBreakerProvider:
         await cb.before_call()
 
         try:
-            response = await self._inner.complete(
-                messages, model=model, temperature=temperature, **kwargs
+            response = await asyncio.wait_for(
+                self._inner.complete(
+                    messages, model=model, temperature=temperature, **kwargs
+                ),
+                timeout=cb._call_timeout,
             )
+        except TimeoutError:
+            logger.warning(
+                "Circuit breaker: LLM call timed out after %.1fs, "
+                "treating as connection error",
+                cb._call_timeout,
+            )
+            cb.on_error()
+            if cb._per_call_delay > 0:
+                await asyncio.sleep(cb._per_call_delay)
+            raise
         except Exception as exc:
-            if is_auth_error(exc):
+            if is_auth_error(exc) or is_connection_error(exc):
+                error_kind = "auth" if is_auth_error(exc) else "connection"
                 logger.warning(
-                    "Circuit breaker: detected auth error (%s: %s), "
+                    "Circuit breaker: detected %s error (%s: %s), "
                     "sleeping %.1fs before re-raising",
+                    error_kind,
                     type(exc).__name__,
                     exc,
                     cb._per_call_delay,
                 )
-                cb.on_auth_error()
+                cb.on_error()
                 # Sleep before re-raising so the caller's retry loop
                 # doesn't hammer the provider immediately.
                 if cb._per_call_delay > 0:
                     await asyncio.sleep(cb._per_call_delay)
             else:
                 logger.debug(
-                    "Circuit breaker: non-auth error ignored (%s: %s)",
+                    "Circuit breaker: non-circuit error ignored (%s: %s)",
                     type(exc).__name__,
                     exc,
                 )

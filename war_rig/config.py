@@ -485,7 +485,13 @@ class WarRigConfig(BaseSettings):
         default=3.0,
         ge=0.0,
         le=30.0,
-        description="Seconds to sleep after each auth error before retrying",
+        description="Seconds to sleep after each provider error before retrying",
+    )
+    circuit_breaker_call_timeout: float = Field(
+        default=300.0,
+        ge=30.0,
+        le=900.0,
+        description="Maximum seconds to wait for a single LLM call before timeout",
     )
 
     # Citadel-guided documentation thresholds

@@ -13,6 +13,7 @@ from war_rig.providers.circuit_breaker import (
     CircuitBreakerProvider,
     ProviderCircuitBreaker,
     is_auth_error,
+    is_connection_error,
 )
 from war_rig.providers.protocol import CompletionResponse, Message
 
@@ -57,6 +58,12 @@ class _ServerError(Exception):
 
 class _OpenAIStyleAuthenticationError(Exception):
     """Fake error matching the openai AuthenticationError class name pattern."""
+
+    pass
+
+
+class _ConnectionError(Exception):
+    """Fake provider connection error."""
 
     pass
 
@@ -312,8 +319,47 @@ class TestCircuitBreakerProvider:
 
         assert cb.consecutive_errors == 1
 
-    async def test_wrapper_ignores_non_auth_errors(self) -> None:
-        """Non-auth errors are re-raised without recording."""
+    async def test_wrapper_detects_connection_error(self) -> None:
+        """Wrapper correctly identifies connection errors and records them."""
+        cb = ProviderCircuitBreaker.configure(
+            consecutive_threshold=5, cooldown_seconds=60.0, max_trips=10,
+            per_call_delay=0,
+        )
+        inner = _make_provider(
+            side_effect=_ConnectionError("Connection error")
+        )
+        wrapper = CircuitBreakerProvider(inner)
+
+        messages = [Message(role="user", content="hello")]
+        with pytest.raises(_ConnectionError):
+            await wrapper.complete(messages)
+
+        assert cb.consecutive_errors == 1
+
+    async def test_wrapper_detects_timeout(self) -> None:
+        """Wrapper treats timeouts as connection errors."""
+        cb = ProviderCircuitBreaker.configure(
+            consecutive_threshold=5, cooldown_seconds=60.0, max_trips=10,
+            per_call_delay=0, call_timeout=0.1,
+        )
+
+        async def slow_complete(*args: Any, **kwargs: Any) -> CompletionResponse:
+            await asyncio.sleep(5.0)
+            return CompletionResponse(content="ok", model="m", tokens_used=1)
+
+        inner = AsyncMock()
+        inner.default_model = "test-model"
+        inner.complete.side_effect = slow_complete
+        wrapper = CircuitBreakerProvider(inner)
+
+        messages = [Message(role="user", content="hello")]
+        with pytest.raises(TimeoutError):
+            await wrapper.complete(messages)
+
+        assert cb.consecutive_errors == 1
+
+    async def test_wrapper_ignores_non_circuit_errors(self) -> None:
+        """Non-auth, non-connection errors are re-raised without recording."""
         cb = ProviderCircuitBreaker.configure(
             consecutive_threshold=5, cooldown_seconds=60.0, max_trips=10,
             per_call_delay=0,
@@ -431,3 +477,56 @@ class TestIsAuthError:
             status_code = None
 
         assert not is_auth_error(NoneStatus("bad"))
+
+
+# ── is_connection_error tests ────────────────────────────────────────
+
+
+class TestIsConnectionError:
+    """Tests for the is_connection_error helper."""
+
+    def test_connection_error_message(self) -> None:
+        """Exception with 'Connection error' in message is recognized."""
+        assert is_connection_error(Exception("Connection error"))
+
+    def test_connection_refused(self) -> None:
+        """Exception with 'Connection refused' in message is recognized."""
+        assert is_connection_error(Exception("Connection refused"))
+
+    def test_timeout_message(self) -> None:
+        """Exception with 'timed out' in message is recognized."""
+        assert is_connection_error(Exception("The request timed out"))
+
+    def test_timeout_class_name(self) -> None:
+        """Exception with 'TimeoutError' class name is recognized."""
+        assert is_connection_error(TimeoutError("timed out"))
+
+    def test_api_connection_error_class(self) -> None:
+        """Exception with APIConnectionError class name is recognized."""
+
+        class APIConnectionError(Exception):
+            pass
+
+        assert is_connection_error(APIConnectionError("failed"))
+
+    def test_ssl_error_message(self) -> None:
+        """Exception with 'ssl' in message is recognized."""
+        assert is_connection_error(Exception("SSL: CERTIFICATE_VERIFY_FAILED"))
+
+    def test_server_error_not_connection(self) -> None:
+        """A plain server error is not a connection error."""
+        assert not is_connection_error(_ServerError("server error"))
+
+    def test_auth_error_not_connection(self) -> None:
+        """Auth errors are not connection errors."""
+        assert not is_connection_error(_AuthError("unauthorized"))
+
+    def test_plain_exception_not_connection(self) -> None:
+        """A generic exception is not a connection error."""
+        assert not is_connection_error(Exception("something else entirely"))
+
+    def test_safechain_connection_error(self) -> None:
+        """SafechainProviderError with connection message is recognized."""
+        assert is_connection_error(
+            Exception("Safechain API error: Connection error.")
+        )

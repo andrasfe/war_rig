@@ -338,12 +338,13 @@ class TicketOrchestrator:
         # Store input directory for worker pools
         self._input_directory = input_dir
 
-        # Configure process-wide circuit breaker for provider 401 errors
+        # Configure process-wide circuit breaker for provider errors
         ProviderCircuitBreaker.configure(
             consecutive_threshold=self.config.circuit_breaker_threshold,
             cooldown_seconds=self.config.circuit_breaker_cooldown,
             max_trips=self.config.circuit_breaker_max_trips,
             per_call_delay=self.config.circuit_breaker_per_call_delay,
+            call_timeout=self.config.circuit_breaker_call_timeout,
         )
 
         # Initialize result
