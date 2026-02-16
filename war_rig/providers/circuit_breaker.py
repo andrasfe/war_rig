@@ -345,45 +345,15 @@ class CircuitBreakerProvider:
     provider and calling the singleton circuit breaker before/after each
     request.
 
-    On construction, disables the OpenAI SDK's built-in retry logic on
-    the inner provider's client (if present). Without this, the SDK
-    silently retries 401s internally and our circuit breaker never sees
-    the individual errors.
+    Note: We intentionally do NOT disable the OpenAI SDK's built-in
+    retry logic. The SDK retries connection errors and rate limits with
+    backoff, which is desirable for transient failures. The SDK does not
+    retry 401 errors by default. Our circuit breaker catches 401s after
+    the SDK has given up.
     """
 
     def __init__(self, inner: LLMProvider) -> None:
         self._inner = inner
-        self._disable_sdk_retries(inner)
-
-    @staticmethod
-    def _disable_sdk_retries(provider: LLMProvider) -> None:
-        """Disable the OpenAI SDK's built-in retry logic on the provider.
-
-        The SDK defaults to ``max_retries=2`` and retries on 401 errors,
-        which means our circuit breaker never sees individual failures.
-        We look for a ``_client`` attribute (``AsyncOpenAI`` instance)
-        on the provider and set its ``max_retries`` to 0.
-        """
-        client = getattr(provider, "_client", None)
-        if client is None:
-            return
-
-        if hasattr(client, "_max_retries"):
-            prev = client._max_retries
-            client._max_retries = 0
-            logger.info(
-                "Circuit breaker: disabled SDK retries on provider "
-                "(was max_retries=%s, now 0)",
-                prev,
-            )
-        elif hasattr(client, "max_retries"):
-            prev = client.max_retries
-            client.max_retries = 0
-            logger.info(
-                "Circuit breaker: disabled SDK retries on provider "
-                "(was max_retries=%s, now 0)",
-                prev,
-            )
 
     @property
     def default_model(self) -> str:
