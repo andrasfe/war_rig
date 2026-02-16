@@ -467,30 +467,35 @@ class TestCircuitBreakerProvider:
         assert result.content == "ok"
         assert reconnected
 
-    async def test_no_reconnect_after_auth_error(self) -> None:
-        """Auth errors do not trigger reconnection."""
+    async def test_reconnect_after_auth_error(self) -> None:
+        """Auth errors (401) also trigger reconnection for fresh connection."""
         ProviderCircuitBreaker.configure(
             consecutive_threshold=5, cooldown_seconds=60.0, max_trips=10,
             per_call_delay=0,
         )
 
-        inner = _make_provider(side_effect=_AuthError("unauthorized"))
-        factory_called = False
+        inner_bad = _make_provider(side_effect=_AuthError("unauthorized"))
+        inner_good = _make_provider()
+        factory_calls: list[AsyncMock] = []
 
         def factory() -> AsyncMock:
-            nonlocal factory_called
-            factory_called = True
-            return _make_provider()
+            factory_calls.append(inner_good)
+            return inner_good
 
-        wrapper = CircuitBreakerProvider(inner, factory=factory)
+        wrapper = CircuitBreakerProvider(inner_bad, factory=factory)
 
         messages = [Message(role="user", content="hello")]
         with pytest.raises(_AuthError):
             await wrapper.complete(messages)
 
-        # Auth errors should NOT trigger reconnection
-        assert not wrapper._needs_reconnect
-        assert not factory_called
+        # Auth errors SHOULD trigger reconnection (fresh HTTP client)
+        assert wrapper._needs_reconnect
+        assert len(factory_calls) == 0  # Not called yet
+
+        # Next call uses fresh provider
+        result = await wrapper.complete(messages)
+        assert result.content == "ok"
+        assert len(factory_calls) == 1
 
     async def test_no_factory_no_crash(self) -> None:
         """Without a factory, connection errors don't crash on reconnect."""

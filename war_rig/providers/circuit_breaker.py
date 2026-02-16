@@ -470,7 +470,7 @@ class CircuitBreakerProvider:
         cb = ProviderCircuitBreaker.get_instance()
         await cb.before_call()
 
-        # Reconnect if a previous call failed with a connection error.
+        # Reconnect if a previous call failed with a provider error.
         if self._needs_reconnect:
             self._reconnect()
 
@@ -493,26 +493,17 @@ class CircuitBreakerProvider:
                 await asyncio.sleep(cb._per_call_delay)
             raise
         except Exception as exc:
-            if is_connection_error(exc):
+            if is_connection_error(exc) or is_auth_error(exc):
+                error_kind = "connection" if is_connection_error(exc) else "auth"
                 logger.warning(
-                    "Circuit breaker: detected connection error (%s: %s), "
-                    "sleeping %.1fs before re-raising",
+                    "Circuit breaker: detected %s error (%s: %s), "
+                    "reconnecting + sleeping %.1fs before re-raising",
+                    error_kind,
                     type(exc).__name__,
                     exc,
                     cb._per_call_delay,
                 )
                 self._needs_reconnect = True
-                cb.on_error()
-                if cb._per_call_delay > 0:
-                    await asyncio.sleep(cb._per_call_delay)
-            elif is_auth_error(exc):
-                logger.warning(
-                    "Circuit breaker: detected auth error (%s: %s), "
-                    "sleeping %.1fs before re-raising",
-                    type(exc).__name__,
-                    exc,
-                    cb._per_call_delay,
-                )
                 cb.on_error()
                 if cb._per_call_delay > 0:
                     await asyncio.sleep(cb._per_call_delay)
