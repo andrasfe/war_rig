@@ -1368,16 +1368,41 @@ class TicketOrchestrator:
 
             logger.info("Post-rescue validation complete")
 
+    def _check_force_review_signal(self) -> bool:
+        """Check for and consume the .force_review signal file.
+
+        Users can create this file in the output directory to force
+        holistic review even when tickets are still pending::
+
+            touch <output_dir>/.force_review
+
+        Returns:
+            True if the signal file was found (and removed).
+        """
+        signal_path = self.config.output_directory / ".force_review"
+        if signal_path.exists():
+            signal_path.unlink()
+            logger.info(
+                "Force-review signal detected (%s) — "
+                "skipping pending-ticket check",
+                signal_path,
+            )
+            return True
+        return False
+
     async def _run_holistic_review(self) -> HolisticReviewOutput | None:
         """Trigger and wait for Imperator holistic review.
 
         Collects all completed documentation and submits it to the
         Imperator for batch-level review. Only runs when all Scribe
-        and Challenger work is complete.
+        and Challenger work is complete — unless the ``.force_review``
+        signal file is present in the output directory.
 
         Returns:
             HolisticReviewOutput with the review decision and feedback.
         """
+        force_review = self._check_force_review_signal()
+
         # Check if there's still pending work - Imperator should wait
         # Must check ALL ticket types that Scribes and Challengers process
         scribe_types = [
@@ -1416,7 +1441,7 @@ class TicketOrchestrator:
                     )
                 )
 
-        if pending_scribe or pending_val:
+        if (pending_scribe or pending_val) and not force_review:
             # Group by state for detailed logging
             scribe_by_state = {}
             for t in pending_scribe:
@@ -1430,7 +1455,8 @@ class TicketOrchestrator:
 
             logger.info(
                 f"Skipping holistic review - work still pending: "
-                f"scribe [{scribe_summary or 'none'}], challenger [{val_summary or 'none'}]"
+                f"scribe [{scribe_summary or 'none'}], challenger [{val_summary or 'none'}]. "
+                f"Touch {self.config.output_directory / '.force_review'} to override."
             )
             return HolisticReviewOutput(
                 success=True,
