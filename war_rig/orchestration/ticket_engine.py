@@ -694,18 +694,48 @@ class TicketOrchestrator:
             self._challenger_pool.wait_for_completion()
         )
 
+        # Also watch for .force_review signal to abort workers early
+        force_review_detected = False
+
+        async def _watch_force_review() -> None:
+            nonlocal force_review_detected
+            signal_path = self.config.output_directory / ".force_review"
+            while not scribe_wait.done() or not challenger_wait.done():
+                if signal_path.exists():
+                    force_review_detected = True
+                    logger.info(
+                        "Force-review signal detected during worker cycle — "
+                        "stopping pools to proceed to holistic review"
+                    )
+                    # Don't delete the file here — let _run_holistic_review
+                    # consume it so it skips the pending-ticket check too.
+                    await self._stop_pools()
+                    # Cancel the wait tasks so gather() returns
+                    scribe_wait.cancel()
+                    challenger_wait.cancel()
+                    return
+                await asyncio.sleep(5.0)
+
+        watcher = asyncio.create_task(_watch_force_review())
+
         # Gather results and check for FatalWorkerError
         results = await asyncio.gather(
             scribe_wait, challenger_wait, return_exceptions=True
         )
+        watcher.cancel()
 
         # Re-raise FatalWorkerError if any worker encountered a fatal error
-        for result in results:
-            if isinstance(result, FatalWorkerError):
-                logger.error(f"Fatal worker error: {result}")
-                raise result
+        # (skip check if we aborted due to force-review)
+        if not force_review_detected:
+            for result in results:
+                if isinstance(result, FatalWorkerError):
+                    logger.error(f"Fatal worker error: {result}")
+                    raise result
 
-        logger.info("Pipeline complete, all workers finished")
+        if force_review_detected:
+            logger.info("Worker cycle aborted by force-review signal")
+        else:
+            logger.info("Pipeline complete, all workers finished")
 
         # Stop pools
         await self._stop_pools()
