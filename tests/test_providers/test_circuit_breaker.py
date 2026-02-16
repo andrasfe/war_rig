@@ -393,6 +393,138 @@ class TestCircuitBreakerProvider:
         await wrapper_ok.complete([Message(role="user", content="hi")])
         assert cb.consecutive_errors == 0
 
+    async def test_reconnect_after_connection_error(self) -> None:
+        """Factory is called to create a fresh provider after connection error."""
+        ProviderCircuitBreaker.configure(
+            consecutive_threshold=5, cooldown_seconds=60.0, max_trips=10,
+            per_call_delay=0,
+        )
+
+        # First provider fails with connection error
+        inner_bad = _make_provider(side_effect=_ConnectionError("Connection error"))
+        inner_good = _make_provider()
+        factory_calls: list[AsyncMock] = []
+
+        def factory() -> AsyncMock:
+            factory_calls.append(inner_good)
+            return inner_good
+
+        wrapper = CircuitBreakerProvider(inner_bad, factory=factory)
+
+        # First call fails
+        messages = [Message(role="user", content="hello")]
+        with pytest.raises(_ConnectionError):
+            await wrapper.complete(messages)
+
+        # Factory hasn't been called yet (happens on next call)
+        assert len(factory_calls) == 0
+        assert wrapper._needs_reconnect
+
+        # Second call uses the fresh provider from factory
+        result = await wrapper.complete(messages)
+        assert result.content == "ok"
+        assert len(factory_calls) == 1
+        assert not wrapper._needs_reconnect
+
+    async def test_reconnect_after_timeout(self) -> None:
+        """Factory is called to create a fresh provider after timeout."""
+        ProviderCircuitBreaker.configure(
+            consecutive_threshold=5, cooldown_seconds=60.0, max_trips=10,
+            per_call_delay=0, call_timeout=0.1,
+        )
+
+        async def slow_complete(*args: Any, **kwargs: Any) -> CompletionResponse:
+            await asyncio.sleep(5.0)
+            return CompletionResponse(content="ok", model="m", tokens_used=1)
+
+        inner_slow = AsyncMock()
+        inner_slow.default_model = "test-model"
+        inner_slow.complete.side_effect = slow_complete
+
+        inner_good = _make_provider()
+        reconnected = False
+
+        def factory() -> AsyncMock:
+            nonlocal reconnected
+            reconnected = True
+            return inner_good
+
+        wrapper = CircuitBreakerProvider(inner_slow, factory=factory)
+
+        # First call times out
+        messages = [Message(role="user", content="hello")]
+        with pytest.raises(TimeoutError):
+            await wrapper.complete(messages)
+
+        assert wrapper._needs_reconnect
+
+        # Second call uses fresh provider (need higher timeout)
+        ProviderCircuitBreaker.configure(
+            consecutive_threshold=5, cooldown_seconds=60.0, max_trips=10,
+            per_call_delay=0, call_timeout=10.0,
+        )
+        result = await wrapper.complete(messages)
+        assert result.content == "ok"
+        assert reconnected
+
+    async def test_no_reconnect_after_auth_error(self) -> None:
+        """Auth errors do not trigger reconnection."""
+        ProviderCircuitBreaker.configure(
+            consecutive_threshold=5, cooldown_seconds=60.0, max_trips=10,
+            per_call_delay=0,
+        )
+
+        inner = _make_provider(side_effect=_AuthError("unauthorized"))
+        factory_called = False
+
+        def factory() -> AsyncMock:
+            nonlocal factory_called
+            factory_called = True
+            return _make_provider()
+
+        wrapper = CircuitBreakerProvider(inner, factory=factory)
+
+        messages = [Message(role="user", content="hello")]
+        with pytest.raises(_AuthError):
+            await wrapper.complete(messages)
+
+        # Auth errors should NOT trigger reconnection
+        assert not wrapper._needs_reconnect
+        assert not factory_called
+
+    async def test_no_factory_no_crash(self) -> None:
+        """Without a factory, connection errors don't crash on reconnect."""
+        ProviderCircuitBreaker.configure(
+            consecutive_threshold=5, cooldown_seconds=60.0, max_trips=10,
+            per_call_delay=0,
+        )
+
+        call_count = 0
+
+        async def complete_side_effect(
+            *args: Any, **kwargs: Any
+        ) -> CompletionResponse:
+            nonlocal call_count
+            call_count += 1
+            if call_count == 1:
+                raise _ConnectionError("Connection error")
+            return CompletionResponse(content="ok", model="m", tokens_used=1)
+
+        inner = AsyncMock()
+        inner.default_model = "test-model"
+        inner.complete.side_effect = complete_side_effect
+
+        # No factory provided
+        wrapper = CircuitBreakerProvider(inner)
+
+        messages = [Message(role="user", content="hello")]
+        with pytest.raises(_ConnectionError):
+            await wrapper.complete(messages)
+
+        # Still uses same inner (no factory), but doesn't crash
+        result = await wrapper.complete(messages)
+        assert result.content == "ok"
+
 
 # ── is_auth_error tests ──────────────────────────────────────────────
 

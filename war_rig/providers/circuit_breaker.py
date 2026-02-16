@@ -37,6 +37,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import Callable
 from typing import Any
 
 from war_rig.providers.protocol import CompletionResponse, LLMProvider, Message
@@ -420,23 +421,43 @@ class CircuitBreakerProvider:
     Protection includes:
     - Auth errors (401): counted toward consecutive threshold, trips circuit.
     - Connection errors: also counted toward threshold, trips circuit.
+      After a connection error, the inner provider is **recreated** via
+      the factory so the next attempt uses a fresh HTTP client.
     - Timeout: ``asyncio.wait_for`` wraps each call so a hung provider
       doesn't block the worker indefinitely. Timeouts are treated as
       connection errors for circuit-breaker purposes.
 
-    Note: We intentionally do NOT disable the OpenAI SDK's built-in
-    retry logic. The SDK retries connection errors and rate limits with
-    backoff, which is desirable for transient failures. The SDK does not
-    retry 401 errors by default. Our circuit breaker catches 401s after
-    the SDK has given up.
+    Args:
+        inner: The LLM provider to delegate to.
+        factory: Optional callable that creates a fresh provider instance.
+            When provided and a connection error occurs, the inner provider
+            is replaced with a new instance so stale HTTP connections are
+            discarded. If not provided, the same inner instance is reused.
     """
 
-    def __init__(self, inner: LLMProvider) -> None:
+    def __init__(
+        self,
+        inner: LLMProvider,
+        factory: Callable[[], LLMProvider] | None = None,
+    ) -> None:
         self._inner = inner
+        self._factory = factory
+        self._needs_reconnect = False
 
     @property
     def default_model(self) -> str:
         return self._inner.default_model
+
+    def _reconnect(self) -> None:
+        """Replace the inner provider with a fresh instance."""
+        if self._factory is None:
+            logger.debug(
+                "Circuit breaker: reconnect requested but no factory available"
+            )
+            return
+        logger.info("Circuit breaker: reconnecting — creating fresh provider")
+        self._inner = self._factory()
+        self._needs_reconnect = False
 
     async def complete(
         self,
@@ -448,6 +469,10 @@ class CircuitBreakerProvider:
         """Delegate to the inner provider with circuit-breaker protection."""
         cb = ProviderCircuitBreaker.get_instance()
         await cb.before_call()
+
+        # Reconnect if a previous call failed with a connection error.
+        if self._needs_reconnect:
+            self._reconnect()
 
         try:
             response = await asyncio.wait_for(
@@ -462,24 +487,33 @@ class CircuitBreakerProvider:
                 "treating as connection error",
                 cb._call_timeout,
             )
+            self._needs_reconnect = True
             cb.on_error()
             if cb._per_call_delay > 0:
                 await asyncio.sleep(cb._per_call_delay)
             raise
         except Exception as exc:
-            if is_auth_error(exc) or is_connection_error(exc):
-                error_kind = "auth" if is_auth_error(exc) else "connection"
+            if is_connection_error(exc):
                 logger.warning(
-                    "Circuit breaker: detected %s error (%s: %s), "
+                    "Circuit breaker: detected connection error (%s: %s), "
                     "sleeping %.1fs before re-raising",
-                    error_kind,
+                    type(exc).__name__,
+                    exc,
+                    cb._per_call_delay,
+                )
+                self._needs_reconnect = True
+                cb.on_error()
+                if cb._per_call_delay > 0:
+                    await asyncio.sleep(cb._per_call_delay)
+            elif is_auth_error(exc):
+                logger.warning(
+                    "Circuit breaker: detected auth error (%s: %s), "
+                    "sleeping %.1fs before re-raising",
                     type(exc).__name__,
                     exc,
                     cb._per_call_delay,
                 )
                 cb.on_error()
-                # Sleep before re-raising so the caller's retry loop
-                # doesn't hammer the provider immediately.
                 if cb._per_call_delay > 0:
                     await asyncio.sleep(cb._per_call_delay)
             else:
