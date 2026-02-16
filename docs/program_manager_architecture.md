@@ -622,6 +622,16 @@ class HolisticReviewTrigger:
         return len(pending) == 0
 ```
 
+**Force review override:** If tickets are stuck in non-terminal states (e.g., due to
+provider errors), the pending-ticket check can be bypassed by creating a signal file:
+
+```bash
+touch <output_dir>/.force_review
+```
+
+The signal file is consumed (deleted) when detected. See the "Force Holistic Review"
+section in the main README for details.
+
 ### 4.2 Holistic Review Input
 
 The Imperator receives aggregated information for batch review:

@@ -310,6 +310,50 @@ This is particularly useful for catching:
 
 Set `MAX_TICKET_RETRIES` higher (up to 20) for more tolerance, or set `EXIT_ON_ERROR=false` to continue processing other files despite retry limit violations.
 
+### Circuit Breaker (Provider Error Protection)
+
+When the LLM provider returns repeated errors (HTTP 401 auth errors or connection failures), the circuit breaker automatically pauses all LLM calls process-wide for a cooldown period. This prevents hammering a broken endpoint and gives transient issues time to resolve.
+
+```bash
+# Circuit breaker settings (all optional, defaults shown)
+CIRCUIT_BREAKER_THRESHOLD=3           # Consecutive errors before tripping (default: 3)
+CIRCUIT_BREAKER_COOLDOWN=120.0        # Base cooldown in seconds (default: 120)
+CIRCUIT_BREAKER_MAX_TRIPS=50          # Max trips before fatal error (default: 50)
+CIRCUIT_BREAKER_PER_CALL_DELAY=3.0    # Delay after each error before retry (default: 3.0)
+CIRCUIT_BREAKER_CALL_TIMEOUT=300.0    # Max seconds per LLM call (default: 300)
+```
+
+**How it works:**
+
+1. **CLOSED** (normal): All LLM calls proceed normally
+2. **OPEN** (tripped): After N consecutive errors, all calls are blocked for the cooldown period
+3. **HALF-OPEN** (probing): After cooldown, one probe request is allowed through
+   - If the probe succeeds, the circuit closes and all workers resume
+   - If it fails, the circuit re-trips with exponential backoff (up to 8x base cooldown)
+4. **EXHAUSTED** (fatal): After `max_trips` total trips, a fatal error stops the batch
+
+The circuit breaker also handles **connection errors** and **timeouts**. After a connection failure, the provider's HTTP client is automatically recreated with fresh connections.
+
+### Force Holistic Review
+
+Normally, holistic review only runs when all Scribe and Challenger tickets reach a terminal state. If tickets are stuck (e.g., due to connection errors), holistic review is skipped indefinitely.
+
+To force holistic review while the orchestrator is running:
+
+```bash
+touch <output_dir>/.force_review
+```
+
+The orchestrator checks for this file at the start of each review cycle. When found, it:
+1. Deletes the signal file
+2. Skips the pending-ticket check
+3. Runs holistic review immediately with whatever documentation is complete
+
+This is useful when:
+- Connection errors have left tickets in non-terminal states
+- You want to get an intermediate quality assessment
+- The batch is mostly complete and you want to proceed to review
+
 ## Usage
 
 ### Analyze a Single File
