@@ -375,14 +375,35 @@ class TicketOrchestrator:
                     self._state.status = OrchestrationStatus.COMPLETED
                     return result
 
-                self._state.batch_id = (
+                batch_id = (
                     existing[0].metadata.get("batch_id", "resume")
                     if existing[0].metadata
                     else "resume"
                 )
+                self._state.batch_id = batch_id
                 self._state.total_files = len(existing)
+
+                # Set up program_manager state so downstream methods
+                # (handle_clarifications, trigger_holistic_review, etc.) work.
+                self.program_manager.batch_id = batch_id
+                self.program_manager._input_directory = input_dir
+                self.program_manager._batch_start_time = datetime.utcnow()
+                # Determine cycle number from existing tickets
+                max_cycle = max(
+                    (t.cycle_number for t in existing if t.cycle_number),
+                    default=1,
+                )
+                self.program_manager.cycle_number = max_cycle
+                # Discover files so file-name validation works
+                self.program_manager.discovered_files = list(
+                    self.program_manager.source_reader.discover_files(
+                        directory=input_dir, recursive=True,
+                    )
+                )
+
                 logger.info(
-                    f"Resuming with {len(existing)} existing tickets"
+                    f"Resuming with {len(existing)} existing tickets "
+                    f"(cycle {max_cycle})"
                 )
             else:
                 logger.info(f"Initializing batch from {input_dir}")
