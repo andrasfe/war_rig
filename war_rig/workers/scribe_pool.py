@@ -2837,6 +2837,10 @@ class ScribeWorker:
                 source_code=source_code,
             )
 
+        # Save before enrichment so file is visible while call-semantics runs
+        if output.success and output.template:
+            self._save_template(ticket.file_name, output.template)
+
         # Enrich with Citadel analysis
         if output.success and output.template:
             output.template = await self._apply_citadel_enrichment(
@@ -3138,6 +3142,11 @@ class ScribeWorker:
             result, outline, ticket, file_type, formatting_strict,
             source_code=source_code,
         )
+
+        # Save the merged template early so the .doc.json file is visible
+        # while enrichment (which can run hundreds of batches) is still running.
+        if result.success and result.template:
+            self._save_template(ticket.file_name, result.template)
 
         # Enrich with Citadel analysis
         if result.success and result.template:
