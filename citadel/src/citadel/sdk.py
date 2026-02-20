@@ -281,6 +281,14 @@ class FileAnalysisPatternResult:
         return total
 
 
+_COBOL_SECTION_RE = re.compile(r"^.{7}([A-Z0-9-]+)\s+SECTION\s*\.", re.IGNORECASE)
+_COBOL_PARAGRAPH_RE = re.compile(r"^.{7}([A-Z0-9-]+)\s*\.(?:\s|$)", re.IGNORECASE)
+_COBOL_END_RE = re.compile(
+    r"^\s*(END-PROGRAM|END\s+PROGRAM|IDENTIFICATION\s+DIVISION|DATA\s+DIVISION)",
+    re.IGNORECASE,
+)
+
+
 class Citadel:
     """
     Citadel SDK for programmatic dependency extraction.
@@ -328,6 +336,8 @@ class Citadel:
         # Cache analyze_file results to avoid re-parsing the same file.
         # Files don't change during processing, so this is safe.
         self._analysis_cache: dict[str, FileAnalysisResult] = {}
+        # Cache file content to avoid re-reading from disk.
+        self._content_cache: dict[str, str] = {}
 
     def _build_extension_map(self) -> None:
         """Build mapping from file extensions to spec IDs."""
@@ -410,11 +420,17 @@ class Citadel:
         return result
 
     def _read_file(self, file_path: Path) -> str:
-        """Read file content with encoding fallbacks."""
+        """Read file content with encoding fallbacks. Results are cached."""
+        cache_key = str(file_path.resolve())
+        cached = self._content_cache.get(cache_key)
+        if cached is not None:
+            return cached
         encodings = ["utf-8", "latin-1", "cp1252"]
         for encoding in encodings:
             try:
-                return file_path.read_text(encoding=encoding)
+                content = file_path.read_text(encoding=encoding)
+                self._content_cache[cache_key] = content
+                return content
             except UnicodeDecodeError:
                 continue
         raise ValueError("Could not decode file with any supported encoding")
@@ -720,8 +736,9 @@ class Citadel:
             shutil.rmtree(cache_dir)
             logger.info(f"Cleared cache at {cache_dir}")
 
-        # Clear in-memory analysis cache
+        # Clear in-memory caches
         self._analysis_cache.clear()
+        self._content_cache.clear()
 
         # Rebuild extension map after clearing
         self._build_extension_map()
@@ -847,7 +864,7 @@ class Citadel:
         Get the body text of multiple functions/paragraphs in a single parse.
 
         More efficient than calling get_function_body() multiple times
-        because the file is only parsed once.
+        because the file is only parsed once and content is split once.
 
         Args:
             file_path: Path to the source file.
@@ -875,21 +892,60 @@ class Citadel:
             logger.warning("Failed to read file %s: %s", file_path, e)
             return bodies
 
-        # Analyze the file once
+        # Analyze the file once (cached)
         result = self.analyze_file(file_path)
+
+        # Build name→artifact dict for O(1) lookup instead of O(n) scan per name
+        artifact_by_name: dict[str, FileArtifact] = {}
+        for artifact in result.artifacts:
+            artifact_by_name[artifact.name.lower()] = artifact
+
+        # Split content once for all body extractions
+        lines = content.splitlines()
 
         # Extract body for each requested function
         for name in function_names:
-            artifact = result.get_artifact_by_name(name)
+            artifact = artifact_by_name.get(name.lower())
             if artifact is None:
                 logger.debug("Function '%s' not found in %s", name, file_path)
                 continue
 
-            bodies[name] = self._extract_body_from_result(
-                artifact, content, spec, result.artifacts
+            bodies[name] = self._extract_body_from_lines(
+                artifact, lines, spec, result.artifacts
             )
 
         return bodies
+
+    def _extract_body_from_lines(
+        self,
+        artifact: FileArtifact,
+        lines: list[str],
+        spec: ArtifactSpec,
+        all_artifacts: list[FileArtifact],
+    ) -> str | None:
+        """Extract body text from pre-split lines.
+
+        Like _extract_body_from_result but avoids re-splitting content.
+        """
+        if artifact.line_start is None:
+            return None
+
+        if artifact.line_end is None:
+            line_end = self._find_function_end_from_lines(
+                lines, artifact.line_start, spec, all_artifacts, artifact
+            )
+        else:
+            line_end = artifact.line_end
+
+        if artifact.line_start > len(lines) or line_end > len(lines):
+            return None
+
+        body_lines = lines[artifact.line_start - 1 : line_end]
+
+        if spec.language.lower() == "cobol":
+            body_lines = self._trim_trailing_cobol_comments(body_lines)
+
+        return "\n".join(body_lines)
 
     def _trim_trailing_cobol_comments(self, lines: list[str]) -> list[str]:
         """
@@ -966,6 +1022,28 @@ class Citadel:
                 lines, start_line, all_artifacts, current_artifact
             )
 
+    def _find_function_end_from_lines(
+        self,
+        lines: list[str],
+        start_line: int,
+        spec: ArtifactSpec,
+        all_artifacts: list[FileArtifact],
+        current_artifact: FileArtifact,
+    ) -> int:
+        """Like _find_function_end but takes pre-split lines."""
+        language = spec.language.lower()
+
+        if language == "cobol":
+            return self._find_cobol_paragraph_end(
+                lines, start_line, all_artifacts, current_artifact
+            )
+        elif language == "python":
+            return self._find_python_function_end(lines, start_line)
+        else:
+            return self._find_end_by_next_artifact_or_eof(
+                lines, start_line, all_artifacts, current_artifact
+            )
+
     def _find_cobol_paragraph_end(
         self,
         lines: list[str],
@@ -987,28 +1065,6 @@ class Citadel:
         """
         total_lines = len(lines)
 
-        # Pattern for section names in COBOL (Area A starts at column 8, 0-indexed: 7)
-        # Must handle both fixed-format (80 cols) and trimmed format files.
-        # A section name is a word followed by SECTION and a period.
-        # Use a flexible pattern that handles variable line lengths.
-        section_pattern = re.compile(r"^.{7}([A-Z0-9-]+)\s+SECTION\s*\.", re.IGNORECASE)
-
-        # Pattern for paragraph names in COBOL.
-        # A paragraph name starts in Area A (columns 8-11, 0-indexed 7-10) and is
-        # followed by a period. The period may or may not be at end of line.
-        # This pattern:
-        # - Requires exactly 7 chars in columns 1-7 (sequence area + indicator)
-        # - Captures the paragraph name (letters, digits, hyphens)
-        # - Allows optional whitespace after the name
-        # - Requires a period
-        # - Allows anything after the period (for fixed-format trailing content)
-        paragraph_pattern = re.compile(r"^.{7}([A-Z0-9-]+)\s*\.(?:\s|$)", re.IGNORECASE)
-
-        end_patterns = re.compile(
-            r"^\s*(END-PROGRAM|END\s+PROGRAM|IDENTIFICATION\s+DIVISION|DATA\s+DIVISION)",
-            re.IGNORECASE,
-        )
-
         # Find the next artifact that starts after this one
         next_artifact_line = total_lines + 1
         for artifact in all_artifacts:
@@ -1017,11 +1073,12 @@ class Citadel:
                     next_artifact_line = artifact.line_start
 
         # Scan from start_line + 1 to find the end
+        # Use pre-compiled module-level regexes to avoid recompilation per call.
         for i in range(start_line, total_lines):  # start_line is 1-indexed
             line = lines[i]
 
             # Check for end markers
-            if end_patterns.search(line):
+            if _COBOL_END_RE.search(line):
                 return (
                     i  # Return previous line (i is 0-indexed, so i is the line before)
                 )
@@ -1033,11 +1090,11 @@ class Citadel:
                 # content in Area A (need at least 8 chars: 7 for cols 1-7 + 1 for name)
                 if len(line) >= 8:
                     # Check for section first
-                    if section_pattern.match(line):
+                    if _COBOL_SECTION_RE.match(line):
                         return i  # Line before this section
 
                     # Check for paragraph
-                    if paragraph_pattern.match(line):
+                    if _COBOL_PARAGRAPH_RE.match(line):
                         return i  # Line before this paragraph
 
         # If no end marker found, return the last line of the file
