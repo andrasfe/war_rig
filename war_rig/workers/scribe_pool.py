@@ -2854,7 +2854,7 @@ class ScribeWorker:
         self,
         outline: list[dict],
         source_path: Path,
-    ) -> list[list[dict]]:
+    ) -> tuple[list[list[dict]], dict[str, str | None]]:
         """Calculate batches based on token budget AND paragraph limit.
 
         Groups paragraphs into batches that fit within the max prompt token limit,
@@ -2868,7 +2868,8 @@ class ScribeWorker:
             source_path: Path to source file for fetching function bodies.
 
         Returns:
-            List of batches, where each batch is a list of paragraph dicts.
+            Tuple of (batches, all_bodies) where batches is a list of paragraph
+            groups and all_bodies maps paragraph names to their extracted source.
         """
         # Maximum paragraphs per batch - LLM can't effectively document more than
         # ~20-40 paragraphs in a single response, regardless of token budget
@@ -2946,7 +2947,7 @@ class ScribeWorker:
             f"from {len(outline)} paragraphs (avg {len(outline) // max(len(batches), 1)} per batch)"
         )
 
-        return batches
+        return batches, all_bodies
 
     async def _process_citadel_batched(
         self,
@@ -2984,7 +2985,7 @@ class ScribeWorker:
         assert self._citadel is not None
 
         # Use dynamic batching based on token budget instead of fixed paragraph count
-        batches = self._calculate_dynamic_batches(outline, source_path)
+        batches, prefetched_bodies = self._calculate_dynamic_batches(outline, source_path)
         total_batches = len(batches)
 
         # Load any existing chunks (for resumption after crash)
@@ -3020,18 +3021,9 @@ class ScribeWorker:
                 )
                 continue
 
-            # Fetch function bodies for this batch
-            try:
-                bodies = self._citadel.get_function_bodies(
-                    str(source_path), batch_names
-                )
-            except Exception as e:
-                logger.warning(
-                    f"Worker {self.worker_id}: Failed to get bodies for batch "
-                    f"{batch_idx}: {e}"
-                )
-                # Fall back to empty bodies
-                bodies = dict.fromkeys(batch_names)
+            # Use pre-fetched bodies from _calculate_dynamic_batches() to
+            # avoid re-parsing the file for every batch.
+            bodies = {name: prefetched_bodies.get(name) for name in batch_names}
 
             # Assemble source code for this batch: include the function bodies.
             # For any paragraph where Citadel body extraction returned None,

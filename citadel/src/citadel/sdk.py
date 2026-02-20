@@ -325,6 +325,10 @@ class Citadel:
         # Track extensions we've warned about to avoid log spam
         self._warned_extensions: set[str] = set()
 
+        # Cache analyze_file results to avoid re-parsing the same file.
+        # Files don't change during processing, so this is safe.
+        self._analysis_cache: dict[str, FileAnalysisResult] = {}
+
     def _build_extension_map(self) -> None:
         """Build mapping from file extensions to spec IDs."""
         for spec_id in self.spec_manager.list_available_specs():
@@ -345,6 +349,10 @@ class Citadel:
         """
         Analyze a single file and extract its artifacts and callouts.
 
+        Results are cached per resolved file path so repeated calls (e.g.
+        from ``get_functions``, ``get_function_bodies``, ``get_file_stats``)
+        don't re-parse the file.
+
         Args:
             file_path: Path to the source file to analyze.
 
@@ -352,41 +360,54 @@ class Citadel:
             FileAnalysisResult containing artifacts and their relationships.
         """
         file_path = Path(file_path)
+        cache_key = str(file_path.resolve())
+
+        cached = self._analysis_cache.get(cache_key)
+        if cached is not None:
+            return cached
 
         # Get spec for this file type
         spec = self._get_spec_for_file(file_path)
         if not spec:
-            return FileAnalysisResult(
+            result = FileAnalysisResult(
                 file_path=str(file_path),
                 language="unknown",
                 artifacts=[],
                 error=f"No spec found for file extension '{file_path.suffix}'",
             )
+            self._analysis_cache[cache_key] = result
+            return result
 
         # Read file content
         try:
             content = self._read_file(file_path)
         except Exception as e:
-            return FileAnalysisResult(
+            result = FileAnalysisResult(
                 file_path=str(file_path),
                 language=spec.language,
                 artifacts=[],
                 error=f"Failed to read file: {e}",
             )
+            self._analysis_cache[cache_key] = result
+            return result
 
         # Parse the file
         try:
             parse_result = self.parser.parse_file(file_path, content, spec)
         except Exception as e:
-            return FileAnalysisResult(
+            result = FileAnalysisResult(
                 file_path=str(file_path),
                 language=spec.language,
                 artifacts=[],
                 error=f"Failed to parse file: {e}",
             )
+            self._analysis_cache[cache_key] = result
+            return result
 
         # Convert to SDK result format
-        return self._convert_parse_result(parse_result, spec)
+        result = self._convert_parse_result(parse_result, spec)
+        self._analysis_cache[cache_key] = result
+        return result
 
     def _read_file(self, file_path: Path) -> str:
         """Read file content with encoding fallbacks."""
@@ -698,6 +719,9 @@ class Citadel:
         if cache_dir.exists():
             shutil.rmtree(cache_dir)
             logger.info(f"Cleared cache at {cache_dir}")
+
+        # Clear in-memory analysis cache
+        self._analysis_cache.clear()
 
         # Rebuild extension map after clearing
         self._build_extension_map()
