@@ -461,6 +461,11 @@ class WarRigConfig(BaseSettings):
         le=20,
         description="Maximum retry attempts per ticket (including Super-Scribe) before fatal exit",
     )
+    skip_ticket_creation: bool = Field(
+        default=False,
+        description="Skip creating new tickets on startup. Work only with existing "
+        "tickets from a previous run. Use when restarting after a crash.",
+    )
 
     # Circuit breaker for provider 401 errors
     circuit_breaker_threshold: int = Field(

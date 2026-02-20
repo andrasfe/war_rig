@@ -361,23 +361,47 @@ class TicketOrchestrator:
 
         try:
             # Phase 1: Initialize batch with Program Manager
-            logger.info(f"Initializing batch from {input_dir}")
-            self._state.status_message = "Discovering source files..."
+            if self.config.skip_ticket_creation:
+                logger.info(
+                    "Skipping ticket creation (skip_ticket_creation=True). "
+                    "Working with existing tickets only."
+                )
+                # Load existing tickets from beads
+                existing = list(self.beads_client._pm_ticket_cache.values())
+                if not existing:
+                    logger.warning("No existing tickets found")
+                    result.final_decision = "NO_FILES"
+                    result.completed_at = datetime.utcnow()
+                    self._state.status = OrchestrationStatus.COMPLETED
+                    return result
 
-            tickets = self.program_manager.initialize_batch(input_dir)
+                self._state.batch_id = (
+                    existing[0].metadata.get("batch_id", "resume")
+                    if existing[0].metadata
+                    else "resume"
+                )
+                self._state.total_files = len(existing)
+                logger.info(
+                    f"Resuming with {len(existing)} existing tickets"
+                )
+            else:
+                logger.info(f"Initializing batch from {input_dir}")
+                self._state.status_message = "Discovering source files..."
 
-            if not tickets:
-                logger.warning("No source files found to process")
-                result.final_decision = "NO_FILES"
-                result.completed_at = datetime.utcnow()
-                self._state.status = OrchestrationStatus.COMPLETED
-                return result
+                tickets = self.program_manager.initialize_batch(input_dir)
 
-            self._state.batch_id = self.program_manager.batch_id or ""
-            self._state.total_files = len(tickets)
-            logger.info(
-                f"Batch {self._state.batch_id}: {len(tickets)} files to process"
-            )
+                if not tickets:
+                    logger.warning("No source files found to process")
+                    result.final_decision = "NO_FILES"
+                    result.completed_at = datetime.utcnow()
+                    self._state.status = OrchestrationStatus.COMPLETED
+                    return result
+
+                self._state.batch_id = self.program_manager.batch_id or ""
+                self._state.total_files = len(tickets)
+                logger.info(
+                    f"Batch {self._state.batch_id}: {len(tickets)} files to process"
+                )
 
             # Generate Citadel dependency graph for the input directory
             await self._generate_citadel_graph(input_dir)

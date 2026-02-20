@@ -331,6 +331,13 @@ def batch(
             help="Output directory for skills (default: skills-{output_name})",
         ),
     ] = None,
+    no_new_tickets: Annotated[
+        bool,
+        typer.Option(
+            "--no-new-tickets",
+            help="Skip ticket creation, work only with existing tickets from a previous run",
+        ),
+    ] = False,
 ) -> None:
     """Process a directory of source files.
 
@@ -392,6 +399,10 @@ def batch(
         raise typer.Exit(0)
 
     console.print(f"Found {len(files)} files to process")
+
+    if no_new_tickets:
+        cfg.skip_ticket_creation = True
+        console.print("[cyan]--no-new-tickets: working with existing tickets only[/cyan]")
 
     # Use TicketOrchestrator for batch processing
     # This ensures Imperator only reviews after all Scribe/Challenger work is done
