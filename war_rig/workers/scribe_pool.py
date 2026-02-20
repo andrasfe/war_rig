@@ -706,6 +706,21 @@ class ScribeWorker:
                     )
                 )
 
+        # Batch-fetch all function bodies in a single parse (instead of
+        # calling get_function_body() per paragraph which re-parses the
+        # entire file each time — critical for large files with 1000+ paragraphs).
+        all_para_names = [
+            p.paragraph_name for p in template.paragraphs if p.paragraph_name
+        ]
+        all_bodies: dict[str, str | None] = {}
+        if all_para_names:
+            try:
+                all_bodies = self._citadel.get_function_bodies(
+                    file_path, all_para_names
+                )
+            except Exception:
+                pass
+
         for para in template.paragraphs:
             para_name = para.paragraph_name
             if not para_name:
@@ -749,21 +764,19 @@ class ScribeWorker:
                 if c.get("file") and c.get("function")
             ]
 
-            # Get function body and chunk if needed for LLM processing
-            try:
-                body = self._citadel.get_function_body(file_path, para_name)
-                if body and len(body) > MAX_FUNCTION_BODY_CHARS:
+            # Chunk large function bodies for metadata tracking
+            body = all_bodies.get(para_name)
+            if body and len(body) > MAX_FUNCTION_BODY_CHARS:
+                try:
                     chunks = self._chunk_function_body(body)
-                    # Store chunk count in metadata for potential future use
                     if not hasattr(para, "metadata") or para.metadata is None:
                         para.metadata = {}
                     para.metadata["body_chunks"] = len(chunks)
                     logger.debug(
                         f"Function {para_name} body split into {len(chunks)} chunks"
                     )
-            except Exception:
-                # Graceful handling - if chunking fails, continue without chunking
-                pass
+                except Exception:
+                    pass
 
         # Mark dead code paragraphs and build dead_code section
         dead_code_items = citadel_context.get("dead_code", [])
@@ -2985,6 +2998,9 @@ class ScribeWorker:
         batches_processed = 0
         batches_skipped = 0
 
+        # Pre-split source lines once instead of inside the loop
+        source_lines = source_code.split("\n") if source_code else []
+
         for batch_idx, batch in enumerate(batches):
             batch_names = [p.get("name", "") for p in batch if p.get("name")]
             if not batch_names:
@@ -3021,7 +3037,6 @@ class ScribeWorker:
             # For any paragraph where Citadel body extraction returned None,
             # fall back to line-range extraction so the Scribe sees all source.
             batch_source_parts = []
-            source_lines = source_code.split("\n") if source_code else []
             fallback_count = 0
             for para_info in batch:
                 name = para_info.get("name", "")
