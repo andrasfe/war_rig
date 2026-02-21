@@ -250,6 +250,54 @@ class KnowledgeGraphManager:
             )
             return ""
 
+    async def ingest_citadel_context(
+        self,
+        citadel_context: dict,
+        file_name: str,
+        source_pass: str = "citadel",
+    ) -> None:
+        """Ingest triples from Citadel static analysis context.
+
+        Extracts deterministic triples from Citadel's function call graph
+        and includes, treating them as ground truth equivalent to
+        preprocessor triples.
+
+        Args:
+            citadel_context: Dictionary with functions and includes keys
+                from Citadel's _get_citadel_context().
+            file_name: Source file name for provenance tracking.
+            source_pass: Pass identifier for provenance tracking.
+        """
+        if not self.enabled:
+            return
+        if self._coordinator is None:
+            return
+
+        try:
+            raw_triples = self._extractor.extract_from_citadel_context(
+                citadel_context, file_name, source_pass
+            )
+            if not raw_triples:
+                logger.debug(
+                    "No triples extracted from Citadel context for %s",
+                    file_name,
+                )
+                return
+
+            triples = await self._coordinator.ingest_raw_triples(raw_triples)
+            if triples:
+                logger.info(
+                    "Ingested %d Citadel triples for %s",
+                    len(triples),
+                    file_name,
+                )
+        except Exception:
+            logger.warning(
+                "Failed to ingest Citadel triples for %s",
+                file_name,
+                exc_info=True,
+            )
+
     async def ingest_scribe_output(
         self,
         scribe_output: str,

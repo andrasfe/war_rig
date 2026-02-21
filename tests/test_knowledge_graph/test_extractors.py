@@ -583,6 +583,244 @@ class TestExtractDispatch:
         contains = [t for t in triples if t.predicate == RelationType.CONTAINS_STEP]
         assert len(contains) == 1
 
+class TestExtractFromCitadelContext:
+    """Tests for Citadel context triple extraction."""
+
+    def test_calls_extraction(self):
+        context = {
+            "functions": [
+                {
+                    "name": "1000-MAIN",
+                    "type": "paragraph",
+                    "line": 10,
+                    "calls": [
+                        {"target": "ACCT0200", "type": "calls", "line": 15},
+                    ],
+                },
+            ],
+            "includes": [],
+        }
+        extractor = TripleExtractor()
+        triples = extractor.extract_from_citadel_context(
+            context, "ACCT0100.cbl"
+        )
+
+        calls = [t for t in triples if t.predicate == RelationType.CALLS]
+        assert len(calls) == 1
+        assert calls[0].subject_type == EntityType.PROGRAM
+        assert calls[0].subject_name == "ACCT0100"
+        assert calls[0].object_type == EntityType.PROGRAM
+        assert calls[0].object_name == "ACCT0200"
+
+    def test_performs_extraction(self):
+        context = {
+            "functions": [
+                {
+                    "name": "1000-MAIN",
+                    "type": "paragraph",
+                    "line": 10,
+                    "calls": [
+                        {"target": "2000-PROCESS", "type": "performs", "line": 20},
+                        {"target": "3000-CLEANUP", "type": "performs", "line": 30},
+                    ],
+                },
+            ],
+            "includes": [],
+        }
+        extractor = TripleExtractor()
+        triples = extractor.extract_from_citadel_context(
+            context, "ACCT0100.cbl"
+        )
+
+        performs = [t for t in triples if t.predicate == RelationType.PERFORMS]
+        assert len(performs) == 2
+        assert performs[0].subject_type == EntityType.PARAGRAPH
+        assert performs[0].subject_name == "1000-MAIN"
+        assert performs[0].object_type == EntityType.PARAGRAPH
+        assert performs[0].object_name == "2000-PROCESS"
+
+    def test_includes_extraction(self):
+        context = {
+            "functions": [],
+            "includes": ["ACCTCPY1", "ACCTCPY2"],
+        }
+        extractor = TripleExtractor()
+        triples = extractor.extract_from_citadel_context(
+            context, "ACCT0100.cbl"
+        )
+
+        includes = [t for t in triples if t.predicate == RelationType.INCLUDES]
+        assert len(includes) == 2
+        assert includes[0].subject_type == EntityType.PROGRAM
+        assert includes[0].subject_name == "ACCT0100"
+        assert includes[0].object_type == EntityType.COPYBOOK
+        names = {t.object_name for t in includes}
+        assert names == {"ACCTCPY1", "ACCTCPY2"}
+
+    def test_reads_writes_extraction(self):
+        context = {
+            "functions": [
+                {
+                    "name": "1000-READ-DATA",
+                    "type": "paragraph",
+                    "line": 10,
+                    "calls": [
+                        {"target": "MASTER-FILE", "type": "reads", "line": 15},
+                        {"target": "OUTPUT-FILE", "type": "writes", "line": 20},
+                    ],
+                },
+            ],
+            "includes": [],
+        }
+        extractor = TripleExtractor()
+        triples = extractor.extract_from_citadel_context(
+            context, "ACCT0100.cbl"
+        )
+
+        reads = [t for t in triples if t.predicate == RelationType.READS]
+        assert len(reads) == 1
+        assert reads[0].object_type == EntityType.DATASET
+        assert reads[0].object_name == "MASTER-FILE"
+
+        writes = [t for t in triples if t.predicate == RelationType.WRITES]
+        assert len(writes) == 1
+        assert writes[0].object_type == EntityType.DATASET
+        assert writes[0].object_name == "OUTPUT-FILE"
+
+    def test_deduplication(self):
+        context = {
+            "functions": [
+                {
+                    "name": "1000-MAIN",
+                    "type": "paragraph",
+                    "line": 10,
+                    "calls": [
+                        {"target": "2000-PROC", "type": "performs", "line": 15},
+                        {"target": "2000-PROC", "type": "performs", "line": 25},
+                    ],
+                },
+                {
+                    "name": "3000-ALT",
+                    "type": "paragraph",
+                    "line": 100,
+                    "calls": [
+                        {"target": "2000-PROC", "type": "performs", "line": 105},
+                    ],
+                },
+            ],
+            "includes": ["CPY1", "CPY1"],
+        }
+        extractor = TripleExtractor()
+        triples = extractor.extract_from_citadel_context(
+            context, "ACCT0100.cbl"
+        )
+
+        performs = [t for t in triples if t.predicate == RelationType.PERFORMS]
+        # 1000-MAIN->2000-PROC (deduped to 1) + 3000-ALT->2000-PROC (different subject)
+        assert len(performs) == 2
+
+        includes = [t for t in triples if t.predicate == RelationType.INCLUDES]
+        assert len(includes) == 1
+
+    def test_source_provenance(self):
+        context = {
+            "functions": [
+                {
+                    "name": "1000-MAIN",
+                    "type": "paragraph",
+                    "line": 10,
+                    "calls": [
+                        {"target": "ACCT0200", "type": "calls", "line": 15},
+                    ],
+                },
+            ],
+            "includes": [],
+        }
+        extractor = TripleExtractor()
+        triples = extractor.extract_from_citadel_context(
+            context, "ACCT0100.cbl", source_pass="citadel_pass_2"
+        )
+
+        assert triples[0].source_pass == "citadel_pass_2"
+        assert triples[0].source_artifact == "ACCT0100.cbl"
+
+    def test_empty_context_returns_empty(self):
+        context = {"functions": [], "includes": []}
+        extractor = TripleExtractor()
+        triples = extractor.extract_from_citadel_context(
+            context, "ACCT0100.cbl"
+        )
+        assert triples == []
+
+    def test_unknown_call_type_skipped(self):
+        context = {
+            "functions": [
+                {
+                    "name": "1000-MAIN",
+                    "type": "paragraph",
+                    "line": 10,
+                    "calls": [
+                        {"target": "SOMETHING", "type": "unknown_type", "line": 15},
+                    ],
+                },
+            ],
+            "includes": [],
+        }
+        extractor = TripleExtractor()
+        triples = extractor.extract_from_citadel_context(
+            context, "ACCT0100.cbl"
+        )
+        assert triples == []
+
+    def test_program_name_from_filename(self):
+        extractor = TripleExtractor()
+
+        triples = extractor.extract_from_citadel_context(
+            {"functions": [], "includes": ["CPY1"]},
+            "my_program.cbl",
+        )
+        assert triples[0].subject_name == "MY_PROGRAM"
+
+        triples = extractor.extract_from_citadel_context(
+            {"functions": [], "includes": ["CPY1"]},
+            "PAYROLL.CBL",
+        )
+        assert triples[0].subject_name == "PAYROLL"
+
+    def test_mixed_call_types(self):
+        context = {
+            "functions": [
+                {
+                    "name": "1000-MAIN",
+                    "type": "paragraph",
+                    "line": 10,
+                    "calls": [
+                        {"target": "2000-PROC", "type": "performs", "line": 15},
+                        {"target": "ACCT0200", "type": "calls", "line": 20},
+                        {"target": "MASTER-FILE", "type": "reads", "line": 25},
+                    ],
+                },
+            ],
+            "includes": ["ACCTCPY1"],
+        }
+        extractor = TripleExtractor()
+        triples = extractor.extract_from_citadel_context(
+            context, "ACCT0100.cbl"
+        )
+
+        assert len(triples) == 4
+        predicates = {t.predicate for t in triples}
+        assert predicates == {
+            RelationType.PERFORMS,
+            RelationType.CALLS,
+            RelationType.READS,
+            RelationType.INCLUDES,
+        }
+
+
+class TestExtractDispatch:
+    """Tests for extract() dispatch method."""
+
     def test_unknown_type_returns_empty(self):
         from war_rig.preprocessors.base import PreprocessorResult
         from war_rig.models.templates import FileType

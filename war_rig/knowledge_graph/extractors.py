@@ -22,6 +22,7 @@ Example:
 """
 
 import logging
+from pathlib import Path
 
 from war_rig.knowledge_graph.models import EntityType, RawTriple, RelationType
 from war_rig.preprocessors.base import PreprocessorResult
@@ -203,6 +204,124 @@ class TripleExtractor:
             len(triples),
             program_name,
             source_artifact,
+        )
+        return triples
+
+    def extract_from_citadel_context(
+        self,
+        citadel_context: dict,
+        file_name: str,
+        source_pass: str = "citadel",
+    ) -> list[RawTriple]:
+        """Extract triples from Citadel static analysis context.
+
+        Uses the function call graph and includes from Citadel's deterministic
+        analysis as an alternative to preprocessor-based extraction. This is
+        the primary KG seeding path for Citadel-guided processing.
+
+        Citadel context structure:
+        - functions: list of {name, type, line, calls: [{target, type, line}]}
+        - includes: list of include file names
+
+        Citadel call types mapped to KG relations:
+        - "calls" -> PROGRAM CALLS PROGRAM
+        - "performs" -> PARAGRAPH PERFORMS PARAGRAPH
+        - "includes" -> PROGRAM INCLUDES COPYBOOK
+        - "reads" -> PROGRAM READS DATASET
+        - "writes" -> PROGRAM WRITES DATASET
+
+        Args:
+            citadel_context: Dictionary from _get_citadel_context() with
+                functions and includes keys.
+            file_name: Source file name for provenance tracking.
+            source_pass: Pass identifier for provenance.
+
+        Returns:
+            List of extracted RawTriple objects.
+        """
+        triples: list[RawTriple] = []
+        functions = citadel_context.get("functions", [])
+        includes = citadel_context.get("includes", [])
+
+        # Derive program name from file_name (strip extension, uppercase)
+        program_name = Path(file_name).stem.upper()
+
+        # Map Citadel relationship types to KG relation/entity pairs
+        _CALL_TYPE_MAP: dict[str, tuple[RelationType, EntityType, EntityType]] = {
+            "calls": (RelationType.CALLS, EntityType.PROGRAM, EntityType.PROGRAM),
+            "performs": (RelationType.PERFORMS, EntityType.PARAGRAPH, EntityType.PARAGRAPH),
+            "reads": (RelationType.READS, EntityType.PROGRAM, EntityType.DATASET),
+            "writes": (RelationType.WRITES, EntityType.PROGRAM, EntityType.DATASET),
+            "updates": (RelationType.MODIFIES, EntityType.PROGRAM, EntityType.DB_TABLE),
+            "deletes": (RelationType.MODIFIES, EntityType.PROGRAM, EntityType.DB_TABLE),
+            "executes": (RelationType.EXECUTES, EntityType.PROGRAM, EntityType.PROGRAM),
+        }
+
+        # Track seen triples to avoid duplicates
+        seen: set[tuple[str, str, str]] = set()
+
+        for func in functions:
+            func_name = func.get("name", "")
+            if not func_name:
+                continue
+
+            for call in func.get("calls", []):
+                target = call.get("target", "")
+                call_type = call.get("type", "").lower()
+                if not target or not call_type:
+                    continue
+
+                mapping = _CALL_TYPE_MAP.get(call_type)
+                if mapping is None:
+                    continue
+
+                predicate, subject_type, object_type = mapping
+
+                # For PERFORMS, subject is the paragraph name
+                if predicate == RelationType.PERFORMS:
+                    subject_name = func_name.upper()
+                else:
+                    subject_name = program_name
+
+                key = (predicate.value, subject_name, target.upper())
+                if key in seen:
+                    continue
+                seen.add(key)
+
+                triples.append(RawTriple(
+                    subject_type=subject_type,
+                    subject_name=subject_name,
+                    predicate=predicate,
+                    object_type=object_type,
+                    object_name=target.upper(),
+                    source_pass=source_pass,
+                    source_artifact=file_name,
+                ))
+
+        # Includes -> PROGRAM INCLUDES COPYBOOK
+        seen_includes: set[str] = set()
+        for include in includes:
+            if not include:
+                continue
+            inc_upper = include.upper()
+            if inc_upper in seen_includes:
+                continue
+            seen_includes.add(inc_upper)
+            triples.append(RawTriple(
+                subject_type=EntityType.PROGRAM,
+                subject_name=program_name,
+                predicate=RelationType.INCLUDES,
+                object_type=EntityType.COPYBOOK,
+                object_name=inc_upper,
+                source_pass=source_pass,
+                source_artifact=file_name,
+            ))
+
+        logger.info(
+            "Extracted %d triples from Citadel context for %s (%s)",
+            len(triples),
+            program_name,
+            file_name,
         )
         return triples
 

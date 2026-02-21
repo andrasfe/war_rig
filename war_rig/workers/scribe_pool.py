@@ -2555,6 +2555,21 @@ class ScribeWorker:
                 if name:
                     func_calls_by_name[name.lower()] = func.get("calls", [])
 
+            # Seed knowledge graph from Citadel's static analysis
+            if self.kg_manager and self.kg_manager.enabled:
+                try:
+                    await self.kg_manager.ingest_citadel_context(
+                        citadel_context,
+                        ticket.file_name,
+                        f"citadel_pass_{ticket.cycle_number}",
+                    )
+                except Exception:
+                    logger.warning(
+                        f"Worker {self.worker_id}: Failed to ingest Citadel "
+                        f"triples for {ticket.file_name}",
+                        exc_info=True,
+                    )
+
         outline = []
         for para in paragraphs:
             name = para.get("name", "")
