@@ -2830,6 +2830,21 @@ class ScribeWorker:
 
         output = await self.scribe_agent.ainvoke(scribe_input)
 
+        # Ingest KG triples from Scribe output
+        if self.kg_manager and self.kg_manager.enabled and output.success and output.raw_response:
+            try:
+                await self.kg_manager.ingest_scribe_output(
+                    output.raw_response,
+                    f"pass_{ticket.cycle_number}",
+                    ticket.file_name,
+                )
+            except Exception:
+                logger.warning(
+                    "Worker %s: Failed to ingest KG triples for %s",
+                    self.worker_id, ticket.file_name,
+                    exc_info=True,
+                )
+
         # Gap-fill: check if any paragraphs from the outline are missing
         if output.success and output.template:
             output = await self._citadel_gap_fill(
@@ -3099,6 +3114,21 @@ class ScribeWorker:
                 )
                 batches_processed += 1
 
+                # Ingest KG triples from this batch's Scribe output
+                if self.kg_manager and self.kg_manager.enabled and output.raw_response:
+                    try:
+                        await self.kg_manager.ingest_scribe_output(
+                            output.raw_response,
+                            f"pass_{ticket.cycle_number}_batch_{batch_idx}",
+                            ticket.file_name,
+                        )
+                    except Exception:
+                        logger.warning(
+                            "Worker %s: Failed to ingest KG triples for %s batch %d",
+                            self.worker_id, ticket.file_name, batch_idx,
+                            exc_info=True,
+                        )
+
                 if merged_template is None:
                     # First batch: use the full template
                     merged_template = output.template
@@ -3358,6 +3388,21 @@ class ScribeWorker:
             gap_output = await self.scribe_agent.ainvoke(scribe_input)
 
             if gap_output.success and gap_output.template:
+                # Ingest KG triples from gap-fill output
+                if self.kg_manager and self.kg_manager.enabled and gap_output.raw_response:
+                    try:
+                        await self.kg_manager.ingest_scribe_output(
+                            gap_output.raw_response,
+                            f"pass_{ticket.cycle_number}_gapfill_{batch_idx}",
+                            ticket.file_name,
+                        )
+                    except Exception:
+                        logger.warning(
+                            "Worker %s: Failed to ingest KG gap-fill triples for %s",
+                            self.worker_id, ticket.file_name,
+                            exc_info=True,
+                        )
+
                 # Merge gap-filled paragraphs
                 for para in gap_output.template.paragraphs:
                     if para.paragraph_name and para.paragraph_name.lower() not in documented:
