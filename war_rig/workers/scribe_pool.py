@@ -1990,7 +1990,7 @@ class ScribeWorker:
         if not arrows:
             return ""
 
-        max_per_diagram = 200
+        max_per_diagram = 50
 
         if len(arrows) <= max_per_diagram:
             # Single diagram — fits within Mermaid limits
