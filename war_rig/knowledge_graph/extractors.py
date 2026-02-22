@@ -362,6 +362,12 @@ class TripleExtractor:
         triples: list[RawTriple] = []
         seen: set[tuple[str, str, str]] = set()
 
+        def _attr(obj: object, key: str) -> str | None:
+            """Get attribute from a model or dict (lenient loading)."""
+            if isinstance(obj, dict):
+                return obj.get(key)  # type: ignore[return-value]
+            return getattr(obj, key, None)
+
         def _add(
             pred: RelationType,
             subj_type: EntityType,
@@ -385,99 +391,127 @@ class TripleExtractor:
 
         # called_programs[].program_name -> PROGRAM CALLS PROGRAM
         for cp in template.called_programs:
-            if cp.program_name:
+            cp_name = _attr(cp, "program_name")
+            if cp_name:
                 _add(
                     RelationType.CALLS,
                     EntityType.PROGRAM, program_name,
-                    EntityType.PROGRAM, cp.program_name,
+                    EntityType.PROGRAM, cp_name,
                 )
 
         # copybooks_used[].copybook_name -> PROGRAM INCLUDES COPYBOOK
         for cb in template.copybooks_used:
-            if cb.copybook_name:
+            cb_name = _attr(cb, "copybook_name")
+            if cb_name:
                 _add(
                     RelationType.INCLUDES,
                     EntityType.PROGRAM, program_name,
-                    EntityType.COPYBOOK, cb.copybook_name,
+                    EntityType.COPYBOOK, cb_name,
                 )
 
         # paragraphs[].outgoing_calls -> varies by call_type
         for para in template.paragraphs:
-            para_name = para.paragraph_name or ""
-            for call in para.outgoing_calls:
-                if not call.target:
+            para_name = _attr(para, "paragraph_name") or ""
+            outgoing = _attr(para, "outgoing_calls") or []
+            for call in outgoing:
+                target = _attr(call, "target")
+                if not target:
                     continue
-                ct = call.call_type.lower() if call.call_type else "performs"
+                ct_raw = _attr(call, "call_type")
+                ct = ct_raw.lower() if ct_raw else "performs"
                 if ct == "performs":
                     _add(
                         RelationType.PERFORMS,
                         EntityType.PARAGRAPH, para_name,
-                        EntityType.PARAGRAPH, call.target,
+                        EntityType.PARAGRAPH, target,
                     )
                 elif ct == "calls":
                     _add(
                         RelationType.CALLS,
                         EntityType.PROGRAM, program_name,
-                        EntityType.PROGRAM, call.target,
+                        EntityType.PROGRAM, target,
                     )
                 elif ct == "includes":
                     _add(
                         RelationType.INCLUDES,
                         EntityType.PROGRAM, program_name,
-                        EntityType.COPYBOOK, call.target,
+                        EntityType.COPYBOOK, target,
                     )
 
+        # data_flow may be a dict if loaded leniently
+        data_flow = template.data_flow
+        reads_from = (
+            data_flow.get("reads_from", [])
+            if isinstance(data_flow, dict)
+            else data_flow.reads_from
+        )
+        writes_to = (
+            data_flow.get("writes_to", [])
+            if isinstance(data_flow, dict)
+            else data_flow.writes_to
+        )
+
         # data_flow.reads_from[].source -> PROGRAM READS DATASET
-        for read in template.data_flow.reads_from:
-            if read.source:
+        for read in reads_from:
+            source = _attr(read, "source")
+            if source:
                 _add(
                     RelationType.READS,
                     EntityType.PROGRAM, program_name,
-                    EntityType.DATASET, read.source,
+                    EntityType.DATASET, source,
                 )
 
         # data_flow.writes_to[].destination -> PROGRAM WRITES DATASET
-        for write in template.data_flow.writes_to:
-            if write.destination:
+        for write in writes_to:
+            dest = _attr(write, "destination")
+            if dest:
                 _add(
                     RelationType.WRITES,
                     EntityType.PROGRAM, program_name,
-                    EntityType.DATASET, write.destination,
+                    EntityType.DATASET, dest,
                 )
 
         # inputs[] / outputs[] -> type-dependent triples
-        _FILE_TYPES = {IOType.FILE_SEQUENTIAL, IOType.FILE_VSAM}
+        _FILE_TYPES = {
+            IOType.FILE_SEQUENTIAL, IOType.FILE_VSAM,
+            IOType.FILE_SEQUENTIAL.value, IOType.FILE_VSAM.value,
+        }
+        _DB2 = {IOType.DB2_TABLE, IOType.DB2_TABLE.value}
 
         for inp in template.inputs:
-            if not inp.name:
+            inp_name = _attr(inp, "name")
+            inp_type = _attr(inp, "io_type")
+            if not inp_name:
                 continue
-            if inp.io_type == IOType.DB2_TABLE:
+            if inp_type in _DB2:
                 _add(
                     RelationType.QUERIES,
                     EntityType.PROGRAM, program_name,
-                    EntityType.DB_TABLE, inp.name,
+                    EntityType.DB_TABLE, inp_name,
                 )
-            elif inp.io_type in _FILE_TYPES:
+            elif inp_type in _FILE_TYPES:
                 _add(
                     RelationType.READS,
                     EntityType.PROGRAM, program_name,
-                    EntityType.DATASET, inp.name,
+                    EntityType.DATASET, inp_name,
                 )
 
         for out in template.outputs:
-            if not out.name:
+            out_name = _attr(out, "name")
+            out_type = _attr(out, "io_type")
+            if not out_name:
                 continue
-            if out.io_type == IOType.DB2_TABLE:
+            if out_type in _DB2:
                 _add(
                     RelationType.MODIFIES,
                     EntityType.PROGRAM, program_name,
-                    EntityType.DB_TABLE, out.name,
+                    EntityType.DB_TABLE, out_name,
                 )
-            elif out.io_type in _FILE_TYPES:
+            elif out_type in _FILE_TYPES:
                 _add(
                     RelationType.WRITES,
                     EntityType.PROGRAM, program_name,
-                    EntityType.DATASET, out.name,
+                    EntityType.DATASET, out_name,
                 )
 
         logger.info(

@@ -1043,6 +1043,41 @@ class TestExtractFromTemplate:
         triples = extractor.extract_from_template(template)
         assert triples == []
 
+    def test_extract_from_template_lenient_dicts(self):
+        """Items loaded as dicts (via load_lenient) should still work."""
+        from war_rig.models.templates import DocumentationTemplate, HeaderSection
+        # Simulate what load_lenient._deep_construct produces:
+        # DataFlow constructed with model_construct, inner items stay as dicts
+        from war_rig.models.templates import DataFlow
+        data_flow = DataFlow.model_construct(
+            reads_from=[{"source": "INPUT-DS", "fields_used": []}],
+            writes_to=[{"destination": "OUTPUT-DS", "fields_written": []}],
+        )
+        template = DocumentationTemplate(
+            header=HeaderSection(program_id="TESTPGM", file_name="TESTPGM.cbl"),
+            data_flow=data_flow,
+            called_programs=[{"program_name": "SUBPGM"}],  # type: ignore[list-item]
+            inputs=[{"name": "ACCT_TBL", "io_type": "DB2_TABLE"}],  # type: ignore[list-item]
+        )
+        extractor = TripleExtractor()
+        triples = extractor.extract_from_template(template)
+
+        reads = [t for t in triples if t.predicate == RelationType.READS]
+        assert len(reads) == 1
+        assert reads[0].object_name == "INPUT-DS"
+
+        writes = [t for t in triples if t.predicate == RelationType.WRITES]
+        assert len(writes) == 1
+        assert writes[0].object_name == "OUTPUT-DS"
+
+        calls = [t for t in triples if t.predicate == RelationType.CALLS]
+        assert len(calls) == 1
+        assert calls[0].object_name == "SUBPGM"
+
+        queries = [t for t in triples if t.predicate == RelationType.QUERIES]
+        assert len(queries) == 1
+        assert queries[0].object_name == "ACCT_TBL"
+
     def test_extract_from_template_provenance(self):
         from war_rig.models.templates import CalledProgram
         template = self._make_template(
