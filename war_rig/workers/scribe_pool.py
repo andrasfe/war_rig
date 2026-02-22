@@ -1985,38 +1985,54 @@ class ScribeWorker:
         if not arrows:
             return ""
 
-        # Cap arrows to stay within Mermaid's rendering limits
-        max_arrows = 200
-        if len(arrows) > max_arrows:
-            logger.info(
-                "Sequence diagram has %d arrows, truncating to %d",
-                len(arrows),
-                max_arrows,
-            )
-            arrows = arrows[:max_arrows]
-            # Rebuild participants to only include those in the truncated arrows
+        max_per_diagram = 200
+
+        if len(arrows) <= max_per_diagram:
+            # Single diagram — fits within Mermaid limits
+            for safe_name, original_name in participants.items():
+                lines.append(f"    participant {safe_name} as {original_name}")
+            lines.extend(arrows)
+            lines.append("```")
+            return "\n".join(lines)
+
+        # Split into multiple diagrams
+        chunks = [
+            arrows[i : i + max_per_diagram]
+            for i in range(0, len(arrows), max_per_diagram)
+        ]
+        diagrams: list[str] = []
+        for idx, chunk in enumerate(chunks, 1):
+            # Find participants used in this chunk
             used_ids: set[str] = set()
-            for arrow in arrows:
-                # Extract participant IDs from arrow lines like "    A->>B: label"
+            for arrow in chunk:
                 parts = arrow.strip().split(":", 1)[0]
-                for sep in ("->>", "-->>"):
+                for sep in ("-->>", "->>"):
                     if sep in parts:
                         a, b = parts.split(sep, 1)
                         used_ids.add(a.strip())
                         used_ids.add(b.strip())
                         break
-            participants = {k: v for k, v in participants.items() if k in used_ids}
+            chunk_participants = {
+                k: v for k, v in participants.items() if k in used_ids
+            }
 
-        # Emit participant declarations (safe_id as readable label)
-        for safe_name, original_name in participants.items():
-            lines.append(f"    participant {safe_name} as {original_name}")
+            d_lines = ["```mermaid", "sequenceDiagram"]
+            for safe_name, original_name in chunk_participants.items():
+                d_lines.append(
+                    f"    participant {safe_name} as {original_name}"
+                )
+            d_lines.extend(chunk)
+            d_lines.append("```")
 
-        # Emit arrows
-        lines.extend(arrows)
+            header = f"### Part {idx} of {len(chunks)}\n"
+            diagrams.append(header + "\n".join(d_lines))
 
-        lines.append("```")
-
-        return "\n".join(lines)
+        logger.info(
+            "Split sequence diagram (%d arrows) into %d parts",
+            len(arrows),
+            len(chunks),
+        )
+        return "\n\n".join(diagrams)
 
     def _truncate_label(self, items: list[str], max_items: int = 3) -> str:
         """Truncate a list of items for use as a diagram label.
