@@ -506,11 +506,11 @@ class TestWriterSequenceDiagramIntegration:
 
         assert "```mermaid" in result
         assert "sequenceDiagram" in result
-        # Should use fallback "performs" labels
-        assert "0000-MAIN->>1000-INITIALIZE: performs" in result
-        assert "0000-MAIN->>2000-VALIDATE-INPUT: performs" in result
-        assert "0000-MAIN->>3000-PROCESS-DATA: performs" in result
-        assert "0000-MAIN->>9000-CLEANUP: performs" in result
+        # Should use fallback "performs" labels (hyphens sanitized to underscores in IDs)
+        assert "0000_MAIN->>1000_INITIALIZE: performs" in result
+        assert "0000_MAIN->>2000_VALIDATE_INPUT: performs" in result
+        assert "0000_MAIN->>3000_PROCESS_DATA: performs" in result
+        assert "0000_MAIN->>9000_CLEANUP: performs" in result
 
     def test_writer_renders_enhanced_diagram_with_call_semantics(
         self, writer, template_with_call_semantics
@@ -521,19 +521,19 @@ class TestWriterSequenceDiagramIntegration:
         assert "```mermaid" in result
         assert "sequenceDiagram" in result
 
-        # Check for enhanced labels with inputs
-        assert "0000-MAIN->>2000-VALIDATE-INPUT: WS-CUSTOMER-ID" in result
-        assert "0000-MAIN->>3000-PROCESS-DATA: WS-CUSTOMER-ID, WS-AMOUNT" in result
+        # Check for enhanced labels with inputs (hyphens sanitized, commas become slashes)
+        assert "0000_MAIN->>2000_VALIDATE_INPUT: WS-CUSTOMER-ID" in result
+        assert "0000_MAIN->>3000_PROCESS_DATA: WS-CUSTOMER-ID / WS-AMOUNT" in result
 
         # Check for return arrows with outputs
-        assert "1000-INITIALIZE-->>0000-MAIN: WS-OUTPUT-RECORD, WS-VALID-FLAG" in result
-        assert "2000-VALIDATE-INPUT-->>0000-MAIN: WS-VALID-FLAG" in result
-        assert "3000-PROCESS-DATA-->>0000-MAIN: WS-RESULT-CODE, WS-RESULT-MSG" in result
+        assert "1000_INITIALIZE-->>0000_MAIN: WS-OUTPUT-RECORD / WS-VALID-FLAG" in result
+        assert "2000_VALIDATE_INPUT-->>0000_MAIN: WS-VALID-FLAG" in result
+        assert "3000_PROCESS_DATA-->>0000_MAIN: WS-RESULT-CODE / WS-RESULT-MSG" in result
 
         # Cleanup has no inputs/outputs, should show "performs"
-        assert "0000-MAIN->>9000-CLEANUP: performs" in result
+        assert "0000_MAIN->>9000_CLEANUP: performs" in result
         # No return arrow for cleanup
-        assert "9000-CLEANUP-->>0000-MAIN" not in result
+        assert "9000_CLEANUP-->>0000_MAIN" not in result
 
     def test_writer_markdown_includes_sequence_diagram_section(
         self, writer, template_with_call_semantics
@@ -574,13 +574,14 @@ class TestGracefulDegradation:
 
         result = writer._render_sequence_diagram(template)
 
-        # All calls should show "performs" fallback
-        assert "0000-MAIN->>1000-INITIALIZE: performs" in result
-        assert "0000-MAIN->>2000-VALIDATE-INPUT: performs" in result
-        assert "0000-MAIN->>3000-PROCESS-DATA: performs" in result
-        assert "0000-MAIN->>9000-CLEANUP: performs" in result
-        # No return arrows
-        assert "-->>" not in result
+        # All calls should show "performs" fallback (hyphens sanitized to underscores in IDs)
+        assert "0000_MAIN->>1000_INITIALIZE: performs" in result
+        assert "0000_MAIN->>2000_VALIDATE_INPUT: performs" in result
+        assert "0000_MAIN->>3000_PROCESS_DATA: performs" in result
+        assert "0000_MAIN->>9000_CLEANUP: performs" in result
+        # No return arrows (check lines that aren't participant declarations)
+        lines = [l for l in result.split("\n") if "-->>" in l]
+        assert len(lines) == 0
 
     def test_partial_call_semantics_uses_fallback_for_missing(self, writer):
         """Test that missing semantics for some calls use fallback."""
@@ -610,12 +611,12 @@ class TestGracefulDegradation:
 
         result = writer._render_sequence_diagram(template)
 
-        # SUB-1 should have enhanced labels
-        assert "MAIN->>SUB-1: WS-INPUT" in result
-        assert "SUB-1-->>MAIN: WS-OUTPUT" in result
+        # SUB-1 should have enhanced labels (hyphens sanitized in IDs)
+        assert "MAIN->>SUB_1: WS-INPUT" in result
+        assert "SUB_1-->>MAIN: WS-OUTPUT" in result
 
         # SUB-2 should use fallback
-        assert "MAIN->>SUB-2: performs" in result
+        assert "MAIN->>SUB_2: performs" in result
 
     def test_call_semantics_with_empty_inputs_outputs(self, writer):
         """Test that call semantics with empty inputs/outputs uses fallback."""

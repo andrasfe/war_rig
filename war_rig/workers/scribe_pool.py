@@ -1863,8 +1863,8 @@ class ScribeWorker:
         """Sanitize a label for Mermaid arrow text.
 
         Replaces characters/sequences that Mermaid interprets as syntax:
-        newlines, commas (delimiters), ``--`` (dotted arrows),
-        ``->`` (solid arrows).
+        newlines, commas, semicolons (statement separators),
+        ``--`` (dotted arrows), ``->`` (solid arrows).
         """
         return (
             label
@@ -1872,7 +1872,8 @@ class ScribeWorker:
             .replace("\r", "")
             .replace("--", "\u2011\u2011")  # non-breaking hyphens
             .replace("->", "\u2011>")
-            .replace(",", ";")
+            .replace(";", " /")
+            .replace(",", " /")
             .strip()
         )
 

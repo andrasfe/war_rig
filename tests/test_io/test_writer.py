@@ -112,7 +112,7 @@ class TestRenderSequenceDiagram:
         )
         result = writer._render_sequence_diagram(template)
 
-        assert "MAIN_PARA->>SUB_PARA: WS-INPUT-FIELD; WS-FLAG" in result
+        assert "MAIN_PARA->>SUB_PARA: WS-INPUT-FIELD / WS-FLAG" in result
         # No return arrow since outputs is empty
         assert "SUB_PARA-->>MAIN_PARA" not in result
 
@@ -199,8 +199,8 @@ class TestRenderSequenceDiagram:
         )
         result = writer._render_sequence_diagram(template)
 
-        # Should show first 3 items + ellipsis (commas become semicolons)
-        assert "VAR1; VAR2; VAR3..." in result
+        # Should show first 3 items + ellipsis (commas become slashes)
+        assert "VAR1 / VAR2 / VAR3..." in result
         assert "VAR4" not in result
         assert "VAR5" not in result
 

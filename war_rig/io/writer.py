@@ -546,8 +546,8 @@ class DocumentationWriter:
         """Sanitize a label for Mermaid sequence diagram arrows.
 
         Replaces characters/sequences that Mermaid interprets as syntax:
-        newlines, commas (delimiters), ``--`` (dotted arrows),
-        ``->`` (solid arrows).
+        newlines, commas, semicolons (statement separators),
+        ``--`` (dotted arrows), ``->`` (solid arrows).
 
         Args:
             label: Raw label text.
@@ -561,7 +561,8 @@ class DocumentationWriter:
             .replace("\r", "")
             .replace("--", "\u2011\u2011")  # non-breaking hyphens
             .replace("->", "\u2011>")
-            .replace(",", ";")
+            .replace(";", " /")
+            .replace(",", " /")
             .strip()
         )
 
