@@ -1793,7 +1793,20 @@ class ScribeWorker:
         if template.flow_diagram:
             from war_rig.validation.mermaid_validator import is_valid_mermaid
 
-            if is_valid_mermaid(template.flow_diagram):
+            # Count edges — Mermaid's default maxEdges is 500
+            edge_count = sum(
+                1
+                for line in template.flow_diagram.splitlines()
+                if " --> " in line or " -.->" in line
+            )
+
+            if edge_count > 500:
+                logger.info(
+                    "Flow diagram has %d edges (limit 500), skipping for %s",
+                    edge_count,
+                    template.header.program_id if template.header else "unknown",
+                )
+            elif is_valid_mermaid(template.flow_diagram):
                 parts.append("## Control Flow")
                 parts.append("")
                 parts.append("```mermaid")
@@ -1836,6 +1849,20 @@ class ScribeWorker:
 
         return "\n".join(parts)
 
+    @staticmethod
+    def _mermaid_safe(name: str) -> str:
+        """Sanitize a name for use as a Mermaid participant/node ID.
+
+        Mermaid interprets hyphens as arrow syntax (``->>``, ``-->>``),
+        so IDs must not contain them.
+        """
+        return "".join(c if c.isalnum() or c == "_" else "_" for c in name)
+
+    @staticmethod
+    def _mermaid_safe_label(label: str) -> str:
+        """Sanitize a label for Mermaid arrow text (commas -> semicolons)."""
+        return label.replace(",", ";")
+
     def _render_sequence_diagram(self, template: DocumentationTemplate) -> str:
         """Generate Mermaid sequence diagram with data flow annotations.
 
@@ -1864,6 +1891,15 @@ class ScribeWorker:
 
         lines = ["```mermaid", "sequenceDiagram"]
 
+        # Collect participants for declaration (safe_id -> original name)
+        participants: dict[str, str] = {}
+
+        def register(name: str) -> str:
+            safe = self._mermaid_safe(name)
+            if safe not in participants:
+                participants[safe] = name
+            return safe
+
         # Build lookup from call_semantics (handle both dict and object)
         semantics_map: dict[tuple[str, str], Any] = {}
         for cs in template.call_semantics:
@@ -1872,6 +1908,9 @@ class ScribeWorker:
             if caller_name and callee_name:
                 semantics_map[(caller_name, callee_name)] = cs
 
+        # Collect arrows first so we can emit participant declarations
+        arrows: list[str] = []
+
         # Get call edges from paragraphs
         for para in template.paragraphs:
             if not para.outgoing_calls:
@@ -1879,6 +1918,8 @@ class ScribeWorker:
             caller = para.paragraph_name
             if not caller:
                 continue
+
+            safe_caller = register(caller)
 
             for call in para.outgoing_calls:
                 # FunctionCall has a 'target' attribute, but may be dict from JSON
@@ -1891,6 +1932,8 @@ class ScribeWorker:
                 if not target:
                     continue
 
+                safe_target = register(target)
+
                 sem = semantics_map.get((caller, target))
 
                 if sem:
@@ -1901,26 +1944,46 @@ class ScribeWorker:
                     if inputs or outputs:
                         # Enhanced: show data flow
                         if inputs:
-                            in_label = self._truncate_label(inputs)
-                            lines.append(f"    {caller}->>{target}: {in_label}")
+                            in_label = self._mermaid_safe_label(
+                                self._truncate_label(inputs)
+                            )
+                            arrows.append(
+                                f"    {safe_caller}->>{safe_target}: {in_label}"
+                            )
                         else:
-                            lines.append(f"    {caller}->>{target}: performs")
+                            arrows.append(
+                                f"    {safe_caller}->>{safe_target}: performs"
+                            )
 
                         if outputs:
-                            out_label = self._truncate_label(outputs)
-                            lines.append(f"    {target}-->>{caller}: {out_label}")
+                            out_label = self._mermaid_safe_label(
+                                self._truncate_label(outputs)
+                            )
+                            arrows.append(
+                                f"    {safe_target}-->>{safe_caller}: {out_label}"
+                            )
                     else:
                         # Semantics exist but no data flow info
-                        lines.append(f"    {caller}->>{target}: performs")
+                        arrows.append(
+                            f"    {safe_caller}->>{safe_target}: performs"
+                        )
                 else:
                     # Fallback: basic label
-                    lines.append(f"    {caller}->>{target}: performs")
+                    arrows.append(
+                        f"    {safe_caller}->>{safe_target}: performs"
+                    )
+
+        if not arrows:
+            return ""
+
+        # Emit participant declarations (safe_id as readable label)
+        for safe_name, original_name in participants.items():
+            lines.append(f"    participant {safe_name} as {original_name}")
+
+        # Emit arrows
+        lines.extend(arrows)
 
         lines.append("```")
-
-        # Only return diagram if we have actual content beyond the header/footer
-        if len(lines) <= 3:  # Just header, footer, no content
-            return ""
 
         return "\n".join(lines)
 
