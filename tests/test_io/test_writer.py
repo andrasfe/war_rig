@@ -81,7 +81,10 @@ class TestRenderSequenceDiagram:
 
         assert "```mermaid" in result
         assert "sequenceDiagram" in result
-        assert "MAIN-PARA->>SUB-PARA: performs" in result
+        # Hyphens sanitized to underscores in IDs, originals in participant labels
+        assert "participant MAIN_PARA as MAIN-PARA" in result
+        assert "participant SUB_PARA as SUB-PARA" in result
+        assert "MAIN_PARA->>SUB_PARA: performs" in result
         assert "```" in result
 
     def test_enhanced_diagram_with_inputs(self, writer):
@@ -109,9 +112,9 @@ class TestRenderSequenceDiagram:
         )
         result = writer._render_sequence_diagram(template)
 
-        assert "MAIN-PARA->>SUB-PARA: WS-INPUT-FIELD, WS-FLAG" in result
+        assert "MAIN_PARA->>SUB_PARA: WS-INPUT-FIELD; WS-FLAG" in result
         # No return arrow since outputs is empty
-        assert "SUB-PARA-->>MAIN-PARA" not in result
+        assert "SUB_PARA-->>MAIN_PARA" not in result
 
     def test_enhanced_diagram_with_outputs(self, writer):
         """Test diagram with call_semantics outputs."""
@@ -139,9 +142,9 @@ class TestRenderSequenceDiagram:
         result = writer._render_sequence_diagram(template)
 
         # Forward arrow should show "performs" when inputs is empty
-        assert "MAIN-PARA->>SUB-PARA: performs" in result
+        assert "MAIN_PARA->>SUB_PARA: performs" in result
         # Return arrow should show output
-        assert "SUB-PARA-->>MAIN-PARA: WS-RESULT" in result
+        assert "SUB_PARA-->>MAIN_PARA: WS-RESULT" in result
 
     def test_enhanced_diagram_with_inputs_and_outputs(self, writer):
         """Test diagram with both inputs and outputs."""
@@ -168,8 +171,8 @@ class TestRenderSequenceDiagram:
         )
         result = writer._render_sequence_diagram(template)
 
-        assert "MAIN-PARA->>SUB-PARA: WS-INPUT" in result
-        assert "SUB-PARA-->>MAIN-PARA: WS-OUTPUT" in result
+        assert "MAIN_PARA->>SUB_PARA: WS-INPUT" in result
+        assert "SUB_PARA-->>MAIN_PARA: WS-OUTPUT" in result
 
     def test_truncation_of_long_input_list(self, writer):
         """Test that long input lists are truncated."""
@@ -196,8 +199,8 @@ class TestRenderSequenceDiagram:
         )
         result = writer._render_sequence_diagram(template)
 
-        # Should show first 3 items + ellipsis
-        assert "VAR1, VAR2, VAR3..." in result
+        # Should show first 3 items + ellipsis (commas become semicolons)
+        assert "VAR1; VAR2; VAR3..." in result
         assert "VAR4" not in result
         assert "VAR5" not in result
 
@@ -248,8 +251,8 @@ class TestRenderSequenceDiagram:
         )
         result = writer._render_sequence_diagram(template)
 
-        assert "MAIN-PARA->>SUB-PARA-1: performs" in result
-        assert "MAIN-PARA->>SUB-PARA-2: performs" in result
+        assert "MAIN_PARA->>SUB_PARA_1: performs" in result
+        assert "MAIN_PARA->>SUB_PARA_2: performs" in result
 
     def test_paragraph_without_name_skipped(self, writer):
         """Test that paragraphs without names are skipped."""
@@ -275,11 +278,11 @@ class TestRenderSequenceDiagram:
         )
         result = writer._render_sequence_diagram(template)
 
-        # Should only have the call from MAIN-PARA
+        # Should only have the call from MAIN-PARA (sanitized to MAIN_PARA)
         lines = result.split("\n")
-        call_lines = [line for line in lines if "->>" in line]
+        call_lines = [line for line in lines if "->>" in line and "participant" not in line]
         assert len(call_lines) == 1
-        assert "MAIN-PARA" in call_lines[0]
+        assert "MAIN_PARA" in call_lines[0]
 
     def test_fallback_without_matching_semantics(self, writer):
         """Test fallback to 'performs' when semantics don't match."""
@@ -308,9 +311,9 @@ class TestRenderSequenceDiagram:
         result = writer._render_sequence_diagram(template)
 
         # Should use fallback label
-        assert "MAIN-PARA->>SUB-PARA: performs" in result
+        assert "MAIN_PARA->>SUB_PARA: performs" in result
         # Should not have return arrow
-        assert "-->>MAIN-PARA" not in result
+        assert "-->>MAIN_PARA" not in result
 
 
 class TestTruncateLabel:
@@ -371,7 +374,7 @@ class TestSequenceDiagramIntegration:
         assert "## Sequence Diagram" in result
         assert "```mermaid" in result
         assert "sequenceDiagram" in result
-        assert "MAIN-PARA->>SUB-PARA: performs" in result
+        assert "MAIN_PARA->>SUB_PARA: performs" in result
 
     def test_no_sequence_diagram_without_calls(self, writer):
         """Test that no sequence diagram section when no calls exist."""

@@ -526,6 +526,36 @@ class DocumentationWriter:
 
         return "\n".join(lines)
 
+    @staticmethod
+    def _mermaid_safe(name: str) -> str:
+        """Sanitize a name for use as a Mermaid sequence diagram participant.
+
+        Mermaid interprets hyphens as arrow syntax (e.g. ``->>``, ``-->>``),
+        so participant IDs must not contain them.
+
+        Args:
+            name: Raw participant name (e.g. a COBOL paragraph name).
+
+        Returns:
+            Alphanumeric+underscore identifier safe for Mermaid syntax.
+        """
+        return "".join(c if c.isalnum() or c == "_" else "_" for c in name)
+
+    @staticmethod
+    def _mermaid_safe_label(label: str) -> str:
+        """Sanitize a label for Mermaid sequence diagram arrows.
+
+        Commas in arrow labels are interpreted as syntax delimiters by
+        the Mermaid parser, so replace them with semicolons.
+
+        Args:
+            label: Raw label text.
+
+        Returns:
+            Label safe for Mermaid arrow syntax.
+        """
+        return label.replace(",", ";")
+
     def _render_sequence_diagram(self, template: DocumentationTemplate) -> str:
         """Generate Mermaid sequence diagram with data flow annotations.
 
@@ -551,6 +581,15 @@ class DocumentationWriter:
 
         lines = ["```mermaid", "sequenceDiagram"]
 
+        # Collect all participants for declaration (preserves readable labels)
+        participants: dict[str, str] = {}  # safe_name -> original_name
+
+        def register(name: str) -> str:
+            safe = self._mermaid_safe(name)
+            if safe not in participants:
+                participants[safe] = name
+            return safe
+
         # Build lookup from call_semantics (handle both dict and object)
         semantics_map: dict[tuple[str, str], Any] = {}
         for cs in template.call_semantics:
@@ -563,6 +602,9 @@ class DocumentationWriter:
             if caller and callee:
                 semantics_map[(caller, callee)] = cs
 
+        # Collect arrows first so we can emit participant declarations
+        arrows: list[str] = []
+
         if has_outgoing_calls:
             # Mode 1: Iterate through paragraphs.outgoing_calls, look up semantics
             for para in template.paragraphs:
@@ -571,6 +613,8 @@ class DocumentationWriter:
                 caller = para.paragraph_name
                 if not caller:
                     continue
+
+                safe_caller = register(caller)
 
                 for call in para.outgoing_calls:
                     # FunctionCall has a 'target' attribute, but may be dict from JSON
@@ -583,6 +627,8 @@ class DocumentationWriter:
                     if not target:
                         continue
 
+                    safe_target = register(target)
+
                     sem = semantics_map.get((caller, target))
                     if sem:
                         # Get inputs/outputs from semantics
@@ -594,17 +640,29 @@ class DocumentationWriter:
                             outputs = sem.outputs or []
 
                         if inputs:
-                            in_label = self._truncate_label(inputs)
-                            lines.append(f"    {caller}->>{target}: {in_label}")
+                            in_label = self._mermaid_safe_label(
+                                self._truncate_label(inputs)
+                            )
+                            arrows.append(
+                                f"    {safe_caller}->>{safe_target}: {in_label}"
+                            )
                         else:
-                            lines.append(f"    {caller}->>{target}: performs")
+                            arrows.append(
+                                f"    {safe_caller}->>{safe_target}: performs"
+                            )
 
                         if outputs:
-                            out_label = self._truncate_label(outputs)
-                            lines.append(f"    {target}-->>{caller}: {out_label}")
+                            out_label = self._mermaid_safe_label(
+                                self._truncate_label(outputs)
+                            )
+                            arrows.append(
+                                f"    {safe_target}-->>{safe_caller}: {out_label}"
+                            )
                     else:
                         # Fallback: basic label
-                        lines.append(f"    {caller}->>{target}: performs")
+                        arrows.append(
+                            f"    {safe_caller}->>{safe_target}: performs"
+                        )
         else:
             # Mode 2: No outgoing_calls but call_semantics exist, use them directly
             for cs in template.call_semantics:
@@ -622,22 +680,43 @@ class DocumentationWriter:
                 if not caller or not callee:
                     continue
 
+                safe_caller = register(caller)
+                safe_callee = register(callee)
+
                 # Show forward call with inputs or "performs"
                 if inputs:
-                    in_label = self._truncate_label(inputs)
-                    lines.append(f"    {caller}->>{callee}: {in_label}")
+                    in_label = self._mermaid_safe_label(
+                        self._truncate_label(inputs)
+                    )
+                    arrows.append(
+                        f"    {safe_caller}->>{safe_callee}: {in_label}"
+                    )
                 else:
-                    lines.append(f"    {caller}->>{callee}: performs")
+                    arrows.append(
+                        f"    {safe_caller}->>{safe_callee}: performs"
+                    )
 
                 # Show return with outputs if available
                 if outputs:
-                    out_label = self._truncate_label(outputs)
-                    lines.append(f"    {callee}-->>{caller}: {out_label}")
+                    out_label = self._mermaid_safe_label(
+                        self._truncate_label(outputs)
+                    )
+                    arrows.append(
+                        f"    {safe_callee}-->>{safe_caller}: {out_label}"
+                    )
+
+        # Emit participant declarations (safe_id as readable label)
+        for safe_name, original_name in participants.items():
+            lines.append(f"    participant {safe_name} as {original_name}")
+
+        # Emit arrows
+        lines.extend(arrows)
 
         lines.append("```")
 
         # Only return diagram if we have actual content beyond the header/footer
-        if len(lines) <= 3:  # Just header, footer, no content
+        # (header + participants + footer = at least 3, need arrows too)
+        if not arrows:
             return ""
 
         return "\n".join(lines)
