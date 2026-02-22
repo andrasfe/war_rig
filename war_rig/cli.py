@@ -1287,6 +1287,113 @@ def _generate_readme_internal(
         raise RuntimeError(f"Failed to generate README: {result.error}")
 
 
+@app.command(name="enrich-kg")
+def enrich_kg(
+    output_dir: Annotated[
+        Path,
+        typer.Option(
+            "--output-dir",
+            help="Directory containing .doc.json files",
+            exists=True,
+            file_okay=False,
+            dir_okay=True,
+        ),
+    ],
+    config_path: Annotated[
+        Path | None,
+        typer.Option(
+            "--config",
+            help="Path to configuration file",
+        ),
+    ] = None,
+    verbose: Annotated[
+        bool,
+        typer.Option("--verbose", "-v", help="Enable verbose logging"),
+    ] = False,
+) -> None:
+    """Enrich the knowledge graph from existing .doc.json documentation files.
+
+    Discovers all .doc.json files under the output directory, extracts
+    KG triples from their structured fields (called_programs, copybooks,
+    data_flow, inputs/outputs, paragraphs), and ingests them into the
+    knowledge graph. This improves KG health without re-running LLM calls.
+    """
+    import json as json_mod
+
+    from war_rig.knowledge_graph.manager import KnowledgeGraphManager
+    from war_rig.models.templates import DocumentationTemplate
+
+    setup_logging(verbose)
+
+    cfg = load_config_with_fallback(config_path)
+    cfg.output_directory = output_dir
+
+    # Force KG enabled for enrichment
+    cfg.knowledge_graph_enabled = True
+
+    async def _run_enrichment() -> None:
+        manager = KnowledgeGraphManager(cfg)
+        await manager.initialize()
+
+        doc_files = sorted(output_dir.rglob("*.doc.json"))
+        if not doc_files:
+            console.print("[yellow]No .doc.json files found[/yellow]")
+            await manager.close()
+            return
+
+        console.print(
+            f"[bold]Found {len(doc_files)} .doc.json files[/bold]"
+        )
+
+        total_triples = 0
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console,
+        ) as progress:
+            task = progress.add_task("Enriching KG...", total=len(doc_files))
+
+            for doc_file in doc_files:
+                try:
+                    with open(doc_file) as f:
+                        data = json_mod.load(f)
+                    template = DocumentationTemplate.load_lenient(data)
+                    triples = await manager.ingest_documentation_template(
+                        template
+                    )
+                    count = len(triples)
+                    total_triples += count
+                    if count > 0:
+                        prog_name = (
+                            template.header.program_id
+                            if template.header
+                            else doc_file.stem
+                        )
+                        progress.console.print(
+                            f"  {prog_name}: {count} triples"
+                        )
+                except Exception as e:
+                    progress.console.print(
+                        f"  [red]Error processing {doc_file.name}: {e}[/red]"
+                    )
+                progress.advance(task)
+
+        await manager.close()
+
+        stats_table = Table(title="KG Enrichment Summary")
+        stats_table.add_column("Metric", style="bold")
+        stats_table.add_column("Value", justify="right")
+        stats_table.add_row("Files processed", str(len(doc_files)))
+        stats_table.add_row("Total triples ingested", str(total_triples))
+        console.print(stats_table)
+
+    try:
+        asyncio.run(_run_enrichment())
+    except Exception as e:
+        console.print(f"[red]Error during KG enrichment: {e}[/red]")
+        raise typer.Exit(1) from None
+
+
 def main() -> None:
     """Main entry point for the CLI."""
     app()

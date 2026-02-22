@@ -159,6 +159,43 @@ class TestTripleOperations:
         assert t2.corroboration_count == 2
         assert t2.confirmed is True
 
+    async def test_insert_triple_confirmed_on_first_insert(self, store):
+        """confirmed=True sets confirmed=1 on first insertion."""
+        subj = await store.upsert_entity(EntityType.PROGRAM, "ACCT0100")
+        obj = await store.upsert_entity(EntityType.DATASET, "MASTER.FILE")
+        triple = await store.insert_triple(
+            subj.id, RelationType.READS, obj.id,
+            source_pass="preprocess",
+            confirmed=True,
+        )
+        assert triple.confirmed is True
+        assert triple.corroboration_count == 1
+
+    async def test_insert_triple_confirmed_false_by_default(self, store):
+        """Default confirmed=False leaves confirmed=0."""
+        subj = await store.upsert_entity(EntityType.PROGRAM, "ACCT0100")
+        obj = await store.upsert_entity(EntityType.PROGRAM, "ACCT0200")
+        triple = await store.insert_triple(
+            subj.id, RelationType.CALLS, obj.id,
+        )
+        assert triple.confirmed is False
+
+    async def test_ingest_raw_triples_confirmed(self, store):
+        """ingest_raw_triples with confirmed=True marks all triples confirmed."""
+        raw = [
+            RawTriple(
+                subject_type=EntityType.PROGRAM,
+                subject_name="ACCT0100",
+                predicate=RelationType.CALLS,
+                object_type=EntityType.PROGRAM,
+                object_name="ACCT0200",
+                source_pass="preprocess",
+            ),
+        ]
+        triples = await store.ingest_raw_triples(raw, confirmed=True)
+        assert len(triples) == 1
+        assert triples[0].confirmed is True
+
     async def test_get_triples_for_entity_as_subject(self, store):
         subj = await store.upsert_entity(EntityType.PROGRAM, "ACCT0100")
         obj = await store.upsert_entity(EntityType.PROGRAM, "ACCT0200")

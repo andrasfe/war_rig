@@ -38,10 +38,11 @@ from war_rig.knowledge_graph.conflicts import ConflictDetector
 from war_rig.knowledge_graph.context import ContextFormatter
 from war_rig.knowledge_graph.extractors import TripleExtractor
 from war_rig.knowledge_graph.ingestion import TripleIngestionCoordinator
-from war_rig.knowledge_graph.models import Entity, EntityType
+from war_rig.knowledge_graph.models import Entity, EntityType, Triple
 from war_rig.knowledge_graph.parser import TripleOutputParser
 from war_rig.knowledge_graph.queries import GraphQueryHelper
 from war_rig.knowledge_graph.sqlite_store import SQLiteGraphStore
+from war_rig.models.templates import DocumentationTemplate
 from war_rig.preprocessors.base import PreprocessorResult
 
 logger = logging.getLogger(__name__)
@@ -297,6 +298,57 @@ class KnowledgeGraphManager:
                 file_name,
                 exc_info=True,
             )
+
+    async def ingest_documentation_template(
+        self,
+        template: DocumentationTemplate,
+        source_pass: str = "doc_enrichment",
+    ) -> list[Triple]:
+        """Extract and ingest triples from a documentation template.
+
+        Mines structured fields in .doc.json (called_programs, copybooks,
+        data_flow, paragraphs, inputs/outputs) and ingests them into the
+        KG. This enables KG enrichment from existing documentation without
+        re-running expensive LLM calls.
+
+        Args:
+            template: The documentation template to extract from.
+            source_pass: Pass identifier for provenance tracking.
+
+        Returns:
+            List of ingested Triple objects, or empty list on failure.
+        """
+        if not self.enabled:
+            return []
+        if self._coordinator is None:
+            return []
+
+        try:
+            raw_triples = self._extractor.extract_from_template(
+                template, source_pass
+            )
+            if not raw_triples:
+                return []
+
+            triples = await self._coordinator.ingest_raw_triples(raw_triples)
+            if triples:
+                program_name = (
+                    template.header.program_id
+                    if template.header
+                    else "unknown"
+                )
+                logger.info(
+                    "Ingested %d doc template triples for %s",
+                    len(triples),
+                    program_name,
+                )
+            return triples
+        except Exception:
+            logger.warning(
+                "Failed to ingest documentation template triples",
+                exc_info=True,
+            )
+            return []
 
     async def ingest_scribe_output(
         self,

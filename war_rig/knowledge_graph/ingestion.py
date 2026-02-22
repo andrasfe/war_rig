@@ -90,7 +90,9 @@ class TripleIngestionCoordinator:
             )
             return []
 
-        triples = await self._store.ingest_raw_triples(raw_triples)
+        triples = await self._store.ingest_raw_triples(
+            raw_triples, confirmed=True
+        )
         logger.info(
             "Ingested %d preprocessor triples for %s (from %d raw)",
             len(triples),
@@ -152,6 +154,7 @@ class TripleIngestionCoordinator:
     async def ingest_raw_triples(
         self,
         raw_triples: list[RawTriple],
+        confirmed: bool = False,
     ) -> list[Triple]:
         """Directly ingest a batch of raw triples.
 
@@ -160,6 +163,8 @@ class TripleIngestionCoordinator:
 
         Args:
             raw_triples: Pre-parsed raw triples to ingest.
+            confirmed: If True, mark new triples as confirmed on first
+                insertion (for ground-truth sources).
 
         Returns:
             List of ingested Triple objects.
@@ -167,7 +172,9 @@ class TripleIngestionCoordinator:
         if not raw_triples:
             return []
 
-        triples = await self._store.ingest_raw_triples(raw_triples)
+        triples = await self._store.ingest_raw_triples(
+            raw_triples, confirmed=confirmed
+        )
 
         conflicts = await self._conflict_detector.detect_conflicts(triples)
         if conflicts:
@@ -203,7 +210,7 @@ async def ingest_preprocessor_triples(
     if not raw_triples:
         return []
 
-    triples = await store.ingest_raw_triples(raw_triples)
+    triples = await store.ingest_raw_triples(raw_triples, confirmed=True)
     logger.info(
         "ingest_preprocessor_triples: %d triples for %s",
         len(triples),

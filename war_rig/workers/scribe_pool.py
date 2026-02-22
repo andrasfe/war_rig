@@ -2087,6 +2087,16 @@ class ScribeWorker:
                 f"Worker {self.worker_id}: Saved documentation to {doc_path}"
             )
 
+            # Enrich the knowledge graph from the template's structured data
+            if self.kg_manager and self.kg_manager.enabled:
+                try:
+                    loop = asyncio.get_running_loop()
+                    loop.create_task(
+                        self.kg_manager.ingest_documentation_template(template)
+                    )
+                except RuntimeError:
+                    pass  # No running event loop
+
             # Also save human-readable markdown alongside the .doc.json
             # Note: .bak files are created separately and do not get .md files
             try:

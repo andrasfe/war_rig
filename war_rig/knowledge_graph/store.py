@@ -124,6 +124,7 @@ class KnowledgeGraphStore(ABC):
         object_id: int,
         source_pass: str | None = None,
         source_artifact: str | None = None,
+        confirmed: bool = False,
     ) -> Triple:
         """Insert a new triple or increment corroboration if it already exists.
 
@@ -136,6 +137,7 @@ class KnowledgeGraphStore(ABC):
             object_id: Database ID of the object entity.
             source_pass: Which War Rig pass produced this triple.
             source_artifact: Source file being analyzed.
+            confirmed: If True, mark as confirmed on first insertion.
 
         Returns:
             The inserted or updated Triple.
@@ -146,6 +148,7 @@ class KnowledgeGraphStore(ABC):
     async def ingest_raw_triples(
         self,
         raw_triples: list[RawTriple],
+        confirmed: bool = False,
     ) -> list[Triple]:
         """Resolve and ingest a batch of raw triples.
 
@@ -158,6 +161,8 @@ class KnowledgeGraphStore(ABC):
 
         Args:
             raw_triples: List of unresolved triples to ingest.
+            confirmed: If True, mark new triples as confirmed on first
+                insertion (for ground-truth sources).
 
         Returns:
             List of persisted Triple objects with database IDs.

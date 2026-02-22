@@ -818,6 +818,243 @@ class TestExtractFromCitadelContext:
         }
 
 
+class TestExtractFromTemplate:
+    """Tests for DocumentationTemplate triple extraction."""
+
+    def _make_template(self, **kwargs):
+        from war_rig.models.templates import (
+            DocumentationTemplate,
+            HeaderSection,
+        )
+        header = kwargs.pop("header", HeaderSection(
+            program_id="RCO100B",
+            file_name="RCO100B.cbl",
+        ))
+        return DocumentationTemplate(header=header, **kwargs)
+
+    def test_extract_from_template_calls(self):
+        from war_rig.models.templates import CalledProgram
+        template = self._make_template(
+            called_programs=[
+                CalledProgram(program_name="ACCT0200"),
+                CalledProgram(program_name="ACCT0300"),
+            ],
+        )
+        extractor = TripleExtractor()
+        triples = extractor.extract_from_template(template)
+
+        calls = [t for t in triples if t.predicate == RelationType.CALLS]
+        assert len(calls) == 2
+        assert calls[0].subject_type == EntityType.PROGRAM
+        assert calls[0].subject_name == "RCO100B"
+        assert calls[0].object_type == EntityType.PROGRAM
+        assert calls[0].object_name == "ACCT0200"
+
+    def test_extract_from_template_performs(self):
+        from war_rig.models.templates import FunctionCall, Paragraph
+        template = self._make_template(
+            paragraphs=[
+                Paragraph(
+                    paragraph_name="1000-MAIN",
+                    outgoing_calls=[
+                        FunctionCall(target="2000-PROCESS", call_type="performs"),
+                        FunctionCall(target="3000-CLEANUP", call_type="performs"),
+                    ],
+                ),
+            ],
+        )
+        extractor = TripleExtractor()
+        triples = extractor.extract_from_template(template)
+
+        performs = [t for t in triples if t.predicate == RelationType.PERFORMS]
+        assert len(performs) == 2
+        assert performs[0].subject_type == EntityType.PARAGRAPH
+        assert performs[0].subject_name == "1000-MAIN"
+        assert performs[0].object_type == EntityType.PARAGRAPH
+        assert performs[0].object_name == "2000-PROCESS"
+
+    def test_extract_from_template_outgoing_calls_type(self):
+        """outgoing_calls with call_type='calls' -> PROGRAM CALLS PROGRAM."""
+        from war_rig.models.templates import FunctionCall, Paragraph
+        template = self._make_template(
+            paragraphs=[
+                Paragraph(
+                    paragraph_name="1000-MAIN",
+                    outgoing_calls=[
+                        FunctionCall(target="SUBPGM", call_type="calls"),
+                    ],
+                ),
+            ],
+        )
+        extractor = TripleExtractor()
+        triples = extractor.extract_from_template(template)
+
+        calls = [t for t in triples if t.predicate == RelationType.CALLS]
+        assert len(calls) == 1
+        assert calls[0].subject_name == "RCO100B"
+        assert calls[0].object_name == "SUBPGM"
+
+    def test_extract_from_template_outgoing_calls_includes(self):
+        """outgoing_calls with call_type='includes' -> PROGRAM INCLUDES COPYBOOK."""
+        from war_rig.models.templates import FunctionCall, Paragraph
+        template = self._make_template(
+            paragraphs=[
+                Paragraph(
+                    paragraph_name="1000-MAIN",
+                    outgoing_calls=[
+                        FunctionCall(target="MYCOPY", call_type="includes"),
+                    ],
+                ),
+            ],
+        )
+        extractor = TripleExtractor()
+        triples = extractor.extract_from_template(template)
+
+        includes = [t for t in triples if t.predicate == RelationType.INCLUDES]
+        assert len(includes) == 1
+        assert includes[0].object_type == EntityType.COPYBOOK
+        assert includes[0].object_name == "MYCOPY"
+
+    def test_extract_from_template_includes(self):
+        from war_rig.models.templates import CopybookReference
+        template = self._make_template(
+            copybooks_used=[
+                CopybookReference(copybook_name="ACCTCPY1"),
+                CopybookReference(copybook_name="ACCTCPY2"),
+            ],
+        )
+        extractor = TripleExtractor()
+        triples = extractor.extract_from_template(template)
+
+        includes = [t for t in triples if t.predicate == RelationType.INCLUDES]
+        assert len(includes) == 2
+        assert includes[0].subject_type == EntityType.PROGRAM
+        assert includes[0].subject_name == "RCO100B"
+        assert includes[0].object_type == EntityType.COPYBOOK
+        names = {t.object_name for t in includes}
+        assert names == {"ACCTCPY1", "ACCTCPY2"}
+
+    def test_extract_from_template_data_flow(self):
+        from war_rig.models.templates import DataFlow, DataFlowRead, DataFlowWrite
+        template = self._make_template(
+            data_flow=DataFlow(
+                reads_from=[DataFlowRead(source="MASTER-FILE")],
+                writes_to=[DataFlowWrite(destination="OUTPUT-FILE")],
+            ),
+        )
+        extractor = TripleExtractor()
+        triples = extractor.extract_from_template(template)
+
+        reads = [t for t in triples if t.predicate == RelationType.READS]
+        assert len(reads) == 1
+        assert reads[0].object_type == EntityType.DATASET
+        assert reads[0].object_name == "MASTER-FILE"
+
+        writes = [t for t in triples if t.predicate == RelationType.WRITES]
+        assert len(writes) == 1
+        assert writes[0].object_type == EntityType.DATASET
+        assert writes[0].object_name == "OUTPUT-FILE"
+
+    def test_extract_from_template_io_resources_db2(self):
+        from war_rig.models.templates import IOType, InputOutput
+        template = self._make_template(
+            inputs=[InputOutput(name="ACCOUNT_TBL", io_type=IOType.DB2_TABLE)],
+            outputs=[InputOutput(name="TRANS_TBL", io_type=IOType.DB2_TABLE)],
+        )
+        extractor = TripleExtractor()
+        triples = extractor.extract_from_template(template)
+
+        queries = [t for t in triples if t.predicate == RelationType.QUERIES]
+        assert len(queries) == 1
+        assert queries[0].object_type == EntityType.DB_TABLE
+        assert queries[0].object_name == "ACCOUNT_TBL"
+
+        modifies = [t for t in triples if t.predicate == RelationType.MODIFIES]
+        assert len(modifies) == 1
+        assert modifies[0].object_type == EntityType.DB_TABLE
+        assert modifies[0].object_name == "TRANS_TBL"
+
+    def test_extract_from_template_io_resources_files(self):
+        from war_rig.models.templates import IOType, InputOutput
+        template = self._make_template(
+            inputs=[InputOutput(name="SEQ-INPUT", io_type=IOType.FILE_SEQUENTIAL)],
+            outputs=[InputOutput(name="VSAM-OUTPUT", io_type=IOType.FILE_VSAM)],
+        )
+        extractor = TripleExtractor()
+        triples = extractor.extract_from_template(template)
+
+        reads = [t for t in triples if t.predicate == RelationType.READS]
+        assert len(reads) == 1
+        assert reads[0].object_name == "SEQ-INPUT"
+
+        writes = [t for t in triples if t.predicate == RelationType.WRITES]
+        assert len(writes) == 1
+        assert writes[0].object_name == "VSAM-OUTPUT"
+
+    def test_extract_from_template_deduplication(self):
+        """Same triple from multiple sources should not be duplicated."""
+        from war_rig.models.templates import (
+            CalledProgram,
+            CopybookReference,
+            FunctionCall,
+            Paragraph,
+        )
+        template = self._make_template(
+            called_programs=[
+                CalledProgram(program_name="ACCT0200"),
+                CalledProgram(program_name="ACCT0200"),  # duplicate
+            ],
+            copybooks_used=[
+                CopybookReference(copybook_name="CPY1"),
+            ],
+            paragraphs=[
+                Paragraph(
+                    paragraph_name="1000-MAIN",
+                    outgoing_calls=[
+                        # This also produces CALLS ACCT0200 — dedup with called_programs
+                        FunctionCall(target="ACCT0200", call_type="calls"),
+                        # This should produce INCLUDES CPY1 — dedup with copybooks_used
+                        FunctionCall(target="CPY1", call_type="includes"),
+                    ],
+                ),
+            ],
+        )
+        extractor = TripleExtractor()
+        triples = extractor.extract_from_template(template)
+
+        calls = [t for t in triples if t.predicate == RelationType.CALLS]
+        assert len(calls) == 1  # deduplicated
+
+        includes = [t for t in triples if t.predicate == RelationType.INCLUDES]
+        assert len(includes) == 1  # deduplicated
+
+    def test_extract_from_template_empty(self):
+        """Empty template with header but no data -> 0 triples."""
+        template = self._make_template()
+        extractor = TripleExtractor()
+        triples = extractor.extract_from_template(template)
+        assert triples == []
+
+    def test_extract_from_template_no_header(self):
+        """Template with no header -> 0 triples."""
+        from war_rig.models.templates import DocumentationTemplate
+        template = DocumentationTemplate()
+        extractor = TripleExtractor()
+        triples = extractor.extract_from_template(template)
+        assert triples == []
+
+    def test_extract_from_template_provenance(self):
+        from war_rig.models.templates import CalledProgram
+        template = self._make_template(
+            called_programs=[CalledProgram(program_name="ACCT0200")],
+        )
+        extractor = TripleExtractor()
+        triples = extractor.extract_from_template(template, source_pass="enrichment_1")
+
+        assert triples[0].source_pass == "enrichment_1"
+        assert triples[0].source_artifact == "RCO100B.cbl"
+
+
 class TestExtractDispatch:
     """Tests for extract() dispatch method."""
 

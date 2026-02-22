@@ -25,6 +25,7 @@ import logging
 from pathlib import Path
 
 from war_rig.knowledge_graph.models import EntityType, RawTriple, RelationType
+from war_rig.models.templates import DocumentationTemplate, IOType
 from war_rig.preprocessors.base import PreprocessorResult
 from war_rig.preprocessors.cobol import COBOLStructure
 from war_rig.preprocessors.jcl import JCLStructure
@@ -322,6 +323,167 @@ class TripleExtractor:
             len(triples),
             program_name,
             file_name,
+        )
+        return triples
+
+    def extract_from_template(
+        self,
+        template: DocumentationTemplate,
+        source_pass: str = "doc_enrichment",
+    ) -> list[RawTriple]:
+        """Extract triples from a DocumentationTemplate (.doc.json).
+
+        Mines structured fields that the Scribe already populated
+        (called_programs, copybooks_used, data_flow, paragraphs,
+        inputs, outputs) and converts them to KG triples. This allows
+        KG enrichment from existing documentation without re-running
+        LLM calls.
+
+        Args:
+            template: The documentation template to extract from.
+            source_pass: Pass identifier for provenance tracking.
+
+        Returns:
+            List of extracted RawTriple objects, deduplicated by
+            (predicate, subject_name, object_name).
+        """
+        # Derive program name from header or return empty
+        program_name: str | None = None
+        source_artifact: str | None = None
+        if template.header:
+            program_name = template.header.program_id
+            source_artifact = template.header.file_name
+        if not program_name:
+            logger.debug(
+                "Template has no program_id in header, skipping extraction"
+            )
+            return []
+
+        triples: list[RawTriple] = []
+        seen: set[tuple[str, str, str]] = set()
+
+        def _add(
+            pred: RelationType,
+            subj_type: EntityType,
+            subj_name: str,
+            obj_type: EntityType,
+            obj_name: str,
+        ) -> None:
+            key = (pred.value, subj_name, obj_name)
+            if key in seen:
+                return
+            seen.add(key)
+            triples.append(RawTriple(
+                subject_type=subj_type,
+                subject_name=subj_name,
+                predicate=pred,
+                object_type=obj_type,
+                object_name=obj_name,
+                source_pass=source_pass,
+                source_artifact=source_artifact,
+            ))
+
+        # called_programs[].program_name -> PROGRAM CALLS PROGRAM
+        for cp in template.called_programs:
+            if cp.program_name:
+                _add(
+                    RelationType.CALLS,
+                    EntityType.PROGRAM, program_name,
+                    EntityType.PROGRAM, cp.program_name,
+                )
+
+        # copybooks_used[].copybook_name -> PROGRAM INCLUDES COPYBOOK
+        for cb in template.copybooks_used:
+            if cb.copybook_name:
+                _add(
+                    RelationType.INCLUDES,
+                    EntityType.PROGRAM, program_name,
+                    EntityType.COPYBOOK, cb.copybook_name,
+                )
+
+        # paragraphs[].outgoing_calls -> varies by call_type
+        for para in template.paragraphs:
+            para_name = para.paragraph_name or ""
+            for call in para.outgoing_calls:
+                if not call.target:
+                    continue
+                ct = call.call_type.lower() if call.call_type else "performs"
+                if ct == "performs":
+                    _add(
+                        RelationType.PERFORMS,
+                        EntityType.PARAGRAPH, para_name,
+                        EntityType.PARAGRAPH, call.target,
+                    )
+                elif ct == "calls":
+                    _add(
+                        RelationType.CALLS,
+                        EntityType.PROGRAM, program_name,
+                        EntityType.PROGRAM, call.target,
+                    )
+                elif ct == "includes":
+                    _add(
+                        RelationType.INCLUDES,
+                        EntityType.PROGRAM, program_name,
+                        EntityType.COPYBOOK, call.target,
+                    )
+
+        # data_flow.reads_from[].source -> PROGRAM READS DATASET
+        for read in template.data_flow.reads_from:
+            if read.source:
+                _add(
+                    RelationType.READS,
+                    EntityType.PROGRAM, program_name,
+                    EntityType.DATASET, read.source,
+                )
+
+        # data_flow.writes_to[].destination -> PROGRAM WRITES DATASET
+        for write in template.data_flow.writes_to:
+            if write.destination:
+                _add(
+                    RelationType.WRITES,
+                    EntityType.PROGRAM, program_name,
+                    EntityType.DATASET, write.destination,
+                )
+
+        # inputs[] / outputs[] -> type-dependent triples
+        _FILE_TYPES = {IOType.FILE_SEQUENTIAL, IOType.FILE_VSAM}
+
+        for inp in template.inputs:
+            if not inp.name:
+                continue
+            if inp.io_type == IOType.DB2_TABLE:
+                _add(
+                    RelationType.QUERIES,
+                    EntityType.PROGRAM, program_name,
+                    EntityType.DB_TABLE, inp.name,
+                )
+            elif inp.io_type in _FILE_TYPES:
+                _add(
+                    RelationType.READS,
+                    EntityType.PROGRAM, program_name,
+                    EntityType.DATASET, inp.name,
+                )
+
+        for out in template.outputs:
+            if not out.name:
+                continue
+            if out.io_type == IOType.DB2_TABLE:
+                _add(
+                    RelationType.MODIFIES,
+                    EntityType.PROGRAM, program_name,
+                    EntityType.DB_TABLE, out.name,
+                )
+            elif out.io_type in _FILE_TYPES:
+                _add(
+                    RelationType.WRITES,
+                    EntityType.PROGRAM, program_name,
+                    EntityType.DATASET, out.name,
+                )
+
+        logger.info(
+            "Extracted %d triples from template for %s",
+            len(triples),
+            program_name,
         )
         return triples
 
