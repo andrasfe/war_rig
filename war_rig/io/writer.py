@@ -546,7 +546,8 @@ class DocumentationWriter:
         """Sanitize a label for Mermaid sequence diagram arrows.
 
         Replaces characters/sequences that Mermaid interprets as syntax:
-        commas (delimiters), ``--`` (dotted arrows), ``->`` (solid arrows).
+        newlines, commas (delimiters), ``--`` (dotted arrows),
+        ``->`` (solid arrows).
 
         Args:
             label: Raw label text.
@@ -556,9 +557,12 @@ class DocumentationWriter:
         """
         return (
             label
+            .replace("\n", " ")
+            .replace("\r", "")
             .replace("--", "\u2011\u2011")  # non-breaking hyphens
             .replace("->", "\u2011>")
             .replace(",", ";")
+            .strip()
         )
 
     def _render_sequence_diagram(self, template: DocumentationTemplate) -> str:

@@ -1800,9 +1800,9 @@ class ScribeWorker:
                 if " --> " in line or " -.->" in line
             )
 
-            if edge_count > 500:
+            if edge_count >= 400:
                 logger.info(
-                    "Flow diagram has %d edges (limit 500), skipping for %s",
+                    "Flow diagram has %d edges (limit 400), skipping for %s",
                     edge_count,
                     template.header.program_id if template.header else "unknown",
                 )
@@ -1863,13 +1863,17 @@ class ScribeWorker:
         """Sanitize a label for Mermaid arrow text.
 
         Replaces characters/sequences that Mermaid interprets as syntax:
-        commas (delimiters), ``--`` (dotted arrows), ``->`` (solid arrows).
+        newlines, commas (delimiters), ``--`` (dotted arrows),
+        ``->`` (solid arrows).
         """
         return (
             label
+            .replace("\n", " ")
+            .replace("\r", "")
             .replace("--", "\u2011\u2011")  # non-breaking hyphens
             .replace("->", "\u2011>")
             .replace(",", ";")
+            .strip()
         )
 
     def _render_sequence_diagram(self, template: DocumentationTemplate) -> str:
