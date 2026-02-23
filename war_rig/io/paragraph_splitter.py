@@ -69,38 +69,33 @@ def sanitize_filename(paragraph_name: str) -> str:
 
 def _build_paragraph_index(
     source_lines: list[str],
-    known_names: set[str] | None = None,
+    known_names: set[str],
 ) -> dict[str, int]:
-    """Scan source lines for COBOL paragraph definitions.
+    """Find known paragraph names in source lines.
 
-    When *known_names* is provided, only matches lines containing one of
-    those names (case-insensitive).  This avoids false positives from
-    data-division level numbers.
+    For each *known_names* entry, scans for a line containing that name
+    followed by a period (the COBOL paragraph definition pattern).
+    This is format-agnostic — works with any indentation, sequence
+    numbering, or column layout.
 
     Returns a mapping of paragraph name (uppercase) -> 1-indexed line number.
     """
+    # Build a case-insensitive lookup: search term -> canonical uppercase name
+    remaining: dict[str, str] = {n.upper(): n.upper() for n in known_names}
     index: dict[str, int] = {}
+
     for i, line in enumerate(source_lines, 1):
-        stripped = line.strip()
-        if not stripped or stripped.startswith("*"):
-            continue
-        # Paragraph definition: NAME. (with only whitespace/seq-numbers before)
-        # Strip common prefixes: sequence numbers (6 digits), indicator col
-        content = line.rstrip()
-        # Remove up to 6 leading digits (sequence area) then whitespace
-        content = re.sub(r"^\d{1,6}", "", content).lstrip()
-        # Also handle indicator column (* for comment, already skipped)
-        if not content:
-            continue
-        # Check if line is just NAME. or NAME .
-        m = re.match(r"^([A-Za-z0-9][A-Za-z0-9_-]*)\s*\.$", content)
-        if not m:
-            continue
-        name = m.group(1).upper()
-        # If we have known names, only match those (avoids data items like "05.")
-        if known_names and name not in known_names:
-            continue
-        index[name] = i
+        upper_line = line.upper()
+        for search_name, canonical in list(remaining.items()):
+            # Check: NAME. appears in the line (paragraph definition)
+            if search_name + "." in upper_line:
+                index[canonical] = i
+                del remaining[search_name]
+                break
+
+        if not remaining:
+            break
+
     return index
 
 
@@ -123,13 +118,23 @@ def _resolve_citation(
         except (TypeError, ValueError):
             pass
         else:
-            if 1 <= start <= len(source_lines) and 1 <= end <= len(source_lines):
+            # Skip obvious "not set" sentinel values
+            if start == 0 and end == 0:
+                pass
+            # Accept 0-indexed citations: if start=0 with a real range, shift up
+            elif start == 0 and end > 0:
+                start = 1
+                if end <= len(source_lines):
+                    return start, end
+            # 1-indexed citations (normal case)
+            elif 1 <= start <= len(source_lines) and 1 <= end <= len(source_lines):
                 return start, end
-            logger.debug(
-                "Paragraph %r: citation %r out of range (file has %d lines), "
-                "falling back to source scan",
-                name, citation, len(source_lines),
-            )
+            else:
+                logger.debug(
+                    "Paragraph %r: citation %r out of range (file has %d lines), "
+                    "falling back to source scan",
+                    name, citation, len(source_lines),
+                )
 
     # --- Fallback: find paragraph by name in source ---
     start_line = para_index.get(name.upper())
