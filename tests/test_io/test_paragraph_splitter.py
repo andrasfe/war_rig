@@ -141,14 +141,17 @@ class TestSplitParagraphs:
         assert all(p.exists() for p in result)
 
         # Check content of first paragraph (lines 10-15, 1-indexed inclusive)
-        main_content = (output_dir / "MAIN-PARA.cbl").read_text()
+        main_content = (output_dir / "MAIN-PARA.cbl.md").read_text()
         assert "LINE 010" in main_content
         assert "LINE 015" in main_content
         assert "LINE 009" not in main_content
         assert "LINE 016" not in main_content
+        # Verify markdown code fence wrapping
+        assert main_content.startswith("```cobol\n")
+        assert main_content.rstrip().endswith("```")
 
         # Check content of second paragraph
-        init_content = (output_dir / "1000-INIT.cbl").read_text()
+        init_content = (output_dir / "1000-INIT.cbl.md").read_text()
         assert "LINE 020" in init_content
         assert "LINE 025" in init_content
 
@@ -171,8 +174,11 @@ class TestSplitParagraphs:
         assert len(result) == 1
         content = result[0].read_text()
         assert "LINE 023" in content
+        # Content is wrapped in ```cobol ... ``` fences (3 lines total)
         lines = content.strip().splitlines()
-        assert len(lines) == 1
+        assert lines[0] == "```cobol"
+        assert lines[-1] == "```"
+        assert len(lines) == 3
 
     def test_missing_source_file_returns_empty(self, tmp_path):
         """When source file does not exist, returns empty list with warning."""
@@ -212,7 +218,7 @@ class TestSplitParagraphs:
         result = split_paragraphs(source, doc_json, output_dir)
 
         assert len(result) == 1
-        assert result[0].name == "HAS-CITE.cbl"
+        assert result[0].name == "HAS-CITE.cbl.md"
 
     def test_citation_beyond_file_length(self, tmp_path):
         """Citation beyond file length does not crash."""
@@ -305,7 +311,7 @@ class TestSplitParagraphs:
         result = split_paragraphs(source, doc_json, output_dir)
 
         assert len(result) == 1
-        assert result[0].name == "DEAD-PARA.cbl"
+        assert result[0].name == "DEAD-PARA.cbl.md"
 
 
 # ---------------------------------------------------------------------------
@@ -317,11 +323,11 @@ class TestPatchMarkdownLinks:
     """Tests for patch_markdown_links()."""
 
     def _setup_split_dir(self, tmp_path: Path, names: list[str]) -> Path:
-        """Create a split directory with .cbl files for the given names."""
+        """Create a split directory with .cbl.md files for the given names."""
         split_dir = tmp_path / "TESTPROG.cbl.d"
         split_dir.mkdir(parents=True, exist_ok=True)
         for name in names:
-            (split_dir / f"{name}.cbl").write_text(f"SOURCE FOR {name}\n")
+            (split_dir / f"{name}.cbl.md").write_text(f"```cobol\nSOURCE FOR {name}\n```\n")
         return split_dir
 
     def test_happy_path_inserts_links(self, tmp_path):
@@ -343,8 +349,8 @@ class TestPatchMarkdownLinks:
         assert result is True
         patched = md_path.read_text()
         assert "> [Source:" in patched
-        assert "MAIN-PARA.cbl" in patched
-        assert "1000-INIT.cbl" in patched
+        assert "MAIN-PARA.cbl.md" in patched
+        assert "1000-INIT.cbl.md" in patched
 
     def test_dead_code_heading_gets_link(self, tmp_path):
         """Dead code headings like ### ~~NAME~~ (Dead Code) get correct link."""
@@ -361,7 +367,7 @@ class TestPatchMarkdownLinks:
 
         assert result is True
         patched = md_path.read_text()
-        assert "9999-EXIT.cbl" in patched
+        assert "9999-EXIT.cbl.md" in patched
 
     def test_idempotency(self, tmp_path):
         """Running twice does not duplicate links."""
@@ -419,8 +425,8 @@ class TestPatchMarkdownLinks:
 
         assert result is True
         patched = md_path.read_text()
-        assert "MAIN-PARA.cbl" in patched
-        assert "1000-INIT.cbl" not in patched
+        assert "MAIN-PARA.cbl.md" in patched
+        assert "1000-INIT.cbl.md" not in patched
 
     def test_does_not_patch_input_output_headings(self, tmp_path):
         """### headings in Inputs/Outputs sections are NOT patched."""
@@ -445,7 +451,7 @@ class TestPatchMarkdownLinks:
         patched = md_path.read_text()
 
         # MAIN-PARA in Paragraphs section should get a link
-        assert "MAIN-PARA.cbl" in patched
+        assert "MAIN-PARA.cbl.md" in patched
         # PENDING-AUTH-SUMMARY in Inputs section should NOT get a link
         # Count source links: should be 1 (only MAIN-PARA)
         assert patched.count("> [Source:") == 1
@@ -494,7 +500,7 @@ class TestSourceLinkRegex:
     def test_matches_source_link(self):
         """Matches > [Source: ...] lines."""
         match = _SOURCE_LINK_RE.match(
-            "> [Source: MAIN-PARA.cbl](TESTPROG.cbl.d/MAIN-PARA.cbl)"
+            "> [Source: MAIN-PARA.cbl.md](TESTPROG.cbl.d/MAIN-PARA.cbl.md)"
         )
         assert match is not None
 
@@ -583,7 +589,7 @@ class TestPatchAllMarkdownInDirectory:
         for prog in ("PROG1", "PROG2"):
             split_dir = doc_dir / f"{prog}.cbl.d"
             split_dir.mkdir()
-            (split_dir / "MAIN-PARA.cbl").write_text("SOURCE\n")
+            (split_dir / "MAIN-PARA.cbl.md").write_text("```cobol\nSOURCE\n```\n")
 
             md_content = (
                 "## Paragraphs/Procedures\n"
@@ -605,7 +611,7 @@ class TestPatchAllMarkdownInDirectory:
         # Create one with matching split files, one without
         split_dir = doc_dir / "PROG1.cbl.d"
         split_dir.mkdir()
-        (split_dir / "MAIN-PARA.cbl").write_text("SOURCE\n")
+        (split_dir / "MAIN-PARA.cbl.md").write_text("```cobol\nSOURCE\n```\n")
         _make_markdown(
             doc_dir / "PROG1.cbl.md",
             "## Key Paragraphs\n\n### MAIN-PARA\nDesc.\n",
@@ -762,8 +768,8 @@ class TestRunBatchSplit:
         assert split_dir.exists()
 
         # Verify split files were created
-        assert (split_dir / "MAIN-PARA.cbl").exists()
-        assert (split_dir / "1000-INIT.cbl").exists()
+        assert (split_dir / "MAIN-PARA.cbl.md").exists()
+        assert (split_dir / "1000-INIT.cbl.md").exists()
 
         # Verify markdown was patched with source links
         md_text = (output_dir / "MYPROG.cbl.md").read_text()
@@ -840,15 +846,15 @@ class TestIntegration:
             assert split_file.name in patched
 
         # Verify split files contain correct lines
-        main_content = (output_dir / "MAIN-PARA.cbl").read_text()
+        main_content = (output_dir / "MAIN-PARA.cbl.md").read_text()
         assert "LINE 010" in main_content
         assert "LINE 025" in main_content
 
-        init_content = (output_dir / "1000-INIT.cbl").read_text()
+        init_content = (output_dir / "1000-INIT.cbl.md").read_text()
         assert "LINE 030" in init_content
         assert "LINE 045" in init_content
 
-        exit_content = (output_dir / "9999-EXIT.cbl").read_text()
+        exit_content = (output_dir / "9999-EXIT.cbl.md").read_text()
         assert "LINE 090" in exit_content
         assert "LINE 092" in exit_content
 

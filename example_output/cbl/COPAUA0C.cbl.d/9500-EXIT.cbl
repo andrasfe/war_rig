@@ -1,2 +1,0 @@
-                                                                                
-       01 WS-VARIABLES.                                                         

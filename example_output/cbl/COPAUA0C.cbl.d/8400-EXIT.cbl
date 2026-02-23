@@ -1,2 +1,0 @@
-         05 WS-TRANSACTION-AMT         PIC S9(10)V99.                           
-         05 WS-APPROVED-AMT            PIC S9(10)V99.                           

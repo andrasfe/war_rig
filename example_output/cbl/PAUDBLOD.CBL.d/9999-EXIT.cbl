@@ -1,2 +1,0 @@
-         05 WS-END-OF-INFILE1          PIC X(01) VALUE SPACES.          00540053
-         05 WS-END-OF-INFILE2          PIC X(01) VALUE SPACES.          00550053

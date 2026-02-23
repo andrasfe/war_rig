@@ -155,8 +155,14 @@ def split_paragraphs(
             )
             continue
 
-        out_file = output_dir / f"{sanitize_filename(name)}.cbl"
-        out_file.write_text("".join(extracted), encoding="utf-8")
+        out_file = output_dir / f"{sanitize_filename(name)}.cbl.md"
+        body = "".join(extracted)
+        if not body.endswith("\n"):
+            body += "\n"
+        out_file.write_text(
+            f"```cobol\n{body}```\n",
+            encoding="utf-8",
+        )
         created.append(out_file)
 
     logger.info(
@@ -190,19 +196,19 @@ def patch_markdown_links(
     """Insert ``[Source: ...]`` links into a ``.cbl.md`` file.
 
     For each ``### PARAGRAPH-NAME`` heading found in the markdown, checks
-    whether a corresponding ``.cbl`` file exists in *split_dir*.  If it
+    whether a corresponding ``.cbl.md`` file exists in *split_dir*.  If it
     does, a blockquote link is inserted on the line immediately following
     the heading::
 
         ### MAIN-PARA
-        > [Source: MAIN-PARA.cbl](PROG.cbl.d/MAIN-PARA.cbl)
+        > [Source: MAIN-PARA.cbl.md](PROG.cbl.d/MAIN-PARA.cbl.md)
 
     The function is idempotent -- lines that already contain a source link
     are not duplicated.
 
     Args:
         md_path: Path to the markdown documentation file.
-        split_dir: Directory containing the split paragraph ``.cbl`` files.
+        split_dir: Directory containing the split paragraph ``.cbl.md`` files.
         relative_link: If *True* (default), the link href is a relative
             path from *md_path*'s parent to the split file.  If *False*,
             uses just the filename.
@@ -239,7 +245,7 @@ def patch_markdown_links(
             m = _PARAGRAPH_HEADING_RE.match(stripped)
             if m:
                 para_name = m.group(1)
-                filename = f"{sanitize_filename(para_name)}.cbl"
+                filename = f"{sanitize_filename(para_name)}.cbl.md"
                 split_file = split_dir / filename
 
                 result.append(line)

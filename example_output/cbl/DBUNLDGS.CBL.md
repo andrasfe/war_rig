@@ -97,26 +97,26 @@ The COBOL program DBUNLDGS extracts pending authorization summary and detail rec
 ## Key Paragraphs
 
 ### MAIN-PARA
-> [Source: MAIN-PARA.cbl](DBUNLDGS.CBL.d/MAIN-PARA.cbl)
+> [Source: MAIN-PARA.cbl.md](DBUNLDGS.CBL.d/MAIN-PARA.cbl.md)
 **Purpose:** This is the main paragraph that controls the program's overall execution flow. It first calls 1000-INITIALIZE to perform initial setup tasks such as accepting the current date and displaying program start messages. After initialization, it enters a loop that repeatedly calls 2000-FIND-NEXT-AUTH-SUMMARY to retrieve and process pending authorization summary records from the IMS database. The loop continues until the end of the root segment is reached, indicated by WS-END-OF-ROOT-SEG being set to 'Y'.  Once all summary records have been processed, the paragraph calls 4000-FILE-CLOSE to close the output files. The paragraph uses the DLITCBL entry point to receive the PCB addresses. The GOBACK statement then terminates the program.
 - Calls: 1000-INITIALIZE, 2000-FIND-NEXT-AUTH-SUMMARY, 4000-FILE-CLOSE
 - Lines: 141-179
 
 ### 1000-INITIALIZE
-> [Source: 1000-INITIALIZE.cbl](DBUNLDGS.CBL.d/1000-INITIALIZE.cbl)
+> [Source: 1000-INITIALIZE.cbl.md](DBUNLDGS.CBL.d/1000-INITIALIZE.cbl.md)
 **Purpose:** This paragraph performs initialization tasks required at the beginning of the program. It accepts the current date and day from the system and stores them in WS-VARIABLES. It then displays messages to the console indicating the program's start and the current date. The paragraph includes commented-out code for accepting parameters from SYSIN and opening the output files OPFILE1 and OPFILE2, including error handling for the file open operations. The purpose of this paragraph is to set up the program environment before processing the IMS database. It does not read any input files, but it prepares the program to write to the output files (although the OPEN statements are commented out).
 - Called by: MAIN-PARA
 - Lines: 157-213
 
 ### 2000-FIND-NEXT-AUTH-SUMMARY
-> [Source: 2000-FIND-NEXT-AUTH-SUMMARY.cbl](DBUNLDGS.CBL.d/2000-FIND-NEXT-AUTH-SUMMARY.cbl)
+> [Source: 2000-FIND-NEXT-AUTH-SUMMARY.cbl.md](DBUNLDGS.CBL.d/2000-FIND-NEXT-AUTH-SUMMARY.cbl.md)
 **Purpose:** This paragraph retrieves the next pending authorization summary record (root segment) from the IMS database. It initializes the PAUT-PCB-STATUS and then calls the CBLTDLI routine with the FUNC-GN function code to retrieve the next segment. The PENDING-AUTH-SUMMARY segment is populated with the data from the database. If the call is successful (PAUT-PCB-STATUS is spaces), the paragraph increments counters, moves the summary record to OPFIL1-REC, and extracts the account ID (PA-ACCT-ID) to ROOT-SEG-KEY. If the account ID is numeric, it calls 3100-INSERT-PARENT-SEG-GSAM to write the parent segment to the GSAM file and then calls 3000-FIND-NEXT-AUTH-DTL to process the child segments. If the PAUT-PCB-STATUS is 'GB', it indicates the end of the database, and the WS-END-OF-ROOT-SEG flag is set to 'Y'. If any other error occurs during the IMS call, the program displays an error message and abends. This paragraph reads data from the IMS database and conditionally writes to OPFILE1 based on the account ID.
 - Called by: MAIN-PARA
 - Calls: 3100-INSERT-PARENT-SEG-GSAM, 3000-FIND-NEXT-AUTH-DTL
 - Lines: 191-259
 
 ### 3000-FIND-NEXT-AUTH-DTL
-> [Source: 3000-FIND-NEXT-AUTH-DTL.cbl](DBUNLDGS.CBL.d/3000-FIND-NEXT-AUTH-DTL.cbl)
+> [Source: 3000-FIND-NEXT-AUTH-DTL.cbl.md](DBUNLDGS.CBL.d/3000-FIND-NEXT-AUTH-DTL.cbl.md)
 **Purpose:** This paragraph retrieves the next pending authorization detail record (child segment) associated with the current summary record. It calls the CBLTDLI routine with the FUNC-GNP function code to retrieve the next child segment. If the call is successful (PAUT-PCB-STATUS is spaces), the paragraph sets the MORE-AUTHS flag to TRUE, increments counters, and moves the detail record to CHILD-SEG-REC. It then calls 3200-INSERT-CHILD-SEG-GSAM to write the child segment to the GSAM file. If the PAUT-PCB-STATUS is 'GE', it indicates that there are no more child segments for the current summary record, and the WS-END-OF-CHILD-SEG flag is set to 'Y'. If any other error occurs during the IMS call, the program displays an error message and abends. The paragraph reads data from the IMS database and conditionally writes to OPFILE2.
 - Called by: 2000-FIND-NEXT-AUTH-SUMMARY
 - Calls: 3200-INSERT-CHILD-SEG-GSAM
