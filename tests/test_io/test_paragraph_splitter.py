@@ -456,6 +456,60 @@ class TestPatchMarkdownLinks:
         assert "PENDING-AUTH-SUMMARY.cbl.md" in patched
         assert patched.count("> [Source:") == 2
 
+    def test_skips_headings_followed_by_code_fence(self, tmp_path):
+        """### headings before code fences (mermaid diagrams) are not patched."""
+        split_dir = self._setup_split_dir(
+            tmp_path, ["MAIN-PARA", "1000-INITIALIZE"]
+        )
+        md_content = (
+            "## Paragraphs/Procedures\n"
+            "\n"
+            "### MAIN-PARA\n"
+            "Main logic paragraph.\n"
+            "\n"
+            "## Sequence Diagram\n"
+            "\n"
+            "### 1000-INITIALIZE\n"
+            "\n"
+            "```mermaid\n"
+            "sequenceDiagram\n"
+            "    MAIN-PARA->>1000-INITIALIZE: performs\n"
+            "```\n"
+        )
+        md_path = _make_markdown(tmp_path / "TESTPROG.cbl.md", md_content)
+
+        patch_markdown_links(md_path, split_dir)
+        patched = md_path.read_text()
+
+        # MAIN-PARA (followed by text) gets a link
+        assert "MAIN-PARA.cbl.md" in patched
+        # 1000-INITIALIZE (followed by code fence) does NOT
+        assert "1000-INITIALIZE.cbl.md" not in patched
+        assert patched.count("> [Source:") == 1
+
+    def test_skips_headings_inside_code_fence(self, tmp_path):
+        """### inside a fenced code block is not treated as a heading."""
+        split_dir = self._setup_split_dir(tmp_path, ["MAIN-PARA"])
+        md_content = (
+            "## Example\n"
+            "\n"
+            "```markdown\n"
+            "### MAIN-PARA\n"
+            "```\n"
+            "\n"
+            "## Paragraphs\n"
+            "\n"
+            "### MAIN-PARA\n"
+            "Description.\n"
+        )
+        md_path = _make_markdown(tmp_path / "TESTPROG.cbl.md", md_content)
+
+        patch_markdown_links(md_path, split_dir)
+        patched = md_path.read_text()
+
+        # Only one link (the one outside the code fence)
+        assert patched.count("> [Source:") == 1
+
 
 # ---------------------------------------------------------------------------
 # Regex pattern tests

@@ -360,11 +360,24 @@ def patch_markdown_links(
 
     modified = False
     result: list[str] = []
+    in_code_fence = False
     i = 0
 
     while i < len(lines):
         line = lines[i]
         stripped = line.rstrip("\n\r")
+
+        # Track fenced code blocks (``` ... ```) — skip everything inside.
+        if stripped.startswith("```"):
+            in_code_fence = not in_code_fence
+            result.append(line)
+            i += 1
+            continue
+
+        if in_code_fence:
+            result.append(line)
+            i += 1
+            continue
 
         m = _PARAGRAPH_HEADING_RE.match(stripped)
         if m:
@@ -380,6 +393,14 @@ def patch_markdown_links(
                 lines[i].rstrip("\n\r"),
             ):
                 # Already linked, skip insertion.
+                continue
+
+            # Skip headings followed by a code fence (e.g. mermaid diagrams).
+            next_content = _peek_next_non_blank(lines, i)
+            if next_content is not None and next_content.startswith("```"):
+                logger.debug(
+                    "Skipping link for %r: followed by code fence", para_name,
+                )
                 continue
 
             if split_file.exists():
@@ -405,6 +426,15 @@ def patch_markdown_links(
 # ---------------------------------------------------------------------------
 # Internal helpers
 # ---------------------------------------------------------------------------
+
+
+def _peek_next_non_blank(lines: list[str], start: int) -> str | None:
+    """Return the first non-blank stripped line at or after *start*, or None."""
+    for j in range(start, len(lines)):
+        s = lines[j].strip()
+        if s:
+            return s
+    return None
 
 
 def _find_source_file(source_dir: Path, file_name: str) -> Path | None:
