@@ -498,10 +498,11 @@ def split_all_in_directory(
                 f"Source file {file_name} not found in {source_dir}"
             )
 
+        base_name = Path(file_name).name
         if output_base is not None:
-            out_dir = output_base / f"{file_name}.d"
+            out_dir = output_base / f"{base_name}.d"
         else:
-            out_dir = doc_json_path.parent / f"{file_name}.d"
+            out_dir = doc_json_path.parent / f"{base_name}.d"
 
         created = split_paragraphs(source_path, doc_json_path, out_dir)
         results[file_name] = created
