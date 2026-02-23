@@ -67,20 +67,40 @@ def sanitize_filename(paragraph_name: str) -> str:
 # COBOL paragraph discovery (fallback when citations are missing)
 # ---------------------------------------------------------------------------
 
-# COBOL paragraph definition: name starts in area A (cols 8-11), ends with "."
-_COBOL_PARA_DEF_RE = re.compile(r"^.{6} {1,4}([A-Za-z0-9][A-Za-z0-9_-]*)\s*\.\s*$")
-
-
-def _build_paragraph_index(source_lines: list[str]) -> dict[str, int]:
+def _build_paragraph_index(
+    source_lines: list[str],
+    known_names: set[str] | None = None,
+) -> dict[str, int]:
     """Scan source lines for COBOL paragraph definitions.
+
+    When *known_names* is provided, only matches lines containing one of
+    those names (case-insensitive).  This avoids false positives from
+    data-division level numbers.
 
     Returns a mapping of paragraph name (uppercase) -> 1-indexed line number.
     """
     index: dict[str, int] = {}
     for i, line in enumerate(source_lines, 1):
-        m = _COBOL_PARA_DEF_RE.match(line)
-        if m:
-            index[m.group(1).upper()] = i
+        stripped = line.strip()
+        if not stripped or stripped.startswith("*"):
+            continue
+        # Paragraph definition: NAME. (with only whitespace/seq-numbers before)
+        # Strip common prefixes: sequence numbers (6 digits), indicator col
+        content = line.rstrip()
+        # Remove up to 6 leading digits (sequence area) then whitespace
+        content = re.sub(r"^\d{1,6}", "", content).lstrip()
+        # Also handle indicator column (* for comment, already skipped)
+        if not content:
+            continue
+        # Check if line is just NAME. or NAME .
+        m = re.match(r"^([A-Za-z0-9][A-Za-z0-9_-]*)\s*\.$", content)
+        if not m:
+            continue
+        name = m.group(1).upper()
+        # If we have known names, only match those (avoids data items like "05.")
+        if known_names and name not in known_names:
+            continue
+        index[name] = i
     return index
 
 
@@ -195,9 +215,13 @@ def split_paragraphs(
     output_dir.mkdir(parents=True, exist_ok=True)
 
     # Build index of paragraph start lines for fallback when citations
-    # are missing.  COBOL paragraphs start with a name in columns 8-11
-    # followed by a period: "       MAIN-PARA."
-    para_line_index = _build_paragraph_index(source_lines)
+    # are missing.  Only look for names we know about from the doc.json.
+    known_names = {
+        p["paragraph_name"].upper()
+        for p in paragraphs
+        if p.get("paragraph_name")
+    }
+    para_line_index = _build_paragraph_index(source_lines, known_names)
 
     created: list[Path] = []
     for para in paragraphs:
