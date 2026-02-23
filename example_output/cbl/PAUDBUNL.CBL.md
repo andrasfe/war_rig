@@ -38,27 +38,21 @@ This COBOL program, named PAUDBUNL, unloads data from an IMS database related to
 ## Paragraphs/Procedures
 
 ### MAIN-PARA
-> [Source: MAIN-PARA.cbl.md](PAUDBUNL.CBL.d/MAIN-PARA.cbl.md)
 This is the main control paragraph of the PAUDBUNL program. It orchestrates the entire process of unloading data from the IMS database and writing it to sequential files. It first calls 1000-INITIALIZE to perform initial setup tasks such as accepting the current date and opening the output files (OPFILE1 and OPFILE2). After initialization, it enters a loop that continues as long as WS-END-OF-ROOT-SEG is not set to 'Y'. Inside the loop, it repeatedly calls 2000-FIND-NEXT-AUTH-SUMMARY to retrieve the next pending authorization summary segment from the IMS database. Once all summary segments have been processed (WS-END-OF-ROOT-SEG = 'Y'), the paragraph calls 4000-FILE-CLOSE to close the output files. Finally, the program terminates using GOBACK.
 
 ### 1000-INITIALIZE
-> [Source: 1000-INITIALIZE.cbl.md](PAUDBUNL.CBL.d/1000-INITIALIZE.cbl.md)
 This paragraph performs the initialization tasks required before processing the IMS database. It accepts the current date and day from the system. It then displays the program name and current date to the console for logging purposes. The paragraph proceeds to open the two output files, OPFILE1 and OPFILE2, for writing. It checks the file status after each OPEN operation. If the file status is not spaces or '00', indicating a successful open, an error message is displayed, and the program abends by calling 9999-ABEND. This paragraph ensures that the output files are available before the program attempts to write data to them.
 
 ### 2000-FIND-NEXT-AUTH-SUMMARY
-> [Source: 2000-FIND-NEXT-AUTH-SUMMARY.cbl.md](PAUDBUNL.CBL.d/2000-FIND-NEXT-AUTH-SUMMARY.cbl.md)
 This paragraph retrieves the next pending authorization summary segment (root segment) from the IMS database. It first initializes the PAUT-PCB-STATUS field. Then, it calls the CBLTDLI routine with the FUNC-GN (Get Next) function code to retrieve the next summary segment. The parameters passed to CBLTDLI include the PCB mask (PAUTBPCB), the PENDING-AUTH-SUMMARY segment, and the ROOT-UNQUAL-SSA. After the IMS call, it checks the PAUT-PCB-STATUS. If the status is spaces (successful retrieval), it increments counters for summary records read and processed, moves the retrieved summary data to OPFIL1-REC, and extracts the account ID (PA-ACCT-ID) to ROOT-SEG-KEY. It then checks if the PA-ACCT-ID is numeric, and if so, writes the OPFIL1-REC to OPFILE1 and calls 3000-FIND-NEXT-AUTH-DTL to retrieve the child segments. If the PAUT-PCB-STATUS is 'GB' (end of database), it sets the END-OF-AUTHDB flag to TRUE and WS-END-OF-ROOT-SEG to 'Y'. If the status is anything else, it displays an error message and abends the program.
 
 ### 3000-FIND-NEXT-AUTH-DTL
-> [Source: 3000-FIND-NEXT-AUTH-DTL.cbl.md](PAUDBUNL.CBL.d/3000-FIND-NEXT-AUTH-DTL.cbl.md)
 This paragraph retrieves the next pending authorization detail segment (child segment) from the IMS database for a given summary segment. It calls CBLTDLI with FUNC-GNP (Get Next within Parent) to retrieve the next detail segment. The parameters include PAUTBPCB, PENDING-AUTH-DETAILS, and CHILD-UNQUAL-SSA. After the call, it checks PAUT-PCB-STATUS. If the status is spaces, it sets MORE-AUTHS to TRUE, increments counters, moves the detail segment to CHILD-SEG-REC, and writes it to OPFILE2. If the status is 'GE' (end of segments for the current parent), it sets WS-END-OF-CHILD-SEG to 'Y'. If the status is anything else, it displays an error message and abends. Finally, it initializes PAUT-PCB-STATUS for the next iteration.
 
 ### 4000-FILE-CLOSE
-> [Source: 4000-FILE-CLOSE.cbl.md](PAUDBUNL.CBL.d/4000-FILE-CLOSE.cbl.md)
 This paragraph closes the output files, OPFILE1 and OPFILE2. It displays a message indicating that the files are being closed. It then closes each file and checks the file status. If the file status is not spaces or '00' after closing, an error message is displayed to the console. This paragraph ensures that the output files are properly closed after all data has been written, preventing data loss or corruption.
 
 ### 9999-ABEND
-> [Source: 9999-ABEND.cbl.md](PAUDBUNL.CBL.d/9999-ABEND.cbl.md)
 This paragraph handles abnormal termination of the program. It displays a message indicating that the program is abending. It then sets the RETURN-CODE to 16, which signals an error condition to the calling environment. Finally, it terminates the program using GOBACK.
 
 ## Control Flow
