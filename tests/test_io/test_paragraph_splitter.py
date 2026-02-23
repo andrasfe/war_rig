@@ -456,8 +456,8 @@ class TestPatchMarkdownLinks:
         assert "PENDING-AUTH-SUMMARY.cbl.md" in patched
         assert patched.count("> [Source:") == 2
 
-    def test_skips_headings_followed_by_code_fence(self, tmp_path):
-        """### headings before code fences (mermaid diagrams) are not patched."""
+    def test_patches_any_heading_with_split_file(self, tmp_path):
+        """### headings get links wherever they appear if split file exists."""
         split_dir = self._setup_split_dir(
             tmp_path, ["MAIN-PARA", "1000-INITIALIZE"]
         )
@@ -481,11 +481,10 @@ class TestPatchMarkdownLinks:
         patch_markdown_links(md_path, split_dir)
         patched = md_path.read_text()
 
-        # MAIN-PARA (followed by text) gets a link
+        # Both get links — split file existence is the only gate
         assert "MAIN-PARA.cbl.md" in patched
-        # 1000-INITIALIZE (followed by code fence) does NOT
-        assert "1000-INITIALIZE.cbl.md" not in patched
-        assert patched.count("> [Source:") == 1
+        assert "1000-INITIALIZE.cbl.md" in patched
+        assert patched.count("> [Source:") == 2
 
     def test_skips_headings_inside_code_fence(self, tmp_path):
         """### inside a fenced code block is not treated as a heading."""
