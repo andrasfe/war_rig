@@ -2105,6 +2105,18 @@ class ScribeWorker:
                 md_path = doc_path.with_suffix("").with_suffix(".md")
                 md_path.write_text(md_content, encoding="utf-8")
                 logger.debug(f"Worker {self.worker_id}: Saved markdown to {md_path}")
+
+                # Split COBOL paragraphs and add source links
+                try:
+                    from war_rig.io.paragraph_splitter import split_and_link
+
+                    source_path = self.input_directory / file_name
+                    split_and_link(source_path, doc_path, md_path)
+                except Exception as split_err:
+                    logger.debug(
+                        f"Worker {self.worker_id}: Paragraph split skipped for "
+                        f"{file_name}: {split_err}"
+                    )
             except Exception as md_error:
                 # Don't fail the main save if markdown generation fails
                 logger.warning(

@@ -1,0 +1,2 @@
+           05 WS-MSG-AVAILABLE-FLG     PIC X(01) VALUE 'M'.                     
+              88 NO-MORE-MSG-AVAILABLE VALUE 'N'.                               

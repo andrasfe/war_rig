@@ -1,0 +1,2 @@
+         05 WS-DAY-DIFF                PIC S9(4) COMP.
+         05 IDX                        PIC S9(4) COMP.
