@@ -337,7 +337,7 @@ def split_all_in_directory(
     results: dict[str, list[Path]] = {}
 
     doc_files = sorted(
-        set(doc_dir.glob("*.cbl.doc.json")) | set(doc_dir.glob("*.CBL.doc.json")),
+        set(doc_dir.rglob("*.cbl.doc.json")) | set(doc_dir.rglob("*.CBL.doc.json")),
     )
 
     for doc_json_path in doc_files:
@@ -391,7 +391,9 @@ def patch_all_markdown_in_directory(
         Count of markdown files that were modified.
     """
     md_files = sorted(
-        set(doc_dir.glob("*.cbl.md")) | set(doc_dir.glob("*.CBL.md")),
+        p
+        for p in set(doc_dir.rglob("*.cbl.md")) | set(doc_dir.rglob("*.CBL.md"))
+        if ".cbl.d" not in p.parent.name and ".CBL.d" not in p.parent.name
     )
 
     patched_count = 0
