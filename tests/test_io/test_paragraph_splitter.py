@@ -430,9 +430,8 @@ class TestPatchMarkdownLinks:
         assert "MAIN-PARA.cbl.md" in patched
         assert "1000-INIT.cbl.md" not in patched
 
-    def test_does_not_patch_input_output_headings(self, tmp_path):
-        """### headings in Inputs/Outputs sections are NOT patched."""
-        # Create split files that coincidentally match an input/output name
+    def test_patches_headings_regardless_of_section(self, tmp_path):
+        """### headings are patched regardless of parent ## section."""
         split_dir = self._setup_split_dir(
             tmp_path, ["PENDING-AUTH-SUMMARY", "MAIN-PARA"]
         )
@@ -452,11 +451,10 @@ class TestPatchMarkdownLinks:
         patch_markdown_links(md_path, split_dir)
         patched = md_path.read_text()
 
-        # MAIN-PARA in Paragraphs section should get a link
+        # Both headings get links (no section gating)
         assert "MAIN-PARA.cbl.md" in patched
-        # PENDING-AUTH-SUMMARY in Inputs section should NOT get a link
-        # Count source links: should be 1 (only MAIN-PARA)
-        assert patched.count("> [Source:") == 1
+        assert "PENDING-AUTH-SUMMARY.cbl.md" in patched
+        assert patched.count("> [Source:") == 2
 
 
 # ---------------------------------------------------------------------------

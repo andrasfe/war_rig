@@ -358,11 +358,6 @@ def patch_markdown_links(
 
     lines = md_path.read_text(encoding="utf-8").splitlines(keepends=True)
 
-    # Determine which sections contain paragraph headings.
-    _PARAGRAPH_SECTION_RE = re.compile(
-        r"^## (?:Key Paragraphs|Paragraphs/Procedures)\s*$",
-    )
-    in_paragraph_section = False
     modified = False
     result: list[str] = []
     i = 0
@@ -371,37 +366,31 @@ def patch_markdown_links(
         line = lines[i]
         stripped = line.rstrip("\n\r")
 
-        # Track which ## section we are in.
-        if stripped.startswith("## "):
-            in_paragraph_section = bool(_PARAGRAPH_SECTION_RE.match(stripped))
+        m = _PARAGRAPH_HEADING_RE.match(stripped)
+        if m:
+            para_name = m.group(1)
+            filename = f"{sanitize_filename(para_name)}.cbl.md"
+            split_file = split_dir / filename
 
-        # Only process ### headings inside paragraph sections.
-        if in_paragraph_section:
-            m = _PARAGRAPH_HEADING_RE.match(stripped)
-            if m:
-                para_name = m.group(1)
-                filename = f"{sanitize_filename(para_name)}.cbl.md"
-                split_file = split_dir / filename
+            result.append(line)
+            i += 1
 
-                result.append(line)
-                i += 1
-
-                # Check if next line is already a source link (idempotency).
-                if i < len(lines) and _SOURCE_LINK_RE.match(
-                    lines[i].rstrip("\n\r"),
-                ):
-                    # Already linked, skip insertion.
-                    continue
-
-                if split_file.exists():
-                    if relative_link:
-                        rel = os.path.relpath(split_file, md_path.parent)
-                    else:
-                        rel = filename
-                    link_line = f"> [Source: {filename}]({rel})\n"
-                    result.append(link_line)
-                    modified = True
+            # Check if next line is already a source link (idempotency).
+            if i < len(lines) and _SOURCE_LINK_RE.match(
+                lines[i].rstrip("\n\r"),
+            ):
+                # Already linked, skip insertion.
                 continue
+
+            if split_file.exists():
+                if relative_link:
+                    rel = os.path.relpath(split_file, md_path.parent)
+                else:
+                    rel = filename
+                link_line = f"> [Source: {filename}]({rel})\n"
+                result.append(link_line)
+                modified = True
+            continue
 
         result.append(line)
         i += 1
