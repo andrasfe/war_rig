@@ -64,6 +64,82 @@ def sanitize_filename(paragraph_name: str) -> str:
 
 
 # ---------------------------------------------------------------------------
+# COBOL paragraph discovery (fallback when citations are missing)
+# ---------------------------------------------------------------------------
+
+# COBOL paragraph definition: name starts in area A (cols 8-11), ends with "."
+_COBOL_PARA_DEF_RE = re.compile(r"^.{6} {1,4}([A-Za-z0-9][A-Za-z0-9_-]*)\s*\.\s*$")
+
+
+def _build_paragraph_index(source_lines: list[str]) -> dict[str, int]:
+    """Scan source lines for COBOL paragraph definitions.
+
+    Returns a mapping of paragraph name (uppercase) -> 1-indexed line number.
+    """
+    index: dict[str, int] = {}
+    for i, line in enumerate(source_lines, 1):
+        m = _COBOL_PARA_DEF_RE.match(line)
+        if m:
+            index[m.group(1).upper()] = i
+    return index
+
+
+def _resolve_citation(
+    name: str,
+    citation: object,
+    source_lines: list[str],
+    para_index: dict[str, int],
+) -> tuple[int | None, int | None]:
+    """Return (start, end) 1-indexed inclusive line range for a paragraph.
+
+    Tries the explicit citation first; falls back to searching the source
+    for the paragraph name when the citation is missing or invalid.
+    """
+    # --- Try explicit citation first ---
+    if isinstance(citation, (list, tuple)) and len(citation) >= 2:
+        try:
+            start = int(citation[0])
+            end = int(citation[1])
+        except (TypeError, ValueError):
+            pass
+        else:
+            if 1 <= start <= len(source_lines) and 1 <= end <= len(source_lines):
+                return start, end
+            logger.debug(
+                "Paragraph %r: citation %r out of range (file has %d lines), "
+                "falling back to source scan",
+                name, citation, len(source_lines),
+            )
+
+    # --- Fallback: find paragraph by name in source ---
+    start_line = para_index.get(name.upper())
+    if start_line is None:
+        logger.warning("Skipping paragraph %r: no citation and not found in source", name)
+        return None, None
+
+    # Find end: next paragraph definition or end of PROCEDURE DIVISION
+    sorted_starts = sorted(para_index.values())
+    idx = sorted_starts.index(start_line)
+    if idx + 1 < len(sorted_starts):
+        end_line = sorted_starts[idx + 1] - 1
+    else:
+        end_line = len(source_lines)
+
+    # Trim trailing blank/comment lines
+    while end_line > start_line:
+        trailing = source_lines[end_line - 1].rstrip()
+        if trailing and not trailing.startswith("      *"):
+            break
+        end_line -= 1
+
+    logger.debug(
+        "Paragraph %r: resolved from source scan -> [%d, %d]",
+        name, start_line, end_line,
+    )
+    return start_line, end_line
+
+
+# ---------------------------------------------------------------------------
 # Single-file paragraph splitting
 # ---------------------------------------------------------------------------
 
@@ -118,35 +194,23 @@ def split_paragraphs(
         output_dir = doc_json_path.parent / f"{source_path.name}.d"
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    # Build index of paragraph start lines for fallback when citations
+    # are missing.  COBOL paragraphs start with a name in columns 8-11
+    # followed by a period: "       MAIN-PARA."
+    para_line_index = _build_paragraph_index(source_lines)
+
     created: list[Path] = []
     for para in paragraphs:
         name = para.get("paragraph_name")
         if not name:
             continue
 
-        citation = para.get("citation")
-        if not isinstance(citation, list) or len(citation) < 2:
-            logger.warning(
-                "Skipping paragraph %r: invalid citation %r", name, citation,
-            )
+        start, end = _resolve_citation(
+            name, para.get("citation"), source_lines, para_line_index,
+        )
+        if start is None:
             continue
 
-        try:
-            start = int(citation[0])
-            end = int(citation[1])
-        except (TypeError, ValueError):
-            logger.warning(
-                "Skipping paragraph %r: non-integer citation %r", name, citation,
-            )
-            continue
-
-        if start < 1 or end < 1:
-            logger.warning(
-                "Skipping paragraph %r: citation out of range %r", name, citation,
-            )
-            continue
-
-        # 1-indexed inclusive -> 0-indexed slice
         extracted = source_lines[start - 1 : end]
         if not extracted:
             logger.warning(
