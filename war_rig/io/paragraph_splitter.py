@@ -195,13 +195,13 @@ def split_paragraphs(
         - Citations are ``[start_line, end_line]``, 1-indexed and inclusive.
         - Paragraphs with missing or invalid citations are skipped with a
           warning.
-        - If *source_path* does not exist, logs a warning and returns an
-          empty list.
         - Dead-code paragraphs are still split (``is_dead_code`` is ignored).
+
+    Raises:
+        FileNotFoundError: If *source_path* does not exist.
     """
     if not source_path.exists():
-        logger.warning("Source file not found: %s", source_path)
-        return []
+        raise FileNotFoundError(f"Source file not found: {source_path}")
 
     with open(doc_json_path, encoding="utf-8") as f:
         doc = json.load(f)
@@ -450,10 +450,9 @@ def split_all_in_directory(
         # Search for source file (case-insensitive).
         source_path = _find_source_file(source_dir, file_name)
         if source_path is None:
-            logger.warning(
-                "Source file %s not found in %s", file_name, source_dir,
+            raise FileNotFoundError(
+                f"Source file {file_name} not found in {source_dir}"
             )
-            continue
 
         if output_base is not None:
             out_dir = output_base / f"{file_name}.d"

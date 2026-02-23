@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from war_rig.io.paragraph_splitter import (
     _PARAGRAPH_HEADING_RE,
     _SOURCE_LINK_RE,
@@ -180,8 +182,8 @@ class TestSplitParagraphs:
         assert lines[-1] == "```"
         assert len(lines) == 3
 
-    def test_missing_source_file_returns_empty(self, tmp_path):
-        """When source file does not exist, returns empty list with warning."""
+    def test_missing_source_file_raises(self, tmp_path):
+        """When source file does not exist, raises FileNotFoundError."""
         doc_json = _make_doc_json(
             tmp_path / "TESTPROG.cbl.doc.json",
             paragraphs=[
@@ -193,8 +195,8 @@ class TestSplitParagraphs:
             ],
         )
         nonexistent = tmp_path / "NOTFOUND.cbl"
-        result = split_paragraphs(nonexistent, doc_json)
-        assert result == []
+        with pytest.raises(FileNotFoundError):
+            split_paragraphs(nonexistent, doc_json)
 
     def test_missing_citation_skips_paragraph(self, tmp_path):
         """Paragraphs with null/missing citation are skipped."""
@@ -550,8 +552,8 @@ class TestSplitAllInDirectory:
         assert "PROG1.cbl" in result or any("PROG1" in k for k in result)
         assert "PROG2.cbl" in result or any("PROG2" in k for k in result)
 
-    def test_missing_source_files_skipped(self, tmp_path):
-        """Doc.json files without matching source files are handled gracefully."""
+    def test_missing_source_files_raises(self, tmp_path):
+        """Doc.json files without matching source files raise FileNotFoundError."""
         source_dir = tmp_path / "src"
         source_dir.mkdir()
         doc_dir = tmp_path / "docs"
@@ -566,10 +568,8 @@ class TestSplitAllInDirectory:
             ],
         )
 
-        result = split_all_in_directory(source_dir, doc_dir)
-
-        # Should not crash; result for MISSING.cbl should be empty or absent
-        assert isinstance(result, dict)
+        with pytest.raises(FileNotFoundError):
+            split_all_in_directory(source_dir, doc_dir)
 
 
 # ---------------------------------------------------------------------------
