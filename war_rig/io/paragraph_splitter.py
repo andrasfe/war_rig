@@ -84,17 +84,31 @@ def _build_paragraph_index(
     remaining: dict[str, str] = {n.upper(): n.upper() for n in known_names}
     index: dict[str, int] = {}
 
+    logger.debug(
+        "Building paragraph index: searching %d lines for %d known names",
+        len(source_lines), len(remaining),
+    )
+
     for i, line in enumerate(source_lines, 1):
         upper_line = line.upper()
         for search_name, canonical in list(remaining.items()):
             # Check: NAME. appears in the line (paragraph definition)
             if search_name + "." in upper_line:
                 index[canonical] = i
+                logger.debug(
+                    "  Found %r at line %d: %s",
+                    canonical, i, line.rstrip()[:80],
+                )
                 del remaining[search_name]
                 break
 
         if not remaining:
             break
+
+    if remaining:
+        logger.debug(
+            "  Not found in source: %s", ", ".join(sorted(remaining)),
+        )
 
     return index
 
@@ -116,25 +130,44 @@ def _resolve_citation(
             start = int(citation[0])
             end = int(citation[1])
         except (TypeError, ValueError):
-            pass
+            logger.debug(
+                "Paragraph %r: non-integer citation %r, falling back to source scan",
+                name, citation,
+            )
         else:
             # Skip obvious "not set" sentinel values
             if start == 0 and end == 0:
-                pass
+                logger.debug(
+                    "Paragraph %r: citation [0, 0] (not set), falling back to source scan",
+                    name,
+                )
             # Accept 0-indexed citations: if start=0 with a real range, shift up
             elif start == 0 and end > 0:
                 start = 1
                 if end <= len(source_lines):
+                    logger.debug(
+                        "Paragraph %r: using 0-indexed citation [0, %d] -> [1, %d]",
+                        name, end, end,
+                    )
                     return start, end
             # 1-indexed citations (normal case)
             elif 1 <= start <= len(source_lines) and 1 <= end <= len(source_lines):
+                logger.debug(
+                    "Paragraph %r: using citation [%d, %d] (%d lines)",
+                    name, start, end, end - start + 1,
+                )
                 return start, end
             else:
                 logger.debug(
-                    "Paragraph %r: citation %r out of range (file has %d lines), "
-                    "falling back to source scan",
-                    name, citation, len(source_lines),
+                    "Paragraph %r: citation [%d, %d] out of range "
+                    "(file has %d lines), falling back to source scan",
+                    name, start, end, len(source_lines),
                 )
+    else:
+        logger.debug(
+            "Paragraph %r: no valid citation (got %r), falling back to source scan",
+            name, citation,
+        )
 
     # --- Fallback: find paragraph by name in source ---
     start_line = para_index.get(name.upper())
@@ -203,6 +236,7 @@ def split_paragraphs(
     if not source_path.exists():
         raise FileNotFoundError(f"Source file not found: {source_path}")
 
+    logger.debug("Reading doc template: %s", doc_json_path)
     with open(doc_json_path, encoding="utf-8") as f:
         doc = json.load(f)
 
@@ -213,6 +247,11 @@ def split_paragraphs(
 
     source_lines = source_path.read_text(encoding="utf-8", errors="replace").splitlines(
         keepends=True,
+    )
+
+    logger.debug(
+        "Processing %s: %d paragraphs in doc, %d source lines, source=%s",
+        doc_json_path.name, len(paragraphs), len(source_lines), source_path,
     )
 
     if output_dir is None:
@@ -257,10 +296,13 @@ def split_paragraphs(
             encoding="utf-8",
         )
         created.append(out_file)
+        logger.debug("  Wrote %s (%d lines)", out_file.name, len(extracted))
 
+    skipped = len(paragraphs) - len(created)
     logger.info(
-        "Split %d paragraphs from %s into %s",
-        len(created), source_path.name, output_dir,
+        "Split %d/%d paragraphs from %s into %s%s",
+        len(created), len(paragraphs), source_path.name, output_dir,
+        f" ({skipped} skipped)" if skipped else "",
     )
     return created
 
