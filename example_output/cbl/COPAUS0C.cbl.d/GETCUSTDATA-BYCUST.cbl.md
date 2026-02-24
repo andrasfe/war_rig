@@ -1,51 +1,52 @@
 ```cobol
-                                             TO CDEMO-CPVS-PAU-SELECTED
-                  WHEN SEL0004I OF COPAU0AI NOT = SPACES AND LOW-VALUES
-                   MOVE SEL0004I OF COPAU0AI TO CDEMO-CPVS-PAU-SEL-FLG
-                   MOVE CDEMO-CPVS-AUTH-KEYS(4)
-                                             TO CDEMO-CPVS-PAU-SELECTED
-                  WHEN SEL0005I OF COPAU0AI NOT = SPACES AND LOW-VALUES
-                   MOVE SEL0005I OF COPAU0AI TO CDEMO-CPVS-PAU-SEL-FLG
-                   MOVE CDEMO-CPVS-AUTH-KEYS(5)
-                                             TO CDEMO-CPVS-PAU-SELECTED
-                  WHEN OTHER
-                   MOVE SPACES   TO CDEMO-CPVS-PAU-SEL-FLG
-                   MOVE SPACES   TO CDEMO-CPVS-PAU-SELECTED
-                END-EVALUATE
-                IF (CDEMO-CPVS-PAU-SEL-FLG NOT = SPACES AND LOW-VALUES)
-                   AND
-                   (CDEMO-CPVS-PAU-SELECTED NOT = SPACES AND LOW-VALUES)
-                   EVALUATE CDEMO-CPVS-PAU-SEL-FLG
-                     WHEN 'S'
-                     WHEN 's'
-                        MOVE WS-PGM-AUTH-DTL  TO CDEMO-TO-PROGRAM
-                        MOVE WS-CICS-TRANID   TO CDEMO-FROM-TRANID
-                        MOVE WS-PGM-AUTH-SMRY TO CDEMO-FROM-PROGRAM
-                        MOVE 0                TO CDEMO-PGM-CONTEXT
-                        SET CDEMO-PGM-ENTER   TO TRUE
+       GETCUSTDATA-BYCUST.
+      *****************************************************************
 
-                        EXEC CICS
-                            XCTL PROGRAM(CDEMO-TO-PROGRAM)
-                            COMMAREA(CARDDEMO-COMMAREA)
-                        END-EXEC
-                     WHEN OTHER
-                       MOVE
-                       'Invalid selection. Valid value is S'
-                                              TO WS-MESSAGE
-                       MOVE -1                TO ACCTIDL OF COPAU0AI
-                   END-EVALUATE
-                END-IF
+           MOVE XREF-CUST-ID              TO WS-CARD-RID-CUST-ID
 
-              END-IF
-           END-IF
+           EXEC CICS READ
+                DATASET   (WS-CUSTFILENAME)
+                RIDFLD    (WS-CARD-RID-CUST-ID-X)
+                KEYLENGTH (LENGTH OF WS-CARD-RID-CUST-ID-X)
+                INTO      (CUSTOMER-RECORD)
+                LENGTH    (LENGTH OF CUSTOMER-RECORD)
+                RESP      (WS-RESP-CD)
+                RESP2     (WS-REAS-CD)
+           END-EXEC
 
-           PERFORM GATHER-DETAILS
+           EVALUATE WS-RESP-CD
+               WHEN DFHRESP(NORMAL)
+                  CONTINUE
+               WHEN DFHRESP(NOTFND)
+                  MOVE WS-RESP-CD        TO WS-RESP-CD-DIS
+                  MOVE WS-REAS-CD        TO WS-REAS-CD-DIS
+
+                  STRING
+                  'Customer:'
+                   WS-CARD-RID-CUST-ID-X
+                  ' not found in CUST file. Resp:' WS-RESP-CD-DIS
+                  ' Reas:' WS-REAS-CD-DIS
+                  DELIMITED BY SIZE
+                  INTO WS-MESSAGE
+                  END-STRING
+                  MOVE -1       TO ACCTIDL OF COPAU0AI
+                  PERFORM SEND-PAULST-SCREEN
+               WHEN OTHER
+                  MOVE 'Y'     TO WS-ERR-FLG
+                  MOVE WS-RESP-CD        TO WS-RESP-CD-DIS
+                  MOVE WS-REAS-CD        TO WS-REAS-CD-DIS
+
+                  STRING
+                  'Customer:'
+                   WS-CARD-RID-CUST-ID-X
+                  ' System error while reading CUST file. Resp:'
+                  WS-RESP-CD-DIS ' Reas:' WS-REAS-CD-DIS
+                  DELIMITED BY SIZE
+                  INTO WS-MESSAGE
+                  END-STRING
+                  MOVE -1       TO ACCTIDL OF COPAU0AI
+                  PERFORM SEND-PAULST-SCREEN
+           END-EVALUATE
            .
 
-
-      *****************************************************************
-       GATHER-DETAILS.
-      *****************************************************************
-
-           MOVE -1       TO ACCTIDL OF COPAU0AI
 ```

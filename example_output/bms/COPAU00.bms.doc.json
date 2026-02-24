@@ -1,28 +1,29 @@
 {
   "header": {
     "program_id": "COPAU00",
-    "file_name": "COPAU00.bms",
+    "file_name": "bms/COPAU00.bms",
     "file_type": "BMS",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-10T17:19:05.202114",
+    "analyzed_at": "2026-02-24T03:59:25.688050",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This BMS map defines the screen layout for the CardDemo application's Pending Authorization screen. It displays customer account information, a list of pending transactions, and options for navigating the application. The screen allows users to view pending authorizations and select a transaction for further details.",
-    "business_context": "This screen is part of a card authorization system, allowing users to view and manage pending authorizations for customer accounts.",
+    "summary": "Defines the COPAU00 mapset and COPAU0A map for the Pending Authorization Screen in a CICS CardDemo application. The screen displays customer account details, credit/cash limits and balances, approval/decline counts, and a list of up to 5 pending transactions with selection options. Users can input an Account ID to search and select a transaction (S) for details.",
+    "business_context": "Credit card authorization pending review process, allowing tellers or operators to view and select pending authorizations by account.",
     "program_type": "ONLINE_CICS",
     "citations": [
+      1,
       2,
-      83,
-      501
+      19,
+      78
     ]
   },
   "inputs": [
     {
       "name": "ACCTID",
       "io_type": "CICS_MAP",
-      "description": "Account ID entered by the user to search for pending authorizations.",
+      "description": "Account ID used to search for pending authorizations",
       "copybook": null,
       "citation": [
         84
@@ -31,7 +32,7 @@
     {
       "name": "SEL0001",
       "io_type": "CICS_MAP",
-      "description": "Selection field for the first transaction in the list.",
+      "description": "Selection field for first pending transaction",
       "copybook": null,
       "citation": [
         277
@@ -40,7 +41,7 @@
     {
       "name": "SEL0002",
       "io_type": "CICS_MAP",
-      "description": "Selection field for the second transaction in the list.",
+      "description": "Selection field for second pending transaction",
       "copybook": null,
       "citation": [
         321
@@ -49,7 +50,7 @@
     {
       "name": "SEL0003",
       "io_type": "CICS_MAP",
-      "description": "Selection field for the third transaction in the list.",
+      "description": "Selection field for third pending transaction",
       "copybook": null,
       "citation": [
         365
@@ -58,7 +59,7 @@
     {
       "name": "SEL0004",
       "io_type": "CICS_MAP",
-      "description": "Selection field for the fourth transaction in the list.",
+      "description": "Selection field for fourth pending transaction",
       "copybook": null,
       "citation": [
         409
@@ -67,7 +68,7 @@
     {
       "name": "SEL0005",
       "io_type": "CICS_MAP",
-      "description": "Selection field for the fifth transaction in the list.",
+      "description": "Selection field for fifth pending transaction",
       "copybook": null,
       "citation": [
         488
@@ -78,70 +79,16 @@
     {
       "name": "COPAU0A",
       "io_type": "CICS_MAP",
-      "description": "The entire screen layout, including labels, data fields, and messages.",
+      "description": "Full screen map displaying headers, customer info, limits, balances, counts, and transaction list",
       "copybook": null,
       "citation": [
         26
       ]
     },
     {
-      "name": "TRNNAME",
-      "io_type": "CICS_MAP",
-      "description": "Transaction name.",
-      "copybook": null,
-      "citation": [
-        34
-      ]
-    },
-    {
-      "name": "TITLE01",
-      "io_type": "CICS_MAP",
-      "description": "Title of the screen.",
-      "copybook": null,
-      "citation": [
-        38
-      ]
-    },
-    {
-      "name": "CURDATE",
-      "io_type": "CICS_MAP",
-      "description": "Current date.",
-      "copybook": null,
-      "citation": [
-        47
-      ]
-    },
-    {
-      "name": "PGMNAME",
-      "io_type": "CICS_MAP",
-      "description": "Program name.",
-      "copybook": null,
-      "citation": [
-        57
-      ]
-    },
-    {
-      "name": "TITLE02",
-      "io_type": "CICS_MAP",
-      "description": "Secondary title.",
-      "copybook": null,
-      "citation": [
-        61
-      ]
-    },
-    {
-      "name": "CURTIME",
-      "io_type": "CICS_MAP",
-      "description": "Current time.",
-      "copybook": null,
-      "citation": [
-        70
-      ]
-    },
-    {
       "name": "CNAME",
       "io_type": "CICS_MAP",
-      "description": "Customer name.",
+      "description": "Customer name display",
       "copybook": null,
       "citation": [
         96
@@ -150,439 +97,16 @@
     {
       "name": "CUSTID",
       "io_type": "CICS_MAP",
-      "description": "Customer ID.",
+      "description": "Customer ID display",
       "copybook": null,
       "citation": [
         103
       ]
     },
     {
-      "name": "ADDR001",
-      "io_type": "CICS_MAP",
-      "description": "Customer address line 1.",
-      "copybook": null,
-      "citation": [
-        107
-      ]
-    },
-    {
-      "name": "ACCSTAT",
-      "io_type": "CICS_MAP",
-      "description": "Account status.",
-      "copybook": null,
-      "citation": [
-        114
-      ]
-    },
-    {
-      "name": "ADDR002",
-      "io_type": "CICS_MAP",
-      "description": "Customer address line 2.",
-      "copybook": null,
-      "citation": [
-        118
-      ]
-    },
-    {
-      "name": "PHONE1",
-      "io_type": "CICS_MAP",
-      "description": "Customer phone number.",
-      "copybook": null,
-      "citation": [
-        125
-      ]
-    },
-    {
-      "name": "APPRCNT",
-      "io_type": "CICS_MAP",
-      "description": "Approval count.",
-      "copybook": null,
-      "citation": [
-        132
-      ]
-    },
-    {
-      "name": "DECLCNT",
-      "io_type": "CICS_MAP",
-      "description": "Decline count.",
-      "copybook": null,
-      "citation": [
-        139
-      ]
-    },
-    {
-      "name": "CREDLIM",
-      "io_type": "CICS_MAP",
-      "description": "Credit limit.",
-      "copybook": null,
-      "citation": [
-        147
-      ]
-    },
-    {
-      "name": "CASHLIM",
-      "io_type": "CICS_MAP",
-      "description": "Cash limit.",
-      "copybook": null,
-      "citation": [
-        156
-      ]
-    },
-    {
-      "name": "APPRAMT",
-      "io_type": "CICS_MAP",
-      "description": "Approved amount.",
-      "copybook": null,
-      "citation": [
-        165
-      ]
-    },
-    {
-      "name": "CREDBAL",
-      "io_type": "CICS_MAP",
-      "description": "Credit balance.",
-      "copybook": null,
-      "citation": [
-        174
-      ]
-    },
-    {
-      "name": "CASHBAL",
-      "io_type": "CICS_MAP",
-      "description": "Cash balance.",
-      "copybook": null,
-      "citation": [
-        183
-      ]
-    },
-    {
-      "name": "DECLAMT",
-      "io_type": "CICS_MAP",
-      "description": "Declined amount.",
-      "copybook": null,
-      "citation": [
-        192
-      ]
-    },
-    {
-      "name": "TRNID01",
-      "io_type": "CICS_MAP",
-      "description": "Transaction ID for the first transaction.",
-      "copybook": null,
-      "citation": [
-        286
-      ]
-    },
-    {
-      "name": "PDATE01",
-      "io_type": "CICS_MAP",
-      "description": "Date of the first transaction.",
-      "copybook": null,
-      "citation": [
-        291
-      ]
-    },
-    {
-      "name": "PTIME01",
-      "io_type": "CICS_MAP",
-      "description": "Time of the first transaction.",
-      "copybook": null,
-      "citation": [
-        296
-      ]
-    },
-    {
-      "name": "PTYPE01",
-      "io_type": "CICS_MAP",
-      "description": "Type of the first transaction.",
-      "copybook": null,
-      "citation": [
-        301
-      ]
-    },
-    {
-      "name": "PAPRV01",
-      "io_type": "CICS_MAP",
-      "description": "Approval status of the first transaction.",
-      "copybook": null,
-      "citation": [
-        306
-      ]
-    },
-    {
-      "name": "PSTAT01",
-      "io_type": "CICS_MAP",
-      "description": "Status of the first transaction.",
-      "copybook": null,
-      "citation": [
-        311
-      ]
-    },
-    {
-      "name": "PAMT001",
-      "io_type": "CICS_MAP",
-      "description": "Amount of the first transaction.",
-      "copybook": null,
-      "citation": [
-        316
-      ]
-    },
-    {
-      "name": "TRNID02",
-      "io_type": "CICS_MAP",
-      "description": "Transaction ID for the second transaction.",
-      "copybook": null,
-      "citation": [
-        330
-      ]
-    },
-    {
-      "name": "PDATE02",
-      "io_type": "CICS_MAP",
-      "description": "Date of the second transaction.",
-      "copybook": null,
-      "citation": [
-        335
-      ]
-    },
-    {
-      "name": "PTIME02",
-      "io_type": "CICS_MAP",
-      "description": "Time of the second transaction.",
-      "copybook": null,
-      "citation": [
-        340
-      ]
-    },
-    {
-      "name": "PTYPE02",
-      "io_type": "CICS_MAP",
-      "description": "Type of the second transaction.",
-      "copybook": null,
-      "citation": [
-        345
-      ]
-    },
-    {
-      "name": "PAPRV02",
-      "io_type": "CICS_MAP",
-      "description": "Approval status of the second transaction.",
-      "copybook": null,
-      "citation": [
-        350
-      ]
-    },
-    {
-      "name": "PSTAT02",
-      "io_type": "CICS_MAP",
-      "description": "Status of the second transaction.",
-      "copybook": null,
-      "citation": [
-        355
-      ]
-    },
-    {
-      "name": "PAMT002",
-      "io_type": "CICS_MAP",
-      "description": "Amount of the second transaction.",
-      "copybook": null,
-      "citation": [
-        360
-      ]
-    },
-    {
-      "name": "TRNID03",
-      "io_type": "CICS_MAP",
-      "description": "Transaction ID for the third transaction.",
-      "copybook": null,
-      "citation": [
-        374
-      ]
-    },
-    {
-      "name": "PDATE03",
-      "io_type": "CICS_MAP",
-      "description": "Date of the third transaction.",
-      "copybook": null,
-      "citation": [
-        379
-      ]
-    },
-    {
-      "name": "PTIME03",
-      "io_type": "CICS_MAP",
-      "description": "Time of the third transaction.",
-      "copybook": null,
-      "citation": [
-        384
-      ]
-    },
-    {
-      "name": "PTYPE03",
-      "io_type": "CICS_MAP",
-      "description": "Type of the third transaction.",
-      "copybook": null,
-      "citation": [
-        389
-      ]
-    },
-    {
-      "name": "PAPRV03",
-      "io_type": "CICS_MAP",
-      "description": "Approval status of the third transaction.",
-      "copybook": null,
-      "citation": [
-        394
-      ]
-    },
-    {
-      "name": "PSTAT03",
-      "io_type": "CICS_MAP",
-      "description": "Status of the third transaction.",
-      "copybook": null,
-      "citation": [
-        399
-      ]
-    },
-    {
-      "name": "PAMT003",
-      "io_type": "CICS_MAP",
-      "description": "Amount of the third transaction.",
-      "copybook": null,
-      "citation": [
-        404
-      ]
-    },
-    {
-      "name": "TRNID04",
-      "io_type": "CICS_MAP",
-      "description": "Transaction ID for the fourth transaction.",
-      "copybook": null,
-      "citation": [
-        418
-      ]
-    },
-    {
-      "name": "PDATE04",
-      "io_type": "CICS_MAP",
-      "description": "Date of the fourth transaction.",
-      "copybook": null,
-      "citation": [
-        423
-      ]
-    },
-    {
-      "name": "PTIME04",
-      "io_type": "CICS_MAP",
-      "description": "Time of the fourth transaction.",
-      "copybook": null,
-      "citation": [
-        428
-      ]
-    },
-    {
-      "name": "PTYPE04",
-      "io_type": "CICS_MAP",
-      "description": "Type of the fourth transaction.",
-      "copybook": null,
-      "citation": [
-        433
-      ]
-    },
-    {
-      "name": "PAPRV04",
-      "io_type": "CICS_MAP",
-      "description": "Approval status of the fourth transaction.",
-      "copybook": null,
-      "citation": [
-        438
-      ]
-    },
-    {
-      "name": "PSTAT04",
-      "io_type": "CICS_MAP",
-      "description": "Status of the fourth transaction.",
-      "copybook": null,
-      "citation": [
-        443
-      ]
-    },
-    {
-      "name": "PAMT004",
-      "io_type": "CICS_MAP",
-      "description": "Amount of the fourth transaction.",
-      "copybook": null,
-      "citation": [
-        448
-      ]
-    },
-    {
-      "name": "TRNID05",
-      "io_type": "CICS_MAP",
-      "description": "Transaction ID for the fifth transaction.",
-      "copybook": null,
-      "citation": [
-        453
-      ]
-    },
-    {
-      "name": "PDATE05",
-      "io_type": "CICS_MAP",
-      "description": "Date of the fifth transaction.",
-      "copybook": null,
-      "citation": [
-        458
-      ]
-    },
-    {
-      "name": "PTIME05",
-      "io_type": "CICS_MAP",
-      "description": "Time of the fifth transaction.",
-      "copybook": null,
-      "citation": [
-        463
-      ]
-    },
-    {
-      "name": "PTYPE05",
-      "io_type": "CICS_MAP",
-      "description": "Type of the fifth transaction.",
-      "copybook": null,
-      "citation": [
-        468
-      ]
-    },
-    {
-      "name": "PAPRV05",
-      "io_type": "CICS_MAP",
-      "description": "Approval status of the fifth transaction.",
-      "copybook": null,
-      "citation": [
-        473
-      ]
-    },
-    {
-      "name": "PSTAT05",
-      "io_type": "CICS_MAP",
-      "description": "Status of the fifth transaction.",
-      "copybook": null,
-      "citation": [
-        478
-      ]
-    },
-    {
-      "name": "PAMT005",
-      "io_type": "CICS_MAP",
-      "description": "Amount of the fifth transaction.",
-      "copybook": null,
-      "citation": [
-        483
-      ]
-    },
-    {
       "name": "ERRMSG",
       "io_type": "CICS_MAP",
-      "description": "Error message display field.",
+      "description": "Error message display area",
       "copybook": null,
       "citation": [
         503
@@ -595,7 +119,43 @@
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [],
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "User input accepted only in unprotected fields (UNPROT attribute); all other fields are display-only with ASKIP attribute.",
+      "logic_summary": "Field input capability controlled by DFHMDF ATTRB=(FSET,NORM,UNPROT) for inputs vs ATTRB=(ASKIP,NORM) or similar for outputs.",
+      "conditions": [
+        "ATTRB=(FSET,NORM,UNPROT)",
+        "ATTRB=(ASKIP,NORM)"
+      ],
+      "citation": [
+        34,
+        84,
+        277,
+        321,
+        365,
+        409,
+        488
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Selection fields (SEL0001-SEL0005) allow user to choose transaction for details view by typing 'S'.",
+      "logic_summary": "Unprotected fields with underline highlight for user selection.",
+      "conditions": [
+        "Type 'S' to View Authorization details",
+        "FSET,NORM,UNPROT,HILIGHT=UNDERLINE"
+      ],
+      "citation": [
+        277,
+        321,
+        365,
+        409,
+        488,
+        500
+      ]
+    }
+  ],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
@@ -604,14 +164,30 @@
   "copybooks_used": [],
   "paragraphs": [
     {
+      "paragraph_name": "COPAU00",
+      "summary": null,
+      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        19,
+        19
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": true,
+      "dead_code_reason": "Artifact 'COPAU00' (map) is never referenced by any other artifact in the dependency graph",
+      "metadata": null
+    },
+    {
       "paragraph_name": "COPAU0A",
       "summary": null,
-      "purpose": "This paragraph defines the overall structure and attributes of the BMS map COPAU0A, which represents the Pending Authorization screen. It specifies the screen size as 24 lines by 80 columns (line 28). The paragraph sets various control options, including enabling the alarm, freeing the keyboard, enabling extended attributes, specifying COBOL as the programming language, setting the mode to INOUT for both input and output, enabling automatic storage, and enabling the TIOAPFX option (lines 19-24). The TYPE parameter is set to &&SYSPARM, allowing the map type (e.g., DSECT, MAP, DATA) to be determined at compile time (line 25). This paragraph acts as the container for all the individual field definitions within the map, defining the overall screen layout and behavior. It does not directly consume any input data or produce any specific output data, but rather provides the framework for the screen's data presentation and interaction. No specific business logic or error handling is implemented within this paragraph itself; these aspects are handled by the CICS application program that uses this map.",
+      "purpose": "[Citadel] Paragraph identified by static analysis",
       "called_by": [],
       "calls": [],
       "citation": [
         26,
-        28
+        26
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
@@ -622,14 +198,27 @@
       }
     }
   ],
-  "error_handling": [],
+  "error_handling": [
+    {
+      "condition": "Application errors or invalid input",
+      "action": "Display message in ERRMSG field (red, bright, FSET)",
+      "citation": [
+        503
+      ]
+    }
+  ],
   "sql_operations": [],
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the purpose of the 'Sel' field and how is it used to select a transaction?",
-      "context": "The code defines 'Sel' fields (SEL0001-SEL0005), but the exact mechanism for using them to select a transaction is unclear from the BMS map definition alone.",
-      "suggestion": "Examine the COBOL code that uses this BMS map to understand how the 'Sel' field is processed."
+      "question": "Which CICS COBOL program(s) use this BMS mapset?",
+      "context": "BMS file defines map but does not reference calling programs.",
+      "suggestion": "Search for CICS programs with SEND MAP('COPAU00') or similar."
+    },
+    {
+      "question": "What are the exact data structures (copybooks) mapped to these fields in the using program?",
+      "context": "BMS defines fields but not underlying data records.",
+      "suggestion": "Examine LINKAGE SECTION or WORKING-STORAGE in associated COBOL programs."
     }
   ],
   "resolved_questions": [],

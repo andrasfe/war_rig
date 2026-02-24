@@ -1,0 +1,457 @@
+{
+  "batch_idx": 3,
+  "total_batches": 5,
+  "template": {
+    "header": {
+      "program_id": "COPAUA0C",
+      "file_name": "cbl/COPAUA0C.cbl",
+      "file_type": "COBOL",
+      "analyzed_by": "WAR_RIG",
+      "analyzed_at": "2026-02-24T03:52:51.882368",
+      "iteration_count": 1,
+      "final_status": null
+    },
+    "purpose": {
+      "summary": "This code snippet documents the final processing phase of the COPAUA0C program, where authorization results are persisted to IMS database segments for pending auth summary (PAUTSUM0) and details (PAUTDTL1). It updates summary statistics based on approval/decline status, inserts timestamped auth details, and handles program termination by closing IMS and the MQ request queue. Error conditions during IMS/DLI and MQ operations are logged via 9500-LOG-ERROR.",
+      "business_context": "Supports card authorization processing by maintaining persistent records of pending authorizations, summaries of approved/declined counts and amounts, and merchant/transaction details in IMS for subsequent matching or reporting.",
+      "program_type": "BATCH",
+      "citations": [
+        786,
+        798,
+        854
+      ]
+    },
+    "inputs": [
+      {
+        "name": "PAUT-SMRY-SEG",
+        "io_type": "IMS_SEGMENT",
+        "description": "Pending authorization summary segment existence checked via NFOUND-PAUT-SMRY-SEG flag from prior IMS call",
+        "copybook": null,
+        "citation": [
+          15
+        ]
+      },
+      {
+        "name": "PENDING-AUTH-REQUEST-RESPONSE",
+        "io_type": "OTHER",
+        "description": "Working storage variables from prior request queue processing (PA-RQ-*, PA-RL-*, XREF-*, ACCT-*, WS-APPROVED-AMT)",
+        "copybook": null,
+        "citation": [
+          19,
+          24,
+          90,
+          110
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "PAUTSUM0",
+        "io_type": "IMS_SEGMENT",
+        "description": "Pending auth summary segment updated via REPL if found or inserted via ISRT if not, with adjusted counts, amounts, balances",
+        "copybook": null,
+        "citation": [
+          39,
+          44
+        ]
+      },
+      {
+        "name": "PAUTDTL1",
+        "io_type": "IMS_SEGMENT",
+        "description": "Pending auth details segment inserted hierarchically under PAUTSUM0 for the account, containing full request/response/timing data",
+        "copybook": null,
+        "citation": [
+          126
+        ]
+      }
+    ],
+    "called_programs": [],
+    "calling_context": {
+      "called_by": [],
+      "entry_points": [],
+      "linkage_section": []
+    },
+    "business_rules": [
+      {
+        "rule_id": "BR001",
+        "description": "If no prior pending auth summary segment exists for the account, initialize a new summary record with account/customer IDs",
+        "logic_summary": "IF NFOUND-PAUT-SMRY-SEG then INITIALIZE PENDING-AUTH-SUMMARY REPLACING NUMERIC BY ZERO and MOVE XREF-ACCT-ID/CUST-ID",
+        "conditions": [
+          "NFOUND-PAUT-SMRY-SEG"
+        ],
+        "citation": [
+          15,
+          22
+        ]
+      },
+      {
+        "rule_id": "BR002",
+        "description": "For approved authorizations, increment approved count, accumulate approved amount in summary approved amt and credit balance, zero cash balance",
+        "logic_summary": "IF AUTH-RESP-APPROVED ADD 1 TO PA-APPROVED-AUTH-CNT, ADD WS-APPROVED-AMT TO PA-APPROVED-AUTH-AMT and PA-CREDIT-BALANCE, MOVE 0 TO PA-CASH-BALANCE",
+        "conditions": [
+          "AUTH-RESP-APPROVED"
+        ],
+        "citation": [
+          27,
+          32
+        ]
+      },
+      {
+        "rule_id": "BR003",
+        "description": "For declined authorizations, increment declined count and accumulate transaction amount in declined amt",
+        "logic_summary": "ELSE ADD 1 TO PA-DECLINED-AUTH-CNT, ADD PA-TRANSACTION-AMT TO PA-DECLINED-AUTH-AMT",
+        "conditions": [
+          "NOT AUTH-RESP-APPROVED"
+        ],
+        "citation": [
+          34,
+          35
+        ]
+      },
+      {
+        "rule_id": "BR004",
+        "description": "Classify inserted auth detail as pending match if approved, or auth declined if not",
+        "logic_summary": "IF AUTH-RESP-APPROVED SET PA-MATCH-PENDING ELSE SET PA-MATCH-AUTH-DECLINED",
+        "conditions": [
+          "AUTH-RESP-APPROVED"
+        ],
+        "citation": [
+          115,
+          119
+        ]
+      }
+    ],
+    "data_flow": {
+      "reads_from": [
+        {
+          "source": "PAUT-SMRY-SEG",
+          "fields_used": [
+            "existence via NFOUND-PAUT-SMRY-SEG flag"
+          ],
+          "citation": [
+            15
+          ]
+        },
+        {
+          "source": "WS-APPROVED-AMT",
+          "fields_used": [
+            "WS-APPROVED-AMT",
+            "PA-TRANSACTION-AMT"
+          ],
+          "citation": [
+            28,
+            35
+          ]
+        }
+      ],
+      "writes_to": [
+        {
+          "destination": "PAUTSUM0",
+          "fields_written": [
+            "PA-ACCT-ID",
+            "PA-CREDIT-LIMIT",
+            "PA-APPROVED-AUTH-CNT",
+            "PA-CREDIT-BALANCE"
+          ],
+          "citation": [
+            19,
+            24,
+            28,
+            39
+          ]
+        },
+        {
+          "destination": "PAUTDTL1",
+          "fields_written": [
+            "PA-AUTH-DATE-9C",
+            "PA-CARD-NUM",
+            "PA-AUTH-RESP-CODE"
+          ],
+          "citation": [
+            87,
+            92,
+            111,
+            126
+          ]
+        }
+      ],
+      "transforms": [
+        {
+          "input_field": "WS-ABS-TIME",
+          "output_field": "WS-YYDDD, WS-CUR-TIME-X6, WS-CUR-TIME-MS",
+          "transformation_description": "CICS FORMATTIME converts abstime to YYDDD and TIME with milliseconds",
+          "citation": [
+            74
+          ]
+        },
+        {
+          "input_field": "WS-YYDDD",
+          "output_field": "PA-AUTH-DATE-9C",
+          "transformation_description": "Inverted date computation: 99999 - WS-YYDDD",
+          "citation": [
+            87
+          ]
+        },
+        {
+          "input_field": "WS-CUR-TIME-N6, WS-CUR-TIME-MS",
+          "output_field": "PA-AUTH-TIME-9C",
+          "transformation_description": "Compute time with ms: (WS-CUR-TIME-N6 * 1000) + WS-CUR-TIME-MS, then invert: 999999999 - result",
+          "citation": [
+            84,
+            88
+          ]
+        }
+      ]
+    },
+    "copybooks_used": [],
+    "paragraphs": [
+      {
+        "paragraph_name": "8000-WRITE-AUTH-TO-DB",
+        "summary": null,
+        "purpose": "This paragraph is the primary orchestrator for persisting authorization outcomes to the IMS database during the write phase. It consumes pre-populated working storage data including account cross-references (XREF-ACCT-ID, XREF-CUST-ID), credit limits (ACCT-CREDIT-LIMIT), approval status (AUTH-RESP-APPROVED), approved amount (WS-APPROVED-AMT), and request/response details (PA-RQ-*, PA-RL-*). It produces updates to the PAUTSUM0 summary segment and a new PAUTDTL1 detail segment via subordinate paragraphs. The business logic sequences summary update first followed by detail insert to ensure hierarchical integrity under the account ID. No direct error handling occurs here; errors are managed in called paragraphs with critical flags set if IMS fails. It unconditionally calls 8400-UPDATE-SUMMARY THRU 8400-EXIT to handle summary logic and IMS I/O, then 8500-INSERT-AUTH THRU 8500-EXIT for detail insertion with fresh timestamps. Upon completion of both, control passes to 8000-EXIT to return to the main flow.",
+        "called_by": [],
+        "calls": [
+          "8400-UPDATE-SUMMARY",
+          "8500-INSERT-AUTH"
+        ],
+        "citation": [
+          786,
+          793
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "8000-EXIT",
+        "summary": null,
+        "purpose": "This paragraph serves as the dedicated exit point for 8000-WRITE-AUTH-TO-DB, ensuring clean return of control to the invoking paragraph. It consumes no inputs and produces no outputs or modifications to data areas. There is no business logic, conditions, or decisions implemented within it. No validation or error handling is performed, as any issues are resolved prior to reaching this point. It is invoked immediately after the PERFORM THRU statements in 8000-WRITE-AUTH-TO-DB. No subordinate paragraphs or external programs are called from here. The sole statement is EXIT, which transfers control back up the perform stack.",
+        "called_by": [
+          "8000-WRITE-AUTH-TO-DB"
+        ],
+        "calls": [],
+        "citation": [
+          794,
+          797
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "8400-UPDATE-SUMMARY",
+        "summary": null,
+        "purpose": "This paragraph manages the update or creation of the pending authorization summary segment (PAUTSUM0) for the current account based on the auth outcome. It reads the existence flag NFOUND-PAUT-SMRY-SEG from prior IMS positioning, along with XREF-ACCT-ID/CUST-ID, ACCT-CREDIT-LIMIT/CASH-CREDIT-LIMIT, AUTH-RESP-APPROVED, WS-APPROVED-AMT, and PA-TRANSACTION-AMT. It outputs an updated/inserted PAUTSUM0 segment via DLI REPL or ISRT, modifying counts, amounts, and balances in PENDING-AUTH-SUMMARY. Business logic initializes summary if not found, always sets limits, increments approved/declined metrics conditionally, and chooses REPL/ISRT based on FOUND flag. Error handling checks IMS-RETURN-CODE (from DIBSTAT) post-I/O; if not STATUS-OK, sets critical IMS error flags, populates error details with 'I003', IMS-RETURN-CODE, message, and PA-CARD-NUM key, then calls 9500-LOG-ERROR. No other paragraphs are called except error logging.",
+        "called_by": [
+          "8000-WRITE-AUTH-TO-DB"
+        ],
+        "calls": [
+          "9500-LOG-ERROR"
+        ],
+        "citation": [
+          798,
+          849
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "8400-EXIT",
+        "summary": null,
+        "purpose": "This is the exit routine for 8400-UPDATE-SUMMARY, providing a standard return point after IMS summary operations. It reads no data and writes nothing. No logic or conditions are evaluated. Error conditions are handled prior in the main body. Invoked via THRU in 8000-WRITE-AUTH-TO-DB. No calls are made. Executes EXIT to resume in caller.",
+        "called_by": [
+          "8400-UPDATE-SUMMARY"
+        ],
+        "calls": [],
+        "citation": [
+          850,
+          853
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "8500-INSERT-AUTH",
+        "summary": null,
+        "purpose": "This paragraph constructs and inserts the detailed pending authorization record (PAUTDTL1) into IMS under the account's PAUTSUM0 parent. It consumes current time via CICS, request fields (PA-RQ-*), response fields (PA-RL-*), XREF-ACCT-ID, AUTH-RESP-APPROVED, and PA-CARD-NUM for errors. Outputs a new PAUTDTL1 segment via hierarchical DLI ISRT with seglength, after populating PENDING-AUTH-DETAILS. Business logic computes inverted auth date/time from current YYDDD/TIME-MS for sequencing, copies all request/merchant/response details, sets match status (PENDING or DECLINED), clears fraud fields. Error handling post-ISRT: if not STATUS-OK, sets critical IMS error 'I004', details, PERFORM 9500-LOG-ERROR. Calls CICS ASKTIME/FORMATTIME for timing and 9500-LOG-ERROR if IMS fails.",
+        "called_by": [
+          "8000-WRITE-AUTH-TO-DB"
+        ],
+        "calls": [
+          "9500-LOG-ERROR"
+        ],
+        "citation": [
+          854,
+          934
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "8500-EXIT",
+        "summary": null,
+        "purpose": "Exit point for 8500-INSERT-AUTH following detail segment insertion. No inputs consumed or outputs produced. No decisions or logic. Errors handled upstream. Called via THRU from 8000. No calls. EXIT statement only.",
+        "called_by": [
+          "8500-INSERT-AUTH"
+        ],
+        "calls": [],
+        "citation": [
+          935,
+          939
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "9000-TERMINATE",
+        "summary": null,
+        "purpose": "This paragraph coordinates program termination cleanup for IMS and MQ resources. It checks IMS-PSB-SCHD to conditionally TERM the IMS PSB via DLI TERM. Then performs queue closure. No direct data I/O but relies on WS-REQUEST-MQ-OPEN flag. Business logic ensures graceful shutdown only if IMS scheduled. Errors delegated to 9100. Calls 9100-CLOSE-REQUEST-QUEUE THRU 9100-EXIT for MQ.",
+        "called_by": [],
+        "calls": [
+          "9100-CLOSE-REQUEST-QUEUE"
+        ],
+        "citation": [
+          940,
+          949
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "9000-EXIT",
+        "summary": null,
+        "purpose": "Standard exit for 9000-TERMINATE after resource closure. No I/O, logic, or errors here. Returns control to prior flow. Invoked via THRU. No calls. EXIT.",
+        "called_by": [
+          "9000-TERMINATE"
+        ],
+        "calls": [],
+        "citation": [
+          950,
+          952
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "9100-CLOSE-REQUEST-QUEUE",
+        "summary": null,
+        "purpose": "Handles closure of the MQ request queue connection and object if open. Consumes WS-REQUEST-MQ-OPEN flag and MQ handles (W01-HCONN-REQUEST, W01-HOBJ-REQUEST). Outputs updated flags (WS-REQUEST-MQ-CLSE) and logs if fail. Logic: conditional CALL 'MQCLOSE' with MQCO-NONE, checks WS-COMPCODE==MQCC-OK to set closed flag, else sets warning MQ error 'M005' with compcode/reason codes, PERFORM 9500-LOG-ERROR. Ensures resource cleanup before program end.",
+        "called_by": [
+          "9000-TERMINATE"
+        ],
+        "calls": [
+          "9500-LOG-ERROR"
+        ],
+        "citation": [
+          953,
+          978
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "9100-EXIT",
+        "summary": null,
+        "purpose": "Exit routine for 9100-CLOSE-REQUEST-QUEUE post-MQ closure. No data access or modification. No conditions checked. Errors logged prior. Called via THRU. No further calls. EXIT to return.",
+        "called_by": [
+          "9100-CLOSE-REQUEST-QUEUE"
+        ],
+        "calls": [],
+        "citation": [
+          979,
+          982
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      }
+    ],
+    "error_handling": [
+      {
+        "condition": "STATUS-OK false after DLI REPL/ISRT on PAUTSUM0",
+        "action": "Set ERR-LOCATION 'I003', ERR-CRITICAL/ERR-IMS true, populate ERR-CODE-1/MESSAGE/EVENT-KEY, PERFORM 9500-LOG-ERROR",
+        "citation": [
+          54
+        ]
+      },
+      {
+        "condition": "STATUS-OK false after DLI ISRT on PAUTDTL1",
+        "action": "Set ERR-LOCATION 'I004', ERR-CRITICAL/ERR-IMS true, populate ERR-CODE-1/MESSAGE/EVENT-KEY, PERFORM 9500-LOG-ERROR",
+        "citation": [
+          138
+        ]
+      },
+      {
+        "condition": "WS-COMPCODE != MQCC-OK after MQCLOSE",
+        "action": "Set ERR-LOCATION 'M005', ERR-WARNING/ERR-MQ true, populate ERR-CODE-1/2/MESSAGE, PERFORM 9500-LOG-ERROR",
+        "citation": [
+          177
+        ]
+      }
+    ],
+    "sql_operations": [],
+    "cics_operations": [
+      {
+        "command": "ASKTIME",
+        "resource": null,
+        "purpose": "Retrieve current absolute time for auth timestamp computation",
+        "citation": 70
+      },
+      {
+        "command": "FORMATTIME",
+        "resource": null,
+        "purpose": "Convert abstime to formatted YYDDD, TIME, and MILLISECONDS for date/time processing",
+        "citation": 74
+      }
+    ],
+    "open_questions": [
+      {
+        "question": "Source of input data like XREF-ACCT-ID, PA-RQ-*, AUTH-RESP-APPROVED, NFOUND-PAUT-SMRY-SEG",
+        "context": "Snippet starts at 8000-; prior paragraphs not provided",
+        "suggestion": "Analyze earlier code sections for reads from MQ request queue, IMS GHU/GU, or linkage"
+      },
+      {
+        "question": "Definitions and copybooks for PENDING-AUTH-SUMMARY, PENDING-AUTH-DETAILS, PCB(PAUT-PCB-NUM)",
+        "context": "No COPY or 01-level definitions in snippet",
+        "suggestion": "Scan WORKING-STORAGE or FILE sections"
+      },
+      {
+        "question": "Full program flow and entry point",
+        "context": "Only 8000-9100 paragraphs provided",
+        "suggestion": "Provide complete source for 0000-MAIN to 7999"
+      }
+    ],
+    "resolved_questions": [],
+    "dead_code": [],
+    "call_semantics": [],
+    "flow_diagram": null
+  },
+  "saved_at": "2026-02-23T20:52:51.884931"
+}

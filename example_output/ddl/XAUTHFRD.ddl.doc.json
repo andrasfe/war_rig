@@ -1,15 +1,15 @@
 {
   "header": {
     "program_id": "XAUTHFRD",
-    "file_name": "XAUTHFRD.ddl",
+    "file_name": "ddl/XAUTHFRD.ddl",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-10T17:20:21.956769",
+    "analyzed_at": "2026-02-24T03:59:02.308269",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This DDL file creates a unique index named CARDDEMO.XAUTHFRD on the CARDDEMO.AUTHFRDS table, using CARD_NUM in ascending order and AUTH_TS in descending order. The index allows copies.",
+    "summary": "This DDL script creates a unique index named CARDDEMO.XAUTHFRD on the CARDDEMO.AUTHFRDS table. The index is defined on columns CARD_NUM in ascending order and AUTH_TS in descending order. The COPY YES option is specified to allow the index to be copied during table reorganization.",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
@@ -20,7 +20,20 @@
     ]
   },
   "inputs": [],
-  "outputs": [],
+  "outputs": [
+    {
+      "name": "CARDDEMO.XAUTHFRD",
+      "io_type": "OTHER",
+      "description": "Unique index on CARDDEMO.AUTHFRDS table keyed by CARD_NUM ASC and AUTH_TS DESC",
+      "copybook": null,
+      "citation": [
+        1,
+        2,
+        3,
+        4
+      ]
+    }
+  ],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
@@ -53,16 +66,27 @@
     }
   ],
   "error_handling": [],
-  "sql_operations": [],
-  "cics_operations": [],
-  "open_questions": [
+  "sql_operations": [
     {
-      "question": "What is the purpose of allowing copies for this unique index?",
-      "context": "The meaning of 'COPY YES' is unclear in the context of a unique index.",
-      "suggestion": "Consult DB2 documentation or a database administrator."
+      "operation": "CREATE UNIQUE INDEX",
+      "table": "CARDDEMO.AUTHFRDS",
+      "purpose": "Enforces uniqueness on the composite key (CARD_NUM ASC, AUTH_TS DESC) and optimizes access for queries filtering or sorting by these columns",
+      "citation": 1
     }
   ],
-  "resolved_questions": [],
+  "cics_operations": [],
+  "open_questions": [],
+  "resolved_questions": [
+    {
+      "original_question": "What is the specific business purpose of the AUTHFRDS table and this index?",
+      "original_context": "Table and index names suggest authorization fraud tracking, but no descriptive comments or context in the DDL",
+      "answer": "**AUTHFRDS Table Purpose:**  \nThe `CARDDEMO.AUTHFRDS` table is a DB2 table specifically for **fraud tracking and reporting** on card authorization messages/transactions. It stores detailed authorization records (e.g., `CARD_NUM`, `AUTH_TS`, `AUTH_TYPE`, `TRANSACTION_AMT`, merchant details, response codes) along with fraud-specific fields like `AUTH_FRAUD` (flag indicating fraud status), `FRAUD_RPT_DATE` (date fraud was reported), `ACCT_ID`, and `CUST_ID`.  \n\nThis is confirmed by:  \n- **README.md** (lines 271, 113): Explicitly describes it as \"DB2 table for fraud tracking\".  \n- **COPAUS2C.cbl** (lines 2-5, 142-198, 223-244): CICS COBOL program \"Mark Authorization Message Fraud\". Performs upsert logic—**INSERT** full auth record with fraud flag into `AUTHFRDS` (populating from input fraud auth record via `CIPAUDTY` copybook); on duplicate key error (SQLCODE -803), **UPDATE** sets `AUTH_FRAUD` and `FRAUD_RPT_DATE`. Input includes action ('F' report fraud, 'R' remove), account/customer IDs.  \n- Table DDL (`ddl/AUTHFRDS.ddl`): Primary key `(CARD_NUM, AUTH_TS)` enforces uniqueness per card/timestamp.  \n\n**XAUTHFRD Index Purpose:**  \nUnique index `CARDDEMO.XAUTHFRD` on `(CARD_NUM ASC, AUTH_TS DESC)` with `COPY YES` (allows index rebuild during table reorganization). Supports:  \n- **Efficient lookups** by card number for the *most recent* authorization (DESC timestamp).  \n- **Upsert enforcement** (unique constraint catches duplicates for UPDATE).  \n- **Fraud queries**: Quick retrieval of latest fraud-flagged auths per card for reporting/analysis.  \n\nSources: `ddl/XAUTHFRD.ddl`, `ddl/AUTHFRDS.ddl`, `cbl/COPAUS2C.cbl` (full file read), `README.md`, `dcl/AUTHFRDS.dcl`. No other code references found, confirming isolated fraud subsystem role.",
+      "confidence": "HIGH",
+      "resolved_by": "CODEWHISPER",
+      "cycle_resolved": 1,
+      "tool_calls_used": 17
+    }
+  ],
   "dead_code": [
     {
       "name": "XAUTHFRD",

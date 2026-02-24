@@ -2,11 +2,18 @@
 
 **File**: `cpy/PASFLPCB.CPY`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-02-10 17:20:15.610583
+**Analyzed**: 2026-02-24 04:02:41.559721
 
 ## Purpose
 
-This copybook defines the data structure PASFLPCB, which appears to be related to IMS PCB (Program Communication Block) based on the field names. It includes fields for DBD name, segment level, PCB status, processing options, segment name, key feedback, number of sensitive segments, and key feedback area. This structure is likely used for communication between a program and IMS.
+This copybook defines the IMS Program Communication Block (PCB) structure named PASFLPCB for accessing the PASFL hierarchical database via DL/I calls. It specifies standard PCB fields including DBD name, segment level, status, processing options, segment name, key feedback name, number of sensitive segments, and key feedback area. Used in IMS programs to interface with the PASFL database.
+
+**Business Context**: Supports IMS DL/I database navigation and access control in mainframe applications, part of Amazon-licensed mainframe code under Apache 2.0.
+
+## Business Rules
+
+- **BR001**: PCB Processing Options define permitted DL/I call functions for the PASFL PCB.
+- **BR002**: PCB Status Code indicates result of last DL/I call on PASFL PCB.
 
 ## Paragraphs/Procedures
 
@@ -20,8 +27,3 @@ The following artifacts were identified as dead code by static analysis:
 | Artifact | Type | Line | Reason |
 |----------|------|------|--------|
 | PASFLPCB | record_layout | 1 | Record layout 'PASFLPCB' is never used by any program |
-
-## Open Questions
-
-- ? How is this copybook used in conjunction with IMS?
-  - Context: The field names suggest an IMS PCB, but without seeing the program that uses it, the exact usage is unclear.

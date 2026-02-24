@@ -7,7 +7,4 @@
            PERFORM 8500-INSERT-AUTH         THRU 8500-EXIT                      
            .                                                                    
       *                                                                         
-       8000-EXIT.                                                               
-           EXIT.                                                                
-      *                                                                         
 ```

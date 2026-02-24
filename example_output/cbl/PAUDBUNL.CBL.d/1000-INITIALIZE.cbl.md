@@ -27,4 +27,6 @@
               DISPLAY 'ERROR IN OPENING OPFILE2:' WS-OUTFL2-STATUS      01969428
               PERFORM 9999-ABEND                                        01969528
            END-IF.                                                      01969634
+      *                                                                 01969728
+      *                                                                 01970026
 ```

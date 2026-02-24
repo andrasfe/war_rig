@@ -21,4 +21,6 @@
             END-IF
 
             .
+       4000-EXIT.
+            EXIT.
 ```

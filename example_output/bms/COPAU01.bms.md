@@ -1,108 +1,99 @@
 # COPAU01
 
-**File**: `bms/COPAU01.bms`
-**Type**: FileType.BMS
-**Analyzed**: 2026-02-10 17:20:05.486395
+**File:** bms/COPAU01.bms
+**Type:** BMS
+**Status:** In Progress
+**Iterations:** 1
+**Analyzed:** 2026-02-24 03:58:34.647405
 
 ## Purpose
 
-This BMS map defines the screen layout for displaying pending authorization details in the CardDemo application. It includes fields for transaction information, card details, authorization specifics, and merchant information, designed for CICS terminal display.
+This BMS file defines the COPAU01 mapset and COPAU1A map for a CICS screen titled 'Pending Authorization Details Screen' (CardDemo). It lays out fields for displaying credit card transaction authorization details including card number, auth date/time/response/code/amount/type/source, merchant details, status flags, and function keys. The map operates in INOUT mode with AUTO storage and supports color-coded display for emphasis on statuses and errors.
 
-**Business Context**: The screen is used to view details of pending card authorizations, likely as part of a fraud detection or transaction monitoring system.
+**Business Context:** Serves credit card authorization review process in a fraud detection or pending auth inquiry transaction within a CICS online banking or payment system.
+**Program Type:** ONLINE_CICS
+**Citations:** Lines 2, 19, 22, 26, 79, 292
 
-## Paragraphs/Procedures
+## Inputs
 
-### COPAU1A DFHMDI
-This DFHMDI macro defines the map's dimensions and placement on the screen. It specifies that the map will start at column 1 and line 1, occupying a size of 24 lines by 80 columns, which represents a standard terminal screen size. This definition acts as a container for all the individual field definitions (DFHMDFs) that make up the screen layout. The SIZE parameter dictates the overall area the map will cover on the display. The COLUMN and LINE parameters determine the map's top-left corner position. The map's attributes, such as the ability to trigger an alarm (ALARM), release the keyboard (FREEKB), use extended attributes (EXTATT=YES), and other control options, are defined in the DFHMSD macro. This paragraph essentially sets the stage for the screen's visual presentation and prepares the CICS environment for displaying the authorization details.
+### COPAU1A
+- **Type:** CICS_MAP
+- **Description:** Symbolic map receives data from CICS program to populate screen fields like CARDNUM, AUTHDT, MERNAME for display and user-modified fields
+- **Lines:** 26, 84, 94, 239
 
-### TRNNAME DFHMDF
-This DFHMDF macro defines a display field for the transaction name or code. It is positioned at line 1, column 7 (POS=(1,7)) and has a length of 4 characters (LENGTH=4). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. This field is intended to display a static label or code identifying the type of transaction being viewed on the screen. It consumes no input data; instead, it displays a pre-defined value. The output of this paragraph is the display of the transaction name on the screen. It does not call any other paragraphs or programs. The business logic is simply to display a static piece of information.
+## Outputs
 
-### TITLE01 DFHMDF
-This DFHMDF macro defines a display field for a title or heading on the screen. It is positioned at line 1, column 21 (POS=(1,21)) and has a length of 40 characters (LENGTH=40). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=YELLOW, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in yellow. This field is intended to display a descriptive title for the screen or section. It consumes no input data; instead, it displays a pre-defined value. The output of this paragraph is the display of the title on the screen. It does not call any other paragraphs or programs. The business logic is simply to display a static piece of information.
+### COPAU1A
+- **Type:** CICS_MAP
+- **Description:** Physical map outputs formatted 24x80 screen with labeled fields, colors, and initial values for SEND MAP in CICS
+- **Lines:** 27, 292
 
-### CURDATE DFHMDF
-This DFHMDF macro defines a display field for the current date. It is positioned at line 1, column 71 (POS=(1,71)) and has a length of 8 characters (LENGTH=8). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to 'mm/dd/yy', which serves as a placeholder or default value when the screen is initially displayed. This field is intended to display the current date. It consumes no input data directly from the user, but it would likely be populated by the application program with the system date. The output of this paragraph is the display of the current date on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the current date, which is a static piece of information that is dynamically populated by the application.
+### ERRMSG
+- **Type:** CICS_MAP
+- **Description:** Error message field for displaying validation or processing errors
+- **Lines:** 284
 
-### PGMNAME DFHMDF
-This DFHMDF macro defines a display field for the program name. It is positioned at line 2, column 7 (POS=(2,7)) and has a length of 8 characters (LENGTH=8). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. This field is intended to display the name of the program associated with the screen. It consumes no input data directly from the user, but it would likely be populated by the application program with the program's identifier. The output of this paragraph is the display of the program name on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the program name, which is a static piece of information that is dynamically populated by the application.
+## Business Rules
 
-### CURTIME DFHMDF
-This DFHMDF macro defines a display field for the current time. It is positioned at line 2, column 71 (POS=(2,71)) and has a length of 8 characters (LENGTH=8). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to 'hh:mm:ss', which serves as a placeholder or default value when the screen is initially displayed. This field is intended to display the current time. It consumes no input data directly from the user, but it would likely be populated by the application program with the system time. The output of this paragraph is the display of the current time on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the current time, which is a static piece of information that is dynamically populated by the application.
+### BR001: Critical authorization status fields (Match Status AUTHMTC and Fraud Status AUTHFRD) are highlighted in RED to draw attention to potential fraud or mismatch issues.
+**Logic:** Fields defined with COLOR=RED for visual alerting.
+**Conditions:** Display of match or fraud status
+**Lines:** 215, 225
 
-### CARDNUM DFHMDF
-This DFHMDF macro defines a display field for the card number. It is positioned at line 7, column 11 (POS=(7,11)) and has a length of 16 characters (LENGTH=16). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=PINK, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in pink. This field is intended to display the card number associated with the authorization. It consumes no input data directly from the user, but it would likely be populated by the application program with the card number retrieved from a database or transaction record. The output of this paragraph is the display of the card number on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the card number, which is a static piece of information that is dynamically populated by the application.
+### BR002: Error messages are prominently displayed in bright red with FSET attribute to ensure user notices issues.
+**Logic:** ERRMSG field uses ATTRB=(ASKIP,BRT,FSET), COLOR=RED.
+**Conditions:** Error condition triggered
+**Lines:** 284
 
-### AUTHDT DFHMDF
-This DFHMDF macro defines a display field for the authorization date. It is positioned at line 7, column 43 (POS=(7,43)) and has a length of 10 characters (LENGTH=10). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=PINK, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in pink. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the date when the authorization was processed. It consumes no input data directly from the user, but it would likely be populated by the application program with the authorization date retrieved from a database or transaction record. The output of this paragraph is the display of the authorization date on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the authorization date, which is a static piece of information that is dynamically populated by the application.
+### BR003: Screen labels use consistent color scheme: TURQUOISE for labels, BLUE/PINK for data fields, YELLOW for titles, NEUTRAL for section headers.
+**Logic:** Multiple DFHMDF definitions specify COLOR attributes for readability and branding.
+**Conditions:** All static text labels
+**Lines:** 30, 39, 80, 83, 229
 
-### AUTHTM DFHMDF
-This DFHMDF macro defines a display field for the authorization time. It is positioned at line 7, column 68 (POS=(7,68)) and has a length of 10 characters (LENGTH=10). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=PINK, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in pink. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the time when the authorization was processed. It consumes no input data directly from the user, but it would likely be populated by the application program with the authorization time retrieved from a database or transaction record. The output of this paragraph is the display of the authorization time on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the authorization time, which is a static piece of information that is dynamically populated by the application.
+### BR004: Function key instructions are provided at screen bottom: F3=Back, F5=Mark/Remove Fraud, F8=Next Auth.
+**Logic:** Static INITIAL text in bottom row.
+**Conditions:** User navigation and actions
+**Lines:** 292
 
-### AUTHRSP DFHMDF
-This DFHMDF macro defines a display field for the authorization response code. It is positioned at line 9, column 14 (POS=(9,14)) and has a length of 1 character (LENGTH=1). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=PINK, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in pink. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the authorization response code. It consumes no input data directly from the user, but it would likely be populated by the application program with the authorization response code retrieved from a database or transaction record. The output of this paragraph is the display of the authorization response code on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the authorization response code, which is a static piece of information that is dynamically populated by the application.
+## Key Paragraphs
 
-### AUTHRSN DFHMDF
-This DFHMDF macro defines a display field for the authorization response reason. It is positioned at line 9, column 32 (POS=(9,32)) and has a length of 20 characters (LENGTH=20). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the reason for the authorization response. It consumes no input data directly from the user, but it would likely be populated by the application program with the authorization response reason retrieved from a database or transaction record. The output of this paragraph is the display of the authorization response reason on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the authorization response reason, which is a static piece of information that is dynamically populated by the application.
+### COPAU01
+**Purpose:** [Citadel] Paragraph identified by static analysis
+- Lines: 19-19
 
-### AUTHCD DFHMDF
-This DFHMDF macro defines a display field for the authorization code. It is positioned at line 9, column 68 (POS=(9,68)) and has a length of 6 characters (LENGTH=6). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the authorization code. It consumes no input data directly from the user, but it would likely be populated by the application program with the authorization code retrieved from a database or transaction record. The output of this paragraph is the display of the authorization code on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the authorization code, which is a static piece of information that is dynamically populated by the application.
+### COPAU1A
+**Purpose:** [Citadel] Paragraph identified by static analysis
+- Lines: 26-26
 
-### AUTHAMT DFHMDF
-This DFHMDF macro defines a display field for the authorization amount. It is positioned at line 11, column 11 (POS=(11,11)) and has a length of 12 characters (LENGTH=12). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the amount authorized for the transaction. It consumes no input data directly from the user, but it would likely be populated by the application program with the authorization amount retrieved from a database or transaction record. The output of this paragraph is the display of the authorization amount on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the authorization amount, which is a static piece of information that is dynamically populated by the application.
+## Error Handling
 
-### POSEMD DFHMDF
-This DFHMDF macro defines a display field for the POS (Point of Sale) entry mode. It is positioned at line 11, column 46 (POS=(11,46)) and has a length of 4 characters (LENGTH=4). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the method used to enter the transaction at the point of sale. It consumes no input data directly from the user, but it would likely be populated by the application program with the POS entry mode retrieved from a database or transaction record. The output of this paragraph is the display of the POS entry mode on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the POS entry mode, which is a static piece of information that is dynamically populated by the application.
-
-### AUTHSRC DFHMDF
-This DFHMDF macro defines a display field for the authorization source. It is positioned at line 11, column 68 (POS=(11,68)) and has a length of 10 characters (LENGTH=10). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the source of the authorization request. It consumes no input data directly from the user, but it would likely be populated by the application program with the authorization source retrieved from a database or transaction record. The output of this paragraph is the display of the authorization source on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the authorization source, which is a static piece of information that is dynamically populated by the application.
-
-### MCCCD DFHMDF
-This DFHMDF macro defines a display field for the Merchant Category Code (MCC). It is positioned at line 13, column 13 (POS=(13,13)) and has a length of 4 characters (LENGTH=4). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the MCC code associated with the transaction. It consumes no input data directly from the user, but it would likely be populated by the application program with the MCC code retrieved from a database or transaction record. The output of this paragraph is the display of the MCC code on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the MCC code, which is a static piece of information that is dynamically populated by the application.
-
-### CRDEXP DFHMDF
-This DFHMDF macro defines a display field for the card expiration date. It is positioned at line 13, column 42 (POS=(13,42)) and has a length of 5 characters (LENGTH=5). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the card's expiration date. It consumes no input data directly from the user, but it would likely be populated by the application program with the card expiration date retrieved from a database or transaction record. The output of this paragraph is the display of the card expiration date on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the card expiration date, which is a static piece of information that is dynamically populated by the application.
-
-### AUTHTYP DFHMDF
-This DFHMDF macro defines a display field for the authorization type. It is positioned at line 13, column 64 (POS=(13,64)) and has a length of 14 characters (LENGTH=14). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the type of authorization. It consumes no input data directly from the user, but it would likely be populated by the application program with the authorization type retrieved from a database or transaction record. The output of this paragraph is the display of the authorization type on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the authorization type, which is a static piece of information that is dynamically populated by the application.
-
-### TRNID DFHMDF
-This DFHMDF macro defines a display field for the transaction ID. It is positioned at line 15, column 12 (POS=(15,12)) and has a length of 15 characters (LENGTH=15). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the unique identifier for the transaction. It consumes no input data directly from the user, but it would likely be populated by the application program with the transaction ID retrieved from a database or transaction record. The output of this paragraph is the display of the transaction ID on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the transaction ID, which is a static piece of information that is dynamically populated by the application.
-
-### AUTHMTC DFHMDF
-This DFHMDF macro defines a display field for the match status of the authorization. It is positioned at line 15, column 46 (POS=(15,46)) and has a length of 1 character (LENGTH=1). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=RED, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in red. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display a status indicating whether the authorization matches certain criteria. It consumes no input data directly from the user, but it would likely be populated by the application program with the match status retrieved from a database or transaction record. The output of this paragraph is the display of the match status on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the match status, which is a static piece of information that is dynamically populated by the application.
-
-### AUTHFRD DFHMDF
-This DFHMDF macro defines a display field for the fraud status of the authorization. It is positioned at line 15, column 67 (POS=(15,67)) and has a length of 10 characters (LENGTH=10). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=RED, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in red. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display a status indicating whether the authorization is suspected of being fraudulent. It consumes no input data directly from the user, but it would likely be populated by the application program with the fraud status retrieved from a database or transaction record. The output of this paragraph is the display of the fraud status on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the fraud status, which is a static piece of information that is dynamically populated by the application.
-
-### MERNAME DFHMDF
-This DFHMDF macro defines a display field for the merchant name. It is positioned at line 19, column 9 (POS=(19,9)) and has a length of 25 characters (LENGTH=25). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the name of the merchant associated with the transaction. It consumes no input data directly from the user, but it would likely be populated by the application program with the merchant name retrieved from a database or transaction record. The output of this paragraph is the display of the merchant name on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the merchant name, which is a static piece of information that is dynamically populated by the application.
-
-### MERID DFHMDF
-This DFHMDF macro defines a display field for the merchant ID. It is positioned at line 19, column 55 (POS=(19,55)) and has a length of 15 characters (LENGTH=15). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the unique identifier for the merchant. It consumes no input data directly from the user, but it would likely be populated by the application program with the merchant ID retrieved from a database or transaction record. The output of this paragraph is the display of the merchant ID on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the merchant ID, which is a static piece of information that is dynamically populated by the application.
-
-### MERCITY DFHMDF
-This DFHMDF macro defines a display field for the merchant city. It is positioned at line 21, column 9 (POS=(21,9)) and has a length of 25 characters (LENGTH=25). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the city where the merchant is located. It consumes no input data directly from the user, but it would likely be populated by the application program with the merchant city retrieved from a database or transaction record. The output of this paragraph is the display of the merchant city on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the merchant city, which is a static piece of information that is dynamically populated by the application.
-
-### MERST DFHMDF
-This DFHMDF macro defines a display field for the merchant state. It is positioned at line 21, column 49 (POS=(21,49)) and has a length of 2 characters (LENGTH=2). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the state where the merchant is located. It consumes no input data directly from the user, but it would likely be populated by the application program with the merchant state retrieved from a database or transaction record. The output of this paragraph is the display of the merchant state on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the merchant state, which is a static piece of information that is dynamically populated by the application.
-
-### MERZIP DFHMDF
-This DFHMDF macro defines a display field for the merchant zip code. It is positioned at line 21, column 61 (POS=(21,61)) and has a length of 10 characters (LENGTH=10). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the zip code of the merchant's location. It consumes no input data directly from the user, but it would likely be populated by the application program with the merchant zip code retrieved from a database or transaction record. The output of this paragraph is the display of the merchant zip code on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the merchant zip code, which is a static piece of information that is dynamically populated by the application.
-
-### ERRMSG DFHMDF
-This DFHMDF macro defines a display field for error messages. It is positioned at line 23, column 1 (POS=(23,1)) and has a length of 78 characters (LENGTH=78). The field is defined with attributes ASKIP (automatic skip), BRT (bright), and FSET (field set), and COLOR=RED, meaning the user cannot input data into this field, it appears in bright intensity, the field will be set, and is displayed in red. This field is intended to display error messages to the user. It consumes no input data directly from the user, but it would likely be populated by the application program with error messages based on various error conditions encountered during processing. The output of this paragraph is the display of the error message on the screen. It does not call any other paragraphs or programs. The business logic involves displaying error messages to the user, which is a dynamic piece of information that is populated by the application based on error conditions.
-
-## Dead Code
-
-The following artifacts were identified as dead code by static analysis:
-
-| Artifact | Type | Line | Reason |
-|----------|------|------|--------|
-| COPAU01 | map | 19 | Artifact 'COPAU01' (map) is never referenced by any other artifact in the dependency graph |
-| COPAU1A | screen | 26 | Screen/Map 'COPAU1A' is never sent to or received from by any program |
+- **Application errors or validation failures:** Display message in ERRMSG field highlighted with BRT, FSET, RED color
+  (Lines: 284)
 
 ## Open Questions
 
-- ? What specific program uses this BMS map?
-  - Context: The BMS map itself doesn't contain information about which program utilizes it.
+- **What are the exact data lengths and formats loaded into fields like AUTHCD, AUTHAMT?**
+  - Context: BMS defines display lengths (e.g., AUTHCD LENGTH=6 line 136) but not validation or source formats.
+  - Suggestion: Review symbolic map copybook or using program.
+
+## Resolved Questions
+
+- **Q:** Which CICS COBOL program(s) use this COPAU01 mapset?
+  **A:** **COPAUS1C.cbl** is the CICS COBOL program that uses the COPAU01 mapset.
+
+### Evidence from Code Search:
+- **COPY statement**: Line 122 in `cbl/COPAUS1C.cbl` includes `COPY COPAU01.`, embedding the map definitions (COPAU1A map and fields) directly into the program working storage.
+- **CICS EXEC calls** (all specifying MAPSET('COPAU01') and MAP('COPAU1A')):
+  | Line | Context | Code Snippet |
+  |------|---------|-------------|
+  | 383 | SEND (with ERASE) | `EXEC CICS SEND MAP('COPAU1A') MAPSET('COPAU01') FROM(COPAU1AO) ERASE CURSOR END-EXEC` |
+  | 391 | SEND (without ERASE) | `EXEC CICS SEND MAP('COPAU1A') MAPSET('COPAU01') FROM(COPAU1AO) CURSOR END-EXEC` |
+  | 402 | RECEIVE | `EXEC CICS RECEIVE MAP('COPAU1A') MAPSET('COPAU01') INTO(COPAU1AI) NOHANDLE END-EXEC` |
+
+No other programs reference COPAU01:
+- Searches for `'COPAU01'` across all files (`*`), `*.cob`, and `*.pli` returned **no additional matches**.
+
+This confirms exclusive usage by COPAUS1C for the "Pending Authorization Details Screen" (handles screen send/receive for auth details, keys, fraud data).
+
+---
+*Generated by War Rig WAR_RIG*

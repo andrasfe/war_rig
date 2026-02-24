@@ -1,6 +1,6 @@
 ```cobol
-
-      *Screen Titles
-       COPY COTTL01Y.
-
+       TAKE-SYNCPOINT.
+           EXEC CICS SYNCPOINT
+           END-EXEC
+           .
 ```

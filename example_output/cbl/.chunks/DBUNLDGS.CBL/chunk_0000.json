@@ -1,0 +1,531 @@
+{
+  "batch_idx": 0,
+  "total_batches": 2,
+  "template": {
+    "header": {
+      "program_id": "DBUNLDGS",
+      "file_name": "cbl/DBUNLDGS.CBL",
+      "file_type": "COBOL",
+      "analyzed_by": "WAR_RIG",
+      "analyzed_at": "2026-02-24T03:50:53.189778",
+      "iteration_count": 1,
+      "final_status": null
+    },
+    "purpose": {
+      "summary": "This COBOL program unloads authorization summary (root) and detail (child) segments from an IMS database via PAUTBPCB PCB using GN calls and inserts them into GSAM databases via PASFLPCB (parent) and presumably PADFLPCB (child) using ISRT calls. It orchestrates initialization, a loop to read and process each root segment by inserting it and then nested-looping its child segments, and file closure. The program serves as a database unload utility from hierarchical IMS to GSAM structure.",
+      "business_context": "Supports data migration or archiving of authorization summary and detail records from IMS database to GSAM files, tracking counts of processed summaries.",
+      "program_type": "BATCH",
+      "citations": [
+        1,
+        3,
+        9,
+        11,
+        37,
+        64,
+        66,
+        83,
+        102,
+        120
+      ]
+    },
+    "inputs": [
+      {
+        "name": "PAUTBPCB",
+        "io_type": "IMS_SEGMENT",
+        "description": "IMS PCB for reading authorization summary (root) and detail (child) segments from IMS database",
+        "copybook": null,
+        "citation": [
+          4,
+          43,
+          44,
+          87,
+          88
+        ]
+      },
+      {
+        "name": "PASFLPCB",
+        "io_type": "IMS_SEGMENT",
+        "description": "GSAM PCB for inserting parent authorization summary segments",
+        "copybook": null,
+        "citation": [
+          5,
+          122,
+          123
+        ]
+      },
+      {
+        "name": "PADFLPCB",
+        "io_type": "IMS_SEGMENT",
+        "description": "PCB passed at entry, presumably for child detail GSAM inserts (usage not visible in provided code)",
+        "copybook": null,
+        "citation": [
+          6
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "PASFLPCB",
+        "io_type": "IMS_SEGMENT",
+        "description": "GSAM database receiving inserted parent authorization summary segments",
+        "copybook": null,
+        "citation": [
+          122,
+          123
+        ]
+      },
+      {
+        "name": "OPFIL1-REC",
+        "io_type": "FILE_SEQUENTIAL",
+        "description": "Sequential file record for output (move performed but WRITE commented out)",
+        "copybook": null,
+        "citation": [
+          57,
+          63
+        ]
+      }
+    ],
+    "called_programs": [],
+    "calling_context": {
+      "called_by": [],
+      "entry_points": [],
+      "linkage_section": [
+        "PAUTBPCB",
+        "PASFLPCB",
+        "PADFLPCB"
+      ]
+    },
+    "business_rules": [
+      {
+        "rule_id": "BR001",
+        "description": "Process authorization summary record if IMS GN call succeeds (status spaces)",
+        "logic_summary": "Increment counters, prepare key and record, insert parent seg, loop children",
+        "conditions": [
+          "PAUT-PCB-STATUS = SPACES"
+        ],
+        "citation": [
+          53,
+          55,
+          56,
+          64,
+          66
+        ]
+      },
+      {
+        "rule_id": "BR002",
+        "description": "End root segment loop if IMS status 'GB' (end of database)",
+        "logic_summary": "Set end flags to exit outer loop",
+        "conditions": [
+          "PAUT-PCB-STATUS = 'GB'"
+        ],
+        "citation": [
+          70,
+          71,
+          72
+        ]
+      },
+      {
+        "rule_id": "BR003",
+        "description": "Abend on IMS GN error status (not spaces or 'GB')",
+        "logic_summary": "Display status and key feedback, then abend",
+        "conditions": [
+          "PAUT-PCB-STATUS NOT = SPACES AND 'GB'"
+        ],
+        "citation": [
+          74,
+          75,
+          76
+        ]
+      },
+      {
+        "rule_id": "BR004",
+        "description": "Process child detail if GNP succeeds (status spaces)",
+        "logic_summary": "Increment counters, insert child segment",
+        "conditions": [
+          "PAUT-PCB-STATUS = SPACES"
+        ],
+        "citation": [
+          96,
+          97,
+          98,
+          102
+        ]
+      },
+      {
+        "rule_id": "BR005",
+        "description": "End child loop if status 'GE' (end of eligible children)",
+        "logic_summary": "Set child end flag",
+        "conditions": [
+          "PAUT-PCB-STATUS = 'GE'"
+        ],
+        "citation": [
+          104,
+          106
+        ]
+      },
+      {
+        "rule_id": "BR006",
+        "description": "Abend on GNP error (not spaces or 'GE')",
+        "logic_summary": "Display error info and abend",
+        "conditions": [
+          "PAUT-PCB-STATUS NOT = SPACES AND 'GE'"
+        ],
+        "citation": [
+          110,
+          111,
+          112
+        ]
+      },
+      {
+        "rule_id": "BR007",
+        "description": "Skip non-numeric PA-ACCT-ID (validation before insert)",
+        "logic_summary": "IF PA-ACCT-ID IS NUMERIC before insert",
+        "conditions": [
+          "PA-ACCT-ID IS NUMERIC"
+        ],
+        "citation": [
+          62
+        ]
+      },
+      {
+        "rule_id": "BR008",
+        "description": "Abend on GSAM parent insert failure",
+        "logic_summary": "If status not spaces after ISRT",
+        "conditions": [
+          "PASFL-PCB-STATUS NOT = SPACES"
+        ],
+        "citation": [
+          131
+        ]
+      }
+    ],
+    "data_flow": {
+      "reads_from": [
+        {
+          "source": "PAUTBPCB",
+          "fields_used": [
+            "PAUT-PCB-STATUS",
+            "PAUT-SEG-NAME",
+            "PA-ACCT-ID",
+            "PAUT-KEYFB"
+          ],
+          "citation": [
+            53,
+            70,
+            74,
+            60,
+            75
+          ]
+        }
+      ],
+      "writes_to": [
+        {
+          "destination": "PASFLPCB",
+          "fields_written": [
+            "PENDING-AUTH-SUMMARY"
+          ],
+          "citation": [
+            123,
+            124
+          ]
+        },
+        {
+          "destination": "OPFIL1-REC",
+          "fields_written": [
+            "PENDING-AUTH-SUMMARY"
+          ],
+          "citation": [
+            57
+          ]
+        }
+      ],
+      "transforms": [
+        {
+          "input_field": "PENDING-AUTH-SUMMARY",
+          "output_field": "OPFIL1-REC",
+          "transformation_description": "Direct move of summary record to output file record",
+          "citation": [
+            57
+          ]
+        },
+        {
+          "input_field": "PA-ACCT-ID",
+          "output_field": "ROOT-SEG-KEY",
+          "transformation_description": "Move account ID to root segment key after initialization",
+          "citation": [
+            58,
+            60
+          ]
+        },
+        {
+          "input_field": "PENDING-AUTH-DETAILS",
+          "output_field": "CHILD-SEG-REC",
+          "transformation_description": "Direct move of detail record to child segment record",
+          "citation": [
+            100
+          ]
+        }
+      ]
+    },
+    "copybooks_used": [],
+    "paragraphs": [
+      {
+        "paragraph_name": "DBUNLDGS",
+        "summary": null,
+        "purpose": "This paragraph represents the program entry point labeled at the GOBACK statement, serving as the final termination point after all processing. It consumes no inputs directly as it is the exit. It produces program termination via GOBACK. No business logic or decisions are implemented here. No error handling is performed. No other paragraphs or programs are called from here; it is reached after MAIN-PARA completion. The role is purely to end the program execution cleanly.",
+        "called_by": [
+          "MAIN-PARA"
+        ],
+        "calls": [],
+        "citation": [
+          18,
+          18
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "MAIN-PARA",
+        "summary": null,
+        "purpose": "This is the primary orchestration paragraph that controls the overall program flow as the main entry after PROGRAM-ID. It consumes IMS PCBs (PAUTBPCB, PASFLPCB, PADFLPCB) passed via ENTRY USING for database access. It produces initialization of dates and counters, processed GSAM inserts for all auth summaries and details, and updated counters like WS-NO-SUMRY-READ. Business logic implements a loop structure: initialize once, then loop reading root segments until WS-END-OF-ROOT-SEG='Y', processing each root and its children, then close files. No explicit error handling here; delegates to subordinates which abend on errors. It calls 1000-INITIALIZE for setup including date acceptance and displays, 2000-FIND-NEXT-AUTH-SUMMARY in loop for root processing (which handles children), and 4000-FILE-CLOSE for termination.",
+        "called_by": [],
+        "calls": [
+          "1000-INITIALIZE",
+          "2000-FIND-NEXT-AUTH-SUMMARY",
+          "4000-FILE-CLOSE"
+        ],
+        "citation": [
+          3,
+          18
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "1000-INITIALIZE",
+        "summary": null,
+        "purpose": "This paragraph handles program initialization including capturing current date and displaying startup information. It consumes system date via ACCEPT FROM DATE/DAY. It produces populated CURRENT-DATE, CURRENT-YYDDD, and console output messages with date. No complex business logic; simple setup with displays for logging start. No error handling as no I/O risks. No calls to other paragraphs. Role is preparatory housekeeping before main processing loop, ensuring audit trail via displays.",
+        "called_by": [
+          "MAIN-PARA"
+        ],
+        "calls": [],
+        "citation": [
+          20,
+          33
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "1000-EXIT",
+        "summary": null,
+        "purpose": "This is a simple exit paragraph that returns control to the caller. It consumes nothing. Produces no data changes. No logic, decisions, or error handling. No calls. Sole purpose is to cleanly exit the 1000-INITIALIZE routine via EXIT statement.",
+        "called_by": [
+          "1000-INITIALIZE"
+        ],
+        "calls": [],
+        "citation": [
+          34,
+          35
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "2000-FIND-NEXT-AUTH-SUMMARY",
+        "summary": null,
+        "purpose": "This complex paragraph reads the next authorization summary (root) segment from IMS via CBLTDLI GN call on PAUTBPCB. It consumes prior ROOT-SEG-KEY (initialized), IMS database via PCB, and loop control flag WS-END-OF-ROOT-SEG. It produces updated counters (WS-NO-SUMRY-READ, WS-AUTH-SMRY-PROC-CNT), prepared ROOT-SEG-KEY and CHILD-SEG-REC, inserted parent GSAM seg, processed child segs, and sets end flag if 'GB'. Business logic: initialize status, perform GN, if spaces: increment counters, move to output rec (commented write), set key from PA-ACCT-ID if numeric, insert parent, loop children until end; if 'GB' set root end; else error display and abend. Error handling: abend on non-spaces/'GB' status with display of status/keyfb (line 74). Calls CBLTDLI (43), 3100-INSERT-PARENT-SEG-GSAM for parent insert (64), 3000-FIND-NEXT-AUTH-DTL for child loop (66), 9999-ABEND on error.",
+        "called_by": [
+          "MAIN-PARA"
+        ],
+        "calls": [
+          "3100-INSERT-PARENT-SEG-GSAM",
+          "3000-FIND-NEXT-AUTH-DTL",
+          "9999-ABEND"
+        ],
+        "citation": [
+          37,
+          80
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "2000-EXIT",
+        "summary": null,
+        "purpose": "Simple exit paragraph returning control to caller after root summary processing. Consumes nothing specific. No outputs, logic, errors, or calls. Role: clean exit from 2000 routine.",
+        "called_by": [
+          "2000-FIND-NEXT-AUTH-SUMMARY"
+        ],
+        "calls": [],
+        "citation": [
+          80,
+          81
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "3000-FIND-NEXT-AUTH-DTL",
+        "summary": null,
+        "purpose": "This paragraph reads the next authorization detail (child) segment from IMS via CBLTDLI GNP on PAUTBPCB. Consumes CHILD-UNQUAL-SSA and PCB status from prior calls. Produces updated counters, CHILD-SEG-REC from move, inserted child GSAM seg (via PERFORM), and sets WS-END-OF-CHILD-SEG on 'GE'. Business logic: GNP call, if spaces: set more flag, increment counters, move to child rec, perform child insert; if 'GE' set end flag and display; else error display/abend. Error handling: abend on invalid status (110), initializes status post-check. Calls CBLTDLI GNP (87), 3200-INSERT-CHILD-SEG-GSAM (102), 9999-ABEND on error. Role: nested loop processor for children under each root.",
+        "called_by": [
+          "2000-FIND-NEXT-AUTH-SUMMARY"
+        ],
+        "calls": [
+          "3200-INSERT-CHILD-SEG-GSAM",
+          "9999-ABEND"
+        ],
+        "citation": [
+          83,
+          116
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "3000-EXIT",
+        "summary": null,
+        "purpose": "Simple exit for child detail routine. No inputs/outputs/logic/errors/calls. Clean EXIT.",
+        "called_by": [
+          "3000-FIND-NEXT-AUTH-DTL"
+        ],
+        "calls": [],
+        "citation": [
+          117,
+          118
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "3100-INSERT-PARENT-SEG-GSAM",
+        "summary": null,
+        "purpose": "This paragraph inserts the parent authorization summary segment into GSAM via CBLTDLI ISRT on PASFLPCB. Consumes PENDING-AUTH-SUMMARY prepared upstream. Produces inserted segment in GSAM if success. Business logic: perform ISRT, check status; if not spaces, display error/keyfb and abend. Error handling: abend on failure (131). Calls CBLTDLI (122), 9999-ABEND (134). Role: atomic insert for root seg with status validation.",
+        "called_by": [
+          "2000-FIND-NEXT-AUTH-SUMMARY"
+        ],
+        "calls": [
+          "9999-ABEND"
+        ],
+        "citation": [
+          120,
+          136
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "3100-EXIT",
+        "summary": null,
+        "purpose": "Simple exit for parent insert routine. No inputs/outputs/logic/errors/calls.",
+        "called_by": [
+          "3100-INSERT-PARENT-SEG-GSAM"
+        ],
+        "calls": [],
+        "citation": [
+          137,
+          138
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      }
+    ],
+    "error_handling": [
+      {
+        "condition": "PAUT-PCB-STATUS NOT = SPACES AND NOT 'GB' after GN",
+        "action": "DISPLAY status and PAUT-KEYFB, PERFORM 9999-ABEND",
+        "citation": [
+          74
+        ]
+      },
+      {
+        "condition": "PAUT-PCB-STATUS NOT = SPACES AND NOT 'GE' after GNP",
+        "action": "DISPLAY status and PAUT-KEYFB, PERFORM 9999-ABEND",
+        "citation": [
+          110
+        ]
+      },
+      {
+        "condition": "PASFL-PCB-STATUS NOT = SPACES after ISRT",
+        "action": "DISPLAY status and PASFL-KEYFB, PERFORM 9999-ABEND",
+        "citation": [
+          131
+        ]
+      },
+      {
+        "condition": "PAUT-PCB-STATUS NOT = '00' (inferred file status checks per hints)",
+        "action": "ABEND (specific lines map to above)",
+        "citation": [
+          74,
+          110,
+          131
+        ]
+      }
+    ],
+    "sql_operations": [],
+    "cics_operations": [],
+    "open_questions": [
+      {
+        "question": "Full code for 3200-INSERT-CHILD-SEG-GSAM, 4000-FILE-CLOSE, 9999-ABEND not provided",
+        "context": "Source snippet truncated after line 139; cannot detail logic/transforms/errors",
+        "suggestion": "Provide complete source file"
+      },
+      {
+        "question": "Copybook definitions for PAUTBPCB, PASFLPCB, PADFLPCB, PENDING-AUTH-SUMMARY etc.",
+        "context": "No COPY statements visible; field details like PAUT-SEG-LEVEL inferred but unknown",
+        "suggestion": "Include copybook sources or WORKING-STORAGE snippet"
+      },
+      {
+        "question": "Usage of PADFLPCB PCB",
+        "context": "Passed at ENTRY (line 6) but no calls visible in snippet",
+        "suggestion": "Likely used in 3200 for child inserts; confirm with full code"
+      },
+      {
+        "question": "OPFIL1-REC and OPFIL2-REC file definitions and actual WRITE usage",
+        "context": "Moves performed but WRITE commented (63,101); are they active?",
+        "suggestion": "Check FD definitions and runtime"
+      },
+      {
+        "question": "What FUNC-GN, FUNC-GNP, FUNC-ISRT, ROOT-UNQUAL-SSA, CHILD-UNQUAL-SSA contain",
+        "context": "Working storage variables not shown",
+        "suggestion": "Include full WORKING-STORAGE section"
+      }
+    ],
+    "resolved_questions": [],
+    "dead_code": [],
+    "call_semantics": [],
+    "flow_diagram": null
+  },
+  "saved_at": "2026-02-23T20:50:53.192766"
+}

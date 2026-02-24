@@ -4,13 +4,13 @@
     "file_name": "jcl/LOADPADB.JCL",
     "file_type": "JCL",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-10T17:21:07.633684",
+    "analyzed_at": "2026-02-24T03:59:14.540061",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This JCL job executes an IMS program (DFSRRC00) to load the PAUTDB database using a BMP (Batch Message Processing) region. It specifies the program, PSB, and necessary datasets for the IMS environment and input files.",
-    "business_context": "Database maintenance and loading.",
+    "summary": "This JCL defines a batch job named LOADPADB that executes the IMS utility program DFSRRC00 in BMP mode to load data into the PAUTDB IMS database. It reads root and child segment data from two sequential input files and uses the PSB named PSBPAUTB with DBD implied by PAUDBLOD parameter. Supporting libraries for IMS and application load modules are provided via DD statements.",
+    "business_context": "Supports loading demonstration data into the PAUTDB IMS database for the AWS M2 Card Demo application",
     "program_type": "BATCH",
     "citations": [
       26,
@@ -21,85 +21,68 @@
   },
   "inputs": [
     {
-      "name": "OEMA.IMS.IMSP.SDFSRESL",
+      "name": "INFILE1",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS RESLIB library.",
-      "copybook": null,
-      "citation": [
-        28,
-        31
-      ]
-    },
-    {
-      "name": "OEMA.IMS.IMSP.SDFSRESL.V151",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS RESLIB library version 151.",
-      "copybook": null,
-      "citation": [
-        29
-      ]
-    },
-    {
-      "name": "AWS.M2.CARDDEMO.LOADLIB",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "Application load library.",
-      "copybook": null,
-      "citation": [
-        30
-      ]
-    },
-    {
-      "name": "OEM.IMS.IMSP.PSBLIB",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS PSB library.",
-      "copybook": null,
-      "citation": [
-        33
-      ]
-    },
-    {
-      "name": "OEM.IMS.IMSP.DBDLIB",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS DBD library.",
-      "copybook": null,
-      "citation": [
-        34
-      ]
-    },
-    {
-      "name": "AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "Input file for the PAUTDB root segment.",
+      "description": "Input file containing root segment data for PAUTDB database load",
       "copybook": null,
       "citation": [
         36
       ]
     },
     {
-      "name": "AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO",
+      "name": "INFILE2",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "Input file for the PAUTDB child segment.",
+      "description": "Input file containing child segment data for PAUTDB database load",
       "copybook": null,
       "citation": [
         38
       ]
     },
     {
-      "name": "OEMPP.IMS.V15R01MB.PROCLIB(DFSVSMDB)",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS VSAM definition.",
+      "name": "IMS",
+      "io_type": "OTHER",
+      "description": "IMS control libraries including PSBLIB and DBDLIB for PSB and database definitions",
       "copybook": null,
       "citation": [
-        44,
-        45
+        33,
+        34
+      ]
+    },
+    {
+      "name": "STEPLIB",
+      "io_type": "OTHER",
+      "description": "Load libraries containing IMS RESLIBs and application load module AWS.M2.CARDDEMO.LOADLIB",
+      "copybook": null,
+      "citation": [
+        28,
+        29,
+        30
       ]
     }
   ],
   "outputs": [
     {
+      "name": "PAUTHDB",
+      "io_type": "IMS_SEGMENT",
+      "description": "Target IMS database for loading (dynamic allocation, explicit DD commented out)",
+      "copybook": null,
+      "citation": [
+        40
+      ]
+    },
+    {
+      "name": "PAUTHDBX",
+      "io_type": "IMS_SEGMENT",
+      "description": "Secondary IMS database or index for loading (dynamic allocation, explicit DD commented out)",
+      "copybook": null,
+      "citation": [
+        41
+      ]
+    },
+    {
       "name": "SYSPRINT",
       "io_type": "REPORT",
-      "description": "System print output.",
+      "description": "Standard output report from DFSRRC00 execution",
       "copybook": null,
       "citation": [
         48
@@ -108,19 +91,10 @@
     {
       "name": "SYSUDUMP",
       "io_type": "REPORT",
-      "description": "System dump output.",
+      "description": "System dump output for abends",
       "copybook": null,
       "citation": [
         49
-      ]
-    },
-    {
-      "name": "IMSERR",
-      "io_type": "REPORT",
-      "description": "IMS error output.",
-      "copybook": null,
-      "citation": [
-        50
       ]
     }
   ],
@@ -128,7 +102,7 @@
     {
       "program_name": "DFSRRC00",
       "call_type": "STATIC_CALL",
-      "purpose": "IMS program execution.",
+      "purpose": "IMS database load utility executed to populate PAUTDB with segment data from inputs",
       "parameters": [
         "BMP",
         "PAUDBLOD",
@@ -146,43 +120,108 @@
   "data_flow": {
     "reads_from": [
       {
-        "source": "AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO",
+        "source": "INFILE1",
         "fields_used": [],
         "citation": [
           36
         ]
       },
       {
-        "source": "AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO",
+        "source": "INFILE2",
         "fields_used": [],
         "citation": [
           38
         ]
       }
     ],
-    "writes_to": [],
+    "writes_to": [
+      {
+        "destination": "PAUTHDB",
+        "fields_written": [],
+        "citation": [
+          40
+        ]
+      }
+    ],
     "transforms": []
   },
   "copybooks_used": [],
   "paragraphs": [
     {
-      "paragraph_name": "LOADPADB",
+      "paragraph_name": "STEP01",
       "summary": null,
-      "purpose": "This JCL defines a job named LOADPADB to load the PAUTDB database using an IMS BMP region. The job specifies job characteristics such as class, message class, region size, notification, and time limit. It then executes the IMS program DFSRRC00 with parameters indicating a BMP region, the PAUDBLOD program, and the PSBPAUTB PSB. The STEPLIB DD statements define the libraries required for the IMS execution, including the IMS RESLIB and the application load library. The IMS DD statement specifies the PSB and DBD libraries. INFILE1 and INFILE2 define the input datasets for the PAUTDB root and child segments, respectively. DFSVSAMP defines the VSAM buffer pool parameters. Finally, SYSPRINT, SYSUDUMP, and IMSERR define the system print, system dump, and IMS error output datasets, respectively. The job's primary purpose is to load the PAUTDB database using the specified IMS configuration and input data. It consumes the input datasets defined by INFILE1 and INFILE2 and produces output reports defined by SYSPRINT, SYSUDUMP, and IMSERR. No specific business logic is implemented within the JCL itself, as it primarily defines the execution environment for the IMS program.",
+      "purpose": "This step is the sole executable step in the LOADPADB job and serves as the primary orchestration point for running the IMS database load utility. It statically calls the DFSRRC00 program with PARM parameters specifying BMP region controller mode, the PAUDBLOD database load function, and PSBPAUTB for segment processing (lines 26-27). Inputs consumed include root segments from INFILE1 (line 36), child segments from INFILE2 (line 38), IMS control libraries from IMS DD (lines 33-34), and STEPLIB datasets for RESLIB and application modules (lines 28-30). Outputs produced include loaded data into the dynamically allocated PAUTHDB and PAUTHDBX IMS databases (commented DDs at lines 40-41), along with report output to SYSPRINT (line 48), dumps to SYSUDUMP (line 49), and error logs to IMSERR (line 50). No explicit business logic or conditional decisions are implemented in the JCL itself, as processing logic resides in DFSRRC00; the JCL assumes standard IMS load behavior for segment insertion based on input file formats. Error handling relies on z/OS job return codes from DFSRRC00, with no JCL-specific COND or IF/THEN steps; abends would produce SYSUDUMP output. DUMMY DDs are provided for IMSLOGR (line 46), IEFRDER (line 47), and others to satisfy utility requirements without actual I/O. The DFSVSAMP DD (lines 44-45) provides a sample VSAM definition member for IMS processing support. Overall, this step populates the PAUTDB IMS database with demo data for the Card Demo application, controlled entirely by the called program's parameters and input files.",
       "called_by": [],
-      "calls": [],
-      "citation": [
-        1,
-        52
+      "calls": [
+        "DFSRRC00"
       ],
-      "outgoing_calls": [],
+      "citation": [
+        26,
+        51
+      ],
+      "outgoing_calls": [
+        {
+          "target": "DFSRRC00",
+          "call_type": "executes",
+          "line": 26
+        },
+        {
+          "target": "OEMA.IMS.IMSP.SDFSRESL",
+          "call_type": "references",
+          "line": 28
+        },
+        {
+          "target": "OEMA.IMS.IMSP.SDFSRESL.V151",
+          "call_type": "references",
+          "line": 29
+        },
+        {
+          "target": "AWS.M2.CARDDEMO.LOADLIB",
+          "call_type": "references",
+          "line": 30
+        },
+        {
+          "target": "OEMA.IMS.IMSP.SDFSRESL",
+          "call_type": "references",
+          "line": 31
+        },
+        {
+          "target": "OEM.IMS.IMSP.PSBLIB",
+          "call_type": "references",
+          "line": 33
+        },
+        {
+          "target": "OEM.IMS.IMSP.DBDLIB",
+          "call_type": "references",
+          "line": 34
+        },
+        {
+          "target": "AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO",
+          "call_type": "references",
+          "line": 36
+        },
+        {
+          "target": "AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO",
+          "call_type": "references",
+          "line": 38
+        }
+      ],
       "incoming_calls": [],
       "is_dead_code": false,
       "dead_code_reason": null,
       "metadata": null
     }
   ],
-  "error_handling": [],
+  "error_handling": [
+    {
+      "condition": "DFSRRC00 abend or non-zero RC",
+      "action": "Standard z/OS job step failure with SYSUDUMP and IMSERR output",
+      "citation": [
+        49,
+        50
+      ]
+    }
+  ],
   "sql_operations": [],
   "cics_operations": [],
   "open_questions": [],

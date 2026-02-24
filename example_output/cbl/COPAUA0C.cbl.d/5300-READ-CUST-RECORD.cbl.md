@@ -43,6 +43,4 @@
            END-EVALUATE                                                         
            .                                                                    
       *                                                                         
-       5300-EXIT.                                                               
-           EXIT.                                                                
 ```

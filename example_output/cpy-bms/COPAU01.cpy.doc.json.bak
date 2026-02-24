@@ -1,17 +1,17 @@
 {
   "header": {
     "program_id": "COPAU01",
-    "file_name": "COPAU01.cpy",
+    "file_name": "cpy-bms/COPAU01.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-10T17:20:55.005205",
+    "analyzed_at": "2026-02-24T03:58:48.947516",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the input and output data structures, COPAU1AI and COPAU1AO, used for CICS BMS map processing. It includes fields for transaction details, titles, dates, times, card numbers, authorization details, merchant information, and error messages. The copybook uses filler fields and redefines to structure the data for screen display.",
-    "business_context": "UNKNOWN",
-    "program_type": "BMS",
+    "summary": "This COBOL copybook defines the symbolic map structures COPAU1AI (input) and COPAU1AO (output redefines COPAU1AI) for the CICS BMS map COPAU01. It provides data areas, length fields (e.g., TRNNAMEL COMP PIC S9(4)), format/attribute fields (e.g., TRNNAMEF/A), and input/output data fields (e.g., TRNNAMEI, TRNNAMEO) for screen elements related to payment authorization. Fields cover transaction name, titles, dates/times, program name, card number, auth details (date/time/response/reason/code/amount), POS mode, source, MCC, expiration, type, txn ID, method, fraud, merchant info, and error message.",
+    "business_context": "CICS online screen for credit card authorization processing, displaying merchant/transaction details and capturing card/auth response data.",
+    "program_type": "ONLINE_CICS",
     "citations": [
       17,
       181
@@ -21,7 +21,7 @@
     {
       "name": "COPAU1AI",
       "io_type": "CICS_MAP",
-      "description": "Input data structure for the CICS BMS map, containing fields to receive data from the screen.",
+      "description": "Symbolic input map structure receiving user-entered data from COPAU01 BMS screen, including fields like CARDNUMI, AUTHRSPI, ERRMSGI",
       "copybook": null,
       "citation": [
         17
@@ -32,7 +32,7 @@
     {
       "name": "COPAU1AO",
       "io_type": "CICS_MAP",
-      "description": "Output data structure for the CICS BMS map, containing fields to send data to the screen.",
+      "description": "Symbolic output map structure sending display data and attributes to COPAU01 BMS screen, with per-character C/P/H/V/O controls (e.g., TRNNAMEO, CARDNUMO)",
       "copybook": null,
       "citation": [
         181
@@ -45,7 +45,52 @@
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [],
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Transaction name input field TRNNAMEI accepts exactly 4 alphanumeric characters",
+      "logic_summary": "Defined as PIC X(4) in input structure",
+      "conditions": [
+        "Data received via RECEIVE MAP into COPAU1AI"
+      ],
+      "citation": [
+        24
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Card number input field CARDNUMI accepts exactly 16 alphanumeric characters for credit/debit card",
+      "logic_summary": "Defined as PIC X(16) in input structure",
+      "conditions": [
+        "Data received via RECEIVE MAP into COPAU1AI"
+      ],
+      "citation": [
+        60
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "Authorization response input field AUTHRSPI accepts 1 character response code",
+      "logic_summary": "Defined as PIC X(1) in input structure",
+      "conditions": [
+        "Data received via RECEIVE MAP into COPAU1AI"
+      ],
+      "citation": [
+        78
+      ]
+    },
+    {
+      "rule_id": "BR004",
+      "description": "Error message output field ERRMSGO supports up to 78 characters for screen display",
+      "logic_summary": "Defined as PIC X(78) in output structure",
+      "conditions": [
+        "Data populated prior to SEND MAP from COPAU1AO"
+      ],
+      "citation": [
+        344
+      ]
+    }
+  ],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
@@ -66,7 +111,7 @@
       "outgoing_calls": [],
       "incoming_calls": [
         {
-          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
           "function": "COPAUS1C",
           "line": 122,
           "call_type": "includes"
@@ -98,13 +143,7 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
-    {
-      "question": "What is the specific CICS application that uses this BMS map?",
-      "context": "The copybook defines the data structures for a BMS map, but the application using it is not specified.",
-      "suggestion": "Review the programs that include this copybook to identify the CICS application."
-    }
-  ],
+  "open_questions": [],
   "resolved_questions": [],
   "dead_code": [
     {

@@ -1,32 +1,37 @@
 ```cobol
-      ******************************************************************
-      * Program     : COPAUA0C.CBL
-      * Application : CardDemo - Authorization Module
-      * Type        : CICS COBOL IMS MQ Program
-      * Function    : Card Authorization Decision Program
-      ******************************************************************
-      * Copyright Amazon.com, Inc. or its affiliates.
-      * All Rights Reserved.
-      *
-      * Licensed under the Apache License, Version 2.0 (the "License").
-      * You may not use this file except in compliance with the License.
-      * You may obtain a copy of the License at
-      *
-      *    http://www.apache.org/licenses/LICENSE-2.0
-      *
-      * Unless required by applicable law or agreed to in writing,
-      * software distributed under the License is distributed on an
-      * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
-      * either express or implied. See the License for the specific
-      * language governing permissions and limitations under the License
-      ******************************************************************
-       IDENTIFICATION DIVISION.
-       PROGRAM-ID. COPAUA0C.                                                    
-       AUTHOR.     SOUMA GHOSH.                                                 
+       2100-EXTRACT-REQUEST-MSG.                                                
+      * ------------------------------------------------------------- *         
+      *                                                                         
+           UNSTRING W01-GET-BUFFER(1:W01-DATALEN)                               
+                    DELIMITED BY ','                                            
+                    INTO PA-RQ-AUTH-DATE                                        
+                         PA-RQ-AUTH-TIME                                        
+                         PA-RQ-CARD-NUM                                         
+                         PA-RQ-AUTH-TYPE                                        
+                         PA-RQ-CARD-EXPIRY-DATE                                 
+                         PA-RQ-MESSAGE-TYPE                                     
+                         PA-RQ-MESSAGE-SOURCE                                   
+                         PA-RQ-PROCESSING-CODE                                  
+                         WS-TRANSACTION-AMT-AN                                  
+                         PA-RQ-MERCHANT-CATAGORY-CODE                           
+                         PA-RQ-ACQR-COUNTRY-CODE                                
+                         PA-RQ-POS-ENTRY-MODE                                   
+                         PA-RQ-MERCHANT-ID                                      
+                         PA-RQ-MERCHANT-NAME                                    
+                         PA-RQ-MERCHANT-CITY                                    
+                         PA-RQ-MERCHANT-STATE                                   
+                         PA-RQ-MERCHANT-ZIP                                     
+                         PA-RQ-TRANSACTION-ID                                   
+           END-UNSTRING                                                         
                                                                                 
-       ENVIRONMENT DIVISION.                                                    
-       CONFIGURATION SECTION.                                                   
+           COMPUTE PA-RQ-TRANSACTION-AMT =                                      
+                               FUNCTION NUMVAL(WS-TRANSACTION-AMT-AN)           
                                                                                 
-       DATA DIVISION.                                                           
-       WORKING-STORAGE SECTION.                                                 
+           MOVE PA-RQ-TRANSACTION-AMT  TO WS-TRANSACTION-AMT                    
+           .                                                                    
+      *                                                                         
+       2100-EXIT.                                                               
+           EXIT.                                                                
+      *                                                                         
+      * ------------------------------------------------------------- *         
 ```

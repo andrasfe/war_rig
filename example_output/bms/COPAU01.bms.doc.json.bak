@@ -1,32 +1,118 @@
 {
   "header": {
     "program_id": "COPAU01",
-    "file_name": "COPAU01.bms",
+    "file_name": "bms/COPAU01.bms",
     "file_type": "BMS",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-10T17:20:05.486395",
+    "analyzed_at": "2026-02-24T03:58:34.647405",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This BMS map defines the screen layout for displaying pending authorization details in the CardDemo application. It includes fields for transaction information, card details, authorization specifics, and merchant information, designed for CICS terminal display.",
-    "business_context": "The screen is used to view details of pending card authorizations, likely as part of a fraud detection or transaction monitoring system.",
+    "summary": "This BMS file defines the COPAU01 mapset and COPAU1A map for a CICS screen titled 'Pending Authorization Details Screen' (CardDemo). It lays out fields for displaying credit card transaction authorization details including card number, auth date/time/response/code/amount/type/source, merchant details, status flags, and function keys. The map operates in INOUT mode with AUTO storage and supports color-coded display for emphasis on statuses and errors.",
+    "business_context": "Serves credit card authorization review process in a fraud detection or pending auth inquiry transaction within a CICS online banking or payment system.",
     "program_type": "ONLINE_CICS",
     "citations": [
       2,
+      19,
+      22,
       26,
-      293
+      79,
+      292
     ]
   },
-  "inputs": [],
-  "outputs": [],
+  "inputs": [
+    {
+      "name": "COPAU1A",
+      "io_type": "CICS_MAP",
+      "description": "Symbolic map receives data from CICS program to populate screen fields like CARDNUM, AUTHDT, MERNAME for display and user-modified fields",
+      "copybook": null,
+      "citation": [
+        26,
+        84,
+        94,
+        239
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "COPAU1A",
+      "io_type": "CICS_MAP",
+      "description": "Physical map outputs formatted 24x80 screen with labeled fields, colors, and initial values for SEND MAP in CICS",
+      "copybook": null,
+      "citation": [
+        27,
+        292
+      ]
+    },
+    {
+      "name": "ERRMSG",
+      "io_type": "CICS_MAP",
+      "description": "Error message field for displaying validation or processing errors",
+      "copybook": null,
+      "citation": [
+        284
+      ]
+    }
+  ],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [],
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Critical authorization status fields (Match Status AUTHMTC and Fraud Status AUTHFRD) are highlighted in RED to draw attention to potential fraud or mismatch issues.",
+      "logic_summary": "Fields defined with COLOR=RED for visual alerting.",
+      "conditions": [
+        "Display of match or fraud status"
+      ],
+      "citation": [
+        215,
+        225
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Error messages are prominently displayed in bright red with FSET attribute to ensure user notices issues.",
+      "logic_summary": "ERRMSG field uses ATTRB=(ASKIP,BRT,FSET), COLOR=RED.",
+      "conditions": [
+        "Error condition triggered"
+      ],
+      "citation": [
+        284
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "Screen labels use consistent color scheme: TURQUOISE for labels, BLUE/PINK for data fields, YELLOW for titles, NEUTRAL for section headers.",
+      "logic_summary": "Multiple DFHMDF definitions specify COLOR attributes for readability and branding.",
+      "conditions": [
+        "All static text labels"
+      ],
+      "citation": [
+        30,
+        39,
+        80,
+        83,
+        229
+      ]
+    },
+    {
+      "rule_id": "BR004",
+      "description": "Function key instructions are provided at screen bottom: F3=Back, F5=Mark/Remove Fraud, F8=Next Auth.",
+      "logic_summary": "Static INITIAL text in bottom row.",
+      "conditions": [
+        "User navigation and actions"
+      ],
+      "citation": [
+        292
+      ]
+    }
+  ],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
@@ -35,453 +121,61 @@
   "copybooks_used": [],
   "paragraphs": [
     {
-      "paragraph_name": "COPAU1A DFHMDI",
+      "paragraph_name": "COPAU01",
       "summary": null,
-      "purpose": "This DFHMDI macro defines the map's dimensions and placement on the screen. It specifies that the map will start at column 1 and line 1, occupying a size of 24 lines by 80 columns, which represents a standard terminal screen size. This definition acts as a container for all the individual field definitions (DFHMDFs) that make up the screen layout. The SIZE parameter dictates the overall area the map will cover on the display. The COLUMN and LINE parameters determine the map's top-left corner position. The map's attributes, such as the ability to trigger an alarm (ALARM), release the keyboard (FREEKB), use extended attributes (EXTATT=YES), and other control options, are defined in the DFHMSD macro. This paragraph essentially sets the stage for the screen's visual presentation and prepares the CICS environment for displaying the authorization details.",
+      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        19,
+        19
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": true,
+      "dead_code_reason": "Artifact 'COPAU01' (map) is never referenced by any other artifact in the dependency graph",
+      "metadata": null
+    },
+    {
+      "paragraph_name": "COPAU1A",
+      "summary": null,
+      "purpose": "[Citadel] Paragraph identified by static analysis",
       "called_by": [],
       "calls": [],
       "citation": [
         26,
-        28
+        26
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "TRNNAME DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the transaction name or code. It is positioned at line 1, column 7 (POS=(1,7)) and has a length of 4 characters (LENGTH=4). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. This field is intended to display a static label or code identifying the type of transaction being viewed on the screen. It consumes no input data; instead, it displays a pre-defined value. The output of this paragraph is the display of the transaction name on the screen. It does not call any other paragraphs or programs. The business logic is simply to display a static piece of information.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        34,
-        37
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "TITLE01 DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for a title or heading on the screen. It is positioned at line 1, column 21 (POS=(1,21)) and has a length of 40 characters (LENGTH=40). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=YELLOW, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in yellow. This field is intended to display a descriptive title for the screen or section. It consumes no input data; instead, it displays a pre-defined value. The output of this paragraph is the display of the title on the screen. It does not call any other paragraphs or programs. The business logic is simply to display a static piece of information.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        38,
-        41
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "CURDATE DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the current date. It is positioned at line 1, column 71 (POS=(1,71)) and has a length of 8 characters (LENGTH=8). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to 'mm/dd/yy', which serves as a placeholder or default value when the screen is initially displayed. This field is intended to display the current date. It consumes no input data directly from the user, but it would likely be populated by the application program with the system date. The output of this paragraph is the display of the current date on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the current date, which is a static piece of information that is dynamically populated by the application.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        47,
-        51
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "PGMNAME DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the program name. It is positioned at line 2, column 7 (POS=(2,7)) and has a length of 8 characters (LENGTH=8). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. This field is intended to display the name of the program associated with the screen. It consumes no input data directly from the user, but it would likely be populated by the application program with the program's identifier. The output of this paragraph is the display of the program name on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the program name, which is a static piece of information that is dynamically populated by the application.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        57,
-        60
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "CURTIME DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the current time. It is positioned at line 2, column 71 (POS=(2,71)) and has a length of 8 characters (LENGTH=8). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to 'hh:mm:ss', which serves as a placeholder or default value when the screen is initially displayed. This field is intended to display the current time. It consumes no input data directly from the user, but it would likely be populated by the application program with the system time. The output of this paragraph is the display of the current time on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the current time, which is a static piece of information that is dynamically populated by the application.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        70,
-        74
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "CARDNUM DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the card number. It is positioned at line 7, column 11 (POS=(7,11)) and has a length of 16 characters (LENGTH=16). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=PINK, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in pink. This field is intended to display the card number associated with the authorization. It consumes no input data directly from the user, but it would likely be populated by the application program with the card number retrieved from a database or transaction record. The output of this paragraph is the display of the card number on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the card number, which is a static piece of information that is dynamically populated by the application.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        85,
-        88
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "AUTHDT DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the authorization date. It is positioned at line 7, column 43 (POS=(7,43)) and has a length of 10 characters (LENGTH=10). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=PINK, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in pink. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the date when the authorization was processed. It consumes no input data directly from the user, but it would likely be populated by the application program with the authorization date retrieved from a database or transaction record. The output of this paragraph is the display of the authorization date on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the authorization date, which is a static piece of information that is dynamically populated by the application.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        94,
-        98
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "AUTHTM DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the authorization time. It is positioned at line 7, column 68 (POS=(7,68)) and has a length of 10 characters (LENGTH=10). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=PINK, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in pink. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the time when the authorization was processed. It consumes no input data directly from the user, but it would likely be populated by the application program with the authorization time retrieved from a database or transaction record. The output of this paragraph is the display of the authorization time on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the authorization time, which is a static piece of information that is dynamically populated by the application.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        104,
-        108
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "AUTHRSP DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the authorization response code. It is positioned at line 9, column 14 (POS=(9,14)) and has a length of 1 character (LENGTH=1). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=PINK, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in pink. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the authorization response code. It consumes no input data directly from the user, but it would likely be populated by the application program with the authorization response code retrieved from a database or transaction record. The output of this paragraph is the display of the authorization response code on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the authorization response code, which is a static piece of information that is dynamically populated by the application.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        114,
-        118
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "AUTHRSN DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the authorization response reason. It is positioned at line 9, column 32 (POS=(9,32)) and has a length of 20 characters (LENGTH=20). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the reason for the authorization response. It consumes no input data directly from the user, but it would likely be populated by the application program with the authorization response reason retrieved from a database or transaction record. The output of this paragraph is the display of the authorization response reason on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the authorization response reason, which is a static piece of information that is dynamically populated by the application.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        124,
-        128
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "AUTHCD DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the authorization code. It is positioned at line 9, column 68 (POS=(9,68)) and has a length of 6 characters (LENGTH=6). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the authorization code. It consumes no input data directly from the user, but it would likely be populated by the application program with the authorization code retrieved from a database or transaction record. The output of this paragraph is the display of the authorization code on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the authorization code, which is a static piece of information that is dynamically populated by the application.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        134,
-        138
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "AUTHAMT DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the authorization amount. It is positioned at line 11, column 11 (POS=(11,11)) and has a length of 12 characters (LENGTH=12). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the amount authorized for the transaction. It consumes no input data directly from the user, but it would likely be populated by the application program with the authorization amount retrieved from a database or transaction record. The output of this paragraph is the display of the authorization amount on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the authorization amount, which is a static piece of information that is dynamically populated by the application.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        144,
-        148
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "POSEMD DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the POS (Point of Sale) entry mode. It is positioned at line 11, column 46 (POS=(11,46)) and has a length of 4 characters (LENGTH=4). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the method used to enter the transaction at the point of sale. It consumes no input data directly from the user, but it would likely be populated by the application program with the POS entry mode retrieved from a database or transaction record. The output of this paragraph is the display of the POS entry mode on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the POS entry mode, which is a static piece of information that is dynamically populated by the application.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        154,
-        158
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "AUTHSRC DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the authorization source. It is positioned at line 11, column 68 (POS=(11,68)) and has a length of 10 characters (LENGTH=10). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the source of the authorization request. It consumes no input data directly from the user, but it would likely be populated by the application program with the authorization source retrieved from a database or transaction record. The output of this paragraph is the display of the authorization source on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the authorization source, which is a static piece of information that is dynamically populated by the application.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        164,
-        168
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "MCCCD DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the Merchant Category Code (MCC). It is positioned at line 13, column 13 (POS=(13,13)) and has a length of 4 characters (LENGTH=4). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the MCC code associated with the transaction. It consumes no input data directly from the user, but it would likely be populated by the application program with the MCC code retrieved from a database or transaction record. The output of this paragraph is the display of the MCC code on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the MCC code, which is a static piece of information that is dynamically populated by the application.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        174,
-        178
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "CRDEXP DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the card expiration date. It is positioned at line 13, column 42 (POS=(13,42)) and has a length of 5 characters (LENGTH=5). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the card's expiration date. It consumes no input data directly from the user, but it would likely be populated by the application program with the card expiration date retrieved from a database or transaction record. The output of this paragraph is the display of the card expiration date on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the card expiration date, which is a static piece of information that is dynamically populated by the application.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        184,
-        188
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "AUTHTYP DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the authorization type. It is positioned at line 13, column 64 (POS=(13,64)) and has a length of 14 characters (LENGTH=14). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the type of authorization. It consumes no input data directly from the user, but it would likely be populated by the application program with the authorization type retrieved from a database or transaction record. The output of this paragraph is the display of the authorization type on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the authorization type, which is a static piece of information that is dynamically populated by the application.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        194,
-        198
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "TRNID DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the transaction ID. It is positioned at line 15, column 12 (POS=(15,12)) and has a length of 15 characters (LENGTH=15). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the unique identifier for the transaction. It consumes no input data directly from the user, but it would likely be populated by the application program with the transaction ID retrieved from a database or transaction record. The output of this paragraph is the display of the transaction ID on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the transaction ID, which is a static piece of information that is dynamically populated by the application.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        204,
-        208
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "AUTHMTC DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the match status of the authorization. It is positioned at line 15, column 46 (POS=(15,46)) and has a length of 1 character (LENGTH=1). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=RED, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in red. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display a status indicating whether the authorization matches certain criteria. It consumes no input data directly from the user, but it would likely be populated by the application program with the match status retrieved from a database or transaction record. The output of this paragraph is the display of the match status on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the match status, which is a static piece of information that is dynamically populated by the application.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        214,
-        218
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "AUTHFRD DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the fraud status of the authorization. It is positioned at line 15, column 67 (POS=(15,67)) and has a length of 10 characters (LENGTH=10). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=RED, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in red. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display a status indicating whether the authorization is suspected of being fraudulent. It consumes no input data directly from the user, but it would likely be populated by the application program with the fraud status retrieved from a database or transaction record. The output of this paragraph is the display of the fraud status on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the fraud status, which is a static piece of information that is dynamically populated by the application.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        224,
-        228
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "MERNAME DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the merchant name. It is positioned at line 19, column 9 (POS=(19,9)) and has a length of 25 characters (LENGTH=25). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the name of the merchant associated with the transaction. It consumes no input data directly from the user, but it would likely be populated by the application program with the merchant name retrieved from a database or transaction record. The output of this paragraph is the display of the merchant name on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the merchant name, which is a static piece of information that is dynamically populated by the application.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        239,
-        243
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "MERID DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the merchant ID. It is positioned at line 19, column 55 (POS=(19,55)) and has a length of 15 characters (LENGTH=15). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the unique identifier for the merchant. It consumes no input data directly from the user, but it would likely be populated by the application program with the merchant ID retrieved from a database or transaction record. The output of this paragraph is the display of the merchant ID on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the merchant ID, which is a static piece of information that is dynamically populated by the application.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        249,
-        253
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "MERCITY DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the merchant city. It is positioned at line 21, column 9 (POS=(21,9)) and has a length of 25 characters (LENGTH=25). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the city where the merchant is located. It consumes no input data directly from the user, but it would likely be populated by the application program with the merchant city retrieved from a database or transaction record. The output of this paragraph is the display of the merchant city on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the merchant city, which is a static piece of information that is dynamically populated by the application.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        259,
-        263
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "MERST DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the merchant state. It is positioned at line 21, column 49 (POS=(21,49)) and has a length of 2 characters (LENGTH=2). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the state where the merchant is located. It consumes no input data directly from the user, but it would likely be populated by the application program with the merchant state retrieved from a database or transaction record. The output of this paragraph is the display of the merchant state on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the merchant state, which is a static piece of information that is dynamically populated by the application.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        269,
-        273
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "MERZIP DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for the merchant zip code. It is positioned at line 21, column 61 (POS=(21,61)) and has a length of 10 characters (LENGTH=10). The field is defined with attributes ASKIP (automatic skip), NORM (normal intensity), and COLOR=BLUE, meaning the user cannot input data into this field, it appears in normal intensity, and is displayed in blue. The INITIAL value is set to ' ', indicating an empty or blank field initially. This field is intended to display the zip code of the merchant's location. It consumes no input data directly from the user, but it would likely be populated by the application program with the merchant zip code retrieved from a database or transaction record. The output of this paragraph is the display of the merchant zip code on the screen. It does not call any other paragraphs or programs. The business logic involves displaying the merchant zip code, which is a static piece of information that is dynamically populated by the application.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        279,
-        283
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "ERRMSG DFHMDF",
-      "summary": null,
-      "purpose": "This DFHMDF macro defines a display field for error messages. It is positioned at line 23, column 1 (POS=(23,1)) and has a length of 78 characters (LENGTH=78). The field is defined with attributes ASKIP (automatic skip), BRT (bright), and FSET (field set), and COLOR=RED, meaning the user cannot input data into this field, it appears in bright intensity, the field will be set, and is displayed in red. This field is intended to display error messages to the user. It consumes no input data directly from the user, but it would likely be populated by the application program with error messages based on various error conditions encountered during processing. The output of this paragraph is the display of the error message on the screen. It does not call any other paragraphs or programs. The business logic involves displaying error messages to the user, which is a dynamic piece of information that is populated by the application based on error conditions.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        284,
-        287
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
+      "is_dead_code": true,
+      "dead_code_reason": "Screen/Map 'COPAU1A' is never sent to or received from by any program",
+      "metadata": {
+        "body_chunks": 3
+      }
     }
   ],
-  "error_handling": [],
+  "error_handling": [
+    {
+      "condition": "Application errors or validation failures",
+      "action": "Display message in ERRMSG field highlighted with BRT, FSET, RED color",
+      "citation": [
+        284
+      ]
+    }
+  ],
   "sql_operations": [],
-  "cics_operations": [
-    {
-      "command": "DFHMSD TYPE=FINAL",
-      "resource": "COPAU01",
-      "purpose": "Terminates the map definition, indicating the end of the BMS source.",
-      "citation": 293
-    }
-  ],
+  "cics_operations": [],
   "open_questions": [
     {
-      "question": "What specific program uses this BMS map?",
-      "context": "The BMS map itself doesn't contain information about which program utilizes it.",
-      "suggestion": "Review the CICS application code to identify the program that loads and uses this map."
+      "question": "Which CICS COBOL program(s) use this COPAU01 mapset?",
+      "context": "BMS file defines the map but does not reference calling transactions or programs.",
+      "suggestion": "Search JCL or COBOL sources for 'COPAU01' or 'COPAU1A' in SEND/RECEIVE MAP statements."
+    },
+    {
+      "question": "What are the exact data lengths and formats loaded into fields like AUTHCD, AUTHAMT?",
+      "context": "BMS defines display lengths (e.g., AUTHCD LENGTH=6 line 136) but not validation or source formats.",
+      "suggestion": "Review symbolic map copybook or using program."
     }
   ],
   "resolved_questions": [],

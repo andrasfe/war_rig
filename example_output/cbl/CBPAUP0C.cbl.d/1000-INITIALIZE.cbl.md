@@ -28,4 +28,6 @@
            END-IF
            .
       *
+       1000-EXIT.
+            EXIT.
 ```

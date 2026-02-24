@@ -1,0 +1,611 @@
+{
+  "batch_idx": 0,
+  "total_batches": 2,
+  "template": {
+    "header": {
+      "program_id": "COPAUS1C",
+      "file_name": "cbl/COPAUS1C.cbl",
+      "file_type": "COBOL",
+      "analyzed_by": "WAR_RIG",
+      "analyzed_at": "2026-02-24T03:52:36.254215",
+      "iteration_count": 1,
+      "final_status": null
+    },
+    "purpose": {
+      "summary": "COPAUS1C is a CICS online transaction program that displays detailed authorization records for a selected account and authorization key from an IMS database. It handles user interactions via BMS map COPAU1A, including ENTER to load details, PF5 to toggle/mark fraud status via a linked program, PF8 to navigate to next authorization, and PF3 to return to previous screen. The program populates screen fields with transformed auth data like dates, amounts, response codes, and merchant info, enforcing validations and error messages.",
+      "business_context": "Manages authorization fraud confirmation/removal in a card demo system, allowing review and update of pending authorizations by account.",
+      "program_type": "ONLINE_CICS",
+      "citations": [
+        1,
+        3,
+        11,
+        26,
+        54,
+        76,
+        114,
+        137,
+        218
+      ]
+    },
+    "inputs": [
+      {
+        "name": "COPAU1AI",
+        "io_type": "CICS_MAP",
+        "description": "Input BMS map fields from user screen, including CDEMO-ACCT-ID and CDEMO-CPVD-PAU-SELECTED",
+        "copybook": "COPAU01",
+        "citation": [
+          245
+        ]
+      },
+      {
+        "name": "CARDDEMO-COMMAREA",
+        "io_type": "CICS_COMMAREA",
+        "description": "Communication area carrying account ID, program context, and data from calling program",
+        "copybook": null,
+        "citation": [
+          17
+        ]
+      },
+      {
+        "name": "PA-AUTHORIZATION-SEGMENT",
+        "io_type": "IMS_SEGMENT",
+        "description": "IMS database authorization segment containing details like PA-AUTH-ORIG-DATE, PA-APPROVED-AMT, PA-FRAUD-CONFIRMED",
+        "copybook": null,
+        "citation": [
+          62
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "COPAU1AO",
+        "io_type": "CICS_MAP",
+        "description": "Output BMS map populated with authorization details, header info, and messages for screen display",
+        "copybook": "COPAU01",
+        "citation": [
+          222
+        ]
+      },
+      {
+        "name": "CARDDEMO-COMMAREA",
+        "io_type": "CICS_COMMAREA",
+        "description": "Updated communication area with context like CDEMO-TO-PROGRAM and CDEMO-FROM-TRANID for return or XCTL",
+        "copybook": null,
+        "citation": [
+          50
+        ]
+      },
+      {
+        "name": "WS-FRAUD-DATA",
+        "io_type": "CICS_COMMAREA",
+        "description": "Data passed to fraud update program including WS-FRAUD-AUTH-RECORD and account/cust IDs",
+        "copybook": null,
+        "citation": [
+          96
+        ]
+      }
+    ],
+    "called_programs": [
+      {
+        "program_name": "CDEMO-TO-PROGRAM",
+        "call_type": "CICS_XCTL",
+        "purpose": "Transfer control to previous program/screen with updated commarea",
+        "parameters": [
+          "CARDDEMO-COMMAREA"
+        ],
+        "citation": 214
+      },
+      {
+        "program_name": "WS-PGM-AUTH-FRAUD",
+        "call_type": "CICS_LINK",
+        "purpose": "Link to program that updates fraud status on authorization record",
+        "parameters": [
+          "WS-FRAUD-DATA"
+        ],
+        "citation": 95
+      }
+    ],
+    "calling_context": {
+      "called_by": [],
+      "entry_points": [
+        "WS-CICS-TRANID"
+      ],
+      "linkage_section": [
+        "CARDDEMO-COMMAREA",
+        "DFHCOMMAREA"
+      ]
+    },
+    "business_rules": [
+      {
+        "rule_id": "BR001",
+        "description": "Only read IMS auth record if CDEMO-ACCT-ID is numeric and CDEMO-CPVD-PAU-SELECTED is neither SPACES nor LOW-VALUES",
+        "logic_summary": "Validation check before performing READ-AUTH-RECORD; sets ERR-FLG-ON if invalid",
+        "conditions": [
+          "CDEMO-ACCT-ID IS NUMERIC",
+          "CDEMO-CPVD-PAU-SELECTED NOT = SPACES AND LOW-VALUES"
+        ],
+        "citation": [
+          56,
+          58
+        ]
+      },
+      {
+        "rule_id": "BR002",
+        "description": "Toggle fraud status: if already PA-FRAUD-CONFIRMED, remove it; else confirm it",
+        "logic_summary": "Sets flags WS-REMOVE-FRAUD or WS-REPORT-FRAUD accordingly before linking to fraud update program",
+        "conditions": [
+          "PA-FRAUD-CONFIRMED"
+        ],
+        "citation": [
+          82
+        ]
+      },
+      {
+        "rule_id": "BR003",
+        "description": "Display response code as 'A' (green) if '00', else 'D' (red)",
+        "logic_summary": "Conditional move and color attribute based on PA-AUTH-RESP-CODE",
+        "conditions": [
+          "PA-AUTH-RESP-CODE = '00'"
+        ],
+        "citation": [
+          157
+        ]
+      },
+      {
+        "rule_id": "BR004",
+        "description": "Handle PF keys: ENTER/PF5/PF8/PF3/OTHER with specific processing",
+        "logic_summary": "EVALUATE EIBAID dispatches to appropriate paragraphs",
+        "conditions": [
+          "DFHENTER",
+          "DFHPF3",
+          "DFHPF5",
+          "DFHPF8",
+          "OTHER"
+        ],
+        "citation": [
+          26
+        ]
+      }
+    ],
+    "data_flow": {
+      "reads_from": [
+        {
+          "source": "COPAU1AI",
+          "fields_used": [
+            "CDEMO-ACCT-ID",
+            "CDEMO-CPVD-PAU-SELECTED"
+          ],
+          "citation": [
+            245
+          ]
+        },
+        {
+          "source": "PA-AUTHORIZATION-SEGMENT",
+          "fields_used": [
+            "PA-CARD-NUM",
+            "PA-AUTH-ORIG-DATE",
+            "PA-APPROVED-AMT",
+            "PA-AUTH-RESP-CODE"
+          ],
+          "citation": [
+            140
+          ]
+        },
+        {
+          "source": "CARDDEMO-COMMAREA",
+          "fields_used": [
+            "CDEMO-ACCT-ID",
+            "CDEMO-CPVD-PAU-SELECTED",
+            "CDEMO-PGM-REENTER"
+          ],
+          "citation": [
+            17
+          ]
+        }
+      ],
+      "writes_to": [
+        {
+          "destination": "COPAU1AO",
+          "fields_written": [
+            "CARDNUMO",
+            "AUTHDTO",
+            "AUTHRSPO",
+            "AUTHRSPC",
+            "MERNAMEO"
+          ],
+          "citation": [
+            141
+          ]
+        },
+        {
+          "destination": "WS-FRAUD-DATA",
+          "fields_written": [
+            "WS-FRAUD-AUTH-RECORD",
+            "WS-FRD-ACCT-ID",
+            "WS-FRD-CUST-ID"
+          ],
+          "citation": [
+            90
+          ]
+        }
+      ],
+      "transforms": [
+        {
+          "input_field": "PA-AUTH-ORIG-DATE",
+          "output_field": "AUTHDTO",
+          "transformation_description": "Extracts YY,MM,DD and reformats to MM-DD-YY via WS-CURDATE-MM-DD-YY",
+          "citation": [
+            143
+          ]
+        },
+        {
+          "input_field": "PA-AUTH-ORIG-TIME",
+          "output_field": "AUTHTMO",
+          "transformation_description": "Repacks HH:MM:SS from packed time fields into display format",
+          "citation": [
+            149
+          ]
+        },
+        {
+          "input_field": "PA-AUTH-RESP-CODE",
+          "output_field": "AUTHRSPO",
+          "transformation_description": "'00' -> 'A' with green, else 'D' with red",
+          "citation": [
+            157
+          ]
+        },
+        {
+          "input_field": "PA-AUTH-RESP-REASON",
+          "output_field": "AUTHRSNO",
+          "transformation_description": "Searches WS-DECLINE-REASON-TAB for description, appends with '-' separator",
+          "citation": [
+            165
+          ]
+        },
+        {
+          "input_field": "PA-CARD-EXPIRY-DATE",
+          "output_field": "CRDEXPO",
+          "transformation_description": "Formats YYMM -> YY/MM",
+          "citation": [
+            182
+          ]
+        }
+      ]
+    },
+    "copybooks_used": [
+      {
+        "copybook_name": "COPAU01",
+        "purpose": "Defines BMS mapset COPAU1A with input/output fields like COPAU1AO, COPAU1AI, CARDNUMO",
+        "location": "WORKING_STORAGE",
+        "citation": 226
+      },
+      {
+        "copybook_name": "CARDDEMO",
+        "purpose": "Defines communication area structure CARDDEMO-COMMAREA with fields like CDEMO-ACCT-ID, CDEMO-CPVD-PAU-SELECTED",
+        "location": "LINKAGE",
+        "citation": 12
+      },
+      {
+        "copybook_name": "CCDA",
+        "purpose": "Defines constants like CCDA-TITLE01, CCDA-TITLE02, CCDA-MSG-INVALID-KEY for screen titles and messages",
+        "location": "WORKING_STORAGE",
+        "citation": 42
+      }
+    ],
+    "paragraphs": [
+      {
+        "paragraph_name": "COPAUS1C",
+        "summary": null,
+        "purpose": "COPAUS1C serves as the program entry point paragraph. Static analysis indicates it calls multiple subprograms including COCOM01Y, COPAU01, COTTL01Y, CSDAT01Y, CSMSG01Y, and five others, likely for CICS environment setup, common data initialization, date/time services, messaging, and map loading. It consumes no explicit inputs from the provided code snippet. It produces initialized working storage or linkage areas for subsequent processing. No business decisions or conditions are discernible without the code. Error handling is unknown. It orchestrates early program startup by invoking these utilities before control likely passes to MAIN-PARA. The exact role cannot be fully detailed due to missing code.",
+        "called_by": [],
+        "calls": [
+          "COCOM01Y",
+          "COPAU01",
+          "COTTL01Y",
+          "CSDAT01Y",
+          "CSMSG01Y"
+        ],
+        "citation": [
+          23,
+          23
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "MAIN-PARA",
+        "summary": null,
+        "purpose": "MAIN-PARA is the central control paragraph orchestrating the entire CICS transaction flow. It initializes flags ERR-FLG-OFF and SEND-ERASE-YES to TRUE, clears WS-MESSAGE and map error field. It checks EIBCALEN=0 for first invocation, initializing commarea and returning to previous screen via XCTL if true. Otherwise, loads DFHCOMMAREA into CARDDEMO-COMMAREA, clears fraud data; if not reenter, sets reenter flag, processes ENTER key, and sends screen. If reenter, receives map, then EVALUATEs EIBAID: ENTER/PF5/PF8 trigger specific processing then send screen; PF3 returns to prev; OTHER defaults to ENTER with invalid key message. Finally executes CICS RETURN with TRANSID and commarea. Business logic enforces user action dispatching and reentry handling. Errors handled implicitly via flags and NOHANDLE. Inputs from EIB, commarea, map; outputs updated map and commarea.",
+        "called_by": [],
+        "calls": [
+          "RETURN-TO-PREV-SCREEN",
+          "PROCESS-ENTER-KEY",
+          "SEND-AUTHVIEW-SCREEN",
+          "RECEIVE-AUTHVIEW-SCREEN",
+          "MARK-AUTH-FRAUD",
+          "PROCESS-PF8-KEY"
+        ],
+        "citation": [
+          3,
+          52
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "PROCESS-ENTER-KEY",
+        "summary": null,
+        "purpose": "PROCESS-ENTER-KEY validates and loads a specific authorization record for display. It moves LOW-VALUES to input map, checks if CDEMO-ACCT-ID numeric and CDEMO-CPVD-PAU-SELECTED valid (not SPACES/LOW-VALUES), then moves to WS-ACCT-ID/WS-AUTH-KEY and performs READ-AUTH-RECORD. If IMS-PSB-SCHD, unschedules PSB and takes syncpoint. If invalid, sets ERR-FLG-ON. Always performs POPULATE-AUTH-DETAILS afterward. Business logic validates user selection before IMS read to prevent errors. Error handling via ERR-FLG for invalid input. Inputs: map fields CDEMO-ACCT-ID, CDEMO-CPVD-PAU-SELECTED. Outputs: WS- fields, populated map via subordinate call, syncpoint if needed.",
+        "called_by": [
+          "MAIN-PARA"
+        ],
+        "calls": [
+          "READ-AUTH-RECORD",
+          "TAKE-SYNCPOINT",
+          "POPULATE-AUTH-DETAILS"
+        ],
+        "citation": [
+          54,
+          75
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "MARK-AUTH-FRAUD",
+        "summary": null,
+        "purpose": "MARK-AUTH-FRAUD handles PF5 key to toggle fraud status on the current authorization. Moves screen ACCT-ID and PAU-SELECTED to WS- fields, reads IMS record. Toggles: if PA-FRAUD-CONFIRMED, sets remove flags; else sets confirm flags. Prepares WS-FRAUD-AUTH-RECORD, account/cust IDs, then CICS LINK NOHANDLE to WS-PGM-AUTH-FRAUD. Checks EIBRESP NORMAL and WS-FRD-UPDT-SUCCESS: if yes, UPDATE-AUTH-DETAILS; else message and ROLL-BACK. On LINK error, ROLL-BACK. Updates screen PAU-SELECTED from PA-AUTHORIZATION-KEY, populates details. Business logic implements fraud toggle with update confirmation. Errors trigger rollback for consistency. Inputs: screen selections, IMS record; outputs: fraud update via LINK, rolled back on fail.",
+        "called_by": [
+          "MAIN-PARA"
+        ],
+        "calls": [
+          "READ-AUTH-RECORD",
+          "UPDATE-AUTH-DETAILS",
+          "ROLL-BACK",
+          "POPULATE-AUTH-DETAILS"
+        ],
+        "citation": [
+          76,
+          112
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "PROCESS-PF8-KEY",
+        "summary": null,
+        "purpose": "PROCESS-PF8-KEY navigates to the next authorization record for the account. Moves CDEMO-ACCT-ID and PAU-SELECTED to WS- fields, performs READ-AUTH-RECORD then READ-NEXT-AUTH-RECORD. If IMS-PSB-SCHD, unschedules and syncpoints. If AUTHS-EOF, sets no-erase, displays 'Already at last' message. Else, moves PA-AUTHORIZATION-KEY to screen selected, populates details. Business logic supports forward pagination through auths, handling end-of-list gracefully. No explicit error handling beyond EOF and PSB. Inputs: current screen selections, IMS current/next records. Outputs: updated screen selected key or error message.",
+        "called_by": [
+          "MAIN-PARA"
+        ],
+        "calls": [
+          "READ-AUTH-RECORD",
+          "READ-NEXT-AUTH-RECORD",
+          "TAKE-SYNCPOINT",
+          "POPULATE-AUTH-DETAILS"
+        ],
+        "citation": [
+          114,
+          135
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "POPULATE-AUTH-DETAILS",
+        "summary": null,
+        "purpose": "POPULATE-AUTH-DETAILS formats and moves IMS PA- authorization fields to output map fields, but only if ERR-FLG-OFF. Moves card num, transforms orig date/time to display formats (MM-DD-YY, HH:MM:SS), approved amt. Sets response display 'A'/green or 'D'/red based on resp code '00'. Searches decline reason table for PA-AUTH-RESP-REASON to populate AUTHRSNO with code-desc. Moves processing code, POS mode, source, MCC, expiry formatted YY/MM, type, tran ID, match status. Formats fraud field if confirmed/removed with date. Moves merchant details. Business logic includes conditional formatting, table lookup, color coding for usability. Handles at-end of search with '9999-ERROR'. Inputs: PA- IMS fields, WS- tables/flags; outputs: all screen detail fields.",
+        "called_by": [
+          "PROCESS-ENTER-KEY",
+          "MARK-AUTH-FRAUD",
+          "PROCESS-PF8-KEY"
+        ],
+        "calls": [],
+        "citation": [
+          137,
+          204
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "RETURN-TO-PREV-SCREEN",
+        "summary": null,
+        "purpose": "RETURN-TO-PREV-SCREEN prepares and executes XCTL to the previous calling program. Moves WS-CICS-TRANID to CDEMO-FROM-TRANID, WS-PGM-AUTH-DTL to CDEMO-FROM-PROGRAM, zeros context, sets enter flag. Performs CICS XCTL to CDEMO-TO-PROGRAM with commarea. Primary role is clean transfer back with context. Consumes WS- program/tran IDs. Produces updated commarea fields. No decisions or business logic. No error handling shown (implicit CICS). Called on first entry or PF3.",
+        "called_by": [
+          "MAIN-PARA"
+        ],
+        "calls": [
+          "CDEMO-TO-PROGRAM"
+        ],
+        "citation": [
+          206,
+          217
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "SEND-AUTHVIEW-SCREEN",
+        "summary": null,
+        "purpose": "SEND-AUTHVIEW-SCREEN sends the populated authorization view map to the terminal. Performs POPULATE-HEADER-INFO first. Moves WS-MESSAGE to map error, sets CARDNUML -1 for cursor. If SEND-ERASE-YES, sends with ERASE; else without. Uses MAP COPAU1A from COPAU01 with CURSOR. Role is final screen presentation after processing. Inputs: populated map fields, flags. Outputs: screen display. Business logic: conditional erase for refresh vs update. No explicit errors.",
+        "called_by": [
+          "MAIN-PARA"
+        ],
+        "calls": [
+          "POPULATE-HEADER-INFO"
+        ],
+        "citation": [
+          218,
+          241
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "RECEIVE-AUTHVIEW-SCREEN",
+        "summary": null,
+        "purpose": "RECEIVE-AUTHVIEW-SCREEN receives user input from the authorization map. Executes CICS RECEIVE MAP COPAU1A INTO COPAU1AI NOHANDLE. Role is capturing screen modifications and AID key. Consumes terminal input. Produces filled COPAU1AI fields for evaluation. No logic/decisions. Error handling via NOHANDLE (suppresses abends). Called on reentry.",
+        "called_by": [
+          "MAIN-PARA"
+        ],
+        "calls": [],
+        "citation": [
+          243,
+          251
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "POPULATE-HEADER-INFO",
+        "summary": null,
+        "purpose": "POPULATE-HEADER-INFO populates static/dynamic header fields on the map. Gets FUNCTION CURRENT-DATE into WS-CURDATE-DATA. Moves CCDA titles, WS-CICS-TRANID, WS-PGM-AUTH-DTL to map. Reformats current date to MM-DD-YY, time to HH:MM:SS for display. Role is screen header setup with timestamp/program info. Inputs: WS- current data, constants. Outputs: TITLE01O, TRNNAMEO, CURDATEO, CURTIMEO etc. No conditions. No errors.",
+        "called_by": [
+          "SEND-AUTHVIEW-SCREEN"
+        ],
+        "calls": [],
+        "citation": [
+          253,
+          273
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      }
+    ],
+    "error_handling": [
+      {
+        "condition": "EIBCALEN = 0 (first entry)",
+        "action": "Initialize commarea and XCTL to previous program",
+        "citation": [
+          11
+        ]
+      },
+      {
+        "condition": "Invalid input (non-numeric ACCT-ID or empty selection)",
+        "action": "Set ERR-FLG-ON, skip read, show details with error",
+        "citation": [
+          70
+        ]
+      },
+      {
+        "condition": "CICS LINK EIBRESP NOT NORMAL or WS-FRD-UPDT-SUCCESS false",
+        "action": "Move error message, PERFORM ROLL-BACK",
+        "citation": [
+          99
+        ]
+      },
+      {
+        "condition": "AUTHS-EOF after next read",
+        "action": "Set SEND-ERASE-NO, display 'Already at last' message",
+        "citation": [
+          127
+        ]
+      },
+      {
+        "condition": "CICS RECEIVE/LINK NOHANDLE",
+        "action": "Suppress abend, continue (errors not checked explicitly)",
+        "citation": [
+          249
+        ]
+      },
+      {
+        "condition": "Decline reason search AT END",
+        "action": "Set '9999-ERROR' in AUTHRSNO",
+        "citation": [
+          167
+        ]
+      }
+    ],
+    "sql_operations": [],
+    "cics_operations": [
+      {
+        "command": "RETURN",
+        "resource": "TRANSID(WS-CICS-TRANID) COMMAREA(CARDDEMO-COMMAREA)",
+        "purpose": "End transaction, return control to CICS with next transid and commarea",
+        "citation": 48
+      },
+      {
+        "command": "XCTL",
+        "resource": "PROGRAM(CDEMO-TO-PROGRAM) COMMAREA(CARDDEMO-COMMAREA)",
+        "purpose": "Transfer control to previous program without return",
+        "citation": 214
+      },
+      {
+        "command": "LINK",
+        "resource": "PROGRAM(WS-PGM-AUTH-FRAUD) COMMAREA(WS-FRAUD-DATA) NOHANDLE",
+        "purpose": "Invoke fraud update subroutine synchronously",
+        "citation": 94
+      },
+      {
+        "command": "SEND MAP",
+        "resource": "MAP('COPAU1A') MAPSET('COPAU01') FROM(COPAU1AO) [ERASE] CURSOR",
+        "purpose": "Display authorization details screen, erase on initial",
+        "citation": 226
+      },
+      {
+        "command": "RECEIVE MAP",
+        "resource": "MAP('COPAU1A') MAPSET('COPAU01') INTO(COPAU1AI) NOHANDLE",
+        "purpose": "Receive user input and AID from screen",
+        "citation": 245
+      }
+    ],
+    "open_questions": [
+      {
+        "question": "Details of performed paragraphs like READ-AUTH-RECORD, UPDATE-AUTH-DETAILS, ROLL-BACK, TAKE-SYNCPOINT, READ-NEXT-AUTH-RECORD",
+        "context": "Code snippet does not include their implementations; only PERFORM statements visible",
+        "suggestion": "Provide full source code for precise logic, data ops, IMS calls"
+      },
+      {
+        "question": "Exact copybook definitions and IMS PCB/PSB names",
+        "context": "No COPY statements or IMS EXEC DLI visible in snippet",
+        "suggestion": "Include WORKING-STORAGE, FILE, LINKAGE sections and IMS-related code"
+      },
+      {
+        "question": "Full list of called programs from COPAUS1C paragraph and their purposes",
+        "context": "COPAUS1C code not provided; static analysis lists but no context",
+        "suggestion": "Provide lines around 23"
+      },
+      {
+        "question": "WS-PGM-AUTH-FRAUD program details and WS-FRD-UPDT-SUCCESS origin",
+        "context": "Linked program modifies return data; not analyzed here",
+        "suggestion": "Analyze that program separately"
+      }
+    ],
+    "resolved_questions": [],
+    "dead_code": [],
+    "call_semantics": [],
+    "flow_diagram": null
+  },
+  "saved_at": "2026-02-23T20:52:36.257717"
+}

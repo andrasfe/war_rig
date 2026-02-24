@@ -3,94 +3,56 @@
     "caller": "MAIN-PARA",
     "callee": "1000-INITIALIZE",
     "inputs": [],
-    "outputs": [
-      "CURRENT-DATE",
-      "CURRENT-YYDDD",
-      "WS-OUTFL1-STATUS",
-      "WS-OUTFL2-STATUS",
-      "WS-END-OF-ROOT-SEG"
-    ],
-    "purpose": "Initializes the program by setting current date values and opening output files OPFILE1 and OPFILE2, with error handling for file open failures."
+    "outputs": [],
+    "purpose": null
   },
   {
     "caller": "MAIN-PARA",
     "callee": "2000-FIND-NEXT-AUTH-SUMMARY",
     "inputs": [],
-    "outputs": [
-      "WS-NO-SUMRY-READ",
-      "WS-AUTH-SMRY-PROC-CNT",
-      "OPFIL1-REC",
-      "ROOT-SEG-KEY",
-      "WS-END-OF-ROOT-SEG",
-      "CHILD-SEG-REC"
-    ],
-    "purpose": "Reads the next authorization summary segment from IMS using a GU call, updates counters, writes to output file, and triggers detail processing if successful."
+    "outputs": [],
+    "purpose": null
   },
   {
     "caller": "MAIN-PARA",
     "callee": "4000-FILE-CLOSE",
-    "inputs": [
-      "WS-OUTFL1-STATUS",
-      "WS-OUTFL2-STATUS"
-    ],
+    "inputs": [],
     "outputs": [],
-    "purpose": "Closes the output files OPFILE1 and OPFILE2 and displays error messages if the close operation fails based on file status codes."
+    "purpose": null
   },
   {
     "caller": "1000-INITIALIZE",
     "callee": "9999-ABEND",
-    "inputs": [
-      "WS-OUTFL1-STATUS"
-    ],
+    "inputs": [],
     "outputs": [],
-    "purpose": "Terminates the program with return code 16 if an error occurs during the opening of OPFILE1."
+    "purpose": null
   },
   {
     "caller": "1000-INITIALIZE",
     "callee": "9999-ABEND",
-    "inputs": [
-      "WS-OUTFL2-STATUS"
-    ],
+    "inputs": [],
     "outputs": [],
-    "purpose": "Terminates the program with return code 16 if an error occurs during the opening of OPFILE2."
+    "purpose": null
   },
   {
     "caller": "2000-FIND-NEXT-AUTH-SUMMARY",
     "callee": "3000-FIND-NEXT-AUTH-DTL",
-    "inputs": [
-      "PA-ACCT-ID",
-      "WS-END-OF-CHILD-SEG"
-    ],
-    "outputs": [
-      "WS-END-OF-CHILD-SEG",
-      "WS-NO-SUMRY-READ",
-      "WS-AUTH-SMRY-PROC-CNT",
-      "CHILD-SEG-REC"
-    ],
-    "purpose": "Reads and processes child segments (authorization details) for the current root segment until no more child segments are found."
+    "inputs": [],
+    "outputs": [],
+    "purpose": null
   },
   {
     "caller": "2000-FIND-NEXT-AUTH-SUMMARY",
     "callee": "9999-ABEND",
-    "inputs": [
-      "PAUT-PCB-STATUS",
-      "PAUT-KEYFB"
-    ],
-    "outputs": [
-      "RETURN-CODE"
-    ],
-    "purpose": "Terminates the program with a return code of 16 when an unexpected IMS status code is encountered during root segment retrieval."
+    "inputs": [],
+    "outputs": [],
+    "purpose": null
   },
   {
     "caller": "3000-FIND-NEXT-AUTH-DTL",
     "callee": "9999-ABEND",
-    "inputs": [
-      "PAUT-PCB-STATUS",
-      "PAUT-KEYFB"
-    ],
-    "outputs": [
-      "RETURN-CODE"
-    ],
-    "purpose": "Terminates the program with a return code of 16 when an unexpected IMS status code is encountered during child segment retrieval."
+    "inputs": [],
+    "outputs": [],
+    "purpose": null
   }
 ]

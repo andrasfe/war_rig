@@ -1,24 +1,24 @@
 ```cobol
-             10 CDEMO-CPVD-PAUKEY-LAST     PIC X(08).
-             10 CDEMO-CPVD-PAGE-NUM        PIC S9(04) COMP.
-             10 CDEMO-CPVD-NEXT-PAGE-FLG   PIC X(01) VALUE 'N'.
-                88 NEXT-PAGE-YES                     VALUE 'Y'.
-                88 NEXT-PAGE-NO                      VALUE 'N'.
-             10 CDEMO-CPVD-AUTH-KEYS       PIC X(08) OCCURS 5 TIMES.
-             10 CDEMO-CPVD-FRAUD-DATA      PIC X(100).
+       PROCESS-PF8-KEY.
 
-       COPY COPAU01.
+           MOVE CDEMO-ACCT-ID            TO WS-ACCT-ID
+           MOVE CDEMO-CPVD-PAU-SELECTED  TO WS-AUTH-KEY
 
+           PERFORM READ-AUTH-RECORD
+           PERFORM READ-NEXT-AUTH-RECORD
 
-      *Screen Titles
-       COPY COTTL01Y.
+           IF IMS-PSB-SCHD
+              SET IMS-PSB-NOT-SCHD      TO TRUE
+              PERFORM TAKE-SYNCPOINT
+           END-IF
 
-      *Current Date
-       COPY CSDAT01Y.
-
-      *Common Messages
-       COPY CSMSG01Y.
-
-      *Abend Variables
-       COPY CSMSG02Y.
+           IF AUTHS-EOF
+              SET SEND-ERASE-NO          TO TRUE
+              MOVE 'Already at the last Authorization...'
+                                         TO WS-MESSAGE
+           ELSE
+              MOVE PA-AUTHORIZATION-KEY  TO CDEMO-CPVD-PAU-SELECTED
+              PERFORM POPULATE-AUTH-DETAILS
+           END-IF
+           .
 ```

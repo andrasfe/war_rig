@@ -1,23 +1,37 @@
 {
   "header": {
     "program_id": "PAUTBUNL",
-    "file_name": "PAUTBUNL.PSB",
+    "file_name": "ims/PAUTBUNL.PSB",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-10T17:16:33.408481",
+    "analyzed_at": "2026-02-24T03:57:21.493252",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This file defines a Program Specification Block (PSB) named PAUTBUNL for an IMS database application. It specifies the database characteristics, segment hierarchy, and processing options for accessing the DBPAUTP0 database. The PSB is configured for COBOL language and indicates compatibility settings.",
+    "summary": "This file is the source specification for generating an IMS Program Specification Block (PSB) named PAUTBUNL for a COBOL language program. It defines a single database PCB named PAUTBPCB for accessing the IMS database DBDNAME=DBPAUTP0 with processing option PROCOPT=GOTP (Get Unique Positioned) and key length 14. The PCB senses the root segment PAUTSUM0 (PARENT=0) and its child segment PAUTDTL1 (PARENT=PAUTSUM0), establishing the program's hierarchical access path to the database.",
     "business_context": null,
-    "program_type": "UTILITY",
+    "program_type": "BATCH",
     "citations": [
       18,
+      19,
+      20,
       21
     ]
   },
-  "inputs": [],
+  "inputs": [
+    {
+      "name": "DBPAUTP0",
+      "io_type": "IMS_SEGMENT",
+      "description": "IMS database accessed via PAUTBPCB PCB, with sensed segments PAUTSUM0 (root) and PAUTDTL1 (child of PAUTSUM0)",
+      "copybook": null,
+      "citation": [
+        18,
+        19,
+        20
+      ]
+    }
+  ],
   "outputs": [],
   "called_programs": [],
   "calling_context": {
@@ -25,9 +39,50 @@
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [],
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Database PCB PAUTBPCB provides read access to DBPAUTP0 using PROCOPT=GOTP (Get Unique Positioned) with KEYLEN=14",
+      "logic_summary": "Specifies positioned GET UNIQUE calls for sequential or keyed database retrieval without update capabilities",
+      "conditions": [
+        "PROCOPT=GOTP",
+        "KEYLEN=14"
+      ],
+      "citation": [
+        18
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Senses specific segment hierarchy: PAUTSUM0 as root segment (PARENT=0) and PAUTDTL1 as dependent child segment (PARENT=PAUTSUM0)",
+      "logic_summary": "Limits program access to only these segments in the defined parent-child relationship for qualified or unqualified SSAs",
+      "conditions": [
+        "PARENT=0 for PAUTSUM0",
+        "PARENT=PAUTSUM0 for PAUTDTL1"
+      ],
+      "citation": [
+        19,
+        20
+      ]
+    }
+  ],
   "data_flow": {
-    "reads_from": [],
+    "reads_from": [
+      {
+        "source": "PAUTSUM0",
+        "fields_used": [],
+        "citation": [
+          19
+        ]
+      },
+      {
+        "source": "PAUTDTL1",
+        "fields_used": [],
+        "citation": [
+          20
+        ]
+      }
+    ],
     "writes_to": [],
     "transforms": []
   },
@@ -38,9 +93,14 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the specific purpose of the PAUTBUNL PSB within the broader IMS application?",
-      "context": "The PSB definition provides structural information but lacks context on its usage.",
-      "suggestion": "Review application documentation or related program source code that utilizes this PSB."
+      "question": "What is the exact business purpose of the DBPAUTP0 database and its segments PAUTSUM0/PAUTDTL1?",
+      "context": "PSB defines access but does not describe data content or business meaning",
+      "suggestion": "Review associated DBD source or COBOL program PAUTBUNL for data definitions"
+    },
+    {
+      "question": "Does the program PAUTBUNL perform file I/O in addition to IMS DB access?",
+      "context": "PSB only defines IMS DB PCB; no file or other I/O specified here",
+      "suggestion": "Examine the COBOL source code for PAUTBUNL"
     }
   ],
   "resolved_questions": [],

@@ -1,20 +1,26 @@
 {
   "header": {
     "program_id": "PASFLPCB",
-    "file_name": "PASFLPCB.CPY",
+    "file_name": "cpy/PASFLPCB.CPY",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-10T17:20:15.610583",
+    "analyzed_at": "2026-02-24T04:02:41.559721",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the data structure PASFLPCB, which appears to be related to IMS PCB (Program Communication Block) based on the field names. It includes fields for DBD name, segment level, PCB status, processing options, segment name, key feedback, number of sensitive segments, and key feedback area. This structure is likely used for communication between a program and IMS.",
-    "business_context": null,
-    "program_type": "SUBROUTINE",
+    "summary": "This copybook defines the IMS Program Communication Block (PCB) structure named PASFLPCB for accessing the PASFL hierarchical database via DL/I calls. It specifies standard PCB fields including DBD name, segment level, status, processing options, segment name, key feedback name, number of sensitive segments, and key feedback area. Used in IMS programs to interface with the PASFL database.",
+    "business_context": "Supports IMS DL/I database navigation and access control in mainframe applications, part of Amazon-licensed mainframe code under Apache 2.0.",
+    "program_type": "UTILITY",
     "citations": [
       17,
       18,
+      19,
+      20,
+      21,
+      23,
+      24,
+      25,
       26
     ]
   },
@@ -26,7 +32,34 @@
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [],
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "PCB Processing Options define permitted DL/I call functions for the PASFL PCB.",
+      "logic_summary": "PASFL-PCB-PROCOPT is predefined in the PSB with codes restricting calls to specific types like Get Unique (GU), Get Next (GN), Get Next Predictive (GNP), etc.",
+      "conditions": [
+        "PROCOPT contains 'GU'",
+        "PROCOPT contains 'GNP'",
+        "PROCOPT contains 'K' for key positioning"
+      ],
+      "citation": [
+        21
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "PCB Status Code indicates result of last DL/I call on PASFL PCB.",
+      "logic_summary": "PASFL-PCB-STATUS is set by IMS post-call; blank or '00' for success, non-blank for errors like 'GE' (segment not found) or 'GB' (end of database).",
+      "conditions": [
+        "STATUS = '  ' (success)",
+        "STATUS = 'GE' (no segment found)",
+        "STATUS = 'GB' (end of database)"
+      ],
+      "citation": [
+        20
+      ]
+    }
+  ],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
@@ -37,17 +70,17 @@
     {
       "paragraph_name": "PASFLPCB",
       "summary": null,
-      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "purpose": "This level-01 data structure serves as the IMS Program Communication Block (PCB) for the PASFL database, enabling DL/I programs to perform database calls and receive feedback from IMS. It is typically copied into the program's WORKING-STORAGE section and referenced by name in CALL 'CBLTDLI' using the PCB as the first parameter. IMS populates fields like PASFL-PCB-STATUS (line 20), PASFL-SEG-LEVEL (line 19), PASFL-SEG-NAME (line 23), PASFL-KEYFB-NAME (line 24), PASFL-NUM-SENSEGS (line 25), and PASFL-KEYFB (line 26) after each database call. The program reads these fields to check call success via status code and extract positioning information from the key feedback area for hierarchical navigation. PASFL-DBDNAME (line 18) identifies the database, and PASFL-PCB-PROCOPT (line 21) enforces allowed call types as defined in the PSB. No data is written by the program to the PCB; IMS controls output fields. Business logic involves post-call validation: if PASFL-PCB-STATUS is not blank, the program handles errors such as logging, retrying, or abending. The filler field (line 22) is reserved by IMS. No paragraphs or programs are called from this structure as it is a static data definition. This PCB supports qualified/unqualified GU, GNP, ISRT, DLET, and REPL calls on PASFL segments.",
       "called_by": [],
       "calls": [],
       "citation": [
-        1,
-        1
+        17,
+        26
       ],
       "outgoing_calls": [],
       "incoming_calls": [
         {
-          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
           "function": "DBUNLDGS",
           "line": 155,
           "call_type": "includes"
@@ -61,13 +94,7 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
-    {
-      "question": "How is this copybook used in conjunction with IMS?",
-      "context": "The field names suggest an IMS PCB, but without seeing the program that uses it, the exact usage is unclear.",
-      "suggestion": "Analyze programs that include this copybook to understand how the fields are populated and used in IMS calls."
-    }
-  ],
+  "open_questions": [],
   "resolved_questions": [],
   "dead_code": [
     {

@@ -1,20 +1,25 @@
 {
   "header": {
     "program_id": "CCPAURLY",
-    "file_name": "CCPAURLY.cpy",
+    "file_name": "cpy/CCPAURLY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-10T17:20:23.039300",
+    "analyzed_at": "2026-02-24T04:03:21.999406",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the data structure for a pending authorization response related to card transactions. It includes fields for card number, transaction ID, authorization codes, response codes, reason codes, and approved amount. The copybook is likely used in programs that process or handle authorization responses from a payment processing system. [19-25]",
-    "business_context": "Authorization of card payments",
-    "program_type": "SUBROUTINE",
+    "summary": "Copybook defining the data structure for Pending Authorization Response (PA-RL). Includes fields for card number, transaction ID, authorization ID code, response code, response reason, and approved amount. Used to standardize response data layout in COBOL programs.",
+    "business_context": "Payment processing for pending card authorizations in an e-commerce system (Amazon).",
+    "program_type": "UTILITY",
     "citations": [
+      2,
       19,
-      25
+      20,
+      21,
+      22,
+      23,
+      24
     ]
   },
   "inputs": [],
@@ -34,21 +39,124 @@
   "copybooks_used": [
     {
       "copybook_name": "CCPAURLY",
-      "purpose": "Defines the structure for pending authorization response data.",
-      "location": "WORKING_STORAGE",
-      "citation": 1
+      "purpose": "Defines Pending Authorization Response data structure with card and auth details",
+      "location": "OTHER",
+      "citation": 19
     }
   ],
   "paragraphs": [
     {
-      "paragraph_name": "DATA-DEFINITION",
+      "paragraph_name": "CCPAURLY",
       "summary": null,
-      "purpose": "This section of the copybook defines the data elements related to pending authorization responses. The primary purpose is to provide a standardized structure for representing authorization data within a COBOL program. It consumes no direct input but defines the structure for data that will be populated from external sources or other program variables. It produces a structured data layout that can be used for storing and manipulating authorization information. No specific business logic or error handling is present within the copybook itself, as it only defines data structures. It does not call any other paragraphs or programs directly, but the defined data structure will be used by other parts of the application. The data elements defined include the card number (PA-RL-CARD-NUM), transaction ID (PA-RL-TRANSACTION-ID), authorization ID code (PA-RL-AUTH-ID-CODE), authorization response code (PA-RL-AUTH-RESP-CODE), authorization response reason (PA-RL-AUTH-RESP-REASON), and the approved amount (PA-RL-APPROVED-AMT). These fields are used to represent the details of an authorization response received from a payment processor.",
+      "purpose": "The CCPAURLY paragraph represents the overall copybook defining the Pending Authorization Response data structure. Its primary purpose is to standardize the layout of authorization response fields for use in COBOL programs handling payment transactions. It defines a group of level-05 fields starting from line 19, including card number, transaction ID, auth codes, and amount. This structure consumes no runtime inputs as it is a static definition; fields are populated by host program logic from files, tables, or queues. Outputs are the populated fields used in writes to output files, reports, or CICS resources. No business decisions or conditions are implemented here due to lack of executable code. Error handling and validation (e.g., field lengths, numeric edits) are delegated to the including program's PROCEDURE DIVISION. It calls no other paragraphs or programs. Likely copied into WORKING_STORAGE, LINKAGE_SECTION, or FILE_SECTION. Licensed under Apache 2.0 by Amazon as per header comments.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1,
+        25
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+          "function": "COPAUA0C",
+          "line": 182,
+          "call_type": "includes"
+        }
+      ],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "05:PA-RL-CARD-NUM",
+      "summary": null,
+      "purpose": "The 05:PA-RL-CARD-NUM paragraph defines an elementary field in the Pending Authorization Response structure. Its primary role is to store the card number (PIC X(16)) associated with the authorization request. In host programs, it is populated from input sources like transaction files or DB2 tables containing customer card data. The field is then included in output responses, such as updated logs or CICS MAPs. No data transformations occur here; any editing (e.g., masking, validation) happens in program logic. Business logic for card validity is not present in this definition. Errors like invalid length would be handled by the host program's checks, potentially setting flags or abending. It does not call other paragraphs or programs. Part of the CCPAURLY structure for consistency across applications. Ensures fixed 16-byte storage for interoperability.",
       "called_by": [],
       "calls": [],
       "citation": [
         19,
-        25
+        19
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": true,
+      "dead_code_reason": "Artifact '05:PA-RL-CARD-NUM' (column) is never referenced by any other artifact in the dependency graph",
+      "metadata": null
+    },
+    {
+      "paragraph_name": "05:PA-RL-TRANSACTION-ID",
+      "summary": null,
+      "purpose": "The 05:PA-RL-TRANSACTION-ID paragraph defines the transaction identifier field (PIC X(15)) in the response structure. Primary purpose is to uniquely identify the authorization transaction. Consumes transaction ID from input records or parameters in the host program. Produces the ID for logging or matching in outputs. No logic or conditions applied in definition. Validation (e.g., uniqueness) in using program. Errors handled externally. No calls made. Supports traceability in payment flows.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        20,
+        20
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "05:PA-RL-AUTH-ID-CODE",
+      "summary": null,
+      "purpose": "The 05:PA-RL-AUTH-ID-CODE paragraph defines the 6-character authorization ID code (PIC X(06)). Role: holds ID from auth service response. Input from external auth system via host reads. Output to audit trails. No transforms or decisions here. Host handles code interpretation. No error handling in copybook. No calls.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        21,
+        21
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "05:PA-RL-AUTH-RESP-CODE",
+      "summary": null,
+      "purpose": "The 05:PA-RL-AUTH-RESP-CODE paragraph defines the 2-character response code (PIC X(02)). Purpose: captures approval/decline code. Populated from auth response input. Used in outputs for status reporting. No logic defined. Host program branches on code values. Errors external.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        22,
+        22
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "05:PA-RL-AUTH-RESP-REASON",
+      "summary": null,
+      "purpose": "The 05:PA-RL-AUTH-RESP-REASON paragraph defines the 4-character reason code (PIC X(04)). Role: provides detailed decline reason. From input response. To output logs. No processing here. Host interprets.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        23,
+        23
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "05:PA-RL-APPROVED-AMT",
+      "summary": null,
+      "purpose": "The 05:PA-RL-APPROVED-AMT paragraph defines the approved amount (PIC +9(10).99). Purpose: stores monetary value if approved. Input from auth calc. Output to updates. Numeric editing in host. No conditions here.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        24,
+        24
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
@@ -60,7 +168,18 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [],
+  "open_questions": [
+    {
+      "question": "In which programs and sections (e.g., WORKING_STORAGE, LINKAGE) is CCPAURLY copied?",
+      "context": "Copybook usage context not determinable from this file alone.",
+      "suggestion": "Static analysis of including COBOL sources."
+    },
+    {
+      "question": "What is the parent group level (01 or FILLER) for these 05 fields?",
+      "context": "Copybook begins directly at 05 level.",
+      "suggestion": "Examine context in referencing programs."
+    }
+  ],
   "resolved_questions": [],
   "dead_code": [
     {

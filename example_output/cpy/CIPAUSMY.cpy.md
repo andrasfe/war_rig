@@ -2,13 +2,13 @@
 
 **File**: `cpy/CIPAUSMY.cpy`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-02-10 17:19:42.187356
+**Analyzed**: 2026-02-24 04:00:35.645395
 
 ## Purpose
 
-This copybook defines the data structure for the IMS segment related to pending authorization summary information. It includes fields for account ID, customer ID, authorization status, account status, credit and cash limits/balances, and authorization counts/amounts. The copybook is used to represent the layout of data exchanged with an IMS database.
+This copybook defines the layout for the IMS 'Pending Authorization Summary' segment. Key fields include account and customer identifiers, authorization and account statuses, credit/cash limits and balances, counts and amounts for approved/declined authorizations, and a filler area. It is used to structure data in an IMS database for authorization processing.
 
-**Business Context**: UNKNOWN
+**Business Context**: Serves financial authorization workflows by summarizing pending authorizations per customer account, including limits, balances, and transaction statistics (evident from field names and IMS segment header at lines 1-3).
 
 ## Paragraphs/Procedures
 
@@ -28,5 +28,5 @@ The following artifacts were identified as dead code by static analysis:
 
 ## Open Questions
 
-- ? What is the business context for this IMS segment?
-  - Context: The code does not provide information about the specific application or business process that uses this segment.
+- ? In which section of calling programs is this copybook typically included?
+  - Context: Copybook usage location (e.g., WORKING_STORAGE, LINKAGE) cannot be determined from the copybook itself.

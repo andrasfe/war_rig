@@ -2,203 +2,207 @@
 
 **File**: `cbl/COPAUA0C.cbl`
 **Type**: FileType.COBOL
-**Analyzed**: 2026-02-10 17:19:28.909600
+**Analyzed**: 2026-02-24 04:02:30.082862
 
 ## Purpose
 
-This CICS COBOL program, COPAUA0C, is a card authorization decision program that processes authorization requests, validates card and customer data, makes an authorization decision, and updates the database with the authorization results. It retrieves requests from an MQ queue, processes them, and sends a response.
+This CICS COBOL program processes credit card authorization requests received via MQ queue triggered by CICS transaction. It parses the request, looks up card cross-reference, account and customer records via CICS VSAM READ, retrieves pending authorization summary segment from IMS database, computes available credit, decides approve/decline based on transaction amount exceeding limit, populates response, sends reply via MQ to reply queue, and updates/inserts IMS summary and detail segments accordingly.
 
-**Business Context**: Card authorization process within a financial transaction system.
+**Business Context**: CardDemo Authorization Module for real-time credit card transaction authorization decisions
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| MQ Request Queue | IOType.CICS_QUEUE | Authorization request messages from MQ Series. |
-| CARD-XREF-RECORD | IOType.FILE_VSAM | Card cross-reference data containing account and customer IDs. |
-| ACCOUNT-RECORD | IOType.FILE_VSAM | Account details for the card. |
-| CUSTOMER-RECORD | IOType.FILE_VSAM | Customer information associated with the account. |
-| PENDING-AUTH-SUMMARY | IOType.IMS_SEGMENT | Summary of pending authorizations for the account. |
-| DFHCOMMAREA | IOType.CICS_COMMAREA | CICS Commarea for passing data between programs. |
+| REQUEST-QNAME (MQ Queue) | IOType.CICS_QUEUE | Incoming authorization request messages in string format, parsed into PENDING-AUTH-REQUEST layout |
+| XREF-FILE (VSAM?) | IOType.FILE_VSAM | Card cross-reference records providing account ID and customer ID from card number |
+| ACCT-FILE | IOType.FILE_VSAM | Account master records with credit limits and balances |
+| CUST-FILE | IOType.FILE_VSAM | Customer master records |
+| PAUTSUM0 (IMS Segment) | IOType.IMS_SEGMENT | Pending authorization summary segment for account, containing credit limits, balances, auth counts |
+| MQTM (Trigger Message) | IOType.CICS_COMMAREA | CICS trigger message providing request queue name and trigger data |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| MQ Reply Queue | IOType.CICS_QUEUE | Authorization response messages sent back to the requestor. |
-| PAUTSUM0 | IOType.IMS_SEGMENT | Updated pending authorization summary in IMS database. |
-| PAUTTRAN | IOType.IMS_SEGMENT | New authorization transaction record in IMS database. |
+| REPLY-QNAME (MQ Queue) | IOType.CICS_QUEUE | Authorization response message in string format from PENDING-AUTH-RESPONSE layout |
+| PAUTSUM0 (IMS Update/Insert) | IOType.IMS_SEGMENT | Updated or new pending auth summary segment with incremented auth counts and adjusted balances |
+| PAUTDTL1 (IMS Insert) | IOType.IMS_SEGMENT | New pending auth detail segment capturing transaction details and decision |
+| ERROR-LOG | IOType.OTHER | Application error log entries for warnings, critical errors from MQ, IMS, CICS |
 
 ## Business Rules
 
-- **BR001**: If the card is not found in the cross-reference file, decline the authorization.
-- **BR002**: If the number of processed messages exceeds the limit, the program stops processing.
+- **BR001**: Decline authorization if transaction amount exceeds available credit (credit limit minus current balance)
+- **BR002**: Set decline reason code '4100' for insufficient funds
+- **BR003**: Decline with reason '3100' if card/account/customer not found in masters
+- **BR004**: On approval, set response code '00', approved amount = transaction amount; on decline '05', approved amount 0
+- **BR005**: Update IMS summary: increment approved/declined auth counts and add amounts to balances on approval/decline
 
 ## Paragraphs/Procedures
 
 ### MAIN-PARA
 > [Source: MAIN-PARA.cbl.md](COPAUA0C.cbl.d/MAIN-PARA.cbl.md)
-This is the main control paragraph of the COPAUA0C program. It orchestrates the entire authorization process by calling other paragraphs in sequence. First, it performs 1000-INITIALIZE to retrieve the MQ trigger monitor message and open the request queue. Then, it calls 2000-MAIN-PROCESS to handle the actual authorization logic, which includes extracting the request message, processing the authorization, and sending the response. Finally, it performs 9000-TERMINATE to close any open resources and return control to CICS. The paragraph does not directly handle any business logic or data manipulation but acts as the central coordinator for the program's execution flow. It ensures that the necessary initialization, processing, and termination steps are executed in the correct order. After termination, the program returns to CICS.
+This is the primary entry point paragraph that orchestrates the entire program flow for a single authorization request. It consumes no direct inputs but relies on CICS EIB and MQ trigger data retrieved in initialization. It sequentially performs 1000-INITIALIZE to setup MQ queue, read request, and IMS PSB; then 2000-MAIN-PROCESS to perform lookups (xref, acct, cust, IMS summary), make decision, prepare response; finally 9000-TERMINATE for cleanup, followed by CICS RETURN. No business decisions are made here, but it ensures orderly execution. Errors in subordinates are handled via flags and logging in called paragraphs. It calls 1000-INITIALIZE for setup, 2000-MAIN-PROCESS for core logic, 9000-TERMINATE for closeout. Upon completion, program returns control to CICS without setting return code explicitly.
 
 ### 1000-INITIALIZE
 > [Source: 1000-INITIALIZE.cbl.md](COPAUA0C.cbl.d/1000-INITIALIZE.cbl.md)
-This paragraph initializes the program by retrieving the MQ trigger monitor message, opening the request queue, and reading the first request message. It starts by retrieving the MQ trigger monitor message using EXEC CICS RETRIEVE, storing the queue name and trigger data in working storage (WS-REQUEST-QNAME, WS-TRIGGER-DATA). If the retrieval is successful (EIBRESP = DFHRESP(NORMAL)), it moves the retrieved data to the corresponding working storage variables. It then sets the wait interval for MQ operations to 5000. Next, it performs 1100-OPEN-REQUEST-QUEUE to open the MQ request queue for processing. Finally, it performs 3100-READ-REQUEST-MQ to read the first authorization request message from the queue. This paragraph sets up the program for subsequent processing by ensuring that the necessary resources are available and the initial data is loaded. No error handling is explicitly performed in this paragraph, but the EXEC CICS RETRIEVE command includes the NOHANDLE option, which suppresses CICS abends.
-
-### 2000-MAIN-PROCESS
-> [Source: 2000-MAIN-PROCESS.cbl.md](COPAUA0C.cbl.d/2000-MAIN-PROCESS.cbl.md)
-This paragraph is the core processing loop of the program, handling the authorization requests until a termination condition is met. It repeatedly performs a series of operations for each message available in the request queue. The loop continues until either NO-MORE-MSG-AVAILABLE is true or WS-LOOP-END is true. Inside the loop, it first performs 2100-EXTRACT-REQUEST-MSG to extract the request message from the buffer. Then, it performs 5000-PROCESS-AUTH to process the authorization request and make a decision. After processing, it increments the WS-MSG-PROCESSED counter and issues a CICS SYNCPOINT to commit the changes. IMS PSB is set to NOT SCHD. It then checks if the number of processed messages (WS-MSG-PROCESSED) exceeds the limit (WS-REQSTS-PROCESS-LIMIT). If the limit is reached, it sets WS-LOOP-END to TRUE, terminating the loop. Otherwise, it performs 3100-READ-REQUEST-MQ to read the next request message from the queue. This paragraph manages the overall flow of authorization processing, ensuring that each request is handled and the system remains synchronized. Error handling is implicit through the PERFORM THRU constructs, which would propagate control to error handling routines if any of the called paragraphs encounter an error.
-
-### 5000-PROCESS-AUTH
-> [Source: 5000-PROCESS-AUTH.cbl.md](COPAUA0C.cbl.d/5000-PROCESS-AUTH.cbl.md)
-This paragraph orchestrates the authorization processing for a single card transaction. It begins by setting APPROVE-AUTH to TRUE, assuming the transaction will be approved unless a reason to decline is found. It then performs 1200-SCHEDULE-PSB to schedule the PSB for IMS database access. It sets CARD-FOUND-XREF and FOUND-ACCT-IN-MSTR to TRUE. Next, if CARD-FOUND-XREF is true, it performs 5100-READ-XREF-RECORD to read the card cross-reference record, 5200-READ-ACCT-RECORD to read the account record, 5300-READ-CUST-RECORD to read the customer record, 5500-READ-AUTH-SUMMRY to read the authorization summary, and 5600-READ-PROFILE-DATA to read the profile data. It then performs 6000-MAKE-DECISION to make the authorization decision and 7100-SEND-RESPONSE to send the response. Finally, if CARD-FOUND-XREF is true, it performs 8000-WRITE-AUTH-TO-DB to write the authorization details to the database. This paragraph manages the sequence of steps required to authorize a transaction, including data retrieval, decision making, and database updates. Error handling is performed within the subordinate paragraphs, and the overall flow is controlled by conditional PERFORM statements based on the CARD-FOUND-XREF flag.
-
-### 5100-READ-XREF-RECORD
-> [Source: 5100-READ-XREF-RECORD.cbl.md](COPAUA0C.cbl.d/5100-READ-XREF-RECORD.cbl.md)
-This paragraph reads the card cross-reference record from the VSAM file WS-CCXREF-FILE. It moves the card number from the request (PA-RQ-CARD-NUM) to the key field (XREF-CARD-NUM). It then executes a CICS READ command to retrieve the CARD-XREF-RECORD from the VSAM file using the key. The RESP and RESP2 options capture the CICS response codes in WS-RESP-CD and WS-REAS-CD, respectively. The paragraph then evaluates the response code. If the read is successful (DFHRESP(NORMAL)), it sets CARD-FOUND-XREF to TRUE. If the record is not found (DFHRESP(NOTFND)), it sets CARD-NFOUND-XREF and NFOUND-ACCT-IN-MSTR to TRUE, logs an error message, and sets error flags. If any other error occurs, it logs a critical error message with the CICS response codes. This paragraph is responsible for retrieving the cross-reference record, which links the card number to the account and customer IDs. Error handling includes logging warning and critical errors based on the CICS response codes. The paragraph does not call any other paragraphs.
-
-### 5200-READ-ACCT-RECORD
-> [Source: 5200-READ-ACCT-RECORD.cbl.md](COPAUA0C.cbl.d/5200-READ-ACCT-RECORD.cbl.md)
-This paragraph reads the account record from the VSAM file WS-ACCTFILENAME. It moves the account ID from the cross-reference record (XREF-ACCT-ID) to the key field (WS-CARD-RID-ACCT-ID). It then executes a CICS READ command to retrieve the ACCOUNT-RECORD from the VSAM file using the key. The RESP and RESP2 options capture the CICS response codes in WS-RESP-CD and WS-REAS-CD, respectively. The paragraph then evaluates the response code. If the read is successful (DFHRESP(NORMAL)), it sets FOUND-ACCT-IN-MSTR to TRUE. If the record is not found (DFHRESP(NOTFND)), it sets NFOUND-ACCT-IN-MSTR to TRUE and logs an error message. If any other error occurs, it logs a critical error message with the CICS response codes. This paragraph is responsible for retrieving the account record, which contains the account details for the card. Error handling includes logging warning and critical errors based on the CICS response codes. The paragraph does not call any other paragraphs.
-
-### 5300-READ-CUST-RECORD
-> [Source: 5300-READ-CUST-RECORD.cbl.md](COPAUA0C.cbl.d/5300-READ-CUST-RECORD.cbl.md)
-This paragraph reads the customer record from the VSAM file WS-CUSTFILENAME. It moves the customer ID from the cross-reference record (XREF-CUST-ID) to the key field (WS-CARD-RID-CUST-ID). It then executes a CICS READ command to retrieve the CUSTOMER-RECORD from the VSAM file using the key. The RESP and RESP2 options capture the CICS response codes in WS-RESP-CD and WS-REAS-CD, respectively. The paragraph then evaluates the response code. If the read is successful (DFHRESP(NORMAL)), it sets FOUND-CUST-IN-MSTR to TRUE. If the record is not found (DFHRESP(NOTFND)), it sets NFOUND-CUST-IN-MSTR to TRUE and logs an error message. If any other error occurs, it logs a critical error message with the CICS response codes. This paragraph is responsible for retrieving the customer record, which contains the customer details associated with the account. Error handling includes logging warning and critical errors based on the CICS response codes. The paragraph does not call any other paragraphs.
-
-### 5500-READ-AUTH-SUMMRY
-> [Source: 5500-READ-AUTH-SUMMRY.cbl.md](COPAUA0C.cbl.d/5500-READ-AUTH-SUMMRY.cbl.md)
-This paragraph reads the pending authorization summary segment (PAUTSUM0) from the IMS database. It moves the account ID from the cross-reference record (XREF-ACCT-ID) to the PA-ACCT-ID field. It then executes a DLI GU (Get Unique) command to retrieve the PAUTSUM0 segment using the PAUT-PCB-NUM PCB. The WHERE clause specifies that the ACCNTID field in the segment must match PA-ACCT-ID. The DIBSTAT field is moved to IMS-RETURN-CODE to check the status of the IMS call. The paragraph then evaluates the IMS-RETURN-CODE. If the status is OK, it sets FOUND-PAUT-SMRY-SEG to TRUE. If the segment is not found, it sets NFOUND-PAUT-SMRY-SEG to TRUE. If any other error occurs, it logs a critical error message with the IMS return code. This paragraph is responsible for retrieving the pending authorization summary, which is used to make the authorization decision. Error handling includes logging critical errors based on the IMS return code. The paragraph does not call any other paragraphs.
-
-### 5600-READ-PROFILE-DATA
-> [Source: 5600-READ-PROFILE-DATA.cbl.md](COPAUA0C.cbl.d/5600-READ-PROFILE-DATA.cbl.md)
-This paragraph is a placeholder and currently contains only a CONTINUE statement. It does not perform any actions. It serves as a stub for future implementation where profile data might be read. Currently, it does not read any data, perform any logic, or call any other paragraphs. It simply allows the program to proceed to the next step in the authorization process without performing any profile data retrieval. This paragraph exists to maintain a consistent program structure and allow for future expansion without requiring significant code changes to the calling paragraph.
-
-### 7100-SEND-RESPONSE
-> [Source: 7100-SEND-RESPONSE.cbl.md](COPAUA0C.cbl.d/7100-SEND-RESPONSE.cbl.md)
-This paragraph sends the authorization response to the MQ reply queue. It moves the card number and transaction ID from the request to the response fields (PA-RQ-CARD-NUM to PA-RL-CARD-NUM, PA-RQ-TRANSACTION-ID to PA-RL-TRANSACTION-ID). It also moves the authorization time to the auth ID code. It then moves the authorization response code (PA-RL-AUTH-RESP-CODE) to the response message buffer (W02-PUT-BUFFER). The paragraph then calculates the length of the response message and moves it to W02-DATALEN. It then executes a series of MQ API calls to put the message on the reply queue. If any MQ API call fails, it logs an error message. This paragraph is responsible for sending the authorization decision back to the requestor. Error handling includes logging errors if any of the MQ API calls fail. The paragraph calls 9500-LOG-ERROR to log error messages.
-
-### 8000-WRITE-AUTH-TO-DB
-> [Source: 8000-WRITE-AUTH-TO-DB.cbl.md](COPAUA0C.cbl.d/8000-WRITE-AUTH-TO-DB.cbl.md)
-This paragraph coordinates the writing of authorization information to the IMS database. It performs 8400-UPDATE-SUMMARY to update the pending authorization summary segment and 8500-INSERT-AUTH to insert a new authorization transaction segment. This paragraph serves as a high-level control point for database updates related to the authorization process. It ensures that both the summary and transaction records are updated appropriately. The paragraph does not directly handle any data manipulation or database calls but delegates these tasks to the subordinate paragraphs. The success of the database updates is dependent on the proper execution of the called paragraphs. The paragraph does not perform any explicit error handling itself, relying on the error handling within the called paragraphs.
-
-### COPAUA0C
-> [Source: COPAUA0C.cbl.md](COPAUA0C.cbl.d/COPAUA0C.cbl.md)
-This paragraph is the program identifier. It does not contain any executable code. It serves as the entry point for the program but immediately passes control to other paragraphs for processing. It is the starting point for the program's execution flow, but its primary function is to define the program's name and initiate the subsequent processing steps. It does not directly interact with any data or perform any business logic. The program's execution begins here, but the actual work is delegated to other paragraphs. This paragraph does not handle any error conditions or make any decisions. It simply marks the beginning of the program's execution.
-
-### 1000-EXIT
-> [Source: 1000-EXIT.cbl.md](COPAUA0C.cbl.d/1000-EXIT.cbl.md)
-This paragraph simply marks the exit point for the 1000-INITIALIZE paragraph. It contains only the EXIT statement and does not perform any processing or data manipulation. It serves as a standard way to define the end of a PERFORM THRU sequence. This paragraph does not consume any input or produce any output. It does not implement any business logic or error handling. It is a placeholder for the end of the initialization process.
+This initialization paragraph sets up the environment by retrieving CICS trigger message for queue name, opening the MQ request queue, and reading the first request message. It consumes EIB data via CICS RETRIEVE into MQTM for WS-REQUEST-QNAME and WS-TRIGGER-DATA, then calls MQOPEN for input-shared access. It produces opened MQ handle W01-HOBJ-REQUEST and request buffer W01-GET-BUFFER populated via MQGET with wait interval. No business logic or decisions; focuses on setup with error handling for MQOPEN/MQGET failures by logging via 9500-LOG-ERROR if compcode != OK. Calls 1100-OPEN-REQUEST-QUEUE to perform MQOPEN and 3100-READ-REQUEST-MQ for MQGET. On MQ errors, sets error flags and logs but continues to exit without abend unless critical.
 
 ### 1100-OPEN-REQUEST-QUEUE
 > [Source: 1100-OPEN-REQUEST-QUEUE.cbl.md](COPAUA0C.cbl.d/1100-OPEN-REQUEST-QUEUE.cbl.md)
-This paragraph opens the request message queue. It moves MQOT-Q to MQOD-OBJECTTYPE and WS-REQUEST-QNAME to MQOD-OBJECTNAME to define the queue object (lines 36-37). It then computes WS-OPTIONS as MQOO-INPUT-SHARED (line 39). It calls MQOPEN to open the queue using the specified parameters. If MQOPEN is successful (WS-COMPCODE = MQCC-OK), it sets WS-REQUEST-MQ-OPEN to TRUE (lines 49-50). Otherwise, it logs an error using 9500-LOG-ERROR (lines 52-61). The paragraph consumes WS-REQUEST-QNAME as input and sets WS-REQUEST-MQ-OPEN based on the MQOPEN result. It produces no direct output but opens the message queue. It implements error handling for MQOPEN failures. It calls MQOPEN to open the queue and 9500-LOG-ERROR to handle errors.
-
-### 1100-EXIT
-> [Source: 1100-EXIT.cbl.md](COPAUA0C.cbl.d/1100-EXIT.cbl.md)
-This paragraph simply marks the exit point for the 1100-OPEN-REQUEST-QUEUE paragraph. It contains only the EXIT statement and does not perform any processing or data manipulation. It serves as a standard way to define the end of a PERFORM THRU sequence. This paragraph does not consume any input or produce any output. It does not implement any business logic or error handling. It is a placeholder for the end of the queue opening process.
-
-### 1200-SCHEDULE-PSB
-> [Source: 1200-SCHEDULE-PSB.cbl.md](COPAUA0C.cbl.d/1200-SCHEDULE-PSB.cbl.md)
-This paragraph schedules a PSB (Program Specification Block) in IMS. It uses the EXEC DLI SCHD command to schedule the PSB specified by PSB-NAME (lines 69-72). It then moves DIBSTAT to IMS-RETURN-CODE to capture the IMS return code. If the PSB was scheduled more than once, it terminates the PSB and schedules it again (lines 74-83). If the status is OK, it sets IMS-PSB-SCHD to TRUE (lines 84-85). Otherwise, it logs an error using 9500-LOG-ERROR (lines 87-93). The paragraph consumes PSB-NAME as input and sets IMS-PSB-SCHD based on the IMS scheduling result. It produces no direct output but schedules the PSB. It implements error handling for IMS scheduling failures. It calls 9500-LOG-ERROR to handle errors.
-
-### 1200-EXIT
-> [Source: 1200-EXIT.cbl.md](COPAUA0C.cbl.d/1200-EXIT.cbl.md)
-This paragraph simply marks the exit point for the 1200-SCHEDULE-PSB paragraph. It contains only the EXIT statement and does not perform any processing or data manipulation. It serves as a standard way to define the end of a PERFORM THRU sequence. This paragraph does not consume any input or produce any output. It does not implement any business logic or error handling. It is a placeholder for the end of the PSB scheduling process.
-
-### 2000-EXIT
-> [Source: 2000-EXIT.cbl.md](COPAUA0C.cbl.d/2000-EXIT.cbl.md)
-This paragraph simply marks the exit point for the 2000-MAIN-PROCESS paragraph. It contains only the EXIT statement and does not perform any processing or data manipulation. It serves as a standard way to define the end of a PERFORM THRU sequence. This paragraph does not consume any input or produce any output. It does not implement any business logic or error handling. It is a placeholder for the end of the main processing loop.
-
-### 2100-EXTRACT-REQUEST-MSG
-> [Source: 2100-EXTRACT-REQUEST-MSG.cbl.md](COPAUA0C.cbl.d/2100-EXTRACT-REQUEST-MSG.cbl.md)
-This paragraph extracts data from the authorization request message (W01-GET-BUFFER) received from the MQ queue. It uses the UNSTRING statement to parse the comma-delimited message into individual fields, such as authorization date, time, card number, and transaction amount. The extracted data is then moved into corresponding fields in the PA-RQ-* and WS-* variables. The alphanumeric transaction amount (WS-TRANSACTION-AMT-AN) is converted to a numeric value using the FUNCTION NUMVAL and stored in PA-RQ-TRANSACTION-AMT and WS-TRANSACTION-AMT. This paragraph prepares the data for subsequent processing and validation. No error handling is performed within this paragraph. It is called by an upstream paragraph (not shown in the provided code) and calls no other paragraphs.
-
-### 2100-EXIT
-> [Source: 2100-EXIT.cbl.md](COPAUA0C.cbl.d/2100-EXIT.cbl.md)
-This paragraph serves as the exit point for the 2100-EXTRACT-REQUEST-MSG paragraph. It contains a simple EXIT statement, which returns control to the calling paragraph. It does not perform any specific actions or data manipulation. It is a standard practice in COBOL to have an explicit exit paragraph for each processing paragraph to ensure proper program flow and maintainability. This paragraph consumes no inputs and produces no outputs. It is called by 2100-EXTRACT-REQUEST-MSG and calls no other paragraphs.
+This paragraph opens the MQ request queue for input-shared reading. It consumes WS-REQUEST-QNAME from trigger, sets MQOD for queue object, options MQOO-INPUT-SHARED. Produces W01-HOBJ-REQUEST handle if successful. No business logic, purely MQ setup. On failure (compcode != MQCC-OK), sets critical MQ error, populates ERR-CODE-1/2 from compcode/reason, message 'REQ MQ OPEN ERROR', performs 9500-LOG-ERROR. Calls no other paragraphs.
 
 ### 3100-READ-REQUEST-MQ
 > [Source: 3100-READ-REQUEST-MQ.cbl.md](COPAUA0C.cbl.d/3100-READ-REQUEST-MQ.cbl.md)
-This paragraph reads the authorization request message from the MQ queue. It sets the MQGMO options for the MQGET call, including no syncpoint, waiting for a message, conversion, and failing if quiescing. It also sets the wait interval and message format. The MQGET call retrieves the message from the queue, placing it into W01-GET-BUFFER. If the MQGET call is successful (WS-COMPCODE = MQCC-OK), the correlation ID and reply queue name are saved. If the call fails, the paragraph checks if the reason is MQRC-NO-MSG-AVAILABLE, setting a flag if no message is available. Otherwise, it logs an error message using 9500-LOG-ERROR, including the completion code, reason code, and relevant error information. The paragraph consumes the MQ queue identified by W01-HCONN-REQUEST and W01-HOBJ-REQUEST and produces the message in W01-GET-BUFFER. It is called by an upstream paragraph (not shown) and calls MQGET and 9500-LOG-ERROR.
+This paragraph reads the authorization request from MQ queue with wait and convert options. Consumes opened queue handle, sets MD for correlid none, format string, options no-sync/wait/convert/fail-quiescing. Produces W01-GET-BUFFER with request data (datalen), saves correlid and reply-qname from MD. No business decisions. On compcode != OK, logs error (not shown fully). Calls no others.
 
-### 3100-EXIT
-> [Source: 3100-EXIT.cbl.md](COPAUA0C.cbl.d/3100-EXIT.cbl.md)
-This paragraph serves as the exit point for the 3100-READ-REQUEST-MQ paragraph. It contains a simple EXIT statement, which returns control to the calling paragraph. It does not perform any specific actions or data manipulation. It is a standard practice in COBOL to have an explicit exit paragraph for each processing paragraph to ensure proper program flow and maintainability. This paragraph consumes no inputs and produces no outputs. It is called by 3100-READ-REQUEST-MQ and calls no other paragraphs.
+### 5200-READ-ACCT-RECORD
+> [Source: 5200-READ-ACCT-RECORD.cbl.md](COPAUA0C.cbl.d/5200-READ-ACCT-RECORD.cbl.md)
+This paragraph reads the account master record using account ID from xref. Consumes WS-CARD-RID-ACCT-ID from xref lookup, performs CICS READ DATASET into ACCOUNT-RECORD. Produces account data or sets NFOUND-ACCT-IN-MSTR flag. Evaluates RESP: NORMAL sets FOUND-ACCT-IN-MSTR, NOTFND sets flag and warning log 'ACCT NOT FOUND IN XREF', other errors critical app log. Calls 9500-LOG-ERROR on errors. Business logic: determines if account exists for auth decision.
 
-### 5000-EXIT
-> [Source: 5000-EXIT.cbl.md](COPAUA0C.cbl.d/5000-EXIT.cbl.md)
-This paragraph serves as the exit point for the 5000-PROCESS-AUTH paragraph. It contains a simple EXIT statement, which returns control to the calling paragraph. It does not perform any specific actions or data manipulation. It is a standard practice in COBOL to have an explicit exit paragraph for each processing paragraph to ensure proper program flow and maintainability. This paragraph consumes no inputs and produces no outputs. It is called by 5000-PROCESS-AUTH and calls no other paragraphs.
-
-### 5100-EXIT
-> [Source: 5100-EXIT.cbl.md](COPAUA0C.cbl.d/5100-EXIT.cbl.md)
-This paragraph serves as the exit point for the 5100-READ-XREF-RECORD paragraph. It contains a simple EXIT statement, which returns control to the calling paragraph. It does not perform any specific actions or data manipulation. It is a standard practice in COBOL to have an explicit exit paragraph for each processing paragraph to ensure proper program flow and maintainability. This paragraph consumes no inputs and produces no outputs. It is called by 5100-READ-XREF-RECORD and calls no other paragraphs.
-
-### 5200-EXIT
-> [Source: 5200-EXIT.cbl.md](COPAUA0C.cbl.d/5200-EXIT.cbl.md)
-This paragraph serves as the exit point for the 5200-READ-ACCT-RECORD paragraph. It contains a simple EXIT statement, which returns control to the calling paragraph. It does not perform any specific actions or data manipulation. It is a standard practice in COBOL to have an explicit exit paragraph for each processing paragraph to ensure proper program flow and maintainability. This paragraph consumes no inputs and produces no outputs. It is called by 5200-READ-ACCT-RECORD and calls no other paragraphs.
-
-### 5300-EXIT
-> [Source: 5300-EXIT.cbl.md](COPAUA0C.cbl.d/5300-EXIT.cbl.md)
-This paragraph simply contains the EXIT statement, providing a standard exit point for the 5300-READ-CUST-RECORD paragraph. It does not perform any specific logic or data manipulation. It is called by 5300-READ-CUST-RECORD after the CICS READ operation and error handling are complete. The paragraph consumes no input and produces no output. It serves as a structured way to return control to the calling paragraph.
-
-### 5500-EXIT
-> [Source: 5500-EXIT.cbl.md](COPAUA0C.cbl.d/5500-EXIT.cbl.md)
-This paragraph simply contains the EXIT statement, providing a standard exit point for the 5500-READ-AUTH-SUMMRY paragraph. It does not perform any specific logic or data manipulation. It is called by 5500-READ-AUTH-SUMMRY after the IMS READ operation and error handling are complete. The paragraph consumes no input and produces no output. It serves as a structured way to return control to the calling paragraph.
-
-### 5600-EXIT
-> [Source: 5600-EXIT.cbl.md](COPAUA0C.cbl.d/5600-EXIT.cbl.md)
-This paragraph simply contains the EXIT statement, providing a standard exit point for the 5600-READ-PROFILE-DATA paragraph. It does not perform any specific logic or data manipulation. It is called by 5600-READ-PROFILE-DATA after the (currently empty) READ operation. The paragraph consumes no input and produces no output. It serves as a structured way to return control to the calling paragraph.
+### 5500-READ-AUTH-SUMMRY
+> [Source: 5500-READ-AUTH-SUMMRY.cbl.md](COPAUA0C.cbl.d/5500-READ-AUTH-SUMMRY.cbl.md)
+This paragraph retrieves IMS pending auth summary segment for the account. Consumes PA-ACCT-ID from xref/acct, EXEC DLI GU on PAUTSUM0 where ACCNTID=PA-ACCT-ID into PENDING-AUTH-SUMMARY. Produces summary data or NFOUND-PAUT-SMRY-SEG flag. Evaluates IMS status: OK sets FOUND, GE sets not found, others critical IMS error log 'IMS GET SUMMARY FAILED'. Calls 9500-LOG-ERROR on error. Key for computing current pending auth balances.
 
 ### 6000-MAKE-DECISION
 > [Source: 6000-MAKE-DECISION.cbl.md](COPAUA0C.cbl.d/6000-MAKE-DECISION.cbl.md)
-This paragraph determines whether to approve or decline an authorization request. It first moves data from request fields (PA-RQ-*) to response fields (PA-RL-*). If a pending authorization summary is found (FOUND-PAUT-SMRY-SEG), it calculates the available amount (WS-AVAILABLE-AMT) using the credit limit and balance from the summary. If no summary is found but an account is found (FOUND-ACCT-IN-MSTR), it calculates the available amount using the credit limit and balance from the account record. If neither a summary nor an account is found, it declines the authorization. If the transaction amount exceeds the available amount, it declines the authorization and sets the INSUFFICIENT-FUND flag. If the authorization is declined, it sets the AUTH-RESP-DECLINED flag and moves '05' to PA-RL-AUTH-RESP-CODE. Otherwise, it sets the AUTH-RESP-APPROVED flag and moves '00' to PA-RL-AUTH-RESP-CODE and the transaction amount to PA-RL-APPROVED-AMT. Finally, it sets the reason code (PA-RL-AUTH-RESP-REASON) based on various conditions, such as card not found, insufficient funds, or fraud. The paragraph consumes data from the CICS COMMAREA, PENDING-AUTH-SUMMARY, and CUSTOMER-RECORD, and produces the authorization decision and response data in PA-RL-* fields.
-
-### 6000-EXIT
-> [Source: 6000-EXIT.cbl.md](COPAUA0C.cbl.d/6000-EXIT.cbl.md)
-This paragraph simply contains the EXIT statement, providing a standard exit point for the 6000-MAKE-DECISION paragraph. It does not perform any specific logic or data manipulation. It is called by 6000-MAKE-DECISION after the authorization decision logic is complete. The paragraph consumes no input and produces no output. It serves as a structured way to return control to the calling paragraph.
-
-### 7100-EXIT
-> [Source: 7100-EXIT.cbl.md](COPAUA0C.cbl.d/7100-EXIT.cbl.md)
-This paragraph simply contains the EXIT statement, providing a standard exit point for the 7100-SEND-RESPONSE paragraph. It does not perform any specific logic or data manipulation. It is called by 7100-SEND-RESPONSE after the MQPUT1 call and error handling are complete. The paragraph consumes no input and produces no output. It serves as a structured way to return control to the calling paragraph.
-
-### 8000-EXIT
-> [Source: 8000-EXIT.cbl.md](COPAUA0C.cbl.d/8000-EXIT.cbl.md)
-This paragraph serves as the exit point for the 8000-WRITE-AUTH-TO-DB paragraph. It contains a simple EXIT statement, which allows the program to return control to the calling paragraph. It does not perform any data manipulation, business logic, or error handling. It is a standard COBOL construct for defining the end of a PERFORM THRU range. This paragraph does not consume any inputs or produce any outputs. It is called by the PERFORM statement in 8000-WRITE-AUTH-TO-DB after the 8500-INSERT-AUTH paragraph has completed. It does not call any other paragraphs or programs.
+Core decision paragraph that determines approve/decline and populates response layout. Consumes request fields (PA-RQ-*) moved to response, flags from lookups, computes available amt preferring IMS summary then acct. Produces PA-RL-* fields with codes '00'/'05', reason '0000'/specific, approved amt. Business logic: decline if trans > available (sets INSUFFICIENT-FUND), sets reasons based on flags (3100 notfound, 4100 insuff, etc.), approve copies trans amt. No explicit error handling here, relies on prior flags. Calls no paragraphs, but logic flows to MQ put.
 
 ### 8400-UPDATE-SUMMARY
 > [Source: 8400-UPDATE-SUMMARY.cbl.md](COPAUA0C.cbl.d/8400-UPDATE-SUMMARY.cbl.md)
-This paragraph updates the pending authorization summary in the IMS database. It first checks if a summary segment already exists (NFOUND-PAUT-SMRY-SEG). If not, it initializes the PENDING-AUTH-SUMMARY with zeros and moves the XREF-ACCT-ID and XREF-CUST-ID to the summary record. It then moves ACCT-CREDIT-LIMIT and ACCT-CASH-CREDIT-LIMIT to the summary record. If the authorization is approved (AUTH-RESP-APPROVED), it increments the approved authorization count and amount, and updates the credit balance. Otherwise, it increments the declined authorization count and amount. Finally, it either updates an existing summary segment or inserts a new one into the IMS database using EXEC DLI REPL or ISRT commands, respectively. If the IMS operation fails, it logs an error using 9500-LOG-ERROR. Inputs include XREF-ACCT-ID, XREF-CUST-ID, ACCT-CREDIT-LIMIT, ACCT-CASH-CREDIT-LIMIT, WS-APPROVED-AMT, and PA-TRANSACTION-AMT. Outputs include the updated PENDING-AUTH-SUMMARY segment in the IMS database. The paragraph is called by 8000-WRITE-AUTH-TO-DB.
-
-### 8400-EXIT
-> [Source: 8400-EXIT.cbl.md](COPAUA0C.cbl.d/8400-EXIT.cbl.md)
-This paragraph serves as the exit point for the 8400-UPDATE-SUMMARY paragraph. It contains a simple EXIT statement, which allows the program to return control to the calling paragraph. It does not perform any data manipulation, business logic, or error handling. It is a standard COBOL construct for defining the end of a PERFORM THRU range. This paragraph does not consume any inputs or produce any outputs. It is called by the PERFORM statement in 8000-WRITE-AUTH-TO-DB after the 8400-UPDATE-SUMMARY paragraph has completed. It does not call any other paragraphs or programs.
+This paragraph updates or inserts IMS pending auth summary based on decision. Consumes decision fields/flags, initializes if not found, sets limits from acct, adjusts counts/balances (approved: +cnt +amt to balance; declined: +decl cnt +decl amt). Produces updated/inserted PAUTSUM0 segment via REPL if found else ISRT. Error handling: on non-OK status, critical IMS log 'IMS UPDATE SUMRY FAILED'. Calls 9500-LOG-ERROR. Ensures persistent auth history.
 
 ### 8500-INSERT-AUTH
 > [Source: 8500-INSERT-AUTH.cbl.md](COPAUA0C.cbl.d/8500-INSERT-AUTH.cbl.md)
-This paragraph inserts authorization details into the IMS database. It first retrieves the current date and time using CICS ASKTIME and FORMATTIME commands, converting the date and time into specific formats. It then computes PA-AUTH-DATE-9C and PA-AUTH-TIME-9C by subtracting the current date and time from constant values. It moves various fields from the request (PA-RQ-*) and response (PA-RL-*) structures to the detail record. It sets PA-MATCH-PENDING or PA-MATCH-AUTH-DECLINED based on whether the authorization was approved. It then inserts the PENDING-AUTH-DETAILS segment into the IMS database using EXEC DLI ISRT. If the IMS operation fails, it logs an error using 9500-LOG-ERROR. Inputs include various PA-RQ-* and PA-RL-* fields. Outputs include the inserted PENDING-AUTH-DETAILS segment in the IMS database. The paragraph is called by 8000-WRITE-AUTH-TO-DB.
+Inserts IMS pending auth detail child segment under summary. Consumes request/response/merchant fields moved to PENDING-AUTH-DETAILS, sets PA-MATCH-PENDING/AUTH-DECLINED flag. Produces new PAUTDTL1 via DLI ISRT under PAUTSUM0 where ACCNTID match. Error handling: non-OK status critical IMS log 'IMS INSERT DETL FAILED'. Calls 9500-LOG-ERROR. Captures transaction audit trail.
 
-### 8500-EXIT
-> [Source: 8500-EXIT.cbl.md](COPAUA0C.cbl.d/8500-EXIT.cbl.md)
-This paragraph serves as the exit point for the 8500-INSERT-AUTH paragraph. It contains a simple EXIT statement, which allows the program to return control to the calling paragraph. It does not perform any data manipulation, business logic, or error handling. It is a standard COBOL construct for defining the end of a PERFORM THRU range. This paragraph does not consume any inputs or produce any outputs. It is called by the PERFORM statement in 8000-WRITE-AUTH-TO-DB after the 8500-INSERT-AUTH paragraph has completed. It does not call any other paragraphs or programs.
+### 1200-SCHEDULE-PSB
+> [Source: 1200-SCHEDULE-PSB.cbl.md](COPAUA0C.cbl.d/1200-SCHEDULE-PSB.cbl.md)
+Schedules the IMS PSB 'PSBPAUTB' for database access required for authorization validation. Consumes PSB-NAME from working storage. Executes DL/I SCHD with NODHABEND; if PSB scheduled more than once (TC), terminates prior and reschedules. Moves DIBSTAT to IMS-RETURN-CODE and checks STATUS-OK; if not, logs critical IMS error 'I001' with return code via 9500-LOG-ERROR. Sets IMS-PSB-SCHD flag on success. No inputs/outputs beyond flags; enables IMS segment access for account/customer/card checks. Handles retry conditions implicitly via status checks. Critical for data validation flow.
+
+### 2100-EXTRACT-REQUEST-MSG
+> [Source: 2100-EXTRACT-REQUEST-MSG.cbl.md](COPAUA0C.cbl.d/2100-EXTRACT-REQUEST-MSG.cbl.md)
+Parses the raw MQ message buffer from W01-GET-BUFFER into structured authorization request fields. Consumes W01-DATALEN to unstring comma-delimited data into PA-RQ-* fields like date, time, card-num, auth-type, expiry, source, amt (alphanumeric), merchant details. Performs NUMVAL on WS-TRANSACTION-AMT-AN to populate numeric PA-RQ-TRANSACTION-AMT. No conditions or decisions; pure data extraction/transformation. Outputs populated PA-RQ-* for downstream validation. No error handling shown (assumes valid format). Prepares data for IMS lookups and auth logic.
+
+### 7100-SEND-RESPONSE
+> [Source: 7100-SEND-RESPONSE.cbl.md](COPAUA0C.cbl.d/7100-SEND-RESPONSE.cbl.md)
+Sends authorization decision response to reply queue. Consumes WS-REPLY-QNAME, WS-SAVE-CORRELID, response fields like PA-RL-*, WS-APPROVED-AMT-DIS to populate MQM-OD-REPLY/MQM-MD-REPLY (reply msgtype, non-persistent, expiry 50). Sets MQPMO options (no-sync, default context). Calls MQPUT1 with buffer length WS-RESP-LENGTH. If not OK, logs critical MQ error 'M004' with codes. No validations; assumes response built upstream. Outputs formatted comma-delimited reply message.
 
 ### 9000-TERMINATE
 > [Source: 9000-TERMINATE.cbl.md](COPAUA0C.cbl.d/9000-TERMINATE.cbl.md)
-This paragraph handles the termination of the IMS PSB and closes the request queue. It first checks if the IMS PSB is scheduled (IMS-PSB-SCHD). If so, it terminates the PSB using EXEC DLI TERM. Then, it calls 9100-CLOSE-REQUEST-QUEUE to close the request queue. There are no explicit inputs or outputs consumed or produced within this paragraph itself, as it delegates the queue closing to the called paragraph. The business logic involves checking if the IMS PSB is scheduled and terminating it if necessary. Error handling is performed by the called paragraph 9100-CLOSE-REQUEST-QUEUE. The paragraph calls 9100-CLOSE-REQUEST-QUEUE to close the request queue.
-
-### 9000-EXIT
-> [Source: 9000-EXIT.cbl.md](COPAUA0C.cbl.d/9000-EXIT.cbl.md)
-This paragraph serves as the exit point for the 9000-TERMINATE paragraph. It contains a simple EXIT statement, which allows the program to return control to the calling paragraph. It does not perform any data manipulation, business logic, or error handling. It is a standard COBOL construct for defining the end of a PERFORM THRU range. This paragraph does not consume any inputs or produce any outputs. It is called by the PERFORM statement in the calling paragraph after the 9000-TERMINATE paragraph has completed. It does not call any other paragraphs or programs.
+Program termination cleanup. Checks IMS-PSB-SCHD and executes DL/I TERM if scheduled. Performs 9100-CLOSE-REQUEST-QUEUE to release MQ handle. No inputs consumed; produces clean shutdown state. No business logic or errors handled here; relies on subordinates. Ensures resources released before CICS return.
 
 ### 9100-CLOSE-REQUEST-QUEUE
 > [Source: 9100-CLOSE-REQUEST-QUEUE.cbl.md](COPAUA0C.cbl.d/9100-CLOSE-REQUEST-QUEUE.cbl.md)
-This paragraph closes the request message queue. It first checks if the request queue is open (WS-REQUEST-MQ-OPEN). If so, it calls the MQCLOSE program to close the queue, passing the connection handle (W01-HCONN-REQUEST), object handle (W01-HOBJ-REQUEST), and other MQ parameters. After the MQCLOSE call, it checks the completion code (WS-COMPCODE). If the completion code is MQCC-OK, it sets WS-REQUEST-MQ-CLSE to TRUE. Otherwise, it logs an error using 9500-LOG-ERROR. Inputs include W01-HCONN-REQUEST and W01-HOBJ-REQUEST. There are no explicit outputs. The paragraph is called by 9000-TERMINATE.
+Closes MQ request queue handle if open. Consumes W01-HOBJ-REQUEST flag WS-REQUEST-MQ-OPEN. Calls MQCLOSE with none options. On OK sets WS-REQUEST-MQ-CLSE; else logs warning MQ error 'M005'. Outputs closed handles; warning-level error.
+
+### COPAUA0C
+> [Source: COPAUA0C.cbl.md](COPAUA0C.cbl.d/COPAUA0C.cbl.md)
+UNKNOWN - line 23 is blank in provided code; outline indicates it calls multiple MQ subroutines (CMQODV, CMQMDV, etc.) likely for MQ structure initialization before MAIN-PARA. No inputs consumed directly visible. No outputs produced directly. No business logic or decisions visible. No error handling shown. Calls numerous MQ setup routines for object descriptors and messages.
+
+### 1000-EXIT
+> [Source: 1000-EXIT.cbl.md](COPAUA0C.cbl.d/1000-EXIT.cbl.md)
+This is a simple exit paragraph for 1000-INITIALIZE, providing a clean return point after initialization activities. It consumes no data. It produces no outputs or modifications. No business logic or decisions implemented. No error handling. Called implicitly by THRU 1000-EXIT from performers; calls nothing.
+
+### 1100-EXIT
+> [Source: 1100-EXIT.cbl.md](COPAUA0C.cbl.d/1100-EXIT.cbl.md)
+Simple exit paragraph for 1100-OPEN-REQUEST-QUEUE, allowing THRU return after MQ open logic. Consumes no data. Produces no changes. No logic, conditions, or errors. No calls.
+
+### 1200-EXIT
+> [Source: 1200-EXIT.cbl.md](COPAUA0C.cbl.d/1200-EXIT.cbl.md)
+Simple exit for 1200-SCHEDULE-PSB after IMS PSB management. No inputs/outputs/logic/errors/calls.
+
+### 2000-MAIN-PROCESS
+> [Source: 2000-MAIN-PROCESS.cbl.md](COPAUA0C.cbl.d/2000-MAIN-PROCESS.cbl.md)
+Core processing loop for authorization requests, handling multiple messages up to limit. Consumes MQ messages via prior reads, WS-MSG-PROCESSED counter, WS-REQSTS-PROCESS-LIMIT. Produces increments to WS-MSG-PROCESSED, sets IMS-PSB-NOT-SCHD=TRUE post-syncpoint, sets WS-LOOP-END if limit hit. Business logic: PERFORM UNTIL NO-MORE-MSG-AVAILABLE OR WS-LOOP-END (103); extract msg (105), process auth (107), add 1 to processed (109), SYNCPOINT (112), set not-scheduled (114), if processed > limit set end else read next (116-119). Error handling delegated to callees. Calls 2100-EXTRACT-REQUEST-MSG for parsing, 5000-PROCESS-AUTH for business logic, 3100-READ-REQUEST-MQ for next iteration.
+
+### 2000-EXIT
+> [Source: 2000-EXIT.cbl.md](COPAUA0C.cbl.d/2000-EXIT.cbl.md)
+Exit for 2000-MAIN-PROCESS after loop completion. No inputs/outputs/logic/errors/calls.
+
+### 2100-EXIT
+> [Source: 2100-EXIT.cbl.md](COPAUA0C.cbl.d/2100-EXIT.cbl.md)
+This is an exit paragraph that simply returns control to the calling paragraph. It consumes no inputs and produces no outputs or modifications. No business logic, decisions, error handling, or calls are implemented. Its sole role is to mark the end of the 2100-EXTRACT-REQUEST-MSG processing block and allow flow to resume at the next statement after the THRU clause if called that way. It is invoked implicitly after 2100-EXTRACT-REQUEST-MSG completes.
+
+### 3100-EXIT
+> [Source: 3100-EXIT.cbl.md](COPAUA0C.cbl.d/3100-EXIT.cbl.md)
+This exit paragraph returns control to the caller after MQ read processing. No inputs consumed, no outputs produced, no logic or error handling. Serves as endpoint for THRU 3100-EXIT invocations.
+
+### 5000-PROCESS-AUTH
+> [Source: 5000-PROCESS-AUTH.cbl.md](COPAUA0C.cbl.d/5000-PROCESS-AUTH.cbl.md)
+This is the main authorization processing orchestration paragraph handling a single request. It initializes APPROVE-AUTH to TRUE (line 89), schedules PSB via 1200-SCHEDULE-PSB (line 91), assumes card and account found initially (lines 93-94). It performs sequential reads: 5100-READ-XREF-RECORD (line 96), conditional account/customer/profile/auth-summary reads if xref found (lines 98-105), then 6000-MAKE-DECISION (line 107), 7100-SEND-RESPONSE (line 109), and conditional DB write if xref found (lines 111-113). Inputs are parsed request data (PA-RQ-*) and flags from subordinate reads; outputs are updated flags, decision, response, and DB record. Business logic conditionally skips reads/writes based on CARD-FOUND-XREF flag, centralizing flow control. No explicit error handling here; relies on subordinates. Calls multiple read and processing paragraphs to gather data for decision. Control to 5000-EXIT.
+
+### 5000-EXIT
+> [Source: 5000-EXIT.cbl.md](COPAUA0C.cbl.d/5000-EXIT.cbl.md)
+Exit paragraph returning control after authorization processing. No inputs, outputs, logic, errors, or calls.
+
+### 5100-READ-XREF-RECORD
+> [Source: 5100-READ-XREF-RECORD.cbl.md](COPAUA0C.cbl.d/5100-READ-XREF-RECORD.cbl.md)
+This paragraph reads the card cross-reference record from VSAM file WS-CCXREF-FILE using CICS READ with key XREF-CARD-NUM from request (line 122). Input is PA-RQ-CARD-NUM moved to key; outputs CARD-XREF-RECORD into working storage and sets CARD-FOUND-XREF or CARD-NFOUND-XREF based on response (lines 135-139). Evaluates WS-RESP-CD: NORMAL sets found flag (line 136); NOTFND logs app warning 'A001' via 9500-LOG-ERROR and sets not found flags (lines 141-147); OTHER logs critical CICS error 'C001' with resp/reas codes (lines 149-159). Business logic classifies read outcome to drive downstream processing like skipping further reads if not found. Error handling uses EVALUATE for all resp codes, logging appropriately without abending on NOTFND. Calls 9500-LOG-ERROR twice on errors. Control to 5100-EXIT.
+
+### 5100-EXIT
+> [Source: 5100-EXIT.cbl.md](COPAUA0C.cbl.d/5100-EXIT.cbl.md)
+Exit paragraph after xref read. No logic or changes.
+
+### 5200-EXIT
+> [Source: 5200-EXIT.cbl.md](COPAUA0C.cbl.d/5200-EXIT.cbl.md)
+Exit after account read. Minimal, no actions.
+
+### 5300-READ-CUST-RECORD
+> [Source: 5300-READ-CUST-RECORD.cbl.md](COPAUA0C.cbl.d/5300-READ-CUST-RECORD.cbl.md)
+This paragraph reads the customer record from the VSAM customer file using CICS READ with RIDFLD based on XREF-CUST-ID moved to WS-CARD-RID-CUST-ID-X. It consumes the customer ID from prior XREF processing (line 4). It produces the populated CUSTOMER-RECORD area and sets flags FOUND-CUST-IN-MSTR or NFOUND-CUST-IN-MSTR based on response. Business logic evaluates WS-RESP-CD: NORMAL sets found flag (17-18); NOTFND sets not found, logs warning 'A003' with message 'CUST NOT FOUND IN XREF' (19-28); OTHER logs critical CICS error 'C003' with resp/reas codes and 'FAILED TO READ CUST FILE' (30-41). Error handling logs via 9500-LOG-ERROR for both warning and critical cases, using ERR-LOCATION, flags, codes, message, and key. It calls 9500-LOG-ERROR twice potentially, once for NOTFND and once for OTHER.
+
+### 5300-EXIT
+> [Source: 5300-EXIT.cbl.md](COPAUA0C.cbl.d/5300-EXIT.cbl.md)
+This is an exit paragraph that simply performs EXIT to return control to the caller paragraph. It consumes no inputs and produces no outputs. There is no business logic, conditions, or error handling. It calls no other paragraphs or programs. Its role is to cleanly exit the 5300-READ-CUST-RECORD logic.
+
+### 5500-EXIT
+> [Source: 5500-EXIT.cbl.md](COPAUA0C.cbl.d/5500-EXIT.cbl.md)
+This is an exit paragraph that simply performs EXIT to return control to the caller. It consumes no data and produces nothing. No logic, decisions, or error handling is present. No calls are made. Its purpose is to terminate the 5500-READ-AUTH-SUMMRY paragraph flow.
+
+### 5600-READ-PROFILE-DATA
+> [Source: 5600-READ-PROFILE-DATA.cbl.md](COPAUA0C.cbl.d/5600-READ-PROFILE-DATA.cbl.md)
+This paragraph is a placeholder for reading profile data but currently contains only CONTINUE with no actual logic implemented. It consumes no inputs and produces no outputs or flags. There are no business decisions, validations, or error handling. No other paragraphs or programs are called. Its intended role appears to be retrieving profile data, but it is not functional in this code.
+
+### 5600-EXIT
+> [Source: 5600-EXIT.cbl.md](COPAUA0C.cbl.d/5600-EXIT.cbl.md)
+This exit paragraph performs EXIT to return control. No inputs consumed, no outputs produced. No logic or errors handled. No calls. Standard exit for 5600-READ-PROFILE-DATA.
+
+### 6000-EXIT
+> [Source: 6000-EXIT.cbl.md](COPAUA0C.cbl.d/6000-EXIT.cbl.md)
+Exit paragraph performing EXIT. No inputs/outputs/logic/errors/calls. Returns control after decision logic.
+
+### 7100-EXIT
+> [Source: 7100-EXIT.cbl.md](COPAUA0C.cbl.d/7100-EXIT.cbl.md)
+Standard exit paragraph with EXIT. No data flow, logic, errors, or calls. Terminates send response flow.
+
+### 8000-WRITE-AUTH-TO-DB
+> [Source: 8000-WRITE-AUTH-TO-DB.cbl.md](COPAUA0C.cbl.d/8000-WRITE-AUTH-TO-DB.cbl.md)
+This paragraph is the primary orchestrator for persisting authorization outcomes to the IMS database during the write phase. It consumes pre-populated working storage data including account cross-references (XREF-ACCT-ID, XREF-CUST-ID), credit limits (ACCT-CREDIT-LIMIT), approval status (AUTH-RESP-APPROVED), approved amount (WS-APPROVED-AMT), and request/response details (PA-RQ-*, PA-RL-*). It produces updates to the PAUTSUM0 summary segment and a new PAUTDTL1 detail segment via subordinate paragraphs. The business logic sequences summary update first followed by detail insert to ensure hierarchical integrity under the account ID. No direct error handling occurs here; errors are managed in called paragraphs with critical flags set if IMS fails. It unconditionally calls 8400-UPDATE-SUMMARY THRU 8400-EXIT to handle summary logic and IMS I/O, then 8500-INSERT-AUTH THRU 8500-EXIT for detail insertion with fresh timestamps. Upon completion of both, control passes to 8000-EXIT to return to the main flow.
+
+### 8000-EXIT
+> [Source: 8000-EXIT.cbl.md](COPAUA0C.cbl.d/8000-EXIT.cbl.md)
+This paragraph serves as the dedicated exit point for 8000-WRITE-AUTH-TO-DB, ensuring clean return of control to the invoking paragraph. It consumes no inputs and produces no outputs or modifications to data areas. There is no business logic, conditions, or decisions implemented within it. No validation or error handling is performed, as any issues are resolved prior to reaching this point. It is invoked immediately after the PERFORM THRU statements in 8000-WRITE-AUTH-TO-DB. No subordinate paragraphs or external programs are called from here. The sole statement is EXIT, which transfers control back up the perform stack.
+
+### 8400-EXIT
+> [Source: 8400-EXIT.cbl.md](COPAUA0C.cbl.d/8400-EXIT.cbl.md)
+This is the exit routine for 8400-UPDATE-SUMMARY, providing a standard return point after IMS summary operations. It reads no data and writes nothing. No logic or conditions are evaluated. Error conditions are handled prior in the main body. Invoked via THRU in 8000-WRITE-AUTH-TO-DB. No calls are made. Executes EXIT to resume in caller.
+
+### 8500-EXIT
+> [Source: 8500-EXIT.cbl.md](COPAUA0C.cbl.d/8500-EXIT.cbl.md)
+Exit point for 8500-INSERT-AUTH following detail segment insertion. No inputs consumed or outputs produced. No decisions or logic. Errors handled upstream. Called via THRU from 8000. No calls. EXIT statement only.
+
+### 9000-EXIT
+> [Source: 9000-EXIT.cbl.md](COPAUA0C.cbl.d/9000-EXIT.cbl.md)
+Standard exit for 9000-TERMINATE after resource closure. No I/O, logic, or errors here. Returns control to prior flow. Invoked via THRU. No calls. EXIT.
 
 ### 9100-EXIT
 > [Source: 9100-EXIT.cbl.md](COPAUA0C.cbl.d/9100-EXIT.cbl.md)
-This paragraph serves as the exit point for the 9100-CLOSE-REQUEST-QUEUE paragraph. It contains a simple EXIT statement, which allows the program to return control to the calling paragraph. It does not perform any data manipulation, business logic, or error handling. It is a standard COBOL construct for defining the end of a PERFORM THRU range. This paragraph does not consume any inputs or produce any outputs. It is called by the PERFORM statement in 9000-TERMINATE after the 9100-CLOSE-REQUEST-QUEUE paragraph has completed. It does not call any other paragraphs or programs.
+Exit routine for 9100-CLOSE-REQUEST-QUEUE post-MQ closure. No data access or modification. No conditions checked. Errors logged prior. Called via THRU. No further calls. EXIT to return.
 
 ### 9500-LOG-ERROR
 > [Source: 9500-LOG-ERROR.cbl.md](COPAUA0C.cbl.d/9500-LOG-ERROR.cbl.md)
-This paragraph logs error information to a CICS temporary data queue (TDQ) named CSSL. It first retrieves the current date and time using CICS ASKTIME and FORMATTIME commands, storing them in WS-CUR-DATE-X6 and WS-CUR-TIME-X6 respectively. It then moves the transaction ID (WS-CICS-TRANID), program name (WS-PGM-AUTH), current date, and current time into the ERROR-LOG-RECORD. The ERROR-LOG-RECORD is then written to the CSSL TDQ using the CICS WRITEQ TD command. Finally, it checks the ERR-CRITICAL flag; if set, it performs the 9990-END-ROUTINE paragraph to terminate the CICS task. This paragraph consumes WS-CICS-TRANID and WS-PGM-AUTH and produces a record in the CSSL queue.
+This paragraph serves as the primary error logging routine in the program, invoked when an error condition occurs to record details for auditing and diagnostics. It consumes working storage variables such as WS-CICS-TRANID, WS-PGM-AUTH, and ERR-CRITICAL, as well as internally populating WS-ABS-TIME via CICS ASKTIME and deriving WS-CUR-DATE-X6 and WS-CUR-TIME-X6 via FORMATTIME. It produces a populated ERROR-LOG-RECORD by moving transaction ID to ERR-APPLICATION, program auth to ERR-PROGRAM, formatted date to ERR-DATE, and time to ERR-TIME, then writes the entire record to the CSSL TD queue. The business logic centers on deciding whether to terminate based on the ERR-CRITICAL flag: if true, it performs 9990-END-ROUTINE to shut down; otherwise, it falls through to exit. Error handling for CICS commands uses NOHANDLE, suppressing exceptions silently. It calls 9990-END-ROUTINE conditionally for critical errors to ensure proper program termination. This routine supports operational reliability by logging errors without interrupting non-critical flows. No files are opened or closed here; it relies on prior setup.
 
 ### ~~9500-EXIT~~ (Dead Code)
 > [Source: 9500-EXIT.cbl.md](COPAUA0C.cbl.d/9500-EXIT.cbl.md)
@@ -206,7 +210,7 @@ This paragraph logs error information to a CICS temporary data queue (TDQ) named
 
 ### 9990-END-ROUTINE
 > [Source: 9990-END-ROUTINE.cbl.md](COPAUA0C.cbl.d/9990-END-ROUTINE.cbl.md)
-This paragraph performs the necessary steps to terminate the CICS task. It first calls the 9000-TERMINATE paragraph, presumably to perform any application-specific cleanup or finalization tasks. After 9000-TERMINATE completes, it executes a CICS RETURN command to terminate the CICS task and return control to CICS. This paragraph is called by 9500-LOG-ERROR when a critical error is detected. It ensures that the application terminates gracefully after logging the error.
+This paragraph orchestrates the final termination of the program in response to critical errors, ensuring cleanup and return to CICS. It consumes no explicit inputs, relying on prior state from calling context. It produces program shutdown by performing 9000-TERMINATE (presumably for resource cleanup) and issuing EXEC CICS RETURN to release control back to CICS. There is no conditional business logic; it unconditionally executes termination steps. No specific error handling or validations are performed here, deferring to 9000-TERMINATE. It calls 9000-TERMINATE to handle any necessary file closures, variable resets, or other end-of-task activities before returning. This routine is critical for preventing resource leaks in CICS environment. Control flows to 9990-EXIT afterward. Its invocation only occurs from 9500-LOG-ERROR for critical cases.
 
 ### ~~9990-EXIT~~ (Dead Code)
 > [Source: 9990-EXIT.cbl.md](COPAUA0C.cbl.d/9990-EXIT.cbl.md)
@@ -320,66 +324,80 @@ flowchart TD
 
 ## Open Questions
 
-- ? What is the structure of the MQ messages?
-  - Context: The program reads from and writes to MQ queues, but the exact message format is not defined in the provided code snippet.
-- ? What is the purpose of 5600-READ-PROFILE-DATA?
-  - Context: The paragraph contains only a CONTINUE statement and does not perform any meaningful operation.
+- ? Details of 2000-MAIN-PROCESS, 5100-READ-XREF, 5300-READ-CUST, MQ reply put paragraph, 9000-TERMINATE, 9500-LOG-ERROR
+  - Context: Source is sampled (55.2%), many lines omitted including these key paragraphs
+- ? Exact logic for CARD-NOT-ACTIVE, ACCOUNT-CLOSED, CARD-FRAUD, MERCHANT-FRAUD flags
+  - Context: Flags defined but setting logic not in sampled lines (e.g., likely in acct/cust reads)
+- ? Customer read details and usage in decision
+  - Context: Flag FOUND-CUST-IN-MSTR referenced in BR but read logic partially omitted at 604
 
 ## Sequence Diagram
 
+### Part 1 of 2
 ```mermaid
 sequenceDiagram
-    MAIN-PARA->>1000-INITIALIZE: performs
-    1000-INITIALIZE-->>MAIN-PARA: WS-REQUEST-QNAME, WS-TRIGGER-DATA, WS-WAIT-INTERVAL
-    MAIN-PARA->>2000-MAIN-PROCESS: WS-REQSTS-PROCESS-LIMIT, WS-MSG-PROCESSED
-    2000-MAIN-PROCESS-->>MAIN-PARA: WS-MSG-PROCESSED
-    MAIN-PARA->>9000-TERMINATE: performs
-    1000-INITIALIZE->>1100-OPEN-REQUEST-QUEUE: WS-REQUEST-QNAME, WS-OPTIONS
-    1100-OPEN-REQUEST-QUEUE-->>1000-INITIALIZE: W01-HOBJ-REQUEST, WS-COMPCODE, WS-REASON
-    1000-INITIALIZE->>3100-READ-REQUEST-MQ: WS-WAIT-INTERVAL, W01-HCONN-REQUEST, W01-HOBJ-REQUEST
-    3100-READ-REQUEST-MQ-->>1000-INITIALIZE: WS-SAVE-CORRELID, WS-REPLY-QNAME, WS-COMPCODE, ...
-    2000-MAIN-PROCESS->>2100-EXTRACT-REQUEST-MSG: W01-GET-BUFFER, W01-DATALEN
-    2100-EXTRACT-REQUEST-MSG-->>2000-MAIN-PROCESS: PA-RQ-AUTH-DATE, PA-RQ-AUTH-TIME, PA-RQ-CARD-NUM, ...
-    2000-MAIN-PROCESS->>5000-PROCESS-AUTH: performs
-    5000-PROCESS-AUTH-->>2000-MAIN-PROCESS: APPROVE-AUTH, CARD-FOUND-XREF, FOUND-ACCT-IN-MSTR
-    2000-MAIN-PROCESS->>3100-READ-REQUEST-MQ: WS-WAIT-INTERVAL, MQMI-NONE, MQCI-NONE, ...
-    3100-READ-REQUEST-MQ-->>2000-MAIN-PROCESS: MQGMO-OPTIONS, MQMD-MSGID, MQMD-CORRELID, ...
-    5000-PROCESS-AUTH->>1200-SCHEDULE-PSB: PSB-NAME
-    1200-SCHEDULE-PSB-->>5000-PROCESS-AUTH: IMS-RETURN-CODE, IMS-PSB-SCHD
-    5000-PROCESS-AUTH->>5100-READ-XREF-RECORD: PA-RQ-CARD-NUM, WS-CCXREF-FILE, WS-RESP-CD, ...
-    5100-READ-XREF-RECORD-->>5000-PROCESS-AUTH: XREF-CARD-NUM, CARD-FOUND-XREF, CARD-NFOUND-XREF, ...
-    5000-PROCESS-AUTH->>5200-READ-ACCT-RECORD: XREF-ACCT-ID, WS-ACCTFILENAME, WS-CARD-RID-ACCT-ID-X, ...
-    5200-READ-ACCT-RECORD-->>5000-PROCESS-AUTH: WS-CARD-RID-ACCT-ID, FOUND-ACCT-IN-MSTR, NFOUND-ACCT-IN-MSTR, ...
-    5000-PROCESS-AUTH->>5300-READ-CUST-RECORD: XREF-CUST-ID, WS-CUSTFILENAME, WS-CARD-RID-CUST-ID-X, ...
-    5300-READ-CUST-RECORD-->>5000-PROCESS-AUTH: WS-CARD-RID-CUST-ID, FOUND-CUST-IN-MSTR, NFOUND-CUST-IN-MSTR, ...
-    5000-PROCESS-AUTH->>5500-READ-AUTH-SUMMRY: XREF-ACCT-ID, PA-ACCT-ID
-    5500-READ-AUTH-SUMMRY-->>5000-PROCESS-AUTH: FOUND-PAUT-SMRY-SEG, NFOUND-PAUT-SMRY-SEG, IMS-RETURN-CODE, ...
-    5000-PROCESS-AUTH->>5600-READ-PROFILE-DATA: performs
-    5000-PROCESS-AUTH->>6000-MAKE-DECISION: FOUND-PAUT-SMRY-SEG, PA-CREDIT-LIMIT, PA-CREDIT-BALANCE, ...
-    6000-MAKE-DECISION-->>5000-PROCESS-AUTH: DECLINE-AUTH, APPROVE-AUTH, AUTH-RESP-DECLINED, ...
-    5000-PROCESS-AUTH->>7100-SEND-RESPONSE: MQOT-Q, WS-REPLY-QNAME, MQMT-REPLY, ...
-    7100-SEND-RESPONSE-->>5000-PROCESS-AUTH: WS-COMPCODE, WS-REASON, ERR-LOCATION, ...
-    5000-PROCESS-AUTH->>8000-WRITE-AUTH-TO-DB: performs
-    5100-READ-XREF-RECORD->>9500-LOG-ERROR: WS-CICS-TRANID, WS-PGM-AUTH, WS-CUR-DATE-X6, ...
-    9500-LOG-ERROR-->>5100-READ-XREF-RECORD: WS-ABS-TIME
-    5100-READ-XREF-RECORD->>9500-LOG-ERROR: WS-CICS-TRANID, WS-PGM-AUTH, WS-CUR-DATE-X6, ...
-    9500-LOG-ERROR-->>5100-READ-XREF-RECORD: WS-ABS-TIME
-    5100-READ-XREF-RECORD->>WS-CCXREF-FILE: performs
-    5200-READ-ACCT-RECORD->>9500-LOG-ERROR: WS-CICS-TRANID, WS-PGM-AUTH, WS-CUR-DATE-X6, ...
-    9500-LOG-ERROR-->>5200-READ-ACCT-RECORD: WS-ABS-TIME
-    5200-READ-ACCT-RECORD->>9500-LOG-ERROR: WS-CICS-TRANID, WS-PGM-AUTH, WS-CUR-DATE-X6, ...
-    9500-LOG-ERROR-->>5200-READ-ACCT-RECORD: WS-ABS-TIME
-    5200-READ-ACCT-RECORD->>WS-ACCTFILENAME: performs
-    5300-READ-CUST-RECORD->>9500-LOG-ERROR: WS-CICS-TRANID, WS-PGM-AUTH, WS-ABS-TIME, ...
-    5300-READ-CUST-RECORD->>9500-LOG-ERROR: WS-CICS-TRANID, WS-PGM-AUTH, WS-ABS-TIME, ...
-    5300-READ-CUST-RECORD->>WS-CUSTFILENAME: performs
-    5500-READ-AUTH-SUMMRY->>9500-LOG-ERROR: WS-CICS-TRANID, WS-PGM-AUTH, WS-ABS-TIME, ...
-    7100-SEND-RESPONSE->>MQPUT1: performs
-    7100-SEND-RESPONSE->>9500-LOG-ERROR: WS-CICS-TRANID, WS-PGM-AUTH, WS-ABS-TIME, ...
-    8000-WRITE-AUTH-TO-DB->>8400-UPDATE-SUMMARY: NFOUND-PAUT-SMRY-SEG, XREF-ACCT-ID, XREF-CUST-ID, ...
-    8400-UPDATE-SUMMARY-->>8000-WRITE-AUTH-TO-DB: PENDING-AUTH-SUMMARY, IMS-RETURN-CODE
-    8000-WRITE-AUTH-TO-DB->>8500-INSERT-AUTH: WS-ABS-TIME, WS-CUR-DATE-X6, WS-CUR-TIME-X6, ...
-    8500-INSERT-AUTH-->>8000-WRITE-AUTH-TO-DB: PA-AUTH-DATE-9C, PA-AUTH-TIME-9C, PA-AUTH-ORIG-DATE, ...
+    participant MAIN_PARA as MAIN-PARA
+    participant 1000_INITIALIZE as 1000-INITIALIZE
+    participant 2000_MAIN_PROCESS as 2000-MAIN-PROCESS
+    participant 9000_TERMINATE as 9000-TERMINATE
+    participant 1100_OPEN_REQUEST_QUEUE as 1100-OPEN-REQUEST-QUEUE
+    participant 3100_READ_REQUEST_MQ as 3100-READ-REQUEST-MQ
+    participant MQOPEN as MQOPEN
+    participant 9500_LOG_ERROR as 9500-LOG-ERROR
+    participant MQGET as MQGET
+    participant 5200_READ_ACCT_RECORD as 5200-READ-ACCT-RECORD
+    participant WS_ACCTFILENAME as WS-ACCTFILENAME
+    participant 5500_READ_AUTH_SUMMRY as 5500-READ-AUTH-SUMMRY
+    participant 8400_UPDATE_SUMMARY as 8400-UPDATE-SUMMARY
+    participant 8500_INSERT_AUTH as 8500-INSERT-AUTH
+    participant 1200_SCHEDULE_PSB as 1200-SCHEDULE-PSB
+    participant 7100_SEND_RESPONSE as 7100-SEND-RESPONSE
+    participant MQPUT1 as MQPUT1
+    participant 9100_CLOSE_REQUEST_QUEUE as 9100-CLOSE-REQUEST-QUEUE
+    participant MQCLOSE as MQCLOSE
+    participant COPAUA0C as COPAUA0C
+    participant CMQODV as CMQODV
+    participant CMQMDV as CMQMDV
+    participant CMQV as CMQV
+    participant CMQTML as CMQTML
+    participant CMQPMOV as CMQPMOV
+    participant CMQGMOV as CMQGMOV
+    participant CCPAURQY as CCPAURQY
+    participant CCPAURLY as CCPAURLY
+    participant CCPAUERY as CCPAUERY
+    participant CIPAUSMY as CIPAUSMY
+    participant CIPAUDTY as CIPAUDTY
+    participant CVACT03Y as CVACT03Y
+    participant CVACT01Y as CVACT01Y
+    participant CVCUS01Y as CVCUS01Y
+    participant 2100_EXTRACT_REQUEST_MSG as 2100-EXTRACT-REQUEST-MSG
+    participant 5000_PROCESS_AUTH as 5000-PROCESS-AUTH
+    participant 5100_READ_XREF_RECORD as 5100-READ-XREF-RECORD
+    participant 5300_READ_CUST_RECORD as 5300-READ-CUST-RECORD
+    participant 5600_READ_PROFILE_DATA as 5600-READ-PROFILE-DATA
+    participant 6000_MAKE_DECISION as 6000-MAKE-DECISION
+    participant 8000_WRITE_AUTH_TO_DB as 8000-WRITE-AUTH-TO-DB
+    MAIN_PARA->>1000_INITIALIZE: performs
+    MAIN_PARA->>2000_MAIN_PROCESS: performs
+    MAIN_PARA->>9000_TERMINATE: performs
+    1000_INITIALIZE->>1100_OPEN_REQUEST_QUEUE: performs
+    1000_INITIALIZE->>3100_READ_REQUEST_MQ: performs
+    1100_OPEN_REQUEST_QUEUE->>MQOPEN: performs
+    1100_OPEN_REQUEST_QUEUE->>9500_LOG_ERROR: performs
+    3100_READ_REQUEST_MQ->>MQGET: performs
+    3100_READ_REQUEST_MQ->>9500_LOG_ERROR: performs
+    5200_READ_ACCT_RECORD->>9500_LOG_ERROR: performs
+    5200_READ_ACCT_RECORD->>9500_LOG_ERROR: performs
+    5200_READ_ACCT_RECORD->>WS_ACCTFILENAME: performs
+    5500_READ_AUTH_SUMMRY->>9500_LOG_ERROR: performs
+    8400_UPDATE_SUMMARY->>9500_LOG_ERROR: performs
+    8500_INSERT_AUTH->>9500_LOG_ERROR: performs
+    1200_SCHEDULE_PSB->>9500_LOG_ERROR: performs
+    7100_SEND_RESPONSE->>MQPUT1: performs
+    7100_SEND_RESPONSE->>9500_LOG_ERROR: performs
+    9000_TERMINATE->>9100_CLOSE_REQUEST_QUEUE: performs
+    9100_CLOSE_REQUEST_QUEUE->>MQCLOSE: performs
+    9100_CLOSE_REQUEST_QUEUE->>9500_LOG_ERROR: performs
     COPAUA0C->>CMQODV: performs
     COPAUA0C->>CMQMDV: performs
     COPAUA0C->>CMQODV: performs
@@ -396,22 +414,41 @@ sequenceDiagram
     COPAUA0C->>CVACT03Y: performs
     COPAUA0C->>CVACT01Y: performs
     COPAUA0C->>CVCUS01Y: performs
-    1100-OPEN-REQUEST-QUEUE->>MQOPEN: performs
-    1100-OPEN-REQUEST-QUEUE->>9500-LOG-ERROR: WS-CICS-TRANID, WS-PGM-AUTH, WS-CUR-DATE-X6, ...
-    9500-LOG-ERROR-->>1100-OPEN-REQUEST-QUEUE: WS-ABS-TIME
-    1200-SCHEDULE-PSB->>9500-LOG-ERROR: WS-CICS-TRANID, WS-PGM-AUTH, WS-CUR-DATE-X6, ...
-    9500-LOG-ERROR-->>1200-SCHEDULE-PSB: WS-ABS-TIME
-    3100-READ-REQUEST-MQ->>MQGET: performs
-    3100-READ-REQUEST-MQ->>9500-LOG-ERROR: WS-CICS-TRANID, WS-PGM-AUTH, WS-CUR-DATE-X6, ...
-    8400-UPDATE-SUMMARY->>9500-LOG-ERROR: IMS-RETURN-CODE, ERR-LOCATION, ERR-CRITICAL, ...
-    9500-LOG-ERROR-->>8400-UPDATE-SUMMARY: ERR-APPLICATION, ERR-PROGRAM, ERR-DATE, ...
-    8500-INSERT-AUTH->>9500-LOG-ERROR: ERR-LOCATION, ERR-CRITICAL, ERR-IMS, ...
-    9500-LOG-ERROR-->>8500-INSERT-AUTH: ERR-APPLICATION, ERR-PROGRAM, ERR-DATE, ...
-    9000-TERMINATE->>9100-CLOSE-REQUEST-QUEUE: WS-REQUEST-MQ-OPEN
-    9100-CLOSE-REQUEST-QUEUE-->>9000-TERMINATE: WS-REQUEST-MQ-CLSE
-    9100-CLOSE-REQUEST-QUEUE->>MQCLOSE: performs
-    9100-CLOSE-REQUEST-QUEUE->>9500-LOG-ERROR: WS-COMPCODE, WS-REASON, ERR-LOCATION, ...
-    9500-LOG-ERROR-->>9100-CLOSE-REQUEST-QUEUE: ERR-APPLICATION, ERR-PROGRAM, ERR-DATE, ...
-    9500-LOG-ERROR->>9990-END-ROUTINE: ERR-CRITICAL
-    9990-END-ROUTINE->>9000-TERMINATE: IMS-PSB-SCHD
+    2000_MAIN_PROCESS->>2100_EXTRACT_REQUEST_MSG: performs
+    2000_MAIN_PROCESS->>5000_PROCESS_AUTH: performs
+    2000_MAIN_PROCESS->>3100_READ_REQUEST_MQ: performs
+    5000_PROCESS_AUTH->>1200_SCHEDULE_PSB: performs
+    5000_PROCESS_AUTH->>5100_READ_XREF_RECORD: performs
+    5000_PROCESS_AUTH->>5200_READ_ACCT_RECORD: performs
+    5000_PROCESS_AUTH->>5300_READ_CUST_RECORD: performs
+    5000_PROCESS_AUTH->>5500_READ_AUTH_SUMMRY: performs
+    5000_PROCESS_AUTH->>5600_READ_PROFILE_DATA: performs
+    5000_PROCESS_AUTH->>6000_MAKE_DECISION: performs
+    5000_PROCESS_AUTH->>7100_SEND_RESPONSE: performs
+    5000_PROCESS_AUTH->>8000_WRITE_AUTH_TO_DB: performs
+    5100_READ_XREF_RECORD->>9500_LOG_ERROR: performs
+```
+
+### Part 2 of 2
+```mermaid
+sequenceDiagram
+    participant 9000_TERMINATE as 9000-TERMINATE
+    participant 9500_LOG_ERROR as 9500-LOG-ERROR
+    participant 8400_UPDATE_SUMMARY as 8400-UPDATE-SUMMARY
+    participant 8500_INSERT_AUTH as 8500-INSERT-AUTH
+    participant 5100_READ_XREF_RECORD as 5100-READ-XREF-RECORD
+    participant 5300_READ_CUST_RECORD as 5300-READ-CUST-RECORD
+    participant 8000_WRITE_AUTH_TO_DB as 8000-WRITE-AUTH-TO-DB
+    participant WS_CCXREF_FILE as WS-CCXREF-FILE
+    participant WS_CUSTFILENAME as WS-CUSTFILENAME
+    participant 9990_END_ROUTINE as 9990-END-ROUTINE
+    5100_READ_XREF_RECORD->>9500_LOG_ERROR: performs
+    5100_READ_XREF_RECORD->>WS_CCXREF_FILE: performs
+    5300_READ_CUST_RECORD->>9500_LOG_ERROR: performs
+    5300_READ_CUST_RECORD->>9500_LOG_ERROR: performs
+    5300_READ_CUST_RECORD->>WS_CUSTFILENAME: performs
+    8000_WRITE_AUTH_TO_DB->>8400_UPDATE_SUMMARY: performs
+    8000_WRITE_AUTH_TO_DB->>8500_INSERT_AUTH: performs
+    9500_LOG_ERROR->>9990_END_ROUTINE: performs
+    9990_END_ROUTINE->>9000_TERMINATE: performs
 ```

@@ -1,7 +1,7 @@
 ```cobol
-       COPY CSDAT01Y.
-
-      *Common Messages
-       COPY CSMSG01Y.
-
+       ROLL-BACK.
+           EXEC CICS
+              SYNCPOINT ROLLBACK
+           END-EXEC
+           .
 ```

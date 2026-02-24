@@ -1,28 +1,4 @@
 ```cobol
-                      MOVE '5200'         TO PA-RL-AUTH-RESP-REASON             
-                 WHEN OTHER                                                     
-                      MOVE '9000'         TO PA-RL-AUTH-RESP-REASON             
-              END-EVALUATE                                                      
-           END-IF                                                               
-                                                                                
-           MOVE WS-APPROVED-AMT        TO WS-APPROVED-AMT-DIS                   
-                                                                                
-           STRING PA-RL-CARD-NUM         ','                                    
-                  PA-RL-TRANSACTION-ID   ','                                    
-                  PA-RL-AUTH-ID-CODE     ','                                    
-                  PA-RL-AUTH-RESP-CODE   ','                                    
-                  PA-RL-AUTH-RESP-REASON ','                                    
-                  WS-APPROVED-AMT-DIS    ','                                    
-                  DELIMITED BY SIZE                                             
-                  INTO W02-PUT-BUFFER                                           
-                  WITH POINTER WS-RESP-LENGTH                                   
-           END-STRING                                                           
-           .                                                                    
-      *                                                                         
-       6000-EXIT.                                                               
-           EXIT.                                                                
-      *                                                                         
-      * ------------------------------------------------------------- *         
        7100-SEND-RESPONSE.                                                      
       * ------------------------------------------------------------- *         
       *                                                                         
@@ -60,13 +36,4 @@
               MOVE WS-CODE-DISPLAY       TO ERR-CODE-1                          
               MOVE WS-REASON             TO WS-CODE-DISPLAY                     
               MOVE WS-CODE-DISPLAY       TO ERR-CODE-2                          
-              MOVE 'FAILED TO PUT ON REPLY MQ'                                  
-                                         TO ERR-MESSAGE                         
-              MOVE PA-CARD-NUM           TO ERR-EVENT-KEY                       
-              PERFORM 9500-LOG-ERROR                                            
-           END-IF                                                               
-           .                                                                    
-      *                                                                         
-       7100-EXIT.                                                               
-           EXIT.                                                                
 ```

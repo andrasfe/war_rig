@@ -1,32 +1,71 @@
 {
   "header": {
     "program_id": "AUTHFRDS",
-    "file_name": "AUTHFRDS.ddl",
+    "file_name": "ddl/AUTHFRDS.ddl",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-10T17:20:26.786644",
+    "analyzed_at": "2026-02-24T03:59:24.682591",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This DDL file defines the CARDDEMO.AUTHFRDS table, which stores authorization and fraud-related information for card transactions. The table includes fields for card number, authorization timestamp, transaction details, merchant information, and fraud indicators.",
-    "business_context": "This table likely supports fraud detection and authorization processes within a card transaction system.",
+    "summary": "DDL script that creates the CARDDEMO.AUTHFRDS DB2 table for storing authorization transaction details related to fraud detection. The table captures card number, timestamp, merchant data, transaction amounts, and fraud indicators. It enforces data integrity via NOT NULL constraints and a composite primary key.",
+    "business_context": "Supports card fraud analysis by storing historical authorization records with fraud status, merchant details, and transaction metadata for reporting and matching.",
     "program_type": "UTILITY",
     "citations": [
       1,
-      24,
+      2,
+      3,
       28
     ]
   },
   "inputs": [],
-  "outputs": [],
+  "outputs": [
+    {
+      "name": "CARDDEMO.AUTHFRDS",
+      "io_type": "DB2_TABLE",
+      "description": "Table storing authorization fraud details including card num, auth timestamp, transaction amounts, merchant info, and fraud flags",
+      "copybook": null,
+      "citation": [
+        1
+      ]
+    }
+  ],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [],
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "CARD_NUM column must not be null",
+      "logic_summary": "Declared as CHAR(16) NOT NULL to ensure every record has a valid card number",
+      "conditions": [],
+      "citation": [
+        2
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "AUTH_TS column must not be null",
+      "logic_summary": "Declared as TIMESTAMP NOT NULL to ensure every record has a valid authorization timestamp",
+      "conditions": [],
+      "citation": [
+        3
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "Composite primary key on (CARD_NUM, AUTH_TS)",
+      "logic_summary": "Ensures uniqueness of authorization records per card and timestamp, preventing duplicates",
+      "conditions": [],
+      "citation": [
+        28
+      ]
+    }
+  ],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
@@ -52,7 +91,14 @@
     }
   ],
   "error_handling": [],
-  "sql_operations": [],
+  "sql_operations": [
+    {
+      "operation": "CREATE TABLE",
+      "table": "CARDDEMO.AUTHFRDS",
+      "purpose": "Defines persistent storage for authorization fraud transaction data with specified columns, types, and constraints",
+      "citation": 1
+    }
+  ],
   "cics_operations": [],
   "open_questions": [],
   "resolved_questions": [],

@@ -1,21 +1,21 @@
 ```cobol
-      * All Rights Reserved.
-      *
-      * Licensed under the Apache License, Version 2.0 (the "License").
-      * You may not use this file except in compliance with the License.
-      * You may obtain a copy of the License at
-      *
-      *    http://www.apache.org/licenses/LICENSE-2.0
-      *
-      * Unless required by applicable law or agreed to in writing,
-      * software distributed under the License is distributed on an
-      * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
-      * either express or implied. See the License for the specific
-      * language governing permissions and limitations under the License
-      ******************************************************************
-       IDENTIFICATION DIVISION.                                         00010026
-       PROGRAM-ID. PAUDBLOD.                                            00020053
-       AUTHOR.     AWS.                                                 00030026
-                                                                        00040026
-       ENVIRONMENT DIVISION.                                            00050026
+       MAIN-PARA.                                                       01220026
+      *     DISPLAY 'CHECK PROG PCB:' PAUTBPCB.                         01222039
+            ENTRY 'DLITCBL'                 USING PAUTBPCB.             01225033
+                                                                        01226029
+            DISPLAY 'STARTING PAUDBLOD'.                                01227053
+      *                                                                 01230026
+           PERFORM 1000-INITIALIZE                THRU 1000-EXIT        01240026
+      *                                                                 01250026
+           PERFORM 2000-READ-ROOT-SEG-FILE        THRU 2000-EXIT        01260053
+           UNTIL   END-ROOT-SEG-FILE  = 'Y'                             01280053
+                                                                        01281053
+           PERFORM 3000-READ-CHILD-SEG-FILE       THRU 3000-EXIT        01290058
+           UNTIL   END-CHILD-SEG-FILE = 'Y'                             01300053
+                                                                        01531150
+           PERFORM 4000-FILE-CLOSE THRU 4000-EXIT                       01532030
+      *                                                                 01540026
+      *                                                                 01560026
+      *                                                                 01650026
+           GOBACK.                                                      01660026
 ```

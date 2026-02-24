@@ -4,128 +4,75 @@
     "file_name": "jcl/DBPAUTP0.jcl",
     "file_type": "JCL",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-10T17:21:52.602908",
+    "analyzed_at": "2026-02-24T03:59:19.390998",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This JCL job unloads the DBD DBPAUTP0 to a sequential dataset. It first deletes the output dataset if it exists, then executes the IMS program DFSRRC00 with parameters to perform the unload. The job also defines various IMS libraries and datasets required for the unload process.",
-    "business_context": null,
+    "summary": "This JCL defines a batch job that first deletes any existing unload dataset AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0 and then executes the IMS unload utility DFSRRC00 to unload the DBPAUTP0 database using user routine DFSURGU0 into a new sequential dataset. The job is part of the CardDemo application as indicated by dataset naming and version comments.",
+    "business_context": "Supports IMS database maintenance for the CardDemo_v2.0 application by unloading DBPAUTP0 database segments for potential backup, transport, or utility processing.",
     "program_type": "BATCH",
     "citations": [
       1,
-      13,
-      15
+      7,
+      15,
+      16,
+      25,
+      46
     ]
   },
   "inputs": [
     {
-      "name": "AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0",
-      "io_type": "FILE_VSAM",
-      "description": "Input IMS database to be unloaded. This is deleted and recreated.",
+      "name": "SYSUT1",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Existing unload dataset targeted for deletion in STEPDEL",
       "copybook": null,
       "citation": [
-        9,
-        25
+        9
       ]
     },
     {
-      "name": "OEMA.IMS.IMSP.SDFSRESL",
+      "name": "DDPAUTP0",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS RESLIB library.",
-      "copybook": null,
-      "citation": [
-        18,
-        20
-      ]
-    },
-    {
-      "name": "AWS.M2.CARDDEMO.LOADLIB",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "Application load library.",
-      "copybook": null,
-      "citation": [
-        19
-      ]
-    },
-    {
-      "name": "OEM.IMS.IMSP.PSBLIB",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS PSB library.",
-      "copybook": null,
-      "citation": [
-        21
-      ]
-    },
-    {
-      "name": "OEM.IMS.IMSP.DBDLIB",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS DBD library.",
-      "copybook": null,
-      "citation": [
-        22
-      ]
-    },
-    {
-      "name": "OEM.IMS.IMSP.PAUTHDB",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS PAUTHDB dataset.",
+      "description": "IMS PAUTHDB dataset providing DBD definitions for DBPAUTP0",
       "copybook": null,
       "citation": [
         31
       ]
     },
     {
-      "name": "OEM.IMS.IMSP.PAUTHDBX",
+      "name": "DDPAUTX0",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS PAUTHDBX dataset.",
+      "description": "IMS PAUTHDBX dataset providing additional DBD definitions",
       "copybook": null,
       "citation": [
         32
       ]
     },
     {
-      "name": "OEMPP.IMS.V15R01MB.PROCLIB(DFSVSMDB)",
+      "name": "DFSCTL",
+      "io_type": "PARAMETER",
+      "description": "Inline control statements for DFSRRC00 including SBPARM ACTIV=COND",
+      "copybook": null,
+      "citation": [
+        34
+      ]
+    },
+    {
+      "name": "DFSVSAMP",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS VSAM parameter library.",
+      "description": "Sample VSAM DBD definitions from DFSVSMDB",
       "copybook": null,
       "citation": [
         33
-      ]
-    },
-    {
-      "name": "OEM.IMS.IMSP.RECON1",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS RECON1 dataset.",
-      "copybook": null,
-      "citation": [
-        40
-      ]
-    },
-    {
-      "name": "OEM.IMS.IMSP.RECON2",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS RECON2 dataset.",
-      "copybook": null,
-      "citation": [
-        41
-      ]
-    },
-    {
-      "name": "OEM.IMS.IMSP.RECON3",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS RECON3 dataset.",
-      "copybook": null,
-      "citation": [
-        42
       ]
     }
   ],
   "outputs": [
     {
-      "name": "AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0",
+      "name": "DFSURGU1",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "Output dataset containing the unloaded DBD DBPAUTP0.",
+      "description": "Sequential unload dataset containing DBPAUTP0 database segments (LRECL=27990, RECFM=VB)",
       "copybook": null,
       "citation": [
         25
@@ -134,7 +81,7 @@
     {
       "name": "SYSPRINT",
       "io_type": "REPORT",
-      "description": "System print output for job logs and messages.",
+      "description": "Utility messages and diagnostics for both steps",
       "copybook": null,
       "citation": [
         8,
@@ -144,7 +91,7 @@
     {
       "name": "SYSUDUMP",
       "io_type": "REPORT",
-      "description": "System dump output for debugging purposes.",
+      "description": "System dump output for debugging abends",
       "copybook": null,
       "citation": [
         36
@@ -155,18 +102,16 @@
     {
       "program_name": "IEFBR14",
       "call_type": "STATIC_CALL",
-      "purpose": "Deletes the output dataset AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0 if it exists.",
+      "purpose": "Delete prior version of unload dataset to avoid conflicts",
       "parameters": [],
       "citation": 7
     },
     {
       "program_name": "DFSRRC00",
       "call_type": "STATIC_CALL",
-      "purpose": "Unloads the DBD DBPAUTP0.",
+      "purpose": "Perform IMS database unload operation on DBPAUTP0",
       "parameters": [
-        "ULU",
-        "DFSURGU0",
-        "DBPAUTP0"
+        "ULU,DFSURGU0,DBPAUTP0"
       ],
       "citation": 15
     }
@@ -176,20 +121,95 @@
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [],
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Always delete existing unload dataset before generating a new one",
+      "logic_summary": "STEPDEL uses IEFBR14 with DISP=(MOD,DELETE) unconditionally prior to UNLOAD",
+      "conditions": [
+        "Sequential execution with no COND parameters"
+      ],
+      "citation": [
+        7,
+        10
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Unload IMS database DBPAUTP0 using specific user routine and conditional activation",
+      "logic_summary": "DFSRRC00 invoked with PARM=(ULU,DFSURGU0,DBPAUTP0) and DFSCTL SBPARM ACTIV=COND",
+      "conditions": [
+        "ACTIV=COND in control cards"
+      ],
+      "citation": [
+        16,
+        35
+      ]
+    }
+  ],
   "data_flow": {
-    "reads_from": [],
-    "writes_to": [],
+    "reads_from": [
+      {
+        "source": "DBPAUTP0 (IMS Database)",
+        "fields_used": [],
+        "citation": [
+          16
+        ]
+      },
+      {
+        "source": "DDPAUTP0/DDPAUTX0/DFSVSAMP",
+        "fields_used": [],
+        "citation": [
+          31,
+          32,
+          33
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "DFSURGU1",
+        "fields_written": [
+          "Unloaded database segments"
+        ],
+        "citation": [
+          25
+        ]
+      }
+    ],
     "transforms": []
   },
   "copybooks_used": [],
   "paragraphs": [
     {
+      "paragraph_name": "DBPAUTP0",
+      "summary": null,
+      "purpose": "This is the JOB statement that defines the overall job parameters including name 'DBPAUTP0', class A, message class X, region 0K, time limit 30 minutes, and notify to &SYSUID. It establishes the execution environment for all subsequent steps without processing any data itself. No inputs are consumed at this level; it relies on system parameters. Outputs are job-level logs via MSGCLASS. No business logic or decisions are implemented here. Error handling is standard JCL job abend propagation. It orchestrates sequential execution of STEPDEL followed by UNLOAD without any conditional logic. Comments indicate purpose as DB unload (lines 4-5,12-13). Version information from CardDemo_v2.0 is noted (line 46).",
+      "called_by": [],
+      "calls": [
+        "STEPDEL",
+        "UNLOAD"
+      ],
+      "citation": [
+        1,
+        2
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
       "paragraph_name": "STEPDEL",
       "summary": null,
-      "purpose": "This step deletes the existing output dataset AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0 before the unload process begins. It executes the utility program IEFBR14, which is a standard IBM utility for dataset allocation and deletion. The SYSUT1 DD statement defines the dataset to be deleted, specifying a DISP value of (MOD,DELETE). This ensures that if the dataset exists, it will be deleted. The SYSPRINT DD statement directs the output messages from IEFBR14 to the job's SYSOUT. This step ensures that the subsequent unload step starts with a clean slate, preventing potential issues from pre-existing data. No specific business logic is implemented in this step, as it primarily focuses on dataset management. No error handling is explicitly defined, but the JCL will fail if the dataset deletion encounters an unrecoverable error.",
-      "called_by": [],
-      "calls": [],
+      "purpose": "This job step executes the IEFBR14 utility solely to delete any existing version of the target unload dataset AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0. It consumes the dataset reference via SYSUT1 DD with DISP=(MOD,DELETE), UNIT=SYSDA, SPACE=(TRK,0). No other inputs or working data are read. It produces no new data files but modifies the catalog by deleting the dataset if present. No business decisions or validations are performed; it's a preparatory cleanup step. Error handling relies on standard IEFBR14 return codes, with no explicit COND or IF in JCL to skip subsequent steps. SYSPRINT is routed to SYSOUT=* for any messages. Called unconditionally after the JOB statement. Control passes to UNLOAD next.",
+      "called_by": [
+        "DBPAUTP0"
+      ],
+      "calls": [
+        "IEFBR14"
+      ],
       "citation": [
         7,
         10
@@ -214,9 +234,13 @@
     {
       "paragraph_name": "UNLOAD",
       "summary": null,
-      "purpose": "This step performs the actual unload of the DBD DBPAUTP0. It executes the IMS program DFSRRC00 with the parameters ULU, DFSURGU0, and DBPAUTP0. The STEPLIB DD statements specify the IMS RESLIB and application load library, providing the necessary runtime environment for DFSRRC00. The DFSRESLB DD statement defines the IMS RESLIB. The IMS DD statements define the PSB and DBD libraries. The DFSURGU1 DD statement defines the output dataset where the unloaded DBD will be stored. The DDPAUTP0 and DDPAUTX0 DD statements define the PAUTHDB and PAUTHDBX datasets, respectively. The DFSVSAMP DD statement points to the DFSVSMDB member in the OEMPP.IMS.V15R01MB.PROCLIB, which contains VSAM parameters. The DFSCTL DD statement specifies SBPARM ACTIV=COND, which activates conditional scheduling. The SYSUDUMP DD statement defines the system dump dataset. The RECON1, RECON2, and RECON3 DD statements define the IMS RECON datasets. The DFSWRK01 and DFSSRT01 DD statements are dummy datasets. The PARM parameter in the EXEC statement passes control information to the DFSRRC00 program, instructing it to perform an unload operation (ULU) using the DFSURGU0 utility and the DBPAUTP0 DBD.",
-      "called_by": [],
-      "calls": [],
+      "purpose": "This job step executes the IMS DFSRRC00 utility to unload the DBPAUTP0 database using PARM=(ULU,DFSURGU0,DBPAUTP0), producing a sequential VB file of database segments. It consumes IMS libraries from STEPLIB, DFSRESLB, IMS DDs (PSBLIB, DBDLIB), DBD datasets (DDPAUTP0, DDPAUTX0, DFSVSAMP), inline DFSCTL parameters (SBPARM ACTIV=COND), and RECON1-3 datasets. Dummy DDs for DFSWRK01 and DFSSRT01 indicate no work/sort files needed. Outputs the unload data to DFSURGU1 (newly allocated, cataloged, with specific DCB params), SYSPRINT, and SYSUDUMP. Implements unload logic via utility with conditional activation per control cards; no JCL-level conditions. Errors cause step ABEND with dumps to SYSUDUMP. Called sequentially after STEPDEL. Handles full database unload without field-level transforms visible in JCL.",
+      "called_by": [
+        "STEPDEL"
+      ],
+      "calls": [
+        "DFSRRC00"
+      ],
       "citation": [
         15,
         45
@@ -294,10 +318,37 @@
       "metadata": null
     }
   ],
-  "error_handling": [],
+  "error_handling": [
+    {
+      "condition": "IEFBR14 delete failure (non-zero RC)",
+      "action": "Step abend; no COND parameter so job may continue to UNLOAD depending on system settings",
+      "citation": [
+        7
+      ]
+    },
+    {
+      "condition": "DFSRRC00 unload failure",
+      "action": "Step abend with SYSUDUMP output",
+      "citation": [
+        15,
+        36
+      ]
+    }
+  ],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [],
+  "open_questions": [
+    {
+      "question": "Purpose of DFSURGU0 user routine",
+      "context": "Referenced in PARM but source code not provided",
+      "suggestion": "Review DFSURGU0 source or IMS documentation"
+    },
+    {
+      "question": "Role of RECON1, RECON2, RECON3 datasets",
+      "context": "SHR datasets referenced but not standard for basic unload",
+      "suggestion": "Check IMS recon documentation or job history"
+    }
+  ],
   "resolved_questions": [],
   "dead_code": [
     {

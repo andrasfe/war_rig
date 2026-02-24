@@ -3,89 +3,70 @@
     "caller": "MAIN-PARA",
     "callee": "1000-INITIALIZE",
     "inputs": [],
-    "outputs": [
-      "CURRENT-DATE",
-      "CURRENT-YYDDD"
-    ],
-    "purpose": "Initializes the program by accepting current date and day from system and displaying startup information."
+    "outputs": [],
+    "purpose": null
   },
   {
     "caller": "MAIN-PARA",
     "callee": "2000-FIND-NEXT-AUTH-SUMMARY",
     "inputs": [],
-    "outputs": [
-      "WS-END-OF-ROOT-SEG",
-      "WS-NO-SUMRY-READ",
-      "WS-AUTH-SMRY-PROC-CNT",
-      "OPFIL1-REC",
-      "ROOT-SEG-KEY",
-      "CHILD-SEG-REC"
-    ],
-    "purpose": "Reads the next root segment (authorization summary) from IMS database and processes it if found, setting end-of-segment flag when done."
+    "outputs": [],
+    "purpose": null
   },
   {
     "caller": "MAIN-PARA",
     "callee": "4000-FILE-CLOSE",
     "inputs": [],
     "outputs": [],
-    "purpose": "Displays a message indicating that the file closing process is starting."
+    "purpose": null
   },
   {
     "caller": "2000-FIND-NEXT-AUTH-SUMMARY",
     "callee": "3100-INSERT-PARENT-SEG-GSAM",
-    "inputs": [
-      "PENDING-AUTH-SUMMARY"
-    ],
+    "inputs": [],
     "outputs": [],
-    "purpose": "Inserts the parent authorization summary segment into the GSAM database using IMS call and abends if the insertion fails."
+    "purpose": null
   },
   {
     "caller": "2000-FIND-NEXT-AUTH-SUMMARY",
     "callee": "3000-FIND-NEXT-AUTH-DTL",
     "inputs": [],
-    "outputs": [
-      "WS-END-OF-CHILD-SEG",
-      "WS-NO-SUMRY-READ",
-      "WS-AUTH-SMRY-PROC-CNT",
-      "CHILD-SEG-REC"
-    ],
-    "purpose": "Retrieves the next child segment (authorization detail) from IMS database and updates processing counters, marking end of child segments when no more are found."
+    "outputs": [],
+    "purpose": null
   },
   {
     "caller": "2000-FIND-NEXT-AUTH-SUMMARY",
     "callee": "9999-ABEND",
     "inputs": [],
     "outputs": [],
-    "purpose": "Terminates the program with return code 16 when an IMS call fails in the authorization summary processing."
+    "purpose": null
   },
   {
     "caller": "3000-FIND-NEXT-AUTH-DTL",
     "callee": "3200-INSERT-CHILD-SEG-GSAM",
-    "inputs": [
-      "PENDING-AUTH-DETAILS"
-    ],
+    "inputs": [],
     "outputs": [],
-    "purpose": "Writes the retrieved authorization detail record to a GSAM output file using IMS ISRT call."
+    "purpose": null
   },
   {
     "caller": "3000-FIND-NEXT-AUTH-DTL",
     "callee": "9999-ABEND",
     "inputs": [],
     "outputs": [],
-    "purpose": "Terminates the program with return code 16 when the IMS GNP call for reading the next authorization detail fails."
+    "purpose": null
   },
   {
     "caller": "3100-INSERT-PARENT-SEG-GSAM",
     "callee": "9999-ABEND",
     "inputs": [],
     "outputs": [],
-    "purpose": "Terminates the program with return code 16 if the IMS ISRT call to insert a parent segment into GSAM fails."
+    "purpose": null
   },
   {
     "caller": "3200-INSERT-CHILD-SEG-GSAM",
     "callee": "9999-ABEND",
     "inputs": [],
     "outputs": [],
-    "purpose": "Terminates the program with return code 16 if the IMS ISRT call to insert a child segment into GSAM fails."
+    "purpose": null
   }
 ]

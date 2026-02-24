@@ -2,13 +2,25 @@
 
 **File**: `ddl/AUTHFRDS.ddl`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-02-10 17:20:26.786644
+**Analyzed**: 2026-02-24 03:59:24.682591
 
 ## Purpose
 
-This DDL file defines the CARDDEMO.AUTHFRDS table, which stores authorization and fraud-related information for card transactions. The table includes fields for card number, authorization timestamp, transaction details, merchant information, and fraud indicators.
+DDL script that creates the CARDDEMO.AUTHFRDS DB2 table for storing authorization transaction details related to fraud detection. The table captures card number, timestamp, merchant data, transaction amounts, and fraud indicators. It enforces data integrity via NOT NULL constraints and a composite primary key.
 
-**Business Context**: This table likely supports fraud detection and authorization processes within a card transaction system.
+**Business Context**: Supports card fraud analysis by storing historical authorization records with fraud status, merchant details, and transaction metadata for reporting and matching.
+
+## Outputs
+
+| Name | Type | Description |
+|------|------|-------------|
+| CARDDEMO.AUTHFRDS | IOType.DB2_TABLE | Table storing authorization fraud details including card num, auth timestamp, transaction amounts, merchant info, and fraud flags |
+
+## Business Rules
+
+- **BR001**: CARD_NUM column must not be null
+- **BR002**: AUTH_TS column must not be null
+- **BR003**: Composite primary key on (CARD_NUM, AUTH_TS)
 
 ## Paragraphs/Procedures
 

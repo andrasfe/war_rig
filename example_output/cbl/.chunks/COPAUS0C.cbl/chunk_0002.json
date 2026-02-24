@@ -1,0 +1,225 @@
+{
+  "batch_idx": 2,
+  "total_batches": 3,
+  "template": {
+    "header": {
+      "program_id": "COPAUS0C",
+      "file_name": "cbl/COPAUS0C.cbl",
+      "file_type": "COBOL",
+      "analyzed_by": "Scribe",
+      "analyzed_at": "2026-02-24T03:54:20.900838",
+      "iteration_count": 1,
+      "final_status": null
+    },
+    "purpose": {
+      "summary": "The SCHEDULE-PSB paragraph schedules the IMS PSB specified in PSB-NAME using DL/I SCHD calls. It handles duplicate scheduling by terminating and rescheduling the PSB if necessary. On failure, it constructs an error message and performs SEND-PAULST-SCREEN after setting error indicators.",
+      "business_context": null,
+      "program_type": "SUBROUTINE",
+      "citations": [
+        1001,
+        1002,
+        1006,
+        1017,
+        1020,
+        1028
+      ]
+    },
+    "inputs": [],
+    "outputs": [],
+    "called_programs": [],
+    "calling_context": {
+      "called_by": [],
+      "entry_points": [],
+      "linkage_section": []
+    },
+    "business_rules": [
+      {
+        "rule_id": "BR001",
+        "description": "If PSB is scheduled more than once, terminate the existing schedule and reschedule",
+        "logic_summary": "Evaluates PSB-SCHEDULED-MORE-THAN-ONCE condition after initial SCHD and performs TERM followed by another SCHD",
+        "conditions": [
+          "PSB-SCHEDULED-MORE-THAN-ONCE"
+        ],
+        "citation": [
+          1007,
+          1008,
+          1011
+        ]
+      },
+      {
+        "rule_id": "BR002",
+        "description": "On successful PSB scheduling (STATUS-OK), set IMS-PSB-SCHD to TRUE",
+        "logic_summary": "Checks STATUS-OK after SCHD and sets flag if true",
+        "conditions": [
+          "STATUS-OK"
+        ],
+        "citation": [
+          1017,
+          1018
+        ]
+      },
+      {
+        "rule_id": "BR003",
+        "description": "On PSB scheduling failure, set error flag, build message, update COPAU0AI, and send error screen",
+        "logic_summary": "If not STATUS-OK, sets WS-ERR-FLG, STRINGs error into WS-MESSAGE, moves -1 to ACCTIDL, performs SEND-PAULST-SCREEN",
+        "conditions": [
+          "STATUS NOT OK"
+        ],
+        "citation": [
+          1019,
+          1020,
+          1022,
+          1028
+        ]
+      }
+    ],
+    "data_flow": {
+      "reads_from": [
+        {
+          "source": "DIBSTAT",
+          "fields_used": [
+            "DIBSTAT"
+          ],
+          "citation": [
+            1006,
+            1015
+          ]
+        },
+        {
+          "source": "PSB-NAME",
+          "fields_used": [
+            "PSB-NAME"
+          ],
+          "citation": [
+            1003,
+            1012
+          ]
+        }
+      ],
+      "writes_to": [
+        {
+          "destination": "IMS-RETURN-CODE",
+          "fields_written": [
+            "IMS-RETURN-CODE"
+          ],
+          "citation": [
+            1006,
+            1015
+          ]
+        },
+        {
+          "destination": "IMS-PSB-SCHD",
+          "fields_written": [
+            "IMS-PSB-SCHD"
+          ],
+          "citation": [
+            1018
+          ]
+        },
+        {
+          "destination": "WS-ERR-FLG",
+          "fields_written": [
+            "WS-ERR-FLG"
+          ],
+          "citation": [
+            1020
+          ]
+        },
+        {
+          "destination": "WS-MESSAGE",
+          "fields_written": [
+            "WS-MESSAGE"
+          ],
+          "citation": [
+            1022
+          ]
+        },
+        {
+          "destination": "ACCTIDL OF COPAU0AI",
+          "fields_written": [
+            "ACCTIDL"
+          ],
+          "citation": [
+            1028
+          ]
+        }
+      ],
+      "transforms": [
+        {
+          "input_field": "IMS-RETURN-CODE",
+          "output_field": "WS-MESSAGE",
+          "transformation_description": "STRINGs fixed text ' System error while scheduling PSB: Code:' with IMS-RETURN-CODE into WS-MESSAGE",
+          "citation": [
+            1022
+          ]
+        }
+      ]
+    },
+    "copybooks_used": [],
+    "paragraphs": [
+      {
+        "paragraph_name": "SCHEDULE-PSB",
+        "summary": null,
+        "purpose": "The SCHEDULE-PSB paragraph's primary purpose is to schedule the IMS Program Specification Block (PSB) named in PSB-NAME, ensuring it is available for subsequent DL/I database calls in the program. It consumes the PSB-NAME variable and the IMS feedback area DIBSTAT from the initial SCHD call. If the PSB-SCHEDULED-MORE-THAN-ONCE condition is true (determined from IMS-RETURN-CODE after moving DIBSTAT), it produces a TERM call to unschedule, followed by a second SCHD call, updating IMS-RETURN-CODE again. It then evaluates STATUS-OK on IMS-RETURN-CODE to decide success or failure, producing IMS-PSB-SCHD set to TRUE on success or WS-ERR-FLG 'Y', WS-MESSAGE, and ACCTIDL=-1 on failure. Business logic includes handling duplicate PSB scheduling to avoid conflicts and error recovery via user notification. Error handling occurs if STATUS-OK is false, where it builds a descriptive error message including the IMS return code and invokes SEND-PAULST-SCREEN to display it, likely aborting further processing. No files are opened or read directly; it relies on pre-initialized variables. This paragraph is typically called during program initialization to prepare IMS resources before main processing. It calls SEND-PAULST-SCREEN only on the error path to communicate failures to the terminal user.",
+        "called_by": [],
+        "calls": [
+          "SEND-PAULST-SCREEN"
+        ],
+        "citation": [
+          1001,
+          1031
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      }
+    ],
+    "error_handling": [
+      {
+        "condition": "PSB-SCHEDULED-MORE-THAN-ONCE",
+        "action": "EXEC DLI TERM then re-EXEC DLI SCHD",
+        "citation": [
+          1007
+        ]
+      },
+      {
+        "condition": "STATUS-OK false after PSB scheduling",
+        "action": "MOVE 'Y' TO WS-ERR-FLG, STRING error message to WS-MESSAGE, MOVE -1 TO ACCTIDL OF COPAU0AI, PERFORM SEND-PAULST-SCREEN",
+        "citation": [
+          1019
+        ]
+      }
+    ],
+    "sql_operations": [],
+    "cics_operations": [],
+    "open_questions": [
+      {
+        "question": "Definition of PSB-SCHEDULED-MORE-THAN-ONCE and STATUS-OK",
+        "context": "These appear to be condition names or flags evaluated on IMS-RETURN-CODE, but their exact logic (e.g., specific return codes checked) is not defined in the provided code snippet",
+        "suggestion": "Review WORKING-STORAGE or copybooks for condition definitions or 01-level records for IMS-RETURN-CODE"
+      },
+      {
+        "question": "Value/source of PSB-NAME",
+        "context": "PSB-NAME is used in SCHD calls but its content or initialization is not shown",
+        "suggestion": "Examine prior paragraphs or WORKING-STORAGE for assignment to PSB-NAME"
+      },
+      {
+        "question": "Purpose and structure of COPAU0AI",
+        "context": "ACCTIDL OF COPAU0AI is modified on error, suggesting it is a commarea, map, or export structure, but definition not provided",
+        "suggestion": "Locate copybook or section defining COPAU0AI"
+      },
+      {
+        "question": "Overall program context and flow",
+        "context": "Only SCHEDULE-PSB paragraph provided; unclear if IMS MPP, BMP, or integrated with CICS; SEND-PAULST-SCREEN implies terminal I/O",
+        "suggestion": "Provide full source code or additional paragraphs for complete analysis"
+      }
+    ],
+    "resolved_questions": [],
+    "dead_code": [],
+    "call_semantics": [],
+    "flow_diagram": null
+  },
+  "saved_at": "2026-02-23T20:54:20.902477"
+}

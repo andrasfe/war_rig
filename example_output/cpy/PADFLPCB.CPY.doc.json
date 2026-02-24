@@ -1,24 +1,45 @@
 {
   "header": {
     "program_id": "PADFLPCB",
-    "file_name": "PADFLPCB.CPY",
+    "file_name": "cpy/PADFLPCB.CPY",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-10T17:19:11.403324",
+    "analyzed_at": "2026-02-24T03:58:49.492765",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the structure PADFLPCB, which appears to be related to IMS PCB (Program Communication Block) information, containing fields for DBD name, segment level, PCB status, processing options, segment name, key feedback name, number of sensitive segments, and key feedback area. The copybook is used to define a data structure for accessing IMS database information within a COBOL program.",
-    "business_context": null,
+    "summary": "This COBOL copybook defines the 01 PADFLPCB record structure, which is the IMS Database Program Control Block (PCB) for the PADFL database. It provides fields for DBD name, segment level, PCB status, processing options, segment name, key feedback name, number of sensitive segments, and key feedback buffer used in DL/I calls. Programs accessing PADFL via IMS include this copybook to declare the PCB interface.",
+    "business_context": "IMS DL/I database access and navigation for the PADFL database in batch or online IMS environments",
     "program_type": "SUBROUTINE",
     "citations": [
       17,
       18,
+      20,
+      21,
+      23,
       26
     ]
   },
-  "inputs": [],
+  "inputs": [
+    {
+      "name": "PADFLPCB",
+      "io_type": "IMS_SEGMENT",
+      "description": "IMS DB PCB structure populated by IMS after DL/I calls and read by the program; includes status codes, segment levels, key feedback, and other navigation data for PADFL database",
+      "copybook": "PADFLPCB",
+      "citation": [
+        17,
+        18,
+        19,
+        20,
+        21,
+        23,
+        24,
+        25,
+        26
+      ]
+    }
+  ],
   "outputs": [],
   "called_programs": [],
   "calling_context": {
@@ -32,22 +53,29 @@
     "writes_to": [],
     "transforms": []
   },
-  "copybooks_used": [],
+  "copybooks_used": [
+    {
+      "copybook_name": "PADFLPCB",
+      "purpose": "Defines the complete IMS DB PCB data structure for PADFL database access, including all standard fields for status, keys, and options",
+      "location": "WORKING_STORAGE",
+      "citation": 17
+    }
+  ],
   "paragraphs": [
     {
       "paragraph_name": "PADFLPCB",
       "summary": null,
-      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "purpose": "This record definition provides the fixed layout for the IMS Database PCB used by COBOL programs to communicate with the PADFL IMS database via DL/I hierarchical calls. It consumes no runtime inputs as it is a static data declaration, but in usage, the program initializes fields like PADFL-PCB-PROCOPT (line 21) before IMS calls, and IMS populates output fields like PADFL-PCB-STATUS (line 20), PADFL-SEG-LEVEL (line 19), PADFL-SEG-NAME (line 23), and PADFL-KEYFB (line 26) after calls. The PCB outputs navigation data such as key feedback in PADFL-KEYFB for continuing GU or GNP calls, and status for error checking. Business logic in calling programs uses PADFL-DBDNAME (line 18, typically 'PADFL   ') to verify the correct database, PADFL-NUM-SENSEGS (line 25) to know sensitive segments, and PADFL-KEYFB-NAME (line 24) as offset to key area. No decisions are implemented here, but it enables logic like IF PADFL-PCB-STATUS NOT = LOW-VALUES THEN error handling in programs. There is no error handling defined in the copybook itself, as it is non-executable; programs must check status post-call. No paragraphs or programs are called from here, as this is DATA DIVISION content typically COPY'ed into WORKING-STORAGE; it supports calls to IMS DL/I functions like GHU, GNP, GU, ISRT, etc.",
       "called_by": [],
       "calls": [],
       "citation": [
-        1,
-        1
+        17,
+        26
       ],
       "outgoing_calls": [],
       "incoming_calls": [
         {
-          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
           "function": "DBUNLDGS",
           "line": 156,
           "call_type": "includes"
@@ -63,9 +91,14 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "Where is this copybook used?",
-      "context": "The current code only defines the structure, but doesn't show where it's included or how it's used.",
-      "suggestion": "Need to examine the programs that include this copybook to understand its usage."
+      "question": "Exact meanings of specific values in fields like PADFL-PCB-STATUS and PADFL-PCB-PROCOPT",
+      "context": "Copybook defines PIC clauses and names but not value meanings, which follow IMS standards",
+      "suggestion": "Consult IMS DL/I manuals or analyze programs using this copybook for context-specific usage"
+    },
+    {
+      "question": "Precise location (e.g., WORKING-STORAGE vs FILE_SECTION) and initialization in using programs",
+      "context": "Not specified in copybook; standard for IMS PCBs is WORKING-STORAGE",
+      "suggestion": "Review including programs' source code"
     }
   ],
   "resolved_questions": [],

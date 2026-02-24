@@ -1,32 +1,32 @@
 ```cobol
-       COPY CSMSG02Y.
+       SCHEDULE-PSB.
+           EXEC DLI SCHD
+                PSB((PSB-NAME))
+                NODHABEND
+           END-EXEC
+           MOVE DIBSTAT        TO IMS-RETURN-CODE
+           IF PSB-SCHEDULED-MORE-THAN-ONCE
+              EXEC DLI TERM
+              END-EXEC
 
-      *----------------------------------------------------------------*
-      *  IMS SEGMENT LAYOUT
-      *----------------------------------------------------------------*
-      *- PENDING AUTHORIZATION SUMMARY SEGMENT - ROOT
-       01 PENDING-AUTH-SUMMARY.
-       COPY CIPAUSMY.
+              EXEC DLI SCHD
+                   PSB((PSB-NAME))
+                   NODHABEND
+              END-EXEC
+              MOVE DIBSTAT     TO IMS-RETURN-CODE
+           END-IF
+           IF STATUS-OK
+              SET IMS-PSB-SCHD           TO TRUE
+           ELSE
+              MOVE 'Y'     TO WS-ERR-FLG
 
-      *- PENDING AUTHORIZATION DETAILS SEGMENT - CHILD
-       01 PENDING-AUTH-DETAILS.
-       COPY CIPAUDTY.
-
-       COPY DFHAID.
-       COPY DFHBMSCA.
-
-       LINKAGE SECTION.
-       01  DFHCOMMAREA.
-         05  LK-COMMAREA                           PIC X(01)
-             OCCURS 1 TO 32767 TIMES DEPENDING ON EIBCALEN.
-
-       PROCEDURE DIVISION.
-       MAIN-PARA.
-
-           SET ERR-FLG-OFF     TO TRUE
-           SET SEND-ERASE-YES  TO TRUE
-
-           MOVE SPACES TO WS-MESSAGE
-                          ERRMSGO OF COPAU1AO
-
+              STRING
+                  ' System error while scheduling PSB: Code:'
+              IMS-RETURN-CODE
+              DELIMITED BY SIZE
+              INTO WS-MESSAGE
+              END-STRING
+              PERFORM SEND-AUTHVIEW-SCREEN
+           END-IF
+           .
 ```

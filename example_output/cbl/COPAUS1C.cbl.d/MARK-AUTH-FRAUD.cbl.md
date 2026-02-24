@@ -1,39 +1,39 @@
 ```cobol
-          05 PSB-NAME                        PIC X(8) VALUE 'PSBPAUTB'.
-          05 PCB-OFFSET.
-             10 PAUT-PCB-NUM                 PIC S9(4) COMP VALUE +1.
-          05 IMS-RETURN-CODE                 PIC X(02).
-             88 STATUS-OK                    VALUE '  ', 'FW'.
-             88 SEGMENT-NOT-FOUND            VALUE 'GE'.
-             88 DUPLICATE-SEGMENT-FOUND      VALUE 'II'.
-             88 WRONG-PARENTAGE              VALUE 'GP'.
-             88 END-OF-DB                    VALUE 'GB'.
-             88 DATABASE-UNAVAILABLE         VALUE 'BA'.
-             88 PSB-SCHEDULED-MORE-THAN-ONCE VALUE 'TC'.
-             88 COULD-NOT-SCHEDULE-PSB       VALUE 'TE'.
-             88 RETRY-CONDITION              VALUE 'BA', 'FH', 'TE'.
-          05 WS-IMS-PSB-SCHD-FLG             PIC X(1).
-             88  IMS-PSB-SCHD                VALUE 'Y'.
-             88  IMS-PSB-NOT-SCHD            VALUE 'N'.
+       MARK-AUTH-FRAUD.
+           MOVE CDEMO-ACCT-ID            TO WS-ACCT-ID
+           MOVE CDEMO-CPVD-PAU-SELECTED  TO WS-AUTH-KEY
 
-       01 WS-FRAUD-DATA.
-          02 WS-FRD-ACCT-ID                PIC 9(11).
-          02 WS-FRD-CUST-ID                PIC 9(9).
-          02 WS-FRAUD-AUTH-RECORD          PIC X(200).
-          02 WS-FRAUD-STATUS-RECORD.
-             05 WS-FRD-ACTION              PIC X(01).
-                88 WS-REPORT-FRAUD         VALUE 'F'.
-                88 WS-REMOVE-FRAUD         VALUE 'R'.
-             05 WS-FRD-UPDATE-STATUS       PIC X(01).
-                88 WS-FRD-UPDT-SUCCESS     VALUE 'S'.
-                88 WS-FRD-UPDT-FAILED      VALUE 'F'.
-             05 WS-FRD-ACT-MSG             PIC X(50).
+           PERFORM READ-AUTH-RECORD
 
+           IF PA-FRAUD-CONFIRMED
+              SET PA-FRAUD-REMOVED          TO TRUE
+              SET WS-REMOVE-FRAUD           TO TRUE
+           ELSE
+              SET PA-FRAUD-CONFIRMED        TO TRUE
+              SET WS-REPORT-FRAUD           TO TRUE
+           END-IF
 
+           MOVE PENDING-AUTH-DETAILS        TO WS-FRAUD-AUTH-RECORD
+           MOVE CDEMO-ACCT-ID               TO WS-FRD-ACCT-ID
+           MOVE CDEMO-CUST-ID               TO WS-FRD-CUST-ID
 
+           EXEC CICS LINK
+                PROGRAM(WS-PGM-AUTH-FRAUD)
+                COMMAREA(WS-FRAUD-DATA)
+                NOHANDLE
+           END-EXEC
+           IF EIBRESP = DFHRESP(NORMAL)
+              IF WS-FRD-UPDT-SUCCESS
+                 PERFORM UPDATE-AUTH-DETAILS
+              ELSE
+                 MOVE WS-FRD-ACT-MSG     TO WS-MESSAGE
+                 PERFORM ROLL-BACK
+              END-IF
+           ELSE
+              PERFORM ROLL-BACK
+           END-IF
 
-       COPY COCOM01Y.
-          05 CDEMO-CPVD-INFO.
-             10 CDEMO-CPVD-PAU-SEL-FLG     PIC X(01).
-             10 CDEMO-CPVD-PAU-SELECTED    PIC X(08).
+           MOVE PA-AUTHORIZATION-KEY     TO CDEMO-CPVD-PAU-SELECTED
+           PERFORM POPULATE-AUTH-DETAILS
+           .
 ```

@@ -1,50 +1,51 @@
 ```cobol
-                       MOVE CCDA-MSG-INVALID-KEY  TO WS-MESSAGE
-                       PERFORM SEND-PAULST-SCREEN
-                  END-EVALUATE
-               END-IF
-           END-IF
-
-           EXEC CICS RETURN
-                     TRANSID (WS-CICS-TRANID)
-                     COMMAREA (CARDDEMO-COMMAREA)
-           END-EXEC.
-
-
-      *****************************************************************
-       PROCESS-ENTER-KEY.
+       GETACCTDATA-BYACCT.
       *****************************************************************
 
-           IF ACCTIDI OF COPAU0AI = SPACES OR LOW-VALUES
-              MOVE LOW-VALUES                 TO WS-ACCT-ID
+           MOVE XREF-ACCT-ID            TO WS-CARD-RID-ACCT-ID
+           EXEC CICS READ
+                DATASET   (WS-ACCTFILENAME)
+                RIDFLD    (WS-CARD-RID-ACCT-ID-X)
+                KEYLENGTH (LENGTH OF WS-CARD-RID-ACCT-ID-X)
+                INTO      (ACCOUNT-RECORD)
+                LENGTH    (LENGTH OF ACCOUNT-RECORD)
+                RESP      (WS-RESP-CD)
+                RESP2     (WS-REAS-CD)
+           END-EXEC
 
-              MOVE 'Y'                        TO WS-ERR-FLG
-              MOVE
-              'Please enter Acct Id...'       TO WS-MESSAGE
+           EVALUATE WS-RESP-CD
+               WHEN DFHRESP(NORMAL)
+                  continue
+               WHEN DFHRESP(NOTFND)
+                  MOVE WS-RESP-CD        TO WS-RESP-CD-DIS
+                  MOVE WS-REAS-CD        TO WS-REAS-CD-DIS
 
-              MOVE -1                         TO ACCTIDL OF COPAU0AI
-           ELSE
-              IF ACCTIDI OF COPAU0AI IS NOT NUMERIC
-                MOVE LOW-VALUES               TO WS-ACCT-ID
+                  STRING
+                  'Account:'
+                   WS-CARD-RID-ACCT-ID-X
+                  ' not found in ACCT file. Resp:' WS-RESP-CD-DIS
+                  ' Reas:' WS-REAS-CD-DIS
+                  DELIMITED BY SIZE
+                  INTO WS-MESSAGE
+                  END-STRING
+                  MOVE -1       TO ACCTIDL OF COPAU0AI
+                  PERFORM SEND-PAULST-SCREEN
+               WHEN OTHER
+                  MOVE 'Y'     TO WS-ERR-FLG
+                  MOVE WS-RESP-CD        TO WS-RESP-CD-DIS
+                  MOVE WS-REAS-CD        TO WS-REAS-CD-DIS
 
-                MOVE 'Y'                      TO WS-ERR-FLG
-                MOVE
-                'Acct Id must be Numeric ...' TO WS-MESSAGE
+                  STRING
+                  'Account:'
+                   WS-CARD-RID-ACCT-ID-X
+                  ' System error while reading ACCT file. Resp:'
+                  WS-RESP-CD-DIS ' Reas:' WS-REAS-CD-DIS
+                  DELIMITED BY SIZE
+                  INTO WS-MESSAGE
+                  END-STRING
+                  MOVE -1       TO ACCTIDL OF COPAU0AI
+                  PERFORM SEND-PAULST-SCREEN
+           END-EVALUATE
+           .
 
-                MOVE -1                       TO ACCTIDL OF COPAU0AI
-
-              ELSE
-                MOVE ACCTIDI OF COPAU0AI      TO WS-ACCT-ID
-                                                 CDEMO-ACCT-ID
-                EVALUATE TRUE
-                  WHEN SEL0001I OF COPAU0AI NOT = SPACES AND LOW-VALUES
-                   MOVE SEL0001I OF COPAU0AI TO CDEMO-CPVS-PAU-SEL-FLG
-                   MOVE CDEMO-CPVS-AUTH-KEYS(1)
-                                             TO CDEMO-CPVS-PAU-SELECTED
-                  WHEN SEL0002I OF COPAU0AI NOT = SPACES AND LOW-VALUES
-                   MOVE SEL0002I OF COPAU0AI TO CDEMO-CPVS-PAU-SEL-FLG
-                   MOVE CDEMO-CPVS-AUTH-KEYS(2)
-                                             TO CDEMO-CPVS-PAU-SELECTED
-                  WHEN SEL0003I OF COPAU0AI NOT = SPACES AND LOW-VALUES
-                   MOVE SEL0003I OF COPAU0AI TO CDEMO-CPVS-PAU-SEL-FLG
 ```

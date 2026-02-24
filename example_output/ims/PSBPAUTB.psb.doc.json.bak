@@ -1,17 +1,17 @@
 {
   "header": {
     "program_id": "PSBPAUTB",
-    "file_name": "PSBPAUTB.psb",
+    "file_name": "ims/PSBPAUTB.psb",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-10T17:20:38.977321",
+    "analyzed_at": "2026-02-24T03:59:57.386110",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This file defines a Program Specification Block (PSB) named PSBPAUTB for an IMS database application. It specifies the database (DBPAUTP0), the segments (PAUTSUM0, PAUTDTL1), and the processing options. It also indicates that the PSB is designed to be used with COBOL.",
+    "summary": "This file defines the IMS Program Specification Block (PSB) named PSBPAUTB for a COBOL application. It specifies a single Database PCB named PAUTBPCB accessing IMS database DBDNAME=DBPAUTP0 with PROCOPT=AP and KEYLEN=14. The PCB senses root segment PAUTSUM0 (PARENT=0) and child segment PAUTDTL1 (PARENT=PAUTSUM0).",
     "business_context": null,
-    "program_type": "OTHER",
+    "program_type": "BATCH",
     "citations": [
       17,
       18,
@@ -19,7 +19,35 @@
       20
     ]
   },
-  "inputs": [],
+  "inputs": [
+    {
+      "name": "PAUTSUM0",
+      "io_type": "IMS_SEGMENT",
+      "description": "Root segment (PARENT=0) sensed by PCB PAUTBPCB in database DBPAUTP0",
+      "copybook": null,
+      "citation": [
+        18
+      ]
+    },
+    {
+      "name": "PAUTDTL1",
+      "io_type": "IMS_SEGMENT",
+      "description": "Child segment (PARENT=PAUTSUM0) sensed by PCB PAUTBPCB in database DBPAUTP0",
+      "copybook": null,
+      "citation": [
+        19
+      ]
+    },
+    {
+      "name": "DBPAUTP0",
+      "io_type": "OTHER",
+      "description": "IMS database (DBDNAME) accessed via PCB PAUTBPCB",
+      "copybook": null,
+      "citation": [
+        17
+      ]
+    }
+  ],
   "outputs": [],
   "called_programs": [],
   "calling_context": {
@@ -38,7 +66,18 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [],
+  "open_questions": [
+    {
+      "question": "What is the specific business purpose of database DBPAUTP0 and segments PAUTSUM0/PAUTDTL1?",
+      "context": "File contains only PSB syntax with no comments or descriptive prose explaining application context.",
+      "suggestion": "Examine COBOL programs linked to PSBNAME=PSBPAUTB or database DBD=DBPAUTP0 definitions."
+    },
+    {
+      "question": "What does PROCOPT=AP precisely authorize (e.g., read-only, update capabilities)?",
+      "context": "Standard IMS PROCOPT codes documented externally; file does not specify.",
+      "suggestion": "Consult IMS manuals for PROCOPT=AP interpretation in PSB context."
+    }
+  ],
   "resolved_questions": [],
   "dead_code": [],
   "call_semantics": [],

@@ -1,13 +1,13 @@
 ```cobol
-           .
+       RETURN-TO-PREV-SCREEN.
 
-       PROCESS-ENTER-KEY.
+           MOVE WS-CICS-TRANID TO CDEMO-FROM-TRANID
+           MOVE WS-PGM-AUTH-DTL TO CDEMO-FROM-PROGRAM
+           MOVE ZEROS          TO CDEMO-PGM-CONTEXT
+           SET CDEMO-PGM-ENTER TO TRUE
 
-           MOVE LOW-VALUES          TO COPAU1AO
-           IF CDEMO-ACCT-ID IS NUMERIC AND
-              CDEMO-CPVD-PAU-SELECTED NOT = SPACES AND LOW-VALUES
-              MOVE CDEMO-ACCT-ID            TO WS-ACCT-ID
-              MOVE CDEMO-CPVD-PAU-SELECTED
-                                            TO WS-AUTH-KEY
-              PERFORM READ-AUTH-RECORD
+           EXEC CICS
+               XCTL PROGRAM(CDEMO-TO-PROGRAM)
+               COMMAREA(CARDDEMO-COMMAREA)
+           END-EXEC.
 ```

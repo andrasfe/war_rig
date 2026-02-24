@@ -1,0 +1,527 @@
+{
+  "batch_idx": 0,
+  "total_batches": 2,
+  "template": {
+    "header": {
+      "program_id": "PAUDBUNL",
+      "file_name": "cbl/PAUDBUNL.CBL",
+      "file_type": "COBOL",
+      "analyzed_by": "WAR_RIG",
+      "analyzed_at": "2026-02-24T03:51:10.350509",
+      "iteration_count": 1,
+      "final_status": null
+    },
+    "purpose": {
+      "summary": "PAUDBUNL is a batch IMS DL/I program that reads root authorization summary segments from an IMS database using GN calls and their child detail segments using GNP calls, writing summary records to OPFILE1 and detail records to OPFILE2. It processes sequentially until end of root segments (PCB status 'GB') and end of child segments ('GE'), accumulating counts of processed summaries and details. The program initializes output files, handles PCB and file status errors by abending, and closes files at termination.",
+      "business_context": "Serves unbundling of IMS authorization database (AUTHDB) into separate flat files for summary and detail authorizations, likely for reporting, archiving, or further batch processing in a financial or authorization system.",
+      "program_type": "BATCH",
+      "citations": [
+        1,
+        4,
+        7,
+        10,
+        12,
+        50,
+        95
+      ]
+    },
+    "inputs": [
+      {
+        "name": "PAUTBPCB",
+        "io_type": "IMS_SEGMENT",
+        "description": "IMS PCB for AUTHDB database, used to read root AUTH-SUMMARY segments via GN and child AUTH-DTL segments via GNP",
+        "copybook": null,
+        "citation": [
+          4,
+          56,
+          99
+        ]
+      },
+      {
+        "name": "ROOT-UNQUAL-SSA",
+        "io_type": "IMS_SEGMENT",
+        "description": "Unqualified SSA for root segment key (ROOT-SEG-KEY derived from PA-ACCT-ID)",
+        "copybook": null,
+        "citation": [
+          59,
+          73
+        ]
+      },
+      {
+        "name": "CHILD-UNQUAL-SSA",
+        "io_type": "IMS_SEGMENT",
+        "description": "Unqualified SSA for child detail segments",
+        "copybook": null,
+        "citation": [
+          102
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "OPFILE1",
+        "io_type": "FILE_SEQUENTIAL",
+        "description": "Output file for authorization summary records (OPFIL1-REC from PENDING-AUTH-SUMMARY)",
+        "copybook": null,
+        "citation": [
+          31,
+          70,
+          76
+        ]
+      },
+      {
+        "name": "OPFILE2",
+        "io_type": "FILE_SEQUENTIAL",
+        "description": "Output file for authorization detail records (OPFIL2-REC from PENDING-AUTH-DETAILS to CHILD-SEG-REC)",
+        "copybook": null,
+        "citation": [
+          39,
+          113
+        ]
+      },
+      {
+        "name": "SYSOUT",
+        "io_type": "REPORT",
+        "description": "Console DISPLAY messages for start date, errors, processing status",
+        "copybook": null,
+        "citation": [
+          25,
+          27,
+          35,
+          88
+        ]
+      }
+    ],
+    "called_programs": [
+      {
+        "program_name": "CBLTDLI",
+        "call_type": "STATIC_CALL",
+        "purpose": "IMS DL/I interface to perform database GET NEXT calls (GN for root, GNP for child)",
+        "parameters": [
+          "FUNC-GN",
+          "PAUTBPCB",
+          "PENDING-AUTH-SUMMARY",
+          "ROOT-UNQUAL-SSA",
+          "FUNC-GNP",
+          "PENDING-AUTH-DETAILS",
+          "CHILD-UNQUAL-SSA"
+        ],
+        "citation": 56
+      },
+      {
+        "program_name": "9999-ABEND",
+        "call_type": "STATIC_CALL",
+        "purpose": "Error handling routine to terminate program on file or IMS errors",
+        "parameters": [],
+        "citation": 36
+      }
+    ],
+    "calling_context": {
+      "called_by": [],
+      "entry_points": [
+        "DLITCBL"
+      ],
+      "linkage_section": [
+        "PAUTBPCB"
+      ]
+    },
+    "business_rules": [
+      {
+        "rule_id": "BR001",
+        "description": "Only write summary record to OPFILE1 if PA-ACCT-ID is numeric",
+        "logic_summary": "Checks PA-ACCT-ID NUMERIC before WRITE OPFIL1-REC",
+        "conditions": [
+          "IF PA-ACCT-ID IS NUMERIC"
+        ],
+        "citation": [
+          75,
+          76
+        ]
+      },
+      {
+        "rule_id": "BR002",
+        "description": "End root processing on IMS PCB status 'GB' (end of database)",
+        "logic_summary": "Sets WS-END-OF-ROOT-SEG = 'Y' to exit main loop",
+        "conditions": [
+          "IF PAUT-PCB-STATUS = 'GB'"
+        ],
+        "citation": [
+          82,
+          84
+        ]
+      },
+      {
+        "rule_id": "BR003",
+        "description": "End child processing on IMS PCB status 'GE' (end of parent-qualified children)",
+        "logic_summary": "Sets WS-END-OF-CHILD-SEG = 'Y' to exit child loop",
+        "conditions": [
+          "IF PAUT-PCB-STATUS = 'GE'"
+        ],
+        "citation": [
+          115,
+          117
+        ]
+      },
+      {
+        "rule_id": "BR004",
+        "description": "Abend on non-space/non-expected PCB statuses for error recovery",
+        "logic_summary": "DISPLAY error details then PERFORM 9999-ABEND",
+        "conditions": [
+          "IF PAUT-PCB-STATUS NOT = SPACES AND 'GB'",
+          "IF PAUT-PCB-STATUS NOT = SPACES AND 'GE'"
+        ],
+        "citation": [
+          86,
+          121
+        ]
+      }
+    ],
+    "data_flow": {
+      "reads_from": [
+        {
+          "source": "PAUTBPCB (IMS AUTHDB root)",
+          "fields_used": [
+            "PAUT-PCB-STATUS",
+            "PAUT-SEG-LEVEL",
+            "PAUT-SEG-NAME",
+            "PA-ACCT-ID"
+          ],
+          "citation": [
+            56,
+            66,
+            73
+          ]
+        },
+        {
+          "source": "PAUTBPCB (IMS AUTHDB child)",
+          "fields_used": [
+            "PAUT-PCB-STATUS",
+            "PAUT-KEYFB"
+          ],
+          "citation": [
+            99,
+            108
+          ]
+        }
+      ],
+      "writes_to": [
+        {
+          "destination": "OPFILE1",
+          "fields_written": [
+            "OPFIL1-REC"
+          ],
+          "citation": [
+            76
+          ]
+        },
+        {
+          "destination": "OPFILE2",
+          "fields_written": [
+            "OPFIL2-REC",
+            "CHILD-SEG-REC"
+          ],
+          "citation": [
+            113
+          ]
+        }
+      ],
+      "transforms": [
+        {
+          "input_field": "PENDING-AUTH-SUMMARY",
+          "output_field": "OPFIL1-REC",
+          "transformation_description": "Direct MOVE from IMS root segment buffer to output record, after incrementing counters WS-NO-SUMRY-READ and WS-AUTH-SMRY-PROC-CNT",
+          "citation": [
+            70
+          ]
+        },
+        {
+          "input_field": "PENDING-AUTH-DETAILS",
+          "output_field": "CHILD-SEG-REC",
+          "transformation_description": "Direct MOVE from IMS child segment buffer to intermediate record, then WRITE OPFIL2-REC, incrementing counters",
+          "citation": [
+            112
+          ]
+        },
+        {
+          "input_field": "PA-ACCT-ID",
+          "output_field": "ROOT-SEG-KEY",
+          "transformation_description": "MOVE to initialize key area after reading summary",
+          "citation": [
+            73
+          ]
+        }
+      ]
+    },
+    "copybooks_used": [],
+    "paragraphs": [
+      {
+        "paragraph_name": "PAUDBUNL",
+        "summary": null,
+        "purpose": "This paragraph serves as the program entry point, but no explicit code is visible at line 18 which starts 1000-INITIALIZE; it may be implicit or a section label before PROCEDURE DIVISION. It receives control via ENTRY 'DLITCBL' USING PAUTBPCB from line 4, providing the IMS PCB as linkage input. No data is read or written here directly. No business logic or decisions are implemented. No error handling is present. It transfers control to MAIN-PARA implicitly upon entry.",
+        "called_by": [],
+        "calls": [],
+        "citation": [
+          18,
+          18
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "MAIN-PARA",
+        "summary": null,
+        "purpose": "MAIN-PARA is the primary orchestration paragraph controlling the overall program flow in this batch IMS unbundler. It begins by performing 1000-INITIALIZE THRU 1000-EXIT to open output files OPFILE1 and OPFILE2 and initialize variables like dates. After initialization, it enters a loop performing 2000-FIND-NEXT-AUTH-SUMMARY THRU 2000-EXIT UNTIL WS-END-OF-ROOT-SEG = 'Y', processing each root summary segment and its children. The loop consumes IMS data via PAUTBPCB and produces writes to output files indirectly through subordinate paragraphs. No direct business decisions are made here, but it relies on WS-END-OF-ROOT-SEG flag set by 2000 on 'GB' status for loop exit. No explicit error handling, deferring to callees. Upon EOF, it performs 4000-FILE-CLOSE THRU 4000-EXIT to close files, then GOBACKs to caller.",
+        "called_by": [
+          "PAUDBUNL"
+        ],
+        "calls": [
+          "1000-INITIALIZE",
+          "2000-FIND-NEXT-AUTH-SUMMARY",
+          "4000-FILE-CLOSE"
+        ],
+        "citation": [
+          157,
+          172
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "1000-INITIALIZE",
+        "summary": null,
+        "purpose": "1000-INITIALIZE handles program startup by accepting system dates into CURRENT-DATE and CURRENT-YYDDD, displaying startup messages including date. It then opens OUTPUT OPFILE1 and checks WS-OUTFL1-STATUS; if not spaces or '00', displays error and performs 9999-ABEND (line 35-36). Similarly opens OPFILE2 and checks WS-OUTFL2-STATUS, abending on error (lines 42-44). Inputs are system date and implicit file statuses; outputs are opened files ready for write and console DISPLAYs. Business logic enforces file open success before proceeding, with 2 decision points for status checks. Error handling abends immediately on open failures without retry. No subordinate calls except ABEND; exits to 1000-EXIT.",
+        "called_by": [
+          "MAIN-PARA"
+        ],
+        "calls": [
+          "9999-ABEND"
+        ],
+        "citation": [
+          173,
+          202
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "1000-EXIT",
+        "summary": null,
+        "purpose": "1000-EXIT is a simple exit routine that performs EXIT to return control to the caller paragraph (MAIN-PARA). It consumes no inputs and produces no outputs or modifications. No business logic, decisions, or error handling. No calls made. Serves only as THRU exit point for 1000-INITIALIZE.",
+        "called_by": [
+          "1000-INITIALIZE"
+        ],
+        "calls": [],
+        "citation": [
+          203,
+          206
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "2000-FIND-NEXT-AUTH-SUMMARY",
+        "summary": null,
+        "purpose": "2000-FIND-NEXT-AUTH-SUMMARY performs the core loop for reading root authorization summary segments from IMS AUTHDB. It initializes PAUT-PCB-STATUS, calls CBLTDLI with FUNC-GN using PAUTBPCB, PENDING-AUTH-SUMMARY, and ROOT-UNQUAL-SSA to get next root (lines 55-59). If PAUT-PCB-STATUS = SPACES (success), increments counters WS-NO-SUMRY-READ and WS-AUTH-SMRY-PROC-CNT, MOVEs to OPFIL1-REC, initializes keys, MOVEs PA-ACCT-ID to ROOT-SEG-KEY, and if PA-ACCT-ID NUMERIC, WRITEs OPFIL1-REC, resets WS-END-OF-CHILD-SEG, and loops PERFORM 3000-FIND-NEXT-AUTH-DTL THRU 3000-EXIT UNTIL 'Y' to process children (lines 66-81). On 'GB', sets WS-END-OF-ROOT-SEG='Y' to exit main loop (82-85). On other statuses, DISPLAYs error/key feedback and abends (86-90). Inputs: IMS PCB/root SSA; outputs: writes to OPFILE1, child processing, counters/flags. 7 decision points: status=SPACES (process), =GB (end root), else abend, plus NUMERIC check. Error handling: abend on invalid status.",
+        "called_by": [
+          "MAIN-PARA"
+        ],
+        "calls": [
+          "CBLTDLI",
+          "3000-FIND-NEXT-AUTH-DTL",
+          "9999-ABEND"
+        ],
+        "citation": [
+          207,
+          247
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "2000-EXIT",
+        "summary": null,
+        "purpose": "2000-EXIT is a simple exit routine that performs EXIT to return control to the caller (MAIN-PARA loop). No inputs consumed, no outputs produced. No logic, decisions, errors, or calls. THRU exit for 2000-FIND-NEXT-AUTH-SUMMARY.",
+        "called_by": [
+          "2000-FIND-NEXT-AUTH-SUMMARY"
+        ],
+        "calls": [],
+        "citation": [
+          248,
+          252
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "3000-FIND-NEXT-AUTH-DTL",
+        "summary": null,
+        "purpose": "3000-FIND-NEXT-AUTH-DTL reads next child authorization detail segments parent-qualified by current root. Calls CBLTDLI with FUNC-GNP using PAUTBPCB, PENDING-AUTH-DETAILS, CHILD-UNQUAL-SSA (99-102). If PAUT-PCB-STATUS=SPACES, sets MORE-AUTHS TRUE, increments counters, MOVEs to CHILD-SEG-REC, WRITEs OPFIL2-REC (108-114). On 'GE', sets WS-END-OF-CHILD-SEG='Y' and DISPLAYs flag (115-120). On other statuses, DISPLAYs error/keyfb and abends (121-124). Initializes PAUT-PCB-STATUS at end (126). Inputs: IMS PCB/child SSA from parent context; outputs: writes to OPFILE2, counters/flags. 4 decision points: SPACES (write detail), GE (end children), else abend. Error handling: abend on failure, no retry.",
+        "called_by": [
+          "2000-FIND-NEXT-AUTH-SUMMARY"
+        ],
+        "calls": [
+          "CBLTDLI",
+          "9999-ABEND"
+        ],
+        "citation": [
+          253,
+          284
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "3000-EXIT",
+        "summary": null,
+        "purpose": "3000-EXIT performs simple EXIT to return to caller (2000 loop). No data I/O, logic, errors, or calls. THRU exit point.",
+        "called_by": [
+          "3000-FIND-NEXT-AUTH-DTL"
+        ],
+        "calls": [],
+        "citation": [
+          285,
+          288
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "4000-FILE-CLOSE",
+        "summary": null,
+        "purpose": "4000-FILE-CLOSE terminates by closing output files and checking statuses. DISPLAYs 'CLOSING THE FILE', CLOSE OPFILE1, if WS-OUTFL1-STATUS not spaces/'00' DISPLAYs error (no abend) (132-139). Then CLOSE OPFILE2, similar status check with DISPLAY error if bad (140-146). Inputs: file statuses post-close; outputs: closed files, console messages. 2 decision points for each close status. Error handling: logs error via DISPLAY but continues without abend. No calls.",
+        "called_by": [
+          "MAIN-PARA"
+        ],
+        "calls": [],
+        "citation": [
+          289,
+          304
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "4000-EXIT",
+        "summary": null,
+        "purpose": "4000-EXIT performs EXIT to return to MAIN-PARA before GOBACK. No inputs/outputs/logic/errors/calls. THRU exit.",
+        "called_by": [
+          "4000-FILE-CLOSE"
+        ],
+        "calls": [],
+        "citation": [
+          305,
+          307
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      }
+    ],
+    "error_handling": [
+      {
+        "condition": "WS-OUTFL1-STATUS NOT = SPACES OR '00' on OPEN",
+        "action": "DISPLAY error message and PERFORM 9999-ABEND",
+        "citation": [
+          32,
+          35
+        ]
+      },
+      {
+        "condition": "WS-OUTFL2-STATUS NOT = SPACES OR '00' on OPEN",
+        "action": "DISPLAY error message and PERFORM 9999-ABEND",
+        "citation": [
+          40,
+          43
+        ]
+      },
+      {
+        "condition": "PAUT-PCB-STATUS NOT = SPACES AND NOT 'GB' on GN",
+        "action": "DISPLAY status and keyfb, PERFORM 9999-ABEND",
+        "citation": [
+          86
+        ]
+      },
+      {
+        "condition": "PAUT-PCB-STATUS NOT = SPACES AND NOT 'GE' on GNP",
+        "action": "DISPLAY status and keyfb, PERFORM 9999-ABEND",
+        "citation": [
+          121
+        ]
+      },
+      {
+        "condition": "WS-OUTFL1-STATUS NOT = SPACES OR '00' on CLOSE",
+        "action": "DISPLAY error message (no abend)",
+        "citation": [
+          135,
+          138
+        ]
+      },
+      {
+        "condition": "WS-OUTFL2-STATUS NOT = SPACES OR '00' on CLOSE",
+        "action": "DISPLAY error message (no abend)",
+        "citation": [
+          142,
+          145
+        ]
+      }
+    ],
+    "sql_operations": [],
+    "cics_operations": [],
+    "open_questions": [
+      {
+        "question": "What are the exact structures of copybooks for PAUTBPCB, PENDING-AUTH-SUMMARY, PENDING-AUTH-DETAILS, etc.?",
+        "context": "Not present in provided PROCEDURE DIVISION snippet; WORKING-STORAGE/FILE/LINKAGE sections omitted.",
+        "suggestion": "Provide full source file including data divisions."
+      },
+      {
+        "question": "Details of 9999-ABEND and 9999-EXIT paragraphs?",
+        "context": "Referenced but not provided in source snippet.",
+        "suggestion": "Include full PROCEDURE DIVISION."
+      },
+      {
+        "question": "What defines FUNC-GN, FUNC-GNP, ROOT-UNQUAL-SSA, CHILD-UNQUAL-SSA?",
+        "context": "Likely WS 01 levels or literals, not shown.",
+        "suggestion": "Full WS section."
+      },
+      {
+        "question": "Calling programs or JCL invoking this?",
+        "context": "ENTRY 'DLITCBL' suggests specific entry, but no callers identified.",
+        "suggestion": "Trace JCL or callers."
+      }
+    ],
+    "resolved_questions": [],
+    "dead_code": [],
+    "call_semantics": [],
+    "flow_diagram": null
+  },
+  "saved_at": "2026-02-23T20:51:10.353529"
+}

@@ -1,25 +1,24 @@
 ```cobol
-       ENVIRONMENT DIVISION.
-       CONFIGURATION SECTION.
+       6000-DELETE-AUTH-SUMMARY.
+      *----------------------------------------------------------------*
+      *
+            IF DEBUG-ON
+               DISPLAY 'DEBUG: AUTH SMRY DLET : ' PA-ACCT-ID
+            END-IF
 
-       INPUT-OUTPUT SECTION.
-       FILE-CONTROL.
-      *
-      *----------------------------------------------------------------*
-       DATA DIVISION.
-      *----------------------------------------------------------------*
-      *
-       FILE SECTION.
-      *
-      *----------------------------------------------------------------*
-       WORKING-STORAGE SECTION.
-      *----------------------------------------------------------------*
-       01 WS-VARIABLES.
-         05 WS-PGMNAME                 PIC X(08) VALUE 'CBPAUP0C'.
-         05 CURRENT-DATE               PIC 9(06).
-         05 CURRENT-YYDDD              PIC 9(05).
-         05 WS-AUTH-DATE               PIC 9(05).
-         05 WS-EXPIRY-DAYS             PIC S9(4) COMP.
-         05 WS-DAY-DIFF                PIC S9(4) COMP.
-         05 IDX                        PIC S9(4) COMP.
+            EXEC DLI DLET USING PCB(PAUT-PCB-NUM)
+                 SEGMENT (PAUTSUM0)
+                 FROM (PENDING-AUTH-SUMMARY)
+            END-EXEC
+
+            IF DIBSTAT = SPACES
+               ADD 1                     TO WS-NO-SUMRY-DELETED
+            ELSE
+               DISPLAY 'AUTH SUMMARY DELETE FAILED :' DIBSTAT
+               DISPLAY 'AUTH APP ID                :' PA-ACCT-ID
+               PERFORM 9999-ABEND
+            END-IF
+            .
+       6000-EXIT.
+            EXIT.
 ```

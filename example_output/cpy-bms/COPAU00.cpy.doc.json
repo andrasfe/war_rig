@@ -1,23 +1,44 @@
 {
   "header": {
-    "program_id": "UNKNOWN",
-    "file_name": "COPAU00.cpy",
+    "program_id": "COPAU00",
+    "file_name": "cpy-bms/COPAU00.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-10T17:20:48.931161",
+    "analyzed_at": "2026-02-24T03:58:09.885484",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook appears to be empty. Further analysis is needed to determine its intended purpose and content.",
-    "business_context": "UNKNOWN",
-    "program_type": "UNKNOWN",
+    "summary": "This COBOL copybook defines the symbolic map structures COPAU0AI and COPAU0AO for the COPAU00 BMS map used in CICS applications. COPAU0AI provides length (L), format (F), attribute (A), and input data (I) fields for screen elements including headers, account/customer details, financial data, recent transactions, and error messages. COPAU0AO redefines COPAU0AI with color (C), protection (P), highlighting (H), intensity (V), and output data (O) fields for screen rendering.",
+    "business_context": "Supports online CICS screen for customer account inquiry or maintenance in a financial system, displaying account summary, limits, balances, and up to five recent transactions.",
+    "program_type": "ONLINE_CICS",
     "citations": [
-      1
+      17,
+      391
     ]
   },
-  "inputs": [],
-  "outputs": [],
+  "inputs": [
+    {
+      "name": "COPAU0AI",
+      "io_type": "CICS_MAP",
+      "description": "Input symbolic map structure containing received data from CICS terminal screen, with redefinable L/F/A/I fields for all screen elements",
+      "copybook": null,
+      "citation": [
+        17
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "COPAU0AO",
+      "io_type": "CICS_MAP",
+      "description": "Output symbolic map structure for sending data to CICS terminal screen, redefined from COPAU0AI with C/P/H/V/O fields for formatting and display",
+      "copybook": null,
+      "citation": [
+        391
+      ]
+    }
+  ],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
@@ -45,7 +66,7 @@
       "outgoing_calls": [],
       "incoming_calls": [
         {
-          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
           "function": "COPAUS0C",
           "line": 129,
           "call_type": "includes"
@@ -77,14 +98,27 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
+  "open_questions": [],
+  "resolved_questions": [
     {
-      "question": "What is the intended purpose of this copybook?",
-      "context": "The copybook is empty, so its purpose cannot be determined from the content.",
-      "suggestion": "Examine the programs that include this copybook to understand how it is used."
+      "original_question": "Exact business meaning of fields like APPRCNTI, DECLCNTI, PAPRVI?",
+      "original_context": "Field names suggest approved/declined counts and approval status for transactions, but no comments or logic provided.",
+      "answer": "**APPRCNTI** (lines 97-102 in `cpy-bms/COPAU00.cpy`; `APPRCNTO` in output map):  \nApproved Authorization Count. This 3-digit field displays the total number of approved authorizations for the account, sourced from `PA-APPROVED-AUTH-CNT` in the `PENDING-AUTH-SUMMARY` IMS segment (`CIPAUSMY` copybook). In `cbl/COPAUS0C.cbl` (lines 788-789), it's populated via `MOVE PA-APPROVED-AUTH-CNT TO WS-DISPLAY-COUNT` then `MOVE WS-DISPLAY-COUNT TO APPRCNTO`. Defaults to zeros if no summary segment found (line 801).\n\n**DECLCNTI** (lines 103-108 in `cpy-bms/COPAU00.cpy`; `DECLCNTO` in output map):  \nDeclined Authorization Count. This 3-digit field displays the total number of declined authorizations for the account, sourced from `PA-DECLINED-AUTH-CNT` in the `PENDING-AUTH-SUMMARY` IMS segment. In `cbl/COPAUS0C.cbl` (lines 790-791), it's populated via `MOVE PA-DECLINED-AUTH-CNT TO WS-DISPLAY-COUNT` then `MOVE WS-DISPLAY-COUNT TO DECLCNTO`. Defaults to zeros if no summary segment found (line 802).\n\n**PAPRVI** (e.g., `PAPRV01I` at line 180, `PAPRV02I` at 228, etc., in `cpy-bms/COPAU00.cpy`; corresponding `PAPRVxxO` in output map):  \nPrevious Authorization Approval Status (per transaction). This 1-character field ('A' or 'D') indicates the approval status for each of up to 5 recent authorization transactions listed on the screen. Set in `cbl/COPAUS0C.cbl` `POPULATE-AUTH-LIST` paragraph (e.g., lines 551, 563, etc.): `MOVE WS-AUTH-APRV-STAT TO PAPRVxxI`. `WS-AUTH-APRV-STAT` derives from `PA-AUTH-RESP-CODE` in `PENDING-AUTH-DETAILS` IMS segment (`CIPAUDTY` copybook): 'A' if '00' (approved), else 'D' (declined/denied). Cleared to spaces during initialization (e.g., lines 619, 628).\n\nThese fields are part of the `COPAU0A` BMS map in `COPAU00.cpy` (used by `COPAUS0C.cbl`, a CICS program displaying account summary and recent authorizations from IMS DB `PAUTSUM0`/`PAUTDTL1` segments). Counts come from root summary segment; statuses from child detail segments via `GNP` calls. Screen populated in `GATHER-ACCOUNT-DETAILS` and `PROCESS-PAGE-FORWARD`. Sources: `cpy-bms/COPAU00.cpy` (full structure), `cbl/COPAUS0C.cbl` (lines 521-607 for population logic, 750-811 for summary).",
+      "confidence": "HIGH",
+      "resolved_by": "CODEWHISPER",
+      "cycle_resolved": 1,
+      "tool_calls_used": 25
+    },
+    {
+      "original_question": "Which CICS programs include COPY COPAU00 and use this map?",
+      "original_context": "Copybook does not specify including programs; typical usage in WORKING-STORAGE or LINKAGE for EXEC CICS RECEIVE MAP and SEND MAP.",
+      "answer": "**COPAUS0C** (in file `cbl/COPAUS0C.cbl`) is the only CICS program that includes `COPY COPAU00` and uses the map.\n\n### Evidence from Code Search:\n- **COPY inclusion**: Line 129: `COPY COPAU00.` (exact match for `COPY\\s+COPAU00`, 1 result across codebase).\n- **Map usage** (MAPSET 'COPAU00' with map 'COPAU0A'):\n  | Line | Usage |\n  |------|-------|\n  | 697  | `EXEC CICS SEND ... MAP('COPAU0A') MAPSET('COPAU00') FROM(COPAU0AO)` |\n  | 705  | `EXEC CICS SEND ... MAP('COPAU0A') MAPSET('COPAU00') FROM(COPAU0AO)` |\n  | 717  | `EXEC CICS RECEIVE ... MAP('COPAU0A') MAPSET('COPAU00') INTO(COPAU0AI)` |\n\nNo other files match `COPY COPAU00` (searched `*.cbl` and all files). Broader searches for `COPAU00` confirm usage only here. No skills documentation found.",
+      "confidence": "HIGH",
+      "resolved_by": "CODEWHISPER",
+      "cycle_resolved": 1,
+      "tool_calls_used": 4
     }
   ],
-  "resolved_questions": [],
   "dead_code": [
     {
       "name": "COPAU0AI",

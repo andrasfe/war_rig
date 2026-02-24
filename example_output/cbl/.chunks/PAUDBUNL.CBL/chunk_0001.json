@@ -1,0 +1,117 @@
+{
+  "batch_idx": 1,
+  "total_batches": 2,
+  "template": {
+    "header": {
+      "program_id": "PAUDBUNL",
+      "file_name": "cbl/PAUDBUNL.CBL",
+      "file_type": "COBOL",
+      "analyzed_by": "WAR_RIG",
+      "analyzed_at": "2026-02-24T03:51:28.990795",
+      "iteration_count": 1,
+      "final_status": null
+    },
+    "purpose": {
+      "summary": "This code snippet defines the termination paragraphs for the PAUDBUNL COBOL program. The 9999-ABEND paragraph handles abnormal program termination by displaying an error message and setting RETURN-CODE to 16 before GOBACK. The 9999-EXIT paragraph provides a standard exit point via EXIT.",
+      "business_context": null,
+      "program_type": "BATCH",
+      "citations": [
+        1,
+        4,
+        6,
+        9,
+        10
+      ]
+    },
+    "inputs": [],
+    "outputs": [],
+    "called_programs": [],
+    "calling_context": {
+      "called_by": [],
+      "entry_points": [],
+      "linkage_section": []
+    },
+    "business_rules": [],
+    "data_flow": {
+      "reads_from": [],
+      "writes_to": [],
+      "transforms": []
+    },
+    "copybooks_used": [],
+    "paragraphs": [
+      {
+        "paragraph_name": "9999-ABEND",
+        "summary": null,
+        "purpose": "The 9999-ABEND paragraph serves as the primary abnormal termination handler for the PAUDBUNL program, invoked when a critical error requires program abend. It consumes no specific inputs or data from files or variables, relying instead on being PERFORMed from error conditions elsewhere in the program. The outputs produced include a DISPLAY message 'IMSUNLOD ABENDING ...' sent to the system console or SYSOUT (line 4), and modification of the RETURN-CODE field to 16 (line 6). No business logic or conditional decisions are implemented within this paragraph; it unconditionally performs termination actions. Error handling is inherent as this is the abend routine itself, with no further validation or recovery attempted. This paragraph calls no other paragraphs or external programs. Following the DISPLAY and MOVE, it executes GOBACK (line 7) to end program execution and propagate the return code. Comments above the DISPLAY provide section headers but no additional logic (lines 2-3). The paragraph's role is strictly to ensure a consistent abend with logging and non-zero return code.",
+        "called_by": [],
+        "calls": [],
+        "citation": [
+          308,
+          315
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "9999-EXIT",
+        "summary": null,
+        "purpose": "The 9999-EXIT paragraph acts as the normal termination point for the PAUDBUNL program, providing a clean exit from PERFORM statements or the main flow. It consumes no inputs, data, files, or variables upon entry. No outputs are produced, written, or modified by this paragraph. There is no business logic, conditions, validations, or decisions implemented here. Error handling is not applicable as this is a standard exit routine. This paragraph calls no other paragraphs or programs. Its sole action is to execute the EXIT statement (line 10), which returns control to the invoking section or ends the routine. This ensures proper flow control without abrupt termination. The paragraph label is at line 9.",
+        "called_by": [],
+        "calls": [],
+        "citation": [
+          316,
+          317
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      }
+    ],
+    "error_handling": [
+      {
+        "condition": "Abnormal termination invoked from elsewhere in program",
+        "action": "DISPLAY 'IMSUNLOD ABENDING ...' (line 4), MOVE 16 TO RETURN-CODE (line 6), GOBACK (line 7)",
+        "citation": [
+          1,
+          4,
+          6,
+          7
+        ]
+      }
+    ],
+    "sql_operations": [],
+    "cics_operations": [],
+    "open_questions": [
+      {
+        "question": "What is the overall purpose and main logic of the PAUDBUNL program?",
+        "context": "Only termination paragraphs provided; no main processing, file I/O, or initialization visible",
+        "suggestion": "Provide full source code or listing file for complete analysis"
+      },
+      {
+        "question": "What inputs, outputs, copybooks, and data flows are used?",
+        "context": "No file definitions, WORKING-STORAGE, or processing logic in snippet",
+        "suggestion": "Analyze full program source"
+      },
+      {
+        "question": "What calls this program and what are its calling contexts?",
+        "context": "No PROGRAM-ID, linkage, or JCL context provided",
+        "suggestion": "Check JCL or PROC invoking this"
+      },
+      {
+        "question": "What is 'IMSUNLOD' referring to?",
+        "context": "Appears in DISPLAY message (line 4), possibly program alias or process name",
+        "suggestion": "Review program documentation or full source for context"
+      }
+    ],
+    "resolved_questions": [],
+    "dead_code": [],
+    "call_semantics": [],
+    "flow_diagram": null
+  },
+  "saved_at": "2026-02-23T20:51:28.992462"
+}

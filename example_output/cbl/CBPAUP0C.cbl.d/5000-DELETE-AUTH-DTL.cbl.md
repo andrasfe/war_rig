@@ -1,25 +1,25 @@
 ```cobol
-      ******************************************************************
-      * Program     : CBPAUP0C.CBL
-      * Application : CardDemo - Authorization Module
-      * Type        : BATCH COBOL IMS Program
-      * Function    : Delete Expired Pending Authoriation Messages
-      ******************************************************************
-      * Copyright Amazon.com, Inc. or its affiliates.
-      * All Rights Reserved.
+       5000-DELETE-AUTH-DTL.
+      *----------------------------------------------------------------*
       *
-      * Licensed under the Apache License, Version 2.0 (the "License").
-      * You may not use this file except in compliance with the License.
-      * You may obtain a copy of the License at
-      *
-      *    http://www.apache.org/licenses/LICENSE-2.0
-      *
-      * Unless required by applicable law or agreed to in writing,
-      * software distributed under the License is distributed on an
-      * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
-      * either express or implied. See the License for the specific
-      * language governing permissions and limitations under the License
-      ******************************************************************
-       IDENTIFICATION DIVISION.
-       PROGRAM-ID. CBPAUP0C.
+            IF DEBUG-ON
+               DISPLAY 'DEBUG: AUTH DTL DLET : ' PA-ACCT-ID
+            END-IF
+
+            EXEC DLI DLET USING PCB(PAUT-PCB-NUM)
+                 SEGMENT (PAUTDTL1)
+                 FROM (PENDING-AUTH-DETAILS)
+            END-EXEC
+
+            IF DIBSTAT = SPACES
+               ADD 1                     TO WS-NO-DTL-DELETED
+            ELSE
+               DISPLAY 'AUTH DETAIL DELETE FAILED :' DIBSTAT
+               DISPLAY 'AUTH APP ID               :' PA-ACCT-ID
+               PERFORM 9999-ABEND
+            END-IF
+
+            .
+       5000-EXIT.
+            EXIT.
 ```

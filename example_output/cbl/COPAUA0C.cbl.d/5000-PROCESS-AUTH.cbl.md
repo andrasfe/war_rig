@@ -1,31 +1,31 @@
 ```cobol
-       5000-PROCESS-AUTH.                                                       
-      * ------------------------------------------------------------- *         
-      *                                                                         
-           SET APPROVE-AUTH                  TO TRUE                            
+             88 STATUS-OK                    VALUE '  ', 'FW'.                  
+             88 SEGMENT-NOT-FOUND            VALUE 'GE'.                        
+             88 DUPLICATE-SEGMENT-FOUND      VALUE 'II'.                        
+             88 WRONG-PARENTAGE              VALUE 'GP'.                        
+             88 END-OF-DB                    VALUE 'GB'.                        
+             88 DATABASE-UNAVAILABLE         VALUE 'BA'.                        
+             88 PSB-SCHEDULED-MORE-THAN-ONCE VALUE 'TC'.                        
+             88 COULD-NOT-SCHEDULE-PSB       VALUE 'TE'.                        
+             88 RETRY-CONDITION              VALUE 'BA', 'FH', 'TE'.            
+          05 WS-IMS-PSB-SCHD-FLG             PIC X(1).                          
+             88  IMS-PSB-SCHD                VALUE 'Y'.                         
+             88  IMS-PSB-NOT-SCHD            VALUE 'N'.                         
                                                                                 
-           PERFORM 1200-SCHEDULE-PSB         THRU 1200-EXIT                     
+       01  W01-HCONN-REQUEST           PIC S9(9) BINARY VALUE ZERO.             
+       01  W01-HOBJ-REQUEST            PIC S9(9) BINARY.                        
+       01  W01-BUFFLEN                 PIC S9(9) BINARY.                        
+       01  W01-DATALEN                 PIC S9(9) BINARY.                        
+       01  W01-GET-BUFFER              PIC X(500).                              
                                                                                 
-           SET CARD-FOUND-XREF               TO TRUE                            
-           SET FOUND-ACCT-IN-MSTR            TO TRUE                            
+       01  W02-HCONN-REPLY             PIC S9(9) BINARY VALUE ZERO.             
+       01  W02-BUFFLEN                 PIC S9(9) BINARY.                        
+       01  W02-DATALEN                 PIC S9(9) BINARY.                        
+       01  W02-PUT-BUFFER              PIC X(200).                              
                                                                                 
-           PERFORM 5100-READ-XREF-RECORD     THRU 5100-EXIT                     
-                                                                                
-           IF CARD-FOUND-XREF                                                   
-              PERFORM 5200-READ-ACCT-RECORD  THRU 5200-EXIT                     
-              PERFORM 5300-READ-CUST-RECORD  THRU 5300-EXIT                     
-                                                                                
-              PERFORM 5500-READ-AUTH-SUMMRY  THRU 5500-EXIT                     
-                                                                                
-              PERFORM 5600-READ-PROFILE-DATA THRU 5600-EXIT                     
-           END-IF                                                               
-                                                                                
-           PERFORM 6000-MAKE-DECISION        THRU 6000-EXIT                     
-                                                                                
-           PERFORM 7100-SEND-RESPONSE        THRU 7100-EXIT                     
-                                                                                
-           IF CARD-FOUND-XREF                                                   
-              PERFORM 8000-WRITE-AUTH-TO-DB  THRU 8000-EXIT                     
-           END-IF                                                               
-           .                                                                    
+       01  WS-SWITCHES.                                                         
+           05 WS-AUTH-RESP-FLG         PIC X(01).                               
+              88 AUTH-RESP-APPROVED    VALUE 'A'.                               
+              88 AUTH-RESP-DECLINED    VALUE 'D'.                               
+           05 WS-MSG-LOOP-FLG          PIC X(01) VALUE 'N'.                     
 ```

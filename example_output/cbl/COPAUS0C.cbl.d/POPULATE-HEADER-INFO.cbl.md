@@ -1,24 +1,25 @@
 ```cobol
-              88 SEND-ERASE-YES                    VALUE 'Y'.                   
-              88 SEND-ERASE-NO                     VALUE 'N'.                   
-                                                                                
-       COPY COCOM01Y.                                                           
-          05 CDEMO-CPVS-INFO.                                                   
-             10 CDEMO-CPVS-PAU-SEL-FLG     PIC X(01).                           
-             10 CDEMO-CPVS-PAU-SELECTED    PIC X(08).                           
-             10 CDEMO-CPVS-PAUKEY-PREV-PG  PIC X(08) OCCURS 20 TIMES.           
-             10 CDEMO-CPVS-PAUKEY-LAST     PIC X(08).                           
-             10 CDEMO-CPVS-PAGE-NUM        PIC S9(04) COMP.                     
-             10 CDEMO-CPVS-NEXT-PAGE-FLG   PIC X(01) VALUE 'N'.                 
-                88 NEXT-PAGE-YES                     VALUE 'Y'.                 
-                88 NEXT-PAGE-NO                      VALUE 'N'.                 
-             10 CDEMO-CPVS-AUTH-KEYS       PIC X(08) OCCURS 5 TIMES.            
-                                                                                
-      *BMS Copybook
-       COPY COPAU00.
+       POPULATE-HEADER-INFO.
+      *****************************************************************
 
-      *Screen Titles
-       COPY COTTL01Y.
+           MOVE FUNCTION CURRENT-DATE  TO WS-CURDATE-DATA
 
-      *Current Date
+           MOVE CCDA-TITLE01           TO TITLE01O OF COPAU0AO
+           MOVE CCDA-TITLE02           TO TITLE02O OF COPAU0AO
+           MOVE WS-CICS-TRANID         TO TRNNAMEO OF COPAU0AO
+           MOVE WS-PGM-AUTH-SMRY       TO PGMNAMEO OF COPAU0AO
+
+           MOVE WS-CURDATE-MONTH       TO WS-CURDATE-MM
+           MOVE WS-CURDATE-DAY         TO WS-CURDATE-DD
+           MOVE WS-CURDATE-YEAR(3:2)   TO WS-CURDATE-YY
+
+           MOVE WS-CURDATE-MM-DD-YY    TO CURDATEO OF COPAU0AO
+
+           MOVE WS-CURTIME-HOURS       TO WS-CURTIME-HH
+           MOVE WS-CURTIME-MINUTE      TO WS-CURTIME-MM
+           MOVE WS-CURTIME-SECOND      TO WS-CURTIME-SS
+
+           MOVE WS-CURTIME-HH-MM-SS    TO CURTIMEO OF COPAU0AO
+           .
+
 ```

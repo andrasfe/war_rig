@@ -67,13 +67,4 @@
            STRING PA-RL-CARD-NUM         ','                                    
                   PA-RL-TRANSACTION-ID   ','                                    
                   PA-RL-AUTH-ID-CODE     ','                                    
-                  PA-RL-AUTH-RESP-CODE   ','                                    
-                  PA-RL-AUTH-RESP-REASON ','                                    
-                  WS-APPROVED-AMT-DIS    ','                                    
-                  DELIMITED BY SIZE                                             
-                  INTO W02-PUT-BUFFER                                           
-                  WITH POINTER WS-RESP-LENGTH                                   
-           END-STRING                                                           
-           .                                                                    
-      *                                                                         
 ```

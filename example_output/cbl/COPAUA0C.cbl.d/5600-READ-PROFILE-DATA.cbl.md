@@ -5,7 +5,4 @@
            CONTINUE                                                             
            .                                                                    
       *                                                                         
-       5600-EXIT.                                                               
-           EXIT.                                                                
-      *                                                                         
 ```

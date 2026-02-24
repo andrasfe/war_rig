@@ -1,70 +1,70 @@
 ```cobol
-      *----------------------------------------------------------------*
-      *  IMS SEGMENT LAYOUT
-      *----------------------------------------------------------------*
-      *- PENDING AUTHORIZATION SUMMARY SEGMENT - ROOT
-       01 PENDING-AUTH-SUMMARY.
-       COPY CIPAUSMY.
+       POPULATE-AUTH-DETAILS.
 
-      *- PENDING AUTHORIZATION DETAILS SEGMENT - CHILD
-       01 PENDING-AUTH-DETAILS.
-       COPY CIPAUDTY.
 
-       COPY DFHAID.
-       COPY DFHBMSCA.
+           IF ERR-FLG-OFF
+               MOVE PA-CARD-NUM               TO CARDNUMO
 
-       LINKAGE SECTION.
-       01  DFHCOMMAREA.
-         05  LK-COMMAREA                           PIC X(01)
-             OCCURS 1 TO 32767 TIMES DEPENDING ON EIBCALEN.
+               MOVE PA-AUTH-ORIG-DATE(1:2)    TO WS-CURDATE-YY
+               MOVE PA-AUTH-ORIG-DATE(3:2)    TO WS-CURDATE-MM
+               MOVE PA-AUTH-ORIG-DATE(5:2)    TO WS-CURDATE-DD
+               MOVE WS-CURDATE-MM-DD-YY       TO WS-AUTH-DATE
+               MOVE WS-AUTH-DATE              TO AUTHDTO
 
-       PROCEDURE DIVISION.
-       MAIN-PARA.
+               MOVE PA-AUTH-ORIG-TIME(1:2)    TO WS-AUTH-TIME(1:2)
+               MOVE PA-AUTH-ORIG-TIME(3:2)    TO WS-AUTH-TIME(4:2)
+               MOVE PA-AUTH-ORIG-TIME(5:2)    TO WS-AUTH-TIME(7:2)
+               MOVE WS-AUTH-TIME              TO AUTHTMO
 
-           SET ERR-FLG-OFF     TO TRUE
-           SET SEND-ERASE-YES  TO TRUE
+               MOVE PA-APPROVED-AMT           TO WS-AUTH-AMT
+               MOVE WS-AUTH-AMT               TO AUTHAMTO
 
-           MOVE SPACES TO WS-MESSAGE
-                          ERRMSGO OF COPAU1AO
-
-           IF EIBCALEN = 0
-               INITIALIZE CARDDEMO-COMMAREA
-
-               MOVE WS-PGM-AUTH-SMRY        TO CDEMO-TO-PROGRAM
-               PERFORM RETURN-TO-PREV-SCREEN
-           ELSE
-               MOVE DFHCOMMAREA(1:EIBCALEN) TO CARDDEMO-COMMAREA
-               MOVE SPACES                  TO CDEMO-CPVD-FRAUD-DATA
-               IF NOT CDEMO-PGM-REENTER
-                   SET CDEMO-PGM-REENTER    TO TRUE
-                   PERFORM PROCESS-ENTER-KEY
-
-                   PERFORM SEND-AUTHVIEW-SCREEN
+               IF PA-AUTH-RESP-CODE = '00'
+                  MOVE 'A'                    TO AUTHRSPO
+                  MOVE DFHGREEN               TO AUTHRSPC
                ELSE
-                   PERFORM RECEIVE-AUTHVIEW-SCREEN
-                   EVALUATE EIBAID
-                       WHEN DFHENTER
-                           PERFORM PROCESS-ENTER-KEY
-                           PERFORM SEND-AUTHVIEW-SCREEN
-                       WHEN DFHPF3
-                           MOVE WS-PGM-AUTH-SMRY     TO CDEMO-TO-PROGRAM
-                           PERFORM RETURN-TO-PREV-SCREEN
-                       WHEN DFHPF5
-                           PERFORM MARK-AUTH-FRAUD
-                           PERFORM SEND-AUTHVIEW-SCREEN
-                       WHEN DFHPF8
-                           PERFORM PROCESS-PF8-KEY
-                           PERFORM SEND-AUTHVIEW-SCREEN
-                       WHEN OTHER
-                           PERFORM PROCESS-ENTER-KEY
-
-                           MOVE CCDA-MSG-INVALID-KEY TO WS-MESSAGE
-                           PERFORM SEND-AUTHVIEW-SCREEN
-                   END-EVALUATE
+                  MOVE 'D'                    TO AUTHRSPO
+                  MOVE DFHRED                 TO AUTHRSPC
                END-IF
-           END-IF
 
-           EXEC CICS RETURN
-                     TRANSID (WS-CICS-TRANID)
-                     COMMAREA (CARDDEMO-COMMAREA)
+               SEARCH ALL WS-DECLINE-REASON-TAB
+                   AT END
+                        MOVE '9999'                     TO AUTHRSNO
+                        MOVE '-'                        TO AUTHRSNO(5:1)
+                        MOVE 'ERROR'                    TO AUTHRSNO(6:)
+                   WHEN DECL-CODE(WS-DECL-RSN-IDX) = PA-AUTH-RESP-REASON
+                        MOVE PA-AUTH-RESP-REASON        TO AUTHRSNO
+                        MOVE '-'                        TO AUTHRSNO(5:1)
+                        MOVE DECL-DESC(WS-DECL-RSN-IDX) TO AUTHRSNO(6:)
+               END-SEARCH
+
+
+               MOVE PA-PROCESSING-CODE        TO AUTHCDO
+               MOVE PA-POS-ENTRY-MODE         TO POSEMDO
+               MOVE PA-MESSAGE-SOURCE         TO AUTHSRCO
+               MOVE PA-MERCHANT-CATAGORY-CODE TO MCCCDO
+
+               MOVE PA-CARD-EXPIRY-DATE(1:2)  TO CRDEXPO(1:2)
+               MOVE '/'                       TO CRDEXPO(3:1)
+               MOVE PA-CARD-EXPIRY-DATE(3:2)  TO CRDEXPO(4:2)
+
+               MOVE PA-AUTH-TYPE              TO AUTHTYPO
+               MOVE PA-TRANSACTION-ID         TO TRNIDO
+               MOVE PA-MATCH-STATUS           TO AUTHMTCO
+
+               IF PA-FRAUD-CONFIRMED OR PA-FRAUD-REMOVED
+                  MOVE PA-AUTH-FRAUD          TO AUTHFRDO(1:1)
+                  MOVE '-'                    TO AUTHFRDO(2:1)
+                  MOVE PA-FRAUD-RPT-DATE      TO AUTHFRDO(3:)
+               ELSE
+                  MOVE '-'                    TO AUTHFRDO
+               END-IF
+
+               MOVE PA-MERCHANT-NAME          TO MERNAMEO
+               MOVE PA-MERCHANT-ID            TO MERIDO
+               MOVE PA-MERCHANT-CITY          TO MERCITYO
+               MOVE PA-MERCHANT-STATE         TO MERSTO
+               MOVE PA-MERCHANT-ZIP           TO MERZIPO
+           END-IF
+           .
 ```
