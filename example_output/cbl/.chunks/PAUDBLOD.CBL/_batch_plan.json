@@ -1,0 +1,592 @@
+{
+  "file_name": "cbl/PAUDBLOD.CBL",
+  "source_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+  "total_batches": 2,
+  "batches": [
+    [
+      {
+        "name": "PAUDBLOD",
+        "line_start": 18,
+        "line_end": 18,
+        "line_count": 1,
+        "calls": [
+          {
+            "target": "IMSFUNCS",
+            "type": "includes",
+            "line": 142
+          },
+          {
+            "target": "CIPAUSMY",
+            "type": "includes",
+            "line": 149
+          },
+          {
+            "target": "CIPAUDTY",
+            "type": "includes",
+            "line": 153
+          },
+          {
+            "target": "PAUTBPCB",
+            "type": "includes",
+            "line": 161
+          }
+        ]
+      },
+      {
+        "name": "MAIN-PARA",
+        "line_start": 169,
+        "line_end": 189,
+        "line_count": 21,
+        "calls": [
+          {
+            "target": "1000-INITIALIZE",
+            "type": "performs",
+            "line": 175
+          },
+          {
+            "target": "2000-READ-ROOT-SEG-FILE",
+            "type": "performs",
+            "line": 177
+          },
+          {
+            "target": "3000-READ-CHILD-SEG-FILE",
+            "type": "performs",
+            "line": 180
+          },
+          {
+            "target": "4000-FILE-CLOSE",
+            "type": "performs",
+            "line": 183
+          }
+        ]
+      },
+      {
+        "name": "1000-INITIALIZE",
+        "line_start": 190,
+        "line_end": 217,
+        "line_count": 28,
+        "calls": [
+          {
+            "target": "9999-ABEND",
+            "type": "performs",
+            "line": 206
+          },
+          {
+            "target": "9999-ABEND",
+            "type": "performs",
+            "line": 214
+          }
+        ]
+      },
+      {
+        "name": "1000-EXIT",
+        "line_start": 218,
+        "line_end": 221,
+        "line_count": 4,
+        "calls": []
+      },
+      {
+        "name": "2000-READ-ROOT-SEG-FILE",
+        "line_start": 222,
+        "line_end": 238,
+        "line_count": 17,
+        "calls": [
+          {
+            "target": "2100-INSERT-ROOT-SEG",
+            "type": "performs",
+            "line": 230
+          }
+        ]
+      },
+      {
+        "name": "2000-EXIT",
+        "line_start": 239,
+        "line_end": 241,
+        "line_count": 3,
+        "calls": []
+      },
+      {
+        "name": "2100-INSERT-ROOT-SEG",
+        "line_start": 242,
+        "line_end": 263,
+        "line_count": 22,
+        "calls": [
+          {
+            "target": "CBLTDLI",
+            "type": "calls",
+            "line": 244
+          },
+          {
+            "target": "9999-ABEND",
+            "type": "performs",
+            "line": 261
+          }
+        ]
+      },
+      {
+        "name": "2100-EXIT",
+        "line_start": 264,
+        "line_end": 268,
+        "line_count": 5,
+        "calls": []
+      },
+      {
+        "name": "3000-READ-CHILD-SEG-FILE",
+        "line_start": 269,
+        "line_end": 289,
+        "line_count": 21,
+        "calls": [
+          {
+            "target": "3100-INSERT-CHILD-SEG",
+            "type": "performs",
+            "line": 281
+          }
+        ]
+      },
+      {
+        "name": "3000-EXIT",
+        "line_start": 290,
+        "line_end": 291,
+        "line_count": 2,
+        "calls": []
+      }
+    ],
+    [
+      {
+        "name": "3100-INSERT-CHILD-SEG",
+        "line_start": 292,
+        "line_end": 314,
+        "line_count": 23,
+        "calls": [
+          {
+            "target": "CBLTDLI",
+            "type": "calls",
+            "line": 296
+          },
+          {
+            "target": "3200-INSERT-IMS-CALL",
+            "type": "performs",
+            "line": 309
+          },
+          {
+            "target": "9999-ABEND",
+            "type": "performs",
+            "line": 313
+          }
+        ]
+      },
+      {
+        "name": "3100-EXIT",
+        "line_start": 315,
+        "line_end": 317,
+        "line_count": 3,
+        "calls": []
+      },
+      {
+        "name": "3200-INSERT-IMS-CALL",
+        "line_start": 318,
+        "line_end": 337,
+        "line_count": 20,
+        "calls": [
+          {
+            "target": "CBLTDLI",
+            "type": "calls",
+            "line": 321
+          },
+          {
+            "target": "9999-ABEND",
+            "type": "performs",
+            "line": 335
+          }
+        ]
+      },
+      {
+        "name": "3200-EXIT",
+        "line_start": 338,
+        "line_end": 340,
+        "line_count": 3,
+        "calls": []
+      },
+      {
+        "name": "4000-FILE-CLOSE",
+        "line_start": 341,
+        "line_end": 356,
+        "line_count": 16,
+        "calls": []
+      },
+      {
+        "name": "4000-EXIT",
+        "line_start": 357,
+        "line_end": 359,
+        "line_count": 3,
+        "calls": []
+      },
+      {
+        "name": "9999-ABEND",
+        "line_start": 360,
+        "line_end": 367,
+        "line_count": 8,
+        "calls": []
+      },
+      {
+        "name": "9999-EXIT",
+        "line_start": 368,
+        "line_end": 369,
+        "line_count": 2,
+        "calls": []
+      }
+    ]
+  ],
+  "outline": [
+    {
+      "name": "PAUDBLOD",
+      "line_start": 18,
+      "line_end": 18,
+      "line_count": 1,
+      "calls": [
+        {
+          "target": "IMSFUNCS",
+          "type": "includes",
+          "line": 142
+        },
+        {
+          "target": "CIPAUSMY",
+          "type": "includes",
+          "line": 149
+        },
+        {
+          "target": "CIPAUDTY",
+          "type": "includes",
+          "line": 153
+        },
+        {
+          "target": "PAUTBPCB",
+          "type": "includes",
+          "line": 161
+        }
+      ]
+    },
+    {
+      "name": "MAIN-PARA",
+      "line_start": 169,
+      "line_end": 189,
+      "line_count": 21,
+      "calls": [
+        {
+          "target": "1000-INITIALIZE",
+          "type": "performs",
+          "line": 175
+        },
+        {
+          "target": "2000-READ-ROOT-SEG-FILE",
+          "type": "performs",
+          "line": 177
+        },
+        {
+          "target": "3000-READ-CHILD-SEG-FILE",
+          "type": "performs",
+          "line": 180
+        },
+        {
+          "target": "4000-FILE-CLOSE",
+          "type": "performs",
+          "line": 183
+        }
+      ]
+    },
+    {
+      "name": "1000-INITIALIZE",
+      "line_start": 190,
+      "line_end": 217,
+      "line_count": 28,
+      "calls": [
+        {
+          "target": "9999-ABEND",
+          "type": "performs",
+          "line": 206
+        },
+        {
+          "target": "9999-ABEND",
+          "type": "performs",
+          "line": 214
+        }
+      ]
+    },
+    {
+      "name": "1000-EXIT",
+      "line_start": 218,
+      "line_end": 221,
+      "line_count": 4,
+      "calls": []
+    },
+    {
+      "name": "2000-READ-ROOT-SEG-FILE",
+      "line_start": 222,
+      "line_end": 238,
+      "line_count": 17,
+      "calls": [
+        {
+          "target": "2100-INSERT-ROOT-SEG",
+          "type": "performs",
+          "line": 230
+        }
+      ]
+    },
+    {
+      "name": "2000-EXIT",
+      "line_start": 239,
+      "line_end": 241,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "2100-INSERT-ROOT-SEG",
+      "line_start": 242,
+      "line_end": 263,
+      "line_count": 22,
+      "calls": [
+        {
+          "target": "CBLTDLI",
+          "type": "calls",
+          "line": 244
+        },
+        {
+          "target": "9999-ABEND",
+          "type": "performs",
+          "line": 261
+        }
+      ]
+    },
+    {
+      "name": "2100-EXIT",
+      "line_start": 264,
+      "line_end": 268,
+      "line_count": 5,
+      "calls": []
+    },
+    {
+      "name": "3000-READ-CHILD-SEG-FILE",
+      "line_start": 269,
+      "line_end": 289,
+      "line_count": 21,
+      "calls": [
+        {
+          "target": "3100-INSERT-CHILD-SEG",
+          "type": "performs",
+          "line": 281
+        }
+      ]
+    },
+    {
+      "name": "3000-EXIT",
+      "line_start": 290,
+      "line_end": 291,
+      "line_count": 2,
+      "calls": []
+    },
+    {
+      "name": "3100-INSERT-CHILD-SEG",
+      "line_start": 292,
+      "line_end": 314,
+      "line_count": 23,
+      "calls": [
+        {
+          "target": "CBLTDLI",
+          "type": "calls",
+          "line": 296
+        },
+        {
+          "target": "3200-INSERT-IMS-CALL",
+          "type": "performs",
+          "line": 309
+        },
+        {
+          "target": "9999-ABEND",
+          "type": "performs",
+          "line": 313
+        }
+      ]
+    },
+    {
+      "name": "3100-EXIT",
+      "line_start": 315,
+      "line_end": 317,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "3200-INSERT-IMS-CALL",
+      "line_start": 318,
+      "line_end": 337,
+      "line_count": 20,
+      "calls": [
+        {
+          "target": "CBLTDLI",
+          "type": "calls",
+          "line": 321
+        },
+        {
+          "target": "9999-ABEND",
+          "type": "performs",
+          "line": 335
+        }
+      ]
+    },
+    {
+      "name": "3200-EXIT",
+      "line_start": 338,
+      "line_end": 340,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "4000-FILE-CLOSE",
+      "line_start": 341,
+      "line_end": 356,
+      "line_count": 16,
+      "calls": []
+    },
+    {
+      "name": "4000-EXIT",
+      "line_start": 357,
+      "line_end": 359,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "9999-ABEND",
+      "line_start": 360,
+      "line_end": 367,
+      "line_count": 8,
+      "calls": []
+    },
+    {
+      "name": "9999-EXIT",
+      "line_start": 368,
+      "line_end": 369,
+      "line_count": 2,
+      "calls": []
+    }
+  ],
+  "stats": {
+    "total_lines": 369,
+    "paragraph_count": 18,
+    "language": "COBOL",
+    "paragraphs": [
+      {
+        "name": "PAUDBLOD",
+        "line_start": 18,
+        "line_end": 18,
+        "line_count": 1
+      },
+      {
+        "name": "MAIN-PARA",
+        "line_start": 169,
+        "line_end": 189,
+        "line_count": 21
+      },
+      {
+        "name": "1000-INITIALIZE",
+        "line_start": 190,
+        "line_end": 217,
+        "line_count": 28
+      },
+      {
+        "name": "1000-EXIT",
+        "line_start": 218,
+        "line_end": 221,
+        "line_count": 4
+      },
+      {
+        "name": "2000-READ-ROOT-SEG-FILE",
+        "line_start": 222,
+        "line_end": 238,
+        "line_count": 17
+      },
+      {
+        "name": "2000-EXIT",
+        "line_start": 239,
+        "line_end": 241,
+        "line_count": 3
+      },
+      {
+        "name": "2100-INSERT-ROOT-SEG",
+        "line_start": 242,
+        "line_end": 263,
+        "line_count": 22
+      },
+      {
+        "name": "2100-EXIT",
+        "line_start": 264,
+        "line_end": 268,
+        "line_count": 5
+      },
+      {
+        "name": "3000-READ-CHILD-SEG-FILE",
+        "line_start": 269,
+        "line_end": 289,
+        "line_count": 21
+      },
+      {
+        "name": "3000-EXIT",
+        "line_start": 290,
+        "line_end": 291,
+        "line_count": 2
+      },
+      {
+        "name": "3100-INSERT-CHILD-SEG",
+        "line_start": 292,
+        "line_end": 314,
+        "line_count": 23
+      },
+      {
+        "name": "3100-EXIT",
+        "line_start": 315,
+        "line_end": 317,
+        "line_count": 3
+      },
+      {
+        "name": "3200-INSERT-IMS-CALL",
+        "line_start": 318,
+        "line_end": 337,
+        "line_count": 20
+      },
+      {
+        "name": "3200-EXIT",
+        "line_start": 338,
+        "line_end": 340,
+        "line_count": 3
+      },
+      {
+        "name": "4000-FILE-CLOSE",
+        "line_start": 341,
+        "line_end": 356,
+        "line_count": 16
+      },
+      {
+        "name": "4000-EXIT",
+        "line_start": 357,
+        "line_end": 359,
+        "line_count": 3
+      },
+      {
+        "name": "9999-ABEND",
+        "line_start": 360,
+        "line_end": 367,
+        "line_count": 8
+      },
+      {
+        "name": "9999-EXIT",
+        "line_start": 368,
+        "line_end": 369,
+        "line_count": 2
+      }
+    ]
+  },
+  "parent_ticket_id": "mem-000004",
+  "cycle_number": 1,
+  "program_id": "PAUDBLOD",
+  "copybook_contents": {},
+  "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+  "feedback_context": null
+}

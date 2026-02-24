@@ -1,0 +1,558 @@
+{
+  "file_name": "cbl/DBUNLDGS.CBL",
+  "source_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+  "total_batches": 2,
+  "batches": [
+    [
+      {
+        "name": "DBUNLDGS",
+        "line_start": 18,
+        "line_end": 18,
+        "line_count": 1,
+        "calls": [
+          {
+            "target": "IMSFUNCS",
+            "type": "includes",
+            "line": 136
+          },
+          {
+            "target": "CIPAUSMY",
+            "type": "includes",
+            "line": 143
+          },
+          {
+            "target": "CIPAUDTY",
+            "type": "includes",
+            "line": 147
+          },
+          {
+            "target": "PAUTBPCB",
+            "type": "includes",
+            "line": 154
+          },
+          {
+            "target": "PASFLPCB",
+            "type": "includes",
+            "line": 155
+          },
+          {
+            "target": "PADFLPCB",
+            "type": "includes",
+            "line": 156
+          }
+        ]
+      },
+      {
+        "name": "MAIN-PARA",
+        "line_start": 164,
+        "line_end": 181,
+        "line_count": 18,
+        "calls": [
+          {
+            "target": "1000-INITIALIZE",
+            "type": "performs",
+            "line": 170
+          },
+          {
+            "target": "2000-FIND-NEXT-AUTH-SUMMARY",
+            "type": "performs",
+            "line": 172
+          },
+          {
+            "target": "4000-FILE-CLOSE",
+            "type": "performs",
+            "line": 175
+          }
+        ]
+      },
+      {
+        "name": "1000-INITIALIZE",
+        "line_start": 182,
+        "line_end": 211,
+        "line_count": 30,
+        "calls": []
+      },
+      {
+        "name": "1000-EXIT",
+        "line_start": 212,
+        "line_end": 215,
+        "line_count": 4,
+        "calls": []
+      },
+      {
+        "name": "2000-FIND-NEXT-AUTH-SUMMARY",
+        "line_start": 216,
+        "line_end": 257,
+        "line_count": 42,
+        "calls": [
+          {
+            "target": "CBLTDLI",
+            "type": "calls",
+            "line": 222
+          },
+          {
+            "target": "3100-INSERT-PARENT-SEG-GSAM",
+            "type": "performs",
+            "line": 243
+          },
+          {
+            "target": "3000-FIND-NEXT-AUTH-DTL",
+            "type": "performs",
+            "line": 245
+          },
+          {
+            "target": "9999-ABEND",
+            "type": "performs",
+            "line": 256
+          }
+        ]
+      },
+      {
+        "name": "2000-EXIT",
+        "line_start": 258,
+        "line_end": 262,
+        "line_count": 5,
+        "calls": []
+      },
+      {
+        "name": "3000-FIND-NEXT-AUTH-DTL",
+        "line_start": 263,
+        "line_end": 295,
+        "line_count": 33,
+        "calls": [
+          {
+            "target": "CBLTDLI",
+            "type": "calls",
+            "line": 267
+          },
+          {
+            "target": "3200-INSERT-CHILD-SEG-GSAM",
+            "type": "performs",
+            "line": 282
+          },
+          {
+            "target": "9999-ABEND",
+            "type": "performs",
+            "line": 293
+          }
+        ]
+      },
+      {
+        "name": "3000-EXIT",
+        "line_start": 296,
+        "line_end": 299,
+        "line_count": 4,
+        "calls": []
+      },
+      {
+        "name": "3100-INSERT-PARENT-SEG-GSAM",
+        "line_start": 300,
+        "line_end": 315,
+        "line_count": 16,
+        "calls": [
+          {
+            "target": "CBLTDLI",
+            "type": "calls",
+            "line": 302
+          },
+          {
+            "target": "9999-ABEND",
+            "type": "performs",
+            "line": 314
+          }
+        ]
+      },
+      {
+        "name": "3100-EXIT",
+        "line_start": 316,
+        "line_end": 318,
+        "line_count": 3,
+        "calls": []
+      }
+    ],
+    [
+      {
+        "name": "3200-INSERT-CHILD-SEG-GSAM",
+        "line_start": 319,
+        "line_end": 334,
+        "line_count": 16,
+        "calls": [
+          {
+            "target": "CBLTDLI",
+            "type": "calls",
+            "line": 321
+          },
+          {
+            "target": "9999-ABEND",
+            "type": "performs",
+            "line": 333
+          }
+        ]
+      },
+      {
+        "name": "3200-EXIT",
+        "line_start": 335,
+        "line_end": 337,
+        "line_count": 3,
+        "calls": []
+      },
+      {
+        "name": "4000-FILE-CLOSE",
+        "line_start": 338,
+        "line_end": 353,
+        "line_count": 16,
+        "calls": []
+      },
+      {
+        "name": "4000-EXIT",
+        "line_start": 354,
+        "line_end": 356,
+        "line_count": 3,
+        "calls": []
+      },
+      {
+        "name": "9999-ABEND",
+        "line_start": 357,
+        "line_end": 364,
+        "line_count": 8,
+        "calls": []
+      },
+      {
+        "name": "9999-EXIT",
+        "line_start": 365,
+        "line_end": 366,
+        "line_count": 2,
+        "calls": []
+      }
+    ]
+  ],
+  "outline": [
+    {
+      "name": "DBUNLDGS",
+      "line_start": 18,
+      "line_end": 18,
+      "line_count": 1,
+      "calls": [
+        {
+          "target": "IMSFUNCS",
+          "type": "includes",
+          "line": 136
+        },
+        {
+          "target": "CIPAUSMY",
+          "type": "includes",
+          "line": 143
+        },
+        {
+          "target": "CIPAUDTY",
+          "type": "includes",
+          "line": 147
+        },
+        {
+          "target": "PAUTBPCB",
+          "type": "includes",
+          "line": 154
+        },
+        {
+          "target": "PASFLPCB",
+          "type": "includes",
+          "line": 155
+        },
+        {
+          "target": "PADFLPCB",
+          "type": "includes",
+          "line": 156
+        }
+      ]
+    },
+    {
+      "name": "MAIN-PARA",
+      "line_start": 164,
+      "line_end": 181,
+      "line_count": 18,
+      "calls": [
+        {
+          "target": "1000-INITIALIZE",
+          "type": "performs",
+          "line": 170
+        },
+        {
+          "target": "2000-FIND-NEXT-AUTH-SUMMARY",
+          "type": "performs",
+          "line": 172
+        },
+        {
+          "target": "4000-FILE-CLOSE",
+          "type": "performs",
+          "line": 175
+        }
+      ]
+    },
+    {
+      "name": "1000-INITIALIZE",
+      "line_start": 182,
+      "line_end": 211,
+      "line_count": 30,
+      "calls": []
+    },
+    {
+      "name": "1000-EXIT",
+      "line_start": 212,
+      "line_end": 215,
+      "line_count": 4,
+      "calls": []
+    },
+    {
+      "name": "2000-FIND-NEXT-AUTH-SUMMARY",
+      "line_start": 216,
+      "line_end": 257,
+      "line_count": 42,
+      "calls": [
+        {
+          "target": "CBLTDLI",
+          "type": "calls",
+          "line": 222
+        },
+        {
+          "target": "3100-INSERT-PARENT-SEG-GSAM",
+          "type": "performs",
+          "line": 243
+        },
+        {
+          "target": "3000-FIND-NEXT-AUTH-DTL",
+          "type": "performs",
+          "line": 245
+        },
+        {
+          "target": "9999-ABEND",
+          "type": "performs",
+          "line": 256
+        }
+      ]
+    },
+    {
+      "name": "2000-EXIT",
+      "line_start": 258,
+      "line_end": 262,
+      "line_count": 5,
+      "calls": []
+    },
+    {
+      "name": "3000-FIND-NEXT-AUTH-DTL",
+      "line_start": 263,
+      "line_end": 295,
+      "line_count": 33,
+      "calls": [
+        {
+          "target": "CBLTDLI",
+          "type": "calls",
+          "line": 267
+        },
+        {
+          "target": "3200-INSERT-CHILD-SEG-GSAM",
+          "type": "performs",
+          "line": 282
+        },
+        {
+          "target": "9999-ABEND",
+          "type": "performs",
+          "line": 293
+        }
+      ]
+    },
+    {
+      "name": "3000-EXIT",
+      "line_start": 296,
+      "line_end": 299,
+      "line_count": 4,
+      "calls": []
+    },
+    {
+      "name": "3100-INSERT-PARENT-SEG-GSAM",
+      "line_start": 300,
+      "line_end": 315,
+      "line_count": 16,
+      "calls": [
+        {
+          "target": "CBLTDLI",
+          "type": "calls",
+          "line": 302
+        },
+        {
+          "target": "9999-ABEND",
+          "type": "performs",
+          "line": 314
+        }
+      ]
+    },
+    {
+      "name": "3100-EXIT",
+      "line_start": 316,
+      "line_end": 318,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "3200-INSERT-CHILD-SEG-GSAM",
+      "line_start": 319,
+      "line_end": 334,
+      "line_count": 16,
+      "calls": [
+        {
+          "target": "CBLTDLI",
+          "type": "calls",
+          "line": 321
+        },
+        {
+          "target": "9999-ABEND",
+          "type": "performs",
+          "line": 333
+        }
+      ]
+    },
+    {
+      "name": "3200-EXIT",
+      "line_start": 335,
+      "line_end": 337,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "4000-FILE-CLOSE",
+      "line_start": 338,
+      "line_end": 353,
+      "line_count": 16,
+      "calls": []
+    },
+    {
+      "name": "4000-EXIT",
+      "line_start": 354,
+      "line_end": 356,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "9999-ABEND",
+      "line_start": 357,
+      "line_end": 364,
+      "line_count": 8,
+      "calls": []
+    },
+    {
+      "name": "9999-EXIT",
+      "line_start": 365,
+      "line_end": 366,
+      "line_count": 2,
+      "calls": []
+    }
+  ],
+  "stats": {
+    "total_lines": 366,
+    "paragraph_count": 16,
+    "language": "COBOL",
+    "paragraphs": [
+      {
+        "name": "DBUNLDGS",
+        "line_start": 18,
+        "line_end": 18,
+        "line_count": 1
+      },
+      {
+        "name": "MAIN-PARA",
+        "line_start": 164,
+        "line_end": 181,
+        "line_count": 18
+      },
+      {
+        "name": "1000-INITIALIZE",
+        "line_start": 182,
+        "line_end": 211,
+        "line_count": 30
+      },
+      {
+        "name": "1000-EXIT",
+        "line_start": 212,
+        "line_end": 215,
+        "line_count": 4
+      },
+      {
+        "name": "2000-FIND-NEXT-AUTH-SUMMARY",
+        "line_start": 216,
+        "line_end": 257,
+        "line_count": 42
+      },
+      {
+        "name": "2000-EXIT",
+        "line_start": 258,
+        "line_end": 262,
+        "line_count": 5
+      },
+      {
+        "name": "3000-FIND-NEXT-AUTH-DTL",
+        "line_start": 263,
+        "line_end": 295,
+        "line_count": 33
+      },
+      {
+        "name": "3000-EXIT",
+        "line_start": 296,
+        "line_end": 299,
+        "line_count": 4
+      },
+      {
+        "name": "3100-INSERT-PARENT-SEG-GSAM",
+        "line_start": 300,
+        "line_end": 315,
+        "line_count": 16
+      },
+      {
+        "name": "3100-EXIT",
+        "line_start": 316,
+        "line_end": 318,
+        "line_count": 3
+      },
+      {
+        "name": "3200-INSERT-CHILD-SEG-GSAM",
+        "line_start": 319,
+        "line_end": 334,
+        "line_count": 16
+      },
+      {
+        "name": "3200-EXIT",
+        "line_start": 335,
+        "line_end": 337,
+        "line_count": 3
+      },
+      {
+        "name": "4000-FILE-CLOSE",
+        "line_start": 338,
+        "line_end": 353,
+        "line_count": 16
+      },
+      {
+        "name": "4000-EXIT",
+        "line_start": 354,
+        "line_end": 356,
+        "line_count": 3
+      },
+      {
+        "name": "9999-ABEND",
+        "line_start": 357,
+        "line_end": 364,
+        "line_count": 8
+      },
+      {
+        "name": "9999-EXIT",
+        "line_start": 365,
+        "line_end": 366,
+        "line_count": 2
+      }
+    ]
+  },
+  "parent_ticket_id": "mem-000005",
+  "cycle_number": 1,
+  "program_id": "DBUNLDGS",
+  "copybook_contents": {},
+  "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+  "feedback_context": null
+}

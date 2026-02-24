@@ -1,0 +1,570 @@
+{
+  "file_name": "cbl/CBPAUP0C.cbl",
+  "source_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+  "total_batches": 2,
+  "batches": [
+    [
+      {
+        "name": "CBPAUP0C",
+        "line_start": 23,
+        "line_end": 23,
+        "line_count": 1,
+        "calls": [
+          {
+            "target": "CIPAUSMY",
+            "type": "includes",
+            "line": 117
+          },
+          {
+            "target": "CIPAUDTY",
+            "type": "includes",
+            "line": 121
+          }
+        ]
+      },
+      {
+        "name": "MAIN-PARA",
+        "line_start": 136,
+        "line_end": 182,
+        "line_count": 47,
+        "calls": [
+          {
+            "target": "1000-INITIALIZE",
+            "type": "performs",
+            "line": 138
+          },
+          {
+            "target": "2000-FIND-NEXT-AUTH-SUMMARY",
+            "type": "performs",
+            "line": 140
+          },
+          {
+            "target": "3000-FIND-NEXT-AUTH-DTL",
+            "type": "performs",
+            "line": 144
+          },
+          {
+            "target": "4000-CHECK-IF-EXPIRED",
+            "type": "performs",
+            "line": 147
+          },
+          {
+            "target": "5000-DELETE-AUTH-DTL",
+            "type": "performs",
+            "line": 150
+          },
+          {
+            "target": "3000-FIND-NEXT-AUTH-DTL",
+            "type": "performs",
+            "line": 153
+          },
+          {
+            "target": "6000-DELETE-AUTH-SUMMARY",
+            "type": "performs",
+            "line": 157
+          },
+          {
+            "target": "9000-TAKE-CHECKPOINT",
+            "type": "performs",
+            "line": 161
+          },
+          {
+            "target": "2000-FIND-NEXT-AUTH-SUMMARY",
+            "type": "performs",
+            "line": 165
+          },
+          {
+            "target": "9000-TAKE-CHECKPOINT",
+            "type": "performs",
+            "line": 169
+          }
+        ]
+      },
+      {
+        "name": "1000-INITIALIZE",
+        "line_start": 183,
+        "line_end": 211,
+        "line_count": 29,
+        "calls": []
+      },
+      {
+        "name": "1000-EXIT",
+        "line_start": 212,
+        "line_end": 215,
+        "line_count": 4,
+        "calls": []
+      },
+      {
+        "name": "2000-FIND-NEXT-AUTH-SUMMARY",
+        "line_start": 216,
+        "line_end": 242,
+        "line_count": 27,
+        "calls": [
+          {
+            "target": "9999-ABEND",
+            "type": "performs",
+            "line": 240
+          }
+        ]
+      },
+      {
+        "name": "2000-EXIT",
+        "line_start": 243,
+        "line_end": 247,
+        "line_count": 5,
+        "calls": []
+      },
+      {
+        "name": "3000-FIND-NEXT-AUTH-DTL",
+        "line_start": 248,
+        "line_end": 272,
+        "line_count": 25,
+        "calls": [
+          {
+            "target": "9999-ABEND",
+            "type": "performs",
+            "line": 270
+          }
+        ]
+      },
+      {
+        "name": "3000-EXIT",
+        "line_start": 273,
+        "line_end": 276,
+        "line_count": 4,
+        "calls": []
+      },
+      {
+        "name": "4000-CHECK-IF-EXPIRED",
+        "line_start": 277,
+        "line_end": 298,
+        "line_count": 22,
+        "calls": []
+      },
+      {
+        "name": "4000-EXIT",
+        "line_start": 299,
+        "line_end": 302,
+        "line_count": 4,
+        "calls": []
+      }
+    ],
+    [
+      {
+        "name": "5000-DELETE-AUTH-DTL",
+        "line_start": 303,
+        "line_end": 323,
+        "line_count": 21,
+        "calls": [
+          {
+            "target": "9999-ABEND",
+            "type": "performs",
+            "line": 320
+          }
+        ]
+      },
+      {
+        "name": "5000-EXIT",
+        "line_start": 324,
+        "line_end": 327,
+        "line_count": 4,
+        "calls": []
+      },
+      {
+        "name": "6000-DELETE-AUTH-SUMMARY",
+        "line_start": 328,
+        "line_end": 347,
+        "line_count": 20,
+        "calls": [
+          {
+            "target": "9999-ABEND",
+            "type": "performs",
+            "line": 345
+          }
+        ]
+      },
+      {
+        "name": "6000-EXIT",
+        "line_start": 348,
+        "line_end": 351,
+        "line_count": 4,
+        "calls": []
+      },
+      {
+        "name": "9000-TAKE-CHECKPOINT",
+        "line_start": 352,
+        "line_end": 372,
+        "line_count": 21,
+        "calls": [
+          {
+            "target": "9999-ABEND",
+            "type": "performs",
+            "line": 369
+          }
+        ]
+      },
+      {
+        "name": "9000-EXIT",
+        "line_start": 373,
+        "line_end": 376,
+        "line_count": 4,
+        "calls": []
+      },
+      {
+        "name": "9999-ABEND",
+        "line_start": 377,
+        "line_end": 384,
+        "line_count": 8,
+        "calls": []
+      },
+      {
+        "name": "9999-EXIT",
+        "line_start": 385,
+        "line_end": 386,
+        "line_count": 2,
+        "calls": []
+      }
+    ]
+  ],
+  "outline": [
+    {
+      "name": "CBPAUP0C",
+      "line_start": 23,
+      "line_end": 23,
+      "line_count": 1,
+      "calls": [
+        {
+          "target": "CIPAUSMY",
+          "type": "includes",
+          "line": 117
+        },
+        {
+          "target": "CIPAUDTY",
+          "type": "includes",
+          "line": 121
+        }
+      ]
+    },
+    {
+      "name": "MAIN-PARA",
+      "line_start": 136,
+      "line_end": 182,
+      "line_count": 47,
+      "calls": [
+        {
+          "target": "1000-INITIALIZE",
+          "type": "performs",
+          "line": 138
+        },
+        {
+          "target": "2000-FIND-NEXT-AUTH-SUMMARY",
+          "type": "performs",
+          "line": 140
+        },
+        {
+          "target": "3000-FIND-NEXT-AUTH-DTL",
+          "type": "performs",
+          "line": 144
+        },
+        {
+          "target": "4000-CHECK-IF-EXPIRED",
+          "type": "performs",
+          "line": 147
+        },
+        {
+          "target": "5000-DELETE-AUTH-DTL",
+          "type": "performs",
+          "line": 150
+        },
+        {
+          "target": "3000-FIND-NEXT-AUTH-DTL",
+          "type": "performs",
+          "line": 153
+        },
+        {
+          "target": "6000-DELETE-AUTH-SUMMARY",
+          "type": "performs",
+          "line": 157
+        },
+        {
+          "target": "9000-TAKE-CHECKPOINT",
+          "type": "performs",
+          "line": 161
+        },
+        {
+          "target": "2000-FIND-NEXT-AUTH-SUMMARY",
+          "type": "performs",
+          "line": 165
+        },
+        {
+          "target": "9000-TAKE-CHECKPOINT",
+          "type": "performs",
+          "line": 169
+        }
+      ]
+    },
+    {
+      "name": "1000-INITIALIZE",
+      "line_start": 183,
+      "line_end": 211,
+      "line_count": 29,
+      "calls": []
+    },
+    {
+      "name": "1000-EXIT",
+      "line_start": 212,
+      "line_end": 215,
+      "line_count": 4,
+      "calls": []
+    },
+    {
+      "name": "2000-FIND-NEXT-AUTH-SUMMARY",
+      "line_start": 216,
+      "line_end": 242,
+      "line_count": 27,
+      "calls": [
+        {
+          "target": "9999-ABEND",
+          "type": "performs",
+          "line": 240
+        }
+      ]
+    },
+    {
+      "name": "2000-EXIT",
+      "line_start": 243,
+      "line_end": 247,
+      "line_count": 5,
+      "calls": []
+    },
+    {
+      "name": "3000-FIND-NEXT-AUTH-DTL",
+      "line_start": 248,
+      "line_end": 272,
+      "line_count": 25,
+      "calls": [
+        {
+          "target": "9999-ABEND",
+          "type": "performs",
+          "line": 270
+        }
+      ]
+    },
+    {
+      "name": "3000-EXIT",
+      "line_start": 273,
+      "line_end": 276,
+      "line_count": 4,
+      "calls": []
+    },
+    {
+      "name": "4000-CHECK-IF-EXPIRED",
+      "line_start": 277,
+      "line_end": 298,
+      "line_count": 22,
+      "calls": []
+    },
+    {
+      "name": "4000-EXIT",
+      "line_start": 299,
+      "line_end": 302,
+      "line_count": 4,
+      "calls": []
+    },
+    {
+      "name": "5000-DELETE-AUTH-DTL",
+      "line_start": 303,
+      "line_end": 323,
+      "line_count": 21,
+      "calls": [
+        {
+          "target": "9999-ABEND",
+          "type": "performs",
+          "line": 320
+        }
+      ]
+    },
+    {
+      "name": "5000-EXIT",
+      "line_start": 324,
+      "line_end": 327,
+      "line_count": 4,
+      "calls": []
+    },
+    {
+      "name": "6000-DELETE-AUTH-SUMMARY",
+      "line_start": 328,
+      "line_end": 347,
+      "line_count": 20,
+      "calls": [
+        {
+          "target": "9999-ABEND",
+          "type": "performs",
+          "line": 345
+        }
+      ]
+    },
+    {
+      "name": "6000-EXIT",
+      "line_start": 348,
+      "line_end": 351,
+      "line_count": 4,
+      "calls": []
+    },
+    {
+      "name": "9000-TAKE-CHECKPOINT",
+      "line_start": 352,
+      "line_end": 372,
+      "line_count": 21,
+      "calls": [
+        {
+          "target": "9999-ABEND",
+          "type": "performs",
+          "line": 369
+        }
+      ]
+    },
+    {
+      "name": "9000-EXIT",
+      "line_start": 373,
+      "line_end": 376,
+      "line_count": 4,
+      "calls": []
+    },
+    {
+      "name": "9999-ABEND",
+      "line_start": 377,
+      "line_end": 384,
+      "line_count": 8,
+      "calls": []
+    },
+    {
+      "name": "9999-EXIT",
+      "line_start": 385,
+      "line_end": 386,
+      "line_count": 2,
+      "calls": []
+    }
+  ],
+  "stats": {
+    "total_lines": 386,
+    "paragraph_count": 18,
+    "language": "COBOL",
+    "paragraphs": [
+      {
+        "name": "CBPAUP0C",
+        "line_start": 23,
+        "line_end": 23,
+        "line_count": 1
+      },
+      {
+        "name": "MAIN-PARA",
+        "line_start": 136,
+        "line_end": 182,
+        "line_count": 47
+      },
+      {
+        "name": "1000-INITIALIZE",
+        "line_start": 183,
+        "line_end": 211,
+        "line_count": 29
+      },
+      {
+        "name": "1000-EXIT",
+        "line_start": 212,
+        "line_end": 215,
+        "line_count": 4
+      },
+      {
+        "name": "2000-FIND-NEXT-AUTH-SUMMARY",
+        "line_start": 216,
+        "line_end": 242,
+        "line_count": 27
+      },
+      {
+        "name": "2000-EXIT",
+        "line_start": 243,
+        "line_end": 247,
+        "line_count": 5
+      },
+      {
+        "name": "3000-FIND-NEXT-AUTH-DTL",
+        "line_start": 248,
+        "line_end": 272,
+        "line_count": 25
+      },
+      {
+        "name": "3000-EXIT",
+        "line_start": 273,
+        "line_end": 276,
+        "line_count": 4
+      },
+      {
+        "name": "4000-CHECK-IF-EXPIRED",
+        "line_start": 277,
+        "line_end": 298,
+        "line_count": 22
+      },
+      {
+        "name": "4000-EXIT",
+        "line_start": 299,
+        "line_end": 302,
+        "line_count": 4
+      },
+      {
+        "name": "5000-DELETE-AUTH-DTL",
+        "line_start": 303,
+        "line_end": 323,
+        "line_count": 21
+      },
+      {
+        "name": "5000-EXIT",
+        "line_start": 324,
+        "line_end": 327,
+        "line_count": 4
+      },
+      {
+        "name": "6000-DELETE-AUTH-SUMMARY",
+        "line_start": 328,
+        "line_end": 347,
+        "line_count": 20
+      },
+      {
+        "name": "6000-EXIT",
+        "line_start": 348,
+        "line_end": 351,
+        "line_count": 4
+      },
+      {
+        "name": "9000-TAKE-CHECKPOINT",
+        "line_start": 352,
+        "line_end": 372,
+        "line_count": 21
+      },
+      {
+        "name": "9000-EXIT",
+        "line_start": 373,
+        "line_end": 376,
+        "line_count": 4
+      },
+      {
+        "name": "9999-ABEND",
+        "line_start": 377,
+        "line_end": 384,
+        "line_count": 8
+      },
+      {
+        "name": "9999-EXIT",
+        "line_start": 385,
+        "line_end": 386,
+        "line_count": 2
+      }
+    ]
+  },
+  "parent_ticket_id": "mem-000006",
+  "cycle_number": 1,
+  "program_id": "CBPAUP0C",
+  "copybook_contents": {},
+  "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+  "feedback_context": null
+}

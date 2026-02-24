@@ -2,65 +2,43 @@
 
 **File**: `cbl/DBUNLDGS.CBL`
 **Type**: FileType.COBOL
-**Analyzed**: 2026-02-24 03:59:38.347882
+**Analyzed**: 2026-02-24 17:43:44.226557
 
 ## Purpose
 
-DBUNLDGS is an IMS DL/I batch utility program that unloads pending authorization summary (root) and details (child) segments from the PAUT IMS database using GN and GNP calls on PAUTBPCB. It inserts the unloaded root segments into a GSAM database via PASFLPCB and child segments into another GSAM via PADFLPCB using ISRT calls. The program processes all root summaries sequentially, unloading all associated child details for each root before moving to the next.
+The COBOL program DBUNLDGS is designed to unload data from an IMS database. It retrieves pending authorization summary and detail segments and writes them to output files. The program initializes, retrieves summary records, and then closes the files upon completion.
 
-**Business Context**: Supports data migration or backup of pending authorization data from hierarchical IMS database to GSAM files for reporting or further processing.
+**Business Context**: UNKNOWN
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| PAUTBPCB | IOType.IMS_SEGMENT | IMS database PCB for reading root (PAUTSUM0) and child (PAUTDTL1) segments from PAUT database |
+| IMS Database | IOType.IMS_SEGMENT | Pending authorization summary and detail segments from an IMS database. |
+| PAUTBPCB | IOType.PARAMETER | Pending Authorization PCB mask. |
+| PASFLPCB | IOType.PARAMETER | Pending Authorization Summary File PCB mask. |
+| PADFLPCB | IOType.PARAMETER | Pending Authorization Detail File PCB mask. |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| PASFLPCB | IOType.IMS_SEGMENT | GSAM PCB for inserting unloaded root summary segments (PENDING-AUTH-SUMMARY) |
-| PADFLPCB | IOType.IMS_SEGMENT | GSAM PCB for inserting unloaded child detail segments (PENDING-AUTH-DETAILS) |
+| OPFILE1 | IOType.FILE_SEQUENTIAL | Output file containing data from the IMS database. The structure is defined by OPFIL1-REC. |
+| OPFILE2 | IOType.FILE_SEQUENTIAL | Output file containing data from the IMS database. The structure is defined by OPFIL2-REC, containing a root segment key and a child segment record. |
 
 ## Business Rules
 
-- **BR001**: Process all root summaries and their child details sequentially until end of database
-- **BR002**: Only process root if PA-ACCT-ID is numeric
+- **BR001**: The program continues processing as long as the end-of-root-segment flag is not set to 'Y'.
 
 ## Paragraphs/Procedures
 
 ### MAIN-PARA
 > [Source: MAIN-PARA.cbl.md](DBUNLDGS.CBL.d/MAIN-PARA.cbl.md)
-This is the primary entry point paragraph that orchestrates the entire unload process. It accepts three IMS PCBs via LINKAGE: PAUTBPCB for source reads, PASFLPCB for parent GSAM inserts, and PADFLPCB for child GSAM inserts (lines 159-161). It first performs initialization including date acceptance and display messages (line 170). Then it enters a loop calling 2000-FIND-NEXT-AUTH-SUMMARY to read root segments until end-of-database flag is set (lines 172-173). For each root, it triggers child processing within 2000. Upon loop exit, it performs file close (though commented, line 175). No explicit error handling here beyond subordinate calls; abend delegated to 9999-ABEND if issues arise in called paragraphs. It sets entry 'DLITCBL' for potential alternate invocation (line 165). Counters like WS-NO-SUMRY-READ are incremented in subordinates but summarized implicitly here.
+This is the main paragraph of the DBUNLDGS program. It serves as the entry point and orchestrates the overall program flow. It first performs the 1000-INITIALIZE paragraph to set up the program environment, including accepting the current date and displaying program start messages. Then, it enters a loop, repeatedly performing the 2000-FIND-NEXT-AUTH-SUMMARY paragraph to retrieve and process pending authorization summary records from the IMS database. The loop continues until the WS-END-OF-ROOT-SEG flag is set to 'Y', indicating that all summary records have been processed. Finally, it performs the 4000-FILE-CLOSE paragraph to close the output files and terminates the program using GOBACK. The paragraph uses PAUTBPCB, PASFLPCB and PADFLPCB from the linkage section.
 
 ### 1000-INITIALIZE
 > [Source: 1000-INITIALIZE.cbl.md](DBUNLDGS.CBL.d/1000-INITIALIZE.cbl.md)
-This paragraph handles program startup initialization. It accepts current date and YYDDD from system (lines 185-186). Displays startup messages including program name, date, and decorative lines (lines 189-192). Commented code for parameter acceptance from SYSIN and file opens for OPFILE1/OPFILE2 with status checks is present but inactive (lines 188,195-209). No data modifications or business logic; purely setup and logging. No error handling as file opens commented; proceeds unconditionally to EXIT. Called once from MAIN-PARA to prepare for processing loop.
-
-### 2000-FIND-NEXT-AUTH-SUMMARY
-> [Source: 2000-FIND-NEXT-AUTH-SUMMARY.cbl.md](DBUNLDGS.CBL.d/2000-FIND-NEXT-AUTH-SUMMARY.cbl.md)
-This paragraph performs GN call to retrieve the next root summary segment from PAUT IMS DB via PAUTBPCB (lines 222-225). Initializes PCB status beforehand (line 221). If status SPACES (success), increments read counters WS-NO-SUMRY-READ and WS-AUTH-SMRY-PROC-CNT (lines 234-235), moves data to working record (236), sets ROOT-SEG-KEY from PA-ACCT-ID (239), performs 3100 to insert into GSAM PASFL (243), then loops 3000 for children until end (245-246). Only if PA-ACCT-ID numeric (241). If 'GB' sets end-of-DB flags (249-251). Other statuses trigger display and abend (253-256). Manages WS-END-OF-ROOT-SEG flag for MAIN loop control. Error handling abends on non-success/non-GB.
-
-### 3000-FIND-NEXT-AUTH-DTL
-> [Source: 3000-FIND-NEXT-AUTH-DTL.cbl.md](DBUNLDGS.CBL.d/3000-FIND-NEXT-AUTH-DTL.cbl.md)
-This paragraph retrieves next child detail segment under current root using GNP on PAUTBPCB (lines 267-270). If SPACES (success), sets MORE-AUTHS flag (277), increments counters (278-279), moves to CHILD-SEG-REC (280), performs 3200 insert to PADFL GSAM (282). If 'GE' (segment not found), sets WS-END-OF-CHILD-SEG='Y' and displays (284-288). Other statuses display feedback and abend (290-293). Initializes PCB status at end (295). Controls inner loop in 2000 via WS-END-OF-CHILD-SEG. No validation on data; assumes parentage from GNP. Error handling abends on failures.
-
-### 3100-INSERT-PARENT-SEG-GSAM
-> [Source: 3100-INSERT-PARENT-SEG-GSAM.cbl.md](DBUNLDGS.CBL.d/3100-INSERT-PARENT-SEG-GSAM.cbl.md)
-Dedicated to inserting the current root summary segment into GSAM via ISRT call on PASFLPCB (lines 302-304). Checks PASFL-PCB-STATUS post-call; if not SPACES, displays error and key feedback then abends (311-314). No data transformation; passes PENDING-AUTH-SUMMARY directly. Increments no counters here. Called from 2000 after root read success. Minimal logic focused on I/O and error check. Handles only insert failure by abend.
-
-### 3200-INSERT-CHILD-SEG-GSAM
-> [Source: 3200-INSERT-CHILD-SEG-GSAM.cbl.md](DBUNLDGS.CBL.d/3200-INSERT-CHILD-SEG-GSAM.cbl.md)
-Inserts current child detail segment into GSAM via ISRT on PADFLPCB (lines 321-323). Post-call, if PADFL-PCB-STATUS not SPACES, displays error and abends (330-333). Passes PENDING-AUTH-DETAILS directly. No additional validation or transforms. Called repeatedly from 3000 for each child under a root. Strict error handling via abend on insert failure.
-
-### 4000-FILE-CLOSE
-> [Source: 4000-FILE-CLOSE.cbl.md](DBUNLDGS.CBL.d/4000-FILE-CLOSE.cbl.md)
-Handles program termination by displaying close message (339). Commented code for closing OPFILE1 and OPFILE2 with status checks (340-353), but inactive. No active file closes as opens commented. No error handling executed. Called once at end of MAIN-PARA after processing loop.
-
-### 9999-ABEND
-> [Source: 9999-ABEND.cbl.md](DBUNLDGS.CBL.d/9999-ABEND.cbl.md)
-Common abend routine called on IMS call failures. Displays abend message (360), sets RETURN-CODE to 16 (362), and GOBACKs (363). No recovery; immediate termination. Used across program for consistent error exit.
+This paragraph initializes the program environment. It accepts the current date and day from the system and stores them in CURRENT-DATE and CURRENT-YYDDD, respectively. It then displays a series of messages to the console indicating the start of the program and the current date. The commented-out code suggests that it was intended to accept parameters from SYSIN and open output files OPFILE1 and OPFILE2, with error handling for file open failures. However, these file operations are currently commented out. The paragraph consumes system date and day, and displays messages to the console. It does not directly produce any output data, but sets up the environment for subsequent processing. It does not call any other paragraphs.
 
 ## Control Flow
 
@@ -99,6 +77,17 @@ flowchart TD
     MAIN_PARA --> 4000_FILE_CLOSE
 ```
 
+## Open Questions
+
+- ? What is the purpose of the IMSFUNCS copybook?
+  - Context: The code includes the IMSFUNCS copybook, but its contents and usage are not evident in the provided snippet.
+- ? What are the exact record layouts for OPFILE1 and OPFILE2?
+  - Context: The file definitions for OPFILE1 and OPFILE2 are commented out, so their exact structure and content are unclear.
+- ? What is the purpose of the 2000-FIND-NEXT-AUTH-SUMMARY and 4000-FILE-CLOSE paragraphs?
+  - Context: The code for these paragraphs is not provided in the snippet.
+- ? What are the contents of the PASFLPCB and PADFLPCB copybooks?
+  - Context: The copybooks PASFLPCB and PADFLPCB are included, but their contents are not shown.
+
 ## Sequence Diagram
 
 ```mermaid
@@ -107,23 +96,9 @@ sequenceDiagram
     participant 1000_INITIALIZE as 1000-INITIALIZE
     participant 2000_FIND_NEXT_AUTH_SUMMARY as 2000-FIND-NEXT-AUTH-SUMMARY
     participant 4000_FILE_CLOSE as 4000-FILE-CLOSE
-    participant CBLTDLI as CBLTDLI
-    participant 3100_INSERT_PARENT_SEG_GSAM as 3100-INSERT-PARENT-SEG-GSAM
-    participant 3000_FIND_NEXT_AUTH_DTL as 3000-FIND-NEXT-AUTH-DTL
-    participant 9999_ABEND as 9999-ABEND
-    participant 3200_INSERT_CHILD_SEG_GSAM as 3200-INSERT-CHILD-SEG-GSAM
     MAIN_PARA->>1000_INITIALIZE: performs
+    1000_INITIALIZE-->>MAIN_PARA: CURRENT-DATE / CURRENT-YYDDD
     MAIN_PARA->>2000_FIND_NEXT_AUTH_SUMMARY: performs
+    2000_FIND_NEXT_AUTH_SUMMARY-->>MAIN_PARA: WS-END-OF-ROOT-SEG / WS-NO-SUMRY-READ / WS-AUTH-SMRY-PROC-CNT / ...
     MAIN_PARA->>4000_FILE_CLOSE: performs
-    2000_FIND_NEXT_AUTH_SUMMARY->>CBLTDLI: performs
-    2000_FIND_NEXT_AUTH_SUMMARY->>3100_INSERT_PARENT_SEG_GSAM: performs
-    2000_FIND_NEXT_AUTH_SUMMARY->>3000_FIND_NEXT_AUTH_DTL: performs
-    2000_FIND_NEXT_AUTH_SUMMARY->>9999_ABEND: performs
-    3000_FIND_NEXT_AUTH_DTL->>CBLTDLI: performs
-    3000_FIND_NEXT_AUTH_DTL->>3200_INSERT_CHILD_SEG_GSAM: performs
-    3000_FIND_NEXT_AUTH_DTL->>9999_ABEND: performs
-    3100_INSERT_PARENT_SEG_GSAM->>CBLTDLI: performs
-    3100_INSERT_PARENT_SEG_GSAM->>9999_ABEND: performs
-    3200_INSERT_CHILD_SEG_GSAM->>CBLTDLI: performs
-    3200_INSERT_CHILD_SEG_GSAM->>9999_ABEND: performs
 ```

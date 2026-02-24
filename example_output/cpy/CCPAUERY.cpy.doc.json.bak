@@ -1,21 +1,21 @@
 {
   "header": {
     "program_id": "CCPAUERY",
-    "file_name": "cpy/CCPAUERY.cpy",
+    "file_name": "CCPAUERY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-24T04:01:23.381252",
+    "analyzed_at": "2026-02-24T17:38:37.303539",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This COBOL copybook defines the ERROR-LOG-RECORD data structure for logging pending authorization errors. It standardizes fields for timestamp, application details, error severity levels with condition names, subsystem identifiers with condition names, error codes, descriptive messages, and event keys. The structure supports consistent error logging across mainframe applications.",
-    "business_context": "Supports error logging in Amazon's pending authorization processes, capturing diagnostic information for auditing and troubleshooting.",
-    "program_type": "UTILITY",
+    "summary": "This copybook defines the data structure for an error log record, used for logging errors related to pending authorizations. It includes fields for date, time, application, program, location, error level, subsystem, error codes, message, and event key.",
+    "business_context": null,
+    "program_type": "COPYBOOK",
     "citations": [
-      1,
       2,
-      19
+      19,
+      39
     ]
   },
   "inputs": [],
@@ -32,29 +32,22 @@
     "writes_to": [],
     "transforms": []
   },
-  "copybooks_used": [
-    {
-      "copybook_name": "CCPAUERY",
-      "purpose": "Defines ERROR-LOG-RECORD layout for pending authorization error logs, including timestamp, program details, severity, subsystem, codes, message, and event key.",
-      "location": "OTHER",
-      "citation": 1
-    }
-  ],
+  "copybooks_used": [],
   "paragraphs": [
     {
       "paragraph_name": "CCPAUERY",
       "summary": null,
-      "purpose": "This represents the overall copybook named CCPAUERY, which serves as a data definition module for pending authorization error log records. Its primary purpose is to provide a reusable, standardized record layout that can be copied into COBOL programs' WORKING-STORAGE, FILE-SECTION, or LINKAGE sections for error logging. It consumes no runtime inputs or data, as it is purely a compile-time structure definition. It produces the ERROR-LOG-RECORD group item available for population and output in including programs, such as writing to sequential files, VSAM files, or CICS queues. No business logic or decisions are implemented here, as it is a static data layout with PIC clauses and 88-level condition names. No error handling or validation is performed within the copybook itself; that occurs in the host program. It calls no other paragraphs or programs. The header comments from lines 1-18 provide copyright, license (Apache 2.0), and descriptive purpose. This structure ensures consistent error log formatting across applications.",
+      "purpose": "[Citadel] Paragraph identified by static analysis",
       "called_by": [],
       "calls": [],
       "citation": [
         1,
-        41
+        1
       ],
       "outgoing_calls": [],
       "incoming_calls": [
         {
-          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
           "function": "COPAUA0C",
           "line": 185,
           "call_type": "includes"
@@ -67,12 +60,12 @@
     {
       "paragraph_name": "ERROR-LOG-RECORD",
       "summary": null,
-      "purpose": "This is the primary 01-level group data item defining the complete error log record structure. Its role in the program flow is to hold all necessary fields for a single error log entry, typically populated during error conditions and written to a log file or output destination. It reads from no sources directly, but its fields are filled by the host program's working storage variables or computations (e.g., WS-CURRENT-DATE into ERR-DATE). It produces a formatted 132-character record (approximate based on PIC lengths) for output operations like WRITE ERROR-LOG-FILE. No business decisions or conditions are checked within this definition; however, it provides 88-level condition names for runtime checks, such as IF ERR-LOG to test for log-level severity. Error handling is not implemented here but relies on host program logic using these fields (e.g., ERR-LEVEL = 'C' for critical). It calls no other paragraphs or external programs. Subfields include ERR-DATE (X(06)), ERR-TIME (X(06)), ERR-APPLICATION (X(08)), ERR-PROGRAM (X(08)), ERR-LOCATION (X(04)), ERR-LEVEL with 88s (L,I,W,C), ERR-SUBSYSTEM with 88s (A,C,I,D,M,F), ERR-CODE-1/2 (X(09) each), ERR-MESSAGE (X(50)), ERR-EVENT-KEY (X(20)). This enables detailed, parseable error logs.",
+      "purpose": "[Citadel] Paragraph identified by static analysis",
       "called_by": [],
       "calls": [],
       "citation": [
-        19,
-        40
+        1,
+        1
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
@@ -84,13 +77,7 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
-    {
-      "question": "In which specific programs and sections (e.g., WORKING-STORAGE, LINKAGE) is this copybook included?",
-      "context": "Cannot be determined from the copybook file itself; requires analysis of including COBOL source files.",
-      "suggestion": "Scan programs with COPY CCPAUERY statements and note their context."
-    }
-  ],
+  "open_questions": [],
   "resolved_questions": [],
   "dead_code": [
     {

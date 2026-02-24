@@ -1,45 +1,44 @@
 ```cobol
-       2000-FIND-NEXT-AUTH-SUMMARY.                                     01910000
-      *----------------------------------------------------------------*01920000
-      *                                                                 01930000
-      *     DISPLAY 'IN 2000 READ ROOT SEGMENT PARA'                    01940002
-      *              PAUT-PCB-STATUS                                    01950000
-            INITIALIZE PAUT-PCB-STATUS                                  01960000
-            CALL 'CBLTDLI'            USING  FUNC-GN                    01970000
-                                        PAUTBPCB                        01980000
-                                        PENDING-AUTH-SUMMARY            01990000
-                                        ROOT-UNQUAL-SSA.                02000000
-      *     DISPLAY ' *******************************'                  02010002
-      *     DISPLAY ' AFTER THE ROOT SEG IMS CALL    '                  02020002
-      *     DISPLAY 'SEG LEVEL: ' PAUT-SEG-LEVEL                        02030002
-      *     DISPLAY 'PCB STATU: ' PAUT-PCB-STATUS                       02040002
-      *     DISPLAY 'SEG NAME   : ' PAUT-SEG-NAME                       02050002
-      *     DISPLAY ' *******************************'                  02060000
-               IF PAUT-PCB-STATUS = SPACES                              02070000
-      *             SET NOT-END-OF-AUTHDB TO TRUE                       02080000
-                    ADD 1                 TO WS-NO-SUMRY-READ           02090000
-                    ADD 1                 TO WS-AUTH-SMRY-PROC-CNT      02100000
-                    MOVE PENDING-AUTH-SUMMARY TO OPFIL1-REC             02110000
-                    INITIALIZE ROOT-SEG-KEY                             02120000
-                    INITIALIZE CHILD-SEG-REC                            02130000
-                    MOVE PA-ACCT-ID           TO ROOT-SEG-KEY           02140000
-      *             DISPLAY 'WRITING FIRST FILE'                        02150000
-                    IF PA-ACCT-ID IS NUMERIC                            02160000
-      *             WRITE OPFIL1-REC                                    02170000
-                    PERFORM 3100-INSERT-PARENT-SEG-GSAM THRU 3100-EXIT  02171000
-                    INITIALIZE WS-END-OF-CHILD-SEG                      02180000
-                    PERFORM 3000-FIND-NEXT-AUTH-DTL THRU 3000-EXIT      02190000
-                    UNTIL  WS-END-OF-CHILD-SEG='Y'                      02200000
-                    END-IF                                              02210000
-               END-IF                                                   02220000
-               IF PAUT-PCB-STATUS = 'GB'                                02230000
-                    SET END-OF-AUTHDB     TO TRUE                       02240000
-                    MOVE 'Y' TO WS-END-OF-ROOT-SEG                      02250000
-               END-IF                                                   02260000
-               IF PAUT-PCB-STATUS NOT EQUAL TO  SPACES AND 'GB'         02270000
-                  DISPLAY 'AUTH SUM  GN FAILED  :' PAUT-PCB-STATUS      02280000
-                  DISPLAY 'KEY FEEDBACK AREA    :' PAUT-KEYFB           02290000
-                    PERFORM 9999-ABEND                                  02300000
-            .                                                           02310000
-       2000-EXIT.                                                       02320000
+      *                                                                 00210000
+      *----------------------------------------------------------------*00220000
+       DATA DIVISION.                                                   00230000
+      *----------------------------------------------------------------*00240000
+      *                                                                 00250000
+      *FILE SECTION.                                                    00260000
+      *FD OPFILE1.                                                      00270000
+      *01 OPFIL1-REC                    PIC X(100).                     00280000
+      *FD OPFILE2.                                                      00290000
+      *01 OPFIL2-REC.                                                   00300000
+      *   05 ROOT-SEG-KEY               PIC S9(11) COMP-3.              00310000
+      *   05 CHILD-SEG-REC              PIC X(200).                     00320000
+      *                                                                 00330000
+      *----------------------------------------------------------------*00340000
+       WORKING-STORAGE SECTION.                                         00350000
+      *----------------------------------------------------------------*00360000
+       01 OPFIL1-REC                    PIC X(100).                     00361000
+       01 OPFIL2-REC.                                                   00362000
+          05 ROOT-SEG-KEY               PIC S9(11) COMP-3.              00363000
+          05 CHILD-SEG-REC              PIC X(200).                     00364000
+       01 WS-VARIABLES.                                                 00370000
+         05 WS-PGMNAME                 PIC X(08) VALUE 'IMSUNLOD'.      00380000
+         05 CURRENT-DATE               PIC 9(06).                       00390000
+         05 CURRENT-YYDDD              PIC 9(05).                       00400000
+         05 WS-AUTH-DATE               PIC 9(05).                       00410000
+         05 WS-EXPIRY-DAYS             PIC S9(4) COMP.                  00420000
+         05 WS-DAY-DIFF                PIC S9(4) COMP.                  00430000
+         05 IDX                        PIC S9(4) COMP.                  00440000
+         05 WS-CURR-APP-ID             PIC 9(11).                       00450000
+      *                                                                 00460000
+         05 WS-NO-CHKP                 PIC  9(8) VALUE 0.               00470000
+         05 WS-AUTH-SMRY-PROC-CNT      PIC  9(8) VALUE 0.               00480000
+         05 WS-TOT-REC-WRITTEN         PIC S9(8) COMP VALUE 0.          00490000
+         05 WS-NO-SUMRY-READ           PIC S9(8) COMP VALUE 0.          00500000
+         05 WS-NO-SUMRY-DELETED        PIC S9(8) COMP VALUE 0.          00510000
+         05 WS-NO-DTL-READ             PIC S9(8) COMP VALUE 0.          00520000
+         05 WS-NO-DTL-DELETED          PIC S9(8) COMP VALUE 0.          00530000
+      *                                                                 00540000
+         05 WS-ERR-FLG                 PIC X(01) VALUE 'N'.             00550000
+           88 ERR-FLG-ON                         VALUE 'Y'.             00560000
+           88 ERR-FLG-OFF                        VALUE 'N'.             00570000
+         05 WS-END-OF-AUTHDB-FLAG      PIC X(01) VALUE 'N'.             00580000
 ```

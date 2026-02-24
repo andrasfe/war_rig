@@ -2,106 +2,213 @@
   {
     "caller": "MAIN-PARA",
     "callee": "1000-INITIALIZE",
-    "inputs": [],
-    "outputs": [],
-    "purpose": null
+    "inputs": [
+      "P-EXPIRY-DAYS",
+      "P-CHKP-FREQ",
+      "P-CHKP-DIS-FREQ",
+      "P-DEBUG-FLAG"
+    ],
+    "outputs": [
+      "WS-EXPIRY-DAYS",
+      "P-CHKP-FREQ",
+      "P-CHKP-DIS-FREQ",
+      "P-DEBUG-FLAG",
+      "CURRENT-DATE",
+      "CURRENT-YYDDD"
+    ],
+    "purpose": "Initializes program variables including current date, expiry days, checkpoint frequency, and debug flag based on input parameters."
   },
   {
     "caller": "MAIN-PARA",
     "callee": "2000-FIND-NEXT-AUTH-SUMMARY",
-    "inputs": [],
-    "outputs": [],
-    "purpose": null
+    "inputs": [
+      "DEBUG-ON"
+    ],
+    "outputs": [
+      "WS-NO-SUMRY-READ",
+      "WS-AUTH-SMRY-PROC-CNT",
+      "WS-CURR-APP-ID",
+      "END-OF-AUTHDB",
+      "NOT-END-OF-AUTHDB"
+    ],
+    "purpose": "Reads the next pending authorization summary segment from IMS and updates read counters and end-of-file status."
   },
   {
     "caller": "MAIN-PARA",
     "callee": "3000-FIND-NEXT-AUTH-DTL",
-    "inputs": [],
-    "outputs": [],
-    "purpose": null
+    "inputs": [
+      "DEBUG-ON"
+    ],
+    "outputs": [
+      "WS-NO-DTL-READ",
+      "MORE-AUTHS",
+      "NO-MORE-AUTHS"
+    ],
+    "purpose": "Retrieves the next authorization detail segment from IMS and sets flags indicating whether more details exist."
   },
   {
     "caller": "MAIN-PARA",
     "callee": "4000-CHECK-IF-EXPIRED",
-    "inputs": [],
-    "outputs": [],
-    "purpose": null
+    "inputs": [
+      "PA-AUTH-DATE-9C",
+      "CURRENT-YYDDD",
+      "WS-EXPIRY-DAYS"
+    ],
+    "outputs": [
+      "WS-AUTH-DATE",
+      "WS-DAY-DIFF",
+      "QUALIFIED-FOR-DELETE",
+      "NOT-QUALIFIED-FOR-DELETE",
+      "PA-APPROVED-AUTH-CNT",
+      "PA-APPROVED-AUTH-AMT",
+      "PA-DECLINED-AUTH-CNT",
+      "PA-DECLINED-AUTH-AMT"
+    ],
+    "purpose": "Determines if an authorization detail is expired based on the current date and configured expiry days, and adjusts summary counts accordingly."
   },
   {
     "caller": "MAIN-PARA",
     "callee": "5000-DELETE-AUTH-DTL",
-    "inputs": [],
-    "outputs": [],
-    "purpose": null
+    "inputs": [
+      "DEBUG-ON",
+      "PA-ACCT-ID"
+    ],
+    "outputs": [
+      "WS-NO-DTL-DELETED"
+    ],
+    "purpose": "Deletes the current authorization detail segment from IMS and increments the deletion counter upon success."
   },
   {
     "caller": "MAIN-PARA",
     "callee": "3000-FIND-NEXT-AUTH-DTL",
-    "inputs": [],
-    "outputs": [],
-    "purpose": null
+    "inputs": [
+      "DEBUG-ON",
+      "WS-NO-DTL-READ"
+    ],
+    "outputs": [
+      "WS-NO-DTL-READ",
+      "WS-MORE-AUTHS-FLAG"
+    ],
+    "purpose": "Reads the next pending authorization detail record from the IMS database and updates read count and flag indicating if more details exist."
   },
   {
     "caller": "MAIN-PARA",
     "callee": "6000-DELETE-AUTH-SUMMARY",
-    "inputs": [],
-    "outputs": [],
-    "purpose": null
+    "inputs": [
+      "DEBUG-ON",
+      "PA-ACCT-ID"
+    ],
+    "outputs": [
+      "WS-NO-SUMRY-DELETED"
+    ],
+    "purpose": "Deletes the current pending authorization summary record from the IMS database and increments the deletion counter upon success."
   },
   {
     "caller": "MAIN-PARA",
     "callee": "9000-TAKE-CHECKPOINT",
-    "inputs": [],
-    "outputs": [],
-    "purpose": null
+    "inputs": [
+      "WK-CHKPT-ID",
+      "WS-NO-SUMRY-READ",
+      "WS-CURR-APP-ID",
+      "P-CHKP-DIS-FREQ",
+      "WS-NO-CHKP"
+    ],
+    "outputs": [
+      "WS-NO-CHKP"
+    ],
+    "purpose": "Takes an IMS checkpoint and displays progress information if the checkpoint frequency threshold has been reached."
   },
   {
     "caller": "MAIN-PARA",
     "callee": "2000-FIND-NEXT-AUTH-SUMMARY",
-    "inputs": [],
-    "outputs": [],
-    "purpose": null
+    "inputs": [
+      "DEBUG-ON",
+      "WS-NO-SUMRY-READ",
+      "WS-AUTH-SMRY-PROC-CNT"
+    ],
+    "outputs": [
+      "WS-NO-SUMRY-READ",
+      "WS-AUTH-SMRY-PROC-CNT",
+      "WS-CURR-APP-ID",
+      "WS-END-OF-AUTHDB-FLAG"
+    ],
+    "purpose": "Reads the next pending authorization summary record from the IMS database and updates counters, current app ID, and end-of-file status."
   },
   {
     "caller": "MAIN-PARA",
     "callee": "9000-TAKE-CHECKPOINT",
-    "inputs": [],
-    "outputs": [],
-    "purpose": null
+    "inputs": [
+      "WK-CHKPT-ID",
+      "WS-NO-SUMRY-READ",
+      "WS-CURR-APP-ID",
+      "P-CHKP-DIS-FREQ",
+      "WS-NO-CHKP"
+    ],
+    "outputs": [
+      "WS-NO-CHKP"
+    ],
+    "purpose": "Takes an IMS checkpoint and displays progress information if the checkpoint frequency threshold has been reached."
   },
   {
     "caller": "2000-FIND-NEXT-AUTH-SUMMARY",
     "callee": "9999-ABEND",
-    "inputs": [],
-    "outputs": [],
-    "purpose": null
+    "inputs": [
+      "WS-NO-SUMRY-READ",
+      "DIBSTAT"
+    ],
+    "outputs": [
+      "RETURN-CODE"
+    ],
+    "purpose": "Abends the program with return code 16 when an unexpected IMS status code is encountered during authorization summary read."
   },
   {
     "caller": "3000-FIND-NEXT-AUTH-DTL",
     "callee": "9999-ABEND",
-    "inputs": [],
-    "outputs": [],
-    "purpose": null
+    "inputs": [
+      "DIBSTAT",
+      "PA-ACCT-ID",
+      "WS-NO-DTL-READ"
+    ],
+    "outputs": [
+      "RETURN-CODE"
+    ],
+    "purpose": "Abends the program with return code 16 when an unexpected IMS status code is encountered during authorization detail read."
   },
   {
     "caller": "5000-DELETE-AUTH-DTL",
     "callee": "9999-ABEND",
-    "inputs": [],
-    "outputs": [],
-    "purpose": null
+    "inputs": [
+      "DIBSTAT",
+      "PA-ACCT-ID"
+    ],
+    "outputs": [
+      "RETURN-CODE"
+    ],
+    "purpose": "Abends the program with return code 16 when an authorization detail deletion fails due to an IMS error."
   },
   {
     "caller": "6000-DELETE-AUTH-SUMMARY",
     "callee": "9999-ABEND",
-    "inputs": [],
-    "outputs": [],
-    "purpose": null
+    "inputs": [
+      "DIBSTAT",
+      "PA-ACCT-ID"
+    ],
+    "outputs": [
+      "RETURN-CODE"
+    ],
+    "purpose": "Abends the program with return code 16 when an authorization summary deletion fails due to an IMS error."
   },
   {
     "caller": "9000-TAKE-CHECKPOINT",
     "callee": "9999-ABEND",
-    "inputs": [],
-    "outputs": [],
-    "purpose": null
+    "inputs": [
+      "DIBSTAT",
+      "WS-NO-SUMRY-READ",
+      "WS-CURR-APP-ID"
+    ],
+    "outputs": [
+      "RETURN-CODE"
+    ],
+    "purpose": "Abends the program with return code 16 when a checkpoint operation fails in IMS."
   }
 ]

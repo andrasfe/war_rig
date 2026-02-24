@@ -4,77 +4,113 @@
   "template": {
     "header": {
       "program_id": "COPAUA0C",
-      "file_name": "cbl/COPAUA0C.cbl",
+      "file_name": "COPAUA0C.cbl",
       "file_type": "COBOL",
       "analyzed_by": "WAR_RIG",
-      "analyzed_at": "2026-02-24T03:51:34.038496",
+      "analyzed_at": "2026-02-24T17:40:33.606276",
       "iteration_count": 1,
       "final_status": null
     },
     "purpose": {
-      "summary": "This CICS program processes credit card authorization requests by reading customer master records from a VSAM file, IMS pending authorization summary segments, and profile data to evaluate transaction approval. It computes available credit based on limits and balances, decides to approve or decline the authorization, sets appropriate response codes and reasons, formats a response buffer, and sends the reply via MQPUT1 to a reply queue. Error conditions from file reads, IMS gets, or MQ puts are logged via 9500-LOG-ERROR.",
-      "business_context": "Credit card transaction authorization decisioning, checking limits and statuses to approve or decline auth requests.",
+      "summary": "This COBOL program is a CICS transaction that processes authorization requests. It retrieves customer and account information, makes an authorization decision based on available credit, and sends a response to a reply queue.",
+      "business_context": "Authorization of credit card transactions.",
       "program_type": "ONLINE_CICS",
       "citations": [
-        4,
-        51,
+        6,
         95,
-        170
+        167
       ]
     },
     "inputs": [
       {
-        "name": "WS-CUSTFILENAME",
+        "name": "CUSTOMER-RECORD",
         "io_type": "FILE_VSAM",
-        "description": "Customer master records identified by WS-CARD-RID-CUST-ID-X",
-        "copybook": "CUSTOMER-RECORD",
+        "description": "Customer information, read based on customer ID.",
+        "copybook": null,
         "citation": [
-          6,
-          7,
           10
         ]
       },
       {
-        "name": "PAUT-PCB-NUM",
+        "name": "PENDING-AUTH-SUMMARY",
         "io_type": "IMS_SEGMENT",
-        "description": "Pending authorization summary segment (PAUTSUM0) for account PA-ACCT-ID",
-        "copybook": "PENDING-AUTH-SUMMARY",
+        "description": "Pending authorization summary data from IMS.",
+        "copybook": null,
         "citation": [
-          52,
-          53,
           54
         ]
       },
       {
-        "name": "PA-RQ-* / XREF-*",
+        "name": "XREF-CUST-ID",
         "io_type": "CICS_COMMAREA",
-        "description": "Request data including card number, transaction ID, amount, cust/acct IDs from prior processing",
+        "description": "Customer ID from the input COMMAREA.",
         "copybook": null,
         "citation": [
-          4,
-          51,
+          4
+        ]
+      },
+      {
+        "name": "XREF-ACCT-ID",
+        "io_type": "CICS_COMMAREA",
+        "description": "Account ID from the input COMMAREA.",
+        "copybook": null,
+        "citation": [
+          51
+        ]
+      },
+      {
+        "name": "PA-RQ-CARD-NUM",
+        "io_type": "CICS_COMMAREA",
+        "description": "Card number from the input COMMAREA.",
+        "copybook": null,
+        "citation": [
           90
+        ]
+      },
+      {
+        "name": "PA-RQ-TRANSACTION-ID",
+        "io_type": "CICS_COMMAREA",
+        "description": "Transaction ID from the input COMMAREA.",
+        "copybook": null,
+        "citation": [
+          91
+        ]
+      },
+      {
+        "name": "PA-RQ-AUTH-TIME",
+        "io_type": "CICS_COMMAREA",
+        "description": "Authorization time from the input COMMAREA.",
+        "copybook": null,
+        "citation": [
+          92
+        ]
+      },
+      {
+        "name": "PA-RQ-TRANSACTION-AMT",
+        "io_type": "CICS_COMMAREA",
+        "description": "Transaction amount from the input COMMAREA.",
+        "copybook": null,
+        "citation": [
+          124
         ]
       }
     ],
     "outputs": [
       {
-        "name": "WS-REPLY-QNAME",
+        "name": "MQM-MD-REPLY",
         "io_type": "CICS_QUEUE",
-        "description": "Formatted authorization response string with card num, trans ID, auth code, resp code, reason, approved amt",
+        "description": "Authorization response message sent to a reply queue.",
         "copybook": null,
         "citation": [
-          152,
-          170,
-          187
+          189
         ]
       }
     ],
     "called_programs": [
       {
         "program_name": "MQPUT1",
-        "call_type": "DYNAMIC_CALL",
-        "purpose": "Send the formatted authorization response to the reply MQ queue",
+        "call_type": "STATIC_CALL",
+        "purpose": "To put the authorization response message on the reply queue.",
         "parameters": [
           "W02-HCONN-REPLY",
           "MQM-OD-REPLY",
@@ -90,15 +126,8 @@
       {
         "program_name": "9500-LOG-ERROR",
         "call_type": "STATIC_CALL",
-        "purpose": "Log application, CICS, IMS, or MQ errors with location, codes, message, and event key",
-        "parameters": [
-          "ERR-LOCATION",
-          "ERR-* flags",
-          "ERR-CODE-1",
-          "ERR-CODE-2",
-          "ERR-MESSAGE",
-          "ERR-EVENT-KEY"
-        ],
+        "purpose": "To log any errors encountered during processing.",
+        "parameters": [],
         "citation": 28
       }
     ],
@@ -110,137 +139,157 @@
     "business_rules": [
       {
         "rule_id": "BR001",
-        "description": "Decline authorization if transaction amount exceeds available credit (credit limit minus balance)",
-        "logic_summary": "Compute WS-AVAILABLE-AMT from PAUT summary if found, else from customer master account data; set DECLINE-AUTH and INSUFFICIENT-FUND if exceeded",
+        "description": "Decline authorization if the transaction amount exceeds the available credit.",
+        "logic_summary": "Compares WS-TRANSACTION-AMT to WS-AVAILABLE-AMT. If the transaction amount is greater, DECLINE-AUTH is set to TRUE.",
         "conditions": [
-          "FOUND-PAUT-SMRY-SEG",
-          "WS-TRANSACTION-AMT > WS-AVAILABLE-AMT",
-          "FOUND-ACCT-IN-MSTR"
+          "WS-TRANSACTION-AMT > WS-AVAILABLE-AMT"
         ],
         "citation": [
-          95,
-          96,
-          103,
-          104
+          98,
+          106
         ]
       },
       {
         "rule_id": "BR002",
-        "description": "Set authorization response code '00' for approve or '05' for decline, with approved amount",
-        "logic_summary": "If not DECLINE-AUTH, set '00' and move transaction amt; else '05' and zero amt",
+        "description": "If no authorization summary is found, use account master data to determine available credit.",
+        "logic_summary": "If FOUND-PAUT-SMRY-SEG is false, the program checks FOUND-ACCT-IN-MSTR and uses ACCT-CREDIT-LIMIT and ACCT-CURR-BAL to calculate available credit.",
         "conditions": [
-          "DECLINE-AUTH"
+          "NOT FOUND-PAUT-SMRY-SEG",
+          "FOUND-ACCT-IN-MSTR"
         ],
         "citation": [
-          115,
-          118,
-          122
+          95,
+          103
         ]
       },
       {
         "rule_id": "BR003",
-        "description": "Assign specific decline reason codes based on failure conditions like not found, insufficient funds, inactive, etc.",
-        "logic_summary": "Evaluate TRUE with WHEN clauses for NFOUND-*, INSUFFICIENT-FUND, CARD-NOT-ACTIVE, etc., mapping to '3100','4100','4200', etc.",
+        "description": "If no account is found in the account master, decline the authorization.",
+        "logic_summary": "If FOUND-ACCT-IN-MSTR is false, DECLINE-AUTH is set to TRUE.",
         "conditions": [
-          "AUTH-RESP-DECLINED",
-          "CARD-NFOUND-XREF",
-          "INSUFFICIENT-FUND"
+          "NOT FOUND-ACCT-IN-MSTR"
         ],
         "citation": [
-          129,
-          131,
-          135
+          110,
+          111
         ]
       }
     ],
     "data_flow": {
       "reads_from": [
         {
-          "source": "WS-CUSTFILENAME",
-          "fields_used": [
-            "CUSTOMER-RECORD fields like ACCT-CREDIT-LIMIT, ACCT-CURR-BAL"
-          ],
+          "source": "CUSTOMER-RECORD",
+          "fields_used": [],
           "citation": [
             10
           ]
         },
         {
-          "source": "PAUT-PCB-NUM (PAUTSUM0)",
+          "source": "PENDING-AUTH-SUMMARY",
           "fields_used": [
             "PA-CREDIT-LIMIT",
             "PA-CREDIT-BALANCE"
           ],
           "citation": [
-            54
+            54,
+            96,
+            97
+          ]
+        },
+        {
+          "source": "ACCT-MASTER",
+          "fields_used": [
+            "ACCT-CREDIT-LIMIT",
+            "ACCT-CURR-BAL"
+          ],
+          "citation": [
+            104,
+            105
           ]
         }
       ],
       "writes_to": [
         {
-          "destination": "W02-PUT-BUFFER",
+          "destination": "MQM-MD-REPLY",
           "fields_written": [
-            "PA-RL-*, WS-APPROVED-AMT-DIS"
+            "MQMD-MSGTYPE",
+            "MQMD-CORRELID",
+            "MQMD-MSGID",
+            "MQMD-REPLYTOQ",
+            "MQMD-REPLYTOQMGR",
+            "MQMD-PERSISTENCE",
+            "MQMD-EXPIRY",
+            "MQMD-FORMAT"
           ],
           "citation": [
-            152
+            173,
+            174,
+            175,
+            176,
+            177,
+            178,
+            179,
+            180
+          ]
+        },
+        {
+          "destination": "W02-PUT-BUFFER",
+          "fields_written": [
+            "PA-RL-CARD-NUM",
+            "PA-RL-TRANSACTION-ID",
+            "PA-RL-AUTH-ID-CODE",
+            "PA-RL-AUTH-RESP-CODE",
+            "PA-RL-AUTH-RESP-REASON",
+            "WS-APPROVED-AMT-DIS"
+          ],
+          "citation": [
+            159
           ]
         }
       ],
       "transforms": [
         {
-          "input_field": "PA-CREDIT-LIMIT, PA-CREDIT-BALANCE or ACCT-CREDIT-LIMIT, ACCT-CURR-BAL",
+          "input_field": "PA-RQ-TRANSACTION-AMT",
+          "output_field": "WS-TRANSACTION-AMT",
+          "transformation_description": "Implicit move of transaction amount to working storage for comparison.",
+          "citation": [
+            98,
+            106
+          ]
+        },
+        {
+          "input_field": "PA-CREDIT-LIMIT, PA-CREDIT-BALANCE",
           "output_field": "WS-AVAILABLE-AMT",
-          "transformation_description": "Subtract balance from limit to compute available amount",
+          "transformation_description": "Calculates available credit by subtracting the credit balance from the credit limit.",
           "citation": [
             96,
-            104
+            97
           ]
         },
         {
-          "input_field": "PA-RQ-TRANSACTION-AMT",
-          "output_field": "PA-RL-APPROVED-AMT, WS-APPROVED-AMT",
-          "transformation_description": "Move transaction amount to approved if approved, else zero",
+          "input_field": "ACCT-CREDIT-LIMIT, ACCT-CURR-BAL",
+          "output_field": "WS-AVAILABLE-AMT",
+          "transformation_description": "Calculates available credit by subtracting the current balance from the credit limit using account master data.",
           "citation": [
-            124,
-            120
-          ]
-        },
-        {
-          "input_field": "PA-RL-*, WS-APPROVED-AMT",
-          "output_field": "W02-PUT-BUFFER",
-          "transformation_description": "String fields delimited by comma into response buffer",
-          "citation": [
-            152
+            104,
+            105
           ]
         }
       ]
     },
-    "copybooks_used": [
-      {
-        "copybook_name": "CUSTOMER-RECORD",
-        "purpose": "Defines structure for customer master record including account limits and balances",
-        "location": "WORKING_STORAGE",
-        "citation": 10
-      },
-      {
-        "copybook_name": "PENDING-AUTH-SUMMARY",
-        "purpose": "Defines IMS PAUTSUM0 segment for pending auth summary with credit limit and balance",
-        "location": "WORKING_STORAGE",
-        "citation": 54
-      }
-    ],
+    "copybooks_used": [],
     "paragraphs": [
       {
         "paragraph_name": "5300-READ-CUST-RECORD",
         "summary": null,
-        "purpose": "This paragraph reads the customer record from the VSAM customer file using CICS READ with RIDFLD based on XREF-CUST-ID moved to WS-CARD-RID-CUST-ID-X. It consumes the customer ID from prior XREF processing (line 4). It produces the populated CUSTOMER-RECORD area and sets flags FOUND-CUST-IN-MSTR or NFOUND-CUST-IN-MSTR based on response. Business logic evaluates WS-RESP-CD: NORMAL sets found flag (17-18); NOTFND sets not found, logs warning 'A003' with message 'CUST NOT FOUND IN XREF' (19-28); OTHER logs critical CICS error 'C003' with resp/reas codes and 'FAILED TO READ CUST FILE' (30-41). Error handling logs via 9500-LOG-ERROR for both warning and critical cases, using ERR-LOCATION, flags, codes, message, and key. It calls 9500-LOG-ERROR twice potentially, once for NOTFND and once for OTHER.",
+        "purpose": "This paragraph reads the customer record from the VSAM file specified by WS-CUSTFILENAME. It first moves the XREF-CUST-ID to WS-CARD-RID-CUST-ID for use as the record ID. It then executes a CICS READ command to retrieve the CUSTOMER-RECORD. The CICS response code (WS-RESP-CD) is evaluated to determine if the read was successful. If the record is found (NORMAL), FOUND-CUST-IN-MSTR is set to TRUE. If the record is not found (NOTFND), NFOUND-CUST-IN-MSTR is set to TRUE, an error message is constructed, and 9500-LOG-ERROR is performed. If any other error occurs, an error message with the CICS response codes is constructed, and 9500-LOG-ERROR is performed. The paragraph consumes XREF-CUST-ID and produces CUSTOMER-RECORD. It calls 9500-LOG-ERROR in case of errors.",
         "called_by": [],
         "calls": [
           "9500-LOG-ERROR"
         ],
         "citation": [
-          568,
-          611
+          1,
+          43
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -251,14 +300,12 @@
       {
         "paragraph_name": "5300-EXIT",
         "summary": null,
-        "purpose": "This is an exit paragraph that simply performs EXIT to return control to the caller paragraph. It consumes no inputs and produces no outputs. There is no business logic, conditions, or error handling. It calls no other paragraphs or programs. Its role is to cleanly exit the 5300-READ-CUST-RECORD logic.",
-        "called_by": [
-          "5300-READ-CUST-RECORD"
-        ],
+        "purpose": "This paragraph simply contains the EXIT statement, providing a standard exit point for the 5300-READ-CUST-RECORD paragraph. It does not consume any inputs or produce any outputs. It serves as a return point after the customer record is read and processed. No business logic or error handling is performed here. It is called by 5300-READ-CUST-RECORD after the CICS READ command and subsequent error handling.",
+        "called_by": [],
         "calls": [],
         "citation": [
-          612,
-          615
+          45,
+          46
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -269,14 +316,14 @@
       {
         "paragraph_name": "5500-READ-AUTH-SUMMRY",
         "summary": null,
-        "purpose": "This paragraph retrieves the pending authorization summary IMS segment (PAUTSUM0) using EXEC DLI GU via PAUT-PCB-NUM, qualified by PA-ACCT-ID from XREF-ACCT-ID (line 51). It consumes the account ID from request/XREF data. It populates PENDING-AUTH-SUMMARY and sets IMS-RETURN-CODE from DIBSTAT (58). Logic evaluates STATUS-OK to set FOUND-PAUT-SMRY-SEG (60-61); SEGMENT-NOT-FOUND sets NFOUND-PAUT-SMRY-SEG (62-63); OTHER logs critical IMS error 'I002' with IMS return code and 'IMS GET SUMMARY FAILED' via 9500-LOG-ERROR (64-71). Error handling is via logging for non-OK statuses. It calls 9500-LOG-ERROR for errors.",
+        "purpose": "This paragraph reads the pending authorization summary from the IMS database. It moves the XREF-ACCT-ID to PA-ACCT-ID and then executes a DLI GU (Get Unique) command to retrieve the PAUTSUM0 segment into PENDING-AUTH-SUMMARY. The IMS return code (DIBSTAT) is moved to IMS-RETURN-CODE and evaluated. If the status is OK, FOUND-PAUT-SMRY-SEG is set to TRUE. If the segment is not found, NFOUND-PAUT-SMRY-SEG is set to TRUE. If any other error occurs, an error message is constructed, and 9500-LOG-ERROR is performed. This paragraph consumes XREF-ACCT-ID and produces PENDING-AUTH-SUMMARY. It calls 9500-LOG-ERROR in case of errors.",
         "called_by": [],
         "calls": [
           "9500-LOG-ERROR"
         ],
         "citation": [
-          616,
-          642
+          48,
+          73
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -287,14 +334,12 @@
       {
         "paragraph_name": "5500-EXIT",
         "summary": null,
-        "purpose": "This is an exit paragraph that simply performs EXIT to return control to the caller. It consumes no data and produces nothing. No logic, decisions, or error handling is present. No calls are made. Its purpose is to terminate the 5500-READ-AUTH-SUMMRY paragraph flow.",
-        "called_by": [
-          "5500-READ-AUTH-SUMMRY"
-        ],
+        "purpose": "This paragraph simply contains the EXIT statement, providing a standard exit point for the 5500-READ-AUTH-SUMMRY paragraph. It does not consume any inputs or produce any outputs. It serves as a return point after the pending authorization summary is read and processed. No business logic or error handling is performed here. It is called by 5500-READ-AUTH-SUMMRY after the IMS READ command and subsequent error handling.",
+        "called_by": [],
         "calls": [],
         "citation": [
-          643,
-          646
+          75,
+          76
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -305,12 +350,12 @@
       {
         "paragraph_name": "5600-READ-PROFILE-DATA",
         "summary": null,
-        "purpose": "This paragraph is a placeholder for reading profile data but currently contains only CONTINUE with no actual logic implemented. It consumes no inputs and produces no outputs or flags. There are no business decisions, validations, or error handling. No other paragraphs or programs are called. Its intended role appears to be retrieving profile data, but it is not functional in this code.",
+        "purpose": "This paragraph currently contains only a CONTINUE statement, indicating that it does not perform any actions. It is likely a placeholder for future functionality to read profile data. It does not consume any inputs or produce any outputs. No business logic or error handling is performed here. It does not call any other paragraphs or programs.",
         "called_by": [],
         "calls": [],
         "citation": [
-          647,
-          652
+          78,
+          82
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -321,14 +366,12 @@
       {
         "paragraph_name": "5600-EXIT",
         "summary": null,
-        "purpose": "This exit paragraph performs EXIT to return control. No inputs consumed, no outputs produced. No logic or errors handled. No calls. Standard exit for 5600-READ-PROFILE-DATA.",
-        "called_by": [
-          "5600-READ-PROFILE-DATA"
-        ],
+        "purpose": "This paragraph simply contains the EXIT statement, providing a standard exit point for the 5600-READ-PROFILE-DATA paragraph. It does not consume any inputs or produce any outputs. It serves as a return point after the profile data is (or would be) read and processed. No business logic or error handling is performed here. It is called by 5600-READ-PROFILE-DATA.",
+        "called_by": [],
         "calls": [],
         "citation": [
-          653,
-          656
+          84,
+          85
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -339,12 +382,12 @@
       {
         "paragraph_name": "6000-MAKE-DECISION",
         "summary": null,
-        "purpose": "This paragraph orchestrates the authorization decision by first copying request fields to response linkage like PA-RL-CARD-NUM, TRANSACTION-ID, AUTH-ID-CODE (90-92). It consumes flags from prior reads (FOUND-PAUT-SMRY-SEG, FOUND-ACCT-IN-MSTR, etc.) and fields like credit limits/balances, WS-TRANSACTION-AMT. It computes available amount preferring IMS summary, falling back to customer acct data, and declines if transaction exceeds available (95-113). Sets AUTH-RESP-DECLINED/APPROVED, resp code '05'/'00', approved amt 0/transaction amt (115-126). Assigns reason '0000' or specific codes like '3100' not found, '4100' insuff funds based on decline conditions (128-148). Formats response buffer by STRINGing fields comma-delimited into W02-PUT-BUFFER (152-160). No explicit error handling here; relies on prior flags. Calls no paragraphs/programs directly.",
+        "purpose": "This paragraph makes the authorization decision based on available credit. It moves data from request fields (PA-RQ-*) to response fields (PA-RL-*). If a pending authorization summary is found (FOUND-PAUT-SMRY-SEG), it calculates available credit using PA-CREDIT-LIMIT and PA-CREDIT-BALANCE. Otherwise, if an account is found in the account master (FOUND-ACCT-IN-MSTR), it calculates available credit using ACCT-CREDIT-LIMIT and ACCT-CURR-BAL. If neither is found, the authorization is declined. If the transaction amount exceeds the available credit, the authorization is declined (DECLINE-AUTH is set to TRUE). If the authorization is declined, PA-RL-AUTH-RESP-CODE is set to '05', and PA-RL-APPROVED-AMT is set to 0. Otherwise, PA-RL-AUTH-RESP-CODE is set to '00', and PA-RL-APPROVED-AMT is set to the transaction amount. Finally, PA-RL-AUTH-RESP-REASON is set based on various conditions like card not found, insufficient funds, etc. The paragraph consumes PA-RQ-* fields, PENDING-AUTH-SUMMARY, and ACCT-MASTER. It produces PA-RL-* fields and WS-APPROVED-AMT. It does not call any other paragraphs.",
         "called_by": [],
         "calls": [],
         "citation": [
-          657,
-          733
+          87,
+          162
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -355,14 +398,12 @@
       {
         "paragraph_name": "6000-EXIT",
         "summary": null,
-        "purpose": "Exit paragraph performing EXIT. No inputs/outputs/logic/errors/calls. Returns control after decision logic.",
-        "called_by": [
-          "6000-MAKE-DECISION"
-        ],
+        "purpose": "This paragraph simply contains the EXIT statement, providing a standard exit point for the 6000-MAKE-DECISION paragraph. It does not consume any inputs or produce any outputs. It serves as a return point after the authorization decision is made. No business logic or error handling is performed here. It is called by 6000-MAKE-DECISION after the authorization logic is complete.",
+        "called_by": [],
         "calls": [],
         "citation": [
-          734,
-          737
+          164,
+          165
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -373,15 +414,15 @@
       {
         "paragraph_name": "7100-SEND-RESPONSE",
         "summary": null,
-        "purpose": "This paragraph prepares and sends the authorization response via MQPUT1 to the reply queue WS-REPLY-QNAME. It consumes the formatted W02-PUT-BUFFER, WS-RESP-LENGTH, saved correl ID, and sets MQMD/MQOD fields like REPLY msg type, non-persistent, string format (170-181). Sets MQPMO options no-syncpoint (182-183). Calls 'MQPUT1' with conn, od, md, pmo, len, buffer, compcode, reason (187-195). Business logic checks WS-COMPCODE = MQCC-OK; if not, logs critical MQ error 'M004' with codes and 'FAILED TO PUT ON REPLY MQ' via 9500-LOG-ERROR (196-207). Error handling via logging only, no abend. Produces the sent MQ message or error log.",
+        "purpose": "This paragraph sends the authorization response to a reply queue using MQSeries. It sets the MQSeries message descriptor (MQM-MD-REPLY) fields, including message type, correlation ID, message ID, reply-to queue, persistence, expiry, and format. It then calls MQPUT1 to put the message on the reply queue specified by WS-REPLY-QNAME. If the MQPUT1 call fails, an error message is constructed, and 9500-LOG-ERROR is performed. The paragraph consumes WS-REPLY-QNAME, WS-SAVE-CORRELID, and W02-PUT-BUFFER. It produces the MQSeries message on the reply queue. It calls MQPUT1 and 9500-LOG-ERROR.",
         "called_by": [],
         "calls": [
           "MQPUT1",
           "9500-LOG-ERROR"
         ],
         "citation": [
-          738,
-          781
+          167,
+          209
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -392,14 +433,12 @@
       {
         "paragraph_name": "7100-EXIT",
         "summary": null,
-        "purpose": "Standard exit paragraph with EXIT. No data flow, logic, errors, or calls. Terminates send response flow.",
-        "called_by": [
-          "7100-SEND-RESPONSE"
-        ],
+        "purpose": "This paragraph simply contains the EXIT statement, providing a standard exit point for the 7100-SEND-RESPONSE paragraph. It does not consume any inputs or produce any outputs. It serves as a return point after the authorization response is sent. No business logic or error handling is performed here. It is called by 7100-SEND-RESPONSE after the MQPUT1 call and subsequent error handling.",
+        "called_by": [],
         "calls": [],
         "citation": [
-          782,
-          785
+          211,
+          212
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -410,35 +449,25 @@
     ],
     "error_handling": [
       {
-        "condition": "WS-RESP-CD = DFHRESP(NOTFND)",
-        "action": "Set NFOUND-CUST-IN-MSTR, log warning 'A003' via 9500-LOG-ERROR",
+        "condition": "WS-RESP-CD NOT = DFHRESP(NORMAL)",
+        "action": "Log error and potentially abend (if critical error)",
         "citation": [
-          19,
-          22
+          16,
+          30
         ]
       },
       {
-        "condition": "WS-RESP-CD OTHER than NORMAL/NOTFND",
-        "action": "Log critical CICS 'C003' via 9500-LOG-ERROR",
+        "condition": "IMS GET SUMMARY FAILED",
+        "action": "Log error and set error flags",
         "citation": [
-          30,
-          31
-        ]
-      },
-      {
-        "condition": "IMS DIBSTAT OTHER than OK/SEG-NOT-FOUND",
-        "action": "Log critical IMS 'I002' via 9500-LOG-ERROR",
-        "citation": [
-          64,
-          65
+          64
         ]
       },
       {
         "condition": "WS-COMPCODE NOT = MQCC-OK",
-        "action": "Log critical MQ 'M004' via 9500-LOG-ERROR",
+        "action": "Log error and set error flags",
         "citation": [
-          196,
-          197
+          196
         ]
       }
     ],
@@ -446,26 +475,36 @@
     "cics_operations": [
       {
         "command": "READ",
-        "resource": "DATASET(WS-CUSTFILENAME)",
-        "purpose": "Retrieve customer record by RIDFLD",
+        "resource": "WS-CUSTFILENAME",
+        "purpose": "Read customer record from VSAM file.",
         "citation": 6
       }
     ],
     "open_questions": [
       {
-        "question": "What are the full copybook definitions and WORKING-STORAGE/LINKAGE structures for PA-RQ-*, XREF-*, CUSTOMER-RECORD, etc.?",
-        "context": "Not present in provided snippet; assumed from usage",
-        "suggestion": "Analyze full source or copybooks"
+        "question": "What is the structure of the CUSTOMER-RECORD?",
+        "context": "The copybook for CUSTOMER-RECORD is not provided, so its fields are unknown.",
+        "suggestion": "Examine the copybook definition for CUSTOMER-RECORD."
       },
       {
-        "question": "What is the overall program flow and calling context (e.g., transaction ID, prior paragraphs like 1000-INIT)?",
-        "context": "Only late paragraphs provided; no MAIN or early logic",
-        "suggestion": "Provide full source code"
+        "question": "What is the structure of the PENDING-AUTH-SUMMARY?",
+        "context": "The copybook for PENDING-AUTH-SUMMARY is not provided, so its fields are unknown.",
+        "suggestion": "Examine the copybook definition for PENDING-AUTH-SUMMARY."
       },
       {
-        "question": "Details of 5600-READ-PROFILE-DATA implementation and WS-CUSTFILENAME definition",
-        "context": "Paragraph is empty (CONTINUE only)",
-        "suggestion": "Check if stub or full code elsewhere"
+        "question": "What is the purpose of the PAUT-PCB-NUM?",
+        "context": "It is used in the IMS call, but the meaning is unclear without more context.",
+        "suggestion": "Consult IMS documentation or related code."
+      },
+      {
+        "question": "What is the structure of the W02-PUT-BUFFER?",
+        "context": "The copybook for W02-PUT-BUFFER is not provided, so its fields are unknown.",
+        "suggestion": "Examine the copybook definition for W02-PUT-BUFFER."
+      },
+      {
+        "question": "What is the purpose of the WS-CUSTFILENAME variable?",
+        "context": "It is used as the DATASET name in the CICS READ command, but its origin and value are unknown.",
+        "suggestion": "Trace the variable's initialization or definition."
       }
     ],
     "resolved_questions": [],
@@ -473,5 +512,5 @@
     "call_semantics": [],
     "flow_diagram": null
   },
-  "saved_at": "2026-02-23T20:51:34.041261"
+  "saved_at": "2026-02-24T10:40:33.607406"
 }

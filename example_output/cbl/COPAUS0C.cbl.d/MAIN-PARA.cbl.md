@@ -79,4 +79,7 @@
                      TRANSID (WS-CICS-TRANID)
                      COMMAREA (CARDDEMO-COMMAREA)
            END-EXEC.
+
+
+      *****************************************************************
 ```

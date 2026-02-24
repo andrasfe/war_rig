@@ -1,0 +1,1542 @@
+{
+  "file_name": "cbl/COPAUA0C.cbl",
+  "source_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+  "total_batches": 5,
+  "batches": [
+    [
+      {
+        "name": "COPAUA0C",
+        "line_start": 23,
+        "line_end": 23,
+        "line_count": 1,
+        "calls": [
+          {
+            "target": "CMQODV",
+            "type": "includes",
+            "line": 149
+          },
+          {
+            "target": "CMQMDV",
+            "type": "includes",
+            "line": 152
+          },
+          {
+            "target": "CMQODV",
+            "type": "includes",
+            "line": 155
+          },
+          {
+            "target": "CMQMDV",
+            "type": "includes",
+            "line": 158
+          },
+          {
+            "target": "CMQV",
+            "type": "includes",
+            "line": 161
+          },
+          {
+            "target": "CMQTML",
+            "type": "includes",
+            "line": 164
+          },
+          {
+            "target": "CMQPMOV",
+            "type": "includes",
+            "line": 167
+          },
+          {
+            "target": "CMQGMOV",
+            "type": "includes",
+            "line": 170
+          },
+          {
+            "target": "CCPAURQY",
+            "type": "includes",
+            "line": 178
+          },
+          {
+            "target": "CCPAURLY",
+            "type": "includes",
+            "line": 182
+          },
+          {
+            "target": "CCPAUERY",
+            "type": "includes",
+            "line": 185
+          },
+          {
+            "target": "CIPAUSMY",
+            "type": "includes",
+            "line": 193
+          },
+          {
+            "target": "CIPAUDTY",
+            "type": "includes",
+            "line": 197
+          },
+          {
+            "target": "CVACT03Y",
+            "type": "includes",
+            "line": 203
+          },
+          {
+            "target": "CVACT01Y",
+            "type": "includes",
+            "line": 206
+          },
+          {
+            "target": "CVCUS01Y",
+            "type": "includes",
+            "line": 209
+          }
+        ]
+      },
+      {
+        "name": "MAIN-PARA",
+        "line_start": 220,
+        "line_end": 229,
+        "line_count": 10,
+        "calls": [
+          {
+            "target": "1000-INITIALIZE",
+            "type": "performs",
+            "line": 222
+          },
+          {
+            "target": "2000-MAIN-PROCESS",
+            "type": "performs",
+            "line": 223
+          },
+          {
+            "target": "9000-TERMINATE",
+            "type": "performs",
+            "line": 224
+          }
+        ]
+      },
+      {
+        "name": "1000-INITIALIZE",
+        "line_start": 230,
+        "line_end": 248,
+        "line_count": 19,
+        "calls": [
+          {
+            "target": "1100-OPEN-REQUEST-QUEUE",
+            "type": "performs",
+            "line": 244
+          },
+          {
+            "target": "3100-READ-REQUEST-MQ",
+            "type": "performs",
+            "line": 246
+          }
+        ]
+      },
+      {
+        "name": "1000-EXIT",
+        "line_start": 249,
+        "line_end": 254,
+        "line_count": 6,
+        "calls": []
+      },
+      {
+        "name": "1100-OPEN-REQUEST-QUEUE",
+        "line_start": 255,
+        "line_end": 285,
+        "line_count": 31,
+        "calls": [
+          {
+            "target": "MQOPEN",
+            "type": "calls",
+            "line": 262
+          },
+          {
+            "target": "9500-LOG-ERROR",
+            "type": "performs",
+            "line": 282
+          }
+        ]
+      },
+      {
+        "name": "1100-EXIT",
+        "line_start": 286,
+        "line_end": 291,
+        "line_count": 6,
+        "calls": []
+      },
+      {
+        "name": "1200-SCHEDULE-PSB",
+        "line_start": 292,
+        "line_end": 318,
+        "line_count": 27,
+        "calls": [
+          {
+            "target": "9500-LOG-ERROR",
+            "type": "performs",
+            "line": 316
+          }
+        ]
+      },
+      {
+        "name": "1200-EXIT",
+        "line_start": 319,
+        "line_end": 322,
+        "line_count": 4,
+        "calls": []
+      },
+      {
+        "name": "2000-MAIN-PROCESS",
+        "line_start": 323,
+        "line_end": 346,
+        "line_count": 24,
+        "calls": [
+          {
+            "target": "2100-EXTRACT-REQUEST-MSG",
+            "type": "performs",
+            "line": 328
+          },
+          {
+            "target": "5000-PROCESS-AUTH",
+            "type": "performs",
+            "line": 330
+          },
+          {
+            "target": "3100-READ-REQUEST-MQ",
+            "type": "performs",
+            "line": 342
+          }
+        ]
+      },
+      {
+        "name": "2000-EXIT",
+        "line_start": 347,
+        "line_end": 350,
+        "line_count": 4,
+        "calls": []
+      }
+    ],
+    [
+      {
+        "name": "2100-EXTRACT-REQUEST-MSG",
+        "line_start": 351,
+        "line_end": 381,
+        "line_count": 31,
+        "calls": []
+      },
+      {
+        "name": "2100-EXIT",
+        "line_start": 382,
+        "line_end": 385,
+        "line_count": 4,
+        "calls": []
+      },
+      {
+        "name": "3100-READ-REQUEST-MQ",
+        "line_start": 386,
+        "line_end": 433,
+        "line_count": 48,
+        "calls": [
+          {
+            "target": "MQGET",
+            "type": "calls",
+            "line": 400
+          },
+          {
+            "target": "9500-LOG-ERROR",
+            "type": "performs",
+            "line": 429
+          }
+        ]
+      },
+      {
+        "name": "3100-EXIT",
+        "line_start": 434,
+        "line_end": 437,
+        "line_count": 4,
+        "calls": []
+      },
+      {
+        "name": "5000-PROCESS-AUTH",
+        "line_start": 438,
+        "line_end": 467,
+        "line_count": 30,
+        "calls": [
+          {
+            "target": "1200-SCHEDULE-PSB",
+            "type": "performs",
+            "line": 443
+          },
+          {
+            "target": "5100-READ-XREF-RECORD",
+            "type": "performs",
+            "line": 448
+          },
+          {
+            "target": "5200-READ-ACCT-RECORD",
+            "type": "performs",
+            "line": 451
+          },
+          {
+            "target": "5300-READ-CUST-RECORD",
+            "type": "performs",
+            "line": 452
+          },
+          {
+            "target": "5500-READ-AUTH-SUMMRY",
+            "type": "performs",
+            "line": 454
+          },
+          {
+            "target": "5600-READ-PROFILE-DATA",
+            "type": "performs",
+            "line": 456
+          },
+          {
+            "target": "6000-MAKE-DECISION",
+            "type": "performs",
+            "line": 459
+          },
+          {
+            "target": "7100-SEND-RESPONSE",
+            "type": "performs",
+            "line": 461
+          },
+          {
+            "target": "8000-WRITE-AUTH-TO-DB",
+            "type": "performs",
+            "line": 464
+          }
+        ]
+      },
+      {
+        "name": "5000-EXIT",
+        "line_start": 468,
+        "line_end": 471,
+        "line_count": 4,
+        "calls": []
+      },
+      {
+        "name": "5100-READ-XREF-RECORD",
+        "line_start": 472,
+        "line_end": 515,
+        "line_count": 44,
+        "calls": [
+          {
+            "target": "9500-LOG-ERROR",
+            "type": "performs",
+            "line": 500
+          },
+          {
+            "target": "9500-LOG-ERROR",
+            "type": "performs",
+            "line": 512
+          },
+          {
+            "target": "WS-CCXREF-FILE",
+            "type": "reads",
+            "line": 477
+          }
+        ]
+      },
+      {
+        "name": "5100-EXIT",
+        "line_start": 516,
+        "line_end": 519,
+        "line_count": 4,
+        "calls": []
+      },
+      {
+        "name": "5200-READ-ACCT-RECORD",
+        "line_start": 520,
+        "line_end": 563,
+        "line_count": 44,
+        "calls": [
+          {
+            "target": "9500-LOG-ERROR",
+            "type": "performs",
+            "line": 547
+          },
+          {
+            "target": "9500-LOG-ERROR",
+            "type": "performs",
+            "line": 560
+          },
+          {
+            "target": "WS-ACCTFILENAME",
+            "type": "reads",
+            "line": 525
+          }
+        ]
+      },
+      {
+        "name": "5200-EXIT",
+        "line_start": 564,
+        "line_end": 567,
+        "line_count": 4,
+        "calls": []
+      }
+    ],
+    [
+      {
+        "name": "5300-READ-CUST-RECORD",
+        "line_start": 568,
+        "line_end": 611,
+        "line_count": 44,
+        "calls": [
+          {
+            "target": "9500-LOG-ERROR",
+            "type": "performs",
+            "line": 595
+          },
+          {
+            "target": "9500-LOG-ERROR",
+            "type": "performs",
+            "line": 608
+          },
+          {
+            "target": "WS-CUSTFILENAME",
+            "type": "reads",
+            "line": 573
+          }
+        ]
+      },
+      {
+        "name": "5300-EXIT",
+        "line_start": 612,
+        "line_end": 615,
+        "line_count": 4,
+        "calls": []
+      },
+      {
+        "name": "5500-READ-AUTH-SUMMRY",
+        "line_start": 616,
+        "line_end": 642,
+        "line_count": 27,
+        "calls": [
+          {
+            "target": "9500-LOG-ERROR",
+            "type": "performs",
+            "line": 639
+          }
+        ]
+      },
+      {
+        "name": "5500-EXIT",
+        "line_start": 643,
+        "line_end": 646,
+        "line_count": 4,
+        "calls": []
+      },
+      {
+        "name": "5600-READ-PROFILE-DATA",
+        "line_start": 647,
+        "line_end": 652,
+        "line_count": 6,
+        "calls": []
+      },
+      {
+        "name": "5600-EXIT",
+        "line_start": 653,
+        "line_end": 656,
+        "line_count": 4,
+        "calls": []
+      },
+      {
+        "name": "6000-MAKE-DECISION",
+        "line_start": 657,
+        "line_end": 733,
+        "line_count": 77,
+        "calls": []
+      },
+      {
+        "name": "6000-EXIT",
+        "line_start": 734,
+        "line_end": 737,
+        "line_count": 4,
+        "calls": []
+      },
+      {
+        "name": "7100-SEND-RESPONSE",
+        "line_start": 738,
+        "line_end": 781,
+        "line_count": 44,
+        "calls": [
+          {
+            "target": "MQPUT1",
+            "type": "calls",
+            "line": 758
+          },
+          {
+            "target": "9500-LOG-ERROR",
+            "type": "performs",
+            "line": 778
+          }
+        ]
+      },
+      {
+        "name": "7100-EXIT",
+        "line_start": 782,
+        "line_end": 785,
+        "line_count": 4,
+        "calls": []
+      }
+    ],
+    [
+      {
+        "name": "8000-WRITE-AUTH-TO-DB",
+        "line_start": 786,
+        "line_end": 793,
+        "line_count": 8,
+        "calls": [
+          {
+            "target": "8400-UPDATE-SUMMARY",
+            "type": "performs",
+            "line": 790
+          },
+          {
+            "target": "8500-INSERT-AUTH",
+            "type": "performs",
+            "line": 791
+          }
+        ]
+      },
+      {
+        "name": "8000-EXIT",
+        "line_start": 794,
+        "line_end": 797,
+        "line_count": 4,
+        "calls": []
+      },
+      {
+        "name": "8400-UPDATE-SUMMARY",
+        "line_start": 798,
+        "line_end": 849,
+        "line_count": 52,
+        "calls": [
+          {
+            "target": "9500-LOG-ERROR",
+            "type": "performs",
+            "line": 846
+          }
+        ]
+      },
+      {
+        "name": "8400-EXIT",
+        "line_start": 850,
+        "line_end": 853,
+        "line_count": 4,
+        "calls": []
+      },
+      {
+        "name": "8500-INSERT-AUTH",
+        "line_start": 854,
+        "line_end": 934,
+        "line_count": 81,
+        "calls": [
+          {
+            "target": "9500-LOG-ERROR",
+            "type": "performs",
+            "line": 931
+          }
+        ]
+      },
+      {
+        "name": "8500-EXIT",
+        "line_start": 935,
+        "line_end": 939,
+        "line_count": 5,
+        "calls": []
+      },
+      {
+        "name": "9000-TERMINATE",
+        "line_start": 940,
+        "line_end": 949,
+        "line_count": 10,
+        "calls": [
+          {
+            "target": "9100-CLOSE-REQUEST-QUEUE",
+            "type": "performs",
+            "line": 947
+          }
+        ]
+      },
+      {
+        "name": "9000-EXIT",
+        "line_start": 950,
+        "line_end": 952,
+        "line_count": 3,
+        "calls": []
+      },
+      {
+        "name": "9100-CLOSE-REQUEST-QUEUE",
+        "line_start": 953,
+        "line_end": 978,
+        "line_count": 26,
+        "calls": [
+          {
+            "target": "MQCLOSE",
+            "type": "calls",
+            "line": 956
+          },
+          {
+            "target": "9500-LOG-ERROR",
+            "type": "performs",
+            "line": 975
+          }
+        ]
+      },
+      {
+        "name": "9100-EXIT",
+        "line_start": 979,
+        "line_end": 982,
+        "line_count": 4,
+        "calls": []
+      }
+    ],
+    [
+      {
+        "name": "9500-LOG-ERROR",
+        "line_start": 983,
+        "line_end": 1011,
+        "line_count": 29,
+        "calls": [
+          {
+            "target": "9990-END-ROUTINE",
+            "type": "performs",
+            "line": 1009
+          }
+        ]
+      },
+      {
+        "name": "9500-EXIT",
+        "line_start": 1012,
+        "line_end": 1015,
+        "line_count": 4,
+        "calls": []
+      },
+      {
+        "name": "9990-END-ROUTINE",
+        "line_start": 1016,
+        "line_end": 1023,
+        "line_count": 8,
+        "calls": [
+          {
+            "target": "9000-TERMINATE",
+            "type": "performs",
+            "line": 1019
+          }
+        ]
+      },
+      {
+        "name": "9990-EXIT",
+        "line_start": 1024,
+        "line_end": 1026,
+        "line_count": 3,
+        "calls": []
+      }
+    ]
+  ],
+  "outline": [
+    {
+      "name": "COPAUA0C",
+      "line_start": 23,
+      "line_end": 23,
+      "line_count": 1,
+      "calls": [
+        {
+          "target": "CMQODV",
+          "type": "includes",
+          "line": 149
+        },
+        {
+          "target": "CMQMDV",
+          "type": "includes",
+          "line": 152
+        },
+        {
+          "target": "CMQODV",
+          "type": "includes",
+          "line": 155
+        },
+        {
+          "target": "CMQMDV",
+          "type": "includes",
+          "line": 158
+        },
+        {
+          "target": "CMQV",
+          "type": "includes",
+          "line": 161
+        },
+        {
+          "target": "CMQTML",
+          "type": "includes",
+          "line": 164
+        },
+        {
+          "target": "CMQPMOV",
+          "type": "includes",
+          "line": 167
+        },
+        {
+          "target": "CMQGMOV",
+          "type": "includes",
+          "line": 170
+        },
+        {
+          "target": "CCPAURQY",
+          "type": "includes",
+          "line": 178
+        },
+        {
+          "target": "CCPAURLY",
+          "type": "includes",
+          "line": 182
+        },
+        {
+          "target": "CCPAUERY",
+          "type": "includes",
+          "line": 185
+        },
+        {
+          "target": "CIPAUSMY",
+          "type": "includes",
+          "line": 193
+        },
+        {
+          "target": "CIPAUDTY",
+          "type": "includes",
+          "line": 197
+        },
+        {
+          "target": "CVACT03Y",
+          "type": "includes",
+          "line": 203
+        },
+        {
+          "target": "CVACT01Y",
+          "type": "includes",
+          "line": 206
+        },
+        {
+          "target": "CVCUS01Y",
+          "type": "includes",
+          "line": 209
+        }
+      ]
+    },
+    {
+      "name": "MAIN-PARA",
+      "line_start": 220,
+      "line_end": 229,
+      "line_count": 10,
+      "calls": [
+        {
+          "target": "1000-INITIALIZE",
+          "type": "performs",
+          "line": 222
+        },
+        {
+          "target": "2000-MAIN-PROCESS",
+          "type": "performs",
+          "line": 223
+        },
+        {
+          "target": "9000-TERMINATE",
+          "type": "performs",
+          "line": 224
+        }
+      ]
+    },
+    {
+      "name": "1000-INITIALIZE",
+      "line_start": 230,
+      "line_end": 248,
+      "line_count": 19,
+      "calls": [
+        {
+          "target": "1100-OPEN-REQUEST-QUEUE",
+          "type": "performs",
+          "line": 244
+        },
+        {
+          "target": "3100-READ-REQUEST-MQ",
+          "type": "performs",
+          "line": 246
+        }
+      ]
+    },
+    {
+      "name": "1000-EXIT",
+      "line_start": 249,
+      "line_end": 254,
+      "line_count": 6,
+      "calls": []
+    },
+    {
+      "name": "1100-OPEN-REQUEST-QUEUE",
+      "line_start": 255,
+      "line_end": 285,
+      "line_count": 31,
+      "calls": [
+        {
+          "target": "MQOPEN",
+          "type": "calls",
+          "line": 262
+        },
+        {
+          "target": "9500-LOG-ERROR",
+          "type": "performs",
+          "line": 282
+        }
+      ]
+    },
+    {
+      "name": "1100-EXIT",
+      "line_start": 286,
+      "line_end": 291,
+      "line_count": 6,
+      "calls": []
+    },
+    {
+      "name": "1200-SCHEDULE-PSB",
+      "line_start": 292,
+      "line_end": 318,
+      "line_count": 27,
+      "calls": [
+        {
+          "target": "9500-LOG-ERROR",
+          "type": "performs",
+          "line": 316
+        }
+      ]
+    },
+    {
+      "name": "1200-EXIT",
+      "line_start": 319,
+      "line_end": 322,
+      "line_count": 4,
+      "calls": []
+    },
+    {
+      "name": "2000-MAIN-PROCESS",
+      "line_start": 323,
+      "line_end": 346,
+      "line_count": 24,
+      "calls": [
+        {
+          "target": "2100-EXTRACT-REQUEST-MSG",
+          "type": "performs",
+          "line": 328
+        },
+        {
+          "target": "5000-PROCESS-AUTH",
+          "type": "performs",
+          "line": 330
+        },
+        {
+          "target": "3100-READ-REQUEST-MQ",
+          "type": "performs",
+          "line": 342
+        }
+      ]
+    },
+    {
+      "name": "2000-EXIT",
+      "line_start": 347,
+      "line_end": 350,
+      "line_count": 4,
+      "calls": []
+    },
+    {
+      "name": "2100-EXTRACT-REQUEST-MSG",
+      "line_start": 351,
+      "line_end": 381,
+      "line_count": 31,
+      "calls": []
+    },
+    {
+      "name": "2100-EXIT",
+      "line_start": 382,
+      "line_end": 385,
+      "line_count": 4,
+      "calls": []
+    },
+    {
+      "name": "3100-READ-REQUEST-MQ",
+      "line_start": 386,
+      "line_end": 433,
+      "line_count": 48,
+      "calls": [
+        {
+          "target": "MQGET",
+          "type": "calls",
+          "line": 400
+        },
+        {
+          "target": "9500-LOG-ERROR",
+          "type": "performs",
+          "line": 429
+        }
+      ]
+    },
+    {
+      "name": "3100-EXIT",
+      "line_start": 434,
+      "line_end": 437,
+      "line_count": 4,
+      "calls": []
+    },
+    {
+      "name": "5000-PROCESS-AUTH",
+      "line_start": 438,
+      "line_end": 467,
+      "line_count": 30,
+      "calls": [
+        {
+          "target": "1200-SCHEDULE-PSB",
+          "type": "performs",
+          "line": 443
+        },
+        {
+          "target": "5100-READ-XREF-RECORD",
+          "type": "performs",
+          "line": 448
+        },
+        {
+          "target": "5200-READ-ACCT-RECORD",
+          "type": "performs",
+          "line": 451
+        },
+        {
+          "target": "5300-READ-CUST-RECORD",
+          "type": "performs",
+          "line": 452
+        },
+        {
+          "target": "5500-READ-AUTH-SUMMRY",
+          "type": "performs",
+          "line": 454
+        },
+        {
+          "target": "5600-READ-PROFILE-DATA",
+          "type": "performs",
+          "line": 456
+        },
+        {
+          "target": "6000-MAKE-DECISION",
+          "type": "performs",
+          "line": 459
+        },
+        {
+          "target": "7100-SEND-RESPONSE",
+          "type": "performs",
+          "line": 461
+        },
+        {
+          "target": "8000-WRITE-AUTH-TO-DB",
+          "type": "performs",
+          "line": 464
+        }
+      ]
+    },
+    {
+      "name": "5000-EXIT",
+      "line_start": 468,
+      "line_end": 471,
+      "line_count": 4,
+      "calls": []
+    },
+    {
+      "name": "5100-READ-XREF-RECORD",
+      "line_start": 472,
+      "line_end": 515,
+      "line_count": 44,
+      "calls": [
+        {
+          "target": "9500-LOG-ERROR",
+          "type": "performs",
+          "line": 500
+        },
+        {
+          "target": "9500-LOG-ERROR",
+          "type": "performs",
+          "line": 512
+        },
+        {
+          "target": "WS-CCXREF-FILE",
+          "type": "reads",
+          "line": 477
+        }
+      ]
+    },
+    {
+      "name": "5100-EXIT",
+      "line_start": 516,
+      "line_end": 519,
+      "line_count": 4,
+      "calls": []
+    },
+    {
+      "name": "5200-READ-ACCT-RECORD",
+      "line_start": 520,
+      "line_end": 563,
+      "line_count": 44,
+      "calls": [
+        {
+          "target": "9500-LOG-ERROR",
+          "type": "performs",
+          "line": 547
+        },
+        {
+          "target": "9500-LOG-ERROR",
+          "type": "performs",
+          "line": 560
+        },
+        {
+          "target": "WS-ACCTFILENAME",
+          "type": "reads",
+          "line": 525
+        }
+      ]
+    },
+    {
+      "name": "5200-EXIT",
+      "line_start": 564,
+      "line_end": 567,
+      "line_count": 4,
+      "calls": []
+    },
+    {
+      "name": "5300-READ-CUST-RECORD",
+      "line_start": 568,
+      "line_end": 611,
+      "line_count": 44,
+      "calls": [
+        {
+          "target": "9500-LOG-ERROR",
+          "type": "performs",
+          "line": 595
+        },
+        {
+          "target": "9500-LOG-ERROR",
+          "type": "performs",
+          "line": 608
+        },
+        {
+          "target": "WS-CUSTFILENAME",
+          "type": "reads",
+          "line": 573
+        }
+      ]
+    },
+    {
+      "name": "5300-EXIT",
+      "line_start": 612,
+      "line_end": 615,
+      "line_count": 4,
+      "calls": []
+    },
+    {
+      "name": "5500-READ-AUTH-SUMMRY",
+      "line_start": 616,
+      "line_end": 642,
+      "line_count": 27,
+      "calls": [
+        {
+          "target": "9500-LOG-ERROR",
+          "type": "performs",
+          "line": 639
+        }
+      ]
+    },
+    {
+      "name": "5500-EXIT",
+      "line_start": 643,
+      "line_end": 646,
+      "line_count": 4,
+      "calls": []
+    },
+    {
+      "name": "5600-READ-PROFILE-DATA",
+      "line_start": 647,
+      "line_end": 652,
+      "line_count": 6,
+      "calls": []
+    },
+    {
+      "name": "5600-EXIT",
+      "line_start": 653,
+      "line_end": 656,
+      "line_count": 4,
+      "calls": []
+    },
+    {
+      "name": "6000-MAKE-DECISION",
+      "line_start": 657,
+      "line_end": 733,
+      "line_count": 77,
+      "calls": []
+    },
+    {
+      "name": "6000-EXIT",
+      "line_start": 734,
+      "line_end": 737,
+      "line_count": 4,
+      "calls": []
+    },
+    {
+      "name": "7100-SEND-RESPONSE",
+      "line_start": 738,
+      "line_end": 781,
+      "line_count": 44,
+      "calls": [
+        {
+          "target": "MQPUT1",
+          "type": "calls",
+          "line": 758
+        },
+        {
+          "target": "9500-LOG-ERROR",
+          "type": "performs",
+          "line": 778
+        }
+      ]
+    },
+    {
+      "name": "7100-EXIT",
+      "line_start": 782,
+      "line_end": 785,
+      "line_count": 4,
+      "calls": []
+    },
+    {
+      "name": "8000-WRITE-AUTH-TO-DB",
+      "line_start": 786,
+      "line_end": 793,
+      "line_count": 8,
+      "calls": [
+        {
+          "target": "8400-UPDATE-SUMMARY",
+          "type": "performs",
+          "line": 790
+        },
+        {
+          "target": "8500-INSERT-AUTH",
+          "type": "performs",
+          "line": 791
+        }
+      ]
+    },
+    {
+      "name": "8000-EXIT",
+      "line_start": 794,
+      "line_end": 797,
+      "line_count": 4,
+      "calls": []
+    },
+    {
+      "name": "8400-UPDATE-SUMMARY",
+      "line_start": 798,
+      "line_end": 849,
+      "line_count": 52,
+      "calls": [
+        {
+          "target": "9500-LOG-ERROR",
+          "type": "performs",
+          "line": 846
+        }
+      ]
+    },
+    {
+      "name": "8400-EXIT",
+      "line_start": 850,
+      "line_end": 853,
+      "line_count": 4,
+      "calls": []
+    },
+    {
+      "name": "8500-INSERT-AUTH",
+      "line_start": 854,
+      "line_end": 934,
+      "line_count": 81,
+      "calls": [
+        {
+          "target": "9500-LOG-ERROR",
+          "type": "performs",
+          "line": 931
+        }
+      ]
+    },
+    {
+      "name": "8500-EXIT",
+      "line_start": 935,
+      "line_end": 939,
+      "line_count": 5,
+      "calls": []
+    },
+    {
+      "name": "9000-TERMINATE",
+      "line_start": 940,
+      "line_end": 949,
+      "line_count": 10,
+      "calls": [
+        {
+          "target": "9100-CLOSE-REQUEST-QUEUE",
+          "type": "performs",
+          "line": 947
+        }
+      ]
+    },
+    {
+      "name": "9000-EXIT",
+      "line_start": 950,
+      "line_end": 952,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "9100-CLOSE-REQUEST-QUEUE",
+      "line_start": 953,
+      "line_end": 978,
+      "line_count": 26,
+      "calls": [
+        {
+          "target": "MQCLOSE",
+          "type": "calls",
+          "line": 956
+        },
+        {
+          "target": "9500-LOG-ERROR",
+          "type": "performs",
+          "line": 975
+        }
+      ]
+    },
+    {
+      "name": "9100-EXIT",
+      "line_start": 979,
+      "line_end": 982,
+      "line_count": 4,
+      "calls": []
+    },
+    {
+      "name": "9500-LOG-ERROR",
+      "line_start": 983,
+      "line_end": 1011,
+      "line_count": 29,
+      "calls": [
+        {
+          "target": "9990-END-ROUTINE",
+          "type": "performs",
+          "line": 1009
+        }
+      ]
+    },
+    {
+      "name": "9500-EXIT",
+      "line_start": 1012,
+      "line_end": 1015,
+      "line_count": 4,
+      "calls": []
+    },
+    {
+      "name": "9990-END-ROUTINE",
+      "line_start": 1016,
+      "line_end": 1023,
+      "line_count": 8,
+      "calls": [
+        {
+          "target": "9000-TERMINATE",
+          "type": "performs",
+          "line": 1019
+        }
+      ]
+    },
+    {
+      "name": "9990-EXIT",
+      "line_start": 1024,
+      "line_end": 1026,
+      "line_count": 3,
+      "calls": []
+    }
+  ],
+  "stats": {
+    "total_lines": 1026,
+    "paragraph_count": 44,
+    "language": "COBOL",
+    "paragraphs": [
+      {
+        "name": "COPAUA0C",
+        "line_start": 23,
+        "line_end": 23,
+        "line_count": 1
+      },
+      {
+        "name": "MAIN-PARA",
+        "line_start": 220,
+        "line_end": 229,
+        "line_count": 10
+      },
+      {
+        "name": "1000-INITIALIZE",
+        "line_start": 230,
+        "line_end": 248,
+        "line_count": 19
+      },
+      {
+        "name": "1000-EXIT",
+        "line_start": 249,
+        "line_end": 254,
+        "line_count": 6
+      },
+      {
+        "name": "1100-OPEN-REQUEST-QUEUE",
+        "line_start": 255,
+        "line_end": 285,
+        "line_count": 31
+      },
+      {
+        "name": "1100-EXIT",
+        "line_start": 286,
+        "line_end": 291,
+        "line_count": 6
+      },
+      {
+        "name": "1200-SCHEDULE-PSB",
+        "line_start": 292,
+        "line_end": 318,
+        "line_count": 27
+      },
+      {
+        "name": "1200-EXIT",
+        "line_start": 319,
+        "line_end": 322,
+        "line_count": 4
+      },
+      {
+        "name": "2000-MAIN-PROCESS",
+        "line_start": 323,
+        "line_end": 346,
+        "line_count": 24
+      },
+      {
+        "name": "2000-EXIT",
+        "line_start": 347,
+        "line_end": 350,
+        "line_count": 4
+      },
+      {
+        "name": "2100-EXTRACT-REQUEST-MSG",
+        "line_start": 351,
+        "line_end": 381,
+        "line_count": 31
+      },
+      {
+        "name": "2100-EXIT",
+        "line_start": 382,
+        "line_end": 385,
+        "line_count": 4
+      },
+      {
+        "name": "3100-READ-REQUEST-MQ",
+        "line_start": 386,
+        "line_end": 433,
+        "line_count": 48
+      },
+      {
+        "name": "3100-EXIT",
+        "line_start": 434,
+        "line_end": 437,
+        "line_count": 4
+      },
+      {
+        "name": "5000-PROCESS-AUTH",
+        "line_start": 438,
+        "line_end": 467,
+        "line_count": 30
+      },
+      {
+        "name": "5000-EXIT",
+        "line_start": 468,
+        "line_end": 471,
+        "line_count": 4
+      },
+      {
+        "name": "5100-READ-XREF-RECORD",
+        "line_start": 472,
+        "line_end": 515,
+        "line_count": 44
+      },
+      {
+        "name": "5100-EXIT",
+        "line_start": 516,
+        "line_end": 519,
+        "line_count": 4
+      },
+      {
+        "name": "5200-READ-ACCT-RECORD",
+        "line_start": 520,
+        "line_end": 563,
+        "line_count": 44
+      },
+      {
+        "name": "5200-EXIT",
+        "line_start": 564,
+        "line_end": 567,
+        "line_count": 4
+      },
+      {
+        "name": "5300-READ-CUST-RECORD",
+        "line_start": 568,
+        "line_end": 611,
+        "line_count": 44
+      },
+      {
+        "name": "5300-EXIT",
+        "line_start": 612,
+        "line_end": 615,
+        "line_count": 4
+      },
+      {
+        "name": "5500-READ-AUTH-SUMMRY",
+        "line_start": 616,
+        "line_end": 642,
+        "line_count": 27
+      },
+      {
+        "name": "5500-EXIT",
+        "line_start": 643,
+        "line_end": 646,
+        "line_count": 4
+      },
+      {
+        "name": "5600-READ-PROFILE-DATA",
+        "line_start": 647,
+        "line_end": 652,
+        "line_count": 6
+      },
+      {
+        "name": "5600-EXIT",
+        "line_start": 653,
+        "line_end": 656,
+        "line_count": 4
+      },
+      {
+        "name": "6000-MAKE-DECISION",
+        "line_start": 657,
+        "line_end": 733,
+        "line_count": 77
+      },
+      {
+        "name": "6000-EXIT",
+        "line_start": 734,
+        "line_end": 737,
+        "line_count": 4
+      },
+      {
+        "name": "7100-SEND-RESPONSE",
+        "line_start": 738,
+        "line_end": 781,
+        "line_count": 44
+      },
+      {
+        "name": "7100-EXIT",
+        "line_start": 782,
+        "line_end": 785,
+        "line_count": 4
+      },
+      {
+        "name": "8000-WRITE-AUTH-TO-DB",
+        "line_start": 786,
+        "line_end": 793,
+        "line_count": 8
+      },
+      {
+        "name": "8000-EXIT",
+        "line_start": 794,
+        "line_end": 797,
+        "line_count": 4
+      },
+      {
+        "name": "8400-UPDATE-SUMMARY",
+        "line_start": 798,
+        "line_end": 849,
+        "line_count": 52
+      },
+      {
+        "name": "8400-EXIT",
+        "line_start": 850,
+        "line_end": 853,
+        "line_count": 4
+      },
+      {
+        "name": "8500-INSERT-AUTH",
+        "line_start": 854,
+        "line_end": 934,
+        "line_count": 81
+      },
+      {
+        "name": "8500-EXIT",
+        "line_start": 935,
+        "line_end": 939,
+        "line_count": 5
+      },
+      {
+        "name": "9000-TERMINATE",
+        "line_start": 940,
+        "line_end": 949,
+        "line_count": 10
+      },
+      {
+        "name": "9000-EXIT",
+        "line_start": 950,
+        "line_end": 952,
+        "line_count": 3
+      },
+      {
+        "name": "9100-CLOSE-REQUEST-QUEUE",
+        "line_start": 953,
+        "line_end": 978,
+        "line_count": 26
+      },
+      {
+        "name": "9100-EXIT",
+        "line_start": 979,
+        "line_end": 982,
+        "line_count": 4
+      },
+      {
+        "name": "9500-LOG-ERROR",
+        "line_start": 983,
+        "line_end": 1011,
+        "line_count": 29
+      },
+      {
+        "name": "9500-EXIT",
+        "line_start": 1012,
+        "line_end": 1015,
+        "line_count": 4
+      },
+      {
+        "name": "9990-END-ROUTINE",
+        "line_start": 1016,
+        "line_end": 1023,
+        "line_count": 8
+      },
+      {
+        "name": "9990-EXIT",
+        "line_start": 1024,
+        "line_end": 1026,
+        "line_count": 3
+      }
+    ]
+  },
+  "parent_ticket_id": "mem-000003",
+  "cycle_number": 1,
+  "program_id": "COPAUA0C",
+  "copybook_contents": {},
+  "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+  "feedback_context": null
+}

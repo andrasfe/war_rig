@@ -1,70 +1,78 @@
 ```cobol
-       6000-MAKE-DECISION.                                                      
-      * ------------------------------------------------------------- *         
-      *                                                                         
-           MOVE PA-RQ-CARD-NUM         TO PA-RL-CARD-NUM                        
-           MOVE PA-RQ-TRANSACTION-ID   TO PA-RL-TRANSACTION-ID                  
-           MOVE PA-RQ-AUTH-TIME        TO PA-RL-AUTH-ID-CODE                    
+             88 SEGMENT-NOT-FOUND            VALUE 'GE'.                        
+             88 DUPLICATE-SEGMENT-FOUND      VALUE 'II'.                        
+             88 WRONG-PARENTAGE              VALUE 'GP'.                        
+             88 END-OF-DB                    VALUE 'GB'.                        
+             88 DATABASE-UNAVAILABLE         VALUE 'BA'.                        
+             88 PSB-SCHEDULED-MORE-THAN-ONCE VALUE 'TC'.                        
+             88 COULD-NOT-SCHEDULE-PSB       VALUE 'TE'.                        
+             88 RETRY-CONDITION              VALUE 'BA', 'FH', 'TE'.            
+          05 WS-IMS-PSB-SCHD-FLG             PIC X(1).                          
+             88  IMS-PSB-SCHD                VALUE 'Y'.                         
+             88  IMS-PSB-NOT-SCHD            VALUE 'N'.                         
                                                                                 
-      *-   Decline Auth if Above Limit; If no AUTH summary, use ACT data        
-           IF FOUND-PAUT-SMRY-SEG                                               
-              COMPUTE WS-AVAILABLE-AMT = PA-CREDIT-LIMIT                        
-                                       - PA-CREDIT-BALANCE                      
-              IF WS-TRANSACTION-AMT > WS-AVAILABLE-AMT                          
-                 SET DECLINE-AUTH      TO TRUE                                  
-                 SET INSUFFICIENT-FUND TO TRUE                                  
-              END-IF                                                            
-           ELSE                                                                 
-              IF FOUND-ACCT-IN-MSTR                                             
-                 COMPUTE WS-AVAILABLE-AMT = ACCT-CREDIT-LIMIT                   
-                                          - ACCT-CURR-BAL                       
-                 IF WS-TRANSACTION-AMT > WS-AVAILABLE-AMT                       
-                    SET DECLINE-AUTH      TO TRUE                               
-                    SET INSUFFICIENT-FUND TO TRUE                               
-                 END-IF                                                         
-              ELSE                                                              
-                 SET DECLINE-AUTH         TO TRUE                               
-              END-IF                                                            
-           END-IF                                                               
+       01  W01-HCONN-REQUEST           PIC S9(9) BINARY VALUE ZERO.             
+       01  W01-HOBJ-REQUEST            PIC S9(9) BINARY.                        
+       01  W01-BUFFLEN                 PIC S9(9) BINARY.                        
+       01  W01-DATALEN                 PIC S9(9) BINARY.                        
+       01  W01-GET-BUFFER              PIC X(500).                              
                                                                                 
-           IF DECLINE-AUTH                                                      
-              SET  AUTH-RESP-DECLINED     TO TRUE                               
+       01  W02-HCONN-REPLY             PIC S9(9) BINARY VALUE ZERO.             
+       01  W02-BUFFLEN                 PIC S9(9) BINARY.                        
+       01  W02-DATALEN                 PIC S9(9) BINARY.                        
+       01  W02-PUT-BUFFER              PIC X(200).                              
                                                                                 
-              MOVE '05'                   TO PA-RL-AUTH-RESP-CODE               
-              MOVE 0                      TO PA-RL-APPROVED-AMT                 
-                                             WS-APPROVED-AMT                    
-           ELSE                                                                 
-              SET  AUTH-RESP-APPROVED     TO TRUE                               
-              MOVE '00'                   TO PA-RL-AUTH-RESP-CODE               
-              MOVE PA-RQ-TRANSACTION-AMT  TO PA-RL-APPROVED-AMT                 
-                                             WS-APPROVED-AMT                    
-           END-IF                                                               
+       01  WS-SWITCHES.                                                         
+           05 WS-AUTH-RESP-FLG         PIC X(01).                               
+              88 AUTH-RESP-APPROVED    VALUE 'A'.                               
+              88 AUTH-RESP-DECLINED    VALUE 'D'.                               
+           05 WS-MSG-LOOP-FLG          PIC X(01) VALUE 'N'.                     
+              88 WS-LOOP-END           VALUE 'E'.                               
+           05 WS-MSG-AVAILABLE-FLG     PIC X(01) VALUE 'M'.                     
+              88 NO-MORE-MSG-AVAILABLE VALUE 'N'.                               
+              88 MORE-MSG-AVAILABLE    VALUE 'M'.                               
+           05 WS-REQUEST-MQ-FLG        PIC X(01) VALUE 'C'.                     
+              88 WS-REQUEST-MQ-OPEN    VALUE 'O'.                               
+              88 WS-REQUEST-MQ-CLSE    VALUE 'C'.                               
+           05 WS-REPLY-MQ-FLG          PIC X(01) VALUE 'C'.                     
+              88 WS-REPLY-MQ-OPEN      VALUE 'O'.                               
+              88 WS-REPLY-MQ-CLSE      VALUE 'C'.                               
+           05 WS-XREF-READ-FLG         PIC X(1).                                
+              88 CARD-NFOUND-XREF      VALUE 'N'.                               
+              88 CARD-FOUND-XREF       VALUE 'Y'.                               
+           05 WS-ACCT-MASTER-READ-FLG PIC X(1).                                 
+              88 FOUND-ACCT-IN-MSTR    VALUE 'Y'.                               
+              88 NFOUND-ACCT-IN-MSTR   VALUE 'N'.                               
+           05 WS-CUST-MASTER-READ-FLG PIC X(1).                                 
+              88 FOUND-CUST-IN-MSTR    VALUE 'Y'.                               
+              88 NFOUND-CUST-IN-MSTR   VALUE 'N'.                               
+           05 WS-PAUT-SMRY-SEG-FLG     PIC X(1).                                
+              88 FOUND-PAUT-SMRY-SEG   VALUE 'Y'.                               
+              88 NFOUND-PAUT-SMRY-SEG  VALUE 'N'.                               
+           05 WS-DECLINE-FLG           PIC X(1).                                
+              88 APPROVE-AUTH          VALUE 'A'.                               
+              88 DECLINE-AUTH          VALUE 'D'.                               
+           05 WS-DECLINE-REASON-FLG    PIC X(1).                                
+              88 INSUFFICIENT-FUND     VALUE 'I'.                               
+              88 CARD-NOT-ACTIVE       VALUE 'A'.                               
+              88 ACCOUNT-CLOSED        VALUE 'C'.                               
+              88 CARD-FRAUD            VALUE 'F'.                               
+              88 MERCHANT-FRAUD        VALUE 'M'.                               
                                                                                 
-           MOVE '0000'                    TO PA-RL-AUTH-RESP-REASON             
-           IF AUTH-RESP-DECLINED                                                
-              EVALUATE TRUE                                                     
-                 WHEN CARD-NFOUND-XREF                                          
-                 WHEN NFOUND-ACCT-IN-MSTR                                       
-                 WHEN NFOUND-CUST-IN-MSTR                                       
-                      MOVE '3100'         TO PA-RL-AUTH-RESP-REASON             
-                 WHEN INSUFFICIENT-FUND                                         
-                      MOVE '4100'         TO PA-RL-AUTH-RESP-REASON             
-                 WHEN CARD-NOT-ACTIVE                                           
-                      MOVE '4200'         TO PA-RL-AUTH-RESP-REASON             
-                 WHEN ACCOUNT-CLOSED                                            
-                      MOVE '4300'         TO PA-RL-AUTH-RESP-REASON             
-                 WHEN CARD-FRAUD                                                
-                      MOVE '5100'         TO PA-RL-AUTH-RESP-REASON             
-                 WHEN MERCHANT-FRAUD                                            
-                      MOVE '5200'         TO PA-RL-AUTH-RESP-REASON             
-                 WHEN OTHER                                                     
-                      MOVE '9000'         TO PA-RL-AUTH-RESP-REASON             
-              END-EVALUATE                                                      
-           END-IF                                                               
                                                                                 
-           MOVE WS-APPROVED-AMT        TO WS-APPROVED-AMT-DIS                   
+       01  MQM-OD-REQUEST.                                                      
+           COPY CMQODV.                                                         
                                                                                 
-           STRING PA-RL-CARD-NUM         ','                                    
-                  PA-RL-TRANSACTION-ID   ','                                    
-                  PA-RL-AUTH-ID-CODE     ','                                    
+       01  MQM-MD-REQUEST.                                                      
+           COPY CMQMDV.                                                         
+                                                                                
+       01  MQM-OD-REPLY.                                                        
+           COPY CMQODV.                                                         
+                                                                                
+       01  MQM-MD-REPLY.                                                        
+           COPY CMQMDV.                                                         
+                                                                                
+       01  MQM-CONSTANTS.                                                       
+           COPY CMQV.                                                           
+                                                                                
 ```

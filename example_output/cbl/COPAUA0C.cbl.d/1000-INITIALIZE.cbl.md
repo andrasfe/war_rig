@@ -18,5 +18,4 @@
            PERFORM 3100-READ-REQUEST-MQ    THRU 3100-EXIT                       
            .                                                                    
       *                                                                         
-       1000-EXIT.                                                               
 ```

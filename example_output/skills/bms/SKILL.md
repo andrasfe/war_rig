@@ -7,5 +7,5 @@ description: BMS map documentation (screen definitions)
 
 | Name | Description | Documentation |
 |---------|-------------|---------------|
-| COPAU00 | Defines the COPAU00 mapset and COPAU0A map for the Pending Authorization Screen in a CICS CardDemo application. The screen displays customer account details, credit/cash limits and balances,... | [Full docs](../documentation/bms/COPAU00.bms.md) |
-| COPAU01 | **File:** bms/COPAU01.bms **Type:** BMS **Status:** In Progress **Iterations:** 1 **Analyzed:** 2026-02-24 03:58:34.647405 | [Full docs](../documentation/bms/COPAU01.bms.md) |
+| COPAU00 | This BMS map defines the screen layout for the 'View Authorizations' function within the CardDemo application. It displays customer account information and a list of recent transactions for... | [Full docs](../documentation/bms/COPAU00.bms.md) |
+| COPAU01 | This BMS map defines the screen layout for the 'Pending Authorization Details' screen in the CardDemo application. It specifies the position, size, color, and attributes of various fields... | [Full docs](../documentation/bms/COPAU01.bms.md) |

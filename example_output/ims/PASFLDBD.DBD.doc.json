@@ -1,80 +1,31 @@
 {
   "header": {
     "program_id": "PASFLDBD",
-    "file_name": "ims/PASFLDBD.DBD",
+    "file_name": "PASFLDBD.DBD",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-24T03:56:38.801326",
+    "analyzed_at": "2026-02-24T17:35:20.780370",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This file is the DBDGEN source defining the IMS database PASFLDBD. It specifies GSAM and BSAM access methods with no password protection. A single dataset group DSG001 defines input dataset DD1=PASFILIP and output dataset DD2=PASFILOP with fixed record format (RECFM=F) and length 100.",
-    "business_context": "IMS database definition supporting sequential and random access to PAS files for input processing and output generation",
+    "summary": "This file defines an IMS Database Description (DBD) named PASFLDBD. It specifies the database's access method as GSAM/BSAM and defines the dataset groups, including DD names and record characteristics.",
+    "business_context": null,
     "program_type": "UTILITY",
     "citations": [
-      17,
       22,
       27
     ]
   },
-  "inputs": [
-    {
-      "name": "PASFILIP",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "Input dataset (DD1) for the PASFLDBD IMS database",
-      "copybook": null,
-      "citation": [
-        27
-      ]
-    }
-  ],
-  "outputs": [
-    {
-      "name": "PASFILOP",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "Output dataset (DD2) for the PASFLDBD IMS database",
-      "copybook": null,
-      "citation": [
-        27
-      ]
-    }
-  ],
+  "inputs": [],
+  "outputs": [],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [
-    {
-      "rule_id": "BR001",
-      "description": "Database supports GSAM for random access and BSAM for sequential access",
-      "logic_summary": "ACCESS=(GSAM,BSAM) specified in DBD macro",
-      "conditions": [],
-      "citation": [
-        22
-      ]
-    },
-    {
-      "rule_id": "BR002",
-      "description": "No password protection is required for database access",
-      "logic_summary": "PASSWD=NO specified in DBD macro",
-      "conditions": [],
-      "citation": [
-        22
-      ]
-    },
-    {
-      "rule_id": "BR003",
-      "description": "Datasets use fixed record format (RECFM=F) with record length of 100 bytes",
-      "logic_summary": "RECORD=(100),RECFM=F defined in DSG001",
-      "conditions": [],
-      "citation": [
-        27
-      ]
-    }
-  ],
+  "business_rules": [],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
@@ -87,14 +38,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the business purpose of the PAS files (PASFILIP/PASFILOP)?",
-      "context": "File names suggest PAS file processing, but no details in source",
-      "suggestion": "Review calling application programs or IMS documentation"
-    },
-    {
-      "question": "Are there any associated PSB or PCB definitions?",
-      "context": "DBD defines database but no application program control blocks referenced",
-      "suggestion": "Search for related PSBGEN sources"
+      "question": "What is the purpose of the PASFILIP and PASFILOP datasets?",
+      "context": "The DBD defines these datasets but does not describe their contents or usage.",
+      "suggestion": "Review related documentation or programs that access this database."
     }
   ],
   "resolved_questions": [],

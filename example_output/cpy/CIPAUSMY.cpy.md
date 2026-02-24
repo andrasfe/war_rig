@@ -2,13 +2,11 @@
 
 **File**: `cpy/CIPAUSMY.cpy`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-02-24 04:00:35.645395
+**Analyzed**: 2026-02-24 17:38:11.574180
 
 ## Purpose
 
-This copybook defines the layout for the IMS 'Pending Authorization Summary' segment. Key fields include account and customer identifiers, authorization and account statuses, credit/cash limits and balances, counts and amounts for approved/declined authorizations, and a filler area. It is used to structure data in an IMS database for authorization processing.
-
-**Business Context**: Serves financial authorization workflows by summarizing pending authorizations per customer account, including limits, balances, and transaction statistics (evident from field names and IMS segment header at lines 1-3).
+This copybook defines the data structure for the IMS segment 'PENDING AUTHORIZATION SUMMARY'. It contains fields related to account ID, customer ID, authorization status, account status, credit and cash limits/balances, and authorization counts/amounts. The copybook is used to represent pending authorization information within an IMS database.
 
 ## Paragraphs/Procedures
 
@@ -28,5 +26,5 @@ The following artifacts were identified as dead code by static analysis:
 
 ## Open Questions
 
-- ? In which section of calling programs is this copybook typically included?
-  - Context: Copybook usage location (e.g., WORKING_STORAGE, LINKAGE) cannot be determined from the copybook itself.
+- ? How is the FILLER field (line 31) used? What kind of data does it contain?
+  - Context: The purpose of the FILLER field is unclear from the copybook definition.

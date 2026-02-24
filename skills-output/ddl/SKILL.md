@@ -7,5 +7,5 @@ description: DDL documentation (database definitions)
 
 | Name | Description | Documentation |
 |---------|-------------|---------------|
-| AUTHFRDS | DDL script that creates the CARDDEMO.AUTHFRDS DB2 table for storing authorization transaction details related to fraud detection. The table captures card number, timestamp, merchant data,... | [Full docs](../documentation/ddl/AUTHFRDS.ddl.md) |
-| XAUTHFRD | This DDL script creates a unique index named CARDDEMO.XAUTHFRD on the CARDDEMO.AUTHFRDS table. The index is defined on columns CARD_NUM in ascending order and AUTH_TS in descending order. The COPY... | [Full docs](../documentation/ddl/XAUTHFRD.ddl.md) |
+| AUTHFRDS | This DDL file defines the CARDDEMO.AUTHFRDS table, which stores authorization and fraud-related data for card transactions. The table includes fields for card number, authorization timestamp,... | [Full docs](../documentation/ddl/AUTHFRDS.ddl.md) |
+| XAUTHFRD | This DDL file defines a unique index named CARDDEMO.XAUTHFRD on the CARDDEMO.AUTHFRDS table, using the CARD_NUM and AUTH_TS columns. The index is created in ascending order for CARD_NUM and... | [Full docs](../documentation/ddl/XAUTHFRD.ddl.md) |

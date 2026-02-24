@@ -1,24 +1,21 @@
 ```cobol
-       3200-INSERT-IMS-CALL.                                            02611053
-      *                                                                 02611153
-      *     DISPLAY 'IN 3200 INSERT CALL'                               02611261
-                  CALL 'CBLTDLI' USING  FUNC-ISRT                       02611353
-                                        PAUTBPCB                        02611453
-                                        PENDING-AUTH-DETAILS            02611553
-                                        CHILD-UNQUAL-SSA.               02611654
-                                                                        02611753
-            IF PAUT-PCB-STATUS = SPACES                                 02611866
-               DISPLAY 'CHILD SEGMENT INSERTED SUCCESS'                 02611966
-            END-IF                                                      02612055
-            IF PAUT-PCB-STATUS = 'II'                                   02612166
-               DISPLAY 'CHILD SEGMENT ALREADY IN DB'                    02612266
-            END-IF                                                      02612366
-            IF PAUT-PCB-STATUS NOT EQUAL TO  SPACES AND 'II'            02612466
-                  DISPLAY 'INSERT CALL FAIL FOR CHILD:' PAUT-PCB-STATUS 02612566
-                  DISPLAY 'KFB AREA IN CHILD:' PAUT-KEYFB               02612666
-                    PERFORM 9999-ABEND                                  02612766
-            END-IF.                                                     02612866
-                                                                        02612966
-       3200-EXIT.                                                       02613066
-            EXIT.                                                       02614066
+           ACCESS MODE  IS SEQUENTIAL                                   00120026
+           FILE STATUS IS WS-INFIL1-STATUS.                             00130053
+                                                                        00140026
+      *                                                                 00150026
+           SELECT INFILE2 ASSIGN TO INFILE2                             00151053
+           ORGANIZATION IS SEQUENTIAL                                   00152026
+           ACCESS MODE  IS SEQUENTIAL                                   00153026
+           FILE STATUS IS WS-INFIL2-STATUS.                             00154053
+                                                                        00155026
+      *                                                                 00156026
+      *----------------------------------------------------------------*00160026
+       DATA DIVISION.                                                   00170026
+      *----------------------------------------------------------------*00180026
+      *                                                                 00190026
+       FILE SECTION.                                                    00200026
+       FD INFILE1.                                                      00210053
+       01 INFIL1-REC                    PIC X(100).                     00220053
+       FD INFILE2.                                                      00221053
+       01 INFIL2-REC.                                                   00222053
 ```

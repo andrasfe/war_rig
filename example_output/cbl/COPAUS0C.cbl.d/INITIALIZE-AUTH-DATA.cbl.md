@@ -1,58 +1,57 @@
 ```cobol
-       INITIALIZE-AUTH-DATA.
-      *****************************************************************
-
-           PERFORM VARYING WS-IDX FROM 1 BY 1 UNTIL WS-IDX > 5
-             EVALUATE WS-IDX
-               WHEN 1
-                   MOVE DFHBMPRO TO SEL0001A OF COPAU0AI
-                   MOVE SPACES   TO TRNID01I OF COPAU0AI
-                   MOVE SPACES   TO PDATE01I OF COPAU0AI
-                   MOVE SPACES   TO PTIME01I OF COPAU0AI
-                   MOVE SPACES   TO PTYPE01I OF COPAU0AI
-                   MOVE SPACES   TO PAPRV01I OF COPAU0AI
-                   MOVE SPACES   TO PSTAT01I OF COPAU0AI
-                   MOVE SPACES   TO PAMT001I OF COPAU0AI
-               WHEN 2
-                   MOVE DFHBMPRO TO SEL0002A OF COPAU0AI
-                   MOVE SPACES   TO TRNID02I OF COPAU0AI
-                   MOVE SPACES   TO PDATE02I OF COPAU0AI
-                   MOVE SPACES   TO PTIME02I OF COPAU0AI
-                   MOVE SPACES   TO PTYPE02I OF COPAU0AI
-                   MOVE SPACES   TO PAPRV02I OF COPAU0AI
-                   MOVE SPACES   TO PSTAT02I OF COPAU0AI
-                   MOVE SPACES   TO PAMT002I OF COPAU0AI
-               WHEN 3
-                   MOVE DFHBMPRO TO SEL0003A OF COPAU0AI
-                   MOVE SPACES   TO TRNID03I OF COPAU0AI
-                   MOVE SPACES   TO PDATE03I OF COPAU0AI
-                   MOVE SPACES   TO PTIME03I OF COPAU0AI
-                   MOVE SPACES   TO PTYPE03I OF COPAU0AI
-                   MOVE SPACES   TO PAPRV03I OF COPAU0AI
-                   MOVE SPACES   TO PSTAT03I OF COPAU0AI
-                   MOVE SPACES   TO PAMT003I OF COPAU0AI
-               WHEN 4
-                   MOVE DFHBMPRO TO SEL0004A OF COPAU0AI
-                   MOVE SPACES   TO TRNID04I OF COPAU0AI
-                   MOVE SPACES   TO PDATE04I OF COPAU0AI
-                   MOVE SPACES   TO PTIME04I OF COPAU0AI
-                   MOVE SPACES   TO PTYPE04I OF COPAU0AI
-                   MOVE SPACES   TO PAPRV04I OF COPAU0AI
-                   MOVE SPACES   TO PSTAT04I OF COPAU0AI
-                   MOVE SPACES   TO PAMT004I OF COPAU0AI
-               WHEN 5
-                   MOVE DFHBMPRO TO SEL0005A OF COPAU0AI
-                   MOVE SPACES   TO TRNID05I OF COPAU0AI
-                   MOVE SPACES   TO PDATE05I OF COPAU0AI
-                   MOVE SPACES   TO PTIME05I OF COPAU0AI
-                   MOVE SPACES   TO PTYPE05I OF COPAU0AI
-                   MOVE SPACES   TO PAPRV05I OF COPAU0AI
-                   MOVE SPACES   TO PSTAT05I OF COPAU0AI
-                   MOVE SPACES   TO PAMT005I OF COPAU0AI
-               WHEN OTHER
-                   CONTINUE
-             END-EVALUATE
-           END-PERFORM
-           .
-
+      ******************************************************************
+      * Program     : COPAUS0C.CBL
+      * Application : CardDemo - Authorization Module
+      * Type        : CICS COBOL IMS BMS Program
+      * Function    : Summary View of Authoriation Messages
+      ******************************************************************
+      * Copyright Amazon.com, Inc. or its affiliates.
+      * All Rights Reserved.
+      *
+      * Licensed under the Apache License, Version 2.0 (the "License").
+      * You may not use this file except in compliance with the License.
+      * You may obtain a copy of the License at
+      *
+      *    http://www.apache.org/licenses/LICENSE-2.0
+      *
+      * Unless required by applicable law or agreed to in writing,
+      * software distributed under the License is distributed on an
+      * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+      * either express or implied. See the License for the specific
+      * language governing permissions and limitations under the License
+      ******************************************************************
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. COPAUS0C.                                                    
+       AUTHOR.     AWS.                                                         
+                                                                                
+       ENVIRONMENT DIVISION.                                                    
+       CONFIGURATION SECTION.                                                   
+                                                                                
+       DATA DIVISION.                                                           
+       WORKING-STORAGE SECTION.                                                 
+                                                                                
+       01 WS-VARIABLES.                                                         
+         05 WS-PGM-AUTH-SMRY           PIC X(08) VALUE 'COPAUS0C'.              
+         05 WS-PGM-AUTH-DTL            PIC X(08) VALUE 'COPAUS1C'.              
+         05 WS-PGM-MENU                PIC X(08) VALUE 'COMEN01C'.              
+         05 WS-CICS-TRANID             PIC X(04) VALUE 'CPVS'.                  
+         05 WS-MESSAGE                 PIC X(80) VALUE SPACES.                  
+         05 WS-ACCTFILENAME            PIC X(8)  VALUE 'ACCTDAT '.              
+         05 WS-CUSTFILENAME            PIC X(8)  VALUE 'CUSTDAT '.              
+         05 WS-CARDFILENAME            PIC X(8)  VALUE 'CARDDAT '.              
+         05 WS-CARDXREFNAME-ACCT-PATH  PIC X(8)  VALUE 'CXACAIX '.              
+         05 WS-CCXREF-FILE             PIC X(08) VALUE 'CCXREF  '.              
+                                                                                
+         05 WS-ACCT-ID                 PIC  X(11).                              
+         05 WS-AUTH-KEY-SAVE           PIC  X(08).                              
+         05 WS-AUTH-APRV-STAT          PIC  X(01).                              
+         05 WS-RESP-CD                 PIC S9(09) COMP VALUE ZEROS.             
+         05 WS-REAS-CD                 PIC S9(09) COMP VALUE ZEROS.             
+         05 WS-RESP-CD-DIS             PIC  9(09).                              
+         05 WS-REAS-CD-DIS             PIC  9(09).                              
+         05 WS-REC-COUNT               PIC S9(04) COMP VALUE ZEROS.             
+         05 WS-IDX                     PIC S9(04) COMP VALUE ZEROS.             
+         05 WS-PAGE-NUM                PIC S9(04) COMP VALUE ZEROS.             
+                                                                                
+         05 WS-AUTH-AMT                PIC -zzzzzzz9.99.                        
 ```

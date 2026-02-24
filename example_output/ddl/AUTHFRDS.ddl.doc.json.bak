@@ -1,71 +1,32 @@
 {
   "header": {
     "program_id": "AUTHFRDS",
-    "file_name": "ddl/AUTHFRDS.ddl",
+    "file_name": "AUTHFRDS.ddl",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-24T03:59:24.682591",
+    "analyzed_at": "2026-02-24T17:38:40.093223",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "DDL script that creates the CARDDEMO.AUTHFRDS DB2 table for storing authorization transaction details related to fraud detection. The table captures card number, timestamp, merchant data, transaction amounts, and fraud indicators. It enforces data integrity via NOT NULL constraints and a composite primary key.",
-    "business_context": "Supports card fraud analysis by storing historical authorization records with fraud status, merchant details, and transaction metadata for reporting and matching.",
+    "summary": "This DDL file defines the CARDDEMO.AUTHFRDS table, which stores authorization and fraud-related data for card transactions. The table includes fields for card number, authorization timestamp, transaction amounts, merchant information, fraud indicators, and customer/account identifiers.",
+    "business_context": "This table likely supports fraud detection and authorization processes within a card transaction system.",
     "program_type": "UTILITY",
     "citations": [
       1,
       2,
-      3,
-      28
+      24
     ]
   },
   "inputs": [],
-  "outputs": [
-    {
-      "name": "CARDDEMO.AUTHFRDS",
-      "io_type": "DB2_TABLE",
-      "description": "Table storing authorization fraud details including card num, auth timestamp, transaction amounts, merchant info, and fraud flags",
-      "copybook": null,
-      "citation": [
-        1
-      ]
-    }
-  ],
+  "outputs": [],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [
-    {
-      "rule_id": "BR001",
-      "description": "CARD_NUM column must not be null",
-      "logic_summary": "Declared as CHAR(16) NOT NULL to ensure every record has a valid card number",
-      "conditions": [],
-      "citation": [
-        2
-      ]
-    },
-    {
-      "rule_id": "BR002",
-      "description": "AUTH_TS column must not be null",
-      "logic_summary": "Declared as TIMESTAMP NOT NULL to ensure every record has a valid authorization timestamp",
-      "conditions": [],
-      "citation": [
-        3
-      ]
-    },
-    {
-      "rule_id": "BR003",
-      "description": "Composite primary key on (CARD_NUM, AUTH_TS)",
-      "logic_summary": "Ensures uniqueness of authorization records per card and timestamp, preventing duplicates",
-      "conditions": [],
-      "citation": [
-        28
-      ]
-    }
-  ],
+  "business_rules": [],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
@@ -76,12 +37,12 @@
     {
       "paragraph_name": "AUTHFRDS",
       "summary": null,
-      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "purpose": "This DDL script defines the CARDDEMO.AUTHFRDS table schema. The table is designed to store detailed information about card authorization requests and potential fraud indicators. The script begins by creating the table with specific column definitions, including data types, lengths, and nullability constraints. Key fields include CARD_NUM and AUTH_TS, which together form the primary key, ensuring uniqueness of authorization records. Other columns capture transaction details such as amounts, merchant information, and authorization response codes. The table also includes fields to flag potential fraud (AUTH_FRAUD) and record the date when fraud was reported (FRAUD_RPT_DATE). The table does not directly consume inputs or produce outputs in the traditional sense, but it defines the structure for data storage and retrieval by other applications. No explicit error handling is defined within the DDL itself, as error handling would be managed by the database system during table creation or data manipulation. No other paragraphs or programs are called within this DDL script; it solely focuses on defining the table structure.",
       "called_by": [],
       "calls": [],
       "citation": [
         1,
-        1
+        28
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
@@ -95,7 +56,7 @@
     {
       "operation": "CREATE TABLE",
       "table": "CARDDEMO.AUTHFRDS",
-      "purpose": "Defines persistent storage for authorization fraud transaction data with specified columns, types, and constraints",
+      "purpose": "Defines the structure for storing card authorization and fraud data.",
       "citation": 1
     }
   ],

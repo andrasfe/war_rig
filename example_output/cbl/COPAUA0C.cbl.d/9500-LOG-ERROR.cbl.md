@@ -1,31 +1,31 @@
 ```cobol
-       9500-LOG-ERROR.                                                          
-      * ------------------------------------------------------------ *          
+      ******************************************************************
+      * Program     : COPAUA0C.CBL
+      * Application : CardDemo - Authorization Module
+      * Type        : CICS COBOL IMS MQ Program
+      * Function    : Card Authorization Decision Program
+      ******************************************************************
+      * Copyright Amazon.com, Inc. or its affiliates.
+      * All Rights Reserved.
+      *
+      * Licensed under the Apache License, Version 2.0 (the "License").
+      * You may not use this file except in compliance with the License.
+      * You may obtain a copy of the License at
+      *
+      *    http://www.apache.org/licenses/LICENSE-2.0
+      *
+      * Unless required by applicable law or agreed to in writing,
+      * software distributed under the License is distributed on an
+      * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+      * either express or implied. See the License for the specific
+      * language governing permissions and limitations under the License
+      ******************************************************************
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. COPAUA0C.                                                    
+       AUTHOR.     SOUMA GHOSH.                                                 
                                                                                 
-           EXEC CICS ASKTIME NOHANDLE                                           
-              ABSTIME(WS-ABS-TIME)                                              
-           END-EXEC                                                             
+       ENVIRONMENT DIVISION.                                                    
+       CONFIGURATION SECTION.                                                   
                                                                                 
-           EXEC CICS FORMATTIME                                                 
-             ABSTIME(WS-ABS-TIME)                                               
-             YYMMDD(WS-CUR-DATE-X6)                                             
-             TIME(WS-CUR-TIME-X6)                                               
-           END-EXEC                                                             
-                                                                                
-           MOVE WS-CICS-TRANID            TO ERR-APPLICATION                    
-           MOVE WS-PGM-AUTH               TO ERR-PROGRAM                        
-           MOVE WS-CUR-DATE-X6            TO ERR-DATE                           
-           MOVE WS-CUR-TIME-X6            TO ERR-TIME                           
-                                                                                
-           EXEC CICS WRITEQ                                                     
-                TD QUEUE('CSSL')                                                
-                FROM (ERROR-LOG-RECORD)                                         
-                LENGTH (LENGTH OF ERROR-LOG-RECORD)                             
-                NOHANDLE                                                        
-           END-EXEC                                                             
-                                                                                
-           IF ERR-CRITICAL                                                      
-              PERFORM 9990-END-ROUTINE                                          
-           END-IF                                                               
-           .                                                                    
+       DATA DIVISION.                                                           
 ```

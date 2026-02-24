@@ -4,78 +4,76 @@
     "file_name": "jcl/CBPAUP0J.jcl",
     "file_type": "JCL",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-24T04:00:08.841674",
+    "analyzed_at": "2026-02-24T17:40:00.031945",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This JCL job CBPAUP0J executes the IMS region controller DFSRRC00 to run application program CBPAUP0C in BMP mode with PSB PAUTB for deleting expired authorizations from an IMS database. It specifies necessary IMS libraries, PSB/DBD libraries, and inline SYSIN control data. Output is directed to multiple SYSOUT datasets for logs, prints, and dumps.",
-    "business_context": "IMS database maintenance for deleting expired authorizations in a card demo system",
+    "summary": "This JCL executes an IMS program (CBPAUP0C) to delete expired authorizations. It defines the execution environment and necessary datasets for the IMS program to run as a BMP (Batch Message Processing) region.",
+    "business_context": null,
     "program_type": "BATCH",
     "citations": [
-      1,
       21,
       24,
-      25,
-      36
+      25
     ]
   },
   "inputs": [
     {
-      "name": "SYSIN",
-      "io_type": "PARAMETER",
-      "description": "Inline IMS control statements '00,00001,00001,Y' specifying processing criteria such as database ID, segment levels, or options for the CBPAUP0C program",
-      "copybook": null,
-      "citation": [
-        36,
-        37
-      ]
-    },
-    {
-      "name": "STEPLIB",
-      "io_type": "OTHER",
-      "description": "Concatenated load libraries containing IMS modules and application program CBPAUP0C",
+      "name": "IMS.SDFSRESL",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS RESLIB library containing IMS modules.",
       "copybook": null,
       "citation": [
         26,
+        28,
+        31
+      ]
+    },
+    {
+      "name": "XXXXXXXX.PROD.LOADLIB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Application load library containing the CBPAUP0C program.",
+      "copybook": null,
+      "citation": [
         27
       ]
     },
     {
-      "name": "DFSRESLB",
-      "io_type": "OTHER",
-      "description": "IMS steplib for resource modules",
-      "copybook": null,
-      "citation": [
-        28
-      ]
-    },
-    {
-      "name": "PROCLIB",
-      "io_type": "OTHER",
-      "description": "IMS proclib for procedures",
+      "name": "IMS.PROCLIB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS procedure library.",
       "copybook": null,
       "citation": [
         29
       ]
     },
     {
-      "name": "DFSSEL",
-      "io_type": "OTHER",
-      "description": "IMS selection library",
+      "name": "IMS.PSBLIB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS PSB library containing PSBPAUTB.",
       "copybook": null,
       "citation": [
-        31
+        33
       ]
     },
     {
-      "name": "IMS",
-      "io_type": "OTHER",
-      "description": "Concatenated PSBLIB and DBDLIB providing PSB PAUTB and database definitions for application access",
+      "name": "IMS.DBDLIB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS DBD library.",
       "copybook": null,
       "citation": [
-        33,
         34
+      ]
+    },
+    {
+      "name": "SYSIN",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Input control statements for the IMS program. Contains parameters '00,00001,00001,Y'.",
+      "copybook": null,
+      "citation": [
+        36,
+        37
       ]
     }
   ],
@@ -83,7 +81,7 @@
     {
       "name": "SYSOUX",
       "io_type": "REPORT",
-      "description": "IMS-specific output",
+      "description": "System output.",
       "copybook": null,
       "citation": [
         39
@@ -92,7 +90,7 @@
     {
       "name": "SYSOUT",
       "io_type": "REPORT",
-      "description": "Standard job output",
+      "description": "System output.",
       "copybook": null,
       "citation": [
         40
@@ -101,7 +99,7 @@
     {
       "name": "SYSABOUT",
       "io_type": "REPORT",
-      "description": "Program about or informational output",
+      "description": "System output for ABEND information.",
       "copybook": null,
       "citation": [
         41
@@ -110,7 +108,7 @@
     {
       "name": "ABENDAID",
       "io_type": "REPORT",
-      "description": "Abend diagnostic aid output",
+      "description": "System output for ABEND AID information.",
       "copybook": null,
       "citation": [
         42
@@ -119,7 +117,7 @@
     {
       "name": "SYSPRINT",
       "io_type": "REPORT",
-      "description": "Print file for compiler or program output",
+      "description": "System print output.",
       "copybook": null,
       "citation": [
         45
@@ -128,7 +126,7 @@
     {
       "name": "SYSUDUMP",
       "io_type": "REPORT",
-      "description": "System dump for diagnostics",
+      "description": "System user dump output.",
       "copybook": null,
       "citation": [
         46
@@ -137,10 +135,28 @@
     {
       "name": "IMSERR",
       "io_type": "REPORT",
-      "description": "IMS error messages",
+      "description": "IMS error output.",
       "copybook": null,
       "citation": [
         47
+      ]
+    },
+    {
+      "name": "IEFRDER",
+      "io_type": "OTHER",
+      "description": "Dummy dataset for logging.",
+      "copybook": null,
+      "citation": [
+        43
+      ]
+    },
+    {
+      "name": "IMSLOGR",
+      "io_type": "OTHER",
+      "description": "Dummy dataset for IMS logging.",
+      "copybook": null,
+      "citation": [
+        44
       ]
     }
   ],
@@ -148,18 +164,13 @@
     {
       "program_name": "DFSRRC00",
       "call_type": "STATIC_CALL",
-      "purpose": "IMS region controller to invoke CBPAUP0C in BMP mode",
+      "purpose": "Executes the IMS BMP region to run the CBPAUP0C program.",
       "parameters": [
-        "BMP,CBPAUP0C,PSBPAUTB"
+        "BMP",
+        "CBPAUP0C",
+        "PSBPAUTB"
       ],
       "citation": 24
-    },
-    {
-      "program_name": "CBPAUP0C",
-      "call_type": "DYNAMIC_CALL",
-      "purpose": "Application program to delete expired authorizations using PSB PAUTB",
-      "parameters": [],
-      "citation": 25
     }
   ],
   "calling_context": {
@@ -178,15 +189,12 @@
     {
       "paragraph_name": "STEP01",
       "summary": null,
-      "purpose": "STEP01 is the only execution step in this JCL job and serves as the primary orchestrator for running the IMS batch deletion process. It consumes input from multiple DD datasets including STEPLIB for load modules (lines 26-27), DFSRESLB (28), PROCLIB (29), DFSSEL (31), IMS PSB/DBDLIB (33-34), and inline SYSIN control data '00,00001,00001,Y' (36-37) which provides parameters for IMS database access by CBPAUP0C. It produces outputs to SYSOUT-class datasets such as SYSOUX (39), SYSOUT (40), SYSABOUT (41), ABENDAID (42), SYSPRINT (45), SYSUDUMP (46), and IMSERR (47) for capturing program output, logs, dumps, and errors. Business logic is not implemented directly in JCL but delegated via EXEC PGM=DFSRRC00 with PARM='BMP,CBPAUP0C,PSBPAUTB' (24-25) to execute the authorization deletion. No conditional decisions are made in the JCL; processing flow is linear based on program success. Error handling is provided implicitly through ABENDAID and SYSUDUMP DDs to capture abend details if DFSRRC00 or CBPAUP0C fails. Dummy DDs IEFRDER (43) and IMSLOGR (44) satisfy program I/O requirements without files. This step controls the overall job flow for the 'DELETE EXPIRED AUTHORIZATIONS' purpose (21). It statically calls DFSRRC00, which dynamically invokes CBPAUP0C for the core IMS processing.",
+      "purpose": "This step executes the IMS program DFSRRC00 as a BMP (Batch Message Processing) region. It sets up the execution environment for the IMS program CBPAUP0C, which is responsible for deleting expired authorizations. The PARM parameter specifies 'BMP' to indicate a batch region, 'CBPAUP0C' as the program to execute, and 'PSBPAUTB' as the PSB (Program Specification Block) to use. The STEPLIB DD statement defines the libraries where the IMS modules and the CBPAUP0C program are located. DFSRESLB points to the IMS RESLIB. The IMS DD statement defines the PSBLIB and DBDLIB. SYSIN provides input control statements to the CBPAUP0C program. The various SYSOUT DD statements define the output datasets for system messages, ABEND information, and program output. IEFRDER and IMSLOGR are dummy datasets. This step is the core execution unit of the JCL, orchestrating the IMS environment and initiating the authorization deletion process.",
       "called_by": [],
-      "calls": [
-        "DFSRRC00",
-        "CBPAUP0C"
-      ],
+      "calls": [],
       "citation": [
         24,
-        47
+        25
       ],
       "outgoing_calls": [
         {
@@ -236,28 +244,14 @@
       "metadata": null
     }
   ],
-  "error_handling": [
-    {
-      "condition": "Program abend or IMS failure",
-      "action": "Capture abend information in ABENDAID and SYSUDUMP datasets",
-      "citation": [
-        42,
-        46
-      ]
-    }
-  ],
+  "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What specific IMS database, DBD, and segments are accessed by CBPAUP0C?",
-      "context": "Not specified in JCL; controlled by PSB PAUTB and SYSIN '00,00001,00001,Y' interpretation",
-      "suggestion": "Analyze PSBPAUTB definition and CBPAUP0C source code"
-    },
-    {
-      "question": "Exact meaning of SYSIN data '00,00001,00001,Y'?",
-      "context": "IMS-specific control format for DFSRRC00 BMP not fully documented in JCL comments",
-      "suggestion": "Consult IMS DFSRRC00 documentation for BMP SYSIN format"
+      "question": "The exact logic within CBPAUP0C for determining expired authorizations is unknown.",
+      "context": "The JCL only sets up the execution environment; the actual business rules reside within the CBPAUP0C program.",
+      "suggestion": "Analyze the CBPAUP0C source code to understand the authorization expiration logic."
     }
   ],
   "resolved_questions": [],

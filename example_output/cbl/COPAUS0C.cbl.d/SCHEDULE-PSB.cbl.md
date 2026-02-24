@@ -1,34 +1,33 @@
 ```cobol
-       SCHEDULE-PSB.
-           EXEC DLI SCHD
-                PSB((PSB-NAME))
-                NODHABEND
-           END-EXEC
-           MOVE DIBSTAT        TO IMS-RETURN-CODE
-           IF PSB-SCHEDULED-MORE-THAN-ONCE
-              EXEC DLI TERM
-              END-EXEC
-
-              EXEC DLI SCHD
-                   PSB((PSB-NAME))
-                   NODHABEND
-              END-EXEC
-              MOVE DIBSTAT     TO IMS-RETURN-CODE
-           END-IF
-           IF STATUS-OK
-              SET IMS-PSB-SCHD           TO TRUE
-           ELSE
-              MOVE 'Y'     TO WS-ERR-FLG
-
-              STRING
-                  ' System error while scheduling PSB: Code:'
-              IMS-RETURN-CODE
-              DELIMITED BY SIZE
-              INTO WS-MESSAGE
-              END-STRING
-              MOVE -1       TO ACCTIDL OF COPAU0AI
-              PERFORM SEND-PAULST-SCREEN
-           END-IF
-           .
-
+      ******************************************************************
+      * Program     : COPAUS0C.CBL
+      * Application : CardDemo - Authorization Module
+      * Type        : CICS COBOL IMS BMS Program
+      * Function    : Summary View of Authoriation Messages
+      ******************************************************************
+      * Copyright Amazon.com, Inc. or its affiliates.
+      * All Rights Reserved.
+      *
+      * Licensed under the Apache License, Version 2.0 (the "License").
+      * You may not use this file except in compliance with the License.
+      * You may obtain a copy of the License at
+      *
+      *    http://www.apache.org/licenses/LICENSE-2.0
+      *
+      * Unless required by applicable law or agreed to in writing,
+      * software distributed under the License is distributed on an
+      * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+      * either express or implied. See the License for the specific
+      * language governing permissions and limitations under the License
+      ******************************************************************
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. COPAUS0C.                                                    
+       AUTHOR.     AWS.                                                         
+                                                                                
+       ENVIRONMENT DIVISION.                                                    
+       CONFIGURATION SECTION.                                                   
+                                                                                
+       DATA DIVISION.                                                           
+       WORKING-STORAGE SECTION.                                                 
+                                                                                
 ```

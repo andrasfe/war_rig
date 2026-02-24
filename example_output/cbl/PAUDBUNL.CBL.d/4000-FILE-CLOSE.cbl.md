@@ -15,4 +15,6 @@
             ELSE                                                        02750034
              DISPLAY 'ERROR IN CLOSING 2ND FILE:'WS-OUTFL2-STATUS       02760030
             END-IF.                                                     02770034
+       4000-EXIT.                                                       02780030
+            EXIT.                                                       02790030
 ```

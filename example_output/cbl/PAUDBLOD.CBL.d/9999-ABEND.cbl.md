@@ -1,12 +1,9 @@
 ```cobol
-       9999-ABEND.                                                      03630026
-      *----------------------------------------------------------------*03640026
-      *                                                                 03650026
-           DISPLAY 'IMS LOAD ABENDING ...'                              03660054
-                                                                        03670026
-           MOVE 16 TO RETURN-CODE                                       03680026
-           GOBACK.                                                      03690026
-      *                                                                 03700026
-       9999-EXIT.                                                       03710026
-            EXIT.                                                       03720026
+           88 ERR-FLG-ON                         VALUE 'Y'.             00460026
+           88 ERR-FLG-OFF                        VALUE 'N'.             00470026
+         05 WS-END-OF-AUTHDB-FLAG      PIC X(01) VALUE 'N'.             00480026
+           88 END-OF-AUTHDB                      VALUE 'Y'.             00490026
+           88 NOT-END-OF-AUTHDB                  VALUE 'N'.             00500026
+         05 WS-MORE-AUTHS-FLAG         PIC X(01) VALUE 'N'.             00510026
+           88 MORE-AUTHS                         VALUE 'Y'.             00520026
 ```

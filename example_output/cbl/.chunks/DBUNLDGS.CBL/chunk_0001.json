@@ -4,38 +4,28 @@
   "template": {
     "header": {
       "program_id": "DBUNLDGS",
-      "file_name": "cbl/DBUNLDGS.CBL",
+      "file_name": "DBUNLDGS.CBL",
       "file_type": "COBOL",
       "analyzed_by": "WAR_RIG",
-      "analyzed_at": "2026-02-24T03:51:39.207285",
+      "analyzed_at": "2026-02-24T17:36:55.439082",
       "iteration_count": 1,
       "final_status": null
     },
     "purpose": {
-      "summary": "This code fragment inserts a child GSAM segment into the IMS PADFL database via a DL/I ISRT call using CBLTDLI. It validates the PCB status post-insert and abends on failure. Supporting paragraphs provide exits, file close notification, and standardized abend handling.",
+      "summary": "This COBOL program contains subroutines related to GSAM database operations, specifically inserting child segments and handling abends. It includes logic to call IMS DL/I functions for database interaction and error handling routines to terminate the program if database operations fail.",
       "business_context": null,
-      "program_type": "BATCH",
+      "program_type": "SUBROUTINE",
       "citations": [
-        1,
         3,
         12,
-        27
+        30
       ]
     },
     "inputs": [
       {
-        "name": "FUNC-ISRT",
-        "io_type": "PARAMETER",
-        "description": "IMS DL/I function code for ISRT (insert)",
-        "copybook": null,
-        "citation": [
-          3
-        ]
-      },
-      {
         "name": "PADFLPCB",
         "io_type": "IMS_SEGMENT",
-        "description": "PCB control block for PADFL GSAM database",
+        "description": "The PCB (Program Communication Block) used for IMS database calls. It contains status information after a DL/I call.",
         "copybook": null,
         "citation": [
           4,
@@ -45,38 +35,28 @@
       {
         "name": "PENDING-AUTH-DETAILS",
         "io_type": "IMS_SEGMENT",
-        "description": "Child segment data to be inserted into PADFL database",
+        "description": "Data structure containing the details of the child segment to be inserted into the GSAM database.",
         "copybook": null,
         "citation": [
           5
         ]
-      }
-    ],
-    "outputs": [
+      },
       {
-        "name": "PADFL",
-        "io_type": "IMS_SEGMENT",
-        "description": "GSAM database receiving the inserted child segment",
+        "name": "FUNC-ISRT",
+        "io_type": "PARAMETER",
+        "description": "Parameter containing the DL/I function code for inserting a segment.",
         "copybook": null,
         "citation": [
           3
         ]
-      },
-      {
-        "name": "RETURN-CODE",
-        "io_type": "RETURN_CODE",
-        "description": "Set to 16 on abend",
-        "copybook": null,
-        "citation": [
-          32
-        ]
       }
     ],
+    "outputs": [],
     "called_programs": [
       {
         "program_name": "CBLTDLI",
-        "call_type": "DYNAMIC_CALL",
-        "purpose": "Execute IMS DL/I insert (ISRT) for child segment",
+        "call_type": "STATIC_CALL",
+        "purpose": "To perform IMS DL/I database operations, specifically inserting a child segment into a GSAM database.",
         "parameters": [
           "FUNC-ISRT",
           "PADFLPCB",
@@ -90,22 +70,7 @@
       "entry_points": [],
       "linkage_section": []
     },
-    "business_rules": [
-      {
-        "rule_id": "BR001",
-        "description": "Fail insert operation if PCB status indicates error",
-        "logic_summary": "Check PADFL-PCB-STATUS; display diagnostics and abend if not spaces",
-        "conditions": [
-          "PADFL-PCB-STATUS NOT EQUAL TO SPACES"
-        ],
-        "citation": [
-          12,
-          13,
-          14,
-          15
-        ]
-      }
-    ],
+    "business_rules": [],
     "data_flow": {
       "reads_from": [
         {
@@ -116,37 +81,9 @@
           "citation": [
             12
           ]
-        },
-        {
-          "source": "PADFLPCB",
-          "fields_used": [
-            "PADFL-KEYFB"
-          ],
-          "citation": [
-            14
-          ]
         }
       ],
-      "writes_to": [
-        {
-          "destination": "PADFL",
-          "fields_written": [
-            "PENDING-AUTH-DETAILS"
-          ],
-          "citation": [
-            3
-          ]
-        },
-        {
-          "destination": "RETURN-CODE",
-          "fields_written": [
-            "16"
-          ],
-          "citation": [
-            32
-          ]
-        }
-      ],
+      "writes_to": [],
       "transforms": []
     },
     "copybooks_used": [],
@@ -154,14 +91,15 @@
       {
         "paragraph_name": "3200-INSERT-CHILD-SEG-GSAM",
         "summary": null,
-        "purpose": "This paragraph performs the core IMS DL/I insert operation for a child GSAM segment in the PADFL database. It consumes three inputs passed via the CALL statement: FUNC-ISRT for the insert function, PADFLPCB as the database PCB, and PENDING-AUTH-DETAILS containing the segment data to insert (lines 3-5). The CALL 'CBLTDLI' USING executes the ISRT, writing the segment to the IMS database (line 3). Post-call, it reads PADFL-PCB-STATUS from the PCB to detect errors (line 12). If status is not spaces, it displays the error status and key feedback area for diagnostics (lines 13-14), then performs 9999-ABEND to terminate (line 15). Commented DISPLAY statements aid debugging by showing PCB details like DBDNAME, status, and PROCOPT (lines 2, 6-11). No data transformations or additional validations occur. Error handling is immediate and fatal on non-zero status. On success, control flows to 3200-EXIT. This paragraph is critical for successful child segment population in batch IMS loading.",
+        "purpose": "This paragraph is responsible for inserting a child segment into a GSAM database using IMS DL/I calls. It calls the 'CBLTDLI' program with the 'FUNC-ISRT' function code, passing the 'PADFLPCB' and 'PENDING-AUTH-DETAILS' as parameters. The 'PADFLPCB' contains the PCB (Program Communication Block) which holds status information about the DL/I call. After the call, it checks the 'PADFL-PCB-STATUS' field in the PCB to determine if the insertion was successful. If the status is not spaces, indicating an error, it displays error messages including the PCB status and the KFB area, and then performs the '9999-ABEND' paragraph to terminate the program. This paragraph consumes the data in 'PENDING-AUTH-DETAILS' and uses it to populate the new child segment. It does not directly produce any output files, but modifies the GSAM database.",
         "called_by": [],
         "calls": [
+          "CBLTDLI",
           "9999-ABEND"
         ],
         "citation": [
-          319,
-          334
+          1,
+          16
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -172,12 +110,12 @@
       {
         "paragraph_name": "3200-EXIT",
         "summary": null,
-        "purpose": "This paragraph acts as the exit routine for 3200-INSERT-CHILD-SEG-GSAM, marking the end of the insert logic. It executes a single EXIT statement (line 19), returning control to the performing paragraph or section. It consumes no inputs or data. It produces no outputs, modifications, or displays. No business logic, conditions, loops, or validations are implemented. No error handling is present. It makes no calls to other paragraphs or programs. This simple structure ensures direct return after successful or checked insert operations. In program flow, it prevents fall-through to subsequent code. Its role is purely procedural housekeeping.",
+        "purpose": "This paragraph simply provides an exit point from the 3200-INSERT-CHILD-SEG-GSAM paragraph. It contains only the EXIT statement, which returns control to the calling paragraph. It does not consume any inputs or produce any outputs. It serves as a standard subroutine exit point.",
         "called_by": [],
         "calls": [],
         "citation": [
-          335,
-          337
+          18,
+          19
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -188,12 +126,12 @@
       {
         "paragraph_name": "4000-FILE-CLOSE",
         "summary": null,
-        "purpose": "This paragraph manages notification during file closure at program end. It displays 'CLOSING THE FILE' to the operator console (line 22), logging the closure activity. It reads no specific input data or variables. It writes only the console message as output. No conditions, decisions, or business rules are checked in the visible code. No validations or transformations occur. Error handling for potential close failures is not shown. It calls no other paragraphs or programs. Control proceeds to 4000-EXIT afterward (line 24). In context, this serves as an audit trail for batch job execution, confirming closure steps.",
+        "purpose": "This paragraph is responsible for closing files. It displays a message 'CLOSING THE FILE' to the console. It does not specify which file is being closed, so the exact purpose cannot be determined from the code. It does not consume any specific input data, and its output is limited to the display message. It does not perform any error handling or call any other paragraphs.",
         "called_by": [],
         "calls": [],
         "citation": [
-          338,
-          353
+          21,
+          23
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -204,12 +142,12 @@
       {
         "paragraph_name": "4000-EXIT",
         "summary": null,
-        "purpose": "This paragraph provides the exit point for 4000-FILE-CLOSE. It contains only an EXIT statement (line 25), transferring control back to the caller. No inputs are consumed. No outputs or data changes are produced. There is no business logic, conditional processing, or validations. Error handling is absent. No calls are made to paragraphs or programs. This ensures clean termination of the file close sequence. It prevents unintended execution of following code. Its minimal role supports modular paragraph design.",
+        "purpose": "This paragraph provides an exit point from the 4000-FILE-CLOSE paragraph. It contains only the EXIT statement, which returns control to the calling paragraph. It does not consume any inputs or produce any outputs. It serves as a standard subroutine exit point.",
         "called_by": [],
         "calls": [],
         "citation": [
-          354,
-          356
+          24,
+          25
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -220,12 +158,14 @@
       {
         "paragraph_name": "9999-ABEND",
         "summary": null,
-        "purpose": "This paragraph executes abnormal program termination for errors like IMS failures. It displays 'DBUNLDGS ABENDING ...' to the console for logging (line 30). It then sets RETURN-CODE to 16 (line 32), signaling failure to JCL or scheduler. Finally, GOBACK terminates the program (line 33). It receives implicit context from callers, such as error details already displayed. Outputs include the message and return code. No conditions are evaluated here; it always completes the abend sequence. No further validations or error handling. It is called from error paths like IMS status checks. This standardizes failure handling across the program.",
-        "called_by": [],
+        "purpose": "This paragraph handles abnormal termination of the program. It displays the message 'DBUNLDGS ABENDING ...' to the console. It then sets the RETURN-CODE to 16, indicating an error condition, and executes a GOBACK statement to terminate the program and return control to the operating system. This paragraph is called when a critical error occurs, such as a failed database operation. It consumes no specific input data but sets the program's return code as its output. It does not call any other paragraphs.",
+        "called_by": [
+          "3200-INSERT-CHILD-SEG-GSAM"
+        ],
         "calls": [],
         "citation": [
-          357,
-          364
+          27,
+          33
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -236,12 +176,12 @@
       {
         "paragraph_name": "9999-EXIT",
         "summary": null,
-        "purpose": "This paragraph serves as the exit for 9999-ABEND or similar routines. It issues only EXIT (line 36), returning control upward. No data inputs are used. No outputs or modifications result. Absent are any logic, conditions, or decisions. No error handling implemented. No calls to other code. It facilitates structured return in abend scenarios, though rarely reached due to GOBACK. Supports paragraph modularity. Minimal design ensures reliability.",
+        "purpose": "This paragraph provides an exit point from the 9999-ABEND paragraph, although it is not actually called within the 9999-ABEND paragraph itself. It contains only the EXIT statement, which would return control to the calling paragraph, but since 9999-ABEND executes a GOBACK, this paragraph is never reached. It does not consume any inputs or produce any outputs. It serves as a standard subroutine exit point, although it is currently unreachable.",
         "called_by": [],
         "calls": [],
         "citation": [
-          365,
-          366
+          35,
+          36
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -253,16 +193,11 @@
     "error_handling": [
       {
         "condition": "PADFL-PCB-STATUS NOT EQUAL TO SPACES",
-        "action": "Display status and key feedback, then PERFORM 9999-ABEND",
+        "action": "DISPLAY error messages and PERFORM 9999-ABEND",
         "citation": [
-          12
-        ]
-      },
-      {
-        "condition": "Abend invoked",
-        "action": "Display abend message, set RETURN-CODE 16, GOBACK",
-        "citation": [
-          27
+          12,
+          13,
+          15
         ]
       }
     ],
@@ -270,24 +205,9 @@
     "cics_operations": [],
     "open_questions": [
       {
-        "question": "What is the full program flow and main paragraph?",
-        "context": "Only terminal paragraphs provided; no IDENTIFICATION, PROCEDURE DIVISION start, or other logic visible",
-        "suggestion": "Analyze complete source file"
-      },
-      {
-        "question": "What files are explicitly closed in 4000-FILE-CLOSE?",
-        "context": "Snippet shows only DISPLAY; no CLOSE statements in lines 338-353",
-        "suggestion": "Review full lines 338-353"
-      },
-      {
-        "question": "Definitions of FUNC-ISRT, PADFLPCB, PENDING-AUTH-DETAILS?",
-        "context": "Working storage, copybooks, or linkage not shown",
-        "suggestion": "Locate COPYBOOKs or variable declarations"
-      },
-      {
-        "question": "Business context of PADFL database and PENDING-AUTH-DETAILS segment?",
-        "context": "No comments or docs in snippet explaining data",
-        "suggestion": "Check program prolog, JCL, or IMS DBD"
+        "question": "Which file is being closed in 4000-FILE-CLOSE?",
+        "context": "The code only displays a message without specifying the file.",
+        "suggestion": "Examine calling programs or related documentation to identify the file being closed."
       }
     ],
     "resolved_questions": [],
@@ -295,5 +215,5 @@
     "call_semantics": [],
     "flow_diagram": null
   },
-  "saved_at": "2026-02-23T20:51:39.209634"
+  "saved_at": "2026-02-24T10:36:55.439932"
 }

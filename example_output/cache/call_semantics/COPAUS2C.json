@@ -2,8 +2,16 @@
   {
     "caller": "MAIN-PARA",
     "callee": "FRAUD-UPDATE",
-    "inputs": [],
-    "outputs": [],
-    "purpose": null
+    "inputs": [
+      "CARD-NUM",
+      "AUTH-TS",
+      "AUTH-FRAUD"
+    ],
+    "outputs": [
+      "WS-SQLCODE",
+      "WS-SQLSTATE",
+      "WS-FRD-ACT-MSG"
+    ],
+    "purpose": "Updates the AUTH_FRAUD and FRAUD_RPT_DATE fields in the AUTHFRDS table for a specific card number and authorization timestamp when a duplicate key error occurs during insert."
   }
 ]

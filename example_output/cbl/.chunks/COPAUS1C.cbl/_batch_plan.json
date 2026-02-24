@@ -1,0 +1,828 @@
+{
+  "file_name": "cbl/COPAUS1C.cbl",
+  "source_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+  "total_batches": 2,
+  "batches": [
+    [
+      {
+        "name": "COPAUS1C",
+        "line_start": 23,
+        "line_end": 23,
+        "line_count": 1,
+        "calls": [
+          {
+            "target": "COCOM01Y",
+            "type": "includes",
+            "line": 109
+          },
+          {
+            "target": "COPAU01",
+            "type": "includes",
+            "line": 122
+          },
+          {
+            "target": "COTTL01Y",
+            "type": "includes",
+            "line": 126
+          },
+          {
+            "target": "CSDAT01Y",
+            "type": "includes",
+            "line": 129
+          },
+          {
+            "target": "CSMSG01Y",
+            "type": "includes",
+            "line": 132
+          },
+          {
+            "target": "CSMSG02Y",
+            "type": "includes",
+            "line": 135
+          },
+          {
+            "target": "CIPAUSMY",
+            "type": "includes",
+            "line": 142
+          },
+          {
+            "target": "CIPAUDTY",
+            "type": "includes",
+            "line": 146
+          },
+          {
+            "target": "DFHAID",
+            "type": "includes",
+            "line": 148
+          },
+          {
+            "target": "DFHBMSCA",
+            "type": "includes",
+            "line": 149
+          }
+        ]
+      },
+      {
+        "name": "MAIN-PARA",
+        "line_start": 157,
+        "line_end": 206,
+        "line_count": 50,
+        "calls": [
+          {
+            "target": "RETURN-TO-PREV-SCREEN",
+            "type": "performs",
+            "line": 169
+          },
+          {
+            "target": "PROCESS-ENTER-KEY",
+            "type": "performs",
+            "line": 175
+          },
+          {
+            "target": "SEND-AUTHVIEW-SCREEN",
+            "type": "performs",
+            "line": 177
+          },
+          {
+            "target": "RECEIVE-AUTHVIEW-SCREEN",
+            "type": "performs",
+            "line": 179
+          },
+          {
+            "target": "PROCESS-ENTER-KEY",
+            "type": "performs",
+            "line": 182
+          },
+          {
+            "target": "SEND-AUTHVIEW-SCREEN",
+            "type": "performs",
+            "line": 183
+          },
+          {
+            "target": "RETURN-TO-PREV-SCREEN",
+            "type": "performs",
+            "line": 186
+          },
+          {
+            "target": "MARK-AUTH-FRAUD",
+            "type": "performs",
+            "line": 188
+          },
+          {
+            "target": "SEND-AUTHVIEW-SCREEN",
+            "type": "performs",
+            "line": 189
+          },
+          {
+            "target": "PROCESS-PF8-KEY",
+            "type": "performs",
+            "line": 191
+          },
+          {
+            "target": "SEND-AUTHVIEW-SCREEN",
+            "type": "performs",
+            "line": 192
+          },
+          {
+            "target": "PROCESS-ENTER-KEY",
+            "type": "performs",
+            "line": 194
+          },
+          {
+            "target": "SEND-AUTHVIEW-SCREEN",
+            "type": "performs",
+            "line": 197
+          }
+        ]
+      },
+      {
+        "name": "PROCESS-ENTER-KEY",
+        "line_start": 208,
+        "line_end": 228,
+        "line_count": 21,
+        "calls": [
+          {
+            "target": "READ-AUTH-RECORD",
+            "type": "performs",
+            "line": 216
+          },
+          {
+            "target": "TAKE-SYNCPOINT",
+            "type": "performs",
+            "line": 220
+          },
+          {
+            "target": "POPULATE-AUTH-DETAILS",
+            "type": "performs",
+            "line": 227
+          }
+        ]
+      },
+      {
+        "name": "MARK-AUTH-FRAUD",
+        "line_start": 230,
+        "line_end": 266,
+        "line_count": 37,
+        "calls": [
+          {
+            "target": "READ-AUTH-RECORD",
+            "type": "performs",
+            "line": 234
+          },
+          {
+            "target": "UPDATE-AUTH-DETAILS",
+            "type": "performs",
+            "line": 255
+          },
+          {
+            "target": "ROLL-BACK",
+            "type": "performs",
+            "line": 258
+          },
+          {
+            "target": "ROLL-BACK",
+            "type": "performs",
+            "line": 261
+          },
+          {
+            "target": "POPULATE-AUTH-DETAILS",
+            "type": "performs",
+            "line": 265
+          },
+          {
+            "target": "WS-PGM-AUTH-FRAUD",
+            "type": "calls",
+            "line": 248
+          }
+        ]
+      },
+      {
+        "name": "PROCESS-PF8-KEY",
+        "line_start": 268,
+        "line_end": 289,
+        "line_count": 22,
+        "calls": [
+          {
+            "target": "READ-AUTH-RECORD",
+            "type": "performs",
+            "line": 273
+          },
+          {
+            "target": "READ-NEXT-AUTH-RECORD",
+            "type": "performs",
+            "line": 274
+          },
+          {
+            "target": "TAKE-SYNCPOINT",
+            "type": "performs",
+            "line": 278
+          },
+          {
+            "target": "POPULATE-AUTH-DETAILS",
+            "type": "performs",
+            "line": 287
+          }
+        ]
+      },
+      {
+        "name": "POPULATE-AUTH-DETAILS",
+        "line_start": 291,
+        "line_end": 358,
+        "line_count": 68,
+        "calls": []
+      },
+      {
+        "name": "RETURN-TO-PREV-SCREEN",
+        "line_start": 360,
+        "line_end": 370,
+        "line_count": 11,
+        "calls": [
+          {
+            "target": "CDEMO-TO-PROGRAM",
+            "type": "calls",
+            "line": 367
+          }
+        ]
+      },
+      {
+        "name": "SEND-AUTHVIEW-SCREEN",
+        "line_start": 373,
+        "line_end": 396,
+        "line_count": 24,
+        "calls": [
+          {
+            "target": "POPULATE-HEADER-INFO",
+            "type": "performs",
+            "line": 375
+          }
+        ]
+      },
+      {
+        "name": "RECEIVE-AUTHVIEW-SCREEN",
+        "line_start": 398,
+        "line_end": 406,
+        "line_count": 9,
+        "calls": []
+      },
+      {
+        "name": "POPULATE-HEADER-INFO",
+        "line_start": 409,
+        "line_end": 429,
+        "line_count": 21,
+        "calls": []
+      }
+    ],
+    [
+      {
+        "name": "READ-AUTH-RECORD",
+        "line_start": 431,
+        "line_end": 491,
+        "line_count": 61,
+        "calls": [
+          {
+            "target": "SCHEDULE-PSB",
+            "type": "performs",
+            "line": 433
+          },
+          {
+            "target": "SEND-AUTHVIEW-SCREEN",
+            "type": "performs",
+            "line": 461
+          },
+          {
+            "target": "SEND-AUTHVIEW-SCREEN",
+            "type": "performs",
+            "line": 487
+          }
+        ]
+      },
+      {
+        "name": "READ-NEXT-AUTH-RECORD",
+        "line_start": 493,
+        "line_end": 518,
+        "line_count": 26,
+        "calls": [
+          {
+            "target": "SEND-AUTHVIEW-SCREEN",
+            "type": "performs",
+            "line": 516
+          }
+        ]
+      },
+      {
+        "name": "UPDATE-AUTH-DETAILS",
+        "line_start": 520,
+        "line_end": 556,
+        "line_count": 37,
+        "calls": [
+          {
+            "target": "TAKE-SYNCPOINT",
+            "type": "performs",
+            "line": 533
+          },
+          {
+            "target": "ROLL-BACK",
+            "type": "performs",
+            "line": 540
+          },
+          {
+            "target": "SEND-AUTHVIEW-SCREEN",
+            "type": "performs",
+            "line": 550
+          }
+        ]
+      },
+      {
+        "name": "TAKE-SYNCPOINT",
+        "line_start": 557,
+        "line_end": 564,
+        "line_count": 8,
+        "calls": []
+      },
+      {
+        "name": "ROLL-BACK",
+        "line_start": 565,
+        "line_end": 573,
+        "line_count": 9,
+        "calls": []
+      },
+      {
+        "name": "SCHEDULE-PSB",
+        "line_start": 574,
+        "line_end": 603,
+        "line_count": 30,
+        "calls": [
+          {
+            "target": "SEND-AUTHVIEW-SCREEN",
+            "type": "performs",
+            "line": 601
+          }
+        ]
+      }
+    ]
+  ],
+  "outline": [
+    {
+      "name": "COPAUS1C",
+      "line_start": 23,
+      "line_end": 23,
+      "line_count": 1,
+      "calls": [
+        {
+          "target": "COCOM01Y",
+          "type": "includes",
+          "line": 109
+        },
+        {
+          "target": "COPAU01",
+          "type": "includes",
+          "line": 122
+        },
+        {
+          "target": "COTTL01Y",
+          "type": "includes",
+          "line": 126
+        },
+        {
+          "target": "CSDAT01Y",
+          "type": "includes",
+          "line": 129
+        },
+        {
+          "target": "CSMSG01Y",
+          "type": "includes",
+          "line": 132
+        },
+        {
+          "target": "CSMSG02Y",
+          "type": "includes",
+          "line": 135
+        },
+        {
+          "target": "CIPAUSMY",
+          "type": "includes",
+          "line": 142
+        },
+        {
+          "target": "CIPAUDTY",
+          "type": "includes",
+          "line": 146
+        },
+        {
+          "target": "DFHAID",
+          "type": "includes",
+          "line": 148
+        },
+        {
+          "target": "DFHBMSCA",
+          "type": "includes",
+          "line": 149
+        }
+      ]
+    },
+    {
+      "name": "MAIN-PARA",
+      "line_start": 157,
+      "line_end": 206,
+      "line_count": 50,
+      "calls": [
+        {
+          "target": "RETURN-TO-PREV-SCREEN",
+          "type": "performs",
+          "line": 169
+        },
+        {
+          "target": "PROCESS-ENTER-KEY",
+          "type": "performs",
+          "line": 175
+        },
+        {
+          "target": "SEND-AUTHVIEW-SCREEN",
+          "type": "performs",
+          "line": 177
+        },
+        {
+          "target": "RECEIVE-AUTHVIEW-SCREEN",
+          "type": "performs",
+          "line": 179
+        },
+        {
+          "target": "PROCESS-ENTER-KEY",
+          "type": "performs",
+          "line": 182
+        },
+        {
+          "target": "SEND-AUTHVIEW-SCREEN",
+          "type": "performs",
+          "line": 183
+        },
+        {
+          "target": "RETURN-TO-PREV-SCREEN",
+          "type": "performs",
+          "line": 186
+        },
+        {
+          "target": "MARK-AUTH-FRAUD",
+          "type": "performs",
+          "line": 188
+        },
+        {
+          "target": "SEND-AUTHVIEW-SCREEN",
+          "type": "performs",
+          "line": 189
+        },
+        {
+          "target": "PROCESS-PF8-KEY",
+          "type": "performs",
+          "line": 191
+        },
+        {
+          "target": "SEND-AUTHVIEW-SCREEN",
+          "type": "performs",
+          "line": 192
+        },
+        {
+          "target": "PROCESS-ENTER-KEY",
+          "type": "performs",
+          "line": 194
+        },
+        {
+          "target": "SEND-AUTHVIEW-SCREEN",
+          "type": "performs",
+          "line": 197
+        }
+      ]
+    },
+    {
+      "name": "PROCESS-ENTER-KEY",
+      "line_start": 208,
+      "line_end": 228,
+      "line_count": 21,
+      "calls": [
+        {
+          "target": "READ-AUTH-RECORD",
+          "type": "performs",
+          "line": 216
+        },
+        {
+          "target": "TAKE-SYNCPOINT",
+          "type": "performs",
+          "line": 220
+        },
+        {
+          "target": "POPULATE-AUTH-DETAILS",
+          "type": "performs",
+          "line": 227
+        }
+      ]
+    },
+    {
+      "name": "MARK-AUTH-FRAUD",
+      "line_start": 230,
+      "line_end": 266,
+      "line_count": 37,
+      "calls": [
+        {
+          "target": "READ-AUTH-RECORD",
+          "type": "performs",
+          "line": 234
+        },
+        {
+          "target": "UPDATE-AUTH-DETAILS",
+          "type": "performs",
+          "line": 255
+        },
+        {
+          "target": "ROLL-BACK",
+          "type": "performs",
+          "line": 258
+        },
+        {
+          "target": "ROLL-BACK",
+          "type": "performs",
+          "line": 261
+        },
+        {
+          "target": "POPULATE-AUTH-DETAILS",
+          "type": "performs",
+          "line": 265
+        },
+        {
+          "target": "WS-PGM-AUTH-FRAUD",
+          "type": "calls",
+          "line": 248
+        }
+      ]
+    },
+    {
+      "name": "PROCESS-PF8-KEY",
+      "line_start": 268,
+      "line_end": 289,
+      "line_count": 22,
+      "calls": [
+        {
+          "target": "READ-AUTH-RECORD",
+          "type": "performs",
+          "line": 273
+        },
+        {
+          "target": "READ-NEXT-AUTH-RECORD",
+          "type": "performs",
+          "line": 274
+        },
+        {
+          "target": "TAKE-SYNCPOINT",
+          "type": "performs",
+          "line": 278
+        },
+        {
+          "target": "POPULATE-AUTH-DETAILS",
+          "type": "performs",
+          "line": 287
+        }
+      ]
+    },
+    {
+      "name": "POPULATE-AUTH-DETAILS",
+      "line_start": 291,
+      "line_end": 358,
+      "line_count": 68,
+      "calls": []
+    },
+    {
+      "name": "RETURN-TO-PREV-SCREEN",
+      "line_start": 360,
+      "line_end": 370,
+      "line_count": 11,
+      "calls": [
+        {
+          "target": "CDEMO-TO-PROGRAM",
+          "type": "calls",
+          "line": 367
+        }
+      ]
+    },
+    {
+      "name": "SEND-AUTHVIEW-SCREEN",
+      "line_start": 373,
+      "line_end": 396,
+      "line_count": 24,
+      "calls": [
+        {
+          "target": "POPULATE-HEADER-INFO",
+          "type": "performs",
+          "line": 375
+        }
+      ]
+    },
+    {
+      "name": "RECEIVE-AUTHVIEW-SCREEN",
+      "line_start": 398,
+      "line_end": 406,
+      "line_count": 9,
+      "calls": []
+    },
+    {
+      "name": "POPULATE-HEADER-INFO",
+      "line_start": 409,
+      "line_end": 429,
+      "line_count": 21,
+      "calls": []
+    },
+    {
+      "name": "READ-AUTH-RECORD",
+      "line_start": 431,
+      "line_end": 491,
+      "line_count": 61,
+      "calls": [
+        {
+          "target": "SCHEDULE-PSB",
+          "type": "performs",
+          "line": 433
+        },
+        {
+          "target": "SEND-AUTHVIEW-SCREEN",
+          "type": "performs",
+          "line": 461
+        },
+        {
+          "target": "SEND-AUTHVIEW-SCREEN",
+          "type": "performs",
+          "line": 487
+        }
+      ]
+    },
+    {
+      "name": "READ-NEXT-AUTH-RECORD",
+      "line_start": 493,
+      "line_end": 518,
+      "line_count": 26,
+      "calls": [
+        {
+          "target": "SEND-AUTHVIEW-SCREEN",
+          "type": "performs",
+          "line": 516
+        }
+      ]
+    },
+    {
+      "name": "UPDATE-AUTH-DETAILS",
+      "line_start": 520,
+      "line_end": 556,
+      "line_count": 37,
+      "calls": [
+        {
+          "target": "TAKE-SYNCPOINT",
+          "type": "performs",
+          "line": 533
+        },
+        {
+          "target": "ROLL-BACK",
+          "type": "performs",
+          "line": 540
+        },
+        {
+          "target": "SEND-AUTHVIEW-SCREEN",
+          "type": "performs",
+          "line": 550
+        }
+      ]
+    },
+    {
+      "name": "TAKE-SYNCPOINT",
+      "line_start": 557,
+      "line_end": 564,
+      "line_count": 8,
+      "calls": []
+    },
+    {
+      "name": "ROLL-BACK",
+      "line_start": 565,
+      "line_end": 573,
+      "line_count": 9,
+      "calls": []
+    },
+    {
+      "name": "SCHEDULE-PSB",
+      "line_start": 574,
+      "line_end": 603,
+      "line_count": 30,
+      "calls": [
+        {
+          "target": "SEND-AUTHVIEW-SCREEN",
+          "type": "performs",
+          "line": 601
+        }
+      ]
+    }
+  ],
+  "stats": {
+    "total_lines": 604,
+    "paragraph_count": 16,
+    "language": "COBOL",
+    "paragraphs": [
+      {
+        "name": "COPAUS1C",
+        "line_start": 23,
+        "line_end": 23,
+        "line_count": 1
+      },
+      {
+        "name": "MAIN-PARA",
+        "line_start": 157,
+        "line_end": 206,
+        "line_count": 50
+      },
+      {
+        "name": "PROCESS-ENTER-KEY",
+        "line_start": 208,
+        "line_end": 228,
+        "line_count": 21
+      },
+      {
+        "name": "MARK-AUTH-FRAUD",
+        "line_start": 230,
+        "line_end": 266,
+        "line_count": 37
+      },
+      {
+        "name": "PROCESS-PF8-KEY",
+        "line_start": 268,
+        "line_end": 289,
+        "line_count": 22
+      },
+      {
+        "name": "POPULATE-AUTH-DETAILS",
+        "line_start": 291,
+        "line_end": 358,
+        "line_count": 68
+      },
+      {
+        "name": "RETURN-TO-PREV-SCREEN",
+        "line_start": 360,
+        "line_end": 370,
+        "line_count": 11
+      },
+      {
+        "name": "SEND-AUTHVIEW-SCREEN",
+        "line_start": 373,
+        "line_end": 396,
+        "line_count": 24
+      },
+      {
+        "name": "RECEIVE-AUTHVIEW-SCREEN",
+        "line_start": 398,
+        "line_end": 406,
+        "line_count": 9
+      },
+      {
+        "name": "POPULATE-HEADER-INFO",
+        "line_start": 409,
+        "line_end": 429,
+        "line_count": 21
+      },
+      {
+        "name": "READ-AUTH-RECORD",
+        "line_start": 431,
+        "line_end": 491,
+        "line_count": 61
+      },
+      {
+        "name": "READ-NEXT-AUTH-RECORD",
+        "line_start": 493,
+        "line_end": 518,
+        "line_count": 26
+      },
+      {
+        "name": "UPDATE-AUTH-DETAILS",
+        "line_start": 520,
+        "line_end": 556,
+        "line_count": 37
+      },
+      {
+        "name": "TAKE-SYNCPOINT",
+        "line_start": 557,
+        "line_end": 564,
+        "line_count": 8
+      },
+      {
+        "name": "ROLL-BACK",
+        "line_start": 565,
+        "line_end": 573,
+        "line_count": 9
+      },
+      {
+        "name": "SCHEDULE-PSB",
+        "line_start": 574,
+        "line_end": 603,
+        "line_count": 30
+      }
+    ]
+  },
+  "parent_ticket_id": "mem-000002",
+  "cycle_number": 1,
+  "program_id": "COPAUS1C",
+  "copybook_contents": {},
+  "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+  "feedback_context": null
+}

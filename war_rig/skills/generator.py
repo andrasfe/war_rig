@@ -16,6 +16,7 @@ Example:
 
 from __future__ import annotations
 
+import json
 import logging
 import re
 from dataclasses import dataclass, field
@@ -160,6 +161,109 @@ def get_markdown_summary(file_path: Path, max_chars: int = 200) -> str | None:
         logger.warning("Failed to extract summary from %s: %s", file_path, e)
 
     return None
+
+
+def _load_file_summary(md_file: Path) -> Any | None:
+    """Load a FileSummary from the sibling .summary.json file.
+
+    Args:
+        md_file: Path to the markdown documentation file (e.g. CBACT01C.cbl.md).
+
+    Returns:
+        A FileSummary instance, or None if no summary file exists.
+    """
+    # CBACT01C.cbl.md -> CBACT01C.cbl.summary.json
+    summary_path = md_file.parent / (md_file.stem + ".summary.json")
+    if not summary_path.exists():
+        return None
+
+    try:
+        from war_rig.models.summaries import FileSummary
+
+        data = json.loads(summary_path.read_text(encoding="utf-8"))
+        return FileSummary.model_validate(data)
+    except Exception as e:
+        logger.debug("Failed to load summary from %s: %s", summary_path, e)
+        return None
+
+
+def _append_items(lines: list[str], items: list[str], label: str) -> None:
+    """Append a compact labeled bullet list if items are non-empty."""
+    filtered = [item for item in items if item]
+    if not filtered:
+        return
+    lines.append("")
+    for i, item in enumerate(filtered):
+        prefix = f"- **{label}**: " if i == 0 else "- "
+        lines.append(f"{prefix}{item}")
+
+
+def format_program_section(
+    file_name: str,
+    md_file: Path,
+    doc_link: str,
+    max_chars: int = 4000,
+) -> str | None:
+    """Build a rich markdown section for a program from its FileSummary.
+
+    Produces a multi-line markdown section (H3 heading + structured content)
+    suitable for inclusion in a category SKILL.md.  Returns None when no
+    `.summary.json` exists (caller should fall back to table row).
+
+    Args:
+        file_name: Clean program name (e.g. "CBACT01C").
+        md_file: Path to the markdown documentation file.
+        doc_link: Relative link to the full documentation.
+        max_chars: Maximum characters for the section body.
+
+    Returns:
+        Formatted markdown section string, or None if no summary available.
+    """
+    summary = _load_file_summary(md_file)
+    if summary is None:
+        return None
+
+    if not summary.business_function:
+        return None
+
+    lines: list[str] = []
+    lines.append(f"### {file_name}")
+    lines.append("")
+    lines.append(summary.business_function.strip())
+
+    # Functional areas — each segment's role and what it does
+    if summary.segment_summaries:
+        segments = [
+            seg for seg in summary.segment_summaries
+            if seg.functional_area and seg.summary
+        ]
+        if segments:
+            lines.append("")
+            for seg in segments:
+                lines.append(f"- **{seg.functional_area}**: {seg.summary}")
+
+    # Data flows, call graph, risks, debt, migration — compact bullet lists
+    _append_items(lines, summary.primary_data_flows, "Data")
+    _append_items(lines, summary.call_graph_summary, "Calls")
+    _append_items(lines, summary.risk_areas, "Risks")
+    _append_items(lines, summary.technical_debt, "Debt")
+    _append_items(lines, summary.migration_considerations, "Migration")
+
+    lines.append("")
+    lines.append(f"[Full documentation]({doc_link})")
+    lines.append("")
+
+    section = "\n".join(lines)
+
+    # Truncate if over budget (preserve the last link line)
+    if len(section) > max_chars:
+        # Find a safe cut point and append the doc link
+        cut = section[: max_chars - 100].rfind("\n")
+        if cut < 0:
+            cut = max_chars - 100
+        section = section[:cut] + f"\n\n...\n\n[Full documentation]({doc_link})\n"
+
+    return section
 
 
 class SkillsGenerator:
@@ -449,6 +553,10 @@ class SkillsGenerator:
     ) -> dict[str, str | int]:
         """Generate a category SKILL.md with file summaries and links.
 
+        Uses rich section-per-program format when a ``.summary.json`` exists
+        (produced by the summarization pipeline).  Falls back to a compact
+        table row for files without summaries.
+
         Args:
             category: Friendly category name (e.g., "cobol").
             docs_subdir: Subdirectory name in docs (e.g., "cbl").
@@ -477,7 +585,7 @@ class SkillsGenerator:
             f"{category.upper()} documentation",
         )
 
-        # Build content
+        # Build content header
         lines: list[str] = [
             "---",
             f"name: {category}",
@@ -488,36 +596,53 @@ class SkillsGenerator:
             "",
         ]
 
-        # Add summary table
-        if category in ("cobol", "jcl"):
-            lines.append(f"| {'Program' if category == 'cobol' else 'Job'} | Description | Documentation |")
-        else:
-            lines.append("| Name | Description | Documentation |")
-        lines.append("|---------|-------------|---------------|")
+        # Partition files into rich (have .summary.json) and slim (no summary)
+        rich_sections: list[str] = []
+        slim_entries: list[tuple[str, str, str]] = []  # (name, summary, link)
 
         file_count = 0
         for md_file in md_files:
-            # Skip README.md and similar
             if md_file.name.lower() in ("readme.md",):
                 continue
 
-            # Extract file info
             file_name = self._extract_program_name(md_file)
-            summary = get_markdown_summary(md_file)
-
-            if summary is None:
-                summary = "(No description available)"
-
-            # Escape any pipe characters in summary
-            summary = summary.replace("|", "\\|")
-
-            # Build link to documentation
             doc_link = f"{self.relative_docs_path}/{docs_subdir}/{md_file.name}"
 
-            lines.append(f"| {file_name} | {summary} | [Full docs]({doc_link}) |")
+            # Try rich section first
+            section = format_program_section(file_name, md_file, doc_link)
+            if section is not None:
+                rich_sections.append(section)
+            else:
+                # Fall back to table-row summary
+                summary = get_markdown_summary(md_file, max_chars=200)
+                if summary is None:
+                    summary = "(No description available)"
+                summary = summary.replace("|", "\\|")
+                slim_entries.append((file_name, summary, doc_link))
+
             file_count += 1
 
-        lines.append("")
+        # Emit rich program sections first
+        if rich_sections:
+            lines.append("## Programs")
+            lines.append("")
+            for section in rich_sections:
+                lines.append(section)
+
+        # Emit slim programs as a table
+        if slim_entries:
+            if rich_sections:
+                lines.append("## Other Programs")
+                lines.append("")
+            if category in ("cobol", "jcl"):
+                col = "Program" if category == "cobol" else "Job"
+            else:
+                col = "Name"
+            lines.append(f"| {col} | Description | Documentation |")
+            lines.append("|---------|-------------|---------------|")
+            for name, summary, link in slim_entries:
+                lines.append(f"| {name} | {summary} | [Full docs]({link}) |")
+            lines.append("")
 
         # Write file
         output_path = category_output / "SKILL.md"

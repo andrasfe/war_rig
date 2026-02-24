@@ -25,4 +25,22 @@
                   SET  ERR-APP               TO TRUE                            
                   MOVE 'ACCT NOT FOUND IN XREF'                                 
                                              TO ERR-MESSAGE                     
+                  MOVE WS-CARD-RID-ACCT-ID-X TO ERR-EVENT-KEY                   
+                  PERFORM 9500-LOG-ERROR                                        
+      *                                                                         
+               WHEN OTHER                                                       
+                  MOVE 'C002'                TO ERR-LOCATION                    
+                  SET  ERR-CRITICAL          TO TRUE                            
+                  SET  ERR-CICS              TO TRUE                            
+                  MOVE WS-RESP-CD            TO WS-CODE-DISPLAY                 
+                  MOVE WS-CODE-DISPLAY       TO ERR-CODE-1                      
+                  MOVE WS-REAS-CD            TO WS-CODE-DISPLAY                 
+                  MOVE WS-CODE-DISPLAY       TO ERR-CODE-2                      
+                  MOVE 'FAILED TO READ ACCT FILE'                               
+                                             TO ERR-MESSAGE                     
+                  MOVE WS-CARD-RID-ACCT-ID-X TO ERR-EVENT-KEY                   
+                  PERFORM 9500-LOG-ERROR                                        
+           END-EVALUATE                                                         
+           .                                                                    
+      *                                                                         
 ```

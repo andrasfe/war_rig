@@ -1,0 +1,64 @@
+2026-02-24 10:39:25,855 | ERROR | war_rig.agents.challenger | Failed to parse Challenger response: Invalid \escape: line 26 column 67 (char 819)
+/home/andras/war_rig/war_rig/agents/challenger.py:462
+
+2026-02-24 10:43:35,355 | ERROR | war_rig.workers.scribe_pool | Worker scribe-1: Prompt ~22206 tokens exceeds limit 15000 and cannot be reduced further
+/home/andras/war_rig/war_rig/workers/scribe_pool.py:1182
+
+2026-02-24 10:44:27,983 | ERROR | war_rig.workers.scribe_pool | Worker scribe-1: Prompt ~22206 tokens exceeds limit 15000 and cannot be reduced further
+/home/andras/war_rig/war_rig/workers/scribe_pool.py:1182
+
+2026-02-24 10:46:14,026 | ERROR | war_rig.workers.scribe_pool | Worker scribe-1: Prompt ~31939 tokens exceeds limit 15000 and cannot be reduced further
+/home/andras/war_rig/war_rig/workers/scribe_pool.py:1182
+
+2026-02-24 10:47:11,692 | ERROR | war_rig.workers.scribe_pool | Worker scribe-1: Prompt ~31835 tokens exceeds limit 15000 and cannot be reduced further
+/home/andras/war_rig/war_rig/workers/scribe_pool.py:1182
+
+2026-02-24 10:49:43,277 | ERROR | war_rig.workers.scribe_pool | Worker scribe-2: Prompt ~32094 tokens exceeds limit 15000 and cannot be reduced further
+/home/andras/war_rig/war_rig/workers/scribe_pool.py:1182
+
+2026-02-24 10:50:39,045 | ERROR | war_rig.workers.scribe_pool | Worker scribe-2: Prompt ~19409 tokens exceeds limit 15000 and cannot be reduced further
+/home/andras/war_rig/war_rig/workers/scribe_pool.py:1182
+
+2026-02-24 10:52:59,318 | ERROR | war_rig.workers.scribe_pool | Worker scribe-2: Prompt ~22140 tokens exceeds limit 15000 and cannot be reduced further
+/home/andras/war_rig/war_rig/workers/scribe_pool.py:1182
+
+2026-02-24 10:54:03,573 | ERROR | war_rig.providers.openrouter | OpenRouter API error: JSON error injected into SSE stream
+/home/andras/war_rig/war_rig/providers/openrouter.py:414
+
+2026-02-24 10:54:03,580 | ERROR | war_rig.errors | 
+================================================================================
+STRUCTURED ERROR:
+{
+  "timestamp": "2026-02-24T10:54:03.579412",
+  "error_type": "APIError",
+  "error_message": "JSON error injected into SSE stream",
+  "context": {
+    "provider": "openrouter",
+    "model": "google/gemini-2.0-flash-001",
+    "error_type": "api_error",
+    "status_code": null
+  },
+  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 309, in complete\n    async for chunk in iter_with_timeout(stream, chunk_timeout):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 296, in iter_with_timeout\n    chunk = await asyncio.wait_for(\n            ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 489, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_streaming.py\", line 148, in __aiter__\n    async for item in self._iterator:\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_streaming.py\", line 195, in __stream__\n    raise APIError(\nopenai.APIError: JSON error injected into SSE stream\n",
+  "request": {
+    "model": "google/gemini-2.0-flash-001",
+    "message_count": 2
+  },
+  "response": {
+    "body": {
+      "message": "JSON error injected into SSE stream",
+      "code": 502,
+      "metadata": {
+        "raw": "{\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"Resource exhausted. Please try again later. Please refer to https://cloud.google.com/vertex-ai/generative-ai/docs/error-code-429 for more details.\",\n    \"status\": \"RESOURCE_EXHAUSTED\"\n  }\n}\n",
+        "provider_name": "Google AI Studio"
+      }
+    },
+    "response": "None",
+    "message": "JSON error injected into SSE stream"
+  }
+}
+================================================================================
+/home/andras/war_rig/war_rig/utils/error_logging.py:164
+
+2026-02-24 10:54:03,595 | ERROR | war_rig.agents.imperator | Compact holistic review failed: OpenRouter API error: JSON error injected into SSE stream
+/home/andras/war_rig/war_rig/agents/imperator.py:2399
+

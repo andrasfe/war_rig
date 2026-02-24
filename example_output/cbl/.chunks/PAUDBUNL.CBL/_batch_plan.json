@@ -1,0 +1,416 @@
+{
+  "file_name": "cbl/PAUDBUNL.CBL",
+  "source_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+  "total_batches": 2,
+  "batches": [
+    [
+      {
+        "name": "PAUDBUNL",
+        "line_start": 18,
+        "line_end": 18,
+        "line_count": 1,
+        "calls": [
+          {
+            "target": "IMSFUNCS",
+            "type": "includes",
+            "line": 132
+          },
+          {
+            "target": "CIPAUSMY",
+            "type": "includes",
+            "line": 139
+          },
+          {
+            "target": "CIPAUDTY",
+            "type": "includes",
+            "line": 143
+          },
+          {
+            "target": "PAUTBPCB",
+            "type": "includes",
+            "line": 150
+          }
+        ]
+      },
+      {
+        "name": "MAIN-PARA",
+        "line_start": 157,
+        "line_end": 172,
+        "line_count": 16,
+        "calls": [
+          {
+            "target": "1000-INITIALIZE",
+            "type": "performs",
+            "line": 161
+          },
+          {
+            "target": "2000-FIND-NEXT-AUTH-SUMMARY",
+            "type": "performs",
+            "line": 163
+          },
+          {
+            "target": "4000-FILE-CLOSE",
+            "type": "performs",
+            "line": 166
+          }
+        ]
+      },
+      {
+        "name": "1000-INITIALIZE",
+        "line_start": 173,
+        "line_end": 202,
+        "line_count": 30,
+        "calls": [
+          {
+            "target": "9999-ABEND",
+            "type": "performs",
+            "line": 191
+          },
+          {
+            "target": "9999-ABEND",
+            "type": "performs",
+            "line": 199
+          }
+        ]
+      },
+      {
+        "name": "1000-EXIT",
+        "line_start": 203,
+        "line_end": 206,
+        "line_count": 4,
+        "calls": []
+      },
+      {
+        "name": "2000-FIND-NEXT-AUTH-SUMMARY",
+        "line_start": 207,
+        "line_end": 247,
+        "line_count": 41,
+        "calls": [
+          {
+            "target": "CBLTDLI",
+            "type": "calls",
+            "line": 213
+          },
+          {
+            "target": "3000-FIND-NEXT-AUTH-DTL",
+            "type": "performs",
+            "line": 235
+          },
+          {
+            "target": "9999-ABEND",
+            "type": "performs",
+            "line": 246
+          }
+        ]
+      },
+      {
+        "name": "2000-EXIT",
+        "line_start": 248,
+        "line_end": 252,
+        "line_count": 5,
+        "calls": []
+      },
+      {
+        "name": "3000-FIND-NEXT-AUTH-DTL",
+        "line_start": 253,
+        "line_end": 284,
+        "line_count": 32,
+        "calls": [
+          {
+            "target": "CBLTDLI",
+            "type": "calls",
+            "line": 257
+          },
+          {
+            "target": "9999-ABEND",
+            "type": "performs",
+            "line": 282
+          }
+        ]
+      },
+      {
+        "name": "3000-EXIT",
+        "line_start": 285,
+        "line_end": 288,
+        "line_count": 4,
+        "calls": []
+      },
+      {
+        "name": "4000-FILE-CLOSE",
+        "line_start": 289,
+        "line_end": 304,
+        "line_count": 16,
+        "calls": []
+      },
+      {
+        "name": "4000-EXIT",
+        "line_start": 305,
+        "line_end": 307,
+        "line_count": 3,
+        "calls": []
+      }
+    ],
+    [
+      {
+        "name": "9999-ABEND",
+        "line_start": 308,
+        "line_end": 315,
+        "line_count": 8,
+        "calls": []
+      },
+      {
+        "name": "9999-EXIT",
+        "line_start": 316,
+        "line_end": 317,
+        "line_count": 2,
+        "calls": []
+      }
+    ]
+  ],
+  "outline": [
+    {
+      "name": "PAUDBUNL",
+      "line_start": 18,
+      "line_end": 18,
+      "line_count": 1,
+      "calls": [
+        {
+          "target": "IMSFUNCS",
+          "type": "includes",
+          "line": 132
+        },
+        {
+          "target": "CIPAUSMY",
+          "type": "includes",
+          "line": 139
+        },
+        {
+          "target": "CIPAUDTY",
+          "type": "includes",
+          "line": 143
+        },
+        {
+          "target": "PAUTBPCB",
+          "type": "includes",
+          "line": 150
+        }
+      ]
+    },
+    {
+      "name": "MAIN-PARA",
+      "line_start": 157,
+      "line_end": 172,
+      "line_count": 16,
+      "calls": [
+        {
+          "target": "1000-INITIALIZE",
+          "type": "performs",
+          "line": 161
+        },
+        {
+          "target": "2000-FIND-NEXT-AUTH-SUMMARY",
+          "type": "performs",
+          "line": 163
+        },
+        {
+          "target": "4000-FILE-CLOSE",
+          "type": "performs",
+          "line": 166
+        }
+      ]
+    },
+    {
+      "name": "1000-INITIALIZE",
+      "line_start": 173,
+      "line_end": 202,
+      "line_count": 30,
+      "calls": [
+        {
+          "target": "9999-ABEND",
+          "type": "performs",
+          "line": 191
+        },
+        {
+          "target": "9999-ABEND",
+          "type": "performs",
+          "line": 199
+        }
+      ]
+    },
+    {
+      "name": "1000-EXIT",
+      "line_start": 203,
+      "line_end": 206,
+      "line_count": 4,
+      "calls": []
+    },
+    {
+      "name": "2000-FIND-NEXT-AUTH-SUMMARY",
+      "line_start": 207,
+      "line_end": 247,
+      "line_count": 41,
+      "calls": [
+        {
+          "target": "CBLTDLI",
+          "type": "calls",
+          "line": 213
+        },
+        {
+          "target": "3000-FIND-NEXT-AUTH-DTL",
+          "type": "performs",
+          "line": 235
+        },
+        {
+          "target": "9999-ABEND",
+          "type": "performs",
+          "line": 246
+        }
+      ]
+    },
+    {
+      "name": "2000-EXIT",
+      "line_start": 248,
+      "line_end": 252,
+      "line_count": 5,
+      "calls": []
+    },
+    {
+      "name": "3000-FIND-NEXT-AUTH-DTL",
+      "line_start": 253,
+      "line_end": 284,
+      "line_count": 32,
+      "calls": [
+        {
+          "target": "CBLTDLI",
+          "type": "calls",
+          "line": 257
+        },
+        {
+          "target": "9999-ABEND",
+          "type": "performs",
+          "line": 282
+        }
+      ]
+    },
+    {
+      "name": "3000-EXIT",
+      "line_start": 285,
+      "line_end": 288,
+      "line_count": 4,
+      "calls": []
+    },
+    {
+      "name": "4000-FILE-CLOSE",
+      "line_start": 289,
+      "line_end": 304,
+      "line_count": 16,
+      "calls": []
+    },
+    {
+      "name": "4000-EXIT",
+      "line_start": 305,
+      "line_end": 307,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "9999-ABEND",
+      "line_start": 308,
+      "line_end": 315,
+      "line_count": 8,
+      "calls": []
+    },
+    {
+      "name": "9999-EXIT",
+      "line_start": 316,
+      "line_end": 317,
+      "line_count": 2,
+      "calls": []
+    }
+  ],
+  "stats": {
+    "total_lines": 317,
+    "paragraph_count": 12,
+    "language": "COBOL",
+    "paragraphs": [
+      {
+        "name": "PAUDBUNL",
+        "line_start": 18,
+        "line_end": 18,
+        "line_count": 1
+      },
+      {
+        "name": "MAIN-PARA",
+        "line_start": 157,
+        "line_end": 172,
+        "line_count": 16
+      },
+      {
+        "name": "1000-INITIALIZE",
+        "line_start": 173,
+        "line_end": 202,
+        "line_count": 30
+      },
+      {
+        "name": "1000-EXIT",
+        "line_start": 203,
+        "line_end": 206,
+        "line_count": 4
+      },
+      {
+        "name": "2000-FIND-NEXT-AUTH-SUMMARY",
+        "line_start": 207,
+        "line_end": 247,
+        "line_count": 41
+      },
+      {
+        "name": "2000-EXIT",
+        "line_start": 248,
+        "line_end": 252,
+        "line_count": 5
+      },
+      {
+        "name": "3000-FIND-NEXT-AUTH-DTL",
+        "line_start": 253,
+        "line_end": 284,
+        "line_count": 32
+      },
+      {
+        "name": "3000-EXIT",
+        "line_start": 285,
+        "line_end": 288,
+        "line_count": 4
+      },
+      {
+        "name": "4000-FILE-CLOSE",
+        "line_start": 289,
+        "line_end": 304,
+        "line_count": 16
+      },
+      {
+        "name": "4000-EXIT",
+        "line_start": 305,
+        "line_end": 307,
+        "line_count": 3
+      },
+      {
+        "name": "9999-ABEND",
+        "line_start": 308,
+        "line_end": 315,
+        "line_count": 8
+      },
+      {
+        "name": "9999-EXIT",
+        "line_start": 316,
+        "line_end": 317,
+        "line_count": 2
+      }
+    ]
+  },
+  "parent_ticket_id": "mem-000001",
+  "cycle_number": 1,
+  "program_id": "PAUDBUNL",
+  "copybook_contents": {},
+  "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+  "feedback_context": null
+}

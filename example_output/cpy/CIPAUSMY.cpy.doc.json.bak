@@ -1,34 +1,21 @@
 {
   "header": {
     "program_id": "CIPAUSMY",
-    "file_name": "cpy/CIPAUSMY.cpy",
+    "file_name": "CIPAUSMY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-24T04:00:35.645395",
+    "analyzed_at": "2026-02-24T17:38:11.574180",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the layout for the IMS 'Pending Authorization Summary' segment. Key fields include account and customer identifiers, authorization and account statuses, credit/cash limits and balances, counts and amounts for approved/declined authorizations, and a filler area. It is used to structure data in an IMS database for authorization processing.",
-    "business_context": "Serves financial authorization workflows by summarizing pending authorizations per customer account, including limits, balances, and transaction statistics (evident from field names and IMS segment header at lines 1-3).",
-    "program_type": "UTILITY",
+    "summary": "This copybook defines the data structure for the IMS segment 'PENDING AUTHORIZATION SUMMARY'. It contains fields related to account ID, customer ID, authorization status, account status, credit and cash limits/balances, and authorization counts/amounts. The copybook is used to represent pending authorization information within an IMS database.",
+    "business_context": null,
+    "program_type": "SUBROUTINE",
     "citations": [
-      1,
       2,
-      3,
       19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31
+      20
     ]
   },
   "inputs": [],
@@ -45,7 +32,14 @@
     "writes_to": [],
     "transforms": []
   },
-  "copybooks_used": [],
+  "copybooks_used": [
+    {
+      "copybook_name": "CIPAUSMY",
+      "purpose": "Defines the structure for pending authorization summary data within an IMS segment.",
+      "location": "FILE_SECTION",
+      "citation": 19
+    }
+  ],
   "paragraphs": [
     {
       "paragraph_name": "CIPAUSMY",
@@ -60,43 +54,43 @@
       "outgoing_calls": [],
       "incoming_calls": [
         {
-          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
-          "function": "PAUDBLOD",
-          "line": 149,
-          "call_type": "includes"
-        },
-        {
-          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
-          "function": "COPAUA0C",
-          "line": 193,
-          "call_type": "includes"
-        },
-        {
-          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
-          "function": "DBUNLDGS",
-          "line": 143,
-          "call_type": "includes"
-        },
-        {
-          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
-          "function": "CBPAUP0C",
-          "line": 117,
-          "call_type": "includes"
-        },
-        {
-          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
           "function": "PAUDBUNL",
           "line": 139,
           "call_type": "includes"
         },
         {
-          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
           "function": "COPAUS1C",
           "line": 142,
           "call_type": "includes"
         },
         {
-          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+          "function": "COPAUA0C",
+          "line": 193,
+          "call_type": "includes"
+        },
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+          "function": "PAUDBLOD",
+          "line": 149,
+          "call_type": "includes"
+        },
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "function": "DBUNLDGS",
+          "line": 143,
+          "call_type": "includes"
+        },
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+          "function": "CBPAUP0C",
+          "line": 117,
+          "call_type": "includes"
+        },
+        {
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
           "function": "COPAUS0C",
           "line": 161,
           "call_type": "includes"
@@ -128,9 +122,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "In which section of calling programs is this copybook typically included?",
-      "context": "Copybook usage location (e.g., WORKING_STORAGE, LINKAGE) cannot be determined from the copybook itself.",
-      "suggestion": "Examine COBOL programs that include COPY CIPAUSMY to confirm placement."
+      "question": "How is the FILLER field (line 31) used? What kind of data does it contain?",
+      "context": "The purpose of the FILLER field is unclear from the copybook definition.",
+      "suggestion": "Examine the programs that use this copybook to understand how the FILLER field is populated and used."
     }
   ],
   "resolved_questions": [],

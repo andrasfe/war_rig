@@ -1,69 +1,32 @@
 # COPAU00
 
-**File:** cpy-bms/COPAU00.cpy
-**Type:** COPYBOOK
-**Status:** In Progress
-**Iterations:** 1
-**Analyzed:** 2026-02-24 03:58:09.885484
+**File**: `cpy-bms/COPAU00.cpy`
+**Type**: FileType.COPYBOOK
+**Analyzed**: 2026-02-24 17:38:57.497823
 
 ## Purpose
 
-This COBOL copybook defines the symbolic map structures COPAU0AI and COPAU0AO for the COPAU00 BMS map used in CICS applications. COPAU0AI provides length (L), format (F), attribute (A), and input data (I) fields for screen elements including headers, account/customer details, financial data, recent transactions, and error messages. COPAU0AO redefines COPAU0AI with color (C), protection (P), highlighting (H), intensity (V), and output data (O) fields for screen rendering.
+This copybook defines the BMS map structure for screen input and output related to an UNKNOWN program. It likely contains field definitions, attributes, and screen layout information used by CICS applications.
 
-**Business Context:** Supports online CICS screen for customer account inquiry or maintenance in a financial system, displaying account summary, limits, balances, and up to five recent transactions.
-**Program Type:** ONLINE_CICS
-**Citations:** Lines 17, 391
+## Paragraphs/Procedures
 
-## Inputs
-
-### COPAU0AI
-- **Type:** CICS_MAP
-- **Description:** Input symbolic map structure containing received data from CICS terminal screen, with redefinable L/F/A/I fields for all screen elements
-- **Lines:** 17
-
-## Outputs
+### ~~COPAU0AI~~ (Dead Code)
+*Record layout 'COPAU0AI' is never used by any program*
 
 ### COPAU0AO
-- **Type:** CICS_MAP
-- **Description:** Output symbolic map structure for sending data to CICS terminal screen, redefined from COPAU0AI with C/P/H/V/O fields for formatting and display
-- **Lines:** 391
+This data structure, which redefines COPAU0AI, defines the output layout for the BMS map. It contains similar fields as COPAU0AI, but the fields are structured for output to the CICS terminal. The fields ending in 'C', 'P', 'H', and 'V' are attribute characters used to control the display characteristics of the output fields. The fields ending in 'O' represent the actual output data to be displayed on the screen. This structure is used to format and send data to the CICS terminal for display.
 
-## Key Paragraphs
+## Dead Code
 
-### COPAU00
-**Purpose:** [Citadel] Paragraph identified by static analysis
-- Lines: 1-1
+The following artifacts were identified as dead code by static analysis:
 
-### COPAU0AI
-**Purpose:** [Citadel] Paragraph identified by static analysis
-- Lines: 1-1
+| Artifact | Type | Line | Reason |
+|----------|------|------|--------|
+| COPAU0AI | record_layout | 1 | Record layout 'COPAU0AI' is never used by any program |
 
-## Resolved Questions
+## Open Questions
 
-- **Q:** Exact business meaning of fields like APPRCNTI, DECLCNTI, PAPRVI?
-  **A:** **APPRCNTI** (lines 97-102 in `cpy-bms/COPAU00.cpy`; `APPRCNTO` in output map):  
-Approved Authorization Count. This 3-digit field displays the total number of approved authorizations for the account, sourced from `PA-APPROVED-AUTH-CNT` in the `PENDING-AUTH-SUMMARY` IMS segment (`CIPAUSMY` copybook). In `cbl/COPAUS0C.cbl` (lines 788-789), it's populated via `MOVE PA-APPROVED-AUTH-CNT TO WS-DISPLAY-COUNT` then `MOVE WS-DISPLAY-COUNT TO APPRCNTO`. Defaults to zeros if no summary segment found (line 801).
-
-**DECLCNTI** (lines 103-108 in `cpy-bms/COPAU00.cpy`; `DECLCNTO` in output map):  
-Declined Authorization Count. This 3-digit field displays the total number of declined authorizations for the account, sourced from `PA-DECLINED-AUTH-CNT` in the `PENDING-AUTH-SUMMARY` IMS segment. In `cbl/COPAUS0C.cbl` (lines 790-791), it's populated via `MOVE PA-DECLINED-AUTH-CNT TO WS-DISPLAY-COUNT` then `MOVE WS-DISPLAY-COUNT TO DECLCNTO`. Defaults to zeros if no summary segment found (line 802).
-
-**PAPRVI** (e.g., `PAPRV01I` at line 180, `PAPRV02I` at 228, etc., in `cpy-bms/COPAU00.cpy`; corresponding `PAPRVxxO` in output map):  
-Previous Authorization Approval Status (per transaction). This 1-character field ('A' or 'D') indicates the approval status for each of up to 5 recent authorization transactions listed on the screen. Set in `cbl/COPAUS0C.cbl` `POPULATE-AUTH-LIST` paragraph (e.g., lines 551, 563, etc.): `MOVE WS-AUTH-APRV-STAT TO PAPRVxxI`. `WS-AUTH-APRV-STAT` derives from `PA-AUTH-RESP-CODE` in `PENDING-AUTH-DETAILS` IMS segment (`CIPAUDTY` copybook): 'A' if '00' (approved), else 'D' (declined/denied). Cleared to spaces during initialization (e.g., lines 619, 628).
-
-These fields are part of the `COPAU0A` BMS map in `COPAU00.cpy` (used by `COPAUS0C.cbl`, a CICS program displaying account summary and recent authorizations from IMS DB `PAUTSUM0`/`PAUTDTL1` segments). Counts come from root summary segment; statuses from child detail segments via `GNP` calls. Screen populated in `GATHER-ACCOUNT-DETAILS` and `PROCESS-PAGE-FORWARD`. Sources: `cpy-bms/COPAU00.cpy` (full structure), `cbl/COPAUS0C.cbl` (lines 521-607 for population logic, 750-811 for summary).
-- **Q:** Which CICS programs include COPY COPAU00 and use this map?
-  **A:** **COPAUS0C** (in file `cbl/COPAUS0C.cbl`) is the only CICS program that includes `COPY COPAU00` and uses the map.
-
-### Evidence from Code Search:
-- **COPY inclusion**: Line 129: `COPY COPAU00.` (exact match for `COPY\s+COPAU00`, 1 result across codebase).
-- **Map usage** (MAPSET 'COPAU00' with map 'COPAU0A'):
-  | Line | Usage |
-  |------|-------|
-  | 697  | `EXEC CICS SEND ... MAP('COPAU0A') MAPSET('COPAU00') FROM(COPAU0AO)` |
-  | 705  | `EXEC CICS SEND ... MAP('COPAU0A') MAPSET('COPAU00') FROM(COPAU0AO)` |
-  | 717  | `EXEC CICS RECEIVE ... MAP('COPAU0A') MAPSET('COPAU00') INTO(COPAU0AI)` |
-
-No other files match `COPY COPAU00` (searched `*.cbl` and all files). Broader searches for `COPAU00` confirm usage only here. No skills documentation found.
-
----
-*Generated by War Rig WAR_RIG*
+- ? What is the purpose of this BMS map?
+  - Context: The code provides no context about the application or function of this map.
+- ? What are the specific definitions and attributes of the fields within the map?
+  - Context: The provided code snippet is incomplete, lacking the actual field definitions.

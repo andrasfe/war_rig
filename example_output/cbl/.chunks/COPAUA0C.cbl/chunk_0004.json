@@ -4,24 +4,21 @@
   "template": {
     "header": {
       "program_id": "COPAUA0C",
-      "file_name": "cbl/COPAUA0C.cbl",
+      "file_name": "COPAUA0C.cbl",
       "file_type": "COBOL",
       "analyzed_by": "WAR_RIG",
-      "analyzed_at": "2026-02-24T03:53:33.425670",
+      "analyzed_at": "2026-02-24T17:45:40.739776",
       "iteration_count": 1,
       "final_status": null
     },
     "purpose": {
-      "summary": "COPAUA0C is a CICS online COBOL program containing terminal error handling paragraphs. The 9500-LOG-ERROR paragraph obtains and formats the current timestamp, populates an error log record with transaction ID, program authority, date, and time, and writes it to the CSSL transient data queue. Critical errors trigger execution of 9990-END-ROUTINE to terminate the program via 9000-TERMINATE and CICS RETURN.",
+      "summary": "This COBOL program contains error handling routines, specifically for logging errors to a CICS temporary data queue and terminating the CICS transaction. It includes paragraphs for logging error details and ending the CICS routine.",
       "business_context": null,
       "program_type": "ONLINE_CICS",
       "citations": [
-        1,
-        4,
-        14,
         19,
-        26,
-        37
+        27,
+        39
       ]
     },
     "inputs": [],
@@ -29,98 +26,33 @@
       {
         "name": "CSSL",
         "io_type": "CICS_QUEUE",
-        "description": "Transient data queue receiving error log records populated with application/transaction ID, program name, date, and time",
-        "copybook": "ERROR-LOG-RECORD",
+        "description": "Error log records written to the CICS temporary data queue 'CSSL'.",
+        "copybook": null,
         "citation": [
-          19,
-          20,
-          21,
-          22,
-          23,
-          24
+          20
         ]
       }
     ],
-    "called_programs": [],
+    "called_programs": [
+      {
+        "program_name": "9000-TERMINATE",
+        "call_type": "STATIC_CALL",
+        "purpose": "To perform termination processing.",
+        "parameters": [],
+        "citation": 37
+      }
+    ],
     "calling_context": {
       "called_by": [],
       "entry_points": [],
       "linkage_section": []
     },
-    "business_rules": [
-      {
-        "rule_id": "BR001",
-        "description": "Terminate program immediately if the error is flagged as critical",
-        "logic_summary": "Check ERR-CRITICAL flag and perform 9990-END-ROUTINE if true",
-        "conditions": [
-          "IF ERR-CRITICAL"
-        ],
-        "citation": [
-          26,
-          27
-        ]
-      }
-    ],
+    "business_rules": [],
     "data_flow": {
-      "reads_from": [
-        {
-          "source": "WS-ABS-TIME",
-          "fields_used": [
-            "WS-ABS-TIME"
-          ],
-          "citation": [
-            5
-          ]
-        },
-        {
-          "source": "WS-CICS-TRANID",
-          "fields_used": [
-            "WS-CICS-TRANID"
-          ],
-          "citation": [
-            14
-          ]
-        },
-        {
-          "source": "WS-PGM-AUTH",
-          "fields_used": [
-            "WS-PGM-AUTH"
-          ],
-          "citation": [
-            15
-          ]
-        },
-        {
-          "source": "WS-CUR-DATE-X6",
-          "fields_used": [
-            "WS-CUR-DATE-X6"
-          ],
-          "citation": [
-            16
-          ]
-        },
-        {
-          "source": "WS-CUR-TIME-X6",
-          "fields_used": [
-            "WS-CUR-TIME-X6"
-          ],
-          "citation": [
-            17
-          ]
-        },
-        {
-          "source": "ERR-CRITICAL",
-          "fields_used": [
-            "ERR-CRITICAL"
-          ],
-          "citation": [
-            26
-          ]
-        }
-      ],
+      "reads_from": [],
       "writes_to": [
         {
-          "destination": "ERROR-LOG-RECORD",
+          "destination": "CSSL",
           "fields_written": [
             "ERR-APPLICATION",
             "ERR-PROGRAM",
@@ -131,85 +63,26 @@
             14,
             15,
             16,
-            17
-          ]
-        },
-        {
-          "destination": "CSSL",
-          "fields_written": [
-            "ERROR-LOG-RECORD"
-          ],
-          "citation": [
-            19
+            17,
+            21
           ]
         }
       ],
-      "transforms": [
-        {
-          "input_field": "WS-ABS-TIME",
-          "output_field": "WS-CUR-DATE-X6",
-          "transformation_description": "Format absolute time to YYMMDD date format using CICS FORMATTIME",
-          "citation": [
-            8,
-            10
-          ]
-        },
-        {
-          "input_field": "WS-ABS-TIME",
-          "output_field": "WS-CUR-TIME-X6",
-          "transformation_description": "Format absolute time to TIME format using CICS FORMATTIME",
-          "citation": [
-            8,
-            11
-          ]
-        },
-        {
-          "input_field": "WS-CICS-TRANID",
-          "output_field": "ERR-APPLICATION",
-          "transformation_description": "Direct move of transaction ID to error log application field",
-          "citation": [
-            14
-          ]
-        },
-        {
-          "input_field": "WS-PGM-AUTH",
-          "output_field": "ERR-PROGRAM",
-          "transformation_description": "Direct move of program authority to error log program field",
-          "citation": [
-            15
-          ]
-        },
-        {
-          "input_field": "WS-CUR-DATE-X6",
-          "output_field": "ERR-DATE",
-          "transformation_description": "Direct move of formatted date to error log date field",
-          "citation": [
-            16
-          ]
-        },
-        {
-          "input_field": "WS-CUR-TIME-X6",
-          "output_field": "ERR-TIME",
-          "transformation_description": "Direct move of formatted time to error log time field",
-          "citation": [
-            17
-          ]
-        }
-      ]
+      "transforms": []
     },
     "copybooks_used": [],
     "paragraphs": [
       {
         "paragraph_name": "9500-LOG-ERROR",
         "summary": null,
-        "purpose": "This paragraph serves as the primary error logging routine in the program, invoked when an error condition occurs to record details for auditing and diagnostics. It consumes working storage variables such as WS-CICS-TRANID, WS-PGM-AUTH, and ERR-CRITICAL, as well as internally populating WS-ABS-TIME via CICS ASKTIME and deriving WS-CUR-DATE-X6 and WS-CUR-TIME-X6 via FORMATTIME. It produces a populated ERROR-LOG-RECORD by moving transaction ID to ERR-APPLICATION, program auth to ERR-PROGRAM, formatted date to ERR-DATE, and time to ERR-TIME, then writes the entire record to the CSSL TD queue. The business logic centers on deciding whether to terminate based on the ERR-CRITICAL flag: if true, it performs 9990-END-ROUTINE to shut down; otherwise, it falls through to exit. Error handling for CICS commands uses NOHANDLE, suppressing exceptions silently. It calls 9990-END-ROUTINE conditionally for critical errors to ensure proper program termination. This routine supports operational reliability by logging errors without interrupting non-critical flows. No files are opened or closed here; it relies on prior setup.",
+        "purpose": "This paragraph logs error information to a CICS temporary data queue named 'CSSL'. It first retrieves the current date and time using CICS ASKTIME and FORMATTIME commands and stores them in WS-CUR-DATE-X6 and WS-CUR-TIME-X6 respectively. It then moves the transaction ID (WS-CICS-TRANID) and program ID (WS-PGM-AUTH) into the ERROR-LOG-RECORD. The current date and time are also moved into the ERROR-LOG-RECORD. Finally, it writes the ERROR-LOG-RECORD to the 'CSSL' queue using the CICS WRITEQ TD command. If the error is critical (ERR-CRITICAL), it performs the 9990-END-ROUTINE paragraph to terminate the transaction. The paragraph consumes WS-CICS-TRANID, WS-PGM-AUTH, WS-ABS-TIME, WS-CUR-DATE-X6, WS-CUR-TIME-X6, and ERR-CRITICAL. It outputs the ERROR-LOG-RECORD to the 'CSSL' queue. No specific error handling is performed within this paragraph beyond the CICS NOHANDLE option. It calls 9990-END-ROUTINE if ERR-CRITICAL is true.",
         "called_by": [],
         "calls": [
           "9990-END-ROUTINE"
         ],
         "citation": [
-          983,
-          1011
+          1,
+          29
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -220,12 +93,12 @@
       {
         "paragraph_name": "9500-EXIT",
         "summary": null,
-        "purpose": "This paragraph acts as the standard exit point for the 9500-LOG-ERROR section, providing a clean return to the calling code when no critical termination is needed. It consumes no inputs or data explicitly, serving solely as a control flow terminator. It produces no outputs, modifications, or side effects. There is no business logic, conditions, decisions, or validations implemented. No error handling is present, as it assumes prior steps succeeded. It makes no calls to other paragraphs or programs. In the program flow, it is reached sequentially after the IF-END-IF block in 9500-LOG-ERROR if ERR-CRITICAL is false. This minimal paragraph ensures proper COBOL procedure division scoping and prevents fall-through issues. Its role is purely structural for maintainability.",
+        "purpose": "This paragraph serves as a simple exit point for the 9500-LOG-ERROR paragraph. It contains only the EXIT statement, which returns control to the calling paragraph. It does not consume any inputs or produce any outputs. No business logic or error handling is performed here. It does not call any other paragraphs or programs. Its primary purpose is to provide a standard exit point.",
         "called_by": [],
         "calls": [],
         "citation": [
-          1012,
-          1015
+          31,
+          32
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -236,14 +109,16 @@
       {
         "paragraph_name": "9990-END-ROUTINE",
         "summary": null,
-        "purpose": "This paragraph orchestrates the final termination of the program in response to critical errors, ensuring cleanup and return to CICS. It consumes no explicit inputs, relying on prior state from calling context. It produces program shutdown by performing 9000-TERMINATE (presumably for resource cleanup) and issuing EXEC CICS RETURN to release control back to CICS. There is no conditional business logic; it unconditionally executes termination steps. No specific error handling or validations are performed here, deferring to 9000-TERMINATE. It calls 9000-TERMINATE to handle any necessary file closures, variable resets, or other end-of-task activities before returning. This routine is critical for preventing resource leaks in CICS environment. Control flows to 9990-EXIT afterward. Its invocation only occurs from 9500-LOG-ERROR for critical cases.",
-        "called_by": [],
+        "purpose": "This paragraph performs the necessary steps to terminate the CICS transaction. It first calls the 9000-TERMINATE paragraph to perform any required termination processing. Then, it issues a CICS RETURN command to end the transaction. This paragraph ensures that the program terminates cleanly after an error. It consumes no direct inputs, but relies on the 9000-TERMINATE paragraph to handle any necessary cleanup. It does not directly produce any outputs, but the CICS RETURN command effectively terminates the transaction. No specific business logic is implemented within this paragraph. No error handling is performed here. It calls 9000-TERMINATE and the CICS RETURN command.",
+        "called_by": [
+          "9500-LOG-ERROR"
+        ],
         "calls": [
           "9000-TERMINATE"
         ],
         "citation": [
-          1016,
-          1023
+          34,
+          41
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -254,12 +129,12 @@
       {
         "paragraph_name": "9990-EXIT",
         "summary": null,
-        "purpose": "This paragraph functions as the exit point for the 9990-END-ROUTINE section, allowing control to return after termination logic. It takes no inputs and performs no reads or computations. It generates no outputs or data changes. No business rules, conditions, or decisions are evaluated. Error handling is absent, as termination is already in progress. No further calls are made to paragraphs or programs. In the overall flow, it is reached immediately after CICS RETURN in 9990-END-ROUTINE, ensuring scoped exit. This structural element maintains COBOL best practices for procedure division organization. It prevents unintended execution of subsequent code.",
+        "purpose": "This paragraph serves as a simple exit point for the 9990-END-ROUTINE paragraph. It contains only the EXIT statement, which returns control to the calling paragraph. It does not consume any inputs or produce any outputs. No business logic or error handling is performed here. It does not call any other paragraphs or programs. Its primary purpose is to provide a standard exit point.",
         "called_by": [],
         "calls": [],
         "citation": [
-          1024,
-          1026
+          43,
+          44
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -268,82 +143,39 @@
         "metadata": null
       }
     ],
-    "error_handling": [
-      {
-        "condition": "Critical error flagged (ERR-CRITICAL)",
-        "action": "Perform 9990-END-ROUTINE to terminate program",
-        "citation": [
-          26
-        ]
-      },
-      {
-        "condition": "CICS command failures (ASKTIME, FORMATTIME, WRITEQ)",
-        "action": "Ignored via NOHANDLE clauses",
-        "citation": [
-          4,
-          8,
-          23
-        ]
-      }
-    ],
+    "error_handling": [],
     "sql_operations": [],
     "cics_operations": [
       {
         "command": "ASKTIME",
         "resource": null,
-        "purpose": "Retrieve current absolute system time for error log timestamp",
+        "purpose": "Retrieves the current system time.",
         "citation": 4
       },
       {
         "command": "FORMATTIME",
         "resource": null,
-        "purpose": "Convert absolute time to readable YYMMDD date and TIME formats for logging",
+        "purpose": "Formats the absolute time into YYMMDD and TIME formats.",
         "citation": 8
       },
       {
-        "command": "WRITEQ",
+        "command": "WRITEQ TD",
         "resource": "CSSL",
-        "purpose": "Append error log record to transient data queue for audit trail",
+        "purpose": "Writes an error log record to the CICS temporary data queue 'CSSL'.",
         "citation": 19
       },
       {
         "command": "RETURN",
         "resource": null,
-        "purpose": "Terminate task and return control to CICS transaction manager",
+        "purpose": "Terminates the CICS transaction.",
         "citation": 39
       }
     ],
-    "open_questions": [
-      {
-        "question": "What is the overall business purpose and main flow of COPAUA0C?",
-        "context": "Only terminal error handling paragraphs provided; no main logic, initialization, or processing sections visible.",
-        "suggestion": "Analyze full source code including PROGRAM-ID, PROCEDURE DIVISION start, and main paragraphs."
-      },
-      {
-        "question": "What external inputs (e.g., CICS_MAP, COMMAREA, queues, files) does the program use?",
-        "context": "Snippet shows only WS variables; no open/read operations or input definitions.",
-        "suggestion": "Provide WORKING-STORAGE, FILE SECTION, and main processing paragraphs."
-      },
-      {
-        "question": "What does 9000-TERMINATE paragraph do?",
-        "context": "Called but code not provided.",
-        "suggestion": "Include lines for 9000-TERMINATE."
-      },
-      {
-        "question": "How are WS-CICS-TRANID, WS-PGM-AUTH, ERR-CRITICAL, and other fields in ERROR-LOG-RECORD populated before 9500-LOG-ERROR?",
-        "context": "Moves occur but prior setup not shown.",
-        "suggestion": "Examine calling paragraphs."
-      },
-      {
-        "question": "Is ERROR-LOG-RECORD from a COPYBOOK or local WS definition?",
-        "context": "Used directly; no COPY statement in snippet.",
-        "suggestion": "Check WORKING-STORAGE SECTION."
-      }
-    ],
+    "open_questions": [],
     "resolved_questions": [],
     "dead_code": [],
     "call_semantics": [],
     "flow_diagram": null
   },
-  "saved_at": "2026-02-23T20:53:33.426887"
+  "saved_at": "2026-02-24T10:45:40.740959"
 }

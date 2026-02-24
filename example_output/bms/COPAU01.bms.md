@@ -1,99 +1,84 @@
 # COPAU01
 
-**File:** bms/COPAU01.bms
-**Type:** BMS
-**Status:** In Progress
-**Iterations:** 1
-**Analyzed:** 2026-02-24 03:58:34.647405
+**File**: `bms/COPAU01.bms`
+**Type**: FileType.BMS
+**Analyzed**: 2026-02-24 17:38:07.760747
 
 ## Purpose
 
-This BMS file defines the COPAU01 mapset and COPAU1A map for a CICS screen titled 'Pending Authorization Details Screen' (CardDemo). It lays out fields for displaying credit card transaction authorization details including card number, auth date/time/response/code/amount/type/source, merchant details, status flags, and function keys. The map operates in INOUT mode with AUTO storage and supports color-coded display for emphasis on statuses and errors.
+This BMS map defines the screen layout for the 'Pending Authorization Details' screen in the CardDemo application. It specifies the position, size, color, and attributes of various fields displayed on the screen, including transaction details, card information, authorization data, and merchant details. The map also includes function key assignments for navigation and fraud management.
 
-**Business Context:** Serves credit card authorization review process in a fraud detection or pending auth inquiry transaction within a CICS online banking or payment system.
-**Program Type:** ONLINE_CICS
-**Citations:** Lines 2, 19, 22, 26, 79, 292
+**Business Context**: This screen is likely used to display and manage pending card authorization details within a card processing or fraud management system.
 
 ## Inputs
 
-### COPAU1A
-- **Type:** CICS_MAP
-- **Description:** Symbolic map receives data from CICS program to populate screen fields like CARDNUM, AUTHDT, MERNAME for display and user-modified fields
-- **Lines:** 26, 84, 94, 239
+| Name | Type | Description |
+|------|------|-------------|
+| TRNNAME | IOType.CICS_MAP | Transaction name field. Input to display the transaction identifier. |
+| PGMNAME | IOType.CICS_MAP | Program name field. Input to display the program identifier. |
+| CARDNUM | IOType.CICS_MAP | Card number field. Input to display the card number. |
+| AUTHDT | IOType.CICS_MAP | Authorization date field. Input to display the authorization date. |
+| AUTHTM | IOType.CICS_MAP | Authorization time field. Input to display the authorization time. |
+| AUTHRSP | IOType.CICS_MAP | Authorization response field. Input to display the authorization response code. |
+| AUTHRSN | IOType.CICS_MAP | Authorization response reason field. Input to display the reason for the authorization response. |
+| AUTHCD | IOType.CICS_MAP | Authorization code field. Input to display the authorization code. |
+| AUTHAMT | IOType.CICS_MAP | Authorization amount field. Input to display the authorized amount. |
+| POSEMD | IOType.CICS_MAP | POS entry mode field. Input to display the point-of-sale entry mode. |
+| AUTHSRC | IOType.CICS_MAP | Authorization source field. Input to display the source of the authorization request. |
+| MCCCD | IOType.CICS_MAP | MCC code field. Input to display the Merchant Category Code. |
+| CRDEXP | IOType.CICS_MAP | Card expiration date field. Input to display the card's expiration date. |
+| AUTHTYP | IOType.CICS_MAP | Authorization type field. Input to display the type of authorization. |
+| TRNID | IOType.CICS_MAP | Transaction ID field. Input to display the transaction identifier. |
+| AUTHMTC | IOType.CICS_MAP | Match status field. Input to display the match status of the transaction. |
+| AUTHFRD | IOType.CICS_MAP | Fraud status field. Input to display the fraud status of the transaction. |
+| MERNAME | IOType.CICS_MAP | Merchant name field. Input to display the name of the merchant. |
+| MERID | IOType.CICS_MAP | Merchant ID field. Input to display the merchant identifier. |
+| MERCITY | IOType.CICS_MAP | Merchant city field. Input to display the city of the merchant. |
+| MERST | IOType.CICS_MAP | Merchant state field. Input to display the state of the merchant. |
+| MERZIP | IOType.CICS_MAP | Merchant zip code field. Input to display the zip code of the merchant. |
+| ERRMSG | IOType.CICS_MAP | Error message field. Input to display error messages. |
 
 ## Outputs
 
-### COPAU1A
-- **Type:** CICS_MAP
-- **Description:** Physical map outputs formatted 24x80 screen with labeled fields, colors, and initial values for SEND MAP in CICS
-- **Lines:** 27, 292
+| Name | Type | Description |
+|------|------|-------------|
+| TRNNAME | IOType.CICS_MAP | Transaction name field. Output to display the transaction identifier. |
+| PGMNAME | IOType.CICS_MAP | Program name field. Output to display the program identifier. |
+| CARDNUM | IOType.CICS_MAP | Card number field. Output to display the card number. |
+| AUTHDT | IOType.CICS_MAP | Authorization date field. Output to display the authorization date. |
+| AUTHTM | IOType.CICS_MAP | Authorization time field. Output to display the authorization time. |
+| AUTHRSP | IOType.CICS_MAP | Authorization response field. Output to display the authorization response code. |
+| AUTHRSN | IOType.CICS_MAP | Authorization response reason field. Output to display the reason for the authorization response. |
+| AUTHCD | IOType.CICS_MAP | Authorization code field. Output to display the authorization code. |
+| AUTHAMT | IOType.CICS_MAP | Authorization amount field. Output to display the authorized amount. |
+| POSEMD | IOType.CICS_MAP | POS entry mode field. Output to display the point-of-sale entry mode. |
+| AUTHSRC | IOType.CICS_MAP | Authorization source field. Output to display the source of the authorization request. |
+| MCCCD | IOType.CICS_MAP | MCC code field. Output to display the Merchant Category Code. |
+| CRDEXP | IOType.CICS_MAP | Card expiration date field. Output to display the card's expiration date. |
+| AUTHTYP | IOType.CICS_MAP | Authorization type field. Output to display the type of authorization. |
+| TRNID | IOType.CICS_MAP | Transaction ID field. Output to display the transaction identifier. |
+| AUTHMTC | IOType.CICS_MAP | Match status field. Output to display the match status of the transaction. |
+| AUTHFRD | IOType.CICS_MAP | Fraud status field. Output to display the fraud status of the transaction. |
+| MERNAME | IOType.CICS_MAP | Merchant name field. Output to display the name of the merchant. |
+| MERID | IOType.CICS_MAP | Merchant ID field. Output to display the merchant identifier. |
+| MERCITY | IOType.CICS_MAP | Merchant city field. Output to display the city of the merchant. |
+| MERST | IOType.CICS_MAP | Merchant state field. Output to display the state of the merchant. |
+| MERZIP | IOType.CICS_MAP | Merchant zip code field. Output to display the zip code of the merchant. |
+| ERRMSG | IOType.CICS_MAP | Error message field. Output to display error messages. |
 
-### ERRMSG
-- **Type:** CICS_MAP
-- **Description:** Error message field for displaying validation or processing errors
-- **Lines:** 284
+## Paragraphs/Procedures
 
-## Business Rules
+### ~~COPAU01~~ (Dead Code)
+*Artifact 'COPAU01' (map) is never referenced by any other artifact in the dependency graph*
 
-### BR001: Critical authorization status fields (Match Status AUTHMTC and Fraud Status AUTHFRD) are highlighted in RED to draw attention to potential fraud or mismatch issues.
-**Logic:** Fields defined with COLOR=RED for visual alerting.
-**Conditions:** Display of match or fraud status
-**Lines:** 215, 225
+### ~~COPAU1A~~ (Dead Code)
+*Screen/Map 'COPAU1A' is never sent to or received from by any program*
 
-### BR002: Error messages are prominently displayed in bright red with FSET attribute to ensure user notices issues.
-**Logic:** ERRMSG field uses ATTRB=(ASKIP,BRT,FSET), COLOR=RED.
-**Conditions:** Error condition triggered
-**Lines:** 284
+## Dead Code
 
-### BR003: Screen labels use consistent color scheme: TURQUOISE for labels, BLUE/PINK for data fields, YELLOW for titles, NEUTRAL for section headers.
-**Logic:** Multiple DFHMDF definitions specify COLOR attributes for readability and branding.
-**Conditions:** All static text labels
-**Lines:** 30, 39, 80, 83, 229
+The following artifacts were identified as dead code by static analysis:
 
-### BR004: Function key instructions are provided at screen bottom: F3=Back, F5=Mark/Remove Fraud, F8=Next Auth.
-**Logic:** Static INITIAL text in bottom row.
-**Conditions:** User navigation and actions
-**Lines:** 292
-
-## Key Paragraphs
-
-### COPAU01
-**Purpose:** [Citadel] Paragraph identified by static analysis
-- Lines: 19-19
-
-### COPAU1A
-**Purpose:** [Citadel] Paragraph identified by static analysis
-- Lines: 26-26
-
-## Error Handling
-
-- **Application errors or validation failures:** Display message in ERRMSG field highlighted with BRT, FSET, RED color
-  (Lines: 284)
-
-## Open Questions
-
-- **What are the exact data lengths and formats loaded into fields like AUTHCD, AUTHAMT?**
-  - Context: BMS defines display lengths (e.g., AUTHCD LENGTH=6 line 136) but not validation or source formats.
-  - Suggestion: Review symbolic map copybook or using program.
-
-## Resolved Questions
-
-- **Q:** Which CICS COBOL program(s) use this COPAU01 mapset?
-  **A:** **COPAUS1C.cbl** is the CICS COBOL program that uses the COPAU01 mapset.
-
-### Evidence from Code Search:
-- **COPY statement**: Line 122 in `cbl/COPAUS1C.cbl` includes `COPY COPAU01.`, embedding the map definitions (COPAU1A map and fields) directly into the program working storage.
-- **CICS EXEC calls** (all specifying MAPSET('COPAU01') and MAP('COPAU1A')):
-  | Line | Context | Code Snippet |
-  |------|---------|-------------|
-  | 383 | SEND (with ERASE) | `EXEC CICS SEND MAP('COPAU1A') MAPSET('COPAU01') FROM(COPAU1AO) ERASE CURSOR END-EXEC` |
-  | 391 | SEND (without ERASE) | `EXEC CICS SEND MAP('COPAU1A') MAPSET('COPAU01') FROM(COPAU1AO) CURSOR END-EXEC` |
-  | 402 | RECEIVE | `EXEC CICS RECEIVE MAP('COPAU1A') MAPSET('COPAU01') INTO(COPAU1AI) NOHANDLE END-EXEC` |
-
-No other programs reference COPAU01:
-- Searches for `'COPAU01'` across all files (`*`), `*.cob`, and `*.pli` returned **no additional matches**.
-
-This confirms exclusive usage by COPAUS1C for the "Pending Authorization Details Screen" (handles screen send/receive for auth details, keys, fraud data).
-
----
-*Generated by War Rig WAR_RIG*
+| Artifact | Type | Line | Reason |
+|----------|------|------|--------|
+| COPAU01 | map | 19 | Artifact 'COPAU01' (map) is never referenced by any other artifact in the dependency graph |
+| COPAU1A | screen | 26 | Screen/Map 'COPAU1A' is never sent to or received from by any program |

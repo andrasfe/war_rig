@@ -7,5 +7,5 @@ description: BMS copybook documentation (screen mappings)
 
 | Name | Description | Documentation |
 |---------|-------------|---------------|
-| COPAU00 | This COBOL copybook defines the symbolic map structures COPAU0AI and COPAU0AO for the COPAU00 BMS map used in CICS applications. COPAU0AI provides length (L), format (F), attribute (A), and input... | [Full docs](../documentation/cpy-bms/COPAU00.cpy.md) |
-| COPAU01 | This COBOL copybook defines the symbolic map structures COPAU1AI (input) and COPAU1AO (output redefines COPAU1AI) for the CICS BMS map COPAU01. It provides data areas, length fields (e.g.,... | [Full docs](../documentation/cpy-bms/COPAU01.cpy.md) |
+| COPAU00 | This copybook defines the BMS map structure for screen input and output related to an UNKNOWN program. It likely contains field definitions, attributes, and screen layout information used by CICS... | [Full docs](../documentation/cpy-bms/COPAU00.cpy.md) |
+| COPAU01 | This copybook defines the data structures COPAU1AI and COPAU1AO, which are used for screen input and output related to authorization processing. It includes fields for transaction name, titles,... | [Full docs](../documentation/cpy-bms/COPAU01.cpy.md) |
