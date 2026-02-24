@@ -53,7 +53,14 @@ class TestCLIHelp:
         """Test that --help works."""
         result = runner.invoke(app, ["--help"])
         assert result.exit_code == 0
-        assert "CodeWhisper" in result.stdout or "codewhisper" in result.stdout.lower()
+        assert "codewhisper" in result.stdout.lower()
+        assert "chat" in result.stdout
+        assert "generate-skills" in result.stdout
+
+    def test_chat_help_message(self) -> None:
+        """Test that chat --help shows options."""
+        result = runner.invoke(app, ["chat", "--help"])
+        assert result.exit_code == 0
         assert "--skills-dir" in result.stdout
         assert "--code-dir" in result.stdout
 
@@ -69,6 +76,7 @@ class TestCLIPathValidation:
         result = runner.invoke(
             app,
             [
+                "chat",
                 "--skills-dir",
                 str(tmp_path / "nonexistent"),
                 "--code-dir",
@@ -87,6 +95,7 @@ class TestCLIPathValidation:
         result = runner.invoke(
             app,
             [
+                "chat",
                 "--skills-dir",
                 str(skills_dir),
                 "--code-dir",
@@ -109,6 +118,7 @@ class TestCLIOptions:
                 result = runner.invoke(
                     app,
                     [
+                        "chat",
                         "--skills-dir",
                         str(tmp_skills_dir),
                         "--code-dir",
@@ -127,6 +137,7 @@ class TestCLIOptions:
                 result = runner.invoke(
                     app,
                     [
+                        "chat",
                         "--skills-dir",
                         str(tmp_skills_dir),
                         "--code-dir",
@@ -144,6 +155,7 @@ class TestCLIOptions:
                 result = runner.invoke(
                     app,
                     [
+                        "chat",
                         "--skills-dir",
                         str(tmp_skills_dir),
                         "--code-dir",
@@ -163,6 +175,7 @@ class TestCLIOptions:
                 runner.invoke(
                     app,
                     [
+                        "chat",
                         "--skills-dir",
                         str(tmp_skills_dir),
                         "--code-dir",
@@ -186,6 +199,7 @@ class TestCLIShortOptions:
                 result = runner.invoke(
                     app,
                     [
+                        "chat",
                         "-s",
                         str(tmp_skills_dir),
                         "-c",
@@ -208,6 +222,7 @@ class TestCLIShortOptions:
                 result = runner.invoke(
                     app,
                     [
+                        "chat",
                         "-s",
                         str(tmp_skills_dir),
                         "-c",

@@ -968,7 +968,7 @@ async def run_single_query(config: AgentConfig, query: str) -> None:
     console.print(Markdown(formatted_response))
 
 
-@app.command()
+@app.command("chat")
 def main(
     skills_dir: Annotated[
         Path | None,
@@ -1086,6 +1086,109 @@ def main(
         asyncio.run(run_single_query(config, query))
     else:
         asyncio.run(run_interactive(config))
+
+
+@app.command("generate-skills")
+def generate_skills(
+    docs_dir: Annotated[
+        Path,
+        typer.Option(
+            "--docs-dir",
+            "-d",
+            help="Path to War Rig documentation directory (contains cbl/, jcl/, etc.)",
+        ),
+    ],
+    output_dir: Annotated[
+        Path | None,
+        typer.Option(
+            "--output-dir",
+            "-o",
+            help="Path for generated skills output (default: docs_dir/../skills-documentation)",
+        ),
+    ] = None,
+    system_name: Annotated[
+        str,
+        typer.Option(
+            "--system-name",
+            help="Name of the system for top-level skill title",
+        ),
+    ] = "System",
+    force: Annotated[
+        bool,
+        typer.Option(
+            "--force",
+            "-f",
+            help="Overwrite existing skills",
+        ),
+    ] = False,
+    verbose: Annotated[
+        bool,
+        typer.Option(
+            "--verbose",
+            "-v",
+            help="Show detailed progress",
+        ),
+    ] = False,
+) -> None:
+    """Generate Agent Skills from War Rig documentation output."""
+    setup_logging(verbose)
+
+    if not docs_dir.exists():
+        console.print(f"[red]Documentation directory not found:[/red] {docs_dir}")
+        raise typer.Exit(1)
+
+    from war_rig.skills import SkillsGenerator, SkillsGeneratorError
+
+    # Check for existing output and --force
+    effective_output = output_dir or docs_dir.parent / "skills-documentation"
+    if effective_output.exists() and not force:
+        console.print(
+            f"[yellow]Output directory already exists:[/yellow] {effective_output}\n"
+            "Use --force to overwrite."
+        )
+        raise typer.Exit(1)
+
+    console.print(f"[bold]Generating skills from:[/bold] {docs_dir}")
+    if verbose:
+        console.print(f"  Output: {effective_output}")
+        console.print(f"  System name: {system_name}")
+
+    try:
+        generator = SkillsGenerator(
+            input_dir=docs_dir,
+            output_dir=output_dir,
+            system_name=system_name,
+        )
+        result = generator.generate_with_result()
+    except SkillsGeneratorError as e:
+        console.print(f"[red]Generation failed:[/red] {e}")
+        raise typer.Exit(1) from None
+
+    # Report results
+    if result.errors:
+        for err in result.errors:
+            console.print(f"  [yellow]Warning:[/yellow] {err}")
+
+    table = Table(title="Generation Summary", show_header=False)
+    table.add_column("Metric", style="bold")
+    table.add_column("Value")
+    table.add_row("Categories", ", ".join(result.categories_created) or "(none)")
+    table.add_row("Files processed", str(result.files_processed))
+    table.add_row(
+        "Top-level skill", "created" if result.top_level_created else "skipped"
+    )
+    table.add_row("Output", str(result.output_dir))
+    console.print(table)
+
+    if result.categories_created:
+        console.print(
+            f"\n[green]Generated {len(result.categories_created)} "
+            f"category skill(s) from {result.files_processed} file(s).[/green]"
+        )
+    else:
+        console.print(
+            "\n[yellow]No categories found in documentation directory.[/yellow]"
+        )
 
 
 if __name__ == "__main__":
