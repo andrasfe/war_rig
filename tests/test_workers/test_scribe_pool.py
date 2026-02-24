@@ -2508,10 +2508,145 @@ class TestPerformThruDeadCodeFilter:
             template, "/nonexistent/PROG.cbl", citadel_context
         )
 
-        # Should still mark as dead code since we can't verify THRU usage
+        # 1000-EXIT has no sibling paragraph — still dead
         exit_para = result.paragraphs[0]
         assert exit_para.is_dead_code is True
         assert len(result.dead_code) == 1
+
+    @pytest.mark.asyncio
+    async def test_dead_code_exit_convention_without_thru(
+        self, mock_config, mock_beads_client, tmp_path
+    ):
+        """EXIT paragraphs with sibling paragraphs are filtered even without THRU."""
+        from war_rig.models.templates import DocumentationTemplate, Paragraph
+
+        # Source with NO PERFORM THRU — just direct PERFORMs
+        source = """\
+       PROCEDURE DIVISION.
+       0000-MAIN.
+           PERFORM 9500-LOG-ERROR.
+           PERFORM 9990-END-ROUTINE.
+       9500-LOG-ERROR.
+           DISPLAY 'ERROR'.
+       9500-EXIT.
+           EXIT.
+       9990-END-ROUTINE.
+           DISPLAY 'ENDING'.
+       9990-EXIT.
+           EXIT.
+       9999-ORPHAN-EXIT.
+           EXIT.
+"""
+        source_file = tmp_path / "TESTPROG.cbl"
+        source_file.write_text(source)
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            output_directory=tmp_path / "output",
+        )
+        mock_citadel = MagicMock()
+        mock_citadel.get_callers.return_value = []
+        mock_citadel.get_function_body.return_value = None
+        worker._citadel = mock_citadel
+
+        template = DocumentationTemplate(
+            paragraphs=[
+                Paragraph(paragraph_name="0000-MAIN", purpose="Main"),
+                Paragraph(paragraph_name="9500-LOG-ERROR", purpose="Log"),
+                Paragraph(paragraph_name="9500-EXIT", purpose="Exit log"),
+                Paragraph(paragraph_name="9990-END-ROUTINE", purpose="End"),
+                Paragraph(paragraph_name="9990-EXIT", purpose="Exit end"),
+                Paragraph(paragraph_name="9999-ORPHAN-EXIT", purpose="Orphan"),
+            ]
+        )
+
+        citadel_context = {
+            "functions": [],
+            "dead_code": [
+                {"name": "9500-EXIT", "type": "paragraph", "line": 7,
+                 "reason": "Paragraph '9500-EXIT' is never PERFORMed"},
+                {"name": "9990-EXIT", "type": "paragraph", "line": 11,
+                 "reason": "Paragraph '9990-EXIT' is never PERFORMed"},
+                {"name": "9999-ORPHAN-EXIT", "type": "paragraph", "line": 13,
+                 "reason": "Paragraph '9999-ORPHAN-EXIT' is never PERFORMed"},
+            ],
+        }
+
+        result = await worker._enrich_paragraphs_with_citadel(
+            template, str(source_file), citadel_context
+        )
+
+        # 9500-EXIT has sibling 9500-LOG-ERROR → convention-filtered, NOT dead
+        exit_9500 = next(
+            p for p in result.paragraphs if p.paragraph_name == "9500-EXIT"
+        )
+        assert exit_9500.is_dead_code is False
+
+        # 9990-EXIT has sibling 9990-END-ROUTINE → convention-filtered, NOT dead
+        exit_9990 = next(
+            p for p in result.paragraphs if p.paragraph_name == "9990-EXIT"
+        )
+        assert exit_9990.is_dead_code is False
+
+        # 9999-ORPHAN-EXIT has NO sibling "9999-*" (only itself) → stays dead
+        orphan = next(
+            p for p in result.paragraphs if p.paragraph_name == "9999-ORPHAN-EXIT"
+        )
+        assert orphan.is_dead_code is True
+
+        # Dead code section should only contain the orphan
+        assert len(result.dead_code) == 1
+        assert result.dead_code[0].name == "9999-ORPHAN-EXIT"
+
+    def test_find_exit_convention_paragraphs(
+        self, mock_config, mock_beads_client, tmp_path
+    ):
+        """Unit test for _find_exit_convention_paragraphs."""
+        from war_rig.models.templates import DocumentationTemplate, Paragraph
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            output_directory=tmp_path / "output",
+        )
+
+        template = DocumentationTemplate(
+            paragraphs=[
+                Paragraph(paragraph_name="1000-INIT"),
+                Paragraph(paragraph_name="1000-EXIT"),
+                Paragraph(paragraph_name="2000-PROCESS"),
+                Paragraph(paragraph_name="2000-EXIT"),
+                Paragraph(paragraph_name="9999-ORPHAN-EXIT"),
+            ]
+        )
+
+        result = worker._find_exit_convention_paragraphs(template)
+
+        assert "1000-EXIT" in result
+        assert "2000-EXIT" in result
+        # 9999-ORPHAN-EXIT has no sibling 9999-* paragraph
+        assert "9999-ORPHAN-EXIT" not in result
+
+    def test_find_exit_convention_empty_template(
+        self, mock_config, mock_beads_client, tmp_path
+    ):
+        """Empty template returns empty set."""
+        from war_rig.models.templates import DocumentationTemplate
+
+        worker = ScribeWorker(
+            worker_id="scribe-1",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            output_directory=tmp_path / "output",
+        )
+
+        result = worker._find_exit_convention_paragraphs(
+            DocumentationTemplate(paragraphs=[])
+        )
+        assert result == set()
 
 
 # =============================================================================

@@ -649,6 +649,52 @@ class ScribeWorker:
             )
         return thru_targets
 
+    @staticmethod
+    def _find_exit_convention_paragraphs(
+        template: DocumentationTemplate,
+    ) -> set[str]:
+        """Find EXIT paragraphs that follow COBOL naming convention.
+
+        COBOL programs conventionally pair processing paragraphs with EXIT
+        paragraphs sharing the same numeric prefix (e.g., 9500-LOG-ERROR
+        and 9500-EXIT).  These EXIT paragraphs are range markers, not dead
+        code, even when no explicit PERFORM THRU references them.
+
+        A paragraph qualifies if:
+        - Its name ends with ``-EXIT`` (case-insensitive)
+        - At least one other paragraph in the template shares the same
+          leading numeric prefix (e.g. ``9500``)
+
+        Returns:
+            Set of paragraph names (uppercased) to exclude from dead code.
+        """
+        if not template.paragraphs:
+            return set()
+
+        all_names = {
+            p.paragraph_name.upper()
+            for p in template.paragraphs
+            if p.paragraph_name
+        }
+
+        exit_paras: set[str] = set()
+        for name in all_names:
+            if not name.endswith("-EXIT"):
+                continue
+            # Extract the prefix before -EXIT (e.g. "9500" from "9500-EXIT")
+            prefix = name[: -len("-EXIT")]
+            if not prefix:
+                continue
+            # Check if any other paragraph shares this prefix
+            has_sibling = any(
+                other.startswith(prefix + "-") and other != name
+                for other in all_names
+            )
+            if has_sibling:
+                exit_paras.add(name)
+
+        return exit_paras
+
     async def _enrich_paragraphs_with_citadel(
         self,
         template: DocumentationTemplate,
@@ -783,24 +829,26 @@ class ScribeWorker:
         # Mark dead code paragraphs and build dead_code section
         dead_code_items = citadel_context.get("dead_code", [])
         if dead_code_items:
-            # Bug fix: Filter out EXIT paragraphs that are PERFORM THRU range
-            # endpoints. In COBOL, PERFORM X THRU Y executes paragraphs from X
-            # through Y. The Y paragraph (typically an EXIT paragraph like
-            # 1000-EXIT) is used as a range marker but may not have explicit
-            # incoming PERFORM edges in the dependency graph. Without this
-            # filter, such paragraphs are incorrectly flagged as dead code.
+            # Filter false-positive dead code for paragraphs:
+            # 1. PERFORM THRU endpoints — the Y in PERFORM X THRU Y may lack
+            #    explicit incoming edges in the dependency graph.
+            # 2. Convention-based EXIT paragraphs — COBOL programs use naming
+            #    patterns like 9500-EXIT paired with 9500-LOG-ERROR. These are
+            #    range markers even when the PERFORM doesn't use THRU syntax.
             thru_targets = self._find_perform_thru_targets(file_path)
-            if thru_targets:
+            exit_convention = self._find_exit_convention_paragraphs(template)
+            exclude = thru_targets | exit_convention
+            if exclude:
                 original_count = len(dead_code_items)
                 dead_code_items = [
                     item for item in dead_code_items
-                    if item.get("name", "").upper() not in thru_targets
+                    if item.get("name", "").upper() not in exclude
                 ]
                 filtered_count = original_count - len(dead_code_items)
                 if filtered_count > 0:
                     logger.info(
                         f"Worker {self.worker_id}: Filtered {filtered_count} "
-                        f"PERFORM THRU endpoint(s) from dead code results"
+                        f"false-positive dead code paragraph(s)"
                     )
 
             # Build lookup of dead paragraph names (case-insensitive)
