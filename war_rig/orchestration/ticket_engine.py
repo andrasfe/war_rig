@@ -449,6 +449,12 @@ class TicketOrchestrator:
                 if self._stop_requested:
                     break
 
+                # Static citation validation — correct hallucinated line ranges
+                await self._run_citation_validation()
+
+                if self._stop_requested:
+                    break
+
                 # Check upfront call graph analysis for documentation gaps
                 call_graph_result = self._state.call_graph_analysis
                 has_call_graph_gaps = (
@@ -833,6 +839,115 @@ class TicketOrchestrator:
         # Terminal states are: COMPLETED, BLOCKED, CANCELLED, MERGED
         # Non-terminal states are: CREATED, CLAIMED, IN_PROGRESS, REWORK
         await self._validate_cycle_complete(max_retries=3)
+
+    async def _run_citation_validation(self) -> None:
+        """Run static citation validation on all documented COBOL files.
+
+        Cross-checks LLM paragraph citations against preprocessor ground
+        truth. Corrects wrong citations, regenerates paragraph splits,
+        and creates CHROME tickets for files whose documentation text
+        may reference incorrect code sections.
+        """
+        if self._input_directory is None:
+            logger.debug("No input directory, skipping citation validation")
+            return
+
+        from war_rig.validation.citation_validator import CitationValidator
+
+        logger.info("Running static citation validation pass")
+
+        validator = CitationValidator(
+            input_directory=self._input_directory,
+            output_directory=self.config.output_directory,
+        )
+
+        results = validator.validate_all()
+
+        if not results:
+            logger.info("Citation validation: all citations correct")
+            return
+
+        # Summarise
+        total_corrected = sum(r.corrected_count for r in results)
+        total_unresolvable = sum(r.unresolvable_count for r in results)
+        files_with_issues = [r.file_name for r in results if r.corrected]
+
+        logger.info(
+            "Citation validation: %d corrections across %d files, "
+            "%d unresolvable paragraphs",
+            total_corrected,
+            len(files_with_issues),
+            total_unresolvable,
+        )
+
+        # Create CHROME tickets for files with WRONG_RANGE findings
+        # (citations were corrected but documentation text may describe wrong code)
+        chrome_requests: list[ClarificationRequest] = []
+        for result in results:
+            wrong_range_findings = [
+                f
+                for f in result.findings
+                if f.issue_type.value == "WRONG_RANGE"
+            ]
+            if not wrong_range_findings:
+                continue
+
+            description = self._format_citation_issues(wrong_range_findings)
+            chrome_requests.append(
+                ClarificationRequest(
+                    file_name=result.file_name,
+                    issue_description=description,
+                    section="paragraphs",
+                    priority=BeadsPriority.HIGH,
+                    guidance=(
+                        "Citation line ranges were corrected by static validation. "
+                        "Review the affected paragraphs and update documentation "
+                        "text to match the correct source code."
+                    ),
+                )
+            )
+
+        if chrome_requests:
+            logger.info(
+                "Creating %d CHROME tickets from citation validation",
+                len(chrome_requests),
+            )
+            tickets = self.program_manager.handle_clarifications(
+                chrome_requests,
+                feedback_context=self._current_feedback_context
+                if hasattr(self, "_current_feedback_context")
+                else None,
+            )
+            # Tag tickets with citation_validation metadata
+            for ticket in tickets:
+                self.beads_client.update_ticket_state(
+                    ticket.ticket_id,
+                    ticket.state,
+                    metadata_updates={"citation_validation": True},
+                )
+
+    @staticmethod
+    def _format_citation_issues(
+        findings: list,
+    ) -> str:
+        """Format citation findings into a compact description for CHROME tickets.
+
+        Args:
+            findings: List of CitationFinding with WRONG_RANGE issues.
+
+        Returns:
+            Human-readable summary of the citation issues.
+        """
+        lines = ["Citation validation found incorrect line ranges:"]
+        for f in findings:
+            orig = f"[{f.original_citation[0]}, {f.original_citation[1]}]" if f.original_citation else "none"
+            corr = f"[{f.corrected_citation[0]}, {f.corrected_citation[1]}]" if f.corrected_citation else "none"
+            lines.append(f"  - {f.paragraph_name}: was {orig}, corrected to {corr}")
+        lines.append(
+            "The source code citations have been corrected. "
+            "Documentation text may still describe the wrong code section."
+        )
+        return "\n".join(lines)
 
     def _run_call_graph_analysis(self) -> CallGraphAnalysis | None:
         """Analyze the call graph to identify documentation gaps.

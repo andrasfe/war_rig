@@ -843,9 +843,14 @@ class ChallengerWorker:
         Returns:
             Claimed ticket, or None if no tickets available.
         """
-        # Get available VALIDATION tickets
+        # Get available VALIDATION and FIX_VERIFICATION tickets
         available = self.beads_client.get_available_tickets(
             ticket_type=TicketType.VALIDATION,
+        )
+        available.extend(
+            self.beads_client.get_available_tickets(
+                ticket_type=TicketType.FIX_VERIFICATION,
+            )
         )
 
         if not available:
@@ -969,6 +974,11 @@ class ChallengerWorker:
             # Check if this is a discovery ticket validation
             if ticket.metadata and ticket.metadata.get("discovery"):
                 await self._process_discovery_validation(ticket)
+                return
+
+            # Handle FIX_VERIFICATION tickets (citation validation fixes)
+            if ticket.ticket_type == TicketType.FIX_VERIFICATION:
+                await self._process_fix_verification(ticket)
                 return
 
             # Load the documentation state from the ticket metadata
@@ -1929,6 +1939,130 @@ class ChallengerWorker:
             )
 
         return rework_ticket
+
+    async def _process_fix_verification(
+        self, ticket: ProgramManagerTicket
+    ) -> None:
+        """Process a FIX_VERIFICATION ticket for citation validation fixes.
+
+        1. Re-runs deterministic citation validation to confirm citations are correct.
+        2. If still wrong, creates a new CHROME ticket (reopen).
+        3. If correct, runs focused Challenger validation on affected paragraphs.
+        4. Completes or reopens based on LLM review.
+
+        Args:
+            ticket: The FIX_VERIFICATION ticket to process.
+        """
+        from war_rig.validation.citation_validator import CitationValidator
+
+        logger.info(
+            f"Worker {self.worker_id}: Processing FIX_VERIFICATION ticket "
+            f"{ticket.ticket_id} for {ticket.file_name}"
+        )
+
+        # Step 1: Deterministic re-check
+        if self._input_directory is None:
+            logger.warning(
+                f"Worker {self.worker_id}: No input directory for FIX_VERIFICATION"
+            )
+            self.beads_client.update_ticket_state(
+                ticket.ticket_id,
+                TicketState.BLOCKED,
+                reason="No input directory available for citation validation",
+            )
+            return
+
+        validator = CitationValidator(
+            input_directory=self._input_directory,
+            output_directory=self.output_directory,
+        )
+        result = validator.validate_file(ticket.file_name)
+
+        # Check if there are still WRONG_RANGE issues
+        wrong_range = [
+            f
+            for f in result.findings
+            if f.issue_type.value == "WRONG_RANGE"
+        ]
+
+        if wrong_range:
+            # Citations still wrong — create rework ticket
+            logger.warning(
+                f"Worker {self.worker_id}: FIX_VERIFICATION for {ticket.file_name} "
+                f"found {len(wrong_range)} remaining citation issues, reopening"
+            )
+            issue_desc = (
+                f"Citation validation still found {len(wrong_range)} "
+                f"wrong paragraph line ranges after fix attempt"
+            )
+            rework_result = ValidationResult(
+                success=True,
+                is_valid=False,
+                issues_found=[issue_desc],
+                blocking_questions=[{
+                    "question_type": QuestionType.VERIFICATION.value,
+                    "severity": QuestionSeverity.IMPORTANT.value,
+                    "section": "paragraphs",
+                    "question": issue_desc,
+                }],
+            )
+            self._create_rework_ticket(ticket, rework_result)
+            self.beads_client.update_ticket_state(
+                ticket.ticket_id,
+                TicketState.COMPLETED,
+                reason="Citations still incorrect, reopened as CHROME",
+            )
+            return
+
+        # Step 2: Citations are correct — run focused LLM validation
+        state = self._load_documentation_state(ticket)
+        if state is None:
+            # No template to validate — just complete the ticket
+            logger.info(
+                f"Worker {self.worker_id}: No documentation state for "
+                f"FIX_VERIFICATION {ticket.ticket_id}, marking complete"
+            )
+            self.beads_client.update_ticket_state(
+                ticket.ticket_id,
+                TicketState.COMPLETED,
+                reason="Citations verified correct, no template to review",
+            )
+            return
+
+        # Run standard LLM validation
+        try:
+            val_result = await self._validate_documentation(state, ticket)
+        except Exception as exc:
+            logger.error(
+                f"Worker {self.worker_id}: FIX_VERIFICATION LLM validation "
+                f"failed for {ticket.file_name}: {exc}"
+            )
+            self.beads_client.update_ticket_state(
+                ticket.ticket_id,
+                TicketState.COMPLETED,
+                reason=f"Citations verified correct, LLM validation error: {exc}",
+            )
+            return
+
+        if not val_result.is_valid and val_result.blocking_questions:
+            # LLM found issues — create rework ticket
+            logger.info(
+                f"Worker {self.worker_id}: FIX_VERIFICATION LLM found "
+                f"{len(val_result.blocking_questions)} issues for {ticket.file_name}"
+            )
+            self._create_rework_ticket(ticket, val_result)
+
+        self.beads_client.update_ticket_state(
+            ticket.ticket_id,
+            TicketState.COMPLETED,
+            reason="Fix verification complete"
+            + (
+                f" ({len(val_result.blocking_questions)} issues found)"
+                if val_result.blocking_questions
+                else ""
+            ),
+        )
+        self.status.completed_count += 1
 
     def get_status(self) -> WorkerStatus:
         """Get the current worker status.

@@ -1375,7 +1375,14 @@ class ScribeWorker:
                 if result.template and ticket.ticket_type in self.COMPATIBLE_TICKET_TYPES:
                     # Save template to disk so CLARIFICATION tickets can load it
                     self._save_template(ticket.file_name, result.template)
-                    self._create_validation_ticket(ticket, result)
+                    # Citation-validation CHROME tickets get FIX_VERIFICATION
+                    if (
+                        ticket.ticket_type == TicketType.CHROME
+                        and ticket.metadata.get("citation_validation")
+                    ):
+                        self._create_fix_verification_ticket(ticket, result)
+                    else:
+                        self._create_validation_ticket(ticket, result)
             elif result.success and result.responses_incomplete:
                 # Success but responses were incomplete - leave ticket for retry
                 logger.warning(
@@ -1427,7 +1434,14 @@ class ScribeWorker:
                     if result.template and ticket.ticket_type in self.COMPATIBLE_TICKET_TYPES:
                         # Save template to disk so CLARIFICATION tickets can load it
                         self._save_template(ticket.file_name, result.template)
-                        self._create_validation_ticket(ticket, result)
+                        # Citation-validation CHROME tickets get FIX_VERIFICATION
+                        if (
+                            ticket.ticket_type == TicketType.CHROME
+                            and ticket.metadata.get("citation_validation")
+                        ):
+                            self._create_fix_verification_ticket(ticket, result)
+                        else:
+                            self._create_validation_ticket(ticket, result)
                 elif result.success and result.responses_incomplete:
                     # Retry succeeded but responses incomplete - leave for another worker
                     logger.warning(
@@ -5077,6 +5091,69 @@ class ScribeWorker:
             )
 
         return validation_ticket
+
+    def _create_fix_verification_ticket(
+        self,
+        chrome_ticket: ProgramManagerTicket,
+        result: ScribeOutput,
+    ) -> ProgramManagerTicket | None:
+        """Create a FIX_VERIFICATION ticket for Challenger after a citation-fix CHROME.
+
+        Same structure as ``_create_validation_ticket`` but uses
+        ``TicketType.FIX_VERIFICATION`` and carries original issue metadata
+        so the Challenger can confirm the fix is correct.
+
+        Args:
+            chrome_ticket: The completed CHROME ticket (with citation_validation metadata).
+            result: The ScribeOutput containing the updated template.
+
+        Returns:
+            The created FIX_VERIFICATION ticket, or None if creation failed.
+        """
+        verification_metadata: dict[str, Any] = {
+            "parent_chrome_ticket": chrome_ticket.ticket_id,
+            "scribe_worker": self.worker_id,
+            "citation_validation": True,
+            "original_issue": chrome_ticket.metadata.get("original_issue", ""),
+            "original_section": chrome_ticket.metadata.get("original_section", "paragraphs"),
+        }
+
+        # Include file_path
+        metadata_path = chrome_ticket.metadata.get("file_path")
+        if metadata_path:
+            source_path = Path(metadata_path)
+        else:
+            source_path = self.input_directory / chrome_ticket.file_name
+
+        if source_path.exists():
+            verification_metadata["file_path"] = str(source_path)
+
+        verification_metadata["file_type"] = self._determine_file_type(
+            chrome_ticket.file_name
+        ).value
+
+        ticket = self.beads_client.create_pm_ticket(
+            ticket_type=TicketType.FIX_VERIFICATION,
+            file_name=chrome_ticket.file_name,
+            program_id=chrome_ticket.program_id,
+            cycle_number=chrome_ticket.cycle_number,
+            parent_ticket_id=chrome_ticket.ticket_id,
+            priority=BeadsPriority.MEDIUM,
+            metadata=verification_metadata,
+        )
+
+        if ticket:
+            logger.info(
+                f"Worker {self.worker_id}: Created FIX_VERIFICATION ticket "
+                f"{ticket.ticket_id} for {chrome_ticket.file_name}"
+            )
+        else:
+            logger.warning(
+                f"Worker {self.worker_id}: Failed to create FIX_VERIFICATION ticket "
+                f"for {chrome_ticket.file_name}"
+            )
+
+        return ticket
 
     def _determine_file_type(self, file_name: str) -> FileType:
         """Determine the FileType from a file name.

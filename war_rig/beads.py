@@ -70,6 +70,7 @@ class TicketType(str, Enum):
     HOLISTIC_REVIEW = "holistic_review"
     SYSTEM_OVERVIEW = "system_overview"
     CALL_SEMANTICS = "call_semantics"
+    FIX_VERIFICATION = "fix_verification"  # Challenger verifies citation fix
 
 
 class TicketState(str, Enum):

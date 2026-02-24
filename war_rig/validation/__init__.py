@@ -4,6 +4,12 @@ This module provides validation criteria and utilities for assessing
 the quality and completeness of generated documentation.
 """
 
+from war_rig.validation.citation_validator import (
+    CitationFinding,
+    CitationIssueType,
+    CitationValidationResult,
+    CitationValidator,
+)
 from war_rig.validation.document_criteria import (
     BMS_CRITERIA,
     COBOL_CRITERIA,
@@ -41,6 +47,11 @@ __all__ = [
     # Validator
     "DocumentValidator",
     "ValidationResult",
+    # Citation validator
+    "CitationValidator",
+    "CitationValidationResult",
+    "CitationFinding",
+    "CitationIssueType",
     # Mermaid
     "is_valid_mermaid",
     "sanitize_mermaid_blocks",

@@ -440,7 +440,11 @@ class TestChallengerWorker:
             cycle_number=1,
         )
 
-        mock_beads_client.get_available_tickets.return_value = [ticket1, ticket2]
+        # First call (VALIDATION) returns both tickets, second call (FIX_VERIFICATION) returns empty
+        mock_beads_client.get_available_tickets.side_effect = [
+            [ticket1, ticket2],  # VALIDATION
+            [],  # FIX_VERIFICATION
+        ]
         # First claim fails, second succeeds
         mock_beads_client.claim_ticket.side_effect = [False, True]
 
