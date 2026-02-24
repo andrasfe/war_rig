@@ -1093,6 +1093,102 @@ class ScribeWorker:
 
         return "\n".join(ws_lines)
 
+    # ── Prompt validation ──────────────────────────────────────────
+
+    async def _validated_invoke(
+        self,
+        scribe_input: ScribeInput,
+        max_reductions: int = 5,
+    ) -> ScribeOutput:
+        """Invoke ScribeAgent after validating prompt size.
+
+        Estimates token count for the full prompt.  If the estimate exceeds
+        ``max_prompt_tokens``, the method reduces the source code (or the
+        Citadel outline, if present) and retries until the prompt fits.
+
+        Reduction strategy (applied in order):
+        1. If the outline has > 1 paragraph, remove the last paragraph and
+           trim the corresponding source text.  Repeat until under budget.
+        2. If a single paragraph (or no outline), truncate ``source_code``
+           to the character limit derived from the remaining token budget.
+
+        Paragraphs removed from the outline are **not** lost — the caller
+        is expected to handle them in a subsequent batch or gap-fill pass.
+
+        Args:
+            scribe_input: The fully-constructed ScribeInput.
+            max_reductions: Maximum number of reduction iterations.
+
+        Returns:
+            ScribeOutput from the ScribeAgent.
+        """
+        estimator = TokenEstimator()
+        max_tokens = self.config.scribe.max_prompt_tokens
+
+        for attempt in range(max_reductions + 1):
+            estimate = estimator.estimate_prompt_tokens(scribe_input)
+            estimated = estimate.total
+
+            if estimated <= max_tokens:
+                break
+
+            over = estimated - max_tokens
+
+            # Strategy 1: reduce outline if multi-paragraph
+            if scribe_input.citadel_outline and len(scribe_input.citadel_outline) > 1:
+                removed = scribe_input.citadel_outline.pop()
+                removed_name = removed.get("name", "?")
+                logger.info(
+                    f"Worker {self.worker_id}: Prompt ~{estimated} tokens "
+                    f"(limit {max_tokens}), removing paragraph {removed_name} "
+                    f"from outline (attempt {attempt + 1})"
+                )
+                continue
+
+            # Strategy 2: truncate source code
+            available_source = estimator.calculate_available_source_tokens(
+                max_tokens, scribe_input,
+            )
+            is_cobol = self._determine_file_type(
+                scribe_input.file_name,
+            ) in (FileType.COBOL, FileType.COPYBOOK)
+            ratio = estimator.cobol_chars_per_token if is_cobol else estimator.chars_per_token
+            max_chars = int(available_source * ratio)
+
+            if max_chars > 0 and len(scribe_input.source_code) > max_chars:
+                logger.warning(
+                    f"Worker {self.worker_id}: Truncating source from "
+                    f"{len(scribe_input.source_code)} to {max_chars} chars "
+                    f"(~{over} tokens over budget)"
+                )
+                scribe_input = ScribeInput(
+                    source_code=scribe_input.source_code[:max_chars],
+                    file_name=scribe_input.file_name,
+                    file_type=scribe_input.file_type,
+                    iteration=scribe_input.iteration,
+                    copybook_contents=scribe_input.copybook_contents,
+                    formatting_strict=scribe_input.formatting_strict,
+                    feedback_context=scribe_input.feedback_context,
+                    citadel_outline=scribe_input.citadel_outline,
+                    pattern_insights=scribe_input.pattern_insights,
+                    preprocessor_result=scribe_input.preprocessor_result,
+                    previous_template=scribe_input.previous_template,
+                    challenger_questions=scribe_input.challenger_questions,
+                    chrome_tickets=scribe_input.chrome_tickets,
+                )
+                break
+
+            # Cannot reduce further
+            logger.error(
+                f"Worker {self.worker_id}: Prompt ~{estimated} tokens "
+                f"exceeds limit {max_tokens} and cannot be reduced further"
+            )
+            break
+
+        return await self.scribe_agent.ainvoke(scribe_input)
+
+    # ── Worker run loop ─────────────────────────────────────────────
+
     async def run(self) -> None:
         """Main worker loop.
 
@@ -2534,7 +2630,7 @@ class ScribeWorker:
             f"({len(batch_names)} paragraphs) for {ticket.file_name}"
         )
 
-        output = await self.scribe_agent.ainvoke(scribe_input)
+        output = await self._validated_invoke(scribe_input)
 
         if output.success and output.template:
             self._save_chunk(
@@ -3479,7 +3575,7 @@ class ScribeWorker:
             pattern_insights=pattern_insights,
         )
 
-        output = await self.scribe_agent.ainvoke(scribe_input)
+        output = await self._validated_invoke(scribe_input)
 
         # Ingest KG triples from Scribe output
         if self.kg_manager and self.kg_manager.enabled and output.success and output.raw_response:
@@ -3806,7 +3902,7 @@ class ScribeWorker:
                 f"({len(batch_names)} paragraphs) for {ticket.file_name}"
             )
 
-            output = await self.scribe_agent.ainvoke(scribe_input)
+            output = await self._validated_invoke(scribe_input)
 
             if output.success and output.template:
                 # Save chunk immediately after successful processing
@@ -4086,7 +4182,7 @@ class ScribeWorker:
                 f"with {len(batch_names)} paragraphs"
             )
 
-            gap_output = await self.scribe_agent.ainvoke(scribe_input)
+            gap_output = await self._validated_invoke(scribe_input)
 
             if gap_output.success and gap_output.template:
                 # Ingest KG triples from gap-fill output
@@ -4155,7 +4251,7 @@ class ScribeWorker:
                         formatting_strict=formatting_strict,
                         citadel_outline=[p],
                     )
-                    solo_output = await self.scribe_agent.ainvoke(solo_input)
+                    solo_output = await self._validated_invoke(solo_input)
                     if solo_output.success and solo_output.template:
                         added = False
                         for para in solo_output.template.paragraphs:
@@ -4279,7 +4375,7 @@ class ScribeWorker:
             file_summary_context=file_summary_ctx,
         )
 
-        output = await self.scribe_agent.ainvoke(scribe_input)
+        output = await self._validated_invoke(scribe_input)
 
         # Ingest triples from Scribe output into knowledge graph
         if self.kg_manager and self.kg_manager.enabled and output.success and output.raw_response:
@@ -4499,7 +4595,7 @@ class ScribeWorker:
 
             # Run Scribe on this chunk
             try:
-                output = await self.scribe_agent.ainvoke(chunk_input)
+                output = await self._validated_invoke(chunk_input)
                 chunk_outputs.append(output)
 
                 if not output.success:
@@ -5267,7 +5363,7 @@ class ScribeWorker:
             f"with {len(challenger_questions)} questions"
             + (" (with feedback context)" if feedback_context else "")
         )
-        output = await self.scribe_agent.ainvoke(scribe_input)
+        output = await self._validated_invoke(scribe_input)
 
         # Merge with previous template to preserve paragraphs when source was sampled
         # The LLM may only regenerate paragraphs for the sampled code, losing others
@@ -5511,7 +5607,7 @@ class ScribeWorker:
             f"with {len(chrome_tickets_list)} issues"
             + (" (with feedback context)" if feedback_context else "")
         )
-        output = await self.scribe_agent.ainvoke(scribe_input)
+        output = await self._validated_invoke(scribe_input)
 
         # Merge with previous template to preserve paragraphs when source was sampled
         # The LLM may only regenerate paragraphs for the sampled code, losing others

@@ -3313,6 +3313,139 @@ class TestTicketBasedChunking:
         assert "No chunks found" in result.error
 
 
+class TestPromptValidation:
+    """Tests for _validated_invoke prompt validation loop."""
+
+    @pytest.fixture
+    def validation_worker(self, mock_config, mock_beads_client, tmp_path):
+        """Create a ScribeWorker for validation tests."""
+        mock_config.scribe.max_prompt_tokens = 5000
+
+        worker = ScribeWorker(
+            worker_id="validate-test",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            input_directory=tmp_path,
+            output_directory=tmp_path / "output",
+            exit_on_error=False,
+        )
+        return worker
+
+    async def test_small_prompt_passes_through(self, validation_worker):
+        """Test that a prompt under the limit passes without modification."""
+        from war_rig.agents.scribe import ScribeInput
+
+        scribe_input = ScribeInput(
+            source_code="DISPLAY 'HELLO'.",
+            file_name="SMALL.cbl",
+            file_type=FileType.COBOL,
+        )
+
+        async def mock_ainvoke(input_data):
+            return ScribeOutput(success=True)
+
+        validation_worker._scribe_agent = MagicMock()
+        validation_worker._scribe_agent.ainvoke = mock_ainvoke
+
+        result = await validation_worker._validated_invoke(scribe_input)
+        assert result.success is True
+
+    async def test_large_outline_gets_reduced(self, validation_worker):
+        """Test that an oversized outline is trimmed to fit."""
+        from war_rig.agents.scribe import ScribeInput
+
+        # Set very low limit to force reduction
+        validation_worker.config.scribe.max_prompt_tokens = 4500
+
+        outline = [
+            {"name": f"PARA-{i}", "line_start": i * 100, "line_end": (i + 1) * 100}
+            for i in range(20)
+        ]
+
+        # Large source code to push over limit
+        scribe_input = ScribeInput(
+            source_code="X" * 20000,
+            file_name="BIG.cbl",
+            file_type=FileType.COBOL,
+            citadel_outline=outline,
+        )
+
+        invoked_input = None
+
+        async def mock_ainvoke(input_data):
+            nonlocal invoked_input
+            invoked_input = input_data
+            return ScribeOutput(success=True)
+
+        validation_worker._scribe_agent = MagicMock()
+        validation_worker._scribe_agent.ainvoke = mock_ainvoke
+
+        result = await validation_worker._validated_invoke(scribe_input)
+
+        assert result.success is True
+        # Outline should have been reduced (some paragraphs removed)
+        assert invoked_input is not None
+        assert len(invoked_input.citadel_outline) < 20
+
+    async def test_source_truncation_when_single_paragraph(self, validation_worker):
+        """Test that source is truncated when single paragraph exceeds limit."""
+        from war_rig.agents.scribe import ScribeInput
+
+        validation_worker.config.scribe.max_prompt_tokens = 4500
+
+        scribe_input = ScribeInput(
+            source_code="X" * 50000,
+            file_name="HUGE.cbl",
+            file_type=FileType.COBOL,
+            citadel_outline=[{"name": "ONLY-PARA"}],
+        )
+
+        invoked_input = None
+
+        async def mock_ainvoke(input_data):
+            nonlocal invoked_input
+            invoked_input = input_data
+            return ScribeOutput(success=True)
+
+        validation_worker._scribe_agent = MagicMock()
+        validation_worker._scribe_agent.ainvoke = mock_ainvoke
+
+        result = await validation_worker._validated_invoke(scribe_input)
+
+        assert result.success is True
+        assert invoked_input is not None
+        # Source should have been truncated
+        assert len(invoked_input.source_code) < 50000
+
+    async def test_no_outline_source_truncation(self, validation_worker):
+        """Test source truncation when no citadel outline present."""
+        from war_rig.agents.scribe import ScribeInput
+
+        validation_worker.config.scribe.max_prompt_tokens = 4500
+
+        scribe_input = ScribeInput(
+            source_code="X" * 50000,
+            file_name="HUGE.cbl",
+            file_type=FileType.COBOL,
+        )
+
+        invoked_input = None
+
+        async def mock_ainvoke(input_data):
+            nonlocal invoked_input
+            invoked_input = input_data
+            return ScribeOutput(success=True)
+
+        validation_worker._scribe_agent = MagicMock()
+        validation_worker._scribe_agent.ainvoke = mock_ainvoke
+
+        result = await validation_worker._validated_invoke(scribe_input)
+
+        assert result.success is True
+        assert invoked_input is not None
+        assert len(invoked_input.source_code) < 50000
+
+
 class TestScribeOutlineInPrompt:
     """Test that ScribeAgent renders citadel_outline in prompt."""
 
