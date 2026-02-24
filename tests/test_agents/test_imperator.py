@@ -1819,3 +1819,60 @@ class TestGenerateSystemDesignAgentic:
             "structural_context", generate_call.args[0] if generate_call.args else None
         )
         assert structural_ctx is not None
+
+
+class TestCallLlmPromptValidation:
+    """Tests for _call_llm prompt size validation."""
+
+    @pytest.fixture
+    def small_limit_agent(self):
+        """Create an Imperator with a low token limit."""
+        from unittest.mock import AsyncMock, MagicMock
+
+        config = ImperatorConfig(model="test-model", max_prompt_tokens=1000)
+        agent = ImperatorAgent(config=config)
+        mock_provider = MagicMock()
+        mock_response = MagicMock()
+        mock_response.content = "LLM response"
+        mock_provider.complete = AsyncMock(return_value=mock_response)
+        agent._provider = mock_provider
+        return agent
+
+    async def test_small_prompt_not_truncated(self, small_limit_agent):
+        """Test that a prompt under the limit is sent unchanged."""
+        agent = small_limit_agent
+        system = "You are an assistant."
+        user = "Review this code."
+
+        result = await agent._call_llm(system, user)
+
+        assert result == "LLM response"
+        call_args = agent._provider.complete.call_args
+        messages = call_args.kwargs["messages"]
+        assert messages[1].content == user
+
+    async def test_large_prompt_truncated(self, small_limit_agent):
+        """Test that an oversized user prompt is truncated."""
+        agent = small_limit_agent
+        system = "System." * 10  # ~70 chars -> ~18 tokens
+        user = "X" * 10000  # ~2500 tokens, way over 1000
+
+        result = await agent._call_llm(system, user)
+
+        assert result == "LLM response"
+        call_args = agent._provider.complete.call_args
+        messages = call_args.kwargs["messages"]
+        # User prompt should be truncated
+        assert len(messages[1].content) < 10000
+
+    async def test_system_prompt_preserved(self, small_limit_agent):
+        """Test that system prompt is never truncated."""
+        agent = small_limit_agent
+        system = "Important system instructions."
+        user = "X" * 10000
+
+        await agent._call_llm(system, user)
+
+        call_args = agent._provider.complete.call_args
+        messages = call_args.kwargs["messages"]
+        assert messages[0].content == system

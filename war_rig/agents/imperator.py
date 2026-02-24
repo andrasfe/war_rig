@@ -806,6 +806,10 @@ class ImperatorAgent(BaseAgent[ImperatorInput, ImperatorOutput]):
         Uses the provider interface which supports all configured providers
         (OpenRouter, Anthropic, Google, OpenAI, etc.).
 
+        Before sending, validates that the estimated token count does not
+        exceed ``max_prompt_tokens``.  If it does, the user prompt is
+        truncated to fit (preserving the first portion of the content).
+
         If the primary model fails (e.g. stream stall, provider error) and
         a fallback_model is configured, retries once with the fallback model
         before raising the error.
@@ -818,14 +822,35 @@ class ImperatorAgent(BaseAgent[ImperatorInput, ImperatorOutput]):
         Returns:
             The LLM response content as string.
         """
+        # ── Prompt size validation ──────────────────────────────────
+        max_tokens = self.config.max_prompt_tokens
+        total_chars = len(system_prompt) + len(user_prompt)
+        estimated_tokens = total_chars // 4  # Rough: 1 token ≈ 4 chars
+
+        if estimated_tokens > max_tokens:
+            # Truncate user_prompt to fit within budget
+            system_tokens = len(system_prompt) // 4
+            available_for_user = max(0, max_tokens - system_tokens)
+            max_user_chars = available_for_user * 4
+
+            if max_user_chars > 0 and len(user_prompt) > max_user_chars:
+                original_len = len(user_prompt)
+                user_prompt = user_prompt[:max_user_chars]
+                logger.warning(
+                    f"Imperator: Truncated user prompt from {original_len:,} "
+                    f"to {max_user_chars:,} chars (~{estimated_tokens:,} tokens "
+                    f"exceeded limit {max_tokens:,})"
+                )
+                # Recalculate
+                total_chars = len(system_prompt) + len(user_prompt)
+                estimated_tokens = total_chars // 4
+
         messages = [
             Message(role="system", content=system_prompt),
             Message(role="user", content=user_prompt),
         ]
 
         # Log token estimation for monitoring
-        total_chars = len(system_prompt) + len(user_prompt)
-        estimated_tokens = total_chars // 4  # Rough: 1 token ≈ 4 chars
         if estimated_tokens > 30000:
             logger.warning(
                 f"Imperator: Large prompt detected: ~{estimated_tokens:,} tokens "
