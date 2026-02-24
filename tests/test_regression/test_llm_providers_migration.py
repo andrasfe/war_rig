@@ -149,11 +149,13 @@ class TestEnvironmentConfiguration:
     """Tests for environment-based configuration."""
 
     def test_openrouter_from_env(self) -> None:
-        """Test creating OpenRouter from environment."""
-        try:
-            from war_rig.providers import get_provider_from_env, OpenRouterProvider
-        except ImportError:
-            from llm_providers import get_provider_from_env, OpenRouterProvider
+        """Test creating OpenRouter from environment.
+
+        get_provider_from_env wraps all providers in CircuitBreakerProvider,
+        so we check the inner provider type.
+        """
+        from war_rig.providers import OpenRouterProvider, get_provider_from_env
+        from war_rig.providers.circuit_breaker import CircuitBreakerProvider
 
         env_vars = {
             "LLM_PROVIDER": "openrouter",
@@ -163,16 +165,19 @@ class TestEnvironmentConfiguration:
         with patch.dict(os.environ, env_vars, clear=True):
             provider = get_provider_from_env()
 
-        assert isinstance(provider, OpenRouterProvider)
+        assert isinstance(provider, CircuitBreakerProvider)
+        assert isinstance(provider._inner, OpenRouterProvider)
 
     def test_anthropic_from_env(self) -> None:
-        """Test creating Anthropic from environment."""
-        try:
-            from war_rig.providers import get_provider_from_env
-        except ImportError:
-            from llm_providers import get_provider_from_env
+        """Test creating Anthropic from environment.
 
+        get_provider_from_env wraps all providers in CircuitBreakerProvider,
+        so we check the inner provider type.
+        """
         from llm_providers.providers.anthropic import AnthropicProvider
+
+        from war_rig.providers import get_provider_from_env
+        from war_rig.providers.circuit_breaker import CircuitBreakerProvider
 
         env_vars = {
             "LLM_PROVIDER": "anthropic",
@@ -182,7 +187,8 @@ class TestEnvironmentConfiguration:
         with patch.dict(os.environ, env_vars, clear=True):
             provider = get_provider_from_env()
 
-        assert isinstance(provider, AnthropicProvider)
+        assert isinstance(provider, CircuitBreakerProvider)
+        assert isinstance(provider._inner, AnthropicProvider)
 
 
 class TestMessageCompatibility:

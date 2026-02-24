@@ -1,30 +1,14 @@
 """Provider factory and registry for War Rig.
 
-This module provides a factory pattern for creating LLM providers by name,
-along with a registry for custom provider implementations. It also supports
-environment-based configuration for easy deployment.
+This module wraps ``llm_providers`` factory functions, adding:
+- Circuit-breaker wrapping for all providers
+- War Rig-specific environment variable handling (e.g. SCRIBE_MODEL)
+- Plugin discovery via the ``war_rig.providers`` entry-point group
 
-**Provider-Agnostic Design:**
-    War Rig does not assume any specific LLM provider. The provider is
-    determined entirely by the LLM_PROVIDER environment variable. If not
-    set, it defaults to "openrouter" for backward compatibility, but this
-    can be any registered provider (built-in or plugin).
-
-Plugin Discovery:
-    External packages can register providers without modifying war_rig by
-    using Python entry points. Add to your pyproject.toml:
-
-        [project.entry-points."war_rig.providers"]
-        myprovider = "mypackage.provider:MyProviderClass"
-
-    The provider will be auto-discovered when war_rig loads. Plugin providers
-    must handle their own environment variable configuration.
-
-Environment Variables:
-    - LLM_PROVIDER: Provider name (default: "openrouter")
-    - LLM_DEFAULT_MODEL: Default model for completions
-    - LLM_REQUEST_TIMEOUT: Request timeout in seconds
-    - Provider-specific keys (e.g., OPENROUTER_API_KEY for openrouter)
+For providers that llm_providers handles natively (anthropic, openai), the
+raw provider is created by llm_providers and then wrapped in a
+``CircuitBreakerProvider``.  For openrouter, war_rig's own implementation
+is used (it adds tool-calling support and structured error logging).
 
 Example:
     from war_rig.providers.factory import create_provider, get_provider_from_env
@@ -42,7 +26,12 @@ Example:
 """
 
 import logging
+import os
 from importlib.metadata import entry_points
+
+from llm_providers import get_provider_from_env as _llm_get_provider_from_env
+from llm_providers.providers.anthropic import AnthropicProvider
+from llm_providers.providers.openai import OpenAIProvider
 
 from war_rig.providers.circuit_breaker import CircuitBreakerProvider
 from war_rig.providers.openrouter import OpenRouterProvider
@@ -53,6 +42,8 @@ logger = logging.getLogger(__name__)
 # Registry of provider classes by name
 _PROVIDERS: dict[str, type] = {
     "openrouter": OpenRouterProvider,
+    "anthropic": AnthropicProvider,
+    "openai": OpenAIProvider,
 }
 
 # Track if plugins have been loaded
@@ -161,17 +152,13 @@ def create_provider(
 def get_provider_from_env(provider_name: str | None = None) -> LLMProvider:
     """Create a provider based on environment variables.
 
-    Automatically discovers provider plugins on first call.
+    Wraps every provider in a ``CircuitBreakerProvider`` for fault tolerance.
 
-    This function is **provider-agnostic**. The provider is determined by:
-    1. The provider_name argument (if provided)
-    2. The LLM_PROVIDER environment variable
-    3. Default: "openrouter" (for backward compatibility only)
+    For openrouter, war_rig's own implementation is used (it adds tool-calling
+    support and reads SCRIBE_MODEL as a fallback for LLM_DEFAULT_MODEL).
 
-    Each provider handles its own environment configuration. For example:
-    - openrouter: reads OPENROUTER_API_KEY, OPENROUTER_BASE_URL
-    - anthropic: reads ANTHROPIC_API_KEY
-    - custom plugins: read their own env vars
+    For anthropic, openai, and plugin providers, the raw provider is created
+    by ``llm_providers`` and then wrapped.
 
     Args:
         provider_name: Optional provider name override. If None, reads from
@@ -179,14 +166,12 @@ def get_provider_from_env(provider_name: str | None = None) -> LLMProvider:
 
     Returns:
         An instance implementing LLMProvider protocol configured from
-        environment variables.
+        environment variables, wrapped in a CircuitBreakerProvider.
 
     Raises:
         KeyError: If required environment variables are missing.
         ValueError: If the provider name is not registered.
     """
-    import os
-
     _discover_plugins()
 
     # Determine provider: argument > env var > default
@@ -194,43 +179,66 @@ def get_provider_from_env(provider_name: str | None = None) -> LLMProvider:
 
     logger.debug(f"Creating provider: {resolved_provider}")
 
-    # Built-in openrouter provider with env configuration
+    # OpenRouter: use war_rig's implementation (tool calling + SCRIBE_MODEL)
     if resolved_provider == "openrouter":
-        # Build timeout from env if specified (in seconds)
-        # LLM_REQUEST_TIMEOUT sets the read timeout for LLM responses
-        # Default is 600s (10 min) to accommodate slow models
-        timeout = None
-        timeout_env = os.getenv("LLM_REQUEST_TIMEOUT")
-        if timeout_env:
-            try:
-                from httpx import Timeout
-                read_timeout = float(timeout_env)
-                timeout = Timeout(connect=30.0, read=read_timeout, write=60.0, pool=30.0)
-                logger.info(f"Using custom LLM request timeout: {read_timeout}s")
-            except ValueError:
-                logger.warning(f"Invalid LLM_REQUEST_TIMEOUT value: {timeout_env}, using default")
+        return _create_openrouter_from_env()
 
-        # Get API key - required for openrouter
-        api_key = os.environ.get("OPENROUTER_API_KEY")
-        if not api_key:
-            raise KeyError(
-                "OPENROUTER_API_KEY environment variable is required for openrouter provider. "
-                "Set LLM_PROVIDER to use a different provider."
-            )
+    # Anthropic / OpenAI: delegate to llm_providers (richer env handling)
+    if resolved_provider in ("anthropic", "openai"):
 
-        def _make_openrouter() -> LLMProvider:
-            return OpenRouterProvider(
-                api_key=api_key,
-                base_url=os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"),
-                default_model=os.getenv("LLM_DEFAULT_MODEL", os.getenv("SCRIBE_MODEL", "anthropic/claude-sonnet-4-20250514")),
-                timeout=timeout,
-            )
+        def _make_llm() -> LLMProvider:
+            return _llm_get_provider_from_env(resolved_provider)
 
-        return CircuitBreakerProvider(_make_openrouter(), factory=_make_openrouter)
+        return CircuitBreakerProvider(_make_llm(), factory=_make_llm)
 
-    # For all other providers (plugins), they must handle their own env configuration
-    # Pass no kwargs - plugin is responsible for reading env vars
+    # Custom / plugin providers: use war_rig's own registry
     def _make_plugin() -> LLMProvider:
         return create_provider(resolved_provider)
 
     return CircuitBreakerProvider(_make_plugin(), factory=_make_plugin)
+
+
+def _create_openrouter_from_env() -> LLMProvider:
+    """Create war_rig's OpenRouterProvider from environment variables.
+
+    Uses war_rig's OpenRouterProvider (with tool-calling support) and wraps
+    it in a CircuitBreakerProvider.  Reads SCRIBE_MODEL as a fallback for
+    LLM_DEFAULT_MODEL for backward compatibility.
+    """
+    # Build timeout from env if specified (in seconds)
+    timeout = None
+    timeout_env = os.getenv("LLM_REQUEST_TIMEOUT")
+    if timeout_env:
+        try:
+            from httpx import Timeout
+
+            read_timeout = float(timeout_env)
+            timeout = Timeout(connect=30.0, read=read_timeout, write=60.0, pool=30.0)
+            logger.info(f"Using custom LLM request timeout: {read_timeout}s")
+        except ValueError:
+            logger.warning(
+                f"Invalid LLM_REQUEST_TIMEOUT value: {timeout_env}, using default"
+            )
+
+    # Get API key - required for openrouter
+    api_key = os.environ.get("OPENROUTER_API_KEY")
+    if not api_key:
+        raise KeyError(
+            "OPENROUTER_API_KEY environment variable is required for openrouter provider. "
+            "Set LLM_PROVIDER to use a different provider."
+        )
+
+    def _make_openrouter() -> LLMProvider:
+        return OpenRouterProvider(
+            api_key=api_key,
+            base_url=os.getenv(
+                "OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1"
+            ),
+            default_model=os.getenv(
+                "LLM_DEFAULT_MODEL",
+                os.getenv("SCRIBE_MODEL", "anthropic/claude-sonnet-4-20250514"),
+            ),
+            timeout=timeout,
+        )
+
+    return CircuitBreakerProvider(_make_openrouter(), factory=_make_openrouter)

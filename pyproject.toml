@@ -38,6 +38,7 @@ dependencies = [
     "httpx>=0.25.0",
     "citadel",
     "codewhisper",
+    "llm-providers",
     "aiosqlite>=0.22.1",
 ]
 
