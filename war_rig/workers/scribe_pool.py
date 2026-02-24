@@ -2122,13 +2122,24 @@ class ScribeWorker:
 
                 # Split COBOL paragraphs and add source links
                 try:
-                    from war_rig.io.paragraph_splitter import split_and_link
+                    from war_rig.io.paragraph_splitter import (
+                        _find_source_file,
+                        split_and_link,
+                    )
 
                     source_path = self.input_directory / file_name
+                    if not source_path.exists():
+                        # Fallback: search recursively (handles changed input dirs
+                        # or flat vs nested layouts)
+                        found = _find_source_file(
+                            self.input_directory, Path(file_name).name,
+                        )
+                        if found:
+                            source_path = found
                     split_and_link(source_path, doc_path, md_path)
                 except Exception as split_err:
-                    logger.debug(
-                        f"Worker {self.worker_id}: Paragraph split skipped for "
+                    logger.warning(
+                        f"Worker {self.worker_id}: Paragraph split failed for "
                         f"{file_name}: {split_err}"
                     )
             except Exception as md_error:
