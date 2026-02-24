@@ -171,6 +171,8 @@ class ScribeWorker:
         TicketType.DOCUMENTATION,
         TicketType.CLARIFICATION,
         TicketType.CHROME,
+        TicketType.CHUNK_CONTINUATION,
+        TicketType.CHUNK_SYNTHESIS,
     ]
 
     # File extensions to search for discovery tickets
@@ -1334,6 +1336,10 @@ class ScribeWorker:
                 result = await self._process_clarification_ticket(ticket)
             elif ticket.ticket_type == TicketType.CHROME:
                 result = await self._process_chrome_ticket(ticket)
+            elif ticket.ticket_type == TicketType.CHUNK_CONTINUATION:
+                result = await self._process_chunk_continuation(ticket)
+            elif ticket.ticket_type == TicketType.CHUNK_SYNTHESIS:
+                result = await self._process_chunk_synthesis(ticket)
             else:
                 logger.warning(
                     f"Worker {self.worker_id}: Unsupported ticket type "
@@ -1418,6 +1424,10 @@ class ScribeWorker:
                     result = await self._process_chrome_ticket(
                         ticket, formatting_strict=True
                     )
+                elif ticket.ticket_type == TicketType.CHUNK_CONTINUATION:
+                    result = await self._process_chunk_continuation(ticket)
+                elif ticket.ticket_type == TicketType.CHUNK_SYNTHESIS:
+                    result = await self._process_chunk_synthesis(ticket)
 
                 if result.success and not result.responses_incomplete:
                     # Retry succeeded
@@ -2330,6 +2340,439 @@ class ScribeWorker:
                 f"Worker {self.worker_id}: Failed to clean up chunks for {file_name}: {e}"
             )
 
+    # ── Ticket-based chunking ──────────────────────────────────────────
+
+    def _save_batch_plan(
+        self,
+        file_name: str,
+        batches: list[list[dict]],
+        outline: list[dict],
+        stats: dict,
+        source_path: Path,
+        ticket: ProgramManagerTicket,
+    ) -> None:
+        """Save the batch plan so continuation tickets can reconstruct it.
+
+        The plan is stored as ``_batch_plan.json`` alongside the chunk files.
+        It contains the full outline and per-batch paragraph assignments so
+        continuation tickets don't need to recalculate batches.
+
+        Args:
+            file_name: Source file name.
+            batches: List of paragraph groups (from ``_calculate_dynamic_batches``).
+            outline: Full Citadel paragraph outline.
+            stats: File stats from Citadel.
+            source_path: Resolved source file path.
+            ticket: The originating DOCUMENTATION ticket.
+        """
+        chunks_dir = self._get_chunks_dir(file_name)
+        chunks_dir.mkdir(parents=True, exist_ok=True)
+
+        plan = {
+            "file_name": file_name,
+            "source_path": str(source_path),
+            "total_batches": len(batches),
+            "batches": batches,
+            "outline": outline,
+            "stats": stats,
+            "parent_ticket_id": ticket.ticket_id,
+            "cycle_number": ticket.cycle_number,
+            "program_id": ticket.program_id,
+            "copybook_contents": ticket.metadata.get("copybook_contents", {}),
+            "file_path": ticket.metadata.get("file_path"),
+            "feedback_context": ticket.metadata.get("feedback_context"),
+        }
+
+        plan_path = chunks_dir / "_batch_plan.json"
+        try:
+            with open(plan_path, "w") as f:
+                json.dump(plan, f, indent=2, default=str)
+            logger.debug(
+                f"Worker {self.worker_id}: Saved batch plan ({len(batches)} batches) "
+                f"for {file_name}"
+            )
+        except Exception as e:
+            logger.warning(
+                f"Worker {self.worker_id}: Failed to save batch plan for "
+                f"{file_name}: {e}"
+            )
+
+    def _load_batch_plan(self, file_name: str) -> dict | None:
+        """Load the batch plan for continuation tickets.
+
+        Args:
+            file_name: Source file name.
+
+        Returns:
+            Batch plan dict or None if not found.
+        """
+        chunks_dir = self._get_chunks_dir(file_name)
+        plan_path = chunks_dir / "_batch_plan.json"
+
+        if not plan_path.exists():
+            return None
+
+        try:
+            with open(plan_path) as f:
+                return json.load(f)
+        except Exception as e:
+            logger.warning(
+                f"Worker {self.worker_id}: Failed to load batch plan for "
+                f"{file_name}: {e}"
+            )
+            return None
+
+    async def _process_single_chunk_batch(
+        self,
+        ticket: ProgramManagerTicket,
+        plan: dict,
+        batch_idx: int,
+    ) -> DocumentationTemplate | None:
+        """Process a single batch of paragraphs from the batch plan.
+
+        Extracts source code for the batch paragraphs using Citadel (or
+        line-range fallback), sends them to the ScribeAgent, and saves
+        the resulting chunk.
+
+        Args:
+            ticket: The current ticket (DOCUMENTATION or CHUNK_CONTINUATION).
+            plan: The batch plan dict.
+            batch_idx: Which batch to process (0-based).
+
+        Returns:
+            Template from this batch, or None on failure.
+        """
+        assert self._citadel is not None
+
+        batches = plan["batches"]
+        total_batches = plan["total_batches"]
+        batch = batches[batch_idx]
+        batch_names = [p.get("name", "") for p in batch if p.get("name")]
+
+        if not batch_names:
+            return None
+
+        source_path = Path(plan["source_path"])
+        file_type = self._determine_file_type(ticket.file_name)
+
+        # Get function bodies from Citadel
+        try:
+            bodies = self._citadel.get_function_bodies(str(source_path), batch_names)
+        except Exception as e:
+            logger.warning(
+                f"Worker {self.worker_id}: Citadel body extraction failed for "
+                f"batch {batch_idx}: {e}"
+            )
+            bodies = {}
+
+        # Assemble source code for this batch
+        batch_source_parts: list[str] = []
+        fallback_count = 0
+
+        # Read source lines for line-range fallback
+        source_lines: list[str] = []
+        if source_path.exists():
+            try:
+                source_lines = source_path.read_text(encoding="utf-8").split("\n")
+            except Exception:
+                pass
+
+        for para_info in batch:
+            name = para_info.get("name", "")
+            body = bodies.get(name) if name else None
+            if body:
+                batch_source_parts.append(body)
+                batch_source_parts.append("")
+            elif source_lines:
+                line_start = para_info.get("line_start")
+                line_end = para_info.get("line_end")
+                if line_start and line_end and line_start <= len(source_lines):
+                    extracted = source_lines[
+                        line_start - 1 : min(line_end, len(source_lines))
+                    ]
+                    batch_source_parts.append(
+                        f"* Paragraph: {name} (lines {line_start}-{line_end})"
+                    )
+                    batch_source_parts.extend(extracted)
+                    batch_source_parts.append("")
+                    fallback_count += 1
+
+        if fallback_count > 0:
+            logger.info(
+                f"Worker {self.worker_id}: Used line-range fallback for "
+                f"{fallback_count}/{len(batch)} paragraphs in batch {batch_idx}"
+            )
+
+        batch_source = "\n".join(batch_source_parts) if batch_source_parts else ""
+        if not batch_source:
+            logger.warning(
+                f"Worker {self.worker_id}: Empty source for batch {batch_idx}"
+            )
+            return None
+
+        feedback_context = plan.get("feedback_context") if batch_idx == 0 else None
+        pattern_insights = None
+        if batch_idx == 0:
+            pattern_insights = self._get_pattern_insights(
+                str(source_path), plan.get("outline", [])
+            )
+
+        scribe_input = ScribeInput(
+            source_code=batch_source,
+            file_name=ticket.file_name,
+            file_type=file_type,
+            iteration=ticket.cycle_number,
+            copybook_contents=plan.get("copybook_contents", {}),
+            formatting_strict=False,
+            feedback_context=feedback_context,
+            citadel_outline=batch,
+            pattern_insights=pattern_insights,
+        )
+
+        logger.info(
+            f"Worker {self.worker_id}: Processing batch {batch_idx + 1}/{total_batches} "
+            f"({len(batch_names)} paragraphs) for {ticket.file_name}"
+        )
+
+        output = await self.scribe_agent.ainvoke(scribe_input)
+
+        if output.success and output.template:
+            self._save_chunk(
+                ticket.file_name, batch_idx, output.template, total_batches
+            )
+
+            # Ingest KG triples from this batch
+            if self.kg_manager and self.kg_manager.enabled and output.raw_response:
+                try:
+                    await self.kg_manager.ingest_scribe_output(
+                        output.raw_response,
+                        f"pass_{ticket.cycle_number}_batch_{batch_idx}",
+                        ticket.file_name,
+                    )
+                except Exception:
+                    logger.warning(
+                        "Worker %s: Failed to ingest KG triples for %s batch %d",
+                        self.worker_id, ticket.file_name, batch_idx,
+                        exc_info=True,
+                    )
+
+            return output.template
+
+        logger.warning(
+            f"Worker {self.worker_id}: Batch {batch_idx + 1} failed for "
+            f"{ticket.file_name}: {output.error}"
+        )
+        return None
+
+    def _create_chunk_ticket(
+        self,
+        ticket: ProgramManagerTicket,
+        ticket_type: TicketType,
+        batch_idx: int,
+    ) -> ProgramManagerTicket | None:
+        """Create a CHUNK_CONTINUATION or CHUNK_SYNTHESIS ticket.
+
+        Args:
+            ticket: The parent ticket (DOCUMENTATION or CHUNK_CONTINUATION).
+            ticket_type: CHUNK_CONTINUATION or CHUNK_SYNTHESIS.
+            batch_idx: Next batch index (for continuation) or -1 (for synthesis).
+
+        Returns:
+            Created ticket or None on failure.
+        """
+        metadata: dict[str, Any] = {
+            "chunk_batch_idx": batch_idx,
+            "file_path": ticket.metadata.get("file_path"),
+        }
+
+        chunk_ticket = self.beads_client.create_pm_ticket(
+            ticket_type=ticket_type,
+            file_name=ticket.file_name,
+            program_id=ticket.program_id,
+            cycle_number=ticket.cycle_number,
+            parent_ticket_id=ticket.ticket_id,
+            priority=BeadsPriority.MEDIUM,
+            metadata=metadata,
+        )
+
+        if chunk_ticket:
+            label = "continuation" if ticket_type == TicketType.CHUNK_CONTINUATION else "synthesis"
+            logger.info(
+                f"Worker {self.worker_id}: Created chunk {label} ticket "
+                f"{chunk_ticket.ticket_id} (batch_idx={batch_idx}) for {ticket.file_name}"
+            )
+        else:
+            logger.warning(
+                f"Worker {self.worker_id}: Failed to create chunk ticket for "
+                f"{ticket.file_name}"
+            )
+
+        return chunk_ticket
+
+    async def _process_chunk_continuation(
+        self,
+        ticket: ProgramManagerTicket,
+    ) -> ScribeOutput:
+        """Process a CHUNK_CONTINUATION ticket: one batch of paragraphs.
+
+        Loads the batch plan, processes the indicated batch, and creates
+        the next continuation or synthesis ticket.
+
+        Args:
+            ticket: The CHUNK_CONTINUATION ticket.
+
+        Returns:
+            ScribeOutput with template=None (synthesis produces the final template).
+        """
+        batch_idx = ticket.metadata.get("chunk_batch_idx", 0)
+        plan = self._load_batch_plan(ticket.file_name)
+
+        if plan is None:
+            return ScribeOutput(
+                success=False,
+                error=f"Batch plan not found for {ticket.file_name}",
+            )
+
+        total_batches = plan["total_batches"]
+
+        if batch_idx >= total_batches:
+            return ScribeOutput(
+                success=False,
+                error=f"Batch index {batch_idx} exceeds total {total_batches}",
+            )
+
+        # Check if batch already processed (resumption)
+        existing = self._load_chunks(ticket.file_name, total_batches)
+        if batch_idx not in existing:
+            # Process this batch
+            template = await self._process_single_chunk_batch(
+                ticket, plan, batch_idx
+            )
+            if template is None:
+                return ScribeOutput(
+                    success=False,
+                    error=f"Batch {batch_idx} failed for {ticket.file_name}",
+                )
+        else:
+            logger.info(
+                f"Worker {self.worker_id}: Batch {batch_idx} already completed, "
+                f"skipping for {ticket.file_name}"
+            )
+
+        # Create next ticket
+        next_batch = batch_idx + 1
+        if next_batch < total_batches:
+            self._create_chunk_ticket(
+                ticket, TicketType.CHUNK_CONTINUATION, next_batch
+            )
+        else:
+            self._create_chunk_ticket(
+                ticket, TicketType.CHUNK_SYNTHESIS, -1
+            )
+
+        # Return success with no template — synthesis will produce it
+        return ScribeOutput(success=True)
+
+    async def _process_chunk_synthesis(
+        self,
+        ticket: ProgramManagerTicket,
+    ) -> ScribeOutput:
+        """Process a CHUNK_SYNTHESIS ticket: merge all chunks into final doc.
+
+        Loads all saved chunks, merges paragraphs, runs gap-fill and
+        enrichment, and produces the final documentation.
+
+        Args:
+            ticket: The CHUNK_SYNTHESIS ticket.
+
+        Returns:
+            ScribeOutput with the final merged template.
+        """
+        plan = self._load_batch_plan(ticket.file_name)
+        if plan is None:
+            return ScribeOutput(
+                success=False,
+                error=f"Batch plan not found for {ticket.file_name}",
+            )
+
+        total_batches = plan["total_batches"]
+        existing = self._load_chunks(ticket.file_name, total_batches)
+
+        if not existing:
+            return ScribeOutput(
+                success=False,
+                error=f"No chunks found for synthesis of {ticket.file_name}",
+            )
+
+        logger.info(
+            f"Worker {self.worker_id}: Synthesizing {len(existing)}/{total_batches} "
+            f"chunks for {ticket.file_name}"
+        )
+
+        # Merge: first chunk provides the base template, subsequent add paragraphs
+        merged_template: DocumentationTemplate | None = None
+        all_paragraphs: list[Paragraph] = []
+
+        for idx in sorted(existing.keys()):
+            template = existing[idx]
+            if merged_template is None:
+                merged_template = template
+            else:
+                all_paragraphs.extend(template.paragraphs)
+
+        if merged_template is None:
+            return ScribeOutput(
+                success=False,
+                error=f"No valid base template for synthesis of {ticket.file_name}",
+            )
+
+        # Deduplicate paragraphs
+        if all_paragraphs:
+            existing_names = {
+                p.paragraph_name.lower()
+                for p in merged_template.paragraphs
+                if p.paragraph_name
+            }
+            for para in all_paragraphs:
+                if para.paragraph_name and para.paragraph_name.lower() not in existing_names:
+                    merged_template.paragraphs.append(para)
+                    existing_names.add(para.paragraph_name.lower())
+
+        # Gap-fill missing paragraphs
+        outline = plan.get("outline", [])
+        file_type = self._determine_file_type(ticket.file_name)
+        source_path = Path(plan["source_path"])
+        source_code = ""
+        if source_path.exists():
+            try:
+                source_code = source_path.read_text(encoding="utf-8")
+            except Exception:
+                pass
+
+        result = ScribeOutput(success=True, template=merged_template)
+        result = await self._citadel_gap_fill(
+            result, outline, ticket, file_type, False,
+            source_code=source_code,
+        )
+
+        # Save before enrichment
+        if result.success and result.template:
+            self._save_template(ticket.file_name, result.template)
+
+        # Enrich with Citadel analysis + call semantics
+        if result.success and result.template:
+            result.template = await self._apply_citadel_enrichment(
+                result.template, ticket, file_type,
+            )
+            result.template = await self._enrich_call_semantics(
+                result.template, ticket, file_type,
+            )
+            self._save_template(ticket.file_name, result.template)
+
+        return result
+
+    # ── End ticket-based chunking ────────────────────────────────────
+
     def _get_chunk_summaries(self, file_name: str) -> list[dict]:
         """Get summaries from chunk files for efficient synthesis.
 
@@ -2916,6 +3359,7 @@ class ScribeWorker:
             stub_output = await self._process_citadel_batched(
                 ticket, source_code, file_type, formatting_strict,
                 stub_outline, source_path, stats, pattern_insights,
+                ticket_dispatch=False,
             )
         else:
             stub_output = await self._process_citadel_single_pass(
@@ -3185,15 +3629,22 @@ class ScribeWorker:
         source_path: Path,
         stats: dict,
         pattern_insights: dict | None = None,
+        ticket_dispatch: bool = True,
     ) -> ScribeOutput:
         """Batched Citadel-guided documentation for large files.
 
         Groups paragraphs into batches based on token budget (not fixed count),
         fetches function bodies per batch, and runs the ScribeAgent for each batch.
-        Merges results into a unified template.
 
-        Chunks are saved after each batch completes, allowing resumption if
-        the process crashes mid-way through.
+        When ``ticket_dispatch`` is True (default) and there are multiple batches,
+        only batch 0 is processed inline.  A CHUNK_CONTINUATION ticket is created
+        for batch 1, which in turn creates tickets for subsequent batches until a
+        final CHUNK_SYNTHESIS ticket merges all chunks and runs enrichment.
+        This avoids holding a single worker for the entire file and makes
+        multi-batch processing fault-tolerant (each batch is a separate ticket).
+
+        When ``ticket_dispatch`` is False (used by the resume path), all batches
+        are processed in a synchronous loop as before.
 
         Args:
             ticket: The DOCUMENTATION ticket.
@@ -3204,9 +3655,14 @@ class ScribeWorker:
             source_path: Resolved path to the source file.
             stats: File stats from Citadel.
             pattern_insights: Aggregated pattern insights for documentation guidance.
+            ticket_dispatch: If True, use ticket-based dispatch for multi-batch
+                files (each batch becomes its own ticket).  If False, process
+                all batches in a single synchronous loop.
 
         Returns:
-            ScribeOutput with merged documentation.
+            ScribeOutput with merged documentation (loop mode) or with
+            template=None (ticket-dispatch mode; synthesis ticket produces
+            the final template).
         """
         assert self._citadel is not None
 
@@ -3214,6 +3670,44 @@ class ScribeWorker:
         batches, prefetched_bodies = self._calculate_dynamic_batches(outline, source_path)
         total_batches = len(batches)
 
+        # ── Ticket-dispatch mode (multi-batch only) ──────────────────
+        if ticket_dispatch and total_batches > 1:
+            # Save the batch plan so continuation tickets can pick up
+            self._save_batch_plan(
+                ticket.file_name, batches, outline, stats, source_path, ticket,
+            )
+
+            # Process batch 0 inline
+            plan = self._load_batch_plan(ticket.file_name)
+            if plan is None:
+                return ScribeOutput(
+                    success=False,
+                    error=f"Failed to save/load batch plan for {ticket.file_name}",
+                )
+
+            template = await self._process_single_chunk_batch(ticket, plan, 0)
+            if template is None:
+                return ScribeOutput(
+                    success=False,
+                    error=f"Batch 0 failed for {ticket.file_name}",
+                )
+
+            # Create continuation ticket for batch 1
+            self._create_chunk_ticket(
+                ticket, TicketType.CHUNK_CONTINUATION, 1,
+            )
+
+            logger.info(
+                f"Worker {self.worker_id}: Ticket-dispatch mode for "
+                f"{ticket.file_name} — batch 0 done, {total_batches - 1} "
+                f"remaining via continuation tickets"
+            )
+
+            # Return success with no template — the CHUNK_SYNTHESIS ticket
+            # will produce the final merged template with enrichment.
+            return ScribeOutput(success=True)
+
+        # ── Synchronous loop mode (single batch or resume path) ──────
         # Load any existing chunks (for resumption after crash)
         existing_chunks = self._load_chunks(ticket.file_name, total_batches)
 

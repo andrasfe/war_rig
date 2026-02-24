@@ -2695,7 +2695,7 @@ class TestCitadelGuidedDocumentation:
         assert len(captured_inputs[0].citadel_outline) == 3
 
     async def test_large_file_batched(self, citadel_worker, sample_pm_ticket):
-        """Test large file gets batched processing."""
+        """Test large file uses ticket-dispatch: processes batch 0 and creates continuation."""
         worker = citadel_worker
 
         # Make file appear large
@@ -2750,6 +2750,83 @@ class TestCitadelGuidedDocumentation:
             sample_pm_ticket,
             "source code",
             FileType.COBOL,
+        )
+
+        # Ticket-dispatch mode: batch 0 processed, rest via continuation tickets
+        assert result.success is True
+        # Template is None — the synthesis ticket will produce the final template
+        assert result.template is None
+        # Only batch 0 was processed inline
+        assert call_count == 1
+        # A CHUNK_CONTINUATION ticket was created for batch 1
+        worker.beads_client.create_pm_ticket.assert_called_once()
+        create_call = worker.beads_client.create_pm_ticket.call_args
+        assert create_call.kwargs["ticket_type"] == TicketType.CHUNK_CONTINUATION
+        assert create_call.kwargs["metadata"]["chunk_batch_idx"] == 1
+
+    async def test_large_file_batched_loop(self, citadel_worker, sample_pm_ticket):
+        """Test large file with ticket_dispatch=False uses synchronous loop."""
+        worker = citadel_worker
+
+        # Make file appear large
+        worker._citadel.get_file_stats.return_value = {
+            "total_lines": 3000,
+            "paragraph_count": 20,
+            "language": "cobol",
+            "paragraphs": [
+                {
+                    "name": f"PARA-{i}",
+                    "line_start": i * 100,
+                    "line_end": (i + 1) * 100 - 1,
+                    "line_count": 100,
+                }
+                for i in range(20)
+            ],
+        }
+        worker._citadel.get_functions.return_value = [
+            {
+                "name": f"PARA-{i}",
+                "type": "paragraph",
+                "line": i * 100,
+                "line_end": (i + 1) * 100 - 1,
+                "calls": [],
+            }
+            for i in range(20)
+        ]
+        worker._citadel.get_function_bodies.return_value = {
+            f"PARA-{i}": f"       PARA-{i}.\n           DISPLAY 'PARA {i}'."
+            for i in range(20)
+        }
+
+        from war_rig.models.templates import DocumentationTemplate, Paragraph
+
+        call_count = 0
+
+        async def mock_ainvoke(input_data):
+            nonlocal call_count
+            call_count += 1
+            template = DocumentationTemplate()
+            if input_data.citadel_outline:
+                template.paragraphs = [
+                    Paragraph(paragraph_name=p["name"], purpose=f"Purpose {p['name']}")
+                    for p in input_data.citadel_outline
+                ]
+            return ScribeOutput(success=True, template=template)
+
+        worker._scribe_agent = MagicMock()
+        worker._scribe_agent.ainvoke = mock_ainvoke
+
+        # Call _process_citadel_batched directly with ticket_dispatch=False
+        outline = worker._citadel.get_file_stats.return_value["paragraphs"]
+        result = await worker._process_citadel_batched(
+            sample_pm_ticket,
+            "source code",
+            FileType.COBOL,
+            formatting_strict=False,
+            outline=outline,
+            source_path=worker.input_directory / "TESTPROG.cbl",
+            stats=worker._citadel.get_file_stats.return_value,
+            ticket_dispatch=False,
         )
 
         assert result.success is True
@@ -2869,6 +2946,371 @@ class TestCitadelGuidedDocumentation:
         # With low thresholds (100 lines >= 50, 3 paragraphs >= 2),
         # should have used batched path (multiple calls)
         assert call_count >= 1
+
+
+class TestTicketBasedChunking:
+    """Tests for ticket-based chunking: batch plan, continuation, synthesis."""
+
+    @pytest.fixture
+    def chunk_worker(self, mock_config, mock_beads_client, tmp_path):
+        """Create a ScribeWorker with mocked Citadel for chunking tests."""
+        mock_config.citadel_guided_threshold_lines = 2000
+        mock_config.citadel_guided_threshold_paragraphs = 15
+        mock_config.scribe.citadel_max_paragraphs_per_batch = 5
+
+        worker = ScribeWorker(
+            worker_id="chunk-test",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            input_directory=tmp_path,
+            output_directory=tmp_path / "output",
+            exit_on_error=False,
+        )
+
+        mock_citadel = MagicMock()
+        mock_citadel.get_function_bodies.return_value = {
+            f"PARA-{i}": f"       PARA-{i}.\n           DISPLAY 'PARA {i}'."
+            for i in range(10)
+        }
+        mock_citadel.get_callers.return_value = []
+        mock_citadel.get_flow_diagram.return_value = None
+        mock_citadel.get_dead_code.return_value = []
+        worker._citadel = mock_citadel
+
+        return worker
+
+    @pytest.fixture
+    def batch_plan(self, tmp_path):
+        """Create a sample batch plan dict."""
+        return {
+            "file_name": "TESTPROG.cbl",
+            "source_path": str(tmp_path / "TESTPROG.cbl"),
+            "total_batches": 3,
+            "batches": [
+                [
+                    {"name": "PARA-0", "line_start": 1, "line_end": 50, "line_count": 50},
+                    {"name": "PARA-1", "line_start": 51, "line_end": 100, "line_count": 50},
+                ],
+                [
+                    {"name": "PARA-2", "line_start": 101, "line_end": 150, "line_count": 50},
+                    {"name": "PARA-3", "line_start": 151, "line_end": 200, "line_count": 50},
+                ],
+                [
+                    {"name": "PARA-4", "line_start": 201, "line_end": 250, "line_count": 50},
+                ],
+            ],
+            "outline": [
+                {"name": f"PARA-{i}", "line_start": i * 50 + 1, "line_end": (i + 1) * 50}
+                for i in range(5)
+            ],
+            "stats": {"total_lines": 250, "paragraph_count": 5},
+            "parent_ticket_id": "war_rig-parent",
+            "cycle_number": 1,
+            "program_id": "TESTPROG",
+            "copybook_contents": {},
+            "file_path": str(tmp_path / "TESTPROG.cbl"),
+            "feedback_context": None,
+        }
+
+    def test_save_and_load_batch_plan(self, chunk_worker, sample_pm_ticket):
+        """Test saving and loading a batch plan."""
+        from pathlib import Path
+
+        batches = [
+            [{"name": "PARA-0"}],
+            [{"name": "PARA-1"}],
+        ]
+        outline = [{"name": "PARA-0"}, {"name": "PARA-1"}]
+        stats = {"total_lines": 100}
+        source_path = Path("/tmp/TESTPROG.cbl")
+
+        chunk_worker._save_batch_plan(
+            "TESTPROG.cbl", batches, outline, stats, source_path, sample_pm_ticket,
+        )
+
+        plan = chunk_worker._load_batch_plan("TESTPROG.cbl")
+        assert plan is not None
+        assert plan["total_batches"] == 2
+        assert len(plan["batches"]) == 2
+        assert plan["file_name"] == "TESTPROG.cbl"
+        assert plan["source_path"] == "/tmp/TESTPROG.cbl"
+        assert plan["parent_ticket_id"] == sample_pm_ticket.ticket_id
+
+    def test_load_batch_plan_missing(self, chunk_worker):
+        """Test loading a non-existent batch plan returns None."""
+        plan = chunk_worker._load_batch_plan("NONEXISTENT.cbl")
+        assert plan is None
+
+    def test_create_chunk_ticket_continuation(self, chunk_worker, sample_pm_ticket):
+        """Test creating a CHUNK_CONTINUATION ticket."""
+        mock_ticket = MagicMock()
+        mock_ticket.ticket_id = "chunk-cont-1"
+        chunk_worker.beads_client.create_pm_ticket.return_value = mock_ticket
+
+        result = chunk_worker._create_chunk_ticket(
+            sample_pm_ticket, TicketType.CHUNK_CONTINUATION, 2,
+        )
+
+        assert result is not None
+        chunk_worker.beads_client.create_pm_ticket.assert_called_once()
+        call_kwargs = chunk_worker.beads_client.create_pm_ticket.call_args.kwargs
+        assert call_kwargs["ticket_type"] == TicketType.CHUNK_CONTINUATION
+        assert call_kwargs["metadata"]["chunk_batch_idx"] == 2
+
+    def test_create_chunk_ticket_synthesis(self, chunk_worker, sample_pm_ticket):
+        """Test creating a CHUNK_SYNTHESIS ticket."""
+        mock_ticket = MagicMock()
+        mock_ticket.ticket_id = "chunk-synth-1"
+        chunk_worker.beads_client.create_pm_ticket.return_value = mock_ticket
+
+        result = chunk_worker._create_chunk_ticket(
+            sample_pm_ticket, TicketType.CHUNK_SYNTHESIS, -1,
+        )
+
+        assert result is not None
+        call_kwargs = chunk_worker.beads_client.create_pm_ticket.call_args.kwargs
+        assert call_kwargs["ticket_type"] == TicketType.CHUNK_SYNTHESIS
+
+    async def test_process_chunk_continuation_creates_next(
+        self, chunk_worker, batch_plan, tmp_path,
+    ):
+        """Test continuation processes a batch and creates next ticket."""
+        from war_rig.models.templates import DocumentationTemplate, Paragraph
+
+        # Save the batch plan
+        chunk_worker._save_batch_plan(
+            "TESTPROG.cbl",
+            batch_plan["batches"],
+            batch_plan["outline"],
+            batch_plan["stats"],
+            tmp_path / "TESTPROG.cbl",
+            ProgramManagerTicket(
+                ticket_id="parent",
+                ticket_type=TicketType.DOCUMENTATION,
+                state=TicketState.COMPLETED,
+                file_name="TESTPROG.cbl",
+                program_id="TESTPROG",
+            ),
+        )
+
+        # Write source file for line-range fallback
+        (tmp_path / "TESTPROG.cbl").write_text(
+            "\n".join(f"       LINE {i}" for i in range(300))
+        )
+
+        # Mock ScribeAgent
+        async def mock_ainvoke(input_data):
+            template = DocumentationTemplate()
+            template.paragraphs = [
+                Paragraph(paragraph_name=p["name"], purpose=f"Purpose {p['name']}")
+                for p in input_data.citadel_outline
+            ]
+            return ScribeOutput(success=True, template=template)
+
+        chunk_worker._scribe_agent = MagicMock()
+        chunk_worker._scribe_agent.ainvoke = mock_ainvoke
+
+        # Process batch 1 (middle batch, should create continuation for batch 2)
+        ticket = ProgramManagerTicket(
+            ticket_id="cont-1",
+            ticket_type=TicketType.CHUNK_CONTINUATION,
+            state=TicketState.IN_PROGRESS,
+            file_name="TESTPROG.cbl",
+            program_id="TESTPROG",
+            metadata={"chunk_batch_idx": 1},
+        )
+
+        result = await chunk_worker._process_chunk_continuation(ticket)
+
+        assert result.success is True
+        assert result.template is None  # Synthesis produces the final template
+        # Should create continuation for batch 2
+        chunk_worker.beads_client.create_pm_ticket.assert_called_once()
+        call_kwargs = chunk_worker.beads_client.create_pm_ticket.call_args.kwargs
+        assert call_kwargs["ticket_type"] == TicketType.CHUNK_CONTINUATION
+        assert call_kwargs["metadata"]["chunk_batch_idx"] == 2
+
+    async def test_process_chunk_continuation_last_creates_synthesis(
+        self, chunk_worker, batch_plan, tmp_path,
+    ):
+        """Test last continuation creates a synthesis ticket."""
+        from war_rig.models.templates import DocumentationTemplate, Paragraph
+
+        # Save the batch plan
+        chunk_worker._save_batch_plan(
+            "TESTPROG.cbl",
+            batch_plan["batches"],
+            batch_plan["outline"],
+            batch_plan["stats"],
+            tmp_path / "TESTPROG.cbl",
+            ProgramManagerTicket(
+                ticket_id="parent",
+                ticket_type=TicketType.DOCUMENTATION,
+                state=TicketState.COMPLETED,
+                file_name="TESTPROG.cbl",
+                program_id="TESTPROG",
+            ),
+        )
+
+        (tmp_path / "TESTPROG.cbl").write_text(
+            "\n".join(f"       LINE {i}" for i in range(300))
+        )
+
+        async def mock_ainvoke(input_data):
+            template = DocumentationTemplate()
+            template.paragraphs = [
+                Paragraph(paragraph_name=p["name"], purpose=f"Purpose {p['name']}")
+                for p in input_data.citadel_outline
+            ]
+            return ScribeOutput(success=True, template=template)
+
+        chunk_worker._scribe_agent = MagicMock()
+        chunk_worker._scribe_agent.ainvoke = mock_ainvoke
+
+        # Process batch 2 (last batch, should create synthesis)
+        ticket = ProgramManagerTicket(
+            ticket_id="cont-2",
+            ticket_type=TicketType.CHUNK_CONTINUATION,
+            state=TicketState.IN_PROGRESS,
+            file_name="TESTPROG.cbl",
+            program_id="TESTPROG",
+            metadata={"chunk_batch_idx": 2},
+        )
+
+        result = await chunk_worker._process_chunk_continuation(ticket)
+
+        assert result.success is True
+        chunk_worker.beads_client.create_pm_ticket.assert_called_once()
+        call_kwargs = chunk_worker.beads_client.create_pm_ticket.call_args.kwargs
+        assert call_kwargs["ticket_type"] == TicketType.CHUNK_SYNTHESIS
+
+    async def test_process_chunk_continuation_no_plan(self, chunk_worker):
+        """Test continuation fails gracefully when batch plan is missing."""
+        ticket = ProgramManagerTicket(
+            ticket_id="cont-orphan",
+            ticket_type=TicketType.CHUNK_CONTINUATION,
+            state=TicketState.IN_PROGRESS,
+            file_name="NONEXISTENT.cbl",
+            program_id="TESTPROG",
+            metadata={"chunk_batch_idx": 0},
+        )
+
+        result = await chunk_worker._process_chunk_continuation(ticket)
+
+        assert result.success is False
+        assert "Batch plan not found" in result.error
+
+    async def test_process_chunk_synthesis(
+        self, chunk_worker, batch_plan, tmp_path,
+    ):
+        """Test synthesis merges all chunks into final template."""
+        from war_rig.models.templates import (
+            DocumentationTemplate,
+            Paragraph,
+            PurposeSection,
+        )
+
+        # Save the batch plan
+        chunk_worker._save_batch_plan(
+            "TESTPROG.cbl",
+            batch_plan["batches"],
+            batch_plan["outline"],
+            batch_plan["stats"],
+            tmp_path / "TESTPROG.cbl",
+            ProgramManagerTicket(
+                ticket_id="parent",
+                ticket_type=TicketType.DOCUMENTATION,
+                state=TicketState.COMPLETED,
+                file_name="TESTPROG.cbl",
+                program_id="TESTPROG",
+            ),
+        )
+
+        (tmp_path / "TESTPROG.cbl").write_text(
+            "\n".join(f"       LINE {i}" for i in range(300))
+        )
+
+        # Save chunks for all 3 batches
+        t0 = DocumentationTemplate(
+            purpose=PurposeSection(summary="Test program"),
+            paragraphs=[
+                Paragraph(paragraph_name="PARA-0", purpose="Purpose 0"),
+                Paragraph(paragraph_name="PARA-1", purpose="Purpose 1"),
+            ],
+        )
+        t1 = DocumentationTemplate(
+            paragraphs=[
+                Paragraph(paragraph_name="PARA-2", purpose="Purpose 2"),
+                Paragraph(paragraph_name="PARA-3", purpose="Purpose 3"),
+            ],
+        )
+        t2 = DocumentationTemplate(
+            paragraphs=[
+                Paragraph(paragraph_name="PARA-4", purpose="Purpose 4"),
+            ],
+        )
+        chunk_worker._save_chunk("TESTPROG.cbl", 0, t0, 3)
+        chunk_worker._save_chunk("TESTPROG.cbl", 1, t1, 3)
+        chunk_worker._save_chunk("TESTPROG.cbl", 2, t2, 3)
+
+        # Mock gap-fill to return unchanged
+        async def mock_ainvoke(input_data):
+            template = DocumentationTemplate()
+            return ScribeOutput(success=True, template=template)
+
+        chunk_worker._scribe_agent = MagicMock()
+        chunk_worker._scribe_agent.ainvoke = mock_ainvoke
+
+        ticket = ProgramManagerTicket(
+            ticket_id="synth-1",
+            ticket_type=TicketType.CHUNK_SYNTHESIS,
+            state=TicketState.IN_PROGRESS,
+            file_name="TESTPROG.cbl",
+            program_id="TESTPROG",
+            metadata={"chunk_batch_idx": -1},
+        )
+
+        result = await chunk_worker._process_chunk_synthesis(ticket)
+
+        assert result.success is True
+        assert result.template is not None
+        para_names = {p.paragraph_name for p in result.template.paragraphs}
+        assert len(para_names) == 5
+        for i in range(5):
+            assert f"PARA-{i}" in para_names
+
+    async def test_process_chunk_synthesis_no_chunks(
+        self, chunk_worker, batch_plan, tmp_path,
+    ):
+        """Test synthesis fails when no chunks exist."""
+        chunk_worker._save_batch_plan(
+            "TESTPROG.cbl",
+            batch_plan["batches"],
+            batch_plan["outline"],
+            batch_plan["stats"],
+            tmp_path / "TESTPROG.cbl",
+            ProgramManagerTicket(
+                ticket_id="parent",
+                ticket_type=TicketType.DOCUMENTATION,
+                state=TicketState.COMPLETED,
+                file_name="TESTPROG.cbl",
+                program_id="TESTPROG",
+            ),
+        )
+
+        ticket = ProgramManagerTicket(
+            ticket_id="synth-orphan",
+            ticket_type=TicketType.CHUNK_SYNTHESIS,
+            state=TicketState.IN_PROGRESS,
+            file_name="TESTPROG.cbl",
+            program_id="TESTPROG",
+            metadata={"chunk_batch_idx": -1},
+        )
+
+        result = await chunk_worker._process_chunk_synthesis(ticket)
+
+        assert result.success is False
+        assert "No chunks found" in result.error
 
 
 class TestScribeOutlineInPrompt:

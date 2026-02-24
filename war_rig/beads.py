@@ -61,6 +61,8 @@ class TicketType(str, Enum):
     - HOLISTIC_REVIEW: Batch review task for Imperator
     - SYSTEM_OVERVIEW: Final system overview generation by Imperator
     - CALL_SEMANTICS: Sub-ticket for call semantics batch processing
+    - CHUNK_CONTINUATION: Continue processing remaining paragraph batches
+    - CHUNK_SYNTHESIS: Merge all chunk outputs into final documentation
     """
 
     DOCUMENTATION = "documentation"
@@ -71,6 +73,8 @@ class TicketType(str, Enum):
     SYSTEM_OVERVIEW = "system_overview"
     CALL_SEMANTICS = "call_semantics"
     FIX_VERIFICATION = "fix_verification"  # Challenger verifies citation fix
+    CHUNK_CONTINUATION = "chunk_continuation"  # Continue processing remaining paragraphs
+    CHUNK_SYNTHESIS = "chunk_synthesis"  # Merge all chunks and generate final doc
 
 
 class TicketState(str, Enum):
