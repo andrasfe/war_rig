@@ -1,0 +1,2 @@
+         05 WS-NO-DTL-DELETED          PIC S9(8) COMP VALUE 0.          00430026
+      *                                                                 00440026

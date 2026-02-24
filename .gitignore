@@ -12,5 +12,3 @@ logs/
 MagicMock/
 war_rig.egg-info/
 node_modules/
-*.cbl.d/
-*.CBL.d/
