@@ -567,6 +567,34 @@ class WarRigConfig(BaseSettings):
         description="Enable merge pass to fix cross-references and deduplicate after section generation",
     )
 
+    # Recursive summarization
+    summarization_enabled: bool = Field(
+        default=False,
+        description="Enable recursive multi-pass summarization for large COBOL files",
+    )
+    summarization_merge_group_size: int = Field(
+        default=6,
+        ge=2,
+        le=12,
+        description="Number of bundle summaries to merge per Pass 2 group",
+    )
+    summarization_pass1_model: str | None = Field(
+        default=None,
+        description="Model for Pass 1 bundle summaries (None = use scribe_model)",
+    )
+    summarization_max_validation_iterations: int = Field(
+        default=3,
+        ge=1,
+        le=10,
+        description="Maximum Challenger validation iterations for root summary",
+    )
+    summarization_min_bundles: int = Field(
+        default=3,
+        ge=2,
+        le=20,
+        description="Minimum bundles before triggering summarization",
+    )
+
     # Beads integration
     # Disabled by default - War Rig uses in-memory ticket tracking
     # Enable only if you have a separate beads instance configured

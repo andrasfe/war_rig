@@ -2069,6 +2069,36 @@ class ScribeWorker:
             return ", ".join(items)
         return ", ".join(items[:max_items]) + ", ..."
 
+    def _load_file_summary_context(self, file_name: str) -> str:
+        """Load file-level summary context for enriching Scribe prompts.
+
+        Looks for a ``.summary.json`` file alongside the ``.doc.json``
+        output.  If found, renders it as a context string for injection
+        into the Scribe user prompt.
+
+        Returns an empty string when no summary is available.
+        """
+        try:
+            summary_path = self.output_directory / f"{file_name}.summary.json"
+            if not summary_path.exists():
+                return ""
+            import json as _json
+
+            from war_rig.models.summaries import FileSummary
+            from war_rig.summarization.prompts import CONTEXT_INJECTION_TEMPLATE
+
+            data = _json.loads(summary_path.read_text(encoding="utf-8"))
+            summary = FileSummary.model_validate(data)
+            return CONTEXT_INJECTION_TEMPLATE.format(
+                summary_text=summary.to_context_string(),
+            )
+        except Exception:
+            logger.debug(
+                "Worker %s: No summary context for %s",
+                self.worker_id, file_name,
+            )
+            return ""
+
     def _save_template(self, file_name: str, template: DocumentationTemplate) -> None:
         """Save the documentation template to the output directory.
 
@@ -3739,6 +3769,9 @@ class ScribeWorker:
                     exc_info=True,
                 )
 
+        # Load file-level summary context if available
+        file_summary_ctx = self._load_file_summary_context(ticket.file_name)
+
         scribe_input = ScribeInput(
             source_code=prepared.source_code,
             file_name=ticket.file_name,
@@ -3749,6 +3782,7 @@ class ScribeWorker:
             formatting_strict=formatting_strict,
             feedback_context=feedback_context,
             knowledge_graph_context=kg_context,
+            file_summary_context=file_summary_ctx,
         )
 
         output = await self.scribe_agent.ainvoke(scribe_input)

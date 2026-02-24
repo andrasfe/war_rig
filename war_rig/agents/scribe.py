@@ -87,6 +87,10 @@ class ScribeInput(AgentInput):
         default="",
         description="Formatted knowledge graph context for system-level relationship awareness",
     )
+    file_summary_context: str = Field(
+        default="",
+        description="File-level summary context from recursive summarization (enriches paragraph documentation)",
+    )
 
 
 class ScribeOutput(AgentOutput):
@@ -464,6 +468,11 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
         # Knowledge graph context (system-level relationships)
         if input_data.knowledge_graph_context:
             parts.append(input_data.knowledge_graph_context)
+            parts.append("")
+
+        # File-level summary context (from recursive summarization)
+        if input_data.file_summary_context:
+            parts.append(input_data.file_summary_context)
             parts.append("")
 
         # Source code

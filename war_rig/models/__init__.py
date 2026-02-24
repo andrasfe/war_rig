@@ -52,6 +52,17 @@ from war_rig.models.templates import (
     RecordField,
     SQLOperation,
 )
+from war_rig.models.summaries import (
+    BundleSummary,
+    ClaimCategory,
+    ClaimVerdict,
+    ConditionalBranch,
+    DataFlowItem,
+    FileSummary,
+    PerformLink,
+    SegmentSummary,
+    VerifiableClaim,
+)
 from war_rig.models.tickets import (
     ActionTaken,
     ChallengerQuestion,
@@ -93,6 +104,16 @@ __all__ = [
     "PurposeSection",
     "RecordField",
     "SQLOperation",
+    # Summarization models
+    "BundleSummary",
+    "ClaimCategory",
+    "ClaimVerdict",
+    "ConditionalBranch",
+    "DataFlowItem",
+    "FileSummary",
+    "PerformLink",
+    "SegmentSummary",
+    "VerifiableClaim",
     # Ticket models
     "ActionTaken",
     "ChromeTicket",
