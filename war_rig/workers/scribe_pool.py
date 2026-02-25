@@ -215,6 +215,7 @@ class ScribeWorker:
         dependency_graph_path: Path | None = None,
         minion_pool: MinionScribePool | None = None,
         kg_manager: KnowledgeGraphManager | None = None,
+        copybook_dirs: list[Path] | None = None,
     ):
         """Initialize the Scribe worker.
 
@@ -252,6 +253,7 @@ class ScribeWorker:
         self.idle_timeout = idle_timeout
         self.file_lock_manager = file_lock_manager
         self.kg_manager = kg_manager
+        self._copybook_dirs = copybook_dirs or []
 
         # Ensure output directory exists
         self.output_directory.mkdir(parents=True, exist_ok=True)
@@ -2336,8 +2338,26 @@ class ScribeWorker:
                             if found:
                                 src = found
                         if src.exists():
-                            self._build_cobol_ast(src, file_name)
+                            _, _, full_ast_text = self._build_cobol_ast(
+                                src, file_name,
+                            )
                             cached_asts = self._file_asts.get(file_name)
+
+                            # Persist .ast file for future runs if missing
+                            ast_file = doc_path.with_suffix("").with_suffix(
+                                ".ast",
+                            )
+                            if not ast_file.exists() and full_ast_text.strip():
+                                ast_file.parent.mkdir(
+                                    parents=True, exist_ok=True,
+                                )
+                                ast_file.write_text(
+                                    full_ast_text, encoding="utf-8",
+                                )
+                                logger.debug(
+                                    f"Worker {self.worker_id}: "
+                                    f"Persisted .ast for {file_name}"
+                                )
                     except Exception:
                         pass  # Best-effort; proceed without ASTs
 
@@ -3330,7 +3350,7 @@ class ScribeWorker:
             AST string.
         """
         assert self._citadel is not None
-        parse_result = self._citadel.parse_cobol(source_path)
+        parse_result = self._citadel.parse_cobol(source_path, copybook_dirs=self._copybook_dirs)
         paragraph_asts = parse_result.paragraph_asts  # name → str(tree)
         full_ast_text = parse_result.full_ast
 
@@ -6067,6 +6087,7 @@ class ScribeWorkerPool:
         exit_on_error: bool | None = None,
         dependency_graph_path: Path | None = None,
         kg_manager: KnowledgeGraphManager | None = None,
+        copybook_dirs: list[Path] | None = None,
     ):
         """Initialize the Scribe worker pool.
 
@@ -6090,6 +6111,8 @@ class ScribeWorkerPool:
                 relationships and improve documentation quality.
             kg_manager: Optional KnowledgeGraphManager for context injection
                 and triple ingestion. Passed through to individual workers.
+            copybook_dirs: Directories to search for COBOL copybook files.
+                Passed through to individual workers for COPY resolution.
         """
         self.config = config
         self.beads_client = beads_client
@@ -6102,6 +6125,7 @@ class ScribeWorkerPool:
         self.exit_on_error = exit_on_error if exit_on_error is not None else config.exit_on_error
         self.dependency_graph_path = dependency_graph_path
         self.kg_manager = kg_manager
+        self.copybook_dirs = copybook_dirs or []
 
         # Create shared MinionScribePool for call semantics processing
         # This pool is shared across all ScribeWorkers for resource efficiency
@@ -6149,6 +6173,7 @@ class ScribeWorkerPool:
                 dependency_graph_path=self.dependency_graph_path,
                 minion_pool=self._minion_pool,
                 kg_manager=self.kg_manager,
+                copybook_dirs=self.copybook_dirs,
             )
             for i in range(self.num_workers)
         ]
