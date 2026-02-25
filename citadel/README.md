@@ -286,6 +286,76 @@ The flow diagram generator:
 - Solid arrows for internal PERFORMs, dashed arrows for external calls
 - De-duplicates edges and handles cycles
 
+### Deep COBOL Structural Parse
+
+```python
+# Full structural parse with DATA DIVISION, PROCEDURE DIVISION,
+# call graph, and citadel graph fragments
+result = citadel.parse_cobol("program.cbl", copybook_dirs=["./copybooks"])
+
+# Program-level info
+print(result.program_id)           # "CBPAUP0C"
+print(result.total_lines)          # 386
+print(result.copybooks_resolved)   # ["CIPAUSMY", "CIPAUDTY"]
+
+# Serialized parse output
+result.data_items      # list[dict] - DATA DIVISION items with types, lengths
+result.paragraphs      # list[dict] - paragraphs with performs, reads, writes
+result.exec_blocks     # list[dict] - EXEC SQL/CICS/DLI blocks
+result.call_graph      # dict - adjacency, topological_order, entry_paragraph
+
+# Citadel graph fragments (Artifact/Relationship objects)
+result.artifacts       # program, paragraph, data_item, exec_block artifacts
+result.relationships   # PERFORMS, CALLS, READS, INCLUDES relationships
+```
+
+### Paragraph Syntax Tree
+
+```python
+# List available paragraphs
+print(result.paragraph_names)
+# ['1000-INITIALIZE', 'MAIN-PARA', '2000-PROCESS', ...]
+
+# Get a full statement-level AST for a single paragraph
+tree = result.get_paragraph_tree("MAIN-PARA")
+
+print(tree.statement_count)    # 25
+print(tree.max_nesting_depth)  # 3
+
+# Print the tree as a string (Unicode box-drawing)
+print(tree)
+# MAIN-PARA  (25 statements, depth=3)
+# PARAGRAPH
+# ├── PERFORM_THRU: PERFORM 1000-INITIALIZE THRU 1000-EXIT
+# ├── PERFORM_INLINE: PERFORM UNTIL END-OF-FILE
+# │   ├── IF: IF RECORD-VALID
+# │   │   └── PERFORM: PERFORM 2000-PROCESS
+# │   └── PERFORM: PERFORM 3000-READ-NEXT
+# └── GOBACK: GOBACK
+
+# Traverse all nodes
+for node in tree.walk():
+    print(f"{node.node_type.value}: {node.source_text[:50]}")
+
+# Find specific statement types
+from citadel.cobol.syntax_tree import StatementType
+
+ifs = tree.find(StatementType.IF)
+execs = tree.find(StatementType.EXEC_SQL)
+performs = tree.find(StatementType.PERFORM_THRU)
+
+# Access node attributes (vary by type)
+for node in ifs:
+    print(f"IF condition: {node.attributes['condition']}")
+for node in performs:
+    print(f"PERFORM {node.attributes['target']} THRU {node.attributes['thru']}")
+```
+
+Node types include: `IF`, `ELSE`, `EVALUATE`, `WHEN`, `PERFORM_INLINE`,
+`PERFORM`, `PERFORM_THRU`, `PERFORM_UNTIL`, `MOVE`, `COMPUTE`, `ADD`,
+`SUBTRACT`, `SET`, `DISPLAY`, `EXEC_SQL`, `EXEC_CICS`, `EXEC_DLI`,
+`CALL`, `GOBACK`, `GO_TO`, `EXIT`, and more.
+
 ### One-off Convenience Functions
 
 ```python
@@ -371,6 +441,19 @@ citadel export graph.json -f csv -o graph_csv/
 | `cypher` | `.cypher` | Neo4j Cypher statements |
 | `csv` | directory | CSV files (artifacts.csv, relationships.csv) |
 
+### COBOL Paragraph AST
+
+```bash
+# Print syntax trees for all paragraphs in a COBOL file
+citadel cobol-ast program.cbl
+
+# Single paragraph
+citadel cobol-ast program.cbl -p MAIN-PARA
+
+# With copybook directories
+citadel cobol-ast program.cbl -c ./copybooks -c ./shared/cpy
+```
+
 ### Spec Management
 
 ```bash
@@ -416,6 +499,7 @@ citadel/
 │   ├── sdk.py           # SDK for programmatic access
 │   ├── cli.py           # Command-line interface
 │   ├── orchestrator.py  # Main analysis coordinator
+│   ├── cobol/           # Structural COBOL parser + syntax tree
 │   ├── analysis/        # Graph analysis (sequence finder, dead code, flow diagrams)
 │   ├── discovery/       # File discovery
 │   ├── specs/           # Language specifications
