@@ -2317,6 +2317,30 @@ class ScribeWorker:
             # Note: .bak files are created separately and do not get .md files
             try:
                 cached_asts = self._file_asts.get(file_name)
+
+                # Build ASTs on demand if not cached (handles saves from
+                # non-Citadel paths, different workers, or CHROME/CLARIFICATION)
+                if cached_asts is None and self._determine_file_type(
+                    file_name,
+                ) == FileType.COBOL:
+                    try:
+                        from war_rig.io.paragraph_splitter import (
+                            _find_source_file as _find_src,
+                        )
+
+                        src = self.input_directory / file_name
+                        if not src.exists():
+                            found = _find_src(
+                                self.input_directory, Path(file_name).name,
+                            )
+                            if found:
+                                src = found
+                        if src.exists():
+                            self._build_cobol_ast(src, file_name)
+                            cached_asts = self._file_asts.get(file_name)
+                    except Exception:
+                        pass  # Best-effort; proceed without ASTs
+
                 md_content = self._generate_markdown_from_template(
                     template, file_name, paragraph_asts=cached_asts,
                 )
