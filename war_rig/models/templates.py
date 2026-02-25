@@ -124,6 +124,15 @@ class CallType(str, Enum):
     CICS_XCTL = "CICS_XCTL"
     OTHER = "OTHER"  # Fallback for non-standard call types
 
+    @classmethod
+    def _missing_(cls, value: object) -> "CallType | None":
+        if isinstance(value, str):
+            upper = value.upper().replace(" ", "_").replace("-", "_")
+            for member in cls:
+                if member.value == upper:
+                    return member
+        return cls.OTHER
+
 
 class FinalStatus(str, Enum):
     """Final documentation approval status."""
