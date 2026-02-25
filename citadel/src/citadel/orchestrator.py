@@ -222,7 +222,12 @@ class Orchestrator:
         registry: The artifact registry for storing discovered artifacts.
     """
 
-    def __init__(self, config: CitadelConfig | None = None) -> None:
+    def __init__(
+        self,
+        config: CitadelConfig | None = None,
+        *,
+        use_structural_parser: bool = True,
+    ) -> None:
         """
         Initialize orchestrator with configuration.
 
@@ -230,8 +235,12 @@ class Orchestrator:
 
         Args:
             config: Configuration instance. If not provided, loads from environment.
+            use_structural_parser: If True, run the COBOL structural parser
+                alongside the regex parser for richer artifact extraction.
+                Default is True since it's strictly additive.
         """
         self.config = config or load_config()
+        self.use_structural_parser = use_structural_parser
 
         # Initialize spec manager with builtin and cache directories
         builtin_dir = self.config.builtin_specs_dir
@@ -313,12 +322,34 @@ class Orchestrator:
             sum(len(r.references_found) for r in parse_results),
         )
 
+        # Phase 3b: Enhanced COBOL structural parsing (optional)
+        structural_artifacts, structural_relationships = (
+            self._run_structural_cobol_parse(
+                discovery.files_by_spec, specs, source_root
+            )
+        )
+        if structural_artifacts:
+            logger.info(
+                "Structural COBOL parse: %d artifacts, %d relationships",
+                len(structural_artifacts),
+                len(structural_relationships),
+            )
+
         # Phase 4: Registration
         self.registry = self._register_artifacts(parse_results)
+        # Merge structural parser artifacts into registry
+        for artifact in structural_artifacts:
+            try:
+                self.registry.register(artifact)
+            except ValueError:
+                # Already registered by regex parser -- skip
+                pass
         logger.info("Registry populated: %d artifacts", self.registry.size())
 
         # Phase 5: Resolution
         relationships, unresolved = self._resolve_references(parse_results, self.registry)
+        # Merge structural parser relationships
+        relationships.extend(structural_relationships)
         logger.info(
             "Resolution complete: %d relationships, %d unresolved",
             len(relationships),
@@ -869,6 +900,81 @@ class Orchestrator:
             logger.warning("Graph validation: %s", warning)
 
         return graph
+
+    def _run_structural_cobol_parse(
+        self,
+        files_by_spec: dict[str, list[Path]],
+        specs: dict[str, ArtifactSpec],
+        source_root: Path,
+    ) -> tuple[list, list]:
+        """Run the COBOL structural parser on COBOL files.
+
+        Produces richer artifacts with complexity scores, variable
+        reads/writes, and detailed call graph relationships that the
+        regex-based parser cannot provide.
+
+        Args:
+            files_by_spec: Files grouped by spec ID.
+            specs: Available specs keyed by spec ID.
+            source_root: Root directory for deriving copybook dirs.
+
+        Returns:
+            Tuple of (artifacts, relationships) from the structural parser.
+        """
+        from citadel.graph.model import Artifact  # noqa: F811
+
+        if not self.use_structural_parser:
+            return [], []
+
+        # Find COBOL files
+        cobol_files: list[Path] = []
+        for spec_id, files in files_by_spec.items():
+            spec = specs.get(spec_id)
+            if spec and spec.spec_id == "cobol":
+                cobol_files.extend(files)
+
+        if not cobol_files:
+            return [], []
+
+        # Derive copybook dirs from the discovery file inventory
+        copybook_dirs: list[Path] = []
+        seen_dirs: set[str] = set()
+        for _spec_id, files in files_by_spec.items():
+            for f in files:
+                parent = f.parent
+                parent_str = str(parent)
+                if parent_str not in seen_dirs:
+                    seen_dirs.add(parent_str)
+                    copybook_dirs.append(parent)
+        # Also include source_root itself
+        if str(source_root) not in seen_dirs:
+            copybook_dirs.insert(0, source_root)
+
+        all_artifacts: list[Artifact] = []
+        all_relationships: list[Relationship] = []
+
+        try:
+            from citadel.cobol.bridge import parse_cobol_to_graph
+
+            for cobol_file in cobol_files:
+                try:
+                    artifacts, relationships = parse_cobol_to_graph(
+                        cobol_file, copybook_dirs
+                    )
+                    all_artifacts.extend(artifacts)
+                    all_relationships.extend(relationships)
+                except Exception as e:
+                    logger.warning(
+                        "Structural COBOL parse failed for %s: %s",
+                        cobol_file,
+                        e,
+                    )
+        except ImportError:
+            logger.debug(
+                "COBOL structural parser not available; skipping"
+            )
+
+        return all_artifacts, all_relationships
 
     def _export_graph(
         self,
