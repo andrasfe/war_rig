@@ -598,12 +598,195 @@ def split_and_link(
 
 
 # ---------------------------------------------------------------------------
+# AST injection into markdown
+# ---------------------------------------------------------------------------
+
+# Matches an existing AST code block (for idempotency).
+_AST_BLOCK_RE = re.compile(r"^```\s*$")
+
+
+def inject_asts_into_markdown(
+    md_path: Path,
+    paragraph_asts: dict[str, str],
+) -> bool:
+    """Insert per-paragraph AST code blocks into a ``.cbl.md`` file.
+
+    For each ``### PARAGRAPH-NAME`` heading, inserts an AST code block
+    after the heading (and any existing source link).  Skips paragraphs
+    that already have an AST block or have no AST available.
+
+    Args:
+        md_path: Path to the markdown documentation file.
+        paragraph_asts: Mapping of uppercase paragraph name to formatted
+            AST string (from ``format_file_ast`` or Citadel).
+
+    Returns:
+        *True* if the file was modified, *False* otherwise.
+    """
+    if not md_path.exists() or not paragraph_asts:
+        return False
+
+    lines = md_path.read_text(encoding="utf-8").splitlines(keepends=True)
+
+    modified = False
+    result: list[str] = []
+    in_code_fence = False
+    i = 0
+
+    while i < len(lines):
+        line = lines[i]
+        stripped = line.rstrip("\n\r")
+
+        # Track fenced code blocks
+        if stripped.startswith("```"):
+            in_code_fence = not in_code_fence
+            result.append(line)
+            i += 1
+            continue
+
+        if in_code_fence:
+            result.append(line)
+            i += 1
+            continue
+
+        m = _PARAGRAPH_HEADING_RE.match(stripped)
+        if m:
+            para_name = m.group(1)
+            result.append(line)
+            i += 1
+
+            # Skip past source link if present
+            if i < len(lines) and _SOURCE_LINK_RE.match(
+                lines[i].rstrip("\n\r"),
+            ):
+                result.append(lines[i])
+                i += 1
+
+            # Check if AST block already exists (next non-blank line is ```)
+            peek = i
+            while peek < len(lines) and lines[peek].strip() == "":
+                peek += 1
+            if peek < len(lines) and _AST_BLOCK_RE.match(
+                lines[peek].rstrip("\n\r"),
+            ):
+                # Already has a code block, skip
+                continue
+
+            # Insert AST if available
+            ast_text = paragraph_asts.get(para_name.upper(), "")
+            if ast_text:
+                result.append("\n")
+                result.append("```\n")
+                if not ast_text.endswith("\n"):
+                    ast_text += "\n"
+                result.append(ast_text)
+                result.append("```\n")
+                result.append("\n")
+                modified = True
+            continue
+
+        result.append(line)
+        i += 1
+
+    if modified:
+        md_path.write_text("".join(result), encoding="utf-8")
+        logger.info("Injected ASTs into %s", md_path)
+
+    return modified
+
+
+def inject_asts_for_directory(
+    source_dir: Path,
+    doc_dir: Path,
+) -> int:
+    """Inject ASTs into all COBOL ``.cbl.md`` files in a directory.
+
+    For each ``.cbl.doc.json`` file, finds the source file, parses it
+    with Citadel to get per-paragraph ASTs, and patches the corresponding
+    ``.cbl.md`` file.
+
+    Args:
+        source_dir: Directory containing original COBOL source files.
+        doc_dir: Directory containing ``.doc.json`` and ``.md`` output.
+
+    Returns:
+        Count of markdown files that were modified.
+    """
+    try:
+        from citadel.sdk import Citadel
+    except ImportError:
+        logger.warning("Citadel not available, skipping AST injection")
+        return 0
+
+    citadel = Citadel()
+    patched_count = 0
+
+    doc_files = sorted(
+        set(doc_dir.rglob("*.cbl.doc.json"))
+        | set(doc_dir.rglob("*.CBL.doc.json")),
+    )
+
+    for doc_json_path in doc_files:
+        try:
+            with open(doc_json_path, encoding="utf-8") as f:
+                doc = json.load(f)
+        except (json.JSONDecodeError, OSError) as exc:
+            logger.warning("Failed to read %s: %s", doc_json_path, exc)
+            continue
+
+        header = doc.get("header", {})
+        file_name = header.get("file_name")
+        if not file_name:
+            continue
+
+        # Find source file (use basename for recursive search)
+        source_path = _find_source_file(source_dir, Path(file_name).name)
+        if source_path is None:
+            logger.warning("Source %s not found in %s", file_name, source_dir)
+            continue
+
+        # Find markdown file (sibling of doc.json)
+        # file_name may include subdirectory (e.g. "cbl/PROG.cbl"), use
+        # just the basename since .md lives next to .doc.json.
+        base_name = Path(file_name).name
+        md_path = doc_json_path.parent / f"{base_name}.md"
+        if not md_path.exists():
+            # Try case-insensitive
+            target_lower = f"{base_name}.md".lower()
+            for candidate in doc_json_path.parent.iterdir():
+                if (
+                    candidate.is_file()
+                    and candidate.name.lower() == target_lower
+                ):
+                    md_path = candidate
+                    break
+        if not md_path.exists():
+            continue
+
+        # Parse with Citadel to get ASTs
+        try:
+            parse_result = citadel.parse_cobol(source_path)
+            paragraph_asts = parse_result.paragraph_asts
+        except Exception as exc:
+            logger.warning("AST parse failed for %s: %s", file_name, exc)
+            continue
+
+        if not paragraph_asts:
+            continue
+
+        if inject_asts_into_markdown(md_path, paragraph_asts):
+            patched_count += 1
+
+    return patched_count
+
+
+# ---------------------------------------------------------------------------
 # Standalone batch runner (for retroactive processing)
 # ---------------------------------------------------------------------------
 
 
 def run_batch_split(input_dir: Path, output_dir: Path) -> None:
-    """Split all COBOL paragraphs and patch markdown links in batch.
+    """Split all COBOL paragraphs, patch markdown links, and inject ASTs.
 
     Intended for retroactive processing of existing output directories
     (e.g. ``example_output/``).  Can also be invoked as a CLI utility.
@@ -623,3 +806,9 @@ def run_batch_split(input_dir: Path, output_dir: Path) -> None:
 
     patched = patch_all_markdown_in_directory(doc_dir=output_dir)
     logger.info("Batch patch complete: %d markdown files updated", patched)
+
+    # Inject ASTs into markdown files (requires Citadel)
+    ast_count = inject_asts_for_directory(
+        source_dir=input_dir, doc_dir=output_dir,
+    )
+    logger.info("AST injection complete: %d markdown files updated", ast_count)

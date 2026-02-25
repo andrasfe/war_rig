@@ -32,26 +32,134 @@ PAUDBUNL is an IMS DL/I unload utility that retrieves all root segments (PAUTSUM
 
 ### MAIN-PARA
 > [Source: MAIN-PARA.cbl.md](PAUDBUNL.CBL.d/MAIN-PARA.cbl.md)
+
+```
+MAIN-PARA  (5 statements, depth=0)
+PARAGRAPH
+├── UNKNOWN: ENTRY 'DLITCBL'                 USING PAUTBPCB
+├── PERFORM_THRU: PERFORM 1000-INITIALIZE                THRU 1000-EXIT
+├── PERFORM_THRU: PERFORM 2000-FIND-NEXT-AUTH-SUMMARY    THRU 2000-EXIT UNTIL   WS-END-...
+├── PERFORM_THRU: PERFORM 4000-FILE-CLOSE THRU 4000-EXIT
+└── GOBACK: GOBACK
+```
+
 MAIN-PARA serves as the primary entry and orchestration point for the entire unload process, defining the high-level program flow. It first declares an alternate entry point 'DLITCBL' using the PAUTBPCB linkage for IMS PCB access (line 1225033). It consumes no direct inputs beyond the linkage PCB but relies on IMS database availability via the PCB. It produces control flow to subordinate paragraphs and ultimately two output files via initialization and processing. The business logic is a simple sequential process: initialize files and variables, loop through all root segments calling 2000-FIND-NEXT-AUTH-SUMMARY until end-of-root flag is set, then close files and terminate normally. No explicit decisions are made here beyond the loop condition on WS-END-OF-ROOT-SEG. Error handling is delegated to subordinate paragraphs which abend on failures. It calls 1000-INITIALIZE to prepare files (line 12400), repeatedly calls 2000-FIND-NEXT-AUTH-SUMMARY in a loop controlled by WS-END-OF-ROOT-SEG until 'Y' (lines 12600-12800), and 4000-FILE-CLOSE for cleanup (line 15320). Upon loop exit, it executes GOBACK for normal termination (line 16600). This structure ensures complete database unload without gaps.
 
 ### 1000-INITIALIZE
 > [Source: 1000-INITIALIZE.cbl.md](PAUDBUNL.CBL.d/1000-INITIALIZE.cbl.md)
+
+```
+1000-INITIALIZE  (18 statements, depth=1)
+PARAGRAPH
+├── ACCEPT: ACCEPT CURRENT-DATE     FROM DATE
+├── ACCEPT: ACCEPT CURRENT-YYDDD    FROM DAY
+├── DISPLAY: DISPLAY 'STARTING PROGRAM PAUDBUNL::'
+├── DISPLAY: DISPLAY '*-------------------------------------*'
+├── DISPLAY: DISPLAY 'TODAYS DATE            :' CURRENT-DATE
+├── DISPLAY: DISPLAY ' '
+├── OPEN: OPEN OUTPUT OPFILE1
+├── IF: IF WS-OUTFL1-STATUS =  SPACES OR '00'
+│   ├── CONTINUE: CONTINUE
+│   └── ELSE: ELSE
+│       ├── DISPLAY: DISPLAY 'ERROR IN OPENING OPFILE1:' WS-OUTFL1-STATUS
+│       └── PERFORM: PERFORM 9999-ABEND
+├── OPEN: OPEN OUTPUT OPFILE2
+└── IF: IF WS-OUTFL2-STATUS =  SPACES OR '00'
+    ├── CONTINUE: CONTINUE
+    └── ELSE: ELSE
+        ├── DISPLAY: DISPLAY 'ERROR IN OPENING OPFILE2:' WS-OUTFL2-STATUS
+        └── PERFORM: PERFORM 9999-ABEND
+```
+
 1000-INITIALIZE handles program startup by accepting system dates into CURRENT-DATE and CURRENT-YYDDD, displaying startup messages including program name and date for logging (lines 17200-17900). It consumes no file or segment data but initializes WS variables implicitly via prior definitions. It produces open output files OPFILE1 and OPFILE2, checking FILE STATUS after each OPEN (lines 19610, 19690). Business logic validates open status: if not SPACES or '00', displays error and calls 9999-ABEND (lines 19620-19660, 19691-19695). No loops or complex decisions; purely sequential setup. Error handling is immediate abend on open failure to prevent processing with invalid files. It calls no other paragraphs but is invoked solely by MAIN-PARA. Exits cleanly to return control (line 19900). This ensures files are ready before unload loop begins.
 
 ### 2000-FIND-NEXT-AUTH-SUMMARY
 > [Source: 2000-FIND-NEXT-AUTH-SUMMARY.cbl.md](PAUDBUNL.CBL.d/2000-FIND-NEXT-AUTH-SUMMARY.cbl.md)
+
+```
+2000-FIND-NEXT-AUTH-SUMMARY  (20 statements, depth=2)
+PARAGRAPH
+├── INITIALIZE: INITIALIZE PAUT-PCB-STATUS
+├── CALL: CALL 'CBLTDLI'            USING  FUNC-GN PAUTBPCB PENDING-AUTH-SUMMAR...
+├── IF: IF PAUT-PCB-STATUS = SPACES
+│   ├── ADD: ADD 1                 TO WS-NO-SUMRY-READ
+│   ├── ADD: ADD 1                 TO WS-AUTH-SMRY-PROC-CNT
+│   ├── MOVE: MOVE PENDING-AUTH-SUMMARY TO OPFIL1-REC
+│   ├── INITIALIZE: INITIALIZE ROOT-SEG-KEY
+│   ├── INITIALIZE: INITIALIZE CHILD-SEG-REC
+│   ├── MOVE: MOVE PA-ACCT-ID           TO ROOT-SEG-KEY
+│   └── IF: IF PA-ACCT-ID IS NUMERIC
+│       ├── WRITE: WRITE OPFIL1-REC
+│       ├── INITIALIZE: INITIALIZE WS-END-OF-CHILD-SEG
+│       └── PERFORM_THRU: PERFORM 3000-FIND-NEXT-AUTH-DTL THRU 3000-EXIT UNTIL  WS-END-OF-CHILD...
+├── IF: IF PAUT-PCB-STATUS = 'GB'
+│   ├── SET: SET END-OF-AUTHDB     TO TRUE
+│   └── MOVE: MOVE 'Y' TO WS-END-OF-ROOT-SEG
+└── IF: IF PAUT-PCB-STATUS NOT EQUAL TO  SPACES AND 'GB'
+    ├── DISPLAY: DISPLAY 'AUTH SUM  GN FAILED  :' PAUT-PCB-STATUS
+    ├── DISPLAY: DISPLAY 'KEY FEEDBACK AREA    :' PAUT-KEYFB
+    └── PERFORM: PERFORM 9999-ABEND
+```
+
 2000-FIND-NEXT-AUTH-SUMMARY implements the outer loop logic for retrieving and processing each root PAUTSUM0 segment from IMS using unqualified GN call via CBLTDLI (lines 20700-21000). It consumes IMS root segments via PAUTBPCB and SSA ROOT-UNQUAL-SSA, initializing PCB status first (line 20660). It produces increments to counters WS-NO-SUMRY-READ and WS-AUTH-SMRY-PROC-CNT, writes the segment to OPFILE1 via MOVE and WRITE (lines 21900-21906), sets ROOT-SEG-KEY from PA-ACCT-ID (line 21903), and conditionally loops to child processing. Business logic checks PAUT-PCB-STATUS: SPACES triggers write and child loop if PA-ACCT-ID numeric (lines 21400-21910); 'GB' sets end-of-root flags (lines 21920-21950); other statuses display error/key feedback and abend (lines 22000-22600). Error handling abends on unexpected IMS statuses. It calls 3000-FIND-NEXT-AUTH-DTL repeatedly until WS-END-OF-CHILD-SEG='Y' (lines 21908-21909). This paragraph drives the core unload of roots and orchestrates nested child processing.
 
 ### 3000-FIND-NEXT-AUTH-DTL
 > [Source: 3000-FIND-NEXT-AUTH-DTL.cbl.md](PAUDBUNL.CBL.d/3000-FIND-NEXT-AUTH-DTL.cbl.md)
+
+```
+3000-FIND-NEXT-AUTH-DTL  (15 statements, depth=1)
+PARAGRAPH
+├── CALL: CALL 'CBLTDLI'            USING  FUNC-GNP PAUTBPCB PENDING-AUTH-DETAI...
+├── IF: IF PAUT-PCB-STATUS = SPACES
+│   ├── SET: SET MORE-AUTHS       TO TRUE
+│   ├── ADD: ADD 1                 TO WS-NO-SUMRY-READ
+│   ├── ADD: ADD 1                 TO WS-AUTH-SMRY-PROC-CNT
+│   ├── MOVE: MOVE PENDING-AUTH-DETAILS TO CHILD-SEG-REC
+│   └── WRITE: WRITE OPFIL2-REC
+├── IF: IF PAUT-PCB-STATUS = 'GE'
+│   ├── MOVE: MOVE 'Y' TO WS-END-OF-CHILD-SEG
+│   └── DISPLAY: DISPLAY 'CHILD SEG FLAG GE : ' WS-END-OF-CHILD-SEG
+├── IF: IF PAUT-PCB-STATUS NOT EQUAL TO  SPACES AND 'GE'
+│   ├── DISPLAY: DISPLAY 'GNP CALL FAILED  :' PAUT-PCB-STATUS
+│   ├── DISPLAY: DISPLAY 'KFB AREA IN CHILD:' PAUT-KEYFB
+│   └── PERFORM: PERFORM 9999-ABEND
+└── INITIALIZE: INITIALIZE PAUT-PCB-STATUS
+```
+
 3000-FIND-NEXT-AUTH-DTL implements the inner loop for retrieving child PAUTDTL1 segments under the current root using GNP call via CBLTDLI with CHILD-UNQUAL-SSA (lines 23700-24000). It consumes IMS child segments qualified by parentage from prior root PA-ACCT-ID in ROOT-SEG-KEY. It produces increments to WS-NO-SUMRY-READ and WS-AUTH-SMRY-PROC-CNT (misnamed, but used here; lines 24400-24500), MOVE to CHILD-SEG-REC, and WRITE to OPFILE2 (lines 24600-24700). Business logic checks PAUT-PCB-STATUS post-GNP: SPACES sets MORE-AUTHS flag and writes record (lines 24200-24800); 'GE' sets WS-END-OF-CHILD-SEG='Y' to exit inner loop (lines 24900-25020); other statuses display error/key feedback and abend (lines 25200-25400). It reinitializes PCB status at end (line 25800). Error handling abends on GNP failures. Called repeatedly by 2000 until child end. This ensures all children per root are fully unloaded.
 
 ### 4000-FILE-CLOSE
 > [Source: 4000-FILE-CLOSE.cbl.md](PAUDBUNL.CBL.d/4000-FILE-CLOSE.cbl.md)
+
+```
+4000-FILE-CLOSE  (11 statements, depth=1)
+PARAGRAPH
+├── DISPLAY: DISPLAY 'CLOSING THE FILE'
+├── CLOSE: CLOSE OPFILE1
+├── IF: IF WS-OUTFL1-STATUS =  SPACES OR '00'
+│   ├── CONTINUE: CONTINUE
+│   └── ELSE: ELSE
+│       └── DISPLAY: DISPLAY 'ERROR IN CLOSING 1ST FILE:'WS-OUTFL1-STATUS
+├── CLOSE: CLOSE OPFILE2
+└── IF: IF WS-OUTFL2-STATUS =  SPACES OR '00'
+    ├── CONTINUE: CONTINUE
+    └── ELSE: ELSE
+        └── DISPLAY: DISPLAY 'ERROR IN CLOSING 2ND FILE:'WS-OUTFL2-STATUS
+```
+
 4000-FILE-CLOSE performs cleanup by closing OPFILE1 and OPFILE2, displaying closure message (lines 26310, 26400, 27100). It consumes file handles opened in 1000-INITIALIZE. It produces checked FILE STATUS post-close, continuing on SPACES/'00' or displaying errors without abend (lines 26600-27000, 27300-27600). No data writes or IMS calls; purely I/O termination. Business logic is conditional display-only on close errors, allowing graceful exit even on minor issues. No loops or calls to others. Invoked once by MAIN-PARA at end. Exits to GOBACK path. This finalizes output files safely.
 
 ### 9999-ABEND
 > [Source: 9999-ABEND.cbl.md](PAUDBUNL.CBL.d/9999-ABEND.cbl.md)
+
+```
+9999-ABEND  (3 statements, depth=0)
+PARAGRAPH
+├── DISPLAY: DISPLAY 'IMSUNLOD ABENDING ...'
+├── MOVE: MOVE 16 TO RETURN-CODE
+└── GOBACK: GOBACK
+```
+
 9999-ABEND is the centralized error termination routine, displaying abend message and setting RETURN-CODE to 16 before GOBACK (lines 36600-36800). It consumes WS error flags/statuses indirectly via callers. It produces non-zero return code for JCL failure. No inputs/outputs beyond display; no business logic or conditions checked here. Error handling is the purpose itself: unconditional abend. Called by 1000 on file open errors, 2000/3000 on IMS call failures. Ensures program does not continue on irrecoverable errors.
 
 ## Dead Code
