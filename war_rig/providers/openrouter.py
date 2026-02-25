@@ -200,7 +200,7 @@ class OpenRouterProvider:
         # Some models require specific temperature settings
         # o3 and other reasoning models require temperature=1.0
         model_lower = resolved_model.lower()
-        if any(m in model_lower for m in ["o3", "o1-", "o1/"]):
+        if any(m in model_lower for m in ["o3", "o1-", "o1/", "gpt-5"]):
             if temperature != 1.0:
                 logger.info(
                     f"Model {resolved_model} requires temperature=1.0, "
