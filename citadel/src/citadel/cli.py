@@ -756,5 +756,73 @@ def _print_graph_statistics(graph: DependencyGraph) -> None:
         console.print(lang_table)
 
 
+@cli.command("cobol-ast")
+@click.argument("source", type=click.Path(exists=True, path_type=Path))
+@click.option(
+    "--copybook-dir", "-c",
+    multiple=True,
+    type=click.Path(exists=True, path_type=Path),
+    help="Copybook search directory (repeatable)",
+)
+@click.option(
+    "--paragraph", "-p",
+    default=None,
+    help="Show AST for a single paragraph (by name)",
+)
+@click.pass_context
+def cobol_ast(
+    ctx: click.Context,
+    source: Path,
+    copybook_dir: tuple[Path, ...],
+    paragraph: str | None,
+) -> None:
+    """Print the syntax tree for each paragraph in a COBOL file.
+
+    Parses SOURCE and prints a statement-level AST with nested control
+    flow for every paragraph (or a single one with --paragraph).
+    """
+    verbose = ctx.obj.get("verbose", False)
+    setup_logging(verbose)
+
+    from citadel.sdk import Citadel
+
+    try:
+        citadel = Citadel()
+        cb_dirs = list(copybook_dir) if copybook_dir else None
+        result = citadel.parse_cobol(source, copybook_dirs=cb_dirs)
+    except Exception as e:
+        console.print(f"[red]Parse error:[/red] {e}")
+        return
+
+    console.print(Panel.fit(
+        f"[bold]{result.source_file}[/bold]  "
+        f"({result.total_lines} lines, "
+        f"{len(result.paragraph_names)} paragraphs)",
+        title="COBOL AST",
+        border_style="blue",
+    ))
+
+    names = result.paragraph_names
+    if paragraph:
+        upper = paragraph.upper()
+        if upper not in names:
+            console.print(
+                f"[red]Paragraph {upper!r} not found.[/red]  "
+                f"Available: {', '.join(names)}"
+            )
+            return
+        names = [upper]
+
+    for name in names:
+        try:
+            tree = result.get_paragraph_tree(name)
+            console.print(f"\n[bold cyan]{tree}[/bold cyan]")
+        except Exception as e:
+            console.print(
+                f"\n[red]Error building AST for "
+                f"{name}:[/red] {e}"
+            )
+
+
 if __name__ == "__main__":
     cli()

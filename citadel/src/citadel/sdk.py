@@ -289,6 +289,89 @@ _COBOL_END_RE = re.compile(
 )
 
 
+@dataclass
+class CobolParseResult:
+    """Result of deep structural COBOL parsing.
+
+    Contains both the detailed parse output from the structural parser
+    AND citadel-compatible graph fragments (artifacts + relationships).
+    """
+
+    program_id: str
+    """PROGRAM-ID extracted from the source file name."""
+
+    source_file: str
+    """Name of the source file."""
+
+    total_lines: int
+    """Total number of lines in the source file."""
+
+    copybooks_resolved: list[str]
+    """List of copybook names that were resolved."""
+
+    data_items: list[dict[str, Any]]
+    """Serialized DataItems from the DATA DIVISION."""
+
+    paragraphs: list[dict[str, Any]]
+    """Serialized ParagraphInfos with called_by reverse lookup."""
+
+    exec_blocks: list[dict[str, Any]]
+    """Serialized ExecBlocks."""
+
+    call_graph: dict[str, Any]
+    """Call graph: adjacency, topological_order, perform_thru_ranges, entry_paragraph."""
+
+    artifacts: list[Any]
+    """Citadel-native Artifact objects (from bridge)."""
+
+    relationships: list[Any]
+    """Citadel-native Relationship objects (from bridge)."""
+
+    _paragraph_source_lines: dict[str, list] = field(
+        default_factory=dict, repr=False
+    )
+    """Internal: paragraph name → list[SourceLine] for lazy AST building."""
+
+    _data_items_raw: list = field(
+        default_factory=list, repr=False
+    )
+    """Internal: raw DataItem objects for variable resolution in AST."""
+
+    def get_paragraph_tree(self, name: str) -> Any:
+        """Return a syntax tree for the named paragraph.
+
+        Lazily builds a full statement AST with nested control flow.
+
+        Args:
+            name: Paragraph name (case-insensitive).
+
+        Returns:
+            ParagraphSyntaxTree with typed, nested statement nodes.
+
+        Raises:
+            KeyError: If no paragraph with that name exists.
+        """
+        from citadel.cobol.syntax_tree import build_paragraph_ast
+
+        upper = name.upper()
+        if upper not in self._paragraph_source_lines:
+            available = sorted(self._paragraph_source_lines)
+            raise KeyError(
+                f"Paragraph {upper!r} not found. "
+                f"Available: {available}"
+            )
+        return build_paragraph_ast(
+            upper,
+            self._paragraph_source_lines[upper],
+            self._data_items_raw,
+        )
+
+    @property
+    def paragraph_names(self) -> list[str]:
+        """Return names of all paragraphs available for AST query."""
+        return sorted(self._paragraph_source_lines)
+
+
 class Citadel:
     """
     Citadel SDK for programmatic dependency extraction.
@@ -1738,6 +1821,150 @@ class Citadel:
             "main_calls": sorted(main_calls)[:10],  # Limit to 10 main calls
             "error": None,
         }
+
+    def parse_cobol(
+        self,
+        path: str | Path,
+        copybook_dirs: list[str | Path] | None = None,
+    ) -> CobolParseResult:
+        """Deep structural parse of a COBOL source file.
+
+        Uses the cbexplore-derived structural parser for rich analysis
+        including DATA DIVISION hierarchy, paragraph complexity scoring,
+        variable read/write tracking, EXEC block classification, and
+        call graph with topological ordering.
+
+        Args:
+            path: Path to the COBOL source file (.cbl).
+            copybook_dirs: Directories to search for copybooks.
+
+        Returns:
+            CobolParseResult with both detailed parse output and
+            citadel-compatible graph fragments.
+        """
+        from citadel.cobol.bridge import build_graph_from_parsed
+        from citadel.cobol.call_graph import CallGraphBuilder
+        from citadel.cobol.data_division import DataDivisionParser
+        from citadel.cobol.procedure_division import ProcedureDivisionParser
+        from citadel.cobol.source_reader import SourceReader
+
+        source_path = Path(path)
+        cb_dirs = [str(Path(d)) for d in (copybook_dirs or [])]
+
+        # Run the parse pipeline
+        reader = SourceReader(
+            copybook_dirs=cb_dirs,
+            skip_missing_copybooks=True,
+        )
+        source = reader.read(str(source_path))
+
+        data_parser = DataDivisionParser()
+        data_items = data_parser.parse(source)
+
+        proc_parser = ProcedureDivisionParser(data_items=data_items)
+        paragraphs, exec_blocks = proc_parser.parse(source)
+
+        graph_builder = CallGraphBuilder()
+        call_graph = graph_builder.build(paragraphs)
+
+        # Build called_by reverse lookup
+        called_by: dict[str, list[str]] = {}
+        for para in paragraphs:
+            for perform in para.performs:
+                target = perform.get("target", "")
+                if target:
+                    if target not in called_by:
+                        called_by[target] = []
+                    if para.name not in called_by[target]:
+                        called_by[target].append(para.name)
+
+        # Serialize data items
+        data_item_dicts = []
+        for item in data_items:
+            if item.level == 88:
+                continue
+            data_item_dicts.append({
+                "name": item.name,
+                "level": item.level,
+                "picture": item.picture,
+                "usage": item.usage,
+                "value": item.value,
+                "byte_length": item.byte_length,
+                "python_type_hint": item.python_type_hint,
+                "section": item.section,
+                "parent": item.parent,
+                "children_count": len(item.children),
+                "copybook_source": item.copybook_source,
+                "conditions_88": item.conditions_88,
+            })
+
+        # Serialize paragraphs
+        para_dicts = []
+        for para in paragraphs:
+            para_dicts.append({
+                "name": para.name,
+                "line_start": para.line_start,
+                "line_end": para.line_end,
+                "performs": para.performs,
+                "exec_blocks": para.exec_blocks,
+                "reads": para.reads,
+                "writes": para.writes,
+                "complexity_score": para.complexity_score,
+                "notes": para.notes,
+                "called_by": called_by.get(para.name, []),
+            })
+
+        # Serialize exec blocks
+        exec_dicts = []
+        for eb in exec_blocks:
+            exec_dicts.append({
+                "id": eb.id,
+                "type": eb.type,
+                "subtype": eb.subtype,
+                "host_variables_in": eb.host_variables_in,
+                "host_variables_out": eb.host_variables_out,
+                "paragraph": eb.paragraph,
+                "line_number": eb.line_number,
+            })
+
+        # Serialize call graph
+        call_graph_dict = {
+            "adjacency": call_graph.adjacency,
+            "topological_order": call_graph.topological_order,
+            "perform_thru_ranges": call_graph.perform_thru_ranges,
+            "entry_paragraph": call_graph.entry_paragraph,
+        }
+
+        # Get citadel artifacts/relationships via bridge (reuse parsed objects)
+        artifacts, relationships = build_graph_from_parsed(
+            source, data_items, paragraphs, exec_blocks,
+            call_graph, source_path,
+        )
+
+        program_id = source.source_file.rsplit(".", 1)[0].upper()
+
+        # Build paragraph name → source lines for lazy AST building
+        para_source_lines: dict[str, list] = {}
+        for para in paragraphs:
+            para_source_lines[para.name] = [
+                ln for ln in source.lines
+                if para.line_start <= ln.line_number <= para.line_end
+            ]
+
+        return CobolParseResult(
+            program_id=program_id,
+            source_file=source.source_file,
+            total_lines=source.total_lines,
+            copybooks_resolved=source.copybooks_resolved,
+            data_items=data_item_dicts,
+            paragraphs=para_dicts,
+            exec_blocks=exec_dicts,
+            call_graph=call_graph_dict,
+            artifacts=artifacts,
+            relationships=relationships,
+            _paragraph_source_lines=para_source_lines,
+            _data_items_raw=data_items,
+        )
 
     def get_callouts_compact(self, path: str | Path) -> list[dict[str, Any]]:
         """
