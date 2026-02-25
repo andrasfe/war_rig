@@ -270,6 +270,10 @@ class ScribeWorker:
             except ImportError:
                 logger.debug(f"Worker {worker_id}: Citadel SDK not available")
 
+        # Cache per-file paragraph ASTs for markdown generation and prompts
+        # Keyed by file_name → dict of uppercase paragraph name → formatted AST string
+        self._file_asts: dict[str, dict[str, str]] = {}
+
         # Cache dead code detection results (keyed by normalized file path)
         self._dead_code_by_file: dict[str, list[dict]] = {}
         if self._citadel and dependency_graph_path and dependency_graph_path.exists():
@@ -1836,6 +1840,7 @@ class ScribeWorker:
         self,
         template: DocumentationTemplate,
         file_name: str,
+        paragraph_asts: dict[str, str] | None = None,
     ) -> str:
         """Generate human-readable markdown from a documentation template.
 
@@ -1845,6 +1850,8 @@ class ScribeWorker:
         Args:
             template: The documentation template to convert.
             file_name: Source file name for display in the header.
+            paragraph_asts: Optional per-paragraph AST strings to insert
+                under each paragraph heading (COBOL files only).
 
         Returns:
             Formatted markdown string.
@@ -1935,6 +1942,17 @@ class ScribeWorker:
                         parts.append(f"*{para.dead_code_reason}*")
                 else:
                     parts.append(f"### {para_name}")
+
+                # Insert per-paragraph AST if available
+                if paragraph_asts:
+                    ast_text = paragraph_asts.get(para_name.upper(), "")
+                    if ast_text:
+                        parts.append("")
+                        parts.append("```")
+                        parts.append(ast_text)
+                        parts.append("```")
+
+                if not para.is_dead_code:
                     if para.purpose:
                         parts.append(para.purpose)
                     if para.summary:
@@ -2298,7 +2316,10 @@ class ScribeWorker:
             # Also save human-readable markdown alongside the .doc.json
             # Note: .bak files are created separately and do not get .md files
             try:
-                md_content = self._generate_markdown_from_template(template, file_name)
+                cached_asts = self._file_asts.get(file_name)
+                md_content = self._generate_markdown_from_template(
+                    template, file_name, paragraph_asts=cached_asts,
+                )
                 # Change .doc.json to .md (remove both suffixes, add .md)
                 md_path = doc_path.with_suffix("").with_suffix(".md")
                 md_path.write_text(md_content, encoding="utf-8")
@@ -3264,6 +3285,47 @@ class ScribeWorker:
             and file_type == FileType.COBOL
         )
 
+    def _build_cobol_ast(
+        self,
+        source_path: Path,
+        file_name: str,
+    ) -> tuple[Any, dict[str, str], str]:
+        """Build full-file AST for a COBOL source file via Citadel.
+
+        Parses the file, builds ASTs for all paragraphs, and caches the
+        per-paragraph AST strings in ``self._file_asts[file_name]`` for
+        later use in markdown generation.
+
+        Args:
+            source_path: Path to the .cbl source file.
+            file_name: Logical file name (ticket key) for caching.
+
+        Returns:
+            Tuple of (parse_result, paragraph_asts, full_ast_text) where
+            paragraph_asts maps uppercase paragraph name to its formatted
+            AST string.
+        """
+        assert self._citadel is not None
+        parse_result = self._citadel.parse_cobol(source_path)
+        paragraph_asts = parse_result.paragraph_asts  # name → str(tree)
+        full_ast_text = parse_result.full_ast
+
+        # Guard against mock/invalid returns
+        if not isinstance(full_ast_text, str):
+            raise TypeError(
+                f"Expected str from full_ast, got {type(full_ast_text).__name__}"
+            )
+
+        # Cache for markdown generation in _save_template
+        self._file_asts[file_name] = paragraph_asts
+
+        logger.debug(
+            f"Worker {self.worker_id}: Built AST for {file_name} — "
+            f"{len(paragraph_asts)} paragraphs, "
+            f"{len(full_ast_text)} chars"
+        )
+        return parse_result, paragraph_asts, full_ast_text
+
     async def _process_citadel_guided_documentation(
         self,
         ticket: ProgramManagerTicket,
@@ -3380,6 +3442,20 @@ class ScribeWorker:
         # Get pattern insights for documentation guidance
         pattern_insights = self._get_pattern_insights(str(source_path), outline)
 
+        # Build full-file AST — agents receive AST instead of raw source
+        try:
+            _parse_result, paragraph_asts, full_ast_text = self._build_cobol_ast(
+                source_path, ticket.file_name,
+            )
+            ast_source = full_ast_text
+        except Exception as e:
+            logger.warning(
+                f"Worker {self.worker_id}: AST build failed for "
+                f"{ticket.file_name}, using raw source: {e}"
+            )
+            ast_source = source_code
+            paragraph_asts = {}
+
         # --- Resume mode: if a previous template exists with incomplete stubs,
         # only re-process the stub paragraphs and keep already-documented ones.
         previous_template = self._load_previous_template(ticket.file_name)
@@ -3392,9 +3468,10 @@ class ScribeWorker:
                     f"stub paragraphs to process"
                 )
                 return await self._process_citadel_resume(
-                    ticket, source_code, file_type, formatting_strict,
+                    ticket, ast_source, file_type, formatting_strict,
                     outline, source_path, stats, pattern_insights,
                     previous_template, stub_names,
+                    paragraph_asts=paragraph_asts,
                 )
 
         if is_large:
@@ -3403,8 +3480,9 @@ class ScribeWorker:
                 f"{ticket.file_name} ({total_lines} lines, {paragraph_count} paragraphs)"
             )
             return await self._process_citadel_batched(
-                ticket, source_code, file_type, formatting_strict,
+                ticket, ast_source, file_type, formatting_strict,
                 outline, source_path, stats, pattern_insights,
+                paragraph_asts=paragraph_asts,
             )
         else:
             logger.info(
@@ -3412,7 +3490,7 @@ class ScribeWorker:
                 f"{ticket.file_name} ({total_lines} lines, {paragraph_count} paragraphs)"
             )
             return await self._process_citadel_single_pass(
-                ticket, source_code, file_type, formatting_strict, outline,
+                ticket, ast_source, file_type, formatting_strict, outline,
                 pattern_insights,
             )
 
@@ -3454,6 +3532,7 @@ class ScribeWorker:
         pattern_insights: dict | None,
         previous_template: DocumentationTemplate,
         stub_names: set[str],
+        paragraph_asts: dict[str, str] | None = None,
     ) -> ScribeOutput:
         """Resume processing by documenting only the incomplete stub paragraphs.
 
@@ -3463,7 +3542,7 @@ class ScribeWorker:
 
         Args:
             ticket: The DOCUMENTATION ticket.
-            source_code: The full source code.
+            source_code: The full source code (or AST text for COBOL).
             file_type: Detected file type.
             formatting_strict: Whether to add strict formatting instructions.
             outline: Full Citadel paragraph outline.
@@ -3472,6 +3551,7 @@ class ScribeWorker:
             pattern_insights: Aggregated pattern insights.
             previous_template: Template loaded from a prior run.
             stub_names: Lowercased names of incomplete stub paragraphs.
+            paragraph_asts: Optional per-paragraph AST strings (COBOL).
 
         Returns:
             ScribeOutput with merged documentation.
@@ -3504,6 +3584,7 @@ class ScribeWorker:
                 ticket, source_code, file_type, formatting_strict,
                 stub_outline, source_path, stats, pattern_insights,
                 ticket_dispatch=False,
+                paragraph_asts=paragraph_asts,
             )
         else:
             stub_output = await self._process_citadel_single_pass(
@@ -3712,6 +3793,10 @@ class ScribeWorker:
         # Get all paragraph names for body size estimation
         all_names = [p.get("name", "") for p in outline if p.get("name")]
 
+        # Use cached AST sizes when available (more compact than raw bodies)
+        file_name = source_path.name
+        cached_asts = self._file_asts.get(file_name, {})
+
         # Fetch all bodies upfront for size estimation (cached by Citadel)
         try:
             all_bodies = self._citadel.get_function_bodies(str(source_path), all_names)
@@ -3724,9 +3809,13 @@ class ScribeWorker:
             if not name:
                 continue
 
-            # Estimate size of this paragraph
-            body = all_bodies.get(name, "")
-            para_chars = len(body) if body else para.get("line_count", 10) * 40  # Fallback estimate
+            # Estimate size: prefer AST string length, then body, then heuristic
+            ast_str = cached_asts.get(name.upper(), "")
+            if ast_str:
+                para_chars = len(ast_str)
+            else:
+                body = all_bodies.get(name, "")
+                para_chars = len(body) if body else para.get("line_count", 10) * 40
 
             # Add outline overhead per paragraph (~100 chars for the outline entry)
             para_chars += 100
@@ -3774,6 +3863,7 @@ class ScribeWorker:
         stats: dict,
         pattern_insights: dict | None = None,
         ticket_dispatch: bool = True,
+        paragraph_asts: dict[str, str] | None = None,
     ) -> ScribeOutput:
         """Batched Citadel-guided documentation for large files.
 
@@ -3792,7 +3882,7 @@ class ScribeWorker:
 
         Args:
             ticket: The DOCUMENTATION ticket.
-            source_code: The full source code.
+            source_code: The full source code (or AST text for COBOL).
             file_type: Detected file type.
             formatting_strict: Whether to add strict formatting instructions.
             outline: Citadel paragraph outline.
@@ -3802,6 +3892,9 @@ class ScribeWorker:
             ticket_dispatch: If True, use ticket-based dispatch for multi-batch
                 files (each batch becomes its own ticket).  If False, process
                 all batches in a single synchronous loop.
+            paragraph_asts: Optional per-paragraph AST strings for COBOL files.
+                When provided, batch source is assembled from ASTs instead of
+                raw function bodies.
 
         Returns:
             ScribeOutput with merged documentation (loop mode) or with
@@ -3885,52 +3978,59 @@ class ScribeWorker:
                 )
                 continue
 
-            # Use pre-fetched bodies from _calculate_dynamic_batches() to
-            # avoid re-parsing the file for every batch.
-            bodies = {name: prefetched_bodies.get(name) for name in batch_names}
-
-            # Assemble source code for this batch: include the function bodies.
-            # For any paragraph where Citadel body extraction returned None,
-            # fall back to line-range extraction so the Scribe sees all source.
-            batch_source_parts = []
-            fallback_count = 0
-            for para_info in batch:
-                name = para_info.get("name", "")
-                body = bodies.get(name) if name else None
-                if body:
-                    batch_source_parts.append(body)
-                    batch_source_parts.append("")
-                elif source_lines:
-                    # Line-range fallback for this specific paragraph
-                    line_start = para_info.get("line_start")
-                    line_end = para_info.get("line_end")
-                    if (
-                        line_start
-                        and line_end
-                        and line_start <= len(source_lines)
-                    ):
-                        extracted = source_lines[
-                            line_start - 1 : min(line_end, len(source_lines))
-                        ]
-                        batch_source_parts.append(
-                            f"* Paragraph: {name} "
-                            f"(lines {line_start}-{line_end})"
-                        )
-                        batch_source_parts.extend(extracted)
-                        batch_source_parts.append("")
-                        fallback_count += 1
-            if fallback_count > 0:
-                logger.info(
-                    f"Worker {self.worker_id}: Used line-range fallback "
-                    f"for {fallback_count}/{len(batch)} paragraphs in batch "
-                    f"{batch_idx} (bodies not extractable)"
+            # Assemble source for this batch.  Prefer per-paragraph ASTs
+            # (compact, structured) when available; fall back to raw bodies.
+            batch_source_parts: list[str] = []
+            if paragraph_asts:
+                for para_info in batch:
+                    name = para_info.get("name", "")
+                    ast_str = paragraph_asts.get(name.upper(), "") if name else ""
+                    if ast_str:
+                        batch_source_parts.append(ast_str)
+                batch_source = (
+                    "\n\n".join(batch_source_parts)
+                    if batch_source_parts
+                    else source_code[:2000]
                 )
-
-            batch_source = (
-                "\n".join(batch_source_parts)
-                if batch_source_parts
-                else source_code[:2000]
-            )
+            else:
+                # Legacy path: raw function bodies
+                bodies = {name: prefetched_bodies.get(name) for name in batch_names}
+                fallback_count = 0
+                for para_info in batch:
+                    name = para_info.get("name", "")
+                    body = bodies.get(name) if name else None
+                    if body:
+                        batch_source_parts.append(body)
+                        batch_source_parts.append("")
+                    elif source_lines:
+                        line_start = para_info.get("line_start")
+                        line_end = para_info.get("line_end")
+                        if (
+                            line_start
+                            and line_end
+                            and line_start <= len(source_lines)
+                        ):
+                            extracted = source_lines[
+                                line_start - 1 : min(line_end, len(source_lines))
+                            ]
+                            batch_source_parts.append(
+                                f"* Paragraph: {name} "
+                                f"(lines {line_start}-{line_end})"
+                            )
+                            batch_source_parts.extend(extracted)
+                            batch_source_parts.append("")
+                            fallback_count += 1
+                if fallback_count > 0:
+                    logger.info(
+                        f"Worker {self.worker_id}: Used line-range fallback "
+                        f"for {fallback_count}/{len(batch)} paragraphs in batch "
+                        f"{batch_idx} (bodies not extractable)"
+                    )
+                batch_source = (
+                    "\n".join(batch_source_parts)
+                    if batch_source_parts
+                    else source_code[:2000]
+                )
 
             scribe_input = ScribeInput(
                 source_code=batch_source,

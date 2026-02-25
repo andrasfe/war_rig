@@ -191,6 +191,17 @@ class ChallengerAgent(BaseAgent[ChallengerInput, ChallengerOutput]):
 
 Your role is to review documentation produced by the Scribe and identify issues, gaps, and errors by cross-checking against the source code.
 
+## COBOL Abstract Syntax Tree Input
+
+For COBOL files, the source code is provided as an Abstract Syntax Tree (AST) instead of raw source.
+The AST represents each paragraph as a tree of typed statement nodes with control flow nesting.
+When validating COBOL documentation:
+- **Verify control flow**: The tree structure directly shows IF/EVALUATE branching and PERFORM loops
+- **Check data operations**: MOVE, COMPUTE, and other data nodes reveal actual transformations
+- **Validate I/O claims**: READ, WRITE, OPEN, CLOSE nodes confirm file operations
+- **Cross-check calls**: PERFORM and CALL nodes show inter-paragraph and inter-program flow
+- **Use line numbers from AST nodes**: Each node carries line_start/line_end from original source
+
 ## Core Principles
 
 1. **Be thorough but fair**: Look for real issues, not nitpicks. Focus on accuracy and completeness.
@@ -275,13 +286,19 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
             parts.append("```")
             parts.append("")
 
-        # Source code for verification
-        parts.append("## Source Code (for verification)")
-        parts.append("```")
-        lines = input_data.source_code.split("\n")
-        for i, line in enumerate(lines, start=1):
-            parts.append(f"{i:5d} | {line}")
-        parts.append("```")
+        # Source code / AST for verification
+        if input_data.file_type == FileType.COBOL:
+            parts.append("## Abstract Syntax Tree (for verification)")
+            parts.append("```")
+            parts.append(input_data.source_code)
+            parts.append("```")
+        else:
+            parts.append("## Source Code (for verification)")
+            parts.append("```")
+            lines = input_data.source_code.split("\n")
+            for i, line in enumerate(lines, start=1):
+                parts.append(f"{i:5d} | {line}")
+            parts.append("```")
         parts.append("")
 
         # Knowledge graph context (cross-check hints)

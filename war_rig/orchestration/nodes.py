@@ -281,11 +281,38 @@ class WarRigNodes:
                     exc_info=True,
                 )
 
-            return {
+            updates: dict[str, Any] = {
                 "file_type": result.file_type,
                 "preprocessor_result": result,
                 "iteration": 1,
             }
+
+            # For COBOL files, replace raw source with AST so all
+            # agents receive structured input instead of raw code.
+            if result.file_type == FileType.COBOL:
+                source_path = state.get("source_file_path", "")
+                if source_path:
+                    try:
+                        from citadel.sdk import Citadel
+
+                        citadel = Citadel()
+                        parse_result = citadel.parse_cobol(source_path)
+                        if parse_result.full_ast:
+                            updates["source_code"] = parse_result.full_ast
+                            logger.info(
+                                "Replaced raw source with AST for %s "
+                                "(%d chars)",
+                                file_name,
+                                len(parse_result.full_ast),
+                            )
+                    except Exception:
+                        logger.debug(
+                            "AST build failed for %s, keeping raw source",
+                            file_name,
+                            exc_info=True,
+                        )
+
+            return updates
         except Exception as e:
             logger.error(f"Preprocessing failed: {e}")
             return {

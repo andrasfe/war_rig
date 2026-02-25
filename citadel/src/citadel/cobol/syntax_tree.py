@@ -695,3 +695,45 @@ def build_paragraph_ast(
     """
     raw_stmts = _assemble_statements(lines)
     return _build_tree(paragraph_name, raw_stmts)
+
+
+def build_file_ast(
+    paragraph_source_lines: dict[str, list[SourceLine]],
+    data_items: list | None = None,
+) -> dict[str, ParagraphSyntaxTree]:
+    """Build ASTs for all paragraphs in a file.
+
+    Args:
+        paragraph_source_lines: Mapping of uppercase paragraph name
+            to the list of SourceLines belonging to that paragraph.
+        data_items: Optional DataItem list (reserved for future
+            variable annotation on nodes).
+
+    Returns:
+        Dict mapping uppercase paragraph name to its syntax tree.
+    """
+    trees: dict[str, ParagraphSyntaxTree] = {}
+    for name, lines in paragraph_source_lines.items():
+        trees[name] = build_paragraph_ast(name, lines, data_items)
+    return trees
+
+
+def format_file_ast(
+    trees: dict[str, ParagraphSyntaxTree],
+) -> str:
+    """Format all paragraph trees into a single string.
+
+    Each paragraph is separated by a blank line. The output is
+    suitable for use as LLM context in place of raw source code.
+
+    Args:
+        trees: Dict of uppercase paragraph name to syntax tree,
+            as returned by ``build_file_ast()``.
+
+    Returns:
+        Formatted multi-paragraph AST text.
+    """
+    parts: list[str] = []
+    for tree in trees.values():
+        parts.append(str(tree))
+    return "\n\n".join(parts)

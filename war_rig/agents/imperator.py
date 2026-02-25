@@ -1131,13 +1131,19 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                 parts.append(f"- Q[{r.question_id}]: {r.action_taken.value} - {r.response[:100]}...")
             parts.append("")
 
-        # Key sections of source for spot-checking
-        parts.append("## Source Code (first 100 lines for reference)")
-        parts.append("```")
-        lines = input_data.source_code.split("\n")[:100]
-        for i, line in enumerate(lines, start=1):
-            parts.append(f"{i:5d} | {line}")
-        parts.append("```")
+        # Source code / AST for spot-checking
+        if input_data.file_type == FileType.COBOL:
+            parts.append("## Abstract Syntax Tree")
+            parts.append("```")
+            parts.append(input_data.source_code)
+            parts.append("```")
+        else:
+            parts.append("## Source Code (first 100 lines for reference)")
+            parts.append("```")
+            lines = input_data.source_code.split("\n")[:100]
+            for i, line in enumerate(lines, start=1):
+                parts.append(f"{i:5d} | {line}")
+            parts.append("```")
         parts.append("")
 
         # Instructions

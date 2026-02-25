@@ -193,6 +193,21 @@ When analyzing a LISTING file:
 3. Focus on purpose (what documentation is in the file), and any inputs/outputs mentioned as references
 4. Treat the content as prose to be understood and summarized, not as code to be reverse-engineered
 
+## COBOL Abstract Syntax Tree Input
+
+For COBOL files, the input is an Abstract Syntax Tree (AST) rather than raw source code.
+Each paragraph is represented as a tree of typed statement nodes:
+- **Control flow nodes**: IF, EVALUATE/WHEN, PERFORM UNTIL — reveal branching and loop structure
+- **Data operation nodes**: MOVE, COMPUTE, ADD, STRING — show data transformations
+- **I/O nodes**: READ, WRITE, OPEN, CLOSE — identify file operations
+- **EXEC nodes**: EXEC SQL, EXEC CICS, EXEC DLI — embedded middleware calls
+- **Flow control**: CALL, PERFORM, GO TO, GOBACK — inter-paragraph and inter-program flow
+
+Each node carries `line_start` and `line_end` metadata from the original source.
+**Citations must still use original source line numbers** from the AST node attributes.
+The tree structure directly reveals nesting depth, control flow paths, and statement relationships
+— use this structure to produce accurate documentation without needing to parse raw COBOL syntax.
+
 ## Core Principles
 
 1. **Accuracy over completeness**: Never invent information. If something cannot be determined from the code, mark it as UNKNOWN with an explanation.
@@ -475,14 +490,20 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
             parts.append(input_data.file_summary_context)
             parts.append("")
 
-        # Source code
-        parts.append("## Source Code")
-        parts.append("```")
-        # Add line numbers
-        lines = input_data.source_code.split("\n")
-        for i, line in enumerate(lines, start=1):
-            parts.append(f"{i:5d} | {line}")
-        parts.append("```")
+        # Source code / AST
+        if input_data.file_type == FileType.COBOL:
+            parts.append("## Abstract Syntax Tree")
+            parts.append("```")
+            parts.append(input_data.source_code)
+            parts.append("```")
+        else:
+            parts.append("## Source Code")
+            parts.append("```")
+            # Add line numbers
+            lines = input_data.source_code.split("\n")
+            for i, line in enumerate(lines, start=1):
+                parts.append(f"{i:5d} | {line}")
+            parts.append("```")
         parts.append("")
 
         # Copybook contents if any

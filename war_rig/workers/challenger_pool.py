@@ -1257,6 +1257,14 @@ class ChallengerWorker:
         except ValueError:
             state["file_type"] = FileType.OTHER
 
+        # Replace raw source with AST for COBOL files
+        if state.get("file_type") == FileType.COBOL:
+            file_path = metadata.get("file_path")
+            if file_path:
+                ast_text = self._get_cobol_ast(file_path)
+                if ast_text:
+                    state["source_code"] = ast_text
+
         # Get preprocessor result if available
         preprocessor_data = metadata.get("preprocessor_result")
         if preprocessor_data:
@@ -1279,6 +1287,24 @@ class ChallengerWorker:
         state["iteration"] = ticket.cycle_number
 
         return state
+
+    def _get_cobol_ast(self, file_path: str) -> str | None:
+        """Build a full-file AST for a COBOL source file.
+
+        Returns the formatted AST text, or None if parsing fails.
+        """
+        if not self._citadel:
+            return None
+        try:
+            parse_result = self._citadel.parse_cobol(file_path)
+            ast_text = parse_result.full_ast
+            return ast_text if ast_text else None
+        except Exception as e:
+            logger.debug(
+                f"Worker {self.worker_id}: Failed to build COBOL AST "
+                f"for {file_path}: {e}"
+            )
+            return None
 
     def _sample_source_code(self, source_code: str, max_tokens: int) -> tuple[str, bool]:
         """Sample a random portion of source code if it exceeds token limit.

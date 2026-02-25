@@ -337,6 +337,14 @@ class CobolParseResult:
     )
     """Internal: raw DataItem objects for variable resolution in AST."""
 
+    _paragraph_asts: dict[str, Any] = field(
+        default_factory=dict, repr=False
+    )
+    """Internal: paragraph name → ParagraphSyntaxTree (eagerly built)."""
+
+    _full_ast_text: str = field(default="", repr=False)
+    """Internal: all paragraph trees formatted as a single string."""
+
     def get_paragraph_tree(self, name: str) -> Any:
         """Return a syntax tree for the named paragraph.
 
@@ -370,6 +378,19 @@ class CobolParseResult:
     def paragraph_names(self) -> list[str]:
         """Return names of all paragraphs available for AST query."""
         return sorted(self._paragraph_source_lines)
+
+    @property
+    def paragraph_asts(self) -> dict[str, str]:
+        """Return paragraph name → formatted AST string dict."""
+        return {
+            name: str(tree)
+            for name, tree in self._paragraph_asts.items()
+        }
+
+    @property
+    def full_ast(self) -> str:
+        """Return the complete formatted AST text for all paragraphs."""
+        return self._full_ast_text
 
 
 class Citadel:
@@ -1943,13 +1964,21 @@ class Citadel:
 
         program_id = source.source_file.rsplit(".", 1)[0].upper()
 
-        # Build paragraph name → source lines for lazy AST building
+        # Build paragraph name → source lines for AST building
         para_source_lines: dict[str, list] = {}
         for para in paragraphs:
             para_source_lines[para.name] = [
                 ln for ln in source.lines
                 if para.line_start <= ln.line_number <= para.line_end
             ]
+
+        # Eagerly build ASTs for all paragraphs
+        from citadel.cobol.syntax_tree import build_file_ast, format_file_ast
+
+        paragraph_ast_trees = build_file_ast(
+            para_source_lines, data_items,
+        )
+        full_ast_text = format_file_ast(paragraph_ast_trees)
 
         return CobolParseResult(
             program_id=program_id,
@@ -1964,6 +1993,8 @@ class Citadel:
             relationships=relationships,
             _paragraph_source_lines=para_source_lines,
             _data_items_raw=data_items,
+            _paragraph_asts=paragraph_ast_trees,
+            _full_ast_text=full_ast_text,
         )
 
     def get_callouts_compact(self, path: str | Path) -> list[dict[str, Any]]:

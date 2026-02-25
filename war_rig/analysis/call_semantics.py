@@ -231,13 +231,29 @@ class CallSemanticsAnalyzer:
             result: dict[str, str | None] = get_function_bodies(
                 source_path, function_names
             )
-            return result
         except ImportError:
             logger.warning("Citadel SDK not available, cannot extract function bodies")
             return dict.fromkeys(function_names)
         except Exception as e:
             logger.warning(f"Failed to get function bodies: {e}")
             return dict.fromkeys(function_names)
+
+        # For COBOL files, prefer AST over raw function bodies
+        if str(source_path).lower().endswith((".cbl", ".cob")):
+            try:
+                from citadel.sdk import Citadel  # type: ignore[import-not-found]
+
+                parse_result = Citadel().parse_cobol(str(source_path))
+                ast_bodies = parse_result.paragraph_asts
+                if ast_bodies:
+                    for name in function_names:
+                        upper = name.upper()
+                        if upper in ast_bodies:
+                            result[name] = ast_bodies[upper]
+            except Exception:
+                pass  # Fall back to raw bodies
+
+        return result
 
     def _truncate_working_storage(self, working_storage: str | None) -> str | None:
         """Truncate working storage to fit within token limits.
