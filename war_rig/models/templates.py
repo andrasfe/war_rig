@@ -18,6 +18,44 @@ from typing import Annotated, Any
 from pydantic import BaseModel, BeforeValidator, Field, field_validator
 
 
+def coerce_optional_int(v: Any) -> int | None:
+    """Coerce a value to int or None.  Handles LLM quirks like ``[]``."""
+    if v is None:
+        return None
+    if isinstance(v, int):
+        return v
+    if isinstance(v, float):
+        return int(v)
+    if isinstance(v, list):
+        # [] -> None;  [42] -> 42
+        ints = [x for x in v if isinstance(x, (int, float))]
+        return int(ints[0]) if ints else None
+    if isinstance(v, str):
+        nums = re.findall(r"\d+", v)
+        return int(nums[0]) if nums else None
+    return None
+
+
+def coerce_optional_int_pair(v: Any) -> tuple[int, int] | None:
+    """Coerce a value to a (start, end) int pair or None."""
+    if v is None:
+        return None
+    if isinstance(v, tuple) and len(v) == 2:
+        if v[0] is not None and v[1] is not None:
+            return (int(v[0]), int(v[1]))
+        return None
+    if isinstance(v, list):
+        ints = [int(x) for x in v if x is not None and x != ""]
+        if len(ints) >= 2:
+            return (ints[0], ints[1])
+        return None
+    return None
+
+
+LenientOptionalInt = Annotated[int | None, BeforeValidator(coerce_optional_int)]
+LenientIntPair = Annotated[tuple[int, int] | None, BeforeValidator(coerce_optional_int_pair)]
+
+
 def coerce_to_int_list(v: Any) -> list[int]:
     """Coerce any value to a list of integers, extracting numbers from strings."""
     if v is None:
@@ -284,7 +322,7 @@ class CalledProgram(BaseModel):
         default_factory=list,
         description="Parameters passed (USING clause items)",
     )
-    citation: int | None = Field(
+    citation: LenientOptionalInt = Field(
         default=None,
         description="Line number of the CALL/LINK/XCTL statement",
     )
@@ -415,7 +453,7 @@ class CopybookReference(BaseModel):
         default=None,
         description="Where the copybook is included",
     )
-    citation: int | None = Field(
+    citation: LenientOptionalInt = Field(
         default=None,
         description="Line number of COPY statement",
     )
@@ -518,7 +556,7 @@ class Paragraph(BaseModel):
         default_factory=list,
         description="Paragraphs this PERFORMs (legacy simple list)",
     )
-    citation: tuple[int, int] | None = Field(
+    citation: LenientIntPair = Field(
         default=None,
         description="Line number range (start, end)",
     )
@@ -577,7 +615,7 @@ class SQLOperation(BaseModel):
         default=None,
         description="Why this operation is performed",
     )
-    citation: int | None = Field(
+    citation: LenientOptionalInt = Field(
         default=None,
         description="Line number",
     )
@@ -598,7 +636,7 @@ class CICSOperation(BaseModel):
         default=None,
         description="Why this operation is performed",
     )
-    citation: int | None = Field(
+    citation: LenientOptionalInt = Field(
         default=None,
         description="Line number",
     )
@@ -869,7 +907,7 @@ class RecordField(BaseModel):
         default_factory=list,
         description="Known valid values",
     )
-    citation: int | None = Field(
+    citation: LenientOptionalInt = Field(
         default=None,
         description="Line number",
     )
@@ -1028,7 +1066,7 @@ class JCLStep(BaseModel):
         default=None,
         description="COND= parameter",
     )
-    citation: int | None = Field(
+    citation: LenientOptionalInt = Field(
         default=None,
         description="Line number",
     )
@@ -1061,7 +1099,7 @@ class JCLDDStatement(BaseModel):
         default=None,
         description="What this file is for",
     )
-    citation: int | None = Field(
+    citation: LenientOptionalInt = Field(
         default=None,
         description="Line number",
     )
