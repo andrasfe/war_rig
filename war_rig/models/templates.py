@@ -79,6 +79,17 @@ class FileType(str, Enum):
     OTHER = "OTHER"
 
 
+def _enum_missing_fallback(cls, value: object):  # type: ignore[no-untyped-def]
+    """Shared _missing_ for template enums — normalise then fall back to OTHER."""
+    if isinstance(value, str):
+        upper = value.upper().replace(" ", "_").replace("-", "_")
+        for member in cls:
+            if member.value == upper:
+                return member
+    # Fall back to OTHER if the enum has it, otherwise None.
+    return cls.__members__.get("OTHER")
+
+
 class ProgramType(str, Enum):
     """Classification of program execution context."""
 
@@ -97,6 +108,9 @@ class ProgramType(str, Enum):
     PLI = "PLI"
     SQL = "SQL"
     DB2 = "DB2"
+    OTHER = "OTHER"
+
+    _missing_ = classmethod(_enum_missing_fallback)  # type: ignore[assignment]
 
 
 class IOType(str, Enum):
@@ -114,6 +128,8 @@ class IOType(str, Enum):
     RETURN_CODE = "RETURN_CODE"
     OTHER = "OTHER"
 
+    _missing_ = classmethod(_enum_missing_fallback)  # type: ignore[assignment]
+
 
 class CallType(str, Enum):
     """Classification of program call types."""
@@ -122,16 +138,9 @@ class CallType(str, Enum):
     DYNAMIC_CALL = "DYNAMIC_CALL"
     CICS_LINK = "CICS_LINK"
     CICS_XCTL = "CICS_XCTL"
-    OTHER = "OTHER"  # Fallback for non-standard call types
+    OTHER = "OTHER"
 
-    @classmethod
-    def _missing_(cls, value: object) -> "CallType | None":
-        if isinstance(value, str):
-            upper = value.upper().replace(" ", "_").replace("-", "_")
-            for member in cls:
-                if member.value == upper:
-                    return member
-        return cls.OTHER
+    _missing_ = classmethod(_enum_missing_fallback)  # type: ignore[assignment]
 
 
 class FinalStatus(str, Enum):
@@ -151,6 +160,8 @@ class CopybookLocation(str, Enum):
     LOCAL_STORAGE = "LOCAL_STORAGE"
     OTHER = "OTHER"
 
+    _missing_ = classmethod(_enum_missing_fallback)  # type: ignore[assignment]
+
 
 class UsageType(str, Enum):
     """COBOL data item usage types."""
@@ -165,6 +176,8 @@ class UsageType(str, Enum):
     POINTER = "POINTER"
     INDEX = "INDEX"
     OTHER = "OTHER"
+
+    _missing_ = classmethod(_enum_missing_fallback)  # type: ignore[assignment]
 
 
 # =============================================================================
