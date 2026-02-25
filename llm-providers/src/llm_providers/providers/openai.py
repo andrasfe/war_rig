@@ -45,7 +45,7 @@ PROGRESS_LOG_INTERVAL = 30.0  # Seconds between progress log messages
 
 # Models that don't support temperature parameter
 # These are reasoning models that use a fixed temperature
-REASONING_MODELS = {"o1", "o1-mini", "o1-preview", "o3", "o3-mini"}
+REASONING_MODELS = {"o1", "o1-mini", "o1-preview", "o3", "o3-mini", "gpt-5"}
 
 
 class OpenAIProviderError(Exception):
