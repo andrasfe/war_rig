@@ -459,6 +459,9 @@ class CircuitBreakerProvider:
         self._inner = self._factory()
         self._needs_reconnect = False
 
+    # Models that require temperature=1.0 (reasoning models).
+    _FIXED_TEMP_MODELS = ("o3", "o1-", "o1/", "gpt-5")
+
     async def complete(
         self,
         messages: list[Message],
@@ -467,6 +470,15 @@ class CircuitBreakerProvider:
         **kwargs: Any,
     ) -> CompletionResponse:
         """Delegate to the inner provider with circuit-breaker protection."""
+        resolved = (model or getattr(self._inner, "default_model", "") or "").lower()
+        if any(m in resolved for m in self._FIXED_TEMP_MODELS):
+            if temperature != 1.0:
+                logger.info(
+                    "Model %s requires temperature=1.0, overriding %.1f",
+                    resolved, temperature,
+                )
+                temperature = 1.0
+
         cb = ProviderCircuitBreaker.get_instance()
         await cb.before_call()
 
