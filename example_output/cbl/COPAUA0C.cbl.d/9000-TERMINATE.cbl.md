@@ -1,11 +1,12 @@
 ```cobol
-       01  MQM-MD-REQUEST.                                                      
-           COPY CMQMDV.                                                         
+       9000-TERMINATE.                                                          
+      * ------------------------------------------------------------- *         
+      *                                                                         
+           IF IMS-PSB-SCHD                                                      
+              EXEC DLI TERM END-EXEC                                            
+           END-IF                                                               
                                                                                 
-       01  MQM-OD-REPLY.                                                        
-           COPY CMQODV.                                                         
-                                                                                
-       01  MQM-MD-REPLY.                                                        
-           COPY CMQMDV.                                                         
-                                                                                
+           PERFORM 9100-CLOSE-REQUEST-QUEUE THRU 9100-EXIT                      
+           .                                                                    
+      *                                                                         
 ```

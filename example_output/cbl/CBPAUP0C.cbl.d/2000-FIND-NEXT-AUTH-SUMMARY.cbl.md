@@ -1,31 +1,53 @@
 ```cobol
-       2000-FIND-NEXT-AUTH-SUMMARY.
-      *----------------------------------------------------------------*
       *
             IF DEBUG-ON
-               DISPLAY 'DEBUG: AUTH SMRY READ : ' WS-NO-SUMRY-READ
+               DISPLAY 'DEBUG: AUTH SMRY DLET : ' PA-ACCT-ID
             END-IF
 
-            EXEC DLI GN USING PCB(PAUT-PCB-NUM)
+            EXEC DLI DLET USING PCB(PAUT-PCB-NUM)
                  SEGMENT (PAUTSUM0)
-                 INTO (PENDING-AUTH-SUMMARY)
+                 FROM (PENDING-AUTH-SUMMARY)
             END-EXEC
 
-            EVALUATE DIBSTAT
-               WHEN '  '
-                    SET NOT-END-OF-AUTHDB TO TRUE
-                    ADD 1                 TO WS-NO-SUMRY-READ
-                    ADD 1                 TO WS-AUTH-SMRY-PROC-CNT
-                    MOVE PA-ACCT-ID       TO WS-CURR-APP-ID
-               WHEN 'GB'
-                    SET END-OF-AUTHDB     TO TRUE
-               WHEN OTHER
-                    DISPLAY 'AUTH SUMMARY READ FAILED  :' DIBSTAT
-                    DISPLAY 'SUMMARY READ BEFORE ABEND :'
-                                                        WS-NO-SUMRY-READ
-                    PERFORM 9999-ABEND
-            END-EVALUATE
+            IF DIBSTAT = SPACES
+               ADD 1                     TO WS-NO-SUMRY-DELETED
+            ELSE
+               DISPLAY 'AUTH SUMMARY DELETE FAILED :' DIBSTAT
+               DISPLAY 'AUTH APP ID                :' PA-ACCT-ID
+               PERFORM 9999-ABEND
+            END-IF
             .
-       2000-EXIT.
+       6000-EXIT.
             EXIT.
+      *
+      *----------------------------------------------------------------*
+       9000-TAKE-CHECKPOINT.
+      *----------------------------------------------------------------*
+      *
+           EXEC DLI CHKP ID(WK-CHKPT-ID)
+           END-EXEC
+      *
+           IF DIBSTAT = SPACES
+              ADD 1                      TO WS-NO-CHKP
+              IF WS-NO-CHKP >= P-CHKP-DIS-FREQ
+                 MOVE 0                  TO WS-NO-CHKP
+                 DISPLAY 'CHKP SUCCESS: AUTH COUNT - ' WS-NO-SUMRY-READ
+                      ', APP ID - ' WS-CURR-APP-ID
+              END-IF
+           ELSE
+              DISPLAY 'CHKP FAILED: DIBSTAT - ' DIBSTAT
+                      ', REC COUNT - ' WS-NO-SUMRY-READ
+                      ', APP ID - ' WS-CURR-APP-ID
+              PERFORM 9999-ABEND
+           END-IF
+      *
+            .
+       9000-EXIT.
+            EXIT.
+      *
+      *----------------------------------------------------------------*
+       9999-ABEND.
+      *----------------------------------------------------------------*
+      *
+           DISPLAY 'CBPAUP0C ABENDING ...'
 ```

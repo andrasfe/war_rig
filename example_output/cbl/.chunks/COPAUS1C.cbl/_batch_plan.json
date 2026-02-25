@@ -1,6 +1,6 @@
 {
   "file_name": "cbl/COPAUS1C.cbl",
-  "source_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+  "source_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
   "total_batches": 2,
   "batches": [
     [
@@ -819,10 +819,10 @@
       }
     ]
   },
-  "parent_ticket_id": "mem-000002",
+  "parent_ticket_id": "mem-000018",
   "cycle_number": 1,
   "program_id": "COPAUS1C",
   "copybook_contents": {},
-  "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+  "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
   "feedback_context": null
 }

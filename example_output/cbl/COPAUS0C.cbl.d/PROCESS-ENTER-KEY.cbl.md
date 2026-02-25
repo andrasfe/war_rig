@@ -1,83 +1,103 @@
 ```cobol
-       PROCESS-ENTER-KEY.
-      *****************************************************************
-
-           IF ACCTIDI OF COPAU0AI = SPACES OR LOW-VALUES
-              MOVE LOW-VALUES                 TO WS-ACCT-ID
-
-              MOVE 'Y'                        TO WS-ERR-FLG
-              MOVE
-              'Please enter Acct Id...'       TO WS-MESSAGE
-
-              MOVE -1                         TO ACCTIDL OF COPAU0AI
-           ELSE
-              IF ACCTIDI OF COPAU0AI IS NOT NUMERIC
-                MOVE LOW-VALUES               TO WS-ACCT-ID
-
-                MOVE 'Y'                      TO WS-ERR-FLG
-                MOVE
-                'Acct Id must be Numeric ...' TO WS-MESSAGE
-
-                MOVE -1                       TO ACCTIDL OF COPAU0AI
-
-              ELSE
-                MOVE ACCTIDI OF COPAU0AI      TO WS-ACCT-ID
-                                                 CDEMO-ACCT-ID
-                EVALUATE TRUE
-                  WHEN SEL0001I OF COPAU0AI NOT = SPACES AND LOW-VALUES
-                   MOVE SEL0001I OF COPAU0AI TO CDEMO-CPVS-PAU-SEL-FLG
-                   MOVE CDEMO-CPVS-AUTH-KEYS(1)
-                                             TO CDEMO-CPVS-PAU-SELECTED
-                  WHEN SEL0002I OF COPAU0AI NOT = SPACES AND LOW-VALUES
-                   MOVE SEL0002I OF COPAU0AI TO CDEMO-CPVS-PAU-SEL-FLG
-                   MOVE CDEMO-CPVS-AUTH-KEYS(2)
-                                             TO CDEMO-CPVS-PAU-SELECTED
-                  WHEN SEL0003I OF COPAU0AI NOT = SPACES AND LOW-VALUES
-                   MOVE SEL0003I OF COPAU0AI TO CDEMO-CPVS-PAU-SEL-FLG
-                   MOVE CDEMO-CPVS-AUTH-KEYS(3)
-                                             TO CDEMO-CPVS-PAU-SELECTED
-                  WHEN SEL0004I OF COPAU0AI NOT = SPACES AND LOW-VALUES
-                   MOVE SEL0004I OF COPAU0AI TO CDEMO-CPVS-PAU-SEL-FLG
-                   MOVE CDEMO-CPVS-AUTH-KEYS(4)
-                                             TO CDEMO-CPVS-PAU-SELECTED
-                  WHEN SEL0005I OF COPAU0AI NOT = SPACES AND LOW-VALUES
-                   MOVE SEL0005I OF COPAU0AI TO CDEMO-CPVS-PAU-SEL-FLG
-                   MOVE CDEMO-CPVS-AUTH-KEYS(5)
-                                             TO CDEMO-CPVS-PAU-SELECTED
-                  WHEN OTHER
-                   MOVE SPACES   TO CDEMO-CPVS-PAU-SEL-FLG
-                   MOVE SPACES   TO CDEMO-CPVS-PAU-SELECTED
-                END-EVALUATE
-                IF (CDEMO-CPVS-PAU-SEL-FLG NOT = SPACES AND LOW-VALUES)
-                   AND
-                   (CDEMO-CPVS-PAU-SELECTED NOT = SPACES AND LOW-VALUES)
-                   EVALUATE CDEMO-CPVS-PAU-SEL-FLG
-                     WHEN 'S'
-                     WHEN 's'
-                        MOVE WS-PGM-AUTH-DTL  TO CDEMO-TO-PROGRAM
-                        MOVE WS-CICS-TRANID   TO CDEMO-FROM-TRANID
-                        MOVE WS-PGM-AUTH-SMRY TO CDEMO-FROM-PROGRAM
-                        MOVE 0                TO CDEMO-PGM-CONTEXT
-                        SET CDEMO-PGM-ENTER   TO TRUE
-
-                        EXEC CICS
-                            XCTL PROGRAM(CDEMO-TO-PROGRAM)
-                            COMMAREA(CARDDEMO-COMMAREA)
-                        END-EXEC
-                     WHEN OTHER
-                       MOVE
-                       'Invalid selection. Valid value is S'
-                                              TO WS-MESSAGE
-                       MOVE -1                TO ACCTIDL OF COPAU0AI
-                   END-EVALUATE
-                END-IF
-
+                 PERFORM PROCESS-PAGE-FORWARD
               END-IF
            END-IF
-
-           PERFORM GATHER-DETAILS
            .
 
 
       *****************************************************************
+       PROCESS-PF7-KEY.
+      *****************************************************************
+
+           IF CDEMO-CPVS-PAGE-NUM > 1
+              COMPUTE CDEMO-CPVS-PAGE-NUM = CDEMO-CPVS-PAGE-NUM - 1
+
+              MOVE CDEMO-CPVS-PAUKEY-PREV-PG(CDEMO-CPVS-PAGE-NUM)
+                                           TO WS-AUTH-KEY-SAVE
+              PERFORM GET-AUTH-SUMMARY
+
+              SET SEND-ERASE-NO            TO TRUE
+
+              SET NEXT-PAGE-YES            TO TRUE
+              MOVE -1                      TO ACCTIDL OF COPAU0AI
+
+              PERFORM INITIALIZE-AUTH-DATA
+
+              PERFORM PROCESS-PAGE-FORWARD
+           ELSE
+              MOVE 'You are already at the top of the page...' TO
+                               WS-MESSAGE
+              SET SEND-ERASE-NO            TO TRUE
+           END-IF
+           .
+
+      *****************************************************************
+       PROCESS-PF8-KEY.
+      *****************************************************************
+
+           IF CDEMO-CPVS-PAUKEY-LAST = SPACES OR LOW-VALUES
+               MOVE LOW-VALUES             TO WS-AUTH-KEY-SAVE
+           ELSE
+               MOVE CDEMO-CPVS-PAUKEY-LAST TO WS-AUTH-KEY-SAVE
+
+               PERFORM GET-AUTH-SUMMARY
+               PERFORM REPOSITION-AUTHORIZATIONS
+           END-IF
+
+           MOVE -1                         TO ACCTIDL OF COPAU0AI
+
+           SET SEND-ERASE-NO               TO TRUE
+
+           IF NEXT-PAGE-YES
+               PERFORM INITIALIZE-AUTH-DATA
+
+               PERFORM PROCESS-PAGE-FORWARD
+           ELSE
+               MOVE 'You are already at the bottom of the page...'
+                                           TO WS-MESSAGE
+           END-IF
+           .
+
+      *****************************************************************
+       PROCESS-PAGE-FORWARD.
+      *****************************************************************
+
+           IF ERR-FLG-OFF
+
+               MOVE 1             TO  WS-IDX
+
+               MOVE LOW-VALUES    TO CDEMO-CPVS-PAUKEY-LAST
+
+               PERFORM UNTIL WS-IDX > 5 OR AUTHS-EOF OR ERR-FLG-ON
+                   IF EIBAID = DFHPF7 AND WS-IDX = 1
+                      PERFORM REPOSITION-AUTHORIZATIONS
+                   ELSE
+                      PERFORM GET-AUTHORIZATIONS
+                   END-IF
+                   IF AUTHS-NOT-EOF AND ERR-FLG-OFF
+                       PERFORM POPULATE-AUTH-LIST
+                       COMPUTE WS-IDX = WS-IDX + 1
+
+                       MOVE PA-AUTHORIZATION-KEY TO
+                                             CDEMO-CPVS-PAUKEY-LAST
+                       IF WS-IDX = 2
+                          COMPUTE CDEMO-CPVS-PAGE-NUM =
+                                  CDEMO-CPVS-PAGE-NUM + 1
+                          MOVE PA-AUTHORIZATION-KEY TO
+                          CDEMO-CPVS-PAUKEY-PREV-PG(CDEMO-CPVS-PAGE-NUM)
+                       END-IF
+                   END-IF
+               END-PERFORM
+
+               IF AUTHS-NOT-EOF AND ERR-FLG-OFF
+                   PERFORM GET-AUTHORIZATIONS
+                   IF AUTHS-NOT-EOF AND ERR-FLG-OFF
+                       SET NEXT-PAGE-YES TO TRUE
+                   ELSE
+                       SET NEXT-PAGE-NO TO TRUE
+                   END-IF
+               END-IF
+
+           END-IF.
+
 ```

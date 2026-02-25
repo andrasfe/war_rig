@@ -1,79 +1,57 @@
 {
   "header": {
     "program_id": "DBUNLDGS",
-    "file_name": "DBUNLDGS.CBL",
+    "file_name": "cbl/DBUNLDGS.CBL",
     "file_type": "COBOL",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-24T17:43:44.226557",
+    "analyzed_at": "2026-02-25T15:35:16.622810",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "The COBOL program DBUNLDGS is designed to unload data from an IMS database. It retrieves pending authorization summary and detail segments and writes them to output files. The program initializes, retrieves summary records, and then closes the files upon completion.",
-    "business_context": "UNKNOWN",
+    "summary": "DBUNLDGS is an IMS batch utility that unloads pending authorization summary (root) and detail (child) segments from the hierarchical IMS database PAUT via sequential GN/GNP calls on PAUTBPCB. It then inserts the read segments into two GSAM databases: summary segments into PASFL via PASFLPCB and detail segments into PADFL via PADFLPCB. Alternate entry point 'DLITCBL' allows it to be invoked as a subroutine.",
+    "business_context": "Supports migration or replication of pending authorization data from hierarchical IMS DB to GSAM files for authorization processing.",
     "program_type": "BATCH",
     "citations": [
-      18,
-      147,
-      175
+      20000,
+      13700,
+      14100,
+      19700,
+      24100,
+      27104,
+      27212
     ]
   },
   "inputs": [
     {
-      "name": "IMS Database",
-      "io_type": "IMS_SEGMENT",
-      "description": "Pending authorization summary and detail segments from an IMS database.",
-      "copybook": "CIPAUSMY, CIPAUDTY",
-      "citation": [
-        143,
-        147
-      ]
-    },
-    {
       "name": "PAUTBPCB",
-      "io_type": "PARAMETER",
-      "description": "Pending Authorization PCB mask.",
+      "io_type": "IMS_SEGMENT",
+      "description": "IMS application PCB for PAUT database providing access to root PENDING-AUTH-SUMMARY (PAUTSUM0) and child PENDING-AUTH-DETAILS (PAUTDTL1) segments",
       "copybook": "PAUTBPCB",
       "citation": [
-        159,
-        165
-      ]
-    },
-    {
-      "name": "PASFLPCB",
-      "io_type": "PARAMETER",
-      "description": "Pending Authorization Summary File PCB mask.",
-      "copybook": "PASFLPCB",
-      "citation": [
-        160,
-        166
-      ]
-    },
-    {
-      "name": "PADFLPCB",
-      "io_type": "PARAMETER",
-      "description": "Pending Authorization Detail File PCB mask.",
-      "copybook": "PADFLPCB",
-      "citation": [
-        161,
-        167
+        19700,
+        24100
       ]
     }
   ],
   "outputs": [
     {
-      "name": "OPFILE1",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "Output file containing data from the IMS database. The structure is defined by OPFIL1-REC.",
-      "copybook": null,
-      "citation": []
+      "name": "PASFLPCB",
+      "io_type": "IMS_SEGMENT",
+      "description": "GSAM PCB for inserting PENDING-AUTH-SUMMARY root segments",
+      "copybook": "PASFLPCB",
+      "citation": [
+        27104
+      ]
     },
     {
-      "name": "OPFILE2",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "Output file containing data from the IMS database. The structure is defined by OPFIL2-REC, containing a root segment key and a child segment record.",
-      "copybook": null,
-      "citation": []
+      "name": "PADFLPCB",
+      "io_type": "IMS_SEGMENT",
+      "description": "GSAM PCB for inserting PENDING-AUTH-DETAILS child segments",
+      "copybook": "PADFLPCB",
+      "citation": [
+        27212
+      ]
     }
   ],
   "called_programs": [],
@@ -91,92 +69,143 @@
   "business_rules": [
     {
       "rule_id": "BR001",
-      "description": "The program continues processing as long as the end-of-root-segment flag is not set to 'Y'.",
-      "logic_summary": "The program loops through the 2000-FIND-NEXT-AUTH-SUMMARY paragraph until WS-END-OF-ROOT-SEG is equal to 'Y'.",
+      "description": "Process only numeric PA-ACCT-ID for root segments",
+      "logic_summary": "Checks IF PA-ACCT-ID IS NUMERIC before inserting parent and processing children",
       "conditions": [
-        "WS-END-OF-ROOT-SEG = 'Y'"
+        "PA-ACCT-ID IS NUMERIC"
       ],
       "citation": [
-        173
+        21600
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "End root processing on IMS status 'GB' (end of database)",
+      "logic_summary": "Sets end flags and exits loop on 'GB'",
+      "conditions": [
+        "PAUT-PCB-STATUS = 'GB'"
+      ],
+      "citation": [
+        22300
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "End child processing on IMS status 'GE' (segment not found)",
+      "logic_summary": "Sets child end flag on 'GE' after GNP",
+      "conditions": [
+        "PAUT-PCB-STATUS = 'GE'"
+      ],
+      "citation": [
+        25700
       ]
     }
   ],
   "data_flow": {
     "reads_from": [
       {
-        "source": "IMS Database",
+        "source": "PAUTBPCB",
         "fields_used": [
           "PENDING-AUTH-SUMMARY",
-          "PENDING-AUTH-DETAILS"
+          "PENDING-AUTH-DETAILS",
+          "PA-ACCT-ID"
         ],
         "citation": [
-          143,
-          147
+          19900,
+          24300
         ]
       }
     ],
     "writes_to": [
       {
-        "destination": "OPFILE1",
+        "destination": "PASFLPCB",
         "fields_written": [
-          "OPFIL1-REC"
+          "PENDING-AUTH-SUMMARY"
         ],
-        "citation": []
+        "citation": [
+          27106
+        ]
       },
       {
-        "destination": "OPFILE2",
+        "destination": "PADFLPCB",
         "fields_written": [
-          "ROOT-SEG-KEY",
-          "CHILD-SEG-REC"
+          "PENDING-AUTH-DETAILS"
         ],
-        "citation": []
+        "citation": [
+          27214
+        ]
       }
     ],
-    "transforms": []
+    "transforms": [
+      {
+        "input_field": "PA-ACCT-ID",
+        "output_field": "ROOT-SEG-KEY",
+        "transformation_description": "Moves PA-ACCT-ID from read summary segment to ROOT-SEG-KEY for child parentage",
+        "citation": [
+          21400
+        ]
+      },
+      {
+        "input_field": "PENDING-AUTH-SUMMARY",
+        "output_field": "OPFIL1-REC",
+        "transformation_description": "Moves entire summary segment to working record (write commented out)",
+        "citation": [
+          21100
+        ]
+      },
+      {
+        "input_field": "PENDING-AUTH-DETAILS",
+        "output_field": "CHILD-SEG-REC",
+        "transformation_description": "Moves entire detail segment to working record (write commented out)",
+        "citation": [
+          25400
+        ]
+      }
+    ]
   },
   "copybooks_used": [
     {
       "copybook_name": "IMSFUNCS",
-      "purpose": "Contains IMS function definitions.",
+      "purpose": "Defines IMS DL/I function codes like FUNC-GN, FUNC-GNP, FUNC-ISRT",
       "location": "WORKING_STORAGE",
-      "citation": 116
+      "citation": 11600
     },
     {
       "copybook_name": "CIPAUSMY",
-      "purpose": "Defines the layout of the PENDING-AUTH-SUMMARY segment.",
+      "purpose": "Defines layout of PENDING-AUTH-SUMMARY root segment",
       "location": "WORKING_STORAGE",
-      "citation": 123
+      "citation": 12300
     },
     {
       "copybook_name": "CIPAUDTY",
-      "purpose": "Defines the layout of the PENDING-AUTH-DETAILS segment.",
+      "purpose": "Defines layout of PENDING-AUTH-DETAILS child segment",
       "location": "WORKING_STORAGE",
-      "citation": 127
+      "citation": 12600
     },
     {
       "copybook_name": "PAUTBPCB",
-      "purpose": "Defines the PCB mask for the Pending Authorization database.",
+      "purpose": "IMS PCB mask for PAUT database access",
       "location": "LINKAGE",
-      "citation": 134
+      "citation": 13400
     },
     {
       "copybook_name": "PASFLPCB",
-      "purpose": "Defines the PCB mask for the Pending Authorization Summary File.",
+      "purpose": "IMS PCB mask for PASFL GSAM summary inserts",
       "location": "LINKAGE",
-      "citation": 1341
+      "citation": 13410
     },
     {
       "copybook_name": "PADFLPCB",
-      "purpose": "Defines the PCB mask for the Pending Authorization Detail File.",
+      "purpose": "IMS PCB mask for PADFL GSAM detail inserts",
       "location": "LINKAGE",
-      "citation": 1342
+      "citation": 13420
     }
   ],
   "paragraphs": [
     {
       "paragraph_name": "MAIN-PARA",
       "summary": null,
-      "purpose": "This is the main paragraph of the DBUNLDGS program. It serves as the entry point and orchestrates the overall program flow. It first performs the 1000-INITIALIZE paragraph to set up the program environment, including accepting the current date and displaying program start messages. Then, it enters a loop, repeatedly performing the 2000-FIND-NEXT-AUTH-SUMMARY paragraph to retrieve and process pending authorization summary records from the IMS database. The loop continues until the WS-END-OF-ROOT-SEG flag is set to 'Y', indicating that all summary records have been processed. Finally, it performs the 4000-FILE-CLOSE paragraph to close the output files and terminates the program using GOBACK. The paragraph uses PAUTBPCB, PASFLPCB and PADFLPCB from the linkage section.",
+      "purpose": "MAIN-PARA serves as the primary orchestration point for the program, including an alternate ENTRY 'DLITCBL' USING the three IMS PCBs to allow invocation as a linked subroutine. It consumes no direct inputs but relies on the passed PCBs for database access. It produces control flow to initialize, process all root summary records with their children, and terminate cleanly. Business logic involves looping over all root segments via 2000 until end-of-root flag is set on IMS 'GB' status. No explicit validation beyond IMS status checks handled in callees. It calls 1000-INITIALIZE for setup including date acceptance and display, 2000-FIND-NEXT-AUTH-SUMMARY in a loop for each root and its children inserts, and 4000-FILE-CLOSE for termination displays (file closes commented). Error handling defers to subordinate paragraphs which abend on IMS errors. After loop, it performs file close and GOBACKs with return code set only on abend path.",
       "called_by": [],
       "calls": [
         "1000-INITIALIZE",
@@ -184,8 +213,8 @@
         "4000-FILE-CLOSE"
       ],
       "citation": [
-        141,
-        154
+        14100,
+        15500
       ],
       "outgoing_calls": [
         {
@@ -212,14 +241,233 @@
     {
       "paragraph_name": "1000-INITIALIZE",
       "summary": null,
-      "purpose": "This paragraph initializes the program environment. It accepts the current date and day from the system and stores them in CURRENT-DATE and CURRENT-YYDDD, respectively. It then displays a series of messages to the console indicating the start of the program and the current date. The commented-out code suggests that it was intended to accept parameters from SYSIN and open output files OPFILE1 and OPFILE2, with error handling for file open failures. However, these file operations are currently commented out. The paragraph consumes system date and day, and displays messages to the console. It does not directly produce any output data, but sets up the environment for subsequent processing. It does not call any other paragraphs.",
+      "purpose": "This paragraph handles program startup initialization by accepting current date and YYDDD into working variables for potential logging or expiry checks (though expiry logic not active). It consumes no file or DB inputs, only system date. It produces populated date fields and display output to console showing program start and date. No business decisions or conditions checked. No error handling as operations are non-I/O. Displays startup banner but file opens are commented out. Calls no other paragraphs. Exits immediately after displays.",
       "called_by": [
         "MAIN-PARA"
       ],
       "calls": [],
       "citation": [
-        157,
-        169
+        15700,
+        18700
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "2000-FIND-NEXT-AUTH-SUMMARY",
+      "summary": null,
+      "purpose": "This paragraph is the core loop driver for processing each root PENDING-AUTH-SUMMARY segment from PAUT IMS DB, invoked repeatedly until end-of-root. It consumes root segments via GN call on PAUTBPCB and unqualified SSA 'PAUTSUM0'. It produces incremented read/process counters, ROOT-SEG-KEY set from PA-ACCT-ID, and triggers inserts for root and all its children. Business logic: initializes PCB status, performs GN, on spaces (success) increments counters, moves data to work recs (writes commented), sets key, checks PA-ACCT-ID numeric then inserts parent via 3100 and loops children via 3000 until child-end; on 'GB' sets root-end flag; other statuses display feedback and abend via 9999. Error handling immediate abend on non-spaces/'GB'. Calls 3100-INSERT-PARENT-SEG-GSAM to replicate summary to PASFL GSAM and 3000-FIND-NEXT-AUTH-DTL loop for details.",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [
+        "3100-INSERT-PARENT-SEG-GSAM",
+        "3000-FIND-NEXT-AUTH-DTL"
+      ],
+      "citation": [
+        19100,
+        23200
+      ],
+      "outgoing_calls": [
+        {
+          "target": "CBLTDLI",
+          "call_type": "calls",
+          "line": 222
+        },
+        {
+          "target": "3100-INSERT-PARENT-SEG-GSAM",
+          "call_type": "performs",
+          "line": 243
+        },
+        {
+          "target": "3000-FIND-NEXT-AUTH-DTL",
+          "call_type": "performs",
+          "line": 245
+        },
+        {
+          "target": "9999-ABEND",
+          "call_type": "performs",
+          "line": 256
+        }
+      ],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "3000-FIND-NEXT-AUTH-DTL",
+      "summary": null,
+      "purpose": "This paragraph processes child PENDING-AUTH-DETAILS segments under a given root by sequential GNP calls using parent ROOT-SEG-KEY. It consumes child segments from PAUTBPCB with unqualified SSA 'PAUTDTL1'. It produces incremented counters (mislabeled as summary), child work record, and insert to PADFL GSAM. Business logic: GNP call, on spaces sets more-auths flag, increments read counters, moves to CHILD-SEG-REC (write commented), performs 3200 insert; on 'GE' sets child-end flag and displays; other statuses display keyfb and abend. Initializes PCB status post-call. Error handling abend on non-spaces/'GE'. Called in loop from 2000 until child-end.",
+      "called_by": [
+        "2000-FIND-NEXT-AUTH-SUMMARY"
+      ],
+      "calls": [
+        "3200-INSERT-CHILD-SEG-GSAM"
+      ],
+      "citation": [
+        23700,
+        27000
+      ],
+      "outgoing_calls": [
+        {
+          "target": "CBLTDLI",
+          "call_type": "calls",
+          "line": 267
+        },
+        {
+          "target": "3200-INSERT-CHILD-SEG-GSAM",
+          "call_type": "performs",
+          "line": 282
+        },
+        {
+          "target": "9999-ABEND",
+          "call_type": "performs",
+          "line": 293
+        }
+      ],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "3100-INSERT-PARENT-SEG-GSAM",
+      "summary": null,
+      "purpose": "This utility paragraph inserts a single root PENDING-AUTH-SUMMARY segment into the PASFL GSAM database. It consumes the summary segment data from working storage populated by 2000. It produces the inserted segment in PASFL via ISRT call on PASFLPCB. No business decisions, unconditional insert. Error handling: if PASFL-PCB-STATUS not spaces, displays status/keyfb and abends via 9999. No calls to other paragraphs.",
+      "called_by": [
+        "2000-FIND-NEXT-AUTH-SUMMARY"
+      ],
+      "calls": [],
+      "citation": [
+        2710200,
+        2713000
+      ],
+      "outgoing_calls": [
+        {
+          "target": "CBLTDLI",
+          "call_type": "calls",
+          "line": 302
+        },
+        {
+          "target": "9999-ABEND",
+          "call_type": "performs",
+          "line": 314
+        }
+      ],
+      "incoming_calls": [
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "function": "2000-FIND-NEXT-AUTH-SUMMARY",
+          "line": 243,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "function": "2000-FIND-NEXT-AUTH-SUMMARY",
+          "line": 216,
+          "call_type": "performs"
+        }
+      ],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "3200-INSERT-CHILD-SEG-GSAM",
+      "summary": null,
+      "purpose": "This utility paragraph inserts a single child PENDING-AUTH-DETAILS segment into the PADFL GSAM database. It consumes the details segment data from working storage populated by 3000. It produces the inserted segment in PADFL via ISRT call on PADFLPCB. No business decisions, unconditional insert. Error handling: if PADFL-PCB-STATUS not spaces, displays status/keyfb and abends via 9999. No calls to other paragraphs.",
+      "called_by": [
+        "3000-FIND-NEXT-AUTH-DTL"
+      ],
+      "calls": [],
+      "citation": [
+        2721000,
+        2723000
+      ],
+      "outgoing_calls": [
+        {
+          "target": "CBLTDLI",
+          "call_type": "calls",
+          "line": 321
+        },
+        {
+          "target": "9999-ABEND",
+          "call_type": "performs",
+          "line": 333
+        }
+      ],
+      "incoming_calls": [
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "function": "3000-FIND-NEXT-AUTH-DTL",
+          "line": 282,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "function": "3000-FIND-NEXT-AUTH-DTL",
+          "line": 263,
+          "call_type": "performs"
+        }
+      ],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "4000-FILE-CLOSE",
+      "summary": null,
+      "purpose": "This termination paragraph handles program shutdown by displaying close message; actual file closes are commented out. Consumes no inputs. Produces console display only. No logic or conditions. No error handling shown (closes commented). No calls.",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [],
+      "citation": [
+        2730000,
+        29000
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "9999-ABEND",
+      "summary": null,
+      "purpose": "This error termination paragraph is called on any IMS call failure to abend the program. Consumes error context from caller displays. Produces console abend message and sets RETURN-CODE to 16 before GOBACK. No conditions checked here. Handles all fatal errors by standard abend. No calls except implicit to 9999-EXIT.",
+      "called_by": [
+        "2000-FIND-NEXT-AUTH-SUMMARY",
+        "3000-FIND-NEXT-AUTH-DTL",
+        "3100-INSERT-PARENT-SEG-GSAM",
+        "3200-INSERT-CHILD-SEG-GSAM"
+      ],
+      "calls": [],
+      "citation": [
+        2920000,
+        30100
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "9999-EXIT",
+      "summary": null,
+      "purpose": "This is the exit point for the 9999-ABEND paragraph, performing a simple EXIT to return control to caller. It consumes nothing and produces no outputs or side effects. No logic, validation, or error handling. Serves only as procedural exit delimiter. Called implicitly by 9999-ABEND.",
+      "called_by": [
+        "9999-ABEND"
+      ],
+      "calls": [],
+      "citation": [
+        3000000,
+        30100
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
@@ -228,122 +476,124 @@
       "metadata": null
     }
   ],
-  "error_handling": [],
-  "sql_operations": [],
-  "cics_operations": [],
-  "open_questions": [
+  "error_handling": [
     {
-      "question": "What is the purpose of the IMSFUNCS copybook?",
-      "context": "The code includes the IMSFUNCS copybook, but its contents and usage are not evident in the provided snippet.",
-      "suggestion": "Examine the contents of IMSFUNCS to determine its role in the program."
+      "condition": "PAUT-PCB-STATUS NOT SPACES AND NOT 'GB'",
+      "action": "DISPLAY status and KEYFB then PERFORM 9999-ABEND",
+      "citation": [
+        22700
+      ]
     },
     {
-      "question": "What are the exact record layouts for OPFILE1 and OPFILE2?",
-      "context": "The file definitions for OPFILE1 and OPFILE2 are commented out, so their exact structure and content are unclear.",
-      "suggestion": "Uncomment the file definitions in the FILE SECTION to determine their record layouts."
+      "condition": "PAUT-PCB-STATUS NOT SPACES AND NOT 'GE'",
+      "action": "DISPLAY status and KEYFB then PERFORM 9999-ABEND",
+      "citation": [
+        26300
+      ]
     },
     {
-      "question": "What is the purpose of the 2000-FIND-NEXT-AUTH-SUMMARY and 4000-FILE-CLOSE paragraphs?",
-      "context": "The code for these paragraphs is not provided in the snippet.",
-      "suggestion": "Provide the code for these paragraphs to fully understand the program's functionality."
+      "condition": "PASFL-PCB-STATUS NOT SPACES",
+      "action": "DISPLAY status and KEYFB then PERFORM 9999-ABEND",
+      "citation": [
+        2711401
+      ]
     },
     {
-      "question": "What are the contents of the PASFLPCB and PADFLPCB copybooks?",
-      "context": "The copybooks PASFLPCB and PADFLPCB are included, but their contents are not shown.",
-      "suggestion": "Provide the contents of these copybooks to understand the structure of the Pending Authorization Summary File and Detail File PCBs."
+      "condition": "PADFL-PCB-STATUS NOT SPACES",
+      "action": "DISPLAY status and KEYFB then PERFORM 9999-ABEND",
+      "citation": [
+        2722101
+      ]
     }
   ],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [],
   "resolved_questions": [],
-  "dead_code": [],
+  "dead_code": [
+    {
+      "name": "PADFLPCB",
+      "artifact_type": "record_layout",
+      "line": 17,
+      "reason": "Record layout 'PADFLPCB' is never used by any program"
+    },
+    {
+      "name": "PASFLPCB",
+      "artifact_type": "record_layout",
+      "line": 17,
+      "reason": "Record layout 'PASFLPCB' is never used by any program"
+    }
+  ],
   "call_semantics": [
     {
       "caller": "MAIN-PARA",
       "callee": "1000-INITIALIZE",
       "inputs": [],
-      "outputs": [
-        "CURRENT-DATE",
-        "CURRENT-YYDDD"
-      ],
-      "purpose": "Initializes the program by accepting current date and day from system and displaying startup information."
+      "outputs": [],
+      "purpose": null
     },
     {
       "caller": "MAIN-PARA",
       "callee": "2000-FIND-NEXT-AUTH-SUMMARY",
       "inputs": [],
-      "outputs": [
-        "WS-END-OF-ROOT-SEG",
-        "WS-NO-SUMRY-READ",
-        "WS-AUTH-SMRY-PROC-CNT",
-        "OPFIL1-REC",
-        "ROOT-SEG-KEY",
-        "CHILD-SEG-REC"
-      ],
-      "purpose": "Reads the next root segment from the IMS database and processes it if found, setting end-of-segment flag when complete."
+      "outputs": [],
+      "purpose": null
     },
     {
       "caller": "MAIN-PARA",
       "callee": "4000-FILE-CLOSE",
       "inputs": [],
       "outputs": [],
-      "purpose": "Displays a message indicating that the file is being closed."
+      "purpose": null
     },
     {
       "caller": "2000-FIND-NEXT-AUTH-SUMMARY",
       "callee": "3100-INSERT-PARENT-SEG-GSAM",
-      "inputs": [
-        "PENDING-AUTH-SUMMARY"
-      ],
+      "inputs": [],
       "outputs": [],
-      "purpose": "Inserts the parent segment into the GSAM database using IMS call and abends if the insertion fails."
+      "purpose": null
     },
     {
       "caller": "2000-FIND-NEXT-AUTH-SUMMARY",
       "callee": "3000-FIND-NEXT-AUTH-DTL",
       "inputs": [],
-      "outputs": [
-        "WS-END-OF-CHILD-SEG",
-        "WS-NO-SUMRY-READ",
-        "WS-AUTH-SMRY-PROC-CNT",
-        "CHILD-SEG-REC"
-      ],
-      "purpose": "Finds and processes the next child segment in the IMS database, inserting it into GSAM and marking end-of-child-segment when no more exist."
+      "outputs": [],
+      "purpose": null
     },
     {
       "caller": "2000-FIND-NEXT-AUTH-SUMMARY",
       "callee": "9999-ABEND",
       "inputs": [],
       "outputs": [],
-      "purpose": "Terminates the program with return code 16 when an IMS call fails unexpectedly."
+      "purpose": null
     },
     {
       "caller": "3000-FIND-NEXT-AUTH-DTL",
       "callee": "3200-INSERT-CHILD-SEG-GSAM",
-      "inputs": [
-        "PENDING-AUTH-DETAILS"
-      ],
+      "inputs": [],
       "outputs": [],
-      "purpose": "Writes the retrieved child segment data to a GSAM output file using IMS ISRT call."
+      "purpose": null
     },
     {
       "caller": "3000-FIND-NEXT-AUTH-DTL",
       "callee": "9999-ABEND",
       "inputs": [],
       "outputs": [],
-      "purpose": "Terminates the program with return code 16 when the IMS GNP call for child segment fails."
+      "purpose": null
     },
     {
       "caller": "3100-INSERT-PARENT-SEG-GSAM",
       "callee": "9999-ABEND",
       "inputs": [],
       "outputs": [],
-      "purpose": "Terminates the program with return code 16 when the IMS ISRT call for parent segment insertion fails."
+      "purpose": null
     },
     {
       "caller": "3200-INSERT-CHILD-SEG-GSAM",
       "callee": "9999-ABEND",
       "inputs": [],
       "outputs": [],
-      "purpose": "Terminates the program with return code 16 when the IMS ISRT call for child segment insertion fails."
+      "purpose": null
     }
   ],
   "flow_diagram": "flowchart TD\n    %% Title: DBUNLDGS.CBL\n    1000_EXIT[\"1000-EXIT\"]\n    1000_INITIALIZE[\"1000-INITIALIZE\"]\n    2000_EXIT[\"2000-EXIT\"]\n    2000_FIND_NEXT_AUTH_SUMMARY[\"2000-FIND-NEXT-AUTH-SUMMARY\"]\n    3000_FIND_NEXT_AUTH_DTL[\"3000-FIND-NEXT-AUTH-DTL\"]\n    3100_INSERT_PARENT_SEG_GSAM[\"3100-INSERT-PARENT-SEG-GSAM\"]\n    9999_ABEND[\"9999-ABEND\"]\n    CBLTDLI__ext([\"CBLTDLI\"])\n    3000_EXIT[\"3000-EXIT\"]\n    3200_INSERT_CHILD_SEG_GSAM[\"3200-INSERT-CHILD-SEG-GSAM\"]\n    3100_EXIT[\"3100-EXIT\"]\n    3200_EXIT[\"3200-EXIT\"]\n    4000_EXIT[\"4000-EXIT\"]\n    4000_FILE_CLOSE[\"4000-FILE-CLOSE\"]\n    9999_EXIT[\"9999-EXIT\"]\n    MAIN_PARA[\"MAIN-PARA\"]\n    2000_FIND_NEXT_AUTH_SUMMARY --> 3000_FIND_NEXT_AUTH_DTL\n    2000_FIND_NEXT_AUTH_SUMMARY --> 3100_INSERT_PARENT_SEG_GSAM\n    2000_FIND_NEXT_AUTH_SUMMARY --> 9999_ABEND\n    2000_FIND_NEXT_AUTH_SUMMARY -.->|calls| CBLTDLI__ext\n    3000_FIND_NEXT_AUTH_DTL --> 3200_INSERT_CHILD_SEG_GSAM\n    3000_FIND_NEXT_AUTH_DTL --> 9999_ABEND\n    3000_FIND_NEXT_AUTH_DTL -.->|calls| CBLTDLI__ext\n    3100_INSERT_PARENT_SEG_GSAM --> 9999_ABEND\n    3100_INSERT_PARENT_SEG_GSAM -.->|calls| CBLTDLI__ext\n    3200_INSERT_CHILD_SEG_GSAM --> 9999_ABEND\n    3200_INSERT_CHILD_SEG_GSAM -.->|calls| CBLTDLI__ext\n    MAIN_PARA --> 1000_INITIALIZE\n    MAIN_PARA --> 2000_FIND_NEXT_AUTH_SUMMARY\n    MAIN_PARA --> 4000_FILE_CLOSE"

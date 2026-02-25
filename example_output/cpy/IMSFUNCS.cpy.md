@@ -2,21 +2,21 @@
 
 **File**: `cpy/IMSFUNCS.cpy`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-02-24 17:38:22.700434
+**Analyzed**: 2026-02-25 15:31:03.414376
 
 ## Purpose
 
-This copybook defines a set of constants representing IMS function codes and a parameter count. These constants are used when making calls to IMS databases.
+This copybook defines a data structure FUNC-CODES containing standard IMS DL/I function codes used to specify database operations in CALL statements to IMS PCBs, such as 'GU  ' for Get Unique, 'GHU ' for Get Hold Unique, 'GN  ' for Get Next, 'GHN ' for Get Hold Next, 'GNP ' for Get Next within Parent, 'GHNP' for Get Hold Next within Parent, 'REPL' for Replace, 'ISRT' for Insert, and 'DLET' for Delete (lines 18-26). It also defines PARMCOUNT as a 5-digit signed binary field initialized to +4, likely indicating the expected number of parameters in IMS DL/I calls (line 27). This structure is copied into COBOL programs to standardize IMS function code values and parameter counts for database access operations.
 
-**Business Context**: This copybook is used in programs that interact with an IMS database.
+**Business Context**: IMS DL/I database access and manipulation in mainframe applications
 
 ## Paragraphs/Procedures
 
+### IMSFUNCS
+[Citadel] Paragraph identified by static analysis
+
 ### ~~FUNC-CODES~~ (Dead Code)
 *Record layout 'FUNC-CODES' is never used by any program*
-
-### PARMCOUNT
-This data item defines a COMP-5 signed integer constant representing the number of parameters expected by an IMS call. It is initialized with the value +4. This constant is likely used to ensure that the correct number of parameters are passed when invoking IMS functions. The value is directly assigned within the copybook and is intended to be used as a read-only constant within the calling program. It does not perform any error handling or call any other programs.
 
 ## Dead Code
 

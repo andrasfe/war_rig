@@ -1,32 +1,60 @@
 # COPAU01
 
-**File**: `cpy-bms/COPAU01.cpy`
-**Type**: FileType.COPYBOOK
-**Analyzed**: 2026-02-24 17:38:59.996763
+**File:** cpy-bms/COPAU01.cpy
+**Type:** COPYBOOK
+**Status:** In Progress
+**Iterations:** 1
+**Analyzed:** 2026-02-25 15:28:49.811940
 
 ## Purpose
 
-This copybook defines the data structures COPAU1AI and COPAU1AO, which are used for screen input and output related to authorization processing. It includes fields for transaction name, titles, date, time, card number, authorization details, merchant information, and error messages.
+This COBOL copybook defines the symbolic map structures for the COPAU01 BMS screen used in CICS online transactions. It provides the COPAU1AI group item containing length (L), format (F), attribute (A), and input data (I) fields for screen elements including transaction names, titles, current date/time, card number, authorization details (date, time, response, code, amount), POS entry mode, auth source, MCC code, card expiration, auth type, transaction ID, auth match, auth fraud, merchant details (name, ID, city, state, zip), and error message. The COPAU1AO group redefines COPAU1AI with BMS output attributes (C=constant, P=protected, H=high intensity, V=visible, O=output data) for screen rendering and data transmission.
 
-**Business Context**: This copybook is used in online CICS applications to define the data structures for screen displays and data transfer related to authorization processes.
+**Business Context:** CICS BMS map for payment card authorization transaction screens, displaying and capturing transaction, card, authorization, and merchant information.
+**Program Type:** ONLINE_CICS
+**Citations:** Lines 17, 181
 
-## Paragraphs/Procedures
+## Inputs
 
-### ~~COPAU1AI~~ (Dead Code)
-*Record layout 'COPAU1AI' is never used by any program*
+### COPAU1AI
+- **Type:** CICS_MAP
+- **Description:** Input symbolic map structure holding user-entered or received data fields with length, format, and values for screen elements
+- **Lines:** 17, 18, 60, 66, 72, 78, 84, 90, 96, 102, 108, 114, 120, 126, 132, 138, 144, 150, 156, 162, 168, 174, 180
+
+## Outputs
 
 ### COPAU1AO
-This data structure redefines the COPAU1AI structure (line 181) and is used for output to the screen. It provides a different view of the same data, allowing the program to format and display the information on the screen. The structure includes fields corresponding to the input fields in COPAU1AI, but with different PICTURE clauses, primarily using 'X' to represent alphanumeric characters. These fields are named with suffixes 'C', 'P', 'H', 'V', and 'O' (e.g., TRNNAMEC, TRNNAMEP, TRNNAMEH, TRNNAMEV, TRNNAMEO) to represent control characters, presentation attributes, highlighting, validation, and output values, respectively. The structure includes redefinitions for transaction name, titles, current date and time, card number, authorization details, POS entry mode, authorization source, MCC code, card expiry, authorization type, transaction ID, authorization match, authorization fraud, merchant details, and error message. This structure is used to format the data for display on the screen, setting attributes such as color, highlighting, and validation rules.
+- **Type:** CICS_MAP
+- **Description:** Output symbolic map structure redefining input with BMS attributes (C/P/H/V) and output data (O) fields for screen display and transmission
+- **Lines:** 181, 184, 188, 194, 200, 206, 212, 218, 224, 230, 236, 242, 248, 254, 260, 266, 272, 278, 284, 290, 296, 302, 308, 314, 320, 326, 332, 338, 344
 
-## Dead Code
+## Key Paragraphs
 
-The following artifacts were identified as dead code by static analysis:
+### COPAU01
+**Purpose:** [Citadel] Paragraph identified by static analysis
+- Lines: 1-1
 
-| Artifact | Type | Line | Reason |
-|----------|------|------|--------|
-| COPAU1AI | record_layout | 1 | Record layout 'COPAU1AI' is never used by any program |
+### COPAU1AI
+**Purpose:** [Citadel] Paragraph identified by static analysis
+- Lines: 1-1
 
-## Open Questions
+## Resolved Questions
 
-- ? What CICS commands use this copybook?
-  - Context: The copybook defines screen fields, but the specific CICS commands that utilize it are not evident from the copybook itself.
+- **Q:** Which CICS programs include and use this COPY COPAU01 copybook?
+  **A:** **COPAUS1C** (file: `cbl/COPAUS1C.cbl`) is the only CICS program that includes and uses the `COPY COPAU01` copybook.
+
+### Evidence from Analysis:
+- **Inclusion**: Direct `COPY COPAU01.` statement at line 122 in `COPAUS1C.cbl` (confirmed via multiple `search_code` patterns: `'COPY.*COPAU01'`, `'COPY COPAU01'`, `'^       COPY COPAU01\.?'`).
+- **Usage**: 
+  - Defines/references map fields like `COPAU1AI` (e.g., line 403: `EXEC CICS RECEIVE ... INTO(COPAU1AI)`) and `COPAU1AO` (multiple references, e.g., lines 163, 210, 377, 384, 392, 413–416, 422, 428 for output like `ERRMSGO OF COPAU1AO`, `TRNNAMEO OF COPAU1AO`, etc.).
+  - `citadel_analyze_file` on `COPAUS1C.cbl` lists `COPAU01` under **Preprocessor Includes**.
+  - CICS BMS interactions: `RECEIVE MAP('COPAU1A') MAPSET('COPAU01')` and `SEND ... FROM(COPAU1AO)`.
+- **Exhaustiveness**:
+  - `search_code` for unique fields (`'COPAU1AI'`, `'COPAU1AO'`) returned matches **only** in `COPAUS1C.cbl` and `cpy-bms/COPAU01.cpy` itself—no other files.
+  - `system-overview` skill confirms `COPAUS1C` handles auth views with `COPAU01` BMS map; other programs like `COPAUS0C` use `COPAU00`.
+  - No matches in other COBOL files (e.g., `COPAUS0C`, `COPAUS2C`, batch programs).
+
+No other CICS programs include or reference it. This copybook is specific to the COPAU1A screen in `COPAUS1C` for authorization detail views.
+
+---
+*Generated by War Rig WAR_RIG*

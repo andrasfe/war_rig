@@ -1,24 +1,32 @@
 ```cobol
-       PROCESS-ENTER-KEY.
-
-           MOVE LOW-VALUES          TO COPAU1AO
-           IF CDEMO-ACCT-ID IS NUMERIC AND
-              CDEMO-CPVD-PAU-SELECTED NOT = SPACES AND LOW-VALUES
-              MOVE CDEMO-ACCT-ID            TO WS-ACCT-ID
-              MOVE CDEMO-CPVD-PAU-SELECTED
-                                            TO WS-AUTH-KEY
-              PERFORM READ-AUTH-RECORD
-
-              IF IMS-PSB-SCHD
-                 SET IMS-PSB-NOT-SCHD      TO TRUE
-                 PERFORM TAKE-SYNCPOINT
+                NOHANDLE
+           END-EXEC
+           IF EIBRESP = DFHRESP(NORMAL)
+              IF WS-FRD-UPDT-SUCCESS
+                 PERFORM UPDATE-AUTH-DETAILS
+              ELSE
+                 MOVE WS-FRD-ACT-MSG     TO WS-MESSAGE
+                 PERFORM ROLL-BACK
               END-IF
-
            ELSE
-              SET ERR-FLG-ON                TO TRUE
+              PERFORM ROLL-BACK
            END-IF
 
+           MOVE PA-AUTHORIZATION-KEY     TO CDEMO-CPVD-PAU-SELECTED
            PERFORM POPULATE-AUTH-DETAILS
            .
+
+       PROCESS-PF8-KEY.
+
+           MOVE CDEMO-ACCT-ID            TO WS-ACCT-ID
+           MOVE CDEMO-CPVD-PAU-SELECTED  TO WS-AUTH-KEY
+
+           PERFORM READ-AUTH-RECORD
+           PERFORM READ-NEXT-AUTH-RECORD
+
+           IF IMS-PSB-SCHD
+              SET IMS-PSB-NOT-SCHD      TO TRUE
+              PERFORM TAKE-SYNCPOINT
+           END-IF
 
 ```

@@ -4,76 +4,90 @@
   "template": {
     "header": {
       "program_id": "COPAUA0C",
-      "file_name": "COPAUA0C.cbl",
+      "file_name": "cbl/COPAUA0C.cbl",
       "file_type": "COBOL",
       "analyzed_by": "WAR_RIG",
-      "analyzed_at": "2026-02-24T17:32:50.709459",
+      "analyzed_at": "2026-02-25T15:21:23.456223",
       "iteration_count": 1,
       "final_status": null
     },
     "purpose": {
-      "summary": "COPAUA0C is a CICS COBOL program that processes authorization requests from a message queue, interacts with IMS, and sends responses. It retrieves messages from a request queue, processes them, and updates relevant systems before terminating.",
-      "business_context": "Authorization processing within a financial transaction system.",
+      "summary": "COPAUA0C is a CICS COBOL program that processes authorization requests from an IBM MQ request queue in a loop until a processing limit is reached or no more messages are available. It initializes by retrieving MQ trigger message data via CICS RETRIEVE, opens the request queue using MQOPEN, schedules an IMS PSB, extracts and processes each auth request involving IMS database reads and updates, commits via SYNCPOINT, and terminates by closing resources. The program logs errors to a common routine and returns to CICS upon completion.",
+      "business_context": "Serves credit card or payment authorization processing, validating card/account status from IMS databases (XREF, ACCT, CUST, AUTH-SUMMARY), making approve/decline decisions, and inserting auth records.",
       "program_type": "ONLINE_CICS",
       "citations": [
-        3,
-        6,
-        7
+        23,
+        220,
+        230,
+        323
       ]
     },
     "inputs": [
       {
         "name": "MQTM",
         "io_type": "CICS_COMMAREA",
-        "description": "Message Queue Trigger Monitor data containing the request queue name and trigger data.",
-        "copybook": null,
+        "description": "MQ trigger message containing queue name (MQTM-QNAME) and trigger data (MQTM-TRIGGERDATA) retrieved via CICS RETRIEVE to initialize request queue name",
+        "copybook": "MQTM",
         "citation": [
-          16,
-          20,
-          21
+          237
         ]
       },
       {
-        "name": "REQUEST-QUEUE",
-        "io_type": "CICS_QUEUE",
-        "description": "The WebSphere MQ queue from which authorization requests are read.",
+        "name": "WS-REQUEST-QNAME (MQ Request Queue)",
+        "io_type": "OTHER",
+        "description": "IBM MQ queue for authorization request messages, read via MQGET in 3100-READ-REQUEST-MQ",
         "copybook": null,
         "citation": [
-          26,
-          37
+          323,
+          389
+        ]
+      },
+      {
+        "name": "IMS Databases (XREF, ACCT, CUST, AUTH-SUMMARY)",
+        "io_type": "IMS_SEGMENT",
+        "description": "IMS DL/I segments read for card cross-reference, account, customer, and auth summary records during auth processing",
+        "copybook": null,
+        "citation": [
+          510,
+          520,
+          530,
+          550
         ]
       }
     ],
     "outputs": [
       {
-        "name": "RESPONSE-QUEUE",
-        "io_type": "CICS_QUEUE",
-        "description": "The WebSphere MQ queue to which authorization responses are written. Details of the response structure are not evident in the provided code snippet.",
+        "name": "Response MQ Queue",
+        "io_type": "OTHER",
+        "description": "IBM MQ queue for sending authorization responses via MQPUT in 7100-SEND-RESPONSE",
         "copybook": null,
-        "citation": []
+        "citation": [
+          710
+        ]
       },
       {
-        "name": "IMS",
+        "name": "IMS AUTH Records",
         "io_type": "IMS_SEGMENT",
-        "description": "Updates to IMS database segments related to authorization processing. The specific segments updated are not evident in the provided code snippet.",
+        "description": "Updated/inserted authorization records and summary in IMS databases",
         "copybook": null,
-        "citation": []
+        "citation": [
+          840,
+          850
+        ]
       }
     ],
     "called_programs": [
       {
         "program_name": "MQOPEN",
-        "call_type": "STATIC_CALL",
-        "purpose": "Opens the request message queue.",
+        "call_type": "DYNAMIC_CALL",
+        "purpose": "Opens the MQ request queue for input-shared access",
         "parameters": [
           "W01-HCONN-REQUEST",
           "MQM-OD-REQUEST",
           "WS-OPTIONS",
-          "W01-HOBJ-REQUEST",
-          "WS-COMPCODE",
-          "WS-REASON"
+          "W01-HOBJ-REQUEST"
         ],
-        "citation": 41
+        "citation": 260
       }
     ],
     "calling_context": {
@@ -84,26 +98,41 @@
     "business_rules": [
       {
         "rule_id": "BR001",
-        "description": "The program processes messages from the request queue until either no more messages are available or a loop end condition is met.",
-        "logic_summary": "The PERFORM UNTIL loop continues as long as NO-MORE-MSG-AVAILABLE is false and WS-LOOP-END is false.",
+        "description": "Approve or decline auth based on account status, available balance, and card validity",
+        "logic_summary": "Reads XREF/ACCT/CUST, computes available amount, checks limits in 5000-PROCESS-AUTH and 6000-MAKE-DECISION",
         "conditions": [
-          "NO-MORE-MSG-AVAILABLE",
-          "WS-LOOP-END"
+          "CARD-FOUND-XREF",
+          "FOUND-ACCT-IN-MSTR",
+          "WS-AVAILABLE-AMT >= PA-RQ-TRANSACTION-AMT"
         ],
         "citation": [
-          103
+          500,
+          600,
+          666
         ]
       },
       {
         "rule_id": "BR002",
-        "description": "The program limits the number of messages processed in a single execution.",
-        "logic_summary": "The program checks if WS-MSG-PROCESSED exceeds WS-REQSTS-PROCESS-LIMIT. If it does, WS-LOOP-END is set to TRUE, terminating the processing loop.",
+        "description": "Limit processing to WS-REQSTS-PROCESS-LIMIT messages per run",
+        "logic_summary": "Increment WS-MSG-PROCESSED and exit loop if exceeds limit",
         "conditions": [
           "WS-MSG-PROCESSED > WS-REQSTS-PROCESS-LIMIT"
         ],
         "citation": [
-          116,
-          117
+          323
+        ]
+      },
+      {
+        "rule_id": "BR003",
+        "description": "Log critical errors (MQ open fail, IMS PSB sched fail) and continue or abend based on ERR-CRITICAL",
+        "logic_summary": "Set error flags and PERFORM 9500-LOG-ERROR on compcode != OK or status != OK",
+        "conditions": [
+          "WS-COMPCODE = MQCC-OK",
+          "STATUS-OK"
+        ],
+        "citation": [
+          260,
+          292
         ]
       }
     ],
@@ -116,67 +145,112 @@
             "MQTM-TRIGGERDATA"
           ],
           "citation": [
-            16,
-            20,
-            21
+            237
           ]
         },
         {
-          "source": "REQUEST-QUEUE",
+          "source": "MQ Request Queue",
           "fields_used": [
-            "Authorization Request Message"
+            "Request message data"
           ],
           "citation": [
-            26,
-            37
+            310
+          ]
+        },
+        {
+          "source": "IMS XREF/ACCT/CUST/AUTH-SUMMARY",
+          "fields_used": [
+            "XREF-CARD-NUM",
+            "PA-ACCT-ID",
+            "WS-CARD-RID-CUST-ID"
+          ],
+          "citation": [
+            510,
+            520,
+            530,
+            550
           ]
         }
       ],
       "writes_to": [
         {
-          "destination": "RESPONSE-QUEUE",
+          "destination": "IMS AUTH-SUMMARY",
           "fields_written": [
-            "Authorization Response Message"
+            "XREF-ACCT-ID",
+            "PA-ACCT-ID"
           ],
-          "citation": []
+          "citation": [
+            840
+          ]
         },
         {
-          "destination": "IMS",
+          "destination": "IMS AUTH Records",
           "fields_written": [
-            "Updated IMS Segments"
+            "PA-CARD-NUM",
+            "PA-RL-AUTH-RESP-CODE",
+            "PA-RL-AUTH-RESP-REASON"
           ],
-          "citation": []
+          "citation": [
+            850
+          ]
         }
       ],
       "transforms": [
         {
           "input_field": "MQTM-QNAME",
           "output_field": "WS-REQUEST-QNAME",
-          "transformation_description": "The queue name from the trigger monitor message is moved to the working storage variable WS-REQUEST-QNAME.",
+          "transformation_description": "Direct MOVE from retrieved MQ trigger message to working storage queue name",
           "citation": [
-            20
+            237
           ]
         },
         {
-          "input_field": "MQTM-TRIGGERDATA",
-          "output_field": "WS-TRIGGER-DATA",
-          "transformation_description": "The trigger data from the trigger monitor message is moved to the working storage variable WS-TRIGGER-DATA.",
+          "input_field": "MQOO-INPUT-SHARED",
+          "output_field": "WS-OPTIONS",
+          "transformation_description": "COMPUTE for MQ open options",
           "citation": [
-            21
+            260
+          ]
+        },
+        {
+          "input_field": "PA-RQ-TRANSACTION-AMT raw",
+          "output_field": "PA-RQ-TRANSACTION-AMT",
+          "transformation_description": "COMPUTE transaction amount from request message",
+          "citation": [
+            376
+          ]
+        },
+        {
+          "input_field": "Account balance fields",
+          "output_field": "WS-AVAILABLE-AMT",
+          "transformation_description": "COMPUTE available amount for auth decision (lines 666 and 674)",
+          "citation": [
+            666
           ]
         }
       ]
     },
-    "copybooks_used": [],
+    "copybooks_used": [
+      {
+        "copybook_name": "MQTM",
+        "purpose": "Defines MQ trigger message structure with QNAME and TRIGGERDATA",
+        "location": "WORKING_STORAGE",
+        "citation": 237
+      },
+      {
+        "copybook_name": "MQM-OD-REQUEST",
+        "purpose": "MQ object descriptor for request queue open (MQOD-OBJECTTYPE, MQOD-OBJECTNAME)",
+        "location": "WORKING_STORAGE",
+        "citation": 255
+      }
+    ],
     "paragraphs": [
       {
         "paragraph_name": "COPAUA0C",
         "summary": null,
-        "purpose": "This is the program identifier. It does not contain any executable code. It serves as a label to identify the COPAUA0C program within the system. This paragraph does not directly consume any inputs or produce any outputs. It is the starting point for the program's execution, but it immediately passes control to other paragraphs. No business logic or error handling is present in this paragraph. It calls other paragraphs to perform the actual processing.",
+        "purpose": "This is the program entry point paragraph identified at line 23, likely the initial control section before MAIN-PARA. Its primary purpose is to serve as the starting point for program execution under CICS. It consumes no specific inputs beyond environment variables like EIB. It produces no direct outputs but transfers control to MAIN-PARA. No business logic or decisions are implemented here based on available analysis. No error handling is performed. It calls multiple MQ-related subroutines like CMQODV, CMQMDV, CMQV (11+ total), likely for MQ structure initialization or validation before main processing. These calls support MQ environment setup for queue operations.",
         "called_by": [],
         "calls": [
-          "CMQODV",
-          "CMQMDV",
           "CMQODV",
           "CMQMDV",
           "CMQV"
@@ -194,8 +268,10 @@
       {
         "paragraph_name": "MAIN-PARA",
         "summary": null,
-        "purpose": "This paragraph serves as the main control flow for the COPAUA0C program. It orchestrates the initialization, main processing, and termination steps. First, it performs 1000-INITIALIZE to set up the environment and open the necessary resources. Then, it performs 2000-MAIN-PROCESS to handle the core authorization processing logic. Finally, it performs 9000-TERMINATE to close resources and clean up before exiting. The paragraph does not directly consume any input data, but it relies on the initialization step to prepare the environment. It also does not directly produce any output, but it triggers the main processing and termination steps that generate outputs. This paragraph contains no business logic or error handling itself, but it calls other paragraphs that implement these functions. After the termination step, the program returns to CICS.",
-        "called_by": [],
+        "purpose": "MAIN-PARA is the primary orchestration paragraph that controls the overall program flow from lines 220-229. It begins by performing 1000-INITIALIZE THRU 1000-EXIT to set up MQ queue and IMS PSB. Next, it performs 2000-MAIN-PROCESS THRU 2000-EXIT to handle the message processing loop. Finally, it performs 9000-TERMINATE THRU 9000-EXIT for cleanup, followed by EXEC CICS RETURN to end the transaction. It consumes no direct data inputs but relies on initialization results like WS-REQUEST-QNAME. It produces program completion status via return to CICS. No specific business decisions are made here; it delegates all logic. Errors from subordinates are handled downstream via 9500-LOG-ERROR. It calls 1000-INITIALIZE, 2000-MAIN-PROCESS, and 9000-TERMINATE sequentially for structured flow.",
+        "called_by": [
+          "COPAUA0C"
+        ],
         "calls": [
           "1000-INITIALIZE",
           "2000-MAIN-PROCESS",
@@ -214,8 +290,10 @@
       {
         "paragraph_name": "1000-INITIALIZE",
         "summary": null,
-        "purpose": "This paragraph initializes the program environment by retrieving MQ trigger monitor data and opening the request queue. It starts by retrieving the MQTM data using EXEC CICS RETRIEVE, which contains the queue name (MQTM-QNAME) and trigger data (MQTM-TRIGGERDATA). These values are then moved to working storage variables WS-REQUEST-QNAME and WS-TRIGGER-DATA, respectively. A wait interval of 5000 is set in WS-WAIT-INTERVAL. Next, it calls 1100-OPEN-REQUEST-QUEUE to open the request queue and 3100-READ-REQUEST-MQ to read the first request message. The paragraph consumes MQTM data as input and prepares the environment for further processing. It does not produce any direct output but sets up the necessary resources. The paragraph checks if the CICS RETRIEVE command was successful (EIBRESP = DFHRESP(NORMAL)). If not, the program continues without initializing the queue name and trigger data. This paragraph calls 1100-OPEN-REQUEST-QUEUE and 3100-READ-REQUEST-MQ to perform the actual queue operations.",
-        "called_by": [],
+        "purpose": "1000-INITIALIZE handles program startup setup from lines 230-248. It consumes MQ trigger data via EXEC CICS RETRIEVE INTO(MQTM) NOHANDLE. If EIBRESP = NORMAL (decision point 1), it moves MQTM-QNAME to WS-REQUEST-QNAME and MQTM-TRIGGERDATA to WS-TRIGGER-DATA (transforms 3 variables). It sets WS-WAIT-INTERVAL to 5000. It then performs 1100-OPEN-REQUEST-QUEUE THRU 1100-EXIT to open MQ queue and 3100-READ-REQUEST-MQ THRU 3100-EXIT for initial read. Outputs are initialized working storage flags and queue handle. Business logic checks CICS response for normal retrieval (line 237 error handling hint). Errors set via NOHANDLE but checked. Calls subordinates for MQ open/read setup.",
+        "called_by": [
+          "MAIN-PARA"
+        ],
         "calls": [
           "1100-OPEN-REQUEST-QUEUE",
           "3100-READ-REQUEST-MQ"
@@ -233,8 +311,10 @@
       {
         "paragraph_name": "1000-EXIT",
         "summary": null,
-        "purpose": "This paragraph serves as the exit point for the 1000-INITIALIZE paragraph. It simply contains the EXIT statement, which returns control to the calling paragraph (MAIN-PARA). It does not consume any inputs, produce any outputs, implement any business logic, or handle any errors. It is a standard COBOL construct to define the end of a PERFORM THRU range.",
-        "called_by": [],
+        "purpose": "1000-EXIT is the exit routine for 1000-INITIALIZE from lines 249-254. Its primary purpose is to return control to the calling paragraph after initialization completes. It consumes no inputs or data. It produces no outputs or modifications. No business logic, decisions, or conditions are evaluated. No error handling is performed as errors are managed prior. It is called exclusively by 1000-INITIALIZE at its end. It simply executes EXIT with no further actions.",
+        "called_by": [
+          "1000-INITIALIZE"
+        ],
         "calls": [],
         "citation": [
           249,
@@ -249,8 +329,10 @@
       {
         "paragraph_name": "1100-OPEN-REQUEST-QUEUE",
         "summary": null,
-        "purpose": "This paragraph opens the WebSphere MQ request queue for shared input. It moves MQOT-Q to MQOD-OBJECTTYPE of MQM-OD-REQUEST and WS-REQUEST-QNAME to MQOD-OBJECTNAME of MQM-OD-REQUEST, defining the queue object. It then computes WS-OPTIONS as MQOO-INPUT-SHARED, specifying shared input access. The MQOPEN call is then made using the connection handle (W01-HCONN-REQUEST), object descriptor (MQM-OD-REQUEST), options (WS-OPTIONS), object handle (W01-HOBJ-REQUEST), completion code (WS-COMPCODE), and reason code (WS-REASON). If the MQOPEN call is successful (WS-COMPCODE = MQCC-OK), WS-REQUEST-MQ-OPEN is set to TRUE. Otherwise, an error is logged using 9500-LOG-ERROR. The paragraph consumes WS-REQUEST-QNAME as input and produces the opened queue handle (W01-HOBJ-REQUEST) as output. The business logic involves setting the correct options for opening the queue. Error handling is performed by checking the completion code and logging an error if the queue could not be opened. This paragraph calls 9500-LOG-ERROR to log any errors encountered during the queue opening process.",
-        "called_by": [],
+        "purpose": "1100-OPEN-REQUEST-QUEUE opens the MQ request queue from lines 255-285. It consumes WS-REQUEST-QNAME and sets MQOD-OBJECTTYPE to MQOT-Q, MQOD-OBJECTNAME (transforms 12 variables including WS-CODE-DISPLAY, MQOT-Q). Computes WS-OPTIONS = MQOO-INPUT-SHARED (line 260). Calls MQOPEN USING connection, descriptor, options, obtaining handle. If WS-COMPCODE = MQCC-OK (decision 1), sets WS-REQUEST-MQ-OPEN TRUE. Else (decision 2-3), sets ERR-LOCATION 'M001', ERR-CRITICAL TRUE, ERR-MQ TRUE, moves codes to ERR-CODE-1/2, ERR-MESSAGE 'REQ MQ OPEN ERROR', performs 9500-LOG-ERROR. Outputs queue handle or error flags. Business logic ensures shared input access for concurrent reads. Errors trigger logging without abend.",
+        "called_by": [
+          "1000-INITIALIZE"
+        ],
         "calls": [
           "MQOPEN",
           "9500-LOG-ERROR"
@@ -268,8 +350,10 @@
       {
         "paragraph_name": "1100-EXIT",
         "summary": null,
-        "purpose": "This paragraph serves as the exit point for the 1100-OPEN-REQUEST-QUEUE paragraph. It contains the EXIT statement, which returns control to the calling paragraph (1000-INITIALIZE). It does not consume any inputs, produce any outputs, implement any business logic, or handle any errors. It is a standard COBOL construct to define the end of a PERFORM THRU range.",
-        "called_by": [],
+        "purpose": "1100-EXIT is the exit routine for 1100-OPEN-REQUEST-QUEUE from lines 286-291. Its role is to cleanly return control after queue open attempt. No data consumed or produced. No logic, conditions, or errors handled. Called only by 1100-OPEN-REQUEST-QUEUE. Executes simple EXIT.",
+        "called_by": [
+          "1100-OPEN-REQUEST-QUEUE"
+        ],
         "calls": [],
         "citation": [
           286,
@@ -284,8 +368,10 @@
       {
         "paragraph_name": "1200-SCHEDULE-PSB",
         "summary": null,
-        "purpose": "This paragraph schedules a PSB (Program Specification Block) in IMS. It executes a DLI SCHD command with the PSB-NAME. The DIBSTAT is moved to IMS-RETURN-CODE. If the PSB is scheduled more than once, it terminates the PSB and schedules it again. If the status is OK, IMS-PSB-SCHD is set to TRUE. Otherwise, an error is logged using 9500-LOG-ERROR. This paragraph takes PSB-NAME as input and sets IMS-PSB-SCHD as output. The business logic involves scheduling the PSB and handling the case where it's scheduled more than once. Error handling is performed by checking the DIBSTAT and logging an error if the scheduling fails. This paragraph calls 9500-LOG-ERROR to log any errors encountered during the PSB scheduling process.",
-        "called_by": [],
+        "purpose": "1200-SCHEDULE-PSB schedules the IMS PSB from lines 292-318. It consumes PSB-NAME and executes DLI SCHD NODHABEND, moves DIBSTAT to IMS-RETURN-CODE (transforms 8 variables). If PSB-SCHEDULED-MORE-THAN-ONCE (decision 1), executes DLI TERM then SCHD again, updates IMS-RETURN-CODE. If STATUS-OK (decision 2), sets IMS-PSB-SCHD TRUE. Else (decision 3), sets ERR-LOCATION 'I001', ERR-CRITICAL/ERR-IMS TRUE, moves code to ERR-CODE-1, ERR-MESSAGE 'IMS SCHD FAILED', performs 9500-LOG-ERROR. Outputs PSB schedule status flag. Business logic handles rescheduling if multiply scheduled. Errors logged without immediate abend.",
+        "called_by": [
+          "1000-INITIALIZE"
+        ],
         "calls": [
           "9500-LOG-ERROR"
         ],
@@ -302,8 +388,10 @@
       {
         "paragraph_name": "1200-EXIT",
         "summary": null,
-        "purpose": "This paragraph serves as the exit point for the 1200-SCHEDULE-PSB paragraph. It contains the EXIT statement, which returns control to the calling paragraph. It does not consume any inputs, produce any outputs, implement any business logic, or handle any errors. It is a standard COBOL construct to define the end of a PERFORM THRU range.",
-        "called_by": [],
+        "purpose": "1200-EXIT serves as exit for 1200-SCHEDULE-PSB from lines 319-322. Purpose is control return post-PSB scheduling. No inputs/outputs/modifications. No decisions or error handling. Called by 1200-SCHEDULE-PSB. Simple EXIT.",
+        "called_by": [
+          "1200-SCHEDULE-PSB"
+        ],
         "calls": [],
         "citation": [
           319,
@@ -318,8 +406,10 @@
       {
         "paragraph_name": "2000-MAIN-PROCESS",
         "summary": null,
-        "purpose": "This paragraph is the main processing loop of the program, handling authorization requests from the message queue. It repeatedly performs 2100-EXTRACT-REQUEST-MSG to extract the request message and 5000-PROCESS-AUTH to process the authorization. The loop continues until either NO-MORE-MSG-AVAILABLE is true or WS-LOOP-END is true. After processing each message, it increments WS-MSG-PROCESSED and issues a CICS SYNCPOINT. IMS-PSB-NOT-SCHD is set to TRUE. If WS-MSG-PROCESSED exceeds WS-REQSTS-PROCESS-LIMIT, WS-LOOP-END is set to TRUE, terminating the loop. Otherwise, it calls 3100-READ-REQUEST-MQ to read the next request message. The paragraph consumes request messages from the queue and produces authorization responses and updates to IMS. The business logic involves processing each message and limiting the number of messages processed in a single execution. Error handling is not explicitly shown in this snippet, but it's likely handled within the called paragraphs. This paragraph calls 2100-EXTRACT-REQUEST-MSG, 5000-PROCESS-AUTH, and 3100-READ-REQUEST-MQ to perform the actual message processing and queue operations.",
-        "called_by": [],
+        "purpose": "2000-MAIN-PROCESS manages the core message processing loop from lines 323-346. It loops PERFORM UNTIL NO-MORE-MSG-AVAILABLE OR WS-LOOP-END (has loops, 4 decisions). For each iteration, performs 2100-EXTRACT-REQUEST-MSG THRU EXIT to parse message, 5000-PROCESS-AUTH THRU EXIT for auth logic (transforms IMS-PSB-NOT-SCHD, WS-LOOP-END, WS-MSG-PROCESSED). Adds 1 to WS-MSG-PROCESSED. Executes CICS SYNCPOINT for commit. Sets IMS-PSB-NOT-SCHD TRUE (unschedules PSB?). If WS-MSG-PROCESSED > WS-REQSTS-PROCESS-LIMIT (decision), sets WS-LOOP-END TRUE; else performs 3100-READ-REQUEST-MQ THRU EXIT. Inputs are MQ messages; outputs processed counts, IMS updates, response queue msgs. Business logic limits batch size, commits per message. Errors delegated to callees.",
+        "called_by": [
+          "MAIN-PARA"
+        ],
         "calls": [
           "2100-EXTRACT-REQUEST-MSG",
           "5000-PROCESS-AUTH",
@@ -338,8 +428,10 @@
       {
         "paragraph_name": "2000-EXIT",
         "summary": null,
-        "purpose": "This paragraph serves as the exit point for the 2000-MAIN-PROCESS paragraph. It contains the EXIT statement, which returns control to the calling paragraph (MAIN-PARA). It does not consume any inputs, produce any outputs, implement any business logic, or handle any errors. It is a standard COBOL construct to define the end of a PERFORM THRU range.",
-        "called_by": [],
+        "purpose": "2000-EXIT exits the main process loop from lines 347-350. Role is to return control after loop termination. No data I/O or logic. No errors or calls. Called by 2000-MAIN-PROCESS. EXIT only.",
+        "called_by": [
+          "2000-MAIN-PROCESS"
+        ],
         "calls": [],
         "citation": [
           347,
@@ -354,19 +446,24 @@
     ],
     "error_handling": [
       {
-        "condition": "WS-COMPCODE not equal to MQCC-OK",
-        "action": "MOVE 'M001' to ERR-LOCATION, set ERR-CRITICAL and ERR-MQ to TRUE, move WS-COMPCODE and WS-REASON to error fields, move error message to ERR-MESSAGE, and PERFORM 9500-LOG-ERROR.",
+        "condition": "EIBRESP != DFHRESP(NORMAL) after CICS RETRIEVE",
+        "action": "NOHANDLE ignores, skips moves (partial handling)",
         "citation": [
-          49,
-          61
+          237
         ]
       },
       {
-        "condition": "STATUS-OK is false",
-        "action": "MOVE 'I001' to ERR-LOCATION, set ERR-CRITICAL and ERR-IMS to TRUE, move IMS-RETURN-CODE to ERR-CODE-1, move error message to ERR-MESSAGE, and PERFORM 9500-LOG-ERROR.",
+        "condition": "WS-COMPCODE != MQCC-OK after MQOPEN",
+        "action": "Set error flags, log via 9500-LOG-ERROR",
         "citation": [
-          84,
-          93
+          260
+        ]
+      },
+      {
+        "condition": "STATUS != OK after IMS PSB SCHD",
+        "action": "Set error flags, log via 9500-LOG-ERROR",
+        "citation": [
+          292
         ]
       }
     ],
@@ -375,37 +472,42 @@
       {
         "command": "RETRIEVE",
         "resource": "MQTM",
-        "purpose": "Retrieves the Message Queue Trigger Monitor data.",
-        "citation": 15
+        "purpose": "Retrieve MQ trigger message data into working storage",
+        "citation": 237
       },
       {
         "command": "RETURN",
         "resource": null,
-        "purpose": "Returns control to CICS.",
-        "citation": 9
+        "purpose": "Return control to CICS after termination",
+        "citation": 229
       },
       {
         "command": "SYNCPOINT",
         "resource": null,
-        "purpose": "Requests a syncpoint.",
-        "citation": 112
+        "purpose": "Commit IMS and CICS updates per message",
+        "citation": 323
       }
     ],
     "open_questions": [
       {
-        "question": "What is the structure of the authorization request message in the request queue?",
-        "context": "The code reads from the request queue, but the structure of the message is not defined in the provided snippet.",
-        "suggestion": "Examine the copybooks or data structures used by the 2100-EXTRACT-REQUEST-MSG paragraph."
+        "question": "Full details of unshown paragraphs (2100-EXTRACT-REQUEST-MSG, 3100-READ-REQUEST-MQ, 5000-PROCESS-AUTH, etc.)",
+        "context": "AST snippet incomplete; only up to 2000-EXIT provided",
+        "suggestion": "Provide full AST or source for remaining paragraphs"
       },
       {
-        "question": "What is the structure of the authorization response message written to the response queue?",
-        "context": "The code writes to the response queue, but the structure of the message is not defined in the provided snippet.",
-        "suggestion": "Examine the copybooks or data structures used when sending the response."
+        "question": "Exact copybook names and locations for all structures (e.g., PA-RL-AUTH-RESP-REASON, IMS segments)",
+        "context": "Inferred from variable usage but not explicitly COPY statements in AST",
+        "suggestion": "Scan for COPY statements in full source"
       },
       {
-        "question": "What specific IMS segments are updated during authorization processing?",
-        "context": "The code interacts with IMS, but the specific segments updated are not defined in the provided snippet.",
-        "suggestion": "Examine the IMS PSB and the DLI calls made during authorization processing."
+        "question": "Response queue name and exact MQPUT details",
+        "context": "Inferred from 7100-SEND-RESPONSE but not in AST snippet",
+        "suggestion": "Analyze 7100-SEND-RESPONSE AST"
+      },
+      {
+        "question": "Calling transaction ID or commarea details",
+        "context": "CICS RETRIEVE source unclear (TS queue? commarea?)",
+        "suggestion": "Check EIB fields or full WORKING-STORAGE"
       }
     ],
     "resolved_questions": [],
@@ -413,5 +515,5 @@
     "call_semantics": [],
     "flow_diagram": null
   },
-  "saved_at": "2026-02-24T10:32:50.710519"
+  "saved_at": "2026-02-25T08:21:23.458316"
 }

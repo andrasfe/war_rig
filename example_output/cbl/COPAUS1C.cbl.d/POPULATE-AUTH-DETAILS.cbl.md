@@ -1,70 +1,122 @@
 ```cobol
-       POPULATE-AUTH-DETAILS.
-
-
-           IF ERR-FLG-OFF
-               MOVE PA-CARD-NUM               TO CARDNUMO
-
-               MOVE PA-AUTH-ORIG-DATE(1:2)    TO WS-CURDATE-YY
-               MOVE PA-AUTH-ORIG-DATE(3:2)    TO WS-CURDATE-MM
-               MOVE PA-AUTH-ORIG-DATE(5:2)    TO WS-CURDATE-DD
-               MOVE WS-CURDATE-MM-DD-YY       TO WS-AUTH-DATE
-               MOVE WS-AUTH-DATE              TO AUTHDTO
-
-               MOVE PA-AUTH-ORIG-TIME(1:2)    TO WS-AUTH-TIME(1:2)
-               MOVE PA-AUTH-ORIG-TIME(3:2)    TO WS-AUTH-TIME(4:2)
-               MOVE PA-AUTH-ORIG-TIME(5:2)    TO WS-AUTH-TIME(7:2)
-               MOVE WS-AUTH-TIME              TO AUTHTMO
-
-               MOVE PA-APPROVED-AMT           TO WS-AUTH-AMT
-               MOVE WS-AUTH-AMT               TO AUTHAMTO
-
-               IF PA-AUTH-RESP-CODE = '00'
-                  MOVE 'A'                    TO AUTHRSPO
-                  MOVE DFHGREEN               TO AUTHRSPC
-               ELSE
-                  MOVE 'D'                    TO AUTHRSPO
-                  MOVE DFHRED                 TO AUTHRSPC
-               END-IF
-
-               SEARCH ALL WS-DECLINE-REASON-TAB
-                   AT END
-                        MOVE '9999'                     TO AUTHRSNO
-                        MOVE '-'                        TO AUTHRSNO(5:1)
-                        MOVE 'ERROR'                    TO AUTHRSNO(6:)
-                   WHEN DECL-CODE(WS-DECL-RSN-IDX) = PA-AUTH-RESP-REASON
-                        MOVE PA-AUTH-RESP-REASON        TO AUTHRSNO
-                        MOVE '-'                        TO AUTHRSNO(5:1)
-                        MOVE DECL-DESC(WS-DECL-RSN-IDX) TO AUTHRSNO(6:)
-               END-SEARCH
-
-
-               MOVE PA-PROCESSING-CODE        TO AUTHCDO
-               MOVE PA-POS-ENTRY-MODE         TO POSEMDO
-               MOVE PA-MESSAGE-SOURCE         TO AUTHSRCO
-               MOVE PA-MERCHANT-CATAGORY-CODE TO MCCCDO
-
-               MOVE PA-CARD-EXPIRY-DATE(1:2)  TO CRDEXPO(1:2)
-               MOVE '/'                       TO CRDEXPO(3:1)
-               MOVE PA-CARD-EXPIRY-DATE(3:2)  TO CRDEXPO(4:2)
-
-               MOVE PA-AUTH-TYPE              TO AUTHTYPO
-               MOVE PA-TRANSACTION-ID         TO TRNIDO
-               MOVE PA-MATCH-STATUS           TO AUTHMTCO
-
-               IF PA-FRAUD-CONFIRMED OR PA-FRAUD-REMOVED
-                  MOVE PA-AUTH-FRAUD          TO AUTHFRDO(1:1)
-                  MOVE '-'                    TO AUTHFRDO(2:1)
-                  MOVE PA-FRAUD-RPT-DATE      TO AUTHFRDO(3:)
-               ELSE
-                  MOVE '-'                    TO AUTHFRDO
-               END-IF
-
-               MOVE PA-MERCHANT-NAME          TO MERNAMEO
-               MOVE PA-MERCHANT-ID            TO MERIDO
-               MOVE PA-MERCHANT-CITY          TO MERCITYO
-               MOVE PA-MERCHANT-STATE         TO MERSTO
-               MOVE PA-MERCHANT-ZIP           TO MERZIPO
+              EXEC CICS SEND
+                     MAP('COPAU1A')
+                     MAPSET('COPAU01')
+                     FROM(COPAU1AO)
+                     ERASE
+                     CURSOR
+              END-EXEC
+           ELSE
+              EXEC CICS SEND
+                     MAP('COPAU1A')
+                     MAPSET('COPAU01')
+                     FROM(COPAU1AO)
+                     CURSOR
+              END-EXEC
            END-IF
            .
+
+       RECEIVE-AUTHVIEW-SCREEN.
+
+           EXEC CICS RECEIVE
+                     MAP('COPAU1A')
+                     MAPSET('COPAU01')
+                     INTO(COPAU1AI)
+                     NOHANDLE
+           END-EXEC
+           .
+
+
+       POPULATE-HEADER-INFO.
+
+           MOVE FUNCTION CURRENT-DATE  TO WS-CURDATE-DATA
+
+           MOVE CCDA-TITLE01           TO TITLE01O OF COPAU1AO
+           MOVE CCDA-TITLE02           TO TITLE02O OF COPAU1AO
+           MOVE WS-CICS-TRANID         TO TRNNAMEO OF COPAU1AO
+           MOVE WS-PGM-AUTH-DTL        TO PGMNAMEO OF COPAU1AO
+
+           MOVE WS-CURDATE-MONTH       TO WS-CURDATE-MM
+           MOVE WS-CURDATE-DAY         TO WS-CURDATE-DD
+           MOVE WS-CURDATE-YEAR(3:2)   TO WS-CURDATE-YY
+
+           MOVE WS-CURDATE-MM-DD-YY    TO CURDATEO OF COPAU1AO
+
+           MOVE WS-CURTIME-HOURS       TO WS-CURTIME-HH
+           MOVE WS-CURTIME-MINUTE      TO WS-CURTIME-MM
+           MOVE WS-CURTIME-SECOND      TO WS-CURTIME-SS
+
+           MOVE WS-CURTIME-HH-MM-SS    TO CURTIMEO OF COPAU1AO
+           .
+
+       READ-AUTH-RECORD.
+
+           PERFORM SCHEDULE-PSB
+
+
+           MOVE WS-ACCT-ID                TO PA-ACCT-ID
+           MOVE WS-AUTH-KEY               TO PA-AUTHORIZATION-KEY
+
+           EXEC DLI GU USING PCB(PAUT-PCB-NUM)
+               SEGMENT (PAUTSUM0)
+               INTO (PENDING-AUTH-SUMMARY)
+               WHERE (ACCNTID = PA-ACCT-ID)
+           END-EXEC
+
+           MOVE DIBSTAT                          TO IMS-RETURN-CODE
+           EVALUATE TRUE
+               WHEN STATUS-OK
+                  SET AUTHS-NOT-EOF              TO TRUE
+               WHEN SEGMENT-NOT-FOUND
+               WHEN END-OF-DB
+                  SET AUTHS-EOF                  TO TRUE
+               WHEN OTHER
+                  MOVE 'Y'     TO WS-ERR-FLG
+
+                  STRING
+                  ' System error while reading Auth Summary: Code:'
+                  IMS-RETURN-CODE
+                  DELIMITED BY SIZE
+                  INTO WS-MESSAGE
+                  END-STRING
+                  PERFORM SEND-AUTHVIEW-SCREEN
+           END-EVALUATE
+
+           IF AUTHS-NOT-EOF
+              EXEC DLI GNP USING PCB(PAUT-PCB-NUM)
+                  SEGMENT (PAUTDTL1)
+                  INTO (PENDING-AUTH-DETAILS)
+                  WHERE (PAUT9CTS = PA-AUTHORIZATION-KEY)
+              END-EXEC
+
+              MOVE DIBSTAT                          TO IMS-RETURN-CODE
+              EVALUATE TRUE
+                  WHEN STATUS-OK
+                     SET AUTHS-NOT-EOF              TO TRUE
+                  WHEN SEGMENT-NOT-FOUND
+                  WHEN END-OF-DB
+                     SET AUTHS-EOF                  TO TRUE
+                  WHEN OTHER
+                     MOVE 'Y'     TO WS-ERR-FLG
+
+                     STRING
+                     ' System error while reading Auth Details: Code:'
+                     IMS-RETURN-CODE
+                     DELIMITED BY SIZE
+                     INTO WS-MESSAGE
+                     END-STRING
+                     PERFORM SEND-AUTHVIEW-SCREEN
+              END-EVALUATE
+           END-IF
+
+           .
+
+       READ-NEXT-AUTH-RECORD.
+
+           EXEC DLI GNP USING PCB(PAUT-PCB-NUM)
+               SEGMENT (PAUTDTL1)
+               INTO (PENDING-AUTH-DETAILS)
+           END-EXEC
+
+           MOVE DIBSTAT                          TO IMS-RETURN-CODE
 ```

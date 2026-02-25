@@ -4,105 +4,82 @@
   "template": {
     "header": {
       "program_id": "COPAUS1C",
-      "file_name": "COPAUS1C.cbl",
+      "file_name": "cbl/COPAUS1C.cbl",
       "file_type": "COBOL",
       "analyzed_by": "WAR_RIG",
-      "analyzed_at": "2026-02-24T17:36:32.135572",
+      "analyzed_at": "2026-02-25T15:26:14.022033",
       "iteration_count": 1,
       "final_status": null
     },
     "purpose": {
-      "summary": "This COBOL program interacts with an IMS database to retrieve and update pending authorization details. It retrieves authorization summary and detail records based on account ID and authorization key, and allows for marking authorizations as fraudulent. The program uses CICS SYNCPOINT and ROLLBACK commands to ensure data consistency during updates.",
-      "business_context": "This program likely supports a fraud detection or authorization workflow within a financial institution or similar organization.",
+      "summary": "This CICS online program manages pending authorization records in an IMS database by reading authorization summaries and details for a given account ID and authorization key, allowing updates to mark or remove fraud status on those details. It schedules the required PSB, performs IMS DLI calls to retrieve and update segments PAUTSUM0 and PAUTDTL1, handles errors by displaying messages via screen sends, and commits or rolls back changes using CICS syncpoints.",
+      "business_context": "Supports fraud detection and authorization management by enabling operators to review and tag pending authorizations as fraudulent or clear fraud flags in a banking or payment authorization system.",
       "program_type": "ONLINE_CICS",
       "citations": [
-        9,
-        35,
-        95
+        431,
+        493,
+        520,
+        557,
+        565,
+        574
       ]
     },
     "inputs": [
       {
-        "name": "PENDING-AUTH-SUMMARY",
+        "name": "PAUT-PCB-NUM",
         "io_type": "IMS_SEGMENT",
-        "description": "Contains summary information about pending authorizations, including account ID.",
-        "copybook": "PAUTSUM0",
+        "description": "IMS PCB used for accessing PAUTSUM0 (authorization summary) and PAUTDTL1 (authorization details) segments",
+        "copybook": null,
         "citation": [
-          11
-        ]
-      },
-      {
-        "name": "PENDING-AUTH-DETAILS",
-        "io_type": "IMS_SEGMENT",
-        "description": "Contains detailed information about a specific pending authorization, including fraud report date and removal status.",
-        "copybook": "PAUTDTL1",
-        "citation": [
-          37,
-          67,
-          97
+          431,
+          493,
+          520,
+          574
         ]
       },
       {
         "name": "WS-ACCT-ID",
-        "io_type": "PARAMETER",
-        "description": "Account ID used to retrieve authorization summary.",
+        "io_type": "CICS_COMMAREA",
+        "description": "Account ID used as qualification for reading PAUTSUM0 segment",
         "copybook": null,
         "citation": [
-          6
+          431
         ]
       },
       {
         "name": "WS-AUTH-KEY",
-        "io_type": "PARAMETER",
-        "description": "Authorization key used to retrieve authorization details.",
+        "io_type": "CICS_COMMAREA",
+        "description": "Authorization key (PAUT9CTS) used as qualification for reading PAUTDTL1 segment",
         "copybook": null,
         "citation": [
-          7
-        ]
-      },
-      {
-        "name": "WS-FRAUD-AUTH-RECORD",
-        "io_type": "PARAMETER",
-        "description": "Fraud authorization record used to update PENDING-AUTH-DETAILS.",
-        "copybook": null,
-        "citation": [
-          92
+          431
         ]
       }
     ],
     "outputs": [
       {
-        "name": "PENDING-AUTH-DETAILS",
+        "name": "PAUTDTL1",
         "io_type": "IMS_SEGMENT",
-        "description": "Updated with fraud information.",
-        "copybook": "PAUTDTL1",
+        "description": "Updated pending authorization details with fraud status changes from WS-FRAUD-AUTH-RECORD",
+        "copybook": null,
         "citation": [
-          97
+          520
         ]
       },
       {
-        "name": "WS-MESSAGE",
+        "name": "AUTHVIEW-SCREEN",
         "io_type": "CICS_MAP",
-        "description": "Error messages and status information displayed on the screen.",
+        "description": "Screen displays for authorization views, error messages, and status updates",
         "copybook": null,
         "citation": [
-          29,
-          55,
-          84,
-          118,
-          160
+          431,
+          493,
+          520,
+          574
         ]
       }
     ],
-    "called_programs": [
-      {
-        "program_name": "SEND-AUTHVIEW-SCREEN",
-        "call_type": "STATIC_CALL",
-        "purpose": "Displays the authorization view screen with data and error messages.",
-        "parameters": [],
-        "citation": 31
-      }
-    ],
+    "called_programs": [],
     "calling_context": {
       "called_by": [],
       "entry_points": [],
@@ -111,106 +88,138 @@
     "business_rules": [
       {
         "rule_id": "BR001",
-        "description": "If the PSB is scheduled more than once, terminate the PSB before scheduling it again.",
-        "logic_summary": "Checks if PSB-SCHEDULED-MORE-THAN-ONCE is true, and if so, performs a DLI TERM before scheduling the PSB again.",
+        "description": "Read authorization summary for specific account ID, then retrieve matching details if summary found",
+        "logic_summary": "Uses GU call on PAUTSUM0 with ACCNTID qualification, followed by conditional GNP on PAUTDTL1 with PAUT9CTS key",
         "conditions": [
-          "IF PSB-SCHEDULED-MORE-THAN-ONCE"
+          "STATUS-OK on GU",
+          "AUTHS-NOT-EOF after summary read"
         ],
         "citation": [
-          141,
-          142
+          431
         ]
       },
       {
         "rule_id": "BR002",
-        "description": "If the IMS call is successful, set IMS-PSB-SCHD to true.",
-        "logic_summary": "Checks if STATUS-OK is true after scheduling the PSB, and if so, sets IMS-PSB-SCHD to true.",
+        "description": "Update authorization details only if IMS REPL succeeds, then commit; otherwise rollback",
+        "logic_summary": "Moves WS-FRAUD-AUTH-RECORD to PENDING-AUTH-DETAILS and performs REPL, evaluating DIBSTAT for success",
         "conditions": [
-          "IF STATUS-OK"
+          "STATUS-OK on REPL",
+          "PA-FRAUD-REMOVED flag determines message"
         ],
         "citation": [
-          151,
-          152
+          520
+        ]
+      },
+      {
+        "rule_id": "BR003",
+        "description": "Schedule PSB once or retry TERM/SCHD if already scheduled more than once",
+        "logic_summary": "Exec DLI SCHD PSB, check if PSB-SCHEDULED-MORE-THAN-ONCE, term and reschedule if true",
+        "conditions": [
+          "PSB-SCHEDULED-MORE-THAN-ONCE",
+          "STATUS-OK after SCHD"
+        ],
+        "citation": [
+          574
         ]
       }
     ],
     "data_flow": {
       "reads_from": [
         {
-          "source": "PENDING-AUTH-SUMMARY",
+          "source": "PAUTSUM0",
           "fields_used": [
             "ACCNTID"
           ],
           "citation": [
-            12
+            431
           ]
         },
         {
-          "source": "PENDING-AUTH-DETAILS",
+          "source": "PAUTDTL1",
           "fields_used": [
             "PAUT9CTS"
           ],
           "citation": [
-            38
+            431,
+            493
           ]
         }
       ],
       "writes_to": [
         {
-          "destination": "PENDING-AUTH-DETAILS",
+          "destination": "PAUTDTL1",
           "fields_written": [
-            "PA-FRAUD-RPT-DATE",
-            "PA-FRAUD-REMOVED"
+            "PENDING-AUTH-DETAILS fields from WS-FRAUD-AUTH-RECORD"
           ],
           "citation": [
-            92,
-            93
+            520
           ]
         },
         {
           "destination": "WS-MESSAGE",
           "fields_written": [
-            "Error messages",
-            "Status messages"
+            "Error messages concatenated with IMS-RETURN-CODE"
           ],
           "citation": [
-            29,
-            55,
-            84,
-            118,
-            160
+            431,
+            493,
+            520,
+            574
           ]
         }
       ],
-      "transforms": []
+      "transforms": [
+        {
+          "input_field": "WS-ACCT-ID",
+          "output_field": "PA-ACCT-ID",
+          "transformation_description": "Direct MOVE to qualify IMS GU call on ACCNTID",
+          "citation": [
+            431
+          ]
+        },
+        {
+          "input_field": "WS-AUTH-KEY",
+          "output_field": "PA-AUTHORIZATION-KEY",
+          "transformation_description": "Direct MOVE to qualify IMS GNP call on PAUT9CTS",
+          "citation": [
+            431
+          ]
+        },
+        {
+          "input_field": "WS-FRAUD-AUTH-RECORD",
+          "output_field": "PENDING-AUTH-DETAILS",
+          "transformation_description": "Direct MOVE before IMS REPL update",
+          "citation": [
+            520
+          ]
+        },
+        {
+          "input_field": "DIBSTAT",
+          "output_field": "IMS-RETURN-CODE",
+          "transformation_description": "Direct MOVE after each IMS DLI call for status evaluation",
+          "citation": [
+            431,
+            493,
+            520,
+            574
+          ]
+        }
+      ]
     },
-    "copybooks_used": [
-      {
-        "copybook_name": "PAUTSUM0",
-        "purpose": "Defines the structure of the PENDING-AUTH-SUMMARY IMS segment.",
-        "location": "WORKING_STORAGE",
-        "citation": 10
-      },
-      {
-        "copybook_name": "PAUTDTL1",
-        "purpose": "Defines the structure of the PENDING-AUTH-DETAILS IMS segment.",
-        "location": "WORKING_STORAGE",
-        "citation": 36
-      }
-    ],
+    "copybooks_used": [],
     "paragraphs": [
       {
         "paragraph_name": "READ-AUTH-RECORD",
         "summary": null,
-        "purpose": "This paragraph retrieves pending authorization records from the IMS database. It first calls SCHEDULE-PSB to schedule the PSB required for accessing the IMS database. It then moves the account ID (WS-ACCT-ID) and authorization key (WS-AUTH-KEY) to the corresponding fields in the PAUTSUM0 segment. A DLI GU (Get Unique) call is issued to retrieve the PENDING-AUTH-SUMMARY segment based on the account ID. If the segment is found, a DLI GNP (Get Next within Parent) call is issued to retrieve the PENDING-AUTH-DETAILS segment based on the authorization key. Error handling is performed by checking the DIBSTAT return code after each DLI call. If an error occurs, an error message is constructed and displayed using SEND-AUTHVIEW-SCREEN. The paragraph sets AUTHS-NOT-EOF or AUTHS-EOF flags based on the DIBSTAT value.",
+        "purpose": "This paragraph serves as the primary entry point for reading the initial authorization summary and details for a specific account. It first performs SCHEDULE-PSB to ensure the IMS PSB is active. It then moves WS-ACCT-ID to PA-ACCT-ID and WS-AUTH-KEY to PA-AUTHORIZATION-KEY for qualification criteria. An EXEC DLI GU call retrieves the PAUTSUM0 segment into PENDING-AUTH-SUMMARY where ACCNTID matches PA-ACCT-ID. The DIBSTAT is moved to IMS-RETURN-CODE and evaluated: STATUS-OK sets AUTHS-NOT-EOF true; SEGMENT-NOT-FOUND or END-OF-DB sets AUTHS-EOF true; other errors set WS-ERR-FLG 'Y', build error message in WS-MESSAGE, and perform SEND-AUTHVIEW-SCREEN. If AUTHS-NOT-EOF, a GNP call retrieves PAUTDTL1 into PENDING-AUTH-DETAILS where PAUT9CTS matches PA-AUTHORIZATION-KEY, with similar evaluation and error handling including screen send on failure. No outputs are written to files, but data is loaded into working storage for further processing. Error handling covers IMS return codes by displaying user messages without abending. It calls SCHEDULE-PSB for PSB setup and SEND-AUTHVIEW-SCREEN for errors.",
         "called_by": [],
         "calls": [
           "SCHEDULE-PSB",
           "SEND-AUTHVIEW-SCREEN"
         ],
         "citation": [
-          1,
-          61
+          431,
+          491
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -221,14 +230,14 @@
       {
         "paragraph_name": "READ-NEXT-AUTH-RECORD",
         "summary": null,
-        "purpose": "This paragraph retrieves the next pending authorization detail record from the IMS database. It issues a DLI GNP (Get Next within Parent) call to retrieve the next PENDING-AUTH-DETAILS segment. The DIBSTAT return code is checked to determine the status of the call. If the call is successful, the AUTHS-NOT-EOF flag is set to TRUE. If an error occurs, an error message is constructed and displayed using SEND-AUTHVIEW-SCREEN, and the WS-ERR-FLG is set to 'Y'. The paragraph sets AUTHS-NOT-EOF or AUTHS-EOF flags based on the DIBSTAT value. This paragraph is designed to be called repeatedly to iterate through all detail records associated with a given summary record.",
+        "purpose": "This paragraph reads the next sequential authorization detail record using GNP without qualification, supporting pagination or iteration through details for an account. It performs an EXEC DLI GNP on PAUTDTL1 into PENDING-AUTH-DETAILS using the PAUT-PCB-NUM. DIBSTAT is moved to IMS-RETURN-CODE and evaluated: STATUS-OK sets AUTHS-NOT-EOF true; SEGMENT-NOT-FOUND or END-OF-DB sets AUTHS-EOF true; other statuses set WS-ERR-FLG 'Y', concatenate error message with code into WS-MESSAGE, and perform SEND-AUTHVIEW-SCREEN. It consumes the current PCB position from prior reads as implicit input. Outputs updated flags AUTHS-NOT-EOF or AUTHS-EOF and loads next PENDING-AUTH-DETAILS. No business decisions beyond status checks; errors are communicated via screen without termination. It calls SEND-AUTHVIEW-SCREEN solely for error notification.",
         "called_by": [],
         "calls": [
           "SEND-AUTHVIEW-SCREEN"
         ],
         "citation": [
-          63,
-          88
+          493,
+          518
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -239,7 +248,7 @@
       {
         "paragraph_name": "UPDATE-AUTH-DETAILS",
         "summary": null,
-        "purpose": "This paragraph updates the pending authorization details in the IMS database. It moves the fraud authorization record (WS-FRAUD-AUTH-RECORD) to the PENDING-AUTH-DETAILS segment. A DLI REPL (Replace) call is issued to update the segment in the database. The DIBSTAT return code is checked to determine the status of the update. If the update is successful, TAKE-SYNCPOINT is performed to commit the changes to the database, and a success message is moved to WS-MESSAGE. If the update fails, ROLL-BACK is performed to undo any changes, an error message is constructed and displayed using SEND-AUTHVIEW-SCREEN, and the WS-ERR-FLG is set to 'Y'. The paragraph also displays the PA-FRAUD-RPT-DATE value to the console.",
+        "purpose": "This paragraph handles the update of fraud status on a pending authorization detail record. It moves the entire WS-FRAUD-AUTH-RECORD to PENDING-AUTH-DETAILS and displays PA-FRAUD-RPT-DATE for logging. An EXEC DLI REPL call updates the PAUTDTL1 segment from PENDING-AUTH-DETAILS using PAUT-PCB-NUM. DIBSTAT moves to IMS-RETURN-CODE and is evaluated: STATUS-OK triggers TAKE-SYNCPOINT commit, sets WS-MESSAGE to 'AUTH FRAUD REMOVED...' if PA-FRAUD-REMOVED or 'AUTH MARKED FRAUD...' otherwise. Other statuses perform ROLL-BACK, set WS-ERR-FLG 'Y', build error message with code, and SEND-AUTHVIEW-SCREEN. Inputs are WS-FRAUD-AUTH-RECORD (likely from screen) and current PCB position. Outputs are the updated IMS segment and status message. Business logic decides commit message based on fraud removal flag. Errors lead to rollback and user notification. Calls TAKE-SYNCPOINT or ROLL-BACK based on update success, and SEND-AUTHVIEW-SCREEN on error.",
         "called_by": [],
         "calls": [
           "TAKE-SYNCPOINT",
@@ -247,8 +256,8 @@
           "SEND-AUTHVIEW-SCREEN"
         ],
         "citation": [
-          90,
-          122
+          520,
+          556
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -259,14 +268,12 @@
       {
         "paragraph_name": "TAKE-SYNCPOINT",
         "summary": null,
-        "purpose": "This paragraph issues a CICS SYNCPOINT command to commit any changes made to recoverable resources, such as the IMS database. This ensures that all updates are made permanent and consistent. It does not take any inputs or produce any outputs other than the implicit effect of committing changes. It is called after a successful update of the authorization details. No error handling is explicitly performed within this paragraph; any errors during the SYNCPOINT command would likely be handled by the CICS region itself.",
-        "called_by": [
-          "UPDATE-AUTH-DETAILS"
-        ],
+        "purpose": "This is a utility paragraph that commits the current CICS/IMS unit of work. It performs EXEC CICS SYNCPOINT to commit all changes made in the transaction. No inputs are consumed; it relies on the current transaction state. The only output is the committed database changes. No conditions or decisions are made; it always executes the syncpoint. No error handling within the paragraph itself. No calls to other paragraphs. It is invoked only on successful IMS REPL in UPDATE-AUTH-DETAILS to persist fraud updates.",
+        "called_by": [],
         "calls": [],
         "citation": [
-          124,
-          127
+          557,
+          564
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -277,14 +284,12 @@
       {
         "paragraph_name": "ROLL-BACK",
         "summary": null,
-        "purpose": "This paragraph issues a CICS SYNCPOINT ROLLBACK command to undo any changes made to recoverable resources. This is used to ensure data consistency in case of errors during the update process. It does not take any inputs or produce any outputs other than the implicit effect of rolling back changes. It is called when an error occurs during the update of authorization details. No explicit error handling is performed within this paragraph; any errors during the ROLLBACK command would likely be handled by the CICS region itself.",
-        "called_by": [
-          "UPDATE-AUTH-DETAILS"
-        ],
+        "purpose": "This utility paragraph rolls back the current CICS/IMS unit of work on error. It performs EXEC CICS SYNCPOINT ROLLBACK to undo all changes. No inputs consumed beyond transaction state. No outputs produced except the rollback effect. No logic, conditions, or error handling; unconditional rollback. Called exclusively from UPDATE-AUTH-DETAILS on IMS REPL failure to discard invalid updates.",
+        "called_by": [],
         "calls": [],
         "citation": [
-          129,
-          133
+          565,
+          573
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -295,16 +300,14 @@
       {
         "paragraph_name": "SCHEDULE-PSB",
         "summary": null,
-        "purpose": "This paragraph schedules the Program Specification Block (PSB) required for accessing the IMS database. It issues a DLI SCHD command with the PSB name. If the PSB has been scheduled more than once (PSB-SCHEDULED-MORE-THAN-ONCE), it first terminates the PSB using DLI TERM and then schedules it again. This ensures that the PSB is properly initialized before accessing the database. The DIBSTAT return code is checked to determine the status of the scheduling. If the scheduling is successful, the IMS-PSB-SCHD flag is set to TRUE. If an error occurs, an error message is constructed and displayed using SEND-AUTHVIEW-SCREEN, and the WS-ERR-FLG is set to 'Y'. The PSB name is obtained from the PSB-NAME variable.",
-        "called_by": [
-          "READ-AUTH-RECORD"
-        ],
+        "purpose": "This paragraph schedules the IMS PSB required for authorization database access. It executes DLI SCHD for PSB((PSB-NAME)) with NODHABEND. Moves DIBSTAT to IMS-RETURN-CODE. If PSB-SCHEDULED-MORE-THAN-ONCE, performs DLI TERM, then reschedules SCHD. Evaluates final STATUS-OK to set IMS-PSB-SCHD true; else sets WS-ERR-FLG 'Y', builds error message in WS-MESSAGE, and performs SEND-AUTHVIEW-SCREEN. Inputs are implicit PSB-NAME. Outputs PSB scheduling status flags and error screen if failed. Business logic handles duplicate scheduling by terminating and retrying. Errors are non-abending, notifying user via screen. Called at start of READ-AUTH-RECORD to prepare IMS access.",
+        "called_by": [],
         "calls": [
           "SEND-AUTHVIEW-SCREEN"
         ],
         "citation": [
-          135,
-          164
+          574,
+          603
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -315,37 +318,34 @@
     ],
     "error_handling": [
       {
-        "condition": "DIBSTAT is not STATUS-OK, SEGMENT-NOT-FOUND, or END-OF-DB during READ-AUTH-RECORD",
-        "action": "Set WS-ERR-FLG to 'Y', construct an error message, and display it using SEND-AUTHVIEW-SCREEN.",
+        "condition": "IMS DLI GU/GNP/REPL DIBSTAT not STATUS-OK, SEGMENT-NOT-FOUND, or END-OF-DB",
+        "action": "Set WS-ERR-FLG 'Y', STRING error message with IMS-RETURN-CODE into WS-MESSAGE, PERFORM SEND-AUTHVIEW-SCREEN",
         "citation": [
-          23,
-          31,
-          49,
-          57
+          431,
+          493,
+          520,
+          574
         ]
       },
       {
-        "condition": "DIBSTAT is not STATUS-OK, SEGMENT-NOT-FOUND, or END-OF-DB during READ-NEXT-AUTH-RECORD",
-        "action": "Set WS-ERR-FLG to 'Y', construct an error message, and display it using SEND-AUTHVIEW-SCREEN.",
+        "condition": "IMS REPL DIBSTAT not STATUS-OK",
+        "action": "PERFORM ROLL-BACK, set WS-ERR-FLG 'Y', STRING error message, SEND-AUTHVIEW-SCREEN",
         "citation": [
-          78,
-          86
+          520
         ]
       },
       {
-        "condition": "DIBSTAT is not STATUS-OK during UPDATE-AUTH-DETAILS",
-        "action": "Perform ROLL-BACK, set WS-ERR-FLG to 'Y', construct an error message, and display it using SEND-AUTHVIEW-SCREEN.",
+        "condition": "PSB-SCHEDULED-MORE-THAN-ONCE after SCHD",
+        "action": "EXEC DLI TERM then reschedule SCHD",
         "citation": [
-          110,
-          120
+          574
         ]
       },
       {
-        "condition": "DIBSTAT is not STATUS-OK during SCHEDULE-PSB",
-        "action": "Set WS-ERR-FLG to 'Y', construct an error message, and display it using SEND-AUTHVIEW-SCREEN.",
+        "condition": "PSB SCHD STATUS not OK",
+        "action": "Set WS-ERR-FLG 'Y', STRING error message, SEND-AUTHVIEW-SCREEN",
         "citation": [
-          154,
-          162
+          574
         ]
       }
     ],
@@ -354,31 +354,42 @@
       {
         "command": "SYNCPOINT",
         "resource": null,
-        "purpose": "Commits changes to recoverable resources.",
-        "citation": 125
+        "purpose": "Commit IMS updates after successful REPL",
+        "citation": 557
       },
       {
         "command": "SYNCPOINT ROLLBACK",
         "resource": null,
-        "purpose": "Rolls back changes to recoverable resources.",
-        "citation": 131
+        "purpose": "Rollback IMS updates on REPL failure",
+        "citation": 565
+      },
+      {
+        "command": "SEND MAP",
+        "resource": "AUTHVIEW",
+        "purpose": "Display authorization views and error/status messages to user",
+        "citation": 431
       }
     ],
     "open_questions": [
       {
-        "question": "What is the purpose and structure of the SEND-AUTHVIEW-SCREEN program?",
-        "context": "The program is called frequently to display data and error messages, but its internal workings are not visible in this code.",
-        "suggestion": "Examine the source code or documentation for SEND-AUTHVIEW-SCREEN."
+        "question": "Source of input variables like WS-ACCT-ID, WS-AUTH-KEY, WS-FRAUD-AUTH-RECORD",
+        "context": "Not shown in provided AST paragraphs; likely from CICS RECEIVE MAP or COMMAREA in earlier code",
+        "suggestion": "Analyze full source or prior paragraphs for screen receive or linkage"
       },
       {
-        "question": "What is the structure of WS-FRAUD-AUTH-RECORD?",
-        "context": "The structure of WS-FRAUD-AUTH-RECORD is not defined in the provided code snippet.",
-        "suggestion": "Examine the copybook or data definition for WS-FRAUD-AUTH-RECORD."
+        "question": "Value of PSB-NAME",
+        "context": "Provide full WORKING-STORAGE or earlier sections",
+        "suggestion": "Check for 01-level WS-PSB-NAME or constants"
       },
       {
-        "question": "What is the definition of STATUS-OK, SEGMENT-NOT-FOUND, END-OF-DB, PSB-SCHEDULED-MORE-THAN-ONCE?",
-        "context": "These are used in EVALUATE statements, but their values are not defined in the provided code.",
-        "suggestion": "Examine the copybooks or data definitions for these variables."
+        "question": "Full program flow and calling context (e.g., transaction ID, main paragraph)",
+        "context": "Only processing paragraphs provided; no MAIN or initialization visible",
+        "suggestion": "Include AST for full program to identify entry points and orchestration"
+      },
+      {
+        "question": "Copybook definitions for PENDING-AUTH-SUMMARY, PENDING-AUTH-DETAILS, etc.",
+        "context": "Used as host variables but no COPY statements in AST",
+        "suggestion": "Scan FILE/WORKING-STORAGE sections for COPYBOOK usage"
       }
     ],
     "resolved_questions": [],
@@ -386,5 +397,5 @@
     "call_semantics": [],
     "flow_diagram": null
   },
-  "saved_at": "2026-02-24T10:36:32.140416"
+  "saved_at": "2026-02-25T08:26:14.023536"
 }

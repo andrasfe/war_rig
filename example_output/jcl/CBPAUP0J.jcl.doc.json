@@ -1,18 +1,19 @@
 {
   "header": {
     "program_id": "CBPAUP0J",
-    "file_name": "jcl/CBPAUP0J.jcl",
+    "file_name": "CBPAUP0J.jcl",
     "file_type": "JCL",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-24T17:40:00.031945",
+    "analyzed_at": "2026-02-25T15:29:20.636659",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This JCL executes an IMS program (CBPAUP0C) to delete expired authorizations. It defines the execution environment and necessary datasets for the IMS program to run as a BMP (Batch Message Processing) region.",
-    "business_context": null,
+    "summary": "This JCL defines a batch job to execute the IMS batch message processing (BMP) driver DFSRRC00, invoking application program CBPAUP0C with PSB PSBPAUTB to delete expired authorizations. It sets up required IMS libraries, control parameters via PARM and SYSIN, and directs outputs to SYSOUT datasets. The job is part of a card demo system as indicated by the job accounting information.",
+    "business_context": "Automates cleanup of expired authorizations in an IMS database, likely for a payment or card authorization system.",
     "program_type": "BATCH",
     "citations": [
+      1,
       21,
       24,
       25
@@ -20,104 +21,50 @@
   },
   "inputs": [
     {
-      "name": "IMS.SDFSRESL",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS RESLIB library containing IMS modules.",
-      "copybook": null,
-      "citation": [
-        26,
-        28,
-        31
-      ]
-    },
-    {
-      "name": "XXXXXXXX.PROD.LOADLIB",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "Application load library containing the CBPAUP0C program.",
-      "copybook": null,
-      "citation": [
-        27
-      ]
-    },
-    {
-      "name": "IMS.PROCLIB",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS procedure library.",
-      "copybook": null,
-      "citation": [
-        29
-      ]
-    },
-    {
-      "name": "IMS.PSBLIB",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS PSB library containing PSBPAUTB.",
-      "copybook": null,
-      "citation": [
-        33
-      ]
-    },
-    {
-      "name": "IMS.DBDLIB",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS DBD library.",
-      "copybook": null,
-      "citation": [
-        34
-      ]
-    },
-    {
       "name": "SYSIN",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "Input control statements for the IMS program. Contains parameters '00,00001,00001,Y'.",
+      "io_type": "PARAMETER",
+      "description": "Inline control card '00,00001,00001,Y' specifying PCB mask 00, GU transaction 00001, IO area 00001, and option Y for the IMS BMP execution",
       "copybook": null,
       "citation": [
         36,
         37
       ]
+    },
+    {
+      "name": "STEPLIB",
+      "io_type": "OTHER",
+      "description": "Load libraries containing IMS modules and application program CBPAUP0C",
+      "copybook": null,
+      "citation": [
+        26,
+        27
+      ]
+    },
+    {
+      "name": "IMS",
+      "io_type": "OTHER",
+      "description": "PSBLIB and DBDLIB datasets providing PSB and database definitions for PSBPAUTB",
+      "copybook": null,
+      "citation": [
+        33,
+        34
+      ]
+    },
+    {
+      "name": "PSBPAUTB",
+      "io_type": "IMS_SEGMENT",
+      "description": "IMS database segments accessed via the specified PSB for authorization data processing",
+      "copybook": null,
+      "citation": [
+        25
+      ]
     }
   ],
   "outputs": [
     {
-      "name": "SYSOUX",
-      "io_type": "REPORT",
-      "description": "System output.",
-      "copybook": null,
-      "citation": [
-        39
-      ]
-    },
-    {
-      "name": "SYSOUT",
-      "io_type": "REPORT",
-      "description": "System output.",
-      "copybook": null,
-      "citation": [
-        40
-      ]
-    },
-    {
-      "name": "SYSABOUT",
-      "io_type": "REPORT",
-      "description": "System output for ABEND information.",
-      "copybook": null,
-      "citation": [
-        41
-      ]
-    },
-    {
-      "name": "ABENDAID",
-      "io_type": "REPORT",
-      "description": "System output for ABEND AID information.",
-      "copybook": null,
-      "citation": [
-        42
-      ]
-    },
-    {
       "name": "SYSPRINT",
       "io_type": "REPORT",
-      "description": "System print output.",
+      "description": "Standard program print output including IMS processing logs",
       "copybook": null,
       "citation": [
         45
@@ -126,37 +73,20 @@
     {
       "name": "SYSUDUMP",
       "io_type": "REPORT",
-      "description": "System user dump output.",
+      "description": "System dump output generated on program abends",
       "copybook": null,
       "citation": [
         46
       ]
     },
     {
-      "name": "IMSERR",
+      "name": "SYSOUT",
       "io_type": "REPORT",
-      "description": "IMS error output.",
+      "description": "Miscellaneous IMS and step outputs",
       "copybook": null,
       "citation": [
-        47
-      ]
-    },
-    {
-      "name": "IEFRDER",
-      "io_type": "OTHER",
-      "description": "Dummy dataset for logging.",
-      "copybook": null,
-      "citation": [
-        43
-      ]
-    },
-    {
-      "name": "IMSLOGR",
-      "io_type": "OTHER",
-      "description": "Dummy dataset for IMS logging.",
-      "copybook": null,
-      "citation": [
-        44
+        39,
+        40
       ]
     }
   ],
@@ -164,13 +94,11 @@
     {
       "program_name": "DFSRRC00",
       "call_type": "STATIC_CALL",
-      "purpose": "Executes the IMS BMP region to run the CBPAUP0C program.",
+      "purpose": "Drives the IMS BMP region to execute application program CBPAUP0C for deleting expired authorizations",
       "parameters": [
-        "BMP",
-        "CBPAUP0C",
-        "PSBPAUTB"
+        "BMP,CBPAUP0C,PSBPAUTB"
       ],
-      "citation": 24
+      "citation": 25
     }
   ],
   "calling_context": {
@@ -178,10 +106,56 @@
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [],
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Executes IMS BMP job to delete expired authorizations only under specific control parameters",
+      "logic_summary": "Uses PARM='BMP,CBPAUP0C,PSBPAUTB' to invoke CBPAUP0C via DFSRRC00 with SYSIN '00,00001,00001,Y' defining PCB, transaction, IO area, and processing option",
+      "conditions": [
+        "PARM specifies BMP mode and PSBPAUTB",
+        "SYSIN PCB=00, GU=00001, IO=00001, Option=Y"
+      ],
+      "citation": [
+        25,
+        37
+      ]
+    }
+  ],
   "data_flow": {
-    "reads_from": [],
-    "writes_to": [],
+    "reads_from": [
+      {
+        "source": "SYSIN",
+        "fields_used": [
+          "00",
+          "00001",
+          "00001",
+          "Y"
+        ],
+        "citation": [
+          37
+        ]
+      },
+      {
+        "source": "PSBPAUTB",
+        "fields_used": [
+          "Authorization segments"
+        ],
+        "citation": [
+          25
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "SYSPRINT",
+        "fields_written": [
+          "Processing logs and results"
+        ],
+        "citation": [
+          45
+        ]
+      }
+    ],
     "transforms": []
   },
   "copybooks_used": [],
@@ -189,12 +163,14 @@
     {
       "paragraph_name": "STEP01",
       "summary": null,
-      "purpose": "This step executes the IMS program DFSRRC00 as a BMP (Batch Message Processing) region. It sets up the execution environment for the IMS program CBPAUP0C, which is responsible for deleting expired authorizations. The PARM parameter specifies 'BMP' to indicate a batch region, 'CBPAUP0C' as the program to execute, and 'PSBPAUTB' as the PSB (Program Specification Block) to use. The STEPLIB DD statement defines the libraries where the IMS modules and the CBPAUP0C program are located. DFSRESLB points to the IMS RESLIB. The IMS DD statement defines the PSBLIB and DBDLIB. SYSIN provides input control statements to the CBPAUP0C program. The various SYSOUT DD statements define the output datasets for system messages, ABEND information, and program output. IEFRDER and IMSLOGR are dummy datasets. This step is the core execution unit of the JCL, orchestrating the IMS environment and initiating the authorization deletion process.",
+      "purpose": "This is the primary and only step in the JCL job, responsible for orchestrating the execution of the IMS batch program to delete expired authorizations. It consumes input datasets including STEPLIB for load modules (lines 26-27), PROCLIB (29), DFSRESLB (28), DFSSEL (31), and IMS PSBLIB/DBDLIB (33-34), as well as inline SYSIN control data '00,00001,00001,Y' (37) which defines the PCB mask, GU transaction ID, IO area size, and processing option for the BMP region. The step produces outputs directed to multiple SYSOUT datasets such as SYSOUX (39), SYSOUT (40), SYSPRINT (45), SYSUDUMP (46), and others for logs, prints, and dumps. There is no conditional business logic within the JCL itself; instead, it configures the environment via PARM='BMP,CBPAUP0C,PSBPAUTB' (25) to statically call DFSRRC00, which in turn runs the application logic in CBPAUP0C against IMS databases defined by PSBPAUTB. Error handling is provided implicitly through dump datasets like ABENDAID (42), SYSUDUMP (46), and IMSERR (47), which capture abend information without explicit conditional checks in the JCL. The step does not call any subordinate steps or additional programs beyond the EXEC PGM=DFSRRC00 (24). Overall, it serves as the entry point for the batch deletion process as described in the job header comment (21).",
       "called_by": [],
-      "calls": [],
+      "calls": [
+        "DFSRRC00"
+      ],
       "citation": [
         24,
-        25
+        47
       ],
       "outgoing_calls": [
         {
@@ -244,16 +220,20 @@
       "metadata": null
     }
   ],
-  "error_handling": [],
-  "sql_operations": [],
-  "cics_operations": [],
-  "open_questions": [
+  "error_handling": [
     {
-      "question": "The exact logic within CBPAUP0C for determining expired authorizations is unknown.",
-      "context": "The JCL only sets up the execution environment; the actual business rules reside within the CBPAUP0C program.",
-      "suggestion": "Analyze the CBPAUP0C source code to understand the authorization expiration logic."
+      "condition": "Program or IMS abend",
+      "action": "Captures dumps and error output to ABENDAID, SYSUDUMP, IMSERR, and other SYSOUT datasets",
+      "citation": [
+        42,
+        46,
+        47
+      ]
     }
   ],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [],
   "resolved_questions": [],
   "dead_code": [],
   "call_semantics": [],

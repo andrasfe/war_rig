@@ -1,4 +1,25 @@
 ```cobol
+       MAIN-PARA.                                                       01220026
+      *     DISPLAY 'CHECK PROG PCB:' PAUTBPCB.                         01222039
+            ENTRY 'DLITCBL'                 USING PAUTBPCB.             01225033
+                                                                        01226029
+            DISPLAY 'STARTING PAUDBLOD'.                                01227053
+      *                                                                 01230026
+           PERFORM 1000-INITIALIZE                THRU 1000-EXIT        01240026
+      *                                                                 01250026
+           PERFORM 2000-READ-ROOT-SEG-FILE        THRU 2000-EXIT        01260053
+           UNTIL   END-ROOT-SEG-FILE  = 'Y'                             01280053
+                                                                        01281053
+           PERFORM 3000-READ-CHILD-SEG-FILE       THRU 3000-EXIT        01290058
+           UNTIL   END-CHILD-SEG-FILE = 'Y'                             01300053
+                                                                        01531150
+           PERFORM 4000-FILE-CLOSE THRU 4000-EXIT                       01532030
+      *                                                                 01540026
+      *                                                                 01560026
+      *                                                                 01650026
+           GOBACK.                                                      01660026
+      *                                                                 01670026
+      *----------------------------------------------------------------*01680026
        1000-INITIALIZE.                                                 01690026
       *----------------------------------------------------------------*01700026
       *                                                                 01710026
@@ -9,24 +30,4 @@
            DISPLAY 'TODAYS DATE            :' CURRENT-DATE              01790043
            DISPLAY ' '                                                  01800026
                                                                         01810026
-           .                                                            01960026
-           OPEN INPUT  INFILE1                                          01961054
-           IF WS-INFIL1-STATUS =  SPACES OR '00'                        01962053
-              CONTINUE                                                  01963028
-           ELSE                                                         01964028
-              DISPLAY 'ERROR IN OPENING INFILE1:' WS-INFIL1-STATUS      01965053
-              PERFORM 9999-ABEND                                        01966028
-           END-IF                                                       01967028
-      *                                                                 01968028
-           OPEN INPUT INFILE2                                           01969054
-           IF WS-INFIL2-STATUS =  SPACES OR '00'                        01969153
-              CONTINUE                                                  01969228
-           ELSE                                                         01969328
-              DISPLAY 'ERROR IN OPENING INFILE2:' WS-INFIL2-STATUS      01969453
-              PERFORM 9999-ABEND                                        01969528
-           END-IF.                                                      01969634
-      *                                                                 01969728
-      *                                                                 01970026
-       1000-EXIT.                                                       01980026
-            EXIT.                                                       01990026
 ```

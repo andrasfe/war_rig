@@ -2,17 +2,15 @@
 
 **File**: `ims/PSBPAUTL.psb`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-02-24 17:38:51.764370
+**Analyzed**: 2026-02-25 15:30:33.688584
 
 ## Purpose
 
-This PSB (Program Specification Block) defines the program's interface to the IMS database DBPAUTP0. It specifies the segments (PAUTSUM0, PAUTDTL1) that the program is allowed to access and the type of access (read-only).
-
-## Business Rules
-
-- **BR001**: The program has read-only access to the DBPAUTP0 database.
+This file is an IMS Program Specification Block (PSB) generation control statement file that defines PSBPAUTL for assembler language programs. It specifies a single database PCB named PAUTLPCB for accessing the DBPAUTP0 database with PROCOPT=L (load/unload processing option) and a key length of 14. The PCB defines two sensitive segments: root segment PAUTSUM0 (PARENT=0) and child segment PAUTDTL1 under parent PAUTSUM0.
 
 ## Open Questions
 
-- ? What is the purpose of the PAUTSUM0 and PAUTDTL1 segments?
-  - Context: The PSB defines these segments, but their specific function is not clear from this file alone.
+- ? What is the business purpose of the DBPAUTP0 database and its segments PAUTSUM0/PAUTDTL1?
+  - Context: No descriptive comments or names indicate business function beyond IMS DL/I access definitions.
+- ? Which application programs use this PSB (PSBPAUTL)?
+  - Context: PSB defines access for unnamed application programs; no references in this file.

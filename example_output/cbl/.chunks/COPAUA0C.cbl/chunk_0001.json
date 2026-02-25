@@ -4,151 +4,182 @@
   "template": {
     "header": {
       "program_id": "COPAUA0C",
-      "file_name": "COPAUA0C.cbl",
+      "file_name": "cbl/COPAUA0C.cbl",
       "file_type": "COBOL",
       "analyzed_by": "WAR_RIG",
-      "analyzed_at": "2026-02-24T17:36:39.977812",
+      "analyzed_at": "2026-02-25T15:25:06.537029",
       "iteration_count": 1,
       "final_status": null
     },
     "purpose": {
-      "summary": "This COBOL program processes authorization requests by extracting data from an MQ message, reading related records from CICS files, making an authorization decision, sending a response, and writing authorization data to a database. It retrieves cardholder information from various sources, including a card cross-reference file, account master file, customer record file, and authorization summary file, to determine whether to approve or decline a transaction.",
-      "business_context": null,
+      "summary": "This CICS online program processes credit card authorization requests received from an MQ queue. It extracts and parses the request message containing transaction details like card number, amount, merchant info, then reads related records from VSAM files (XREF, ACCOUNT) to validate and gather data for an authorization decision. It orchestrates reads, decision making, response sending via MQ, and writing auth summary to a database if card is found.",
+      "business_context": "Credit card authorization processing for transactions from merchants via POS, involving card validation against cross-reference, account, and customer master files.",
       "program_type": "ONLINE_CICS",
       "citations": [
-        4,
-        96,
-        107,
-        109,
-        112
+        351,
+        386,
+        438
       ]
     },
     "inputs": [
       {
-        "name": "W01-GET-BUFFER",
+        "name": "REQUEST-MQ",
         "io_type": "CICS_QUEUE",
-        "description": "MQ message buffer containing the authorization request data.",
+        "description": "Incoming authorization request messages in comma-delimited string format containing auth date, time, card num, amount, merchant details, etc.",
         "copybook": null,
         "citation": [
-          4,
-          54
+          386,
+          433
         ]
       },
       {
         "name": "WS-CCXREF-FILE",
         "io_type": "FILE_VSAM",
-        "description": "CICS VSAM file containing card cross-reference records.",
+        "description": "Card cross-reference file used to lookup account ID by card number.",
         "copybook": "CARD-XREF-RECORD",
         "citation": [
-          125
+          472,
+          515
         ]
       },
       {
         "name": "WS-ACCTFILENAME",
         "io_type": "FILE_VSAM",
-        "description": "CICS VSAM file containing account records.",
+        "description": "Account master file containing account details, read using account ID from XREF.",
         "copybook": "ACCOUNT-RECORD",
         "citation": [
-          172
+          520,
+          563
         ]
       }
     ],
-    "outputs": [],
-    "called_programs": [
+    "outputs": [
       {
-        "program_name": "MQGET",
-        "call_type": "STATIC_CALL",
-        "purpose": "Retrieves a message from the MQ queue.",
-        "parameters": [
-          "W01-HCONN-REQUEST",
-          "W01-HOBJ-REQUEST",
-          "MQM-MD-REQUEST",
-          "MQM-GET-MESSAGE-OPTIONS",
-          "W01-BUFFLEN",
-          "W01-GET-BUFFER",
-          "W01-DATALEN",
-          "WS-COMPCODE",
-          "WS-REASON"
-        ],
-        "citation": 49
+        "name": "RESPONSE-MQ",
+        "io_type": "CICS_QUEUE",
+        "description": "Authorization response sent back via MQ (inferred from 7100-SEND-RESPONSE).",
+        "copybook": null,
+        "citation": [
+          438
+        ]
       },
       {
-        "program_name": "9500-LOG-ERROR",
-        "call_type": "STATIC_CALL",
-        "purpose": "Logs error messages.",
-        "parameters": [],
-        "citation": 78
+        "name": "AUTH-SUMMARY-DB",
+        "io_type": "FILE_VSAM",
+        "description": "Updated authorization summary record written to database if card found.",
+        "copybook": null,
+        "citation": [
+          438
+        ]
       }
     ],
+    "called_programs": [],
     "calling_context": {
       "called_by": [],
       "entry_points": [],
       "linkage_section": []
     },
-    "business_rules": [],
+    "business_rules": [
+      {
+        "rule_id": "BR001",
+        "description": "Approve authorization by default unless subsequent checks fail.",
+        "logic_summary": "Sets APPROVE-AUTH to TRUE at start of processing.",
+        "conditions": [
+          "SET APPROVE-AUTH TO TRUE"
+        ],
+        "citation": [
+          438
+        ]
+      },
+      {
+        "rule_id": "BR002",
+        "description": "Only read account, customer, auth summary, and profile if card found in XREF.",
+        "logic_summary": "Conditional PERFORMs after checking CARD-FOUND-XREF.",
+        "conditions": [
+          "IF CARD-FOUND-XREF"
+        ],
+        "citation": [
+          438,
+          472
+        ]
+      }
+    ],
     "data_flow": {
       "reads_from": [
         {
-          "source": "W01-GET-BUFFER",
+          "source": "REQUEST-MQ",
           "fields_used": [
             "PA-RQ-AUTH-DATE",
-            "PA-RQ-AUTH-TIME",
             "PA-RQ-CARD-NUM",
-            "PA-RQ-AUTH-TYPE",
-            "PA-RQ-CARD-EXPIRY-DATE",
-            "PA-RQ-MESSAGE-TYPE",
-            "PA-RQ-MESSAGE-SOURCE",
-            "PA-RQ-PROCESSING-CODE",
-            "WS-TRANSACTION-AMT-AN",
-            "PA-RQ-MERCHANT-CATAGORY-CODE",
-            "PA-RQ-ACQR-COUNTRY-CODE",
-            "PA-RQ-POS-ENTRY-MODE",
-            "PA-RQ-MERCHANT-ID",
-            "PA-RQ-MERCHANT-NAME",
-            "PA-RQ-MERCHANT-CITY",
-            "PA-RQ-MERCHANT-STATE",
-            "PA-RQ-MERCHANT-ZIP",
             "PA-RQ-TRANSACTION-ID"
           ],
           "citation": [
-            4
+            351,
+            386
           ]
         },
         {
           "source": "WS-CCXREF-FILE",
           "fields_used": [
-            "CARD-XREF-RECORD"
+            "XREF-ACCT-ID"
           ],
           "citation": [
-            126
+            472
           ]
         },
         {
           "source": "WS-ACCTFILENAME",
           "fields_used": [
-            "ACCOUNT-RECORD"
+            "ACCOUNT-RECORD fields"
           ],
           "citation": [
-            175
+            520
           ]
         }
       ],
-      "writes_to": [],
+      "writes_to": [
+        {
+          "destination": "PA-RQ-* fields",
+          "fields_written": [
+            "PA-RQ-TRANSACTION-AMT"
+          ],
+          "citation": [
+            351
+          ]
+        },
+        {
+          "destination": "AUTH-SUMMARY-DB",
+          "fields_written": [
+            "Authorization summary"
+          ],
+          "citation": [
+            438
+          ]
+        }
+      ],
       "transforms": [
         {
           "input_field": "WS-TRANSACTION-AMT-AN",
           "output_field": "PA-RQ-TRANSACTION-AMT",
-          "transformation_description": "Converts alphanumeric transaction amount to numeric.",
+          "transformation_description": "Numeric conversion using FUNCTION NUMVAL on alphanumeric amount from UNSTRING.",
           "citation": [
-            26
+            351
           ]
         },
         {
-          "input_field": "PA-RQ-TRANSACTION-AMT",
-          "output_field": "WS-TRANSACTION-AMT",
-          "transformation_description": "Moves transaction amount to working storage.",
+          "input_field": "PA-RQ-CARD-NUM",
+          "output_field": "XREF-CARD-NUM",
+          "transformation_description": "Direct MOVE to key for XREF file read.",
           "citation": [
-            29
+            472
+          ]
+        },
+        {
+          "input_field": "XREF-ACCT-ID",
+          "output_field": "WS-CARD-RID-ACCT-ID",
+          "transformation_description": "MOVE to construct RIDFLD for account file read.",
+          "citation": [
+            520
           ]
         }
       ]
@@ -156,22 +187,22 @@
     "copybooks_used": [
       {
         "copybook_name": "CARD-XREF-RECORD",
-        "purpose": "Defines the structure of the card cross-reference record.",
+        "purpose": "Defines structure for card cross-reference VSAM record including XREF-CARD-NUM and XREF-ACCT-ID.",
         "location": "WORKING_STORAGE",
-        "citation": 126
+        "citation": 472
       },
       {
         "copybook_name": "ACCOUNT-RECORD",
-        "purpose": "Defines the structure of the account record.",
+        "purpose": "Defines structure for account master VSAM record.",
         "location": "WORKING_STORAGE",
-        "citation": 175
+        "citation": 520
       }
     ],
     "paragraphs": [
       {
         "paragraph_name": "2100-EXTRACT-REQUEST-MSG",
         "summary": null,
-        "purpose": "This paragraph extracts data from the MQ message buffer (W01-GET-BUFFER) into individual fields. It uses the UNSTRING statement to parse the comma-delimited message. The extracted fields include authorization date, time, card number, authorization type, card expiry date, message type, message source, processing code, transaction amount (alphanumeric), merchant category code, acquirer country code, POS entry mode, merchant ID, merchant name, merchant city, merchant state, merchant zip, and transaction ID. It then converts the alphanumeric transaction amount (WS-TRANSACTION-AMT-AN) to a numeric value (PA-RQ-TRANSACTION-AMT) using the NUMVAL function and moves it to WS-TRANSACTION-AMT. No error handling is explicitly performed within this paragraph. It does not call any other paragraphs or programs.",
+        "purpose": "This paragraph parses the incoming MQ request buffer into individual authorization request fields using UNSTRING delimited by commas. It consumes the raw buffer data from W01-GET-BUFFER after MQGET in prior paragraph, extracting fields like PA-RQ-AUTH-DATE, PA-RQ-CARD-NUM, merchant details, and transaction amount as alphanumeric. It produces populated PA-RQ-* working storage fields, including numeric conversion of transaction amount via FUNCTION NUMVAL into PA-RQ-TRANSACTION-AMT and WS-TRANSACTION-AMT. No business decisions or error handling here; it's pure data extraction. No calls to other paragraphs. Control flows to 2100-EXIT.",
         "called_by": [],
         "calls": [],
         "citation": [
@@ -187,7 +218,7 @@
       {
         "paragraph_name": "2100-EXIT",
         "summary": null,
-        "purpose": "This paragraph simply exits the 2100-EXTRACT-REQUEST-MSG paragraph. It serves as a standard exit point and does not perform any specific logic or data manipulation. It does not consume any inputs or produce any outputs. It does not make any decisions or handle any errors. It does not call any other paragraphs or programs.",
+        "purpose": "This is an exit paragraph that simply executes EXIT to return control to the calling paragraph. It consumes no inputs and produces no outputs. No business logic, decisions, error handling, or calls. Serves as a thru-exit point for 2100-EXTRACT-REQUEST-MSG.",
         "called_by": [],
         "calls": [],
         "citation": [
@@ -203,10 +234,9 @@
       {
         "paragraph_name": "3100-READ-REQUEST-MQ",
         "summary": null,
-        "purpose": "This paragraph reads a request message from the MQ queue. It sets the MQGMO options for no syncpoint, waiting, conversion, and failing if quiescing. It moves the wait interval to MQGMO-WAITINTERVAL. It initializes the message ID and correlation ID in the MQMD. It then calls the MQGET API to retrieve the message from the queue, using the connection and object handles, message descriptor, get message options, buffer length, and buffer. If the MQGET call is successful (WS-COMPCODE = MQCC-OK), it saves the correlation ID and reply-to queue name. If the call fails, it checks if the reason code is MQRC-NO-MSG-AVAILABLE and sets the NO-MORE-MSG-AVAILABLE flag. Otherwise, it logs an error message using 9500-LOG-ERROR, including the component code, reason code, and a descriptive message. The paragraph consumes the W01-HCONN-REQUEST, W01-HOBJ-REQUEST, MQM-MD-REQUEST, MQM-GET-MESSAGE-OPTIONS, W01-BUFFLEN and produces the W01-GET-BUFFER, W01-DATALEN, WS-COMPCODE, WS-REASON.",
+        "purpose": "This paragraph reads the next authorization request message from the MQ queue using CALL 'MQGET' with options for no-syncpoint, wait interval, convert, and fail-if-quiescing. It consumes MQ connection/handle (W01-HCONN-REQUEST, W01-HOBJ-REQUEST) and sets message descriptor fields like MQMD-FORMAT to STRING. On success (MQCC-OK), it saves correlid and reply-to queue name, populates W01-DATALEN and buffer for subsequent parsing. On failure, if no message available (MQRC-NO-MSG-AVAILABLE), sets NO-MORE-MSG-AVAILABLE flag; otherwise, logs critical CICS error via 9500-LOG-ERROR with codes and 'FAILED TO READ REQUEST MQ' message using PA-CARD-NUM as key. Error handling distinguishes non-critical EOF from critical MQ errors. Calls 9500-LOG-ERROR on MQ failures.",
         "called_by": [],
         "calls": [
-          "MQGET",
           "9500-LOG-ERROR"
         ],
         "citation": [
@@ -222,7 +252,7 @@
       {
         "paragraph_name": "3100-EXIT",
         "summary": null,
-        "purpose": "This paragraph simply exits the 3100-READ-REQUEST-MQ paragraph. It serves as a standard exit point and does not perform any specific logic or data manipulation. It does not consume any inputs or produce any outputs. It does not make any decisions or handle any errors. It does not call any other paragraphs or programs.",
+        "purpose": "This is an exit paragraph that simply executes EXIT to return control to the calling paragraph. It consumes no inputs and produces no outputs. No business logic, decisions, error handling, or calls. Serves as a thru-exit point for 3100-READ-REQUEST-MQ.",
         "called_by": [],
         "calls": [],
         "citation": [
@@ -238,7 +268,7 @@
       {
         "paragraph_name": "5000-PROCESS-AUTH",
         "summary": null,
-        "purpose": "This paragraph is the main processing logic for authorization requests. It starts by setting APPROVE-AUTH to TRUE. It then performs 1200-SCHEDULE-PSB. It sets CARD-FOUND-XREF and FOUND-ACCT-IN-MSTR to TRUE. It then performs 5100-READ-XREF-RECORD to read the card cross-reference record. If the card is found in the cross-reference file (CARD-FOUND-XREF), it performs 5200-READ-ACCT-RECORD, 5300-READ-CUST-RECORD, 5500-READ-AUTH-SUMMRY, and 5600-READ-PROFILE-DATA. After reading the records, it performs 6000-MAKE-DECISION to determine whether to approve or decline the authorization. It then performs 7100-SEND-RESPONSE to send the response. Finally, if the card was found in the cross-reference file, it performs 8000-WRITE-AUTH-TO-DB to write the authorization data to the database. This paragraph orchestrates the entire authorization process, reading data from various sources, making a decision, sending a response, and writing data to the database. The inputs are PA-RQ-CARD-NUM, and the outputs are the authorization decision and the data written to the database. It calls several other paragraphs to perform specific tasks.",
+        "purpose": "This is the main authorization processing orchestration paragraph that handles a single request after extraction. It consumes parsed PA-RQ-* fields and flags like CARD-FOUND-XREF, setting initial APPROVE-AUTH to TRUE. It first performs 1200-SCHEDULE-PSB for PSB setup, then assumes/sets card and account found flags, and conditionally reads XREF, ACCT, CUST, AUTH-SUMMARY, PROFILE based on CARD-FOUND-XREF. After reads, it performs decision making (6000-MAKE-DECISION), sends response (7100-SEND-RESPONSE), and if card found, writes auth to DB (8000-WRITE-AUTH-TO-DB). No direct error handling here; relies on subordinate paragraphs. Calls multiple read and processing paragraphs to gather data for auth decision.",
         "called_by": [],
         "calls": [
           "1200-SCHEDULE-PSB",
@@ -264,7 +294,7 @@
       {
         "paragraph_name": "5000-EXIT",
         "summary": null,
-        "purpose": "This paragraph simply exits the 5000-PROCESS-AUTH paragraph. It serves as a standard exit point and does not perform any specific logic or data manipulation. It does not consume any inputs or produce any outputs. It does not make any decisions or handle any errors. It does not call any other paragraphs or programs.",
+        "purpose": "This is an exit paragraph that simply executes EXIT to return control to the calling paragraph. It consumes no inputs and produces no outputs. No business logic, decisions, error handling, or calls. Serves as a thru-exit point for 5000-PROCESS-AUTH.",
         "called_by": [],
         "calls": [],
         "citation": [
@@ -280,10 +310,9 @@
       {
         "paragraph_name": "5100-READ-XREF-RECORD",
         "summary": null,
-        "purpose": "This paragraph reads the card cross-reference record from the WS-CCXREF-FILE. It moves the card number (PA-RQ-CARD-NUM) to the XREF-CARD-NUM field. It then executes a CICS READ command to read the CARD-XREF-RECORD from the WS-CCXREF-FILE using the XREF-CARD-NUM as the RIDFLD. It evaluates the CICS response code (WS-RESP-CD). If the response is DFHRESP(NORMAL), it sets CARD-FOUND-XREF to TRUE. If the response is DFHRESP(NOTFND), it sets CARD-NFOUND-XREF and NFOUND-ACCT-IN-MSTR to TRUE and logs a warning message using 9500-LOG-ERROR. If the response is OTHER, it logs a critical error message using 9500-LOG-ERROR. The input is PA-RQ-CARD-NUM, and the output is the CARD-XREF-RECORD. It calls 9500-LOG-ERROR in case of errors.",
+        "purpose": "This paragraph reads the card cross-reference record from VSAM file WS-CCXREF-FILE using CICS READ DATASET with key XREF-CARD-NUM from PA-RQ-CARD-NUM. It consumes PA-RQ-CARD-NUM moved to XREF-CARD-NUM and populates CARD-XREF-RECORD area. On NORMAL resp, sets CARD-FOUND-XREF TRUE; on NOTFND, sets CARD-NFOUND-XREF and NFOUND-ACCT-IN-MSTR TRUE, logs WARNING 'A001' 'CARD NOT FOUND IN XREF'; on other errors, logs CRITICAL 'C001' CICS error with resp/reas codes. Error handling via EVALUATE on WS-RESP-CD triggers 9500-LOG-ERROR with appropriate severity and event key. Provides XREF-ACCT-ID for subsequent account read. Calls 9500-LOG-ERROR on errors.",
         "called_by": [],
         "calls": [
-          "9500-LOG-ERROR",
           "9500-LOG-ERROR"
         ],
         "citation": [
@@ -299,7 +328,7 @@
       {
         "paragraph_name": "5100-EXIT",
         "summary": null,
-        "purpose": "This paragraph simply exits the 5100-READ-XREF-RECORD paragraph. It serves as a standard exit point and does not perform any specific logic or data manipulation. It does not consume any inputs or produce any outputs. It does not make any decisions or handle any errors. It does not call any other paragraphs or programs.",
+        "purpose": "This is an exit paragraph that simply executes EXIT to return control to the calling paragraph. It consumes no inputs and produces no outputs. No business logic, decisions, error handling, or calls. Serves as a thru-exit point for 5100-READ-XREF-RECORD.",
         "called_by": [],
         "calls": [],
         "citation": [
@@ -315,10 +344,9 @@
       {
         "paragraph_name": "5200-READ-ACCT-RECORD",
         "summary": null,
-        "purpose": "This paragraph reads the account record from the WS-ACCTFILENAME. It moves the account ID (XREF-ACCT-ID) to WS-CARD-RID-ACCT-ID. It then executes a CICS READ command to read the ACCOUNT-RECORD from the WS-ACCTFILENAME using WS-CARD-RID-ACCT-ID-X as the RIDFLD. It evaluates the CICS response code (WS-RESP-CD). If the response is DFHRESP(NORMAL), it sets FOUND-ACCT-IN-MSTR to TRUE. If the response is DFHRESP(NOTFND), it sets NFOUND-ACCT-IN-MSTR to TRUE and logs a warning message using 9500-LOG-ERROR. If the response is OTHER, it logs a critical error message using 9500-LOG-ERROR. The input is XREF-ACCT-ID, and the output is the ACCOUNT-RECORD. It calls 9500-LOG-ERROR in case of errors.",
+        "purpose": "This paragraph reads the account record from VSAM file WS-ACCTFILENAME using CICS READ DATASET with RIDFLD constructed from XREF-ACCT-ID. It consumes XREF-ACCT-ID moved to WS-CARD-RID-ACCT-ID-X and populates ACCOUNT-RECORD area. On NORMAL resp, sets FOUND-ACCT-IN-MSTR TRUE; on NOTFND, sets NFOUND-ACCT-IN-MSTR TRUE, logs WARNING 'A002' 'ACCT NOT FOUND IN XREF'; on other errors, logs CRITICAL 'C002' CICS error with resp/reas codes and event key WS-CARD-RID-ACCT-ID-X. Error handling via EVALUATE on WS-RESP-CD triggers 9500-LOG-ERROR. Provides account data for further processing like customer read.",
         "called_by": [],
         "calls": [
-          "9500-LOG-ERROR",
           "9500-LOG-ERROR"
         ],
         "citation": [
@@ -334,7 +362,7 @@
       {
         "paragraph_name": "5200-EXIT",
         "summary": null,
-        "purpose": "This paragraph simply exits the 5200-READ-ACCT-RECORD paragraph. It serves as a standard exit point and does not perform any specific logic or data manipulation. It does not consume any inputs or produce any outputs. It does not make any decisions or handle any errors. It does not call any other paragraphs or programs.",
+        "purpose": "This is an exit paragraph that simply executes EXIT to return control to the calling paragraph. It consumes no inputs and produces no outputs. No business logic, decisions, error handling, or calls. Serves as a thru-exit point for 5200-READ-ACCT-RECORD.",
         "called_by": [],
         "calls": [],
         "citation": [
@@ -350,79 +378,76 @@
     ],
     "error_handling": [
       {
-        "condition": "WS-REASON = MQRC-NO-MSG-AVAILABLE",
-        "action": "SET NO-MORE-MSG-AVAILABLE TO TRUE",
+        "condition": "MQGET WS-COMPCODE NOT = MQCC-OK and WS-REASON NOT = MQRC-NO-MSG-AVAILABLE",
+        "action": "Set critical CICS error, PERFORM 9500-LOG-ERROR with 'M003' and MQ codes",
         "citation": [
-          65,
-          66
+          386
         ]
       },
       {
-        "condition": "WS-COMPCODE not equal to MQCC-OK",
-        "action": "Log error and perform 9500-LOG-ERROR",
+        "condition": "CICS READ XREF WS-RESP-CD = NOTFND",
+        "action": "Set warning APP error 'A001', PERFORM 9500-LOG-ERROR",
         "citation": [
-          59,
-          78
+          472
         ]
       },
       {
-        "condition": "WS-RESP-CD not equal to DFHRESP(NORMAL) and equal to DFHRESP(NOTFND) in 5100-READ-XREF-RECORD",
-        "action": "SET CARD-NFOUND-XREF TO TRUE, SET NFOUND-ACCT-IN-MSTR TO TRUE, log warning and perform 9500-LOG-ERROR",
+        "condition": "CICS READ XREF WS-RESP-CD OTHER",
+        "action": "Set critical CICS error 'C001', PERFORM 9500-LOG-ERROR",
         "citation": [
-          137,
-          147
+          472
         ]
       },
       {
-        "condition": "WS-RESP-CD not equal to DFHRESP(NORMAL) in 5100-READ-XREF-RECORD",
-        "action": "Log critical error and perform 9500-LOG-ERROR",
+        "condition": "CICS READ ACCT WS-RESP-CD = NOTFND",
+        "action": "Set warning APP error 'A002', PERFORM 9500-LOG-ERROR",
         "citation": [
-          148,
-          159
+          520
         ]
       },
       {
-        "condition": "WS-RESP-CD not equal to DFHRESP(NORMAL) and equal to DFHRESP(NOTFND) in 5200-READ-ACCT-RECORD",
-        "action": "SET NFOUND-ACCT-IN-MSTR TO TRUE, log warning and perform 9500-LOG-ERROR",
+        "condition": "CICS READ ACCT WS-RESP-CD OTHER",
+        "action": "Set critical CICS error 'C002', PERFORM 9500-LOG-ERROR",
         "citation": [
-          184,
-          193
-        ]
-      },
-      {
-        "condition": "WS-RESP-CD not equal to DFHRESP(NORMAL) in 5200-READ-ACCT-RECORD",
-        "action": "Log critical error and perform 9500-LOG-ERROR",
-        "citation": [
-          195,
-          206
+          520
         ]
       }
     ],
     "sql_operations": [],
     "cics_operations": [
       {
-        "command": "READ",
+        "command": "READ DATASET",
         "resource": "WS-CCXREF-FILE",
-        "purpose": "Read card cross-reference record.",
-        "citation": 124
+        "purpose": "Retrieve card cross-reference record by card number key.",
+        "citation": 472
       },
       {
-        "command": "READ",
+        "command": "READ DATASET",
         "resource": "WS-ACCTFILENAME",
-        "purpose": "Read account record.",
-        "citation": 171
+        "purpose": "Retrieve account record by account ID RIDFLD.",
+        "citation": 520
       }
     ],
     "open_questions": [
       {
-        "question": "What is the purpose of 1200-SCHEDULE-PSB?",
-        "context": "The code calls 1200-SCHEDULE-PSB, but the source code for this paragraph is not provided.",
-        "suggestion": "Need to examine the source code of 1200-SCHEDULE-PSB to understand its functionality."
+        "question": "What are the contents and logic of called paragraphs like 1200-SCHEDULE-PSB, 5300-READ-CUST-RECORD, 6000-MAKE-DECISION?",
+        "context": "AST snippet does not include these paragraphs.",
+        "suggestion": "Provide full AST or source for remaining paragraphs."
       },
       {
-        "question": "What is the purpose of 5300-READ-CUST-RECORD, 5500-READ-AUTH-SUMMRY, 5600-READ-PROFILE-DATA, 6000-MAKE-DECISION, 7100-SEND-RESPONSE, and 8000-WRITE-AUTH-TO-DB?",
-        "context": "The code calls these paragraphs, but the source code for these paragraphs is not provided.",
-        "suggestion": "Need to examine the source code of these paragraphs to understand their functionality."
+        "question": "What is the program entry point and overall mainline flow?",
+        "context": "Only partial paragraphs provided; no MAIN or 0000-INIT visible.",
+        "suggestion": "Include earlier AST sections."
+      },
+      {
+        "question": "Details of copybooks for PA-RQ-*, W01-*, MQM-* structures?",
+        "context": "Fields referenced but no COPY statements in snippet.",
+        "suggestion": "Analyze WORKING-STORAGE SECTION."
+      },
+      {
+        "question": "Exact output queue for responses and DB file for AUTH summary?",
+        "context": "Inferred from PERFORMs but not detailed in snippet.",
+        "suggestion": "Examine 7100-SEND-RESPONSE and 8000-WRITE-AUTH-TO-DB."
       }
     ],
     "resolved_questions": [],
@@ -430,5 +455,5 @@
     "call_semantics": [],
     "flow_diagram": null
   },
-  "saved_at": "2026-02-24T10:36:39.978801"
+  "saved_at": "2026-02-25T08:25:06.538632"
 }

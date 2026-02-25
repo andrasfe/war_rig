@@ -1,16 +1,28 @@
 ```cobol
-         05 WS-DISPLAY-AMT9            PIC -zzzz9.99.                           
-         05 WS-DISPLAY-COUNT           PIC 9(03).                               
-         05 WS-AUTH-DATE               PIC X(08) VALUE '00/00/00'.              
-         05 WS-AUTH-TIME               PIC X(08) VALUE '00:00:00'.              
-                                                                                
-      ******************************************************************        
-      *      File and data Handling                                             
-      ******************************************************************        
-         05 WS-XREF-RID.                                                        
-           10  WS-CARD-RID-CARDNUM                 PIC X(16).                   
-           10  WS-CARD-RID-CUST-ID                 PIC 9(09).                   
-           10  WS-CARD-RID-CUST-ID-X REDEFINES                                  
-                  WS-CARD-RID-CUST-ID              PIC X(09).                   
-           10  WS-CARD-RID-ACCT-ID                 PIC 9(11).                   
+                  ' System error while reading CUST file. Resp:'
+                  WS-RESP-CD-DIS ' Reas:' WS-REAS-CD-DIS
+                  DELIMITED BY SIZE
+                  INTO WS-MESSAGE
+                  END-STRING
+                  MOVE -1       TO ACCTIDL OF COPAU0AI
+                  PERFORM SEND-PAULST-SCREEN
+           END-EVALUATE
+           .
+
+      *****************************************************************
+       GET-AUTH-SUMMARY.
+      *****************************************************************
+
+           PERFORM SCHEDULE-PSB
+
+           MOVE CDEMO-ACCT-ID                   TO PA-ACCT-ID
+      *    MOVE XREF-ACCT-ID                    TO PA-ACCT-ID
+           EXEC DLI GU USING PCB(PAUT-PCB-NUM)
+               SEGMENT (PAUTSUM0)
+               INTO (PENDING-AUTH-SUMMARY)
+               WHERE (ACCNTID = PA-ACCT-ID)
+           END-EXEC
+
+           MOVE DIBSTAT                          TO IMS-RETURN-CODE
+           EVALUATE TRUE
 ```

@@ -1,15 +1,15 @@
 {
   "header": {
     "program_id": "PSBPAUTL",
-    "file_name": "PSBPAUTL.psb",
+    "file_name": "ims/PSBPAUTL.psb",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-24T17:38:51.764370",
+    "analyzed_at": "2026-02-25T15:30:33.688584",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This PSB (Program Specification Block) defines the program's interface to the IMS database DBPAUTP0. It specifies the segments (PAUTSUM0, PAUTDTL1) that the program is allowed to access and the type of access (read-only).",
+    "summary": "This file is an IMS Program Specification Block (PSB) generation control statement file that defines PSBPAUTL for assembler language programs. It specifies a single database PCB named PAUTLPCB for accessing the DBPAUTP0 database with PROCOPT=L (load/unload processing option) and a key length of 14. The PCB defines two sensitive segments: root segment PAUTSUM0 (PARENT=0) and child segment PAUTDTL1 under parent PAUTSUM0.",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
@@ -27,17 +27,7 @@
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [
-    {
-      "rule_id": "BR001",
-      "description": "The program has read-only access to the DBPAUTP0 database.",
-      "logic_summary": "The PROCOPT=L parameter in the PCB definition restricts the program to read-only operations.",
-      "conditions": [],
-      "citation": [
-        17
-      ]
-    }
-  ],
+  "business_rules": [],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
@@ -50,9 +40,14 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the purpose of the PAUTSUM0 and PAUTDTL1 segments?",
-      "context": "The PSB defines these segments, but their specific function is not clear from this file alone.",
-      "suggestion": "Review the DBD (Database Description) for DBPAUTP0 to understand the segment definitions."
+      "question": "What is the business purpose of the DBPAUTP0 database and its segments PAUTSUM0/PAUTDTL1?",
+      "context": "No descriptive comments or names indicate business function beyond IMS DL/I access definitions.",
+      "suggestion": "Review the associated DBD (Database Definition) for DBPAUTP0 or application programs using this PSB."
+    },
+    {
+      "question": "Which application programs use this PSB (PSBPAUTL)?",
+      "context": "PSB defines access for unnamed application programs; no references in this file.",
+      "suggestion": "Search for PSBNAME=PSBPAUTL in PCB masks of COBOL/PL/I/PSB using programs."
     }
   ],
   "resolved_questions": [],

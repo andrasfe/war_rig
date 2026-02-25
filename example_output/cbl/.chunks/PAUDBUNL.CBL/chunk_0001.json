@@ -4,21 +4,20 @@
   "template": {
     "header": {
       "program_id": "PAUDBUNL",
-      "file_name": "PAUDBUNL.CBL",
+      "file_name": "cbl/PAUDBUNL.CBL",
       "file_type": "COBOL",
       "analyzed_by": "WAR_RIG",
-      "analyzed_at": "2026-02-24T17:36:12.241951",
+      "analyzed_at": "2026-02-25T15:25:32.847951",
       "iteration_count": 1,
       "final_status": null
     },
     "purpose": {
-      "summary": "This COBOL program contains two paragraphs: 9999-ABEND, which is used to terminate the program abnormally, and 9999-EXIT, which provides a standard exit point. The ABEND paragraph displays a message and sets a non-zero return code before terminating the program.",
-      "business_context": null,
-      "program_type": "UTILITY",
+      "summary": "The PAUDBUNL program contains termination logic for abnormal ending and normal exit, suggesting it is part of an IMS unload utility based on the abend message. The 9999-ABEND paragraph handles fatal errors by displaying a message and setting a return code of 16. The 9999-EXIT paragraph provides a standard exit for PERFORM statements.",
+      "business_context": "IMS data unload process (inferred from abend message)",
+      "program_type": "BATCH",
       "citations": [
-        4,
-        6,
-        10
+        308,
+        316
       ]
     },
     "inputs": [],
@@ -40,12 +39,12 @@
       {
         "paragraph_name": "9999-ABEND",
         "summary": null,
-        "purpose": "This paragraph handles abnormal termination of the program. Its primary purpose is to provide a controlled exit point when an unrecoverable error occurs. It first displays the message 'IMSUNLOD ABENDING ...' to the console, indicating that the program is terminating abnormally (4). Then, it sets the RETURN-CODE to 16, signaling to the calling environment that the program ended with an error (6). Finally, it executes a GOBACK statement to terminate the program and return control to the operating system (7). This paragraph does not consume any specific input files or data, nor does it call any other paragraphs. It serves as a centralized error handling routine to ensure a consistent exit strategy.",
+        "purpose": "This paragraph serves as the program's abnormal termination handler, invoked when a fatal error occurs elsewhere in the program. It consumes no specific inputs or data, relying instead on the program's current state such as the RETURN-CODE field. It produces a console or log output by displaying the message 'IMSUNLOD ABENDING ...', indicating failure in what appears to be an IMS unload process. It then sets the RETURN-CODE to 16, which signals a specific error condition to the calling JCL or environment. The paragraph concludes with GOBACK to immediately terminate the program execution. No business logic or conditional decisions are implemented within this paragraph. There is no further error handling, as this represents the final escalation point for errors. It does not call any other paragraphs or external programs. The presence of comments suggests this is documentation or spacing for readability. Overall, it ensures a consistent abend behavior across the program.",
         "called_by": [],
         "calls": [],
         "citation": [
-          1,
-          7
+          308,
+          315
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -56,12 +55,12 @@
       {
         "paragraph_name": "9999-EXIT",
         "summary": null,
-        "purpose": "This paragraph provides a standard exit point for the program. Its primary purpose is to allow the program to terminate normally. It simply executes an EXIT statement (10), which returns control to the calling program or operating system. This paragraph does not consume any input data, produce any output data, perform any business logic, or handle any errors. It also does not call any other paragraphs or programs. It serves as a clean and simple way to exit the program when processing is complete or when a normal termination is required.",
+        "purpose": "This paragraph acts as a standard exit point primarily used within PERFORM statements to return control to the calling section without altering program flow. It consumes no inputs, data files, or variables, functioning solely as a control transfer mechanism. It produces no outputs, modifications, or side effects such as writes or displays. There is no business logic, conditions, validations, or decisions implemented here. No error handling is performed, as it assumes normal execution path. It executes a single EXIT statement, which transfers control back to the invoker. This paragraph does not call any other paragraphs or programs. It is typically used in nested PERFORM structures to cleanly delineate scope. Given its simplicity, it supports modular code organization in the overall program flow. No specific role in IMS unload is evident beyond general COBOL conventions.",
         "called_by": [],
         "calls": [],
         "citation": [
-          9,
-          10
+          316,
+          317
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -72,21 +71,37 @@
     ],
     "error_handling": [
       {
-        "condition": "Abnormal program condition",
-        "action": "DISPLAY message and ABEND with return code 16",
+        "condition": "Fatal error triggering ABEND",
+        "action": "DISPLAY 'IMSUNLOD ABENDING ...', MOVE 16 TO RETURN-CODE, GOBACK",
         "citation": [
-          4,
-          6
+          308,
+          315
         ]
       }
     ],
     "sql_operations": [],
     "cics_operations": [],
-    "open_questions": [],
+    "open_questions": [
+      {
+        "question": "What is the full program logic and main processing paragraphs?",
+        "context": "Only termination paragraphs provided; no main flow, inputs, or processing visible",
+        "suggestion": "Provide full AST or source for complete analysis"
+      },
+      {
+        "question": "What are the inputs, files, and data structures used?",
+        "context": "No file operations, copybooks, or data definitions shown",
+        "suggestion": "Include WORKING-STORAGE, FILE-SECTION, and PROCEDURE DIVISION start"
+      },
+      {
+        "question": "Confirm program ID and relation to 'IMSUNLOD'?",
+        "context": "Filename PAUDBUNL.CBL but message references IMSUNLOD",
+        "suggestion": "Check PROGRAM-ID statement (likely lines 1-100)"
+      }
+    ],
     "resolved_questions": [],
     "dead_code": [],
     "call_semantics": [],
     "flow_diagram": null
   },
-  "saved_at": "2026-02-24T10:36:12.250799"
+  "saved_at": "2026-02-25T08:25:32.849149"
 }

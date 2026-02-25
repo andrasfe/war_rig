@@ -1,33 +1,100 @@
 {
   "header": {
     "program_id": "COPAU00",
-    "file_name": "COPAU00.bms",
+    "file_name": "bms/COPAU00.bms",
     "file_type": "BMS",
-    "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-24T17:37:22.671384",
+    "analyzed_by": "Scribe",
+    "analyzed_at": "2026-02-25T15:30:57.423429",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This BMS map defines the screen layout for the 'View Authorizations' function within the CardDemo application. It displays customer account information and a list of recent transactions for approval or decline.",
-    "business_context": "This screen is used by customer service representatives or fraud analysts to review and manage pending card authorizations.",
+    "summary": "Defines the COPAU00 CICS mapset with COPAU0A map for the Pending Authorization Screen in CardDemo application. Allows searching pending authorizations by account ID, displays customer details (name, ID, address, phone, status, approval/decline counts, credit/cash limits and balances), and lists up to 5 transactions with selection options. Includes headers, timestamps, error message field, and function key instructions.",
+    "business_context": "Credit card authorization management in CICS online transaction processing for viewing and selecting pending authorizations.",
     "program_type": "ONLINE_CICS",
     "citations": [
       2,
+      19,
+      26,
       78,
-      83
+      83,
+      501,
+      511
     ]
   },
-  "inputs": [],
+  "inputs": [
+    {
+      "name": "ACCTID",
+      "io_type": "CICS_MAP",
+      "description": "Unprotected input field for entering account ID to search for pending authorizations",
+      "copybook": null,
+      "citation": [
+        84
+      ]
+    },
+    {
+      "name": "SEL0001",
+      "io_type": "CICS_MAP",
+      "description": "Unprotected selection field for first transaction (e.g., enter 'S' to view details)",
+      "copybook": null,
+      "citation": [
+        277
+      ]
+    },
+    {
+      "name": "SEL0002",
+      "io_type": "CICS_MAP",
+      "description": "Unprotected selection field for second transaction",
+      "copybook": null,
+      "citation": [
+        321
+      ]
+    },
+    {
+      "name": "SEL0003",
+      "io_type": "CICS_MAP",
+      "description": "Unprotected selection field for third transaction",
+      "copybook": null,
+      "citation": [
+        365
+      ]
+    },
+    {
+      "name": "SEL0004",
+      "io_type": "CICS_MAP",
+      "description": "Unprotected selection field for fourth transaction",
+      "copybook": null,
+      "citation": [
+        409
+      ]
+    },
+    {
+      "name": "SEL0005",
+      "io_type": "CICS_MAP",
+      "description": "Unprotected selection field for fifth transaction",
+      "copybook": null,
+      "citation": [
+        488
+      ]
+    }
+  ],
   "outputs": [
     {
       "name": "COPAU0A",
       "io_type": "CICS_MAP",
-      "description": "Represents the CICS screen layout for displaying pending authorizations. Includes fields for account ID, customer name, address, transaction details, and approval/decline options.",
+      "description": "Display map containing customer information, limits, balances, transaction list, headers, timestamps, and instructions",
       "copybook": null,
       "citation": [
-        26,
-        28
+        26
+      ]
+    },
+    {
+      "name": "ERRMSG",
+      "io_type": "CICS_MAP",
+      "description": "Field for displaying error messages to the user",
+      "copybook": null,
+      "citation": [
+        503
       ]
     }
   ],
@@ -37,7 +104,41 @@
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [],
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "User input fields such as ACCTID and SELxxxx are unprotected (UNPROT) to accept search criteria and transaction selections, with validation expected in the calling CICS program.",
+      "logic_summary": "Fields defined with ATTRB=(FSET,NORM,UNPROT) or similar to enable data entry without protection.",
+      "conditions": [
+        "UNPROT attribute present",
+        "FSET for modified field detection"
+      ],
+      "citation": [
+        84,
+        277,
+        321,
+        365,
+        409,
+        488
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Display-only fields use ASKIP and NORM/PROT attributes to prevent user modification.",
+      "logic_summary": "Customer data, headers, and transaction details are protected for output only.",
+      "conditions": [
+        "ASKIP for skip",
+        "NORM without UNPROT"
+      ],
+      "citation": [
+        29,
+        34,
+        47,
+        96,
+        103
+      ]
+    }
+  ],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
@@ -48,12 +149,12 @@
     {
       "paragraph_name": "COPAU00",
       "summary": null,
-      "purpose": "This DFHMSD macro defines the map set 'COPAU00', which is a collection of related maps. It specifies various attributes for the map set, including control options (ALARM, FREEKB), extended attributes (EXTATT=YES), the programming language (LANG=COBOL), the mode of operation (MODE=INOUT), storage allocation (STORAGE=AUTO), the TIOAPFX option (TIOAPFX=YES), and the type of map (TYPE=&&SYSPARM). The CTRL parameter enables the alarm and allows the keyboard to be freed after input. EXTATT enables extended attributes for color and highlighting. LANG specifies COBOL as the programming language. MODE=INOUT indicates that the map is used for both input and output. STORAGE=AUTO allows CICS to manage the storage for the map. TIOAPFX=YES includes the terminal input/output area prefix. TYPE=&&SYSPARM allows the map type to be specified at compile time. This macro essentially sets the overall environment and characteristics for all the maps defined within this map set, ensuring they adhere to the specified standards and conventions. It does not directly consume or produce data but rather configures the environment for data exchange. No specific business logic or error handling is present within this macro definition itself.",
+      "purpose": "[Citadel] Paragraph identified by static analysis",
       "called_by": [],
       "calls": [],
       "citation": [
         19,
-        25
+        19
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
@@ -64,12 +165,12 @@
     {
       "paragraph_name": "COPAU0A",
       "summary": null,
-      "purpose": "This DFHMDI macro defines the map 'COPAU0A', which represents a single screen layout within the 'COPAU00' map set. It specifies the screen's column and line position (COLUMN=1, LINE=1) and its size (SIZE=(24,80)), indicating a full-screen map. The map contains various fields defined using DFHMDF macros. These fields include labels, input fields, and output fields for displaying information such as transaction details, customer information, and account status. The map is designed to present a 'View Authorizations' screen, allowing users to search for accounts, view transaction history, and potentially approve or decline transactions. The input field 'ACCTID' allows the user to enter an account ID to search for. The output fields display customer information such as name, address, account status, and credit/cash limits. The map also includes a table-like structure to display multiple transactions with details like transaction ID, date, time, type, approval status, and amount. The 'SEL' fields (SEL0001, SEL0002, etc.) are unprotected input fields that allow the user to select a transaction for further action. The map does not directly perform any business logic or error handling but defines the visual interface for interacting with the application.",
+      "purpose": "[Citadel] Paragraph identified by static analysis",
       "called_by": [],
       "calls": [],
       "citation": [
         26,
-        28
+        26
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
@@ -80,27 +181,27 @@
       }
     }
   ],
-  "error_handling": [],
-  "sql_operations": [],
-  "cics_operations": [
+  "error_handling": [
     {
-      "command": "SEND MAP",
-      "resource": "COPAU0A",
-      "purpose": "Display the 'View Authorizations' screen to the user.",
-      "citation": 26
-    },
-    {
-      "command": "RECEIVE MAP",
-      "resource": "COPAU0A",
-      "purpose": "Receive input from the user on the 'View Authorizations' screen, such as the account ID to search for or the selection of a transaction.",
-      "citation": 26
+      "condition": "Application errors or invalid inputs",
+      "action": "Populate and display message in ERRMSG field (bright, red, full screen width)",
+      "citation": [
+        503
+      ]
     }
   ],
+  "sql_operations": [],
+  "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the purpose of the '&&SYSPARM' variable used in the TYPE parameter of the DFHMSD macro?",
-      "context": "The meaning and usage of this variable are unclear from the code.",
-      "suggestion": "Consult the application's build or deployment documentation to understand how this variable is set and what values it can take."
+      "question": "Which CICS COBOL program(s) reference and use this COPAU00 BMS mapset?",
+      "context": "BMS file defines the map but does not specify calling programs.",
+      "suggestion": "Search for COBOL programs containing 'COPAU0A' or 'COPAU00' in DFHMDI statements."
+    },
+    {
+      "question": "What are the exact validation rules for inputs like ACCTID length/format or SEL values?",
+      "context": "BMS defines layout and attributes but no programmatic validation.",
+      "suggestion": "Examine the calling CICS program for RECEIVE MAP logic."
     }
   ],
   "resolved_questions": [],

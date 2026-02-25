@@ -1,44 +1,127 @@
 {
   "header": {
     "program_id": "DBPAUTP0",
-    "file_name": "DBPAUTP0.dbd",
+    "file_name": "ims/DBPAUTP0.dbd",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-24T17:35:09.966041",
+    "analyzed_at": "2026-02-25T15:22:14.369249",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This file defines the Database Description (DBD) for the DBPAUTP0 database, which is a HIDAM VSAM database. It describes the database structure, including segments, fields, and indexing, for pending authorization summaries and details. The DBD specifies dataset characteristics, segment layouts, and relationships between segments.",
-    "business_context": null,
+    "summary": "This is a Database Definition (DBD) source file for the IMS database DBPAUTP0, specifying a HIDAM database with VSAM access and no password. It defines one dataset group DSG001 using logical dataset DDPAUTP0 of size 4096 with scan value 3. The database has two segments in a hierarchical structure: root segment PAUTSUM0 (Pending Authorization Summary) with key field ACCNTID and child segment PAUTDTL1 (Pending Authorization Details) with key field PAUT9CTS.",
+    "business_context": "Defines structure for storing and accessing pending authorization summary and detail data for accounts (e.g., ACCNTID), likely supporting financial transaction processing in a card demo environment.",
     "program_type": "UTILITY",
     "citations": [
       17,
       18,
-      26,
-      34
+      24,
+      28,
+      36
     ]
   },
-  "inputs": [],
-  "outputs": [],
+  "inputs": [
+    {
+      "name": "DDPAUTP0",
+      "io_type": "FILE_VSAM",
+      "description": "Primary dataset referenced in dataset group DSG001 for storing segments of DBPAUTP0 database",
+      "copybook": null,
+      "citation": [
+        24
+      ]
+    },
+    {
+      "name": "DBPAUTX0",
+      "io_type": "OTHER",
+      "description": "Index database referenced via LCHILD pointer from PAUTSUM0 segment under PAUTINDX",
+      "copybook": null,
+      "citation": [
+        31,
+        32
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "DBPAUTP0",
+      "io_type": "FILE_VSAM",
+      "description": "IMS database defined by this DBD source, targeted for data storage as per system context",
+      "copybook": null,
+      "citation": [
+        18
+      ]
+    }
+  ],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [],
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "PAUTSUM0 is root segment (PARENT=0) with sequential unique packed key ACCNTID starting at offset 1",
+      "logic_summary": "FIELD defined as SEQ,U,TYPE=P; includes LCHILD to index and POINTER=TWINBWD",
+      "conditions": [
+        "PARENT=0",
+        "RULES=(,HERE)"
+      ],
+      "citation": [
+        28,
+        30,
+        31,
+        29
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "PAUTDTL1 is child segment of PAUTSUM0 with sequential unique character key PAUT9CTS starting at offset 1",
+      "logic_summary": "PARENT=((PAUTSUM0,)); FIELD defined as SEQ,U,TYPE=C",
+      "conditions": [
+        "PARENT=((PAUTSUM0,))"
+      ],
+      "citation": [
+        36,
+        37
+      ]
+    }
+  ],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
     "transforms": []
   },
-  "copybooks_used": [],
+  "copybooks_used": [
+    {
+      "copybook_name": "PAUTSUM0",
+      "purpose": "Defines 100-byte root segment layout including ACCNTID key and pointers",
+      "location": "FILE_SECTION",
+      "citation": 28
+    },
+    {
+      "copybook_name": "PAUTDTL1",
+      "purpose": "Defines 200-byte child segment layout including PAUT9CTS key",
+      "location": "FILE_SECTION",
+      "citation": 36
+    }
+  ],
   "paragraphs": [],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [],
+  "open_questions": [
+    {
+      "question": "Specific programs or JCL that assemble and use this DBD",
+      "context": "Source defines the database but does not reference calling programs; system context lists related datasets and libraries",
+      "suggestion": "Analyze associated LOADLIB, PROCLIB, or application programs like those in AWS.M2.CARDDEMO.LOADLIB"
+    },
+    {
+      "question": "Detailed field layouts beyond keys (e.g., other fields in segments)",
+      "context": "Only key fields explicitly defined; other bytes implied but not named",
+      "suggestion": "Review generated DBDLIB or associated COBOL copybooks/PCB for full segment layouts"
+    }
+  ],
   "resolved_questions": [],
   "dead_code": [],
   "call_semantics": [],

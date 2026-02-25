@@ -2,16 +2,18 @@
 
 **File**: `cpy/PASFLPCB.CPY`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-02-24 17:38:30.648223
+**Analyzed**: 2026-02-25 15:31:47.425731
 
 ## Purpose
 
-This copybook defines the structure of PASFLPCB, which appears to be related to IMS PCB (Program Communication Block) information. It includes fields for DBD name, segment level, PCB status, processing options, segment name, key feedback name, number of sensitive segments, and key feedback area.
+This COBOL copybook defines the PASFLPCB 01-level record layout, which represents the Program Communication Block (PCB) for the IMS DL/I database named PASFL. It includes fields for database name, segment level, PCB status, processing options, segment name, key feedback name, number of sensitive segments, and the key feedback buffer area. This structure is used by IMS-enabled programs to interface with DL/I calls for database navigation and access.
+
+**Business Context**: Facilitates IMS hierarchical database (DL/I) access and control for the PASFL database in mainframe batch or online applications.
 
 ## Paragraphs/Procedures
 
-### N/A
-This copybook does not contain any paragraphs. It is a data structure definition. Therefore, there are no control flow or processing steps to describe. The copybook's purpose is solely to define the layout of the PASFLPCB data structure, which likely holds information about an IMS database PCB. This structure includes fields for the database name (PASFL-DBDNAME), segment level (PASFL-SEG-LEVEL), PCB status (PASFL-PCB-STATUS), processing options (PASFL-PCB-PROCOPT), segment name (PASFL-SEG-NAME), key feedback name (PASFL-KEYFB-NAME), number of sensitive segments (PASFL-NUM-SENSEGS), and a key feedback area (PASFL-KEYFB). These fields are used by programs interacting with an IMS database to understand the current state and characteristics of the database and the program's access to it. The copybook is included in the WORKING-STORAGE section of COBOL programs that need to access or manipulate this PCB information.
+### ~~PASFLPCB~~ (Dead Code)
+*Record layout 'PASFLPCB' is never used by any program*
 
 ## Dead Code
 
@@ -23,5 +25,5 @@ The following artifacts were identified as dead code by static analysis:
 
 ## Open Questions
 
-- ? What is the specific purpose of each field within the PASFLPCB structure in the context of IMS database interaction?
-  - Context: The copybook defines the structure, but the exact usage of each field within an IMS program is unclear without further context.
+- ? Is PASFL-SEG-LEVEL a standard or custom field in the IMS PCB layout?
+  - Context: Standard IMS DB PCB layouts typically position PCB-STATUS immediately after DBDNAME, without a preceding 2-byte segment level field.

@@ -1,23 +1,37 @@
 {
   "header": {
     "program_id": "PSBPAUTB",
-    "file_name": "PSBPAUTB.psb",
+    "file_name": "ims/PSBPAUTB.psb",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-24T17:38:46.647366",
+    "analyzed_at": "2026-02-25T15:30:16.875951",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This file defines a Program Specification Block (PSB) named PSBPAUTB for an IMS database DBPAUTP0. It specifies the database access characteristics, segment hierarchy, and language interface for COBOL programs accessing this database.",
+    "summary": "This file defines an IMS Program Specification Block (PSB) named PSBPAUTB for COBOL-language application programs. It specifies a single database PCB named PAUTBPCB that accesses the DBPAUTP0 database with application-controlled processing (PROCOPT=AP) and a key length of 14 bytes (KEYLEN=14). The PCB senses the root segment PAUTSUM0 (PARENT=0) and its child segment PAUTDTL1 (PARENT=PAUTSUM0).",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
       17,
+      18,
+      19,
       20
     ]
   },
-  "inputs": [],
+  "inputs": [
+    {
+      "name": "DBPAUTP0",
+      "io_type": "IMS_SEGMENT",
+      "description": "IMS database accessed via PCB PAUTBPCB, with accessible segments PAUTSUM0 (root) and PAUTDTL1 (child of PAUTSUM0)",
+      "copybook": null,
+      "citation": [
+        17,
+        18,
+        19
+      ]
+    }
+  ],
   "outputs": [],
   "called_programs": [],
   "calling_context": {
@@ -28,11 +42,27 @@
   "business_rules": [
     {
       "rule_id": "BR001",
-      "description": "The key length for accessing the DBPAUTP0 database is 14 bytes.",
-      "logic_summary": "The KEYLEN parameter in the PCB definition specifies the key length.",
-      "conditions": [],
+      "description": "Database PCB PAUTBPCB uses PROCOPT=AP for application-controlled processing and KEYLEN=14 for the search key length",
+      "logic_summary": "These parameters control how the application program manages segment positioning and key-based access to the DBPAUTP0 database",
+      "conditions": [
+        "PROCOPT=AP",
+        "KEYLEN=14"
+      ],
       "citation": [
         17
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "SENSEG definitions limit access to PAUTSUM0 as root segment (PARENT=0) and PAUTDTL1 as child segment under PAUTSUM0",
+      "logic_summary": "Specifies the hierarchical segments available to the application program using this PSB",
+      "conditions": [
+        "PARENT=0",
+        "PARENT=PAUTSUM0"
+      ],
+      "citation": [
+        18,
+        19
       ]
     }
   ],
@@ -48,9 +78,14 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the purpose of the PAUTSUM0 and PAUTDTL1 segments?",
-      "context": "The SENSEG statements define segments, but their specific function within the database is unclear from this PSB definition alone.",
-      "suggestion": "Consult the DBD (Database Description) for DBPAUTP0 to understand the segment definitions and their relationships."
+      "question": "What business data do the PAUTSUM0 and PAUTDTL1 segments represent?",
+      "context": "Segment names suggest summary and detail data (possibly automation or audit), but no field-level details provided in PSB",
+      "suggestion": "Review the corresponding DBD (DBPAUTP0) source or data dictionary for segment layouts"
+    },
+    {
+      "question": "What IMS application programs (COBOL) use this PSB?",
+      "context": "PSBGEN specifies LANG=COBOL and PSBNAME=PSBPAUTB, but no calling programs listed",
+      "suggestion": "Search for COBOL programs with IMS DL/I calls referencing PCB PAUTBPCB"
     }
   ],
   "resolved_questions": [],

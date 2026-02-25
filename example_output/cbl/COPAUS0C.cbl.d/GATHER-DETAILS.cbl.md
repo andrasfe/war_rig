@@ -1,22 +1,23 @@
 ```cobol
-       GATHER-DETAILS.
-      *****************************************************************
-
-           MOVE -1       TO ACCTIDL OF COPAU0AI
-
-           MOVE 0        TO CDEMO-CPVS-PAGE-NUM
-
-           IF WS-ACCT-ID NOT = LOW-VALUES
-              PERFORM GATHER-ACCOUNT-DETAILS
-
-              PERFORM INITIALIZE-AUTH-DATA
-
-              IF FOUND-PAUT-SMRY-SEG
-                 PERFORM PROCESS-PAGE-FORWARD
-              END-IF
-           END-IF
-           .
 
 
       *****************************************************************
+       GET-AUTHORIZATIONS.
+      *****************************************************************
+
+           EXEC DLI GNP USING PCB(PAUT-PCB-NUM)
+               SEGMENT (PAUTDTL1)
+               INTO (PENDING-AUTH-DETAILS)
+           END-EXEC
+
+           MOVE DIBSTAT                          TO IMS-RETURN-CODE
+           EVALUATE TRUE
+               WHEN STATUS-OK
+                  SET AUTHS-NOT-EOF              TO TRUE
+               WHEN SEGMENT-NOT-FOUND
+               WHEN END-OF-DB
+                  SET AUTHS-EOF                  TO TRUE
+               WHEN OTHER
+                  MOVE 'Y'     TO WS-ERR-FLG
+
 ```

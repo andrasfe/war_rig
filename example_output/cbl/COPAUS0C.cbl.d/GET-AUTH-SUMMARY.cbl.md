@@ -1,34 +1,37 @@
 ```cobol
-           MOVE 0        TO CDEMO-CPVS-PAGE-NUM
+       GET-AUTH-SUMMARY.
+      *****************************************************************
 
-           IF WS-ACCT-ID NOT = LOW-VALUES
-              PERFORM GATHER-ACCOUNT-DETAILS
+           PERFORM SCHEDULE-PSB
 
-              PERFORM INITIALIZE-AUTH-DATA
+           MOVE CDEMO-ACCT-ID                   TO PA-ACCT-ID
+      *    MOVE XREF-ACCT-ID                    TO PA-ACCT-ID
+           EXEC DLI GU USING PCB(PAUT-PCB-NUM)
+               SEGMENT (PAUTSUM0)
+               INTO (PENDING-AUTH-SUMMARY)
+               WHERE (ACCNTID = PA-ACCT-ID)
+           END-EXEC
 
-              IF FOUND-PAUT-SMRY-SEG
-                 PERFORM PROCESS-PAGE-FORWARD
-              END-IF
-           END-IF
+           MOVE DIBSTAT                          TO IMS-RETURN-CODE
+           EVALUATE TRUE
+               WHEN STATUS-OK
+                  SET FOUND-PAUT-SMRY-SEG        TO TRUE
+               WHEN SEGMENT-NOT-FOUND
+                  SET NFOUND-PAUT-SMRY-SEG       TO TRUE
+               WHEN OTHER
+                  MOVE 'Y'     TO WS-ERR-FLG
+
+                  STRING
+                  ' System error while reading AUTH Summary: Code:'
+                  IMS-RETURN-CODE
+                  DELIMITED BY SIZE
+                  INTO WS-MESSAGE
+                  END-STRING
+                  MOVE -1       TO ACCTIDL OF COPAU0AI
+                  PERFORM SEND-PAULST-SCREEN
+           END-EVALUATE
            .
-
-
       *****************************************************************
-       PROCESS-PF7-KEY.
+      * SCHEDULE PSB                                                  *
       *****************************************************************
-
-           IF CDEMO-CPVS-PAGE-NUM > 1
-              COMPUTE CDEMO-CPVS-PAGE-NUM = CDEMO-CPVS-PAGE-NUM - 1
-
-              MOVE CDEMO-CPVS-PAUKEY-PREV-PG(CDEMO-CPVS-PAGE-NUM)
-                                           TO WS-AUTH-KEY-SAVE
-              PERFORM GET-AUTH-SUMMARY
-
-              SET SEND-ERASE-NO            TO TRUE
-
-              SET NEXT-PAGE-YES            TO TRUE
-              MOVE -1                      TO ACCTIDL OF COPAU0AI
-
-              PERFORM INITIALIZE-AUTH-DATA
-
 ```

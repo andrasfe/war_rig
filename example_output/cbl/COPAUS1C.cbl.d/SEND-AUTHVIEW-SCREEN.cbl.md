@@ -1,26 +1,32 @@
 ```cobol
-       SEND-AUTHVIEW-SCREEN.
 
-           PERFORM POPULATE-HEADER-INFO
+           MOVE WS-FRAUD-AUTH-RECORD           TO PENDING-AUTH-DETAILS
+           DISPLAY 'RPT DT: ' PA-FRAUD-RPT-DATE
 
-           MOVE WS-MESSAGE TO ERRMSGO OF COPAU1AO
-           MOVE -1       TO CARDNUML
+           EXEC DLI REPL USING PCB(PAUT-PCB-NUM)
+                SEGMENT (PAUTDTL1)
+                FROM (PENDING-AUTH-DETAILS)
+           END-EXEC
 
-           IF SEND-ERASE-YES
-              EXEC CICS SEND
-                     MAP('COPAU1A')
-                     MAPSET('COPAU01')
-                     FROM(COPAU1AO)
-                     ERASE
-                     CURSOR
-              END-EXEC
-           ELSE
-              EXEC CICS SEND
-                     MAP('COPAU1A')
-                     MAPSET('COPAU01')
-                     FROM(COPAU1AO)
-                     CURSOR
-              END-EXEC
-           END-IF
-           .
+           MOVE DIBSTAT                        TO IMS-RETURN-CODE
+           EVALUATE TRUE
+               WHEN STATUS-OK
+                  PERFORM TAKE-SYNCPOINT
+                  IF PA-FRAUD-REMOVED
+                     MOVE 'AUTH FRAUD REMOVED...'   TO WS-MESSAGE
+                  ELSE
+                     MOVE 'AUTH MARKED FRAUD...'    TO WS-MESSAGE
+                  END-IF
+               WHEN OTHER
+                  PERFORM ROLL-BACK
+
+                  MOVE 'Y'     TO WS-ERR-FLG
+
+                  STRING
+                  ' System error while FRAUD Tagging, ROLLBACK||'
+                  IMS-RETURN-CODE
+                  DELIMITED BY SIZE
+                  INTO WS-MESSAGE
+                  END-STRING
+                  PERFORM SEND-AUTHVIEW-SCREEN
 ```

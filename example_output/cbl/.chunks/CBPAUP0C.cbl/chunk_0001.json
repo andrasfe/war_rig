@@ -4,35 +4,302 @@
   "template": {
     "header": {
       "program_id": "CBPAUP0C",
-      "file_name": "CBPAUP0C.cbl",
+      "file_name": "cbl/CBPAUP0C.cbl",
       "file_type": "COBOL",
       "analyzed_by": "WAR_RIG",
-      "analyzed_at": "2026-02-24T17:37:09.809368",
+      "analyzed_at": "2026-02-25T15:25:52.671403",
       "iteration_count": 1,
       "final_status": null
     },
     "purpose": {
-      "summary": "This COBOL program deletes authorization details and summary records from an IMS database. It also takes checkpoints to ensure recoverability.",
-      "business_context": "This program likely supports a business process related to managing and purging pending authorization requests.",
+      "summary": "Deletes authorization detail (PAUTDTL1) and summary (PAUTSUM0) segments from the PAUT IMS database using DL/I DLET calls for pending authorizations. Increments counters for successful deletions and checkpoints, abending the program if any DL/I operation fails (DIBSTAT not spaces). Periodically takes IMS checkpoints every P-CHKP-DIS-FREQ successful checkpoints, displaying progress information.",
+      "business_context": null,
       "program_type": "BATCH",
       "citations": [
-        8,
-        33,
-        53
+        303,
+        328,
+        352
       ]
     },
-    "inputs": [],
-    "outputs": [],
+    "inputs": [
+      {
+        "name": "PAUT-PCB-NUM",
+        "io_type": "IMS_SEGMENT",
+        "description": "IMS DL/I PCB used for DLET and CHKP operations on PAUT database segments PAUTDTL1 and PAUTSUM0",
+        "copybook": null,
+        "citation": [
+          303,
+          328,
+          352
+        ]
+      },
+      {
+        "name": "PENDING-AUTH-DETAILS",
+        "io_type": "OTHER",
+        "description": "Working storage area containing key data (including PA-ACCT-ID) for deleting PAUTDTL1 segment",
+        "copybook": null,
+        "citation": [
+          303
+        ]
+      },
+      {
+        "name": "PENDING-AUTH-SUMMARY",
+        "io_type": "OTHER",
+        "description": "Working storage area containing key data (including PA-ACCT-ID) for deleting PAUTSUM0 segment",
+        "copybook": null,
+        "citation": [
+          328
+        ]
+      },
+      {
+        "name": "P-CHKP-DIS-FREQ",
+        "io_type": "PARAMETER",
+        "description": "Parameter defining checkpoint display frequency",
+        "copybook": null,
+        "citation": [
+          352
+        ]
+      },
+      {
+        "name": "WK-CHKPT-ID",
+        "io_type": "OTHER",
+        "description": "Working storage checkpoint ID used in CHKP call",
+        "copybook": null,
+        "citation": [
+          352
+        ]
+      }
+    ],
+    "outputs": [
+      {
+        "name": "PAUT IMS Database",
+        "io_type": "IMS_SEGMENT",
+        "description": "Deleted PAUTDTL1 and PAUTSUM0 segments",
+        "copybook": null,
+        "citation": [
+          303,
+          328
+        ]
+      },
+      {
+        "name": "WS-NO-DTL-DELETED",
+        "io_type": "OTHER",
+        "description": "Counter incremented for each successful detail deletion",
+        "copybook": null,
+        "citation": [
+          303
+        ]
+      },
+      {
+        "name": "WS-NO-SUMRY-DELETED",
+        "io_type": "OTHER",
+        "description": "Counter incremented for each successful summary deletion",
+        "copybook": null,
+        "citation": [
+          328
+        ]
+      },
+      {
+        "name": "WS-NO-CHKP",
+        "io_type": "OTHER",
+        "description": "Checkpoint counter incremented and reset periodically",
+        "copybook": null,
+        "citation": [
+          352
+        ]
+      },
+      {
+        "name": "RETURN-CODE",
+        "io_type": "RETURN_CODE",
+        "description": "Set to 16 upon abend",
+        "copybook": null,
+        "citation": [
+          377
+        ]
+      }
+    ],
     "called_programs": [],
     "calling_context": {
       "called_by": [],
       "entry_points": [],
       "linkage_section": []
     },
-    "business_rules": [],
+    "business_rules": [
+      {
+        "rule_id": "BR001",
+        "description": "Successful DL/I DLET (DIBSTAT = SPACES) increments deletion counter",
+        "logic_summary": "ADD 1 TO counter after DLET if DIBSTAT = SPACES",
+        "conditions": [
+          "DIBSTAT = SPACES"
+        ],
+        "citation": [
+          303,
+          328
+        ]
+      },
+      {
+        "rule_id": "BR002",
+        "description": "Failed DL/I DLET (DIBSTAT not SPACES) displays error and abends",
+        "logic_summary": "DISPLAY error messages and PERFORM 9999-ABEND",
+        "conditions": [
+          "DIBSTAT != SPACES"
+        ],
+        "citation": [
+          303,
+          328
+        ]
+      },
+      {
+        "rule_id": "BR003",
+        "description": "Take IMS checkpoint and increment counter; display and reset counter if frequency reached",
+        "logic_summary": "EXEC DLI CHKP; if successful and WS-NO-CHKP >= P-CHKP-DIS-FREQ, display stats and reset",
+        "conditions": [
+          "DIBSTAT = SPACES",
+          "WS-NO-CHKP >= P-CHKP-DIS-FREQ"
+        ],
+        "citation": [
+          352
+        ]
+      },
+      {
+        "rule_id": "BR004",
+        "description": "Failed checkpoint abends program",
+        "logic_summary": "DISPLAY error and PERFORM 9999-ABEND if DIBSTAT != SPACES",
+        "conditions": [
+          "DIBSTAT != SPACES"
+        ],
+        "citation": [
+          352
+        ]
+      }
+    ],
     "data_flow": {
-      "reads_from": [],
-      "writes_to": [],
+      "reads_from": [
+        {
+          "source": "PENDING-AUTH-DETAILS",
+          "fields_used": [
+            "PA-ACCT-ID"
+          ],
+          "citation": [
+            303
+          ]
+        },
+        {
+          "source": "PENDING-AUTH-SUMMARY",
+          "fields_used": [
+            "PA-ACCT-ID"
+          ],
+          "citation": [
+            328
+          ]
+        },
+        {
+          "source": "DIBSTAT",
+          "fields_used": [
+            "DIBSTAT"
+          ],
+          "citation": [
+            303,
+            328,
+            352
+          ]
+        },
+        {
+          "source": "DEBUG-ON",
+          "fields_used": [
+            "DEBUG-ON"
+          ],
+          "citation": [
+            303,
+            328
+          ]
+        },
+        {
+          "source": "WS-NO-CHKP",
+          "fields_used": [
+            "WS-NO-CHKP"
+          ],
+          "citation": [
+            352
+          ]
+        },
+        {
+          "source": "P-CHKP-DIS-FREQ",
+          "fields_used": [
+            "P-CHKP-DIS-FREQ"
+          ],
+          "citation": [
+            352
+          ]
+        },
+        {
+          "source": "WS-NO-SUMRY-READ",
+          "fields_used": [
+            "WS-NO-SUMRY-READ"
+          ],
+          "citation": [
+            352
+          ]
+        },
+        {
+          "source": "WS-CURR-APP-ID",
+          "fields_used": [
+            "WS-CURR-APP-ID"
+          ],
+          "citation": [
+            352
+          ]
+        }
+      ],
+      "writes_to": [
+        {
+          "destination": "PAUT IMS Database",
+          "fields_written": [
+            "PAUTDTL1",
+            "PAUTSUM0"
+          ],
+          "citation": [
+            303,
+            328
+          ]
+        },
+        {
+          "destination": "WS-NO-DTL-DELETED",
+          "fields_written": [
+            "WS-NO-DTL-DELETED"
+          ],
+          "citation": [
+            303
+          ]
+        },
+        {
+          "destination": "WS-NO-SUMRY-DELETED",
+          "fields_written": [
+            "WS-NO-SUMRY-DELETED"
+          ],
+          "citation": [
+            328
+          ]
+        },
+        {
+          "destination": "WS-NO-CHKP",
+          "fields_written": [
+            "WS-NO-CHKP"
+          ],
+          "citation": [
+            352
+          ]
+        },
+        {
+          "destination": "RETURN-CODE",
+          "fields_written": [
+            "RETURN-CODE"
+          ],
+          "citation": [
+            377
+          ]
+        }
+      ],
       "transforms": []
     },
     "copybooks_used": [],
@@ -40,14 +307,14 @@
       {
         "paragraph_name": "5000-DELETE-AUTH-DTL",
         "summary": null,
-        "purpose": "This paragraph deletes an authorization detail record from the IMS database. It first checks if debugging is enabled and displays the account ID if it is (lines 4-6). It then executes a DLI DELETE command to remove the PAUTDTL1 segment from the PENDING-AUTH-DETAILS using the PAUT-PCB-NUM (lines 8-11). After the delete operation, it checks the DIBSTAT to determine if the deletion was successful (line 13). If DIBSTAT is spaces, it increments the WS-NO-DTL-DELETED counter (line 14). If the deletion fails (DIBSTAT is not spaces), it displays an error message including the DIBSTAT and PA-ACCT-ID and then calls the 9999-ABEND paragraph to terminate the program (lines 16-18).",
+        "purpose": "The 5000-DELETE-AUTH-DTL paragraph is responsible for deleting a specific authorization detail segment (PAUTDTL1) from the PAUT IMS database. It consumes input from the PENDING-AUTH-DETAILS working storage area, which holds the segment key data including PA-ACCT-ID, and the PAUT-PCB-NUM PCB. If DEBUG-ON is true, it displays a debug message with PA-ACCT-ID before the deletion. It performs an EXEC DLI DLET using the PCB, specifying the PAUTDTL1 segment and the key from PENDING-AUTH-DETAILS. After the DLET, it checks DIBSTAT: if SPACES, it increments WS-NO-DTL-DELETED counter, indicating successful deletion; otherwise, it displays error messages with DIBSTAT and PA-ACCT-ID, then performs 9999-ABEND to terminate the program. There are no other paragraphs called besides the potential abend. This ensures atomic deletion of detail records with immediate failure handling for data integrity.",
         "called_by": [],
         "calls": [
           "9999-ABEND"
         ],
         "citation": [
-          1,
-          23
+          303,
+          323
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -58,12 +325,12 @@
       {
         "paragraph_name": "5000-EXIT",
         "summary": null,
-        "purpose": "This paragraph simply exits the 5000-DELETE-AUTH-DTL paragraph, returning control to the calling paragraph. It contains only the EXIT statement (line 24).",
+        "purpose": "The 5000-EXIT paragraph serves as the standard exit point for the 5000-DELETE-AUTH-DTL paragraph. It consumes no inputs and reads no data or files. It produces no outputs, modifies no variables, and performs no writes. There is no business logic, conditions, or decisions implemented in this paragraph. No error handling is performed as it assumes successful completion of the prior deletion logic. It contains only an EXIT statement, which transfers control back to the calling paragraph without any further action. This maintains proper control flow in the COBOL PERFORM structure.",
         "called_by": [],
         "calls": [],
         "citation": [
-          23,
-          25
+          324,
+          327
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -74,14 +341,14 @@
       {
         "paragraph_name": "6000-DELETE-AUTH-SUMMARY",
         "summary": null,
-        "purpose": "This paragraph deletes an authorization summary record from the IMS database. It begins by checking if debugging is enabled and displaying the account ID if it is (lines 29-31). It then executes a DLI DELETE command to remove the PAUTSUM0 segment from the PENDING-AUTH-SUMMARY using the PAUT-PCB-NUM (lines 33-36). Following the delete operation, it checks the DIBSTAT to determine if the deletion was successful (line 38). If DIBSTAT is spaces, it increments the WS-NO-SUMRY-DELETED counter (line 39). If the deletion fails (DIBSTAT is not spaces), it displays an error message including the DIBSTAT and PA-ACCT-ID, and then calls the 9999-ABEND paragraph to terminate the program (lines 41-43).",
+        "purpose": "The 6000-DELETE-AUTH-SUMMARY paragraph handles the deletion of an authorization summary segment (PAUTSUM0) from the PAUT IMS database. It reads from the PENDING-AUTH-SUMMARY working storage area containing the segment key including PA-ACCT-ID, and uses the PAUT-PCB-NUM PCB. If DEBUG-ON, it displays a debug message with PA-ACCT-ID. It executes a DL/I DLET specifying PAUTSUM0 and the key from PENDING-AUTH-SUMMARY. Post-deletion, it evaluates DIBSTAT: if SPACES, adds 1 to WS-NO-SUMRY-DELETED; else, displays failure details with DIBSTAT and PA-ACCT-ID, then performs 9999-ABEND. No other calls are made except potential abend. This paragraph ensures summary records are deleted reliably after details, with strict error handling to prevent partial updates.",
         "called_by": [],
         "calls": [
           "9999-ABEND"
         ],
         "citation": [
-          26,
-          48
+          328,
+          347
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -92,12 +359,12 @@
       {
         "paragraph_name": "6000-EXIT",
         "summary": null,
-        "purpose": "This paragraph exits the 6000-DELETE-AUTH-SUMMARY paragraph, returning control to the calling paragraph. It consists solely of the EXIT statement (line 48).",
+        "purpose": "The 6000-EXIT paragraph acts as the exit routine for the 6000-DELETE-AUTH-SUMMARY paragraph. It does not consume any inputs or read from files or variables. No outputs are produced, and no data modifications occur. No business rules, validations, or conditional logic are applied. Error handling is not relevant here as it follows successful summary deletion. It solely executes an EXIT statement to return control to the invoker. This paragraph enforces standard COBOL flow control discipline.",
         "called_by": [],
         "calls": [],
         "citation": [
-          47,
-          49
+          348,
+          351
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -108,14 +375,14 @@
       {
         "paragraph_name": "9000-TAKE-CHECKPOINT",
         "summary": null,
-        "purpose": "This paragraph takes a checkpoint using the IMS CHKP call. It issues the EXEC DLI CHKP command with the ID WK-CHKPT-ID (lines 53-54). After the checkpoint call, it checks the DIBSTAT to determine if the checkpoint was successful (line 56). If DIBSTAT is spaces, it increments the WS-NO-CHKP counter (line 57). If WS-NO-CHKP is greater than or equal to P-CHKP-DIS-FREQ, it resets WS-NO-CHKP to 0 and displays a checkpoint success message including the WS-NO-SUMRY-READ and WS-CURR-APP-ID (lines 58-62). If the checkpoint fails (DIBSTAT is not spaces), it displays an error message including the DIBSTAT, WS-NO-SUMRY-READ, and WS-CURR-APP-ID, and then calls the 9999-ABEND paragraph to terminate the program (lines 64-67).",
+        "purpose": "The 9000-TAKE-CHECKPOINT paragraph manages IMS checkpointing to ensure database consistency during batch processing. It consumes WS-NO-CHKP counter, P-CHKP-DIS-FREQ parameter, WS-NO-SUMRY-READ, WS-CURR-APP-ID, and WK-CHKPT-ID. It executes DL/I CHKP using WK-CHKPT-ID. If DIBSTAT = SPACES, it increments WS-NO-CHKP; if this reaches or exceeds P-CHKP-DIS-FREQ, resets WS-NO-CHKP to 0 and displays checkpoint success with record count and app ID. If DIBSTAT not SPACES, displays failure details and performs 9999-ABEND. No other paragraphs are called except abend. This implements periodic commit points critical for long-running IMS batch jobs, balancing recovery needs with performance.",
         "called_by": [],
         "calls": [
           "9999-ABEND"
         ],
         "citation": [
-          50,
-          73
+          352,
+          372
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -126,12 +393,12 @@
       {
         "paragraph_name": "9000-EXIT",
         "summary": null,
-        "purpose": "This paragraph exits the 9000-TAKE-CHECKPOINT paragraph, returning control to the calling paragraph. It contains only the EXIT statement (line 73).",
+        "purpose": "The 9000-EXIT paragraph provides the exit mechanism for the 9000-TAKE-CHECKPOINT paragraph. It reads no data and has no inputs from files or storage. It generates no outputs or changes to variables. There are no decisions, loops, or business logic executed. Error conditions are handled upstream before reaching this exit. It performs a single EXIT to return control to the caller. This simple structure supports modular PERFORM/EXIT patterns in the program.",
         "called_by": [],
         "calls": [],
         "citation": [
-          72,
-          74
+          373,
+          376
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -142,7 +409,7 @@
       {
         "paragraph_name": "9999-ABEND",
         "summary": null,
-        "purpose": "This paragraph handles program termination due to an error. It displays a message indicating that CBPAUP0C is abending (line 78). It then sets the RETURN-CODE to 16 (line 80) and executes a GOBACK statement to terminate the program (line 81).",
+        "purpose": "The 9999-ABEND paragraph is the central error termination routine invoked on any DL/I failure. It consumes no specific inputs but is triggered by error conditions in prior paragraphs. It displays 'CBPAUP0C ABENDING ...' to the console or log. It then sets RETURN-CODE to 16 to signal abnormal end to the caller or JCL. No validations or further conditions are checked. It executes GOBACK to terminate the program. This ensures consistent abend handling across the module, preventing continuation on database errors.",
         "called_by": [
           "5000-DELETE-AUTH-DTL",
           "6000-DELETE-AUTH-SUMMARY",
@@ -150,8 +417,8 @@
         ],
         "calls": [],
         "citation": [
-          75,
-          83
+          377,
+          384
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -162,12 +429,12 @@
       {
         "paragraph_name": "9999-EXIT",
         "summary": null,
-        "purpose": "This paragraph exits the 9999-ABEND paragraph. It contains only the EXIT statement (line 84). This paragraph is likely unreachable, since 9999-ABEND performs a GOBACK.",
+        "purpose": "The 9999-EXIT paragraph functions as an exit for the 9999-ABEND section, though rarely reached due to GOBACK. It processes no inputs or data reads. No outputs or modifications are made. No logic, conditions, or error handling is present. It issues an EXIT statement for potential return, but contextually supports PERFORM structures. This maintains code standardization even in terminal routines.",
         "called_by": [],
         "calls": [],
         "citation": [
-          83,
-          85
+          385,
+          386
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -178,27 +445,31 @@
     ],
     "error_handling": [
       {
-        "condition": "DIBSTAT NOT = SPACES during AUTH DETAIL DELETE",
-        "action": "DISPLAY error message and ABEND",
+        "condition": "DIBSTAT != SPACES after DLET PAUTDTL1",
+        "action": "DISPLAY error messages and PERFORM 9999-ABEND",
         "citation": [
-          16,
-          18
+          303
         ]
       },
       {
-        "condition": "DIBSTAT NOT = SPACES during AUTH SUMMARY DELETE",
-        "action": "DISPLAY error message and ABEND",
+        "condition": "DIBSTAT != SPACES after DLET PAUTSUM0",
+        "action": "DISPLAY error messages and PERFORM 9999-ABEND",
         "citation": [
-          41,
-          43
+          328
         ]
       },
       {
-        "condition": "DIBSTAT NOT = SPACES during CHECKPOINT",
-        "action": "DISPLAY error message and ABEND",
+        "condition": "DIBSTAT != SPACES after CHKP",
+        "action": "DISPLAY error messages and PERFORM 9999-ABEND",
         "citation": [
-          64,
-          67
+          352
+        ]
+      },
+      {
+        "condition": "Any DL/I failure",
+        "action": "MOVE 16 TO RETURN-CODE and GOBACK",
+        "citation": [
+          377
         ]
       }
     ],
@@ -206,24 +477,24 @@
     "cics_operations": [],
     "open_questions": [
       {
-        "question": "What is the purpose of the WK-CHKPT-ID?",
-        "context": "The code uses WK-CHKPT-ID in the checkpoint call, but its origin and purpose are unclear.",
-        "suggestion": "Examine the data definitions section to understand how WK-CHKPT-ID is defined and populated."
+        "question": "What loads data into PENDING-AUTH-DETAILS and PENDING-AUTH-SUMMARY?",
+        "context": "These WS areas provide keys for DLET but source of data (prior GU/GET?) not in fragment",
+        "suggestion": "Analyze earlier paragraphs like 0000-MAIN or 2000-READ"
       },
       {
-        "question": "What is the structure of PENDING-AUTH-DETAILS and PENDING-AUTH-SUMMARY?",
-        "context": "The code deletes segments from these structures, but the structure itself is not defined in the snippet.",
-        "suggestion": "Check the copybooks used by this program to find the definitions of these structures."
+        "question": "What is the full program flow and calling context for these paragraphs?",
+        "context": "Fragment shows only deletion/checkpoint; no main logic or how these are invoked",
+        "suggestion": "Provide AST for full source or prior/next paragraphs"
       },
       {
-        "question": "What are the valid values for DIBSTAT?",
-        "context": "The code checks if DIBSTAT is equal to spaces, but other possible values and their meanings are unknown.",
-        "suggestion": "Consult IMS documentation to understand the possible values of DIBSTAT and their corresponding meanings."
+        "question": "What copybooks define PAUTDTL1, PAUTSUM0, PCBs, and WS areas?",
+        "context": "No COPY statements visible in fragment",
+        "suggestion": "Scan for COPY in full file or related copybooks"
       },
       {
-        "question": "What is the purpose of the DEBUG-ON variable?",
-        "context": "The code checks DEBUG-ON to display debug messages, but the origin and purpose of this variable are unclear.",
-        "suggestion": "Examine the data definitions section to understand how DEBUG-ON is defined and populated."
+        "question": "Business context of PAUT database and pending authorizations?",
+        "context": "Names suggest payment auth, but no comments or full logic",
+        "suggestion": "Review program docs or related JCL/PROCs"
       }
     ],
     "resolved_questions": [],
@@ -231,5 +502,5 @@
     "call_semantics": [],
     "flow_diagram": null
   },
-  "saved_at": "2026-02-24T10:37:09.810346"
+  "saved_at": "2026-02-25T08:25:52.673136"
 }

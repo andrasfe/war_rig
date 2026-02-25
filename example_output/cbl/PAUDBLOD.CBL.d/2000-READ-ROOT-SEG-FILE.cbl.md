@@ -11,4 +11,12 @@
             ELSE                                                        02042553
                IF WS-INFIL1-STATUS = '10'                               02042653
                   MOVE 'Y' TO END-ROOT-SEG-FILE                         02042753
+               ELSE                                                     02042853
+                  DISPLAY 'ERROR READING ROOT SEG INFILE'               02042953
+               END-IF                                                   02043053
+            END-IF.                                                     02043153
+                                                                        02043253
+       2000-EXIT.                                                       02043353
+            EXIT.                                                       02043453
+                                                                        02043553
 ```

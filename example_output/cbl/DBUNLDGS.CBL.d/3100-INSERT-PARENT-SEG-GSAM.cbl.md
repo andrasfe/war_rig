@@ -1,18 +1,20 @@
 ```cobol
-          05 FILLER                 PIC X(08) VALUE 'PAUTDTL1'.         01000000
-          05 FILLER                 PIC X(01) VALUE ' '.                01010000
-      *                                                                 01020000
-       01 PRM-INFO.                                                     01030000
-          05 P-EXPIRY-DAYS          PIC 9(02).                          01040000
-          05 FILLER                 PIC X(01).                          01050000
-          05 P-CHKP-FREQ            PIC X(05).                          01060000
-          05 FILLER                 PIC X(01).                          01070000
-          05 P-CHKP-DIS-FREQ        PIC X(05).                          01080000
-          05 FILLER                 PIC X(01).                          01090000
-          05 P-DEBUG-FLAG           PIC X(01).                          01100000
-             88 DEBUG-ON            VALUE 'Y'.                          01110000
-             88 DEBUG-OFF           VALUE 'N'.                          01120000
-          05 FILLER                 PIC X(01).                          01130000
-      *                                                                 01140000
-      *                                                                 01150000
+       3100-INSERT-PARENT-SEG-GSAM.                                     02710200
+      *     DISPLAY 'IN 3100 INSERT-PARENT-SEG-GSAM'                    02710302
+            CALL 'CBLTDLI'       USING  FUNC-ISRT                       02710400
+                                        PASFLPCB                        02710500
+                                        PENDING-AUTH-SUMMARY.           02710600
+      *        DISPLAY '***************************'                    02710802
+      *        DISPLAY ' AFTER PARENT GSAM IMS CALL'                    02710902
+      *        DISPLAY ' PASFL-DBDNAME : ' PASFL-DBDNAME                02711002
+      *        DISPLAY ' PASFL-PCB-PROCOPT : ' PASFL-PCB-PROCOPT        02711102
+      *        DISPLAY 'PCB STATUS: ' PASFL-PCB-STATUS                  02711202
+      *        DISPLAY '***************************'                    02711302
+               IF PASFL-PCB-STATUS NOT EQUAL TO SPACES                  02711401
+                  DISPLAY 'GSAM PARENT FAIL :' PASFL-PCB-STATUS         02711501
+                  DISPLAY 'KFB AREA IN GSAM:' PASFL-KEYFB               02711601
+                  PERFORM 9999-ABEND                                    02711701
+               END-IF.                                                  02711801
+       3100-EXIT.                                                       02712000
+            EXIT.                                                       02713000
 ```

@@ -1,6 +1,6 @@
 {
   "file_name": "cbl/PAUDBUNL.CBL",
-  "source_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+  "source_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
   "total_batches": 2,
   "batches": [
     [
@@ -407,10 +407,10 @@
       }
     ]
   },
-  "parent_ticket_id": "mem-000001",
+  "parent_ticket_id": "mem-000017",
   "cycle_number": 1,
   "program_id": "PAUDBUNL",
   "copybook_contents": {},
-  "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+  "file_path": "aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
   "feedback_context": null
 }

@@ -1,82 +1,83 @@
 ```cobol
-         05 WS-TRIGGER-DATA            PIC X(64).                               
+       8500-INSERT-AUTH.                                                        
+      * ------------------------------------------------------------- *         
+      *                                                                         
+           EXEC CICS ASKTIME NOHANDLE                                           
+              ABSTIME(WS-ABS-TIME)                                              
+           END-EXEC                                                             
                                                                                 
-      ******************************************************************        
-      *      File and data Handling                                             
-      ******************************************************************        
-         05 WS-XREF-RID.                                                        
-           10  WS-CARD-RID-CARDNUM                 PIC X(16).                   
-           10  WS-CARD-RID-CUST-ID                 PIC 9(09).                   
-           10  WS-CARD-RID-CUST-ID-X REDEFINES                                  
-                  WS-CARD-RID-CUST-ID              PIC X(09).                   
-           10  WS-CARD-RID-ACCT-ID                 PIC 9(11).                   
-           10  WS-CARD-RID-ACCT-ID-X REDEFINES                                  
-                  WS-CARD-RID-ACCT-ID              PIC X(11).                   
+           EXEC CICS FORMATTIME                                                 
+             ABSTIME(WS-ABS-TIME)                                               
+             YYDDD(WS-CUR-DATE-X6)                                              
+             TIME(WS-CUR-TIME-X6)                                               
+             MILLISECONDS(WS-CUR-TIME-MS)                                       
+           END-EXEC                                                             
                                                                                 
-       01 WS-IMS-VARIABLES.
-          05 PSB-NAME                        PIC X(8) VALUE 'PSBPAUTB'.
-          05 PCB-OFFSET.
-             10 PAUT-PCB-NUM                 PIC S9(4) COMP VALUE +1.
-          05 IMS-RETURN-CODE                 PIC X(02).
-             88 STATUS-OK                    VALUE '  ', 'FW'.                  
-             88 SEGMENT-NOT-FOUND            VALUE 'GE'.                        
-             88 DUPLICATE-SEGMENT-FOUND      VALUE 'II'.                        
-             88 WRONG-PARENTAGE              VALUE 'GP'.                        
-             88 END-OF-DB                    VALUE 'GB'.                        
-             88 DATABASE-UNAVAILABLE         VALUE 'BA'.                        
-             88 PSB-SCHEDULED-MORE-THAN-ONCE VALUE 'TC'.                        
-             88 COULD-NOT-SCHEDULE-PSB       VALUE 'TE'.                        
-             88 RETRY-CONDITION              VALUE 'BA', 'FH', 'TE'.            
-          05 WS-IMS-PSB-SCHD-FLG             PIC X(1).                          
-             88  IMS-PSB-SCHD                VALUE 'Y'.                         
-             88  IMS-PSB-NOT-SCHD            VALUE 'N'.                         
+           MOVE WS-CUR-DATE-X6(1:5)         TO WS-YYDDD                         
+           MOVE WS-CUR-TIME-X6              TO WS-CUR-TIME-N6                   
                                                                                 
-       01  W01-HCONN-REQUEST           PIC S9(9) BINARY VALUE ZERO.             
-       01  W01-HOBJ-REQUEST            PIC S9(9) BINARY.                        
-       01  W01-BUFFLEN                 PIC S9(9) BINARY.                        
-       01  W01-DATALEN                 PIC S9(9) BINARY.                        
-       01  W01-GET-BUFFER              PIC X(500).                              
+           COMPUTE WS-TIME-WITH-MS = (WS-CUR-TIME-N6 * 1000) +                  
+                                     WS-CUR-TIME-MS                             
                                                                                 
-       01  W02-HCONN-REPLY             PIC S9(9) BINARY VALUE ZERO.             
-       01  W02-BUFFLEN                 PIC S9(9) BINARY.                        
-       01  W02-DATALEN                 PIC S9(9) BINARY.                        
-       01  W02-PUT-BUFFER              PIC X(200).                              
+           COMPUTE PA-AUTH-DATE-9C = 99999 - WS-YYDDD                           
+           COMPUTE PA-AUTH-TIME-9C = 999999999 - WS-TIME-WITH-MS                
                                                                                 
-       01  WS-SWITCHES.                                                         
-           05 WS-AUTH-RESP-FLG         PIC X(01).                               
-              88 AUTH-RESP-APPROVED    VALUE 'A'.                               
-              88 AUTH-RESP-DECLINED    VALUE 'D'.                               
-           05 WS-MSG-LOOP-FLG          PIC X(01) VALUE 'N'.                     
-              88 WS-LOOP-END           VALUE 'E'.                               
-           05 WS-MSG-AVAILABLE-FLG     PIC X(01) VALUE 'M'.                     
-              88 NO-MORE-MSG-AVAILABLE VALUE 'N'.                               
-              88 MORE-MSG-AVAILABLE    VALUE 'M'.                               
-           05 WS-REQUEST-MQ-FLG        PIC X(01) VALUE 'C'.                     
-              88 WS-REQUEST-MQ-OPEN    VALUE 'O'.                               
-              88 WS-REQUEST-MQ-CLSE    VALUE 'C'.                               
-           05 WS-REPLY-MQ-FLG          PIC X(01) VALUE 'C'.                     
-              88 WS-REPLY-MQ-OPEN      VALUE 'O'.                               
-              88 WS-REPLY-MQ-CLSE      VALUE 'C'.                               
-           05 WS-XREF-READ-FLG         PIC X(1).                                
-              88 CARD-NFOUND-XREF      VALUE 'N'.                               
-              88 CARD-FOUND-XREF       VALUE 'Y'.                               
-           05 WS-ACCT-MASTER-READ-FLG PIC X(1).                                 
-              88 FOUND-ACCT-IN-MSTR    VALUE 'Y'.                               
-              88 NFOUND-ACCT-IN-MSTR   VALUE 'N'.                               
-           05 WS-CUST-MASTER-READ-FLG PIC X(1).                                 
-              88 FOUND-CUST-IN-MSTR    VALUE 'Y'.                               
-              88 NFOUND-CUST-IN-MSTR   VALUE 'N'.                               
-           05 WS-PAUT-SMRY-SEG-FLG     PIC X(1).                                
-              88 FOUND-PAUT-SMRY-SEG   VALUE 'Y'.                               
-              88 NFOUND-PAUT-SMRY-SEG  VALUE 'N'.                               
-           05 WS-DECLINE-FLG           PIC X(1).                                
-              88 APPROVE-AUTH          VALUE 'A'.                               
-              88 DECLINE-AUTH          VALUE 'D'.                               
-           05 WS-DECLINE-REASON-FLG    PIC X(1).                                
-              88 INSUFFICIENT-FUND     VALUE 'I'.                               
-              88 CARD-NOT-ACTIVE       VALUE 'A'.                               
-              88 ACCOUNT-CLOSED        VALUE 'C'.                               
-              88 CARD-FRAUD            VALUE 'F'.                               
-              88 MERCHANT-FRAUD        VALUE 'M'.                               
+           MOVE PA-RQ-AUTH-DATE             TO PA-AUTH-ORIG-DATE                
+           MOVE PA-RQ-AUTH-TIME             TO PA-AUTH-ORIG-TIME                
+           MOVE PA-RQ-CARD-NUM              TO PA-CARD-NUM                      
+           MOVE PA-RQ-AUTH-TYPE             TO PA-AUTH-TYPE                     
+           MOVE PA-RQ-CARD-EXPIRY-DATE      TO PA-CARD-EXPIRY-DATE              
+           MOVE PA-RQ-MESSAGE-TYPE          TO PA-MESSAGE-TYPE                  
+           MOVE PA-RQ-MESSAGE-SOURCE        TO PA-MESSAGE-SOURCE                
+           MOVE PA-RQ-PROCESSING-CODE       TO PA-PROCESSING-CODE               
+           MOVE PA-RQ-TRANSACTION-AMT       TO PA-TRANSACTION-AMT               
+           MOVE PA-RQ-MERCHANT-CATAGORY-CODE                                    
+                                            TO PA-MERCHANT-CATAGORY-CODE        
+           MOVE PA-RQ-ACQR-COUNTRY-CODE     TO PA-ACQR-COUNTRY-CODE             
+           MOVE PA-RQ-POS-ENTRY-MODE        TO PA-POS-ENTRY-MODE                
+           MOVE PA-RQ-MERCHANT-ID           TO PA-MERCHANT-ID                   
+           MOVE PA-RQ-MERCHANT-NAME         TO PA-MERCHANT-NAME                 
+           MOVE PA-RQ-MERCHANT-CITY         TO PA-MERCHANT-CITY                 
+           MOVE PA-RQ-MERCHANT-STATE        TO PA-MERCHANT-STATE                
+           MOVE PA-RQ-MERCHANT-ZIP          TO PA-MERCHANT-ZIP                  
+           MOVE PA-RQ-TRANSACTION-ID        TO PA-TRANSACTION-ID                
                                                                                 
+           MOVE PA-RL-AUTH-ID-CODE          TO PA-AUTH-ID-CODE                  
+           MOVE PA-RL-AUTH-RESP-CODE        TO PA-AUTH-RESP-CODE                
+           MOVE PA-RL-AUTH-RESP-REASON      TO PA-AUTH-RESP-REASON              
+           MOVE PA-RL-APPROVED-AMT          TO PA-APPROVED-AMT                  
+                                                                                
+           IF AUTH-RESP-APPROVED                                                
+              SET  PA-MATCH-PENDING         TO TRUE
+           ELSE                                                                 
+              SET  PA-MATCH-AUTH-DECLINED   TO TRUE
+           END-IF                                                               
+
+           MOVE SPACE                       TO PA-AUTH-FRAUD
+                                               PA-FRAUD-RPT-DATE
+
+           MOVE XREF-ACCT-ID                TO PA-ACCT-ID                       
+                                                                                
+           EXEC DLI ISRT USING PCB(PAUT-PCB-NUM)
+                SEGMENT (PAUTSUM0)
+                WHERE (ACCNTID = PA-ACCT-ID)
+                SEGMENT (PAUTDTL1)
+                FROM (PENDING-AUTH-DETAILS)
+                SEGLENGTH (LENGTH OF PENDING-AUTH-DETAILS)
+           END-EXEC
+           MOVE DIBSTAT                     TO IMS-RETURN-CODE                  
+                                                                                
+           IF STATUS-OK                                                         
+             CONTINUE                                                           
+           ELSE                                                                 
+             MOVE 'I004'                    TO ERR-LOCATION                     
+             SET  ERR-CRITICAL              TO TRUE                             
+             SET  ERR-IMS                   TO TRUE                             
+             MOVE IMS-RETURN-CODE           TO ERR-CODE-1                       
+             MOVE 'IMS INSERT DETL FAILED'  TO ERR-MESSAGE                      
+             MOVE PA-CARD-NUM               TO ERR-EVENT-KEY                    
+             PERFORM 9500-LOG-ERROR                                             
+           END-IF                                                               
+           .                                                                    
+      *                                                                         
 ```

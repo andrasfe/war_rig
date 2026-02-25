@@ -1,41 +1,36 @@
 {
   "header": {
     "program_id": "PAUDBUNL",
-    "file_name": "PAUDBUNL.CBL",
+    "file_name": "cbl/PAUDBUNL.CBL",
     "file_type": "COBOL",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-24T17:42:26.182361",
+    "analyzed_at": "2026-02-25T15:35:11.827323",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "The COBOL program PAUDBUNL unloads pending authorization summary and detail segments from an IMS database and writes them to two sequential output files. It reads the PAUTSUM0 root segment and PAUTDTL1 child segment from the IMS database and writes them to OPFILE1 and OPFILE2 respectively, filtering for numeric PA-ACCT-ID.",
-    "business_context": null,
+    "summary": "PAUDBUNL is an IMS DL/I unload utility that retrieves all root segments (PAUTSUM0 Pending Authorization Summary) using unqualified GN calls and their dependent child segments (PAUTDTL1 Pending Authorization Details) using GNP calls, writing root records to OPFILE1 and child records (prefixed with root account ID key) to OPFILE2. It processes the entire database until end-of-database (GB status) on root and end-of-segment (GE status) on children. The program initializes files, unloads data in a nested loop structure, closes files, and handles errors by abending.",
+    "business_context": "Supports unloading of pending authorization data from IMS PAUT database for backup, migration, reporting, or offline processing.",
     "program_type": "BATCH",
     "citations": [
-      18,
-      213,
-      271
+      20037,
+      20200,
+      23400,
+      21400,
+      24900
     ]
   },
   "inputs": [
     {
-      "name": "IMS Database (PAUTSUM0, PAUTDTL1 segments)",
+      "name": "PAUT Database",
       "io_type": "IMS_SEGMENT",
-      "description": "Pending authorization summary (PAUTSUM0) and detail (PAUTDTL1) segments from an IMS database.",
+      "description": "Root segments PAUTSUM0 (Pending Auth Summary) and child segments PAUTDTL1 (Pending Auth Details) accessed via PAUTBPCB",
       "copybook": "CIPAUSMY, CIPAUDTY",
       "citation": [
-        213,
-        237
-      ]
-    },
-    {
-      "name": "PAUTBPCB",
-      "io_type": "PARAMETER",
-      "description": "PCB mask for IMS calls.",
-      "copybook": "PAUTBPCB",
-      "citation": [
-        153
+        20200,
+        20800,
+        23400,
+        23800
       ]
     }
   ],
@@ -43,48 +38,25 @@
     {
       "name": "OPFILE1",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "Pending authorization summary records (PAUTSUM0).",
-      "copybook": "CIPAUSMY",
+      "description": "Flat file containing all root PAUTSUM0 segments copied directly from IMS",
+      "copybook": null,
       "citation": [
-        233
+        21900,
+        21906
       ]
     },
     {
       "name": "OPFILE2",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "Pending authorization detail records (PAUTDTL1).",
-      "copybook": "CIPAUDTY",
+      "description": "Flat file containing all child PAUTDTL1 segments prefixed with root segment key (PA-ACCT-ID)",
+      "copybook": null,
       "citation": [
-        271
+        24600,
+        24700
       ]
     }
   ],
-  "called_programs": [
-    {
-      "program_name": "CBLTDLI",
-      "call_type": "STATIC_CALL",
-      "purpose": "Performs IMS database calls.",
-      "parameters": [
-        "FUNC-GN",
-        "PAUTBPCB",
-        "PENDING-AUTH-SUMMARY",
-        "ROOT-UNQUAL-SSA"
-      ],
-      "citation": 213
-    },
-    {
-      "program_name": "CBLTDLI",
-      "call_type": "STATIC_CALL",
-      "purpose": "Performs IMS database calls to retrieve child segments.",
-      "parameters": [
-        "FUNC-GNP",
-        "PAUTBPCB",
-        "PENDING-AUTH-DETAILS",
-        "CHILD-UNQUAL-SSA"
-      ],
-      "citation": 237
-    }
-  ],
+  "called_programs": [],
   "calling_context": {
     "called_by": [],
     "entry_points": [
@@ -94,27 +66,56 @@
       "PAUTBPCB"
     ]
   },
-  "business_rules": [],
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Unload every root summary segment and all its qualified child detail segments without filtering",
+      "logic_summary": "Outer loop performs GN until GB status; inner loop performs GNP until GE status",
+      "conditions": [
+        "PAUT-PCB-STATUS = SPACES (success)",
+        "PAUT-PCB-STATUS = 'GB' (end of root)",
+        "PAUT-PCB-STATUS = 'GE' (end of children)"
+      ],
+      "citation": [
+        21400,
+        21920,
+        21911,
+        24900,
+        25001
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Only process root segments with numeric PA-ACCT-ID for child loop",
+      "logic_summary": "IF PA-ACCT-ID IS NUMERIC before inner child loop",
+      "conditions": [
+        "PA-ACCT-ID IS NUMERIC"
+      ],
+      "citation": [
+        21905
+      ]
+    }
+  ],
   "data_flow": {
     "reads_from": [
       {
-        "source": "IMS Database (PAUTSUM0)",
+        "source": "PAUTSUM0",
         "fields_used": [
           "PA-ACCT-ID",
-          "PENDING-AUTH-SUMMARY"
+          "All fields in PENDING-AUTH-SUMMARY"
         ],
         "citation": [
-          213,
-          230
+          21903,
+          20900
         ]
       },
       {
-        "source": "IMS Database (PAUTDTL1)",
+        "source": "PAUTDTL1",
         "fields_used": [
-          "PENDING-AUTH-DETAILS"
+          "All fields in PENDING-AUTH-DETAILS"
         ],
         "citation": [
-          237
+          23900
         ]
       }
     ],
@@ -122,57 +123,83 @@
       {
         "destination": "OPFILE1",
         "fields_written": [
-          "OPFIL1-REC"
+          "OPFIL1-REC (full PENDING-AUTH-SUMMARY)"
         ],
         "citation": [
-          233
+          21906
         ]
       },
       {
         "destination": "OPFILE2",
         "fields_written": [
-          "OPFIL2-REC",
-          "ROOT-SEG-KEY",
-          "CHILD-SEG-REC"
+          "ROOT-SEG-KEY (from PA-ACCT-ID)",
+          "CHILD-SEG-REC (full PENDING-AUTH-DETAILS)"
         ],
         "citation": [
-          271
+          21903,
+          24600,
+          24700
         ]
       }
     ],
-    "transforms": []
+    "transforms": [
+      {
+        "input_field": "PENDING-AUTH-SUMMARY",
+        "output_field": "OPFIL1-REC",
+        "transformation_description": "Direct MOVE of entire IMS root segment to output record",
+        "citation": [
+          21900
+        ]
+      },
+      {
+        "input_field": "PA-ACCT-ID",
+        "output_field": "ROOT-SEG-KEY",
+        "transformation_description": "MOVE root account ID to prefix field in child output record",
+        "citation": [
+          21903
+        ]
+      },
+      {
+        "input_field": "PENDING-AUTH-DETAILS",
+        "output_field": "CHILD-SEG-REC",
+        "transformation_description": "Direct MOVE of entire IMS child segment to output record body",
+        "citation": [
+          24600
+        ]
+      }
+    ]
   },
   "copybooks_used": [
     {
       "copybook_name": "IMSFUNCS",
-      "purpose": "Contains definitions for IMS function codes.",
+      "purpose": "Defines IMS DL/I function codes (FUNC-GN, FUNC-GNP)",
       "location": "WORKING_STORAGE",
-      "citation": 132
+      "citation": 961032
     },
     {
       "copybook_name": "CIPAUSMY",
-      "purpose": "Defines the layout of the PENDING-AUTH-SUMMARY segment.",
+      "purpose": "Defines layout of PENDING-AUTH-SUMMARY root segment (PAUTSUM0)",
       "location": "WORKING_STORAGE",
-      "citation": 103
+      "citation": 1030026
     },
     {
       "copybook_name": "CIPAUDTY",
-      "purpose": "Defines the layout of the PENDING-AUTH-DETAILS segment.",
+      "purpose": "Defines layout of PENDING-AUTH-DETAILS child segment (PAUTDTL1)",
       "location": "WORKING_STORAGE",
-      "citation": 107
+      "citation": 1070026
     },
     {
       "copybook_name": "PAUTBPCB",
-      "purpose": "Defines the PCB mask for IMS calls.",
+      "purpose": "IMS PCB mask for PAUT database access",
       "location": "LINKAGE",
-      "citation": 114
+      "citation": 1140027
     }
   ],
   "paragraphs": [
     {
       "paragraph_name": "MAIN-PARA",
       "summary": null,
-      "purpose": "This is the main control paragraph of the PAUDBUNL program. It orchestrates the entire process of unloading pending authorization data from an IMS database to sequential files. It first calls 1000-INITIALIZE to perform initial setup tasks such as accepting the current date and opening the output files (OPFILE1 and OPFILE2). After initialization, it enters a loop, controlled by the WS-END-OF-ROOT-SEG flag, that repeatedly calls 2000-FIND-NEXT-AUTH-SUMMARY to retrieve and process pending authorization summary segments. Once all summary segments have been processed (WS-END-OF-ROOT-SEG is 'Y'), the paragraph calls 4000-FILE-CLOSE to close the output files. Finally, the program terminates using GOBACK.",
+      "purpose": "MAIN-PARA serves as the primary entry and orchestration point for the entire unload process, defining the high-level program flow. It first declares an alternate entry point 'DLITCBL' using the PAUTBPCB linkage for IMS PCB access (line 1225033). It consumes no direct inputs beyond the linkage PCB but relies on IMS database availability via the PCB. It produces control flow to subordinate paragraphs and ultimately two output files via initialization and processing. The business logic is a simple sequential process: initialize files and variables, loop through all root segments calling 2000-FIND-NEXT-AUTH-SUMMARY until end-of-root flag is set, then close files and terminate normally. No explicit decisions are made here beyond the loop condition on WS-END-OF-ROOT-SEG. Error handling is delegated to subordinate paragraphs which abend on failures. It calls 1000-INITIALIZE to prepare files (line 12400), repeatedly calls 2000-FIND-NEXT-AUTH-SUMMARY in a loop controlled by WS-END-OF-ROOT-SEG until 'Y' (lines 12600-12800), and 4000-FILE-CLOSE for cleanup (line 15320). Upon loop exit, it executes GOBACK for normal termination (line 16600). This structure ensures complete database unload without gaps.",
       "called_by": [],
       "calls": [
         "1000-INITIALIZE",
@@ -180,8 +207,8 @@
         "4000-FILE-CLOSE"
       ],
       "citation": [
-        157,
-        170
+        1220026,
+        1660026
       ],
       "outgoing_calls": [
         {
@@ -208,16 +235,14 @@
     {
       "paragraph_name": "1000-INITIALIZE",
       "summary": null,
-      "purpose": "This paragraph performs the initialization tasks required before processing the IMS database. It accepts the current date and day from the system. It then opens the two output files, OPFILE1 and OPFILE2, for writing. It checks the file status after each OPEN operation (WS-OUTFL1-STATUS and WS-OUTFL2-STATUS). If the file status is not spaces or '00', indicating a successful open, it displays an error message and calls 9999-ABEND to terminate the program. Otherwise, the program continues. There is no specific input consumed by this paragraph other than system date and parameters. The outputs are the opened files OPFILE1 and OPFILE2. It does not call any other paragraphs other than 9999-ABEND in case of an error.",
+      "purpose": "1000-INITIALIZE handles program startup by accepting system dates into CURRENT-DATE and CURRENT-YYDDD, displaying startup messages including program name and date for logging (lines 17200-17900). It consumes no file or segment data but initializes WS variables implicitly via prior definitions. It produces open output files OPFILE1 and OPFILE2, checking FILE STATUS after each OPEN (lines 19610, 19690). Business logic validates open status: if not SPACES or '00', displays error and calls 9999-ABEND (lines 19620-19660, 19691-19695). No loops or complex decisions; purely sequential setup. Error handling is immediate abend on open failure to prevent processing with invalid files. It calls no other paragraphs but is invoked solely by MAIN-PARA. Exits cleanly to return control (line 19900). This ensures files are ready before unload loop begins.",
       "called_by": [
         "MAIN-PARA"
       ],
-      "calls": [
-        "9999-ABEND"
-      ],
+      "calls": [],
       "citation": [
-        173,
-        204
+        1690026,
+        1990026
       ],
       "outgoing_calls": [
         {
@@ -231,7 +256,44 @@
           "line": 199
         }
       ],
-      "incoming_calls": [],
+      "incoming_calls": [
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+          "function": "MAIN-PARA",
+          "line": 175,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+          "function": "MAIN-PARA",
+          "line": 169,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+          "function": "MAIN-PARA",
+          "line": 220,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "function": "MAIN-PARA",
+          "line": 164,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+          "function": "MAIN-PARA",
+          "line": 136,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+          "function": "MAIN-PARA",
+          "line": 157,
+          "call_type": "performs"
+        }
+      ],
       "is_dead_code": false,
       "dead_code_reason": null,
       "metadata": null
@@ -239,17 +301,16 @@
     {
       "paragraph_name": "2000-FIND-NEXT-AUTH-SUMMARY",
       "summary": null,
-      "purpose": "This paragraph retrieves the next pending authorization summary segment from the IMS database. It initializes the PAUT-PCB-STATUS field and then calls the CBLTDLI routine with the FUNC-GN (Get Next) function code to retrieve the next PAUTSUM0 segment using the ROOT-UNQUAL-SSA. After the IMS call, it checks the PAUT-PCB-STATUS. If the status is spaces, indicating a successful read, it increments counters WS-NO-SUMRY-READ and WS-AUTH-SMRY-PROC-CNT, moves the retrieved PENDING-AUTH-SUMMARY data to OPFIL1-REC, and writes the record to OPFILE1 if PA-ACCT-ID is numeric. It then calls 3000-FIND-NEXT-AUTH-DTL to process the child segments. If the PAUT-PCB-STATUS is 'GB' (End of Database), it sets the WS-END-OF-ROOT-SEG flag to 'Y' to terminate the main processing loop. If the PAUT-PCB-STATUS is neither spaces nor 'GB', it displays an error message and calls 9999-ABEND. The input is the IMS database and the output is the OPFILE1 file. The paragraph calls 3000-FIND-NEXT-AUTH-DTL to process child segments.",
+      "purpose": "2000-FIND-NEXT-AUTH-SUMMARY implements the outer loop logic for retrieving and processing each root PAUTSUM0 segment from IMS using unqualified GN call via CBLTDLI (lines 20700-21000). It consumes IMS root segments via PAUTBPCB and SSA ROOT-UNQUAL-SSA, initializing PCB status first (line 20660). It produces increments to counters WS-NO-SUMRY-READ and WS-AUTH-SMRY-PROC-CNT, writes the segment to OPFILE1 via MOVE and WRITE (lines 21900-21906), sets ROOT-SEG-KEY from PA-ACCT-ID (line 21903), and conditionally loops to child processing. Business logic checks PAUT-PCB-STATUS: SPACES triggers write and child loop if PA-ACCT-ID numeric (lines 21400-21910); 'GB' sets end-of-root flags (lines 21920-21950); other statuses display error/key feedback and abend (lines 22000-22600). Error handling abends on unexpected IMS statuses. It calls 3000-FIND-NEXT-AUTH-DTL repeatedly until WS-END-OF-CHILD-SEG='Y' (lines 21908-21909). This paragraph drives the core unload of roots and orchestrates nested child processing.",
       "called_by": [
         "MAIN-PARA"
       ],
       "calls": [
-        "3000-FIND-NEXT-AUTH-DTL",
-        "9999-ABEND"
+        "3000-FIND-NEXT-AUTH-DTL"
       ],
       "citation": [
-        207,
-        249
+        2020026,
+        2300026
       ],
       "outgoing_calls": [
         {
@@ -268,7 +329,32 @@
           "line": 246
         }
       ],
-      "incoming_calls": [],
+      "incoming_calls": [
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "function": "MAIN-PARA",
+          "line": 172,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "function": "MAIN-PARA",
+          "line": 164,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+          "function": "MAIN-PARA",
+          "line": 136,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+          "function": "MAIN-PARA",
+          "line": 157,
+          "call_type": "performs"
+        }
+      ],
       "is_dead_code": false,
       "dead_code_reason": null,
       "metadata": null
@@ -276,16 +362,14 @@
     {
       "paragraph_name": "3000-FIND-NEXT-AUTH-DTL",
       "summary": null,
-      "purpose": "This paragraph retrieves the next pending authorization detail segment (PAUTDTL1) for the current summary segment. It calls the CBLTDLI routine with the FUNC-GNP (Get Next within Parent) function code, using the CHILD-UNQUAL-SSA. After the call, it checks the PAUT-PCB-STATUS. If the status is spaces, indicating a successful read, it sets the MORE-AUTHS flag to TRUE, increments counters WS-NO-SUMRY-READ and WS-AUTH-SMRY-PROC-CNT, moves the PENDING-AUTH-DETAILS data to CHILD-SEG-REC, and writes the record to OPFILE2. If the PAUT-PCB-STATUS is 'GE' (Segment Not Found), it sets the WS-END-OF-CHILD-SEG flag to 'Y' to indicate that there are no more detail segments for the current summary segment. If the PAUT-PCB-STATUS is neither spaces nor 'GE', it displays an error message and calls 9999-ABEND. Finally, it initializes PAUT-PCB-STATUS. The input is the IMS database and the output is the OPFILE2 file. No other paragraphs are called other than 9999-ABEND in case of error.",
+      "purpose": "3000-FIND-NEXT-AUTH-DTL implements the inner loop for retrieving child PAUTDTL1 segments under the current root using GNP call via CBLTDLI with CHILD-UNQUAL-SSA (lines 23700-24000). It consumes IMS child segments qualified by parentage from prior root PA-ACCT-ID in ROOT-SEG-KEY. It produces increments to WS-NO-SUMRY-READ and WS-AUTH-SMRY-PROC-CNT (misnamed, but used here; lines 24400-24500), MOVE to CHILD-SEG-REC, and WRITE to OPFILE2 (lines 24600-24700). Business logic checks PAUT-PCB-STATUS post-GNP: SPACES sets MORE-AUTHS flag and writes record (lines 24200-24800); 'GE' sets WS-END-OF-CHILD-SEG='Y' to exit inner loop (lines 24900-25020); other statuses display error/key feedback and abend (lines 25200-25400). It reinitializes PCB status at end (line 25800). Error handling abends on GNP failures. Called repeatedly by 2000 until child end. This ensures all children per root are fully unloaded.",
       "called_by": [
         "2000-FIND-NEXT-AUTH-SUMMARY"
       ],
-      "calls": [
-        "9999-ABEND"
-      ],
+      "calls": [],
       "citation": [
-        253,
-        286
+        2340026,
+        2600026
       ],
       "outgoing_calls": [
         {
@@ -299,7 +383,38 @@
           "line": 282
         }
       ],
-      "incoming_calls": [],
+      "incoming_calls": [
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "function": "2000-FIND-NEXT-AUTH-SUMMARY",
+          "line": 245,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+          "function": "MAIN-PARA",
+          "line": 144,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "function": "2000-FIND-NEXT-AUTH-SUMMARY",
+          "line": 216,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+          "function": "MAIN-PARA",
+          "line": 136,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+          "function": "2000-FIND-NEXT-AUTH-SUMMARY",
+          "line": 207,
+          "call_type": "performs"
+        }
+      ],
       "is_dead_code": false,
       "dead_code_reason": null,
       "metadata": null
@@ -307,17 +422,42 @@
     {
       "paragraph_name": "4000-FILE-CLOSE",
       "summary": null,
-      "purpose": "This paragraph closes the output files OPFILE1 and OPFILE2. It displays a message indicating that the files are being closed. It then closes each file and checks the file status (WS-OUTFL1-STATUS and WS-OUTFL2-STATUS) after the CLOSE operation. If the file status is not spaces or '00', indicating a successful close, it displays an error message. The input to this paragraph is the open files OPFILE1 and OPFILE2. The output is the closed files. It does not call any other paragraphs.",
+      "purpose": "4000-FILE-CLOSE performs cleanup by closing OPFILE1 and OPFILE2, displaying closure message (lines 26310, 26400, 27100). It consumes file handles opened in 1000-INITIALIZE. It produces checked FILE STATUS post-close, continuing on SPACES/'00' or displaying errors without abend (lines 26600-27000, 27300-27600). No data writes or IMS calls; purely I/O termination. Business logic is conditional display-only on close errors, allowing graceful exit even on minor issues. No loops or calls to others. Invoked once by MAIN-PARA at end. Exits to GOBACK path. This finalizes output files safely.",
       "called_by": [
         "MAIN-PARA"
       ],
       "calls": [],
       "citation": [
-        289,
-        306
+        2630030,
+        2790030
       ],
       "outgoing_calls": [],
-      "incoming_calls": [],
+      "incoming_calls": [
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+          "function": "MAIN-PARA",
+          "line": 183,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+          "function": "MAIN-PARA",
+          "line": 169,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "function": "MAIN-PARA",
+          "line": 164,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+          "function": "MAIN-PARA",
+          "line": 157,
+          "call_type": "performs"
+        }
+      ],
       "is_dead_code": false,
       "dead_code_reason": null,
       "metadata": null
@@ -325,7 +465,7 @@
     {
       "paragraph_name": "9999-ABEND",
       "summary": null,
-      "purpose": "This paragraph handles abnormal termination of the program. It displays a message indicating that the program is abending. It sets the RETURN-CODE to 16 and terminates the program using GOBACK. The input is the error condition that led to the abend. There is no output other than the program termination. It does not call any other paragraphs.",
+      "purpose": "9999-ABEND is the centralized error termination routine, displaying abend message and setting RETURN-CODE to 16 before GOBACK (lines 36600-36800). It consumes WS error flags/statuses indirectly via callers. It produces non-zero return code for JCL failure. No inputs/outputs beyond display; no business logic or conditions checked here. Error handling is the purpose itself: unconditional abend. Called by 1000 on file open errors, 2000/3000 on IMS call failures. Ensures program does not continue on irrecoverable errors.",
       "called_by": [
         "1000-INITIALIZE",
         "2000-FIND-NEXT-AUTH-SUMMARY",
@@ -333,11 +473,174 @@
       ],
       "calls": [],
       "citation": [
-        308,
-        317
+        3630026,
+        3720026
       ],
       "outgoing_calls": [],
-      "incoming_calls": [],
+      "incoming_calls": [
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+          "function": "1000-INITIALIZE",
+          "line": 206,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+          "function": "2100-INSERT-ROOT-SEG",
+          "line": 261,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+          "function": "3100-INSERT-CHILD-SEG",
+          "line": 313,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+          "function": "3200-INSERT-IMS-CALL",
+          "line": 335,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "function": "2000-FIND-NEXT-AUTH-SUMMARY",
+          "line": 256,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "function": "3000-FIND-NEXT-AUTH-DTL",
+          "line": 293,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "function": "3100-INSERT-PARENT-SEG-GSAM",
+          "line": 314,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "function": "3200-INSERT-CHILD-SEG-GSAM",
+          "line": 333,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+          "function": "5000-DELETE-AUTH-DTL",
+          "line": 320,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+          "function": "6000-DELETE-AUTH-SUMMARY",
+          "line": 345,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+          "function": "9000-TAKE-CHECKPOINT",
+          "line": 369,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+          "function": "1000-INITIALIZE",
+          "line": 190,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+          "function": "2100-INSERT-ROOT-SEG",
+          "line": 242,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+          "function": "3100-INSERT-CHILD-SEG",
+          "line": 292,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+          "function": "3200-INSERT-IMS-CALL",
+          "line": 318,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "function": "2000-FIND-NEXT-AUTH-SUMMARY",
+          "line": 216,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "function": "3000-FIND-NEXT-AUTH-DTL",
+          "line": 263,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "function": "3100-INSERT-PARENT-SEG-GSAM",
+          "line": 300,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "function": "3200-INSERT-CHILD-SEG-GSAM",
+          "line": 319,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+          "function": "2000-FIND-NEXT-AUTH-SUMMARY",
+          "line": 216,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+          "function": "3000-FIND-NEXT-AUTH-DTL",
+          "line": 248,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+          "function": "5000-DELETE-AUTH-DTL",
+          "line": 303,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+          "function": "6000-DELETE-AUTH-SUMMARY",
+          "line": 328,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+          "function": "9000-TAKE-CHECKPOINT",
+          "line": 352,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+          "function": "1000-INITIALIZE",
+          "line": 173,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+          "function": "2000-FIND-NEXT-AUTH-SUMMARY",
+          "line": 207,
+          "call_type": "performs"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+          "function": "3000-FIND-NEXT-AUTH-DTL",
+          "line": 253,
+          "call_type": "performs"
+        }
+      ],
       "is_dead_code": false,
       "dead_code_reason": null,
       "metadata": null
@@ -345,151 +648,146 @@
   ],
   "error_handling": [
     {
-      "condition": "WS-OUTFL1-STATUS not equal to spaces or '00' during OPEN",
-      "action": "DISPLAY error message and PERFORM 9999-ABEND",
+      "condition": "WS-OUTFL1-STATUS or WS-OUTFL2-STATUS NOT = SPACES OR '00' after OPEN",
+      "action": "DISPLAY error and PERFORM 9999-ABEND",
       "citation": [
-        190,
-        191
+        19640,
+        19691
       ]
     },
     {
-      "condition": "WS-OUTFL2-STATUS not equal to spaces or '00' during OPEN",
-      "action": "DISPLAY error message and PERFORM 9999-ABEND",
+      "condition": "PAUT-PCB-STATUS NOT = SPACES AND NOT 'GB' after GN",
+      "action": "DISPLAY status/KEYFB and PERFORM 9999-ABEND",
       "citation": [
-        198,
-        199
+        22000
       ]
     },
     {
-      "condition": "PAUT-PCB-STATUS not equal to spaces or 'GB' after GN call",
-      "action": "DISPLAY error message and PERFORM 9999-ABEND",
+      "condition": "PAUT-PCB-STATUS NOT = SPACES AND NOT 'GE' after GNP",
+      "action": "DISPLAY status/KEYFB and PERFORM 9999-ABEND",
       "citation": [
-        244,
-        246
+        25200
       ]
     },
     {
-      "condition": "PAUT-PCB-STATUS not equal to spaces or 'GE' after GNP call",
-      "action": "DISPLAY error message and PERFORM 9999-ABEND",
+      "condition": "WS-OUTFL1-STATUS or WS-OUTFL2-STATUS NOT = SPACES OR '00' after CLOSE",
+      "action": "DISPLAY error (no abend)",
       "citation": [
-        280,
-        282
-      ]
-    },
-    {
-      "condition": "WS-OUTFL1-STATUS not equal to spaces or '00' during CLOSE",
-      "action": "DISPLAY error message",
-      "citation": [
-        269
-      ]
-    },
-    {
-      "condition": "WS-OUTFL2-STATUS not equal to spaces or '00' during CLOSE",
-      "action": "DISPLAY error message",
-      "citation": [
-        303
+        26800,
+        27500
       ]
     }
   ],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
+  "open_questions": [],
+  "resolved_questions": [],
+  "dead_code": [
     {
-      "question": "What is the purpose of the commented out ACCEPT PRM-INFO FROM SYSIN statement?",
-      "context": "The code is commented out, so it's unclear if it was intended to be used or if it's obsolete.",
-      "suggestion": "Check older versions of the code or related documentation to see if PRM-INFO was ever used."
+      "name": "9999-EXIT",
+      "artifact_type": "paragraph",
+      "line": 316,
+      "reason": "Paragraph '9999-EXIT' is never PERFORMed or referenced by any other paragraph or program"
+    },
+    {
+      "name": "CHILD-UNQUAL-SSA",
+      "artifact_type": "record_layout",
+      "line": 115,
+      "reason": "Record layout 'CHILD-UNQUAL-SSA' is never used by any program"
+    },
+    {
+      "name": "FUNC-CODES",
+      "artifact_type": "record_layout",
+      "line": 17,
+      "reason": "Record layout 'FUNC-CODES' is never used by any program"
+    },
+    {
+      "name": "OPFIL1-REC",
+      "artifact_type": "record_layout",
+      "line": 44,
+      "reason": "Record layout 'OPFIL1-REC' is never used by any program"
+    },
+    {
+      "name": "OPFIL2-REC",
+      "artifact_type": "record_layout",
+      "line": 46,
+      "reason": "Record layout 'OPFIL2-REC' is never used by any program"
+    },
+    {
+      "name": "PAUTBPCB",
+      "artifact_type": "record_layout",
+      "line": 17,
+      "reason": "Record layout 'PAUTBPCB' is never used by any program"
+    },
+    {
+      "name": "PRM-INFO",
+      "artifact_type": "record_layout",
+      "line": 119,
+      "reason": "Record layout 'PRM-INFO' is never used by any program"
+    },
+    {
+      "name": "ROOT-UNQUAL-SSA",
+      "artifact_type": "record_layout",
+      "line": 111,
+      "reason": "Record layout 'ROOT-UNQUAL-SSA' is never used by any program"
     }
   ],
-  "resolved_questions": [],
-  "dead_code": [],
   "call_semantics": [
     {
       "caller": "MAIN-PARA",
       "callee": "1000-INITIALIZE",
       "inputs": [],
-      "outputs": [
-        "CURRENT-DATE",
-        "CURRENT-YYDDD",
-        "WS-OUTFL1-STATUS",
-        "WS-OUTFL2-STATUS",
-        "WS-END-OF-ROOT-SEG"
-      ],
-      "purpose": "Initializes the program by accepting current date and opening output files, setting up environment for processing."
+      "outputs": [],
+      "purpose": null
     },
     {
       "caller": "MAIN-PARA",
       "callee": "2000-FIND-NEXT-AUTH-SUMMARY",
-      "inputs": [
-        "WS-END-OF-ROOT-SEG"
-      ],
-      "outputs": [
-        "WS-NO-SUMRY-READ",
-        "WS-AUTH-SMRY-PROC-CNT",
-        "OPFIL1-REC",
-        "ROOT-SEG-KEY",
-        "WS-END-OF-CHILD-SEG",
-        "WS-END-OF-ROOT-SEG"
-      ],
-      "purpose": "Reads the next authorization summary segment from IMS database and processes its child segments if available."
+      "inputs": [],
+      "outputs": [],
+      "purpose": null
     },
     {
       "caller": "MAIN-PARA",
       "callee": "4000-FILE-CLOSE",
-      "inputs": [
-        "WS-OUTFL1-STATUS",
-        "WS-OUTFL2-STATUS"
-      ],
+      "inputs": [],
       "outputs": [],
-      "purpose": "Closes the output files and displays error messages if closing fails."
+      "purpose": null
     },
     {
       "caller": "1000-INITIALIZE",
       "callee": "9999-ABEND",
-      "inputs": [
-        "WS-OUTFL1-STATUS",
-        "WS-OUTFL2-STATUS"
-      ],
-      "outputs": [
-        "RETURN-CODE"
-      ],
-      "purpose": "Terminates the program with a return code of 16 upon encountering a critical error during initialization."
+      "inputs": [],
+      "outputs": [],
+      "purpose": null
     },
     {
       "caller": "1000-INITIALIZE",
       "callee": "9999-ABEND",
-      "inputs": [
-        "WS-OUTFL1-STATUS",
-        "WS-OUTFL2-STATUS"
-      ],
-      "outputs": [
-        "RETURN-CODE"
-      ],
-      "purpose": "Terminates the program with a return code of 16 upon encountering a critical error during initialization."
+      "inputs": [],
+      "outputs": [],
+      "purpose": null
     },
     {
       "caller": "2000-FIND-NEXT-AUTH-SUMMARY",
       "callee": "3000-FIND-NEXT-AUTH-DTL",
-      "inputs": [
-        "WS-END-OF-CHILD-SEG"
-      ],
-      "outputs": [
-        "WS-END-OF-CHILD-SEG"
-      ],
-      "purpose": "Processes all child detail segments for the current root summary segment by reading and writing them until no more child segments are found."
+      "inputs": [],
+      "outputs": [],
+      "purpose": null
     },
     {
       "caller": "2000-FIND-NEXT-AUTH-SUMMARY",
       "callee": "9999-ABEND",
       "inputs": [],
       "outputs": [],
-      "purpose": "Terminates the program with a return code of 16 when an unexpected IMS status code is encountered during root segment retrieval."
+      "purpose": null
     },
     {
       "caller": "3000-FIND-NEXT-AUTH-DTL",
       "callee": "9999-ABEND",
       "inputs": [],
       "outputs": [],
-      "purpose": "Terminates the program with a return code of 16 when an unexpected IMS status code is encountered during child segment retrieval."
+      "purpose": null
     }
   ],
   "flow_diagram": "flowchart TD\n    %% Title: PAUDBUNL.CBL\n    1000_EXIT[\"1000-EXIT\"]\n    1000_INITIALIZE[\"1000-INITIALIZE\"]\n    9999_ABEND[\"9999-ABEND\"]\n    2000_EXIT[\"2000-EXIT\"]\n    2000_FIND_NEXT_AUTH_SUMMARY[\"2000-FIND-NEXT-AUTH-SUMMARY\"]\n    3000_FIND_NEXT_AUTH_DTL[\"3000-FIND-NEXT-AUTH-DTL\"]\n    CBLTDLI__ext([\"CBLTDLI\"])\n    3000_EXIT[\"3000-EXIT\"]\n    4000_EXIT[\"4000-EXIT\"]\n    4000_FILE_CLOSE[\"4000-FILE-CLOSE\"]\n    9999_EXIT[\"9999-EXIT\"]\n    MAIN_PARA[\"MAIN-PARA\"]\n    1000_INITIALIZE --> 9999_ABEND\n    2000_FIND_NEXT_AUTH_SUMMARY --> 3000_FIND_NEXT_AUTH_DTL\n    2000_FIND_NEXT_AUTH_SUMMARY --> 9999_ABEND\n    2000_FIND_NEXT_AUTH_SUMMARY -.->|calls| CBLTDLI__ext\n    3000_FIND_NEXT_AUTH_DTL --> 9999_ABEND\n    3000_FIND_NEXT_AUTH_DTL -.->|calls| CBLTDLI__ext\n    MAIN_PARA --> 1000_INITIALIZE\n    MAIN_PARA --> 2000_FIND_NEXT_AUTH_SUMMARY\n    MAIN_PARA --> 4000_FILE_CLOSE"

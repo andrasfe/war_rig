@@ -1,34 +1,138 @@
 {
   "header": {
     "program_id": "PAUTBPCB",
-    "file_name": "PAUTBPCB.CPY",
+    "file_name": "cpy/PAUTBPCB.CPY",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-24T17:38:24.483322",
+    "analyzed_at": "2026-02-25T15:28:48.076025",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the structure PAUTBPCB, which appears to be related to IMS PCB (Program Communication Block) information based on the field names. It contains fields for DBD name, segment level, PCB status, processing options, segment name, key feedback name, number of sensitive segments, and key feedback.",
-    "business_context": null,
-    "program_type": "COPYBOOK",
+    "summary": "This copybook defines the IMS Program Communication Block (PCB) structure PAUTBPCB used for DL/I database access to the PAUTB database. It includes fields for DBD name, segment level, PCB status, processing options, segment name, key feedback length, number of sensitive segments, and the key feedback buffer. The structure matches the standard IMS DB PCB layout for program-IMS communication.",
+    "business_context": "IMS DL/I hierarchical database access control block for PAUTB database",
+    "program_type": "UTILITY",
     "citations": [
-      17,
-      18,
-      26
+      17
     ]
   },
-  "inputs": [],
-  "outputs": [],
+  "inputs": [
+    {
+      "name": "PAUT-DBDNAME",
+      "io_type": "OTHER",
+      "description": "Database DBD name provided by IMS control region",
+      "copybook": null,
+      "citation": [
+        18
+      ]
+    },
+    {
+      "name": "PAUT-PCB-PROCOPT",
+      "io_type": "OTHER",
+      "description": "Processing options from PSB definition, provided by IMS",
+      "copybook": null,
+      "citation": [
+        21
+      ]
+    },
+    {
+      "name": "PAUT-KEYFB-NAME",
+      "io_type": "OTHER",
+      "description": "Key feedback area name/offset provided by IMS",
+      "copybook": null,
+      "citation": [
+        24
+      ]
+    },
+    {
+      "name": "PAUT-NUM-SENSEGS",
+      "io_type": "OTHER",
+      "description": "Number of sensitive segments from PSB, provided by IMS",
+      "copybook": null,
+      "citation": [
+        25
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "PAUT-SEG-LEVEL",
+      "io_type": "OTHER",
+      "description": "Segment hierarchical level filled by IMS after retrieval call",
+      "copybook": null,
+      "citation": [
+        19
+      ]
+    },
+    {
+      "name": "PAUT-PCB-STATUS",
+      "io_type": "OTHER",
+      "description": "Status code set by IMS after each DL/I call",
+      "copybook": null,
+      "citation": [
+        20
+      ]
+    },
+    {
+      "name": "PAUT-SEG-NAME",
+      "io_type": "OTHER",
+      "description": "Name of the retrieved segment filled by IMS",
+      "copybook": null,
+      "citation": [
+        23
+      ]
+    },
+    {
+      "name": "PAUT-KEYFB",
+      "io_type": "OTHER",
+      "description": "Key feedback buffer populated by IMS with concatenated keys",
+      "copybook": null,
+      "citation": [
+        26
+      ]
+    }
+  ],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
     "entry_points": [],
-    "linkage_section": []
+    "linkage_section": [
+      "PAUTBPCB"
+    ]
   },
-  "business_rules": [],
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Fields must conform to defined PIC sizes and types for IMS PCB compatibility",
+      "logic_summary": "PIC clauses enforce data formats matching IMS expectations",
+      "conditions": [
+        "PAUT-DBDNAME PIC X(08)",
+        "PAUT-PCB-STATUS PIC X(02)",
+        "PAUT-KEYFB PIC X(255)"
+      ],
+      "citation": [
+        18,
+        20,
+        26
+      ]
+    }
+  ],
   "data_flow": {
-    "reads_from": [],
+    "reads_from": [
+      {
+        "source": "IMS",
+        "fields_used": [
+          "PAUT-DBDNAME",
+          "PAUT-PCB-PROCOPT",
+          "PAUT-NUM-SENSEGS"
+        ],
+        "citation": [
+          18,
+          21,
+          25
+        ]
+      }
+    ],
     "writes_to": [],
     "transforms": []
   },
@@ -37,31 +141,49 @@
     {
       "paragraph_name": "PAUTBPCB",
       "summary": null,
-      "purpose": "This copybook defines the data structure PAUTBPCB, which is likely used to hold information related to an IMS Program Communication Block (PCB). The structure contains fields that describe the database (PAUT-DBDNAME), segment level (PAUT-SEG-LEVEL), PCB status (PAUT-PCB-STATUS), processing options (PAUT-PCB-PROCOPT), and segment name (PAUT-SEG-NAME). It also includes fields for key feedback name (PAUT-KEYFB-NAME), the number of sensitive segments (PAUT-NUM-SENSEGS), and the key feedback itself (PAUT-KEYFB). This copybook does not perform any processing or logic itself; it merely defines a data structure that other programs can use to access and manipulate PCB-related data. The fields within PAUTBPCB are used to store information retrieved from or passed to IMS during database operations. The copybook is intended to be included in the WORKING-STORAGE SECTION or LINKAGE SECTION of a COBOL program that interacts with an IMS database.",
+      "purpose": "This structure defines the complete IMS Database PCB at level 01, serving as the communication interface between the application program and IMS DL/I for the PAUTB database. It is typically referenced in the LINKAGE SECTION and addressed via the PCB pointer provided by IMS upon program entry. The primary purpose is to hold input control information from IMS/PSB and receive output feedback from DL/I calls such as GU, GN, ISRT. Inputs consumed are the pre-filled fields from IMS: PAUT-DBDNAME with the 8-character DBD name (line 18), PAUT-PCB-PROCOPT with 4-character processing options like 'GO  ' or 'GU  ' (line 21), PAUT-KEYFB-NAME as a 5-digit COMP offset to the key feedback area (line 24), and PAUT-NUM-SENSEGS indicating sensitive segment count (line 25). Outputs produced are fields updated by IMS after each DL/I call: PAUT-SEG-LEVEL with the 2-digit segment level (line 19), PAUT-PCB-STATUS with 2-character status codes (line 20), PAUT-SEG-NAME with the 8-character segment name (line 23), and PAUT-KEYFB with up to 255 bytes of key data (line 26). A FILLER field at line 22 reserves space per IMS PCB layout. No business logic, decisions, or validations are implemented here, as this is purely a data definition copybook; logic is in the consuming program. Error handling is not defined in this structure but relies on the program checking PAUT-PCB-STATUS for codes like spaces (success) or 'GE' (end of SSAs). This structure does not call any paragraphs or programs; it is used in EXEC DLI statements by name. The overall role is to enable safe database navigation and error detection in IMS batch or online programs.",
       "called_by": [],
       "calls": [],
       "citation": [
         17,
-        27
+        26
       ],
       "outgoing_calls": [],
       "incoming_calls": [
         {
-          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
-          "function": "PAUDBUNL",
-          "line": 150,
-          "call_type": "includes"
-        },
-        {
-          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
           "function": "PAUDBLOD",
           "line": 161,
           "call_type": "includes"
         },
         {
-          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
           "function": "DBUNLDGS",
           "line": 154,
+          "call_type": "includes"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+          "function": "PAUDBUNL",
+          "line": 150,
+          "call_type": "includes"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+          "function": "PAUDBLOD",
+          "line": 1,
+          "call_type": "includes"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "function": "DBUNLDGS",
+          "line": 1,
+          "call_type": "includes"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+          "function": "PAUDBUNL",
+          "line": 1,
           "call_type": "includes"
         }
       ],
@@ -73,13 +195,7 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
-    {
-      "question": "What is the specific purpose of each field within the PAUTBPCB structure in the context of IMS database operations?",
-      "context": "The copybook defines the structure, but the exact usage of each field within an IMS environment is unclear without further context.",
-      "suggestion": "Review the programs that use this copybook to understand how each field is populated and used."
-    }
-  ],
+  "open_questions": [],
   "resolved_questions": [],
   "dead_code": [
     {

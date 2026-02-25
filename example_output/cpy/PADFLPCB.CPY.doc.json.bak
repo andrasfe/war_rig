@@ -1,21 +1,19 @@
 {
   "header": {
     "program_id": "PADFLPCB",
-    "file_name": "PADFLPCB.CPY",
+    "file_name": "cpy/PADFLPCB.CPY",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-24T17:38:01.898397",
+    "analyzed_at": "2026-02-25T15:32:43.048068",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the structure PADFLPCB, which appears to be related to IMS database Program Communication Blocks (PCBs). It contains fields for database name, segment level, PCB status, processing options, segment name, key feedback information, number of sensitive segments, and key feedback area. The structure likely facilitates communication and data transfer between a COBOL program and an IMS database.",
-    "business_context": null,
-    "program_type": "SUBROUTINE",
+    "summary": "This COBOL copybook defines the PADFLPCB level-01 group item, which maps the standard IMS Database Program Control Block (DBPCB) structure. It provides named fields for accessing IMS-provided PCB data such as database name, segment level, status codes, processing options, segment feedback, and key feedback information used in DL/I database calls.",
+    "business_context": "IMS DL/I hierarchical database access in mainframe batch or online programs, enabling programs to retrieve feedback from IMS after database calls like GU, GN, ISRT, etc.",
+    "program_type": "UTILITY",
     "citations": [
-      17,
-      18,
-      26
+      17
     ]
   },
   "inputs": [],
@@ -37,19 +35,25 @@
     {
       "paragraph_name": "PADFLPCB",
       "summary": null,
-      "purpose": "This copybook defines the data structure PADFLPCB, which is likely used to interface with an IMS (Information Management System) database.  The primary purpose of this structure is to provide a standardized layout for accessing and manipulating data within an IMS database environment. It defines various fields related to the database and segment information. PADFL-DBDNAME (line 18) stores the name of the database. PADFL-SEG-LEVEL (line 19) indicates the hierarchical level of the segment being accessed. PADFL-PCB-STATUS (line 20) provides status information related to the PCB. PADFL-PCB-PROCOPT (line 21) specifies the processing options for the PCB. PADFL-SEG-NAME (line 23) contains the name of the segment. PADFL-KEYFB-NAME (line 24) and PADFL-NUM-SENSEGS (line 25) store key feedback name and number of sensitive segments respectively. Finally, PADFL-KEYFB (line 26) provides a key feedback area, holding information about the key of the accessed segment. This structure does not perform any direct business logic or error handling; it merely defines the data layout. It is expected that a COBOL program using this copybook will populate and interpret these fields to interact with the IMS database.",
+      "purpose": "PADFLPCB is the primary level-01 data structure defined in this copybook (lines 17-26), serving as the IMS Database PCB (DBPCB) mapping for DL/I database interactions. Its role is to provide symbolically named fields overlaying the fixed binary layout of the PCB supplied by IMS to the application program. It consumes no runtime inputs itself, as the fields are populated by the IMS control region during program execution and after each DL/I call. The structure produces accessible output fields for the program to read, including PADFL-DBDNAME (line 18, PIC X(08), the 8-character database name), PADFL-SEG-LEVEL (line 19, PIC X(02), the 2-character current segment level returned by IMS), PADFL-PCB-STATUS (line 20, PIC X(02), 2-character PCB status such as spaces for success, 'GE' for database end, 'IK' for key invalid), PADFL-PCB-PROCOPT (line 21, PIC X(04), 4-character processing options like 'GO  ' for get unique), FILLER (line 22, PIC S9(05) COMP, reserved or alignment bytes), PADFL-SEG-NAME (line 23, PIC X(08), 8-character feedback name of the segment retrieved), PADFL-KEYFB-NAME (line 24, PIC S9(05) COMP, offset or identifier for first key feedback field name), PADFL-NUM-SENSEGS (line 25, PIC S9(05) COMP, number of parent-sensitive segments for this PCB), and PADFL-KEYFB (line 26, PIC X(255), variable-length key feedback area containing concatenated key values from IMS). No business logic, conditions, or decisions are implemented, as this is a pure data definition with no executable statements. There is no error handling defined within the structure; error checking is performed by the using program inspecting fields like PADFL-PCB-STATUS post-DL/I call. No paragraphs or external programs are called or invoked from here, as it is not procedural code. Typically copied into the LINKAGE SECTION of an IMS application for direct access to IMS-provided PCB data.",
       "called_by": [],
       "calls": [],
       "citation": [
         17,
-        27
+        26
       ],
       "outgoing_calls": [],
       "incoming_calls": [
         {
-          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
           "function": "DBUNLDGS",
           "line": 156,
+          "call_type": "includes"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "function": "DBUNLDGS",
+          "line": 1,
           "call_type": "includes"
         }
       ],
@@ -61,13 +65,7 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
-    {
-      "question": "What is the specific purpose of FILLER PIC S9(05) COMP (line 22)?",
-      "context": "The purpose of this filler field is unclear without more context.",
-      "suggestion": "Examine the COBOL program(s) that use this copybook to understand how this filler field is used, or if it is truly just padding."
-    }
-  ],
+  "open_questions": [],
   "resolved_questions": [],
   "dead_code": [
     {

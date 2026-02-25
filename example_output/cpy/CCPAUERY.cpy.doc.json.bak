@@ -1,21 +1,21 @@
 {
   "header": {
     "program_id": "CCPAUERY",
-    "file_name": "CCPAUERY.cpy",
+    "file_name": "cpy/CCPAUERY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-24T17:38:37.303539",
+    "analyzed_at": "2026-02-25T15:31:40.484893",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the data structure for an error log record, used for logging errors related to pending authorizations. It includes fields for date, time, application, program, location, error level, subsystem, error codes, message, and event key.",
-    "business_context": null,
-    "program_type": "COPYBOOK",
+    "summary": "This copybook defines the ERROR-LOG-RECORD structure for logging errors in pending authorization processes. It includes fields for timestamp (ERR-DATE, ERR-TIME), identifiers (ERR-APPLICATION, ERR-PROGRAM, ERR-LOCATION), severity (ERR-LEVEL with 88-level conditions), subsystem (ERR-SUBSYSTEM with 88-level conditions), error codes (ERR-CODE-1, ERR-CODE-2), message (ERR-MESSAGE), and event key (ERR-EVENT-KEY). The structure standardizes error logging across mainframe applications.",
+    "business_context": "Facilitates standardized error logging for pending authorization errors in COBOL mainframe applications, as indicated by the header documentation.",
+    "program_type": "UTILITY",
     "citations": [
+      1,
       2,
-      19,
-      39
+      19
     ]
   },
   "inputs": [],
@@ -26,7 +26,46 @@
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [],
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "Defines valid error severity levels using condition names on ERR-LEVEL field.",
+      "logic_summary": "88-level condition names enforce standardization: ERR-LOG ('L'), ERR-INFO ('I'), ERR-WARNING ('W'), ERR-CRITICAL ('C').",
+      "conditions": [
+        "ERR-LOG VALUE 'L'",
+        "ERR-INFO VALUE 'I'",
+        "ERR-WARNING VALUE 'W'",
+        "ERR-CRITICAL VALUE 'C'"
+      ],
+      "citation": [
+        26,
+        27,
+        28,
+        29
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "Defines valid error subsystems using condition names on ERR-SUBSYSTEM field.",
+      "logic_summary": "88-level condition names enforce standardization: ERR-APP ('A'), ERR-CICS ('C'), ERR-IMS ('I'), ERR-DB2 ('D'), ERR-MQ ('M'), ERR-FILE ('F').",
+      "conditions": [
+        "ERR-APP VALUE 'A'",
+        "ERR-CICS VALUE 'C'",
+        "ERR-IMS VALUE 'I'",
+        "ERR-DB2 VALUE 'D'",
+        "ERR-MQ VALUE 'M'",
+        "ERR-FILE VALUE 'F'"
+      ],
+      "citation": [
+        31,
+        32,
+        33,
+        34,
+        35,
+        36
+      ]
+    }
+  ],
   "data_flow": {
     "reads_from": [],
     "writes_to": [],
@@ -47,9 +86,15 @@
       "outgoing_calls": [],
       "incoming_calls": [
         {
-          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
           "function": "COPAUA0C",
           "line": 185,
+          "call_type": "includes"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+          "function": "COPAUA0C",
+          "line": 1,
           "call_type": "includes"
         }
       ],

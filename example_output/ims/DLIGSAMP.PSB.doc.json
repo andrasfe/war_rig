@@ -1,25 +1,69 @@
 {
   "header": {
     "program_id": "DLIGSAMP",
-    "file_name": "DLIGSAMP.PSB",
+    "file_name": "ims/DLIGSAMP.PSB",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-24T17:35:27.512443",
+    "analyzed_at": "2026-02-25T15:31:46.361586",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This PSB (Program Specification Block) defines the database access characteristics for an IMS (Information Management System) application. It specifies the PCBs (Program Communication Blocks) that the application will use to interact with databases and GSAM (Generalized Sequential Access Method) files, defining segment names, parent-child relationships, and processing options.",
+    "summary": "This file is a Program Specification Block (PSB) source definition for the IMS DL/I application program DLIGSAMP, generated for COBOL language with no compatibility mode. It defines a database PCB named PAUTBPCB for the hierarchical IMS database DBPAUTP0 with PROCOPT=GOTP and KEYLEN=14, including root segment PAUTSUM0 and child segment PAUTDTL1. It also defines two GSAM PCBs for sequential access to databases PASFLDBD and PADFLDBD with PROCOPT=LS.",
     "business_context": null,
-    "program_type": "UTILITY",
+    "program_type": "BATCH",
     "citations": [
+      17,
       18,
+      19,
+      20,
       21,
+      22,
       23
     ]
   },
-  "inputs": [],
-  "outputs": [],
+  "inputs": [
+    {
+      "name": "DBPAUTP0",
+      "io_type": "IMS_SEGMENT",
+      "description": "IMS hierarchical database accessed via PAUTBPCB PCB with segments PAUTSUM0 (PARENT=0) and PAUTDTL1 (PARENT=PAUTSUM0)",
+      "copybook": null,
+      "citation": [
+        18,
+        19,
+        20
+      ]
+    },
+    {
+      "name": "PASFLDBD",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "GSAM database PCB with PROCOPT=LS for low-sequence access",
+      "copybook": null,
+      "citation": [
+        21
+      ]
+    },
+    {
+      "name": "PADFLDBD",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "GSAM database PCB with PROCOPT=LS for low-sequence access",
+      "copybook": null,
+      "citation": [
+        22
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "DLIGSAMP",
+      "io_type": "OTHER",
+      "description": "Generated PSB load module for use by the DLIGSAMP COBOL application program",
+      "copybook": null,
+      "citation": [
+        23
+      ]
+    }
+  ],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
@@ -39,9 +83,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What specific application uses this PSB?",
-      "context": "The PSB itself doesn't contain information about the application it's used by.",
-      "suggestion": "Review application JCL or documentation referencing this PSB."
+      "question": "What is the specific business process served by the DLIGSAMP program using this PSB?",
+      "context": "The file contains only IMS PSBGEN macros, license header, and no descriptive comments on business logic or application purpose.",
+      "suggestion": "Review the COBOL source code for the DLIGSAMP program that references this PSB via the PCB masks."
     }
   ],
   "resolved_questions": [],

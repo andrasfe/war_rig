@@ -1,23 +1,44 @@
 {
   "header": {
     "program_id": "COPAU00",
-    "file_name": "COPAU00.cpy",
+    "file_name": "cpy-bms/COPAU00.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-24T17:38:57.497823",
+    "analyzed_at": "2026-02-25T15:28:17.388472",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the BMS map structure for screen input and output related to an UNKNOWN program. It likely contains field definitions, attributes, and screen layout information used by CICS applications.",
-    "business_context": null,
+    "summary": "This COBOL copybook defines the symbolic maps for the COPAU00 BMS screen in a CICS environment. COPAU0AI provides the input map with field lengths (L), format flags (F), attributes (A), and input data (I) for all screen fields. COPAU0AO redefines the area for output with separate attribute bytes (C, P, H, V) and output data (O) to support screen rendering of customer account details, limits, balances, counts, recent transactions, and error messages.",
+    "business_context": "CICS online screen for customer account inquiry or maintenance in a financial/banking system, displaying header info (program/transaction names, titles, date/time), customer details (ID, name, address, status, phone), account metrics (approved/declined counts, credit/cash limits and balances), up to 5 recent transactions (ID, date, time, type, approval, status, amount), selectors, and error messages.",
     "program_type": "ONLINE_CICS",
     "citations": [
-      1
+      17,
+      391
     ]
   },
-  "inputs": [],
-  "outputs": [],
+  "inputs": [
+    {
+      "name": "COPAU0AI",
+      "io_type": "CICS_MAP",
+      "description": "Input symbolic map area with packed field definitions: length (COMP S9(4)), flag (X), redefined attribute (X), and input data (PIC X(n)) for screen fields including TRNNAMEI, TITLE01I, CURDATEI, PGMNAMEI, TITLE02I, CURTIMEI, ACCTIDI, CNAMEI, CUSTIDI, ADDR001I, ACCSTATI, ADDR002I, PHONE1I, APPRCNTI, DECLCNTI, CREDLIMI, CASHLIMI, APPRAMTI, CREDBALI, CASHBALI, DECLAMTI, multiple transaction fields (SEL000XI/TRNID0XI/PDATE0XI etc.), and ERRMSGI.",
+      "copybook": null,
+      "citation": [
+        17
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "COPAU0AO",
+      "io_type": "CICS_MAP",
+      "description": "Output symbolic map area redefining COPAU0AI, with separate attribute bytes (C/P/H/V PIC X each) and output data (O PIC X(n)) for all screen fields, enabling BMS SEND MAP operations to display formatted account summary and transactions.",
+      "copybook": null,
+      "citation": [
+        391
+      ]
+    }
+  ],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
@@ -33,14 +54,43 @@
   "copybooks_used": [],
   "paragraphs": [
     {
-      "paragraph_name": "COPAU0AI",
+      "paragraph_name": "COPAU00",
       "summary": null,
-      "purpose": "This data structure defines the input layout for the BMS map. It contains fields for transaction name (TRNNAMEL, TRNNAMEF, TRNNAMEI), titles (TITLE01L, TITLE01F, TITLE01I, TITLE02L, TITLE02F, TITLE02I), current date and time (CURDATEL, CURDATEF, CURDATEI, CURTIMEL, CURTIMEF, CURTIMEI), and customer account information such as account ID (ACCTIDL, ACCTIDF, ACCTIDI), customer name (CNAMEL, CNAMEF, CNAMEI), customer ID (CUSTIDL, CUSTIDF, CUSTIDI), address (ADDR001L, ADDR001F, ADDR001I, ADDR002L, ADDR002F, ADDR002I), account status (ACCSTATL, ACCSTATF, ACCSTATI), and phone number (PHONE1L, PHONE1F, PHONE1I). It also includes fields related to credit limits, cash limits, approved amounts, credit balances, cash balances, declined amounts, and transaction details (SEL0001L to PAMT005I). Finally, it contains a field for error messages (ERRMSGL, ERRMSGF, ERRMSGI). The fields ending in 'L' represent the length of the field, 'F' is a flag or attribute byte, and 'I' is the actual input data. This structure is used to receive data from the CICS terminal.",
+      "purpose": "[Citadel] Paragraph identified by static analysis",
       "called_by": [],
       "calls": [],
       "citation": [
-        17,
-        390
+        1,
+        1
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+          "function": "COPAUS0C",
+          "line": 129,
+          "call_type": "includes"
+        },
+        {
+          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+          "function": "COPAUS0C",
+          "line": 1,
+          "call_type": "includes"
+        }
+      ],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "COPAU0AI",
+      "summary": null,
+      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1,
+        1
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
@@ -49,40 +99,23 @@
       "metadata": {
         "body_chunks": 8
       }
-    },
-    {
-      "paragraph_name": "COPAU0AO",
-      "summary": null,
-      "purpose": "This data structure, which redefines COPAU0AI, defines the output layout for the BMS map. It contains similar fields as COPAU0AI, but the fields are structured for output to the CICS terminal. The fields ending in 'C', 'P', 'H', and 'V' are attribute characters used to control the display characteristics of the output fields. The fields ending in 'O' represent the actual output data to be displayed on the screen. This structure is used to format and send data to the CICS terminal for display.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        391,
-        549
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
     }
   ],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
+  "open_questions": [],
+  "resolved_questions": [
     {
-      "question": "What is the purpose of this BMS map?",
-      "context": "The code provides no context about the application or function of this map.",
-      "suggestion": "Examine the CICS program(s) that use this map to understand its role."
-    },
-    {
-      "question": "What are the specific definitions and attributes of the fields within the map?",
-      "context": "The provided code snippet is incomplete, lacking the actual field definitions.",
-      "suggestion": "Obtain the complete copybook source to analyze the field definitions and their attributes."
+      "original_question": "Which CICS programs include this copybook and use the COPAU00 map?",
+      "original_context": "Copybook does not specify including programs; usage inferred from BMS naming convention but not explicit.",
+      "answer": "**COPAUS0C** (in file `cbl/COPAUS0C.cbl`) is the only CICS program that includes the `COPAU00` copybook and uses the `COPAU00` mapset.\n\n### Evidence from Code Searches:\n- **Copybook Inclusion**:\n  - Line 129: `COPY COPAU00.` (exact match for `COPY\\s+COPAU00`; no other files match).\n\n- **Mapset Usage** (via `MAPSET('COPAU00')` with `MAP('COPAU0A')`):\n  | Line | Context | Statement |\n  |------|---------|-----------|\n  | 697  | SEND FROM(COPAU0AO) | `EXEC CICS SEND MAP('COPAU0A') MAPSET('COPAU00') ...` |\n  | 705  | SEND FROM(COPAU0AO) | `EXEC CICS SEND MAP('COPAU0A') MAPSET('COPAU00') ...` |\n  | 717  | RECEIVE INTO(COPAU0AI) | `EXEC CICS RECEIVE MAP('COPAU0A') MAPSET('COPAU00') INTO(COPAU0AI) ...` |\n\nNo other `.cbl` files reference `COPY COPAU00`, `MAPSET('COPAU00')`, `MAP('COPAU00')`, `SEND MAP('COPAU00')`, or `RECEIVE MAP('COPAU00')`. This confirms exclusive usage by COPAUS0C for screen I/O with the symbolic maps (COPAU0AI for input, COPAU0AO for output).",
+      "confidence": "HIGH",
+      "resolved_by": "CODEWHISPER",
+      "cycle_resolved": 1,
+      "tool_calls_used": 4
     }
   ],
-  "resolved_questions": [],
   "dead_code": [
     {
       "name": "COPAU0AI",

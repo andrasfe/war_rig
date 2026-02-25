@@ -1,28 +1,33 @@
 ```cobol
-       PROCESS-PF7-KEY.
-      *****************************************************************
 
-           IF CDEMO-CPVS-PAGE-NUM > 1
-              COMPUTE CDEMO-CPVS-PAGE-NUM = CDEMO-CPVS-PAGE-NUM - 1
+                  STRING
+                  ' System error while reading AUTH Details: Code:'
+                  IMS-RETURN-CODE
+                  DELIMITED BY SIZE
+                  INTO WS-MESSAGE
+                  END-STRING
+                  MOVE -1       TO ACCTIDL OF COPAU0AI
+                  PERFORM SEND-PAULST-SCREEN
+           END-EVALUATE
 
-              MOVE CDEMO-CPVS-PAUKEY-PREV-PG(CDEMO-CPVS-PAGE-NUM)
-                                           TO WS-AUTH-KEY-SAVE
-              PERFORM GET-AUTH-SUMMARY
-
-              SET SEND-ERASE-NO            TO TRUE
-
-              SET NEXT-PAGE-YES            TO TRUE
-              MOVE -1                      TO ACCTIDL OF COPAU0AI
-
-              PERFORM INITIALIZE-AUTH-DATA
-
-              PERFORM PROCESS-PAGE-FORWARD
-           ELSE
-              MOVE 'You are already at the top of the page...' TO
-                               WS-MESSAGE
-              SET SEND-ERASE-NO            TO TRUE
-           END-IF
            .
-
       *****************************************************************
+       REPOSITION-AUTHORIZATIONS.
+      *****************************************************************
+
+           MOVE WS-AUTH-KEY-SAVE          TO PA-AUTHORIZATION-KEY
+
+           EXEC DLI GNP USING PCB(PAUT-PCB-NUM)
+               SEGMENT (PAUTDTL1)
+               INTO (PENDING-AUTH-DETAILS)
+               WHERE (PAUT9CTS = PA-AUTHORIZATION-KEY)
+           END-EXEC
+
+           MOVE DIBSTAT                          TO IMS-RETURN-CODE
+           EVALUATE TRUE
+               WHEN STATUS-OK
+                  SET AUTHS-NOT-EOF              TO TRUE
+               WHEN SEGMENT-NOT-FOUND
+               WHEN END-OF-DB
+                  SET AUTHS-EOF                  TO TRUE
 ```

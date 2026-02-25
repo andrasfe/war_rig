@@ -3,435 +3,52 @@
     "program_id": "COPAU01",
     "file_name": "COPAU01.bms",
     "file_type": "BMS",
-    "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-24T17:38:07.760747",
+    "analyzed_by": "Scribe",
+    "analyzed_at": "2026-02-25T15:29:03.102221",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This BMS map defines the screen layout for the 'Pending Authorization Details' screen in the CardDemo application. It specifies the position, size, color, and attributes of various fields displayed on the screen, including transaction details, card information, authorization data, and merchant details. The map also includes function key assignments for navigation and fraud management.",
-    "business_context": "This screen is likely used to display and manage pending card authorization details within a card processing or fraud management system.",
+    "summary": "This BMS file defines the COPAU01 mapset with the COPAU1A map for displaying 'Pending Authorization Details Screen' in a CICS online application called CardDemo. The screen layout includes fields for transaction details such as card number, authorization date/time/response/code/amount/type/source, merchant details (name, ID, city, state, zip, MCC), fraud/match status, and error messaging. It supports input/output mode with auto storage, free cursor, and alarm control.",
+    "business_context": "Serves the CardDemo application for viewing pending credit card authorization details in a CICS transaction processing environment.",
     "program_type": "ONLINE_CICS",
     "citations": [
       2,
       19,
+      20,
+      22,
       26
     ]
   },
   "inputs": [
     {
-      "name": "TRNNAME",
+      "name": "COPAU1A",
       "io_type": "CICS_MAP",
-      "description": "Transaction name field. Input to display the transaction identifier.",
+      "description": "CICS map for receiving and displaying authorization details data including card number (CARDNUM), auth date (AUTHDT), time (AUTHTM), response (AUTHRSP), merchant info (MERNAME, MERID, etc.), and status fields.",
       "copybook": null,
       "citation": [
-        34
-      ]
-    },
-    {
-      "name": "PGMNAME",
-      "io_type": "CICS_MAP",
-      "description": "Program name field. Input to display the program identifier.",
-      "copybook": null,
-      "citation": [
-        57
-      ]
-    },
-    {
-      "name": "CARDNUM",
-      "io_type": "CICS_MAP",
-      "description": "Card number field. Input to display the card number.",
-      "copybook": null,
-      "citation": [
-        85
-      ]
-    },
-    {
-      "name": "AUTHDT",
-      "io_type": "CICS_MAP",
-      "description": "Authorization date field. Input to display the authorization date.",
-      "copybook": null,
-      "citation": [
-        94
-      ]
-    },
-    {
-      "name": "AUTHTM",
-      "io_type": "CICS_MAP",
-      "description": "Authorization time field. Input to display the authorization time.",
-      "copybook": null,
-      "citation": [
-        104
-      ]
-    },
-    {
-      "name": "AUTHRSP",
-      "io_type": "CICS_MAP",
-      "description": "Authorization response field. Input to display the authorization response code.",
-      "copybook": null,
-      "citation": [
-        114
-      ]
-    },
-    {
-      "name": "AUTHRSN",
-      "io_type": "CICS_MAP",
-      "description": "Authorization response reason field. Input to display the reason for the authorization response.",
-      "copybook": null,
-      "citation": [
-        124
-      ]
-    },
-    {
-      "name": "AUTHCD",
-      "io_type": "CICS_MAP",
-      "description": "Authorization code field. Input to display the authorization code.",
-      "copybook": null,
-      "citation": [
-        134
-      ]
-    },
-    {
-      "name": "AUTHAMT",
-      "io_type": "CICS_MAP",
-      "description": "Authorization amount field. Input to display the authorized amount.",
-      "copybook": null,
-      "citation": [
-        144
-      ]
-    },
-    {
-      "name": "POSEMD",
-      "io_type": "CICS_MAP",
-      "description": "POS entry mode field. Input to display the point-of-sale entry mode.",
-      "copybook": null,
-      "citation": [
-        154
-      ]
-    },
-    {
-      "name": "AUTHSRC",
-      "io_type": "CICS_MAP",
-      "description": "Authorization source field. Input to display the source of the authorization request.",
-      "copybook": null,
-      "citation": [
-        164
-      ]
-    },
-    {
-      "name": "MCCCD",
-      "io_type": "CICS_MAP",
-      "description": "MCC code field. Input to display the Merchant Category Code.",
-      "copybook": null,
-      "citation": [
-        174
-      ]
-    },
-    {
-      "name": "CRDEXP",
-      "io_type": "CICS_MAP",
-      "description": "Card expiration date field. Input to display the card's expiration date.",
-      "copybook": null,
-      "citation": [
-        184
-      ]
-    },
-    {
-      "name": "AUTHTYP",
-      "io_type": "CICS_MAP",
-      "description": "Authorization type field. Input to display the type of authorization.",
-      "copybook": null,
-      "citation": [
-        194
-      ]
-    },
-    {
-      "name": "TRNID",
-      "io_type": "CICS_MAP",
-      "description": "Transaction ID field. Input to display the transaction identifier.",
-      "copybook": null,
-      "citation": [
-        204
-      ]
-    },
-    {
-      "name": "AUTHMTC",
-      "io_type": "CICS_MAP",
-      "description": "Match status field. Input to display the match status of the transaction.",
-      "copybook": null,
-      "citation": [
-        214
-      ]
-    },
-    {
-      "name": "AUTHFRD",
-      "io_type": "CICS_MAP",
-      "description": "Fraud status field. Input to display the fraud status of the transaction.",
-      "copybook": null,
-      "citation": [
-        224
-      ]
-    },
-    {
-      "name": "MERNAME",
-      "io_type": "CICS_MAP",
-      "description": "Merchant name field. Input to display the name of the merchant.",
-      "copybook": null,
-      "citation": [
-        239
-      ]
-    },
-    {
-      "name": "MERID",
-      "io_type": "CICS_MAP",
-      "description": "Merchant ID field. Input to display the merchant identifier.",
-      "copybook": null,
-      "citation": [
+        26,
+        85,
+        94,
+        104,
+        114,
+        239,
         249
-      ]
-    },
-    {
-      "name": "MERCITY",
-      "io_type": "CICS_MAP",
-      "description": "Merchant city field. Input to display the city of the merchant.",
-      "copybook": null,
-      "citation": [
-        259
-      ]
-    },
-    {
-      "name": "MERST",
-      "io_type": "CICS_MAP",
-      "description": "Merchant state field. Input to display the state of the merchant.",
-      "copybook": null,
-      "citation": [
-        269
-      ]
-    },
-    {
-      "name": "MERZIP",
-      "io_type": "CICS_MAP",
-      "description": "Merchant zip code field. Input to display the zip code of the merchant.",
-      "copybook": null,
-      "citation": [
-        279
-      ]
-    },
-    {
-      "name": "ERRMSG",
-      "io_type": "CICS_MAP",
-      "description": "Error message field. Input to display error messages.",
-      "copybook": null,
-      "citation": [
-        284
       ]
     }
   ],
   "outputs": [
     {
-      "name": "TRNNAME",
+      "name": "COPAU1A",
       "io_type": "CICS_MAP",
-      "description": "Transaction name field. Output to display the transaction identifier.",
+      "description": "CICS map for sending screen output with populated fields like transaction name (TRNNAME), program name (PGMNAME), current date/time (CURDATE, CURTIME), auth details, merchant details, fraud status (AUTHFRD), and error messages (ERRMSG).",
       "copybook": null,
       "citation": [
-        34
-      ]
-    },
-    {
-      "name": "PGMNAME",
-      "io_type": "CICS_MAP",
-      "description": "Program name field. Output to display the program identifier.",
-      "copybook": null,
-      "citation": [
-        57
-      ]
-    },
-    {
-      "name": "CARDNUM",
-      "io_type": "CICS_MAP",
-      "description": "Card number field. Output to display the card number.",
-      "copybook": null,
-      "citation": [
-        85
-      ]
-    },
-    {
-      "name": "AUTHDT",
-      "io_type": "CICS_MAP",
-      "description": "Authorization date field. Output to display the authorization date.",
-      "copybook": null,
-      "citation": [
-        94
-      ]
-    },
-    {
-      "name": "AUTHTM",
-      "io_type": "CICS_MAP",
-      "description": "Authorization time field. Output to display the authorization time.",
-      "copybook": null,
-      "citation": [
-        104
-      ]
-    },
-    {
-      "name": "AUTHRSP",
-      "io_type": "CICS_MAP",
-      "description": "Authorization response field. Output to display the authorization response code.",
-      "copybook": null,
-      "citation": [
-        114
-      ]
-    },
-    {
-      "name": "AUTHRSN",
-      "io_type": "CICS_MAP",
-      "description": "Authorization response reason field. Output to display the reason for the authorization response.",
-      "copybook": null,
-      "citation": [
-        124
-      ]
-    },
-    {
-      "name": "AUTHCD",
-      "io_type": "CICS_MAP",
-      "description": "Authorization code field. Output to display the authorization code.",
-      "copybook": null,
-      "citation": [
-        134
-      ]
-    },
-    {
-      "name": "AUTHAMT",
-      "io_type": "CICS_MAP",
-      "description": "Authorization amount field. Output to display the authorized amount.",
-      "copybook": null,
-      "citation": [
-        144
-      ]
-    },
-    {
-      "name": "POSEMD",
-      "io_type": "CICS_MAP",
-      "description": "POS entry mode field. Output to display the point-of-sale entry mode.",
-      "copybook": null,
-      "citation": [
-        154
-      ]
-    },
-    {
-      "name": "AUTHSRC",
-      "io_type": "CICS_MAP",
-      "description": "Authorization source field. Output to display the source of the authorization request.",
-      "copybook": null,
-      "citation": [
-        164
-      ]
-    },
-    {
-      "name": "MCCCD",
-      "io_type": "CICS_MAP",
-      "description": "MCC code field. Output to display the Merchant Category Code.",
-      "copybook": null,
-      "citation": [
-        174
-      ]
-    },
-    {
-      "name": "CRDEXP",
-      "io_type": "CICS_MAP",
-      "description": "Card expiration date field. Output to display the card's expiration date.",
-      "copybook": null,
-      "citation": [
-        184
-      ]
-    },
-    {
-      "name": "AUTHTYP",
-      "io_type": "CICS_MAP",
-      "description": "Authorization type field. Output to display the type of authorization.",
-      "copybook": null,
-      "citation": [
-        194
-      ]
-    },
-    {
-      "name": "TRNID",
-      "io_type": "CICS_MAP",
-      "description": "Transaction ID field. Output to display the transaction identifier.",
-      "copybook": null,
-      "citation": [
-        204
-      ]
-    },
-    {
-      "name": "AUTHMTC",
-      "io_type": "CICS_MAP",
-      "description": "Match status field. Output to display the match status of the transaction.",
-      "copybook": null,
-      "citation": [
-        214
-      ]
-    },
-    {
-      "name": "AUTHFRD",
-      "io_type": "CICS_MAP",
-      "description": "Fraud status field. Output to display the fraud status of the transaction.",
-      "copybook": null,
-      "citation": [
-        224
-      ]
-    },
-    {
-      "name": "MERNAME",
-      "io_type": "CICS_MAP",
-      "description": "Merchant name field. Output to display the name of the merchant.",
-      "copybook": null,
-      "citation": [
-        239
-      ]
-    },
-    {
-      "name": "MERID",
-      "io_type": "CICS_MAP",
-      "description": "Merchant ID field. Output to display the merchant identifier.",
-      "copybook": null,
-      "citation": [
-        249
-      ]
-    },
-    {
-      "name": "MERCITY",
-      "io_type": "CICS_MAP",
-      "description": "Merchant city field. Output to display the city of the merchant.",
-      "copybook": null,
-      "citation": [
-        259
-      ]
-    },
-    {
-      "name": "MERST",
-      "io_type": "CICS_MAP",
-      "description": "Merchant state field. Output to display the state of the merchant.",
-      "copybook": null,
-      "citation": [
-        269
-      ]
-    },
-    {
-      "name": "MERZIP",
-      "io_type": "CICS_MAP",
-      "description": "Merchant zip code field. Output to display the zip code of the merchant.",
-      "copybook": null,
-      "citation": [
-        279
-      ]
-    },
-    {
-      "name": "ERRMSG",
-      "io_type": "CICS_MAP",
-      "description": "Error message field. Output to display error messages.",
-      "copybook": null,
-      "citation": [
+        26,
+        34,
+        57,
+        47,
+        70,
         284
       ]
     }
@@ -485,10 +102,42 @@
       }
     }
   ],
-  "error_handling": [],
+  "error_handling": [
+    {
+      "condition": "Application errors",
+      "action": "Display message in ERRMSG field with FSET attribute for field set and bright intensity.",
+      "citation": [
+        284
+      ]
+    }
+  ],
   "sql_operations": [],
-  "cics_operations": [],
-  "open_questions": [],
+  "cics_operations": [
+    {
+      "command": "SEND MAP",
+      "resource": "COPAU1A",
+      "purpose": "Display pending authorization details screen with labels, data fields, and function key prompts.",
+      "citation": 26
+    },
+    {
+      "command": "RECEIVE MAP",
+      "resource": "COPAU1A",
+      "purpose": "Receive user input from modifiable fields in INOUT mode.",
+      "citation": 22
+    }
+  ],
+  "open_questions": [
+    {
+      "question": "Which specific CICS COBOL program(s) use this COPAU01 mapset?",
+      "context": "BMS file defines the map but does not reference calling programs.",
+      "suggestion": "Search CICS transaction programs for EXEC CICS SEND MAP('COPAU1A') or similar."
+    },
+    {
+      "question": "What are the transaction IDs or entry points that invoke this screen?",
+      "context": "Not specified in BMS definition; typically defined in CICS PCT.",
+      "suggestion": "Review CICS program control table (PCT) or calling COBOL source."
+    }
+  ],
   "resolved_questions": [],
   "dead_code": [
     {

@@ -1,23 +1,32 @@
 ```cobol
-       POPULATE-HEADER-INFO.
 
-           MOVE FUNCTION CURRENT-DATE  TO WS-CURDATE-DATA
-
-           MOVE CCDA-TITLE01           TO TITLE01O OF COPAU1AO
-           MOVE CCDA-TITLE02           TO TITLE02O OF COPAU1AO
-           MOVE WS-CICS-TRANID         TO TRNNAMEO OF COPAU1AO
-           MOVE WS-PGM-AUTH-DTL        TO PGMNAMEO OF COPAU1AO
-
-           MOVE WS-CURDATE-MONTH       TO WS-CURDATE-MM
-           MOVE WS-CURDATE-DAY         TO WS-CURDATE-DD
-           MOVE WS-CURDATE-YEAR(3:2)   TO WS-CURDATE-YY
-
-           MOVE WS-CURDATE-MM-DD-YY    TO CURDATEO OF COPAU1AO
-
-           MOVE WS-CURTIME-HOURS       TO WS-CURTIME-HH
-           MOVE WS-CURTIME-MINUTE      TO WS-CURTIME-MM
-           MOVE WS-CURTIME-SECOND      TO WS-CURTIME-SS
-
-           MOVE WS-CURTIME-HH-MM-SS    TO CURTIMEO OF COPAU1AO
+      *****************************************************************
+      * ROLLBACK THE DB CHANGES                                       *
+      *****************************************************************
+       ROLL-BACK.
+           EXEC CICS
+              SYNCPOINT ROLLBACK
+           END-EXEC
            .
+
+      *****************************************************************
+      * SCHEDULE PSB                                                  *
+      *****************************************************************
+       SCHEDULE-PSB.
+           EXEC DLI SCHD
+                PSB((PSB-NAME))
+                NODHABEND
+           END-EXEC
+           MOVE DIBSTAT        TO IMS-RETURN-CODE
+           IF PSB-SCHEDULED-MORE-THAN-ONCE
+              EXEC DLI TERM
+              END-EXEC
+
+              EXEC DLI SCHD
+                   PSB((PSB-NAME))
+                   NODHABEND
+              END-EXEC
+              MOVE DIBSTAT     TO IMS-RETURN-CODE
+           END-IF
+           IF STATUS-OK
 ```

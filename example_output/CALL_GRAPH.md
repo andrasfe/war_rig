@@ -1,6 +1,6 @@
 # Call Graph Analysis
 
-*Generated: 2026-02-24 10:31:47*
+*Generated: 2026-02-25 08:19:18*
 
 **Programs Analyzed:** 24
 
@@ -10,9 +10,8 @@
 flowchart TD
 
     subgraph jobs[" "]
-        CBPAUP0J([CBPAUP0J])
         DBPAUTP0([DBPAUTP0])
-        PAUDBUNL([PAUDBUNL])
+        UNLDPADB([UNLDPADB])
     end
 
     subgraph procs[" "]
@@ -33,6 +32,7 @@ flowchart TD
         PADFLPCB[/PADFLPCB/]
         PASFLPCB[/PASFLPCB/]
         PAUDBLOD[PAUDBLOD]
+        PAUDBUNL[PAUDBUNL]
         PAUTBPCB[/PAUTBPCB/]
     end
 
@@ -48,47 +48,46 @@ flowchart TD
     end
 
     %% Call relationships
-    CBPAUP0C --> CBPAUP0C
-    CBPAUP0C --> COPAUA0C
-    CBPAUP0C --> DBUNLDGS
+    CBPAUP0C --> PAUDBUNL
     CBPAUP0C -.->|COPY| COPYBOOKS
-    CBPAUP0C --> CBLTDLI
-    CBPAUP0J --> DFSRRC00
     COPAUA0C --> COPAUA0C
     COPAUA0C -.->|COPY| COPYBOOKS
     COPAUA0C --> MQOPEN
     COPAUA0C --> MQGET
     COPAUA0C --> MQPUT1
     COPAUA0C --> MQCLOSE
-    COPAUS0C --> COPAUS1C
+    COPAUS0C --> PAUDBUNL
+    COPAUS0C --> PAUDBLOD
+    COPAUS0C --> COPAUS2C
+    COPAUS0C --> COPAUA0C
+    COPAUS0C --> CBPAUP0C
     COPAUS0C --> COPAUS0C
+    COPAUS0C --> COPAUS1C
     COPAUS0C -.->|COPY| COPYBOOKS
     COPAUS0C --> CDEMO_TO_PROGRAM
     COPAUS1C --> COPAUS1C
     COPAUS1C --> COPAUS0C
     COPAUS1C -.->|COPY| COPYBOOKS
     COPAUS1C --> WS_PGM_AUTH_FRAUD
-    COPAUS2C --> CBPAUP0C
-    COPAUS2C --> DBUNLDGS
-    COPAUS2C --> COPAUS0C
-    COPAUS2C --> COPAUS1C
-    COPAUS2C --> COPAUA0C
-    COPAUS2C --> PAUDBLOD
-    COPAUS2C --> COPAUS2C
     COPAUS2C -.->|COPY| COPYBOOKS
     DBPAUTP0 --> DFSRRC00
-    DBUNLDGS --> CBPAUP0C
+    DBUNLDGS --> PAUDBUNL
     DBUNLDGS -.->|COPY| COPYBOOKS
     DBUNLDGS --> CBLTDLI
     PAUDBLOD --> PAUDBLOD
-    PAUDBLOD --> CBPAUP0C
+    PAUDBLOD --> PAUDBUNL
     PAUDBLOD -.->|COPY| COPYBOOKS
     PAUDBLOD --> CBLTDLI
+    PAUDBUNL --> PAUDBUNL
+    PAUDBUNL --> COPAUA0C
+    PAUDBUNL --> DBUNLDGS
     PAUDBUNL -.->|COPY| COPYBOOKS
+    PAUDBUNL --> CBLTDLI
+    UNLDPADB --> DFSRRC00
 
     %% Styling
     classDef entryPoint fill:#90EE90,stroke:#228B22
-    class CBPAUP0J,DBPAUTP0,LOADPADB,PAUDBUNL,UNLDGSAM,UNLDPADB entryPoint
+    class CBPAUP0J,DBPAUTP0,LOADPADB,UNLDGSAM,UNLDPADB entryPoint
     classDef missing fill:#1E3A5F,stroke:#2E5A8F,color:#FFFFFF
     class CBLTDLI,CDEMO_TO_PROGRAM,DFSRRC00,MQCLOSE,MQGET,MQOPEN,MQPUT1,WS_PGM_AUTH_FRAUD missing
 ```
@@ -98,7 +97,6 @@ flowchart TD
 - ✓ **CBPAUP0J**: No summary
 - ✓ **DBPAUTP0**: No summary
 - ✓ **LOADPADB**: No summary
-- ✓ **PAUDBUNL**: No summary
 - ✓ **UNLDGSAM**: No summary
 - ✓ **UNLDPADB**: No summary
 
@@ -110,9 +108,9 @@ flowchart TD
 
 ### Custom Programs (Need Documentation)
 
-- **CBLTDLI**: Called by PAUDBLOD (EXEC), PAUDBLOD (EXEC), PAUDBLOD (EXEC), DBUNLDGS (EXEC), DBUNLDGS (EXEC), CBPAUP0C (EXEC), CBPAUP0C (EXEC), CBPAUP0C (EXEC), CBPAUP0C (EXEC)
+- **CBLTDLI**: Called by PAUDBLOD (EXEC), PAUDBLOD (EXEC), PAUDBLOD (EXEC), DBUNLDGS (EXEC), DBUNLDGS (EXEC), PAUDBUNL (EXEC), PAUDBUNL (EXEC), PAUDBUNL (EXEC), PAUDBUNL (EXEC)
 - **CDEMO-TO-PROGRAM**: Called by COPAUS0C (EXEC), COPAUS0C (EXEC), COPAUS0C (EXEC)
-- **DFSRRC00**: Called by DBPAUTP0 (EXEC), CBPAUP0J (EXEC), CBPAUP0J (EXEC), CBPAUP0J (EXEC), CBPAUP0J (EXEC)
+- **DFSRRC00**: Called by DBPAUTP0 (EXEC), UNLDPADB (EXEC), UNLDPADB (EXEC), UNLDPADB (EXEC), UNLDPADB (EXEC)
 - **MQCLOSE**: Called by COPAUA0C (EXEC)
 - **MQGET**: Called by COPAUA0C (EXEC)
 - **MQOPEN**: Called by COPAUA0C (EXEC)
@@ -124,13 +122,13 @@ flowchart TD
 | Metric | Count |
 |--------|-------|
 | Documented Programs | 24 |
-| Entry Points | 6 |
+| Entry Points | 5 |
 | Leaf Nodes | 16 |
 | External Dependencies | 8 |
 | System Utilities | 0 |
 | Auto-classified | 0 |
 | Custom Missing | 8 |
-| Total Calls | 166 |
+| Total Calls | 327 |
 
 ### Status Legend
 

@@ -1,23 +1,37 @@
 {
   "header": {
     "program_id": "PAUTBUNL",
-    "file_name": "PAUTBUNL.PSB",
+    "file_name": "ims/PAUTBUNL.PSB",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-24T17:35:27.588863",
+    "analyzed_at": "2026-02-25T15:22:41.101203",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This PSB (Program Specification Block) defines the database access characteristics for an IMS (Information Management System) application. It specifies the database (DBPAUTP0), the processing options (GOTP), the key length (14), and the segment hierarchy (PAUTSUM0 and PAUTDTL1). It is generated for use with COBOL programs.",
+    "summary": "This file defines an IMS Program Specification Block (PSB) named PAUTBUNL for a COBOL program. It specifies a Database PCB (PAUTBPCB) for accessing the IMS database DBDNAME=DBPAUTP0 with PROCOPT=GOTP and KEYLEN=14. The PCB includes two sensitive segments: PAUTSUM0 as the root (PARENT=0) and PAUTDTL1 as its child (PARENT=PAUTSUM0).",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
       18,
+      19,
+      20,
       21
     ]
   },
-  "inputs": [],
+  "inputs": [
+    {
+      "name": "DBPAUTP0",
+      "io_type": "IMS_SEGMENT",
+      "description": "IMS database referenced by the PAUTBPCB PCB, with sensitive segments PAUTSUM0 (root) and PAUTDTL1 (child of PAUTSUM0)",
+      "copybook": null,
+      "citation": [
+        18,
+        19,
+        20
+      ]
+    }
+  ],
   "outputs": [],
   "called_programs": [],
   "calling_context": {
@@ -36,7 +50,18 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [],
+  "open_questions": [
+    {
+      "question": "What is the business purpose of the DBPAUTP0 database and its segments PAUTSUM0/PAUTDTL1?",
+      "context": "PSB defines access structure but provides no description of data content or usage",
+      "suggestion": "Review DBD source for DBPAUTP0 or COBOL program PAUTBUNL for context"
+    },
+    {
+      "question": "What does the PAUTBUNL COBOL program perform using this PSB?",
+      "context": "PSB is a specification file only; no program logic present",
+      "suggestion": "Analyze the linked COBOL source file PAUTBUNL.cbl"
+    }
+  ],
   "resolved_questions": [],
   "dead_code": [],
   "call_semantics": [],

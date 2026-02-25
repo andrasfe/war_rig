@@ -1,45 +1,46 @@
 ```cobol
-      ******************************************************************
-      * Program     : COPAUA0C.CBL
-      * Application : CardDemo - Authorization Module
-      * Type        : CICS COBOL IMS MQ Program
-      * Function    : Card Authorization Decision Program
-      ******************************************************************
-      * Copyright Amazon.com, Inc. or its affiliates.
-      * All Rights Reserved.
-      *
-      * Licensed under the Apache License, Version 2.0 (the "License").
-      * You may not use this file except in compliance with the License.
-      * You may obtain a copy of the License at
-      *
-      *    http://www.apache.org/licenses/LICENSE-2.0
-      *
-      * Unless required by applicable law or agreed to in writing,
-      * software distributed under the License is distributed on an
-      * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
-      * either express or implied. See the License for the specific
-      * language governing permissions and limitations under the License
-      ******************************************************************
-       IDENTIFICATION DIVISION.
-       PROGRAM-ID. COPAUA0C.                                                    
-       AUTHOR.     SOUMA GHOSH.                                                 
+       5300-READ-CUST-RECORD.                                                   
+      * ------------------------------------------------------------- *         
+      *                                                                         
+           MOVE XREF-CUST-ID                 TO WS-CARD-RID-CUST-ID             
                                                                                 
-       ENVIRONMENT DIVISION.                                                    
-       CONFIGURATION SECTION.                                                   
+           EXEC CICS READ                                                       
+                DATASET   (WS-CUSTFILENAME)                                     
+                RIDFLD    (WS-CARD-RID-CUST-ID-X)                               
+                KEYLENGTH (LENGTH OF WS-CARD-RID-CUST-ID-X)                     
+                INTO      (CUSTOMER-RECORD)                                     
+                LENGTH    (LENGTH OF CUSTOMER-RECORD)                           
+                RESP      (WS-RESP-CD)                                          
+                RESP2     (WS-REAS-CD)                                          
+           END-EXEC                                                             
                                                                                 
-       DATA DIVISION.                                                           
-       WORKING-STORAGE SECTION.                                                 
+           EVALUATE WS-RESP-CD                                                  
+               WHEN DFHRESP(NORMAL)                                             
+                  SET FOUND-CUST-IN-MSTR     TO TRUE                            
+               WHEN DFHRESP(NOTFND)                                             
+                  SET NFOUND-CUST-IN-MSTR    TO TRUE                            
                                                                                 
-       01 WS-VARIABLES.                                                         
-         05 WS-PGM-AUTH                PIC X(08)  VALUE 'COPAUA0C'.             
-         05 WS-CICS-TRANID             PIC X(04)  VALUE 'CP00'.                 
-         05 WS-ACCTFILENAME            PIC X(8)   VALUE 'ACCTDAT '.             
-         05 WS-CUSTFILENAME            PIC X(8)   VALUE 'CUSTDAT '.             
-         05 WS-CARDFILENAME            PIC X(8)   VALUE 'CARDDAT '.             
-         05 WS-CARDFILENAME-ACCT-PATH  PIC X(8)   VALUE 'CARDAIX '.             
-         05 WS-CCXREF-FILE             PIC X(08)  VALUE 'CCXREF  '.             
-         05 WS-REQSTS-PROCESS-LIMIT    PIC S9(4)  COMP VALUE 500.               
-                                                                                
-         05 WS-MSG-PROCESSED           PIC S9(4)  COMP VALUE ZERO.              
-         05 WS-REQUEST-QNAME           PIC X(48).                               
+                  MOVE 'A003'                TO ERR-LOCATION                    
+                  SET  ERR-WARNING           TO TRUE                            
+                  SET  ERR-APP               TO TRUE                            
+                  MOVE 'CUST NOT FOUND IN XREF'                                 
+                                             TO ERR-MESSAGE                     
+                  MOVE WS-CARD-RID-CUST-ID   TO ERR-EVENT-KEY                   
+                  PERFORM 9500-LOG-ERROR                                        
+      *                                                                         
+               WHEN OTHER                                                       
+                  MOVE 'C003'                TO ERR-LOCATION                    
+                  SET  ERR-CRITICAL          TO TRUE                            
+                  SET  ERR-CICS              TO TRUE                            
+                  MOVE WS-RESP-CD            TO WS-CODE-DISPLAY                 
+                  MOVE WS-CODE-DISPLAY       TO ERR-CODE-1                      
+                  MOVE WS-REAS-CD            TO WS-CODE-DISPLAY                 
+                  MOVE WS-CODE-DISPLAY       TO ERR-CODE-2                      
+                  MOVE 'FAILED TO READ CUST FILE'                               
+                                             TO ERR-MESSAGE                     
+                  MOVE WS-CARD-RID-CUST-ID   TO ERR-EVENT-KEY                   
+                  PERFORM 9500-LOG-ERROR                                        
+           END-EVALUATE                                                         
+           .                                                                    
+      *                                                                         
 ```

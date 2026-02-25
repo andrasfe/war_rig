@@ -1,88 +1,143 @@
 ```cobol
-       POPULATE-AUTH-LIST.
-      *****************************************************************
-
-           MOVE PA-APPROVED-AMT           TO WS-AUTH-AMT
-
-           MOVE PA-AUTH-ORIG-TIME(1:2)    TO WS-AUTH-TIME(1:2)
-           MOVE PA-AUTH-ORIG-TIME(3:2)    TO WS-AUTH-TIME(4:2)
-           MOVE PA-AUTH-ORIG-TIME(5:2)    TO WS-AUTH-TIME(7:2)
-
-           MOVE PA-AUTH-ORIG-DATE(1:2)    TO WS-CURDATE-YY
-           MOVE PA-AUTH-ORIG-DATE(3:2)    TO WS-CURDATE-MM
-           MOVE PA-AUTH-ORIG-DATE(5:2)    TO WS-CURDATE-DD
-           MOVE WS-CURDATE-MM-DD-YY       TO WS-AUTH-DATE
-
-           IF PA-AUTH-RESP-CODE = '00'
-              MOVE 'A'               TO WS-AUTH-APRV-STAT
-           ELSE
-              MOVE 'D'               TO WS-AUTH-APRV-STAT
+              SET IMS-PSB-NOT-SCHD      TO TRUE
+              EXEC CICS SYNCPOINT
+              END-EXEC
            END-IF
 
-           EVALUATE WS-IDX
-               WHEN 1
-                   MOVE PA-AUTHORIZATION-KEY
-                                          TO CDEMO-CPVS-AUTH-KEYS(1)
+           PERFORM POPULATE-HEADER-INFO
 
-                   MOVE PA-TRANSACTION-ID TO TRNID01I OF COPAU0AI
-                   MOVE WS-AUTH-DATE      TO PDATE01I OF COPAU0AI
-                   MOVE WS-AUTH-TIME      TO PTIME01I OF COPAU0AI
-                   MOVE PA-AUTH-TYPE      TO PTYPE01I OF COPAU0AI
-                   MOVE WS-AUTH-APRV-STAT TO PAPRV01I OF COPAU0AI
-                   MOVE PA-MATCH-STATUS   TO PSTAT01I OF COPAU0AI
-                   MOVE WS-AUTH-AMT       TO PAMT001I OF COPAU0AI
-                   MOVE DFHBMUNP          TO SEL0001A OF COPAU0AI
-               WHEN 2
-                   MOVE PA-AUTHORIZATION-KEY
-                                          TO CDEMO-CPVS-AUTH-KEYS(2)
+           MOVE WS-MESSAGE TO ERRMSGO OF COPAU0AO
 
-                   MOVE PA-TRANSACTION-ID TO TRNID02I OF COPAU0AI
-                   MOVE WS-AUTH-DATE      TO PDATE02I OF COPAU0AI
-                   MOVE WS-AUTH-TIME      TO PTIME02I OF COPAU0AI
-                   MOVE PA-AUTH-TYPE      TO PTYPE02I OF COPAU0AI
-                   MOVE WS-AUTH-APRV-STAT TO PAPRV02I OF COPAU0AI
-                   MOVE PA-MATCH-STATUS   TO PSTAT02I OF COPAU0AI
-                   MOVE WS-AUTH-AMT       TO PAMT002I OF COPAU0AI
-                   MOVE DFHBMUNP          TO SEL0002A OF COPAU0AI
-               WHEN 3
-                   MOVE PA-AUTHORIZATION-KEY
-                                          TO CDEMO-CPVS-AUTH-KEYS(3)
-
-                   MOVE PA-TRANSACTION-ID TO TRNID03I OF COPAU0AI
-                   MOVE WS-AUTH-DATE      TO PDATE03I OF COPAU0AI
-                   MOVE WS-AUTH-TIME      TO PTIME03I OF COPAU0AI
-                   MOVE PA-AUTH-TYPE      TO PTYPE03I OF COPAU0AI
-                   MOVE WS-AUTH-APRV-STAT TO PAPRV03I OF COPAU0AI
-                   MOVE PA-MATCH-STATUS   TO PSTAT03I OF COPAU0AI
-                   MOVE WS-AUTH-AMT       TO PAMT003I OF COPAU0AI
-                   MOVE DFHBMUNP          TO SEL0003A OF COPAU0AI
-               WHEN 4
-                   MOVE PA-AUTHORIZATION-KEY
-                                          TO CDEMO-CPVS-AUTH-KEYS(4)
-
-                   MOVE PA-TRANSACTION-ID TO TRNID04I OF COPAU0AI
-                   MOVE WS-AUTH-DATE      TO PDATE04I OF COPAU0AI
-                   MOVE WS-AUTH-TIME      TO PTIME04I OF COPAU0AI
-                   MOVE PA-AUTH-TYPE      TO PTYPE04I OF COPAU0AI
-                   MOVE WS-AUTH-APRV-STAT TO PAPRV04I OF COPAU0AI
-                   MOVE PA-MATCH-STATUS   TO PSTAT04I OF COPAU0AI
-                   MOVE WS-AUTH-AMT       TO PAMT004I OF COPAU0AI
-                   MOVE DFHBMUNP          TO SEL0004A OF COPAU0AI
-               WHEN 5
-                   MOVE PA-AUTHORIZATION-KEY
-                                          TO CDEMO-CPVS-AUTH-KEYS(5)
-
-                   MOVE PA-TRANSACTION-ID TO TRNID05I OF COPAU0AI
-                   MOVE WS-AUTH-DATE      TO PDATE05I OF COPAU0AI
-                   MOVE WS-AUTH-TIME      TO PTIME05I OF COPAU0AI
-                   MOVE PA-AUTH-TYPE      TO PTYPE05I OF COPAU0AI
-                   MOVE WS-AUTH-APRV-STAT TO PAPRV05I OF COPAU0AI
-                   MOVE PA-MATCH-STATUS   TO PSTAT05I OF COPAU0AI
-                   MOVE WS-AUTH-AMT       TO PAMT005I OF COPAU0AI
-                   MOVE DFHBMUNP          TO SEL0005A OF COPAU0AI
-               WHEN OTHER
-                   CONTINUE
-           END-EVALUATE.
+           IF SEND-ERASE-YES
+               EXEC CICS SEND
+                         MAP('COPAU0A')
+                         MAPSET('COPAU00')
+                         FROM(COPAU0AO)
+                         ERASE
+                         CURSOR
+               END-EXEC
+           ELSE
+               EXEC CICS SEND
+                         MAP('COPAU0A')
+                         MAPSET('COPAU00')
+                         FROM(COPAU0AO)
+                         CURSOR
+               END-EXEC
+           END-IF.
 
       *****************************************************************
+       RECEIVE-PAULST-SCREEN.
+      *****************************************************************
+
+           EXEC CICS RECEIVE
+                     MAP('COPAU0A')
+                     MAPSET('COPAU00')
+                     INTO(COPAU0AI)
+                     RESP(WS-RESP-CD)
+                     RESP2(WS-REAS-CD)
+           END-EXEC
+           .
+
+
+      *****************************************************************
+       POPULATE-HEADER-INFO.
+      *****************************************************************
+
+           MOVE FUNCTION CURRENT-DATE  TO WS-CURDATE-DATA
+
+           MOVE CCDA-TITLE01           TO TITLE01O OF COPAU0AO
+           MOVE CCDA-TITLE02           TO TITLE02O OF COPAU0AO
+           MOVE WS-CICS-TRANID         TO TRNNAMEO OF COPAU0AO
+           MOVE WS-PGM-AUTH-SMRY       TO PGMNAMEO OF COPAU0AO
+
+           MOVE WS-CURDATE-MONTH       TO WS-CURDATE-MM
+           MOVE WS-CURDATE-DAY         TO WS-CURDATE-DD
+           MOVE WS-CURDATE-YEAR(3:2)   TO WS-CURDATE-YY
+
+           MOVE WS-CURDATE-MM-DD-YY    TO CURDATEO OF COPAU0AO
+
+           MOVE WS-CURTIME-HOURS       TO WS-CURTIME-HH
+           MOVE WS-CURTIME-MINUTE      TO WS-CURTIME-MM
+           MOVE WS-CURTIME-SECOND      TO WS-CURTIME-SS
+
+           MOVE WS-CURTIME-HH-MM-SS    TO CURTIMEO OF COPAU0AO
+           .
+
+      *****************************************************************
+       GATHER-ACCOUNT-DETAILS.
+      *****************************************************************
+
+           PERFORM GETCARDXREF-BYACCT
+           PERFORM GETACCTDATA-BYACCT
+           PERFORM GETCUSTDATA-BYCUST
+
+           MOVE CUST-ID                TO CUSTIDO
+           STRING CUST-FIRST-NAME DELIMITED BY SPACES
+                  ' ' DELIMITED BY SIZE
+                  CUST-MIDDLE-NAME(1:1) DELIMITED BY SIZE
+                  ' ' DELIMITED BY SIZE
+                  CUST-LAST-NAME DELIMITED BY SPACES
+                  INTO CNAMEO
+           END-STRING
+
+           STRING CUST-ADDR-LINE-1 DELIMITED BY '  '
+                  ',' DELIMITED BY SIZE
+                  CUST-ADDR-LINE-2 DELIMITED BY '  '
+                  INTO ADDR001O
+           END-STRING
+           STRING CUST-ADDR-LINE-3 DELIMITED BY '  '
+                  ',' DELIMITED BY SIZE
+                  CUST-ADDR-STATE-CD DELIMITED BY SIZE
+                  ',' DELIMITED BY SIZE
+                  CUST-ADDR-ZIP(1:5) DELIMITED BY SIZE
+                  INTO ADDR002O
+           END-STRING
+
+           MOVE CUST-PHONE-NUM-1       TO PHONE1O
+           MOVE ACCT-CREDIT-LIMIT      TO WS-DISPLAY-AMT12
+           MOVE WS-DISPLAY-AMT12       TO CREDLIMO
+           MOVE ACCT-CASH-CREDIT-LIMIT TO WS-DISPLAY-AMT9
+           MOVE WS-DISPLAY-AMT9        TO CASHLIMO
+
+           PERFORM GET-AUTH-SUMMARY
+
+           IF FOUND-PAUT-SMRY-SEG
+              MOVE PA-APPROVED-AUTH-CNT   TO WS-DISPLAY-COUNT
+              MOVE WS-DISPLAY-COUNT       TO APPRCNTO
+              MOVE PA-DECLINED-AUTH-CNT   TO WS-DISPLAY-COUNT
+              MOVE WS-DISPLAY-COUNT       TO DECLCNTO
+              MOVE PA-CREDIT-BALANCE      TO WS-DISPLAY-AMT12
+              MOVE WS-DISPLAY-AMT12       TO CREDBALO
+              MOVE PA-CASH-BALANCE        TO WS-DISPLAY-AMT9
+              MOVE WS-DISPLAY-AMT9        TO CASHBALO
+              MOVE PA-APPROVED-AUTH-AMT   TO WS-DISPLAY-AMT9
+              MOVE WS-DISPLAY-AMT9        TO APPRAMTO
+              MOVE PA-DECLINED-AUTH-AMT   TO WS-DISPLAY-AMT9
+              MOVE WS-DISPLAY-AMT9        TO DECLAMTO
+           ELSE
+              MOVE ZERO                   TO APPRCNTO
+                                             DECLCNTO
+                                             CREDBALO
+                                             CASHBALO
+                                             APPRAMTO
+                                             DECLAMTO
+           END-IF
+           .
+
+
+      *****************************************************************
+       GETCARDXREF-BYACCT.
+      *****************************************************************
+
+      *    Read the Card file. Access via alternate index ACCTID
+      *
+           MOVE WS-ACCT-ID          TO WS-CARD-RID-ACCT-ID-X
+           EXEC CICS READ
+                DATASET   (WS-CARDXREFNAME-ACCT-PATH)
+                RIDFLD    (WS-CARD-RID-ACCT-ID-X)
+                KEYLENGTH (LENGTH OF WS-CARD-RID-ACCT-ID-X)
+                INTO      (CARD-XREF-RECORD)
+                LENGTH    (LENGTH OF CARD-XREF-RECORD)
+                RESP      (WS-RESP-CD)
+                RESP2     (WS-REAS-CD)
 ```

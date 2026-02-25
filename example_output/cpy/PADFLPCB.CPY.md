@@ -2,11 +2,13 @@
 
 **File**: `cpy/PADFLPCB.CPY`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-02-24 17:38:01.898397
+**Analyzed**: 2026-02-25 15:32:43.048068
 
 ## Purpose
 
-This copybook defines the structure PADFLPCB, which appears to be related to IMS database Program Communication Blocks (PCBs). It contains fields for database name, segment level, PCB status, processing options, segment name, key feedback information, number of sensitive segments, and key feedback area. The structure likely facilitates communication and data transfer between a COBOL program and an IMS database.
+This COBOL copybook defines the PADFLPCB level-01 group item, which maps the standard IMS Database Program Control Block (DBPCB) structure. It provides named fields for accessing IMS-provided PCB data such as database name, segment level, status codes, processing options, segment feedback, and key feedback information used in DL/I database calls.
+
+**Business Context**: IMS DL/I hierarchical database access in mainframe batch or online programs, enabling programs to retrieve feedback from IMS after database calls like GU, GN, ISRT, etc.
 
 ## Paragraphs/Procedures
 
@@ -20,8 +22,3 @@ The following artifacts were identified as dead code by static analysis:
 | Artifact | Type | Line | Reason |
 |----------|------|------|--------|
 | PADFLPCB | record_layout | 1 | Record layout 'PADFLPCB' is never used by any program |
-
-## Open Questions
-
-- ? What is the specific purpose of FILLER PIC S9(05) COMP (line 22)?
-  - Context: The purpose of this filler field is unclear without more context.

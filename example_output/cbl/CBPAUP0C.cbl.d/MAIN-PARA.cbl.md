@@ -1,28 +1,4 @@
 ```cobol
-       MAIN-PARA.
-      *
-           PERFORM 1000-INITIALIZE                THRU 1000-EXIT
-      *
-           PERFORM 2000-FIND-NEXT-AUTH-SUMMARY    THRU 2000-EXIT
-
-           PERFORM UNTIL ERR-FLG-ON OR END-OF-AUTHDB
-
-              PERFORM 3000-FIND-NEXT-AUTH-DTL     THRU 3000-EXIT
-
-              PERFORM UNTIL NO-MORE-AUTHS
-                 PERFORM 4000-CHECK-IF-EXPIRED    THRU 4000-EXIT
-
-                 IF QUALIFIED-FOR-DELETE
-                    PERFORM 5000-DELETE-AUTH-DTL  THRU 5000-EXIT
-                 END-IF
-
-                 PERFORM 3000-FIND-NEXT-AUTH-DTL  THRU 3000-EXIT
-              END-PERFORM
-
-              IF PA-APPROVED-AUTH-CNT <= 0 AND PA-APPROVED-AUTH-CNT <= 0
-                 PERFORM 6000-DELETE-AUTH-SUMMARY THRU 6000-EXIT
-              END-IF
-
               IF WS-AUTH-SMRY-PROC-CNT > P-CHKP-FREQ
                  PERFORM 9000-TAKE-CHECKPOINT     THRU 9000-EXIT
 
@@ -44,4 +20,74 @@
            DISPLAY ' '
       *
            GOBACK.
+      *
+      *----------------------------------------------------------------*
+       1000-INITIALIZE.
+      *----------------------------------------------------------------*
+      *
+           ACCEPT CURRENT-DATE     FROM DATE
+           ACCEPT CURRENT-YYDDD    FROM DAY
+
+           ACCEPT PRM-INFO FROM SYSIN
+           DISPLAY 'STARTING PROGRAM CBPAUP0C::'
+           DISPLAY '*-------------------------------------*'
+           DISPLAY 'CBPAUP0C PARM RECEIVED :' PRM-INFO
+           DISPLAY 'TODAYS DATE            :' CURRENT-YYDDD
+           DISPLAY ' '
+
+           IF P-EXPIRY-DAYS IS NUMERIC
+              MOVE P-EXPIRY-DAYS     TO WS-EXPIRY-DAYS
+           ELSE
+              MOVE 5                 TO WS-EXPIRY-DAYS
+           END-IF
+           IF P-CHKP-FREQ = SPACES OR 0 OR LOW-VALUES
+              MOVE 5                 TO P-CHKP-FREQ
+           END-IF
+           IF P-CHKP-DIS-FREQ = SPACES OR 0 OR LOW-VALUES
+              MOVE 10                TO P-CHKP-DIS-FREQ
+           END-IF
+           IF P-DEBUG-FLAG NOT = 'Y'
+              MOVE 'N'               TO P-DEBUG-FLAG
+           END-IF
+           .
+      *
+       1000-EXIT.
+            EXIT.
+      *
+      *----------------------------------------------------------------*
+       2000-FIND-NEXT-AUTH-SUMMARY.
+      *----------------------------------------------------------------*
+      *
+            IF DEBUG-ON
+               DISPLAY 'DEBUG: AUTH SMRY READ : ' WS-NO-SUMRY-READ
+            END-IF
+
+            EXEC DLI GN USING PCB(PAUT-PCB-NUM)
+                 SEGMENT (PAUTSUM0)
+                 INTO (PENDING-AUTH-SUMMARY)
+            END-EXEC
+
+            EVALUATE DIBSTAT
+               WHEN '  '
+                    SET NOT-END-OF-AUTHDB TO TRUE
+                    ADD 1                 TO WS-NO-SUMRY-READ
+                    ADD 1                 TO WS-AUTH-SMRY-PROC-CNT
+                    MOVE PA-ACCT-ID       TO WS-CURR-APP-ID
+               WHEN 'GB'
+                    SET END-OF-AUTHDB     TO TRUE
+               WHEN OTHER
+                    DISPLAY 'AUTH SUMMARY READ FAILED  :' DIBSTAT
+                    DISPLAY 'SUMMARY READ BEFORE ABEND :'
+                                                        WS-NO-SUMRY-READ
+                    PERFORM 9999-ABEND
+            END-EVALUATE
+            .
+       2000-EXIT.
+            EXIT.
+      *
+      *
+      *----------------------------------------------------------------*
+       3000-FIND-NEXT-AUTH-DTL.
+      *----------------------------------------------------------------*
+      *
 ```

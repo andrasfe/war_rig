@@ -2,13 +2,28 @@
 
 **File**: `ims/PADFLDBD.DBD`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-02-24 17:35:11.069640
+**Analyzed**: 2026-02-25 15:26:04.240875
 
 ## Purpose
 
-This file defines the Database Description (DBD) for PADFLDBD, specifying its access method as GSAM/BSAM, dataset names (PADFILIP, PADFILOP), record length (200), and record format (F). It indicates the DBD was generated on 04/21/2023 using IMS version 15.1 (lines 20, 21).
+This DBDGEN source file defines the IMS database PADFLDBD with dual access methods GSAM and BSAM, no password protection. It specifies Dataset Group 1 (DSG001) consisting of input dataset DD1=PADFILIP and output dataset DD2=PADFILOP, with fixed-length records of 200 bytes (RECFM=F). The file is assembled into a DBD library for IMS database access.
 
-## Open Questions
+**Business Context**: IMS database definition supporting sequential file input/output operations, likely for padding or file processing workflows
 
-- ? What is the purpose of the PADFILIP and PADFILOP datasets?
-  - Context: The DBD definition specifies these datasets, but their specific roles are unclear.
+## Inputs
+
+| Name | Type | Description |
+|------|------|-------------|
+| PADFILIP | IOType.FILE_SEQUENTIAL | Input dataset defined as DD1 in Dataset Group 1 for IMS database access |
+
+## Outputs
+
+| Name | Type | Description |
+|------|------|-------------|
+| PADFILOP | IOType.FILE_SEQUENTIAL | Output dataset defined as DD2 in Dataset Group 1 for IMS database access |
+
+## Business Rules
+
+- **BR001**: Database supports GSAM and BSAM access methods
+- **BR002**: No password protection is required for database access
+- **BR003**: Database records are fixed-length (RECFM=F) with length 200 bytes

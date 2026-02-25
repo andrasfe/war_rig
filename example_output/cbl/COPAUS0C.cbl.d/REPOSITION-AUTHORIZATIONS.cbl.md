@@ -1,36 +1,43 @@
 ```cobol
-       REPOSITION-AUTHORIZATIONS.
-      *****************************************************************
-
-           MOVE WS-AUTH-KEY-SAVE          TO PA-AUTHORIZATION-KEY
-
-           EXEC DLI GNP USING PCB(PAUT-PCB-NUM)
-               SEGMENT (PAUTDTL1)
-               INTO (PENDING-AUTH-DETAILS)
-               WHERE (PAUT9CTS = PA-AUTHORIZATION-KEY)
-           END-EXEC
-
-           MOVE DIBSTAT                          TO IMS-RETURN-CODE
-           EVALUATE TRUE
-               WHEN STATUS-OK
-                  SET AUTHS-NOT-EOF              TO TRUE
-               WHEN SEGMENT-NOT-FOUND
-               WHEN END-OF-DB
-                  SET AUTHS-EOF                  TO TRUE
+                   MOVE SPACES   TO PTYPE04I OF COPAU0AI
+                   MOVE SPACES   TO PAPRV04I OF COPAU0AI
+                   MOVE SPACES   TO PSTAT04I OF COPAU0AI
+                   MOVE SPACES   TO PAMT004I OF COPAU0AI
+               WHEN 5
+                   MOVE DFHBMPRO TO SEL0005A OF COPAU0AI
+                   MOVE SPACES   TO TRNID05I OF COPAU0AI
+                   MOVE SPACES   TO PDATE05I OF COPAU0AI
+                   MOVE SPACES   TO PTIME05I OF COPAU0AI
+                   MOVE SPACES   TO PTYPE05I OF COPAU0AI
+                   MOVE SPACES   TO PAPRV05I OF COPAU0AI
+                   MOVE SPACES   TO PSTAT05I OF COPAU0AI
+                   MOVE SPACES   TO PAMT005I OF COPAU0AI
                WHEN OTHER
-                  MOVE 'Y'     TO WS-ERR-FLG
-
-                  STRING
-                  ' System error while repos. AUTH Details: Code:'
-                  IMS-RETURN-CODE
-                  DELIMITED BY SIZE
-                  INTO WS-MESSAGE
-                  END-STRING
-                  MOVE -1       TO ACCTIDL OF COPAU0AI
-                  PERFORM SEND-PAULST-SCREEN
-           END-EVALUATE
-
+                   CONTINUE
+             END-EVALUATE
+           END-PERFORM
            .
 
       *****************************************************************
+       RETURN-TO-PREV-SCREEN.
+      *****************************************************************
+
+           IF CDEMO-TO-PROGRAM = LOW-VALUES OR SPACES
+               MOVE 'COSGN00C' TO CDEMO-TO-PROGRAM
+           END-IF
+           MOVE WS-CICS-TRANID  TO CDEMO-FROM-TRANID
+           MOVE WS-PGM-AUTH-SMRY TO CDEMO-FROM-PROGRAM
+           MOVE ZEROS           TO CDEMO-PGM-CONTEXT
+           EXEC CICS
+               XCTL PROGRAM(CDEMO-TO-PROGRAM)
+               COMMAREA(CARDDEMO-COMMAREA)
+           END-EXEC.
+
+
+      *****************************************************************
+       SEND-PAULST-SCREEN.
+      *****************************************************************
+
+           IF IMS-PSB-SCHD
+              SET IMS-PSB-NOT-SCHD      TO TRUE
 ```

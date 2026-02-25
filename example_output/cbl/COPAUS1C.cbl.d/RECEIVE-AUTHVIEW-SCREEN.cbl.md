@@ -1,11 +1,12 @@
 ```cobol
-       RECEIVE-AUTHVIEW-SCREEN.
+           END-EVALUATE
+           .
 
-           EXEC CICS RECEIVE
-                     MAP('COPAU1A')
-                     MAPSET('COPAU01')
-                     INTO(COPAU1AI)
-                     NOHANDLE
+      *****************************************************************
+      * TAKE SYNCPOINT                                                *
+      *****************************************************************
+       TAKE-SYNCPOINT.
+           EXEC CICS SYNCPOINT
            END-EXEC
            .
 ```

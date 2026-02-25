@@ -1,35 +1,91 @@
 {
   "header": {
     "program_id": "DBPAUTX0",
-    "file_name": "DBPAUTX0.dbd",
+    "file_name": "ims/DBPAUTX0.dbd",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-24T17:35:06.996587",
+    "analyzed_at": "2026-02-25T15:26:27.988041",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This file defines a Database Description (DBD) for an IMS database named DBPAUTX0. It specifies the database structure, including dataset groups, segments, fields, and indexing information. The DBD defines an index database used to access data in DBPAUTP0.",
-    "business_context": null,
+    "summary": "This DBD source defines the IMS database DBPAUTX0 as an index database using VSAM access with dataset DDPAUTX0. It specifies a single root segment PAUTINDX (6 bytes) with a unique packed decimal sequence field INDXSEQ at positions 1-6 for key-based access. The database provides logical child access to PAUTSUM0 segments in the physical database DBPAUTP0 via the ACCNTID total segment index.",
+    "business_context": "Supports efficient index-based retrieval of account summary segments (PAUTSUM0) by account ID or sequence key in an IMS hierarchical database environment.",
     "program_type": "UTILITY",
     "citations": [
+      17,
       18,
       23,
       27,
-      30
+      28,
+      29,
+      30,
+      31
     ]
   },
-  "inputs": [],
-  "outputs": [],
+  "inputs": [
+    {
+      "name": "DDPAUTX0",
+      "io_type": "FILE_VSAM",
+      "description": "VSAM dataset containing the index database physical storage.",
+      "copybook": null,
+      "citation": [
+        23
+      ]
+    },
+    {
+      "name": "PAUTINDX.INDXSEQ",
+      "io_type": "IMS_SEGMENT",
+      "description": "Unique packed decimal sequence key field (positions 1-6, TYPE=P) in root segment PAUTINDX, used as primary input for index database access.",
+      "copybook": null,
+      "citation": [
+        27,
+        29
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "PAUTSUM0",
+      "io_type": "IMS_SEGMENT",
+      "description": "Logical child summary segments in database DBPAUTP0, accessed via the ACCNTID index from the PAUTINDX root segment.",
+      "copybook": null,
+      "citation": [
+        30,
+        31
+      ]
+    }
+  ],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
     "entry_points": [],
     "linkage_section": []
   },
-  "business_rules": [],
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "The root segment PAUTINDX provides index-based access to PAUTSUM0 summary segments using the ACCNTID index total segment index.",
+      "logic_summary": "Defined through LCHILD specification linking PAUTINDX to PAUTSUM0 in DBPAUTP0 with INDEX=ACCNTID.",
+      "conditions": [],
+      "citation": [
+        30,
+        31
+      ]
+    }
+  ],
   "data_flow": {
-    "reads_from": [],
+    "reads_from": [
+      {
+        "source": "PAUTINDX",
+        "fields_used": [
+          "INDXSEQ"
+        ],
+        "citation": [
+          29
+        ]
+      }
+    ],
     "writes_to": [],
     "transforms": []
   },
@@ -40,9 +96,14 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the purpose of the VERSION parameter on line 19?",
-      "context": "The value is missing.",
-      "suggestion": "Check related documentation or other DBDs to understand the VERSION parameter."
+      "question": "What is the exact business meaning of INDXSEQ and ACCNTID fields?",
+      "context": "Field names suggest account indexing (e.g., account ID), but specific data semantics not defined in DBD.",
+      "suggestion": "Review associated PSB, PCB, or application COBOL programs using this database."
+    },
+    {
+      "question": "Are there additional segments or fields not shown in this simplified DBD?",
+      "context": "Only one segment defined; production DBDs often have more.",
+      "suggestion": "Examine generated DBD library entry or full IMS database documentation."
     }
   ],
   "resolved_questions": [],

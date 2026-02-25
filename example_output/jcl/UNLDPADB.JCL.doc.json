@@ -4,111 +4,54 @@
     "file_name": "jcl/UNLDPADB.JCL",
     "file_type": "JCL",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-24T17:39:12.749757",
+    "analyzed_at": "2026-02-25T15:29:52.791147",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This JCL job unloads an IMS database (PAUTDB) and reloads it. It first deletes the existing database files, then executes the IMS program DFSRRC00 with the PAUDBUNL PSB to unload the database, and finally re-creates the database files.",
-    "business_context": null,
+    "summary": "This JCL job executes an IMS database unload for the PAUTDB database, producing sequential flat files for root and child segments. STEP0 uses IEFBR14 to delete any existing output files. STEP01 invokes the IMS utility DFSRRC00 to perform the unload using DLI access.",
+    "business_context": "Supports AWS M2 Card Demo application by unloading Payment Authorization Test IMS database (PAUTDB) for offline processing, backup, or migration.",
     "program_type": "BATCH",
     "citations": [
       23,
-      33,
-      38,
-      48,
-      53
+      25,
+      38
     ]
   },
   "inputs": [
     {
-      "name": "OEM.IMS.IMSP.PAUTHDB",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "Input IMS database to be unloaded.",
+      "name": "DDPAUTP0",
+      "io_type": "IMS_SEGMENT",
+      "description": "IMS primary database PAUTHDB containing PAUTDB root and child segments",
       "copybook": null,
       "citation": [
         58
       ]
     },
     {
-      "name": "OEM.IMS.IMSP.PAUTHDBX",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "Input IMS database index to be unloaded.",
+      "name": "DDPAUTX0",
+      "io_type": "IMS_SEGMENT",
+      "description": "IMS secondary database/index PAUTHDBX for PAUTDB",
       "copybook": null,
       "citation": [
         59
-      ]
-    },
-    {
-      "name": "OEMA.IMS.IMSP.SDFSRESL",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS RESLIB library.",
-      "copybook": null,
-      "citation": [
-        40,
-        43
-      ]
-    },
-    {
-      "name": "OEMA.IMS.IMSP.SDFSRESL.V151",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS RESLIB library version 151.",
-      "copybook": null,
-      "citation": [
-        41
-      ]
-    },
-    {
-      "name": "AWS.M2.CARDDEMO.LOADLIB",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "Load library containing the IMS program.",
-      "copybook": null,
-      "citation": [
-        42
-      ]
-    },
-    {
-      "name": "OEM.IMS.IMSP.PSBLIB",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS PSB library.",
-      "copybook": null,
-      "citation": [
-        45
-      ]
-    },
-    {
-      "name": "OEM.IMS.IMSP.DBDLIB",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS DBD library.",
-      "copybook": null,
-      "citation": [
-        46
-      ]
-    },
-    {
-      "name": "OEMPP.IMS.V15R01MB.PROCLIB(DFSVSMDB)",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS VSAM definition library.",
-      "copybook": null,
-      "citation": [
-        63
       ]
     }
   ],
   "outputs": [
     {
-      "name": "AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO",
+      "name": "OUTFIL1",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "Output file for the unloaded root segment of the PAUTDB database.",
+      "description": "Sequential file containing unloaded root segments from PAUTDB (LRECL=100, RECFM=FB)",
       "copybook": null,
       "citation": [
         48
       ]
     },
     {
-      "name": "AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO",
+      "name": "OUTFIL2",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "Output file for the unloaded child segment of the PAUTDB database.",
+      "description": "Sequential file containing unloaded child segments from PAUTDB (LRECL=206, RECFM=FB)",
       "copybook": null,
       "citation": [
         53
@@ -119,19 +62,16 @@
     {
       "program_name": "IEFBR14",
       "call_type": "STATIC_CALL",
-      "purpose": "Dummy program used to delete the existing database files.",
+      "purpose": "Perform dataset deletion for prior output files",
       "parameters": [],
       "citation": 25
     },
     {
       "program_name": "DFSRRC00",
       "call_type": "STATIC_CALL",
-      "purpose": "IMS program used to unload the PAUTDB database.",
+      "purpose": "Execute IMS database unload utility for PAUTDB",
       "parameters": [
-        "DLI",
-        "PAUDBUNL",
-        "PAUTBUNL",
-        ",,,,,,,,,,,N"
+        "DLI,PAUDBUNL,PAUTBUNL,,,,,,,,,,,N"
       ],
       "citation": 38
     }
@@ -145,15 +85,19 @@
   "data_flow": {
     "reads_from": [
       {
-        "source": "OEM.IMS.IMSP.PAUTHDB",
-        "fields_used": [],
+        "source": "DDPAUTP0",
+        "fields_used": [
+          "All PAUTDB root and child segments"
+        ],
         "citation": [
           58
         ]
       },
       {
-        "source": "OEM.IMS.IMSP.PAUTHDBX",
-        "fields_used": [],
+        "source": "DDPAUTX0",
+        "fields_used": [
+          "PAUTDB secondary index data"
+        ],
         "citation": [
           59
         ]
@@ -161,30 +105,66 @@
     ],
     "writes_to": [
       {
-        "destination": "AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO",
-        "fields_written": [],
+        "destination": "OUTFIL1",
+        "fields_written": [
+          "PAUTDB root segments"
+        ],
         "citation": [
           48
         ]
       },
       {
-        "destination": "AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO",
-        "fields_written": [],
+        "destination": "OUTFIL2",
+        "fields_written": [
+          "PAUTDB child segments"
+        ],
         "citation": [
           53
         ]
       }
     ],
-    "transforms": []
+    "transforms": [
+      {
+        "input_field": "PAUTDB hierarchical segments",
+        "output_field": "Sequential flat file records",
+        "transformation_description": "Unloads IMS database segments into fixed-block sequential files preserving record data",
+        "citation": [
+          39
+        ]
+      }
+    ]
   },
   "copybooks_used": [],
   "paragraphs": [
     {
+      "paragraph_name": "UNLDPADB",
+      "summary": null,
+      "purpose": "This is the JOB card paragraph defining the overall job execution parameters and context for the IMS database unload. It specifies job class A, message class H, region 0M, notification to SYSUID, and maximum time 1440 minutes. Lines 3-22 contain copyright notices, Apache License 2.0 details, and a high-level comment indicating execution of an IMS program. No data is read or written here; it sets the execution environment. There is no business logic or decisions made. No error handling defined at job level beyond defaults. It orchestrates sequential execution of subordinate STEP0 and STEP01 without COND parameters. Purpose is to provide metadata and scheduling info for the PAUTDB unload job.",
+      "called_by": [],
+      "calls": [
+        "STEP0",
+        "STEP01"
+      ],
+      "citation": [
+        1,
+        24
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
       "paragraph_name": "STEP0",
       "summary": null,
-      "purpose": "This step executes the IEFBR14 program, a dummy program that performs no actual processing. In this JCL, it's used to delete the existing IMS database files (AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO and AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO) before the database is unloaded and re-created. The DD statements DD1 and DD2 define the datasets to be deleted, specifying DISP=(OLD,DELETE,DELETE). The first DELETE ensures the dataset is deleted at the end of the step, regardless of the step's success or failure. This step prepares the environment for the subsequent unloading and reloading of the IMS database by removing any existing data.",
-      "called_by": [],
-      "calls": [],
+      "purpose": "This preparatory step executes PGM=IEFBR14, a null utility program that performs no computation but enables DD statements for dataset management. It defines DD1 and DD2 pointing to prior versions of output files AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO and CHILD.FILEO with DISP=(OLD,DELETE,DELETE), ensuring deletion if they exist to prevent conflicts. Additional DDs (SYSPRINT, SYSOUT, SYSDUMP) route output to SYSOUT*. It consumes no runtime data inputs beyond checking for existing files. It produces no new data files, only performs cleanup. No business logic, validations, or conditions are checked; deletion is unconditional via DISP. No error handling beyond JCL defaults (step abend on uncorrectable errors). This step is called first sequentially by the job and prepares for STEP01 by clearing output paths.",
+      "called_by": [
+        "UNLDPADB"
+      ],
+      "calls": [
+        "IEFBR14"
+      ],
       "citation": [
         25,
         37
@@ -214,9 +194,13 @@
     {
       "paragraph_name": "STEP01",
       "summary": null,
-      "purpose": "This step executes the IMS program DFSRRC00 to unload the PAUTDB database. The PGM parameter specifies the program to be executed, and the PARM parameter passes control information to the IMS program. The PARM string 'DLI,PAUDBUNL,PAUTBUNL,,,,,,,,,,,N' indicates that the program is to be executed in DLI mode, using the PAUDBUNL PSB (Program Specification Block) and the PAUTBUNL control region. The STEPLIB DD statements define the libraries containing the IMS modules required for execution, including OEMA.IMS.IMSP.SDFSRESL, OEMA.IMS.IMSP.SDFSRESL.V151, and AWS.M2.CARDDEMO.LOADLIB. The DFSRESLB DD statement defines the IMS RESLIB library. The IMS DD statement defines the PSBLIB and DBDLIB libraries. The OUTFIL1 and OUTFIL2 DD statements define the output files where the unloaded database segments will be written. DDPAUTP0 and DDPAUTX0 define the input IMS database and index. DFSVSAMP defines the VSAM parameters. The remaining DD statements define dummy datasets for IMS logging and error handling.",
-      "called_by": [],
-      "calls": [],
+      "purpose": "This is the primary processing step executing PGM=DFSRRC00, the IMS database reorganization utility configured for UNLOAD function via PARM='DLI,PAUDBUNL,PAUTBUNL,,,,,,,,,,,N'. It reads all root and child segments from input IMS databases DDPAUTP0 (PAUTHDB) and DDPAUTX0 (PAUTHDBX) using DLI access. Outputs are written to OUTFIL1 (root segments, LRECL=100, SPACE=(400,(20,20))) and OUTFIL2 (child segments, LRECL=206). Required IMS libraries are provided via STEPLIB (SDFSRESL, LOADLIB), DFSRESLB, and IMS (PSBLIB, DBDLIB). DFsVSAMP references the VSAM definition for PAUTDB, with DUMMY for IMSLOGR, IEFRDER, and SYSOUTs for diagnostics. No explicit business rules or validations beyond IMS utility defaults for unload completeness. Error handling relies on IMS messages to IMSERR/SYSUDUMP/SYSPRINT and JCL defaults. Executed unconditionally after STEP0, it accomplishes the core unload of PAUTDB for the card demo application.",
+      "called_by": [
+        "UNLDPADB"
+      ],
+      "calls": [
+        "DFSRRC00"
+      ],
       "citation": [
         38,
         69
@@ -279,17 +263,55 @@
         }
       ],
       "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
+      "is_dead_code": true,
+      "dead_code_reason": "Paragraph 'STEP01' is never PERFORMed or referenced by any other paragraph or program",
       "metadata": null
     }
   ],
-  "error_handling": [],
+  "error_handling": [
+    {
+      "condition": "Dataset not found or I/O error in STEP0 deletes",
+      "action": "JCL default: continue to next step or abend if severe",
+      "citation": [
+        33
+      ]
+    },
+    {
+      "condition": "IMS utility failure in STEP01 (e.g., DB not accessible)",
+      "action": "IMS messages to SYSOUT*/IMSERR; job abends on RC non-zero",
+      "citation": [
+        66
+      ]
+    }
+  ],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [],
-  "resolved_questions": [],
-  "dead_code": [],
+  "open_questions": [
+    {
+      "question": "Detailed segment layouts and field mappings in PAUTDB",
+      "context": "JCL references DBD/PSB but no copybook or DBD source provided",
+      "suggestion": "Analyze OEM.IMS.IMSP.PAUTHDB DBD source or unload file samples"
+    }
+  ],
+  "resolved_questions": [
+    {
+      "original_question": "Exact role of PAUDBUNL/PAUTBUNL in PARM",
+      "original_context": "Likely PCB/DBD names for unload, but not confirmed without PSB/DBD",
+      "answer": "**PAUDBUNL** is the **application program name** (PROGRAM-ID from `cbl/PAUDBUNL.CBL`, lines 17-18), a custom COBOL program implementing the unload logic. It uses `CBLTDLI` calls (e.g., `FUNC-GN`/`FUNC-GNP`) via the `PAUTBPCB` PCB mask (copied from linkage section, line 150) to:\n\n- Perform unqualified GN calls on root segment `PAUTSUM0` (lines 213-216, 228), writing full records to `OUTFIL1` (`AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO`, LRECL=100).\n- For each root, perform unqualified GNP calls on child segment `PAUTDTL1` (lines 257-260, 271), prefixing with root key (`PA-ACCT-ID` moved to `ROOT-SEG-KEY`, line 230) and writing to `OUTFIL2` (`AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO`, LRECL=206).\n- Accesses IMS DB datasets via `DDPAUTP0`/`DDPAUTX0` (`OEM.IMS.IMSP.PAUTHDB*`).\n- Handles status codes (e.g., 'GB' for end-of-DB, 'GE' for no more children) and writes stats/displays (lines 180+).\n\n**PAUTBUNL** is the **PSB name** (from `ims/PAUTBUNL.PSB`, line 21: `PSBGEN LANG=COBOL,PSBNAME=PAUTBUNL`), defining access to DBD `DBPAUTP0` (line 18):\n```\nPAUTBPCB PCB TYPE=DB,DBDNAME=DBPAUTP0,PROCOPT=GOTP,KEYLEN=14\nSENSEG NAME=PAUTSUM0,PARENT=0\nSENSEG NAME=PAUTDTL1,PARENT=PAUTSUM0\n```\n- Matches PCB (`PAUTBPCB`), segments (`PAUTSUM0`/`PAUTDTL1` via unqualified SSAs, lines 111-118), and COBOL language.\n- PROCOPT=GOTP enables Get Next/Parent for sequential unload.\n\n**In the PARM** (`'DLI,PAUDBUNL,PAUTBUNL,,,,,,,,,,,N'` in `jcl/UNLDPADB.JCL` line 39):\n- `DLI`: Specifies DLI (non-CICS batch) access mode.\n- `PAUDBUNL`: Program to dynamically load/execute (from `STEPLIB` `AWS.M2.CARDDEMO.LOADLIB`).\n- `PAUTBUNL`: PSB to schedule (from `IMS` DD: PSBLIB/DBDLIB).\n- Remaining commas/N: Default optional parms (e.g., checkpoint intervals, no checkpoint?).\n\n`DFSRRC00` (IMS SDFSRESL) acts as the **batch DL/I driver**, initializing IMS environment (`DFSRESLB`, `DFSVSAMP`, etc.), scheduling the PSB, and invoking the program via `ENTRY 'DLITCBL'` (line 158). This produces flat files for root/children from PAUTDB (`DBPAUTP0`), as per system-overview skill (PAUDBUNL for IMS unloading).\n\nNo standard IMS unload utility (e.g., DFSURGL0); this is a **custom user-exit style unload** via application program + PSB under DFSRRC00 driver.",
+      "confidence": "HIGH",
+      "resolved_by": "CODEWHISPER",
+      "cycle_resolved": 1,
+      "tool_calls_used": 17
+    }
+  ],
+  "dead_code": [
+    {
+      "name": "STEP01",
+      "artifact_type": "paragraph",
+      "line": 38,
+      "reason": "Paragraph 'STEP01' is never PERFORMed or referenced by any other paragraph or program"
+    }
+  ],
   "call_semantics": [],
   "flow_diagram": null
 }

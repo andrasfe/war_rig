@@ -1,9 +1,10 @@
 ```cobol
-      ******************************************************************
-      * Program     : COPAUA0C.CBL
-      * Application : CardDemo - Authorization Module
-      * Type        : CICS COBOL IMS MQ Program
-      * Function    : Card Authorization Decision Program
-      ******************************************************************
-      * Copyright Amazon.com, Inc. or its affiliates.
+       8000-WRITE-AUTH-TO-DB.                                                   
+      * ------------------------------------------------------------- *         
+      *                                                                         
+                                                                                
+           PERFORM 8400-UPDATE-SUMMARY      THRU 8400-EXIT                      
+           PERFORM 8500-INSERT-AUTH         THRU 8500-EXIT                      
+           .                                                                    
+      *                                                                         
 ```

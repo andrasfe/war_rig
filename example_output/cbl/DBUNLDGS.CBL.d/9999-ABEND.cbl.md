@@ -1,9 +1,9 @@
 ```cobol
-      *    ORGANIZATION IS SEQUENTIAL                                   00110000
-      *    ACCESS MODE  IS SEQUENTIAL                                   00120000
-      *    FILE STATUS IS WS-OUTFL1-STATUS.                             00130000
-                                                                        00140000
-      *                                                                 00150000
-      *    SELECT OPFILE2 ASSIGN TO OUTFIL2                             00160000
-      *    ORGANIZATION IS SEQUENTIAL                                   00170000
+       9999-ABEND.                                                      02920000
+      *----------------------------------------------------------------*02930000
+      *                                                                 02940000
+           DISPLAY 'DBUNLDGS ABENDING ...'                              02950000
+                                                                        02960000
+           MOVE 16 TO RETURN-CODE                                       02970000
+           GOBACK.                                                      02980000
 ```
