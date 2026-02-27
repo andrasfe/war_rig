@@ -567,6 +567,12 @@ class WarRigConfig(BaseSettings):
         description="Enable merge pass to fix cross-references and deduplicate after section generation",
     )
 
+    # Copybook resolution
+    extra_copybook_dirs: str = Field(
+        default="",
+        description="Comma-separated extra directories to search for COBOL copybooks",
+    )
+
     # Recursive summarization
     summarization_enabled: bool = Field(
         default=False,
@@ -737,6 +743,17 @@ class WarRigConfig(BaseSettings):
             codewhisper_max_tokens=self.question_resolution_cw_max_tokens,
             resolve_readme_questions=self.question_resolution_resolve_readme,
         )
+
+    @property
+    def copybook_dirs_list(self) -> list[Path]:
+        """Parse extra_copybook_dirs into a list of Paths."""
+        if not self.extra_copybook_dirs:
+            return []
+        return [
+            Path(d.strip())
+            for d in self.extra_copybook_dirs.split(",")
+            if d.strip()
+        ]
 
     @property
     def knowledge_graph(self) -> KnowledgeGraphConfig:

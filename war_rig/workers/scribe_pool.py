@@ -2284,6 +2284,11 @@ class ScribeWorker:
             file_name: Source file name or relative path (e.g., "app/cobol/PROG.cbl").
             template: The documentation template to save.
         """
+        # Attach missing-copybook metadata if available
+        missing = getattr(self, "_missing_copybooks", {}).get(file_name)
+        if missing and not template.copybooks_not_found:
+            template.copybooks_not_found = missing
+
         doc_path = self._get_doc_output_path(file_name)
         backup_path = Path(str(doc_path) + ".bak")
 
@@ -3362,6 +3367,17 @@ class ScribeWorker:
 
         # Cache for markdown generation in _save_template
         self._file_asts[file_name] = paragraph_asts
+
+        # Record missing copybooks for template metadata
+        if parse_result.copybooks_not_found:
+            if not hasattr(self, "_missing_copybooks"):
+                self._missing_copybooks: dict[str, list[str]] = {}
+            self._missing_copybooks[file_name] = parse_result.copybooks_not_found
+            logger.warning(
+                f"Worker {self.worker_id}: {file_name} has "
+                f"{len(parse_result.copybooks_not_found)} unresolved "
+                f"copybooks: {parse_result.copybooks_not_found}"
+            )
 
         logger.debug(
             f"Worker {self.worker_id}: Built AST for {file_name} — "

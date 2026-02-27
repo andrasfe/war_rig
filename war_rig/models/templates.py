@@ -780,6 +780,10 @@ class DocumentationTemplate(BaseModel):
         default=None,
         description="Mermaid flowchart of internal control flow (COBOL only)",
     )
+    copybooks_not_found: list[str] = Field(
+        default_factory=list,
+        description="Copybooks referenced but not found during analysis",
+    )
 
     @classmethod
     def load_lenient(cls, data: dict) -> "DocumentationTemplate":

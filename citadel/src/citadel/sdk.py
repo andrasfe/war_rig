@@ -345,6 +345,9 @@ class CobolParseResult:
     _full_ast_text: str = field(default="", repr=False)
     """Internal: all paragraph trees formatted as a single string."""
 
+    copybooks_not_found: list[str] = field(default_factory=list)
+    """Copybook names referenced via COPY but not resolved."""
+
     def get_paragraph_tree(self, name: str) -> Any:
         """Return a syntax tree for the named paragraph.
 
@@ -1995,6 +1998,7 @@ class Citadel:
             _data_items_raw=data_items,
             _paragraph_asts=paragraph_ast_trees,
             _full_ast_text=full_ast_text,
+            copybooks_not_found=list(set(reader.missing_copybooks)),
         )
 
     def get_callouts_compact(self, path: str | Path) -> list[dict[str, Any]]:

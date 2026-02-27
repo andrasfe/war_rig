@@ -243,7 +243,12 @@ class CallSemanticsAnalyzer:
             try:
                 from citadel.sdk import Citadel  # type: ignore[import-not-found]
 
-                parse_result = Citadel().parse_cobol(str(source_path))
+                from war_rig.utils.copybook_dirs import derive_copybook_dirs
+
+                cb_dirs = derive_copybook_dirs(source_path.parent)
+                parse_result = Citadel().parse_cobol(
+                    str(source_path), copybook_dirs=cb_dirs,
+                )
                 ast_bodies = parse_result.paragraph_asts
                 if ast_bodies:
                     for name in function_names:

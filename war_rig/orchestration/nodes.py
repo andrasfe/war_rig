@@ -295,8 +295,13 @@ class WarRigNodes:
                     try:
                         from citadel.sdk import Citadel
 
+                        from war_rig.utils.copybook_dirs import derive_copybook_dirs
+
                         citadel = Citadel()
-                        parse_result = citadel.parse_cobol(source_path)
+                        cb_dirs = derive_copybook_dirs(Path(source_path).parent)
+                        parse_result = citadel.parse_cobol(
+                            source_path, copybook_dirs=cb_dirs,
+                        )
                         if parse_result.full_ast:
                             updates["source_code"] = parse_result.full_ast
                             logger.info(

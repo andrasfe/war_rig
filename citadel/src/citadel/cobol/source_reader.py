@@ -218,6 +218,7 @@ class SourceReader:
         self.max_copy_depth = max_copy_depth
         self.skip_missing_copybooks = skip_missing_copybooks
         self.missing_copybooks: list[str] = []
+        self._dir_cache: dict[str, list[Path]] = {}
 
     # ----- public API -----
 
@@ -455,8 +456,15 @@ class SourceReader:
         return resolved, copybooks_found
 
     def _find_copybook(self, name: str) -> Path:
-        """Search configured directories for a copybook file."""
+        """Search configured directories for a copybook file.
+
+        Tries exact-match first (fast path), then falls back to
+        case-insensitive scanning for Linux filesystems where
+        ``COPY WSCPYBBK`` may need to find ``wscpybbk.cpy``.
+        """
         extensions = [".cpy", ".CPY", ".cbl", ".CBL", ""]
+
+        # Fast path: exact name + extension match
         for directory in self.copybook_dirs:
             for ext in extensions:
                 candidate = directory / f"{name}{ext}"
@@ -464,9 +472,29 @@ class SourceReader:
                     logger.debug("Found copybook: %s", candidate)
                     return candidate
 
+        # Slow path: case-insensitive fallback
+        name_upper = name.upper()
+        for directory in self.copybook_dirs:
+            for entry in self._list_dir_cached(directory):
+                if entry.stem.upper() == name_upper and entry.is_file():
+                    logger.debug(
+                        "Found copybook (case-insensitive): %s", entry
+                    )
+                    return entry
+
         raise CopybookNotFoundError(
             name, [str(d) for d in self.copybook_dirs]
         )
+
+    def _list_dir_cached(self, directory: Path) -> list[Path]:
+        """Return cached directory listing for *directory*."""
+        key = str(directory)
+        if key not in self._dir_cache:
+            try:
+                self._dir_cache[key] = list(directory.iterdir())
+            except OSError:
+                self._dir_cache[key] = []
+        return self._dir_cache[key]
 
     def _parse_replacing(
         self, replacing_text: str | None

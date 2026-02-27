@@ -945,6 +945,139 @@ def version() -> None:
     console.print(f"[bold blue]War Rig[/bold blue] version {__version__}")
 
 
+@app.command(name="repair-copybooks")
+def repair_copybooks(
+    input_dir: Annotated[
+        Path,
+        typer.Argument(
+            help="Directory containing COBOL source files",
+            exists=True,
+            file_okay=False,
+            dir_okay=True,
+            readable=True,
+        ),
+    ],
+    output_dir: Annotated[
+        Path | None,
+        typer.Option(
+            "--output-dir",
+            "-o",
+            help="Output directory containing .doc.json files (default: config output)",
+        ),
+    ] = None,
+    copybook_dirs: Annotated[
+        str | None,
+        typer.Option(
+            "--copybook-dirs",
+            help="Comma-separated extra copybook directories",
+        ),
+    ] = None,
+    dry_run: Annotated[
+        bool,
+        typer.Option(
+            "--dry-run",
+            help="List affected files without repairing",
+        ),
+    ] = False,
+    config: Annotated[
+        Path | None,
+        typer.Option(
+            "--config",
+            "-c",
+            help="Path to configuration file",
+        ),
+    ] = None,
+    verbose: Annotated[
+        bool,
+        typer.Option(
+            "--verbose",
+            "-v",
+            help="Enable verbose logging",
+        ),
+    ] = False,
+) -> None:
+    """Repair documentation files with unresolved copybooks.
+
+    Scans .doc.json files for missing copybooks, checks if they are now
+    resolvable, and re-parses affected files to update the documentation.
+
+    Example:
+        $ war-rig repair-copybooks ./input --dry-run
+        $ war-rig repair-copybooks ./input --copybook-dirs /extra/cpys
+    """
+    setup_logging(verbose)
+
+    cfg = load_config_with_fallback(config)
+    scan_dir = output_dir or cfg.output_directory
+
+    console.print(Panel.fit(
+        "[bold blue]War Rig[/bold blue] - Repair Copybooks",
+        border_style="blue",
+    ))
+
+    # Build copybook search directories
+    from war_rig.repair.copybook_repair import (
+        repair_file,
+        scan_for_missing_copybooks,
+        verify_resolvability,
+    )
+    from war_rig.utils.copybook_dirs import derive_copybook_dirs
+
+    extra: list[Path] = cfg.copybook_dirs_list
+    if copybook_dirs:
+        extra.extend(Path(d.strip()) for d in copybook_dirs.split(",") if d.strip())
+
+    cb_dirs = derive_copybook_dirs(input_dir, extra_dirs=extra or None)
+
+    # Scan
+    candidates = scan_for_missing_copybooks(scan_dir)
+    if not candidates:
+        console.print("[green]No files with missing copybooks found.[/green]")
+        raise typer.Exit(0)
+
+    console.print(f"Found {len(candidates)} file(s) with missing copybooks")
+
+    # Verify which are now resolvable
+    resolvable = verify_resolvability(candidates, cb_dirs)
+
+    if dry_run:
+        table = Table(title="Copybook Repair — Dry Run")
+        table.add_column("File", style="bold")
+        table.add_column("Now Resolvable", style="green")
+        table.add_column("Still Missing", style="red")
+
+        for cand in candidates:
+            table.add_row(
+                cand.file_name,
+                ", ".join(cand.now_resolvable) or "—",
+                ", ".join(cand.still_missing) or "—",
+            )
+        console.print(table)
+        console.print(
+            f"\n[cyan]{len(resolvable)} file(s) can be repaired[/cyan]"
+        )
+        raise typer.Exit(0)
+
+    if not resolvable:
+        console.print("[yellow]No copybooks are newly resolvable.[/yellow]")
+        raise typer.Exit(0)
+
+    # Repair
+    repaired = 0
+    failed = 0
+    for cand in resolvable:
+        console.print(f"  Repairing [bold]{cand.file_name}[/bold]...")
+        if repair_file(cand, input_dir, scan_dir, cb_dirs):
+            repaired += 1
+        else:
+            failed += 1
+
+    console.print(
+        f"\n[green]Repaired: {repaired}[/green]"
+        + (f"  [red]Failed: {failed}[/red]" if failed else "")
+    )
+
+
 def _generate_overview_internal(
     cfg: WarRigConfig,
     system_name: str = "CardDemo",

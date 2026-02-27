@@ -1296,7 +1296,17 @@ class ChallengerWorker:
         if not self._citadel:
             return None
         try:
-            parse_result = self._citadel.parse_cobol(file_path)
+            from war_rig.utils.copybook_dirs import derive_copybook_dirs
+
+            cb_dirs = derive_copybook_dirs(
+                self._input_directory,
+                extra_dirs=self.config.copybook_dirs_list
+                if hasattr(self.config, "copybook_dirs_list")
+                else None,
+            )
+            parse_result = self._citadel.parse_cobol(
+                file_path, copybook_dirs=cb_dirs,
+            )
             ast_text = parse_result.full_ast
             return ast_text if ast_text else None
         except Exception as e:
