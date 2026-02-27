@@ -63,13 +63,13 @@ body::after{
 
 .pool{
   border:1px solid #222;border-radius:6px;
-  background:rgba(255,255,255,.02);overflow:hidden;
+  background:rgba(255,255,255,.02);overflow:visible;
 }
 .pool-header{
   padding:8px 12px;font-size:13px;font-weight:bold;letter-spacing:3px;
   border-bottom:1px solid rgba(255,255,255,.06);
 }
-.pool-body{padding:8px;display:flex;flex-wrap:wrap;gap:6px;min-height:60px}
+.pool-body{padding:0;position:relative;height:140px;overflow:visible}
 
 /* Documentation Specialists pool */
 .pool-scribe .pool-header{color:#0ff;background:rgba(0,255,255,.05)}
@@ -81,56 +81,36 @@ body::after{
 
 /* Holistic Reviewer */
 .pool-imperator .pool-header{color:#ffd700;background:rgba(255,215,0,.06)}
-.pool-imperator{border-color:rgba(255,215,0,.15)}
+.pool-imperator{border-color:rgba(255,215,0,.15);overflow:hidden}
+.pool-imperator .pool-body{height:auto;padding:8px;overflow:hidden;position:static}
 
-/* ── Worker Cards ─────────────────────────────────────── */
-.worker-card{
-  padding:6px 10px;border-radius:4px;font-size:12px;
-  border:1px solid #333;background:#111;
-  min-width:130px;transition:all .3s ease;
-  position:relative;overflow:hidden;
+/* ── Sprites ──────────────────────────────────────────── */
+.sprite{
+  position:absolute;width:70px;text-align:center;
+  transition:none;cursor:default;user-select:none;
 }
-.worker-card .wid{font-weight:bold;font-size:11px;margin-bottom:3px}
-.worker-card .wfile{color:#aaa;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px}
-.worker-card .wbadge{font-size:10px;color:#666;margin-top:2px}
+.sprite-body{
+  width:22px;height:22px;border-radius:50%;margin:0 auto;
+  position:relative;
+}
+.sprite.scribe .sprite-body{background:#0ff}
+.sprite.challenger .sprite-body{background:#f0f}
 
-/* ── Resting state ── */
-.worker-card.idle{border-color:#222}
-.worker-card.idle .wid{color:#556}
-.worker-card.idle .w-sprite{opacity:.5}
-.worker-card.idle .w-zzz{display:inline}
-.worker-card .w-zzz{display:none;font-size:10px;color:#446;margin-left:4px;animation:zzz-float 2.5s ease-in-out infinite}
-@keyframes zzz-float{
-  0%,100%{opacity:.3;transform:translateY(0)}
-  50%{opacity:.8;transform:translateY(-3px)}
-}
+/* Idle: dimmed, smaller */
+.sprite.idle .sprite-body{opacity:.45;transform:scale(.8)}
+.sprite.idle .sprite-zzz{display:block}
+.sprite.idle .sprite-file{display:none}
+.sprite.idle .sprite-doc{display:none}
 
-/* ── Active state (eating) ── */
-.worker-card.active{
-  border-color:rgba(0,255,255,.4);
-  box-shadow:0 0 8px rgba(0,255,255,.15);
-}
-.worker-card.active .wid{color:#0ff}
+/* Processing: chomp animation */
+.sprite.processing .sprite-body{animation:chomp .4s steps(2) infinite}
+.sprite.processing .sprite-file{display:block}
+.sprite.processing .sprite-zzz{display:none}
 
-.worker-card.active-challenger{
-  border-color:rgba(255,0,255,.4);
-  box-shadow:0 0 8px rgba(255,0,255,.15);
-}
-.worker-card.active-challenger .wid{color:#f0f}
-
-/* ── Pac-man chomper ── */
-.w-chomp-row{display:flex;align-items:center;gap:0;margin-top:2px;overflow:hidden;height:18px}
-
-.w-pacman{
-  width:16px;height:16px;flex-shrink:0;position:relative;
-}
-.w-pacman-body{
-  width:16px;height:16px;border-radius:50%;position:absolute;
-  animation:chomp .4s steps(2) infinite;
-}
-.worker-card.active .w-pacman-body{background:#0ff}
-.worker-card.active-challenger .w-pacman-body{background:#f0f}
-.worker-card.idle .w-pacman{display:none}
+/* Grabbing / returning: z-index above pool */
+.sprite.grabbing,.sprite.returning{z-index:100}
+.sprite.grabbing .sprite-zzz,.sprite.returning .sprite-zzz{display:none}
+.sprite.grabbing .sprite-file,.sprite.returning .sprite-file{display:none}
 
 @keyframes chomp{
   0%{clip-path:polygon(100% 50%,40% 0%,0% 0%,0% 100%,40% 100%)}
@@ -138,40 +118,59 @@ body::after{
   100%{clip-path:polygon(100% 50%,40% 0%,0% 0%,0% 100%,40% 100%)}
 }
 
-/* Filename scrolls into the mouth */
-.w-food{
-  font-size:11px;white-space:nowrap;overflow:hidden;
+.sprite-label{font-size:9px;color:#888;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sprite.scribe.processing .sprite-label,.sprite.scribe.grabbing .sprite-label,.sprite.scribe.returning .sprite-label{color:#0ff}
+.sprite.challenger.processing .sprite-label,.sprite.challenger.grabbing .sprite-label,.sprite.challenger.returning .sprite-label{color:#f0f}
+
+.sprite-file{
+  font-size:8px;color:#aaa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  max-width:70px;margin-top:1px;display:none;
   animation:scroll-eat 3s linear infinite;
-  padding-left:3px;
 }
-.worker-card.active .w-food{color:#0ff}
-.worker-card.active-challenger .w-food{color:#f0f}
-.worker-card.idle .w-food{display:none}
-
 @keyframes scroll-eat{
-  0%{max-width:140px;opacity:1}
-  80%{max-width:140px;opacity:1}
+  0%{max-width:70px;opacity:1}
+  80%{max-width:70px;opacity:1}
   95%{max-width:0;opacity:0}
-  100%{max-width:140px;opacity:1}
+  100%{max-width:70px;opacity:1}
 }
 
-/* Crumbs that fly off the pac-man */
-.w-crumbs{position:absolute;top:50%;right:4px;pointer-events:none}
-.w-crumb{
-  position:absolute;width:3px;height:3px;border-radius:50%;opacity:0;
+.sprite-zzz{
+  display:none;font-size:9px;color:#446;margin-top:1px;
+  animation:zzz-float 2.5s ease-in-out infinite;
 }
-.worker-card.active .w-crumb{animation:crumb-fly 1.2s ease-out infinite;background:#0ff}
-.worker-card.active-challenger .w-crumb{animation:crumb-fly 1.2s ease-out infinite;background:#f0f}
-.w-crumb:nth-child(1){animation-delay:0s}
-.w-crumb:nth-child(2){animation-delay:.4s}
-.w-crumb:nth-child(3){animation-delay:.8s}
+@keyframes zzz-float{
+  0%,100%{opacity:.3;transform:translateY(0)}
+  50%{opacity:.8;transform:translateY(-3px)}
+}
 
+.sprite-badge{
+  position:absolute;top:-4px;right:2px;font-size:8px;font-weight:bold;
+  background:#222;border:1px solid #444;border-radius:6px;padding:0 3px;
+  color:#0f0;min-width:14px;text-align:center;
+}
+.sprite-badge:empty{display:none}
+
+.sprite-doc{
+  display:none;width:14px;height:10px;margin:2px auto 0;border-radius:2px;
+  border:1px solid rgba(255,255,255,.3);
+}
+.sprite.grabbing .sprite-doc,.sprite.returning .sprite-doc{display:block}
+.sprite.scribe .sprite-doc{background:rgba(0,200,255,.5)}
+.sprite.challenger .sprite-doc{background:rgba(255,0,255,.5)}
+
+/* Crumbs for processing */
+.sprite-crumbs{position:absolute;top:8px;right:-2px;pointer-events:none}
+.sprite-crumb{position:absolute;width:3px;height:3px;border-radius:50%;opacity:0}
+.sprite.processing .sprite-crumb{animation:crumb-fly 1.2s ease-out infinite}
+.sprite.scribe .sprite-crumb{background:#0ff}
+.sprite.challenger .sprite-crumb{background:#f0f}
+.sprite-crumb:nth-child(1){animation-delay:0s}
+.sprite-crumb:nth-child(2){animation-delay:.4s}
+.sprite-crumb:nth-child(3){animation-delay:.8s}
 @keyframes crumb-fly{
   0%{transform:translate(0,0);opacity:.8}
   100%{transform:translate(12px,-8px);opacity:0}
 }
-
-.worker-card.error{border-color:#f44;box-shadow:0 0 8px rgba(255,0,0,.2)}
 
 /* Holistic Reviewer stats */
 .imp-stats{padding:10px 12px;font-size:11px;line-height:1.8}
@@ -564,24 +563,216 @@ function displayName(wid) {
   return m[1] === 'scribe' ? `writer-${n}` : `reviewer-${n}`;
 }
 
-function buildWorkerCard(wid, ticket, completedCount, type) {
-  const isActive = !!ticket;
-  const cls = isActive ? (type === 'challenger' ? 'active-challenger' : 'active') : 'idle';
-  const file = isActive ? shortName(ticket.file_name) : '';
+// ── Sprite System ─────────────────────────────────────
+const sprites = {};        // keyed by worker ID
+const SPRITE_R = 15;       // collision radius
+const POOL_PAD = 6;        // padding inside pool
+const GRAB_FRAMES = 40;    // frames for grab/return arc
+const BOB_AMP = 2;         // processing bob amplitude
 
-  const crumbs = '<span class="w-crumbs"><span class="w-crumb"></span><span class="w-crumb"></span><span class="w-crumb"></span></span>';
+function createSprite(wid, type, poolEl) {
+  const pw = poolEl.clientWidth || 400;
+  const ph = poolEl.clientHeight || 140;
+  const el = document.createElement('div');
+  el.className = `sprite ${type} idle`;
+  el.innerHTML = `
+    <div class="sprite-badge"></div>
+    <div class="sprite-body"></div>
+    <div class="sprite-label">${displayName(wid)}</div>
+    <div class="sprite-file"></div>
+    <div class="sprite-zzz">zzz</div>
+    <div class="sprite-doc"></div>
+    <div class="sprite-crumbs"><span class="sprite-crumb"></span><span class="sprite-crumb"></span><span class="sprite-crumb"></span></div>`;
+  poolEl.appendChild(el);
 
-  return `<div class="worker-card ${cls}">
-    <div class="wid">${displayName(wid)}<span class="w-zzz">zzz</span></div>
-    <div class="w-chomp-row">
-      <div class="w-pacman"><div class="w-pacman-body"></div></div>
-      <div class="w-food">${file}</div>
-    </div>
-    ${!isActive ? '<div class="wfile" style="color:#334;font-size:10px;font-style:italic">resting</div>' : ''}
-    <div class="wbadge">${completedCount} done</div>
-    ${isActive ? crumbs : ''}
-  </div>`;
+  const s = {
+    id: wid,
+    type,
+    x: POOL_PAD + Math.random() * (pw - 2 * POOL_PAD - 70),
+    y: POOL_PAD + Math.random() * (ph - 2 * POOL_PAD - 50),
+    vx: (Math.random() - 0.5) * 0.8,
+    vy: (Math.random() - 0.5) * 0.8,
+    state: 'idle',
+    stateTimer: 0,
+    file: null,
+    completedCount: 0,
+    el,
+    poolEl,
+    // For grab/return tween
+    baseY: 0,
+    arcProgress: 0,
+  };
+  s.baseY = s.y;
+  sprites[wid] = s;
+  return s;
 }
+
+function ensureSprites(poolEl, count, prefix, type) {
+  for (let i = 1; i <= count; i++) {
+    const wid = `${prefix}-${i}`;
+    if (!sprites[wid]) createSprite(wid, type, poolEl);
+  }
+}
+
+function setSpriteState(sprite, newState) {
+  if (sprite.state === newState) return;
+  sprite.el.classList.remove('idle', 'processing', 'grabbing', 'returning');
+  sprite.el.classList.add(newState);
+  sprite.state = newState;
+  sprite.stateTimer = 0;
+  if (newState === 'grabbing') {
+    sprite.baseY = sprite.y;
+    sprite.arcProgress = 0;
+  }
+  if (newState === 'returning') {
+    sprite.arcProgress = 0;
+    // Pick a random landing Y
+    const ph = sprite.poolEl.clientHeight || 140;
+    sprite.landY = POOL_PAD + Math.random() * (ph - 2 * POOL_PAD - 50);
+  }
+}
+
+function updateSpriteData(sprite, ticket, completedCount) {
+  sprite.completedCount = completedCount;
+  sprite.el.querySelector('.sprite-badge').textContent = completedCount > 0 ? completedCount : '';
+
+  const wasActive = sprite.state === 'processing' || sprite.state === 'grabbing' || sprite.state === 'returning';
+  const isActive = !!ticket;
+
+  if (isActive) {
+    const fname = shortName(ticket.file_name);
+    sprite.file = fname;
+    sprite.el.querySelector('.sprite-file').textContent = fname;
+    // If newly active and was idle, start grabbing
+    if (!wasActive) {
+      setSpriteState(sprite, 'grabbing');
+    }
+    // If already in grabbing/returning, let the animation finish
+  } else {
+    // No ticket — go idle (unless mid-animation, let it finish first)
+    if (sprite.state === 'processing') {
+      // Completed! Green burst at sprite position
+      const rect = sprite.el.getBoundingClientRect();
+      spawnBurst(rect.left + 35, rect.top + 11, '#0f0', 12);
+      setSpriteState(sprite, 'idle');
+    } else if (sprite.state === 'idle') {
+      // already idle
+    }
+    // If grabbing/returning, let the animation finish then it'll see no ticket
+    sprite.file = null;
+    sprite.el.querySelector('.sprite-file').textContent = '';
+  }
+}
+
+function tickSprite(s) {
+  const pw = s.poolEl.clientWidth || 400;
+  const ph = s.poolEl.clientHeight || 140;
+  s.stateTimer++;
+
+  if (s.state === 'idle') {
+    // Random velocity perturbation
+    s.vx += (Math.random() - 0.5) * 0.05;
+    s.vy += (Math.random() - 0.5) * 0.05;
+    // Dampen
+    s.vx *= 0.99;
+    s.vy *= 0.99;
+    // Clamp speed
+    const speed = Math.sqrt(s.vx * s.vx + s.vy * s.vy);
+    if (speed > 1.2) { s.vx *= 1.2 / speed; s.vy *= 1.2 / speed; }
+    if (speed < 0.15) { s.vx += (Math.random() - 0.5) * 0.3; s.vy += (Math.random() - 0.5) * 0.3; }
+    // Move
+    s.x += s.vx;
+    s.y += s.vy;
+    // Wall bounce
+    if (s.x < POOL_PAD) { s.x = POOL_PAD; s.vx = Math.abs(s.vx); }
+    if (s.x > pw - 70 - POOL_PAD) { s.x = pw - 70 - POOL_PAD; s.vx = -Math.abs(s.vx); }
+    if (s.y < POOL_PAD) { s.y = POOL_PAD; s.vy = Math.abs(s.vy); }
+    if (s.y > ph - 50 - POOL_PAD) { s.y = ph - 50 - POOL_PAD; s.vy = -Math.abs(s.vy); }
+
+  } else if (s.state === 'grabbing') {
+    s.arcProgress += 1 / GRAB_FRAMES;
+    if (s.arcProgress >= 1) {
+      s.arcProgress = 1;
+      setSpriteState(s, 'returning');
+    }
+
+  } else if (s.state === 'returning') {
+    s.arcProgress += 1 / GRAB_FRAMES;
+    if (s.arcProgress >= 1) {
+      s.arcProgress = 1;
+      s.y = s.landY;
+      // If we still have a file, start processing; otherwise go idle
+      if (s.file) {
+        setSpriteState(s, 'processing');
+      } else {
+        setSpriteState(s, 'idle');
+      }
+    }
+
+  } else if (s.state === 'processing') {
+    // Gentle bob
+    s.y += Math.sin(s.stateTimer * 0.08) * 0.15;
+    // Clamp
+    const ph2 = s.poolEl.clientHeight || 140;
+    if (s.y < POOL_PAD) s.y = POOL_PAD;
+    if (s.y > ph2 - 50 - POOL_PAD) s.y = ph2 - 50 - POOL_PAD;
+  }
+
+  // Apply position to DOM
+  let renderY = s.y;
+  if (s.state === 'grabbing') {
+    // Arc upward: parabolic, peak at -100px above pool
+    const t = s.arcProgress;
+    const jumpHeight = 100;
+    renderY = s.baseY - jumpHeight * 4 * t * (1 - t); // parabola peaking at t=0.5
+  } else if (s.state === 'returning') {
+    const t = s.arcProgress;
+    const jumpHeight = 100;
+    // Descend from peak back down
+    renderY = (s.landY) - jumpHeight * 4 * (1 - t) * t;
+  }
+
+  s.el.style.transform = `translate(${s.x}px, ${renderY}px)`;
+}
+
+// Collision detection — only between sprites in idle state in the same pool
+function collideSprites(poolEl) {
+  const poolSprites = Object.values(sprites).filter(s => s.poolEl === poolEl && s.state === 'idle');
+  for (let i = 0; i < poolSprites.length; i++) {
+    for (let j = i + 1; j < poolSprites.length; j++) {
+      const a = poolSprites[i], b = poolSprites[j];
+      const dx = (b.x + 35) - (a.x + 35); // center offset (sprite width 70/2)
+      const dy = (b.y + 20) - (a.y + 20);
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < SPRITE_R * 2 && dist > 0.1) {
+        const nx = dx / dist, ny = dy / dist;
+        const dvx = a.vx - b.vx, dvy = a.vy - b.vy;
+        const dot = dvx * nx + dvy * ny;
+        if (dot > 0) {
+          a.vx -= dot * nx * 0.5;
+          a.vy -= dot * ny * 0.5;
+          b.vx += dot * nx * 0.5;
+          b.vy += dot * ny * 0.5;
+        }
+        // Separate overlapping sprites
+        const overlap = SPRITE_R * 2 - dist;
+        a.x -= nx * overlap * 0.5;
+        a.y -= ny * overlap * 0.5;
+        b.x += nx * overlap * 0.5;
+        b.y += ny * overlap * 0.5;
+      }
+    }
+  }
+}
+
+// Master physics tick
+function tickAllSprites() {
+  Object.values(sprites).forEach(tickSprite);
+  collideSprites($('#scribe-pool'));
+  collideSprites($('#challenger-pool'));
+  requestAnimationFrame(tickAllSprites);
+}
+requestAnimationFrame(tickAllSprites);
 
 function renderWorkers(tickets) {
   // Group active tickets by worker
@@ -599,27 +790,25 @@ function renderWorkers(tickets) {
     }
   });
 
-  // Always show at least default number of workers
+  // Discover pool sizes
   const numScribes = discoverPoolSize(tickets, 'scribe', DEFAULT_SCRIBES);
   const numChallengers = discoverPoolSize(tickets, 'challenger', DEFAULT_CHALLENGERS);
 
-  // Render scribe pool
-  const sp = $('#scribe-pool');
-  sp.innerHTML = '';
+  // Ensure sprites exist
+  ensureSprites($('#scribe-pool'), numScribes, 'scribe', 'scribe');
+  ensureSprites($('#challenger-pool'), numChallengers, 'challenger', 'challenger');
+
+  // Update sprite data from tickets
   for (let i = 1; i <= numScribes; i++) {
     const wid = `scribe-${i}`;
-    sp.innerHTML += buildWorkerCard(wid, byWorker[wid], workerCompleted[wid] || 0, 'scribe');
+    if (sprites[wid]) updateSpriteData(sprites[wid], byWorker[wid], workerCompleted[wid] || 0);
   }
-
-  // Render challenger pool
-  const cp = $('#challenger-pool');
-  cp.innerHTML = '';
   for (let i = 1; i <= numChallengers; i++) {
     const wid = `challenger-${i}`;
-    cp.innerHTML += buildWorkerCard(wid, byWorker[wid], workerCompleted[wid] || 0, 'challenger');
+    if (sprites[wid]) updateSpriteData(sprites[wid], byWorker[wid], workerCompleted[wid] || 0);
   }
 
-  // Render Holistic Reviewer
+  // Render Holistic Reviewer (unchanged — not a sprite)
   const ip = $('#imperator-pool');
   const decisions = countDecisions(tickets);
   const totalDec = Object.values(decisions).reduce((a, b) => a + b, 0);
