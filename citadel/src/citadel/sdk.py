@@ -1846,6 +1846,27 @@ class Citadel:
             "error": None,
         }
 
+    def _discover_copybook_dirs(self, source_path: Path) -> list[Path]:
+        """Auto-discover copybook directories from source file location.
+
+        Walks up from source_path.parent to find all directories containing
+        copybook files (.cpy, .CPY, .copy, .COPY, .cpb, .CPB).
+        Always includes source_path.parent as a baseline.
+        """
+        copybook_exts = {".cpy", ".CPY", ".copy", ".COPY", ".cpb", ".CPB"}
+        root = source_path.parent
+        dirs: dict[str, Path] = {str(root): root}
+        try:
+            for entry in root.rglob("*"):
+                if entry.is_file() and entry.suffix in copybook_exts:
+                    parent = entry.parent
+                    key = str(parent)
+                    if key not in dirs:
+                        dirs[key] = parent
+        except OSError:
+            pass
+        return list(dirs.values())
+
     def parse_cobol(
         self,
         path: str | Path,
@@ -1873,7 +1894,10 @@ class Citadel:
         from citadel.cobol.source_reader import SourceReader
 
         source_path = Path(path)
-        cb_dirs = [str(Path(d)) for d in (copybook_dirs or [])]
+        if copybook_dirs:
+            cb_dirs = [str(Path(d)) for d in copybook_dirs]
+        else:
+            cb_dirs = [str(d) for d in self._discover_copybook_dirs(source_path)]
 
         # Run the parse pipeline
         reader = SourceReader(
