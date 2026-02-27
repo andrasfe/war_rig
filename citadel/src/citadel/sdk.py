@@ -1846,25 +1846,43 @@ class Citadel:
             "error": None,
         }
 
-    def _discover_copybook_dirs(self, source_path: Path) -> list[Path]:
-        """Auto-discover copybook directories from source file location.
+    @staticmethod
+    def _discover_copybook_dirs(source_path: Path) -> list[Path]:
+        """Auto-discover copybook directories by walking up from source file.
 
-        Walks up from source_path.parent to find all directories containing
-        copybook files (.cpy, .CPY, .copy, .COPY, .cpb, .CPB).
-        Always includes source_path.parent as a baseline.
+        Starts at source_path.parent and walks up the directory tree (up to
+        5 levels).  At each ancestor, scans all subdirectories for copybook
+        files (.cpy, .CPY, .copy, .COPY, .cpb, .CPB).  Stops as soon as at
+        least one copybook directory is found.  Always includes source_path's
+        parent as a baseline search dir.
         """
         copybook_exts = {".cpy", ".CPY", ".copy", ".COPY", ".cpb", ".CPB"}
-        root = source_path.parent
-        dirs: dict[str, Path] = {str(root): root}
-        try:
-            for entry in root.rglob("*"):
-                if entry.is_file() and entry.suffix in copybook_exts:
-                    parent = entry.parent
-                    key = str(parent)
-                    if key not in dirs:
-                        dirs[key] = parent
-        except OSError:
-            pass
+        source_parent = source_path.parent.resolve()
+        dirs: dict[str, Path] = {}
+
+        ancestor = source_parent
+        for _ in range(5):
+            try:
+                for entry in ancestor.rglob("*"):
+                    if entry.is_file() and entry.suffix in copybook_exts:
+                        parent = entry.parent
+                        key = str(parent)
+                        if key not in dirs:
+                            dirs[key] = parent
+            except OSError:
+                pass
+            if dirs:
+                break
+            next_ancestor = ancestor.parent
+            if next_ancestor == ancestor:
+                break  # filesystem root
+            ancestor = next_ancestor
+
+        # Always include the source file's own directory
+        sp_key = str(source_parent)
+        if sp_key not in dirs:
+            dirs[sp_key] = source_parent
+
         return list(dirs.values())
 
     def parse_cobol(
