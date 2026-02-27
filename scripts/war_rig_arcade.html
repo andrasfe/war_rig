@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mainframe Agentic Documentation</title>
+<style>
+/* ── Reset & Base ─────────────────────────────────────── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{background:#0a0a0f;color:#e0e0e0;overflow-x:hidden}
+body{font-family:"Courier New",Courier,monospace;min-height:100vh;display:flex;justify-content:center;align-items:flex-start;padding:20px 10px}
+
+/* ── CRT scanline overlay ─────────────────────────────── */
+body::after{
+  content:'';position:fixed;top:0;left:0;width:100%;height:100%;
+  background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.08) 2px,rgba(0,0,0,.08) 4px);
+  pointer-events:none;z-index:9999;
+}
+
+/* ── Cabinet ──────────────────────────────────────────── */
+#cabinet{
+  width:1200px;max-width:100%;
+  border:2px solid #333;border-radius:8px;
+  background:#0d0d15;
+  box-shadow:0 0 40px rgba(0,200,255,.06),inset 0 0 60px rgba(0,0,0,.5);
+  overflow:hidden;
+}
+
+/* ── Header ───────────────────────────────────────────── */
+#header{
+  background:linear-gradient(180deg,#1a1a2e 0%,#0d0d15 100%);
+  padding:18px 24px 14px;border-bottom:1px solid #222;
+}
+#header-top{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:8px}
+#title{
+  font-size:22px;letter-spacing:4px;font-weight:bold;
+  color:#0ff;
+  text-shadow:0 0 10px #0ff,0 0 30px rgba(0,255,255,.3);
+}
+#header-stats{display:flex;gap:20px;align-items:baseline;font-size:14px;flex-wrap:wrap}
+#header-stats .stat-label{color:#666}
+#header-stats .stat-value{font-weight:bold;font-size:18px}
+.stat-cycle{color:#ff0}
+.stat-score{color:#0f0}
+#phase-bar{margin-top:10px;display:flex;align-items:center;gap:14px}
+#progress-track{
+  flex:1;height:16px;background:#111;border:1px solid #333;border-radius:2px;overflow:hidden;position:relative;
+}
+#progress-fill{
+  height:100%;background:linear-gradient(90deg,#0a4,#0f0);
+  transition:width .6s ease;width:0%;
+  box-shadow:0 0 8px rgba(0,255,0,.4);
+}
+#progress-text{position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;text-shadow:0 0 4px #000;font-weight:bold}
+#phase-label{
+  font-size:14px;font-weight:bold;letter-spacing:2px;
+  min-width:140px;text-align:right;
+}
+#batch-id{font-size:11px;color:#555;margin-top:4px}
+
+/* ── Agent Pools Row ──────────────────────────────────── */
+#pools{display:grid;grid-template-columns:1fr 1fr 260px;gap:12px;padding:12px 16px}
+
+.pool{
+  border:1px solid #222;border-radius:6px;
+  background:rgba(255,255,255,.02);overflow:hidden;
+}
+.pool-header{
+  padding:8px 12px;font-size:13px;font-weight:bold;letter-spacing:3px;
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.pool-body{padding:8px;display:flex;flex-wrap:wrap;gap:6px;min-height:60px}
+
+/* Documentation Specialists pool */
+.pool-scribe .pool-header{color:#0ff;background:rgba(0,255,255,.05)}
+.pool-scribe{border-color:rgba(0,255,255,.15)}
+
+/* Quality Validators pool */
+.pool-challenger .pool-header{color:#f0f;background:rgba(255,0,255,.05)}
+.pool-challenger{border-color:rgba(255,0,255,.15)}
+
+/* Holistic Reviewer */
+.pool-imperator .pool-header{color:#ffd700;background:rgba(255,215,0,.06)}
+.pool-imperator{border-color:rgba(255,215,0,.15)}
+
+/* ── Worker Cards ─────────────────────────────────────── */
+.worker-card{
+  padding:6px 10px;border-radius:4px;font-size:12px;
+  border:1px solid #333;background:#111;
+  min-width:130px;transition:all .3s ease;
+  position:relative;overflow:hidden;
+}
+.worker-card .wid{font-weight:bold;font-size:11px;margin-bottom:3px}
+.worker-card .wfile{color:#aaa;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px}
+.worker-card .wbadge{font-size:10px;color:#666;margin-top:2px}
+
+/* ── Resting state ── */
+.worker-card.idle{border-color:#222}
+.worker-card.idle .wid{color:#556}
+.worker-card.idle .w-sprite{opacity:.5}
+.worker-card.idle .w-zzz{display:inline}
+.worker-card .w-zzz{display:none;font-size:10px;color:#446;margin-left:4px;animation:zzz-float 2.5s ease-in-out infinite}
+@keyframes zzz-float{
+  0%,100%{opacity:.3;transform:translateY(0)}
+  50%{opacity:.8;transform:translateY(-3px)}
+}
+
+/* ── Active state (eating) ── */
+.worker-card.active{
+  border-color:rgba(0,255,255,.4);
+  box-shadow:0 0 8px rgba(0,255,255,.15);
+}
+.worker-card.active .wid{color:#0ff}
+
+.worker-card.active-challenger{
+  border-color:rgba(255,0,255,.4);
+  box-shadow:0 0 8px rgba(255,0,255,.15);
+}
+.worker-card.active-challenger .wid{color:#f0f}
+
+/* ── Pac-man chomper ── */
+.w-chomp-row{display:flex;align-items:center;gap:0;margin-top:2px;overflow:hidden;height:18px}
+
+.w-pacman{
+  width:16px;height:16px;flex-shrink:0;position:relative;
+}
+.w-pacman-body{
+  width:16px;height:16px;border-radius:50%;position:absolute;
+  animation:chomp .4s steps(2) infinite;
+}
+.worker-card.active .w-pacman-body{background:#0ff}
+.worker-card.active-challenger .w-pacman-body{background:#f0f}
+.worker-card.idle .w-pacman{display:none}
+
+@keyframes chomp{
+  0%{clip-path:polygon(100% 50%,40% 0%,0% 0%,0% 100%,40% 100%)}
+  50%{clip-path:polygon(100% 50%,40% 25%,0% 0%,0% 100%,40% 75%)}
+  100%{clip-path:polygon(100% 50%,40% 0%,0% 0%,0% 100%,40% 100%)}
+}
+
+/* Filename scrolls into the mouth */
+.w-food{
+  font-size:11px;white-space:nowrap;overflow:hidden;
+  animation:scroll-eat 3s linear infinite;
+  padding-left:3px;
+}
+.worker-card.active .w-food{color:#0ff}
+.worker-card.active-challenger .w-food{color:#f0f}
+.worker-card.idle .w-food{display:none}
+
+@keyframes scroll-eat{
+  0%{max-width:140px;opacity:1}
+  80%{max-width:140px;opacity:1}
+  95%{max-width:0;opacity:0}
+  100%{max-width:140px;opacity:1}
+}
+
+/* Crumbs that fly off the pac-man */
+.w-crumbs{position:absolute;top:50%;right:4px;pointer-events:none}
+.w-crumb{
+  position:absolute;width:3px;height:3px;border-radius:50%;opacity:0;
+}
+.worker-card.active .w-crumb{animation:crumb-fly 1.2s ease-out infinite;background:#0ff}
+.worker-card.active-challenger .w-crumb{animation:crumb-fly 1.2s ease-out infinite;background:#f0f}
+.w-crumb:nth-child(1){animation-delay:0s}
+.w-crumb:nth-child(2){animation-delay:.4s}
+.w-crumb:nth-child(3){animation-delay:.8s}
+
+@keyframes crumb-fly{
+  0%{transform:translate(0,0);opacity:.8}
+  100%{transform:translate(12px,-8px);opacity:0}
+}
+
+.worker-card.error{border-color:#f44;box-shadow:0 0 8px rgba(255,0,0,.2)}
+
+/* Holistic Reviewer stats */
+.imp-stats{padding:10px 12px;font-size:11px;line-height:1.8}
+.imp-stats .imp-row{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.imp-stats .imp-count{font-weight:bold;font-size:13px;flex-shrink:0;text-align:right;min-width:20px}
+.imp-witnessed{color:#0f0}
+.imp-chrome{color:#ffa500}
+.imp-valhalla{color:#ffd700}
+.imp-forced{color:#f66}
+
+/* ── Conveyor Belt ────────────────────────────────────── */
+#conveyor-section{padding:8px 16px}
+#conveyor-label{font-size:12px;color:#555;letter-spacing:3px;margin-bottom:6px}
+#conveyor{
+  height:48px;border:1px solid #333;border-radius:4px;
+  background:repeating-linear-gradient(90deg,#0d0d15 0px,#0d0d15 28px,#161620 28px,#161620 30px);
+  overflow:hidden;position:relative;
+  display:flex;align-items:center;
+}
+#conveyor-track{
+  display:flex;gap:8px;position:absolute;left:0;
+  transition:transform .4s linear;
+  padding:0 12px;
+}
+.ticket-chip{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:4px 10px;border-radius:3px;font-size:11px;font-weight:bold;
+  white-space:nowrap;flex-shrink:0;
+  border:1px solid rgba(255,255,255,.1);
+  transition:all .4s ease;
+}
+.ticket-chip .chip-type{font-size:9px;opacity:.7;text-transform:uppercase}
+.ticket-chip .chip-name{max-width:100px;overflow:hidden;text-overflow:ellipsis}
+
+/* Ticket type colors */
+.chip-documentation{background:rgba(0,120,255,.2);color:#4cf;border-color:rgba(0,120,255,.3)}
+.chip-validation{background:rgba(255,200,0,.15);color:#fe0;border-color:rgba(255,200,0,.3)}
+.chip-chrome{background:rgba(255,140,0,.15);color:#fa0;border-color:rgba(255,140,0,.3)}
+.chip-clarification{background:rgba(180,0,255,.15);color:#c8f;border-color:rgba(180,0,255,.3)}
+.chip-system_overview{background:rgba(0,255,180,.15);color:#6fb;border-color:rgba(0,255,180,.3)}
+.chip-other{background:rgba(128,128,128,.15);color:#aaa;border-color:rgba(128,128,128,.3)}
+
+/* Ticket state overlays */
+.chip-state-created{opacity:.6;border-style:dashed}
+.chip-state-in_progress{animation:pulse-glow 1.5s ease-in-out infinite}
+.chip-state-claimed{animation:pulse-glow 1.5s ease-in-out infinite}
+.chip-state-completed{opacity:.35}
+.chip-state-blocked{border-color:#f44!important;animation:shake .4s ease-in-out infinite;box-shadow:0 0 6px rgba(255,0,0,.3)}
+
+@keyframes pulse-glow{
+  0%,100%{box-shadow:0 0 4px rgba(255,255,255,.1)}
+  50%{box-shadow:0 0 12px rgba(255,255,255,.25)}
+}
+@keyframes shake{
+  0%,100%{transform:translateX(0)}
+  25%{transform:translateX(-2px)}
+  75%{transform:translateX(2px)}
+}
+
+/* ── Scoreboard ───────────────────────────────────────── */
+#scoreboard{
+  padding:12px 16px 16px;
+  border-top:1px solid #222;
+}
+#scoreboard-title{font-size:12px;color:#555;letter-spacing:3px;margin-bottom:10px}
+#scoreboard-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+.sb-panel{
+  background:rgba(255,255,255,.02);border:1px solid #222;border-radius:4px;padding:10px 12px;
+}
+.sb-panel-title{font-size:11px;color:#666;letter-spacing:2px;margin-bottom:8px}
+
+/* Decision bars */
+.decision-bar{display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:12px}
+.decision-bar .db-label{width:120px;text-align:right;font-size:11px}
+.decision-bar .db-track{flex:1;height:12px;background:#111;border-radius:2px;overflow:hidden}
+.decision-bar .db-fill{height:100%;border-radius:2px;transition:width .5s ease}
+.decision-bar .db-count{width:30px;font-weight:bold}
+
+/* State counters */
+.state-counters{display:flex;flex-wrap:wrap;gap:12px}
+.state-counter{text-align:center}
+.state-counter .sc-num{font-size:22px;font-weight:bold}
+.state-counter .sc-label{font-size:10px;color:#666;text-transform:uppercase;letter-spacing:1px}
+.sc-completed .sc-num{color:#0f0}
+.sc-in_progress .sc-num{color:#ff0}
+.sc-created .sc-num{color:#48f}
+.sc-blocked .sc-num{color:#f44}
+
+/* File type pills */
+.file-types{display:flex;flex-wrap:wrap;gap:6px}
+.ft-pill{padding:3px 10px;border-radius:10px;font-size:11px;background:rgba(255,255,255,.05);border:1px solid #333}
+
+/* Throughput */
+.throughput{font-size:14px;color:#0f0;font-weight:bold;margin-top:4px}
+
+/* Stuck alerts */
+.stuck-alert{
+  margin-top:8px;padding:6px 10px;border-radius:4px;font-size:11px;
+  background:rgba(255,0,0,.1);border:1px solid rgba(255,0,0,.3);color:#f88;
+  animation:pulse-red 2s ease-in-out infinite;
+}
+@keyframes pulse-red{0%,100%{opacity:.8}50%{opacity:1}}
+
+/* ── INSERT COIN screen ───────────────────────────────── */
+#insert-coin{
+  display:none;position:absolute;top:0;left:0;right:0;bottom:0;
+  background:rgba(0,0,0,.85);z-index:100;
+  flex-direction:column;align-items:center;justify-content:center;
+}
+#insert-coin.visible{display:flex}
+#insert-coin .coin-text{
+  font-size:32px;letter-spacing:6px;color:#ff0;
+  text-shadow:0 0 20px rgba(255,255,0,.4);
+  animation:blink 1.2s step-end infinite;
+}
+#insert-coin .coin-sub{font-size:13px;color:#666;margin-top:12px}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0}}
+
+/* ── Canvas overlay ───────────────────────────────────── */
+#particles{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  pointer-events:none;z-index:9998;
+}
+
+/* ── Phase transition flash ───────────────────────────── */
+.phase-flash{
+  position:fixed;top:0;left:0;right:0;bottom:0;
+  pointer-events:none;z-index:9997;
+  animation:flash-out .5s ease-out forwards;
+}
+@keyframes flash-out{0%{background:rgba(255,255,255,.15)}100%{background:transparent}}
+</style>
+</head>
+<body>
+<div id="cabinet" style="position:relative">
+
+  <!-- INSERT COIN overlay -->
+  <div id="insert-coin" class="visible">
+    <div class="coin-text">AWAITING DATA</div>
+    <div class="coin-sub">Waiting for pipeline tickets...</div>
+  </div>
+
+  <!-- Header -->
+  <div id="header">
+    <div id="header-top">
+      <div id="title">MAINFRAME AGENTIC DOCUMENTATION</div>
+      <div id="header-stats">
+        <div><span class="stat-label">ITERATION </span><span class="stat-value stat-cycle" id="s-cycle">-</span></div>
+        <div><span class="stat-label">COMPLETE </span><span class="stat-value stat-score" id="s-score">000</span><span class="stat-label"> / </span><span id="s-total">0</span></div>
+      </div>
+    </div>
+    <div id="phase-bar">
+      <div id="progress-track">
+        <div id="progress-fill"></div>
+        <div id="progress-text">0%</div>
+      </div>
+      <div id="phase-label">IDLE</div>
+    </div>
+    <div id="batch-id"></div>
+  </div>
+
+  <!-- Agent Pools -->
+  <div id="pools">
+    <div class="pool pool-scribe">
+      <div class="pool-header">DOCUMENTATION SPECIALISTS</div>
+      <div class="pool-body" id="scribe-pool"></div>
+    </div>
+    <div class="pool pool-challenger">
+      <div class="pool-header">QUALITY VALIDATORS</div>
+      <div class="pool-body" id="challenger-pool"></div>
+    </div>
+    <div class="pool pool-imperator">
+      <div class="pool-header">HOLISTIC REVIEWER</div>
+      <div class="pool-body" id="imperator-pool"></div>
+    </div>
+  </div>
+
+  <!-- Conveyor Belt -->
+  <div id="conveyor-section">
+    <div id="conveyor-label">PIPELINE</div>
+    <div id="conveyor">
+      <div id="conveyor-track"></div>
+    </div>
+  </div>
+
+  <!-- Scoreboard -->
+  <div id="scoreboard">
+    <div id="scoreboard-title">SCOREBOARD</div>
+    <div id="scoreboard-grid">
+      <div class="sb-panel" id="sb-decisions">
+        <div class="sb-panel-title">REVIEW OUTCOMES</div>
+        <div id="decision-bars"></div>
+      </div>
+      <div class="sb-panel" id="sb-states">
+        <div class="sb-panel-title">TICKET STATUS</div>
+        <div class="state-counters" id="state-counters"></div>
+      </div>
+      <div class="sb-panel" id="sb-files">
+        <div class="sb-panel-title">FILE TYPES</div>
+        <div class="file-types" id="file-types"></div>
+      </div>
+      <div class="sb-panel" id="sb-throughput">
+        <div class="sb-panel-title">THROUGHPUT</div>
+        <div class="throughput" id="throughput-val">-</div>
+        <div id="stuck-alerts"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Particle canvas -->
+<canvas id="particles"></canvas>
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   Mainframe Agentic Documentation — Client JS
+   ═══════════════════════════════════════════════════════════ */
+
+// ── State ───────────────────────────────────────────────
+let prev = null;    // previous tickets snapshot
+let prevMap = {};   // ticket_id -> ticket (previous)
+let particles = []; // active particles
+
+// ── Helpers ─────────────────────────────────────────────
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+function shortName(fileName) {
+  if (!fileName) return '?';
+  const parts = fileName.split('/');
+  return parts[parts.length - 1];
+}
+
+function typeClass(type) {
+  const known = ['documentation','validation','chrome','clarification','system_overview'];
+  return known.includes(type) ? 'chip-' + type : 'chip-other';
+}
+
+const TYPE_ABBREV = {
+  documentation: 'DOC', validation: 'QA', chrome: 'REV',
+  clarification: 'CLR', system_overview: 'OVR', chunk_synthesis: 'SYN',
+  chunk_continuation: 'CNT', call_semantics: 'REF'
+};
+
+// ── Phase inference (mirrors Python) ────────────────────
+function inferPhase(tickets) {
+  const active = tickets.filter(t => t.state === 'in_progress' || t.state === 'claimed');
+  const activeTypes = new Set(active.map(t => t.ticket_type));
+
+  if (active.length > 0) {
+    if (activeTypes.has('documentation')) return 'DOCUMENTING';
+    if (activeTypes.has('validation')) return 'VALIDATING';
+    if (activeTypes.has('chrome')) return 'REWORKING';
+    if (activeTypes.has('clarification')) return 'CLARIFYING';
+  }
+  const blocked = tickets.filter(t => t.state === 'blocked').length;
+  if (blocked > 0) return 'BLOCKED';
+
+  const created = tickets.filter(t => t.state === 'created').length;
+  if (created > 0) return 'PENDING';
+
+  const completed = tickets.filter(t => t.state === 'completed').length;
+  if (tickets.length > 0 && completed === tickets.length) return 'COMPLETE';
+
+  return 'IDLE';
+}
+
+const PHASE_COLORS = {
+  DOCUMENTING: '#0ff', VALIDATING: '#f0f', REWORKING: '#fa0',
+  CLARIFYING: '#c8f', BLOCKED: '#f44', PENDING: '#48f',
+  COMPLETE: '#0f0', IDLE: '#666'
+};
+
+// ── Rendering ───────────────────────────────────────────
+function render(data) {
+  const tickets = data.tickets || [];
+  const coin = $('#insert-coin');
+
+  if (tickets.length === 0 && data.error === 'no_file') {
+    coin.classList.add('visible');
+    return;
+  }
+  coin.classList.remove('visible');
+
+  // Build lookup
+  const curMap = {};
+  tickets.forEach(t => { curMap[t.ticket_id] = t; });
+
+  // Detect events for particles
+  if (prev) {
+    tickets.forEach(t => {
+      const old = prevMap[t.ticket_id];
+      if (!old) {
+        // new ticket
+      } else if (old.state !== 'completed' && t.state === 'completed') {
+        spawnBurst(randomX(), randomY(), '#0f0', 20);
+        incrementScore();
+      } else if (old.state !== 'blocked' && t.state === 'blocked') {
+        spawnBurst(randomX(), randomY(), '#f44', 12);
+      }
+    });
+
+    // Check for VALHALLA decisions
+    const oldDecisions = countDecisions(prev.tickets || []);
+    const newDecisions = countDecisions(tickets);
+    if ((newDecisions.VALHALLA || 0) > (oldDecisions.VALHALLA || 0)) {
+      spawnRain('#ffd700', 40);
+    }
+  }
+
+  // Phase
+  const phase = inferPhase(tickets);
+  if (prev) {
+    const oldPhase = inferPhase(prev.tickets || []);
+    if (oldPhase !== phase) flashPhase();
+  }
+  const phaseEl = $('#phase-label');
+  phaseEl.textContent = phase;
+  phaseEl.style.color = PHASE_COLORS[phase] || '#666';
+  phaseEl.style.textShadow = `0 0 10px ${PHASE_COLORS[phase] || '#666'}`;
+
+  // Cycle & Score
+  const cycle = data.current_cycle || Math.max(1, ...tickets.map(t => t.cycle_number || 1));
+  const completed = tickets.filter(t => t.state === 'completed').length;
+  const total = tickets.length;
+  const pct = total > 0 ? Math.round(completed / total * 100) : 0;
+
+  $('#s-cycle').textContent = cycle;
+  $('#s-score').textContent = String(completed).padStart(3, '0');
+  $('#s-total').textContent = total;
+  $('#progress-fill').style.width = pct + '%';
+  $('#progress-text').textContent = pct + '%';
+
+  // Batch ID
+  const batchId = findBatchId(tickets);
+  $('#batch-id').textContent = batchId ? `Batch: ${batchId}` : '';
+
+  // Workers
+  renderWorkers(tickets);
+
+  // Conveyor
+  renderConveyor(tickets);
+
+  // Scoreboard
+  renderScoreboard(tickets, data);
+
+  // Save previous
+  prev = data;
+  prevMap = curMap;
+}
+
+function findBatchId(tickets) {
+  for (const t of tickets) {
+    const bid = t.metadata && t.metadata.batch_id;
+    if (bid) return bid;
+  }
+  return null;
+}
+
+function countDecisions(tickets) {
+  const d = {};
+  tickets.forEach(t => { if (t.decision) d[t.decision] = (d[t.decision] || 0) + 1; });
+  return d;
+}
+
+// ── Worker Pools ────────────────────────────────────────
+// Default pool sizes — always shown even when idle
+const DEFAULT_SCRIBES = 5;
+const DEFAULT_CHALLENGERS = 5;
+
+function discoverPoolSize(tickets, prefix, defaultSize) {
+  // Find highest numbered worker from ticket data, or use default
+  let max = defaultSize;
+  tickets.forEach(t => {
+    if (t.worker_id && t.worker_id.startsWith(prefix + '-')) {
+      const n = parseInt(t.worker_id.split('-')[1], 10);
+      if (n > max) max = n;
+    }
+  });
+  return max;
+}
+
+// Map internal worker IDs to leadership-friendly display names
+function displayName(wid) {
+  const m = wid.match(/^(scribe|challenger)-(\d+)$/);
+  if (!m) return wid;
+  const n = m[2];
+  return m[1] === 'scribe' ? `writer-${n}` : `reviewer-${n}`;
+}
+
+function buildWorkerCard(wid, ticket, completedCount, type) {
+  const isActive = !!ticket;
+  const cls = isActive ? (type === 'challenger' ? 'active-challenger' : 'active') : 'idle';
+  const file = isActive ? shortName(ticket.file_name) : '';
+
+  const crumbs = '<span class="w-crumbs"><span class="w-crumb"></span><span class="w-crumb"></span><span class="w-crumb"></span></span>';
+
+  return `<div class="worker-card ${cls}">
+    <div class="wid">${displayName(wid)}<span class="w-zzz">zzz</span></div>
+    <div class="w-chomp-row">
+      <div class="w-pacman"><div class="w-pacman-body"></div></div>
+      <div class="w-food">${file}</div>
+    </div>
+    ${!isActive ? '<div class="wfile" style="color:#334;font-size:10px;font-style:italic">resting</div>' : ''}
+    <div class="wbadge">${completedCount} done</div>
+    ${isActive ? crumbs : ''}
+  </div>`;
+}
+
+function renderWorkers(tickets) {
+  // Group active tickets by worker
+  const active = tickets.filter(t => t.state === 'in_progress' || t.state === 'claimed');
+  const byWorker = {};
+  active.forEach(t => {
+    if (t.worker_id) byWorker[t.worker_id] = t;
+  });
+
+  // Count completed per worker
+  const workerCompleted = {};
+  tickets.forEach(t => {
+    if (t.state === 'completed' && t.worker_id) {
+      workerCompleted[t.worker_id] = (workerCompleted[t.worker_id] || 0) + 1;
+    }
+  });
+
+  // Always show at least default number of workers
+  const numScribes = discoverPoolSize(tickets, 'scribe', DEFAULT_SCRIBES);
+  const numChallengers = discoverPoolSize(tickets, 'challenger', DEFAULT_CHALLENGERS);
+
+  // Render scribe pool
+  const sp = $('#scribe-pool');
+  sp.innerHTML = '';
+  for (let i = 1; i <= numScribes; i++) {
+    const wid = `scribe-${i}`;
+    sp.innerHTML += buildWorkerCard(wid, byWorker[wid], workerCompleted[wid] || 0, 'scribe');
+  }
+
+  // Render challenger pool
+  const cp = $('#challenger-pool');
+  cp.innerHTML = '';
+  for (let i = 1; i <= numChallengers; i++) {
+    const wid = `challenger-${i}`;
+    cp.innerHTML += buildWorkerCard(wid, byWorker[wid], workerCompleted[wid] || 0, 'challenger');
+  }
+
+  // Render Holistic Reviewer
+  const ip = $('#imperator-pool');
+  const decisions = countDecisions(tickets);
+  const totalDec = Object.values(decisions).reduce((a, b) => a + b, 0);
+  ip.innerHTML = `
+    <div style="text-align:center;padding:12px 0 6px;font-size:28px">\uD83D\uDC51</div>
+    <div style="text-align:center;font-size:13px;font-weight:bold;color:#ffd700;letter-spacing:2px;margin-bottom:8px">HOLISTIC REVIEWER</div>
+    <div class="imp-stats">
+      <div class="imp-row"><span class="imp-witnessed">APPROVED</span><span class="imp-count imp-witnessed">${decisions.WITNESSED || 0}</span></div>
+      <div class="imp-row"><span class="imp-chrome">NEEDS REVISION</span><span class="imp-count imp-chrome">${decisions.CHROME || 0}</span></div>
+      <div class="imp-row"><span class="imp-valhalla">EXCEPTIONAL</span><span class="imp-count imp-valhalla">${decisions.VALHALLA || 0}</span></div>
+      <div class="imp-row"><span class="imp-forced">FORCE APPROVED</span><span class="imp-count imp-forced">${decisions.FORCED || 0}</span></div>
+      ${totalDec > 0 ? `<div style="margin-top:6px;font-size:10px;color:#666;text-align:center">${totalDec} total outcomes</div>` : ''}
+    </div>`;
+}
+
+// ── Conveyor Belt ───────────────────────────────────────
+let conveyorOffset = 0;
+
+function renderConveyor(tickets) {
+  const track = $('#conveyor-track');
+
+  // Show recent non-completed tickets + recently completed
+  const now = Date.now();
+  const interesting = tickets
+    .filter(t => t.state !== 'completed' || isRecent(t.updated_at, 30))
+    .sort((a, b) => {
+      const sa = stateOrder(a.state), sb = stateOrder(b.state);
+      if (sa !== sb) return sa - sb;
+      return (a.created_at || '').localeCompare(b.created_at || '');
+    })
+    .slice(0, 40);
+
+  track.innerHTML = '';
+  interesting.forEach(t => {
+    const chip = document.createElement('div');
+    const tc = typeClass(t.ticket_type);
+    chip.className = `ticket-chip ${tc} chip-state-${t.state}`;
+    const abbr = TYPE_ABBREV[t.ticket_type] || t.ticket_type.slice(0, 3).toUpperCase();
+    chip.innerHTML = `<span class="chip-type">${abbr}</span><span class="chip-name">${shortName(t.file_name)}</span>`;
+    track.appendChild(chip);
+  });
+
+  // Scroll animation
+  conveyorOffset -= 0.5;
+  const maxOffset = -(track.scrollWidth - ($('#conveyor').clientWidth));
+  if (conveyorOffset < maxOffset) conveyorOffset = 0;
+  track.style.transform = `translateX(${conveyorOffset}px)`;
+}
+
+function stateOrder(s) {
+  return {blocked: 0, in_progress: 1, claimed: 2, created: 3, rework: 4, completed: 5}[s] || 3;
+}
+
+function isRecent(ts, seconds) {
+  if (!ts) return false;
+  const d = new Date(ts);
+  return (Date.now() - d.getTime()) < seconds * 1000;
+}
+
+// ── Scoreboard ──────────────────────────────────────────
+function renderScoreboard(tickets, data) {
+  // Decisions
+  const decisions = countDecisions(tickets);
+  const maxDec = Math.max(1, ...Object.values(decisions));
+  const decBars = $('#decision-bars');
+  // Decision keys (from data) mapped to display labels
+  const decEntries = [
+    {key: 'WITNESSED', label: 'APPROVED', color: '#0f0'},
+    {key: 'CHROME',    label: 'NEEDS REVISION', color: '#ffa500'},
+    {key: 'VALHALLA',  label: 'EXCEPTIONAL', color: '#ffd700'},
+    {key: 'FORCED',    label: 'FORCE APPROVED', color: '#f66'},
+  ];
+  decBars.innerHTML = decEntries.map(({key, label, color}) => {
+    const count = decisions[key] || 0;
+    const pct = (count / maxDec) * 100;
+    return `<div class="decision-bar">
+      <div class="db-label" style="color:${color}">${label}</div>
+      <div class="db-track"><div class="db-fill" style="width:${pct}%;background:${color}"></div></div>
+      <div class="db-count" style="color:${color}">${count}</div>
+    </div>`;
+  }).join('');
+
+  // State counters
+  const states = {};
+  tickets.forEach(t => { states[t.state] = (states[t.state] || 0) + 1; });
+  const sc = $('#state-counters');
+  const stateOrder = ['completed', 'in_progress', 'created', 'blocked'];
+  sc.innerHTML = stateOrder.map(s => {
+    const n = states[s] || 0;
+    const label = s === 'in_progress' ? 'active' : s;
+    return `<div class="state-counter sc-${s}"><div class="sc-num">${n}</div><div class="sc-label">${label}</div></div>`;
+  }).join('');
+
+  // File types
+  const fileTypes = {};
+  tickets.forEach(t => {
+    const ft = (t.metadata && t.metadata.file_type) || 'unknown';
+    fileTypes[ft] = (fileTypes[ft] || 0) + 1;
+  });
+  const ftDiv = $('#file-types');
+  ftDiv.innerHTML = Object.entries(fileTypes).sort((a, b) => b[1] - a[1]).map(
+    ([ft, n]) => `<div class="ft-pill">${ft}: ${n}</div>`
+  ).join('');
+
+  // Throughput
+  const completedTickets = tickets.filter(t => t.state === 'completed' && t.updated_at);
+  let tpText = '-';
+  if (completedTickets.length >= 2) {
+    const times = completedTickets.map(t => new Date(t.updated_at).getTime()).sort();
+    const span = (times[times.length - 1] - times[0]) / 60000; // minutes
+    if (span > 0) {
+      tpText = (completedTickets.length / span).toFixed(1) + ' tickets/min';
+    }
+  }
+  $('#throughput-val').textContent = tpText;
+
+  // Stuck alerts
+  const stuck = tickets.filter(t => t.state === 'blocked');
+  const alertDiv = $('#stuck-alerts');
+  if (stuck.length > 0) {
+    alertDiv.innerHTML = stuck.slice(0, 3).map(t =>
+      `<div class="stuck-alert">\u26A0 BLOCKED: ${shortName(t.file_name)} (${t.worker_id ? displayName(t.worker_id) : 'unassigned'})</div>`
+    ).join('');
+    if (stuck.length > 3) {
+      alertDiv.innerHTML += `<div class="stuck-alert">... and ${stuck.length - 3} more blocked</div>`;
+    }
+  } else {
+    alertDiv.innerHTML = '';
+  }
+}
+
+// ── Animated score counter ──────────────────────────────
+function incrementScore() {
+  // The score already updates on render, this is just for future animation hooks
+}
+
+// ── Particle System ─────────────────────────────────────
+const canvas = $('#particles');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resizeCanvas);
+resizeCanvas();
+
+function randomX() { return window.innerWidth * (0.2 + Math.random() * 0.6); }
+function randomY() { return window.innerHeight * (0.3 + Math.random() * 0.4); }
+
+function spawnBurst(x, y, color, count) {
+  for (let i = 0; i < count; i++) {
+    const angle = Math.random() * Math.PI * 2;
+    const speed = 1 + Math.random() * 3;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed - 1,
+      life: 1,
+      decay: 0.01 + Math.random() * 0.02,
+      color,
+      size: 2 + Math.random() * 3
+    });
+  }
+}
+
+function spawnRain(color, count) {
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x: Math.random() * window.innerWidth,
+      y: -10 - Math.random() * 100,
+      vx: (Math.random() - 0.5) * 1,
+      vy: 1 + Math.random() * 2,
+      life: 1,
+      decay: 0.005 + Math.random() * 0.01,
+      color,
+      size: 2 + Math.random() * 2
+    });
+  }
+}
+
+// Ambient background particles
+function spawnAmbient() {
+  if (particles.length < 30 && Math.random() < 0.1) {
+    particles.push({
+      x: Math.random() * window.innerWidth,
+      y: window.innerHeight + 5,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: -(0.3 + Math.random() * 0.5),
+      life: 1,
+      decay: 0.003 + Math.random() * 0.005,
+      color: '#f80',
+      size: 1 + Math.random() * 1.5
+    });
+  }
+}
+
+function tickParticles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  spawnAmbient();
+
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.02; // gravity
+    p.life -= p.decay;
+    if (p.life <= 0) { particles.splice(i, 1); continue; }
+
+    ctx.globalAlpha = p.life;
+    ctx.fillStyle = p.color;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+  requestAnimationFrame(tickParticles);
+}
+requestAnimationFrame(tickParticles);
+
+// ── Phase transition flash ──────────────────────────────
+function flashPhase() {
+  const el = document.createElement('div');
+  el.className = 'phase-flash';
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 600);
+}
+
+// ── Conveyor scroll animation ───────────────────────────
+function tickConveyor() {
+  const track = $('#conveyor-track');
+  if (track && track.scrollWidth > 0) {
+    conveyorOffset -= 0.3;
+    const container = $('#conveyor');
+    const maxOffset = -(track.scrollWidth);
+    if (conveyorOffset < maxOffset) conveyorOffset = 20;
+    track.style.transform = `translateX(${conveyorOffset}px)`;
+  }
+  requestAnimationFrame(tickConveyor);
+}
+requestAnimationFrame(tickConveyor);
+
+// ── Polling ─────────────────────────────────────────────
+async function poll() {
+  try {
+    const res = await fetch('/api/tickets', { cache: 'no-store' });
+    const data = await res.json();
+    render(data);
+  } catch (e) {
+    // Network error — show insert coin
+    $('#insert-coin').classList.add('visible');
+  }
+}
+
+// Initial fetch then poll every 2s
+poll();
+setInterval(poll, 2000);
+</script>
+</body>
+</html>
