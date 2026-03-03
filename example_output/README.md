@@ -1,6 +1,5 @@
 # System Design Document
 
-```markdown
 ## 1. Executive Summary
 
 This mainframe system is a critical component of the organization's financial authorization infrastructure, responsible for validating and processing transaction requests in real-time. Its primary purpose is to ensure that all financial transactions adhere to predefined rules and limits, thereby mitigating fraud and minimizing financial risk. The system serves as a central authorization engine, interfacing with various internal and external systems to facilitate secure and reliable transaction processing. Ultimately, it protects the organization's assets and maintains customer trust by preventing unauthorized financial activities.
@@ -12,9 +11,6 @@ The system is built on a robust technical foundation, leveraging proven mainfram
 The system's boundaries are well-defined, with clear inputs, outputs, and external integrations. It receives transaction requests from various front-end systems and channels. It generates authorization responses, which are sent back to the originating systems. The system integrates with external fraud detection services, credit bureaus, and other financial institutions. The [CBPAUP0J](jcl/CBPAUP0J.jcl.md) job, along with the [DBPAUTP0](jcl/DBPAUTP0.jcl.md) job, are key entry points for batch processing, while online transactions are primarily handled through CICS. The system's data storage relies heavily on IMS databases defined in [DBPAUTP0](ims/DBPAUTP0.dbd.md) and other DBDs.
 
 The system delivers significant business value by ensuring the integrity and security of financial transactions. Its real-time authorization capabilities prevent fraudulent activities and minimize financial losses. The system's high availability and reliability ensure uninterrupted transaction processing, maintaining customer satisfaction. If the system were unavailable, the organization would face significant financial losses, reputational damage, and potential regulatory penalties. Therefore, the system is a mission-critical asset, essential for the organization's financial stability and operational efficiency. The shared copybooks like [CIPAUDTY](cpy/CIPAUDTY.cpy.md) and [CIPAUSMY](cpy/CIPAUSMY.cpy.md) highlight the importance of data consistency across different parts of the system.
-```
-
-```markdown
 ## 2. Architecture Overview
 
 The system architecture is structured around a combination of batch and online processing, with a clear separation of concerns between data access, business logic, and external integrations. The core components interact through a combination of direct program calls, shared data access, and asynchronous messaging.
@@ -117,9 +113,7 @@ Data access is primarily handled through IMS databases. Programs use DL/I calls 
 The system integrates with external systems for fraud detection and other services. This integration is facilitated through IBM MQ, allowing for asynchronous communication and decoupling of components. Programs like [COPAUA0C](cbl/COPAUA0C.cbl.md) use MQ to send and receive messages from external systems.
 
 The shared copybooks, such as [CIPAUDTY](cpy/CIPAUDTY.cpy.md) and [CIPAUSMY](cpy/CIPAUSMY.cpy.md), are included in multiple programs, indicating a common data structure and logic used across the system. This promotes code reuse and ensures consistency in data handling.
-```
 
-```markdown
 ## 3. Component Catalog
 
 This section provides a comprehensive catalog of all documented components within the system, categorized by type. Each entry includes a brief description of the component's purpose and a link to its detailed documentation.
@@ -168,9 +162,6 @@ This section provides a comprehensive catalog of all documented components withi
 | **DDL Definitions** | | | |
 | [XAUTHFRD](ddl/XAUTHFRD.ddl.md) | DDL Definition | ❓ QUESTION: What is the purpose of XAUTHFRD? | [XAUTHFRD](ddl/XAUTHFRD.ddl.md) |
 | [AUTHFRDS](ddl/AUTHFRDS.ddl.md) | DDL Definition | ❓ QUESTION: What is the purpose of AUTHFRDS? | [AUTHFRDS](ddl/AUTHFRDS.ddl.md) |
-```
-
-```markdown
 ## 4. Subsystem Breakdown
 
 This section details the major subsystems within the authorization system, outlining their responsibilities, components, and interactions.
@@ -240,9 +231,6 @@ This subsystem defines the data structures used throughout the system, including
 
 *   **Interactions:**
     *   This subsystem provides the data definitions used by the other subsystems.
-```
-
-```markdown
 ## 5. Data Architecture
 
 This section describes the data architecture of the authorization system, including key datasets, data flow patterns, and shared data structures.
@@ -290,7 +278,6 @@ The following table illustrates the producer-consumer relationships between prog
 | [CBPAUP0J](jcl/CBPAUP0J.jcl.md), [DBPAUTP0](jcl/DBPAUTP0.jcl.md) | IMS Database (e.g., PAUTHDB) | [COPAUA0C](cbl/COPAUA0C.cbl.md), [COPAUS0C](cbl/COPAUS0C.cbl.md) |
 | ❓ QUESTION: Which program creates this file? | `OEMPP.IMS.V15R01MB.PROCLIB(DFSVSMDB)` | 8 programs |
 
-```markdown
 ## 6. Integration Points
 
 This section describes the integration points of the authorization system, including external interfaces, batch job scheduling, and CICS transaction entry points.
@@ -328,9 +315,6 @@ The system exchanges data with other systems for authorization and fraud detecti
 
 *   **Account Information:**
     *   The system likely exchanges account information with other systems for authorization purposes. ❓ QUESTION: What systems are involved in account information exchange? What data is exchanged? What protocols are used?
-```
-
-```markdown
 ## 7. Business Rules
 
 This section documents the key business rules implemented within the authorization system. These rules govern how transactions are processed, data is validated, and decisions are made.
@@ -355,9 +339,6 @@ These rules ensure the integrity and consistency of data.
 These rules govern how data is aggregated and presented in reports.
 
 *   ❓ QUESTION: What reporting rules are implemented in the system? Which programs generate the reports? What are the report formats?
-```
-
-```markdown
 ## 8. Error Handling Patterns
 
 This section documents the common error handling patterns used throughout the authorization system. Understanding these patterns is crucial for diagnosing and resolving issues.
@@ -390,9 +371,6 @@ The system uses logging and monitoring to track errors and system performance.
 The system implements error escalation procedures to ensure that critical errors are addressed promptly.
 
 *   ❓ QUESTION: What are the error escalation chains in the system? Who is responsible for responding to different types of errors?
-```
-
-```markdown
 ## 9. Open Questions and Uncertainties
 
 This section consolidates the open questions and uncertainties identified during the documentation process. Addressing these questions is crucial for a complete understanding of the authorization system.
@@ -468,7 +446,6 @@ This section consolidates the open questions and uncertainties identified during
 
 *   The documentation assumes a basic understanding of mainframe concepts such as JCL, COBOL, CICS, and IMS.
 *   The documentation assumes that the source code accurately reflects the current state of the system.
-```
 
 ## Flows
 
