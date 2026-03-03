@@ -22,6 +22,7 @@ from citadel.cobol.proleap_bridge import (
     _max_depth,
     parse_proleap,
 )
+from citadel.cobol.proleap_preprocessor import PreprocessResult
 from citadel.cobol.syntax_tree import (
     ParagraphSyntaxTree,
     StatementType,
@@ -379,9 +380,18 @@ class TestCountAndDepth:
 # ---------------------------------------------------------------------------
 
 
+def _fake_preprocess(source_path: str | Path) -> PreprocessResult:
+    """Return a PreprocessResult pointing at the original path (no temp file)."""
+    p = Path(source_path)
+    return PreprocessResult(
+        output_path=p, original_path=p, transformations=[], line_count=0
+    )
+
+
 class TestParseProleap:
     """Tests for parse_proleap with mocked subprocess."""
 
+    @patch("citadel.cobol.proleap_bridge.preprocess_for_proleap", side_effect=_fake_preprocess)
     @patch("citadel.cobol.proleap_bridge._find_java", return_value="/usr/bin/java")
     @patch(
         "citadel.cobol.proleap_bridge._find_jar",
@@ -393,6 +403,7 @@ class TestParseProleap:
         mock_run: MagicMock,
         mock_jar: MagicMock,
         mock_java: MagicMock,
+        mock_pp: MagicMock,
     ) -> None:
         mock_run.return_value = MagicMock(
             returncode=0,
@@ -405,6 +416,7 @@ class TestParseProleap:
         assert isinstance(text, str)
         assert "MAIN-PARA" in text
 
+    @patch("citadel.cobol.proleap_bridge.preprocess_for_proleap", side_effect=_fake_preprocess)
     @patch("citadel.cobol.proleap_bridge._find_java", return_value="/usr/bin/java")
     @patch(
         "citadel.cobol.proleap_bridge._find_jar",
@@ -416,6 +428,7 @@ class TestParseProleap:
         mock_run: MagicMock,
         mock_jar: MagicMock,
         mock_java: MagicMock,
+        mock_pp: MagicMock,
     ) -> None:
         mock_run.return_value = MagicMock(
             returncode=1,
@@ -430,6 +443,7 @@ class TestParseProleap:
         with pytest.raises(RuntimeError, match="Java 17"):
             parse_proleap("/fake/source.cbl")
 
+    @patch("citadel.cobol.proleap_bridge.preprocess_for_proleap", side_effect=_fake_preprocess)
     @patch("citadel.cobol.proleap_bridge._find_java", return_value="/usr/bin/java")
     @patch(
         "citadel.cobol.proleap_bridge._find_jar",
@@ -441,6 +455,7 @@ class TestParseProleap:
         mock_run: MagicMock,
         mock_jar: MagicMock,
         mock_java: MagicMock,
+        mock_pp: MagicMock,
     ) -> None:
         mock_run.return_value = MagicMock(
             returncode=0,

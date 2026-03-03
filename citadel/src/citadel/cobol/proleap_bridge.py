@@ -28,6 +28,7 @@ import subprocess
 from pathlib import Path
 from typing import Any
 
+from citadel.cobol.proleap_preprocessor import preprocess_for_proleap
 from citadel.cobol.syntax_tree import (
     ParagraphSyntaxTree,
     StatementType,
@@ -214,32 +215,38 @@ def parse_proleap(
             "Run citadel/proleap-wrapper/build-jar.sh or set PROLEAP_JAR_PATH."
         )
 
-    cmd: list[str] = [java_bin, "-jar", str(jar), str(source_path)]
-    if copybook_dirs:
-        for d in copybook_dirs:
-            cmd.append(f"--copybook-dir={d}")
+    pp = preprocess_for_proleap(source_path)
+    effective_source = str(pp.output_path)
 
-    logger.debug("ProLeap command: %s", " ".join(cmd))
+    try:
+        cmd: list[str] = [java_bin, "-jar", str(jar), effective_source]
+        if copybook_dirs:
+            for d in copybook_dirs:
+                cmd.append(f"--copybook-dir={d}")
 
-    proc = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True,
-        timeout=_TIMEOUT,
-    )
+        logger.debug("ProLeap command: %s", " ".join(cmd))
 
-    if proc.returncode != 0:
-        raise RuntimeError(
-            f"ProLeap failed (exit {proc.returncode}): {proc.stderr[:500]}"
+        proc = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=_TIMEOUT,
         )
 
-    if not proc.stdout.strip():
-        raise RuntimeError("ProLeap returned empty output")
+        if proc.returncode != 0:
+            raise RuntimeError(
+                f"ProLeap failed (exit {proc.returncode}): {proc.stderr[:500]}"
+            )
 
-    data = json.loads(proc.stdout)
-    trees = _deserialize_paragraphs(data)
-    full_text = format_file_ast(trees)
-    return trees, full_text
+        if not proc.stdout.strip():
+            raise RuntimeError("ProLeap returned empty output")
+
+        data = json.loads(proc.stdout)
+        trees = _deserialize_paragraphs(data)
+        full_text = format_file_ast(trees)
+        return trees, full_text
+    finally:
+        pp.output_path.unlink(missing_ok=True)
 
 
 # ---------------------------------------------------------------------------
