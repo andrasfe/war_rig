@@ -2,13 +2,13 @@
 
 **File**: `cpy/PADFLPCB.CPY`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-02-25 15:32:43.048068
+**Analyzed**: 2026-02-27 14:43:46.070054
 
 ## Purpose
 
-This COBOL copybook defines the PADFLPCB level-01 group item, which maps the standard IMS Database Program Control Block (DBPCB) structure. It provides named fields for accessing IMS-provided PCB data such as database name, segment level, status codes, processing options, segment feedback, and key feedback information used in DL/I database calls.
+This copybook defines the structure of PADFLPCB, which appears to be a PCB (Program Communication Block) used in an IMS (Information Management System) environment. It contains fields related to database name, segment level, PCB status, processing options, segment name, key feedback, number of sensitive segments, and key feedback area.
 
-**Business Context**: IMS DL/I hierarchical database access in mainframe batch or online programs, enabling programs to retrieve feedback from IMS after database calls like GU, GN, ISRT, etc.
+**Business Context**: UNKNOWN
 
 ## Paragraphs/Procedures
 
@@ -22,3 +22,10 @@ The following artifacts were identified as dead code by static analysis:
 | Artifact | Type | Line | Reason |
 |----------|------|------|--------|
 | PADFLPCB | record_layout | 1 | Record layout 'PADFLPCB' is never used by any program |
+
+## Open Questions
+
+- ? What is the specific purpose and usage of this PCB within the broader IMS application?
+  - Context: The copybook only defines the structure, not the context of its use.
+- ? What is the business context for this PCB?
+  - Context: The copybook does not provide information about the business context.

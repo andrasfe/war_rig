@@ -24,6 +24,4 @@
                     PERFORM 9999-ABEND
             END-EVALUATE
             .
-       3000-EXIT.
-            EXIT.
 ```

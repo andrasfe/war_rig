@@ -1,26 +1,20 @@
 {
   "header": {
     "program_id": "PASFLPCB",
-    "file_name": "cpy/PASFLPCB.CPY",
+    "file_name": "PASFLPCB.CPY",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-25T15:31:47.425731",
+    "analyzed_at": "2026-02-27T14:44:10.255168",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This COBOL copybook defines the PASFLPCB 01-level record layout, which represents the Program Communication Block (PCB) for the IMS DL/I database named PASFL. It includes fields for database name, segment level, PCB status, processing options, segment name, key feedback name, number of sensitive segments, and the key feedback buffer area. This structure is used by IMS-enabled programs to interface with DL/I calls for database navigation and access.",
-    "business_context": "Facilitates IMS hierarchical database (DL/I) access and control for the PASFL database in mainframe batch or online applications.",
-    "program_type": "UTILITY",
+    "summary": "This copybook defines the structure of the PASFLPCB, which appears to be a PCB (Program Communication Block) used in IMS (Information Management System) for database communication. It contains fields related to database name, segment level, processing options, segment name, key feedback, and number of sensitive segments.",
+    "business_context": null,
+    "program_type": "COPYBOOK",
     "citations": [
       17,
       18,
-      19,
-      20,
-      21,
-      23,
-      24,
-      25,
       26
     ]
   },
@@ -28,9 +22,7 @@
   "outputs": [],
   "called_programs": [],
   "calling_context": {
-    "called_by": [
-      "DBUNLDGS.CBL"
-    ],
+    "called_by": [],
     "entry_points": [],
     "linkage_section": []
   },
@@ -45,23 +37,23 @@
     {
       "paragraph_name": "PASFLPCB",
       "summary": null,
-      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "purpose": "This copybook defines the structure of the PASFLPCB, which is likely a Program Communication Block (PCB) used within an IMS (Information Management System) environment for database interactions. The PCB provides a communication interface between the application program and the IMS database. It contains various fields that describe the database, segment, and processing options. PASFL-DBDNAME (line 18) specifies the database name associated with this PCB. PASFL-SEG-LEVEL (line 19) indicates the segment level. PASFL-PCB-STATUS (line 20) provides the status of the PCB after an operation. PASFL-PCB-PROCOPT (line 21) defines the processing options for database access. PASFL-SEG-NAME (line 23) holds the name of the segment being accessed. PASFL-KEYFB-NAME (line 24) and PASFL-NUM-SENSEGS (line 25) are related to key feedback and the number of sensitive segments, respectively. PASFL-KEYFB (line 26) contains the key feedback information, which is the fully concatenated key of the last accessed segment. This copybook is included in programs that need to interact with an IMS database through this PCB.",
       "called_by": [],
       "calls": [],
       "citation": [
-        1,
-        1
+        17,
+        27
       ],
       "outgoing_calls": [],
       "incoming_calls": [
         {
-          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
           "function": "DBUNLDGS",
           "line": 155,
           "call_type": "includes"
         },
         {
-          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
           "function": "DBUNLDGS",
           "line": 1,
           "call_type": "includes"
@@ -77,9 +69,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "Is PASFL-SEG-LEVEL a standard or custom field in the IMS PCB layout?",
-      "context": "Standard IMS DB PCB layouts typically position PCB-STATUS immediately after DBDNAME, without a preceding 2-byte segment level field.",
-      "suggestion": "Review IMS manuals or analyze including programs like DBUNLDGS.CBL for usage context."
+      "question": "What is the specific purpose of the FILLER field on line 22?",
+      "context": "The purpose of the filler field is not clear from the code.",
+      "suggestion": "Review the documentation or related code to determine its usage."
     }
   ],
   "resolved_questions": [],
@@ -92,5 +84,6 @@
     }
   ],
   "call_semantics": [],
-  "flow_diagram": null
+  "flow_diagram": null,
+  "copybooks_not_found": []
 }

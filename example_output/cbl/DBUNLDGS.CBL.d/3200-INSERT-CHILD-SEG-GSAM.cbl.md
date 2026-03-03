@@ -15,6 +15,4 @@
                   DISPLAY 'KFB AREA IN GSAM:' PADFL-KEYFB               02722301
                   PERFORM 9999-ABEND                                    02722401
                END-IF.                                                  02722501
-       3200-EXIT.                                                       02722601
-            EXIT.                                                       02723000
 ```

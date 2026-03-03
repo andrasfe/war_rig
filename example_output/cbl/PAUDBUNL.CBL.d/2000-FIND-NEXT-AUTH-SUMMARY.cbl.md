@@ -40,6 +40,4 @@
                   DISPLAY 'KEY FEEDBACK AREA    :' PAUT-KEYFB           02240048
                     PERFORM 9999-ABEND                                  02260026
             .                                                           02280026
-       2000-EXIT.                                                       02290026
-            EXIT.                                                       02300026
 ```

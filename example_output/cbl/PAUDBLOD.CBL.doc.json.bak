@@ -4,127 +4,74 @@
     "file_name": "PAUDBLOD.CBL",
     "file_type": "COBOL",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-25T15:38:36.824155",
+    "analyzed_at": "2026-02-27T14:51:28.531679",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This program is a batch utility designed to load data into an IMS database from two sequential input files. It performs insertions for both root segments (PAUTSUM0) and child segments (PAUTDTL1) while handling existing records and potential I/O errors.",
-    "business_context": "This program likely serves as a data migration or initialization utility for the Pending Authorization (PAUT) system, ensuring that authorization summary and detail records are correctly populated in the IMS environment.",
+    "summary": "The COBOL program PAUDBLOD reads two sequential input files (INFILE1 and INFILE2), treats the records as IMS database segments (root and child), and inserts them into an IMS database. It reads records from INFILE1 into PENDING-AUTH-SUMMARY (root segment) and INFILE2 into PENDING-AUTH-DETAILS (child segment), then calls IMS functions to insert these segments into the database.",
+    "business_context": "This program is likely part of a larger system dealing with pending authorizations, possibly related to financial transactions or security clearances. The program's function is to load data from sequential files into an IMS database for further processing or querying.",
     "program_type": "BATCH",
     "citations": [
-      122,
       126,
       129,
-      207,
-      26113
+      2042353
     ]
   },
   "inputs": [
     {
       "name": "INFILE1",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "Sequential input file containing data for the root segment (PAUTSUM0).",
-      "copybook": null,
+      "description": "Sequential file containing root segment records for pending authorization summaries.",
+      "copybook": "CIPAUSMY",
       "citation": [
-        21,
-        2042
+        10,
+        2042253
       ]
     },
     {
       "name": "INFILE2",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "Sequential input file containing data for the child segment (PAUTDTL1), including the root segment key for parentage.",
-      "copybook": null,
+      "description": "Sequential file containing child segment records for pending authorization details.",
+      "copybook": "CIPAUDTY",
       "citation": [
-        221,
-        2352
+        151053,
+        2042353
       ]
     }
   ],
   "outputs": [
     {
-      "name": "PAUTSUM0",
+      "name": "IMS Database",
       "io_type": "IMS_SEGMENT",
-      "description": "Root segment in the IMS database representing Pending Authorization Summary.",
-      "copybook": "CIPAUSMY",
+      "description": "The program inserts root (PAUTSUM0) and child (PAUTDTL1) segments into an IMS database.",
+      "copybook": null,
       "citation": [
-        207
-      ]
-    },
-    {
-      "name": "PAUTDTL1",
-      "io_type": "IMS_SEGMENT",
-      "description": "Child segment in the IMS database representing Pending Authorization Details.",
-      "copybook": "CIPAUDTY",
-      "citation": [
-        26113
+        2042454,
+        2042353
       ]
     }
   ],
   "called_programs": [
     {
-      "program_name": "CBLTDLI",
+      "program_name": "DLITCBL",
       "call_type": "STATIC_CALL",
-      "purpose": "Interface with IMS for database operations including ISRT (Insert) and GU (Get Unique).",
+      "purpose": "Entry point for IMS DL/I calls.",
       "parameters": [
-        "FUNC-ISRT",
-        "FUNC-GU",
-        "PAUTBPCB",
-        "PENDING-AUTH-SUMMARY",
-        "PENDING-AUTH-DETAILS"
+        "PAUTBPCB"
       ],
-      "citation": 207
+      "citation": 1225033
     }
   ],
   "calling_context": {
     "called_by": [],
-    "entry_points": [
-      "DLITCBL"
-    ],
+    "entry_points": [],
     "linkage_section": [
       "IO-PCB-MASK",
       "PAUTBPCB"
     ]
   },
-  "business_rules": [
-    {
-      "rule_id": "BR001",
-      "description": "Root Segment Insertion",
-      "logic_summary": "The program reads records from INFILE1 and attempts to insert them as root segments (PAUTSUM0) using an unqualified SSA.",
-      "conditions": [
-        "IF WS-INFIL1-STATUS = '00'"
-      ],
-      "citation": [
-        2042,
-        207
-      ]
-    },
-    {
-      "rule_id": "BR002",
-      "description": "Child Segment Parentage",
-      "logic_summary": "To insert a child segment, the program first performs a Get Unique (GU) on the root segment using the key provided in INFILE2 to establish correct parentage.",
-      "conditions": [
-        "IF ROOT-SEG-KEY IS NUMERIC"
-      ],
-      "citation": [
-        23541,
-        237
-      ]
-    },
-    {
-      "rule_id": "BR003",
-      "description": "Duplicate Handling",
-      "logic_summary": "If an IMS status code of 'II' is returned during an insert, the program logs that the segment already exists rather than abending.",
-      "conditions": [
-        "IF PAUT-PCB-STATUS = 'II'"
-      ],
-      "citation": [
-        2192,
-        26121
-      ]
-    }
-  ],
+  "business_rules": [],
   "data_flow": {
     "reads_from": [
       {
@@ -133,7 +80,7 @@
           "INFIL1-REC"
         ],
         "citation": [
-          2042
+          2042253
         ]
       },
       {
@@ -143,45 +90,18 @@
           "CHILD-SEG-REC"
         ],
         "citation": [
-          2352
+          2042353
         ]
       }
     ],
-    "writes_to": [
-      {
-        "destination": "PAUTSUM0",
-        "fields_written": [
-          "PENDING-AUTH-SUMMARY"
-        ],
-        "citation": [
-          207
-        ]
-      },
-      {
-        "destination": "PAUTDTL1",
-        "fields_written": [
-          "PENDING-AUTH-DETAILS"
-        ],
-        "citation": [
-          26113
-        ]
-      }
-    ],
+    "writes_to": [],
     "transforms": [
       {
         "input_field": "INFIL1-REC",
         "output_field": "PENDING-AUTH-SUMMARY",
-        "transformation_description": "Direct move of record from sequential file to IMS segment buffer.",
+        "transformation_description": "Moves the input record from INFILE1 to the PENDING-AUTH-SUMMARY working storage area, which is then used for inserting the root segment into the IMS database.",
         "citation": [
-          20423
-        ]
-      },
-      {
-        "input_field": "CHILD-SEG-REC",
-        "output_field": "PENDING-AUTH-DETAILS",
-        "transformation_description": "Direct move of child data from sequential file to IMS segment buffer.",
-        "citation": [
-          23555
+          2042353
         ]
       }
     ]
@@ -189,34 +109,34 @@
   "copybooks_used": [
     {
       "copybook_name": "IMSFUNCS",
-      "purpose": "Defines IMS function codes like ISRT and GU.",
+      "purpose": "Contains definitions for IMS function call parameters and related data structures.",
       "location": "WORKING_STORAGE",
-      "citation": 96
+      "citation": 961032
     },
     {
       "copybook_name": "CIPAUSMY",
-      "purpose": "Defines the structure of the Pending Authorization Summary root segment.",
+      "purpose": "Defines the layout of the PENDING-AUTH-SUMMARY segment (root segment).",
       "location": "WORKING_STORAGE",
-      "citation": 103
+      "citation": 1030026
     },
     {
       "copybook_name": "CIPAUDTY",
-      "purpose": "Defines the structure of the Pending Authorization Details child segment.",
+      "purpose": "Defines the layout of the PENDING-AUTH-DETAILS segment (child segment).",
       "location": "WORKING_STORAGE",
-      "citation": 107
+      "citation": 1070026
     },
     {
       "copybook_name": "PAUTBPCB",
-      "purpose": "Defines the PCB mask for the PAUT database.",
+      "purpose": "Defines the PCB mask for IMS calls.",
       "location": "LINKAGE",
-      "citation": 114
+      "citation": 1140027
     }
   ],
   "paragraphs": [
     {
       "paragraph_name": "MAIN-PARA",
       "summary": null,
-      "purpose": "This is the primary orchestration paragraph for the PAUDBLOD program. It establishes the entry point for the DLITCBL interface and initializes the execution environment by calling 1000-INITIALIZE. The paragraph then executes two main processing loops: one to read and load root segments from INFILE1 via 2000-READ-ROOT-SEG-FILE, and another to read and load child segments from INFILE2 via 3000-READ-CHILD-SEG-FILE. After all records are processed and the end-of-file flags are set, it calls 4000-FILE-CLOSE to release file resources. Finally, it terminates the program execution using GOBACK to return control to the operating system or calling JCL.",
+      "purpose": "The MAIN-PARA is the primary control flow for the PAUDBLOD program. It begins by calling the IMS entry point 'DLITCBL' to establish the connection to the IMS database. It then performs 1000-INITIALIZE to open the input files (INFILE1 and INFILE2) and initialize working storage variables, including accepting the current date. After initialization, it enters two processing loops. The first loop reads root segments from INFILE1 by performing 2000-READ-ROOT-SEG-FILE until the end of the file is reached. The second loop reads child segments from INFILE2 by performing 3000-READ-CHILD-SEG-FILE until the end of the file is reached. Finally, it calls 4000-FILE-CLOSE to close the input files and terminates the program with a GOBACK statement.",
       "called_by": [],
       "calls": [
         "1000-INITIALIZE",
@@ -225,8 +145,8 @@
         "4000-FILE-CLOSE"
       ],
       "citation": [
-        122,
-        166
+        1220026,
+        1660026
       ],
       "outgoing_calls": [
         {
@@ -258,7 +178,7 @@
     {
       "paragraph_name": "1000-INITIALIZE",
       "summary": null,
-      "purpose": "This paragraph handles the setup and initialization tasks required before data processing begins. It retrieves the current system date and day using ACCEPT statements and displays them for logging purposes. The paragraph's critical function is opening the two input sequential files, INFILE1 and INFILE2. It performs error checking on the file status codes (WS-INFIL1-STATUS and WS-INFIL2-STATUS) immediately after the OPEN commands. If either file fails to open (status not '00' or spaces), an error message is displayed and the program branches to 9999-ABEND to prevent further execution with invalid file handles.",
+      "purpose": "The 1000-INITIALIZE paragraph performs initial setup tasks for the program. It accepts the current date and day from the system and displays them. It then opens INFILE1 and INFILE2 for input. If either file fails to open (file status is not SPACES or '00'), an error message is displayed, and the program abends by performing 9999-ABEND. This paragraph ensures that the input files are accessible before the main processing loop begins. The paragraph sets up the environment for reading the input files.",
       "called_by": [
         "MAIN-PARA"
       ],
@@ -266,8 +186,8 @@
         "9999-ABEND"
       ],
       "citation": [
-        169,
-        199
+        1690026,
+        1990026
       ],
       "outgoing_calls": [
         {
@@ -289,7 +209,7 @@
     {
       "paragraph_name": "2000-READ-ROOT-SEG-FILE",
       "summary": null,
-      "purpose": "This paragraph manages the reading of the root segment input file, INFILE1. It executes a READ operation and checks the resulting file status. If the read is successful (status '00'), the record is moved from the file buffer (INFIL1-REC) to the IMS segment structure (PENDING-AUTH-SUMMARY), and the paragraph calls 2100-INSERT-ROOT-SEG to perform the database update. If the end of the file is reached (status '10'), it sets the END-ROOT-SEG-FILE flag to 'Y' to terminate the processing loop in the main paragraph. Any other status code results in an error message being displayed to the log.",
+      "purpose": "The 2000-READ-ROOT-SEG-FILE paragraph reads records from INFILE1 and processes them as root segments. It reads a record from INFILE1. If the read is successful (WS-INFIL1-STATUS is SPACES or '00'), it moves the record to PENDING-AUTH-SUMMARY and performs 2100-INSERT-ROOT-SEG to insert the segment into the IMS database. If the end of the file is reached (WS-INFIL1-STATUS is '10'), it sets the END-ROOT-SEG-FILE flag to 'Y'. If any other error occurs during the read, an error message is displayed. This paragraph handles reading and preparing the root segment data for insertion into the IMS database.",
       "called_by": [
         "MAIN-PARA"
       ],
@@ -297,8 +217,8 @@
         "2100-INSERT-ROOT-SEG"
       ],
       "citation": [
-        202,
-        20434
+        2020053,
+        2043153
       ],
       "outgoing_calls": [
         {
@@ -309,59 +229,15 @@
       ],
       "incoming_calls": [
         {
-          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
           "function": "MAIN-PARA",
           "line": 177,
           "call_type": "performs"
         },
         {
-          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
           "function": "MAIN-PARA",
           "line": 169,
-          "call_type": "performs"
-        }
-      ],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "2100-INSERT-ROOT-SEG",
-      "summary": null,
-      "purpose": "This paragraph performs the actual IMS database insertion for the root segment. It calls the 'CBLTDLI' interface using the ISRT (Insert) function, passing the PCB mask, the data buffer, and an unqualified SSA (ROOT-UNQUAL-SSA). After the call, it evaluates the PCB status code. A successful insertion (status spaces) or a duplicate record condition (status 'II') are handled gracefully with log messages. However, if any other error status is returned, the paragraph displays the failed status and triggers 9999-ABEND to stop the load process, ensuring data integrity.",
-      "called_by": [
-        "2000-READ-ROOT-SEG-FILE"
-      ],
-      "calls": [
-        "9999-ABEND"
-      ],
-      "citation": [
-        20436,
-        229
-      ],
-      "outgoing_calls": [
-        {
-          "target": "CBLTDLI",
-          "call_type": "calls",
-          "line": 244
-        },
-        {
-          "target": "9999-ABEND",
-          "call_type": "performs",
-          "line": 261
-        }
-      ],
-      "incoming_calls": [
-        {
-          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
-          "function": "2000-READ-ROOT-SEG-FILE",
-          "line": 230,
-          "call_type": "performs"
-        },
-        {
-          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
-          "function": "2000-READ-ROOT-SEG-FILE",
-          "line": 222,
           "call_type": "performs"
         }
       ],
@@ -372,16 +248,14 @@
     {
       "paragraph_name": "3000-READ-CHILD-SEG-FILE",
       "summary": null,
-      "purpose": "This paragraph is responsible for reading the child segment input file, INFILE2. Each record in this file contains both a root segment key and the child segment data. Upon a successful read, the paragraph validates that the root key is numeric before moving it to the qualified SSA (ROOT-QUAL-SSA) and moving the child data to the segment buffer (PENDING-AUTH-DETAILS). It then calls 3100-INSERT-CHILD-SEG to handle the database logic. If the end of INFILE2 is reached, it sets the END-CHILD-SEG-FILE flag to 'Y'. Unexpected file status codes trigger an error display message.",
+      "purpose": "The 3000-READ-CHILD-SEG-FILE paragraph reads records from INFILE2. The logic for processing the records is not present in the provided code snippet. The paragraph reads a record from INFILE2. The code to handle the file status and process the record is missing. The paragraph is intended to read and process child segment records from INFILE2, but the implementation details are not provided in the given extract.",
       "called_by": [
         "MAIN-PARA"
       ],
-      "calls": [
-        "3100-INSERT-CHILD-SEG"
-      ],
+      "calls": [],
       "citation": [
-        234,
-        23596
+        1290058,
+        1300053
       ],
       "outgoing_calls": [
         {
@@ -392,13 +266,13 @@
       ],
       "incoming_calls": [
         {
-          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
           "function": "MAIN-PARA",
           "line": 180,
           "call_type": "performs"
         },
         {
-          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
           "function": "MAIN-PARA",
           "line": 169,
           "call_type": "performs"
@@ -409,147 +283,16 @@
       "metadata": null
     },
     {
-      "paragraph_name": "3100-INSERT-CHILD-SEG",
-      "summary": null,
-      "purpose": "This paragraph establishes the necessary parentage before inserting a child segment. It performs an IMS 'GU' (Get Unique) call on the root segment (PAUTSUM0) using a qualified SSA based on the key read from INFILE2. This step is required in IMS to point the database position to the correct parent. If the GU call is successful (status spaces), it proceeds to call 3200-INSERT-IMS-CALL to insert the child segment. If the GU call fails with an unexpected status (anything other than spaces or 'II'), the paragraph displays the error and the key feedback area before calling 9999-ABEND.",
-      "called_by": [
-        "3000-READ-CHILD-SEG-FILE"
-      ],
-      "calls": [
-        "3200-INSERT-IMS-CALL",
-        "9999-ABEND"
-      ],
-      "citation": [
-        23597,
-        260
-      ],
-      "outgoing_calls": [
-        {
-          "target": "CBLTDLI",
-          "call_type": "calls",
-          "line": 296
-        },
-        {
-          "target": "3200-INSERT-IMS-CALL",
-          "call_type": "performs",
-          "line": 309
-        },
-        {
-          "target": "9999-ABEND",
-          "call_type": "performs",
-          "line": 313
-        }
-      ],
-      "incoming_calls": [
-        {
-          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
-          "function": "3000-READ-CHILD-SEG-FILE",
-          "line": 281,
-          "call_type": "performs"
-        },
-        {
-          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
-          "function": "3000-READ-CHILD-SEG-FILE",
-          "line": 269,
-          "call_type": "performs"
-        }
-      ],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "3200-INSERT-IMS-CALL",
-      "summary": null,
-      "purpose": "This paragraph executes the IMS insertion for the child segment (PAUTDTL1). It uses the 'CBLTDLI' interface with the ISRT function and an unqualified SSA for the child segment, relying on the parentage established in the previous GU call. It checks the PCB status for success (spaces) or duplicate records ('II'), logging the outcome. If the insertion fails for any other reason, it logs the failure status and the key feedback area, then performs 9999-ABEND to halt the program and prevent partial or corrupted data loads.",
-      "called_by": [
-        "3100-INSERT-CHILD-SEG"
-      ],
-      "calls": [
-        "9999-ABEND"
-      ],
-      "citation": [
-        26110,
-        26140
-      ],
-      "outgoing_calls": [
-        {
-          "target": "CBLTDLI",
-          "call_type": "calls",
-          "line": 321
-        },
-        {
-          "target": "9999-ABEND",
-          "call_type": "performs",
-          "line": 335
-        }
-      ],
-      "incoming_calls": [
-        {
-          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
-          "function": "3100-INSERT-CHILD-SEG",
-          "line": 309,
-          "call_type": "performs"
-        },
-        {
-          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
-          "function": "3100-INSERT-CHILD-SEG",
-          "line": 292,
-          "call_type": "performs"
-        }
-      ],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
       "paragraph_name": "4000-FILE-CLOSE",
       "summary": null,
-      "purpose": "This paragraph is responsible for the orderly shutdown of file resources. It issues CLOSE commands for both INFILE1 and INFILE2. After each close operation, it checks the file status variables (WS-INFIL1-STATUS and WS-INFIL2-STATUS). If the status is not '00' or spaces, it displays an error message indicating which file failed to close properly. This paragraph ensures that all input streams are released and buffers are flushed before the program terminates, which is a standard cleanup procedure in batch processing.",
+      "purpose": "The 4000-FILE-CLOSE paragraph is responsible for closing the input files. The implementation details are not present in the provided code snippet. The paragraph is intended to close INFILE1 and INFILE2, releasing the file resources. The actual CLOSE statements and error handling are missing from the provided code.",
       "called_by": [
         "MAIN-PARA"
       ],
       "calls": [],
       "citation": [
-        263,
-        279
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "9999-ABEND",
-      "summary": null,
-      "purpose": "This paragraph serves as the centralized error termination routine for the program. When called, it displays a message indicating that the IMS load is abending. It sets the system RETURN-CODE to 16, which is a standard convention for a 'Fatal Error' or 'Abend' in mainframe batch processing. After setting the return code, it executes a GOBACK to immediately terminate the program and signal the failure to the job entry subsystem (JES), ensuring that subsequent job steps are not executed.",
-      "called_by": [
-        "1000-INITIALIZE",
-        "2100-INSERT-ROOT-SEG",
-        "3100-INSERT-CHILD-SEG",
-        "3200-INSERT-IMS-CALL"
-      ],
-      "calls": [],
-      "citation": [
-        363,
-        369
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "9999-EXIT",
-      "summary": null,
-      "purpose": "This paragraph provides a formal exit point for the 9999-ABEND routine. It contains only an EXIT statement, which serves as a procedural marker for the end of the abend logic block. While the GOBACK in the preceding paragraph typically prevents this exit from being reached during a failure, it is included to maintain structured programming standards and provide a clear boundary for the paragraph's scope within the Procedure Division.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        371,
-        372
+        1532030,
+        1532030
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
@@ -560,19 +303,27 @@
   ],
   "error_handling": [
     {
-      "condition": "WS-INFIL1-STATUS OR WS-INFIL2-STATUS NOT = '00'",
-      "action": "Display error message and PERFORM 9999-ABEND",
+      "condition": "WS-INFIL1-STATUS not equal to SPACES or '00' during OPEN",
+      "action": "DISPLAY error message and PERFORM 9999-ABEND",
       "citation": [
-        1965,
-        19694
+        1965053,
+        1966028
       ]
     },
     {
-      "condition": "PAUT-PCB-STATUS NOT EQUAL TO SPACES AND 'II'",
-      "action": "Display IMS error status and PERFORM 9999-ABEND",
+      "condition": "WS-INFIL2-STATUS not equal to SPACES or '00' during OPEN",
+      "action": "DISPLAY error message and PERFORM 9999-ABEND",
       "citation": [
-        223,
-        26125
+        1969453,
+        1969528
+      ]
+    },
+    {
+      "condition": "WS-INFIL1-STATUS not equal to SPACES or '00' or '10' during READ",
+      "action": "DISPLAY error message",
+      "citation": [
+        2042853,
+        2042953
       ]
     }
   ],
@@ -580,9 +331,24 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "Are there specific requirements for the numeric format of ROOT-SEG-KEY?",
-      "context": "The code checks IF ROOT-SEG-KEY IS NUMERIC before processing child segments.",
-      "suggestion": "Verify the expected format in the INFILE2 layout documentation."
+      "question": "What is the purpose of the 2100-INSERT-ROOT-SEG paragraph?",
+      "context": "The code for this paragraph is not included in the provided extract, making it impossible to determine how the root segment is inserted into the IMS database.",
+      "suggestion": "Examine the source code for the 2100-INSERT-ROOT-SEG paragraph to understand the IMS DL/I calls being made."
+    },
+    {
+      "question": "What is the purpose of the 3000-READ-CHILD-SEG-FILE paragraph?",
+      "context": "The code for this paragraph is incomplete in the provided extract, making it impossible to determine how the child segment is processed.",
+      "suggestion": "Examine the source code for the 3000-READ-CHILD-SEG-FILE paragraph to understand how the child segment is read and processed."
+    },
+    {
+      "question": "What is the purpose of the 4000-FILE-CLOSE paragraph?",
+      "context": "The code for this paragraph is not included in the provided extract, making it impossible to determine how the files are closed.",
+      "suggestion": "Examine the source code for the 4000-FILE-CLOSE paragraph to understand how the files are closed."
+    },
+    {
+      "question": "What is the purpose of the 9999-ABEND paragraph?",
+      "context": "The code for this paragraph is not included in the provided extract, making it impossible to determine how the program terminates in case of an error.",
+      "suggestion": "Examine the source code for the 9999-ABEND paragraph to understand the abend routine."
     }
   ],
   "resolved_questions": [],
@@ -611,86 +377,134 @@
       "caller": "MAIN-PARA",
       "callee": "1000-INITIALIZE",
       "inputs": [],
-      "outputs": [],
-      "purpose": null
+      "outputs": [
+        "CURRENT-DATE",
+        "CURRENT-YYDDD",
+        "WS-INFIL1-STATUS",
+        "WS-INFIL2-STATUS",
+        "END-ROOT-SEG-FILE",
+        "END-CHILD-SEG-FILE"
+      ],
+      "purpose": "Initializes the program by accepting current date values and opening input files INFILE1 and INFILE2, checking for any open errors."
     },
     {
       "caller": "MAIN-PARA",
       "callee": "2000-READ-ROOT-SEG-FILE",
-      "inputs": [],
-      "outputs": [],
-      "purpose": null
+      "inputs": [
+        "WS-INFIL1-STATUS",
+        "INFIL1-REC"
+      ],
+      "outputs": [
+        "PENDING-AUTH-SUMMARY",
+        "END-ROOT-SEG-FILE"
+      ],
+      "purpose": "Reads a record from INFILE1 and moves it to the pending authorization summary if successful, or sets the end-of-file flag if no more records are available."
     },
     {
       "caller": "MAIN-PARA",
       "callee": "3000-READ-CHILD-SEG-FILE",
-      "inputs": [],
-      "outputs": [],
-      "purpose": null
+      "inputs": [
+        "WS-INFIL2-STATUS",
+        "ROOT-SEG-KEY",
+        "CHILD-SEG-REC"
+      ],
+      "outputs": [
+        "QUAL-SSA-KEY-VALUE",
+        "PENDING-AUTH-DETAILS",
+        "END-CHILD-SEG-FILE"
+      ],
+      "purpose": "Reads a record from INFILE2, validates the root segment key, and populates child segment data for insertion if the record is valid."
     },
     {
       "caller": "MAIN-PARA",
       "callee": "4000-FILE-CLOSE",
-      "inputs": [],
+      "inputs": [
+        "WS-INFIL1-STATUS",
+        "WS-INFIL2-STATUS"
+      ],
       "outputs": [],
-      "purpose": null
+      "purpose": "Closes both input files INFILE1 and INFILE2 and displays error messages if either file fails to close."
     },
     {
       "caller": "1000-INITIALIZE",
       "callee": "9999-ABEND",
       "inputs": [],
-      "outputs": [],
-      "purpose": null
+      "outputs": [
+        "RETURN-CODE"
+      ],
+      "purpose": "Terminates the program abnormally by setting the return code to 16 and displaying an abend message."
     },
     {
       "caller": "1000-INITIALIZE",
       "callee": "9999-ABEND",
-      "inputs": [],
-      "outputs": [],
-      "purpose": null
+      "inputs": [
+        "WS-INFIL1-STATUS",
+        "WS-INFIL2-STATUS"
+      ],
+      "outputs": [
+        "RETURN-CODE"
+      ],
+      "purpose": "Abends the program with return code 16 when an input file fails to open."
     },
     {
       "caller": "2000-READ-ROOT-SEG-FILE",
       "callee": "2100-INSERT-ROOT-SEG",
-      "inputs": [],
-      "outputs": [],
-      "purpose": null
+      "inputs": [
+        "INFIL1-REC"
+      ],
+      "outputs": [
+        "PAUT-PCB-STATUS"
+      ],
+      "purpose": "Inserts a root segment into the IMS database using the data read from INFILE1."
     },
     {
       "caller": "2100-INSERT-ROOT-SEG",
       "callee": "9999-ABEND",
-      "inputs": [],
-      "outputs": [],
-      "purpose": null
+      "inputs": [
+        "PAUT-PCB-STATUS"
+      ],
+      "outputs": [
+        "RETURN-CODE"
+      ],
+      "purpose": "Abends the program if the root segment insertion fails with an unexpected IMS status code."
     },
     {
       "caller": "3000-READ-CHILD-SEG-FILE",
       "callee": "3100-INSERT-CHILD-SEG",
-      "inputs": [],
+      "inputs": [
+        "ROOT-SEG-KEY",
+        "CHILD-SEG-REC"
+      ],
       "outputs": [],
-      "purpose": null
+      "purpose": "Inserts a child segment into the IMS database after validating the root segment key and moving data from the input record."
     },
     {
       "caller": "3100-INSERT-CHILD-SEG",
       "callee": "3200-INSERT-IMS-CALL",
-      "inputs": [],
-      "outputs": [],
-      "purpose": null
+      "inputs": [
+        "PENDING-AUTH-SUMMARY",
+        "PENDING-AUTH-DETAILS"
+      ],
+      "outputs": [
+        "PAUT-PCB-STATUS"
+      ],
+      "purpose": "Performs an IMS insert call to add a child segment under the retrieved parent segment."
     },
     {
       "caller": "3100-INSERT-CHILD-SEG",
       "callee": "9999-ABEND",
       "inputs": [],
       "outputs": [],
-      "purpose": null
+      "purpose": "Abends the program with return code 16 when the GU call to the root segment fails unexpectedly."
     },
     {
       "caller": "3200-INSERT-IMS-CALL",
       "callee": "9999-ABEND",
       "inputs": [],
       "outputs": [],
-      "purpose": null
+      "purpose": "Abends the program with return code 16 when the ISRT call for the child segment fails unexpectedly."
     }
   ],
-  "flow_diagram": "flowchart TD\n    %% Title: PAUDBLOD.CBL\n    1000_EXIT[\"1000-EXIT\"]\n    1000_INITIALIZE[\"1000-INITIALIZE\"]\n    9999_ABEND[\"9999-ABEND\"]\n    2000_EXIT[\"2000-EXIT\"]\n    2000_READ_ROOT_SEG_FILE[\"2000-READ-ROOT-SEG-FILE\"]\n    2100_INSERT_ROOT_SEG[\"2100-INSERT-ROOT-SEG\"]\n    2100_EXIT[\"2100-EXIT\"]\n    CBLTDLI__ext([\"CBLTDLI\"])\n    3000_EXIT[\"3000-EXIT\"]\n    3000_READ_CHILD_SEG_FILE[\"3000-READ-CHILD-SEG-FILE\"]\n    3100_INSERT_CHILD_SEG[\"3100-INSERT-CHILD-SEG\"]\n    3100_EXIT[\"3100-EXIT\"]\n    3200_INSERT_IMS_CALL[\"3200-INSERT-IMS-CALL\"]\n    3200_EXIT[\"3200-EXIT\"]\n    4000_EXIT[\"4000-EXIT\"]\n    4000_FILE_CLOSE[\"4000-FILE-CLOSE\"]\n    9999_EXIT[\"9999-EXIT\"]\n    MAIN_PARA[\"MAIN-PARA\"]\n    1000_INITIALIZE --> 9999_ABEND\n    2000_READ_ROOT_SEG_FILE --> 2100_INSERT_ROOT_SEG\n    2100_INSERT_ROOT_SEG --> 9999_ABEND\n    2100_INSERT_ROOT_SEG -.->|calls| CBLTDLI__ext\n    3000_READ_CHILD_SEG_FILE --> 3100_INSERT_CHILD_SEG\n    3100_INSERT_CHILD_SEG --> 3200_INSERT_IMS_CALL\n    3100_INSERT_CHILD_SEG --> 9999_ABEND\n    3100_INSERT_CHILD_SEG -.->|calls| CBLTDLI__ext\n    3200_INSERT_IMS_CALL --> 9999_ABEND\n    3200_INSERT_IMS_CALL -.->|calls| CBLTDLI__ext\n    MAIN_PARA --> 1000_INITIALIZE\n    MAIN_PARA --> 2000_READ_ROOT_SEG_FILE\n    MAIN_PARA --> 3000_READ_CHILD_SEG_FILE\n    MAIN_PARA --> 4000_FILE_CLOSE"
+  "flow_diagram": "flowchart TD\n    %% Title: PAUDBLOD.CBL\n    1000_EXIT[\"1000-EXIT\"]\n    1000_INITIALIZE[\"1000-INITIALIZE\"]\n    9999_ABEND[\"9999-ABEND\"]\n    2000_EXIT[\"2000-EXIT\"]\n    2000_READ_ROOT_SEG_FILE[\"2000-READ-ROOT-SEG-FILE\"]\n    2100_INSERT_ROOT_SEG[\"2100-INSERT-ROOT-SEG\"]\n    2100_EXIT[\"2100-EXIT\"]\n    CBLTDLI__ext([\"CBLTDLI\"])\n    3000_EXIT[\"3000-EXIT\"]\n    3000_READ_CHILD_SEG_FILE[\"3000-READ-CHILD-SEG-FILE\"]\n    3100_INSERT_CHILD_SEG[\"3100-INSERT-CHILD-SEG\"]\n    3100_EXIT[\"3100-EXIT\"]\n    3200_INSERT_IMS_CALL[\"3200-INSERT-IMS-CALL\"]\n    3200_EXIT[\"3200-EXIT\"]\n    4000_EXIT[\"4000-EXIT\"]\n    4000_FILE_CLOSE[\"4000-FILE-CLOSE\"]\n    9999_EXIT[\"9999-EXIT\"]\n    MAIN_PARA[\"MAIN-PARA\"]\n    1000_INITIALIZE --> 9999_ABEND\n    2000_READ_ROOT_SEG_FILE --> 2100_INSERT_ROOT_SEG\n    2100_INSERT_ROOT_SEG --> 9999_ABEND\n    2100_INSERT_ROOT_SEG -.->|calls| CBLTDLI__ext\n    3000_READ_CHILD_SEG_FILE --> 3100_INSERT_CHILD_SEG\n    3100_INSERT_CHILD_SEG --> 3200_INSERT_IMS_CALL\n    3100_INSERT_CHILD_SEG --> 9999_ABEND\n    3100_INSERT_CHILD_SEG -.->|calls| CBLTDLI__ext\n    3200_INSERT_IMS_CALL --> 9999_ABEND\n    3200_INSERT_IMS_CALL -.->|calls| CBLTDLI__ext\n    MAIN_PARA --> 1000_INITIALIZE\n    MAIN_PARA --> 2000_READ_ROOT_SEG_FILE\n    MAIN_PARA --> 3000_READ_CHILD_SEG_FILE\n    MAIN_PARA --> 4000_FILE_CLOSE",
+  "copybooks_not_found": []
 }

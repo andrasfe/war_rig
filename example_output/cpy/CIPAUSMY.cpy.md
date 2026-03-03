@@ -2,27 +2,18 @@
 
 **File**: `cpy/CIPAUSMY.cpy`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-02-25 15:31:01.581161
+**Analyzed**: 2026-02-27 14:43:55.018807
 
 ## Purpose
 
-This copybook defines the data structure for the IMS segment named PENDING AUTHORIZATION SUMMARY. It specifies fields for account identification, customer ID, authorization and account statuses, credit and cash limits and balances, and summary counts and amounts for approved and declined authorizations. The structure is used to store and retrieve pending authorization summary data in an IMS database.
+This copybook defines the data structure for the IMS segment related to pending authorization summary information. It includes fields for account ID, customer ID, authorization status, account status, credit and cash limits/balances, and authorization counts/amounts.
 
-**Business Context**: Supports business processes involving authorization tracking for customer accounts, including limits, balances, and transaction approval/decline summaries in a mainframe IMS environment.
-
-## Business Rules
-
-- **BR001**: PA-ACCT-ID serves as the primary key for the IMS PENDING AUTHORIZATION SUMMARY segment, uniquely identifying the account.
-- **BR002**: PA-ACCOUNT-STATUS is an array storing up to 5 account status values.
-- **BR003**: Credit and cash limits, balances, and authorization counts/amounts are tracked separately for approved and declined transactions.
+**Business Context**: This copybook is likely used in a system that manages and tracks pending authorizations for customer accounts, possibly within a financial institution or credit card processing system.
 
 ## Paragraphs/Procedures
 
-### CIPAUSMY
-[Citadel] Paragraph identified by static analysis
-
-### ~~05:PA-ACCT-ID~~ (Dead Code)
-*Artifact '05:PA-ACCT-ID' (column) is never referenced by any other artifact in the dependency graph*
+### PA-ACCT-ID
+This data field defines the pending authorization account identifier. It is a COMP-3 (packed decimal) field with a length of 11 digits and is signed. This field likely stores the unique identifier for an account that has pending authorizations. The field is defined on line 19. It does not perform any business logic or call any other paragraphs. It is an input field to the segment defined by the copybook.
 
 ## Dead Code
 
@@ -34,7 +25,5 @@ The following artifacts were identified as dead code by static analysis:
 
 ## Open Questions
 
-- ? Which programs or modules include and use this CIPAUSMY copybook?
-  - Context: Copybook defines structure but does not indicate including programs.
-- ? What are the exact usage contexts for fields like PA-AUTH-STATUS and PA-ACCOUNT-STATUS in parent programs?
-  - Context: Field purposes inferred from names but not explicitly documented beyond structure.
+- ? The purpose of the FILLER field is unclear.
+  - Context: The code does not specify what data, if any, is stored in the FILLER field.

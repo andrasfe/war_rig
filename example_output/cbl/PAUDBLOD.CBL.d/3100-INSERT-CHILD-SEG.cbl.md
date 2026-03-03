@@ -22,6 +22,4 @@
                   DISPLAY 'KFB AREA IN CHILD:' PAUT-KEYFB               02531048
                     PERFORM 9999-ABEND                                  02540049
                END-IF.                                                  02550051
-       3100-EXIT.                                                       02590053
-            EXIT.                                                       02600026
 ```

@@ -2,13 +2,11 @@
 
 **File**: `cpy/PASFLPCB.CPY`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-02-25 15:31:47.425731
+**Analyzed**: 2026-02-27 14:44:10.255168
 
 ## Purpose
 
-This COBOL copybook defines the PASFLPCB 01-level record layout, which represents the Program Communication Block (PCB) for the IMS DL/I database named PASFL. It includes fields for database name, segment level, PCB status, processing options, segment name, key feedback name, number of sensitive segments, and the key feedback buffer area. This structure is used by IMS-enabled programs to interface with DL/I calls for database navigation and access.
-
-**Business Context**: Facilitates IMS hierarchical database (DL/I) access and control for the PASFL database in mainframe batch or online applications.
+This copybook defines the structure of the PASFLPCB, which appears to be a PCB (Program Communication Block) used in IMS (Information Management System) for database communication. It contains fields related to database name, segment level, processing options, segment name, key feedback, and number of sensitive segments.
 
 ## Paragraphs/Procedures
 
@@ -25,5 +23,5 @@ The following artifacts were identified as dead code by static analysis:
 
 ## Open Questions
 
-- ? Is PASFL-SEG-LEVEL a standard or custom field in the IMS PCB layout?
-  - Context: Standard IMS DB PCB layouts typically position PCB-STATUS immediately after DBDNAME, without a preceding 2-byte segment level field.
+- ? What is the specific purpose of the FILLER field on line 22?
+  - Context: The purpose of the filler field is not clear from the code.

@@ -1,28 +1,18 @@
 ```cobol
-                  ' System error while reading CUST file. Resp:'
-                  WS-RESP-CD-DIS ' Reas:' WS-REAS-CD-DIS
-                  DELIMITED BY SIZE
-                  INTO WS-MESSAGE
-                  END-STRING
-                  MOVE -1       TO ACCTIDL OF COPAU0AI
-                  PERFORM SEND-PAULST-SCREEN
-           END-EVALUATE
-           .
-
-      *****************************************************************
-       GET-AUTH-SUMMARY.
+       RETURN-TO-PREV-SCREEN.
       *****************************************************************
 
-           PERFORM SCHEDULE-PSB
+           IF CDEMO-TO-PROGRAM = LOW-VALUES OR SPACES
+               MOVE 'COSGN00C' TO CDEMO-TO-PROGRAM
+           END-IF
+           MOVE WS-CICS-TRANID  TO CDEMO-FROM-TRANID
+           MOVE WS-PGM-AUTH-SMRY TO CDEMO-FROM-PROGRAM
+           MOVE ZEROS           TO CDEMO-PGM-CONTEXT
+           EXEC CICS
+               XCTL PROGRAM(CDEMO-TO-PROGRAM)
+               COMMAREA(CARDDEMO-COMMAREA)
+           END-EXEC.
 
-           MOVE CDEMO-ACCT-ID                   TO PA-ACCT-ID
-      *    MOVE XREF-ACCT-ID                    TO PA-ACCT-ID
-           EXEC DLI GU USING PCB(PAUT-PCB-NUM)
-               SEGMENT (PAUTSUM0)
-               INTO (PENDING-AUTH-SUMMARY)
-               WHERE (ACCNTID = PA-ACCT-ID)
-           END-EXEC
 
-           MOVE DIBSTAT                          TO IMS-RETURN-CODE
-           EVALUATE TRUE
+      *****************************************************************
 ```

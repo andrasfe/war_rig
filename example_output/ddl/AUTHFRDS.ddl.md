@@ -2,19 +2,13 @@
 
 **File**: `ddl/AUTHFRDS.ddl`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-02-25 15:24:35.289459
+**Analyzed**: 2026-02-27 14:44:26.205916
 
 ## Purpose
 
-DDL script that creates the AUTHFRDS table in the CARDDEMO schema to store authorization transaction details for fraud detection and analysis in card processing. Columns capture card details, timestamps, merchant information, transaction amounts, response codes, and fraud indicators. Primary key is composite on CARD_NUM and AUTH_TS.
+This DDL file defines the CARDDEMO.AUTHFRDS table, which stores authorization and fraud-related information for card transactions. It includes fields for card number, authorization timestamp, transaction amounts, merchant details, and fraud indicators.
 
-**Business Context**: Card authorization fraud monitoring and reporting system
-
-## Outputs
-
-| Name | Type | Description |
-|------|------|-------------|
-| CARDDEMO.AUTHFRDS | IOType.DB2_TABLE | Table storing authorization fraud details including card number, auth timestamp, transaction amounts, merchant data, and fraud flags |
+**Business Context**: This table likely supports fraud detection and analysis within a card transaction processing system.
 
 ## Paragraphs/Procedures
 
@@ -28,3 +22,8 @@ The following artifacts were identified as dead code by static analysis:
 | Artifact | Type | Line | Reason |
 |----------|------|------|--------|
 | AUTHFRDS | table | 1 | Table 'AUTHFRDS' is never read, written, or referenced by any program |
+
+## Open Questions
+
+- ? What application or system uses this table?
+  - Context: The DDL does not specify the application context.

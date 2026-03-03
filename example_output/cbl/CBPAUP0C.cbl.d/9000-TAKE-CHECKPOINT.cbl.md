@@ -20,6 +20,4 @@
            END-IF
       *
             .
-       9000-EXIT.
-            EXIT.
 ```

@@ -1,133 +1,59 @@
 ```cobol
-                RESP2     (WS-REAS-CD)
-           END-EXEC
+       INITIALIZE-AUTH-DATA.
+      *****************************************************************
 
-           EVALUATE WS-RESP-CD
-               WHEN DFHRESP(NORMAL)
-                  MOVE XREF-CUST-ID               TO CDEMO-CUST-ID
-                  MOVE XREF-CARD-NUM              TO CDEMO-CARD-NUM
-               WHEN DFHRESP(NOTFND)
-                  MOVE WS-RESP-CD        TO WS-RESP-CD-DIS
-                  MOVE WS-REAS-CD        TO WS-REAS-CD-DIS
-
-                  STRING
-                  'Account:'
-                   WS-ACCT-ID
-                  ' not found in XREF file. Resp:' WS-RESP-CD-DIS
-                  ' Reas:' WS-REAS-CD-DIS
-                  DELIMITED BY SIZE
-                  INTO WS-MESSAGE
-                  END-STRING
-                  MOVE -1       TO ACCTIDL OF COPAU0AI
-                  PERFORM SEND-PAULST-SCREEN
+           PERFORM VARYING WS-IDX FROM 1 BY 1 UNTIL WS-IDX > 5
+             EVALUATE WS-IDX
+               WHEN 1
+                   MOVE DFHBMPRO TO SEL0001A OF COPAU0AI
+                   MOVE SPACES   TO TRNID01I OF COPAU0AI
+                   MOVE SPACES   TO PDATE01I OF COPAU0AI
+                   MOVE SPACES   TO PTIME01I OF COPAU0AI
+                   MOVE SPACES   TO PTYPE01I OF COPAU0AI
+                   MOVE SPACES   TO PAPRV01I OF COPAU0AI
+                   MOVE SPACES   TO PSTAT01I OF COPAU0AI
+                   MOVE SPACES   TO PAMT001I OF COPAU0AI
+               WHEN 2
+                   MOVE DFHBMPRO TO SEL0002A OF COPAU0AI
+                   MOVE SPACES   TO TRNID02I OF COPAU0AI
+                   MOVE SPACES   TO PDATE02I OF COPAU0AI
+                   MOVE SPACES   TO PTIME02I OF COPAU0AI
+                   MOVE SPACES   TO PTYPE02I OF COPAU0AI
+                   MOVE SPACES   TO PAPRV02I OF COPAU0AI
+                   MOVE SPACES   TO PSTAT02I OF COPAU0AI
+                   MOVE SPACES   TO PAMT002I OF COPAU0AI
+               WHEN 3
+                   MOVE DFHBMPRO TO SEL0003A OF COPAU0AI
+                   MOVE SPACES   TO TRNID03I OF COPAU0AI
+                   MOVE SPACES   TO PDATE03I OF COPAU0AI
+                   MOVE SPACES   TO PTIME03I OF COPAU0AI
+                   MOVE SPACES   TO PTYPE03I OF COPAU0AI
+                   MOVE SPACES   TO PAPRV03I OF COPAU0AI
+                   MOVE SPACES   TO PSTAT03I OF COPAU0AI
+                   MOVE SPACES   TO PAMT003I OF COPAU0AI
+               WHEN 4
+                   MOVE DFHBMPRO TO SEL0004A OF COPAU0AI
+                   MOVE SPACES   TO TRNID04I OF COPAU0AI
+                   MOVE SPACES   TO PDATE04I OF COPAU0AI
+                   MOVE SPACES   TO PTIME04I OF COPAU0AI
+                   MOVE SPACES   TO PTYPE04I OF COPAU0AI
+                   MOVE SPACES   TO PAPRV04I OF COPAU0AI
+                   MOVE SPACES   TO PSTAT04I OF COPAU0AI
+                   MOVE SPACES   TO PAMT004I OF COPAU0AI
+               WHEN 5
+                   MOVE DFHBMPRO TO SEL0005A OF COPAU0AI
+                   MOVE SPACES   TO TRNID05I OF COPAU0AI
+                   MOVE SPACES   TO PDATE05I OF COPAU0AI
+                   MOVE SPACES   TO PTIME05I OF COPAU0AI
+                   MOVE SPACES   TO PTYPE05I OF COPAU0AI
+                   MOVE SPACES   TO PAPRV05I OF COPAU0AI
+                   MOVE SPACES   TO PSTAT05I OF COPAU0AI
+                   MOVE SPACES   TO PAMT005I OF COPAU0AI
                WHEN OTHER
-                  MOVE 'Y'     TO WS-ERR-FLG
-                  MOVE WS-RESP-CD        TO WS-RESP-CD-DIS
-                  MOVE WS-REAS-CD        TO WS-REAS-CD-DIS
-
-                  STRING
-                  'Account:'
-                   WS-CARD-RID-ACCT-ID-X
-                  ' System error while reading XREF file. Resp:'
-                  WS-RESP-CD-DIS ' Reas:' WS-REAS-CD-DIS
-                  DELIMITED BY SIZE
-                  INTO WS-MESSAGE
-                  END-STRING
-                  MOVE -1       TO ACCTIDL OF COPAU0AI
-                  PERFORM SEND-PAULST-SCREEN
-           END-EVALUATE
+                   CONTINUE
+             END-EVALUATE
+           END-PERFORM
            .
 
       *****************************************************************
-       GETACCTDATA-BYACCT.
-      *****************************************************************
-
-           MOVE XREF-ACCT-ID            TO WS-CARD-RID-ACCT-ID
-           EXEC CICS READ
-                DATASET   (WS-ACCTFILENAME)
-                RIDFLD    (WS-CARD-RID-ACCT-ID-X)
-                KEYLENGTH (LENGTH OF WS-CARD-RID-ACCT-ID-X)
-                INTO      (ACCOUNT-RECORD)
-                LENGTH    (LENGTH OF ACCOUNT-RECORD)
-                RESP      (WS-RESP-CD)
-                RESP2     (WS-REAS-CD)
-           END-EXEC
-
-           EVALUATE WS-RESP-CD
-               WHEN DFHRESP(NORMAL)
-                  continue
-               WHEN DFHRESP(NOTFND)
-                  MOVE WS-RESP-CD        TO WS-RESP-CD-DIS
-                  MOVE WS-REAS-CD        TO WS-REAS-CD-DIS
-
-                  STRING
-                  'Account:'
-                   WS-CARD-RID-ACCT-ID-X
-                  ' not found in ACCT file. Resp:' WS-RESP-CD-DIS
-                  ' Reas:' WS-REAS-CD-DIS
-                  DELIMITED BY SIZE
-                  INTO WS-MESSAGE
-                  END-STRING
-                  MOVE -1       TO ACCTIDL OF COPAU0AI
-                  PERFORM SEND-PAULST-SCREEN
-               WHEN OTHER
-                  MOVE 'Y'     TO WS-ERR-FLG
-                  MOVE WS-RESP-CD        TO WS-RESP-CD-DIS
-                  MOVE WS-REAS-CD        TO WS-REAS-CD-DIS
-
-                  STRING
-                  'Account:'
-                   WS-CARD-RID-ACCT-ID-X
-                  ' System error while reading ACCT file. Resp:'
-                  WS-RESP-CD-DIS ' Reas:' WS-REAS-CD-DIS
-                  DELIMITED BY SIZE
-                  INTO WS-MESSAGE
-                  END-STRING
-                  MOVE -1       TO ACCTIDL OF COPAU0AI
-                  PERFORM SEND-PAULST-SCREEN
-           END-EVALUATE
-           .
-
-      *****************************************************************
-       GETCUSTDATA-BYCUST.
-      *****************************************************************
-
-           MOVE XREF-CUST-ID              TO WS-CARD-RID-CUST-ID
-
-           EXEC CICS READ
-                DATASET   (WS-CUSTFILENAME)
-                RIDFLD    (WS-CARD-RID-CUST-ID-X)
-                KEYLENGTH (LENGTH OF WS-CARD-RID-CUST-ID-X)
-                INTO      (CUSTOMER-RECORD)
-                LENGTH    (LENGTH OF CUSTOMER-RECORD)
-                RESP      (WS-RESP-CD)
-                RESP2     (WS-REAS-CD)
-           END-EXEC
-
-           EVALUATE WS-RESP-CD
-               WHEN DFHRESP(NORMAL)
-                  CONTINUE
-               WHEN DFHRESP(NOTFND)
-                  MOVE WS-RESP-CD        TO WS-RESP-CD-DIS
-                  MOVE WS-REAS-CD        TO WS-REAS-CD-DIS
-
-                  STRING
-                  'Customer:'
-                   WS-CARD-RID-CUST-ID-X
-                  ' not found in CUST file. Resp:' WS-RESP-CD-DIS
-                  ' Reas:' WS-REAS-CD-DIS
-                  DELIMITED BY SIZE
-                  INTO WS-MESSAGE
-                  END-STRING
-                  MOVE -1       TO ACCTIDL OF COPAU0AI
-                  PERFORM SEND-PAULST-SCREEN
-               WHEN OTHER
-                  MOVE 'Y'     TO WS-ERR-FLG
-                  MOVE WS-RESP-CD        TO WS-RESP-CD-DIS
-                  MOVE WS-REAS-CD        TO WS-REAS-CD-DIS
-
-                  STRING
-                  'Customer:'
-                   WS-CARD-RID-CUST-ID-X
-                  ' System error while reading CUST file. Resp:'
 ```

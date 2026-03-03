@@ -1,19 +1,20 @@
 {
   "header": {
     "program_id": "PADFLPCB",
-    "file_name": "cpy/PADFLPCB.CPY",
+    "file_name": "PADFLPCB.CPY",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-25T15:32:43.048068",
+    "analyzed_at": "2026-02-27T14:43:46.070054",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This COBOL copybook defines the PADFLPCB level-01 group item, which maps the standard IMS Database Program Control Block (DBPCB) structure. It provides named fields for accessing IMS-provided PCB data such as database name, segment level, status codes, processing options, segment feedback, and key feedback information used in DL/I database calls.",
-    "business_context": "IMS DL/I hierarchical database access in mainframe batch or online programs, enabling programs to retrieve feedback from IMS after database calls like GU, GN, ISRT, etc.",
-    "program_type": "UTILITY",
+    "summary": "This copybook defines the structure of PADFLPCB, which appears to be a PCB (Program Communication Block) used in an IMS (Information Management System) environment. It contains fields related to database name, segment level, PCB status, processing options, segment name, key feedback, number of sensitive segments, and key feedback area.",
+    "business_context": "UNKNOWN",
+    "program_type": "COPYBOOK",
     "citations": [
-      17
+      17,
+      26
     ]
   },
   "inputs": [],
@@ -35,23 +36,23 @@
     {
       "paragraph_name": "PADFLPCB",
       "summary": null,
-      "purpose": "PADFLPCB is the primary level-01 data structure defined in this copybook (lines 17-26), serving as the IMS Database PCB (DBPCB) mapping for DL/I database interactions. Its role is to provide symbolically named fields overlaying the fixed binary layout of the PCB supplied by IMS to the application program. It consumes no runtime inputs itself, as the fields are populated by the IMS control region during program execution and after each DL/I call. The structure produces accessible output fields for the program to read, including PADFL-DBDNAME (line 18, PIC X(08), the 8-character database name), PADFL-SEG-LEVEL (line 19, PIC X(02), the 2-character current segment level returned by IMS), PADFL-PCB-STATUS (line 20, PIC X(02), 2-character PCB status such as spaces for success, 'GE' for database end, 'IK' for key invalid), PADFL-PCB-PROCOPT (line 21, PIC X(04), 4-character processing options like 'GO  ' for get unique), FILLER (line 22, PIC S9(05) COMP, reserved or alignment bytes), PADFL-SEG-NAME (line 23, PIC X(08), 8-character feedback name of the segment retrieved), PADFL-KEYFB-NAME (line 24, PIC S9(05) COMP, offset or identifier for first key feedback field name), PADFL-NUM-SENSEGS (line 25, PIC S9(05) COMP, number of parent-sensitive segments for this PCB), and PADFL-KEYFB (line 26, PIC X(255), variable-length key feedback area containing concatenated key values from IMS). No business logic, conditions, or decisions are implemented, as this is a pure data definition with no executable statements. There is no error handling defined within the structure; error checking is performed by the using program inspecting fields like PADFL-PCB-STATUS post-DL/I call. No paragraphs or external programs are called or invoked from here, as it is not procedural code. Typically copied into the LINKAGE SECTION of an IMS application for direct access to IMS-provided PCB data.",
+      "purpose": "This copybook defines the data structure for PADFLPCB, which is likely a Program Communication Block (PCB) used within an IMS (Information Management System) environment. The PCB provides a communication interface between an application program and the IMS database. The structure includes PADFL-DBDNAME (database name), PADFL-SEG-LEVEL (segment level), PADFL-PCB-STATUS (PCB status), PADFL-PCB-PROCOPT (processing options), PADFL-SEG-NAME (segment name), PADFL-KEYFB-NAME (key feedback name), PADFL-NUM-SENSEGS (number of sensitive segments), and PADFL-KEYFB (key feedback area). These fields provide information about the database, segment, and processing options being used by the application program. The PADFL-KEYFB field is a 255-byte area that contains the key feedback information from the database. This copybook does not perform any processing or call any other programs; it simply defines a data structure for use by other programs.",
       "called_by": [],
       "calls": [],
       "citation": [
         17,
-        26
+        27
       ],
       "outgoing_calls": [],
       "incoming_calls": [
         {
-          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
           "function": "DBUNLDGS",
           "line": 156,
           "call_type": "includes"
         },
         {
-          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
           "function": "DBUNLDGS",
           "line": 1,
           "call_type": "includes"
@@ -65,7 +66,18 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [],
+  "open_questions": [
+    {
+      "question": "What is the specific purpose and usage of this PCB within the broader IMS application?",
+      "context": "The copybook only defines the structure, not the context of its use.",
+      "suggestion": "Review the programs that include this copybook to understand how the fields are used."
+    },
+    {
+      "question": "What is the business context for this PCB?",
+      "context": "The copybook does not provide information about the business context.",
+      "suggestion": "Review the programs that include this copybook to understand the business context."
+    }
+  ],
   "resolved_questions": [],
   "dead_code": [
     {
@@ -76,5 +88,6 @@
     }
   ],
   "call_semantics": [],
-  "flow_diagram": null
+  "flow_diagram": null,
+  "copybooks_not_found": []
 }

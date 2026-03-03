@@ -2,33 +2,43 @@
 
 **File**: `cbl/PAUDBUNL.CBL`
 **Type**: FileType.COBOL
-**Analyzed**: 2026-02-25 15:35:11.827323
+**Analyzed**: 2026-02-27 14:39:14.333260
 
 ## Purpose
 
-PAUDBUNL is an IMS DL/I unload utility that retrieves all root segments (PAUTSUM0 Pending Authorization Summary) using unqualified GN calls and their dependent child segments (PAUTDTL1 Pending Authorization Details) using GNP calls, writing root records to OPFILE1 and child records (prefixed with root account ID key) to OPFILE2. It processes the entire database until end-of-database (GB status) on root and end-of-segment (GE status) on children. The program initializes files, unloads data in a nested loop structure, closes files, and handles errors by abending.
+The COBOL program PAUDBUNL extracts pending authorization summary and detail records from an IMS database and writes them to sequential output files. It reads authorization summary records and then retrieves associated detail records, writing each to separate output files.
 
-**Business Context**: Supports unloading of pending authorization data from IMS PAUT database for backup, migration, reporting, or offline processing.
+**Business Context**: UNKNOWN
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| PAUT Database | IOType.IMS_SEGMENT | Root segments PAUTSUM0 (Pending Auth Summary) and child segments PAUTDTL1 (Pending Auth Details) accessed via PAUTBPCB |
+| PAUTBPCB | IOType.IMS_SEGMENT | IMS PCB used to access the authorization summary and detail segments. |
+| PENDING-AUTH-SUMMARY | IOType.IMS_SEGMENT | Pending authorization summary segment from the IMS database. |
+| PENDING-AUTH-DETAILS | IOType.IMS_SEGMENT | Pending authorization detail segment from the IMS database. |
+| ROOT-UNQUAL-SSA | IOType.OTHER | Unqualified SSA for the root segment. |
+| CHILD-UNQUAL-SSA | IOType.OTHER | Unqualified SSA for the child segment. |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| OPFILE1 | IOType.FILE_SEQUENTIAL | Flat file containing all root PAUTSUM0 segments copied directly from IMS |
-| OPFILE2 | IOType.FILE_SEQUENTIAL | Flat file containing all child PAUTDTL1 segments prefixed with root segment key (PA-ACCT-ID) |
+| OPFILE1 | IOType.FILE_SEQUENTIAL | Sequential file containing pending authorization summary records. |
+| OPFILE2 | IOType.FILE_SEQUENTIAL | Sequential file containing pending authorization detail records. |
 
-## Business Rules
+## Called Programs
 
-- **BR001**: Unload every root summary segment and all its qualified child detail segments without filtering
-- **BR002**: Only process root segments with numeric PA-ACCT-ID for child loop
+| Program | Call Type | Purpose |
+|---------|-----------|---------|
+| CBLTDLI | CallType.STATIC_CALL | Issue DL/I calls to the IMS database. |
+| CBLTDLI | CallType.STATIC_CALL | Issue DL/I calls to the IMS database. |
 
 ## Paragraphs/Procedures
+
+### PAUDBUNL
+> [Source: PAUDBUNL.cbl.md](PAUDBUNL.CBL.d/PAUDBUNL.cbl.md)
+This is the program ID paragraph. It does not contain any executable code.
 
 ### MAIN-PARA
 > [Source: MAIN-PARA.cbl.md](PAUDBUNL.CBL.d/MAIN-PARA.cbl.md)
@@ -42,8 +52,7 @@ PARAGRAPH
 ├── PERFORM_THRU: PERFORM 4000-FILE-CLOSE THRU 4000-EXIT
 └── GOBACK: GOBACK
 ```
-
-MAIN-PARA serves as the primary entry and orchestration point for the entire unload process, defining the high-level program flow. It first declares an alternate entry point 'DLITCBL' using the PAUTBPCB linkage for IMS PCB access (line 1225033). It consumes no direct inputs beyond the linkage PCB but relies on IMS database availability via the PCB. It produces control flow to subordinate paragraphs and ultimately two output files via initialization and processing. The business logic is a simple sequential process: initialize files and variables, loop through all root segments calling 2000-FIND-NEXT-AUTH-SUMMARY until end-of-root flag is set, then close files and terminate normally. No explicit decisions are made here beyond the loop condition on WS-END-OF-ROOT-SEG. Error handling is delegated to subordinate paragraphs which abend on failures. It calls 1000-INITIALIZE to prepare files (line 12400), repeatedly calls 2000-FIND-NEXT-AUTH-SUMMARY in a loop controlled by WS-END-OF-ROOT-SEG until 'Y' (lines 12600-12800), and 4000-FILE-CLOSE for cleanup (line 15320). Upon loop exit, it executes GOBACK for normal termination (line 16600). This structure ensures complete database unload without gaps.
+This paragraph serves as the main control flow for the program. It first performs 1000-INITIALIZE to set up the program environment, including opening files. Then, it enters a loop, repeatedly performing 2000-FIND-NEXT-AUTH-SUMMARY until the end of the root segment is reached, indicated by WS-END-OF-ROOT-SEG being set to 'Y'. Finally, it performs 4000-FILE-CLOSE to close the output files before terminating the program. The paragraph uses GOBACK to return control to the calling program.
 
 ### 1000-INITIALIZE
 > [Source: 1000-INITIALIZE.cbl.md](PAUDBUNL.CBL.d/1000-INITIALIZE.cbl.md)
@@ -70,8 +79,17 @@ PARAGRAPH
         ├── DISPLAY: DISPLAY 'ERROR IN OPENING OPFILE2:' WS-OUTFL2-STATUS
         └── PERFORM: PERFORM 9999-ABEND
 ```
+This paragraph initializes the program environment. It accepts the current date and day from the system. It then opens OPFILE1 and OPFILE2 for output. If either OPEN operation fails (WS-OUTFL1-STATUS or WS-OUTFL2-STATUS not equal to spaces or '00'), it displays an error message and performs 9999-ABEND to terminate the program. The paragraph displays a starting message with the current date.
 
-1000-INITIALIZE handles program startup by accepting system dates into CURRENT-DATE and CURRENT-YYDDD, displaying startup messages including program name and date for logging (lines 17200-17900). It consumes no file or segment data but initializes WS variables implicitly via prior definitions. It produces open output files OPFILE1 and OPFILE2, checking FILE STATUS after each OPEN (lines 19610, 19690). Business logic validates open status: if not SPACES or '00', displays error and calls 9999-ABEND (lines 19620-19660, 19691-19695). No loops or complex decisions; purely sequential setup. Error handling is immediate abend on open failure to prevent processing with invalid files. It calls no other paragraphs but is invoked solely by MAIN-PARA. Exits cleanly to return control (line 19900). This ensures files are ready before unload loop begins.
+### 1000-EXIT
+> [Source: 1000-EXIT.cbl.md](PAUDBUNL.CBL.d/1000-EXIT.cbl.md)
+
+```
+1000-EXIT  (1 statements, depth=0)
+PARAGRAPH
+└── EXIT: EXIT
+```
+This paragraph is a standard exit point for the 1000-INITIALIZE paragraph. It contains only the EXIT statement and serves as a target for the PERFORM THRU construct.
 
 ### 2000-FIND-NEXT-AUTH-SUMMARY
 > [Source: 2000-FIND-NEXT-AUTH-SUMMARY.cbl.md](PAUDBUNL.CBL.d/2000-FIND-NEXT-AUTH-SUMMARY.cbl.md)
@@ -100,8 +118,17 @@ PARAGRAPH
     ├── DISPLAY: DISPLAY 'KEY FEEDBACK AREA    :' PAUT-KEYFB
     └── PERFORM: PERFORM 9999-ABEND
 ```
+This paragraph retrieves the next pending authorization summary record from the IMS database. It initializes PAUT-PCB-STATUS and then calls CBLTDLI with FUNC-GN to retrieve the next root segment (PENDING-AUTH-SUMMARY) using the ROOT-UNQUAL-SSA. If the call is successful (PAUT-PCB-STATUS is spaces), it increments counters, moves the retrieved summary record to OPFIL1-REC, initializes ROOT-SEG-KEY and CHILD-SEG-REC, moves PA-ACCT-ID to ROOT-SEG-KEY, and writes the summary record to OPFILE1. It then calls 3000-FIND-NEXT-AUTH-DTL to retrieve the associated detail records. If PAUT-PCB-STATUS is 'GB', it sets WS-END-OF-ROOT-SEG to 'Y' to indicate the end of the root segment. If the DL/I call fails (PAUT-PCB-STATUS is not spaces or 'GB'), it displays an error message and performs 9999-ABEND.
 
-2000-FIND-NEXT-AUTH-SUMMARY implements the outer loop logic for retrieving and processing each root PAUTSUM0 segment from IMS using unqualified GN call via CBLTDLI (lines 20700-21000). It consumes IMS root segments via PAUTBPCB and SSA ROOT-UNQUAL-SSA, initializing PCB status first (line 20660). It produces increments to counters WS-NO-SUMRY-READ and WS-AUTH-SMRY-PROC-CNT, writes the segment to OPFILE1 via MOVE and WRITE (lines 21900-21906), sets ROOT-SEG-KEY from PA-ACCT-ID (line 21903), and conditionally loops to child processing. Business logic checks PAUT-PCB-STATUS: SPACES triggers write and child loop if PA-ACCT-ID numeric (lines 21400-21910); 'GB' sets end-of-root flags (lines 21920-21950); other statuses display error/key feedback and abend (lines 22000-22600). Error handling abends on unexpected IMS statuses. It calls 3000-FIND-NEXT-AUTH-DTL repeatedly until WS-END-OF-CHILD-SEG='Y' (lines 21908-21909). This paragraph drives the core unload of roots and orchestrates nested child processing.
+### 2000-EXIT
+> [Source: 2000-EXIT.cbl.md](PAUDBUNL.CBL.d/2000-EXIT.cbl.md)
+
+```
+2000-EXIT  (1 statements, depth=0)
+PARAGRAPH
+└── EXIT: EXIT
+```
+This paragraph is a standard exit point for the 2000-FIND-NEXT-AUTH-SUMMARY paragraph. It contains only the EXIT statement and serves as a target for the PERFORM THRU construct.
 
 ### 3000-FIND-NEXT-AUTH-DTL
 > [Source: 3000-FIND-NEXT-AUTH-DTL.cbl.md](PAUDBUNL.CBL.d/3000-FIND-NEXT-AUTH-DTL.cbl.md)
@@ -125,8 +152,17 @@ PARAGRAPH
 │   └── PERFORM: PERFORM 9999-ABEND
 └── INITIALIZE: INITIALIZE PAUT-PCB-STATUS
 ```
+This paragraph retrieves the next pending authorization detail record from the IMS database. It calls CBLTDLI with FUNC-GNP to retrieve the next child segment (PENDING-AUTH-DETAILS) using the CHILD-UNQUAL-SSA. If the call is successful (PAUT-PCB-STATUS is spaces), it sets MORE-AUTHS to TRUE, increments counters, moves the retrieved detail record to CHILD-SEG-REC, and writes the detail record to OPFILE2. If PAUT-PCB-STATUS is 'GE', it moves 'Y' to WS-END-OF-CHILD-SEG to indicate the end of the child segment. If the DL/I call fails (PAUT-PCB-STATUS is not spaces or 'GE'), it displays an error message and performs 9999-ABEND. Finally, it initializes PAUT-PCB-STATUS.
 
-3000-FIND-NEXT-AUTH-DTL implements the inner loop for retrieving child PAUTDTL1 segments under the current root using GNP call via CBLTDLI with CHILD-UNQUAL-SSA (lines 23700-24000). It consumes IMS child segments qualified by parentage from prior root PA-ACCT-ID in ROOT-SEG-KEY. It produces increments to WS-NO-SUMRY-READ and WS-AUTH-SMRY-PROC-CNT (misnamed, but used here; lines 24400-24500), MOVE to CHILD-SEG-REC, and WRITE to OPFILE2 (lines 24600-24700). Business logic checks PAUT-PCB-STATUS post-GNP: SPACES sets MORE-AUTHS flag and writes record (lines 24200-24800); 'GE' sets WS-END-OF-CHILD-SEG='Y' to exit inner loop (lines 24900-25020); other statuses display error/key feedback and abend (lines 25200-25400). It reinitializes PCB status at end (line 25800). Error handling abends on GNP failures. Called repeatedly by 2000 until child end. This ensures all children per root are fully unloaded.
+### 3000-EXIT
+> [Source: 3000-EXIT.cbl.md](PAUDBUNL.CBL.d/3000-EXIT.cbl.md)
+
+```
+3000-EXIT  (1 statements, depth=0)
+PARAGRAPH
+└── EXIT: EXIT
+```
+This paragraph is a standard exit point for the 3000-FIND-NEXT-AUTH-DTL paragraph. It contains only the EXIT statement and serves as a target for the PERFORM THRU construct.
 
 ### 4000-FILE-CLOSE
 > [Source: 4000-FILE-CLOSE.cbl.md](PAUDBUNL.CBL.d/4000-FILE-CLOSE.cbl.md)
@@ -146,8 +182,17 @@ PARAGRAPH
     └── ELSE: ELSE
         └── DISPLAY: DISPLAY 'ERROR IN CLOSING 2ND FILE:'WS-OUTFL2-STATUS
 ```
+This paragraph closes the output files OPFILE1 and OPFILE2. It displays a message indicating that the files are being closed. After closing each file, it checks the file status (WS-OUTFL1-STATUS and WS-OUTFL2-STATUS). If the file status is not spaces or '00', it displays an error message indicating a problem during the close operation.
 
-4000-FILE-CLOSE performs cleanup by closing OPFILE1 and OPFILE2, displaying closure message (lines 26310, 26400, 27100). It consumes file handles opened in 1000-INITIALIZE. It produces checked FILE STATUS post-close, continuing on SPACES/'00' or displaying errors without abend (lines 26600-27000, 27300-27600). No data writes or IMS calls; purely I/O termination. Business logic is conditional display-only on close errors, allowing graceful exit even on minor issues. No loops or calls to others. Invoked once by MAIN-PARA at end. Exits to GOBACK path. This finalizes output files safely.
+### 4000-EXIT
+> [Source: 4000-EXIT.cbl.md](PAUDBUNL.CBL.d/4000-EXIT.cbl.md)
+
+```
+4000-EXIT  (1 statements, depth=0)
+PARAGRAPH
+└── EXIT: EXIT
+```
+This paragraph is a standard exit point for the 4000-FILE-CLOSE paragraph. It contains only the EXIT statement and serves as a target for the PERFORM THRU construct.
 
 ### 9999-ABEND
 > [Source: 9999-ABEND.cbl.md](PAUDBUNL.CBL.d/9999-ABEND.cbl.md)
@@ -159,23 +204,17 @@ PARAGRAPH
 ├── MOVE: MOVE 16 TO RETURN-CODE
 └── GOBACK: GOBACK
 ```
+The 9999-ABEND paragraph is responsible for handling the abnormal termination of the program. It first displays the message 'IMSUNLOD ABENDING ...' to the console, indicating that the program is terminating unexpectedly. It then sets the RETURN-CODE to 16, which is a standard convention for signaling an error condition to the calling environment. Finally, it executes the GOBACK statement, which terminates the program and returns control to the operating system or calling program. This paragraph does not consume any specific input files or data structures, but it does output a message to the console and sets the return code. It is called when a critical error occurs that prevents the program from continuing its normal execution. No other paragraphs or programs are called from this paragraph.
 
-9999-ABEND is the centralized error termination routine, displaying abend message and setting RETURN-CODE to 16 before GOBACK (lines 36600-36800). It consumes WS error flags/statuses indirectly via callers. It produces non-zero return code for JCL failure. No inputs/outputs beyond display; no business logic or conditions checked here. Error handling is the purpose itself: unconditional abend. Called by 1000 on file open errors, 2000/3000 on IMS call failures. Ensures program does not continue on irrecoverable errors.
+### 9999-EXIT
+> [Source: 9999-EXIT.cbl.md](PAUDBUNL.CBL.d/9999-EXIT.cbl.md)
 
-## Dead Code
-
-The following artifacts were identified as dead code by static analysis:
-
-| Artifact | Type | Line | Reason |
-|----------|------|------|--------|
-| 9999-EXIT | paragraph | 316 | Paragraph '9999-EXIT' is never PERFORMed or referenced by any other paragraph or program |
-| CHILD-UNQUAL-SSA | record_layout | 115 | Record layout 'CHILD-UNQUAL-SSA' is never used by any program |
-| FUNC-CODES | record_layout | 17 | Record layout 'FUNC-CODES' is never used by any program |
-| OPFIL1-REC | record_layout | 44 | Record layout 'OPFIL1-REC' is never used by any program |
-| OPFIL2-REC | record_layout | 46 | Record layout 'OPFIL2-REC' is never used by any program |
-| PAUTBPCB | record_layout | 17 | Record layout 'PAUTBPCB' is never used by any program |
-| PRM-INFO | record_layout | 119 | Record layout 'PRM-INFO' is never used by any program |
-| ROOT-UNQUAL-SSA | record_layout | 111 | Record layout 'ROOT-UNQUAL-SSA' is never used by any program |
+```
+9999-EXIT  (1 statements, depth=0)
+PARAGRAPH
+└── EXIT: EXIT
+```
+The 9999-EXIT paragraph provides a standard exit point for the program. It consists of a single EXIT statement, which simply marks the logical end of the program flow. This paragraph does not perform any specific actions, such as closing files or releasing resources. It serves as a placeholder for potential future exit logic. The paragraph does not consume any input or produce any output. It is called when the program has completed its processing successfully or when a controlled termination is required. No other paragraphs or programs are called from this paragraph.
 
 ## Control Flow
 
@@ -205,10 +244,22 @@ flowchart TD
     MAIN_PARA --> 4000_FILE_CLOSE
 ```
 
+## Open Questions
+
+- ? What is the purpose of OPFILE2?
+  - Context: The description of OPFILE2 is missing.
+- ? What is the structure of the IMS segments?
+  - Context: The copybooks for the IMS segments are not provided.
+
 ## Sequence Diagram
 
 ```mermaid
 sequenceDiagram
+    participant PAUDBUNL as PAUDBUNL
+    participant IMSFUNCS as IMSFUNCS
+    participant CIPAUSMY as CIPAUSMY
+    participant CIPAUDTY as CIPAUDTY
+    participant PAUTBPCB as PAUTBPCB
     participant MAIN_PARA as MAIN-PARA
     participant 1000_INITIALIZE as 1000-INITIALIZE
     participant 2000_FIND_NEXT_AUTH_SUMMARY as 2000-FIND-NEXT-AUTH-SUMMARY
@@ -216,14 +267,25 @@ sequenceDiagram
     participant 9999_ABEND as 9999-ABEND
     participant CBLTDLI as CBLTDLI
     participant 3000_FIND_NEXT_AUTH_DTL as 3000-FIND-NEXT-AUTH-DTL
+    PAUDBUNL->>IMSFUNCS: performs
+    PAUDBUNL->>CIPAUSMY: performs
+    PAUDBUNL->>CIPAUDTY: performs
+    PAUDBUNL->>PAUTBPCB: performs
     MAIN_PARA->>1000_INITIALIZE: performs
-    MAIN_PARA->>2000_FIND_NEXT_AUTH_SUMMARY: performs
-    MAIN_PARA->>4000_FILE_CLOSE: performs
-    1000_INITIALIZE->>9999_ABEND: performs
-    1000_INITIALIZE->>9999_ABEND: performs
+    1000_INITIALIZE-->>MAIN_PARA: CURRENT-DATE / CURRENT-YYDDD / WS-OUTFL1-STATUS / ...
+    MAIN_PARA->>2000_FIND_NEXT_AUTH_SUMMARY: WS-END-OF-AUTHDB-FLAG
+    2000_FIND_NEXT_AUTH_SUMMARY-->>MAIN_PARA: WS-NO-SUMRY-READ / WS-AUTH-SMRY-PROC-CNT / OPFIL1-REC / ...
+    MAIN_PARA->>4000_FILE_CLOSE: WS-OUTFL1-STATUS / WS-OUTFL2-STATUS
+    1000_INITIALIZE->>9999_ABEND: WS-OUTFL1-STATUS / WS-OUTFL2-STATUS
+    9999_ABEND-->>1000_INITIALIZE: RETURN-CODE
+    1000_INITIALIZE->>9999_ABEND: WS-OUTFL1-STATUS / WS-OUTFL2-STATUS
+    9999_ABEND-->>1000_INITIALIZE: RETURN-CODE
     2000_FIND_NEXT_AUTH_SUMMARY->>CBLTDLI: performs
-    2000_FIND_NEXT_AUTH_SUMMARY->>3000_FIND_NEXT_AUTH_DTL: performs
+    2000_FIND_NEXT_AUTH_SUMMARY->>3000_FIND_NEXT_AUTH_DTL: WS-END-OF-CHILD-SEG / PA-ACCT-ID
+    3000_FIND_NEXT_AUTH_DTL-->>2000_FIND_NEXT_AUTH_SUMMARY: WS-END-OF-CHILD-SEG
     2000_FIND_NEXT_AUTH_SUMMARY->>9999_ABEND: performs
+    9999_ABEND-->>2000_FIND_NEXT_AUTH_SUMMARY: RETURN-CODE
     3000_FIND_NEXT_AUTH_DTL->>CBLTDLI: performs
     3000_FIND_NEXT_AUTH_DTL->>9999_ABEND: performs
+    9999_ABEND-->>3000_FIND_NEXT_AUTH_DTL: RETURN-CODE
 ```

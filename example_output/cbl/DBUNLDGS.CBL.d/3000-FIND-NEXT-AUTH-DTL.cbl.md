@@ -32,6 +32,4 @@
                     PERFORM 9999-ABEND                                  02660000
                END-IF.                                                  02670000
                INITIALIZE PAUT-PCB-STATUS.                              02680000
-       3000-EXIT.                                                       02690000
-            EXIT.                                                       02700000
 ```

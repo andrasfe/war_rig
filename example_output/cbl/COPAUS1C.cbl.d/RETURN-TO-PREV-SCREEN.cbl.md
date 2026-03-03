@@ -1,22 +1,13 @@
 ```cobol
-           EVALUATE TRUE
-               WHEN STATUS-OK
-                  SET AUTHS-NOT-EOF              TO TRUE
-               WHEN SEGMENT-NOT-FOUND
-               WHEN END-OF-DB
-                  SET AUTHS-EOF                  TO TRUE
-               WHEN OTHER
-                  MOVE 'Y'     TO WS-ERR-FLG
+       RETURN-TO-PREV-SCREEN.
 
-                  STRING
-                  ' System error while reading next Auth: Code:'
-                  IMS-RETURN-CODE
-                  DELIMITED BY SIZE
-                  INTO WS-MESSAGE
-                  END-STRING
-                  PERFORM SEND-AUTHVIEW-SCREEN
-           END-EVALUATE
-           .
+           MOVE WS-CICS-TRANID TO CDEMO-FROM-TRANID
+           MOVE WS-PGM-AUTH-DTL TO CDEMO-FROM-PROGRAM
+           MOVE ZEROS          TO CDEMO-PGM-CONTEXT
+           SET CDEMO-PGM-ENTER TO TRUE
 
-       UPDATE-AUTH-DETAILS.
+           EXEC CICS
+               XCTL PROGRAM(CDEMO-TO-PROGRAM)
+               COMMAREA(CARDDEMO-COMMAREA)
+           END-EXEC.
 ```

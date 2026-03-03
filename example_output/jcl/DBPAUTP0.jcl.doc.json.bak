@@ -4,59 +4,110 @@
     "file_name": "jcl/DBPAUTP0.jcl",
     "file_type": "JCL",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-25T15:30:04.280679",
+    "analyzed_at": "2026-02-27T14:45:11.756966",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This JCL job first deletes any existing dataset AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0 using IEFBR14 and then executes the IMS unload utility DFSRRC00 to unload the entire IMS database DBPAUTP0 into a sequential VB dataset at the same DSN. The unload uses user exit DFSURGU0 and conditional activation via SBPARM ACTIV=COND. It serves as a data extraction step for the CardDemo application.",
-    "business_context": "IMS database unload for CardDemo_v2.0 application, likely for backup, migration, or offline processing of DBPAUTP0 database.",
+    "summary": "This JCL job unloads the DBD DBPAUTP0. It first deletes the output dataset if it exists, then executes the IMS program DFSRRC00 to unload the DBD to a sequential dataset.",
+    "business_context": null,
     "program_type": "BATCH",
     "citations": [
       1,
-      7,
-      15,
-      25,
-      46
+      13,
+      15
     ]
   },
   "inputs": [
     {
-      "name": "DBPAUTP0",
-      "io_type": "IMS_SEGMENT",
-      "description": "IMS database definition (DBD) for unloading all segments and data from DBPAUTP0",
+      "name": "OEM.IMS.IMSP.SDFSRESL",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS RESLIB library.",
       "copybook": null,
       "citation": [
-        15,
-        31,
-        32
+        18,
+        20
       ]
     },
     {
-      "name": "DDPAUTP0",
-      "io_type": "OTHER",
-      "description": "IMS PSB/DBD library containing DBPAUTP0 definition",
+      "name": "AWS.M2.CARDDEMO.LOADLIB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Application load library.",
+      "copybook": null,
+      "citation": [
+        19
+      ]
+    },
+    {
+      "name": "OEM.IMS.IMSP.PSBLIB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS PSBLIB library.",
+      "copybook": null,
+      "citation": [
+        21
+      ]
+    },
+    {
+      "name": "OEM.IMS.IMSP.DBDLIB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS DBDLIB library.",
+      "copybook": null,
+      "citation": [
+        22
+      ]
+    },
+    {
+      "name": "OEM.IMS.IMSP.PAUTHDB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS PAUTHDB dataset.",
       "copybook": null,
       "citation": [
         31
       ]
     },
     {
-      "name": "DDPAUTX0",
-      "io_type": "OTHER",
-      "description": "IMS extended DBD library for DBPAUTP0",
+      "name": "OEM.IMS.IMSP.PAUTHDBX",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS PAUTHDBX dataset.",
       "copybook": null,
       "citation": [
         32
       ]
     },
     {
-      "name": "DFSVSAMP",
-      "io_type": "OTHER",
-      "description": "IMS sample VSAM DBD module for DBPAUTP0",
+      "name": "OEMPP.IMS.V15R01MB.PROCLIB(DFSVSMDB)",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "DFSVSMDB member in the PROCLIB.",
       "copybook": null,
       "citation": [
         33
+      ]
+    },
+    {
+      "name": "OEM.IMS.IMSP.RECON1",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS RECON1 dataset.",
+      "copybook": null,
+      "citation": [
+        40
+      ]
+    },
+    {
+      "name": "OEM.IMS.IMSP.RECON2",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS RECON2 dataset.",
+      "copybook": null,
+      "citation": [
+        41
+      ]
+    },
+    {
+      "name": "OEM.IMS.IMSP.RECON3",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "IMS RECON3 dataset.",
+      "copybook": null,
+      "citation": [
+        42
       ]
     }
   ],
@@ -64,7 +115,7 @@
     {
       "name": "AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "Sequential VB dataset containing unloaded IMS database records from DBPAUTP0",
+      "description": "Output dataset containing the unloaded DBD DBPAUTP0.",
       "copybook": null,
       "citation": [
         9,
@@ -76,16 +127,18 @@
     {
       "program_name": "IEFBR14",
       "call_type": "STATIC_CALL",
-      "purpose": "Delete existing output dataset to ensure clean creation",
+      "purpose": "Deletes the output dataset AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0 if it exists.",
       "parameters": [],
       "citation": 7
     },
     {
       "program_name": "DFSRRC00",
       "call_type": "STATIC_CALL",
-      "purpose": "Perform IMS database unload (ULU) of DBPAUTP0 using exit DFSURGU0",
+      "purpose": "Unloads the DBD DBPAUTP0 using the ULU function.",
       "parameters": [
-        "ULU,DFSURGU0,DBPAUTP0"
+        "ULU",
+        "DFSURGU0",
+        "DBPAUTP0"
       ],
       "citation": 15
     }
@@ -97,29 +150,8 @@
   },
   "business_rules": [],
   "data_flow": {
-    "reads_from": [
-      {
-        "source": "DBPAUTP0",
-        "fields_used": [
-          "ALL SEGMENTS AND FIELDS"
-        ],
-        "citation": [
-          15,
-          31
-        ]
-      }
-    ],
-    "writes_to": [
-      {
-        "destination": "AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0",
-        "fields_written": [
-          "UNLOADED IMS RECORDS"
-        ],
-        "citation": [
-          25
-        ]
-      }
-    ],
+    "reads_from": [],
+    "writes_to": [],
     "transforms": []
   },
   "copybooks_used": [],
@@ -127,11 +159,9 @@
     {
       "paragraph_name": "STEPDEL",
       "summary": null,
-      "purpose": "This step, named STEPDEL, serves as the primary purpose of conditionally deleting any pre-existing output dataset to prevent catalog conflicts or residual data in subsequent steps. It consumes the dataset name AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0 specified in the SYSUT1 DD statement with DISP=(MOD,DELETE), which modifies and deletes if present. It produces no data outputs but directs SYSPRINT messages to SYSOUT=* for any utility feedback. There are no business logic decisions, validations, or conditional processing; it is a unconditional deletion utility execution. No explicit error handling is implemented beyond standard JCL disposition failure which would cause step abend. It executes the IEFBR14 program, a z/OS dummy utility specifically for dataset disposition without data movement. This step does not call any other steps, programs, or paragraphs. Upon successful completion, control flows to the next step UNLOAD. The step ensures the output DSN is fresh for the unload operation. SYSPRINT provides logging of the deletion activity.",
+      "purpose": "This step deletes the output dataset AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0 before the unload process. It executes the utility IEFBR14 with DISP=(MOD,DELETE) to remove the dataset. The SYSPRINT DD defines the output for system messages. SYSUT1 defines the dataset to be deleted, specifying the dataset name, disposition, unit, and space allocation. If the dataset does not exist, the step will still complete successfully. This ensures that the subsequent unload step can create the dataset without encountering a dataset already exists error. No specific error handling is implemented within this step.",
       "called_by": [],
-      "calls": [
-        "IEFBR14"
-      ],
+      "calls": [],
       "citation": [
         7,
         10
@@ -156,14 +186,12 @@
     {
       "paragraph_name": "UNLOAD",
       "summary": null,
-      "purpose": "This step, named UNLOAD, is the core processing step whose primary purpose is to unload the entire IMS database DBPAUTP0 into a sequential file using the IMSRRC utility. It consumes input from IMS database libraries via DDPAUTP0, DDPAUTX0, and DFSVSAMP DDs, along with control parameters in PARM=(ULU,DFSURGU0,DBPAUTP0) specifying unload mode, user exit, and DBD name; DFSCTL inline data sets SBPARM ACTIV=COND for conditional activation. It produces the output dataset AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0 defined in DFSURGU1 DD with VB format, large LRECL=27990, and catalog disposition. SYSPRINT logs utility messages, SYSUDUMP captures abends, and dummy DDs (DFSWRK01, DFSSRT01) indicate no secondary work/sort needed. Business logic is inherent to the IMS unload utility: it reads all root and dependent segments from DBPAUTP0 without filtering, applying the DFSURGU0 exit if needed. No explicit validations or decisions are coded in JCL; errors are handled by IMS utility abends dumped to SYSUDUMP. STEPLIB, DFSRESLB, and IMS DDs provide required IMS libraries (SDFSRESL, PSBLIB, DBDLIB) and RECON datasets for recovery context. This step does not call subordinate programs beyond the EXEC PGM=DFSRRC00. Upon EOF or completion, the step ends, cataloging the output. The version note indicates CardDemo_v2.0 context.",
+      "purpose": "This step unloads the DBD DBPAUTP0. It executes the IMS program DFSRRC00 with parameters ULU, DFSURGU0, and DBPAUTP0. STEPLIB and DFSRESLB DD statements define the IMS load libraries. IMS DD defines the PSBLIB and DBDLIB libraries. DFSURGU1 defines the output dataset AWS.M2.CARDDEMO.IMSDATA.DBPAUTP0, specifying its disposition, unit, space allocation, and DCB attributes. DDPAUTP0 and DDPAUTX0 define the PAUTHDB and PAUTHDBX datasets. DFSVSAMP defines the DFSVSMDB member in the PROCLIB. DFSCTL contains the SBPARM ACTIV=COND control statement. SYSUDUMP defines the system dump dataset. RECON1, RECON2, and RECON3 define the IMS RECON datasets. DFSWRK01 and DFSSRT01 are dummy datasets. The purpose of this step is to extract the DBD definition into a sequential file for backup or migration purposes.",
       "called_by": [],
-      "calls": [
-        "DFSRRC00"
-      ],
+      "calls": [],
       "citation": [
         15,
-        47
+        45
       ],
       "outgoing_calls": [
         {
@@ -238,16 +266,7 @@
       "metadata": null
     }
   ],
-  "error_handling": [
-    {
-      "condition": "Dataset deletion failure or IMS utility abend",
-      "action": "Step abend with SYSUDUMP output for diagnostics",
-      "citation": [
-        8,
-        36
-      ]
-    }
-  ],
+  "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
   "open_questions": [],
@@ -261,5 +280,6 @@
     }
   ],
   "call_semantics": [],
-  "flow_diagram": null
+  "flow_diagram": null,
+  "copybooks_not_found": []
 }

@@ -1,43 +1,33 @@
 ```cobol
-           EVALUATE TRUE
-               WHEN STATUS-OK
-                  SET FOUND-PAUT-SMRY-SEG        TO TRUE
-               WHEN SEGMENT-NOT-FOUND
-                  SET NFOUND-PAUT-SMRY-SEG       TO TRUE
-               WHEN OTHER
-                  MOVE 'Y'     TO WS-ERR-FLG
-
-                  STRING
-                  ' System error while reading AUTH Summary: Code:'
-                  IMS-RETURN-CODE
-                  DELIMITED BY SIZE
-                  INTO WS-MESSAGE
-                  END-STRING
-                  MOVE -1       TO ACCTIDL OF COPAU0AI
-                  PERFORM SEND-PAULST-SCREEN
-           END-EVALUATE
-           .
+       SEND-PAULST-SCREEN.
       *****************************************************************
-      * SCHEDULE PSB                                                  *
-      *****************************************************************
-       SCHEDULE-PSB.
-           EXEC DLI SCHD
-                PSB((PSB-NAME))
-                NODHABEND
-           END-EXEC
-           MOVE DIBSTAT        TO IMS-RETURN-CODE
-           IF PSB-SCHEDULED-MORE-THAN-ONCE
-              EXEC DLI TERM
-              END-EXEC
 
-              EXEC DLI SCHD
-                   PSB((PSB-NAME))
-                   NODHABEND
+           IF IMS-PSB-SCHD
+              SET IMS-PSB-NOT-SCHD      TO TRUE
+              EXEC CICS SYNCPOINT
               END-EXEC
-              MOVE DIBSTAT     TO IMS-RETURN-CODE
            END-IF
-           IF STATUS-OK
-              SET IMS-PSB-SCHD           TO TRUE
+
+           PERFORM POPULATE-HEADER-INFO
+
+           MOVE WS-MESSAGE TO ERRMSGO OF COPAU0AO
+
+           IF SEND-ERASE-YES
+               EXEC CICS SEND
+                         MAP('COPAU0A')
+                         MAPSET('COPAU00')
+                         FROM(COPAU0AO)
+                         ERASE
+                         CURSOR
+               END-EXEC
            ELSE
-              MOVE 'Y'     TO WS-ERR-FLG
+               EXEC CICS SEND
+                         MAP('COPAU0A')
+                         MAPSET('COPAU00')
+                         FROM(COPAU0AO)
+                         CURSOR
+               END-EXEC
+           END-IF.
+
+      *****************************************************************
 ```

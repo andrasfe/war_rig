@@ -2,21 +2,18 @@
 
 **File**: `cpy/CCPAURQY.cpy`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-02-25 15:31:28.442890
+**Analyzed**: 2026-02-27 14:43:56.488938
 
 ## Purpose
 
-This COBOL copybook defines a data structure at the 05 group level for a 'PENDING AUTHORIZATION REQUEST' used in payment processing systems. It specifies 18 elementary fields including timestamps (auth date/time), card details (number, expiry, type), transaction data (amount, ID, processing code), message metadata (type, source), and merchant information (ID, name, city, state, zip, category code, acquirer country). The structure ensures consistent data formatting via PIC clauses for use in COBOL programs handling credit card authorizations.
+This copybook defines the data structure for a pending authorization request, containing fields related to card details, transaction information, and merchant details. It is used to facilitate the processing of authorization requests.
 
-**Business Context**: Credit card transaction authorization workflows, capturing pending auth request details for validation, processing, and logging.
+**Business Context**: This copybook is likely used in financial transaction processing systems to represent authorization requests before they are approved or declined.
 
 ## Paragraphs/Procedures
 
-### CCPAURQY
-[Citadel] Paragraph identified by static analysis
-
-### ~~05:PA-RQ-AUTH-DATE~~ (Dead Code)
-*Artifact '05:PA-RQ-AUTH-DATE' (column) is never referenced by any other artifact in the dependency graph*
+### PA-RQ-AUTH-DATE
+This data element defines the authorization date of the pending transaction. It is a 6-byte alphanumeric field (PIC X(06)) that stores the date when the authorization request was initiated. The format of the date is not specified within the copybook itself, but it's likely to be in a standard format like YYMMDD or MMDDYY. This field is part of the larger pending authorization request structure defined in the copybook. It is used to record the date of the authorization for tracking and auditing purposes. The value is likely populated by the calling program or system at the time the authorization request is created. There are no explicit error handling or validation rules defined within the copybook for this field. The field does not call any other paragraphs or programs directly.
 
 ## Dead Code
 
@@ -28,5 +25,5 @@ The following artifacts were identified as dead code by static analysis:
 
 ## Open Questions
 
-- ? In which section (WORKING-STORAGE, LINKAGE, FILE-SECTION) is this copybook typically included?
-  - Context: Copybook itself does not specify; must be determined from including programs.
+- ? The specific format of the date and time fields (PA-RQ-AUTH-DATE, PA-RQ-AUTH-TIME) is not defined in the copybook. What is the expected format?
+  - Context: The PIC clauses only specify the length, not the format.

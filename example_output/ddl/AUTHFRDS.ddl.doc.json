@@ -1,34 +1,25 @@
 {
   "header": {
     "program_id": "AUTHFRDS",
-    "file_name": "ddl/AUTHFRDS.ddl",
+    "file_name": "AUTHFRDS.ddl",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-25T15:24:35.289459",
+    "analyzed_at": "2026-02-27T14:44:26.205916",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "DDL script that creates the AUTHFRDS table in the CARDDEMO schema to store authorization transaction details for fraud detection and analysis in card processing. Columns capture card details, timestamps, merchant information, transaction amounts, response codes, and fraud indicators. Primary key is composite on CARD_NUM and AUTH_TS.",
-    "business_context": "Card authorization fraud monitoring and reporting system",
+    "summary": "This DDL file defines the CARDDEMO.AUTHFRDS table, which stores authorization and fraud-related information for card transactions. It includes fields for card number, authorization timestamp, transaction amounts, merchant details, and fraud indicators.",
+    "business_context": "This table likely supports fraud detection and analysis within a card transaction processing system.",
     "program_type": "UTILITY",
     "citations": [
       1,
-      28
+      2,
+      24
     ]
   },
   "inputs": [],
-  "outputs": [
-    {
-      "name": "CARDDEMO.AUTHFRDS",
-      "io_type": "DB2_TABLE",
-      "description": "Table storing authorization fraud details including card number, auth timestamp, transaction amounts, merchant data, and fraud flags",
-      "copybook": null,
-      "citation": [
-        1
-      ]
-    }
-  ],
+  "outputs": [],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
@@ -46,12 +37,12 @@
     {
       "paragraph_name": "AUTHFRDS",
       "summary": null,
-      "purpose": "This paragraph constitutes the entire DDL script for creating the AUTHFRDS table in the CARDDEMO schema, serving as the foundational schema definition for storing detailed authorization records used in fraud analysis for card transactions. It consumes no inputs, as it is a declarative CREATE TABLE statement with no data reads or parameters. The output is the table structure itself, defined across lines 1-28 with 27 columns including primary keys CARD_NUM (CHAR(16) NOT NULL at line 2) and AUTH_TS (TIMESTAMP NOT NULL at line 3), which ensure unique identification of each auth event. Key data elements include transaction details like TRANSACTION_AMT (DECIMAL(12,2) at line 12), APPROVED_AMT (line 13), response codes such as AUTH_RESP_CODE (CHAR(2) at line 9), merchant info like MERCHANT_ID (CHAR(15) at line 17), MERCHANT_NAME (VARCHAR(22) at line 18), and fraud indicators including AUTH_FRAUD (CHAR(1) at line 24), MATCH_STATUS (line 23), and FRAUD_RPT_DATE (DATE at line 25). No business logic or conditional decisions are implemented, as this is purely a structural definition without processing flows. There is no error handling, validation, or exceptional condition management within the script. No other paragraphs, subroutines, or external programs are called or referenced. The table links to accounts via ACCT_ID (DECIMAL(11) at line 26) and customers via CUST_ID (DECIMAL(9) at line 27), supporting downstream queries and inserts by application programs for fraud pattern detection.",
+      "purpose": "This DDL script defines the CARDDEMO.AUTHFRDS table schema. The table is designed to store detailed information about card authorization requests, including transaction amounts, merchant details, and fraud-related indicators. The table's primary key consists of the CARD_NUM and AUTH_TS fields, ensuring uniqueness for each authorization event. The table includes fields for identifying the card used (CARD_NUM), the time of authorization (AUTH_TS), the type of authorization (AUTH_TYPE), and the card's expiry date (CARD_EXPIRY_DATE). It also captures message details (MESSAGE_TYPE, MESSAGE_SOURCE), authorization response codes (AUTH_RESP_CODE, AUTH_RESP_REASON), and processing codes (PROCESSING_CODE). Transaction and approved amounts are stored as DECIMAL(12,2) values, while merchant details such as category code, country code, ID, name, city, state, and zip code are also included. Furthermore, the table tracks transaction IDs, match status, fraud indicators (AUTH_FRAUD), fraud report dates, account IDs, and customer IDs. No specific error handling is defined within the DDL itself, as it primarily focuses on table structure definition. No other programs or paragraphs are called within this DDL script.",
       "called_by": [],
       "calls": [],
       "citation": [
         1,
-        29
+        28
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
@@ -61,16 +52,15 @@
     }
   ],
   "error_handling": [],
-  "sql_operations": [
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
     {
-      "operation": "CREATE TABLE",
-      "table": "CARDDEMO.AUTHFRDS",
-      "purpose": "Defines persistent storage schema for authorization fraud transaction records",
-      "citation": 1
+      "question": "What application or system uses this table?",
+      "context": "The DDL does not specify the application context.",
+      "suggestion": "Examine related documentation or application code to determine the table's usage."
     }
   ],
-  "cics_operations": [],
-  "open_questions": [],
   "resolved_questions": [],
   "dead_code": [
     {
@@ -81,5 +71,6 @@
     }
   ],
   "call_semantics": [],
-  "flow_diagram": null
+  "flow_diagram": null,
+  "copybooks_not_found": []
 }

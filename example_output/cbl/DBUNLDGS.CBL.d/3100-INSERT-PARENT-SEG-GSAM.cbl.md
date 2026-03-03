@@ -15,6 +15,4 @@
                   DISPLAY 'KFB AREA IN GSAM:' PASFL-KEYFB               02711601
                   PERFORM 9999-ABEND                                    02711701
                END-IF.                                                  02711801
-       3100-EXIT.                                                       02712000
-            EXIT.                                                       02713000
 ```

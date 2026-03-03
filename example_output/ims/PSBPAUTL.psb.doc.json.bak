@@ -1,21 +1,20 @@
 {
   "header": {
     "program_id": "PSBPAUTL",
-    "file_name": "ims/PSBPAUTL.psb",
+    "file_name": "PSBPAUTL.psb",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-25T15:30:33.688584",
+    "analyzed_at": "2026-02-27T14:44:33.323793",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This file is an IMS Program Specification Block (PSB) generation control statement file that defines PSBPAUTL for assembler language programs. It specifies a single database PCB named PAUTLPCB for accessing the DBPAUTP0 database with PROCOPT=L (load/unload processing option) and a key length of 14. The PCB defines two sensitive segments: root segment PAUTSUM0 (PARENT=0) and child segment PAUTDTL1 under parent PAUTSUM0.",
+    "summary": "This file defines a Program Specification Block (PSB) for IMS database access. It specifies the database (DBPAUTP0), processing options, and segment hierarchy (PAUTSUM0, PAUTDTL1) used by an application program.",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
       17,
       18,
-      19,
       20
     ]
   },
@@ -40,18 +39,14 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the business purpose of the DBPAUTP0 database and its segments PAUTSUM0/PAUTDTL1?",
-      "context": "No descriptive comments or names indicate business function beyond IMS DL/I access definitions.",
-      "suggestion": "Review the associated DBD (Database Definition) for DBPAUTP0 or application programs using this PSB."
-    },
-    {
-      "question": "Which application programs use this PSB (PSBPAUTL)?",
-      "context": "PSB defines access for unnamed application programs; no references in this file.",
-      "suggestion": "Search for PSBNAME=PSBPAUTL in PCB masks of COBOL/PL/I/PSB using programs."
+      "question": "What application program uses this PSB?",
+      "context": "The PSB is a data structure definition, but the application program that uses it is not specified in this file.",
+      "suggestion": "Review application program source code or system documentation to identify the program that references PSBPAUTL."
     }
   ],
   "resolved_questions": [],
   "dead_code": [],
   "call_semantics": [],
-  "flow_diagram": null
+  "flow_diagram": null,
+  "copybooks_not_found": []
 }

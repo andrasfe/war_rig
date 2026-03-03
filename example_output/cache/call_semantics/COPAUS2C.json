@@ -2,8 +2,18 @@
   {
     "caller": "MAIN-PARA",
     "callee": "FRAUD-UPDATE",
-    "inputs": [],
-    "outputs": [],
-    "purpose": null
+    "inputs": [
+      "AUTH-FRAUD",
+      "CARD-NUM",
+      "AUTH-TS"
+    ],
+    "outputs": [
+      "WS-FRD-UPDT-SUCCESS",
+      "WS-FRD-ACT-MSG",
+      "WS-FRD-UPDT-FAILED",
+      "WS-SQLCODE",
+      "WS-SQLSTATE"
+    ],
+    "purpose": "Updates the AUTHFRDS table with fraud-related information when a duplicate key error occurs during insert, and sets status flags and messages based on the update result."
   }
 ]

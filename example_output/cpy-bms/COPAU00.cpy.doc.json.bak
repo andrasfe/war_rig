@@ -1,44 +1,24 @@
 {
   "header": {
     "program_id": "COPAU00",
-    "file_name": "cpy-bms/COPAU00.cpy",
+    "file_name": "COPAU00.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-25T15:28:17.388472",
+    "analyzed_at": "2026-02-27T14:44:47.848471",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This COBOL copybook defines the symbolic maps for the COPAU00 BMS screen in a CICS environment. COPAU0AI provides the input map with field lengths (L), format flags (F), attributes (A), and input data (I) for all screen fields. COPAU0AO redefines the area for output with separate attribute bytes (C, P, H, V) and output data (O) to support screen rendering of customer account details, limits, balances, counts, recent transactions, and error messages.",
-    "business_context": "CICS online screen for customer account inquiry or maintenance in a financial/banking system, displaying header info (program/transaction names, titles, date/time), customer details (ID, name, address, status, phone), account metrics (approved/declined counts, credit/cash limits and balances), up to 5 recent transactions (ID, date, time, type, approval, status, amount), selectors, and error messages.",
-    "program_type": "ONLINE_CICS",
+    "summary": "This copybook defines the data structures COPAU0AI and COPAU0AO, which are used for screen input and output. COPAU0AI contains fields for transaction name, title, and current date, while COPAU0AO redefines COPAU0AI to provide different views of the same data.",
+    "business_context": null,
+    "program_type": "COPYBOOK",
     "citations": [
-      17,
+      24,
       391
     ]
   },
-  "inputs": [
-    {
-      "name": "COPAU0AI",
-      "io_type": "CICS_MAP",
-      "description": "Input symbolic map area with packed field definitions: length (COMP S9(4)), flag (X), redefined attribute (X), and input data (PIC X(n)) for screen fields including TRNNAMEI, TITLE01I, CURDATEI, PGMNAMEI, TITLE02I, CURTIMEI, ACCTIDI, CNAMEI, CUSTIDI, ADDR001I, ACCSTATI, ADDR002I, PHONE1I, APPRCNTI, DECLCNTI, CREDLIMI, CASHLIMI, APPRAMTI, CREDBALI, CASHBALI, DECLAMTI, multiple transaction fields (SEL000XI/TRNID0XI/PDATE0XI etc.), and ERRMSGI.",
-      "copybook": null,
-      "citation": [
-        17
-      ]
-    }
-  ],
-  "outputs": [
-    {
-      "name": "COPAU0AO",
-      "io_type": "CICS_MAP",
-      "description": "Output symbolic map area redefining COPAU0AI, with separate attribute bytes (C/P/H/V PIC X each) and output data (O PIC X(n)) for all screen fields, enabling BMS SEND MAP operations to display formatted account summary and transactions.",
-      "copybook": null,
-      "citation": [
-        391
-      ]
-    }
-  ],
+  "inputs": [],
+  "outputs": [],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
@@ -54,6 +34,40 @@
   "copybooks_used": [],
   "paragraphs": [
     {
+      "paragraph_name": "COPAU0AI",
+      "summary": null,
+      "purpose": "This data structure defines the layout for screen input/output fields. It includes fields for transaction name (TRNNAMEL, TRNNAMEF, TRNNAMEA, TRNNAMEI), title (TITLE01L, TITLE01F, TITLE01A, TITLE01I), current date (CURDATEL, CURDATEF), selection option (SEL0005L, SEL0005F, SEL0005A, SEL0005I), amount (PAMT001L, PAMT001F, PAMT001A, PAMT001I, PAMT002L, PAMT002F, PAMT002A, PAMT002I, PAMT003L, PAMT003F, PAMT003A, PAMT003I, PAMT004L, PAMT004F, PAMT004A, PAMT004I, PAMT005L, PAMT005F, PAMT005A, PAMT005I), and error message (ERRMSGL, ERRMSGF, ERRMSGA, ERRMSGI). The structure uses a combination of COMP and PICTURE clauses to define the data types and lengths of each field. The 'L' suffix indicates the length of the field, 'F' is a single character flag, 'A' is a redefined single character flag, and 'I' is the actual data. This structure does not perform any business logic or call other paragraphs; it simply defines the data layout.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        24,
+        390
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": true,
+      "dead_code_reason": "Record layout 'COPAU0AI' is never used by any program",
+      "metadata": {
+        "body_chunks": 8
+      }
+    },
+    {
+      "paragraph_name": "COPAU0AO",
+      "summary": null,
+      "purpose": "This data structure redefines the COPAU0AI structure to provide a different view of the same data. Specifically, it redefines parts of the transaction name, title, and current date fields into single-character fields (TRNNAMEC, TRNNAMEP, TRNNAMEH, TRNNAMEV, TRNNAMEO, TITLE01C, TITLE01P, TITLE01H, TITLE01V, TITLE01O, CURDATEC). This allows for easier manipulation or display of individual characters within these fields. The FILLER fields are used to skip over portions of the original COPAU0AI structure that are not being redefined. This structure does not perform any business logic or call other paragraphs; it simply provides an alternative data layout based on COPAU0AI.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        391,
+        406
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
       "paragraph_name": "COPAU00",
       "summary": null,
       "purpose": "[Citadel] Paragraph identified by static analysis",
@@ -66,13 +80,13 @@
       "outgoing_calls": [],
       "incoming_calls": [
         {
-          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
           "function": "COPAUS0C",
           "line": 129,
           "call_type": "includes"
         },
         {
-          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
           "function": "COPAUS0C",
           "line": 1,
           "call_type": "includes"
@@ -81,36 +95,12 @@
       "is_dead_code": false,
       "dead_code_reason": null,
       "metadata": null
-    },
-    {
-      "paragraph_name": "COPAU0AI",
-      "summary": null,
-      "purpose": "[Citadel] Paragraph identified by static analysis",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        1,
-        1
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": true,
-      "dead_code_reason": "Record layout 'COPAU0AI' is never used by any program",
-      "metadata": {
-        "body_chunks": 8
-      }
     }
   ],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
-    {
-      "question": "Which CICS programs include this copybook and use the COPAU00 map?",
-      "context": "Copybook does not specify including programs; usage inferred from BMS naming convention but not explicit.",
-      "suggestion": "Search for COPY COPAU00 in associated COBOL programs or BMS physical map definitions."
-    }
-  ],
+  "open_questions": [],
   "resolved_questions": [],
   "dead_code": [
     {
@@ -121,5 +111,6 @@
     }
   ],
   "call_semantics": [],
-  "flow_diagram": null
+  "flow_diagram": null,
+  "copybooks_not_found": []
 }

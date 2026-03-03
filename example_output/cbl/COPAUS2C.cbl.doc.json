@@ -1,31 +1,33 @@
 {
   "header": {
     "program_id": "COPAUS2C",
-    "file_name": "cbl/COPAUS2C.cbl",
+    "file_name": "COPAUS2C.cbl",
     "file_type": "COBOL",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-25T15:20:46.974030",
+    "analyzed_at": "2026-02-27T14:40:40.370958",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "COPAUS2C is a CICS online program that processes authorization fraud data by formatting the current date and time, parsing authorization timestamps, moving input authorization details from the linkage section to a structured format, and inserting them into the CARDDEMO.AUTHFRDS DB2 table. If the insert fails due to a duplicate key (SQLCODE -803), it performs an update on the same table instead. Upon success or handling errors, it returns control to CICS.",
-    "business_context": "Supports fraud logging and updating for card authorization transactions in a payment processing system.",
-    "program_type": "ONLINE_CICS",
+    "summary": "This COBOL program processes fraud reports, inserts them into the CARDDEMO.AUTHFRDS table, and updates existing records if a duplicate is found. It retrieves the current date and time, formats the time, and interacts with a DB2 database to manage fraud activity.",
+    "business_context": "Fraud detection and reporting within a card processing system.",
+    "program_type": "BATCH",
     "citations": [
       89,
+      152,
       221
     ]
   },
   "inputs": [
     {
-      "name": "PA-RECORD",
+      "name": "PA-FRAUD-RPT",
       "io_type": "CICS_COMMAREA",
-      "description": "Input authorization data including fraud report date, auth orig date, card number, auth time, auth type, card expiry, message type/source, auth codes, amounts, merchant details, transaction ID, and match status",
+      "description": "Fraud report data passed from a calling program.",
       "copybook": null,
       "citation": [
-        89,
-        107
+        91,
+        100,
+        115
       ]
     }
   ],
@@ -33,69 +35,50 @@
     {
       "name": "CARDDEMO.AUTHFRDS",
       "io_type": "DB2_TABLE",
-      "description": "Fraud authorization details table storing card num, auth timestamp components, type, expiry, message info, auth responses, transaction details, merchant info, acct/cust IDs, and fraud action",
+      "description": "Table storing fraud authorization details.",
       "copybook": null,
       "citation": [
-        199,
-        221
+        152,
+        223
       ]
     }
   ],
-  "called_programs": [],
+  "called_programs": [
+    {
+      "program_name": "CIPAUDTY",
+      "call_type": "STATIC_CALL",
+      "purpose": "UNKNOWN",
+      "parameters": [],
+      "citation": 23
+    }
+  ],
   "calling_context": {
     "called_by": [],
     "entry_points": [],
-    "linkage_section": [
-      "PA-FRAUD-RPT-DATE",
-      "PA-AUTH-ORIG-DATE",
-      "PA-CARD-NUM",
-      "PA-AUTH-TIME",
-      "PA-AUTH-TYPE",
-      "PA-CARD-EXPIRY-DATE",
-      "PA-MESSAGE-TYPE",
-      "PA-MESSAGE-SOURCE",
-      "PA-AUTH-ID-CODE",
-      "PA-AUTH-RESP-CODE",
-      "PA-AUTH-RESP-REASON",
-      "PA-PROCESSING-CODE",
-      "PA-TRANSACTION-AMT",
-      "PA-APPROVED-AMT",
-      "PA-MERCHANT-CATAGORY-CODE",
-      "PA-ACQR-COUNTRY-CODE",
-      "PA-POS-ENTRY-MODE",
-      "PA-MERCHANT-ID",
-      "PA-MERCHANT-NAME",
-      "PA-MERCHANT-CITY",
-      "PA-MERCHANT-STATE",
-      "PA-MERCHANT-ZIP",
-      "PA-TRANSACTION-ID",
-      "PA-MATCH-STATUS"
-    ]
+    "linkage_section": []
   },
   "business_rules": [
     {
       "rule_id": "BR001",
-      "description": "On successful INSERT (SQLCODE=0), set success flag and message; on duplicate key (SQLCODE=-803), perform UPDATE instead; on other errors, set failure flag and build error message",
-      "logic_summary": "Nested IF on SQLCODE after INSERT, with PERFORM FRAUD-UPDATE on -803",
+      "description": "If a record with the same key already exists in CARDDEMO.AUTHFRDS, update the existing record instead of inserting a new one.",
+      "logic_summary": "Checks SQLCODE after INSERT. If SQLCODE is -803 (duplicate key), PERFORM FRAUD-UPDATE.",
       "conditions": [
-        "IF SQLCODE = ZERO",
-        "IF SQLCODE = -803"
+        "SQLCODE = -803"
       ],
       "citation": [
-        199,
-        203
+        195,
+        199
       ]
     }
   ],
   "data_flow": {
     "reads_from": [
       {
-        "source": "PA-RECORD",
+        "source": "PA-FRAUD-RPT",
         "fields_used": [
-          "PA-FRAUD-RPT-DATE",
           "PA-AUTH-ORIG-DATE",
+          "PA-AUTH-TIME-9C",
           "PA-CARD-NUM",
-          "PA-AUTH-TIME",
           "PA-AUTH-TYPE",
           "PA-CARD-EXPIRY-DATE",
           "PA-MESSAGE-TYPE",
@@ -115,14 +98,12 @@
           "PA-MERCHANT-STATE",
           "PA-MERCHANT-ZIP",
           "PA-TRANSACTION-ID",
-          "PA-MATCH-STATUS",
-          "WS-FRD-ACTION",
-          "WS-ACCT-ID",
-          "WS-CUST-ID"
+          "PA-MATCH-STATUS"
         ],
         "citation": [
-          89,
-          150
+          100,
+          107,
+          115
         ]
       }
     ],
@@ -157,50 +138,28 @@
           "CUST_ID"
         ],
         "citation": [
-          199,
-          221
+          152,
+          223
         ]
       }
     ],
     "transforms": [
       {
-        "input_field": "WS-ABS-TIME",
-        "output_field": "WS-CUR-DATE",
-        "transformation_description": "Format CICS absolute time to MMDDYY date string using FORMATTIME",
+        "input_field": "PA-AUTH-TIME-9C",
+        "output_field": "WS-AUTH-TIME",
+        "transformation_description": "Calculates WS-AUTH-TIME by subtracting PA-AUTH-TIME-9C from 999999999.",
         "citation": [
-          89
+          107
         ]
       },
       {
         "input_field": "PA-AUTH-ORIG-DATE",
         "output_field": "WS-AUTH-YY, WS-AUTH-MM, WS-AUTH-DD",
-        "transformation_description": "Substring extraction: positions 1:2 to YY, 3:2 to MM, 5:2 to DD",
+        "transformation_description": "Extracts year, month, and day from PA-AUTH-ORIG-DATE.",
         "citation": [
-          89
-        ]
-      },
-      {
-        "input_field": "PA-AUTH-TIME-9C",
-        "output_field": "WS-AUTH-TIME",
-        "transformation_description": "COMPUTE WS-AUTH-TIME = 999999999 - PA-AUTH-TIME-9C to adjust timestamp",
-        "citation": [
-          107
-        ]
-      },
-      {
-        "input_field": "WS-AUTH-TIME-AN",
-        "output_field": "WS-AUTH-HH, WS-AUTH-MI, WS-AUTH-SS, WS-AUTH-SSS",
-        "transformation_description": "Substring extraction from adjusted time: 1:2 HH, 3:2 MI, 5:2 SS, 7:3 SSS",
-        "citation": [
-          107
-        ]
-      },
-      {
-        "input_field": "PA-MERCHANT-NAME",
-        "output_field": "MERCHANT-NAME-LEN",
-        "transformation_description": "MOVE LENGTH OF PA-MERCHANT-NAME to MERCHANT-NAME-LEN",
-        "citation": [
-          150
+          94,
+          96,
+          98
         ]
       }
     ]
@@ -208,7 +167,7 @@
   "copybooks_used": [
     {
       "copybook_name": "SQLCA",
-      "purpose": "Defines SQL communication area for SQLCODE and SQLSTATE",
+      "purpose": "SQL Communication Area for DB2 interaction.",
       "location": "WORKING_STORAGE",
       "citation": 23
     }
@@ -217,7 +176,7 @@
     {
       "paragraph_name": "COPAUS2C",
       "summary": null,
-      "purpose": "This is the program entry point paragraph, likely serving as the initial control point in the PROCEDURE DIVISION. It consumes no explicit inputs shown in the AST but sets up the environment by referencing or calling initialization elements. It produces control flow to subsequent paragraphs or external elements like CIPAUDTY for typing or setup, SQLCA for SQL handling, and AUTHFRDS context. No explicit business logic or decisions are detailed in the AST, but it orchestrates the start of fraud authorization processing. Error handling is not visible here, deferred to called paragraphs. It calls CIPAUDTY (possibly for audit typing), SQLCA initialization, and transitions to AUTHFRDS processing context, enabling the main fraud update logic.",
+      "purpose": "This is the main program entry point. It does not contain any executable logic other than declaring called programs. It serves as a container for the program's overall structure and external dependencies. It declares calls to CIPAUDTY, SQLCA, and AUTHFRDS. The program's primary logic resides in the MAIN-PARA and FRAUD-UPDATE paragraphs. It does not directly consume any inputs or produce any outputs. It does not implement any business logic or error handling itself, delegating these tasks to its subordinate paragraphs. This paragraph essentially defines the program's interface and dependencies.",
       "called_by": [],
       "calls": [
         "CIPAUDTY",
@@ -253,12 +212,11 @@
     {
       "paragraph_name": "MAIN-PARA",
       "summary": null,
-      "purpose": "This is the primary orchestration paragraph handling the core fraud authorization logging logic in the program flow. It consumes CICS absolute time via ASKTIME and input linkage fields like PA-FRAUD-RPT-DATE, PA-AUTH-ORIG-DATE, PA-CARD-NUM, and numerous other PA- authorization details. It produces formatted WS-CUR-DATE, parsed WS-AUTH-YY/MM/DD/HH/MI/SS/SSS from date/time computations, structured output fields like CARD-NUM and AUTH-TS, and ultimately inserts a record into CARDDEMO.AUTHFRDS. Business logic includes time adjustment via COMPUTE WS-AUTH-TIME = 999999999 - PA-AUTH-TIME-9C (line 107), substring extractions for timestamp components, and numerous MOVE operations to prepare INSERT data; it checks SQLCODE post-INSERT: success sets WS-FRD-UPDT-SUCCESS and 'ADD SUCCESS' message; duplicate (-803) triggers PERFORM FRAUD-UPDATE; other errors set WS-FRD-UPDT-FAILED, capture SQLCODE/SQLSTATE, and STRING error message into WS-FRD-ACT-MSG. Error handling uses sqlcode_check logic (lines 199, 203) for recovery or failure logging without abend. It performs FRAUD-UPDATE for duplicate handling and ends with CICS RETURN to release control.",
-      "called_by": [
-        "COPAUS2C"
-      ],
+      "purpose": "This paragraph is the main processing logic of the program. It retrieves the current date and time using CICS services and formats the date. It then moves data from the input COMMAREA (PA-FRAUD-RPT) to working storage variables. It calculates WS-AUTH-TIME based on PA-AUTH-TIME-9C. It then constructs an SQL INSERT statement to add a new fraud record to the CARDDEMO.AUTHFRDS table. If the insertion is successful (SQLCODE = 0), it sets WS-FRD-UPDT-SUCCESS to TRUE and sets a success message. If a duplicate key error occurs (SQLCODE = -803), it performs the FRAUD-UPDATE paragraph to update the existing record. If any other SQL error occurs, it sets WS-FRD-UPDT-FAILED to TRUE, captures the SQLCODE and SQLSTATE, and constructs an error message. Finally, it returns to the calling program using EXEC CICS RETURN.",
+      "called_by": [],
       "calls": [
-        "FRAUD-UPDATE"
+        "FRAUD-UPDATE",
+        "CARDDEMO.AUTHFRDS"
       ],
       "citation": [
         89,
@@ -286,11 +244,13 @@
     {
       "paragraph_name": "FRAUD-UPDATE",
       "summary": null,
-      "purpose": "This paragraph serves as an error recovery routine specifically for duplicate key violations during the initial INSERT, performing an UPDATE on CARDDEMO.AUTHFRDS to set AUTH_FRAUD and other fields from prepared working storage variables. It consumes the pre-moved fields like AUTH-FRAUD (from WS-FRD-ACTION), ACCT-ID, CUST-ID, and prior INSERT targets now used in SET clauses. It produces an updated record in the AUTHFRDS table and status messages in WS-FRD-ACT-MSG. Business logic executes an UPDATE SQL statement targeting the existing record based on CARD_NUM and AUTH_TS, then checks SQLCODE: zero sets WS-FRD-UPDT-SUCCESS and 'UPDT SUCCESS'; non-zero sets WS-FRD-UPDT-FAILED, captures SQLCODE/SQLSTATE, and STRINGs error into WS-FRD-ACT-MSG (sqlcode_check at line 230). Error handling mirrors MAIN-PARA with failure logging but no further recovery or abend shown. No subordinate calls are made; it returns control to the caller (MAIN-PARA post-duplicate detection).",
+      "purpose": "This paragraph updates an existing fraud record in the CARDDEMO.AUTHFRDS table. It constructs an SQL UPDATE statement using data from working storage variables. If the update is successful (SQLCODE = 0), it sets WS-FRD-UPDT-SUCCESS to TRUE and sets a success message. If any SQL error occurs, it sets WS-FRD-UPDT-FAILED to TRUE, captures the SQLCODE and SQLSTATE, and constructs an error message. The paragraph is called when a duplicate key error occurs during the initial INSERT operation in MAIN-PARA, indicating that the record already exists. This paragraph ensures that existing fraud records are updated with the latest information. It uses AUTH-FRAUD to update the AUTH_FRAUD column in the CARDDEMO.AUTHFRDS table.",
       "called_by": [
         "MAIN-PARA"
       ],
-      "calls": [],
+      "calls": [
+        "CARDDEMO.AUTHFRDS"
+      ],
       "citation": [
         221,
         244
@@ -304,13 +264,13 @@
       ],
       "incoming_calls": [
         {
-          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
           "function": "MAIN-PARA",
           "line": 204,
           "call_type": "performs"
         },
         {
-          "file": "/Users/andraslferenczi/war_rig/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
+          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
           "function": "MAIN-PARA",
           "line": 89,
           "call_type": "performs"
@@ -323,15 +283,16 @@
   ],
   "error_handling": [
     {
-      "condition": "SQLCODE NOT = ZERO after INSERT",
-      "action": "If SQLCODE = -803, PERFORM FRAUD-UPDATE; else SET WS-FRD-UPDT-FAILED, MOVE SQLCODE/SQLSTATE, STRING error message",
+      "condition": "SQLCODE not equal to ZERO after INSERT",
+      "action": "Check if SQLCODE is -803. If so, PERFORM FRAUD-UPDATE. Otherwise, set WS-FRD-UPDT-FAILED to TRUE, move SQLCODE and SQLSTATE to working storage, and construct an error message.",
       "citation": [
-        199
+        195,
+        203
       ]
     },
     {
-      "condition": "SQLCODE NOT = ZERO after UPDATE",
-      "action": "SET WS-FRD-UPDT-FAILED, MOVE SQLCODE/SQLSTATE, STRING 'UPDT ERROR DB2: CODE:' WS-SQLCODE ' STATE:' WS-SQLSTATE into WS-FRD-ACT-MSG",
+      "condition": "SQLCODE not equal to ZERO after UPDATE",
+      "action": "Set WS-FRD-UPDT-FAILED to TRUE, move SQLCODE and SQLSTATE to working storage, and construct an error message.",
       "citation": [
         230
       ]
@@ -341,47 +302,112 @@
     {
       "operation": "INSERT",
       "table": "CARDDEMO.AUTHFRDS",
-      "purpose": "Log new fraud authorization details from input transaction",
-      "citation": 199
+      "purpose": "Insert a new fraud authorization record.",
+      "citation": 152
     },
     {
       "operation": "UPDATE",
       "table": "CARDDEMO.AUTHFRDS",
-      "purpose": "Update existing fraud record with AUTH_FRAUD, ACCT_ID, CUST_ID on duplicate key",
-      "citation": 221
+      "purpose": "Update an existing fraud authorization record when a duplicate key is encountered.",
+      "citation": 223
     }
   ],
   "cics_operations": [
     {
       "command": "ASKTIME",
-      "resource": "WS-ABS-TIME",
-      "purpose": "Obtain current absolute time for date formatting",
-      "citation": 89
+      "resource": null,
+      "purpose": "Retrieve the current absolute time.",
+      "citation": 90
     },
     {
       "command": "FORMATTIME",
-      "resource": "WS-ABS-TIME",
-      "purpose": "Convert absolute time to MMDDYY format in WS-CUR-DATE",
-      "citation": 89
+      "resource": null,
+      "purpose": "Format the absolute time into MMDDYY format.",
+      "citation": 91
     },
     {
       "command": "RETURN",
       "resource": null,
-      "purpose": "Return control to CICS after processing",
-      "citation": 220
+      "purpose": "Return control to the calling program.",
+      "citation": 216
     }
   ],
-  "open_questions": [],
+  "open_questions": [
+    {
+      "question": "What is the purpose of CIPAUDTY?",
+      "context": "The code calls CIPAUDTY, but its function is not clear from the provided snippet.",
+      "suggestion": "Examine the CIPAUDTY source code or related documentation."
+    },
+    {
+      "question": "What is the structure of the PA-FRAUD-RPT COMMAREA?",
+      "context": "The program reads from PA-FRAUD-RPT, but the structure is not defined in the provided snippet.",
+      "suggestion": "Review the copybook or data definition for PA-FRAUD-RPT."
+    }
+  ],
   "resolved_questions": [],
-  "dead_code": [],
+  "dead_code": [
+    {
+      "name": "exec-001",
+      "artifact_type": "function",
+      "line": 91,
+      "reason": "Function 'exec-001' is never called by any other artifact"
+    },
+    {
+      "name": "exec-002",
+      "artifact_type": "function",
+      "line": 95,
+      "reason": "Function 'exec-002' is never called by any other artifact"
+    },
+    {
+      "name": "exec-003",
+      "artifact_type": "function",
+      "line": 141,
+      "reason": "Function 'exec-003' is never called by any other artifact"
+    },
+    {
+      "name": "exec-004",
+      "artifact_type": "function",
+      "line": 218,
+      "reason": "Function 'exec-004' is never called by any other artifact"
+    },
+    {
+      "name": "exec-005",
+      "artifact_type": "function",
+      "line": 222,
+      "reason": "Function 'exec-005' is never called by any other artifact"
+    },
+    {
+      "name": "DFHCOMMAREA",
+      "artifact_type": "record_layout",
+      "line": 74,
+      "reason": "Record layout 'DFHCOMMAREA' is never used by any program"
+    },
+    {
+      "name": "WS-VARIABLES",
+      "artifact_type": "record_layout",
+      "line": 32,
+      "reason": "Record layout 'WS-VARIABLES' is never used by any program"
+    }
+  ],
   "call_semantics": [
     {
       "caller": "MAIN-PARA",
       "callee": "FRAUD-UPDATE",
-      "inputs": [],
-      "outputs": [],
-      "purpose": null
+      "inputs": [
+        "AUTH-FRAUD",
+        "CARD-NUM",
+        "AUTH-TS"
+      ],
+      "outputs": [
+        "WS-FRD-UPDT-SUCCESS",
+        "WS-FRD-ACT-MSG",
+        "WS-FRD-UPDT-FAILED",
+        "WS-SQLCODE",
+        "WS-SQLSTATE"
+      ],
+      "purpose": "Updates the AUTHFRDS table with fraud-related information when a duplicate key error occurs during insert, and sets status flags and messages based on the update result."
     }
   ],
-  "flow_diagram": "flowchart TD\n    %% Title: COPAUS2C.cbl\n    FRAUD_UPDATE[\"FRAUD-UPDATE\"]\n    CARDDEMO_AUTHFRDS__ext[(\"CARDDEMO.AUTHFRDS\")]\n    MAIN_PARA[\"MAIN-PARA\"]\n    FRAUD_UPDATE -.->|updates| CARDDEMO_AUTHFRDS__ext\n    MAIN_PARA --> FRAUD_UPDATE\n    MAIN_PARA -.->|writes| CARDDEMO_AUTHFRDS__ext"
+  "flow_diagram": "flowchart TD\n    %% Title: COPAUS2C.cbl\n    FRAUD_UPDATE[\"FRAUD-UPDATE\"]\n    CARDDEMO_AUTHFRDS__ext[(\"CARDDEMO.AUTHFRDS\")]\n    MAIN_PARA[\"MAIN-PARA\"]\n    FRAUD_UPDATE -.->|updates| CARDDEMO_AUTHFRDS__ext\n    MAIN_PARA --> FRAUD_UPDATE\n    MAIN_PARA -.->|writes| CARDDEMO_AUTHFRDS__ext",
+  "copybooks_not_found": []
 }

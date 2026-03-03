@@ -2,36 +2,25 @@
 
 **File**: `bms/COPAU00.bms`
 **Type**: FileType.BMS
-**Analyzed**: 2026-02-25 15:30:57.423429
+**Analyzed**: 2026-02-27 14:43:28.976979
 
 ## Purpose
 
-Defines the COPAU00 CICS mapset with COPAU0A map for the Pending Authorization Screen in CardDemo application. Allows searching pending authorizations by account ID, displays customer details (name, ID, address, phone, status, approval/decline counts, credit/cash limits and balances), and lists up to 5 transactions with selection options. Includes headers, timestamps, error message field, and function key instructions.
+This BMS map defines the screen layout for the 'CardDemo - Pending Authorization Screen'. It is used to display pending credit card authorizations and related customer information, allowing users to search by account ID and select transactions for further action.
 
-**Business Context**: Credit card authorization management in CICS online transaction processing for viewing and selecting pending authorizations.
+**Business Context**: This screen is part of a credit card authorization workflow, likely used by customer service representatives or fraud analysts to review and manage pending transactions.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| ACCTID | IOType.CICS_MAP | Unprotected input field for entering account ID to search for pending authorizations |
-| SEL0001 | IOType.CICS_MAP | Unprotected selection field for first transaction (e.g., enter 'S' to view details) |
-| SEL0002 | IOType.CICS_MAP | Unprotected selection field for second transaction |
-| SEL0003 | IOType.CICS_MAP | Unprotected selection field for third transaction |
-| SEL0004 | IOType.CICS_MAP | Unprotected selection field for fourth transaction |
-| SEL0005 | IOType.CICS_MAP | Unprotected selection field for fifth transaction |
+| ACCTID | IOType.CICS_MAP | Account ID entered by the user to search for pending authorizations. |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| COPAU0A | IOType.CICS_MAP | Display map containing customer information, limits, balances, transaction list, headers, timestamps, and instructions |
-| ERRMSG | IOType.CICS_MAP | Field for displaying error messages to the user |
-
-## Business Rules
-
-- **BR001**: User input fields such as ACCTID and SELxxxx are unprotected (UNPROT) to accept search criteria and transaction selections, with validation expected in the calling CICS program.
-- **BR002**: Display-only fields use ASKIP and NORM/PROT attributes to prevent user modification.
+| COPAU0A | IOType.CICS_MAP | The entire screen layout, including static text, customer information, and a list of pending transactions. |
 
 ## Paragraphs/Procedures
 
@@ -52,7 +41,5 @@ The following artifacts were identified as dead code by static analysis:
 
 ## Open Questions
 
-- ? Which CICS COBOL program(s) reference and use this COPAU00 BMS mapset?
-  - Context: BMS file defines the map but does not specify calling programs.
-- ? What are the exact validation rules for inputs like ACCTID length/format or SEL values?
-  - Context: BMS defines layout and attributes but no programmatic validation.
+- ? What is the purpose of the '&&SYSPARM' variable used in the TYPE parameter of the DFHMSD macro?
+  - Context: The code uses 'TYPE=&&SYSPARM' without explaining where this variable is defined or what values it can take.

@@ -1,19 +1,31 @@
 ```cobol
-            .                                                           02271053
-       2100-EXIT.                                                       02280053
-            EXIT.                                                       02290053
-      *                                                                 02310026
-      *                                                                 02320026
-      *----------------------------------------------------------------*02330026
-       3000-READ-CHILD-SEG-FILE.                                        02340053
-      *----------------------------------------------------------------*02350026
-      *     DISPLAY 'IN 3000 READ CHILD SEG FILE PARA'                  02351067
-            READ INFILE2                                                02352053
-                                                                        02353053
-            IF WS-INFIL2-STATUS =  SPACES OR '00'                       02354053
-               IF ROOT-SEG-KEY IS NUMERIC                               02354162
-      *        DISPLAY 'GNGTO ROOT SEG KEY'                             02355067
-               MOVE ROOT-SEG-KEY  TO QUAL-SSA-KEY-VALUE                 02355260
-      *        DISPLAY 'ROOT-SEG-KEY : '    QUAL-SSA-KEY-VALUE          02355367
-      *        DISPLAY 'MOVED ROOT SEG KEY'                             02355467
+       4000-FILE-CLOSE.                                                 02630030
+            DISPLAY 'CLOSING THE FILE'                                  02631043
+            CLOSE INFILE1.                                              02640053
+                                                                        02650030
+            IF WS-INFIL1-STATUS =  SPACES OR '00'                       02660053
+             CONTINUE                                                   02670030
+            ELSE                                                        02680034
+             DISPLAY 'ERROR IN CLOSING 1ST FILE:'WS-INFIL1-STATUS       02690053
+            END-IF.                                                     02700034
+            CLOSE INFILE2.                                              02710053
+                                                                        02720030
+            IF WS-INFIL2-STATUS =  SPACES OR '00'                       02730053
+             CONTINUE                                                   02740030
+            ELSE                                                        02750034
+             DISPLAY 'ERROR IN CLOSING 2ND FILE:'WS-INFIL2-STATUS       02760053
+            END-IF.                                                     02770034
+       4000-EXIT.                                                       02780030
+            EXIT.                                                       02790030
+      *----------------------------------------------------------------*03620026
+       9999-ABEND.                                                      03630026
+      *----------------------------------------------------------------*03640026
+      *                                                                 03650026
+           DISPLAY 'IMS LOAD ABENDING ...'                              03660054
+                                                                        03670026
+           MOVE 16 TO RETURN-CODE                                       03680026
+           GOBACK.                                                      03690026
+      *                                                                 03700026
+       9999-EXIT.                                                       03710026
+            EXIT.                                                       03720026
 ```

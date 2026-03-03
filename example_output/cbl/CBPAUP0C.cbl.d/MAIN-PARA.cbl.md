@@ -1,19 +1,4 @@
 ```cobol
-              IF WS-AUTH-SMRY-PROC-CNT > P-CHKP-FREQ
-                 PERFORM 9000-TAKE-CHECKPOINT     THRU 9000-EXIT
-
-                 MOVE 0                         TO WS-AUTH-SMRY-PROC-CNT
-              END-IF
-              PERFORM 2000-FIND-NEXT-AUTH-SUMMARY THRU 2000-EXIT
-
-           END-PERFORM
-      *
-           PERFORM 9000-TAKE-CHECKPOINT           THRU 9000-EXIT
-      *
-           DISPLAY ' '
-           DISPLAY '*-------------------------------------*'
-           DISPLAY '# TOTAL SUMMARY READ  :' WS-NO-SUMRY-READ
-           DISPLAY '# SUMMARY REC DELETED :' WS-NO-SUMRY-DELETED
            DISPLAY '# TOTAL DETAILS READ  :' WS-NO-DTL-READ
            DISPLAY '# DETAILS REC DELETED :' WS-NO-DTL-DELETED
            DISPLAY '*-------------------------------------*'
@@ -90,4 +75,24 @@
        3000-FIND-NEXT-AUTH-DTL.
       *----------------------------------------------------------------*
       *
+            IF DEBUG-ON
+               DISPLAY 'DEBUG: AUTH DTL READ : ' WS-NO-DTL-READ
+            END-IF
+
+            EXEC DLI GNP USING PCB(PAUT-PCB-NUM)
+                 SEGMENT (PAUTDTL1)
+                 INTO (PENDING-AUTH-DETAILS)
+            END-EXEC
+            EVALUATE DIBSTAT
+               WHEN '  '
+                    SET MORE-AUTHS       TO TRUE
+                    ADD 1                TO WS-NO-DTL-READ
+               WHEN 'GE'
+               WHEN 'GB'
+                    SET NO-MORE-AUTHS    TO TRUE
+               WHEN OTHER
+                    DISPLAY 'AUTH DETAIL READ FAILED  :' DIBSTAT
+                    DISPLAY 'SUMMARY AUTH APP ID      :' PA-ACCT-ID
+                    DISPLAY 'DETAIL READ BEFORE ABEND :' WS-NO-DTL-READ
+                    PERFORM 9999-ABEND
 ```

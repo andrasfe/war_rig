@@ -3,56 +3,23 @@
     "program_id": "COPAU01",
     "file_name": "COPAU01.bms",
     "file_type": "BMS",
-    "analyzed_by": "Scribe",
-    "analyzed_at": "2026-02-25T15:29:03.102221",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-02-27T14:43:38.744071",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This BMS file defines the COPAU01 mapset with the COPAU1A map for displaying 'Pending Authorization Details Screen' in a CICS online application called CardDemo. The screen layout includes fields for transaction details such as card number, authorization date/time/response/code/amount/type/source, merchant details (name, ID, city, state, zip, MCC), fraud/match status, and error messaging. It supports input/output mode with auto storage, free cursor, and alarm control.",
-    "business_context": "Serves the CardDemo application for viewing pending credit card authorization details in a CICS transaction processing environment.",
+    "summary": "This BMS map defines the screen layout for displaying pending authorization details in the CardDemo application. It includes fields for transaction information, card details, authorization responses, amounts, and merchant information. The map also provides options for navigating to other authorizations and marking/removing fraud.",
+    "business_context": "This screen is used to view details of a pending card authorization, likely as part of a fraud detection or customer service workflow.",
     "program_type": "ONLINE_CICS",
     "citations": [
       2,
-      19,
-      20,
-      22,
-      26
+      79,
+      292
     ]
   },
-  "inputs": [
-    {
-      "name": "COPAU1A",
-      "io_type": "CICS_MAP",
-      "description": "CICS map for receiving and displaying authorization details data including card number (CARDNUM), auth date (AUTHDT), time (AUTHTM), response (AUTHRSP), merchant info (MERNAME, MERID, etc.), and status fields.",
-      "copybook": null,
-      "citation": [
-        26,
-        85,
-        94,
-        104,
-        114,
-        239,
-        249
-      ]
-    }
-  ],
-  "outputs": [
-    {
-      "name": "COPAU1A",
-      "io_type": "CICS_MAP",
-      "description": "CICS map for sending screen output with populated fields like transaction name (TRNNAME), program name (PGMNAME), current date/time (CURDATE, CURTIME), auth details, merchant details, fraud status (AUTHFRD), and error messages (ERRMSG).",
-      "copybook": null,
-      "citation": [
-        26,
-        34,
-        57,
-        47,
-        70,
-        284
-      ]
-    }
-  ],
+  "inputs": [],
+  "outputs": [],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
@@ -70,12 +37,12 @@
     {
       "paragraph_name": "COPAU01",
       "summary": null,
-      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "purpose": "This DFHMSD macro defines the beginning of the BMS map set named COPAU01. It specifies various control options for the map set, including enabling the alarm, freeing the keyboard after input, enabling extended attributes, setting the language to COBOL, specifying input/output mode, enabling automatic storage allocation, including the TIOAPFX, and defining the map type based on the system parameter &&SYSPARM. This macro acts as a container for all the individual map definitions within the COPAU01 map set. It doesn't directly process data but sets the overall environment for the screen definition. The TYPE=FINAL parameter on line 293 indicates the end of the map definition. No error handling is defined at this level, as it's a declarative statement. It does not call any other paragraphs or programs.",
       "called_by": [],
       "calls": [],
       "citation": [
         19,
-        19
+        25
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
@@ -86,12 +53,12 @@
     {
       "paragraph_name": "COPAU1A",
       "summary": null,
-      "purpose": "[Citadel] Paragraph identified by static analysis",
+      "purpose": "This DFHMDI macro defines an individual map named COPAU1A within the COPAU01 map set. It specifies the map's position on the screen (line 1, column 1) and its size (24 lines, 80 columns). This macro essentially defines the window or viewport for the screen. It doesn't directly process data or implement business logic. Instead, it provides the structure onto which the individual fields and labels are placed using DFHMDF macros. The map definition includes various fields such as transaction name (TRNNAME), current date (CURDATE), program name (PGMNAME), current time (CURTIME), card number (CARDNUM), authorization details (AUTHDT, AUTHTM, AUTHRSP, AUTHRSN, AUTHCD, AUTHAMT, POSEMD, AUTHSRC, MCCCD, CRDEXP, AUTHTYP, TRNID, AUTHMTC, AUTHFRD), merchant details (MERNAME, MERID, MERCITY, MERST, MERZIP), and an error message area (ERRMSG). It also includes labels and instructions for the user (e.g., 'F3=Back'). It does not call any other paragraphs or programs.",
       "called_by": [],
       "calls": [],
       "citation": [
         26,
-        26
+        28
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
@@ -102,42 +69,10 @@
       }
     }
   ],
-  "error_handling": [
-    {
-      "condition": "Application errors",
-      "action": "Display message in ERRMSG field with FSET attribute for field set and bright intensity.",
-      "citation": [
-        284
-      ]
-    }
-  ],
+  "error_handling": [],
   "sql_operations": [],
-  "cics_operations": [
-    {
-      "command": "SEND MAP",
-      "resource": "COPAU1A",
-      "purpose": "Display pending authorization details screen with labels, data fields, and function key prompts.",
-      "citation": 26
-    },
-    {
-      "command": "RECEIVE MAP",
-      "resource": "COPAU1A",
-      "purpose": "Receive user input from modifiable fields in INOUT mode.",
-      "citation": 22
-    }
-  ],
-  "open_questions": [
-    {
-      "question": "Which specific CICS COBOL program(s) use this COPAU01 mapset?",
-      "context": "BMS file defines the map but does not reference calling programs.",
-      "suggestion": "Search CICS transaction programs for EXEC CICS SEND MAP('COPAU1A') or similar."
-    },
-    {
-      "question": "What are the transaction IDs or entry points that invoke this screen?",
-      "context": "Not specified in BMS definition; typically defined in CICS PCT.",
-      "suggestion": "Review CICS program control table (PCT) or calling COBOL source."
-    }
-  ],
+  "cics_operations": [],
+  "open_questions": [],
   "resolved_questions": [],
   "dead_code": [
     {
@@ -154,5 +89,6 @@
     }
   ],
   "call_semantics": [],
-  "flow_diagram": null
+  "flow_diagram": null,
+  "copybooks_not_found": []
 }
