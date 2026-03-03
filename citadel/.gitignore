@@ -99,6 +99,11 @@ cache/
 !cache/.gitignore
 *.log
 
+# ProLeap wrapper build artifacts
+proleap-wrapper/target/
+proleap-wrapper/.maven/
+
 # OS
 .DS_Store
 Thumbs.db
+citadel/proleap-wrapper/dependency-reduced-pom.xml

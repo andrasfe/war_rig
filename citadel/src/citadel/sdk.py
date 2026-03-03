@@ -2017,13 +2017,12 @@ class Citadel:
                 if para.line_start <= ln.line_number <= para.line_end
             ]
 
-        # Eagerly build ASTs for all paragraphs
-        from citadel.cobol.syntax_tree import build_file_ast, format_file_ast
+        # Build ASTs for all paragraphs via ProLeap grammar-based parser.
+        from citadel.cobol.proleap_bridge import parse_proleap
 
-        paragraph_ast_trees = build_file_ast(
-            para_source_lines, data_items,
+        paragraph_ast_trees, full_ast_text = parse_proleap(
+            source_path, copybook_dirs=cb_dirs,
         )
-        full_ast_text = format_file_ast(paragraph_ast_trees)
 
         return CobolParseResult(
             program_id=program_id,
