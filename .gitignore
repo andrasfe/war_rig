@@ -12,3 +12,7 @@ logs/
 MagicMock/
 war_rig.egg-info/
 node_modules/
+
+# Dolt database files (added by bd init)
+.dolt/
+*.db
