@@ -1223,20 +1223,17 @@ class TicketOrchestrator:
             TicketState.REWORK,
         ]
 
-        # Collect all non-terminal tickets (excluding internally-managed types)
-        # - SYSTEM_OVERVIEW / HOLISTIC_REVIEW: processed by Imperator, not worker pools
-        # - CALL_SEMANTICS: sub-tickets managed internally by MinionScribePool
-        #   (claimed via _get_pending_subtickets, not the normal worker polling loop)
-        internally_managed_types = {
+        # Collect all non-terminal tickets (excluding Imperator-handled types)
+        # SYSTEM_OVERVIEW and HOLISTIC_REVIEW are processed by Imperator, not Scribe/Challenger
+        imperator_ticket_types = {
             TicketType.SYSTEM_OVERVIEW,
             TicketType.HOLISTIC_REVIEW,
-            TicketType.CALL_SEMANTICS,
         }
         stuck_tickets = []
         for state in non_terminal_states:
             tickets = self.beads_client.get_tickets_by_state(state)
             for ticket in tickets:
-                if ticket.ticket_type not in internally_managed_types:
+                if ticket.ticket_type not in imperator_ticket_types:
                     stuck_tickets.append(ticket)
 
         if not stuck_tickets:
@@ -1692,6 +1689,12 @@ class TicketOrchestrator:
                     use_mock=self.use_mock,
                 )
 
+                # Refresh skills during holistic review — the Imperator
+                # has full system context by now so documentation is at
+                # its most complete state for skill generation.
+                if output.success:
+                    self._refresh_skills()
+
                 # If compact review succeeded with SATISFIED, generate README.md
                 if (
                     output.success
@@ -1720,6 +1723,10 @@ class TicketOrchestrator:
                 error="No documentation to review",
                 decision=ImperatorHolisticDecision.NEEDS_CLARIFICATION,
             )
+
+        # Refresh skills before full review — documentation is complete
+        # and skills provide useful context for README generation.
+        self._refresh_skills()
 
         # Use upfront-generated sequence diagrams for README.md Flows section
         # Run holistic review
@@ -1787,13 +1794,16 @@ class TicketOrchestrator:
 
         return cross_file_semantics, kg_system_summary, entry_points, call_chains
 
-    def _ensure_skills_for_readme(self) -> Path | None:
+    def _refresh_skills(self) -> Path | None:
         """Generate (or regenerate) skills from the documentation output.
 
         Skills are rebuilt every time because the underlying .md
         documentation files may have been updated by the latest Scribe
         cycle.  The generation is cheap (no LLM calls, just file reads)
         so always refreshing is safe.
+
+        Called during holistic review (when the Imperator has full
+        system context) and before README generation.
 
         Returns:
             Path to the skills directory, or None if generation fails.
@@ -1842,7 +1852,7 @@ class TicketOrchestrator:
 
         # Try agentic generation if enabled and not mock mode
         if self.config.agentic_readme_enabled and not self.use_mock:
-            skills_dir = self._ensure_skills_for_readme()
+            skills_dir = self._refresh_skills()
             code_dir = self._input_directory or self.config.input_directory
 
             design_output = await self.imperator.generate_system_design_agentic(
