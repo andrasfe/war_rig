@@ -3211,6 +3211,7 @@ class TicketOrchestrator:
 
         created = 0
         skipped = 0
+        failures: list[str] = []
 
         for source_file in reader.discover_files(
             directory=self._input_directory,
@@ -3230,8 +3231,8 @@ class TicketOrchestrator:
                 full_ast_text = parse_result.full_ast
 
                 if not isinstance(full_ast_text, str) or not full_ast_text.strip():
-                    logger.debug(
-                        f"Skipping AST for {source_file.name}: empty or invalid"
+                    failures.append(
+                        f"{source_file.name}: empty or invalid AST"
                     )
                     continue
 
@@ -3239,13 +3240,17 @@ class TicketOrchestrator:
                 ast_path.write_text(full_ast_text, encoding="utf-8")
                 created += 1
             except Exception as e:
-                logger.warning(
-                    f"Failed to generate AST for {source_file.name}: {e}"
-                )
+                failures.append(f"{source_file.name}: {e}")
 
         logger.info(
             f"Upfront AST generation: {created} created, {skipped} skipped (existing)"
         )
+
+        if failures:
+            msg = "AST generation failed for the following files:\n" + "\n".join(
+                f"  - {f}" for f in failures
+            )
+            raise RuntimeError(msg)
 
     def _generate_upfront_artifacts(self) -> None:
         """Generate CALL_GRAPH.md and sequence diagrams upfront.

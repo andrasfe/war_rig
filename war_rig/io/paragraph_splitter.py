@@ -764,12 +764,8 @@ def inject_asts_for_directory(
             continue
 
         # Parse with Citadel to get ASTs
-        try:
-            parse_result = citadel.parse_cobol(source_path)
-            paragraph_asts = parse_result.paragraph_asts
-        except Exception as exc:
-            logger.warning("AST parse failed for %s: %s", file_name, exc)
-            continue
+        parse_result = citadel.parse_cobol(source_path)
+        paragraph_asts = parse_result.paragraph_asts
 
         if not paragraph_asts:
             continue

@@ -2325,47 +2325,6 @@ class ScribeWorker:
             try:
                 cached_asts = self._file_asts.get(file_name)
 
-                # Build ASTs on demand if not cached (handles saves from
-                # non-Citadel paths, different workers, or CHROME/CLARIFICATION)
-                if cached_asts is None and self._determine_file_type(
-                    file_name,
-                ) == FileType.COBOL:
-                    try:
-                        from war_rig.io.paragraph_splitter import (
-                            _find_source_file as _find_src,
-                        )
-
-                        src = self.input_directory / file_name
-                        if not src.exists():
-                            found = _find_src(
-                                self.input_directory, Path(file_name).name,
-                            )
-                            if found:
-                                src = found
-                        if src.exists():
-                            _, _, full_ast_text = self._build_cobol_ast(
-                                src, file_name,
-                            )
-                            cached_asts = self._file_asts.get(file_name)
-
-                            # Persist .ast file for future runs if missing
-                            ast_file = doc_path.with_suffix("").with_suffix(
-                                ".ast",
-                            )
-                            if not ast_file.exists() and full_ast_text.strip():
-                                ast_file.parent.mkdir(
-                                    parents=True, exist_ok=True,
-                                )
-                                ast_file.write_text(
-                                    full_ast_text, encoding="utf-8",
-                                )
-                                logger.debug(
-                                    f"Worker {self.worker_id}: "
-                                    f"Persisted .ast for {file_name}"
-                                )
-                    except Exception:
-                        pass  # Best-effort; proceed without ASTs
-
                 md_content = self._generate_markdown_from_template(
                     template, file_name, paragraph_asts=cached_asts,
                 )
@@ -3423,16 +3382,7 @@ class ScribeWorker:
             )
 
         # Get file stats from Citadel
-        try:
-            stats = self._citadel.get_file_stats(str(source_path))
-        except Exception as e:
-            logger.warning(
-                f"Worker {self.worker_id}: Citadel file stats failed for "
-                f"{ticket.file_name}, falling back to standard processing: {e}"
-            )
-            return await self._process_documentation_ticket_standard(
-                ticket, source_code, file_type, formatting_strict
-            )
+        stats = self._citadel.get_file_stats(str(source_path))
 
         total_lines = stats.get("total_lines", 0)
         paragraph_count = stats.get("paragraph_count", 0)
@@ -3503,18 +3453,10 @@ class ScribeWorker:
         pattern_insights = self._get_pattern_insights(str(source_path), outline)
 
         # Build full-file AST — agents receive AST instead of raw source
-        try:
-            _parse_result, paragraph_asts, full_ast_text = self._build_cobol_ast(
-                source_path, ticket.file_name,
-            )
-            ast_source = full_ast_text
-        except Exception as e:
-            logger.warning(
-                f"Worker {self.worker_id}: AST build failed for "
-                f"{ticket.file_name}, using raw source: {e}"
-            )
-            ast_source = source_code
-            paragraph_asts = {}
+        _parse_result, paragraph_asts, full_ast_text = self._build_cobol_ast(
+            source_path, ticket.file_name,
+        )
+        ast_source = full_ast_text
 
         # --- Resume mode: if a previous template exists with incomplete stubs,
         # only re-process the stub paragraphs and keep already-documented ones.

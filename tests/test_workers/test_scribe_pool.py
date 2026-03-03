@@ -2789,6 +2789,15 @@ class TestCitadelGuidedDocumentation:
         mock_citadel.get_callers.return_value = []
         mock_citadel.get_flow_diagram.return_value = None
         mock_citadel.get_dead_code.return_value = []
+        mock_parse_result = MagicMock()
+        mock_parse_result.full_ast = "FULL AST TEXT"
+        mock_parse_result.paragraph_asts = {
+            "0000-MAIN": "AST for 0000-MAIN",
+            "1000-PROCESS": "AST for 1000-PROCESS",
+            "9999-EXIT": "AST for 9999-EXIT",
+        }
+        mock_parse_result.copybooks_not_found = []
+        mock_citadel.parse_cobol.return_value = mock_parse_result
         worker._citadel = mock_citadel
 
         return worker
@@ -3011,39 +3020,21 @@ class TestCitadelGuidedDocumentation:
         assert "1000-PROCESS" in para_names
         assert "9999-EXIT" in para_names
 
-    async def test_fallback_on_citadel_failure(
-        self, citadel_worker, sample_pm_ticket, tmp_path
+    async def test_citadel_failure_propagates(
+        self, citadel_worker, sample_pm_ticket,
     ):
-        """Test fallback to standard processing when Citadel fails."""
+        """Test that Citadel failure propagates instead of falling back."""
         worker = citadel_worker
 
         # Make Citadel stats fail
         worker._citadel.get_file_stats.side_effect = Exception("Citadel error")
 
-        # Write a source file for the standard path
-        source_file = tmp_path / "TESTPROG.cbl"
-        source_file.write_text(sample_pm_ticket.metadata["source_code"])
-
-        from war_rig.models.templates import DocumentationTemplate
-
-        async def mock_ainvoke(input_data):
-            # No citadel_outline should be set in fallback path
-            return ScribeOutput(
-                success=True,
-                template=DocumentationTemplate(),
+        with pytest.raises(Exception, match="Citadel error"):
+            await worker._process_citadel_guided_documentation(
+                sample_pm_ticket,
+                "source code",
+                FileType.COBOL,
             )
-
-        worker._scribe_agent = MagicMock()
-        worker._scribe_agent.ainvoke = mock_ainvoke
-
-        result = await worker._process_citadel_guided_documentation(
-            sample_pm_ticket,
-            "source code",
-            FileType.COBOL,
-        )
-
-        # Should have fallen back to standard processing
-        assert result.success is True
 
     async def test_threshold_config(self, citadel_worker, sample_pm_ticket):
         """Test that threshold config controls small vs large path selection."""
