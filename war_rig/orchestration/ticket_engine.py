@@ -1223,17 +1223,20 @@ class TicketOrchestrator:
             TicketState.REWORK,
         ]
 
-        # Collect all non-terminal tickets (excluding Imperator-handled types)
-        # SYSTEM_OVERVIEW and HOLISTIC_REVIEW are processed by Imperator, not Scribe/Challenger
-        imperator_ticket_types = {
+        # Collect all non-terminal tickets (excluding internally-managed types)
+        # - SYSTEM_OVERVIEW / HOLISTIC_REVIEW: processed by Imperator, not worker pools
+        # - CALL_SEMANTICS: sub-tickets managed internally by MinionScribePool
+        #   (claimed via _get_pending_subtickets, not the normal worker polling loop)
+        internally_managed_types = {
             TicketType.SYSTEM_OVERVIEW,
             TicketType.HOLISTIC_REVIEW,
+            TicketType.CALL_SEMANTICS,
         }
         stuck_tickets = []
         for state in non_terminal_states:
             tickets = self.beads_client.get_tickets_by_state(state)
             for ticket in tickets:
-                if ticket.ticket_type not in imperator_ticket_types:
+                if ticket.ticket_type not in internally_managed_types:
                     stuck_tickets.append(ticket)
 
         if not stuck_tickets:
