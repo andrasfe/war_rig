@@ -4,17 +4,20 @@
     "file_name": "CIPAUDTY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-27T14:43:59.722856",
+    "analyzed_at": "2026-03-03T16:50:05.062799",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the data structure for the IMS segment containing pending authorization details. It includes fields for authorization keys, card details, transaction information, merchant details, and fraud-related information.",
-    "business_context": null,
+    "summary": "This copybook defines the data structure for the IMS segment containing pending authorization details. It includes fields for authorization keys, card numbers, transaction amounts, merchant information, and fraud indicators related to pending authorizations.",
+    "business_context": "This data structure is used in the context of processing and managing pending card authorizations, likely within a financial transaction processing system.",
     "program_type": "COPYBOOK",
     "citations": [
       2,
-      19
+      19,
+      34,
+      39,
+      50
     ]
   },
   "inputs": [],
@@ -152,9 +155,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the purpose of the FILLER field?",
-      "context": "The purpose of the FILLER field on line 54 is unclear without knowing how this copybook is used.",
-      "suggestion": "Examine the programs that use this copybook to determine the purpose of the FILLER field."
+      "question": "The FILLER field at line 54 is not documented. What is its purpose?",
+      "context": "The purpose of the filler field is unclear from the code.",
+      "suggestion": "Examine related programs or documentation to determine the purpose of the FILLER field."
     }
   ],
   "resolved_questions": [],

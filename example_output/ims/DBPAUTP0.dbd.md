@@ -2,15 +2,13 @@
 
 **File**: `ims/DBPAUTP0.dbd`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-02-27 14:41:12.434897
+**Analyzed**: 2026-03-03 16:47:06.150981
 
 ## Purpose
 
-This file defines the Database Description (DBD) for DBPAUTP0, which represents a HIDAM VSAM database related to pending authorization summaries and details. It specifies the database structure, segments, fields, and indexing.
+This file defines the Database Description (DBD) for DBPAUTP0, which describes the structure and characteristics of an IMS database. It specifies the database's organization as HIDAM with VSAM access, defines segments (PAUTSUM0, PAUTDTL1) and their fields, and establishes relationships between them.
 
 ## Open Questions
 
-- ? What is the purpose of the EXIT parameter in the DBD macro?
-  - Context: The meaning of EXIT=(*,KEY,DATA,NOPATH,(NOCASCADE),LOG) is unclear without further documentation.
-- ? What is the significance of the VERSION parameter being empty?
-  - Context: The VERSION parameter in the DBD macro is not specified.
+- ? What is the purpose of the EXIT parameter in the DBD statement?
+  - Context: The documentation does not explain the specific functions of the exit routines defined in the EXIT parameter.

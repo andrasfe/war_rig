@@ -4,12 +4,12 @@
     "file_name": "PADFLDBD.DBD",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-27T14:44:32.028132",
+    "analyzed_at": "2026-03-03T16:47:11.592838",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This file contains the Database Description (DBD) for PADFLDBD. It defines the database name, access method (GSAM, BSAM), dataset names (PADFILIP, PADFILOP), record length (200), and record format (F). It also includes copyright and licensing information.",
+    "summary": "This file defines the Database Description (DBD) for PADFLDBD, specifying its access method as GSAM/BSAM and defining the associated datasets PADFILIP and PADFILOP. It also includes copyright and licensing information.",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
@@ -17,8 +17,28 @@
       27
     ]
   },
-  "inputs": [],
-  "outputs": [],
+  "inputs": [
+    {
+      "name": "PADFILIP",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Input dataset for PADFLDBD, part of dataset group DSG001.",
+      "copybook": null,
+      "citation": [
+        27
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "PADFILOP",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Output dataset for PADFLDBD, part of dataset group DSG001.",
+      "copybook": null,
+      "citation": [
+        27
+      ]
+    }
+  ],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
@@ -27,8 +47,24 @@
   },
   "business_rules": [],
   "data_flow": {
-    "reads_from": [],
-    "writes_to": [],
+    "reads_from": [
+      {
+        "source": "PADFILIP",
+        "fields_used": [],
+        "citation": [
+          27
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "PADFILOP",
+        "fields_written": [],
+        "citation": [
+          27
+        ]
+      }
+    ],
     "transforms": []
   },
   "copybooks_used": [],
@@ -38,9 +74,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the purpose of the PADFILIP and PADFILOP datasets?",
-      "context": "The DBD defines these datasets, but their specific function is unclear.",
-      "suggestion": "Examine related programs or documentation that use this DBD."
+      "question": "What is the purpose of the PADFLDBD database and how are the PADFILIP and PADFILOP datasets used within it?",
+      "context": "The DBD definition provides the dataset names but not their specific roles in the application.",
+      "suggestion": "Review application documentation or related modules that use this DBD."
     }
   ],
   "resolved_questions": [],

@@ -7,14 +7,14 @@
       "file_name": "COPAUA0C.cbl",
       "file_type": "COBOL",
       "analyzed_by": "WAR_RIG",
-      "analyzed_at": "2026-02-27T14:38:55.303998",
+      "analyzed_at": "2026-03-03T16:44:34.573111",
       "iteration_count": 1,
       "final_status": null
     },
     "purpose": {
-      "summary": "The COPAUA0C program processes authorization requests from a message queue, validates the requests, and updates relevant systems. It retrieves messages from a request queue, processes the authorization, and then either continues processing or terminates based on message volume or errors.",
-      "business_context": "This program likely serves as a component in a larger transaction processing system, handling authorization requests for financial transactions.",
-      "program_type": "BATCH",
+      "summary": "COPAUA0C is a CICS program that processes authorization requests from a message queue. It retrieves requests, processes them, and then sends a response. The program interacts with IMS to schedule and terminate PSBs.",
+      "business_context": "This program likely serves as part of a larger transaction processing system, handling authorization requests for financial transactions.",
+      "program_type": "ONLINE_CICS",
       "citations": [
         23,
         220,
@@ -32,21 +32,63 @@
         ]
       },
       {
-        "name": "WS-REQUEST-QNAME",
-        "io_type": "PARAMETER",
-        "description": "The name of the request queue to read messages from.",
+        "name": "REQUEST-QUEUE",
+        "io_type": "CICS_QUEUE",
+        "description": "The WebSphere MQ queue from which authorization requests are read.",
         "copybook": null,
         "citation": [
+          256,
           266
         ]
       }
     ],
-    "outputs": [],
+    "outputs": [
+      {
+        "name": "RESPONSE-QUEUE",
+        "io_type": "CICS_QUEUE",
+        "description": "The WebSphere MQ queue to which authorization responses are written.",
+        "copybook": null,
+        "citation": [
+          751
+        ]
+      },
+      {
+        "name": "IMS",
+        "io_type": "IMS_SEGMENT",
+        "description": "Updates to IMS database segments related to authorization processing.",
+        "copybook": null,
+        "citation": [
+          530,
+          841
+        ]
+      }
+    ],
     "called_programs": [
+      {
+        "program_name": "CMQODV",
+        "call_type": "STATIC_CALL",
+        "purpose": "UNKNOWN",
+        "parameters": [],
+        "citation": 23
+      },
+      {
+        "program_name": "CMQMDV",
+        "call_type": "STATIC_CALL",
+        "purpose": "UNKNOWN",
+        "parameters": [],
+        "citation": 23
+      },
+      {
+        "program_name": "CMQV",
+        "call_type": "STATIC_CALL",
+        "purpose": "UNKNOWN",
+        "parameters": [],
+        "citation": 23
+      },
       {
         "program_name": "MQOPEN",
         "call_type": "STATIC_CALL",
-        "purpose": "Opens the request message queue for processing.",
+        "purpose": "Opens the request message queue.",
         "parameters": [
           "W01-HCONN-REQUEST",
           "MQM-OD-REQUEST",
@@ -55,28 +97,50 @@
           "WS-COMPCODE",
           "WS-REASON"
         ],
-        "citation": 263
+        "citation": 267
       },
       {
-        "program_name": "CMQODV",
-        "call_type": "OTHER",
-        "purpose": "UNKNOWN",
-        "parameters": [],
-        "citation": 23
+        "program_name": "MQGET",
+        "call_type": "STATIC_CALL",
+        "purpose": "Reads a message from the request message queue.",
+        "parameters": [
+          "W01-HCONN-REQUEST",
+          "W01-HOBJ-REQUEST",
+          "MQM-MD-REQUEST",
+          "MQM-GD-REQUEST",
+          "MQGMO",
+          "WS-COMPCODE",
+          "WS-REASON"
+        ],
+        "citation": 390
       },
       {
-        "program_name": "CMQMDV",
-        "call_type": "OTHER",
-        "purpose": "UNKNOWN",
-        "parameters": [],
-        "citation": 23
+        "program_name": "MQPUT",
+        "call_type": "STATIC_CALL",
+        "purpose": "Writes a message to the response message queue.",
+        "parameters": [
+          "W01-HCONN-REQUEST",
+          "W01-HOBJ-RESPONSE",
+          "MQM-MD-RESPONSE",
+          "MQM-PD-RESPONSE",
+          "MQPMO",
+          "WS-COMPCODE",
+          "WS-REASON"
+        ],
+        "citation": 754
       },
       {
-        "program_name": "CMQV",
-        "call_type": "OTHER",
-        "purpose": "UNKNOWN",
-        "parameters": [],
-        "citation": 23
+        "program_name": "MQCLOSE",
+        "call_type": "STATIC_CALL",
+        "purpose": "Closes the request and response message queues.",
+        "parameters": [
+          "W01-HCONN-REQUEST",
+          "W01-HOBJ-REQUEST",
+          "WS-OPTIONS-CLOSE",
+          "WS-COMPCODE",
+          "WS-REASON"
+        ],
+        "citation": 902
       }
     ],
     "calling_context": {
@@ -94,19 +158,68 @@
             "MQTM-TRIGGERDATA"
           ],
           "citation": [
-            233
+            233,
+            234
+          ]
+        },
+        {
+          "source": "REQUEST-QUEUE",
+          "fields_used": [
+            "Authorization Request Message"
+          ],
+          "citation": [
+            391
           ]
         }
       ],
-      "writes_to": [],
+      "writes_to": [
+        {
+          "destination": "RESPONSE-QUEUE",
+          "fields_written": [
+            "Authorization Response Message"
+          ],
+          "citation": [
+            755
+          ]
+        },
+        {
+          "destination": "IMS",
+          "fields_written": [
+            "Authorization Summary Data"
+          ],
+          "citation": [
+            841
+          ]
+        }
+      ],
       "transforms": []
     },
     "copybooks_used": [],
     "paragraphs": [
       {
+        "paragraph_name": "COPAUA0C",
+        "summary": null,
+        "purpose": "This is the program entry point. It appears to call several subroutines (CMQODV, CMQMDV, CMQV, etc.) but their purpose cannot be determined from the provided code. The program then proceeds to the MAIN-PARA to execute the core logic.",
+        "called_by": [],
+        "calls": [
+          "CMQODV",
+          "CMQMDV",
+          "CMQV"
+        ],
+        "citation": [
+          23,
+          23
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
         "paragraph_name": "MAIN-PARA",
         "summary": null,
-        "purpose": "This is the main control paragraph for the COPAUA0C program. It orchestrates the initialization, main processing, and termination steps. First, it performs 1000-INITIALIZE to set up the environment and open the request queue. Then, it performs 2000-MAIN-PROCESS to read and process authorization requests from the queue. Finally, it performs 9000-TERMINATE to close the queue and perform cleanup tasks. After the subroutines are completed, the program executes a CICS RETURN to terminate the transaction.",
+        "purpose": "This paragraph orchestrates the main processing flow of the program. It first calls 1000-INITIALIZE to perform initial setup, including retrieving trigger monitor data and opening the request queue. Then, it calls 2000-MAIN-PROCESS to process authorization requests from the queue. Finally, it calls 9000-TERMINATE to close the queues and perform cleanup before returning to CICS. The paragraph uses EXEC CICS RETURN to terminate the CICS transaction.",
         "called_by": [],
         "calls": [
           "1000-INITIALIZE",
@@ -126,7 +239,7 @@
       {
         "paragraph_name": "1000-INITIALIZE",
         "summary": null,
-        "purpose": "This paragraph initializes the program environment. It retrieves the MQTM (Message Queue Trigger Monitor) data using EXEC CICS RETRIEVE to obtain the request queue name and trigger data. It moves the queue name and trigger data to working storage variables WS-REQUEST-QNAME and WS-TRIGGER-DATA, respectively. It sets the wait interval to 5000. It then performs 1100-OPEN-REQUEST-QUEUE to open the request queue and 3100-READ-REQUEST-MQ to read the first message from the queue. Error handling is performed by checking EIBRESP.",
+        "purpose": "This paragraph performs initialization tasks for the program. It retrieves the queue name and trigger data from the CICS RETRIEVE command, storing them in WS-REQUEST-QNAME and WS-TRIGGER-DATA respectively. It sets WS-WAIT-INTERVAL to 5000, likely representing a wait time in milliseconds. It then calls 1100-OPEN-REQUEST-QUEUE to open the request queue and 3100-READ-REQUEST-MQ to read the first request message from the queue. The paragraph handles the case where the CICS RETRIEVE command fails by checking EIBRESP, but takes no specific action.",
         "called_by": [
           "MAIN-PARA"
         ],
@@ -147,7 +260,7 @@
       {
         "paragraph_name": "1000-EXIT",
         "summary": null,
-        "purpose": "This paragraph serves as the exit point for the 1000-INITIALIZE paragraph. It contains only the EXIT statement and ensures proper control flow.",
+        "purpose": "This paragraph serves as the exit point for the 1000-INITIALIZE paragraph. It contains only the EXIT statement and does not perform any specific actions.",
         "called_by": [
           "MAIN-PARA"
         ],
@@ -165,7 +278,7 @@
       {
         "paragraph_name": "1100-OPEN-REQUEST-QUEUE",
         "summary": null,
-        "purpose": "This paragraph opens the request queue for processing. It moves MQOT-Q to MQOD-OBJECTTYPE of MQM-OD-REQUEST and WS-REQUEST-QNAME to MQOD-OBJECTNAME of MQM-OD-REQUEST to define the queue to be opened. It computes WS-OPTIONS as MQOO-INPUT-SHARED, specifying that the queue should be opened for shared input. It then calls MQOPEN to open the queue, passing the connection handle, object descriptor, options, object handle, completion code, and reason code. If the completion code is MQCC-OK, it sets WS-REQUEST-MQ-OPEN to TRUE. Otherwise, it logs an error using 9500-LOG-ERROR, setting various error fields and flags.",
+        "purpose": "This paragraph opens the request message queue. It moves MQOT-Q to MQOD-OBJECTTYPE and WS-REQUEST-QNAME to MQOD-OBJECTNAME, configuring the object descriptor for the MQOPEN call. It computes WS-OPTIONS as MQOO-INPUT-SHARED, indicating shared access to the queue. It then calls MQOPEN to open the queue, passing the connection handle, object descriptor, options, object handle, completion code, and reason code. If the MQOPEN call is successful (WS-COMPCODE = MQCC-OK), it sets WS-REQUEST-MQ-OPEN to TRUE. Otherwise, it logs an error using 9500-LOG-ERROR, setting ERR-LOCATION to 'M001', ERR-CRITICAL and ERR-MQ to TRUE, and populating ERR-CODE-1, ERR-CODE-2, and ERR-MESSAGE with relevant error information.",
         "called_by": [
           "1000-INITIALIZE"
         ],
@@ -185,9 +298,9 @@
       {
         "paragraph_name": "1100-EXIT",
         "summary": null,
-        "purpose": "This paragraph serves as the exit point for the 1100-OPEN-REQUEST-QUEUE paragraph. It contains only the EXIT statement and ensures proper control flow.",
+        "purpose": "This paragraph serves as the exit point for the 1100-OPEN-REQUEST-QUEUE paragraph. It contains only the EXIT statement and does not perform any specific actions.",
         "called_by": [
-          "1100-OPEN-REQUEST-QUEUE"
+          "1000-INITIALIZE"
         ],
         "calls": [],
         "citation": [
@@ -203,7 +316,7 @@
       {
         "paragraph_name": "1200-SCHEDULE-PSB",
         "summary": null,
-        "purpose": "This paragraph schedules a PSB (Program Specification Block) for IMS database access. It executes a DLI SCHD command with the PSB-NAME and NODHABEND option. The DIBSTAT is moved to IMS-RETURN-CODE. If the PSB is scheduled more than once, it terminates the PSB and schedules it again. If the status is OK, it sets IMS-PSB-SCHD to TRUE. Otherwise, it logs an error using 9500-LOG-ERROR, setting various error fields and flags.",
+        "purpose": "This paragraph schedules a PSB (Program Specification Block) in IMS. It executes a DLI SCHD command with the PSB-NAME. The DIBSTAT is moved to IMS-RETURN-CODE. If the PSB was scheduled more than once, the paragraph terminates the PSB and schedules it again. If the status is OK, IMS-PSB-SCHD is set to TRUE. Otherwise, it logs an error using 9500-LOG-ERROR, setting ERR-LOCATION to 'I001', ERR-CRITICAL and ERR-IMS to TRUE, and populating ERR-CODE-1 and ERR-MESSAGE with relevant error information.",
         "called_by": [],
         "calls": [
           "9500-LOG-ERROR"
@@ -221,10 +334,8 @@
       {
         "paragraph_name": "1200-EXIT",
         "summary": null,
-        "purpose": "This paragraph serves as the exit point for the 1200-SCHEDULE-PSB paragraph. It contains only the EXIT statement and ensures proper control flow.",
-        "called_by": [
-          "1200-SCHEDULE-PSB"
-        ],
+        "purpose": "This paragraph serves as the exit point for the 1200-SCHEDULE-PSB paragraph. It contains only the EXIT statement and does not perform any specific actions.",
+        "called_by": [],
         "calls": [],
         "citation": [
           319,
@@ -239,7 +350,7 @@
       {
         "paragraph_name": "2000-MAIN-PROCESS",
         "summary": null,
-        "purpose": "This paragraph is the main processing loop for handling authorization requests. It performs 2100-EXTRACT-REQUEST-MSG to extract the request message, then performs 5000-PROCESS-AUTH to process the authorization. It increments WS-MSG-PROCESSED to track the number of processed messages. A CICS SYNCPOINT is issued. IMS-PSB-NOT-SCHD is set to TRUE. If the number of processed messages exceeds WS-REQSTS-PROCESS-LIMIT, WS-LOOP-END is set to TRUE to terminate the loop. Otherwise, it performs 3100-READ-REQUEST-MQ to read the next message from the queue. The loop continues until NO-MORE-MSG-AVAILABLE or WS-LOOP-END is TRUE.",
+        "purpose": "This paragraph processes authorization requests in a loop. The loop continues until NO-MORE-MSG-AVAILABLE or WS-LOOP-END is set to TRUE. Inside the loop, it calls 2100-EXTRACT-REQUEST-MSG to extract the request message, then calls 5000-PROCESS-AUTH to process the authorization. It increments WS-MSG-PROCESSED and issues a CICS SYNCPOINT. It then sets IMS-PSB-NOT-SCHD to TRUE. If WS-MSG-PROCESSED exceeds WS-REQSTS-PROCESS-LIMIT, WS-LOOP-END is set to TRUE. Otherwise, it calls 3100-READ-REQUEST-MQ to read the next request message. The paragraph manages the overall flow of processing multiple authorization requests.",
         "called_by": [
           "MAIN-PARA"
         ],
@@ -261,9 +372,9 @@
       {
         "paragraph_name": "2000-EXIT",
         "summary": null,
-        "purpose": "This paragraph serves as the exit point for the 2000-MAIN-PROCESS paragraph. It contains only the EXIT statement and ensures proper control flow.",
+        "purpose": "This paragraph serves as the exit point for the 2000-MAIN-PROCESS paragraph. It contains only the EXIT statement and does not perform any specific actions.",
         "called_by": [
-          "2000-MAIN-PROCESS"
+          "MAIN-PARA"
         ],
         "calls": [],
         "citation": [
@@ -280,14 +391,14 @@
     "error_handling": [
       {
         "condition": "WS-COMPCODE NOT = MQCC-OK",
-        "action": "Log error and set critical error flags",
+        "action": "Logs an error and sets error flags.",
         "citation": [
-          271
+          273
         ]
       },
       {
-        "condition": "STATUS not OK",
-        "action": "Log error and set critical error flags",
+        "condition": "STATUS-OK is false",
+        "action": "Logs an error and sets error flags.",
         "citation": [
           307
         ]
@@ -298,37 +409,37 @@
       {
         "command": "RETRIEVE",
         "resource": "MQTM",
-        "purpose": "Retrieves the Message Queue Trigger Monitor data.",
+        "purpose": "Retrieves the MQTM from the CICS terminal.",
         "citation": 233
       },
       {
         "command": "RETURN",
         "resource": null,
-        "purpose": "Terminates the CICS transaction.",
+        "purpose": "Returns control to CICS.",
         "citation": 226
       },
       {
         "command": "SYNCPOINT",
         "resource": null,
-        "purpose": "Establishes a synchronization point.",
-        "citation": 335
+        "purpose": "Requests a syncpoint.",
+        "citation": 336
       }
     ],
     "open_questions": [
       {
-        "question": "What is the purpose of the CMQODV, CMQMDV, and CMQV calls in the COPAUA0C paragraph?",
-        "context": "The purpose of these calls is not clear from the provided code snippet.",
-        "suggestion": "Review the complete source code or related documentation to understand the functionality of these calls."
+        "question": "What is the purpose of the CMQODV, CMQMDV, and CMQV programs?",
+        "context": "These programs are called at the beginning of the COPAUA0C program, but their functionality is unclear from the provided code.",
+        "suggestion": "Examine the source code or documentation for these programs to determine their purpose."
       },
       {
-        "question": "What is the structure and content of the messages read from the request queue?",
-        "context": "The structure of the messages is not defined in the provided code.",
-        "suggestion": "Examine the copybooks or data structures used to define the message format."
+        "question": "What is the structure and content of the authorization request and response messages?",
+        "context": "The program reads and writes messages to MQ queues, but the format of these messages is not defined in the provided code.",
+        "suggestion": "Review the copybooks or message definitions used by the program to understand the message structure."
       },
       {
-        "question": "What is the purpose of the PSB scheduled in 1200-SCHEDULE-PSB?",
-        "context": "The purpose of the PSB and the data it accesses is not clear from the provided code.",
-        "suggestion": "Review the IMS database schema and PSB definition to understand the data accessed and its purpose."
+        "question": "What is the purpose of the IMS PSB scheduled by this program?",
+        "context": "The program schedules and terminates an IMS PSB, but the specific IMS transactions performed are not clear.",
+        "suggestion": "Review the PSB definition and related IMS application code to understand the IMS processing performed."
       }
     ],
     "resolved_questions": [],
@@ -337,5 +448,5 @@
     "flow_diagram": null,
     "copybooks_not_found": []
   },
-  "saved_at": "2026-02-27T07:38:55.305314"
+  "saved_at": "2026-03-03T09:44:34.574227"
 }

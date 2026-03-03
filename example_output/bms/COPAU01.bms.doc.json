@@ -4,18 +4,18 @@
     "file_name": "COPAU01.bms",
     "file_type": "BMS",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-27T14:43:38.744071",
+    "analyzed_at": "2026-03-03T16:49:34.846650",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This BMS map defines the screen layout for displaying pending authorization details in the CardDemo application. It includes fields for transaction information, card details, authorization responses, amounts, and merchant information. The map also provides options for navigating to other authorizations and marking/removing fraud.",
-    "business_context": "This screen is used to view details of a pending card authorization, likely as part of a fraud detection or customer service workflow.",
+    "summary": "This BMS map defines the screen layout for displaying pending authorization details in the CardDemo application. It includes fields for card number, authorization date/time, response, amount, merchant details, and other relevant information.",
+    "business_context": "This screen is used to view details of pending card authorizations, likely as part of a fraud detection or customer service workflow.",
     "program_type": "ONLINE_CICS",
     "citations": [
       2,
       79,
-      292
+      232
     ]
   },
   "inputs": [],
@@ -37,7 +37,7 @@
     {
       "paragraph_name": "COPAU01",
       "summary": null,
-      "purpose": "This DFHMSD macro defines the beginning of the BMS map set named COPAU01. It specifies various control options for the map set, including enabling the alarm, freeing the keyboard after input, enabling extended attributes, setting the language to COBOL, specifying input/output mode, enabling automatic storage allocation, including the TIOAPFX, and defining the map type based on the system parameter &&SYSPARM. This macro acts as a container for all the individual map definitions within the COPAU01 map set. It doesn't directly process data but sets the overall environment for the screen definition. The TYPE=FINAL parameter on line 293 indicates the end of the map definition. No error handling is defined at this level, as it's a declarative statement. It does not call any other paragraphs or programs.",
+      "purpose": "This DFHMSD macro defines the map set COPAU01, which is the highest-level structure in the BMS map definition. It specifies various control options for the map, including alarm settings (ALARM), keyboard handling (FREEKB), extended attributes (EXTATT=YES), programming language (LANG=COBOL), input/output mode (MODE=INOUT), storage management (STORAGE=AUTO), terminal I/O area prefixing (TIOAPFX=YES), and map type (TYPE=&&SYSPARM). It acts as a container for the individual map definitions within the set, defining the overall characteristics of the screen.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -53,7 +53,7 @@
     {
       "paragraph_name": "COPAU1A",
       "summary": null,
-      "purpose": "This DFHMDI macro defines an individual map named COPAU1A within the COPAU01 map set. It specifies the map's position on the screen (line 1, column 1) and its size (24 lines, 80 columns). This macro essentially defines the window or viewport for the screen. It doesn't directly process data or implement business logic. Instead, it provides the structure onto which the individual fields and labels are placed using DFHMDF macros. The map definition includes various fields such as transaction name (TRNNAME), current date (CURDATE), program name (PGMNAME), current time (CURTIME), card number (CARDNUM), authorization details (AUTHDT, AUTHTM, AUTHRSP, AUTHRSN, AUTHCD, AUTHAMT, POSEMD, AUTHSRC, MCCCD, CRDEXP, AUTHTYP, TRNID, AUTHMTC, AUTHFRD), merchant details (MERNAME, MERID, MERCITY, MERST, MERZIP), and an error message area (ERRMSG). It also includes labels and instructions for the user (e.g., 'F3=Back'). It does not call any other paragraphs or programs.",
+      "purpose": "This DFHMDI macro defines the map COPAU1A, which represents a single screen layout within the COPAU01 mapset. It specifies the screen's position (COLUMN=1, LINE=1) and size (SIZE=(24,80)), indicating a full-screen map. This macro acts as a container for the individual field definitions (DFHMDF macros) that make up the screen's content. It defines the overall dimensions and placement of the screen elements.",
       "called_by": [],
       "calls": [],
       "citation": [

@@ -2,11 +2,13 @@
 
 **File**: `cpy/CIPAUDTY.cpy`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-02-27 14:43:59.722856
+**Analyzed**: 2026-03-03 16:50:05.062799
 
 ## Purpose
 
-This copybook defines the data structure for the IMS segment containing pending authorization details. It includes fields for authorization keys, card details, transaction information, merchant details, and fraud-related information.
+This copybook defines the data structure for the IMS segment containing pending authorization details. It includes fields for authorization keys, card numbers, transaction amounts, merchant information, and fraud indicators related to pending authorizations.
+
+**Business Context**: This data structure is used in the context of processing and managing pending card authorizations, likely within a financial transaction processing system.
 
 ## Paragraphs/Procedures
 
@@ -15,5 +17,5 @@ This copybook defines the data structure for the IMS segment containing pending 
 
 ## Open Questions
 
-- ? What is the purpose of the FILLER field?
-  - Context: The purpose of the FILLER field on line 54 is unclear without knowing how this copybook is used.
+- ? The FILLER field at line 54 is not documented. What is its purpose?
+  - Context: The purpose of the filler field is unclear from the code.

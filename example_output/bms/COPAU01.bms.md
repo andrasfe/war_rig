@@ -2,13 +2,13 @@
 
 **File**: `bms/COPAU01.bms`
 **Type**: FileType.BMS
-**Analyzed**: 2026-02-27 14:43:38.744071
+**Analyzed**: 2026-03-03 16:49:34.846650
 
 ## Purpose
 
-This BMS map defines the screen layout for displaying pending authorization details in the CardDemo application. It includes fields for transaction information, card details, authorization responses, amounts, and merchant information. The map also provides options for navigating to other authorizations and marking/removing fraud.
+This BMS map defines the screen layout for displaying pending authorization details in the CardDemo application. It includes fields for card number, authorization date/time, response, amount, merchant details, and other relevant information.
 
-**Business Context**: This screen is used to view details of a pending card authorization, likely as part of a fraud detection or customer service workflow.
+**Business Context**: This screen is used to view details of pending card authorizations, likely as part of a fraud detection or customer service workflow.
 
 ## Paragraphs/Procedures
 

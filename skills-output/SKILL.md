@@ -14,3 +14,4 @@ description: System documentation overview
 - [DDL](ddl/SKILL.md) - DDL documentation (database definitions) (2 files)
 - [IMS](ims/SKILL.md) - IMS documentation (database/PSB definitions) (8 files)
 - [JCL](jcl/SKILL.md) - JCL job documentation (5 files)
+- [SKILLS](skills/SKILL.md) - SKILLS documentation (1 files)

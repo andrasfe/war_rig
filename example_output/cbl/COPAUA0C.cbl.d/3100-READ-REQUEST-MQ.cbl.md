@@ -1,18 +1,4 @@
 ```cobol
-       3100-READ-REQUEST-MQ.                                                    
-      * ------------------------------------------------------------- *         
-      *                                                                         
-           COMPUTE MQGMO-OPTIONS  =  MQGMO-NO-SYNCPOINT + MQGMO-WAIT            
-                                  +  MQGMO-CONVERT                              
-                                  +  MQGMO-FAIL-IF-QUIESCING                    
-                                                                                
-           MOVE WS-WAIT-INTERVAL      TO MQGMO-WAITINTERVAL                     
-                                                                                
-           MOVE MQMI-NONE             TO MQMD-MSGID    OF MQM-MD-REQUEST        
-           MOVE MQCI-NONE             TO MQMD-CORRELID OF MQM-MD-REQUEST        
-           MOVE MQFMT-STRING          TO MQMD-FORMAT   OF MQM-MD-REQUEST        
-           MOVE LENGTH OF W01-GET-BUFFER TO W01-BUFFLEN                         
-                                                                                
            CALL 'MQGET' USING W01-HCONN-REQUEST                                 
                               W01-HOBJ-REQUEST                                  
                               MQM-MD-REQUEST                                    
@@ -45,6 +31,4 @@
                 PERFORM 9500-LOG-ERROR                                          
               END-IF                                                            
            END-IF                                                               
-           .                                                                    
-      *                                                                         
 ```

@@ -2,11 +2,11 @@
 
 **File**: `ddl/XAUTHFRD.ddl`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-02-27 14:44:21.355468
+**Analyzed**: 2026-03-03 16:50:25.499333
 
 ## Purpose
 
-This DDL file creates a unique index named CARDDEMO.XAUTHFRD on the CARDDEMO.AUTHFRDS table, using the CARD_NUM and AUTH_TS columns. The index is created with a COPY YES attribute.
+This DDL file defines a unique index named CARDDEMO.XAUTHFRD on the CARDDEMO.AUTHFRDS table, using CARD_NUM in ascending order and AUTH_TS in descending order. The index allows copies.
 
 ## Paragraphs/Procedures
 

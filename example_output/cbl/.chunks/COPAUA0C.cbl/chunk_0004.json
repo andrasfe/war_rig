@@ -7,49 +7,38 @@
       "file_name": "COPAUA0C.cbl",
       "file_type": "COBOL",
       "analyzed_by": "WAR_RIG",
-      "analyzed_at": "2026-02-27T14:47:58.306904",
+      "analyzed_at": "2026-03-03T16:55:36.009246",
       "iteration_count": 1,
       "final_status": null
     },
     "purpose": {
-      "summary": "This COBOL program is a CICS module that handles error logging and program termination. It logs error information to a CICS temporary data queue and conditionally terminates the program based on the criticality of the error.",
+      "summary": "This COBOL program contains error handling and termination routines for a CICS application. It logs errors to a transient data queue and terminates the CICS task.",
       "business_context": null,
       "program_type": "ONLINE_CICS",
       "citations": [
         983,
-        999,
         1016
       ]
     },
-    "inputs": [
+    "inputs": [],
+    "outputs": [
       {
-        "name": "ERROR-LOG-RECORD",
+        "name": "CSSL",
         "io_type": "CICS_QUEUE",
-        "description": "Error information to be written to the CICS temporary data queue 'CSSL'.",
+        "description": "Error log records written to the CICS transient data queue CSSL.",
         "copybook": null,
         "citation": [
-          999
-        ]
-      },
-      {
-        "name": "WS-ABS-TIME",
-        "io_type": "CICS_COMMAREA",
-        "description": "The absolute time value obtained from CICS.",
-        "copybook": null,
-        "citation": [
-          986,
-          990
+          1000
         ]
       }
     ],
-    "outputs": [],
     "called_programs": [
       {
         "program_name": "9000-TERMINATE",
         "call_type": "STATIC_CALL",
-        "purpose": "To perform program termination procedures.",
+        "purpose": "Performs termination logic.",
         "parameters": [],
-        "citation": 1018
+        "citation": 1019
       }
     ],
     "calling_context": {
@@ -57,61 +46,12 @@
       "entry_points": [],
       "linkage_section": []
     },
-    "business_rules": [
-      {
-        "rule_id": "BR001",
-        "description": "If the error is critical, terminate the program.",
-        "logic_summary": "Checks the ERR-CRITICAL flag and performs 9990-END-ROUTINE if it is set.",
-        "conditions": [
-          "IF ERR-CRITICAL"
-        ],
-        "citation": [
-          1008
-        ]
-      }
-    ],
+    "business_rules": [],
     "data_flow": {
-      "reads_from": [
-        {
-          "source": "WS-CICS-TRANID",
-          "fields_used": [
-            "ERR-APPLICATION"
-          ],
-          "citation": [
-            994
-          ]
-        },
-        {
-          "source": "WS-PGM-AUTH",
-          "fields_used": [
-            "ERR-PROGRAM"
-          ],
-          "citation": [
-            995
-          ]
-        },
-        {
-          "source": "WS-CUR-DATE-X6",
-          "fields_used": [
-            "ERR-DATE"
-          ],
-          "citation": [
-            996
-          ]
-        },
-        {
-          "source": "WS-CUR-TIME-X6",
-          "fields_used": [
-            "ERR-TIME"
-          ],
-          "citation": [
-            997
-          ]
-        }
-      ],
+      "reads_from": [],
       "writes_to": [
         {
-          "destination": "ERROR-LOG-RECORD",
+          "destination": "CSSL",
           "fields_written": [
             "ERR-APPLICATION",
             "ERR-PROGRAM",
@@ -119,7 +59,7 @@
             "ERR-TIME"
           ],
           "citation": [
-            999
+            1000
           ]
         }
       ],
@@ -130,7 +70,7 @@
       {
         "paragraph_name": "9500-LOG-ERROR",
         "summary": null,
-        "purpose": "This paragraph logs error information to a CICS temporary data queue named 'CSSL'. It first retrieves the current date and time from CICS using the ASKTIME and FORMATTIME commands, storing the results in WS-CUR-DATE-X6 and WS-CUR-TIME-X6 respectively. It then moves the transaction ID (WS-CICS-TRANID), program name (WS-PGM-AUTH), current date (WS-CUR-DATE-X6), and current time (WS-CUR-TIME-X6) into the ERROR-LOG-RECORD. The ERROR-LOG-RECORD is then written to the 'CSSL' queue using the WRITEQ TD command. Finally, it checks the ERR-CRITICAL flag. If ERR-CRITICAL is set, it performs the 9990-END-ROUTINE to terminate the program.",
+        "purpose": "This paragraph logs error information to the CICS transient data queue 'CSSL'. It retrieves the current date and time using CICS ASKTIME and FORMATTIME commands and moves the transaction ID (WS-CICS-TRANID) and program name (WS-PGM-AUTH) into the error log record. It then writes the error log record (ERROR-LOG-RECORD) to the 'CSSL' queue. If the error is critical (ERR-CRITICAL), it performs the 9990-END-ROUTINE paragraph to terminate the CICS task. The paragraph consumes WS-ABS-TIME, WS-CICS-TRANID, WS-PGM-AUTH, WS-CUR-DATE-X6, WS-CUR-TIME-X6, and ERR-CRITICAL. It produces an error log record in the CSSL queue.",
         "called_by": [],
         "calls": [
           "9990-END-ROUTINE"
@@ -148,7 +88,7 @@
       {
         "paragraph_name": "9500-EXIT",
         "summary": null,
-        "purpose": "This paragraph serves as an exit point for the 9500-LOG-ERROR paragraph. It contains only the EXIT statement, which returns control to the calling paragraph. It does not perform any data manipulation, error handling, or call any other paragraphs or programs. Its sole purpose is to provide a standard exit point.",
+        "purpose": "This paragraph serves as an exit point for the 9500-LOG-ERROR paragraph. It contains only the EXIT statement and does not perform any specific logic or data manipulation. It is a standard COBOL construct for exiting a paragraph.",
         "called_by": [],
         "calls": [],
         "citation": [
@@ -164,7 +104,7 @@
       {
         "paragraph_name": "9990-END-ROUTINE",
         "summary": null,
-        "purpose": "This paragraph is responsible for terminating the CICS program. It first performs the 9000-TERMINATE paragraph, presumably to perform any necessary cleanup or finalization tasks. After performing 9000-TERMINATE, it executes a CICS RETURN command to terminate the CICS task and return control to CICS. This paragraph does not receive any direct input, but relies on the state of the program as set by previous paragraphs. It does not perform any error handling beyond the actions taken in the 9000-TERMINATE paragraph.",
+        "purpose": "This paragraph performs the necessary steps to terminate the CICS task. It first performs the 9000-TERMINATE paragraph, presumably for cleanup or other termination procedures. Then, it executes a CICS RETURN command to terminate the task. This paragraph ensures a controlled exit from the CICS application. It calls 9000-TERMINATE and issues a CICS RETURN command. It does not consume any specific inputs, but relies on the PERFORMED 9000-TERMINATE paragraph to handle any necessary data or file operations before termination.",
         "called_by": [],
         "calls": [
           "9000-TERMINATE"
@@ -182,7 +122,7 @@
       {
         "paragraph_name": "9990-EXIT",
         "summary": null,
-        "purpose": "This paragraph serves as an exit point for the 9990-END-ROUTINE paragraph. It consists solely of the EXIT statement, which returns control to the calling paragraph. It does not perform any data manipulation, error handling, or call any other paragraphs or programs. Its sole purpose is to provide a standard exit point.",
+        "purpose": "This paragraph serves as an exit point for the 9990-END-ROUTINE paragraph. It contains only the EXIT statement and does not perform any specific logic or data manipulation. It is a standard COBOL construct for exiting a paragraph.",
         "called_by": [],
         "calls": [],
         "citation": [
@@ -202,43 +142,38 @@
       {
         "command": "ASKTIME",
         "resource": null,
-        "purpose": "Retrieves the current absolute time from CICS.",
-        "citation": 985
+        "purpose": "Retrieves the current system time.",
+        "citation": 986
       },
       {
         "command": "FORMATTIME",
         "resource": null,
-        "purpose": "Formats the absolute time into YYMMDD and TIME formats.",
-        "citation": 989
+        "purpose": "Formats the system time into YYMMDD and TIME formats.",
+        "citation": 991
       },
       {
         "command": "WRITEQ TD",
         "resource": "CSSL",
-        "purpose": "Writes the error log record to the CICS temporary data queue 'CSSL'.",
-        "citation": 999
+        "purpose": "Writes an error log record to the CICS transient data queue CSSL.",
+        "citation": 998
       },
       {
         "command": "RETURN",
         "resource": null,
-        "purpose": "Terminates the CICS task and returns control to CICS.",
-        "citation": 1020
+        "purpose": "Terminates the CICS task.",
+        "citation": 1021
       }
     ],
     "open_questions": [
       {
-        "question": "What is the purpose of program 9000-TERMINATE?",
-        "context": "The code calls 9000-TERMINATE, but its function is not defined in the provided code snippet.",
-        "suggestion": "Examine the source code for 9000-TERMINATE to determine its purpose."
+        "question": "What is the purpose of the 9000-TERMINATE paragraph?",
+        "context": "The code calls 9000-TERMINATE but its function is unknown.",
+        "suggestion": "Examine the source code of 9000-TERMINATE."
       },
       {
         "question": "What is the structure and content of ERROR-LOG-RECORD?",
-        "context": "The code writes to ERROR-LOG-RECORD, but its structure is not defined in the provided code snippet.",
-        "suggestion": "Examine the copybook or data division to determine the structure of ERROR-LOG-RECORD."
-      },
-      {
-        "question": "What are the possible values and meaning of ERR-CRITICAL?",
-        "context": "The code checks ERR-CRITICAL to determine whether to terminate the program, but the possible values and their meaning are not defined in the provided code snippet.",
-        "suggestion": "Examine the copybook or data division to determine the possible values and meaning of ERR-CRITICAL."
+        "context": "The ERROR-LOG-RECORD is written to the CSSL queue, but its fields are not defined in the provided code snippet.",
+        "suggestion": "Examine the copybook that defines ERROR-LOG-RECORD."
       }
     ],
     "resolved_questions": [],
@@ -247,5 +182,5 @@
     "flow_diagram": null,
     "copybooks_not_found": []
   },
-  "saved_at": "2026-02-27T07:47:58.308237"
+  "saved_at": "2026-03-03T09:55:36.009941"
 }

@@ -2,11 +2,11 @@
 
 **File**: `cpy-bms/COPAU00.cpy`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-02-27 14:44:47.848471
+**Analyzed**: 2026-03-03 16:50:35.696087
 
 ## Purpose
 
-This copybook defines the data structures COPAU0AI and COPAU0AO, which are used for screen input and output. COPAU0AI contains fields for transaction name, title, and current date, while COPAU0AO redefines COPAU0AI to provide different views of the same data.
+This copybook defines the data structures COPAU0AI and COPAU0AO, which are used for screen input and output. COPAU0AI contains fields for transaction name, title, and current date, while COPAU0AO redefines COPAU0AI to provide character-by-character access to some of the same fields.
 
 ## Paragraphs/Procedures
 
@@ -14,7 +14,7 @@ This copybook defines the data structures COPAU0AI and COPAU0AO, which are used 
 *Record layout 'COPAU0AI' is never used by any program*
 
 ### COPAU0AO
-This data structure redefines the COPAU0AI structure to provide a different view of the same data. Specifically, it redefines parts of the transaction name, title, and current date fields into single-character fields (TRNNAMEC, TRNNAMEP, TRNNAMEH, TRNNAMEV, TRNNAMEO, TITLE01C, TITLE01P, TITLE01H, TITLE01V, TITLE01O, CURDATEC). This allows for easier manipulation or display of individual characters within these fields. The FILLER fields are used to skip over portions of the original COPAU0AI structure that are not being redefined. This structure does not perform any business logic or call other paragraphs; it simply provides an alternative data layout based on COPAU0AI.
+This data structure redefines the COPAU0AI structure to allow access to individual characters within certain fields. Specifically, it provides character-by-character access to the transaction name (TRNNAMEC, TRNNAMEP, TRNNAMEH, TRNNAMEV, TRNNAMEO), title (TITLE01C, TITLE01P, TITLE01H, TITLE01V, TITLE01O), and current date (CURDATEC). This redefinition is useful for manipulating individual characters within these fields, such as for validation or formatting purposes. The filler fields ensure proper alignment with the corresponding fields in COPAU0AI. This structure is likely used in conjunction with COPAU0AI to provide more granular control over the data being displayed or processed.
 
 ### COPAU00
 [Citadel] Paragraph identified by static analysis

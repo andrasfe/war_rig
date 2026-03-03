@@ -4,17 +4,17 @@
     "file_name": "cpy/PAUTBPCB.CPY",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-27T14:44:18.946428",
+    "analyzed_at": "2026-03-03T16:50:07.888440",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the structure PAUTBPCB, which is likely used to hold PCB (Program Communication Block) information related to IMS database interaction. It contains fields for database name, segment level, PCB status, processing options, segment name, key feedback length, number of sensitive segments, and key feedback area.",
+    "summary": "This copybook defines the structure PAUTBPCB, which is likely used to interface with an IMS database PCB (Program Communication Block). It contains fields related to database name, segment level, processing options, segment name, and key feedback information.",
     "business_context": null,
-    "program_type": "SUBROUTINE",
+    "program_type": "COPYBOOK",
     "citations": [
       17,
-      27
+      26
     ]
   },
   "inputs": [],
@@ -36,7 +36,7 @@
     {
       "paragraph_name": "PAUTBPCB",
       "summary": null,
-      "purpose": "This copybook defines the data structure PAUTBPCB, which is used to store information retrieved from or passed to an IMS Program Communication Block (PCB). The PCB provides a communication interface between a COBOL program and the IMS database. The PAUT-DBDNAME field (line 18) stores the name of the database. PAUT-SEG-LEVEL (line 19) indicates the segment level within the database hierarchy. PAUT-PCB-STATUS (line 20) contains status codes returned by IMS after database operations. PAUT-PCB-PROCOPT (line 21) specifies the processing options used for database access. PAUT-SEG-NAME (line 23) holds the name of the current segment being processed. PAUT-KEYFB-NAME (line 24) and PAUT-NUM-SENSEGS (line 25) store the length of the key feedback area and the number of sensitive segments, respectively. PAUT-KEYFB (line 26) is a large field that contains the key feedback information for the current segment. This copybook is likely included in programs that interact with an IMS database to access and manipulate data within the database segments.",
+      "purpose": "This copybook defines the structure of PAUTBPCB, which appears to be related to IMS database interaction, specifically with a PCB (Program Communication Block). The structure includes fields such as PAUT-DBDNAME (database name), PAUT-SEG-LEVEL (segment level), PAUT-PCB-STATUS (PCB status), and PAUT-PCB-PROCOPT (processing options) which are standard elements found in IMS PCBs. It also contains fields for PAUT-SEG-NAME (segment name), PAUT-KEYFB-NAME (key feedback name), PAUT-NUM-SENSEGS (number of sensitive segments), and PAUT-KEYFB (key feedback area). The FILLER field is used for padding or alignment purposes. This copybook is likely included in COBOL programs that interact with an IMS database to access and manipulate data within the database segments. The PAUT-KEYFB field is a 255-byte field that likely holds the key feedback information after an IMS database call.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -92,9 +92,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "The exact usage of this copybook and the context in which it's used within a larger application is unclear.",
-      "context": "Without knowing the programs that include this copybook, it's difficult to determine the specific purpose and data flow.",
-      "suggestion": "Analyze the COBOL programs that include this copybook to understand its role in the application."
+      "question": "The exact purpose and usage of this copybook within a larger application is unclear without more context.",
+      "context": "The copybook defines a data structure, but its specific role in data processing or interaction with other modules is unknown.",
+      "suggestion": "Analyze the COBOL programs that include this copybook to understand how the PAUTBPCB structure is used."
     }
   ],
   "resolved_questions": [],

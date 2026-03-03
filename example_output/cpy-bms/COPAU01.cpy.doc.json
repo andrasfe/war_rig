@@ -1,15 +1,15 @@
 {
   "header": {
     "program_id": "COPAU01",
-    "file_name": "COPAU01.cpy",
+    "file_name": "cpy-bms/COPAU01.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-27T14:44:53.386169",
-    "iteration_count": 2,
+    "analyzed_at": "2026-03-03T16:50:43.690391",
+    "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the data structures COPAU1AI and COPAU1AO, which appear to be used for screen input and output related to authorization processing. COPAU1AI defines the input fields with associated length, flag, attribute, and input fields. COPAU1AO redefines COPAU1AI to provide a structure for output fields, including control characters and output values.",
+    "summary": "This copybook defines the data structures COPAU1AI and COPAU1AO, which are used for screen input and output, potentially related to authorization processing. COPAU1AI defines the input fields with associated length and flag fields, while COPAU1AO redefines COPAU1AI to provide a different view of the same data, using single-character fields for cursor positioning and other attributes.",
     "business_context": "UNKNOWN",
     "program_type": "COPYBOOK",
     "citations": [
@@ -36,7 +36,7 @@
     {
       "paragraph_name": "COPAU1AI",
       "summary": null,
-      "purpose": "This data structure defines the input fields for a screen or data record, likely related to authorization processing. It contains fields such as TRNNAMEL, TRNNAMEF, TRNNAMEI, TITLE01L, TITLE01F, TITLE01I, CURDATEL, CURDATEF, CURDATEI, PGMNAMEL, PGMNAMEF, PGMNAMEI, TITLE02L, TITLE02F, TITLE02I, CURTIMEL, CURTIMEF, CURTIMEI, CARDNUML, CARDNUMF, CARDNUMI, AUTHDTL, AUTHDTF, AUTHDTI, AUTHTML, AUTHTMF, AUTHTMI, AUTHRSPL, AUTHRSPF, AUTHRSPI, AUTHRSNL, AUTHRSNF, AUTHRSNI, AUTHCDL, AUTHCDF, AUTHCDI, AUTHAMTL, AUTHAMTF, AUTHAMTI, POSEMDF, POSEMDI, AUTHSRCL, AUTHSRCF, AUTHSRCI, MCCCDL, MCCCDF, MCCCDI, CRDEXPL, CRDEXPF, CRDEXPI, AUTHTYPL, AUTHTYPF, AUTHTYPI, TRNIDL, TRNIDF, TRNIDI, AUTHMTCL, AUTHMTCF, AUTHMTCI, AUTHFRDL, AUTHFRDF, AUTHFRDI, MERNAMEL, MERNAMEF, MERNAMEI, MERIDL, MERIDF, MERIDI, MERCITYL, MERCITYF, MERCITYI, MERSTL, MERSTF, MERSTI, MERZIPL, MERZIPF, MERZIPI, ERRMSGL, ERRMSGF, and ERRMSGI. Each field is defined with a length (L), a flag (F), and an input field (I). The flag fields are then redefined with an attribute field (A). The purpose of these fields is to receive data from an input source, likely a user interface or another program, related to transaction authorization. The data received in these fields is then likely processed by the calling program.",
+      "purpose": "This data structure defines the input fields for a screen, likely related to authorization processing. It contains various fields such as TRNNAMEL/I/F/A (Transaction Name), TITLE01L/I/F/A (Title 1), CURDATEL/I/F/A (Current Date), PGMNAMEL/I/F/A (Program Name), TITLE02L/I/F/A (Title 2), CURTIMEL/I/F/A (Current Time), CARDNUML/I/F/A (Card Number), AUTHDTL/I/F/A (Authorization Date), AUTHTML/I/F/A (Authorization Time), AUTHRSPL/I/F/A (Authorization Response Code), AUTHRSNL/I/F/A (Authorization Response Name), AUTHCDL/I/F/A (Authorization Code), AUTHAMTL/I/F/A (Authorization Amount), POSEMDL/I/F/A (Point of Service Entry Mode), AUTHSRCL/I/F/A (Authorization Source), MCCCDL/I/F/A (Merchant Category Code), CRDEXPL/I/F/A (Card Expiration Date), AUTHTYPL/I/F/A (Authorization Type), TRNIDL/I/F/A (Transaction ID), AUTHMTCL/I/F/A (Authorization Match Code), AUTHFRDL/I/F/A (Authorization Fraud Date), MERNAMEL/I/F/A (Merchant Name), MERIDL/I/F/A (Merchant ID), MERCITYL/I/F/A (Merchant City), MERSTL/I/F/A (Merchant State), MERZIPL/I/F/A (Merchant Zip), and ERRMSGL/I/F/A (Error Message). Each field is defined with its length (L), input/output flag (F), attribute character (A), and input field (I). The structure appears to be designed for capturing and displaying authorization-related data on a screen.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -54,7 +54,7 @@
     {
       "paragraph_name": "COPAU1AO",
       "summary": null,
-      "purpose": "This data structure redefines the COPAU1AI structure to provide a format suitable for output, likely to a screen. It includes control characters (C), presentation attributes (P), highlighting attributes (H), validation attributes (V), and output fields (O) corresponding to the input fields defined in COPAU1AI. The fields include TRNNAMEC, TRNNAMEP, TRNNAMEH, TRNNAMEV, TRNNAMEO, TITLE01C, TITLE01P, TITLE01H, TITLE01V, TITLE01O, CURDATEC, CURDATEP, CURDATEH, CURDATEV, CURDATEO, PGMNAMEC, PGMNAMEP, PGMNAMEH, PGMNAMEV, PGMNAMEO, TITLE02C, TITLE02P, TITLE02H, TITLE02V, TITLE02O, CURTIMEC, CURTIMEP, CURTIMEH, CURTIMEV, CURTIMEO, CARDNUMC, CARDNUMP, CARDNUMH, CARDNUMV, CARDNUMO, AUTHDTC, AUTHDTP, AUTHDTH, AUTHDTV, AUTHDTO, AUTHTMC, AUTHTMP, AUTHTMH, AUTHTMV, AUTHTMO, AUTHRSPC, AUTHRSPP, AUTHRSPH, AUTHRSPV, AUTHRSPV, AUTHRSPO, AUTHRSNC, AUTHRSNP, AUTHRSNH, AUTHRSNV, AUTHRSNO, AUTHCDC, AUTHCDP, AUTHCDH, AUTHCDV, AUTHCDO, AUTHAMTC, AUTHAMTP, AUTHAMTH, AUTHAMTV, AUTHAMTO, POSEMDC, POSEMDP, POSEMDO, AUTHSRCC, AUTHSRCP, AUTHSRCH, AUTHSRCV, AUTHSRCO, MCCCDC, MCCCDP, MCCCDH, MCCCDV, MCCCDO, CRDEXPC, CRDEXPP, CRDEXPH, CRDEXPV, CRDEXPO, AUTHTYPC, AUTHTYPP, AUTHTYPH, AUTHTYPV, AUTHTYPO, TRNIDC, TRNIDP, TRNIDH, TRNIDV, TRNIDO, AUTHMTCC, AUTHMTCP, AUTHMTCH, AUTHMTCV, AUTHMTCO, AUTHFRDC, AUTHFRDP, AUTHFRDH, AUTHFRDV, AUTHFRDO, MERNAMEC, MERNAMEP, MERNAMEH, MERNAMEV, MERNAMEO, MERIDC, MERIDP, MERIDH, MERIDV, MERIDO, MERCITYC, MERCITYP, MERCITYH, MERCITYV, MERCITYO, MERSTC, MERSTP, MERSTH, MERSTV, MERSTO, MERZIPC, MERZIPP, MERZIPH, MERZIPV, MERZIPO, ERRMSGC, ERRMSGP, ERRMSGH, ERRMSGV, ERRMSGO. The purpose of this structure is to format the data for display on a screen, including attributes for highlighting, color, and other visual cues. No calls are made from this paragraph, as it is a data structure definition.",
+      "purpose": "This data structure redefines COPAU1AI to provide a different perspective on the same data, primarily for screen output formatting and control. It uses single-character fields (C, P, H, V, O) to represent cursor positioning, highlighting, and other display attributes for each corresponding field in COPAU1AI. For example, TRNNAMEC/P/H/V/O correspond to TRNNAMEL/I/F/A in COPAU1AI, allowing the program to control the display attributes of the Transaction Name field. The 'C' suffix likely represents the cursor position, 'P' the protection attribute, 'H' the highlight attribute, 'V' the validation attribute, and 'O' the output field. This redefinition enables precise control over the screen's appearance and user interaction, facilitating a user-friendly interface for authorization-related transactions.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -73,14 +73,14 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the specific screen or application that uses this copybook?",
-      "context": "The copybook defines data structures for screen input and output, but the specific application is not clear.",
-      "suggestion": "Review the programs that include this copybook to determine its usage."
+      "question": "What is the specific screen layout and purpose of each field?",
+      "context": "The copybook defines the data structure, but the exact usage within a BMS map or CICS transaction is unclear.",
+      "suggestion": "Examine the BMS map or CICS transaction that uses this copybook."
     },
     {
-      "question": "What are the valid values and meanings of the flag fields (e.g., TRNNAMEF)?",
-      "context": "The copybook includes flag fields, but their specific meanings are not documented.",
-      "suggestion": "Examine the programs that use this copybook to understand how these flags are used."
+      "question": "What is the business context for this authorization process?",
+      "context": "The copybook contains authorization-related fields, but the specific industry or application is unknown.",
+      "suggestion": "Consult the application documentation or subject matter experts."
     }
   ],
   "resolved_questions": [],

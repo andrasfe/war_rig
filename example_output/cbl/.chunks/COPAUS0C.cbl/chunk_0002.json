@@ -7,18 +7,18 @@
       "file_name": "COPAUS0C.cbl",
       "file_type": "COBOL",
       "analyzed_by": "WAR_RIG",
-      "analyzed_at": "2026-02-27T14:47:16.053687",
+      "analyzed_at": "2026-03-03T16:53:28.768092",
       "iteration_count": 1,
       "final_status": null
     },
     "purpose": {
-      "summary": "The COPAUS0C program schedules a PSB (Program Specification Block) for IMS database interaction. It handles scheduling, potential rescheduling, and error conditions, setting a flag to indicate successful scheduling or displaying an error message if scheduling fails.",
-      "business_context": "This program is likely part of an IMS-based system, possibly related to transaction processing or data access within a larger business application.",
+      "summary": "The COPAUS0C program schedules a PSB (Program Specification Block) for IMS database interaction. It handles scheduling, potential rescheduling, and error handling related to the PSB scheduling process, and sends an error message to the screen if scheduling fails.",
+      "business_context": "This program is likely part of an IMS-based application, responsible for initiating the connection to the IMS database by scheduling the appropriate PSB.",
       "program_type": "ONLINE_CICS",
       "citations": [
         1001,
         1015,
-        1023
+        1025
       ]
     },
     "inputs": [],
@@ -26,7 +26,7 @@
     "called_programs": [
       {
         "program_name": "SEND-PAULST-SCREEN",
-        "call_type": "STATIC_CALL",
+        "call_type": "OTHER",
         "purpose": "Displays an error message on the screen if PSB scheduling fails.",
         "parameters": [],
         "citation": 1029
@@ -48,7 +48,7 @@
       {
         "paragraph_name": "SCHEDULE-PSB",
         "summary": null,
-        "purpose": "The SCHEDULE-PSB paragraph is responsible for scheduling a Program Specification Block (PSB) for IMS database interaction. It begins by attempting to schedule the PSB using the EXEC DLI SCHD command with the PSB-NAME. The NODHABEND option specifies that the program should not abnormally terminate if the PSB is unavailable. The DIBSTAT field is then moved to IMS-RETURN-CODE to capture the status of the scheduling operation. If the PSB has been scheduled more than once (PSB-SCHEDULED-MORE-THAN-ONCE), the paragraph terminates the current PSB and schedules it again. If the scheduling is successful (STATUS-OK), the IMS-PSB-SCHD flag is set to TRUE. Otherwise, WS-ERR-FLG is set to 'Y', an error message is constructed including the IMS-RETURN-CODE, the ACCTIDL field of COPAU0AI is set to -1, and the SEND-PAULST-SCREEN paragraph is performed to display the error message.",
+        "purpose": "The SCHEDULE-PSB paragraph is responsible for scheduling a Program Specification Block (PSB) for IMS database interaction. It first attempts to schedule the PSB using the EXEC DLI SCHD command, specifying the PSB name and disabling the Dhabend exit. The DIBSTAT field is then moved to IMS-RETURN-CODE to capture the IMS return code. If the PSB has been scheduled more than once, it terminates the current PSB and reschedules it. If the scheduling is successful (STATUS-OK), it sets the IMS-PSB-SCHD flag to TRUE. Otherwise, it sets the WS-ERR-FLG to 'Y', constructs an error message including the IMS return code, sets ACCTIDL to -1, and performs the SEND-PAULST-SCREEN paragraph to display the error message to the user. This paragraph ensures the program connects to the IMS database and handles potential scheduling errors.",
         "called_by": [],
         "calls": [
           "SEND-PAULST-SCREEN"
@@ -69,11 +69,7 @@
         "condition": "STATUS-OK is false (PSB scheduling fails)",
         "action": "Sets WS-ERR-FLG to 'Y', constructs an error message, sets ACCTIDL to -1, and calls SEND-PAULST-SCREEN to display the error.",
         "citation": [
-          1025,
-          1026,
-          1027,
-          1028,
-          1029
+          1025
         ]
       }
     ],
@@ -81,14 +77,14 @@
     "cics_operations": [],
     "open_questions": [
       {
-        "question": "What are the definitions of PSB-NAME, DIBSTAT, IMS-RETURN-CODE, PSB-SCHEDULED-MORE-THAN-ONCE, STATUS-OK, WS-ERR-FLG, ACCTIDL, and COPAU0AI?",
-        "context": "These variables are used in the logic but their definitions are not available in the provided code snippet.",
-        "suggestion": "Examine the copybooks or data division of the complete program to determine their definitions."
+        "question": "What are the definitions of PSB-NAME, DIBSTAT, STATUS-OK, PSB-SCHEDULED-MORE-THAN-ONCE, IMS-RETURN-CODE, WS-ERR-FLG, WS-MESSAGE, and ACCTIDL?",
+        "context": "These variables are used in the paragraph but their definitions are not available in the provided code snippet.",
+        "suggestion": "Review the copybooks included in the program to find the definitions of these variables."
       },
       {
-        "question": "What is the purpose and functionality of the SEND-PAULST-SCREEN program?",
-        "context": "The program calls SEND-PAULST-SCREEN, but the functionality of this program is not clear from the provided code snippet.",
-        "suggestion": "Analyze the source code of SEND-PAULST-SCREEN to understand its purpose and how it displays the error message."
+        "question": "What is the purpose of setting ACCTIDL to -1?",
+        "context": "The code sets ACCTIDL to -1 when PSB scheduling fails, but the reason for this is unclear without more context.",
+        "suggestion": "Examine the SEND-PAULST-SCREEN paragraph and related code to understand how ACCTIDL is used."
       }
     ],
     "resolved_questions": [],
@@ -97,5 +93,5 @@
     "flow_diagram": null,
     "copybooks_not_found": []
   },
-  "saved_at": "2026-02-27T07:47:16.054681"
+  "saved_at": "2026-03-03T09:53:28.769115"
 }

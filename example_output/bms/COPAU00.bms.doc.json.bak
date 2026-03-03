@@ -4,42 +4,21 @@
     "file_name": "COPAU00.bms",
     "file_type": "BMS",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-27T14:43:28.976979",
+    "analyzed_at": "2026-03-03T16:49:23.889803",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This BMS map defines the screen layout for the 'CardDemo - Pending Authorization Screen'. It is used to display pending credit card authorizations and related customer information, allowing users to search by account ID and select transactions for further action.",
-    "business_context": "This screen is part of a credit card authorization workflow, likely used by customer service representatives or fraud analysts to review and manage pending transactions.",
+    "summary": "This BMS map defines the screen layout for the CardDemo Pending Authorization screen. It displays customer account information and a list of recent transactions awaiting authorization, allowing a user to select a transaction for further action.",
+    "business_context": "This screen is used in a card authorization system to view and manage pending authorizations.",
     "program_type": "ONLINE_CICS",
     "citations": [
       2,
-      19,
-      83
+      78
     ]
   },
-  "inputs": [
-    {
-      "name": "ACCTID",
-      "io_type": "CICS_MAP",
-      "description": "Account ID entered by the user to search for pending authorizations.",
-      "copybook": null,
-      "citation": [
-        84
-      ]
-    }
-  ],
-  "outputs": [
-    {
-      "name": "COPAU0A",
-      "io_type": "CICS_MAP",
-      "description": "The entire screen layout, including static text, customer information, and a list of pending transactions.",
-      "copybook": null,
-      "citation": [
-        26
-      ]
-    }
-  ],
+  "inputs": [],
+  "outputs": [],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
@@ -57,7 +36,7 @@
     {
       "paragraph_name": "COPAU00",
       "summary": null,
-      "purpose": "This DFHMSD macro defines the BMS map set 'COPAU00'. It specifies overall characteristics of the map set, including control options (ALARM, FREEKB), extended attributes (EXTATT=YES), the programming language (LANG=COBOL), input/output mode (MODE=INOUT), storage allocation (STORAGE=AUTO), terminal I/O area prefix (TIOAPFX=YES), and the map type based on the system parameter (TYPE=&&SYSPARM). This macro acts as the container for all the individual map definitions within this map set. It essentially initializes the screen definition process by setting the stage for defining the individual fields and their attributes that will be displayed on the terminal. The specified attributes influence how the screen interacts with the user and the CICS environment. It doesn't directly consume or produce data but sets the framework for subsequent map definitions to handle data input and output.",
+      "purpose": "This DFHMSD macro (lines 19-25) defines the BMS map set named COPAU00. It specifies various attributes for the map set, including control options (ALARM, FREEKB), extended attributes (EXTATT=YES), the programming language (LANG=COBOL), input/output mode (MODE=INOUT), storage allocation (STORAGE=AUTO), terminal I/O area prefix (TIOAPFX=YES), and the map type (TYPE=&&SYSPARM). The TYPE parameter allows for different map types to be generated during compilation, such as a symbolic map or a physical map. This macro essentially acts as the container for all the individual map definitions within this BMS file, setting the overall context for how the screen will be handled by CICS.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -73,7 +52,7 @@
     {
       "paragraph_name": "COPAU0A",
       "summary": null,
-      "purpose": "This DFHMDI macro defines an individual map named 'COPAU0A' within the 'COPAU00' map set. It specifies the map's position on the screen (COLUMN=1, LINE=1) and its size (SIZE=(24,80)), effectively defining a full-screen map. This macro acts as a container for the individual field definitions (DFHMDF macros) that make up the screen layout. It establishes the boundaries within which the screen elements will be arranged. The map definition itself doesn't directly interact with data; instead, it provides the structure and dimensions for the screen that will be used to display information and accept user input. It sets the stage for the subsequent DFHMDF macros to define the specific fields and their attributes within this screen area. The map is designed to occupy the entire screen, providing ample space for displaying customer information and pending transaction details.",
+      "purpose": "This DFHMDI macro (lines 26-28) defines a map (screen) named COPAU0A within the COPAU00 mapset. It specifies the screen's dimensions (SIZE=(24,80)), and its position on the terminal (COLUMN=1, LINE=1). This macro essentially defines the overall structure of the screen, acting as a container for the individual fields that will be displayed. The screen is 24 lines by 80 columns, a standard terminal size. No specific processing logic is contained within this macro; it simply defines the screen's layout.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -92,13 +71,7 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
-    {
-      "question": "What is the purpose of the '&&SYSPARM' variable used in the TYPE parameter of the DFHMSD macro?",
-      "context": "The code uses 'TYPE=&&SYSPARM' without explaining where this variable is defined or what values it can take.",
-      "suggestion": "Check the JCL or CICS definitions associated with this BMS map to determine the possible values and their impact on the map type (e.g., DSECT, MAP, etc.)."
-    }
-  ],
+  "open_questions": [],
   "resolved_questions": [],
   "dead_code": [
     {

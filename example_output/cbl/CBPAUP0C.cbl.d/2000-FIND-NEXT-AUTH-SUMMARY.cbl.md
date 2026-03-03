@@ -1,29 +1,36 @@
 ```cobol
-       2000-FIND-NEXT-AUTH-SUMMARY.
+
+            .
+       4000-EXIT.
+            EXIT.
+      *
+      *----------------------------------------------------------------*
+       5000-DELETE-AUTH-DTL.
       *----------------------------------------------------------------*
       *
             IF DEBUG-ON
-               DISPLAY 'DEBUG: AUTH SMRY READ : ' WS-NO-SUMRY-READ
+               DISPLAY 'DEBUG: AUTH DTL DLET : ' PA-ACCT-ID
             END-IF
 
-            EXEC DLI GN USING PCB(PAUT-PCB-NUM)
-                 SEGMENT (PAUTSUM0)
-                 INTO (PENDING-AUTH-SUMMARY)
+            EXEC DLI DLET USING PCB(PAUT-PCB-NUM)
+                 SEGMENT (PAUTDTL1)
+                 FROM (PENDING-AUTH-DETAILS)
             END-EXEC
 
-            EVALUATE DIBSTAT
-               WHEN '  '
-                    SET NOT-END-OF-AUTHDB TO TRUE
-                    ADD 1                 TO WS-NO-SUMRY-READ
-                    ADD 1                 TO WS-AUTH-SMRY-PROC-CNT
-                    MOVE PA-ACCT-ID       TO WS-CURR-APP-ID
-               WHEN 'GB'
-                    SET END-OF-AUTHDB     TO TRUE
-               WHEN OTHER
-                    DISPLAY 'AUTH SUMMARY READ FAILED  :' DIBSTAT
-                    DISPLAY 'SUMMARY READ BEFORE ABEND :'
-                                                        WS-NO-SUMRY-READ
-                    PERFORM 9999-ABEND
-            END-EVALUATE
+            IF DIBSTAT = SPACES
+               ADD 1                     TO WS-NO-DTL-DELETED
+            ELSE
+               DISPLAY 'AUTH DETAIL DELETE FAILED :' DIBSTAT
+               DISPLAY 'AUTH APP ID               :' PA-ACCT-ID
+               PERFORM 9999-ABEND
+            END-IF
+
             .
+       5000-EXIT.
+            EXIT.
+      *
+      *----------------------------------------------------------------*
+       6000-DELETE-AUTH-SUMMARY.
+      *----------------------------------------------------------------*
+      *
 ```

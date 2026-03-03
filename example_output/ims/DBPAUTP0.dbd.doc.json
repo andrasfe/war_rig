@@ -4,18 +4,18 @@
     "file_name": "ims/DBPAUTP0.dbd",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-27T14:41:12.434897",
+    "analyzed_at": "2026-03-03T16:47:06.150981",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This file defines the Database Description (DBD) for DBPAUTP0, which represents a HIDAM VSAM database related to pending authorization summaries and details. It specifies the database structure, segments, fields, and indexing.",
+    "summary": "This file defines the Database Description (DBD) for DBPAUTP0, which describes the structure and characteristics of an IMS database. It specifies the database's organization as HIDAM with VSAM access, defines segments (PAUTSUM0, PAUTDTL1) and their fields, and establishes relationships between them.",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
       18,
-      26,
-      34
+      28,
+      36
     ]
   },
   "inputs": [],
@@ -39,14 +39,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the purpose of the EXIT parameter in the DBD macro?",
-      "context": "The meaning of EXIT=(*,KEY,DATA,NOPATH,(NOCASCADE),LOG) is unclear without further documentation.",
-      "suggestion": "Consult IMS documentation for the DBD macro and its EXIT parameter."
-    },
-    {
-      "question": "What is the significance of the VERSION parameter being empty?",
-      "context": "The VERSION parameter in the DBD macro is not specified.",
-      "suggestion": "Check IMS documentation to understand the default behavior or required values for the VERSION parameter."
+      "question": "What is the purpose of the EXIT parameter in the DBD statement?",
+      "context": "The documentation does not explain the specific functions of the exit routines defined in the EXIT parameter.",
+      "suggestion": "Consult IMS documentation for details on the KEY, DATA, NOPATH, NOCASCADE, and LOG exit routines."
     }
   ],
   "resolved_questions": [],

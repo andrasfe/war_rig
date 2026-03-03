@@ -2,11 +2,13 @@
 
 **File**: `cpy/PASFLPCB.CPY`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-02-27 14:44:10.255168
+**Analyzed**: 2026-03-03 16:50:16.520269
 
 ## Purpose
 
-This copybook defines the structure of the PASFLPCB, which appears to be a PCB (Program Communication Block) used in IMS (Information Management System) for database communication. It contains fields related to database name, segment level, processing options, segment name, key feedback, and number of sensitive segments.
+This copybook defines the structure of the PASFLPCB, which appears to be a PCB (Program Communication Block) used in an IMS (Information Management System) environment. It contains fields related to database name, segment level, PCB status, processing options, segment name, key feedback, number of sensitive segments, and key feedback area.
+
+**Business Context**: UNKNOWN
 
 ## Paragraphs/Procedures
 
@@ -23,5 +25,7 @@ The following artifacts were identified as dead code by static analysis:
 
 ## Open Questions
 
-- ? What is the specific purpose of the FILLER field on line 22?
-  - Context: The purpose of the filler field is not clear from the code.
+- ? What is the specific purpose of each field within the PASFLPCB structure in the context of the larger application?
+  - Context: The copybook defines the structure, but the exact usage of each field is unclear without examining the programs that include this copybook.
+- ? What is the business context for this PCB?
+  - Context: The copybook itself doesn't provide information about the business process it supports.

@@ -4,12 +4,12 @@
     "file_name": "COPAU00.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-27T14:44:47.848471",
+    "analyzed_at": "2026-03-03T16:50:35.696087",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the data structures COPAU0AI and COPAU0AO, which are used for screen input and output. COPAU0AI contains fields for transaction name, title, and current date, while COPAU0AO redefines COPAU0AI to provide different views of the same data.",
+    "summary": "This copybook defines the data structures COPAU0AI and COPAU0AO, which are used for screen input and output. COPAU0AI contains fields for transaction name, title, and current date, while COPAU0AO redefines COPAU0AI to provide character-by-character access to some of the same fields.",
     "business_context": null,
     "program_type": "COPYBOOK",
     "citations": [
@@ -36,12 +36,12 @@
     {
       "paragraph_name": "COPAU0AI",
       "summary": null,
-      "purpose": "This data structure defines the layout for screen input/output fields. It includes fields for transaction name (TRNNAMEL, TRNNAMEF, TRNNAMEA, TRNNAMEI), title (TITLE01L, TITLE01F, TITLE01A, TITLE01I), current date (CURDATEL, CURDATEF), selection option (SEL0005L, SEL0005F, SEL0005A, SEL0005I), amount (PAMT001L, PAMT001F, PAMT001A, PAMT001I, PAMT002L, PAMT002F, PAMT002A, PAMT002I, PAMT003L, PAMT003F, PAMT003A, PAMT003I, PAMT004L, PAMT004F, PAMT004A, PAMT004I, PAMT005L, PAMT005F, PAMT005A, PAMT005I), and error message (ERRMSGL, ERRMSGF, ERRMSGA, ERRMSGI). The structure uses a combination of COMP and PICTURE clauses to define the data types and lengths of each field. The 'L' suffix indicates the length of the field, 'F' is a single character flag, 'A' is a redefined single character flag, and 'I' is the actual data. This structure does not perform any business logic or call other paragraphs; it simply defines the data layout.",
+      "purpose": "This data structure defines the layout for input and output data related to a screen or transaction. It includes fields for transaction name (TRNNAMEL, TRNNAMEF, TRNNAMEA, TRNNAMEI), title (TITLE01L, TITLE01F, TITLE01A, TITLE01I), and current date (CURDATEL, CURDATEF). The 'L' fields likely represent the length of the associated data, 'F' fields are single-character flags, 'A' fields are single-character redefinitions of the flag fields, and 'I' fields contain the actual data. The structure also includes filler fields for spacing and alignment. This copybook is likely used by a CICS program to format data for display on a screen and to receive input from the user.",
       "called_by": [],
       "calls": [],
       "citation": [
         24,
-        390
+        32
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
@@ -54,7 +54,7 @@
     {
       "paragraph_name": "COPAU0AO",
       "summary": null,
-      "purpose": "This data structure redefines the COPAU0AI structure to provide a different view of the same data. Specifically, it redefines parts of the transaction name, title, and current date fields into single-character fields (TRNNAMEC, TRNNAMEP, TRNNAMEH, TRNNAMEV, TRNNAMEO, TITLE01C, TITLE01P, TITLE01H, TITLE01V, TITLE01O, CURDATEC). This allows for easier manipulation or display of individual characters within these fields. The FILLER fields are used to skip over portions of the original COPAU0AI structure that are not being redefined. This structure does not perform any business logic or call other paragraphs; it simply provides an alternative data layout based on COPAU0AI.",
+      "purpose": "This data structure redefines the COPAU0AI structure to allow access to individual characters within certain fields. Specifically, it provides character-by-character access to the transaction name (TRNNAMEC, TRNNAMEP, TRNNAMEH, TRNNAMEV, TRNNAMEO), title (TITLE01C, TITLE01P, TITLE01H, TITLE01V, TITLE01O), and current date (CURDATEC). This redefinition is useful for manipulating individual characters within these fields, such as for validation or formatting purposes. The filler fields ensure proper alignment with the corresponding fields in COPAU0AI. This structure is likely used in conjunction with COPAU0AI to provide more granular control over the data being displayed or processed.",
       "called_by": [],
       "calls": [],
       "citation": [

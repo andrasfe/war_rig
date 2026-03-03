@@ -1,18 +1,19 @@
 ```cobol
-       4000-FILE-CLOSE.                                                 02630030
-            DISPLAY 'CLOSING THE FILE'                                  02631043
-            CLOSE OPFILE1.                                              02640034
-                                                                        02650030
-            IF WS-OUTFL1-STATUS =  SPACES OR '00'                       02660034
-             CONTINUE                                                   02670030
-            ELSE                                                        02680034
-             DISPLAY 'ERROR IN CLOSING 1ST FILE:'WS-OUTFL1-STATUS       02690030
-            END-IF.                                                     02700034
-            CLOSE OPFILE2.                                              02710034
-                                                                        02720030
-            IF WS-OUTFL2-STATUS =  SPACES OR '00'                       02730034
-             CONTINUE                                                   02740030
-            ELSE                                                        02750034
-             DISPLAY 'ERROR IN CLOSING 2ND FILE:'WS-OUTFL2-STATUS       02760030
-            END-IF.                                                     02770034
+      *        DISPLAY 'PCB STATU: ' PAUT-PCB-STATUS                    02410057
+      *        DISPLAY 'SEG NAME   : ' PAUT-SEG-NAME                    02411057
+      *        DISPLAY '***************************'                    02412057
+               IF PAUT-PCB-STATUS = SPACES                              02420030
+                    SET MORE-AUTHS       TO TRUE                        02430030
+                    ADD 1                 TO WS-NO-SUMRY-READ           02440030
+                    ADD 1                 TO WS-AUTH-SMRY-PROC-CNT      02450030
+                    MOVE PENDING-AUTH-DETAILS TO CHILD-SEG-REC          02460036
+                    WRITE OPFIL2-REC                                    02470030
+               END-IF                                                   02480030
+               IF PAUT-PCB-STATUS = 'GE'                                02490030
+      *             SET NO-MORE-AUTHS    TO TRUE                        02500050
+                    MOVE 'Y' TO WS-END-OF-CHILD-SEG                     02500150
+                    DISPLAY 'CHILD SEG FLAG GE : '                      02501044
+                             WS-END-OF-CHILD-SEG                        02502050
+               END-IF                                                   02510030
+               IF PAUT-PCB-STATUS NOT EQUAL TO  SPACES AND 'GE'         02520030
 ```

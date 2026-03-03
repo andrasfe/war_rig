@@ -4,12 +4,12 @@
     "file_name": "DLIGSAMP.PSB",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-27T14:41:29.499912",
+    "analyzed_at": "2026-03-03T16:47:30.297751",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This file defines a Program Specification Block (PSB) named DLIGSAMP for an IMS application. It specifies the database PCBs, GSAM PCBs, and PSBGEN parameters required for the program to access IMS databases.",
+    "summary": "This file defines a Program Specification Block (PSB) named DLIGSAMP for an IMS application. It specifies the database PCBs, GSAM PCBs, and PSBGEN parameters required for the application to access IMS databases.",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
@@ -39,14 +39,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the purpose of the PAUTBPCB PCB definition?",
-      "context": "The documentation does not describe the function of the PAUTBPCB PCB.",
-      "suggestion": "Consult the IMS application documentation to understand the purpose of this PCB."
-    },
-    {
-      "question": "What is the purpose of the PASFLDBD and PADFLDBD GSAM PCBs?",
-      "context": "The documentation does not describe the function of the GSAM PCBs.",
-      "suggestion": "Consult the IMS application documentation to understand the purpose of these PCBs."
+      "question": "What is the specific purpose of the PAUTBPCB, PASFLDBD, and PADFLDBD databases?",
+      "context": "The DBDNAME values are not descriptive enough to understand their exact function.",
+      "suggestion": "Examine the corresponding DBD definitions or application code that uses this PSB."
     }
   ],
   "resolved_questions": [],

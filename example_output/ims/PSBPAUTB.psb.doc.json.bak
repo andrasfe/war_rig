@@ -4,18 +4,17 @@
     "file_name": "PSBPAUTB.psb",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-27T14:44:36.722965",
+    "analyzed_at": "2026-03-03T16:47:18.787471",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This PSB (Program Specification Block) defines the database access parameters for COBOL programs interacting with the DBPAUTP0 database. It specifies the PCB (Program Communication Block) type, the DBDNAME, processing options, key length, and defines sensitive segments PAUTSUM0 and PAUTDTL1.",
+    "summary": "This file defines a Program Specification Block (PSB) named PSBPAUTB for an IMS database DBPAUTP0. It specifies the database access characteristics and the segments that the program is sensitive to, namely PAUTSUM0 and PAUTDTL1.",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
       17,
       18,
-      19,
       20
     ]
   },
@@ -40,9 +39,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What COBOL programs use this PSB?",
-      "context": "The PSB is a configuration file, so it is unclear which programs use it without further context.",
-      "suggestion": "Examine COBOL programs in the same application to see if they reference this PSB."
+      "question": "What is the purpose of the DBPAUTP0 database?",
+      "context": "The PSB definition refers to a database but its purpose is not defined in this file.",
+      "suggestion": "Consult the DBD definition for DBPAUTP0."
     }
   ],
   "resolved_questions": [],

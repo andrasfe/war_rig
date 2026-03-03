@@ -2,13 +2,13 @@
 
 **File**: `ims/PSBPAUTB.psb`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-02-27 14:44:36.722965
+**Analyzed**: 2026-03-03 16:47:18.787471
 
 ## Purpose
 
-This PSB (Program Specification Block) defines the database access parameters for COBOL programs interacting with the DBPAUTP0 database. It specifies the PCB (Program Communication Block) type, the DBDNAME, processing options, key length, and defines sensitive segments PAUTSUM0 and PAUTDTL1.
+This file defines a Program Specification Block (PSB) named PSBPAUTB for an IMS database DBPAUTP0. It specifies the database access characteristics and the segments that the program is sensitive to, namely PAUTSUM0 and PAUTDTL1.
 
 ## Open Questions
 
-- ? What COBOL programs use this PSB?
-  - Context: The PSB is a configuration file, so it is unclear which programs use it without further context.
+- ? What is the purpose of the DBPAUTP0 database?
+  - Context: The PSB definition refers to a database but its purpose is not defined in this file.

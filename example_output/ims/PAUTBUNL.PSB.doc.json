@@ -4,12 +4,12 @@
     "file_name": "PAUTBUNL.PSB",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-27T14:41:26.174913",
+    "analyzed_at": "2026-03-03T16:47:25.595951",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This file defines a Program Specification Block (PSB) named PAUTBUNL for an IMS database DBPAUTP0. It specifies the database access characteristics and segment hierarchy for COBOL programs accessing the database.",
+    "summary": "This file defines a Program Specification Block (PSB) named PAUTBUNL for an IMS database DBPAUTP0. It specifies the database access characteristics and the segment hierarchy for COBOL programs accessing the database.",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
@@ -38,9 +38,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the purpose of the 'PRINT NOGEN' statement?",
-      "context": "The meaning of this statement is unclear without further context or documentation.",
-      "suggestion": "Consult IMS documentation or related code to understand its effect on code generation."
+      "question": "What is the purpose of the PRINT NOGEN statement?",
+      "context": "The meaning of PRINT NOGEN is unclear without further context.",
+      "suggestion": "Consult IMS documentation for PSBGEN parameters."
     }
   ],
   "resolved_questions": [],

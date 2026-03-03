@@ -4,13 +4,13 @@
     "file_name": "jcl/CBPAUP0J.jcl",
     "file_type": "JCL",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-27T14:45:27.036249",
+    "analyzed_at": "2026-03-03T16:51:27.249311",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This JCL executes an IMS Batch Message Processing (BMP) program CBPAUP0C to delete expired authorizations. It defines the necessary datasets for the IMS environment and specifies the program parameters.",
-    "business_context": "This job is likely part of a security or compliance process to remove outdated access rights.",
+    "summary": "This JCL executes an IMS program (DFSRRC00) to delete expired authorizations. It defines the program to be executed, the parameters passed to it, and the necessary datasets for the IMS environment.",
+    "business_context": "Authorization management and cleanup within an IMS environment.",
     "program_type": "BATCH",
     "citations": [
       21,
@@ -22,7 +22,7 @@
     {
       "name": "IMS.SDFSRESL",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS system library containing the required modules.",
+      "description": "IMS RESLIB dataset containing required modules.",
       "copybook": null,
       "citation": [
         26,
@@ -33,7 +33,7 @@
     {
       "name": "XXXXXXXX.PROD.LOADLIB",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "Application load library containing the CBPAUP0C program.",
+      "description": "Application load library.",
       "copybook": null,
       "citation": [
         27
@@ -51,7 +51,7 @@
     {
       "name": "IMS.PSBLIB",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS PSB library containing PSBPAUTB.",
+      "description": "IMS PSB library.",
       "copybook": null,
       "citation": [
         33
@@ -69,11 +69,10 @@
     {
       "name": "SYSIN",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "Input data for the CBPAUP0C program. The provided data '00,00001,00001,Y' is likely used as parameters for the program's execution.",
+      "description": "Input data for the IMS program, likely containing parameters for the authorization deletion process.",
       "copybook": null,
       "citation": [
-        36,
-        37
+        36
       ]
     }
   ],
@@ -108,7 +107,7 @@
     {
       "name": "ABENDAID",
       "io_type": "REPORT",
-      "description": "System output for ABEND AID information.",
+      "description": "System output for ABEND aid.",
       "copybook": null,
       "citation": [
         42
@@ -126,7 +125,7 @@
     {
       "name": "SYSUDUMP",
       "io_type": "REPORT",
-      "description": "System user dump output.",
+      "description": "System user dump.",
       "copybook": null,
       "citation": [
         46
@@ -142,7 +141,19 @@
       ]
     }
   ],
-  "called_programs": [],
+  "called_programs": [
+    {
+      "program_name": "DFSRRC00",
+      "call_type": "STATIC_CALL",
+      "purpose": "IMS control region program that executes the authorization deletion logic.",
+      "parameters": [
+        "BMP",
+        "CBPAUP0C",
+        "PSBPAUTB"
+      ],
+      "citation": 24
+    }
+  ],
   "calling_context": {
     "called_by": [],
     "entry_points": [],
@@ -150,8 +161,103 @@
   },
   "business_rules": [],
   "data_flow": {
-    "reads_from": [],
-    "writes_to": [],
+    "reads_from": [
+      {
+        "source": "IMS.SDFSRESL",
+        "fields_used": [],
+        "citation": [
+          26,
+          28,
+          31
+        ]
+      },
+      {
+        "source": "XXXXXXXX.PROD.LOADLIB",
+        "fields_used": [],
+        "citation": [
+          27
+        ]
+      },
+      {
+        "source": "IMS.PROCLIB",
+        "fields_used": [],
+        "citation": [
+          29
+        ]
+      },
+      {
+        "source": "IMS.PSBLIB",
+        "fields_used": [],
+        "citation": [
+          33
+        ]
+      },
+      {
+        "source": "IMS.DBDLIB",
+        "fields_used": [],
+        "citation": [
+          34
+        ]
+      },
+      {
+        "source": "SYSIN",
+        "fields_used": [],
+        "citation": [
+          36
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "SYSOUX",
+        "fields_written": [],
+        "citation": [
+          39
+        ]
+      },
+      {
+        "destination": "SYSOUT",
+        "fields_written": [],
+        "citation": [
+          40
+        ]
+      },
+      {
+        "destination": "SYSABOUT",
+        "fields_written": [],
+        "citation": [
+          41
+        ]
+      },
+      {
+        "destination": "ABENDAID",
+        "fields_written": [],
+        "citation": [
+          42
+        ]
+      },
+      {
+        "destination": "SYSPRINT",
+        "fields_written": [],
+        "citation": [
+          45
+        ]
+      },
+      {
+        "destination": "SYSUDUMP",
+        "fields_written": [],
+        "citation": [
+          46
+        ]
+      },
+      {
+        "destination": "IMSERR",
+        "fields_written": [],
+        "citation": [
+          47
+        ]
+      }
+    ],
     "transforms": []
   },
   "copybooks_used": [],
@@ -159,7 +265,7 @@
     {
       "paragraph_name": "STEP01",
       "summary": null,
-      "purpose": "This step executes the IMS program DFSRRC00, which is a control region program for IMS BMP execution. The PARM parameter specifies 'BMP' indicating a Batch Message Processing program, 'CBPAUP0C' which is the name of the actual program being executed, and 'PSBPAUTB' which is the PSB (Program Specification Block) name. The STEPLIB DD statements define the libraries where the program DFSRRC00 and CBPAUP0C can be found. DFSRESLB points to the IMS RESLIB. The IMS DD statement defines the PSBLIB and DBDLIB to be used by the program. SYSIN provides input data to the CBPAUP0C program. The remaining DD statements define the various SYSOUT datasets for capturing program output, error messages, and dumps. IEFRDER and IMSLOGR are DUMMY datasets, likely indicating that logging is suppressed or handled elsewhere.",
+      "purpose": "This step executes the IMS program DFSRRC00. It defines the program to be executed and passes parameters 'BMP,CBPAUP0C,PSBPAUTB' to it. 'BMP' indicates that the program runs as a Batch Message Processing program. 'CBPAUP0C' is likely the program name executed within the IMS environment to perform the authorization deletion. 'PSBPAUTB' is the PSB (Program Specification Block) name, which defines the database resources the program can access. The step also defines the STEPLIB, DFSRESLB, PROCLIB, IMS, DFSSEL DD statements, which are required for the IMS environment to locate the necessary libraries and datasets. SYSIN provides input data for the program. The output datasets (SYSOUT, SYSPRINT, etc.) are defined for capturing program output, error messages, and dumps. IEFRDER and IMSLOGR are defined as DUMMY datasets, indicating that they are not used in this execution.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -219,9 +325,14 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "The purpose of the input data '00,00001,00001,Y' passed via SYSIN is unclear.",
-      "context": "Without access to the CBPAUP0C program source code, it's impossible to determine how this data is used.",
-      "suggestion": "Review the CBPAUP0C program documentation or source code to understand the SYSIN data format and its impact on program execution."
+      "question": "What specific criteria are used to determine which authorizations are 'expired'?",
+      "context": "The JCL executes a program to delete expired authorizations, but the definition of 'expired' is not evident from the JCL itself.",
+      "suggestion": "Examine the CBPAUP0C program source code or related documentation to understand the expiration logic."
+    },
+    {
+      "question": "What is the format and content of the SYSIN dataset?",
+      "context": "SYSIN provides input to the CBPAUP0C program, but the specific data it contains and its structure are unknown.",
+      "suggestion": "Examine the CBPAUP0C program source code or related documentation to understand the expected SYSIN format."
     }
   ],
   "resolved_questions": [],

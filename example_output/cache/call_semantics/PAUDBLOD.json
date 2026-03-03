@@ -11,7 +11,7 @@
       "END-ROOT-SEG-FILE",
       "END-CHILD-SEG-FILE"
     ],
-    "purpose": "Initializes the program by accepting current date values and opening input files INFILE1 and INFILE2, checking for any open errors."
+    "purpose": "Initializes the program by accepting current date values and opening input files INFILE1 and INFILE2, setting end-of-file flags if necessary."
   },
   {
     "caller": "MAIN-PARA",
@@ -39,7 +39,7 @@
       "PENDING-AUTH-DETAILS",
       "END-CHILD-SEG-FILE"
     ],
-    "purpose": "Reads a record from INFILE2, validates the root segment key, and populates child segment data for insertion if the record is valid."
+    "purpose": "Reads a record from INFILE2 and, if the root segment key is numeric, moves relevant data to detail and qualifier fields, or sets the end-of-file flag if no more records are available."
   },
   {
     "caller": "MAIN-PARA",
@@ -49,7 +49,7 @@
       "WS-INFIL2-STATUS"
     ],
     "outputs": [],
-    "purpose": "Closes both input files INFILE1 and INFILE2 and displays error messages if either file fails to close."
+    "purpose": "Closes both INFILE1 and INFILE2 and displays error messages if either file fails to close."
   },
   {
     "caller": "1000-INITIALIZE",
@@ -63,14 +63,9 @@
   {
     "caller": "1000-INITIALIZE",
     "callee": "9999-ABEND",
-    "inputs": [
-      "WS-INFIL1-STATUS",
-      "WS-INFIL2-STATUS"
-    ],
-    "outputs": [
-      "RETURN-CODE"
-    ],
-    "purpose": "Abends the program with return code 16 when an input file fails to open."
+    "inputs": [],
+    "outputs": [],
+    "purpose": "Abends the program with return code 16 if an error occurs during file opening."
   },
   {
     "caller": "2000-READ-ROOT-SEG-FILE",
@@ -78,10 +73,8 @@
     "inputs": [
       "INFIL1-REC"
     ],
-    "outputs": [
-      "PAUT-PCB-STATUS"
-    ],
-    "purpose": "Inserts a root segment into the IMS database using the data read from INFILE1."
+    "outputs": [],
+    "purpose": "Inserts a root segment into the IMS database using data read from INFILE1."
   },
   {
     "caller": "2100-INSERT-ROOT-SEG",
@@ -89,10 +82,8 @@
     "inputs": [
       "PAUT-PCB-STATUS"
     ],
-    "outputs": [
-      "RETURN-CODE"
-    ],
-    "purpose": "Abends the program if the root segment insertion fails with an unexpected IMS status code."
+    "outputs": [],
+    "purpose": "Abends the program if the root segment insertion into IMS fails with an unexpected status code."
   },
   {
     "caller": "3000-READ-CHILD-SEG-FILE",
@@ -101,33 +92,30 @@
       "ROOT-SEG-KEY",
       "CHILD-SEG-REC"
     ],
-    "outputs": [],
-    "purpose": "Inserts a child segment into the IMS database after validating the root segment key and moving data from the input record."
+    "outputs": [
+      "QUAL-SSA-KEY-VALUE"
+    ],
+    "purpose": "Inserts a child segment into the IMS database after setting up the qualifying SSA with the root key."
   },
   {
     "caller": "3100-INSERT-CHILD-SEG",
     "callee": "3200-INSERT-IMS-CALL",
-    "inputs": [
-      "PENDING-AUTH-SUMMARY",
-      "PENDING-AUTH-DETAILS"
-    ],
-    "outputs": [
-      "PAUT-PCB-STATUS"
-    ],
-    "purpose": "Performs an IMS insert call to add a child segment under the retrieved parent segment."
+    "inputs": [],
+    "outputs": [],
+    "purpose": "Performs an IMS insert call to insert the child segment after successfully retrieving the parent segment."
   },
   {
     "caller": "3100-INSERT-CHILD-SEG",
     "callee": "9999-ABEND",
     "inputs": [],
     "outputs": [],
-    "purpose": "Abends the program with return code 16 when the GU call to the root segment fails unexpectedly."
+    "purpose": "Abends the program with return code 16 when the root GU call fails."
   },
   {
     "caller": "3200-INSERT-IMS-CALL",
     "callee": "9999-ABEND",
     "inputs": [],
     "outputs": [],
-    "purpose": "Abends the program with return code 16 when the ISRT call for the child segment fails unexpectedly."
+    "purpose": "Abends the program with return code 16 when the child segment insert call fails."
   }
 ]

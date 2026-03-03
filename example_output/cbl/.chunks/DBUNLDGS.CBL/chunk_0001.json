@@ -7,7 +7,7 @@
       "file_name": "DBUNLDGS.CBL",
       "file_type": "COBOL",
       "analyzed_by": "WAR_RIG",
-      "analyzed_at": "2026-02-27T14:42:58.183786",
+      "analyzed_at": "2026-03-03T16:49:10.372432",
       "iteration_count": 1,
       "final_status": null
     },
@@ -21,26 +21,7 @@
         357
       ]
     },
-    "inputs": [
-      {
-        "name": "PENDING-AUTH-DETAILS",
-        "io_type": "IMS_SEGMENT",
-        "description": "Data to be inserted into the GSAM database as a child segment.",
-        "copybook": null,
-        "citation": [
-          322
-        ]
-      },
-      {
-        "name": "PADFLPCB",
-        "io_type": "PARAMETER",
-        "description": "PCB for the GSAM database.",
-        "copybook": null,
-        "citation": [
-          321
-        ]
-      }
-    ],
+    "inputs": [],
     "outputs": [],
     "called_programs": [
       {
@@ -62,17 +43,7 @@
     },
     "business_rules": [],
     "data_flow": {
-      "reads_from": [
-        {
-          "source": "PADFLPCB",
-          "fields_used": [
-            "PADFL-PCB-STATUS"
-          ],
-          "citation": [
-            326
-          ]
-        }
-      ],
+      "reads_from": [],
       "writes_to": [],
       "transforms": []
     },
@@ -81,7 +52,7 @@
       {
         "paragraph_name": "3200-INSERT-CHILD-SEG-GSAM",
         "summary": null,
-        "purpose": "This paragraph inserts a child segment into a GSAM database. It calls the CBLTDLI routine with the ISRT function to insert the PENDING-AUTH-DETAILS segment using the PADFLPCB. After the call, it checks the PADFL-PCB-STATUS. If the status is not spaces, it displays error messages including the PCB status and the key feedback area, and then performs 9999-ABEND to terminate the program. The paragraph consumes the PADFLPCB and PENDING-AUTH-DETAILS as input. It produces no direct output other than potentially triggering an abend. It calls CBLTDLI to insert the segment and 9999-ABEND in case of an error.",
+        "purpose": "This paragraph inserts a child segment into a GSAM database using the IMS call 'CBLTDLI'. It uses the 'FUNC-ISRT' function code, 'PADFLPCB' as the PCB, and 'PENDING-AUTH-DETAILS' as the segment to be inserted. After the call, it checks the 'PADFL-PCB-STATUS' field for errors. If the status is not spaces, it displays error messages including the PCB status and KFB area, and then performs 9999-ABEND to terminate the program. The paragraph consumes data from PENDING-AUTH-DETAILS and PADFLPCB, and calls CBLTDLI to write to the GSAM database. It handles error conditions by checking the PCB status and calling the abend routine.",
         "called_by": [],
         "calls": [
           "CBLTDLI",
@@ -100,7 +71,7 @@
       {
         "paragraph_name": "3200-EXIT",
         "summary": null,
-        "purpose": "This paragraph serves as the exit point for the 3200-INSERT-CHILD-SEG-GSAM paragraph. It contains a simple EXIT statement, providing a common point to return from the paragraph. It consumes no input and produces no output. Its primary purpose is to provide a structured exit from the 3200-INSERT-CHILD-SEG-GSAM paragraph, ensuring proper control flow. It does not perform any business logic or error handling. It does not call any other paragraphs or programs.",
+        "purpose": "This paragraph serves as the exit point for the 3200-INSERT-CHILD-SEG-GSAM paragraph. It contains a simple EXIT statement to return control to the calling paragraph. It does not consume any inputs or produce any outputs. It does not implement any business logic or error handling. It is a standard practice for structured COBOL programming to have an explicit exit paragraph.",
         "called_by": [],
         "calls": [],
         "citation": [
@@ -116,7 +87,7 @@
       {
         "paragraph_name": "4000-FILE-CLOSE",
         "summary": null,
-        "purpose": "This paragraph is responsible for closing files. Currently, it only displays a message 'CLOSING THE FILE'. It does not take any input or produce any output other than the display message. The paragraph's purpose is to provide a centralized location for file closing operations, although the current implementation lacks the actual file closing logic. It does not implement any business logic or error handling beyond the display message. It does not call any other paragraphs or programs.",
+        "purpose": "This paragraph is responsible for closing files used by the program. Currently, it only displays a message 'CLOSING THE FILE'. It does not take any inputs or produce any specific outputs other than the display message. It does not implement any business logic or error handling beyond the display message. The specific files to be closed are not evident from this snippet, suggesting the actual close statements are elsewhere or missing.",
         "called_by": [],
         "calls": [],
         "citation": [
@@ -132,7 +103,7 @@
       {
         "paragraph_name": "4000-EXIT",
         "summary": null,
-        "purpose": "This paragraph serves as the exit point for the 4000-FILE-CLOSE paragraph. It contains a simple EXIT statement, providing a common point to return from the paragraph. It consumes no input and produces no output. Its primary purpose is to provide a structured exit from the 4000-FILE-CLOSE paragraph, ensuring proper control flow. It does not perform any business logic or error handling. It does not call any other paragraphs or programs.",
+        "purpose": "This paragraph serves as the exit point for the 4000-FILE-CLOSE paragraph. It contains a simple EXIT statement to return control to the calling paragraph. It does not consume any inputs or produce any outputs. It does not implement any business logic or error handling. It is a standard practice for structured COBOL programming to have an explicit exit paragraph.",
         "called_by": [],
         "calls": [],
         "citation": [
@@ -148,10 +119,8 @@
       {
         "paragraph_name": "9999-ABEND",
         "summary": null,
-        "purpose": "This paragraph handles program termination (abend) scenarios. It displays a message 'DBUNLDGS ABENDING ...', sets the RETURN-CODE to 16, and then terminates the program using GOBACK. It takes no input other than the implicit program state. It produces no direct output other than the display message and the return code. The paragraph's purpose is to provide a centralized point for abnormal program termination, setting a specific return code for diagnostic purposes. It does not implement any specific business logic beyond setting the return code. It does not call any other paragraphs or programs.",
-        "called_by": [
-          "3200-INSERT-CHILD-SEG-GSAM"
-        ],
+        "purpose": "This paragraph handles program termination (abend) scenarios. It displays a message 'DBUNLDGS ABENDING ...', sets the RETURN-CODE to 16, and then terminates the program using GOBACK. It does not take any specific inputs, but it sets the RETURN-CODE as output. It does not implement any business logic beyond setting the return code. It is called when a critical error occurs that prevents the program from continuing, such as a failed IMS call.",
+        "called_by": [],
         "calls": [],
         "citation": [
           357,
@@ -166,7 +135,7 @@
       {
         "paragraph_name": "9999-EXIT",
         "summary": null,
-        "purpose": "This paragraph serves as the exit point for the 9999-ABEND paragraph. It contains a simple EXIT statement, providing a common point to return from the paragraph. It consumes no input and produces no output. Its primary purpose is to provide a structured exit, although in this case, it's unlikely to be reached since 9999-ABEND performs a GOBACK. It does not perform any business logic or error handling. It does not call any other paragraphs or programs.",
+        "purpose": "This paragraph serves as the exit point for the 9999-ABEND paragraph. It contains a simple EXIT statement to return control to the calling paragraph. It does not consume any inputs or produce any outputs. It does not implement any business logic or error handling. It is a standard practice for structured COBOL programming to have an explicit exit paragraph.",
         "called_by": [],
         "calls": [],
         "citation": [
@@ -193,14 +162,9 @@
     "cics_operations": [],
     "open_questions": [
       {
-        "question": "What is the purpose of the 'DBUNLDGS' program in the larger system?",
-        "context": "The provided code snippet only shows a few paragraphs and lacks context about the overall application.",
-        "suggestion": "Review the program's documentation or consult with the developers to understand its role and dependencies."
-      },
-      {
-        "question": "What files are intended to be closed in 4000-FILE-CLOSE?",
-        "context": "The paragraph only contains a display message and no actual CLOSE statements.",
-        "suggestion": "Examine the complete source code or related documentation to identify the files that should be closed in this paragraph."
+        "question": "What files are being closed in 4000-FILE-CLOSE?",
+        "context": "The paragraph only displays a message and does not contain the actual CLOSE statements.",
+        "suggestion": "Examine other parts of the program or related documentation to identify the files being closed."
       }
     ],
     "resolved_questions": [],
@@ -209,5 +173,5 @@
     "flow_diagram": null,
     "copybooks_not_found": []
   },
-  "saved_at": "2026-02-27T07:42:58.185077"
+  "saved_at": "2026-03-03T09:49:10.373448"
 }

@@ -2,11 +2,11 @@
 
 **File**: `jcl/UNLDGSAM.JCL`
 **Type**: FileType.JCL
-**Analyzed**: 2026-02-27 14:45:27.519209
+**Analyzed**: 2026-03-03 16:51:03.829043
 
 ## Purpose
 
-This JCL job executes the IMS program DFSRRC00 to unload a GSAM database. It specifies the program to execute, the required libraries, and the input and output datasets.
+This JCL job executes the IMS program DFSRRC00 to unload GSAM databases. It specifies the program to execute, the required libraries, and the input and output datasets for the unload process.
 
 **Business Context**: UNKNOWN
 
@@ -14,24 +14,16 @@ This JCL job executes the IMS program DFSRRC00 to unload a GSAM database. It spe
 
 | Name | Type | Description |
 |------|------|-------------|
-| AWS.M2.CARDDEMO.PAUTDB.ROOT.GSAM | IOType.FILE_VSAM | Input GSAM database root segment to be unloaded. |
-| AWS.M2.CARDDEMO.PAUTDB.CHILD.GSAM | IOType.FILE_VSAM | Input GSAM database child segment to be unloaded. |
-| OEM.IMS.IMSP.PAUTHDB | IOType.FILE_SEQUENTIAL | Input database file. |
-| OEM.IMS.IMSP.PAUTHDBX | IOType.FILE_SEQUENTIAL | Input database index file. |
-| OEMA.IMS.IMSP.SDFSRESL | IOType.FILE_SEQUENTIAL | IMS RESLIB |
-| OEMA.IMS.IMSP.SDFSRESL.V151 | IOType.FILE_SEQUENTIAL | IMS RESLIB version 151 |
-| AWS.M2.CARDDEMO.LOADLIB | IOType.FILE_SEQUENTIAL | Load library |
-| OEM.IMS.IMSP.PSBLIB | IOType.FILE_SEQUENTIAL | IMS PSBLIB |
-| OEM.IMS.IMSP.DBDLIB | IOType.FILE_SEQUENTIAL | IMS DBDLIB |
-| OEMPP.IMS.V15R01MB.PROCLIB(DFSVSMDB) | IOType.FILE_SEQUENTIAL | DFSVSAMP member |
-
-## Outputs
-
-| Name | Type | Description |
-|------|------|-------------|
-| SYSPRINT | IOType.REPORT | System print output for job execution messages. |
-| SYSUDUMP | IOType.REPORT | System dump output for debugging purposes. |
-| IMSERR | IOType.REPORT | IMS error output. |
+| OEMA.IMS.IMSP.SDFSRESL | IOType.FILE_SEQUENTIAL | IMS RESLIB library. |
+| OEMA.IMS.IMSP.SDFSRESL.V151 | IOType.FILE_SEQUENTIAL | IMS RESLIB library version 151. |
+| AWS.M2.CARDDEMO.LOADLIB | IOType.FILE_SEQUENTIAL | Application load library. |
+| OEM.IMS.IMSP.PSBLIB | IOType.FILE_SEQUENTIAL | IMS PSB library. |
+| OEM.IMS.IMSP.DBDLIB | IOType.FILE_SEQUENTIAL | IMS DBD library. |
+| AWS.M2.CARDDEMO.PAUTDB.ROOT.GSAM | IOType.FILE_VSAM | Input GSAM database root segment. |
+| AWS.M2.CARDDEMO.PAUTDB.CHILD.GSAM | IOType.FILE_VSAM | Input GSAM database child segment. |
+| OEM.IMS.IMSP.PAUTHDB | IOType.FILE_SEQUENTIAL | IMS PAUTHDB. |
+| OEM.IMS.IMSP.PAUTHDBX | IOType.FILE_SEQUENTIAL | IMS PAUTHDBX. |
+| OEMPP.IMS.V15R01MB.PROCLIB(DFSVSMDB) | IOType.FILE_SEQUENTIAL | IMS VSAM Definition parameters. |
 
 ## Called Programs
 
@@ -42,12 +34,12 @@ This JCL job executes the IMS program DFSRRC00 to unload a GSAM database. It spe
 ## Paragraphs/Procedures
 
 ### STEP01
-This step executes the IMS program DFSRRC00. It specifies the program name, parameters, and required libraries. The PARM parameter defines the execution environment as DLI, specifies the database unload function (DBUNLDGS), and sets other options for the IMS execution. The STEPLIB DD statements define the libraries required for the IMS program to execute, including the IMS RESLIB and the application load library. The DFSRESLB DD statement defines the IMS RESLIB. The IMS DD statements define the PSBLIB and DBDLIB. PASFILOP and PADFILOP define the input GSAM databases to be unloaded. DDPAUTP0 and DDPAUTX0 define additional input database files. DFSVSAMP defines the buffer pool parameters. IMSLOGR and IEFRDER are dummy datasets. SYSPRINT, SYSUDUMP, and IMSERR define the output datasets for job execution messages, system dumps, and IMS errors, respectively. The program unloads the GSAM database defined by PASFILOP and PADFILOP.
+This step executes the IMS program DFSRRC00 with specific parameters to unload a GSAM database. It defines the program to be executed (DFSRRC00) and passes parameters such as 'DLI,DBUNLDGS,DLIGSAMP,,,,,,,,,,,N' to configure the execution environment and specify the unload operation. The STEPLIB DD statements define the libraries required for the program to run, including IMS RESLIB and the application load library. The DFSRESLB DD statement specifies the IMS RESLIB dataset. The IMS DD statements define the PSBLIB and DBDLIB datasets needed for IMS database access. PASFILOP and PADFILOP DD statements define the input GSAM database datasets (root and child segments). DDPAUTP0 and DDPAUTX0 define the PAUTHDB and PAUTHDBX datasets. DFSVSAMP defines the VSAM parameters. Finally, SYSPRINT, SYSUDUMP, and IMSERR DD statements define the output datasets for system messages, dumps, and error messages, respectively.
 
 ## Open Questions
 
-- ? What is the specific purpose of unloading the GSAM database in the context of the broader application?
-  - Context: The JCL provides the technical details of the unload process but lacks information about the business reason for performing this operation.
+- ? What is the business purpose of unloading the GSAM database?
+  - Context: The JCL does not provide information about the specific business process that triggers the database unload.
 
 ## Sequence Diagram
 

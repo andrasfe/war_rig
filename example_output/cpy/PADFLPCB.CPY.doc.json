@@ -1,19 +1,20 @@
 {
   "header": {
     "program_id": "PADFLPCB",
-    "file_name": "PADFLPCB.CPY",
+    "file_name": "cpy/PADFLPCB.CPY",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-27T14:43:46.070054",
+    "analyzed_at": "2026-03-03T16:50:00.469892",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the structure of PADFLPCB, which appears to be a PCB (Program Communication Block) used in an IMS (Information Management System) environment. It contains fields related to database name, segment level, PCB status, processing options, segment name, key feedback, number of sensitive segments, and key feedback area.",
-    "business_context": "UNKNOWN",
-    "program_type": "COPYBOOK",
+    "summary": "This copybook defines the data structure for PADFLPCB, which appears to be related to IMS PCB (Program Communication Block) information. It contains fields for DBD name, segment level, PCB status, processing options, segment name, key feedback name, number of sensitive segments, and key feedback area.",
+    "business_context": null,
+    "program_type": "OTHER",
     "citations": [
       17,
+      18,
       26
     ]
   },
@@ -36,7 +37,7 @@
     {
       "paragraph_name": "PADFLPCB",
       "summary": null,
-      "purpose": "This copybook defines the data structure for PADFLPCB, which is likely a Program Communication Block (PCB) used within an IMS (Information Management System) environment. The PCB provides a communication interface between an application program and the IMS database. The structure includes PADFL-DBDNAME (database name), PADFL-SEG-LEVEL (segment level), PADFL-PCB-STATUS (PCB status), PADFL-PCB-PROCOPT (processing options), PADFL-SEG-NAME (segment name), PADFL-KEYFB-NAME (key feedback name), PADFL-NUM-SENSEGS (number of sensitive segments), and PADFL-KEYFB (key feedback area). These fields provide information about the database, segment, and processing options being used by the application program. The PADFL-KEYFB field is a 255-byte area that contains the key feedback information from the database. This copybook does not perform any processing or call any other programs; it simply defines a data structure for use by other programs.",
+      "purpose": "This copybook defines the structure of the PADFLPCB data area, which is likely used to hold Program Communication Block (PCB) information within an IMS (Information Management System) environment. The structure includes fields such as PADFL-DBDNAME (Database Description Name) to identify the database being accessed [18], PADFL-SEG-LEVEL (Segment Level) indicating the hierarchical level of the segment [19], PADFL-PCB-STATUS (PCB Status) providing status codes related to the PCB [20], and PADFL-PCB-PROCOPT (PCB Processing Options) specifying the processing options used for database access [21]. It also contains PADFL-SEG-NAME (Segment Name) to identify the segment being processed [23], PADFL-KEYFB-NAME (Key Feedback Name) and PADFL-NUM-SENSEGS (Number of Sensitive Segments) which likely relate to key feedback information and the number of sensitive segments defined in the database [24, 25]. Finally, PADFL-KEYFB (Key Feedback) provides a 255-byte area for key feedback data [26]. This copybook is intended to be included in COBOL programs that interact with an IMS database, allowing the program to access and manipulate PCB information.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -68,14 +69,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the specific purpose and usage of this PCB within the broader IMS application?",
-      "context": "The copybook only defines the structure, not the context of its use.",
-      "suggestion": "Review the programs that include this copybook to understand how the fields are used."
-    },
-    {
-      "question": "What is the business context for this PCB?",
-      "context": "The copybook does not provide information about the business context.",
-      "suggestion": "Review the programs that include this copybook to understand the business context."
+      "question": "What is the exact purpose and usage of the FILLER field?",
+      "context": "The purpose of the FILLER field is unclear without more context.",
+      "suggestion": "Examine the programs that use this copybook to understand how the FILLER field is used."
     }
   ],
   "resolved_questions": [],

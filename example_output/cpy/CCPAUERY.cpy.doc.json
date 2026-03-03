@@ -4,16 +4,16 @@
     "file_name": "CCPAUERY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-27T14:44:14.139508",
+    "analyzed_at": "2026-03-03T16:50:19.696039",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the structure of an error log record, used for logging errors, warnings, and critical events within an application. It includes fields for date, time, application name, program name, location, error level, subsystem, error codes, message, and an event key.",
+    "summary": "This copybook defines the structure of the ERROR-LOG-RECORD, which is used for logging errors and informational messages within an application. It includes fields for date, time, application name, program name, location, severity level, subsystem, error codes, message text, and an event key.",
     "business_context": null,
     "program_type": "COPYBOOK",
     "citations": [
-      20,
+      19,
       39
     ]
   },
@@ -36,7 +36,7 @@
     {
       "paragraph_name": "ERROR-LOG-RECORD",
       "summary": null,
-      "purpose": "This data structure defines the layout of an error log record. It contains fields for capturing the date and time of the error (ERR-DATE, ERR-TIME), the application and program where the error occurred (ERR-APPLICATION, ERR-PROGRAM), the location within the program (ERR-LOCATION), the severity level of the error (ERR-LEVEL), and the subsystem involved (ERR-SUBSYSTEM). It also includes fields for specific error codes (ERR-CODE-1, ERR-CODE-2), a descriptive error message (ERR-MESSAGE), and an event key for tracking purposes (ERR-EVENT-KEY). The ERR-LEVEL and ERR-SUBSYSTEM fields use 88-level condition names to define specific values for error levels (ERR-LOG, ERR-INFO, ERR-WARNING, ERR-CRITICAL) and subsystems (ERR-APP, ERR-CICS, ERR-IMS, ERR-DB2, ERR-MQ, ERR-FILE). This structure is intended to be used for creating and writing error records to an error log file or database.",
+      "purpose": "This copybook defines the ERROR-LOG-RECORD data structure, which serves as a template for logging error and informational messages. The record includes fields for capturing the date (ERR-DATE) and time (ERR-TIME) of the event, the application (ERR-APPLICATION) and program (ERR-PROGRAM) where the event occurred, and a location code (ERR-LOCATION). It also specifies the severity level (ERR-LEVEL) using condition names like ERR-LOG, ERR-INFO, ERR-WARNING, and ERR-CRITICAL, as well as the subsystem (ERR-SUBSYSTEM) using condition names like ERR-APP, ERR-CICS, ERR-IMS, ERR-DB2, ERR-MQ, and ERR-FILE. The record further includes two error code fields (ERR-CODE-1 and ERR-CODE-2), a message field (ERR-MESSAGE) to store the error description, and an event key (ERR-EVENT-KEY) for tracking purposes. This structure is intended to provide a standardized format for error logging across different applications and subsystems, facilitating easier analysis and troubleshooting.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -55,9 +55,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "How is the ERROR-LOG-RECORD populated and written to a log?",
-      "context": "The copybook only defines the structure, not the usage.",
-      "suggestion": "Review the programs that include this copybook to understand how it's used."
+      "question": "How is the ERR-LOCATION field populated and what does it represent?",
+      "context": "The purpose of the ERR-LOCATION field is unclear from the copybook definition.",
+      "suggestion": "Review the programs that use this copybook to understand how the ERR-LOCATION field is used."
     }
   ],
   "resolved_questions": [],

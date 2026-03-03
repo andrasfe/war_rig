@@ -2,13 +2,11 @@
 
 **File**: `cpy/PADFLPCB.CPY`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-02-27 14:43:46.070054
+**Analyzed**: 2026-03-03 16:50:00.469892
 
 ## Purpose
 
-This copybook defines the structure of PADFLPCB, which appears to be a PCB (Program Communication Block) used in an IMS (Information Management System) environment. It contains fields related to database name, segment level, PCB status, processing options, segment name, key feedback, number of sensitive segments, and key feedback area.
-
-**Business Context**: UNKNOWN
+This copybook defines the data structure for PADFLPCB, which appears to be related to IMS PCB (Program Communication Block) information. It contains fields for DBD name, segment level, PCB status, processing options, segment name, key feedback name, number of sensitive segments, and key feedback area.
 
 ## Paragraphs/Procedures
 
@@ -25,7 +23,5 @@ The following artifacts were identified as dead code by static analysis:
 
 ## Open Questions
 
-- ? What is the specific purpose and usage of this PCB within the broader IMS application?
-  - Context: The copybook only defines the structure, not the context of its use.
-- ? What is the business context for this PCB?
-  - Context: The copybook does not provide information about the business context.
+- ? What is the exact purpose and usage of the FILLER field?
+  - Context: The purpose of the FILLER field is unclear without more context.

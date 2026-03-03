@@ -4,13 +4,13 @@
     "file_name": "IMSFUNCS.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-02-27T14:44:06.284758",
+    "analyzed_at": "2026-03-03T16:50:11.210163",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
     "summary": "This copybook defines a set of constants representing IMS function codes and a parameter count. These constants are used when making calls to IMS databases.",
-    "business_context": null,
+    "business_context": "UNKNOWN",
     "program_type": "COPYBOOK",
     "citations": [
       17,
@@ -36,12 +36,12 @@
     {
       "paragraph_name": "FUNC-CODES",
       "summary": null,
-      "purpose": "This data structure defines a set of constants representing IMS (Information Management System) function codes. These codes are used to specify the type of operation to be performed against an IMS database. Each function code is a 4-character alphanumeric field (PIC X(04)) and is assigned a specific value. The function codes include 'GU  ' (Get Unique), 'GHU ' (Get Hold Unique), 'GN  ' (Get Next), 'GHN ' (Get Hold Next), 'GNP ' (Get Next within Parent), 'GHNP' (Get Hold Next within Parent), 'REPL' (Replace), 'ISRT' (Insert), and 'DLET' (Delete). These codes are used in conjunction with IMS calls to retrieve, update, and delete data within the IMS database. The structure is defined in working storage and does not directly interact with input or output files, but rather provides symbolic constants for use in other parts of the program that interact with IMS.",
+      "purpose": "This data definition paragraph defines a set of constants representing IMS (Information Management System) function codes. These codes are used as parameters when calling IMS to perform specific database operations. The defined function codes include 'GU' (Get Unique), 'GHU' (Get Hold Unique), 'GN' (Get Next), 'GHN' (Get Hold Next), 'GNP' (Get Next within Parent), 'GHNP' (Get Hold Next within Parent), 'REPL' (Replace), 'ISRT' (Insert), and 'DLET' (Delete). Each function code is a 4-character alphanumeric field with a predefined value. These values are used to instruct IMS on the desired database action. The paragraph also defines PARMCOUNT which specifies the number of parameters expected by the IMS call.",
       "called_by": [],
       "calls": [],
       "citation": [
         17,
-        26
+        27
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
@@ -55,9 +55,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "Where is this copybook used?",
-      "context": "Cannot determine which programs use this copybook from the copybook itself.",
-      "suggestion": "Search codebase for COPY statement referencing this copybook."
+      "question": "What is the specific purpose of each IMS function code in the context of the larger application?",
+      "context": "The copybook only defines the codes, not their usage.",
+      "suggestion": "Review the programs that include this copybook to understand how these codes are used in IMS calls."
     }
   ],
   "resolved_questions": [],

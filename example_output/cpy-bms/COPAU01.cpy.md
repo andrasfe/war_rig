@@ -2,11 +2,11 @@
 
 **File**: `cpy-bms/COPAU01.cpy`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-02-27 14:44:53.386169
+**Analyzed**: 2026-03-03 16:50:43.690391
 
 ## Purpose
 
-This copybook defines the data structures COPAU1AI and COPAU1AO, which appear to be used for screen input and output related to authorization processing. COPAU1AI defines the input fields with associated length, flag, attribute, and input fields. COPAU1AO redefines COPAU1AI to provide a structure for output fields, including control characters and output values.
+This copybook defines the data structures COPAU1AI and COPAU1AO, which are used for screen input and output, potentially related to authorization processing. COPAU1AI defines the input fields with associated length and flag fields, while COPAU1AO redefines COPAU1AI to provide a different view of the same data, using single-character fields for cursor positioning and other attributes.
 
 **Business Context**: UNKNOWN
 
@@ -16,7 +16,7 @@ This copybook defines the data structures COPAU1AI and COPAU1AO, which appear to
 *Record layout 'COPAU1AI' is never used by any program*
 
 ### COPAU1AO
-This data structure redefines the COPAU1AI structure to provide a format suitable for output, likely to a screen. It includes control characters (C), presentation attributes (P), highlighting attributes (H), validation attributes (V), and output fields (O) corresponding to the input fields defined in COPAU1AI. The fields include TRNNAMEC, TRNNAMEP, TRNNAMEH, TRNNAMEV, TRNNAMEO, TITLE01C, TITLE01P, TITLE01H, TITLE01V, TITLE01O, CURDATEC, CURDATEP, CURDATEH, CURDATEV, CURDATEO, PGMNAMEC, PGMNAMEP, PGMNAMEH, PGMNAMEV, PGMNAMEO, TITLE02C, TITLE02P, TITLE02H, TITLE02V, TITLE02O, CURTIMEC, CURTIMEP, CURTIMEH, CURTIMEV, CURTIMEO, CARDNUMC, CARDNUMP, CARDNUMH, CARDNUMV, CARDNUMO, AUTHDTC, AUTHDTP, AUTHDTH, AUTHDTV, AUTHDTO, AUTHTMC, AUTHTMP, AUTHTMH, AUTHTMV, AUTHTMO, AUTHRSPC, AUTHRSPP, AUTHRSPH, AUTHRSPV, AUTHRSPV, AUTHRSPO, AUTHRSNC, AUTHRSNP, AUTHRSNH, AUTHRSNV, AUTHRSNO, AUTHCDC, AUTHCDP, AUTHCDH, AUTHCDV, AUTHCDO, AUTHAMTC, AUTHAMTP, AUTHAMTH, AUTHAMTV, AUTHAMTO, POSEMDC, POSEMDP, POSEMDO, AUTHSRCC, AUTHSRCP, AUTHSRCH, AUTHSRCV, AUTHSRCO, MCCCDC, MCCCDP, MCCCDH, MCCCDV, MCCCDO, CRDEXPC, CRDEXPP, CRDEXPH, CRDEXPV, CRDEXPO, AUTHTYPC, AUTHTYPP, AUTHTYPH, AUTHTYPV, AUTHTYPO, TRNIDC, TRNIDP, TRNIDH, TRNIDV, TRNIDO, AUTHMTCC, AUTHMTCP, AUTHMTCH, AUTHMTCV, AUTHMTCO, AUTHFRDC, AUTHFRDP, AUTHFRDH, AUTHFRDV, AUTHFRDO, MERNAMEC, MERNAMEP, MERNAMEH, MERNAMEV, MERNAMEO, MERIDC, MERIDP, MERIDH, MERIDV, MERIDO, MERCITYC, MERCITYP, MERCITYH, MERCITYV, MERCITYO, MERSTC, MERSTP, MERSTH, MERSTV, MERSTO, MERZIPC, MERZIPP, MERZIPH, MERZIPV, MERZIPO, ERRMSGC, ERRMSGP, ERRMSGH, ERRMSGV, ERRMSGO. The purpose of this structure is to format the data for display on a screen, including attributes for highlighting, color, and other visual cues. No calls are made from this paragraph, as it is a data structure definition.
+This data structure redefines COPAU1AI to provide a different perspective on the same data, primarily for screen output formatting and control. It uses single-character fields (C, P, H, V, O) to represent cursor positioning, highlighting, and other display attributes for each corresponding field in COPAU1AI. For example, TRNNAMEC/P/H/V/O correspond to TRNNAMEL/I/F/A in COPAU1AI, allowing the program to control the display attributes of the Transaction Name field. The 'C' suffix likely represents the cursor position, 'P' the protection attribute, 'H' the highlight attribute, 'V' the validation attribute, and 'O' the output field. This redefinition enables precise control over the screen's appearance and user interaction, facilitating a user-friendly interface for authorization-related transactions.
 
 ## Dead Code
 
@@ -28,7 +28,7 @@ The following artifacts were identified as dead code by static analysis:
 
 ## Open Questions
 
-- ? What is the specific screen or application that uses this copybook?
-  - Context: The copybook defines data structures for screen input and output, but the specific application is not clear.
-- ? What are the valid values and meanings of the flag fields (e.g., TRNNAMEF)?
-  - Context: The copybook includes flag fields, but their specific meanings are not documented.
+- ? What is the specific screen layout and purpose of each field?
+  - Context: The copybook defines the data structure, but the exact usage within a BMS map or CICS transaction is unclear.
+- ? What is the business context for this authorization process?
+  - Context: The copybook contains authorization-related fields, but the specific industry or application is unknown.

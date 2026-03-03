@@ -9,23 +9,23 @@
       "WS-OUTFL1-STATUS",
       "WS-OUTFL2-STATUS"
     ],
-    "purpose": "Initializes the program by setting up current date and opening output files."
+    "purpose": "Initializes the program by accepting current date values and opening output files, checking for any open errors."
   },
   {
     "caller": "MAIN-PARA",
     "callee": "2000-FIND-NEXT-AUTH-SUMMARY",
     "inputs": [
-      "WS-END-OF-AUTHDB-FLAG"
+      "WS-END-OF-ROOT-SEG"
     ],
     "outputs": [
       "WS-NO-SUMRY-READ",
       "WS-AUTH-SMRY-PROC-CNT",
-      "OPFIL1-REC",
+      "WS-END-OF-ROOT-SEG",
       "ROOT-SEG-KEY",
       "CHILD-SEG-REC",
-      "WS-END-OF-ROOT-SEG"
+      "OPFIL1-REC"
     ],
-    "purpose": "Reads the next authorization summary record from IMS and processes it if valid."
+    "purpose": "Retrieves the next authorization summary segment from IMS, updates counters, writes to output file, and triggers detail processing if applicable."
   },
   {
     "caller": "MAIN-PARA",
@@ -35,7 +35,7 @@
       "WS-OUTFL2-STATUS"
     ],
     "outputs": [],
-    "purpose": "Closes the output files and displays any error messages if closure fails."
+    "purpose": "Closes the output files and displays error messages if the close operation fails based on file status codes."
   },
   {
     "caller": "1000-INITIALIZE",
@@ -47,7 +47,7 @@
     "outputs": [
       "RETURN-CODE"
     ],
-    "purpose": "Terminates the program abnormally with return code 16 when a file open error occurs."
+    "purpose": "Terminates the program abnormally with return code 16 when a critical error occurs during file opening in initialization."
   },
   {
     "caller": "1000-INITIALIZE",
@@ -59,19 +59,22 @@
     "outputs": [
       "RETURN-CODE"
     ],
-    "purpose": "Terminates the program abnormally with return code 16 when a file open error occurs."
+    "purpose": "Terminates the program abnormally with return code 16 when a critical error occurs during file opening in initialization."
   },
   {
     "caller": "2000-FIND-NEXT-AUTH-SUMMARY",
     "callee": "3000-FIND-NEXT-AUTH-DTL",
     "inputs": [
-      "WS-END-OF-CHILD-SEG",
-      "PA-ACCT-ID"
-    ],
-    "outputs": [
+      "PA-ACCT-ID",
       "WS-END-OF-CHILD-SEG"
     ],
-    "purpose": "Processes the next authorization detail segment for the current summary record until all child segments are read."
+    "outputs": [
+      "WS-END-OF-CHILD-SEG",
+      "WS-NO-SUMRY-READ",
+      "WS-AUTH-SMRY-PROC-CNT",
+      "CHILD-SEG-REC"
+    ],
+    "purpose": "Processes all detail segments for the current summary record by retrieving and writing child segments until no more are found."
   },
   {
     "caller": "2000-FIND-NEXT-AUTH-SUMMARY",
@@ -80,7 +83,7 @@
     "outputs": [
       "RETURN-CODE"
     ],
-    "purpose": "Terminates the program with a return code of 16 when an unexpected IMS status code is encountered during summary retrieval."
+    "purpose": "Terminates the program abnormally with return code 16 when a failure occurs during retrieval of the summary segment."
   },
   {
     "caller": "3000-FIND-NEXT-AUTH-DTL",
@@ -89,6 +92,6 @@
     "outputs": [
       "RETURN-CODE"
     ],
-    "purpose": "Terminates the program with a return code of 16 when an unexpected IMS status code is encountered during detail segment retrieval."
+    "purpose": "Terminates the program abnormally with return code 16 when a failure occurs during retrieval of a detail segment."
   }
 ]

@@ -1,6 +1,6 @@
 {
   "version": "1.0",
-  "generated_at": "2026-02-27T14:38:08.787239",
+  "generated_at": "2026-03-03T16:43:16.791957",
   "source_root": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq",
   "artifacts": {
     "program::PAUDBUNL": {
@@ -6265,7 +6265,7 @@
   },
   "relationships": [
     {
-      "id": "47bb762a-741f-4fb0-a774-53d1112e7fbc",
+      "id": "89841d66-4b68-4296-9bbe-d2bb1df682cf",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::1000-INITIALIZE",
       "relationship_type": "performs",
@@ -6284,7 +6284,7 @@
       "is_resolved": true
     },
     {
-      "id": "ec6745d9-eaae-465a-a11b-da1b37a1b124",
+      "id": "514d05fb-d614-48c5-ba6d-a49805175513",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::2000-FIND-NEXT-AUTH-SUMMARY",
       "relationship_type": "performs",
@@ -6303,7 +6303,7 @@
       "is_resolved": true
     },
     {
-      "id": "4303d7e9-4e32-45db-85e7-a0c09722ffe9",
+      "id": "01c1c866-754f-4d49-9f0a-6d3987e57b80",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::4000-FILE-CLOSE",
       "relationship_type": "performs",
@@ -6322,7 +6322,7 @@
       "is_resolved": true
     },
     {
-      "id": "83a89c66-6195-456f-8948-b30df588be82",
+      "id": "5288db68-cbab-486f-aef4-65208359cb61",
       "from_artifact": "paragraph::1000-INITIALIZE",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -6341,7 +6341,7 @@
       "is_resolved": true
     },
     {
-      "id": "1fb3fbc4-1644-47d0-a4b7-e5e2dc8d90e6",
+      "id": "21266923-7f94-4c69-b508-9233b744e044",
       "from_artifact": "paragraph::2000-FIND-NEXT-AUTH-SUMMARY",
       "to_artifact": "paragraph::3000-FIND-NEXT-AUTH-DTL",
       "relationship_type": "performs",
@@ -6360,7 +6360,7 @@
       "is_resolved": true
     },
     {
-      "id": "b64aa5ab-feb8-4b71-8778-a0b636830d68",
+      "id": "e5fe1769-0562-4e6f-a445-8c6631e73fef",
       "from_artifact": "paragraph::2000-FIND-NEXT-AUTH-SUMMARY",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -6379,7 +6379,7 @@
       "is_resolved": true
     },
     {
-      "id": "ad4b4af5-3413-42d3-b000-91605359e85a",
+      "id": "9ed83cd1-e8ef-4d45-ace3-8a5dfce0845c",
       "from_artifact": "paragraph::3000-FIND-NEXT-AUTH-DTL",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -6398,7 +6398,7 @@
       "is_resolved": true
     },
     {
-      "id": "ae54f3f1-b5fb-4138-a789-d26a590e4948",
+      "id": "a49a019a-7f35-46ca-81aa-1321c880f405",
       "from_artifact": "program::PAUDBUNL",
       "to_artifact": "copybook::IMSFUNCS",
       "relationship_type": "includes",
@@ -6417,7 +6417,7 @@
       "is_resolved": true
     },
     {
-      "id": "5be72b20-8c58-4c41-9d62-016bea54f90c",
+      "id": "47f98146-73d0-462d-9aff-a75c34be08b7",
       "from_artifact": "program::PAUDBUNL",
       "to_artifact": "copybook::CIPAUSMY",
       "relationship_type": "includes",
@@ -6436,7 +6436,7 @@
       "is_resolved": true
     },
     {
-      "id": "0e49576a-34bf-4a37-bf41-f809a66a0c6d",
+      "id": "ae7dee10-4177-4ef6-bd20-7f1b4a5c640d",
       "from_artifact": "program::PAUDBUNL",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
@@ -6455,7 +6455,7 @@
       "is_resolved": true
     },
     {
-      "id": "d1b7ce24-39f3-4c90-b201-7dad6853c1ab",
+      "id": "652cf350-f788-4ad4-98dc-e733d7519292",
       "from_artifact": "program::PAUDBUNL",
       "to_artifact": "copybook::PAUTBPCB",
       "relationship_type": "includes",
@@ -6474,7 +6474,7 @@
       "is_resolved": true
     },
     {
-      "id": "75494411-6603-4207-a7f9-a2b7420bfcc5",
+      "id": "7fe770af-54de-402c-ab75-44e503763be5",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::RETURN-TO-PREV-SCREEN",
       "relationship_type": "performs",
@@ -6493,7 +6493,7 @@
       "is_resolved": true
     },
     {
-      "id": "da665498-cf12-439c-b14c-2f175a79c433",
+      "id": "6da5c2fc-fdc6-42d4-ac8c-3b00065fc3b6",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::PROCESS-ENTER-KEY",
       "relationship_type": "performs",
@@ -6512,7 +6512,7 @@
       "is_resolved": true
     },
     {
-      "id": "95654715-aa20-40aa-8b9e-dcefa25c3177",
+      "id": "9e8f427f-4eec-4a52-be9d-80bbe682ace2",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::SEND-AUTHVIEW-SCREEN",
       "relationship_type": "performs",
@@ -6531,7 +6531,7 @@
       "is_resolved": true
     },
     {
-      "id": "6669f176-be9f-4632-b007-cbdc2407b48f",
+      "id": "1fe69ebb-5eef-4807-8f2a-26a5e9fa1338",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::RECEIVE-AUTHVIEW-SCREEN",
       "relationship_type": "performs",
@@ -6550,7 +6550,7 @@
       "is_resolved": true
     },
     {
-      "id": "6e84076d-d31d-4513-aa70-43ec793b5011",
+      "id": "ab0d025e-4076-4b7d-a816-6745f290a706",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::MARK-AUTH-FRAUD",
       "relationship_type": "performs",
@@ -6569,7 +6569,7 @@
       "is_resolved": true
     },
     {
-      "id": "2c2de849-c052-4e0e-a802-f059b41f9d22",
+      "id": "eb9935ab-e184-4d55-ae4c-ca86c8c3c3b7",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::PROCESS-PF8-KEY",
       "relationship_type": "performs",
@@ -6588,7 +6588,7 @@
       "is_resolved": true
     },
     {
-      "id": "7813e8ac-3093-4500-bdaf-26ae39721221",
+      "id": "0a12e489-bf56-452a-a733-b41a03966412",
       "from_artifact": "paragraph::PROCESS-ENTER-KEY",
       "to_artifact": "paragraph::READ-AUTH-RECORD",
       "relationship_type": "performs",
@@ -6607,7 +6607,7 @@
       "is_resolved": true
     },
     {
-      "id": "16b6d422-8be5-428b-a715-c01de66ea8f9",
+      "id": "50b6960e-6415-4a31-adeb-f82edff1bcec",
       "from_artifact": "paragraph::PROCESS-ENTER-KEY",
       "to_artifact": "paragraph::TAKE-SYNCPOINT",
       "relationship_type": "performs",
@@ -6626,7 +6626,7 @@
       "is_resolved": true
     },
     {
-      "id": "e6953927-a7e8-415b-b7c0-2e4e7d334e43",
+      "id": "9c2ddd61-f558-4fe3-b785-e58048197e51",
       "from_artifact": "paragraph::PROCESS-ENTER-KEY",
       "to_artifact": "paragraph::POPULATE-AUTH-DETAILS",
       "relationship_type": "performs",
@@ -6645,7 +6645,7 @@
       "is_resolved": true
     },
     {
-      "id": "65698b6f-aea0-4070-b13a-83acccc5a09c",
+      "id": "efed9d06-752e-4af6-9fb9-858f20663930",
       "from_artifact": "paragraph::MARK-AUTH-FRAUD",
       "to_artifact": "paragraph::READ-AUTH-RECORD",
       "relationship_type": "performs",
@@ -6664,7 +6664,7 @@
       "is_resolved": true
     },
     {
-      "id": "9f3d9a17-7e86-454d-ba14-ff5b259d4d33",
+      "id": "12f6d97f-6c9a-4c41-8386-f1de60a7d0ec",
       "from_artifact": "paragraph::MARK-AUTH-FRAUD",
       "to_artifact": "paragraph::UPDATE-AUTH-DETAILS",
       "relationship_type": "performs",
@@ -6683,7 +6683,7 @@
       "is_resolved": true
     },
     {
-      "id": "4773392d-6215-4a18-8bab-589e521b7435",
+      "id": "cc11849f-d932-463d-b738-9999c8b50428",
       "from_artifact": "paragraph::MARK-AUTH-FRAUD",
       "to_artifact": "paragraph::ROLL-BACK",
       "relationship_type": "performs",
@@ -6702,7 +6702,7 @@
       "is_resolved": true
     },
     {
-      "id": "2bd555a5-a578-48a2-800b-5af35af3d453",
+      "id": "f4859243-ef2a-4a56-ac82-86ccb112c617",
       "from_artifact": "paragraph::MARK-AUTH-FRAUD",
       "to_artifact": "paragraph::POPULATE-AUTH-DETAILS",
       "relationship_type": "performs",
@@ -6721,7 +6721,7 @@
       "is_resolved": true
     },
     {
-      "id": "0d16d09a-c2d2-4bb0-94f4-866e2703aa45",
+      "id": "4bca2045-ffe9-4664-83a3-d5be6a2b887c",
       "from_artifact": "paragraph::PROCESS-PF8-KEY",
       "to_artifact": "paragraph::READ-AUTH-RECORD",
       "relationship_type": "performs",
@@ -6740,7 +6740,7 @@
       "is_resolved": true
     },
     {
-      "id": "0941c887-f09a-490f-95fb-d47526cf2550",
+      "id": "2f700106-a1f9-4931-a3cb-6a75c0e7d1f4",
       "from_artifact": "paragraph::PROCESS-PF8-KEY",
       "to_artifact": "paragraph::READ-NEXT-AUTH-RECORD",
       "relationship_type": "performs",
@@ -6759,7 +6759,7 @@
       "is_resolved": true
     },
     {
-      "id": "9b8038fd-2df9-407e-af91-1891cf2e4888",
+      "id": "99792693-cf05-4332-84ba-2481318d77c7",
       "from_artifact": "paragraph::PROCESS-PF8-KEY",
       "to_artifact": "paragraph::TAKE-SYNCPOINT",
       "relationship_type": "performs",
@@ -6778,7 +6778,7 @@
       "is_resolved": true
     },
     {
-      "id": "a6a93b4a-75a1-4fbd-9664-2dc1be00f778",
+      "id": "cd988704-8510-4ac2-8889-842c5c78561b",
       "from_artifact": "paragraph::PROCESS-PF8-KEY",
       "to_artifact": "paragraph::POPULATE-AUTH-DETAILS",
       "relationship_type": "performs",
@@ -6797,7 +6797,7 @@
       "is_resolved": true
     },
     {
-      "id": "5302ea13-8692-479b-9726-d02b81305d09",
+      "id": "db0a4c2c-2e1d-45fd-bc34-a7a495717efe",
       "from_artifact": "paragraph::SEND-AUTHVIEW-SCREEN",
       "to_artifact": "paragraph::POPULATE-HEADER-INFO",
       "relationship_type": "performs",
@@ -6816,7 +6816,7 @@
       "is_resolved": true
     },
     {
-      "id": "79c04380-2719-4a1e-b3a7-19abb41a66aa",
+      "id": "bea7813a-9455-42a9-b534-d7992f977915",
       "from_artifact": "paragraph::READ-AUTH-RECORD",
       "to_artifact": "paragraph::SCHEDULE-PSB",
       "relationship_type": "performs",
@@ -6835,7 +6835,7 @@
       "is_resolved": true
     },
     {
-      "id": "d549c30c-fe25-4f66-8125-4187b3e6aca1",
+      "id": "cbb9dad6-2111-4e41-97ac-ff9e32514845",
       "from_artifact": "paragraph::READ-AUTH-RECORD",
       "to_artifact": "paragraph::SEND-AUTHVIEW-SCREEN",
       "relationship_type": "performs",
@@ -6854,7 +6854,7 @@
       "is_resolved": true
     },
     {
-      "id": "2f01203c-6a2c-4c78-b460-0a7266937748",
+      "id": "53ed1f03-61a8-4ff9-9216-e3dc88ad4c57",
       "from_artifact": "paragraph::READ-NEXT-AUTH-RECORD",
       "to_artifact": "paragraph::SEND-AUTHVIEW-SCREEN",
       "relationship_type": "performs",
@@ -6873,7 +6873,7 @@
       "is_resolved": true
     },
     {
-      "id": "92c78249-c390-417d-ad2b-b91bd5606a0b",
+      "id": "0952b614-a630-4b91-a888-f22d6afa2e77",
       "from_artifact": "paragraph::UPDATE-AUTH-DETAILS",
       "to_artifact": "paragraph::TAKE-SYNCPOINT",
       "relationship_type": "performs",
@@ -6892,7 +6892,7 @@
       "is_resolved": true
     },
     {
-      "id": "dafd9621-587b-44c0-809e-2e539c63808b",
+      "id": "8f302ef0-1815-41d4-b2c5-234391b32318",
       "from_artifact": "paragraph::UPDATE-AUTH-DETAILS",
       "to_artifact": "paragraph::ROLL-BACK",
       "relationship_type": "performs",
@@ -6911,7 +6911,7 @@
       "is_resolved": true
     },
     {
-      "id": "ab8caa0f-173c-4662-bd06-6bbae668a667",
+      "id": "3476cd3c-1466-45bb-b052-327761739191",
       "from_artifact": "paragraph::UPDATE-AUTH-DETAILS",
       "to_artifact": "paragraph::SEND-AUTHVIEW-SCREEN",
       "relationship_type": "performs",
@@ -6930,7 +6930,7 @@
       "is_resolved": true
     },
     {
-      "id": "126cf51d-68b1-4760-897a-929a845a9ccd",
+      "id": "e9ec92cc-2845-495f-bfa6-174d7153d2e1",
       "from_artifact": "paragraph::SCHEDULE-PSB",
       "to_artifact": "paragraph::SEND-AUTHVIEW-SCREEN",
       "relationship_type": "performs",
@@ -6949,7 +6949,7 @@
       "is_resolved": true
     },
     {
-      "id": "a1ea7fdb-84ae-4a8d-8701-992945600f8d",
+      "id": "f6817516-c9d0-4a66-a470-3e60f737adb0",
       "from_artifact": "program::COPAUS1C",
       "to_artifact": "copybook::COPAU01",
       "relationship_type": "includes",
@@ -6968,7 +6968,7 @@
       "is_resolved": true
     },
     {
-      "id": "55fadd4e-454a-4359-8114-bb9073c9285e",
+      "id": "db2a43b8-b3f2-4b38-9236-7a0215505d7d",
       "from_artifact": "program::COPAUS1C",
       "to_artifact": "copybook::CIPAUSMY",
       "relationship_type": "includes",
@@ -6987,7 +6987,7 @@
       "is_resolved": true
     },
     {
-      "id": "bbfe1705-ae63-4335-a202-53cb920f7750",
+      "id": "e464a9c8-a93a-4ba1-a4c0-4c5efcf3cee0",
       "from_artifact": "program::COPAUS1C",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
@@ -7006,7 +7006,7 @@
       "is_resolved": true
     },
     {
-      "id": "09ea4346-3714-41a6-b18e-694ce63ffe49",
+      "id": "3a581898-7796-4a18-9035-2b7f4e48f53a",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::2000-MAIN-PROCESS",
       "relationship_type": "performs",
@@ -7025,7 +7025,7 @@
       "is_resolved": true
     },
     {
-      "id": "5dfbb0b6-c25c-4db7-8b79-85e9d4c9b633",
+      "id": "adc11618-cb0a-44fc-9567-53c60538ced8",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::9000-TERMINATE",
       "relationship_type": "performs",
@@ -7044,7 +7044,7 @@
       "is_resolved": true
     },
     {
-      "id": "dcade645-5709-4af7-845e-8aa97d8ec7ee",
+      "id": "4e51005a-49ed-45d7-8297-dce831ccf922",
       "from_artifact": "paragraph::1000-INITIALIZE",
       "to_artifact": "paragraph::1100-OPEN-REQUEST-QUEUE",
       "relationship_type": "performs",
@@ -7063,7 +7063,7 @@
       "is_resolved": true
     },
     {
-      "id": "623c26c3-1456-46ff-95bf-24afd3888299",
+      "id": "34ea6ea0-4c5d-4f87-b534-88f801a5135a",
       "from_artifact": "paragraph::1000-INITIALIZE",
       "to_artifact": "paragraph::3100-READ-REQUEST-MQ",
       "relationship_type": "performs",
@@ -7082,7 +7082,7 @@
       "is_resolved": true
     },
     {
-      "id": "d414f1b8-de95-43a7-930c-99a126c0b6d8",
+      "id": "873595f0-8ed1-403a-9b6c-0a69a5666c03",
       "from_artifact": "paragraph::1100-OPEN-REQUEST-QUEUE",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -7101,7 +7101,7 @@
       "is_resolved": true
     },
     {
-      "id": "39a92ba9-a2a4-41bc-81d6-32709f8a76b7",
+      "id": "191a22d5-c424-44d6-972d-aba91332c4b4",
       "from_artifact": "paragraph::1200-SCHEDULE-PSB",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -7120,7 +7120,7 @@
       "is_resolved": true
     },
     {
-      "id": "6298d1cc-70da-44a7-bdcc-bb38e0e56eb5",
+      "id": "b9a8b859-1178-467f-840a-a412c0521dcf",
       "from_artifact": "paragraph::2000-MAIN-PROCESS",
       "to_artifact": "paragraph::2100-EXTRACT-REQUEST-MSG",
       "relationship_type": "performs",
@@ -7139,7 +7139,7 @@
       "is_resolved": true
     },
     {
-      "id": "eede0817-b073-467d-89a6-d2b24a2d1e0f",
+      "id": "42cc21b7-9870-4775-ad0d-ca627bb03322",
       "from_artifact": "paragraph::2000-MAIN-PROCESS",
       "to_artifact": "paragraph::5000-PROCESS-AUTH",
       "relationship_type": "performs",
@@ -7158,7 +7158,7 @@
       "is_resolved": true
     },
     {
-      "id": "21522387-1116-4651-892f-bfb9c85e27e3",
+      "id": "34a39361-b102-414f-b4d4-ad07d65e4326",
       "from_artifact": "paragraph::2000-MAIN-PROCESS",
       "to_artifact": "paragraph::3100-READ-REQUEST-MQ",
       "relationship_type": "performs",
@@ -7177,7 +7177,7 @@
       "is_resolved": true
     },
     {
-      "id": "e149ab9d-1d8d-42fb-abd7-0dfd5c890b74",
+      "id": "1b459a7e-536c-4a5b-891e-a3e4feaa1676",
       "from_artifact": "paragraph::3100-READ-REQUEST-MQ",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -7196,7 +7196,7 @@
       "is_resolved": true
     },
     {
-      "id": "18d791a1-b95d-4f1c-a553-d53e9c04da15",
+      "id": "a08ca099-c2f5-4c89-afb9-2720f9bc7816",
       "from_artifact": "paragraph::5000-PROCESS-AUTH",
       "to_artifact": "paragraph::1200-SCHEDULE-PSB",
       "relationship_type": "performs",
@@ -7215,7 +7215,7 @@
       "is_resolved": true
     },
     {
-      "id": "77fb6c68-3449-4984-bf20-05e5721f973c",
+      "id": "e8900929-a821-4ad2-935b-04bc745c7499",
       "from_artifact": "paragraph::5000-PROCESS-AUTH",
       "to_artifact": "paragraph::5100-READ-XREF-RECORD",
       "relationship_type": "performs",
@@ -7234,7 +7234,7 @@
       "is_resolved": true
     },
     {
-      "id": "0622ddf6-7880-4f0b-a983-87366e28e104",
+      "id": "45ed92de-0b6f-4f95-bb32-df8776f2d2e3",
       "from_artifact": "paragraph::5000-PROCESS-AUTH",
       "to_artifact": "paragraph::5200-READ-ACCT-RECORD",
       "relationship_type": "performs",
@@ -7253,7 +7253,7 @@
       "is_resolved": true
     },
     {
-      "id": "d974f2c1-f60c-4ce4-83ef-baa88609f9d7",
+      "id": "4c43db4d-2d25-438f-8a04-b6969b82de00",
       "from_artifact": "paragraph::5000-PROCESS-AUTH",
       "to_artifact": "paragraph::5300-READ-CUST-RECORD",
       "relationship_type": "performs",
@@ -7272,7 +7272,7 @@
       "is_resolved": true
     },
     {
-      "id": "832cd23a-bec6-409b-8459-9dbd8170e9b4",
+      "id": "13e5cfcd-e8bd-4102-bbef-c0e8f39d3e41",
       "from_artifact": "paragraph::5000-PROCESS-AUTH",
       "to_artifact": "paragraph::5500-READ-AUTH-SUMMRY",
       "relationship_type": "performs",
@@ -7291,7 +7291,7 @@
       "is_resolved": true
     },
     {
-      "id": "87b27523-fdc6-42b6-b29b-5ff44f3938a9",
+      "id": "899e131b-02ad-4e5c-9cb5-cd1bed628ac0",
       "from_artifact": "paragraph::5000-PROCESS-AUTH",
       "to_artifact": "paragraph::5600-READ-PROFILE-DATA",
       "relationship_type": "performs",
@@ -7310,7 +7310,7 @@
       "is_resolved": true
     },
     {
-      "id": "4ffce47a-0004-456a-ad5b-953fee5d1ede",
+      "id": "afea54ce-ea87-43f2-a0cd-3dfd3e3f3311",
       "from_artifact": "paragraph::5000-PROCESS-AUTH",
       "to_artifact": "paragraph::6000-MAKE-DECISION",
       "relationship_type": "performs",
@@ -7329,7 +7329,7 @@
       "is_resolved": true
     },
     {
-      "id": "7d01138b-6345-4447-aef2-75840c449b90",
+      "id": "6e07ee14-aedb-4df5-b75b-5e58472e2457",
       "from_artifact": "paragraph::5000-PROCESS-AUTH",
       "to_artifact": "paragraph::7100-SEND-RESPONSE",
       "relationship_type": "performs",
@@ -7348,7 +7348,7 @@
       "is_resolved": true
     },
     {
-      "id": "4c5afd98-d123-4d32-9b54-4884935c0e22",
+      "id": "200e16df-f6bb-45a6-a771-e7cae8726367",
       "from_artifact": "paragraph::5000-PROCESS-AUTH",
       "to_artifact": "paragraph::8000-WRITE-AUTH-TO-DB",
       "relationship_type": "performs",
@@ -7367,7 +7367,7 @@
       "is_resolved": true
     },
     {
-      "id": "e46cf1d4-65b6-4c1c-a222-7b992ab72e76",
+      "id": "5ea65a23-24bb-477d-a3dc-4e8bf2cf78c8",
       "from_artifact": "paragraph::5100-READ-XREF-RECORD",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -7386,7 +7386,7 @@
       "is_resolved": true
     },
     {
-      "id": "e3c4dd8c-43c6-4902-ad0c-c963469352d6",
+      "id": "9a7a8bb6-965e-4980-9076-dcf630d7a995",
       "from_artifact": "paragraph::5200-READ-ACCT-RECORD",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -7405,7 +7405,7 @@
       "is_resolved": true
     },
     {
-      "id": "7f8bbe09-0ecf-4c2d-9272-52d3af481778",
+      "id": "0da94ede-acb2-42e3-ae36-3643225ffd2d",
       "from_artifact": "paragraph::5300-READ-CUST-RECORD",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -7424,7 +7424,7 @@
       "is_resolved": true
     },
     {
-      "id": "ba4fc75c-858b-4ddb-8809-3778a810d8b0",
+      "id": "bd639cf9-b26d-4a86-967a-4a42d4ef493d",
       "from_artifact": "paragraph::5500-READ-AUTH-SUMMRY",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -7443,7 +7443,7 @@
       "is_resolved": true
     },
     {
-      "id": "b8461153-1f5d-49fe-9f81-0726f948b6ba",
+      "id": "e8bc4c04-fb89-4407-bf0c-0f8c07e7666f",
       "from_artifact": "paragraph::7100-SEND-RESPONSE",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -7462,7 +7462,7 @@
       "is_resolved": true
     },
     {
-      "id": "a1dd18fc-0559-4b85-ac17-a6f5a1375a16",
+      "id": "0a4b4146-031c-4d26-aa4e-1ec1da133ac5",
       "from_artifact": "paragraph::8000-WRITE-AUTH-TO-DB",
       "to_artifact": "paragraph::8400-UPDATE-SUMMARY",
       "relationship_type": "performs",
@@ -7481,7 +7481,7 @@
       "is_resolved": true
     },
     {
-      "id": "527cb01f-7417-42dc-9d9b-3497e5862263",
+      "id": "e7a124f4-269e-4067-b5b1-90c3b54dd0f9",
       "from_artifact": "paragraph::8000-WRITE-AUTH-TO-DB",
       "to_artifact": "paragraph::8500-INSERT-AUTH",
       "relationship_type": "performs",
@@ -7500,7 +7500,7 @@
       "is_resolved": true
     },
     {
-      "id": "3adc201c-9698-453d-8ab7-b0a6672154c7",
+      "id": "f7aff1de-5e66-4a48-aa7c-92ca58652252",
       "from_artifact": "paragraph::8400-UPDATE-SUMMARY",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -7519,7 +7519,7 @@
       "is_resolved": true
     },
     {
-      "id": "8216667d-b2ec-4e2a-becd-5136792105d8",
+      "id": "ece98b66-751a-40bd-bfd4-f2305ab049b6",
       "from_artifact": "paragraph::8500-INSERT-AUTH",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -7538,7 +7538,7 @@
       "is_resolved": true
     },
     {
-      "id": "18614151-c210-4113-93d9-c43c2bfe8317",
+      "id": "e825412d-ced6-46e6-98ea-059afeb4cecf",
       "from_artifact": "paragraph::9000-TERMINATE",
       "to_artifact": "paragraph::9100-CLOSE-REQUEST-QUEUE",
       "relationship_type": "performs",
@@ -7557,7 +7557,7 @@
       "is_resolved": true
     },
     {
-      "id": "4558d42f-1e75-426e-86b5-c732d4ebde29",
+      "id": "b249e4a2-bfe5-402a-b269-6d1365c34c40",
       "from_artifact": "paragraph::9100-CLOSE-REQUEST-QUEUE",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -7576,7 +7576,7 @@
       "is_resolved": true
     },
     {
-      "id": "42ef508e-7a86-4da8-a2a2-bd8ecd2867cf",
+      "id": "b8a4d36b-95c4-4b79-9422-faa2d9c16c80",
       "from_artifact": "paragraph::9500-LOG-ERROR",
       "to_artifact": "paragraph::9990-END-ROUTINE",
       "relationship_type": "performs",
@@ -7595,7 +7595,7 @@
       "is_resolved": true
     },
     {
-      "id": "fe4f4957-b160-422b-919b-27ca826a2de2",
+      "id": "7404c0de-077e-46ed-8886-645400865634",
       "from_artifact": "paragraph::9990-END-ROUTINE",
       "to_artifact": "paragraph::9000-TERMINATE",
       "relationship_type": "performs",
@@ -7614,7 +7614,7 @@
       "is_resolved": true
     },
     {
-      "id": "b929340c-8da2-400b-839a-36537fea74b2",
+      "id": "5ad634bc-9a48-42a5-94af-b5edc1e37e31",
       "from_artifact": "program::COPAUA0C",
       "to_artifact": "copybook::CCPAURQY",
       "relationship_type": "includes",
@@ -7633,7 +7633,7 @@
       "is_resolved": true
     },
     {
-      "id": "faecccf3-1f30-4929-9b61-3f8d3f5939c6",
+      "id": "882f328a-91d4-4b62-b75a-437fdacca0cc",
       "from_artifact": "program::COPAUA0C",
       "to_artifact": "copybook::CCPAURLY",
       "relationship_type": "includes",
@@ -7652,7 +7652,7 @@
       "is_resolved": true
     },
     {
-      "id": "febb78cb-bab3-4f53-9bd5-1a7ccf42b449",
+      "id": "224168db-404e-421c-889f-27942b84eb9d",
       "from_artifact": "program::COPAUA0C",
       "to_artifact": "copybook::CCPAUERY",
       "relationship_type": "includes",
@@ -7671,7 +7671,7 @@
       "is_resolved": true
     },
     {
-      "id": "4070be0e-f40e-40b8-b85c-b6267ac44b38",
+      "id": "51eae06e-dd56-4663-95e5-84b500d2c5e0",
       "from_artifact": "program::COPAUA0C",
       "to_artifact": "copybook::CIPAUSMY",
       "relationship_type": "includes",
@@ -7690,7 +7690,7 @@
       "is_resolved": true
     },
     {
-      "id": "6b348227-d75e-46d2-a946-ccef4769c051",
+      "id": "bc55d399-1a8a-4fd8-a913-5cc0ac26fc11",
       "from_artifact": "program::COPAUA0C",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
@@ -7709,7 +7709,7 @@
       "is_resolved": true
     },
     {
-      "id": "e716dba7-5e29-4eff-999a-cd90f2882920",
+      "id": "3970fe52-65ea-48f2-894d-49445253d40b",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::2000-READ-ROOT-SEG-FILE",
       "relationship_type": "performs",
@@ -7728,7 +7728,7 @@
       "is_resolved": true
     },
     {
-      "id": "3498a7b3-fa33-4d69-89dd-62636b7ecb8c",
+      "id": "d7cb922e-c261-43bc-b968-2f284bca0407",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::3000-READ-CHILD-SEG-FILE",
       "relationship_type": "performs",
@@ -7747,7 +7747,7 @@
       "is_resolved": true
     },
     {
-      "id": "0fe2c6aa-c6b0-4927-a222-52905aa322f1",
+      "id": "f0bec4fa-c188-4e77-bd4a-0f00bfc47a8a",
       "from_artifact": "paragraph::2000-READ-ROOT-SEG-FILE",
       "to_artifact": "paragraph::2100-INSERT-ROOT-SEG",
       "relationship_type": "performs",
@@ -7766,7 +7766,7 @@
       "is_resolved": true
     },
     {
-      "id": "932e9702-d786-4d3a-851c-2e36779c764a",
+      "id": "4241e600-4e9c-4d1e-b90b-82cf87c0492d",
       "from_artifact": "paragraph::2100-INSERT-ROOT-SEG",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -7785,7 +7785,7 @@
       "is_resolved": true
     },
     {
-      "id": "47ee13c1-5c72-4fd9-ad38-0fb554af6e02",
+      "id": "1af36a75-9263-49b2-bf1c-7c8270bb7e72",
       "from_artifact": "paragraph::3000-READ-CHILD-SEG-FILE",
       "to_artifact": "paragraph::3100-INSERT-CHILD-SEG",
       "relationship_type": "performs",
@@ -7804,7 +7804,7 @@
       "is_resolved": true
     },
     {
-      "id": "43409b18-2387-410a-ad37-005b0688382d",
+      "id": "b55c0ec0-edf3-4966-a182-de7909e454dc",
       "from_artifact": "paragraph::3100-INSERT-CHILD-SEG",
       "to_artifact": "paragraph::3200-INSERT-IMS-CALL",
       "relationship_type": "performs",
@@ -7823,7 +7823,7 @@
       "is_resolved": true
     },
     {
-      "id": "d1b50206-6bb5-44f1-986a-28940afcefb4",
+      "id": "8570cd28-1f31-4712-868f-fa95a47f07b0",
       "from_artifact": "paragraph::3100-INSERT-CHILD-SEG",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -7842,7 +7842,7 @@
       "is_resolved": true
     },
     {
-      "id": "15b473bd-30d8-4cc9-a489-25dfed84d614",
+      "id": "99861b2b-4772-4bd2-b5f8-6b60eaded207",
       "from_artifact": "paragraph::3200-INSERT-IMS-CALL",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -7861,7 +7861,7 @@
       "is_resolved": true
     },
     {
-      "id": "5c3274f0-e833-42f2-ac03-7d18b0109468",
+      "id": "73086da2-a544-45e8-81a8-11ce340a42e7",
       "from_artifact": "program::PAUDBLOD",
       "to_artifact": "copybook::IMSFUNCS",
       "relationship_type": "includes",
@@ -7880,7 +7880,7 @@
       "is_resolved": true
     },
     {
-      "id": "bc16d2c9-ac7f-4a4b-a1d0-241872ccdad3",
+      "id": "8284c920-f98e-43d9-b8be-d4be4c0bc78d",
       "from_artifact": "program::PAUDBLOD",
       "to_artifact": "copybook::CIPAUSMY",
       "relationship_type": "includes",
@@ -7899,7 +7899,7 @@
       "is_resolved": true
     },
     {
-      "id": "a89af583-5eb9-496e-a5b4-c5ff588131ee",
+      "id": "09e0dc9f-729c-4ef1-a4b9-104e844f1707",
       "from_artifact": "program::PAUDBLOD",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
@@ -7918,7 +7918,7 @@
       "is_resolved": true
     },
     {
-      "id": "3586b9ce-988f-4426-a7ad-edeb9856e68f",
+      "id": "d1703ec8-9588-4fdd-8e30-82f280aafab2",
       "from_artifact": "program::PAUDBLOD",
       "to_artifact": "copybook::PAUTBPCB",
       "relationship_type": "includes",
@@ -7937,7 +7937,7 @@
       "is_resolved": true
     },
     {
-      "id": "cb9ac9a5-f946-4abd-98a7-2527f584640b",
+      "id": "558e9a66-5b5f-4780-8bc4-d1e90f81bdc4",
       "from_artifact": "paragraph::2000-FIND-NEXT-AUTH-SUMMARY",
       "to_artifact": "paragraph::3100-INSERT-PARENT-SEG-GSAM",
       "relationship_type": "performs",
@@ -7956,7 +7956,7 @@
       "is_resolved": true
     },
     {
-      "id": "82195c18-3500-45ab-a760-7f323bc4ca3b",
+      "id": "f34ffa3c-44c0-4b40-923b-c3b2a9cdf24e",
       "from_artifact": "paragraph::3000-FIND-NEXT-AUTH-DTL",
       "to_artifact": "paragraph::3200-INSERT-CHILD-SEG-GSAM",
       "relationship_type": "performs",
@@ -7975,7 +7975,7 @@
       "is_resolved": true
     },
     {
-      "id": "b7356028-7d66-4087-98b7-fa2b3cf1f66c",
+      "id": "3cba3b05-db2d-4df8-9f0d-e4a6043d3127",
       "from_artifact": "paragraph::3100-INSERT-PARENT-SEG-GSAM",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -7994,7 +7994,7 @@
       "is_resolved": true
     },
     {
-      "id": "1e7f669a-a033-4436-b2b4-df2fad78b9b7",
+      "id": "ee3875f6-0cde-45df-8b61-26c4a0dc6345",
       "from_artifact": "paragraph::3200-INSERT-CHILD-SEG-GSAM",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -8013,7 +8013,7 @@
       "is_resolved": true
     },
     {
-      "id": "51295ec4-39e9-4ae9-a738-acfe6bba0cd8",
+      "id": "59659d1d-6124-40ee-98a3-aa32eac43f11",
       "from_artifact": "program::DBUNLDGS",
       "to_artifact": "copybook::IMSFUNCS",
       "relationship_type": "includes",
@@ -8032,7 +8032,7 @@
       "is_resolved": true
     },
     {
-      "id": "23f8fba4-719e-40fe-a2a9-97258c5231a7",
+      "id": "489b427e-d76d-4807-bb5c-b97032aaf521",
       "from_artifact": "program::DBUNLDGS",
       "to_artifact": "copybook::CIPAUSMY",
       "relationship_type": "includes",
@@ -8051,7 +8051,7 @@
       "is_resolved": true
     },
     {
-      "id": "6e3fa0ee-aca9-41ae-917a-74a51816a422",
+      "id": "84c1bc33-c273-49b9-80ba-a46da71a9528",
       "from_artifact": "program::DBUNLDGS",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
@@ -8070,7 +8070,7 @@
       "is_resolved": true
     },
     {
-      "id": "6009d01b-0f6b-4c15-b4bf-e1be212ad094",
+      "id": "84ebc91f-fa70-4e2d-b6c7-5ebb329985b3",
       "from_artifact": "program::DBUNLDGS",
       "to_artifact": "copybook::PAUTBPCB",
       "relationship_type": "includes",
@@ -8089,7 +8089,7 @@
       "is_resolved": true
     },
     {
-      "id": "3900946c-bf64-4e03-95f7-7bcacb4faea2",
+      "id": "79a681f5-0864-40db-a4b2-3a9c7c29091e",
       "from_artifact": "program::DBUNLDGS",
       "to_artifact": "copybook::PASFLPCB",
       "relationship_type": "includes",
@@ -8108,7 +8108,7 @@
       "is_resolved": true
     },
     {
-      "id": "5570216b-8249-4a8b-8315-f3a7e4136d11",
+      "id": "c1248d27-0751-41a7-9df3-815ed4b7a70a",
       "from_artifact": "program::DBUNLDGS",
       "to_artifact": "copybook::PADFLPCB",
       "relationship_type": "includes",
@@ -8127,7 +8127,7 @@
       "is_resolved": true
     },
     {
-      "id": "a80841ed-f767-4f7b-838e-a273cb83e909",
+      "id": "e9cf58f9-bc39-44d2-972b-815cf9389b4f",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::3000-FIND-NEXT-AUTH-DTL",
       "relationship_type": "performs",
@@ -8146,7 +8146,7 @@
       "is_resolved": true
     },
     {
-      "id": "1dfb4cca-26a9-4a90-9cc8-fa3a910e4799",
+      "id": "4e5b607e-a9e6-45ed-9ee7-f8f4fd111a15",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::4000-CHECK-IF-EXPIRED",
       "relationship_type": "performs",
@@ -8165,7 +8165,7 @@
       "is_resolved": true
     },
     {
-      "id": "e038c69a-2a33-4326-928e-f703ab7b7ee0",
+      "id": "d17b18fd-3212-48e1-8924-1eaec26894ca",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::5000-DELETE-AUTH-DTL",
       "relationship_type": "performs",
@@ -8184,7 +8184,7 @@
       "is_resolved": true
     },
     {
-      "id": "005fe6fd-b52f-44db-b39e-de326a787aea",
+      "id": "66bab077-b414-413d-ab1b-02213ccc319b",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::6000-DELETE-AUTH-SUMMARY",
       "relationship_type": "performs",
@@ -8203,7 +8203,7 @@
       "is_resolved": true
     },
     {
-      "id": "1e027188-58a6-4f1d-ac0a-89b0d8206ca6",
+      "id": "82bf142d-9051-44ca-b53c-2715fc7e7451",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::9000-TAKE-CHECKPOINT",
       "relationship_type": "performs",
@@ -8222,7 +8222,7 @@
       "is_resolved": true
     },
     {
-      "id": "6f02755c-8f4f-4a4e-b384-e69842ce2975",
+      "id": "ad2a9b0a-f11e-41aa-9524-348434601351",
       "from_artifact": "paragraph::5000-DELETE-AUTH-DTL",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -8241,7 +8241,7 @@
       "is_resolved": true
     },
     {
-      "id": "ceafb3b7-149f-4e22-8665-c8ae279f61f5",
+      "id": "b8495a2e-2172-4091-875d-e362aafd559d",
       "from_artifact": "paragraph::6000-DELETE-AUTH-SUMMARY",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -8260,7 +8260,7 @@
       "is_resolved": true
     },
     {
-      "id": "d2f352af-cfc0-4c8b-ae55-18aaa1b22e2b",
+      "id": "84344e2c-9fae-402a-8be7-691c7918bbb7",
       "from_artifact": "paragraph::9000-TAKE-CHECKPOINT",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -8279,7 +8279,7 @@
       "is_resolved": true
     },
     {
-      "id": "8d9f6f66-0aa3-4b9b-aa70-44c5aec67a94",
+      "id": "9163d380-2389-4cd0-8406-1a2fe8807ede",
       "from_artifact": "program::CBPAUP0C",
       "to_artifact": "copybook::CIPAUSMY",
       "relationship_type": "includes",
@@ -8298,7 +8298,7 @@
       "is_resolved": true
     },
     {
-      "id": "3c24f165-cf12-43d9-a17b-9ddab491176d",
+      "id": "b963e2b9-8a7b-4227-88e5-52d22d48567c",
       "from_artifact": "program::CBPAUP0C",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
@@ -8317,7 +8317,7 @@
       "is_resolved": true
     },
     {
-      "id": "cf45bec6-1b21-4d26-bd37-fa4635228a67",
+      "id": "68562a27-e02d-457a-bf4e-8bf68a2a7748",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::SEND-PAULST-SCREEN",
       "relationship_type": "performs",
@@ -8336,7 +8336,7 @@
       "is_resolved": true
     },
     {
-      "id": "0084a9b4-d5bb-4101-81d8-4d62cbbf63a9",
+      "id": "df42de50-33fc-4704-a81d-990d671aecb3",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::GATHER-DETAILS",
       "relationship_type": "performs",
@@ -8355,7 +8355,7 @@
       "is_resolved": true
     },
     {
-      "id": "d2313a17-9a06-4680-b7ff-e949c21173e2",
+      "id": "79bab3d1-82b2-4392-9f48-82cdc84668fc",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::RECEIVE-PAULST-SCREEN",
       "relationship_type": "performs",
@@ -8374,7 +8374,7 @@
       "is_resolved": true
     },
     {
-      "id": "4767faeb-c62a-413f-8dd8-f1b36b189800",
+      "id": "ce1cb23b-6a7a-4e1a-903b-0381377e0d68",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::PROCESS-PF7-KEY",
       "relationship_type": "performs",
@@ -8393,7 +8393,7 @@
       "is_resolved": true
     },
     {
-      "id": "b9288d16-3584-4851-802e-72ccba45d5d4",
+      "id": "b5a18020-5871-43e2-af4a-a5e65914ef72",
       "from_artifact": "paragraph::PROCESS-ENTER-KEY",
       "to_artifact": "paragraph::GATHER-DETAILS",
       "relationship_type": "performs",
@@ -8412,7 +8412,7 @@
       "is_resolved": true
     },
     {
-      "id": "3754ea63-0c92-4c8b-98a2-da4fe5b4895e",
+      "id": "a46f0f7c-0593-421b-a51a-f6ff1e5c8ec6",
       "from_artifact": "paragraph::GATHER-DETAILS",
       "to_artifact": "paragraph::GATHER-ACCOUNT-DETAILS",
       "relationship_type": "performs",
@@ -8431,7 +8431,7 @@
       "is_resolved": true
     },
     {
-      "id": "e3882726-4291-4f17-b430-827df69a5d21",
+      "id": "97dd7066-d583-4f27-87e3-6ca0a17af6d2",
       "from_artifact": "paragraph::GATHER-DETAILS",
       "to_artifact": "paragraph::INITIALIZE-AUTH-DATA",
       "relationship_type": "performs",
@@ -8450,7 +8450,7 @@
       "is_resolved": true
     },
     {
-      "id": "5510dc0a-b145-4fd2-a64c-ff6e4674c1a2",
+      "id": "ffc67d40-7c5b-4ff3-aff1-dcc7f5ca8046",
       "from_artifact": "paragraph::GATHER-DETAILS",
       "to_artifact": "paragraph::PROCESS-PAGE-FORWARD",
       "relationship_type": "performs",
@@ -8469,7 +8469,7 @@
       "is_resolved": true
     },
     {
-      "id": "a71300e2-294c-4100-99c1-628727ec49db",
+      "id": "eed15466-ffbe-4f5d-926c-604b5a1df666",
       "from_artifact": "paragraph::PROCESS-PF7-KEY",
       "to_artifact": "paragraph::GET-AUTH-SUMMARY",
       "relationship_type": "performs",
@@ -8488,7 +8488,7 @@
       "is_resolved": true
     },
     {
-      "id": "c959abd1-7452-4840-ad8d-5b7ca27c044f",
+      "id": "eb70c1ab-8aa0-4e3e-b27e-f9ee51e8f5e7",
       "from_artifact": "paragraph::PROCESS-PF7-KEY",
       "to_artifact": "paragraph::INITIALIZE-AUTH-DATA",
       "relationship_type": "performs",
@@ -8507,7 +8507,7 @@
       "is_resolved": true
     },
     {
-      "id": "92dca34a-7c79-41dc-b111-af41559a6656",
+      "id": "ef3da9cc-f9b5-444e-80c7-35b95d370563",
       "from_artifact": "paragraph::PROCESS-PF7-KEY",
       "to_artifact": "paragraph::PROCESS-PAGE-FORWARD",
       "relationship_type": "performs",
@@ -8526,7 +8526,7 @@
       "is_resolved": true
     },
     {
-      "id": "de22aa08-51c9-464d-a380-91535a53d94d",
+      "id": "7d4615d5-cf0e-4c01-8eab-b9dda82c035a",
       "from_artifact": "paragraph::PROCESS-PF8-KEY",
       "to_artifact": "paragraph::GET-AUTH-SUMMARY",
       "relationship_type": "performs",
@@ -8545,7 +8545,7 @@
       "is_resolved": true
     },
     {
-      "id": "f7f0d79e-bd3e-4335-a6b3-55a210ac988d",
+      "id": "ee197f7d-777e-44c1-b87f-6e90e4a9586d",
       "from_artifact": "paragraph::PROCESS-PF8-KEY",
       "to_artifact": "paragraph::REPOSITION-AUTHORIZATIONS",
       "relationship_type": "performs",
@@ -8564,7 +8564,7 @@
       "is_resolved": true
     },
     {
-      "id": "66c3a887-b60f-4687-8576-587105885246",
+      "id": "b43f4be5-b0d5-4c37-8a9e-1c1a898ee7af",
       "from_artifact": "paragraph::PROCESS-PF8-KEY",
       "to_artifact": "paragraph::INITIALIZE-AUTH-DATA",
       "relationship_type": "performs",
@@ -8583,7 +8583,7 @@
       "is_resolved": true
     },
     {
-      "id": "66f44b21-9526-4b17-b58a-d7f174627cd5",
+      "id": "0ffce81d-6f86-41ed-8cf6-e1d539aa128c",
       "from_artifact": "paragraph::PROCESS-PF8-KEY",
       "to_artifact": "paragraph::PROCESS-PAGE-FORWARD",
       "relationship_type": "performs",
@@ -8602,7 +8602,7 @@
       "is_resolved": true
     },
     {
-      "id": "ccb83b90-07b0-4359-8e99-a969aefefc6a",
+      "id": "fa7fabbf-7c0e-4425-a785-725b29fca5b6",
       "from_artifact": "paragraph::PROCESS-PAGE-FORWARD",
       "to_artifact": "paragraph::REPOSITION-AUTHORIZATIONS",
       "relationship_type": "performs",
@@ -8621,7 +8621,7 @@
       "is_resolved": true
     },
     {
-      "id": "a48789d0-9d92-4bf5-869c-1929cd0a8435",
+      "id": "8ec3d848-7caa-45fd-b71c-65a9147d08ed",
       "from_artifact": "paragraph::PROCESS-PAGE-FORWARD",
       "to_artifact": "paragraph::GET-AUTHORIZATIONS",
       "relationship_type": "performs",
@@ -8640,7 +8640,7 @@
       "is_resolved": true
     },
     {
-      "id": "bb319a1d-70d1-4222-a81d-7fb046ec67ca",
+      "id": "59284d24-0376-4ea2-8544-5e0a074fc1e2",
       "from_artifact": "paragraph::PROCESS-PAGE-FORWARD",
       "to_artifact": "paragraph::POPULATE-AUTH-LIST",
       "relationship_type": "performs",
@@ -8659,7 +8659,7 @@
       "is_resolved": true
     },
     {
-      "id": "1a5c6544-83b8-4c78-a3f3-1b176a60c558",
+      "id": "43ed8092-b4fc-4da2-9d88-b0cc55d3cba3",
       "from_artifact": "paragraph::GET-AUTHORIZATIONS",
       "to_artifact": "paragraph::SEND-PAULST-SCREEN",
       "relationship_type": "performs",
@@ -8678,7 +8678,7 @@
       "is_resolved": true
     },
     {
-      "id": "6861d8bc-35bd-43a3-88e4-aeeda6ee451b",
+      "id": "24767698-4820-472e-b6c7-f0c584117f4a",
       "from_artifact": "paragraph::REPOSITION-AUTHORIZATIONS",
       "to_artifact": "paragraph::SEND-PAULST-SCREEN",
       "relationship_type": "performs",
@@ -8697,7 +8697,7 @@
       "is_resolved": true
     },
     {
-      "id": "3e07fe10-ae5f-4b4a-ad9c-3e13b13305d5",
+      "id": "69147430-b6f5-4cb2-80e5-25f34608026e",
       "from_artifact": "paragraph::SEND-PAULST-SCREEN",
       "to_artifact": "paragraph::POPULATE-HEADER-INFO",
       "relationship_type": "performs",
@@ -8716,7 +8716,7 @@
       "is_resolved": true
     },
     {
-      "id": "d74b344d-00f2-4905-8b61-c4f643f9c78f",
+      "id": "2d902f63-f18a-4b19-b216-ca576294b306",
       "from_artifact": "paragraph::GATHER-ACCOUNT-DETAILS",
       "to_artifact": "paragraph::GETCARDXREF-BYACCT",
       "relationship_type": "performs",
@@ -8735,7 +8735,7 @@
       "is_resolved": true
     },
     {
-      "id": "3dd42e92-8cde-4f2c-b31e-b506a42adc3e",
+      "id": "30253132-7c21-4d5a-bb3d-5998e5888147",
       "from_artifact": "paragraph::GATHER-ACCOUNT-DETAILS",
       "to_artifact": "paragraph::GETACCTDATA-BYACCT",
       "relationship_type": "performs",
@@ -8754,7 +8754,7 @@
       "is_resolved": true
     },
     {
-      "id": "5b0b1f80-9f1e-4117-92bd-cf5e01a802b1",
+      "id": "8192236e-d4df-420a-b1ea-48537a536826",
       "from_artifact": "paragraph::GATHER-ACCOUNT-DETAILS",
       "to_artifact": "paragraph::GETCUSTDATA-BYCUST",
       "relationship_type": "performs",
@@ -8773,7 +8773,7 @@
       "is_resolved": true
     },
     {
-      "id": "424ce261-162b-4679-a982-70581d953dfe",
+      "id": "41e1015d-93a0-4409-9d09-cf9cc117ffd5",
       "from_artifact": "paragraph::GATHER-ACCOUNT-DETAILS",
       "to_artifact": "paragraph::GET-AUTH-SUMMARY",
       "relationship_type": "performs",
@@ -8792,7 +8792,7 @@
       "is_resolved": true
     },
     {
-      "id": "e6858f93-f2ec-4c80-a7b3-882ed68308f0",
+      "id": "ccea6f16-8472-47ff-8c17-8655a05d067d",
       "from_artifact": "paragraph::GETCARDXREF-BYACCT",
       "to_artifact": "paragraph::SEND-PAULST-SCREEN",
       "relationship_type": "performs",
@@ -8811,7 +8811,7 @@
       "is_resolved": true
     },
     {
-      "id": "8db6ba8f-181d-447d-a3a1-bf6f13255125",
+      "id": "4f4ae422-8a76-4b07-a2b9-5f4f9080a57c",
       "from_artifact": "paragraph::GETACCTDATA-BYACCT",
       "to_artifact": "paragraph::SEND-PAULST-SCREEN",
       "relationship_type": "performs",
@@ -8830,7 +8830,7 @@
       "is_resolved": true
     },
     {
-      "id": "4cdee21c-3f15-48aa-a413-c3c5c8911a9c",
+      "id": "2058870c-a2be-4580-9b38-38c8b535944f",
       "from_artifact": "paragraph::GETCUSTDATA-BYCUST",
       "to_artifact": "paragraph::SEND-PAULST-SCREEN",
       "relationship_type": "performs",
@@ -8849,7 +8849,7 @@
       "is_resolved": true
     },
     {
-      "id": "5db9c1d5-d8b2-437b-9d7b-c5f4e61aee8c",
+      "id": "e7ecbf3d-3481-4e17-ac7c-1d566929745f",
       "from_artifact": "paragraph::GET-AUTH-SUMMARY",
       "to_artifact": "paragraph::SCHEDULE-PSB",
       "relationship_type": "performs",
@@ -8868,7 +8868,7 @@
       "is_resolved": true
     },
     {
-      "id": "6070adf0-39cd-4aa1-b753-1687f93e391b",
+      "id": "f3738941-69bc-416c-b942-0a222ef4ae45",
       "from_artifact": "paragraph::GET-AUTH-SUMMARY",
       "to_artifact": "paragraph::SEND-PAULST-SCREEN",
       "relationship_type": "performs",
@@ -8887,7 +8887,7 @@
       "is_resolved": true
     },
     {
-      "id": "a16d2eab-32b6-412a-a39f-43e16ea14f13",
+      "id": "09bbc174-2a1f-45dd-8668-d10026a21502",
       "from_artifact": "paragraph::SCHEDULE-PSB",
       "to_artifact": "paragraph::SEND-PAULST-SCREEN",
       "relationship_type": "performs",
@@ -8906,7 +8906,7 @@
       "is_resolved": true
     },
     {
-      "id": "f07e05d7-4673-47a1-a30f-8bf15917cfea",
+      "id": "247023e1-375e-4ee6-a661-963fb5284d51",
       "from_artifact": "program::COPAUS0C",
       "to_artifact": "copybook::COPAU00",
       "relationship_type": "includes",
@@ -8925,7 +8925,7 @@
       "is_resolved": true
     },
     {
-      "id": "2778151c-7d31-4bdd-b4b0-9ff7a5bfa8a0",
+      "id": "9fb97faa-8363-4abe-9265-f3db0fe84248",
       "from_artifact": "program::COPAUS0C",
       "to_artifact": "copybook::CIPAUSMY",
       "relationship_type": "includes",
@@ -8944,7 +8944,7 @@
       "is_resolved": true
     },
     {
-      "id": "e3844d59-1cd5-4f2a-80d9-cb494964f89d",
+      "id": "403f1c79-780d-43bb-bdf4-275b5262fcd7",
       "from_artifact": "program::COPAUS0C",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
@@ -8963,7 +8963,7 @@
       "is_resolved": true
     },
     {
-      "id": "fbbe6cb8-e062-4900-bac9-aab3e049e5e9",
+      "id": "4b543f0d-a992-40c9-89af-b1489932416d",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::FRAUD-UPDATE",
       "relationship_type": "performs",
@@ -8982,7 +8982,7 @@
       "is_resolved": true
     },
     {
-      "id": "fd5cc723-3f4f-491a-a533-9ddd399a5bec",
+      "id": "77604d96-ae22-4a62-b68c-15fad905f290",
       "from_artifact": "program::COPAUS2C",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
@@ -9001,7 +9001,7 @@
       "is_resolved": true
     },
     {
-      "id": "25051aa2-3ba6-47e2-b407-cab90ed26f4d",
+      "id": "b8332b5e-1e64-4fa0-8d53-220efdd79e1c",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::1000-INITIALIZE",
       "relationship_type": "performs",
@@ -9020,7 +9020,7 @@
       "is_resolved": true
     },
     {
-      "id": "f0acaaf9-bb2f-451e-84a6-6b91a518f817",
+      "id": "e4766539-c285-413e-bab0-27f7bf646bf6",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::2000-FIND-NEXT-AUTH-SUMMARY",
       "relationship_type": "performs",
@@ -9039,7 +9039,7 @@
       "is_resolved": true
     },
     {
-      "id": "41be2400-82a5-45cf-b63e-d7a7cc8e71d5",
+      "id": "4701d712-53a1-4d99-a961-3ba45daf1161",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::4000-FILE-CLOSE",
       "relationship_type": "performs",
@@ -9058,7 +9058,7 @@
       "is_resolved": true
     },
     {
-      "id": "c8a6b0b7-1cf5-4a84-aaed-485b95511dcc",
+      "id": "c4d33a88-1c74-4c99-9d7c-c3f0a82fe53c",
       "from_artifact": "paragraph::1000-INITIALIZE",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -9077,7 +9077,7 @@
       "is_resolved": true
     },
     {
-      "id": "1435a7e5-8b32-48e6-aacb-475ea5a15114",
+      "id": "0fbd5bfc-e7eb-4c89-b963-965a88b66ce6",
       "from_artifact": "paragraph::2000-FIND-NEXT-AUTH-SUMMARY",
       "to_artifact": "paragraph::3000-FIND-NEXT-AUTH-DTL",
       "relationship_type": "performs",
@@ -9096,7 +9096,7 @@
       "is_resolved": true
     },
     {
-      "id": "a427ddc4-b71a-45ad-ab48-254456da4385",
+      "id": "7548eee0-c3a8-4fb0-8598-d4323991cb64",
       "from_artifact": "paragraph::2000-FIND-NEXT-AUTH-SUMMARY",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -9115,7 +9115,7 @@
       "is_resolved": true
     },
     {
-      "id": "8e1bff8f-3747-43f9-8b19-4d09ed3ce516",
+      "id": "74ddd472-97a4-4ef2-b273-26af527c4e09",
       "from_artifact": "paragraph::3000-FIND-NEXT-AUTH-DTL",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -9134,7 +9134,7 @@
       "is_resolved": true
     },
     {
-      "id": "cc07af44-9e2b-4602-90a3-5d59113c19e1",
+      "id": "19cc49dc-62d4-49c9-88d5-47280f898105",
       "from_artifact": "program::PAUDBUNL",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
@@ -9153,7 +9153,7 @@
       "is_resolved": false
     },
     {
-      "id": "8248d684-279f-4ba6-9463-188ecd652a95",
+      "id": "769ccc8e-2ff0-42ab-b198-7b06249d9350",
       "from_artifact": "program::PAUDBUNL",
       "to_artifact": "copybook::CIPAUSMY",
       "relationship_type": "includes",
@@ -9172,7 +9172,7 @@
       "is_resolved": false
     },
     {
-      "id": "76f6ed20-eb63-43d1-ae8f-b1ef6baabcc4",
+      "id": "cf791773-119c-4fbe-89ea-e8e87d344bb9",
       "from_artifact": "program::PAUDBUNL",
       "to_artifact": "copybook::IMSFUNCS",
       "relationship_type": "includes",
@@ -9191,7 +9191,7 @@
       "is_resolved": false
     },
     {
-      "id": "48810315-dc8c-43c6-86b2-0d76bf8201c5",
+      "id": "d00b7c31-a1ee-4455-a0bf-fdbbeb423b63",
       "from_artifact": "program::PAUDBUNL",
       "to_artifact": "copybook::PAUTBPCB",
       "relationship_type": "includes",
@@ -9210,7 +9210,7 @@
       "is_resolved": false
     },
     {
-      "id": "9698a918-bbcf-44aa-bfcc-ff8144e8a394",
+      "id": "2b698c28-c725-4004-8d69-63ac4d9a6717",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::RETURN-TO-PREV-SCREEN",
       "relationship_type": "performs",
@@ -9229,7 +9229,7 @@
       "is_resolved": true
     },
     {
-      "id": "49be2a85-6392-4e80-8cae-a8309d75e352",
+      "id": "83e0cdc7-b7a2-4882-b730-9a060bb8c762",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::PROCESS-ENTER-KEY",
       "relationship_type": "performs",
@@ -9248,7 +9248,7 @@
       "is_resolved": true
     },
     {
-      "id": "695ae1a6-1c70-4eff-b12e-653e9849bc38",
+      "id": "bf142ea6-7fce-4989-a762-eb5d7ac30260",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::SEND-AUTHVIEW-SCREEN",
       "relationship_type": "performs",
@@ -9267,7 +9267,7 @@
       "is_resolved": true
     },
     {
-      "id": "495d2ac3-0171-403b-8555-349eb904d841",
+      "id": "ae8bfe12-5fb2-4dff-9c8a-94756840df28",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::RECEIVE-AUTHVIEW-SCREEN",
       "relationship_type": "performs",
@@ -9286,7 +9286,7 @@
       "is_resolved": true
     },
     {
-      "id": "e690e1ff-82d9-448c-9318-99130041ed15",
+      "id": "111a3963-c144-4933-875c-1524e306a5d6",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::MARK-AUTH-FRAUD",
       "relationship_type": "performs",
@@ -9305,7 +9305,7 @@
       "is_resolved": true
     },
     {
-      "id": "67d7ccf2-8c2e-4dc5-9ae3-c1cf59782a9f",
+      "id": "637c2cf1-0ae6-4876-8957-06e1563e6eb2",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::PROCESS-PF8-KEY",
       "relationship_type": "performs",
@@ -9324,7 +9324,7 @@
       "is_resolved": true
     },
     {
-      "id": "da7780ba-0c0a-4e68-870f-6009fbede108",
+      "id": "d1723d65-cd3c-4c14-a348-bb6b99118504",
       "from_artifact": "paragraph::PROCESS-ENTER-KEY",
       "to_artifact": "paragraph::READ-AUTH-RECORD",
       "relationship_type": "performs",
@@ -9343,7 +9343,7 @@
       "is_resolved": true
     },
     {
-      "id": "425231ff-c1d0-43f8-bc75-c2a5e29db794",
+      "id": "3ff68ccd-3aa9-45e0-b7a7-3fbfe3bf0832",
       "from_artifact": "paragraph::PROCESS-ENTER-KEY",
       "to_artifact": "paragraph::TAKE-SYNCPOINT",
       "relationship_type": "performs",
@@ -9362,7 +9362,7 @@
       "is_resolved": true
     },
     {
-      "id": "6aa5dab3-3622-47c9-b718-c588aa6e9138",
+      "id": "a9051661-7621-4a6a-bbd2-25eb97d83da9",
       "from_artifact": "paragraph::PROCESS-ENTER-KEY",
       "to_artifact": "paragraph::POPULATE-AUTH-DETAILS",
       "relationship_type": "performs",
@@ -9381,7 +9381,7 @@
       "is_resolved": true
     },
     {
-      "id": "23132641-f3b1-430f-9b35-fb81aecdb6a6",
+      "id": "b66a9f7b-ec05-43ed-8c6c-245af317dcef",
       "from_artifact": "paragraph::MARK-AUTH-FRAUD",
       "to_artifact": "paragraph::READ-AUTH-RECORD",
       "relationship_type": "performs",
@@ -9400,7 +9400,7 @@
       "is_resolved": true
     },
     {
-      "id": "68394fc7-1dc7-4a7e-9584-c77e4a8bed91",
+      "id": "117e96e7-82d6-48c5-8b37-6100c0416278",
       "from_artifact": "paragraph::MARK-AUTH-FRAUD",
       "to_artifact": "paragraph::UPDATE-AUTH-DETAILS",
       "relationship_type": "performs",
@@ -9419,7 +9419,7 @@
       "is_resolved": true
     },
     {
-      "id": "96d26475-d892-40f5-b0de-04542e8a56d8",
+      "id": "aecf5d82-d68b-4b32-ba60-b76db7507891",
       "from_artifact": "paragraph::MARK-AUTH-FRAUD",
       "to_artifact": "paragraph::ROLL-BACK",
       "relationship_type": "performs",
@@ -9438,7 +9438,7 @@
       "is_resolved": true
     },
     {
-      "id": "af5a8f02-717e-4326-8784-22d536299cc2",
+      "id": "0ef27aeb-4a29-4ed6-b4c3-2074dbb9fd9f",
       "from_artifact": "paragraph::MARK-AUTH-FRAUD",
       "to_artifact": "paragraph::POPULATE-AUTH-DETAILS",
       "relationship_type": "performs",
@@ -9457,7 +9457,7 @@
       "is_resolved": true
     },
     {
-      "id": "3d4c20e3-529a-4ffb-89f2-aabfa80a5944",
+      "id": "a740d19e-8ee0-4bf0-b7d3-984d2c6b65cc",
       "from_artifact": "paragraph::PROCESS-PF8-KEY",
       "to_artifact": "paragraph::READ-AUTH-RECORD",
       "relationship_type": "performs",
@@ -9476,7 +9476,7 @@
       "is_resolved": true
     },
     {
-      "id": "0615a4bb-6487-434e-a585-344c40fb5833",
+      "id": "3ace82d4-91ea-46b0-8093-4ea584de5851",
       "from_artifact": "paragraph::PROCESS-PF8-KEY",
       "to_artifact": "paragraph::READ-NEXT-AUTH-RECORD",
       "relationship_type": "performs",
@@ -9495,7 +9495,7 @@
       "is_resolved": true
     },
     {
-      "id": "91f16067-3e77-4cb4-8f2f-01ca82fa57fb",
+      "id": "5491e564-37fb-451b-b471-21936210458d",
       "from_artifact": "paragraph::PROCESS-PF8-KEY",
       "to_artifact": "paragraph::TAKE-SYNCPOINT",
       "relationship_type": "performs",
@@ -9514,7 +9514,7 @@
       "is_resolved": true
     },
     {
-      "id": "4459a593-9d39-4c4b-b5cc-1b4e4fd032f4",
+      "id": "6c7ea1be-fade-464c-914f-f476cb08c016",
       "from_artifact": "paragraph::PROCESS-PF8-KEY",
       "to_artifact": "paragraph::POPULATE-AUTH-DETAILS",
       "relationship_type": "performs",
@@ -9533,7 +9533,7 @@
       "is_resolved": true
     },
     {
-      "id": "0a28c24f-2b60-4904-8eac-d6e27dd56217",
+      "id": "bed958c9-5a8b-4443-961c-4842c7622cf3",
       "from_artifact": "paragraph::SEND-AUTHVIEW-SCREEN",
       "to_artifact": "paragraph::POPULATE-HEADER-INFO",
       "relationship_type": "performs",
@@ -9552,7 +9552,7 @@
       "is_resolved": true
     },
     {
-      "id": "71f9a196-83ce-44ab-bf22-bb580ed34bfd",
+      "id": "56d92f22-595e-43b1-bb1f-0b9a55a48fbf",
       "from_artifact": "paragraph::READ-AUTH-RECORD",
       "to_artifact": "paragraph::SCHEDULE-PSB",
       "relationship_type": "performs",
@@ -9571,7 +9571,7 @@
       "is_resolved": true
     },
     {
-      "id": "7934378a-477a-4ab5-8fa0-faa7f22634a5",
+      "id": "c6ec14d7-4cad-4e42-8b33-2742e8c0f432",
       "from_artifact": "paragraph::READ-AUTH-RECORD",
       "to_artifact": "paragraph::SEND-AUTHVIEW-SCREEN",
       "relationship_type": "performs",
@@ -9590,7 +9590,7 @@
       "is_resolved": true
     },
     {
-      "id": "73818a7f-dab4-413d-a16e-dc6fbf3f6a53",
+      "id": "b73a2b76-6f83-47ff-ae5b-52e90717f380",
       "from_artifact": "paragraph::READ-NEXT-AUTH-RECORD",
       "to_artifact": "paragraph::SEND-AUTHVIEW-SCREEN",
       "relationship_type": "performs",
@@ -9609,7 +9609,7 @@
       "is_resolved": true
     },
     {
-      "id": "1fbded1f-996e-4908-886e-2eb7a4a4b55f",
+      "id": "1795e9c4-806f-4a25-987b-e8d35826d923",
       "from_artifact": "paragraph::UPDATE-AUTH-DETAILS",
       "to_artifact": "paragraph::TAKE-SYNCPOINT",
       "relationship_type": "performs",
@@ -9628,7 +9628,7 @@
       "is_resolved": true
     },
     {
-      "id": "86770c8f-8077-4564-99d9-763f1e5aa9b8",
+      "id": "d86e251b-615b-439a-9f4f-ec40fb3e81e8",
       "from_artifact": "paragraph::UPDATE-AUTH-DETAILS",
       "to_artifact": "paragraph::ROLL-BACK",
       "relationship_type": "performs",
@@ -9647,7 +9647,7 @@
       "is_resolved": true
     },
     {
-      "id": "9b2b202a-70cd-4ae7-b906-a7b92e588646",
+      "id": "6755c07e-5265-4b29-b914-0ed5f2fcee0e",
       "from_artifact": "paragraph::UPDATE-AUTH-DETAILS",
       "to_artifact": "paragraph::SEND-AUTHVIEW-SCREEN",
       "relationship_type": "performs",
@@ -9666,7 +9666,7 @@
       "is_resolved": true
     },
     {
-      "id": "2a76ae9f-3bd0-4dcc-bfcc-2bb291217196",
+      "id": "750795c8-4c9c-494b-8f4f-724684f92f5a",
       "from_artifact": "paragraph::SCHEDULE-PSB",
       "to_artifact": "paragraph::SEND-AUTHVIEW-SCREEN",
       "relationship_type": "performs",
@@ -9685,7 +9685,7 @@
       "is_resolved": true
     },
     {
-      "id": "3329b632-a631-4842-aeb6-784c4378401d",
+      "id": "7767d147-4f0e-4618-b1f3-a5f268475114",
       "from_artifact": "program::COPAUS1C",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
@@ -9704,7 +9704,7 @@
       "is_resolved": false
     },
     {
-      "id": "9d860009-4515-46f9-ab69-b353f4e875c5",
+      "id": "5fcdc0bf-3551-4ed7-b201-bea0aeb64699",
       "from_artifact": "program::COPAUS1C",
       "to_artifact": "copybook::CIPAUSMY",
       "relationship_type": "includes",
@@ -9723,7 +9723,7 @@
       "is_resolved": false
     },
     {
-      "id": "247bb2dc-9758-4f4c-9555-3b1e588e120b",
+      "id": "d5bae176-de29-4391-8694-fafb86e77c6e",
       "from_artifact": "program::COPAUS1C",
       "to_artifact": "copybook::COPAU01",
       "relationship_type": "includes",
@@ -9742,7 +9742,7 @@
       "is_resolved": false
     },
     {
-      "id": "fe48c69d-7c34-4b3a-9716-a14c26f9d9bf",
+      "id": "c5acc815-bd94-4b8f-8d20-8e68dfffbb50",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::1000-INITIALIZE",
       "relationship_type": "performs",
@@ -9761,7 +9761,7 @@
       "is_resolved": true
     },
     {
-      "id": "1f4dda1f-2d3d-40d7-ad42-7d6778e52ae0",
+      "id": "32a3ad23-b82b-4d67-9386-49d96dccad94",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::2000-MAIN-PROCESS",
       "relationship_type": "performs",
@@ -9780,7 +9780,7 @@
       "is_resolved": true
     },
     {
-      "id": "d9da10a0-bb77-433a-bb4c-15c07b86d0c3",
+      "id": "2974ed23-7feb-4066-9db7-7e297f0d0eaf",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::9000-TERMINATE",
       "relationship_type": "performs",
@@ -9799,7 +9799,7 @@
       "is_resolved": true
     },
     {
-      "id": "03e383bc-a665-493e-a6d3-d07dfbefd19f",
+      "id": "6c8f36fa-635e-496c-ae1e-4cc6a5337be1",
       "from_artifact": "paragraph::1000-INITIALIZE",
       "to_artifact": "paragraph::1100-OPEN-REQUEST-QUEUE",
       "relationship_type": "performs",
@@ -9818,7 +9818,7 @@
       "is_resolved": true
     },
     {
-      "id": "3747ccc3-46ad-4e34-ab4e-ddef4947905c",
+      "id": "52c29e5c-d29b-4000-bd88-5d0e416ea3e4",
       "from_artifact": "paragraph::1000-INITIALIZE",
       "to_artifact": "paragraph::3100-READ-REQUEST-MQ",
       "relationship_type": "performs",
@@ -9837,7 +9837,7 @@
       "is_resolved": true
     },
     {
-      "id": "abda1606-7bc7-49b6-9197-20592fdbf8f0",
+      "id": "ae44f261-3e03-4c22-a877-6e13e6bac023",
       "from_artifact": "paragraph::1100-OPEN-REQUEST-QUEUE",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -9856,7 +9856,7 @@
       "is_resolved": true
     },
     {
-      "id": "cb322809-6c93-4d70-93ad-01dab063f7ac",
+      "id": "bf3135d8-0755-4c5d-a72b-8c412ffa045f",
       "from_artifact": "paragraph::1200-SCHEDULE-PSB",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -9875,7 +9875,7 @@
       "is_resolved": true
     },
     {
-      "id": "17079b58-b1c3-4c7e-b120-d3da5f4f0034",
+      "id": "5729dd89-a1d2-4900-9452-e213a01a6be9",
       "from_artifact": "paragraph::2000-MAIN-PROCESS",
       "to_artifact": "paragraph::2100-EXTRACT-REQUEST-MSG",
       "relationship_type": "performs",
@@ -9894,7 +9894,7 @@
       "is_resolved": true
     },
     {
-      "id": "a19774de-23e1-4a60-9720-9e59cda4e3f4",
+      "id": "8fc55515-8f69-4ac0-81e5-53e22432b8d6",
       "from_artifact": "paragraph::2000-MAIN-PROCESS",
       "to_artifact": "paragraph::5000-PROCESS-AUTH",
       "relationship_type": "performs",
@@ -9913,7 +9913,7 @@
       "is_resolved": true
     },
     {
-      "id": "dc29647b-538a-4ab5-873f-38b770fd7f28",
+      "id": "9272b607-d99d-48ff-b0c3-adf7f7f931e6",
       "from_artifact": "paragraph::2000-MAIN-PROCESS",
       "to_artifact": "paragraph::3100-READ-REQUEST-MQ",
       "relationship_type": "performs",
@@ -9932,7 +9932,7 @@
       "is_resolved": true
     },
     {
-      "id": "77317241-fcaf-4098-bc0c-3dfa6a429a30",
+      "id": "cd3a8456-7c54-48eb-a470-3870635d2e53",
       "from_artifact": "paragraph::3100-READ-REQUEST-MQ",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -9951,7 +9951,7 @@
       "is_resolved": true
     },
     {
-      "id": "bf6a4357-a237-4aab-a5ca-4e65c42d2d84",
+      "id": "df3dfcb9-58b6-4f50-8ca3-bc663a497a5c",
       "from_artifact": "paragraph::5000-PROCESS-AUTH",
       "to_artifact": "paragraph::1200-SCHEDULE-PSB",
       "relationship_type": "performs",
@@ -9970,7 +9970,7 @@
       "is_resolved": true
     },
     {
-      "id": "b3cbd87e-fc48-4f16-8cbf-0dfe055571ef",
+      "id": "87b6dcd3-0812-4284-8e42-5385d3db583c",
       "from_artifact": "paragraph::5000-PROCESS-AUTH",
       "to_artifact": "paragraph::5100-READ-XREF-RECORD",
       "relationship_type": "performs",
@@ -9989,7 +9989,7 @@
       "is_resolved": true
     },
     {
-      "id": "9942a6e0-1f7d-4401-9b75-81ce68840e0f",
+      "id": "1b880854-17f9-4a17-94fb-ef417e4a1cf4",
       "from_artifact": "paragraph::5000-PROCESS-AUTH",
       "to_artifact": "paragraph::5200-READ-ACCT-RECORD",
       "relationship_type": "performs",
@@ -10008,7 +10008,7 @@
       "is_resolved": true
     },
     {
-      "id": "e17e2798-df73-4ff0-8312-9b495c42ec02",
+      "id": "d3a32397-bd6d-43e3-900e-10c25afcf46e",
       "from_artifact": "paragraph::5000-PROCESS-AUTH",
       "to_artifact": "paragraph::5300-READ-CUST-RECORD",
       "relationship_type": "performs",
@@ -10027,7 +10027,7 @@
       "is_resolved": true
     },
     {
-      "id": "07985b76-8203-47c3-a248-c9556a2298b2",
+      "id": "980d379c-7fad-427b-9f7b-c170085a6e26",
       "from_artifact": "paragraph::5000-PROCESS-AUTH",
       "to_artifact": "paragraph::5500-READ-AUTH-SUMMRY",
       "relationship_type": "performs",
@@ -10046,7 +10046,7 @@
       "is_resolved": true
     },
     {
-      "id": "f1173f87-4e4f-4be7-ac23-60926b063bbb",
+      "id": "1cdfa433-ca79-4af6-a4bf-33678d37446f",
       "from_artifact": "paragraph::5000-PROCESS-AUTH",
       "to_artifact": "paragraph::5600-READ-PROFILE-DATA",
       "relationship_type": "performs",
@@ -10065,7 +10065,7 @@
       "is_resolved": true
     },
     {
-      "id": "d371e865-f918-4eef-b3d7-1b192ffb1d00",
+      "id": "8a785893-e32f-4c7c-912a-3cad0ae20e4d",
       "from_artifact": "paragraph::5000-PROCESS-AUTH",
       "to_artifact": "paragraph::6000-MAKE-DECISION",
       "relationship_type": "performs",
@@ -10084,7 +10084,7 @@
       "is_resolved": true
     },
     {
-      "id": "58be087c-e746-4f86-97e2-f7dbec55f4cb",
+      "id": "78013cfa-5f60-48e3-b921-150ffee95a97",
       "from_artifact": "paragraph::5000-PROCESS-AUTH",
       "to_artifact": "paragraph::7100-SEND-RESPONSE",
       "relationship_type": "performs",
@@ -10103,7 +10103,7 @@
       "is_resolved": true
     },
     {
-      "id": "07d56c43-9510-450e-840f-fa25c64ad6e5",
+      "id": "ae08b34e-87b2-45ee-94ef-548e1dd2463f",
       "from_artifact": "paragraph::5000-PROCESS-AUTH",
       "to_artifact": "paragraph::8000-WRITE-AUTH-TO-DB",
       "relationship_type": "performs",
@@ -10122,7 +10122,7 @@
       "is_resolved": true
     },
     {
-      "id": "5b23f599-4fcb-43a3-a9e7-e5dbcfcce852",
+      "id": "24554fbc-de38-4b81-8af5-be73d03b7d91",
       "from_artifact": "paragraph::5100-READ-XREF-RECORD",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -10141,7 +10141,7 @@
       "is_resolved": true
     },
     {
-      "id": "ae9a1378-659b-491f-b7e4-4b93edbe1a2c",
+      "id": "d377bf5b-6cb0-45f8-a2d7-21e3f41ef5f1",
       "from_artifact": "paragraph::5200-READ-ACCT-RECORD",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -10160,7 +10160,7 @@
       "is_resolved": true
     },
     {
-      "id": "f8372f3c-7b3d-489f-9c3d-5b6cdeb24c49",
+      "id": "9a1986be-a1ad-43c4-af39-b8f25c023659",
       "from_artifact": "paragraph::5300-READ-CUST-RECORD",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -10179,7 +10179,7 @@
       "is_resolved": true
     },
     {
-      "id": "eae7c24f-ee11-4785-97f9-25e892f65d84",
+      "id": "896db07e-3945-4fc6-ac9a-b49f49e39318",
       "from_artifact": "paragraph::5500-READ-AUTH-SUMMRY",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -10198,7 +10198,7 @@
       "is_resolved": true
     },
     {
-      "id": "17834859-07c8-43ba-8557-dc88e561b7e4",
+      "id": "b62623c5-2b8c-43fa-990a-d62f7ccbadf9",
       "from_artifact": "paragraph::7100-SEND-RESPONSE",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -10217,7 +10217,7 @@
       "is_resolved": true
     },
     {
-      "id": "6e22c9bb-62a4-4e8d-8a28-5ab129be76d7",
+      "id": "af7e9be3-4d62-4473-9996-b1da3a8cd311",
       "from_artifact": "paragraph::8000-WRITE-AUTH-TO-DB",
       "to_artifact": "paragraph::8400-UPDATE-SUMMARY",
       "relationship_type": "performs",
@@ -10236,7 +10236,7 @@
       "is_resolved": true
     },
     {
-      "id": "6722bb17-b1da-4c34-bb0b-995fe9322f0a",
+      "id": "d4f5ad53-78b4-43ad-9eac-65ba4c2f6eeb",
       "from_artifact": "paragraph::8000-WRITE-AUTH-TO-DB",
       "to_artifact": "paragraph::8500-INSERT-AUTH",
       "relationship_type": "performs",
@@ -10255,7 +10255,7 @@
       "is_resolved": true
     },
     {
-      "id": "f49eab43-0e21-40d4-901f-877006dea9aa",
+      "id": "2ca8c896-303c-42d6-bb7c-416e1dd17b6c",
       "from_artifact": "paragraph::8400-UPDATE-SUMMARY",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -10274,7 +10274,7 @@
       "is_resolved": true
     },
     {
-      "id": "8702bc85-5398-4b18-9746-ffa6b9f50712",
+      "id": "4d66ced3-0f6d-4bde-be10-000167c14893",
       "from_artifact": "paragraph::8500-INSERT-AUTH",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -10293,7 +10293,7 @@
       "is_resolved": true
     },
     {
-      "id": "44601fd4-7e21-4d31-8cba-61adf6a5287e",
+      "id": "e1289665-f4dd-4f9a-aa1a-4b201dffd836",
       "from_artifact": "paragraph::9000-TERMINATE",
       "to_artifact": "paragraph::9100-CLOSE-REQUEST-QUEUE",
       "relationship_type": "performs",
@@ -10312,7 +10312,7 @@
       "is_resolved": true
     },
     {
-      "id": "1682af22-495f-45c4-91ad-f78e90de6e18",
+      "id": "3b6b00dd-72fe-4a28-9268-b89842e958c8",
       "from_artifact": "paragraph::9100-CLOSE-REQUEST-QUEUE",
       "to_artifact": "paragraph::9500-LOG-ERROR",
       "relationship_type": "performs",
@@ -10331,7 +10331,7 @@
       "is_resolved": true
     },
     {
-      "id": "e5fa6463-518e-4c91-9f14-3688e4a65f08",
+      "id": "1876605d-fe05-47aa-a813-887675f62411",
       "from_artifact": "paragraph::9500-LOG-ERROR",
       "to_artifact": "paragraph::9990-END-ROUTINE",
       "relationship_type": "performs",
@@ -10350,7 +10350,7 @@
       "is_resolved": true
     },
     {
-      "id": "ca0c413a-4b08-467a-ba61-13dcfce16d38",
+      "id": "683f0263-d9bb-4df5-a7d9-45a15c24ca3c",
       "from_artifact": "paragraph::9990-END-ROUTINE",
       "to_artifact": "paragraph::9000-TERMINATE",
       "relationship_type": "performs",
@@ -10369,7 +10369,7 @@
       "is_resolved": true
     },
     {
-      "id": "7a667fc1-e620-4710-9354-a625e5643272",
+      "id": "823c4266-39f2-4f6b-b44c-4c54546381f9",
       "from_artifact": "program::COPAUA0C",
       "to_artifact": "copybook::CCPAUERY",
       "relationship_type": "includes",
@@ -10388,7 +10388,7 @@
       "is_resolved": false
     },
     {
-      "id": "c3a29ec8-85bd-415f-897f-e5c92170101f",
+      "id": "ee137da2-8d05-4eea-afec-9bfd49c7cb31",
       "from_artifact": "program::COPAUA0C",
       "to_artifact": "copybook::CCPAURLY",
       "relationship_type": "includes",
@@ -10407,7 +10407,7 @@
       "is_resolved": false
     },
     {
-      "id": "b8bcdf34-80db-488c-b7b7-31c9d9f5a4b9",
+      "id": "56d19b24-d342-45d5-bbe6-32a1e799c898",
       "from_artifact": "program::COPAUA0C",
       "to_artifact": "copybook::CCPAURQY",
       "relationship_type": "includes",
@@ -10426,7 +10426,7 @@
       "is_resolved": false
     },
     {
-      "id": "64f7a7cb-d112-40f6-a8fd-4b5572e7ec85",
+      "id": "340175b4-30a3-4ca4-a55d-4e6681a4eb8d",
       "from_artifact": "program::COPAUA0C",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
@@ -10445,7 +10445,7 @@
       "is_resolved": false
     },
     {
-      "id": "60cf9d11-c2f9-4f98-9a72-d034e53f3d4b",
+      "id": "f6b3df50-9727-44da-b6c0-505e5057023a",
       "from_artifact": "program::COPAUA0C",
       "to_artifact": "copybook::CIPAUSMY",
       "relationship_type": "includes",
@@ -10464,7 +10464,7 @@
       "is_resolved": false
     },
     {
-      "id": "c5d59ad9-fbef-4091-824a-d356824955b6",
+      "id": "30694eb8-0449-4ad9-bb1d-ae55ba8e3a2e",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::1000-INITIALIZE",
       "relationship_type": "performs",
@@ -10483,7 +10483,7 @@
       "is_resolved": true
     },
     {
-      "id": "c7fcf44b-607a-4d26-b30f-64596f3c7a9c",
+      "id": "c93ea541-e1e5-4a2b-a3fc-e1fc85f63e11",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::2000-READ-ROOT-SEG-FILE",
       "relationship_type": "performs",
@@ -10502,7 +10502,7 @@
       "is_resolved": true
     },
     {
-      "id": "2bfeb27e-e18f-49c4-88f0-03a70c25d314",
+      "id": "dc7aa019-cd71-4806-8ab0-f02a237a0fc0",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::3000-READ-CHILD-SEG-FILE",
       "relationship_type": "performs",
@@ -10521,7 +10521,7 @@
       "is_resolved": true
     },
     {
-      "id": "b8907dfe-4efb-49e6-aa31-f9a1aef3a6c8",
+      "id": "a6dda0f5-e01f-4bf3-9a33-c36ac7b9833f",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::4000-FILE-CLOSE",
       "relationship_type": "performs",
@@ -10540,7 +10540,7 @@
       "is_resolved": true
     },
     {
-      "id": "6e2f50fb-841e-409e-83ea-b734cc9ce2ff",
+      "id": "a661d268-b9a8-43e3-a6b7-0e9cd3619cba",
       "from_artifact": "paragraph::1000-INITIALIZE",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -10559,7 +10559,7 @@
       "is_resolved": true
     },
     {
-      "id": "32aa224f-b775-4c64-94d0-097b206d8328",
+      "id": "5079b1b4-98d8-4af5-b144-07754fd0a54f",
       "from_artifact": "paragraph::2000-READ-ROOT-SEG-FILE",
       "to_artifact": "paragraph::2100-INSERT-ROOT-SEG",
       "relationship_type": "performs",
@@ -10578,7 +10578,7 @@
       "is_resolved": true
     },
     {
-      "id": "73310a0d-115d-49d9-acf4-aa1f600cd60a",
+      "id": "42925950-042b-4e69-95ff-d106b07f8778",
       "from_artifact": "paragraph::2100-INSERT-ROOT-SEG",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -10597,7 +10597,7 @@
       "is_resolved": true
     },
     {
-      "id": "ca47390d-9bbd-4d73-9988-368fb91e0553",
+      "id": "4772493a-c117-40b7-bbbb-0a7dfb362d14",
       "from_artifact": "paragraph::3000-READ-CHILD-SEG-FILE",
       "to_artifact": "paragraph::3100-INSERT-CHILD-SEG",
       "relationship_type": "performs",
@@ -10616,7 +10616,7 @@
       "is_resolved": true
     },
     {
-      "id": "a41e5291-7c36-43db-bb9d-2bed413dbf30",
+      "id": "ca21a60b-038a-4264-a18b-3fb78b4a7bae",
       "from_artifact": "paragraph::3100-INSERT-CHILD-SEG",
       "to_artifact": "paragraph::3200-INSERT-IMS-CALL",
       "relationship_type": "performs",
@@ -10635,7 +10635,7 @@
       "is_resolved": true
     },
     {
-      "id": "841ca56c-3b2d-4945-9f05-932025607f53",
+      "id": "813bc010-901d-4faa-a2f7-a21084194680",
       "from_artifact": "paragraph::3100-INSERT-CHILD-SEG",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -10654,7 +10654,7 @@
       "is_resolved": true
     },
     {
-      "id": "0523a4ad-554e-4c99-b8ae-5b21475aed67",
+      "id": "8ec9e592-c4f6-441b-b3f5-ea23aa60603f",
       "from_artifact": "paragraph::3200-INSERT-IMS-CALL",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -10673,7 +10673,7 @@
       "is_resolved": true
     },
     {
-      "id": "c3088d15-5eb9-4b44-ade1-7e2cea99e655",
+      "id": "6984ae54-43ec-422e-8feb-bb458ebc2ac0",
       "from_artifact": "program::PAUDBLOD",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
@@ -10692,7 +10692,7 @@
       "is_resolved": false
     },
     {
-      "id": "acb08ec9-cdbf-4f7d-8666-89f0423c2669",
+      "id": "123969aa-45c5-4d2f-b5e7-aff01940f8b4",
       "from_artifact": "program::PAUDBLOD",
       "to_artifact": "copybook::CIPAUSMY",
       "relationship_type": "includes",
@@ -10711,7 +10711,7 @@
       "is_resolved": false
     },
     {
-      "id": "6bd01d5b-ebc4-44ab-8d6f-091aee783fd2",
+      "id": "b8430ad9-26af-453d-a0f9-1b42289d99d0",
       "from_artifact": "program::PAUDBLOD",
       "to_artifact": "copybook::IMSFUNCS",
       "relationship_type": "includes",
@@ -10730,7 +10730,7 @@
       "is_resolved": false
     },
     {
-      "id": "7faf3717-27d3-4398-9ebb-31d744ac03e9",
+      "id": "cead1733-3521-4de9-aa8c-09e3de2f176c",
       "from_artifact": "program::PAUDBLOD",
       "to_artifact": "copybook::PAUTBPCB",
       "relationship_type": "includes",
@@ -10749,7 +10749,7 @@
       "is_resolved": false
     },
     {
-      "id": "d7978f37-02ab-46f4-ad1d-1da47bd216bb",
+      "id": "907455be-9da0-4f82-b8f2-1b6f71b239c6",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::1000-INITIALIZE",
       "relationship_type": "performs",
@@ -10768,7 +10768,7 @@
       "is_resolved": true
     },
     {
-      "id": "4a9ea1a7-d340-48d9-b4f1-19b6210f2e9b",
+      "id": "788cef57-aa9c-44be-829a-7412bc88c3fa",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::2000-FIND-NEXT-AUTH-SUMMARY",
       "relationship_type": "performs",
@@ -10787,7 +10787,7 @@
       "is_resolved": true
     },
     {
-      "id": "a877522b-fdcd-4a98-8a97-3f88725795b3",
+      "id": "1b6b7a45-1de0-4acc-9462-08b7203e2f36",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::4000-FILE-CLOSE",
       "relationship_type": "performs",
@@ -10806,7 +10806,7 @@
       "is_resolved": true
     },
     {
-      "id": "6375859b-72a2-4a11-a045-9cc89bee2d97",
+      "id": "854b40a8-f682-4699-b09a-76f47897f10e",
       "from_artifact": "paragraph::2000-FIND-NEXT-AUTH-SUMMARY",
       "to_artifact": "paragraph::3100-INSERT-PARENT-SEG-GSAM",
       "relationship_type": "performs",
@@ -10825,7 +10825,7 @@
       "is_resolved": true
     },
     {
-      "id": "39db58a1-e2aa-4fba-866e-b402e2cd8d9b",
+      "id": "38f49935-8f16-425c-8f78-a8514a86bbbc",
       "from_artifact": "paragraph::2000-FIND-NEXT-AUTH-SUMMARY",
       "to_artifact": "paragraph::3000-FIND-NEXT-AUTH-DTL",
       "relationship_type": "performs",
@@ -10844,7 +10844,7 @@
       "is_resolved": true
     },
     {
-      "id": "4582dfff-eaea-4fac-925d-2d42c09f8b39",
+      "id": "fb7bf703-fba9-4fae-9737-338e625ed08e",
       "from_artifact": "paragraph::2000-FIND-NEXT-AUTH-SUMMARY",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -10863,7 +10863,7 @@
       "is_resolved": true
     },
     {
-      "id": "f3c12a52-bb0b-402d-8d3c-5f12fb8e173c",
+      "id": "005d1514-ed16-437b-908e-e55245f82833",
       "from_artifact": "paragraph::3000-FIND-NEXT-AUTH-DTL",
       "to_artifact": "paragraph::3200-INSERT-CHILD-SEG-GSAM",
       "relationship_type": "performs",
@@ -10882,7 +10882,7 @@
       "is_resolved": true
     },
     {
-      "id": "d2a11356-eafe-409e-b043-88943505a9fd",
+      "id": "1b35e6e7-5a71-4764-8e67-3fd388dc1753",
       "from_artifact": "paragraph::3000-FIND-NEXT-AUTH-DTL",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -10901,7 +10901,7 @@
       "is_resolved": true
     },
     {
-      "id": "b20495fd-9fbf-4ca0-ab64-0b47d755a884",
+      "id": "5ac1994a-a9db-43d6-9edd-a27ee76f8210",
       "from_artifact": "paragraph::3100-INSERT-PARENT-SEG-GSAM",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -10920,7 +10920,7 @@
       "is_resolved": true
     },
     {
-      "id": "b65b3be0-71b4-40d3-9e2b-322466117e01",
+      "id": "77971e10-d0dc-4d5d-b336-2069509e3e2b",
       "from_artifact": "paragraph::3200-INSERT-CHILD-SEG-GSAM",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -10939,7 +10939,7 @@
       "is_resolved": true
     },
     {
-      "id": "b33297ae-c07e-488c-a0bb-668d482a1df5",
+      "id": "6afe4c6b-c067-4a27-9e17-457b3d7c37a0",
       "from_artifact": "program::DBUNLDGS",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
@@ -10958,7 +10958,7 @@
       "is_resolved": false
     },
     {
-      "id": "a53f0f65-3fe8-4b54-a2ce-345ee0d2b31e",
+      "id": "7801060f-3a78-4698-a31e-770fd3d48cfb",
       "from_artifact": "program::DBUNLDGS",
       "to_artifact": "copybook::CIPAUSMY",
       "relationship_type": "includes",
@@ -10977,7 +10977,7 @@
       "is_resolved": false
     },
     {
-      "id": "d17d9e50-417e-4a82-8568-194454e3b63c",
+      "id": "097382bb-6cd1-4499-8502-1fb5c41849af",
       "from_artifact": "program::DBUNLDGS",
       "to_artifact": "copybook::IMSFUNCS",
       "relationship_type": "includes",
@@ -10996,7 +10996,7 @@
       "is_resolved": false
     },
     {
-      "id": "e5044714-476f-4766-b8aa-e5c17250c5c7",
+      "id": "828e6724-7b39-449a-af14-a14a1535c655",
       "from_artifact": "program::DBUNLDGS",
       "to_artifact": "copybook::PADFLPCB",
       "relationship_type": "includes",
@@ -11015,7 +11015,7 @@
       "is_resolved": false
     },
     {
-      "id": "156a4f20-737e-44af-bd6e-2c242781c4d7",
+      "id": "31e2b2ad-540e-4dcc-ae94-4a6cec37d352",
       "from_artifact": "program::DBUNLDGS",
       "to_artifact": "copybook::PASFLPCB",
       "relationship_type": "includes",
@@ -11034,7 +11034,7 @@
       "is_resolved": false
     },
     {
-      "id": "70f4dadc-b80e-4032-87e6-c32507f5d014",
+      "id": "59a64fbe-2d54-4adb-9f50-86c30001f801",
       "from_artifact": "program::DBUNLDGS",
       "to_artifact": "copybook::PAUTBPCB",
       "relationship_type": "includes",
@@ -11053,7 +11053,7 @@
       "is_resolved": false
     },
     {
-      "id": "82e3b97e-ad89-4636-a2ec-92efb81798bd",
+      "id": "56c77731-5005-4cc1-a6a0-1a759f59d1fa",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::1000-INITIALIZE",
       "relationship_type": "performs",
@@ -11072,7 +11072,7 @@
       "is_resolved": true
     },
     {
-      "id": "e30f2d0a-a577-4f82-94e6-d51d3568e99c",
+      "id": "dc1dd738-a8c5-4516-aecd-9be6a73fde17",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::2000-FIND-NEXT-AUTH-SUMMARY",
       "relationship_type": "performs",
@@ -11091,7 +11091,7 @@
       "is_resolved": true
     },
     {
-      "id": "6bb81447-1e63-4605-93bb-6c703f9b69e0",
+      "id": "abbdff1b-2def-4b51-b94e-b17557398b41",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::3000-FIND-NEXT-AUTH-DTL",
       "relationship_type": "performs",
@@ -11110,7 +11110,7 @@
       "is_resolved": true
     },
     {
-      "id": "11d5132d-1f20-4678-84d8-b1e8e5dbcee6",
+      "id": "5c21c6e5-8429-4ff8-9b3d-7625966412dd",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::4000-CHECK-IF-EXPIRED",
       "relationship_type": "performs",
@@ -11129,7 +11129,7 @@
       "is_resolved": true
     },
     {
-      "id": "94dfe111-99de-43c5-beee-d46b8ee57261",
+      "id": "b04a3c15-c4de-4800-8419-724e87cf0a7a",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::5000-DELETE-AUTH-DTL",
       "relationship_type": "performs",
@@ -11148,7 +11148,7 @@
       "is_resolved": true
     },
     {
-      "id": "1f8433ee-851c-43ff-8b44-7e4d82a629a0",
+      "id": "43f2727e-1d3c-42d2-912c-33e12c3210dd",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::6000-DELETE-AUTH-SUMMARY",
       "relationship_type": "performs",
@@ -11167,7 +11167,7 @@
       "is_resolved": true
     },
     {
-      "id": "8d569273-08c1-4cc0-b48b-de940f6e59d4",
+      "id": "7d2041ad-632c-47cb-8aa8-4da7635897d5",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::9000-TAKE-CHECKPOINT",
       "relationship_type": "performs",
@@ -11186,7 +11186,7 @@
       "is_resolved": true
     },
     {
-      "id": "3e7b55f3-bb91-4266-807a-a93fdeab6d39",
+      "id": "e29bcfdc-6c86-40d3-abfa-95d6430f3415",
       "from_artifact": "paragraph::2000-FIND-NEXT-AUTH-SUMMARY",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -11205,7 +11205,7 @@
       "is_resolved": true
     },
     {
-      "id": "5ec4c924-af32-47ba-ba7f-2a11fa4b6add",
+      "id": "ca8b569c-2f79-4f3a-894b-176fff189cdc",
       "from_artifact": "paragraph::3000-FIND-NEXT-AUTH-DTL",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -11224,7 +11224,7 @@
       "is_resolved": true
     },
     {
-      "id": "c9e67ca8-42f3-4396-849f-6a11c0828a1f",
+      "id": "dce805bf-3fa0-44b6-a61e-929840349100",
       "from_artifact": "paragraph::5000-DELETE-AUTH-DTL",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -11243,7 +11243,7 @@
       "is_resolved": true
     },
     {
-      "id": "d38d324a-d908-4040-a87f-550bc7046ae2",
+      "id": "1d4b08d8-1b01-4f57-a6cf-3a11e0e72fda",
       "from_artifact": "paragraph::6000-DELETE-AUTH-SUMMARY",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -11262,7 +11262,7 @@
       "is_resolved": true
     },
     {
-      "id": "28e78c29-ab4a-4750-8bb6-69f034597680",
+      "id": "a516634b-9edd-4197-aa93-8250f922073b",
       "from_artifact": "paragraph::9000-TAKE-CHECKPOINT",
       "to_artifact": "paragraph::9999-ABEND",
       "relationship_type": "performs",
@@ -11281,7 +11281,7 @@
       "is_resolved": true
     },
     {
-      "id": "ea75c0dd-ecc4-4827-a287-3dd35855be39",
+      "id": "110c04a4-9eb3-4d00-a354-c79645d84f54",
       "from_artifact": "program::CBPAUP0C",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
@@ -11300,7 +11300,7 @@
       "is_resolved": false
     },
     {
-      "id": "6da00374-c7ed-421c-9572-00313076a452",
+      "id": "930d3fa5-d11f-4737-ad99-5034f7425a6b",
       "from_artifact": "program::CBPAUP0C",
       "to_artifact": "copybook::CIPAUSMY",
       "relationship_type": "includes",
@@ -11319,7 +11319,7 @@
       "is_resolved": false
     },
     {
-      "id": "48c4460f-9777-4d3a-87ed-c3665d53da02",
+      "id": "2c098d2b-64da-4f74-9cfa-7b341978ab59",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::SEND-PAULST-SCREEN",
       "relationship_type": "performs",
@@ -11338,7 +11338,7 @@
       "is_resolved": true
     },
     {
-      "id": "ba113b60-05c1-48f1-953b-2059de8e5f91",
+      "id": "52b934e0-7c64-44b7-9dcd-8065544822ca",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::GATHER-DETAILS",
       "relationship_type": "performs",
@@ -11357,7 +11357,7 @@
       "is_resolved": true
     },
     {
-      "id": "f9ec1ce2-0ff5-49f8-bbcf-bf6ab7e8cf48",
+      "id": "24edffa5-858c-411a-a500-d4428b82000f",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::RECEIVE-PAULST-SCREEN",
       "relationship_type": "performs",
@@ -11376,7 +11376,7 @@
       "is_resolved": true
     },
     {
-      "id": "cc645ce0-db16-4dc5-aa53-9fde648f6eaf",
+      "id": "6602edb3-ab9d-4b85-9a98-266c2b9fa14e",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::PROCESS-ENTER-KEY",
       "relationship_type": "performs",
@@ -11395,7 +11395,7 @@
       "is_resolved": true
     },
     {
-      "id": "b16f181d-1b94-4f90-a469-dd9cef92f494",
+      "id": "40002f9e-4f3a-4ff4-9a94-d0e55fa4a64f",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::RETURN-TO-PREV-SCREEN",
       "relationship_type": "performs",
@@ -11414,7 +11414,7 @@
       "is_resolved": true
     },
     {
-      "id": "b7089d12-bd85-4fa3-8b36-3b9b4938c26a",
+      "id": "bf288cc7-6dba-4d7f-b384-5349af85c956",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::PROCESS-PF7-KEY",
       "relationship_type": "performs",
@@ -11433,7 +11433,7 @@
       "is_resolved": true
     },
     {
-      "id": "7689f731-573e-4c01-a8fb-5edf8682861f",
+      "id": "1b0a7d26-8ea1-41b3-b9bb-f191e9b90d59",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::PROCESS-PF8-KEY",
       "relationship_type": "performs",
@@ -11452,7 +11452,7 @@
       "is_resolved": true
     },
     {
-      "id": "0cdadd9b-64bf-46d2-b40c-c986da6b8a21",
+      "id": "69d8de88-299e-4453-a1e4-89610b860b02",
       "from_artifact": "paragraph::PROCESS-ENTER-KEY",
       "to_artifact": "paragraph::GATHER-DETAILS",
       "relationship_type": "performs",
@@ -11471,7 +11471,7 @@
       "is_resolved": true
     },
     {
-      "id": "ea2a4b17-cb41-4a3b-8eaf-6207c056806e",
+      "id": "06f5da52-e5df-4396-ba7d-8ce1abf80754",
       "from_artifact": "paragraph::GATHER-DETAILS",
       "to_artifact": "paragraph::GATHER-ACCOUNT-DETAILS",
       "relationship_type": "performs",
@@ -11490,7 +11490,7 @@
       "is_resolved": true
     },
     {
-      "id": "7237090c-f434-4833-abb0-5e972b4a9e0c",
+      "id": "b11d27dc-4fa7-4414-9c95-ececec188006",
       "from_artifact": "paragraph::GATHER-DETAILS",
       "to_artifact": "paragraph::INITIALIZE-AUTH-DATA",
       "relationship_type": "performs",
@@ -11509,7 +11509,7 @@
       "is_resolved": true
     },
     {
-      "id": "0d0fbae3-79d1-48e5-9337-95e87b69ba3b",
+      "id": "0063de0a-1b41-4bdf-bac2-7eb3b0b22519",
       "from_artifact": "paragraph::GATHER-DETAILS",
       "to_artifact": "paragraph::PROCESS-PAGE-FORWARD",
       "relationship_type": "performs",
@@ -11528,7 +11528,7 @@
       "is_resolved": true
     },
     {
-      "id": "9269a94e-010e-40f7-9615-41b8d9b7c8f7",
+      "id": "a5c54cc9-18e8-41e5-a6f4-3bc5510f2878",
       "from_artifact": "paragraph::PROCESS-PF7-KEY",
       "to_artifact": "paragraph::GET-AUTH-SUMMARY",
       "relationship_type": "performs",
@@ -11547,7 +11547,7 @@
       "is_resolved": true
     },
     {
-      "id": "5d1c3ae9-dc09-43a8-87bc-b0afc1866171",
+      "id": "af18d691-5038-4d10-ab0b-0bd2177ba345",
       "from_artifact": "paragraph::PROCESS-PF7-KEY",
       "to_artifact": "paragraph::INITIALIZE-AUTH-DATA",
       "relationship_type": "performs",
@@ -11566,7 +11566,7 @@
       "is_resolved": true
     },
     {
-      "id": "6ace4f3d-c4d1-451f-a283-85917aa12374",
+      "id": "18c67d4f-e208-4f2e-89c0-a437bff4b61e",
       "from_artifact": "paragraph::PROCESS-PF7-KEY",
       "to_artifact": "paragraph::PROCESS-PAGE-FORWARD",
       "relationship_type": "performs",
@@ -11585,7 +11585,7 @@
       "is_resolved": true
     },
     {
-      "id": "87d1ee08-9714-4520-8986-098d76b11633",
+      "id": "a113c0cc-6970-4af3-ae1f-1012f942980c",
       "from_artifact": "paragraph::PROCESS-PF8-KEY",
       "to_artifact": "paragraph::GET-AUTH-SUMMARY",
       "relationship_type": "performs",
@@ -11604,7 +11604,7 @@
       "is_resolved": true
     },
     {
-      "id": "4a88feb8-6f98-4b59-9082-cf435d559a25",
+      "id": "7487f3c8-5bb6-4f4c-a5c4-6cdffdded4b5",
       "from_artifact": "paragraph::PROCESS-PF8-KEY",
       "to_artifact": "paragraph::REPOSITION-AUTHORIZATIONS",
       "relationship_type": "performs",
@@ -11623,7 +11623,7 @@
       "is_resolved": true
     },
     {
-      "id": "7daa0340-56d9-4bcf-97f0-7ecd03e06a80",
+      "id": "6f5b005d-c3cd-4486-a650-a7d371fe05e5",
       "from_artifact": "paragraph::PROCESS-PF8-KEY",
       "to_artifact": "paragraph::INITIALIZE-AUTH-DATA",
       "relationship_type": "performs",
@@ -11642,7 +11642,7 @@
       "is_resolved": true
     },
     {
-      "id": "666d34e2-b076-42b8-9d27-661d4c9d0d82",
+      "id": "a47e431f-dc31-44c7-a8f9-224c88dc0fd7",
       "from_artifact": "paragraph::PROCESS-PF8-KEY",
       "to_artifact": "paragraph::PROCESS-PAGE-FORWARD",
       "relationship_type": "performs",
@@ -11661,7 +11661,7 @@
       "is_resolved": true
     },
     {
-      "id": "a698d56c-6b13-4274-b651-a9e4a6259598",
+      "id": "0e91967b-c4aa-4bff-b509-fd8d00a18948",
       "from_artifact": "paragraph::PROCESS-PAGE-FORWARD",
       "to_artifact": "paragraph::REPOSITION-AUTHORIZATIONS",
       "relationship_type": "performs",
@@ -11680,7 +11680,7 @@
       "is_resolved": true
     },
     {
-      "id": "5a959e7f-23ac-4482-9fb5-289fccb6487d",
+      "id": "e0a6a572-aad0-4ac8-a884-5cd41ca480a4",
       "from_artifact": "paragraph::PROCESS-PAGE-FORWARD",
       "to_artifact": "paragraph::GET-AUTHORIZATIONS",
       "relationship_type": "performs",
@@ -11699,7 +11699,7 @@
       "is_resolved": true
     },
     {
-      "id": "da5bc862-4b1f-44a3-a008-4bc9bc7d3842",
+      "id": "d6130aed-b6a7-4e5a-ab38-3bea82cb6a5a",
       "from_artifact": "paragraph::PROCESS-PAGE-FORWARD",
       "to_artifact": "paragraph::POPULATE-AUTH-LIST",
       "relationship_type": "performs",
@@ -11718,7 +11718,7 @@
       "is_resolved": true
     },
     {
-      "id": "23bba599-1b52-4fc1-9c00-e64c4e20f97e",
+      "id": "fec74c68-915b-45d2-9933-076f64c3a46b",
       "from_artifact": "paragraph::GET-AUTHORIZATIONS",
       "to_artifact": "paragraph::SEND-PAULST-SCREEN",
       "relationship_type": "performs",
@@ -11737,7 +11737,7 @@
       "is_resolved": true
     },
     {
-      "id": "1e13b56e-12b5-45c0-8d2b-0d3228c365ff",
+      "id": "0b82db47-78b4-48e7-bedd-5ae12a01b0f6",
       "from_artifact": "paragraph::REPOSITION-AUTHORIZATIONS",
       "to_artifact": "paragraph::SEND-PAULST-SCREEN",
       "relationship_type": "performs",
@@ -11756,7 +11756,7 @@
       "is_resolved": true
     },
     {
-      "id": "2182a857-0c39-4152-b65c-cfe28eaf8aa8",
+      "id": "1171610c-d7e5-417a-9250-33f108e815c9",
       "from_artifact": "paragraph::SEND-PAULST-SCREEN",
       "to_artifact": "paragraph::POPULATE-HEADER-INFO",
       "relationship_type": "performs",
@@ -11775,7 +11775,7 @@
       "is_resolved": true
     },
     {
-      "id": "1160b38b-0adf-4f21-a671-4ec42a65eae3",
+      "id": "3db83003-281c-40c4-bcc9-33a2a896a2f6",
       "from_artifact": "paragraph::GATHER-ACCOUNT-DETAILS",
       "to_artifact": "paragraph::GETCARDXREF-BYACCT",
       "relationship_type": "performs",
@@ -11794,7 +11794,7 @@
       "is_resolved": true
     },
     {
-      "id": "a7e0404c-e1ac-4583-97c2-bf9a518702d6",
+      "id": "d48d3986-be16-4f07-b4e2-c2bbc77474f2",
       "from_artifact": "paragraph::GATHER-ACCOUNT-DETAILS",
       "to_artifact": "paragraph::GETACCTDATA-BYACCT",
       "relationship_type": "performs",
@@ -11813,7 +11813,7 @@
       "is_resolved": true
     },
     {
-      "id": "44c1764e-eb92-40c6-9cc4-fcb70064a601",
+      "id": "a960aa68-c0a2-4b24-b1a2-d4f34739a16e",
       "from_artifact": "paragraph::GATHER-ACCOUNT-DETAILS",
       "to_artifact": "paragraph::GETCUSTDATA-BYCUST",
       "relationship_type": "performs",
@@ -11832,7 +11832,7 @@
       "is_resolved": true
     },
     {
-      "id": "99b96c60-b27a-4b4d-841d-a3b127fa659e",
+      "id": "54076478-fbfb-4be3-81a0-2c0b46576def",
       "from_artifact": "paragraph::GATHER-ACCOUNT-DETAILS",
       "to_artifact": "paragraph::GET-AUTH-SUMMARY",
       "relationship_type": "performs",
@@ -11851,7 +11851,7 @@
       "is_resolved": true
     },
     {
-      "id": "3eb6df7e-5ac4-455c-a22a-ffc70f5e1726",
+      "id": "0a1c99a1-80fe-4154-aa6f-1e29e5caa486",
       "from_artifact": "paragraph::GETCARDXREF-BYACCT",
       "to_artifact": "paragraph::SEND-PAULST-SCREEN",
       "relationship_type": "performs",
@@ -11870,7 +11870,7 @@
       "is_resolved": true
     },
     {
-      "id": "1aecd359-19d3-49e9-aa62-e1ece37d253e",
+      "id": "b10796de-d039-41ff-990d-0bc0c296b69b",
       "from_artifact": "paragraph::GETACCTDATA-BYACCT",
       "to_artifact": "paragraph::SEND-PAULST-SCREEN",
       "relationship_type": "performs",
@@ -11889,7 +11889,7 @@
       "is_resolved": true
     },
     {
-      "id": "63bcb86f-8ddf-4c5c-817b-c480abf7e339",
+      "id": "41e894ef-de99-4328-8694-e7c89b379653",
       "from_artifact": "paragraph::GETCUSTDATA-BYCUST",
       "to_artifact": "paragraph::SEND-PAULST-SCREEN",
       "relationship_type": "performs",
@@ -11908,7 +11908,7 @@
       "is_resolved": true
     },
     {
-      "id": "b01f51c3-11d8-42a3-ad17-c42ce2cfb469",
+      "id": "0f00a0a0-dce7-4ce5-bd1c-ebe6d847da29",
       "from_artifact": "paragraph::GET-AUTH-SUMMARY",
       "to_artifact": "paragraph::SCHEDULE-PSB",
       "relationship_type": "performs",
@@ -11927,7 +11927,7 @@
       "is_resolved": true
     },
     {
-      "id": "ed338a7b-d37e-4c63-adab-1de3fed67c79",
+      "id": "f392516d-39f9-46ae-970f-0fcc11504d4d",
       "from_artifact": "paragraph::GET-AUTH-SUMMARY",
       "to_artifact": "paragraph::SEND-PAULST-SCREEN",
       "relationship_type": "performs",
@@ -11946,7 +11946,7 @@
       "is_resolved": true
     },
     {
-      "id": "4bff6f1f-7745-47ba-b37b-5aa2c67e38cf",
+      "id": "9bdb1b53-87a2-4ebc-b7c7-4e7627ffad94",
       "from_artifact": "paragraph::SCHEDULE-PSB",
       "to_artifact": "paragraph::SEND-PAULST-SCREEN",
       "relationship_type": "performs",
@@ -11965,7 +11965,7 @@
       "is_resolved": true
     },
     {
-      "id": "76cebdeb-20bc-4603-8d8d-83a2dd5e995d",
+      "id": "edb1309f-c99c-433b-a57d-4f24fe6e11a8",
       "from_artifact": "program::COPAUS0C",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
@@ -11984,7 +11984,7 @@
       "is_resolved": false
     },
     {
-      "id": "0d219cec-7c7a-4da6-a504-f6127a1b0f0d",
+      "id": "f3d6e540-e5f5-4073-a921-a4fa551ff393",
       "from_artifact": "program::COPAUS0C",
       "to_artifact": "copybook::CIPAUSMY",
       "relationship_type": "includes",
@@ -12003,7 +12003,7 @@
       "is_resolved": false
     },
     {
-      "id": "f146a714-004c-4282-aa87-50d572b9bb81",
+      "id": "959c54ef-12aa-4d53-bcfd-6774e63dd101",
       "from_artifact": "program::COPAUS0C",
       "to_artifact": "copybook::COPAU00",
       "relationship_type": "includes",
@@ -12022,7 +12022,7 @@
       "is_resolved": false
     },
     {
-      "id": "99257311-b8c9-46ad-8ff7-9c65ab9c6ea2",
+      "id": "5693dc3f-d3e4-4928-9f5f-d2baafb39fe1",
       "from_artifact": "paragraph::MAIN-PARA",
       "to_artifact": "paragraph::FRAUD-UPDATE",
       "relationship_type": "performs",
@@ -12041,7 +12041,7 @@
       "is_resolved": true
     },
     {
-      "id": "8553ad25-210a-4aa6-a1c1-6b4ce0479570",
+      "id": "77416fa2-3625-41d0-94e7-9ae0699e61df",
       "from_artifact": "program::COPAUS2C",
       "to_artifact": "copybook::CIPAUDTY",
       "relationship_type": "includes",
