@@ -3198,9 +3198,9 @@ class TicketOrchestrator:
         """Generate .ast files for all COBOL sources that don't have one yet.
 
         Iterates over discovered COBOL files in the input directory and writes
-        a full-file AST (via Citadel) to the output directory alongside the
-        existing documentation files.  Existing ``.ast`` files are skipped so
-        the operation is idempotent across runs.
+        a full-file AST (via Citadel) alongside each ``.cbl`` source file.
+        For example, ``input/FOO.cbl`` produces ``input/FOO.cbl.ast``.
+        Existing ``.ast`` files are skipped so the operation is idempotent.
         """
         from citadel import Citadel
         from war_rig.io.reader import SourceReader
@@ -3218,9 +3218,10 @@ class TicketOrchestrator:
             file_types=[FileType.COBOL],
             recursive=True,
         ):
-            # Compute output path mirroring the source layout
-            rel = Path(source_file.relative_path or source_file.name)
-            ast_path = self.config.output_directory / f"{rel}.ast"
+            # Place .ast file alongside the source file
+            ast_path = Path(source_file.path).with_suffix(
+                Path(source_file.path).suffix + ".ast"
+            )
 
             if ast_path.exists():
                 skipped += 1
@@ -3236,7 +3237,6 @@ class TicketOrchestrator:
                     )
                     continue
 
-                ast_path.parent.mkdir(parents=True, exist_ok=True)
                 ast_path.write_text(full_ast_text, encoding="utf-8")
                 created += 1
             except Exception as e:

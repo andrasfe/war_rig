@@ -287,8 +287,9 @@ class WarRigNodes:
                 "iteration": 1,
             }
 
-            # For COBOL files, replace raw source with AST so all
-            # agents receive structured input instead of raw code.
+            # For COBOL files, parse ASTs and store per-paragraph ASTs
+            # in state.  Raw source_code is preserved for the Scribe;
+            # Challenger uses per-paragraph ASTs for compact validation.
             if result.file_type == FileType.COBOL:
                 source_path = state.get("source_file_path", "")
                 if source_path:
@@ -296,17 +297,13 @@ class WarRigNodes:
 
                     citadel = Citadel()
                     parse_result = citadel.parse_cobol(source_path)
-                    if not parse_result.full_ast:
-                        raise RuntimeError(
-                            f"AST generation produced empty result for {file_name}"
+                    if parse_result.paragraph_asts:
+                        updates["paragraph_asts"] = parse_result.paragraph_asts
+                        logger.info(
+                            "Stored %d per-paragraph ASTs for %s",
+                            len(parse_result.paragraph_asts),
+                            file_name,
                         )
-                    updates["source_code"] = parse_result.full_ast
-                    logger.info(
-                        "Replaced raw source with AST for %s "
-                        "(%d chars)",
-                        file_name,
-                        len(parse_result.full_ast),
-                    )
 
             return updates
         except Exception as e:
@@ -471,10 +468,23 @@ class WarRigNodes:
             logger.error("No template to validate")
             return {"error": "No template to validate"}
 
-        # Sample source code if it exceeds token limit
-        max_prompt_tokens = self.config.challenger.max_prompt_tokens
-        max_source_tokens = max_prompt_tokens - 6000  # Reserve for template and overhead
-        source_code, was_sampled = _sample_source_code(state["source_code"], max_source_tokens)
+        # Use per-paragraph ASTs when available (compact, structured);
+        # otherwise fall back to sampled raw source.
+        paragraph_asts = state.get("paragraph_asts", {})
+        if paragraph_asts:
+            ast_parts = []
+            for name, ast_str in paragraph_asts.items():
+                ast_parts.append(f"## AST: {name}")
+                ast_parts.append(ast_str)
+                ast_parts.append("")
+            source_code = "\n".join(ast_parts)
+            was_sampled = False
+        else:
+            max_prompt_tokens = self.config.challenger.max_prompt_tokens
+            max_source_tokens = max_prompt_tokens - 6000
+            source_code, was_sampled = _sample_source_code(
+                state["source_code"], max_source_tokens
+            )
         if was_sampled:
             logger.info(f"Source code sampled for Challenger validation ({state['file_name']})")
 

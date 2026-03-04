@@ -219,6 +219,9 @@ class ChallengerWorker:
             except Exception as e:
                 logger.debug(f"Worker {worker_id}: Dead code detection failed: {e}")
 
+        # Per-paragraph AST cache (keyed by file path)
+        self._paragraph_ast_cache: dict[str, dict[str, str]] = {}
+
         # Worker state
         self.status = WorkerStatus(worker_id=worker_id)
         self._stop_event = asyncio.Event()
@@ -1257,13 +1260,13 @@ class ChallengerWorker:
         except ValueError:
             state["file_type"] = FileType.OTHER
 
-        # Replace raw source with AST for COBOL files
+        # Cache per-paragraph ASTs for COBOL files (used for validation)
         if state.get("file_type") == FileType.COBOL:
             file_path = metadata.get("file_path")
             if file_path:
-                ast_text = self._get_cobol_ast(file_path)
-                if ast_text:
-                    state["source_code"] = ast_text
+                _ast_text, para_asts = self._get_cobol_ast(file_path)
+                if para_asts:
+                    self._paragraph_ast_cache[file_path] = para_asts
 
         # Get preprocessor result if available
         preprocessor_data = metadata.get("preprocessor_result")
@@ -1288,13 +1291,15 @@ class ChallengerWorker:
 
         return state
 
-    def _get_cobol_ast(self, file_path: str) -> str | None:
-        """Build a full-file AST for a COBOL source file.
+    def _get_cobol_ast(
+        self, file_path: str
+    ) -> tuple[str | None, dict[str, str]]:
+        """Build ASTs for a COBOL source file.
 
-        Returns the formatted AST text, or None if parsing fails.
+        Returns a tuple of (full AST text, per-paragraph AST dict).
         """
         if not self._citadel:
-            return None
+            return None, {}
         try:
             from war_rig.utils.copybook_dirs import derive_copybook_dirs
 
@@ -1307,14 +1312,15 @@ class ChallengerWorker:
             parse_result = self._citadel.parse_cobol(
                 file_path, copybook_dirs=cb_dirs,
             )
-            ast_text = parse_result.full_ast
-            return ast_text if ast_text else None
+            ast_text = parse_result.full_ast if parse_result.full_ast else None
+            para_asts = parse_result.paragraph_asts or {}
+            return ast_text, para_asts
         except Exception as e:
             logger.debug(
                 f"Worker {self.worker_id}: Failed to build COBOL AST "
                 f"for {file_path}: {e}"
             )
-            return None
+            return None, {}
 
     def _sample_source_code(self, source_code: str, max_tokens: int) -> tuple[str, bool]:
         """Sample a random portion of source code if it exceeds token limit.
@@ -1571,21 +1577,34 @@ class ChallengerWorker:
                     # Resolve source file path
                     source_path = self._resolve_source_path(ticket)
 
-                    # Get bodies ONLY for sampled paragraphs
-                    bodies = self._citadel.get_function_bodies(
-                        str(source_path), sampled_para_names
-                    )
-                    citadel_ctx = {"paragraph_bodies": bodies}
+                    # Prefer per-paragraph ASTs (compact); fall back to raw bodies
+                    file_path = ticket.metadata.get("file_path", "") if ticket.metadata else ""
+                    cached_asts = self._paragraph_ast_cache.get(file_path, {})
 
-                    # Build sampled source code from paragraph bodies (not full source)
-                    # This replaces sending the full source_code
-                    body_parts = []
-                    for name in sampled_para_names:
-                        if name in bodies and bodies[name]:
-                            body_parts.append(f"* PARAGRAPH: {name}")
-                            body_parts.append(bodies[name])
-                            body_parts.append("")
-                    sampled_code = "\n".join(body_parts)
+                    if cached_asts:
+                        # Build sampled code from per-paragraph ASTs
+                        ast_parts = []
+                        for name in sampled_para_names:
+                            ast_str = cached_asts.get(name.upper(), "")
+                            if ast_str:
+                                ast_parts.append(f"## AST: {name}")
+                                ast_parts.append(ast_str)
+                                ast_parts.append("")
+                        sampled_code = "\n".join(ast_parts)
+                    else:
+                        # Fallback: raw function bodies
+                        bodies = self._citadel.get_function_bodies(
+                            str(source_path), sampled_para_names
+                        )
+                        body_parts = []
+                        for name in sampled_para_names:
+                            if name in bodies and bodies[name]:
+                                body_parts.append(f"* PARAGRAPH: {name}")
+                                body_parts.append(bodies[name])
+                                body_parts.append("")
+                        sampled_code = "\n".join(body_parts)
+
+                    citadel_ctx = None  # code is already in sampled_code
 
                     # Get pattern facts for sampled paragraphs only
                     citadel_analysis_ctx = self._get_citadel_context(str(source_path))
@@ -1614,11 +1633,6 @@ class ChallengerWorker:
                 max_prompt_tokens = self.config.challenger.max_prompt_tokens
                 max_source_tokens = max_prompt_tokens - 6000
                 sampled_code, _ = self._sample_source_code(source_code, max_source_tokens)
-
-            # Don't send paragraph_bodies in citadel_ctx since we're using sampled_code
-            # This avoids duplication
-            if citadel_ctx:
-                citadel_ctx = None  # Bodies are already in sampled_code
 
             # Get knowledge graph context for Challenger cross-checking
             kg_context = ""

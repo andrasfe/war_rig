@@ -3452,11 +3452,10 @@ class ScribeWorker:
         # Get pattern insights for documentation guidance
         pattern_insights = self._get_pattern_insights(str(source_path), outline)
 
-        # Build full-file AST — agents receive AST instead of raw source
+        # Build AST for markdown generation (still needed for _save_template)
         _parse_result, paragraph_asts, full_ast_text = self._build_cobol_ast(
             source_path, ticket.file_name,
         )
-        ast_source = full_ast_text
 
         # --- Resume mode: if a previous template exists with incomplete stubs,
         # only re-process the stub paragraphs and keep already-documented ones.
@@ -3470,7 +3469,7 @@ class ScribeWorker:
                     f"stub paragraphs to process"
                 )
                 return await self._process_citadel_resume(
-                    ticket, ast_source, file_type, formatting_strict,
+                    ticket, source_code, file_type, formatting_strict,
                     outline, source_path, stats, pattern_insights,
                     previous_template, stub_names,
                     paragraph_asts=paragraph_asts,
@@ -3482,7 +3481,7 @@ class ScribeWorker:
                 f"{ticket.file_name} ({total_lines} lines, {paragraph_count} paragraphs)"
             )
             return await self._process_citadel_batched(
-                ticket, ast_source, file_type, formatting_strict,
+                ticket, source_code, file_type, formatting_strict,
                 outline, source_path, stats, pattern_insights,
                 paragraph_asts=paragraph_asts,
             )
@@ -3492,7 +3491,7 @@ class ScribeWorker:
                 f"{ticket.file_name} ({total_lines} lines, {paragraph_count} paragraphs)"
             )
             return await self._process_citadel_single_pass(
-                ticket, ast_source, file_type, formatting_strict, outline,
+                ticket, source_code, file_type, formatting_strict, outline,
                 pattern_insights,
             )
 
@@ -3795,10 +3794,6 @@ class ScribeWorker:
         # Get all paragraph names for body size estimation
         all_names = [p.get("name", "") for p in outline if p.get("name")]
 
-        # Use cached AST sizes when available (more compact than raw bodies)
-        file_name = source_path.name
-        cached_asts = self._file_asts.get(file_name, {})
-
         # Fetch all bodies upfront for size estimation (cached by Citadel)
         try:
             all_bodies = self._citadel.get_function_bodies(str(source_path), all_names)
@@ -3811,13 +3806,9 @@ class ScribeWorker:
             if not name:
                 continue
 
-            # Estimate size: prefer AST string length, then body, then heuristic
-            ast_str = cached_asts.get(name.upper(), "")
-            if ast_str:
-                para_chars = len(ast_str)
-            else:
-                body = all_bodies.get(name, "")
-                para_chars = len(body) if body else para.get("line_count", 10) * 40
+            # Estimate size from raw body length
+            body = all_bodies.get(name, "")
+            para_chars = len(body) if body else para.get("line_count", 10) * 40
 
             # Add outline overhead per paragraph (~100 chars for the outline entry)
             para_chars += 100
@@ -3980,59 +3971,45 @@ class ScribeWorker:
                 )
                 continue
 
-            # Assemble source for this batch.  Prefer per-paragraph ASTs
-            # (compact, structured) when available; fall back to raw bodies.
+            # Assemble source for this batch from raw function bodies.
             batch_source_parts: list[str] = []
-            if paragraph_asts:
-                for para_info in batch:
-                    name = para_info.get("name", "")
-                    ast_str = paragraph_asts.get(name.upper(), "") if name else ""
-                    if ast_str:
-                        batch_source_parts.append(ast_str)
-                batch_source = (
-                    "\n\n".join(batch_source_parts)
-                    if batch_source_parts
-                    else source_code[:2000]
-                )
-            else:
-                # Legacy path: raw function bodies
-                bodies = {name: prefetched_bodies.get(name) for name in batch_names}
-                fallback_count = 0
-                for para_info in batch:
-                    name = para_info.get("name", "")
-                    body = bodies.get(name) if name else None
-                    if body:
-                        batch_source_parts.append(body)
+            bodies = {name: prefetched_bodies.get(name) for name in batch_names}
+            fallback_count = 0
+            for para_info in batch:
+                name = para_info.get("name", "")
+                body = bodies.get(name) if name else None
+                if body:
+                    batch_source_parts.append(body)
+                    batch_source_parts.append("")
+                elif source_lines:
+                    line_start = para_info.get("line_start")
+                    line_end = para_info.get("line_end")
+                    if (
+                        line_start
+                        and line_end
+                        and line_start <= len(source_lines)
+                    ):
+                        extracted = source_lines[
+                            line_start - 1 : min(line_end, len(source_lines))
+                        ]
+                        batch_source_parts.append(
+                            f"* Paragraph: {name} "
+                            f"(lines {line_start}-{line_end})"
+                        )
+                        batch_source_parts.extend(extracted)
                         batch_source_parts.append("")
-                    elif source_lines:
-                        line_start = para_info.get("line_start")
-                        line_end = para_info.get("line_end")
-                        if (
-                            line_start
-                            and line_end
-                            and line_start <= len(source_lines)
-                        ):
-                            extracted = source_lines[
-                                line_start - 1 : min(line_end, len(source_lines))
-                            ]
-                            batch_source_parts.append(
-                                f"* Paragraph: {name} "
-                                f"(lines {line_start}-{line_end})"
-                            )
-                            batch_source_parts.extend(extracted)
-                            batch_source_parts.append("")
-                            fallback_count += 1
-                if fallback_count > 0:
-                    logger.info(
-                        f"Worker {self.worker_id}: Used line-range fallback "
-                        f"for {fallback_count}/{len(batch)} paragraphs in batch "
-                        f"{batch_idx} (bodies not extractable)"
-                    )
-                batch_source = (
-                    "\n".join(batch_source_parts)
-                    if batch_source_parts
-                    else source_code[:2000]
+                        fallback_count += 1
+            if fallback_count > 0:
+                logger.info(
+                    f"Worker {self.worker_id}: Used line-range fallback "
+                    f"for {fallback_count}/{len(batch)} paragraphs in batch "
+                    f"{batch_idx} (bodies not extractable)"
                 )
+            batch_source = (
+                "\n".join(batch_source_parts)
+                if batch_source_parts
+                else source_code[:2000]
+            )
 
             scribe_input = ScribeInput(
                 source_code=batch_source,

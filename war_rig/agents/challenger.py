@@ -288,7 +288,7 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
 
         # Source code / AST for verification
         if input_data.file_type == FileType.COBOL:
-            parts.append("## Abstract Syntax Tree (for verification)")
+            parts.append("## Paragraph ASTs (for verification)")
             parts.append("```")
             parts.append(input_data.source_code)
             parts.append("```")

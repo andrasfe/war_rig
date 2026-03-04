@@ -125,6 +125,9 @@ class WarRigState(TypedDict, total=False):
     preprocessor_result: PreprocessorResult | None
     """Output from preprocessing phase."""
 
+    paragraph_asts: dict[str, str]
+    """Per-paragraph AST strings keyed by uppercase paragraph name (COBOL only)."""
+
     current_template: DocumentationTemplate | None
     """Current documentation draft."""
 
@@ -267,6 +270,7 @@ def create_initial_state(
         iteration=0,  # Will be incremented to 1 at start
         max_iterations=max_iterations,
         preprocessor_result=None,
+        paragraph_asts={},
         current_template=None,
         current_confidence=None,
         # Dialogue

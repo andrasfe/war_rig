@@ -360,9 +360,9 @@ class WarRigConfig(BaseSettings):
 
     # Challenger sampling (reduces context by validating only a sample of paragraphs)
     challenger_paragraph_sample_size: int = Field(
-        default=5,
+        default=15,
         ge=1,
-        le=20,
+        le=50,
         description="Number of paragraphs to sample for Challenger validation (0 = all)",
     )
 
