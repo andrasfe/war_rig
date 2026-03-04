@@ -24,6 +24,7 @@ Example:
 from __future__ import annotations
 
 import logging
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -34,6 +35,24 @@ if TYPE_CHECKING:
     from war_rig.knowledge_graph.manager import KnowledgeGraphManager
 
 logger = logging.getLogger(__name__)
+
+_FENCE_OPEN = re.compile(r"^```(?:markdown|md|text)?[ \t]*\r?\n", re.IGNORECASE)
+_FENCE_CLOSE = re.compile(r"\n```[ \t]*$")
+
+
+def _strip_markdown_fences(text: str) -> str:
+    """Strip ```markdown / ```md / ``` wrapper from LLM output.
+
+    Handles both a single outer fence and multiple consecutive fenced
+    blocks that cover the entire response (the LLM wraps every section).
+    """
+    stripped = text.strip()
+    m = _FENCE_OPEN.match(stripped)
+    if m and _FENCE_CLOSE.search(stripped):
+        inner = stripped[m.end():]
+        inner = _FENCE_CLOSE.sub("", inner)
+        return inner
+    return text
 
 
 # ============================================================================
@@ -640,7 +659,7 @@ class AgenticReadmeGenerator:
             The generated section markdown.
         """
         result = await sdk.complete(prompt)
-        content = result.content.strip()
+        content = _strip_markdown_fences(result.content.strip())
 
         logger.debug(
             "Section %d used %d tool calls in %d iterations",
@@ -683,7 +702,7 @@ Output the COMPLETE cleaned-up README.md document.
 Do NOT summarize or truncate — output the full document."""
 
         result = await sdk.complete(merge_prompt)
-        merged = result.content.strip()
+        merged = _strip_markdown_fences(result.content.strip())
 
         # Only use merged version if it's substantial (not a summary)
         if len(merged) > len(assembled_markdown) * 0.5:

@@ -186,7 +186,7 @@ def _auto_build() -> bool:
 def parse_proleap(
     source_path: str | Path,
     copybook_dirs: list[str | Path] | None = None,
-) -> tuple[dict[str, ParagraphSyntaxTree], str]:
+) -> tuple[dict[str, ParagraphSyntaxTree], str, str]:
     """Parse a COBOL file via ProLeap and return AST structures.
 
     Args:
@@ -194,7 +194,8 @@ def parse_proleap(
         copybook_dirs: Directories to search for copybooks.
 
     Returns:
-        Tuple of (paragraph_name → ParagraphSyntaxTree, full_ast_text).
+        Tuple of (paragraph_name → ParagraphSyntaxTree, full_ast_text,
+        raw_json).
 
     Raises:
         RuntimeError: If ProLeap parsing fails.
@@ -241,10 +242,11 @@ def parse_proleap(
         if not proc.stdout.strip():
             raise RuntimeError("ProLeap returned empty output")
 
-        data = json.loads(proc.stdout)
+        raw_json = proc.stdout
+        data = json.loads(raw_json)
         trees = _deserialize_paragraphs(data)
         full_text = format_file_ast(trees)
-        return trees, full_text
+        return trees, full_text, raw_json
     finally:
         pp.output_path.unlink(missing_ok=True)
 

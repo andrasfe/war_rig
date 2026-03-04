@@ -3229,15 +3229,15 @@ class TicketOrchestrator:
 
             try:
                 parse_result = citadel.parse_cobol(source_file.path, copybook_dirs=self._copybook_dirs)
-                full_ast_text = parse_result.full_ast
+                raw_json = parse_result.raw_ast_json
 
-                if not isinstance(full_ast_text, str) or not full_ast_text.strip():
+                if not raw_json or not raw_json.strip():
                     failures.append(
-                        f"{source_file.name}: empty or invalid AST"
+                        f"{source_file.name}: empty or invalid AST JSON"
                     )
                     continue
 
-                ast_path.write_text(full_ast_text, encoding="utf-8")
+                ast_path.write_text(raw_json, encoding="utf-8")
                 created += 1
             except Exception as e:
                 failures.append(f"{source_file.name}: {e}")
