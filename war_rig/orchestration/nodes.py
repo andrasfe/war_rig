@@ -293,15 +293,25 @@ class WarRigNodes:
             if result.file_type == FileType.COBOL:
                 source_path = state.get("source_file_path", "")
                 if source_path:
+                    from pathlib import Path as _Path
+
                     from citadel.sdk import Citadel
 
                     citadel = Citadel()
-                    parse_result = citadel.parse_cobol(source_path)
-                    if parse_result.paragraph_asts:
-                        updates["paragraph_asts"] = parse_result.paragraph_asts
+                    ast_file = _Path(source_path).with_suffix(
+                        _Path(source_path).suffix + ".ast"
+                    )
+                    if ast_file.exists():
+                        para_asts, _ = citadel.load_cobol_ast(ast_file)
+                    else:
+                        parse_result = citadel.parse_cobol(source_path)
+                        para_asts = parse_result.paragraph_asts
+
+                    if para_asts:
+                        updates["paragraph_asts"] = para_asts
                         logger.info(
                             "Stored %d per-paragraph ASTs for %s",
-                            len(parse_result.paragraph_asts),
+                            len(para_asts),
                             file_name,
                         )
 

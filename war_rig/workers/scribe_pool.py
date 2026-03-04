@@ -3314,9 +3314,16 @@ class ScribeWorker:
             AST string.
         """
         assert self._citadel is not None
-        parse_result = self._citadel.parse_cobol(source_path, copybook_dirs=self._copybook_dirs)
-        paragraph_asts = parse_result.paragraph_asts  # name → str(tree)
-        full_ast_text = parse_result.full_ast
+
+        # Use pre-generated .ast JSON file if it exists (avoids re-invoking ProLeap)
+        ast_file = Path(source_path).with_suffix(Path(source_path).suffix + ".ast")
+        if ast_file.exists():
+            paragraph_asts, full_ast_text = self._citadel.load_cobol_ast(ast_file)
+            parse_result = None
+        else:
+            parse_result = self._citadel.parse_cobol(source_path, copybook_dirs=self._copybook_dirs)
+            paragraph_asts = parse_result.paragraph_asts  # name → str(tree)
+            full_ast_text = parse_result.full_ast
 
         # Guard against mock/invalid returns
         if not isinstance(full_ast_text, str):
@@ -3328,7 +3335,7 @@ class ScribeWorker:
         self._file_asts[file_name] = paragraph_asts
 
         # Record missing copybooks for template metadata
-        if parse_result.copybooks_not_found:
+        if parse_result and parse_result.copybooks_not_found:
             if not hasattr(self, "_missing_copybooks"):
                 self._missing_copybooks: dict[str, list[str]] = {}
             self._missing_copybooks[file_name] = parse_result.copybooks_not_found

@@ -2046,6 +2046,27 @@ class Citadel:
             copybooks_not_found=list(set(reader.missing_copybooks)),
         )
 
+    def load_cobol_ast(
+        self, ast_path: str | Path,
+    ) -> tuple[dict[str, str], str]:
+        """Load a pre-generated ``.ast`` JSON file.
+
+        Returns the same (paragraph_asts, full_ast) as ``parse_cobol``
+        but without invoking the ProLeap Java subprocess.
+
+        Args:
+            ast_path: Path to the ``.ast`` JSON file.
+
+        Returns:
+            Tuple of (paragraph_name → formatted AST string, full AST text).
+        """
+        from citadel.cobol.proleap_bridge import load_ast_json
+
+        raw = Path(ast_path).read_text(encoding="utf-8")
+        trees, full_text = load_ast_json(raw)
+        para_asts = {name: str(tree) for name, tree in trees.items()}
+        return para_asts, full_text
+
     def get_callouts_compact(self, path: str | Path) -> list[dict[str, Any]]:
         """
         Get compact callouts from a file or directory for Tier 1 review.

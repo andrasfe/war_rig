@@ -1301,6 +1301,14 @@ class ChallengerWorker:
         if not self._citadel:
             return None, {}
         try:
+            # Use pre-generated .ast JSON file if available
+            ast_file = Path(file_path).with_suffix(
+                Path(file_path).suffix + ".ast"
+            )
+            if ast_file.exists():
+                para_asts, full_text = self._citadel.load_cobol_ast(ast_file)
+                return full_text or None, para_asts
+
             from war_rig.utils.copybook_dirs import derive_copybook_dirs
 
             cb_dirs = derive_copybook_dirs(

@@ -251,6 +251,26 @@ def parse_proleap(
         pp.output_path.unlink(missing_ok=True)
 
 
+def load_ast_json(
+    json_text: str,
+) -> tuple[dict[str, ParagraphSyntaxTree], str]:
+    """Load pre-generated ProLeap JSON and return AST structures.
+
+    This avoids re-invoking the Java subprocess when a ``.ast`` file
+    already exists on disk.
+
+    Args:
+        json_text: Raw JSON string (same format as ProLeap stdout).
+
+    Returns:
+        Tuple of (paragraph_name → ParagraphSyntaxTree, full_ast_text).
+    """
+    data = json.loads(json_text)
+    trees = _deserialize_paragraphs(data)
+    full_text = format_file_ast(trees)
+    return trees, full_text
+
+
 # ---------------------------------------------------------------------------
 # JSON → ParagraphSyntaxTree deserialization
 # ---------------------------------------------------------------------------

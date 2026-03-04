@@ -240,10 +240,20 @@ class CallSemanticsAnalyzer:
 
         # For COBOL files, prefer AST over raw function bodies
         if str(source_path).lower().endswith((".cbl", ".cob")):
+            from pathlib import Path as _Path
+
             from citadel.sdk import Citadel  # type: ignore[import-not-found]
 
-            parse_result = Citadel().parse_cobol(str(source_path))
-            ast_bodies = parse_result.paragraph_asts
+            citadel = Citadel()
+            ast_file = _Path(str(source_path)).with_suffix(
+                _Path(str(source_path)).suffix + ".ast"
+            )
+            if ast_file.exists():
+                ast_bodies, _ = citadel.load_cobol_ast(ast_file)
+            else:
+                parse_result = citadel.parse_cobol(str(source_path))
+                ast_bodies = parse_result.paragraph_asts
+
             if ast_bodies:
                 for name in function_names:
                     upper = name.upper()
