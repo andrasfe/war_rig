@@ -236,6 +236,14 @@ class MinionScribePool:
             f"{len(all_semantics)} call semantics"
         )
 
+        # Cancel any BLOCKED sub-tickets — the parent has moved on and
+        # there is no retry path, so leaving them BLOCKED would be misleading.
+        if parent_ticket_id and errors:
+            try:
+                self._cancel_blocked_sub_tickets(parent_ticket_id)
+            except Exception as e:
+                logger.debug(f"Could not cancel blocked sub-tickets: {e}")
+
         return all_semantics
 
     def get_pending_batches(
@@ -387,6 +395,46 @@ class MinionScribePool:
             logger.debug(f"Marked sub-ticket {sub_ticket_id} as BLOCKED")
         except Exception as e:
             logger.warning(f"Failed to update sub-ticket {sub_ticket_id}: {e}")
+
+    def _cancel_blocked_sub_tickets(self, parent_ticket_id: str) -> None:
+        """Cancel any BLOCKED CALL_SEMANTICS sub-tickets for a parent.
+
+        After ``analyze_file`` completes, failed batches leave sub-tickets
+        in BLOCKED state.  Since there is no retry loop, these tickets
+        would remain blocked forever.  Cancelling them keeps the ticket
+        board clean.
+
+        Args:
+            parent_ticket_id: ID of the parent DOCUMENTATION ticket.
+        """
+        if not self._beads_client:
+            return
+
+        pending = self.get_pending_batches(parent_ticket_id)
+        if not pending:
+            return
+
+        from war_rig.beads import TicketState
+
+        cancelled = 0
+        for t in pending:
+            try:
+                self._beads_client.update_ticket_state(
+                    t.ticket_id,
+                    TicketState.CANCELLED,
+                    reason="Parent analysis completed; no retry path",
+                )
+                cancelled += 1
+            except Exception as e:
+                logger.warning(
+                    f"Failed to cancel sub-ticket {t.ticket_id}: {e}"
+                )
+
+        if cancelled:
+            logger.info(
+                f"MinionScribePool: Cancelled {cancelled} blocked "
+                f"CALL_SEMANTICS sub-tickets for {parent_ticket_id}"
+            )
 
     async def _worker(
         self,
