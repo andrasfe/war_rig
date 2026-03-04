@@ -1,232 +1,33 @@
 {
   "header": {
     "program_id": "COPAUS2C",
-    "file_name": "COPAUS2C.cbl",
+    "file_name": "cbl/COPAUS2C.cbl",
     "file_type": "COBOL",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-03T16:46:36.163518",
+    "analyzed_at": "2026-03-04T03:23:58.861230",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This COBOL program processes fraud reports and updates the CARDDEMO.AUTHFRDS table in a DB2 database. It inserts new records or updates existing ones based on the SQLCODE returned from the INSERT statement. The program is triggered by a CICS transaction.",
-    "business_context": "Fraud detection and reporting within a card authorization system.",
+    "summary": "The COPAUS2C program is a CICS COBOL DB2 program that marks an authorization message as fraudulent. It inserts a record into the CARDDEMO.AUTHFRDS table, and if a duplicate record exists, it updates the existing record to mark it as fraudulent.",
+    "business_context": "This program is part of the CardDemo application and is used to report fraudulent authorization messages.",
     "program_type": "ONLINE_CICS",
     "citations": [
-      89,
-      155,
-      221
+      2,
+      5,
+      142,
+      223
     ]
   },
   "inputs": [
     {
-      "name": "PA-CARD-NUM",
+      "name": "DFHCOMMAREA",
       "io_type": "CICS_COMMAREA",
-      "description": "Card number from the CICS COMMAREA.",
-      "copybook": null,
+      "description": "The CICS COMMAREA contains the account ID (WS-ACCT-ID), customer ID (WS-CUST-ID), and the fraud authorization record (WS-FRAUD-AUTH-RECORD) which includes the authorization details. It also contains the fraud status record (WS-FRAUD-STATUS-RECORD) which includes the fraud action (WS-FRD-ACTION), update status (WS-FRD-UPDATE-STATUS), and action message (WS-FRD-ACT-MSG).",
+      "copybook": "CIPAUDTY",
       "citation": [
-        113
-      ]
-    },
-    {
-      "name": "PA-AUTH-ORIG-DATE",
-      "io_type": "CICS_COMMAREA",
-      "description": "Authorization original date from the CICS COMMAREA.",
-      "copybook": null,
-      "citation": [
-        91,
-        92,
-        93
-      ]
-    },
-    {
-      "name": "PA-AUTH-TIME-9C",
-      "io_type": "CICS_COMMAREA",
-      "description": "Authorization time from the CICS COMMAREA.",
-      "copybook": null,
-      "citation": [
-        106
-      ]
-    },
-    {
-      "name": "PA-AUTH-TYPE",
-      "io_type": "CICS_COMMAREA",
-      "description": "Authorization type from the CICS COMMAREA.",
-      "copybook": null,
-      "citation": [
-        115
-      ]
-    },
-    {
-      "name": "PA-CARD-EXPIRY-DATE",
-      "io_type": "CICS_COMMAREA",
-      "description": "Card expiry date from the CICS COMMAREA.",
-      "copybook": null,
-      "citation": [
-        116
-      ]
-    },
-    {
-      "name": "PA-MESSAGE-TYPE",
-      "io_type": "CICS_COMMAREA",
-      "description": "Message type from the CICS COMMAREA.",
-      "copybook": null,
-      "citation": [
-        117
-      ]
-    },
-    {
-      "name": "PA-MESSAGE-SOURCE",
-      "io_type": "CICS_COMMAREA",
-      "description": "Message source from the CICS COMMAREA.",
-      "copybook": null,
-      "citation": [
-        118
-      ]
-    },
-    {
-      "name": "PA-AUTH-ID-CODE",
-      "io_type": "CICS_COMMAREA",
-      "description": "Authorization ID code from the CICS COMMAREA.",
-      "copybook": null,
-      "citation": [
-        119
-      ]
-    },
-    {
-      "name": "PA-AUTH-RESP-CODE",
-      "io_type": "CICS_COMMAREA",
-      "description": "Authorization response code from the CICS COMMAREA.",
-      "copybook": null,
-      "citation": [
-        120
-      ]
-    },
-    {
-      "name": "PA-AUTH-RESP-REASON",
-      "io_type": "CICS_COMMAREA",
-      "description": "Authorization response reason from the CICS COMMAREA.",
-      "copybook": null,
-      "citation": [
-        121
-      ]
-    },
-    {
-      "name": "PA-PROCESSING-CODE",
-      "io_type": "CICS_COMMAREA",
-      "description": "Processing code from the CICS COMMAREA.",
-      "copybook": null,
-      "citation": [
-        122
-      ]
-    },
-    {
-      "name": "PA-TRANSACTION-AMT",
-      "io_type": "CICS_COMMAREA",
-      "description": "Transaction amount from the CICS COMMAREA.",
-      "copybook": null,
-      "citation": [
-        123
-      ]
-    },
-    {
-      "name": "PA-APPROVED-AMT",
-      "io_type": "CICS_COMMAREA",
-      "description": "Approved amount from the CICS COMMAREA.",
-      "copybook": null,
-      "citation": [
-        124
-      ]
-    },
-    {
-      "name": "PA-MERCHANT-CATAGORY-CODE",
-      "io_type": "CICS_COMMAREA",
-      "description": "Merchant category code from the CICS COMMAREA.",
-      "copybook": null,
-      "citation": [
-        125
-      ]
-    },
-    {
-      "name": "PA-ACQR-COUNTRY-CODE",
-      "io_type": "CICS_COMMAREA",
-      "description": "Acquirer country code from the CICS COMMAREA.",
-      "copybook": null,
-      "citation": [
-        126
-      ]
-    },
-    {
-      "name": "PA-POS-ENTRY-MODE",
-      "io_type": "CICS_COMMAREA",
-      "description": "POS entry mode from the CICS COMMAREA.",
-      "copybook": null,
-      "citation": [
-        127
-      ]
-    },
-    {
-      "name": "PA-MERCHANT-ID",
-      "io_type": "CICS_COMMAREA",
-      "description": "Merchant ID from the CICS COMMAREA.",
-      "copybook": null,
-      "citation": [
-        128
-      ]
-    },
-    {
-      "name": "PA-MERCHANT-NAME",
-      "io_type": "CICS_COMMAREA",
-      "description": "Merchant name from the CICS COMMAREA.",
-      "copybook": null,
-      "citation": [
-        129,
-        130
-      ]
-    },
-    {
-      "name": "PA-MERCHANT-CITY",
-      "io_type": "CICS_COMMAREA",
-      "description": "Merchant city from the CICS COMMAREA.",
-      "copybook": null,
-      "citation": [
-        131
-      ]
-    },
-    {
-      "name": "PA-MERCHANT-STATE",
-      "io_type": "CICS_COMMAREA",
-      "description": "Merchant state from the CICS COMMAREA.",
-      "copybook": null,
-      "citation": [
-        132
-      ]
-    },
-    {
-      "name": "PA-MERCHANT-ZIP",
-      "io_type": "CICS_COMMAREA",
-      "description": "Merchant ZIP code from the CICS COMMAREA.",
-      "copybook": null,
-      "citation": [
-        133
-      ]
-    },
-    {
-      "name": "PA-TRANSACTION-ID",
-      "io_type": "CICS_COMMAREA",
-      "description": "Transaction ID from the CICS COMMAREA.",
-      "copybook": null,
-      "citation": [
-        134
-      ]
-    },
-    {
-      "name": "PA-MATCH-STATUS",
-      "io_type": "CICS_COMMAREA",
-      "description": "Match status from the CICS COMMAREA.",
-      "copybook": null,
-      "citation": [
-        135
+        74,
+        78
       ]
     }
   ],
@@ -234,80 +35,57 @@
     {
       "name": "CARDDEMO.AUTHFRDS",
       "io_type": "DB2_TABLE",
-      "description": "Updated fraud information in the CARDDEMO.AUTHFRDS table.",
-      "copybook": null,
+      "description": "This table stores authorization details and fraud status. The program inserts a new record or updates an existing record in this table to mark an authorization as fraudulent.",
+      "copybook": "AUTHFRDS",
       "citation": [
-        155,
-        222
+        142,
+        223
       ]
     },
     {
-      "name": "CICS COMMAREA",
+      "name": "DFHCOMMAREA",
       "io_type": "CICS_COMMAREA",
-      "description": "Updated COMMAREA with fraud action message.",
+      "description": "The CICS COMMAREA is updated with the fraud update status (WS-FRD-UPDT-STATUS) and a message (WS-FRD-ACT-MSG) indicating the success or failure of the fraud update.",
       "copybook": null,
       "citation": [
-        160,
-        162,
-        225,
-        227
+        83,
+        86,
+        201,
+        213,
+        232,
+        241
       ]
     }
   ],
-  "called_programs": [
-    {
-      "program_name": "CIPAUDTY",
-      "call_type": "OTHER",
-      "purpose": "UNKNOWN",
-      "parameters": [],
-      "citation": 23
-    }
-  ],
+  "called_programs": [],
   "calling_context": {
     "called_by": [],
     "entry_points": [],
-    "linkage_section": []
+    "linkage_section": [
+      "DFHCOMMAREA"
+    ]
   },
   "business_rules": [
     {
       "rule_id": "BR001",
-      "description": "If the SQLCODE is zero after inserting a record into CARDDEMO.AUTHFRDS, the fraud update is considered successful.",
-      "logic_summary": "Checks SQLCODE after INSERT.",
-      "conditions": [
-        "SQLCODE = ZERO"
-      ],
-      "citation": [
-        157
-      ]
-    },
-    {
-      "rule_id": "BR002",
-      "description": "If the SQLCODE is -803 after inserting a record, it indicates a duplicate key, and the program attempts to update the existing record.",
-      "logic_summary": "Checks SQLCODE for duplicate key.",
+      "description": "If a record with the same card number and authorization timestamp already exists in the CARDDEMO.AUTHFRDS table, update the existing record instead of inserting a new one.",
+      "logic_summary": "The program checks the SQLCODE after the INSERT operation. If the SQLCODE is -803 (duplicate key), it performs an UPDATE operation.",
       "conditions": [
         "SQLCODE = -803"
       ],
       "citation": [
-        163
-      ]
-    },
-    {
-      "rule_id": "BR003",
-      "description": "If the SQLCODE is zero after updating a record in CARDDEMO.AUTHFRDS, the fraud update is considered successful.",
-      "logic_summary": "Checks SQLCODE after UPDATE.",
-      "conditions": [
-        "SQLCODE = ZERO"
-      ],
-      "citation": [
-        224
+        203,
+        204
       ]
     }
   ],
   "data_flow": {
     "reads_from": [
       {
-        "source": "CICS COMMAREA",
+        "source": "DFHCOMMAREA",
         "fields_used": [
+          "WS-ACCT-ID",
+          "WS-CUST-ID",
           "PA-CARD-NUM",
           "PA-AUTH-ORIG-DATE",
           "PA-AUTH-TIME-9C",
@@ -330,11 +108,27 @@
           "PA-MERCHANT-STATE",
           "PA-MERCHANT-ZIP",
           "PA-TRANSACTION-ID",
-          "PA-MATCH-STATUS"
+          "PA-MATCH-STATUS",
+          "WS-FRD-ACTION"
         ],
         "citation": [
-          91,
-          106,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          80,
+          81,
+          82,
+          83,
+          84,
+          85,
+          86,
+          101,
+          103,
+          104,
+          105,
           113,
           115,
           116,
@@ -347,69 +141,9 @@
           123,
           124,
           125,
-          126,
           127,
           128,
           129,
-          130,
-          131,
-          132,
-          133,
-          134,
-          135
-        ]
-      }
-    ],
-    "writes_to": [
-      {
-        "destination": "CARDDEMO.AUTHFRDS",
-        "fields_written": [
-          "CARD-NUM",
-          "AUTH-TS",
-          "AUTH-TYPE",
-          "CARD-EXPIRY-DATE",
-          "MESSAGE-TYPE",
-          "MESSAGE-SOURCE",
-          "AUTH-ID-CODE",
-          "AUTH-RESP-CODE",
-          "AUTH-RESP-REASON",
-          "PROCESSING-CODE",
-          "TRANSACTION-AMT",
-          "APPROVED-AMT",
-          "MERCHANT-CATAGORY-CODE",
-          "ACQR-COUNTRY-CODE",
-          "POS-ENTRY-MODE",
-          "MERCHANT-ID",
-          "MERCHANT-NAME-LEN",
-          "MERCHANT-NAME-TEXT",
-          "MERCHANT-CITY",
-          "MERCHANT-STATE",
-          "MERCHANT-ZIP",
-          "TRANSACTION-ID",
-          "MATCH-STATUS",
-          "AUTH-FRAUD",
-          "ACCT-ID",
-          "CUST-ID"
-        ],
-        "citation": [
-          113,
-          114,
-          115,
-          116,
-          117,
-          118,
-          119,
-          120,
-          121,
-          122,
-          123,
-          124,
-          125,
-          126,
-          127,
-          128,
-          129,
-          130,
           131,
           132,
           133,
@@ -417,55 +151,147 @@
           135,
           136,
           137,
-          138
+          138,
+          139
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "CARDDEMO.AUTHFRDS",
+        "fields_written": [
+          "CARD_NUM",
+          "AUTH_TS",
+          "AUTH_TYPE",
+          "CARD_EXPIRY_DATE",
+          "MESSAGE_TYPE",
+          "MESSAGE_SOURCE",
+          "AUTH_ID_CODE",
+          "AUTH_RESP_CODE",
+          "AUTH_RESP_REASON",
+          "PROCESSING_CODE",
+          "TRANSACTION_AMT",
+          "APPROVED_AMT",
+          "MERCHANT_CATAGORY_CODE",
+          "ACQR_COUNTRY_CODE",
+          "POS_ENTRY_MODE",
+          "MERCHANT_ID",
+          "MERCHANT_NAME",
+          "MERCHANT_CITY",
+          "MERCHANT_STATE",
+          "MERCHANT_ZIP",
+          "TRANSACTION_ID",
+          "MATCH_STATUS",
+          "AUTH_FRAUD",
+          "FRAUD_RPT_DATE",
+          "ACCT_ID",
+          "CUST_ID"
+        ],
+        "citation": [
+          143,
+          144,
+          145,
+          146,
+          147,
+          148,
+          149,
+          150,
+          151,
+          152,
+          153,
+          154,
+          155,
+          156,
+          157,
+          158,
+          159,
+          160,
+          161,
+          162,
+          163,
+          164,
+          165,
+          166,
+          167,
+          168,
+          224,
+          225
+        ]
+      },
+      {
+        "destination": "DFHCOMMAREA",
+        "fields_written": [
+          "WS-FRD-UPDATE-STATUS",
+          "WS-FRD-ACT-MSG"
+        ],
+        "citation": [
+          200,
+          201,
+          206,
+          211,
+          213,
+          231,
+          232,
+          234,
+          239,
+          241
         ]
       }
     ],
     "transforms": [
       {
-        "input_field": "PA-AUTH-ORIG-DATE",
-        "output_field": "WS-AUTH-YY, WS-AUTH-MM, WS-AUTH-DD",
-        "transformation_description": "Splits the authorization original date into year, month, and day components.",
-        "citation": [
-          91,
-          92,
-          93
-        ]
-      },
-      {
         "input_field": "PA-AUTH-TIME-9C",
         "output_field": "WS-AUTH-TIME",
-        "transformation_description": "Calculates the authorization time by subtracting PA-AUTH-TIME-9C from 999999999.",
+        "transformation_description": "Calculates the authorization time by subtracting PA-AUTH-TIME-9C from 999999999. This is likely done to convert the time into a format suitable for the DB2 table.",
         "citation": [
-          106
+          107
         ]
       },
       {
-        "input_field": "WS-AUTH-TIME-AN",
-        "output_field": "WS-AUTH-HH, WS-AUTH-MI, WS-AUTH-SS, WS-AUTH-SSS",
-        "transformation_description": "Splits the authorization time into hours, minutes, seconds, and milliseconds.",
+        "input_field": "PA-AUTH-ORIG-DATE",
+        "output_field": "WS-AUTH-YY, WS-AUTH-MM, WS-AUTH-DD",
+        "transformation_description": "The authorization original date is split into year, month, and day components.",
         "citation": [
-          107,
-          108,
-          109,
-          110
+          103,
+          104,
+          105
+        ]
+      },
+      {
+        "input_field": "WS-CUR-DATE",
+        "output_field": "PA-FRAUD-RPT-DATE",
+        "transformation_description": "The current date is moved to the fraud report date field.",
+        "citation": [
+          101
         ]
       }
     ]
   },
   "copybooks_used": [
     {
+      "copybook_name": "CIPAUDTY",
+      "purpose": "Defines the structure of the fraud authorization record.",
+      "location": "LINKAGE",
+      "citation": 78
+    },
+    {
       "copybook_name": "SQLCA",
-      "purpose": "SQL Communication Area for DB2 interaction.",
+      "purpose": "SQL Communication Area, used for DB2 error handling.",
       "location": "WORKING_STORAGE",
-      "citation": 23
+      "citation": 66
+    },
+    {
+      "copybook_name": "AUTHFRDS",
+      "purpose": "Defines the structure of the CARDDEMO.AUTHFRDS table.",
+      "location": "WORKING_STORAGE",
+      "citation": 69
     }
   ],
   "paragraphs": [
     {
       "paragraph_name": "COPAUS2C",
       "summary": null,
-      "purpose": "This is the main program entry point. It doesn't contain any executable logic other than calling other programs or copybooks. It declares the program ID and includes necessary copybooks such as SQLCA for DB2 communication. The program also calls CIPAUDTY and AUTHFRDS, but their purpose cannot be determined from the provided code snippet.",
+      "purpose": "This is the program identification paragraph. It simply defines the program ID as COPAUS2C. It does not perform any processing logic or call any other paragraphs directly. It serves as the entry point for the program but delegates all functional responsibilities to other paragraphs. The program utilizes copybooks CIPAUDTY, SQLCA, and AUTHFRDS, which are included for data structure definitions and DB2 communication. The program's main function, marking authorization messages as fraudulent, is handled in subsequent paragraphs. This paragraph is essential for program identification and organization, but it does not directly contribute to the program's core functionality. It is the starting point for understanding the program's overall structure and purpose.",
       "called_by": [],
       "calls": [
         "CIPAUDTY",
@@ -501,7 +327,7 @@
     {
       "paragraph_name": "MAIN-PARA",
       "summary": null,
-      "purpose": "This paragraph is the main processing logic of the program. It first retrieves the current date using EXEC CICS ASKTIME and moves it to PA-FRAUD-RPT-DATE. It then extracts year, month, and day from PA-AUTH-ORIG-DATE and calculates WS-AUTH-TIME by subtracting PA-AUTH-TIME-9C from 999999999. The calculated time is then split into hours, minutes, seconds, and milliseconds. After preparing the data, it moves data from the CICS COMMAREA (PA-*) to corresponding fields for insertion into the CARDDEMO.AUTHFRDS table. It then executes an SQL INSERT statement to add a new record to the CARDDEMO.AUTHFRDS table. If the insert is successful (SQLCODE = 0), it sets WS-FRD-UPDT-SUCCESS to TRUE and moves 'ADD SUCCESS' to WS-FRD-ACT-MSG. If a duplicate key error occurs (SQLCODE = -803), it performs the FRAUD-UPDATE paragraph to update the existing record. If any other SQL error occurs, it sets WS-FRD-UPDT-FAILED to TRUE, moves the SQLCODE and SQLSTATE to WS-SQLCODE and WS-SQLSTATE respectively, and constructs an error message. Finally, it returns control to CICS.",
+      "purpose": "This paragraph is the main processing logic of the COPAUS2C program. It retrieves the current date and time using CICS ASKTIME and FORMATTIME commands and moves the current date to PA-FRAUD-RPT-DATE. It then extracts the year, month, and day from PA-AUTH-ORIG-DATE and calculates WS-AUTH-TIME by subtracting PA-AUTH-TIME-9C from 999999999. The paragraph moves data from the input COMMAREA (PA- fields) to corresponding fields in the AUTHFRDS table structure. It then attempts to insert a new record into the CARDDEMO.AUTHFRDS table using an embedded SQL INSERT statement. If the insert is successful (SQLCODE = ZERO), it sets WS-FRD-UPDT-SUCCESS to TRUE and moves 'ADD SUCCESS' to WS-FRD-ACT-MSG. If the insert fails with a duplicate key error (SQLCODE = -803), it calls the FRAUD-UPDATE paragraph to update the existing record. If any other SQL error occurs, it sets WS-FRD-UPDT-FAILED to TRUE, moves the SQLCODE and SQLSTATE to WS-SQLCODE and WS-SQLSTATE, respectively, and constructs an error message in WS-FRD-ACT-MSG. Finally, it returns control to CICS.",
       "called_by": [],
       "calls": [
         "FRAUD-UPDATE",
@@ -533,8 +359,10 @@
     {
       "paragraph_name": "FRAUD-UPDATE",
       "summary": null,
-      "purpose": "This paragraph handles the update of an existing record in the CARDDEMO.AUTHFRDS table. It executes an SQL UPDATE statement to set AUTH-FRAUD, ACCT-ID, and CUST-ID based on WS-FRD-ACTION, WS-ACCT-ID, and WS-CUST-ID respectively, where the CARD-NUM and AUTH-TS match. If the update is successful (SQLCODE = 0), it sets WS-FRD-UPDT-SUCCESS to TRUE and moves 'UPDT SUCCESS' to WS-FRD-ACT-MSG. If any SQL error occurs, it sets WS-FRD-UPDT-FAILED to TRUE, moves the SQLCODE and SQLSTATE to WS-SQLCODE and WS-SQLSTATE respectively, and constructs an error message. The paragraph updates the CARDDEMO.AUTHFRDS table and potentially modifies the WS-FRD-ACT-MSG based on the success of the update.",
-      "called_by": [],
+      "purpose": "This paragraph updates an existing record in the CARDDEMO.AUTHFRDS table. It constructs an SQL UPDATE statement to set the AUTH_FRAUD and FRAUD_RPT_DATE fields for the record matching the CARD_NUM and AUTH_TS from the input COMMAREA. If the update is successful (SQLCODE = ZERO), it sets WS-FRD-UPDT-SUCCESS to TRUE and moves 'UPDT SUCCESS' to WS-FRD-ACT-MSG. If the update fails, it sets WS-FRD-UPDT-FAILED to TRUE, moves the SQLCODE and SQLSTATE to WS-SQLCODE and WS-SQLSTATE, respectively, and constructs an error message in WS-FRD-ACT-MSG. This paragraph is called by MAIN-PARA when an attempt to insert a new record results in a duplicate key error, indicating that the record already exists and needs to be updated instead. The updated information includes marking the record as fraudulent and setting the fraud report date.",
+      "called_by": [
+        "MAIN-PARA"
+      ],
       "calls": [
         "CARDDEMO.AUTHFRDS"
       ],
@@ -571,29 +399,34 @@
   "error_handling": [
     {
       "condition": "SQLCODE = -803 after INSERT",
-      "action": "PERFORM FRAUD-UPDATE",
+      "action": "PERFORM FRAUD-UPDATE to update the existing record.",
       "citation": [
-        163
+        203,
+        204
       ]
     },
     {
-      "condition": "SQLCODE not ZERO after INSERT",
-      "action": "SET WS-FRD-UPDT-FAILED to TRUE, MOVE SQLCODE and SQLSTATE to WS-SQLCODE and WS-SQLSTATE, STRING error message.",
+      "condition": "SQLCODE not ZERO after INSERT and not -803",
+      "action": "Set WS-FRD-UPDT-FAILED to TRUE, move SQLCODE and SQLSTATE to WS-SQLCODE and WS-SQLSTATE, and construct an error message in WS-FRD-ACT-MSG.",
       "citation": [
-        165,
-        166,
-        167,
-        168
+        203,
+        206,
+        208,
+        209,
+        211,
+        213
       ]
     },
     {
       "condition": "SQLCODE not ZERO after UPDATE",
-      "action": "SET WS-FRD-UPDT-FAILED to TRUE, MOVE SQLCODE and SQLSTATE to WS-SQLCODE and WS-SQLSTATE, STRING error message.",
+      "action": "Set WS-FRD-UPDT-FAILED to TRUE, move SQLCODE and SQLSTATE to WS-SQLCODE and WS-SQLSTATE, and construct an error message in WS-FRD-ACT-MSG.",
       "citation": [
-        226,
-        227,
-        228,
-        229
+        230,
+        234,
+        236,
+        237,
+        239,
+        241
       ]
     }
   ],
@@ -601,47 +434,37 @@
     {
       "operation": "INSERT",
       "table": "CARDDEMO.AUTHFRDS",
-      "purpose": "To insert a new fraud record into the CARDDEMO.AUTHFRDS table.",
-      "citation": 155
+      "purpose": "To insert a new record into the AUTHFRDS table, marking an authorization message as fraudulent.",
+      "citation": 142
     },
     {
       "operation": "UPDATE",
       "table": "CARDDEMO.AUTHFRDS",
-      "purpose": "To update an existing fraud record in the CARDDEMO.AUTHFRDS table.",
-      "citation": 222
+      "purpose": "To update an existing record in the AUTHFRDS table, marking an authorization message as fraudulent when a duplicate record is found.",
+      "citation": 223
     }
   ],
   "cics_operations": [
     {
       "command": "ASKTIME",
       "resource": null,
-      "purpose": "To retrieve the current date and time.",
-      "citation": 90
+      "purpose": "To retrieve the current absolute time.",
+      "citation": 91
+    },
+    {
+      "command": "FORMATTIME",
+      "resource": null,
+      "purpose": "To format the absolute time into a MMDDYY date format.",
+      "citation": 95
     },
     {
       "command": "RETURN",
       "resource": null,
       "purpose": "To return control to CICS.",
-      "citation": 170
+      "citation": 218
     }
   ],
-  "open_questions": [
-    {
-      "question": "What is the purpose of CIPAUDTY program?",
-      "context": "The code only shows that CIPAUDTY is called, but its function is unclear.",
-      "suggestion": "Need to analyze CIPAUDTY source code or documentation."
-    },
-    {
-      "question": "What is the purpose of AUTHFRDS program?",
-      "context": "The code only shows that AUTHFRDS is called, but its function is unclear.",
-      "suggestion": "Need to analyze AUTHFRDS source code or documentation."
-    },
-    {
-      "question": "What is the structure of the CICS COMMAREA?",
-      "context": "The code uses PA-* fields, but the structure of the COMMAREA is not defined in the provided code.",
-      "suggestion": "Need to review the BMS map or copybook defining the COMMAREA structure."
-    }
-  ],
+  "open_questions": [],
   "resolved_questions": [],
   "dead_code": [
     {
@@ -692,34 +515,33 @@
       "caller": "MAIN-PARA",
       "callee": "FRAUD-UPDATE",
       "inputs": [
-        "PA-AUTH-ORIG-DATE",
-        "PA-AUTH-TIME-9C",
-        "PA-CARD-NUM",
-        "WS-AUTH-TS",
-        "PA-AUTH-TYPE",
-        "PA-CARD-EXPIRY-DATE",
-        "PA-MESSAGE-TYPE",
-        "PA-MESSAGE-SOURCE",
-        "PA-AUTH-ID-CODE",
-        "PA-AUTH-RESP-CODE",
-        "PA-AUTH-RESP-REASON",
-        "PA-PROCESSING-CODE",
-        "PA-TRANSACTION-AMT",
-        "PA-APPROVED-AMT",
-        "PA-MERCHANT-CATAGORY-CODE",
-        "PA-ACQR-COUNTRY-CODE",
-        "PA-POS-ENTRY-MODE",
-        "PA-MERCHANT-ID",
+        "SQLCODE",
+        "CARD-NUM",
+        "AUTH-TS",
+        "AUTH-TYPE",
+        "CARD-EXPIRY-DATE",
+        "MESSAGE-TYPE",
+        "MESSAGE-SOURCE",
+        "AUTH-ID-CODE",
+        "AUTH-RESP-CODE",
+        "AUTH-RESP-REASON",
+        "PROCESSING-CODE",
+        "TRANSACTION-AMT",
+        "APPROVED-AMT",
+        "MERCHANT-CATAGORY-CODE",
+        "ACQR-COUNTRY-CODE",
+        "POS-ENTRY-MODE",
+        "MERCHANT-ID",
         "MERCHANT-NAME-LEN",
-        "PA-MERCHANT-NAME",
-        "PA-MERCHANT-CITY",
-        "PA-MERCHANT-STATE",
-        "PA-MERCHANT-ZIP",
-        "PA-TRANSACTION-ID",
-        "PA-MATCH-STATUS",
-        "WS-FRD-ACTION",
-        "WS-ACCT-ID",
-        "WS-CUST-ID"
+        "MERCHANT-NAME-TEXT",
+        "MERCHANT-CITY",
+        "MERCHANT-STATE",
+        "MERCHANT-ZIP",
+        "TRANSACTION-ID",
+        "MATCH-STATUS",
+        "AUTH-FRAUD",
+        "ACCT-ID",
+        "CUST-ID"
       ],
       "outputs": [
         "WS-FRD-UPDT-SUCCESS",
@@ -728,7 +550,7 @@
         "WS-SQLCODE",
         "WS-SQLSTATE"
       ],
-      "purpose": "Updates an existing fraud authorization record in the database when an insert fails due to a duplicate key, and sets success or failure flags accordingly."
+      "purpose": "Updates an existing fraud authorization record in the database when an insert fails due to a duplicate key."
     }
   ],
   "flow_diagram": "flowchart TD\n    %% Title: COPAUS2C.cbl\n    FRAUD_UPDATE[\"FRAUD-UPDATE\"]\n    CARDDEMO_AUTHFRDS__ext[(\"CARDDEMO.AUTHFRDS\")]\n    MAIN_PARA[\"MAIN-PARA\"]\n    FRAUD_UPDATE -.->|updates| CARDDEMO_AUTHFRDS__ext\n    MAIN_PARA --> FRAUD_UPDATE\n    MAIN_PARA -.->|writes| CARDDEMO_AUTHFRDS__ext",

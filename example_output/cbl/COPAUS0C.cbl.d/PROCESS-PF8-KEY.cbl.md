@@ -1,29 +1,27 @@
 ```cobol
-       PROCESS-PF8-KEY.
-      *****************************************************************
 
-           IF CDEMO-CPVS-PAUKEY-LAST = SPACES OR LOW-VALUES
-               MOVE LOW-VALUES             TO WS-AUTH-KEY-SAVE
-           ELSE
-               MOVE CDEMO-CPVS-PAUKEY-LAST TO WS-AUTH-KEY-SAVE
+                  IF CDEMO-ACCT-ID IS NUMERIC
+                     MOVE CDEMO-ACCT-ID     TO WS-ACCT-ID
+                                               ACCTIDO OF COPAU0AO
+                  ELSE
+                     MOVE SPACE             TO ACCTIDO OF COPAU0AO
+                     MOVE LOW-VALUES        TO WS-ACCT-ID
+                  END-IF
 
-               PERFORM GET-AUTH-SUMMARY
-               PERFORM REPOSITION-AUTHORIZATIONS
-           END-IF
+                  PERFORM GATHER-DETAILS
 
-           MOVE -1                         TO ACCTIDL OF COPAU0AI
+                  SET SEND-ERASE-YES TO TRUE
 
-           SET SEND-ERASE-NO               TO TRUE
+                  PERFORM SEND-PAULST-SCREEN
 
-           IF NEXT-PAGE-YES
-               PERFORM INITIALIZE-AUTH-DATA
+               ELSE
+                  PERFORM RECEIVE-PAULST-SCREEN
 
-               PERFORM PROCESS-PAGE-FORWARD
-           ELSE
-               MOVE 'You are already at the bottom of the page...'
-                                           TO WS-MESSAGE
-           END-IF
-           .
+                  EVALUATE EIBAID
+                     WHEN DFHENTER
+                       PERFORM PROCESS-ENTER-KEY
 
-      *****************************************************************
+                       IF WS-ACCT-ID = LOW-VALUES
+                          MOVE SPACE           TO ACCTIDO   OF COPAU0AO
+                       ELSE
 ```

@@ -21,4 +21,6 @@
                 PERFORM 3100-READ-REQUEST-MQ THRU 3100-EXIT                     
              END-IF                                                             
            END-PERFORM                                                          
+           .                                                                    
+      *                                                                         
 ```

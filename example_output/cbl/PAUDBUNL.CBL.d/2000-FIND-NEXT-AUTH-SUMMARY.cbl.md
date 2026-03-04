@@ -1,9 +1,4 @@
 ```cobol
-      *                                                                 01970026
-       1000-EXIT.                                                       01980026
-            EXIT.                                                       01990026
-      *                                                                 02000026
-      *----------------------------------------------------------------*02010026
        2000-FIND-NEXT-AUTH-SUMMARY.                                     02020026
       *----------------------------------------------------------------*02030026
       *                                                                 02040026
@@ -28,4 +23,21 @@
                     INITIALIZE ROOT-SEG-KEY                             02190156
                     INITIALIZE CHILD-SEG-REC                            02190256
                     MOVE PA-ACCT-ID           TO ROOT-SEG-KEY           02190356
+      *             DISPLAY 'WRITING FIRST FILE'                        02190456
+                    IF PA-ACCT-ID IS NUMERIC                            02190556
+                    WRITE OPFIL1-REC                                    02190656
+                    INITIALIZE WS-END-OF-CHILD-SEG                      02190756
+                    PERFORM 3000-FIND-NEXT-AUTH-DTL THRU 3000-EXIT      02190856
+                    UNTIL  WS-END-OF-CHILD-SEG='Y'                      02190956
+                    END-IF                                              02191056
+               END-IF                                                   02191156
+               IF PAUT-PCB-STATUS = 'GB'                                02192029
+                    SET END-OF-AUTHDB     TO TRUE                       02194029
+                    MOVE 'Y' TO WS-END-OF-ROOT-SEG                      02195050
+               END-IF                                                   02197029
+               IF PAUT-PCB-STATUS NOT EQUAL TO  SPACES AND 'GB'         02200029
+                  DISPLAY 'AUTH SUM  GN FAILED  :' PAUT-PCB-STATUS      02230029
+                  DISPLAY 'KEY FEEDBACK AREA    :' PAUT-KEYFB           02240048
+                    PERFORM 9999-ABEND                                  02260026
+            .                                                           02280026
 ```

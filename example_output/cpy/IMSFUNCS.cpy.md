@@ -2,13 +2,13 @@
 
 **File**: `cpy/IMSFUNCS.cpy`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-03-03 16:50:11.210163
+**Analyzed**: 2026-03-04 03:32:16.036892
 
 ## Purpose
 
-This copybook defines a set of constants representing IMS function codes and a parameter count. These constants are used when making calls to IMS databases.
+This copybook defines a set of constants representing IMS function codes and a parameter count. These constants are used in IMS (Information Management System) database calls within COBOL programs.
 
-**Business Context**: UNKNOWN
+**Business Context**: This copybook supports IMS database interactions within the application.
 
 ## Paragraphs/Procedures
 
@@ -25,5 +25,5 @@ The following artifacts were identified as dead code by static analysis:
 
 ## Open Questions
 
-- ? What is the specific purpose of each IMS function code in the context of the larger application?
-  - Context: The copybook only defines the codes, not their usage.
+- ? Where is this copybook used?
+  - Context: Cannot determine the programs that include this copybook from the copybook itself.

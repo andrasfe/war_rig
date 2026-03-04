@@ -1,28 +1,26 @@
 ```cobol
-       PROCESS-PF7-KEY.
-      *****************************************************************
+           SET ERR-FLG-OFF TO TRUE
+           SET AUTHS-NOT-EOF TO TRUE
+           SET NEXT-PAGE-NO TO TRUE
+           SET SEND-ERASE-YES TO TRUE
 
-           IF CDEMO-CPVS-PAGE-NUM > 1
-              COMPUTE CDEMO-CPVS-PAGE-NUM = CDEMO-CPVS-PAGE-NUM - 1
+           MOVE SPACES TO WS-MESSAGE ERRMSGO OF COPAU0AO
 
-              MOVE CDEMO-CPVS-PAUKEY-PREV-PG(CDEMO-CPVS-PAGE-NUM)
-                                           TO WS-AUTH-KEY-SAVE
-              PERFORM GET-AUTH-SUMMARY
+           MOVE -1       TO ACCTIDL OF COPAU0AI
 
-              SET SEND-ERASE-NO            TO TRUE
+           IF EIBCALEN = 0
+               INITIALIZE CARDDEMO-COMMAREA
+               MOVE WS-PGM-AUTH-SMRY    TO CDEMO-TO-PROGRAM
 
-              SET NEXT-PAGE-YES            TO TRUE
-              MOVE -1                      TO ACCTIDL OF COPAU0AI
+               SET CDEMO-PGM-REENTER    TO TRUE
+               MOVE LOW-VALUES          TO COPAU0AO
+               MOVE -1                  TO ACCTIDL OF COPAU0AI
 
-              PERFORM INITIALIZE-AUTH-DATA
-
-              PERFORM PROCESS-PAGE-FORWARD
+              PERFORM SEND-PAULST-SCREEN
            ELSE
-              MOVE 'You are already at the top of the page...' TO
-                               WS-MESSAGE
-              SET SEND-ERASE-NO            TO TRUE
-           END-IF
-           .
+               MOVE DFHCOMMAREA(1:EIBCALEN) TO CARDDEMO-COMMAREA
 
-      *****************************************************************
+               IF NOT CDEMO-PGM-REENTER
+                  SET CDEMO-PGM-REENTER     TO TRUE
+
 ```

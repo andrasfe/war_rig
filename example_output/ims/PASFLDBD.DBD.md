@@ -2,13 +2,13 @@
 
 **File**: `ims/PASFLDBD.DBD`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-03-03 16:47:22.227337
+**Analyzed**: 2026-03-04 03:29:58.205532
 
 ## Purpose
 
-This file defines the Database Description (DBD) for PASFLDBD, specifying its access method as GSAM/BSAM, dataset names (PASFILIP, PASFILOP), record length (100), and record format (F). It also includes copyright and licensing information.
+This file contains the Database Description (DBD) for PASFLDBD, defining its structure and access method as GSAM/BSAM. It specifies the dataset names, record length, and record format.
 
 ## Open Questions
 
 - ? What is the purpose of the PASFILIP and PASFILOP datasets?
-  - Context: The DBD defines these datasets, but their specific function is unclear.
+  - Context: The DBD defines these datasets but doesn't explain their specific roles.

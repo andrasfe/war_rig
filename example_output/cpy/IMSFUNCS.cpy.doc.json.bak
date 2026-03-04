@@ -4,13 +4,13 @@
     "file_name": "IMSFUNCS.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-03T16:50:11.210163",
+    "analyzed_at": "2026-03-04T03:32:16.036892",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines a set of constants representing IMS function codes and a parameter count. These constants are used when making calls to IMS databases.",
-    "business_context": "UNKNOWN",
+    "summary": "This copybook defines a set of constants representing IMS function codes and a parameter count. These constants are used in IMS (Information Management System) database calls within COBOL programs.",
+    "business_context": "This copybook supports IMS database interactions within the application.",
     "program_type": "COPYBOOK",
     "citations": [
       17,
@@ -36,12 +36,12 @@
     {
       "paragraph_name": "FUNC-CODES",
       "summary": null,
-      "purpose": "This data definition paragraph defines a set of constants representing IMS (Information Management System) function codes. These codes are used as parameters when calling IMS to perform specific database operations. The defined function codes include 'GU' (Get Unique), 'GHU' (Get Hold Unique), 'GN' (Get Next), 'GHN' (Get Hold Next), 'GNP' (Get Next within Parent), 'GHNP' (Get Hold Next within Parent), 'REPL' (Replace), 'ISRT' (Insert), and 'DLET' (Delete). Each function code is a 4-character alphanumeric field with a predefined value. These values are used to instruct IMS on the desired database action. The paragraph also defines PARMCOUNT which specifies the number of parameters expected by the IMS call.",
+      "purpose": "This data structure defines a series of constants representing IMS (Information Management System) function codes. These codes are used when making calls to the IMS database to specify the type of operation to be performed. Each function code is a 4-character alphanumeric field, and they include codes for operations such as 'GU' (Get Unique), 'GHU' (Get Hold Unique), 'GN' (Get Next), 'GHN' (Get Hold Next), 'GNP' (Get Next within Parent), 'GHNP' (Get Hold Next within Parent), 'REPL' (Replace), 'ISRT' (Insert), and 'DLET' (Delete). These codes are used to build the Application Program Specification Block (PSB) when interacting with IMS.",
       "called_by": [],
       "calls": [],
       "citation": [
         17,
-        27
+        26
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
@@ -55,9 +55,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the specific purpose of each IMS function code in the context of the larger application?",
-      "context": "The copybook only defines the codes, not their usage.",
-      "suggestion": "Review the programs that include this copybook to understand how these codes are used in IMS calls."
+      "question": "Where is this copybook used?",
+      "context": "Cannot determine the programs that include this copybook from the copybook itself.",
+      "suggestion": "Search the codebase for programs that include this copybook."
     }
   ],
   "resolved_questions": [],

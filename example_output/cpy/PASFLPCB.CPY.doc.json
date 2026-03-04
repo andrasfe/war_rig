@@ -4,12 +4,12 @@
     "file_name": "PASFLPCB.CPY",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-03T16:50:16.520269",
+    "analyzed_at": "2026-03-04T03:32:23.822484",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the structure of the PASFLPCB, which appears to be a PCB (Program Communication Block) used in an IMS (Information Management System) environment. It contains fields related to database name, segment level, PCB status, processing options, segment name, key feedback, number of sensitive segments, and key feedback area.",
+    "summary": "This copybook defines the structure PASFLPCB, which appears to be related to IMS database Program Communication Blocks (PCBs). It contains fields for database name, segment level, PCB status, processing options, segment name, key feedback length, number of sensitive segments, and key feedback area.",
     "business_context": "UNKNOWN",
     "program_type": "COPYBOOK",
     "citations": [
@@ -36,7 +36,7 @@
     {
       "paragraph_name": "PASFLPCB",
       "summary": null,
-      "purpose": "This copybook defines the structure of the PASFLPCB data area, which is likely used for communication between a COBOL program and the IMS database system. The PASFLPCB contains information about the database, segment level, PCB status, processing options, segment name, key feedback length, number of sensitive segments, and the key feedback area itself. The PASFL-DBDNAME (line 18) specifies the database name. The PASFL-SEG-LEVEL (line 19) indicates the segment level. PASFL-PCB-STATUS (line 20) provides the status of the PCB. PASFL-PCB-PROCOPT (line 21) defines the processing options. PASFL-SEG-NAME (line 23) stores the name of the segment. PASFL-KEYFB-NAME (line 24) and PASFL-NUM-SENSEGS (line 25) appear to be related to key feedback information. PASFL-KEYFB (line 26) is a 100-byte field that likely holds the key feedback data. This copybook is intended to be included in COBOL programs that interact with IMS databases to access and manipulate data.",
+      "purpose": "This copybook defines the data structure PASFLPCB, which is likely used to represent an IMS PCB (Program Communication Block). The structure contains information about the database, segment, and key feedback area. PASFL-DBDNAME (line 18) stores the name of the database. PASFL-SEG-LEVEL (line 19) indicates the segment level. PASFL-PCB-STATUS (line 20) provides the status of the PCB. PASFL-PCB-PROCOPT (line 21) specifies the processing options. PASFL-SEG-NAME (line 23) stores the name of the segment. PASFL-KEYFB-NAME (line 24) and PASFL-NUM-SENSEGS (line 25) define the key feedback length and number of sensitive segments, respectively. PASFL-KEYFB (line 26) is a 100-byte field that likely holds the key feedback area. This copybook is used to define the structure in WORKING-STORAGE or LINKAGE SECTION of COBOL programs that interact with IMS databases.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -68,14 +68,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the specific purpose of each field within the PASFLPCB structure in the context of the larger application?",
-      "context": "The copybook defines the structure, but the exact usage of each field is unclear without examining the programs that include this copybook.",
-      "suggestion": "Analyze the COBOL programs that use this copybook to understand how each field is used."
-    },
-    {
-      "question": "What is the business context for this PCB?",
-      "context": "The copybook itself doesn't provide information about the business process it supports.",
-      "suggestion": "Examine the programs that use this copybook to determine the business context."
+      "question": "What is the specific purpose of this PCB structure within the larger application?",
+      "context": "The copybook provides the structure definition, but the context of its usage is unclear.",
+      "suggestion": "Analyze the programs that include this copybook to understand how the PCB fields are used."
     }
   ],
   "resolved_questions": [],

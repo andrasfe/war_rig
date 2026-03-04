@@ -2,13 +2,13 @@
 
 **File**: `ims/PSBPAUTB.psb`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-03-03 16:47:18.787471
+**Analyzed**: 2026-03-04 03:32:42.026792
 
 ## Purpose
 
-This file defines a Program Specification Block (PSB) named PSBPAUTB for an IMS database DBPAUTP0. It specifies the database access characteristics and the segments that the program is sensitive to, namely PAUTSUM0 and PAUTDTL1.
+This PSB (Program Specification Block) defines the program's interface to the IMS database DBPAUTP0. It specifies the segments (PAUTSUM0, PAUTDTL1) that the program is authorized to access and the type of access granted.
 
 ## Open Questions
 
-- ? What is the purpose of the DBPAUTP0 database?
-  - Context: The PSB definition refers to a database but its purpose is not defined in this file.
+- ? What is the purpose of this PSB in the broader application context?
+  - Context: The PSB definition provides technical details but lacks business context.

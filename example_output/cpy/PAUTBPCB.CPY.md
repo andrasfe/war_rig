@@ -2,11 +2,11 @@
 
 **File**: `cpy/PAUTBPCB.CPY`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-03-03 16:50:07.888440
+**Analyzed**: 2026-03-04 03:32:15.607678
 
 ## Purpose
 
-This copybook defines the structure PAUTBPCB, which is likely used to interface with an IMS database PCB (Program Communication Block). It contains fields related to database name, segment level, processing options, segment name, and key feedback information.
+This copybook defines the structure PAUTBPCB, which appears to be related to IMS PCB (Program Communication Block) information. It contains fields for database name, segment level, PCB status, processing options, segment name, key feedback length, number of sensitive segments, and key feedback area.
 
 ## Paragraphs/Procedures
 
@@ -23,5 +23,5 @@ The following artifacts were identified as dead code by static analysis:
 
 ## Open Questions
 
-- ? The exact purpose and usage of this copybook within a larger application is unclear without more context.
-  - Context: The copybook defines a data structure, but its specific role in data processing or interaction with other modules is unknown.
+- ? What is the specific purpose of each field within the PAUTBPCB structure in the context of IMS?
+  - Context: The copybook defines the structure, but the exact meaning and usage of each field are unclear without additional context.

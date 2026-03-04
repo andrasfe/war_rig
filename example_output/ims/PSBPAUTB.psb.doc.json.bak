@@ -4,18 +4,18 @@
     "file_name": "PSBPAUTB.psb",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-03T16:47:18.787471",
+    "analyzed_at": "2026-03-04T03:32:42.026792",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This file defines a Program Specification Block (PSB) named PSBPAUTB for an IMS database DBPAUTP0. It specifies the database access characteristics and the segments that the program is sensitive to, namely PAUTSUM0 and PAUTDTL1.",
+    "summary": "This PSB (Program Specification Block) defines the program's interface to the IMS database DBPAUTP0. It specifies the segments (PAUTSUM0, PAUTDTL1) that the program is authorized to access and the type of access granted.",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
       17,
       18,
-      20
+      19
     ]
   },
   "inputs": [],
@@ -39,9 +39,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the purpose of the DBPAUTP0 database?",
-      "context": "The PSB definition refers to a database but its purpose is not defined in this file.",
-      "suggestion": "Consult the DBD definition for DBPAUTP0."
+      "question": "What is the purpose of this PSB in the broader application context?",
+      "context": "The PSB definition provides technical details but lacks business context.",
+      "suggestion": "Review application documentation or consult with subject matter experts."
     }
   ],
   "resolved_questions": [],

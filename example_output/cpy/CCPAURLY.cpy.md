@@ -2,33 +2,18 @@
 
 **File**: `cpy/CCPAURLY.cpy`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-03-03 16:50:26.749899
+**Analyzed**: 2026-03-04 03:32:30.070589
 
 ## Purpose
 
-This copybook defines the data structure for a pending authorization response, containing fields related to card number, transaction ID, authorization codes, response codes, reason, and approved amount. It is used for processing authorization responses within the system.
+This copybook defines the data structure for a pending authorization response related to card transactions. It includes fields for card number, transaction ID, authorization ID code, response code, reason, and approved amount.
 
-**Business Context**: Authorization processing within financial transactions.
+**Business Context**: This copybook is likely used in systems that process credit card transactions and require authorization from a payment gateway or processor.
 
 ## Paragraphs/Procedures
 
 ### PA-RL-CARD-NUM
-This data element defines the card number associated with the pending authorization response. It is a 16-character alphanumeric field. The card number is likely used for identifying the card used in the transaction for which authorization is pending. It serves as an input to subsequent processes that validate or process the authorization. The data element does not perform any transformations or error handling directly, but its value is crucial for the overall authorization process. It is defined within the copybook and is intended to be used by programs that include this copybook.
-
-### PA-RL-TRANSACTION-ID
-This data element defines the transaction ID associated with the pending authorization response. It is a 15-character alphanumeric field. The transaction ID is used to uniquely identify the transaction for which authorization is pending. It serves as an input to subsequent processes that track or reconcile the transaction. The data element does not perform any transformations or error handling directly, but its value is crucial for the overall authorization process. It is defined within the copybook and is intended to be used by programs that include this copybook.
-
-### PA-RL-AUTH-ID-CODE
-This data element defines the authorization ID code associated with the pending authorization response. It is a 6-character alphanumeric field. The authorization ID code is used to identify the specific authorization request. It serves as an input to subsequent processes that validate or process the authorization. The data element does not perform any transformations or error handling directly, but its value is crucial for the overall authorization process. It is defined within the copybook and is intended to be used by programs that include this copybook.
-
-### PA-RL-AUTH-RESP-CODE
-This data element defines the authorization response code associated with the pending authorization response. It is a 2-character alphanumeric field. The authorization response code indicates the status of the authorization request. It serves as an input to subsequent processes that determine the outcome of the transaction. The data element does not perform any transformations or error handling directly, but its value is crucial for the overall authorization process. It is defined within the copybook and is intended to be used by programs that include this copybook.
-
-### PA-RL-AUTH-RESP-REASON
-This data element defines the authorization response reason associated with the pending authorization response. It is a 4-character alphanumeric field. The authorization response reason provides additional information about the authorization response. It serves as an input to subsequent processes that analyze the authorization outcome. The data element does not perform any transformations or error handling directly, but its value is crucial for the overall authorization process. It is defined within the copybook and is intended to be used by programs that include this copybook.
-
-### PA-RL-APPROVED-AMT
-This data element defines the approved amount associated with the pending authorization response. It is a signed numeric field with 10 digits and 2 decimal places. The approved amount indicates the amount authorized for the transaction. It serves as an input to subsequent processes that settle the transaction. The data element does not perform any transformations or error handling directly, but its value is crucial for the overall authorization process. It is defined within the copybook and is intended to be used by programs that include this copybook.
+This data field defines the structure for storing the card number associated with a pending authorization. It is a 16-character alphanumeric field. The field is part of the pending authorization response data structure defined in this copybook. This field is used to identify the card used in the transaction. It does not perform any calculations or call other paragraphs. It's a simple data definition.
 
 ## Dead Code
 
@@ -40,5 +25,5 @@ The following artifacts were identified as dead code by static analysis:
 
 ## Open Questions
 
-- ? What specific programs use this copybook?
-  - Context: The copybook defines a data structure, but the programs that utilize it are unknown.
+- ? The purpose of the 'PENDING AUTHORIZATION RESPONSE' is not clear without knowing the context of the calling program.
+  - Context: The copybook itself doesn't provide information on how the data structure is used.

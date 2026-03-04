@@ -1,85 +1,82 @@
 ```cobol
-       MAIN-PARA.
-      *****************************************************************
-
-           SET ERR-FLG-OFF TO TRUE
-           SET AUTHS-NOT-EOF TO TRUE
-           SET NEXT-PAGE-NO TO TRUE
-           SET SEND-ERASE-YES TO TRUE
-
-           MOVE SPACES TO WS-MESSAGE ERRMSGO OF COPAU0AO
-
-           MOVE -1       TO ACCTIDL OF COPAU0AI
-
-           IF EIBCALEN = 0
-               INITIALIZE CARDDEMO-COMMAREA
-               MOVE WS-PGM-AUTH-SMRY    TO CDEMO-TO-PROGRAM
-
-               SET CDEMO-PGM-REENTER    TO TRUE
-               MOVE LOW-VALUES          TO COPAU0AO
-               MOVE -1                  TO ACCTIDL OF COPAU0AI
-
-              PERFORM SEND-PAULST-SCREEN
-           ELSE
-               MOVE DFHCOMMAREA(1:EIBCALEN) TO CARDDEMO-COMMAREA
-
-               IF NOT CDEMO-PGM-REENTER
-                  SET CDEMO-PGM-REENTER     TO TRUE
-
-                  MOVE LOW-VALUES           TO COPAU0AO
-
-                  IF CDEMO-ACCT-ID IS NUMERIC
-                     MOVE CDEMO-ACCT-ID     TO WS-ACCT-ID
-                                               ACCTIDO OF COPAU0AO
-                  ELSE
-                     MOVE SPACE             TO ACCTIDO OF COPAU0AO
-                     MOVE LOW-VALUES        TO WS-ACCT-ID
-                  END-IF
-
-                  PERFORM GATHER-DETAILS
-
-                  SET SEND-ERASE-YES TO TRUE
-
-                  PERFORM SEND-PAULST-SCREEN
-
-               ELSE
-                  PERFORM RECEIVE-PAULST-SCREEN
-
-                  EVALUATE EIBAID
-                     WHEN DFHENTER
-                       PERFORM PROCESS-ENTER-KEY
-
-                       IF WS-ACCT-ID = LOW-VALUES
-                          MOVE SPACE           TO ACCTIDO   OF COPAU0AO
-                       ELSE
-                          MOVE WS-ACCT-ID      TO ACCTIDO   OF COPAU0AO
-                       END-IF
-
-                       PERFORM SEND-PAULST-SCREEN
-                     WHEN DFHPF3
-                       MOVE WS-PGM-MENU        TO CDEMO-TO-PROGRAM
-                       PERFORM RETURN-TO-PREV-SCREEN
-                       PERFORM SEND-PAULST-SCREEN
-                     WHEN DFHPF7
-                       PERFORM PROCESS-PF7-KEY
-                       PERFORM SEND-PAULST-SCREEN
-                     WHEN DFHPF8
-                       PERFORM PROCESS-PF8-KEY
-                       PERFORM SEND-PAULST-SCREEN
-                     WHEN OTHER
-                       MOVE 'Y'              TO WS-ERR-FLG
-                       MOVE -1               TO ACCTIDL OF COPAU0AI
-                       MOVE CCDA-MSG-INVALID-KEY  TO WS-MESSAGE
-                       PERFORM SEND-PAULST-SCREEN
-                  END-EVALUATE
-               END-IF
-           END-IF
-
-           EXEC CICS RETURN
-                     TRANSID (WS-CICS-TRANID)
-                     COMMAREA (CARDDEMO-COMMAREA)
-           END-EXEC.
-
-
-      *****************************************************************
+      * Application : CardDemo - Authorization Module
+      * Type        : CICS COBOL IMS BMS Program
+      * Function    : Summary View of Authoriation Messages
+      ******************************************************************
+      * Copyright Amazon.com, Inc. or its affiliates.
+      * All Rights Reserved.
+      *
+      * Licensed under the Apache License, Version 2.0 (the "License").
+      * You may not use this file except in compliance with the License.
+      * You may obtain a copy of the License at
+      *
+      *    http://www.apache.org/licenses/LICENSE-2.0
+      *
+      * Unless required by applicable law or agreed to in writing,
+      * software distributed under the License is distributed on an
+      * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+      * either express or implied. See the License for the specific
+      * language governing permissions and limitations under the License
+      ******************************************************************
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. COPAUS0C.                                                    
+       AUTHOR.     AWS.                                                         
+                                                                                
+       ENVIRONMENT DIVISION.                                                    
+       CONFIGURATION SECTION.                                                   
+                                                                                
+       DATA DIVISION.                                                           
+       WORKING-STORAGE SECTION.                                                 
+                                                                                
+       01 WS-VARIABLES.                                                         
+         05 WS-PGM-AUTH-SMRY           PIC X(08) VALUE 'COPAUS0C'.              
+         05 WS-PGM-AUTH-DTL            PIC X(08) VALUE 'COPAUS1C'.              
+         05 WS-PGM-MENU                PIC X(08) VALUE 'COMEN01C'.              
+         05 WS-CICS-TRANID             PIC X(04) VALUE 'CPVS'.                  
+         05 WS-MESSAGE                 PIC X(80) VALUE SPACES.                  
+         05 WS-ACCTFILENAME            PIC X(8)  VALUE 'ACCTDAT '.              
+         05 WS-CUSTFILENAME            PIC X(8)  VALUE 'CUSTDAT '.              
+         05 WS-CARDFILENAME            PIC X(8)  VALUE 'CARDDAT '.              
+         05 WS-CARDXREFNAME-ACCT-PATH  PIC X(8)  VALUE 'CXACAIX '.              
+         05 WS-CCXREF-FILE             PIC X(08) VALUE 'CCXREF  '.              
+                                                                                
+         05 WS-ACCT-ID                 PIC  X(11).                              
+         05 WS-AUTH-KEY-SAVE           PIC  X(08).                              
+         05 WS-AUTH-APRV-STAT          PIC  X(01).                              
+         05 WS-RESP-CD                 PIC S9(09) COMP VALUE ZEROS.             
+         05 WS-REAS-CD                 PIC S9(09) COMP VALUE ZEROS.             
+         05 WS-RESP-CD-DIS             PIC  9(09).                              
+         05 WS-REAS-CD-DIS             PIC  9(09).                              
+         05 WS-REC-COUNT               PIC S9(04) COMP VALUE ZEROS.             
+         05 WS-IDX                     PIC S9(04) COMP VALUE ZEROS.             
+         05 WS-PAGE-NUM                PIC S9(04) COMP VALUE ZEROS.             
+                                                                                
+         05 WS-AUTH-AMT                PIC -zzzzzzz9.99.                        
+         05 WS-DISPLAY-AMT12           PIC -zzzzzzz9.99.                        
+         05 WS-DISPLAY-AMT9            PIC -zzzz9.99.                           
+         05 WS-DISPLAY-COUNT           PIC 9(03).                               
+         05 WS-AUTH-DATE               PIC X(08) VALUE '00/00/00'.              
+         05 WS-AUTH-TIME               PIC X(08) VALUE '00:00:00'.              
+                                                                                
+      ******************************************************************        
+      *      File and data Handling                                             
+      ******************************************************************        
+         05 WS-XREF-RID.                                                        
+           10  WS-CARD-RID-CARDNUM                 PIC X(16).                   
+           10  WS-CARD-RID-CUST-ID                 PIC 9(09).                   
+           10  WS-CARD-RID-CUST-ID-X REDEFINES                                  
+                  WS-CARD-RID-CUST-ID              PIC X(09).                   
+           10  WS-CARD-RID-ACCT-ID                 PIC 9(11).                   
+           10  WS-CARD-RID-ACCT-ID-X REDEFINES                                  
+                  WS-CARD-RID-ACCT-ID              PIC X(11).                   
+                                                                                
+       01 WS-IMS-VARIABLES.
+          05 PSB-NAME                        PIC X(8) VALUE 'PSBPAUTB'.
+          05 PCB-OFFSET.
+             10 PAUT-PCB-NUM                 PIC S9(4) COMP VALUE +1.
+          05 IMS-RETURN-CODE                 PIC X(02).
+             88 STATUS-OK                    VALUE '  ', 'FW'.                  
+             88 SEGMENT-NOT-FOUND            VALUE 'GE'.                        
+             88 DUPLICATE-SEGMENT-FOUND      VALUE 'II'.                        
+             88 WRONG-PARENTAGE              VALUE 'GP'.                        
 ```

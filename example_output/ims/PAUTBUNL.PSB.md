@@ -2,13 +2,13 @@
 
 **File**: `ims/PAUTBUNL.PSB`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-03-03 16:47:25.595951
+**Analyzed**: 2026-03-04 03:30:02.454296
 
 ## Purpose
 
-This file defines a Program Specification Block (PSB) named PAUTBUNL for an IMS database DBPAUTP0. It specifies the database access characteristics and the segment hierarchy for COBOL programs accessing the database.
+This PSB (Program Specification Block) defines the database access and processing characteristics for an IMS (Information Management System) application. It specifies the database (DBPAUTP0), the processing options (GOTP), key length, and the segments (PAUTSUM0, PAUTDTL1) that the program will access. The PSB is generated for COBOL and indicates compatibility is not required.
 
 ## Open Questions
 
-- ? What is the purpose of the PRINT NOGEN statement?
-  - Context: The meaning of PRINT NOGEN is unclear without further context.
+- ? What is the purpose of PROCOPT=GOTP?
+  - Context: The meaning of GOTP is unclear without additional IMS documentation.

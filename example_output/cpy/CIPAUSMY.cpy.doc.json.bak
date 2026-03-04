@@ -4,13 +4,13 @@
     "file_name": "CIPAUSMY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-03T16:49:45.294469",
+    "analyzed_at": "2026-03-04T03:32:01.802303",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the data structure for the IMS segment related to pending authorization summary information. It contains fields for account ID, customer ID, authorization status, account status, credit and cash limits/balances, and counts/amounts for approved and declined authorizations.",
-    "business_context": "UNKNOWN",
+    "summary": "This copybook defines the layout of the IMS segment for Pending Authorization Summary. It contains fields related to account identification, customer identification, authorization status, account status, credit and cash limits, balances, and authorization counts and amounts. This segment is likely used to store and retrieve information about pending authorizations for customer accounts.",
+    "business_context": "This copybook is used in the context of authorization processing for customer accounts, likely within a financial institution or similar organization.",
     "program_type": "COPYBOOK",
     "citations": [
       2,
@@ -32,12 +32,19 @@
     "writes_to": [],
     "transforms": []
   },
-  "copybooks_used": [],
+  "copybooks_used": [
+    {
+      "copybook_name": "CIPAUSMY",
+      "purpose": "Defines the structure of the IMS segment for Pending Authorization Summary.",
+      "location": "FILE_SECTION",
+      "citation": 1
+    }
+  ],
   "paragraphs": [
     {
       "paragraph_name": "PA-ACCT-ID",
       "summary": null,
-      "purpose": "This data field, PA-ACCT-ID, defines the pending authorization account identifier. It is a COMP-3 (packed decimal) field with a signed 11-digit precision. This field is intended to store the unique identifier for an account that has pending authorizations. The field is part of the CIPAUSMY copybook which defines the structure for an IMS segment related to pending authorization summary information. This field is used to identify the account to which the pending authorization summary data applies. The data contained within this field is used in conjunction with other fields in the copybook to provide a comprehensive overview of pending authorizations for a given account. No specific validation or error handling is defined within the copybook itself for this field. The field does not directly call any other paragraphs or programs.",
+      "purpose": "This data field defines the Account ID for the Pending Authorization Summary segment. It is a COMP-3 field, meaning it's a packed decimal field, with a length of 11 digits and a sign. This field likely serves as a key or identifier for the account to which the pending authorization information relates. The account ID is used to uniquely identify the customer's account within the system. It does not call any other paragraphs or programs, nor does it perform any error handling directly, as it is simply a data definition. The value is used to link pending authorizations to a specific account.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -56,9 +63,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the business context for this IMS segment?",
-      "context": "The purpose section is missing the business context.",
-      "suggestion": "Review the programs that use this copybook to determine the business process it supports."
+      "question": "What is the specific purpose of the FILLER field at line 31?",
+      "context": "The purpose of the filler field is unclear without knowing the context of the IMS segment layout and its relation to other segments or data structures.",
+      "suggestion": "Examine the IMS database schema or related program documentation to determine the filler field's purpose and content."
     }
   ],
   "resolved_questions": [],

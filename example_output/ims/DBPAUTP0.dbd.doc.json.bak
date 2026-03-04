@@ -1,21 +1,22 @@
 {
   "header": {
     "program_id": "DBPAUTP0",
-    "file_name": "ims/DBPAUTP0.dbd",
+    "file_name": "DBPAUTP0.dbd",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-03T16:47:06.150981",
+    "analyzed_at": "2026-03-04T03:30:03.580288",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This file defines the Database Description (DBD) for DBPAUTP0, which describes the structure and characteristics of an IMS database. It specifies the database's organization as HIDAM with VSAM access, defines segments (PAUTSUM0, PAUTDTL1) and their fields, and establishes relationships between them.",
-    "business_context": null,
+    "summary": "This Database Description (DBD) file defines the structure and characteristics of the DBPAUTP0 database for IMS (Information Management System). It specifies the database organization, segment definitions, fields within those segments, and relationships between segments. The database stores pending authorization summary and detail information.",
+    "business_context": "This DBD likely supports a business process involving authorization workflows, potentially for financial transactions or access control.",
     "program_type": "UTILITY",
     "citations": [
+      17,
       18,
-      28,
-      36
+      26,
+      34
     ]
   },
   "inputs": [],
@@ -37,13 +38,7 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
-    {
-      "question": "What is the purpose of the EXIT parameter in the DBD statement?",
-      "context": "The documentation does not explain the specific functions of the exit routines defined in the EXIT parameter.",
-      "suggestion": "Consult IMS documentation for details on the KEY, DATA, NOPATH, NOCASCADE, and LOG exit routines."
-    }
-  ],
+  "open_questions": [],
   "resolved_questions": [],
   "dead_code": [],
   "call_semantics": [],

@@ -7,18 +7,18 @@
       "file_name": "PAUDBUNL.CBL",
       "file_type": "COBOL",
       "analyzed_by": "WAR_RIG",
-      "analyzed_at": "2026-03-03T16:48:28.798646",
+      "analyzed_at": "2026-03-04T03:30:38.754038",
       "iteration_count": 1,
       "final_status": null
     },
     "purpose": {
-      "summary": "The program PAUDBUNL is a COBOL program that sets a return code and terminates. It displays a message indicating that the program is abending before setting the return code to 16 and exiting. It also contains an exit paragraph.",
+      "summary": "This COBOL program contains two paragraphs: 9999-ABEND, which is used to terminate the program abnormally, and 9999-EXIT, which provides a standard program exit point. The ABEND paragraph displays a message and sets a non-zero return code before terminating the program.",
       "business_context": null,
       "program_type": "UTILITY",
       "citations": [
-        366,
-        368,
-        369
+        1,
+        4,
+        9
       ]
     },
     "inputs": [],
@@ -40,12 +40,12 @@
       {
         "paragraph_name": "9999-ABEND",
         "summary": null,
-        "purpose": "The 9999-ABEND paragraph is responsible for handling abnormal termination of the program. It first displays a message 'IMSUNLOD ABENDING ...' to the console, indicating that the program is terminating due to an error. It then sets the RETURN-CODE to 16, which signals an unsuccessful completion to the calling environment. Finally, it executes a GOBACK statement to return control to the calling program or operating system, effectively ending the program's execution. This paragraph does not receive any specific inputs other than the implicit program state. It outputs a message to the console and sets the return code. No other paragraphs or programs are called.",
+        "purpose": "This paragraph handles abnormal termination of the program. It first displays the message 'IMSUNLOD ABENDING ...' to the console, indicating that the program is terminating due to an error condition (line 4). It then sets the RETURN-CODE to 16, which signals to the calling environment that the program terminated abnormally (line 6). Finally, it uses the GOBACK statement to terminate the program and return control to the calling program or operating system (line 7). This paragraph is likely invoked when a critical error is encountered that prevents the program from continuing normal execution. It does not call any other paragraphs or programs.",
         "called_by": [],
         "calls": [],
         "citation": [
-          363,
-          369
+          308,
+          315
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -56,12 +56,12 @@
       {
         "paragraph_name": "9999-EXIT",
         "summary": null,
-        "purpose": "The 9999-EXIT paragraph provides a standard exit point for the program. It consists of a single EXIT statement, which allows control to fall through to the next sequential instruction or, if it's the last paragraph, to terminate the program gracefully. This paragraph serves as a placeholder for potential future exit logic, such as closing files or releasing resources, although it currently performs no specific actions. It does not consume any inputs or produce any outputs. It is not called by any other paragraphs and does not call any other paragraphs or programs. The primary purpose is to provide a clean and consistent way to exit the program.",
+        "purpose": "This paragraph provides a standard exit point for the program. It consists of a single EXIT statement (line 10). This paragraph likely serves as a common point to exit the program under normal circumstances, allowing for consistent program termination. It is a simple exit and does not perform any specific actions or call any other paragraphs or programs before exiting.",
         "called_by": [],
         "calls": [],
         "citation": [
-          371,
-          372
+          316,
+          317
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -70,7 +70,17 @@
         "metadata": null
       }
     ],
-    "error_handling": [],
+    "error_handling": [
+      {
+        "condition": "Abnormal program condition",
+        "action": "DISPLAY message 'IMSUNLOD ABENDING ...', set RETURN-CODE to 16, and GOBACK",
+        "citation": [
+          4,
+          6,
+          7
+        ]
+      }
+    ],
     "sql_operations": [],
     "cics_operations": [],
     "open_questions": [],
@@ -80,5 +90,5 @@
     "flow_diagram": null,
     "copybooks_not_found": []
   },
-  "saved_at": "2026-03-03T09:48:28.799619"
+  "saved_at": "2026-03-03T20:30:38.755050"
 }

@@ -4,63 +4,61 @@
   "template": {
     "header": {
       "program_id": "DBUNLDGS",
-      "file_name": "DBUNLDGS.CBL",
+      "file_name": "cbl/DBUNLDGS.CBL",
       "file_type": "COBOL",
       "analyzed_by": "WAR_RIG",
-      "analyzed_at": "2026-03-03T16:45:00.175843",
+      "analyzed_at": "2026-03-04T03:23:29.367260",
       "iteration_count": 1,
       "final_status": null
     },
     "purpose": {
-      "summary": "The DBUNLDGS program extracts pending authorization summary and detail information from an IMS database and writes it to a GSAM file. It reads authorization summary records and then retrieves associated detail records, writing both to the GSAM file.",
-      "business_context": null,
+      "summary": "The COBOL program DBUNLDGS extracts authorization summary and detail data from an IMS database and inserts it into a GSAM dataset. It reads parent and child segments from the IMS database and writes them to a GSAM file.",
+      "business_context": "UNKNOWN",
       "program_type": "BATCH",
       "citations": [
-        20,
-        147,
-        219
+        11,
+        57,
+        100
       ]
     },
     "inputs": [
       {
         "name": "PAUTBPCB",
         "io_type": "IMS_SEGMENT",
-        "description": "Pending Authorization Summary IMS database PCB",
+        "description": "IMS database PCB for authorization data. Used to retrieve parent and child segments.",
         "copybook": null,
         "citation": [
-          198,
-          242
+          44,
+          88
         ]
       },
       {
         "name": "PASFLPCB",
         "io_type": "IMS_SEGMENT",
-        "description": "GSAM database PCB",
+        "description": "GSAM database PCB. Used to insert parent segments into the GSAM dataset.",
         "copybook": null,
         "citation": [
-          1421000,
-          2710500
+          123
         ]
       },
       {
         "name": "PADFLPCB",
-        "io_type": "IMS_SEGMENT",
-        "description": "Pending Authorization Detail IMS database PCB",
+        "io_type": "PARAMETER",
+        "description": "UNKNOWN",
         "copybook": null,
         "citation": [
-          1422000
+          6
         ]
       }
     ],
     "outputs": [
       {
-        "name": "GSAM Output",
+        "name": "GSAM Dataset",
         "io_type": "FILE_SEQUENTIAL",
-        "description": "GSAM output file containing parent and child segment records.",
+        "description": "GSAM dataset containing extracted authorization summary and detail data.",
         "copybook": null,
         "citation": [
-          2171000,
-          2551000
+          124
         ]
       }
     ],
@@ -68,37 +66,14 @@
       {
         "program_name": "CBLTDLI",
         "call_type": "STATIC_CALL",
-        "purpose": "Issue IMS DL/I calls to retrieve and insert data.",
+        "purpose": "IMS DL/I call interface for accessing the IMS database.",
         "parameters": [
           "FUNC-GN",
           "PAUTBPCB",
           "PENDING-AUTH-SUMMARY",
           "ROOT-UNQUAL-SSA"
         ],
-        "citation": 197
-      },
-      {
-        "program_name": "CBLTDLI",
-        "call_type": "STATIC_CALL",
-        "purpose": "Issue IMS DL/I calls to retrieve and insert data.",
-        "parameters": [
-          "FUNC-GNP",
-          "PAUTBPCB",
-          "PENDING-AUTH-DETAILS",
-          "CHILD-UNQUAL-SSA"
-        ],
-        "citation": 241
-      },
-      {
-        "program_name": "CBLTDLI",
-        "call_type": "STATIC_CALL",
-        "purpose": "Issue IMS DL/I calls to insert data into GSAM file.",
-        "parameters": [
-          "FUNC-ISRT",
-          "PASFLPCB",
-          "PENDING-AUTH-SUMMARY"
-        ],
-        "citation": 2710400
+        "citation": 43
       }
     ],
     "calling_context": {
@@ -112,7 +87,52 @@
         "PADFLPCB"
       ]
     },
-    "business_rules": [],
+    "business_rules": [
+      {
+        "rule_id": "BR001",
+        "description": "Process authorization summary records only if the account ID is numeric.",
+        "logic_summary": "Checks if PA-ACCT-ID is numeric before processing the authorization summary.",
+        "conditions": [
+          "IF PA-ACCT-ID IS NUMERIC"
+        ],
+        "citation": [
+          62
+        ]
+      },
+      {
+        "rule_id": "BR002",
+        "description": "Terminate program if the PAUT PCB status is not spaces or 'GB'.",
+        "logic_summary": "Checks PAUT-PCB-STATUS for values other than spaces or 'GB'.",
+        "conditions": [
+          "IF PAUT-PCB-STATUS NOT EQUAL TO SPACES AND 'GB'"
+        ],
+        "citation": [
+          74
+        ]
+      },
+      {
+        "rule_id": "BR003",
+        "description": "Terminate program if the PAUT PCB status is not spaces or 'GE' during child segment processing.",
+        "logic_summary": "Checks PAUT-PCB-STATUS for values other than spaces or 'GE' during child segment processing.",
+        "conditions": [
+          "IF PAUT-PCB-STATUS NOT EQUAL TO SPACES AND 'GE'"
+        ],
+        "citation": [
+          110
+        ]
+      },
+      {
+        "rule_id": "BR004",
+        "description": "Terminate program if the PASFL PCB status is not spaces during parent segment GSAM insertion.",
+        "logic_summary": "Checks PASFL-PCB-STATUS for values other than spaces during parent segment GSAM insertion.",
+        "conditions": [
+          "IF PASFL-PCB-STATUS NOT EQUAL TO SPACES"
+        ],
+        "citation": [
+          131
+        ]
+      }
+    ],
     "data_flow": {
       "reads_from": [
         {
@@ -123,31 +143,38 @@
             "PA-ACCT-ID"
           ],
           "citation": [
-            207,
-            223,
-            227,
-            250,
-            257,
-            263
+            53,
+            60,
+            74
           ]
         },
         {
           "source": "PENDING-AUTH-SUMMARY",
           "fields_used": [
-            "All fields"
+            "PENDING-AUTH-SUMMARY"
           ],
           "citation": [
-            211,
-            2710600
+            57
           ]
         },
         {
           "source": "PENDING-AUTH-DETAILS",
           "fields_used": [
-            "All fields"
+            "PENDING-AUTH-DETAILS"
           ],
           "citation": [
-            254
+            100
+          ]
+        },
+        {
+          "source": "PASFLPCB",
+          "fields_used": [
+            "PASFL-PCB-STATUS",
+            "PASFL-KEYFB"
+          ],
+          "citation": [
+            131,
+            133
           ]
         }
       ],
@@ -158,7 +185,7 @@
             "PENDING-AUTH-SUMMARY"
           ],
           "citation": [
-            211
+            57
           ]
         },
         {
@@ -167,17 +194,33 @@
             "PENDING-AUTH-DETAILS"
           ],
           "citation": [
-            254
+            100
           ]
         }
       ],
       "transforms": [
         {
+          "input_field": "PENDING-AUTH-SUMMARY",
+          "output_field": "OPFIL1-REC",
+          "transformation_description": "Moves the contents of PENDING-AUTH-SUMMARY to OPFIL1-REC.",
+          "citation": [
+            57
+          ]
+        },
+        {
+          "input_field": "PENDING-AUTH-DETAILS",
+          "output_field": "CHILD-SEG-REC",
+          "transformation_description": "Moves the contents of PENDING-AUTH-DETAILS to CHILD-SEG-REC.",
+          "citation": [
+            100
+          ]
+        },
+        {
           "input_field": "PA-ACCT-ID",
           "output_field": "ROOT-SEG-KEY",
-          "transformation_description": "Moves the account ID from the pending authorization summary record to the root segment key.",
+          "transformation_description": "Moves the account ID to the root segment key.",
           "citation": [
-            214
+            60
           ]
         }
       ]
@@ -187,18 +230,11 @@
       {
         "paragraph_name": "DBUNLDGS",
         "summary": null,
-        "purpose": "This is the program identifier paragraph. It does not contain any executable code. It simply marks the beginning of the program.",
+        "purpose": "This is the main program entry point. It receives control from the operating system via the DLITCBL entry point using PAUTBPCB, PASFLPCB, and PADFLPCB. It then immediately returns control to the calling program via the GOBACK statement. This paragraph essentially acts as a stub or a placeholder, as the core logic resides in the MAIN-PARA paragraph.",
         "called_by": [],
-        "calls": [
-          "IMSFUNCS",
-          "CIPAUSMY",
-          "CIPAUDTY",
-          "PAUTBPCB",
-          "PASFLPCB",
-          "PADFLPCB"
-        ],
+        "calls": [],
         "citation": [
-          18,
+          1,
           18
         ],
         "outgoing_calls": [],
@@ -210,7 +246,7 @@
       {
         "paragraph_name": "MAIN-PARA",
         "summary": null,
-        "purpose": "This paragraph serves as the main control loop for the program. It first performs 1000-INITIALIZE to set up the program environment. Then, it repeatedly performs 2000-FIND-NEXT-AUTH-SUMMARY until WS-END-OF-ROOT-SEG is set to 'Y', indicating the end of the authorization summary data. Finally, it performs 4000-FILE-CLOSE to close the output file before terminating the program. The paragraph uses the linkage section to receive the PCBs.",
+        "purpose": "This paragraph serves as the main control loop for the program. It first calls 1000-INITIALIZE to perform initial setup tasks. Then, it enters a loop that repeatedly calls 2000-FIND-NEXT-AUTH-SUMMARY until WS-END-OF-ROOT-SEG is set to 'Y', indicating the end of the root segment data. Inside the loop, 2000-FIND-NEXT-AUTH-SUMMARY retrieves and processes authorization summary records. After processing all root segments, it calls 4000-FILE-CLOSE to close the output file. The paragraph uses PAUTBPCB, PASFLPCB, and PADFLPCB as input parameters.",
         "called_by": [],
         "calls": [
           "1000-INITIALIZE",
@@ -218,8 +254,8 @@
           "4000-FILE-CLOSE"
         ],
         "citation": [
-          164,
-          181
+          3,
+          18
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -230,14 +266,12 @@
       {
         "paragraph_name": "1000-INITIALIZE",
         "summary": null,
-        "purpose": "This paragraph initializes the program environment. It accepts the current date and day from the system. It then displays a series of messages to the console, including the program name and the current date. This paragraph prepares the program for processing by setting up initial values and providing informational output.",
-        "called_by": [
-          "MAIN-PARA"
-        ],
+        "purpose": "This paragraph initializes the program by accepting the current date and day from the system. It then displays a series of messages to the console, including the program name, a separator line, and the current date. It prepares the program for processing by setting up the environment and displaying relevant information. The paragraph does not read any input files or write any output files. It only interacts with the system to retrieve the current date and display messages.",
+        "called_by": [],
         "calls": [],
         "citation": [
-          182,
-          211
+          20,
+          33
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -248,12 +282,14 @@
       {
         "paragraph_name": "1000-EXIT",
         "summary": null,
-        "purpose": "This paragraph simply contains the EXIT statement, marking the end of the 1000-INITIALIZE paragraph. It is used to define the scope of the PERFORM THRU statement in MAIN-PARA.",
-        "called_by": [],
+        "purpose": "This paragraph serves as the exit point for the 1000-INITIALIZE paragraph. It contains a single EXIT statement, which returns control to the calling paragraph (MAIN-PARA). It does not perform any processing or data manipulation.",
+        "called_by": [
+          "MAIN-PARA"
+        ],
         "calls": [],
         "citation": [
-          212,
-          215
+          34,
+          35
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -264,7 +300,7 @@
       {
         "paragraph_name": "2000-FIND-NEXT-AUTH-SUMMARY",
         "summary": null,
-        "purpose": "This paragraph retrieves the next pending authorization summary record from the IMS database. It initializes the PAUT-PCB-STATUS and then calls CBLTDLI with the FUNC-GN parameter to retrieve the next root segment. If the PAUT-PCB-STATUS is spaces, it means a record was successfully read, and the program increments counters, moves the data to OPFIL1-REC, initializes ROOT-SEG-KEY and CHILD-SEG-REC, moves PA-ACCT-ID to ROOT-SEG-KEY, and then performs 3100-INSERT-PARENT-SEG-GSAM to write the parent segment to the GSAM file and then calls 3000-FIND-NEXT-AUTH-DTL to process child segments. If the PAUT-PCB-STATUS is 'GB', it sets the end-of-file flag. If the PAUT-PCB-STATUS is neither spaces nor 'GB', it displays an error message and calls 9999-ABEND to terminate the program.",
+        "purpose": "This paragraph retrieves the next authorization summary record from the IMS database using the DL/I call. It initializes PAUT-PCB-STATUS and then calls CBLTDLI with the FUNC-GN (Get Next) function code. If the call is successful (PAUT-PCB-STATUS is spaces), it increments counters, moves the retrieved data to OPFIL1-REC, initializes ROOT-SEG-KEY and CHILD-SEG-REC, moves PA-ACCT-ID to ROOT-SEG-KEY, checks if PA-ACCT-ID is numeric, calls 3100-INSERT-PARENT-SEG-GSAM to insert the parent segment into the GSAM dataset, and then calls 3000-FIND-NEXT-AUTH-DTL to retrieve child segments. If the PAUT-PCB-STATUS is 'GB' (end of database), it sets the end-of-database flag. If the PAUT-PCB-STATUS is neither spaces nor 'GB', it displays an error message and calls 9999-ABEND to terminate the program.",
         "called_by": [
           "MAIN-PARA"
         ],
@@ -275,8 +311,8 @@
           "9999-ABEND"
         ],
         "citation": [
-          216,
-          257
+          37,
+          78
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -287,12 +323,14 @@
       {
         "paragraph_name": "2000-EXIT",
         "summary": null,
-        "purpose": "This paragraph simply contains the EXIT statement, marking the end of the 2000-FIND-NEXT-AUTH-SUMMARY paragraph. It is used to define the scope of the PERFORM THRU statement in MAIN-PARA.",
-        "called_by": [],
+        "purpose": "This paragraph serves as the exit point for the 2000-FIND-NEXT-AUTH-SUMMARY paragraph. It contains a single EXIT statement, which returns control to the calling paragraph (MAIN-PARA). It does not perform any processing or data manipulation.",
+        "called_by": [
+          "MAIN-PARA"
+        ],
         "calls": [],
         "citation": [
-          258,
-          262
+          80,
+          81
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -303,7 +341,7 @@
       {
         "paragraph_name": "3000-FIND-NEXT-AUTH-DTL",
         "summary": null,
-        "purpose": "This paragraph retrieves the next pending authorization detail record from the IMS database. It calls CBLTDLI with the FUNC-GNP parameter to retrieve the next child segment. If the PAUT-PCB-STATUS is spaces, it means a record was successfully read, and the program sets MORE-AUTHS to TRUE, increments counters, moves the data to CHILD-SEG-REC, and performs 3200-INSERT-CHILD-SEG-GSAM to write the child segment to the GSAM file. If the PAUT-PCB-STATUS is 'GE', it sets the end-of-child-segment flag. If the PAUT-PCB-STATUS is neither spaces nor 'GE', it displays an error message and calls 9999-ABEND to terminate the program. Finally, it initializes PAUT-PCB-STATUS.",
+        "purpose": "This paragraph retrieves the next authorization detail record (child segment) from the IMS database using the DL/I call. It calls CBLTDLI with the FUNC-GNP (Get Next within Parent) function code. If the call is successful (PAUT-PCB-STATUS is spaces), it sets MORE-AUTHS to TRUE, increments counters, moves the retrieved data to CHILD-SEG-REC, and calls 3200-INSERT-CHILD-SEG-GSAM to insert the child segment into the GSAM dataset. If the PAUT-PCB-STATUS is 'GE' (end of parent), it sets the end-of-child-segment flag. If the PAUT-PCB-STATUS is neither spaces nor 'GE', it displays an error message and calls 9999-ABEND to terminate the program. Finally, it initializes PAUT-PCB-STATUS.",
         "called_by": [
           "2000-FIND-NEXT-AUTH-SUMMARY"
         ],
@@ -313,8 +351,8 @@
           "9999-ABEND"
         ],
         "citation": [
-          263,
-          295
+          83,
+          116
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -325,12 +363,14 @@
       {
         "paragraph_name": "3000-EXIT",
         "summary": null,
-        "purpose": "This paragraph simply contains the EXIT statement, marking the end of the 3000-FIND-NEXT-AUTH-DTL paragraph. It is used to define the scope of the PERFORM THRU statement in 2000-FIND-NEXT-AUTH-SUMMARY.",
-        "called_by": [],
+        "purpose": "This paragraph serves as the exit point for the 3000-FIND-NEXT-AUTH-DTL paragraph. It contains a single EXIT statement, which returns control to the calling paragraph (2000-FIND-NEXT-AUTH-SUMMARY). It does not perform any processing or data manipulation.",
+        "called_by": [
+          "2000-FIND-NEXT-AUTH-SUMMARY"
+        ],
         "calls": [],
         "citation": [
-          296,
-          299
+          117,
+          118
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -341,7 +381,7 @@
       {
         "paragraph_name": "3100-INSERT-PARENT-SEG-GSAM",
         "summary": null,
-        "purpose": "This paragraph inserts the parent segment (PENDING-AUTH-SUMMARY) into the GSAM file. It calls CBLTDLI with the FUNC-ISRT parameter to perform the insert. If the PASFL-PCB-STATUS is not spaces, indicating an error, it displays an error message and calls 9999-ABEND to terminate the program.",
+        "purpose": "This paragraph inserts the parent segment into the GSAM dataset. It calls CBLTDLI with the FUNC-ISRT (Insert) function code, using PASFLPCB and PENDING-AUTH-SUMMARY. If the call is not successful (PASFL-PCB-STATUS is not spaces), it displays an error message and calls 9999-ABEND to terminate the program. This paragraph is called from 2000-FIND-NEXT-AUTH-SUMMARY after a parent segment has been successfully read from the IMS database, and it ensures that the data is written to the GSAM output file.",
         "called_by": [
           "2000-FIND-NEXT-AUTH-SUMMARY"
         ],
@@ -350,8 +390,8 @@
           "9999-ABEND"
         ],
         "citation": [
-          300,
-          315
+          120,
+          135
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -362,12 +402,14 @@
       {
         "paragraph_name": "3100-EXIT",
         "summary": null,
-        "purpose": "This paragraph simply contains the EXIT statement, marking the end of the 3100-INSERT-PARENT-SEG-GSAM paragraph. It is used to define the scope of the PERFORM THRU statement in 2000-FIND-NEXT-AUTH-SUMMARY.",
-        "called_by": [],
+        "purpose": "This paragraph serves as the exit point for the 3100-INSERT-PARENT-SEG-GSAM paragraph. It contains a single EXIT statement, which returns control to the calling paragraph (2000-FIND-NEXT-AUTH-SUMMARY). It does not perform any processing or data manipulation.",
+        "called_by": [
+          "2000-FIND-NEXT-AUTH-SUMMARY"
+        ],
         "calls": [],
         "citation": [
-          316,
-          318
+          137,
+          138
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -379,26 +421,26 @@
     "error_handling": [
       {
         "condition": "PAUT-PCB-STATUS NOT EQUAL TO SPACES AND 'GB'",
-        "action": "DISPLAY error message and PERFORM 9999-ABEND",
+        "action": "ABEND",
         "citation": [
-          227,
-          230
+          74,
+          77
         ]
       },
       {
         "condition": "PAUT-PCB-STATUS NOT EQUAL TO SPACES AND 'GE'",
-        "action": "DISPLAY error message and PERFORM 9999-ABEND",
+        "action": "ABEND",
         "citation": [
-          263,
-          266
+          110,
+          113
         ]
       },
       {
         "condition": "PASFL-PCB-STATUS NOT EQUAL TO SPACES",
-        "action": "DISPLAY error message and PERFORM 9999-ABEND",
+        "action": "ABEND",
         "citation": [
-          2711401,
-          2711701
+          131,
+          134
         ]
       }
     ],
@@ -406,14 +448,19 @@
     "cics_operations": [],
     "open_questions": [
       {
-        "question": "What is the purpose of the IMSFUNCS, CIPAUSMY, CIPAUDTY, PAUTBPCB, PASFLPCB, and PADFLPCB calls in the DBUNLDGS paragraph?",
-        "context": "The code only shows the paragraph name and the calls, but not the purpose of these calls.",
-        "suggestion": "Examine the definitions of these called programs or functions to determine their purpose."
+        "question": "What is the purpose of PADFLPCB?",
+        "context": "It is passed in the linkage section but not used.",
+        "suggestion": "Examine calling programs to determine its purpose."
       },
       {
-        "question": "What is the structure of the GSAM output file?",
-        "context": "The code writes parent and child segments to the GSAM file, but the specific format and content of the file are not clear.",
-        "suggestion": "Examine the copybooks or data definitions associated with the GSAM file to determine its structure."
+        "question": "What is the structure of the IMS segments PENDING-AUTH-SUMMARY and PENDING-AUTH-DETAILS?",
+        "context": "The copybooks are not provided.",
+        "suggestion": "Obtain the copybooks to understand the data being processed."
+      },
+      {
+        "question": "What is the structure of OPFIL1-REC and OPFIL2-REC?",
+        "context": "These are the output records, but their structure is not defined in the provided code.",
+        "suggestion": "Examine the file definitions or related documentation to determine their structure."
       }
     ],
     "resolved_questions": [],
@@ -422,5 +469,5 @@
     "flow_diagram": null,
     "copybooks_not_found": []
   },
-  "saved_at": "2026-03-03T09:45:00.176943"
+  "saved_at": "2026-03-03T20:23:29.369052"
 }

@@ -1,16 +1,16 @@
 {
   "header": {
     "program_id": "COPAU01",
-    "file_name": "cpy-bms/COPAU01.cpy",
+    "file_name": "COPAU01.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-03T16:50:43.690391",
+    "analyzed_at": "2026-03-04T03:32:49.733282",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the data structures COPAU1AI and COPAU1AO, which are used for screen input and output, potentially related to authorization processing. COPAU1AI defines the input fields with associated length and flag fields, while COPAU1AO redefines COPAU1AI to provide a different view of the same data, using single-character fields for cursor positioning and other attributes.",
-    "business_context": "UNKNOWN",
+    "summary": "This copybook defines the data structure COPAU1AI and its redefinition COPAU1AO, which are used for screen input/output. It contains fields related to transaction details, titles, dates, times, card numbers, authorization details, merchant information, and error messages.",
+    "business_context": "This copybook is likely used in an online CICS application to format data displayed on a screen and receive input from a user, possibly related to payment authorization or transaction processing.",
     "program_type": "COPYBOOK",
     "citations": [
       17,
@@ -36,7 +36,7 @@
     {
       "paragraph_name": "COPAU1AI",
       "summary": null,
-      "purpose": "This data structure defines the input fields for a screen, likely related to authorization processing. It contains various fields such as TRNNAMEL/I/F/A (Transaction Name), TITLE01L/I/F/A (Title 1), CURDATEL/I/F/A (Current Date), PGMNAMEL/I/F/A (Program Name), TITLE02L/I/F/A (Title 2), CURTIMEL/I/F/A (Current Time), CARDNUML/I/F/A (Card Number), AUTHDTL/I/F/A (Authorization Date), AUTHTML/I/F/A (Authorization Time), AUTHRSPL/I/F/A (Authorization Response Code), AUTHRSNL/I/F/A (Authorization Response Name), AUTHCDL/I/F/A (Authorization Code), AUTHAMTL/I/F/A (Authorization Amount), POSEMDL/I/F/A (Point of Service Entry Mode), AUTHSRCL/I/F/A (Authorization Source), MCCCDL/I/F/A (Merchant Category Code), CRDEXPL/I/F/A (Card Expiration Date), AUTHTYPL/I/F/A (Authorization Type), TRNIDL/I/F/A (Transaction ID), AUTHMTCL/I/F/A (Authorization Match Code), AUTHFRDL/I/F/A (Authorization Fraud Date), MERNAMEL/I/F/A (Merchant Name), MERIDL/I/F/A (Merchant ID), MERCITYL/I/F/A (Merchant City), MERSTL/I/F/A (Merchant State), MERZIPL/I/F/A (Merchant Zip), and ERRMSGL/I/F/A (Error Message). Each field is defined with its length (L), input/output flag (F), attribute character (A), and input field (I). The structure appears to be designed for capturing and displaying authorization-related data on a screen.",
+      "purpose": "This data structure defines the input/output fields for a screen. It includes fields for transaction name (TRNNAMEL, TRNNAMEF, TRNNAMEI), titles (TITLE01L, TITLE01F, TITLE01I, TITLE02L, TITLE02F, TITLE02I), current date and time (CURDATEL, CURDATEF, CURDATEI, CURTIMEL, CURTIMEF, CURTIMEI), card number (CARDNUML, CARDNUMF, CARDNUMI), authorization details (AUTHDTL, AUTHDTF, AUTHDTI, AUTHTML, AUTHTMF, AUTHTMI, AUTHRSPL, AUTHRSPF, AUTHRSPI, AUTHRSNL, AUTHRSNF, AUTHRSNI, AUTHCDL, AUTHCDF, AUTHCDI, AUTHAMTL, AUTHAMTF, AUTHAMTI), POS entry mode (POSEMDL, POSEMDF, POSEMDI), authorization source (AUTHSRCL, AUTHSRCF, AUTHSRCI), MCC code (MCCCDL, MCCCDF, MCCCDI), card expiry (CRDEXPL, CRDEXPF, CRDEXPI), authorization type (AUTHTYPL, AUTHTYPF, AUTHTYPI), transaction ID (TRNIDL, TRNIDF, TRNIDI), authorization match (AUTHMTCL, AUTHMTCF, AUTHMTCI), authorization fraud (AUTHFRDL, AUTHFRDF, AUTHFRDI), merchant information (MERNAMEL, MERNAMEF, MERNAMEI, MERIDL, MERIDF, MERIDI, MERCITYL, MERCITYF, MERCITYI, MERSTL, MERSTF, MERSTI, MERZIPL, MERZIPF, MERZIPI), and error message (ERRMSGL, ERRMSGF, ERRMSGI). The 'L' fields represent the length of the corresponding input field, the 'F' fields are single-character flags, and the 'I' fields contain the actual input data. The 'COMP' attribute suggests these length fields are binary.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -54,7 +54,7 @@
     {
       "paragraph_name": "COPAU1AO",
       "summary": null,
-      "purpose": "This data structure redefines COPAU1AI to provide a different perspective on the same data, primarily for screen output formatting and control. It uses single-character fields (C, P, H, V, O) to represent cursor positioning, highlighting, and other display attributes for each corresponding field in COPAU1AI. For example, TRNNAMEC/P/H/V/O correspond to TRNNAMEL/I/F/A in COPAU1AI, allowing the program to control the display attributes of the Transaction Name field. The 'C' suffix likely represents the cursor position, 'P' the protection attribute, 'H' the highlight attribute, 'V' the validation attribute, and 'O' the output field. This redefinition enables precise control over the screen's appearance and user interaction, facilitating a user-friendly interface for authorization-related transactions.",
+      "purpose": "This data structure redefines COPAU1AI to provide a different view of the same data. Instead of length and flag fields, it uses single-character fields ('C', 'P', 'H', 'V') and output fields ('O') for each data element. The 'C', 'P', 'H', and 'V' fields likely represent control characters or attributes for screen display, while the 'O' fields contain the actual output data to be displayed on the screen. This redefinition allows the program to easily format and display the data on a CICS screen. The FILLER fields are used to align the data correctly within the structure. This structure is used to populate the BMS map fields for output.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -73,14 +73,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the specific screen layout and purpose of each field?",
-      "context": "The copybook defines the data structure, but the exact usage within a BMS map or CICS transaction is unclear.",
-      "suggestion": "Examine the BMS map or CICS transaction that uses this copybook."
-    },
-    {
-      "question": "What is the business context for this authorization process?",
-      "context": "The copybook contains authorization-related fields, but the specific industry or application is unknown.",
-      "suggestion": "Consult the application documentation or subject matter experts."
+      "question": "What is the exact purpose of the 'C', 'P', 'H', and 'V' fields in the COPAU1AO redefinition?",
+      "context": "The code only shows the data structure definition, not how these fields are used.",
+      "suggestion": "Examine the BMS map definition and the COBOL code that uses this copybook to understand how these fields control the screen display attributes."
     }
   ],
   "resolved_questions": [],

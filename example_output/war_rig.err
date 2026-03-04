@@ -1,54 +1,29 @@
-2026-03-03 09:46:04,295 | ERROR | war_rig.providers.openrouter | OpenRouter API error: JSON error injected into SSE stream
-/home/andras/war_rig/war_rig/providers/openrouter.py:414
+2026-03-03 20:18:48,642 | ERROR | war_rig.orchestration.ticket_engine | Batch processing failed: AST generation failed for the following files:
+  - PAUDBUNL.CBL: ProLeap requires Java 17+. Set PROLEAP_JAVA_HOME or JAVA_HOME, or install JDK 17+ on PATH.
+  - COPAUS1C.cbl: ProLeap requires Java 17+. Set PROLEAP_JAVA_HOME or JAVA_HOME, or install JDK 17+ on PATH.
+  - COPAUA0C.cbl: ProLeap requires Java 17+. Set PROLEAP_JAVA_HOME or JAVA_HOME, or install JDK 17+ on PATH.
+  - PAUDBLOD.CBL: ProLeap requires Java 17+. Set PROLEAP_JAVA_HOME or JAVA_HOME, or install JDK 17+ on PATH.
+  - DBUNLDGS.CBL: ProLeap requires Java 17+. Set PROLEAP_JAVA_HOME or JAVA_HOME, or install JDK 17+ on PATH.
+  - CBPAUP0C.cbl: ProLeap requires Java 17+. Set PROLEAP_JAVA_HOME or JAVA_HOME, or install JDK 17+ on PATH.
+  - COPAUS0C.cbl: ProLeap requires Java 17+. Set PROLEAP_JAVA_HOME or JAVA_HOME, or install JDK 17+ on PATH.
+  - COPAUS2C.cbl: ProLeap requires Java 17+. Set PROLEAP_JAVA_HOME or JAVA_HOME, or install JDK 17+ on PATH.
+/home/andras/war_rig/war_rig/orchestration/ticket_engine.py:616
 
-2026-03-03 09:46:04,299 | ERROR | war_rig.errors | 
-================================================================================
-STRUCTURED ERROR:
-{
-  "timestamp": "2026-03-03T09:46:04.296983",
-  "error_type": "APIError",
-  "error_message": "JSON error injected into SSE stream",
-  "context": {
-    "provider": "openrouter",
-    "model": "google/gemini-2.0-flash-001",
-    "error_type": "api_error",
-    "status_code": null
-  },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 309, in complete\n    async for chunk in iter_with_timeout(stream, chunk_timeout):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 296, in iter_with_timeout\n    chunk = await asyncio.wait_for(\n            ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 489, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_streaming.py\", line 148, in __aiter__\n    async for item in self._iterator:\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_streaming.py\", line 195, in __stream__\n    raise APIError(\nopenai.APIError: JSON error injected into SSE stream\n",
-  "request": {
-    "model": "google/gemini-2.0-flash-001",
-    "message_count": 2
-  },
-  "response": {
-    "body": {
-      "code": 429,
-      "message": "JSON error injected into SSE stream",
-      "metadata": {
-        "error_type": "rate_limit_exceeded"
-      }
-    },
-    "response": "None",
-    "message": "JSON error injected into SSE stream"
-  }
-}
-================================================================================
-/home/andras/war_rig/war_rig/utils/error_logging.py:164
-
-2026-03-03 09:46:04,303 | ERROR | war_rig.agents.base | Scribe: Error during invocation: OpenRouter API error: JSON error injected into SSE stream
+2026-03-03 20:29:30,674 | ERROR | war_rig.agents.base | Scribe: Error during invocation: 
 /home/andras/war_rig/war_rig/agents/base.py:474
 
-2026-03-03 09:46:04,305 | ERROR | war_rig.errors | 
+2026-03-03 20:29:30,681 | ERROR | war_rig.errors | 
 ================================================================================
 STRUCTURED ERROR:
 {
-  "timestamp": "2026-03-03T09:46:04.304471",
-  "error_type": "OpenRouterProviderError",
-  "error_message": "OpenRouter API error: JSON error injected into SSE stream",
+  "timestamp": "2026-03-03T20:29:30.676012",
+  "error_type": "TimeoutError",
+  "error_message": "",
   "context": {
     "iteration": 1,
-    "file_name": "cbl/COPAUS2C.cbl"
+    "file_name": "cpy/CIPAUDTY.cpy"
   },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 309, in complete\n    async for chunk in iter_with_timeout(stream, chunk_timeout):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 296, in iter_with_timeout\n    chunk = await asyncio.wait_for(\n            ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 489, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_streaming.py\", line 148, in __aiter__\n    async for item in self._iterator:\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_streaming.py\", line 195, in __stream__\n    raise APIError(\nopenai.APIError: JSON error injected into SSE stream\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/agents/base.py\", line 450, in ainvoke\n    response = await self._provider.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/circuit_breaker.py\", line 490, in complete\n    response = await asyncio.wait_for(\n               ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 489, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 421, in complete\n    raise OpenRouterProviderError(\nwar_rig.providers.openrouter.OpenRouterProviderError: OpenRouter API error: JSON error injected into SSE stream\n",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 500, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py\", line 2678, in create\n    return await self._post(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1797, in post\n    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1532, in request\n    response = await self._client.send(\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1629, in send\n    response = await self._send_handling_auth(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1657, in _send_handling_auth\n    response = await self._send_handling_redirects(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1694, in _send_handling_redirects\n    response = await self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1730, in _send_single_request\n    response = await transport.handle_async_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 103, in handle_async_request\n    return await self._connection.handle_async_request(request)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 136, in handle_async_request\n    raise exc\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 106, in handle_async_request\n    ) = await self._receive_response_headers(**kwargs)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 177, in _receive_response_headers\n    event = await self._receive_event(timeout=timeout)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 217, in _receive_event\n    data = await self._network_stream.read(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 35, in read\n    return await self._stream.receive(max_bytes=max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 244, in receive\n    data = await self._call_sslobject_method(self._ssl_object.read, max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 187, in _call_sslobject_method\n    data = await self.transport_stream.receive()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py\", line 1269, in receive\n    await self._protocol.read_event.wait()\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/locks.py\", line 213, in wait\n    await fut\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/agents/base.py\", line 450, in ainvoke\n    response = await self._provider.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/circuit_breaker.py\", line 490, in complete\n    response = await asyncio.wait_for(\n               ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 502, in wait_for\n    raise exceptions.TimeoutError() from exc\nTimeoutError\n",
   "request": {
     "agent": "Scribe",
     "model": "google/gemini-2.0-flash-001",
@@ -59,7 +34,7 @@ STRUCTURED ERROR:
       },
       {
         "role": "user",
-        "content": "## Source File: cbl/COPAUS2C.cbl\nFile Type: COBOL\nIteration: 1\n\n## Paragraph Outline (from static analysis)\n\nThe following paragraphs were identified by static analysis.\nYou MUST document ALL listed paragraphs. Do not skip any.\n\n- **COPAUS2C** (lines 23-23) \u2192 calls: CIPAUDTY, SQLCA, AUTHFRDS\n- **MAIN-PARA** (lines 89-220) \u2192 calls: FRAUD-UPDATE, CARDDEMO.AUTHFRDS\n- **FRAUD-UPDATE** (lines 221-244) \u2192 calls: CARDDEMO.AUTHFRDS\n\n## Analysis Pattern Insights\n\n**Key Variables**: WS-FRD-ACT-MSG, SQLCODE, WS-SQLCODE, SQLSTATE, WS-SQLSTATE, WS-FRD-UPDT-SUCCESS, WS-FRD-UPDT-FAILED, WS-CUR-DATE, PA-FRAUD-RPT-DATE, PA-AUTH-ORIG-DATE(1:2)\n**Complexity**: {'total_data_ops': 46, 'decision_points': 5, 'has_loops': False, 'has_nested_conditionals': False, 'has_go_to': False, 'error_coverage': 'moderate'}\n\n### Paragraph Documentation Hints\n\n**MAIN-PARA** (complex):\n  - Modifies 39 variables (WS-FRD-ACT-MSG, WS-CUR-DATE, PA-FRAUD-RPT-DATE). Document the transformations.\n  - Contains 4 decision points. Exp..."
+        "content": "## Source File: cpy/CIPAUDTY.cpy\nFile Type: COPYBOOK\nIteration: 1\n\n## Source Code\n```\n    1 |       *****************************************************************         \n    2 |       *   IMS SEGMENT - PENDING AUTHORIZATION DETAILS                           \n    3 |       *****************************************************************         \n    4 |       * Copyright Amazon.com, Inc. or its affiliates.\n    5 |       * All Rights Reserved.\n    6 |       *\n    7 |       * Licensed under the Apache License, Version 2.0 (the \"License\").\n    8 |       * You may not use this file except in compliance with the License.\n    9 |       * You may obtain a copy of the License at\n   10 |       *\n   11 |       *    http://www.apache.org/licenses/LICENSE-2.0\n   12 |       *\n   13 |       * Unless required by applicable law or agreed to in writing,\n   14 |       * software distributed under the License is distributed on an\n   15 |       * \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY..."
       }
     ]
   }
@@ -67,57 +42,21 @@ STRUCTURED ERROR:
 ================================================================================
 /home/andras/war_rig/war_rig/utils/error_logging.py:164
 
-2026-03-03 09:46:05,377 | ERROR | war_rig.providers.openrouter | OpenRouter API error: JSON error injected into SSE stream
-/home/andras/war_rig/war_rig/providers/openrouter.py:414
-
-2026-03-03 09:46:05,378 | ERROR | war_rig.errors | 
-================================================================================
-STRUCTURED ERROR:
-{
-  "timestamp": "2026-03-03T09:46:05.378462",
-  "error_type": "APIError",
-  "error_message": "JSON error injected into SSE stream",
-  "context": {
-    "provider": "openrouter",
-    "model": "google/gemini-2.0-flash-001",
-    "error_type": "api_error",
-    "status_code": null
-  },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 309, in complete\n    async for chunk in iter_with_timeout(stream, chunk_timeout):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 296, in iter_with_timeout\n    chunk = await asyncio.wait_for(\n            ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 489, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_streaming.py\", line 148, in __aiter__\n    async for item in self._iterator:\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_streaming.py\", line 195, in __stream__\n    raise APIError(\nopenai.APIError: JSON error injected into SSE stream\n",
-  "request": {
-    "model": "google/gemini-2.0-flash-001",
-    "message_count": 2
-  },
-  "response": {
-    "body": {
-      "code": 429,
-      "message": "JSON error injected into SSE stream",
-      "metadata": {
-        "error_type": "rate_limit_exceeded"
-      }
-    },
-    "response": "None",
-    "message": "JSON error injected into SSE stream"
-  }
-}
-================================================================================
-/home/andras/war_rig/war_rig/utils/error_logging.py:164
-
-2026-03-03 09:46:05,453 | ERROR | war_rig.agents.base | Scribe: Error during invocation: OpenRouter API error: JSON error injected into SSE stream
+2026-03-03 20:29:58,794 | ERROR | war_rig.agents.base | Scribe: Error during invocation: 
 /home/andras/war_rig/war_rig/agents/base.py:474
 
-2026-03-03 09:46:05,454 | ERROR | war_rig.errors | 
+2026-03-03 20:29:58,797 | ERROR | war_rig.errors | 
 ================================================================================
 STRUCTURED ERROR:
 {
-  "timestamp": "2026-03-03T09:46:05.453677",
-  "error_type": "OpenRouterProviderError",
-  "error_message": "OpenRouter API error: JSON error injected into SSE stream",
+  "timestamp": "2026-03-03T20:29:58.795977",
+  "error_type": "TimeoutError",
+  "error_message": "",
   "context": {
     "iteration": 1,
-    "file_name": "bms/COPAU01.bms"
+    "file_name": "ims/DBPAUTP0.dbd"
   },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 309, in complete\n    async for chunk in iter_with_timeout(stream, chunk_timeout):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 296, in iter_with_timeout\n    chunk = await asyncio.wait_for(\n            ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 489, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_streaming.py\", line 148, in __aiter__\n    async for item in self._iterator:\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_streaming.py\", line 195, in __stream__\n    raise APIError(\nopenai.APIError: JSON error injected into SSE stream\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/agents/base.py\", line 450, in ainvoke\n    response = await self._provider.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/circuit_breaker.py\", line 490, in complete\n    response = await asyncio.wait_for(\n               ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 489, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 421, in complete\n    raise OpenRouterProviderError(\nwar_rig.providers.openrouter.OpenRouterProviderError: OpenRouter API error: JSON error injected into SSE stream\n",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 500, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py\", line 2678, in create\n    return await self._post(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1797, in post\n    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1532, in request\n    response = await self._client.send(\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1629, in send\n    response = await self._send_handling_auth(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1657, in _send_handling_auth\n    response = await self._send_handling_redirects(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1694, in _send_handling_redirects\n    response = await self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1730, in _send_single_request\n    response = await transport.handle_async_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 103, in handle_async_request\n    return await self._connection.handle_async_request(request)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 136, in handle_async_request\n    raise exc\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 106, in handle_async_request\n    ) = await self._receive_response_headers(**kwargs)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 177, in _receive_response_headers\n    event = await self._receive_event(timeout=timeout)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 217, in _receive_event\n    data = await self._network_stream.read(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 35, in read\n    return await self._stream.receive(max_bytes=max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 244, in receive\n    data = await self._call_sslobject_method(self._ssl_object.read, max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 187, in _call_sslobject_method\n    data = await self.transport_stream.receive()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py\", line 1269, in receive\n    await self._protocol.read_event.wait()\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/locks.py\", line 213, in wait\n    await fut\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/agents/base.py\", line 450, in ainvoke\n    response = await self._provider.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/circuit_breaker.py\", line 490, in complete\n    response = await asyncio.wait_for(\n               ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 502, in wait_for\n    raise exceptions.TimeoutError() from exc\nTimeoutError\n",
   "request": {
     "agent": "Scribe",
     "model": "google/gemini-2.0-flash-001",
@@ -128,7 +67,7 @@ STRUCTURED ERROR:
       },
       {
         "role": "user",
-        "content": "## Source File: bms/COPAU01.bms\nFile Type: BMS\nIteration: 1\n\n## Source Code\n```\n    1 | ***********************************************************************         \n    2 | *    CardDemo - Pending Authorization Details Screen                            \n    3 | ***********************************************************************\n    4 | * Copyright Amazon.com, Inc. or its affiliates.\n    5 | * All Rights Reserved.\n    6 | *\n    7 | * Licensed under the Apache License, Version 2.0 (the \"License\").\n    8 | * You may not use this file except in compliance with the License.\n    9 | * You may obtain a copy of the License at\n   10 | *\n   11 | *    http://www.apache.org/licenses/LICENSE-2.0\n   12 | *\n   13 | * Unless required by applicable law or agreed to in writing,\n   14 | * software distributed under the License is distributed on an\n   15 | * \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,\n   16 | * either express or implied. See the License for the specific\n   17 | * ..."
+        "content": "## Source File: ims/DBPAUTP0.dbd\nFile Type: OTHER\nIteration: 1\n\n## Source Code\n```\n    1 | ***********************************************************************\n    2 | * Copyright Amazon.com, Inc. or its affiliates.\n    3 | * All Rights Reserved.\n    4 | *\n    5 | * Licensed under the Apache License, Version 2.0 (the \"License\").\n    6 | * You may not use this file except in compliance with the License.\n    7 | * You may obtain a copy of the License at\n    8 | *\n    9 | *    http://www.apache.org/licenses/LICENSE-2.0\n   10 | *\n   11 | * Unless required by applicable law or agreed to in writing,\n   12 | * software distributed under the License is distributed on an\n   13 | * \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,\n   14 | * either express or implied. See the License for the specific\n   15 | * language governing permissions and limitations under the License\n   16 | ***********************************************************************\n   17 |          TITLE   'ASSE..."
       }
     ]
   }
@@ -136,126 +75,6 @@ STRUCTURED ERROR:
 ================================================================================
 /home/andras/war_rig/war_rig/utils/error_logging.py:164
 
-2026-03-03 09:47:45,890 | ERROR | war_rig.providers.openrouter | OpenRouter API error: JSON error injected into SSE stream
-/home/andras/war_rig/war_rig/providers/openrouter.py:414
-
-2026-03-03 09:47:45,892 | ERROR | war_rig.errors | 
-================================================================================
-STRUCTURED ERROR:
-{
-  "timestamp": "2026-03-03T09:47:45.891621",
-  "error_type": "APIError",
-  "error_message": "JSON error injected into SSE stream",
-  "context": {
-    "provider": "openrouter",
-    "model": "google/gemini-2.0-flash-001",
-    "error_type": "api_error",
-    "status_code": null
-  },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 309, in complete\n    async for chunk in iter_with_timeout(stream, chunk_timeout):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 296, in iter_with_timeout\n    chunk = await asyncio.wait_for(\n            ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 489, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_streaming.py\", line 148, in __aiter__\n    async for item in self._iterator:\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_streaming.py\", line 195, in __stream__\n    raise APIError(\nopenai.APIError: JSON error injected into SSE stream\n",
-  "request": {
-    "model": "google/gemini-2.0-flash-001",
-    "message_count": 2
-  },
-  "response": {
-    "body": {
-      "code": 429,
-      "message": "JSON error injected into SSE stream",
-      "metadata": {
-        "error_type": "rate_limit_exceeded"
-      }
-    },
-    "response": "None",
-    "message": "JSON error injected into SSE stream"
-  }
-}
-================================================================================
-/home/andras/war_rig/war_rig/utils/error_logging.py:164
-
-2026-03-03 09:47:45,896 | ERROR | war_rig.agents.base | Scribe: Error during invocation: OpenRouter API error: JSON error injected into SSE stream
-/home/andras/war_rig/war_rig/agents/base.py:474
-
-2026-03-03 09:47:45,897 | ERROR | war_rig.errors | 
-================================================================================
-STRUCTURED ERROR:
-{
-  "timestamp": "2026-03-03T09:47:45.896995",
-  "error_type": "OpenRouterProviderError",
-  "error_message": "OpenRouter API error: JSON error injected into SSE stream",
-  "context": {
-    "iteration": 1,
-    "file_name": "ims/DBPAUTX0.dbd"
-  },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 309, in complete\n    async for chunk in iter_with_timeout(stream, chunk_timeout):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 296, in iter_with_timeout\n    chunk = await asyncio.wait_for(\n            ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 489, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_streaming.py\", line 148, in __aiter__\n    async for item in self._iterator:\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_streaming.py\", line 195, in __stream__\n    raise APIError(\nopenai.APIError: JSON error injected into SSE stream\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/agents/base.py\", line 450, in ainvoke\n    response = await self._provider.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/circuit_breaker.py\", line 490, in complete\n    response = await asyncio.wait_for(\n               ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 489, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 421, in complete\n    raise OpenRouterProviderError(\nwar_rig.providers.openrouter.OpenRouterProviderError: OpenRouter API error: JSON error injected into SSE stream\n",
-  "request": {
-    "agent": "Scribe",
-    "model": "google/gemini-2.0-flash-001",
-    "messages": [
-      {
-        "role": "system",
-        "content": "You are the Scribe, a documentation specialist for mainframe code analysis.\n\nYour role is to analyze COBOL, PL/I, JCL, and other mainframe source files and produce comprehensive documentation following a structured template.\n\n## Special File Types\n\n### LISTING Files (.lst, .list)\nLISTING files are NOT executable programs. They contain **prose documentation** such as:\n- Compiler output and diagnostics\n- Change history and modification notes\n- System documentation and comments\n- Version control notes\n- Developer notes and explanations\n\nWhen analyzing a LISTING file:\n1. The summary should describe what the file CONTAINS (change history, compiler output, notes), not what code it \"executes\"\n2. Do NOT try to document called_programs, data_flow, sql_operations, cics_operations - these are not applicable\n3. Focus on purpose (what documentation is in the file), and any inputs/outputs mentioned as references\n4. Treat the content as prose to be understood and summarized, not as code to be reverse..."
-      },
-      {
-        "role": "user",
-        "content": "## Source File: ims/DBPAUTX0.dbd\nFile Type: OTHER\nIteration: 1\n\n## Source Code\n```\n    1 | ***********************************************************************\n    2 | * Copyright Amazon.com, Inc. or its affiliates.\n    3 | * All Rights Reserved.\n    4 | *\n    5 | * Licensed under the Apache License, Version 2.0 (the \"License\").\n    6 | * You may not use this file except in compliance with the License.\n    7 | * You may obtain a copy of the License at\n    8 | *\n    9 | *    http://www.apache.org/licenses/LICENSE-2.0\n   10 | *\n   11 | * Unless required by applicable law or agreed to in writing,\n   12 | * software distributed under the License is distributed on an\n   13 | * \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,\n   14 | * either express or implied. See the License for the specific\n   15 | * language governing permissions and limitations under the License\n   16 | ***********************************************************************\n   17 |          TITLE   'ASSE..."
-      }
-    ]
-  }
-}
-================================================================================
-/home/andras/war_rig/war_rig/utils/error_logging.py:164
-
-2026-03-03 09:58:56,762 | ERROR | war_rig.workers.scribe_pool | Worker scribe-1: Prompt ~29287 tokens exceeds limit 15000 and cannot be reduced further
+2026-03-03 20:39:33,583 | ERROR | war_rig.workers.scribe_pool | Worker scribe-1: Prompt ~22642 tokens exceeds limit 15000 and cannot be reduced further
 /home/andras/war_rig/war_rig/workers/scribe_pool.py:1236
-
-2026-03-03 09:59:02,824 | ERROR | war_rig.workers.scribe_pool | Worker scribe-2: Prompt ~27523 tokens exceeds limit 15000 and cannot be reduced further
-/home/andras/war_rig/war_rig/workers/scribe_pool.py:1236
-
-2026-03-03 09:59:55,929 | ERROR | war_rig.workers.scribe_pool | Worker scribe-2: Prompt ~27523 tokens exceeds limit 15000 and cannot be reduced further
-/home/andras/war_rig/war_rig/workers/scribe_pool.py:1236
-
-2026-03-03 10:01:37,826 | ERROR | war_rig.workers.scribe_pool | Worker scribe-1: Prompt ~27523 tokens exceeds limit 15000 and cannot be reduced further
-/home/andras/war_rig/war_rig/workers/scribe_pool.py:1236
-
-2026-03-03 10:02:20,759 | ERROR | war_rig.workers.scribe_pool | Worker scribe-1: Prompt ~27523 tokens exceeds limit 15000 and cannot be reduced further
-/home/andras/war_rig/war_rig/workers/scribe_pool.py:1236
-
-2026-03-03 10:04:04,278 | ERROR | war_rig.workers.scribe_pool | Worker scribe-1: Prompt ~27523 tokens exceeds limit 15000 and cannot be reduced further
-/home/andras/war_rig/war_rig/workers/scribe_pool.py:1236
-
-2026-03-03 10:05:01,178 | ERROR | war_rig.workers.scribe_pool | Worker scribe-1: Prompt ~27523 tokens exceeds limit 15000 and cannot be reduced further
-/home/andras/war_rig/war_rig/workers/scribe_pool.py:1236
-
-2026-03-03 10:08:38,654 | ERROR | war_rig.agents.base | Scribe: Error during invocation: Stream stalled: no chunk received for 180.0s (network-level timeout)
-/home/andras/war_rig/war_rig/agents/base.py:474
-
-2026-03-03 10:08:38,665 | ERROR | war_rig.errors | 
-================================================================================
-STRUCTURED ERROR:
-{
-  "timestamp": "2026-03-03T10:08:38.656046",
-  "error_type": "OpenRouterProviderError",
-  "error_message": "Stream stalled: no chunk received for 180.0s (network-level timeout)",
-  "context": {
-    "iteration": 1,
-    "file_name": "cbl/COPAUS0C.cbl"
-  },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 500, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_streaming.py\", line 148, in __aiter__\n    async for item in self._iterator:\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_streaming.py\", line 162, in __stream__\n    async for sse in iterator:\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_streaming.py\", line 152, in _iter_events\n    async for sse in self._decoder.aiter_bytes(self.response.aiter_bytes()):\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_streaming.py\", line 304, in aiter_bytes\n    async for chunk in self._aiter_chunks(iterator):\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_streaming.py\", line 315, in _aiter_chunks\n    async for chunk in iterator:\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_models.py\", line 997, in aiter_bytes\n    async for raw_bytes in self.aiter_raw():\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_models.py\", line 1055, in aiter_raw\n    async for raw_stream_bytes in self.stream:\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 176, in __aiter__\n    async for chunk in self._stream:\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_transports/default.py\", line 271, in __aiter__\n    async for part in self._httpcore_stream:\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 407, in __aiter__\n    raise exc from None\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 403, in __aiter__\n    async for part in self._stream:\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 342, in __aiter__\n    raise exc\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 334, in __aiter__\n    async for chunk in self._connection._receive_response_body(**kwargs):\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 203, in _receive_response_body\n    event = await self._receive_event(timeout=timeout)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 217, in _receive_event\n    data = await self._network_stream.read(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 35, in read\n    return await self._stream.receive(max_bytes=max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 244, in receive\n    data = await self._call_sslobject_method(self._ssl_object.read, max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 187, in _call_sslobject_method\n    data = await self.transport_stream.receive()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py\", line 1269, in receive\n    await self._protocol.read_event.wait()\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/locks.py\", line 213, in wait\n    await fut\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 296, in iter_with_timeout\n    chunk = await asyncio.wait_for(\n            ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 502, in wait_for\n    raise exceptions.TimeoutError() from exc\nTimeoutError\n\nDuring handling of the above exception, another exception occurred:\n\nTraceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/agents/base.py\", line 450, in ainvoke\n    response = await self._provider.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/circuit_breaker.py\", line 490, in complete\n    response = await asyncio.wait_for(\n               ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 489, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 309, in complete\n    async for chunk in iter_with_timeout(stream, chunk_timeout):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 304, in iter_with_timeout\n    raise OpenRouterProviderError(\nwar_rig.providers.openrouter.OpenRouterProviderError: Stream stalled: no chunk received for 180.0s (network-level timeout)\n",
-  "request": {
-    "agent": "Scribe",
-    "model": "google/gemini-2.0-flash-001",
-    "messages": [
-      {
-        "role": "system",
-        "content": "You are the Scribe, a documentation specialist for mainframe code analysis.\n\nYour role is to analyze COBOL, PL/I, JCL, and other mainframe source files and produce comprehensive documentation following a structured template.\n\n## Special File Types\n\n### LISTING Files (.lst, .list)\nLISTING files are NOT executable programs. They contain **prose documentation** such as:\n- Compiler output and diagnostics\n- Change history and modification notes\n- System documentation and comments\n- Version control notes\n- Developer notes and explanations\n\nWhen analyzing a LISTING file:\n1. The summary should describe what the file CONTAINS (change history, compiler output, notes), not what code it \"executes\"\n2. Do NOT try to document called_programs, data_flow, sql_operations, cics_operations - these are not applicable\n3. Focus on purpose (what documentation is in the file), and any inputs/outputs mentioned as references\n4. Treat the content as prose to be understood and summarized, not as code to be reverse..."
-      },
-      {
-        "role": "user",
-        "content": "## Source File: cbl/COPAUS0C.cbl\nFile Type: COBOL\nIteration: 1\n\n## Abstract Syntax Tree\n```\n* INTELLIGENT SOURCE SAMPLING\n* Sampled 541 of 1033 lines (52.4%)\n* Strategies used: identifier_mention, line_citation\n* Windows included:\n*   - Lines 1-27: Identifier 'YOU' found at line 11\n*   - Lines 72-102: Identifier 'CONDITION' found at line 87\n*   - Lines 128-223: Identifier 'ACCOUNT' found at line 143\n*   - Lines 232-299: Lines around cited line 275\n*   - Lines 335-424: Identifier 'ACCOUNT' found at line 350\n*   - Lines 535-619: Lines around cited line 550\n*   - Lines 735-765: Identifier 'ACCOUNT' found at line 750\n*   - Lines 807-888: Identifier 'RECORD' found at line 822\n*   - Lines 956-986: Identifier 'CDEMO-ACCT-ID' found at line 971\n*\n     1\t      ******************************************************************\n     2\t      * Program     : COPAUS0C.CBL\n     3\t      * Application : CardDemo - Authorization Module\n     4\t      * Type        : CICS COBOL IMS BMS Program\n     5\t      ..."
-      }
-    ]
-  }
-}
-================================================================================
-/home/andras/war_rig/war_rig/utils/error_logging.py:164
 

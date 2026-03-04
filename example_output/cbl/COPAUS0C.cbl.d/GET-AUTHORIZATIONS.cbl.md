@@ -1,32 +1,31 @@
 ```cobol
-       GET-AUTHORIZATIONS.
-      *****************************************************************
+              IF ACCTIDI OF COPAU0AI IS NOT NUMERIC
+                MOVE LOW-VALUES               TO WS-ACCT-ID
 
-           EXEC DLI GNP USING PCB(PAUT-PCB-NUM)
-               SEGMENT (PAUTDTL1)
-               INTO (PENDING-AUTH-DETAILS)
-           END-EXEC
+                MOVE 'Y'                      TO WS-ERR-FLG
+                MOVE
+                'Acct Id must be Numeric ...' TO WS-MESSAGE
 
-           MOVE DIBSTAT                          TO IMS-RETURN-CODE
-           EVALUATE TRUE
-               WHEN STATUS-OK
-                  SET AUTHS-NOT-EOF              TO TRUE
-               WHEN SEGMENT-NOT-FOUND
-               WHEN END-OF-DB
-                  SET AUTHS-EOF                  TO TRUE
-               WHEN OTHER
-                  MOVE 'Y'     TO WS-ERR-FLG
+                MOVE -1                       TO ACCTIDL OF COPAU0AI
 
-                  STRING
-                  ' System error while reading AUTH Details: Code:'
-                  IMS-RETURN-CODE
-                  DELIMITED BY SIZE
-                  INTO WS-MESSAGE
-                  END-STRING
-                  MOVE -1       TO ACCTIDL OF COPAU0AI
-                  PERFORM SEND-PAULST-SCREEN
-           END-EVALUATE
-
-           .
-      *****************************************************************
+              ELSE
+                MOVE ACCTIDI OF COPAU0AI      TO WS-ACCT-ID
+                                                 CDEMO-ACCT-ID
+                EVALUATE TRUE
+                  WHEN SEL0001I OF COPAU0AI NOT = SPACES AND LOW-VALUES
+                   MOVE SEL0001I OF COPAU0AI TO CDEMO-CPVS-PAU-SEL-FLG
+                   MOVE CDEMO-CPVS-AUTH-KEYS(1)
+                                             TO CDEMO-CPVS-PAU-SELECTED
+                  WHEN SEL0002I OF COPAU0AI NOT = SPACES AND LOW-VALUES
+                   MOVE SEL0002I OF COPAU0AI TO CDEMO-CPVS-PAU-SEL-FLG
+                   MOVE CDEMO-CPVS-AUTH-KEYS(2)
+                                             TO CDEMO-CPVS-PAU-SELECTED
+                  WHEN SEL0003I OF COPAU0AI NOT = SPACES AND LOW-VALUES
+                   MOVE SEL0003I OF COPAU0AI TO CDEMO-CPVS-PAU-SEL-FLG
+                   MOVE CDEMO-CPVS-AUTH-KEYS(3)
+                                             TO CDEMO-CPVS-PAU-SELECTED
+                  WHEN SEL0004I OF COPAU0AI NOT = SPACES AND LOW-VALUES
+                   MOVE SEL0004I OF COPAU0AI TO CDEMO-CPVS-PAU-SEL-FLG
+                   MOVE CDEMO-CPVS-AUTH-KEYS(4)
+                                             TO CDEMO-CPVS-PAU-SELECTED
 ```

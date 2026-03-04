@@ -37,7 +37,7 @@
       "WS-MORE-AUTHS-FLAG",
       "WS-END-OF-AUTHDB-FLAG"
     ],
-    "purpose": "Retrieves the next authorization detail segment from the IMS database and updates read count and control flags based on the retrieval status."
+    "purpose": "Retrieves the next pending authorization detail record via IMS GNP call, updates read counter and control flags based on retrieval status."
   },
   {
     "caller": "MAIN-PARA",
@@ -56,20 +56,19 @@
       "PA-DECLINED-AUTH-CNT",
       "PA-DECLINED-AUTH-AMT"
     ],
-    "purpose": "Checks if an authorization detail is expired based on the difference between current date and authorization date, and updates counts accordingly if deletion is qualified."
+    "purpose": "Checks if the current authorization detail is expired based on date difference and updates counts accordingly, marking it for deletion if expired."
   },
   {
     "caller": "MAIN-PARA",
     "callee": "5000-DELETE-AUTH-DTL",
     "inputs": [
       "DEBUG-ON",
-      "PA-ACCT-ID",
-      "PENDING-AUTH-DETAILS"
+      "PA-ACCT-ID"
     ],
     "outputs": [
       "WS-NO-DTL-DELETED"
     ],
-    "purpose": "Deletes the current authorization detail segment from the IMS database and increments the deletion counter if successful, otherwise abends."
+    "purpose": "Deletes the current authorization detail segment via IMS DLET call and increments the deletion counter if successful, otherwise abends."
   },
   {
     "caller": "MAIN-PARA",
@@ -84,7 +83,7 @@
       "WS-NO-DTL-READ",
       "WS-MORE-AUTHS-FLAG"
     ],
-    "purpose": "Reads the next pending authorization detail record from the IMS database and updates read count and flag indicating if more details exist."
+    "purpose": "Reads the next pending authorization detail record from the IMS database and updates counters and flags accordingly."
   },
   {
     "caller": "MAIN-PARA",
@@ -113,7 +112,7 @@
     "outputs": [
       "WS-NO-CHKP"
     ],
-    "purpose": "Takes an IMS checkpoint and displays success or failure based on the checkpoint status, resetting the checkpoint counter when display frequency is reached."
+    "purpose": "Takes an IMS checkpoint and displays success or failure based on the current authorization processing count and application ID."
   },
   {
     "caller": "MAIN-PARA",
@@ -123,7 +122,7 @@
       "WS-NO-SUMRY-READ"
     ],
     "outputs": [],
-    "purpose": "Displays a debug message with the current authorization summary read count if debug mode is enabled."
+    "purpose": "Displays a debug message with the current count of authorization summaries read if debug mode is enabled."
   },
   {
     "caller": "MAIN-PARA",
@@ -138,7 +137,7 @@
     "outputs": [
       "WS-NO-CHKP"
     ],
-    "purpose": "Takes an IMS checkpoint and displays success or failure based on the checkpoint status, resetting the checkpoint counter when display frequency is reached."
+    "purpose": "Takes an IMS checkpoint and displays success or failure based on the current authorization processing count and application ID."
   },
   {
     "caller": "2000-FIND-NEXT-AUTH-SUMMARY",
@@ -179,9 +178,9 @@
     "caller": "9000-TAKE-CHECKPOINT",
     "callee": "9999-ABEND",
     "inputs": [
-      "DIBSTAT",
       "WS-NO-SUMRY-READ",
-      "WS-CURR-APP-ID"
+      "WS-CURR-APP-ID",
+      "DIBSTAT"
     ],
     "outputs": [],
     "purpose": "Abends the program with return code 16 if the checkpoint operation fails."

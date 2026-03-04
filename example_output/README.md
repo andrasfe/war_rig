@@ -1,19 +1,23 @@
 # System Design Document
 
+
 ## 1. Executive Summary
 
-This mainframe system is a critical component of the organization's financial authorization infrastructure, responsible for validating and processing transaction requests in real-time. Its primary purpose is to ensure that all financial transactions adhere to predefined rules and limits, thereby mitigating fraud and minimizing financial risk. The system serves as a central authorization engine, interfacing with various internal and external systems to facilitate secure and reliable transaction processing. Ultimately, it protects the organization's assets and maintains customer trust by preventing unauthorized financial activities.
+This mainframe system is a critical component of the organization's financial authorization infrastructure, responsible for validating and processing transaction requests in real-time. Its primary mission is to ensure the secure and accurate authorization of financial transactions, preventing fraud and minimizing financial losses. The system serves as a central hub for authorizing various types of transactions, catering to both internal users and external partners. Ultimately, the system's purpose is to maintain the integrity of financial transactions and protect the organization's assets.
 
-The system's core functionality revolves around real-time transaction authorization, involving a complex series of checks and validations. It receives transaction requests from various channels, including point-of-sale systems and online banking platforms. Upon receiving a request, the system verifies account balances, transaction limits, and fraud indicators. It then applies sophisticated authorization rules, potentially involving communication with external fraud detection services. Based on these evaluations, the system either approves or denies the transaction, sending a response back to the originating channel. Key workflows include credit card authorizations, debit card transactions, and fund transfers, all processed with stringent security measures. The [COPAUA0C](cbl/COPAUA0C.cbl.md) program plays a central role in this process, acting as a hub for many authorization-related activities.
+The system provides a comprehensive suite of functionalities, including real-time authorization processing, fraud detection, and transaction logging. Key transactions include authorization requests, settlement processing, and reconciliation. The system's core workflow involves receiving transaction requests, validating account information, applying fraud detection rules, and routing the request to the appropriate authorization network. It also supports various reporting capabilities, providing insights into transaction patterns and potential fraud risks. A crucial aspect of the system is its ability to interface with external systems, such as credit card networks and banking institutions, to facilitate seamless transaction processing. The [COPAUA0C](cbl/COPAUA0C.cbl.md) program, a hub entity with numerous relationships, likely plays a central role in orchestrating these functionalities.
 
-The system is built on a robust technical foundation, leveraging proven mainframe technologies for performance and reliability. COBOL is the primary programming language, providing the necessary precision and efficiency for financial calculations. JCL (Job Control Language) is used for batch processing and system automation. CICS (Customer Information Control System) handles online transaction processing, ensuring rapid response times for user interactions. IMS (Information Management System) databases provide hierarchical data storage for account information and transaction history. The system also utilizes IBM MQ for asynchronous messaging, facilitating communication between different components.
+The system is built on a robust technical foundation, leveraging a combination of mainframe technologies, including COBOL for application logic, JCL for batch processing, CICS for online transaction processing, and IMS for database management. COBOL programs like [COPAUS1C](cbl/COPAUS1C.cbl.md) and [COPAUS0C](cbl/COPAUS0C.cbl.md) form the backbone of the application, handling complex business rules and data manipulation. JCL jobs, such as [DBPAUTP0](jcl/DBPAUTP0.jcl.md), automate batch processes like data extraction and reporting. CICS provides the online environment for real-time transaction processing, while IMS manages the system's databases, ensuring data integrity and availability. Copybooks like [CIPAUDTY](cpy/CIPAUDTY.cpy.md) and [CIPAUSMY](cpy/CIPAUSMY.cpy.md) are shared across multiple programs, promoting code reuse and data consistency.
 
-The system's boundaries are well-defined, with clear inputs, outputs, and external integrations. It receives transaction requests from various front-end systems and channels. It generates authorization responses, which are sent back to the originating systems. The system integrates with external fraud detection services, credit bureaus, and other financial institutions. The [CBPAUP0J](jcl/CBPAUP0J.jcl.md) job, along with the [DBPAUTP0](jcl/DBPAUTP0.jcl.md) job, are key entry points for batch processing, while online transactions are primarily handled through CICS. The system's data storage relies heavily on IMS databases defined in [DBPAUTP0](ims/DBPAUTP0.dbd.md) and other DBDs.
+The system's boundaries are defined by its inputs, outputs, and external integrations. Inputs include transaction requests from various channels, such as point-of-sale systems and online portals. Outputs include authorization responses, transaction logs, and reports. The system integrates with external systems, such as credit card networks, banking institutions, and fraud detection services. The [PAUDBUNL](cbl/PAUDBUNL.CBL.md) program interacts with [IMSFUNCS](cpy/IMSFUNCS.cpy.md), suggesting an integration with IMS databases. The system also likely interacts with message queues via IBM MQ, as indicated by calls to MQ functions in [COPAUA0C](cbl/COPAUA0C.cbl.md).
 
-The system delivers significant business value by ensuring the integrity and security of financial transactions. Its real-time authorization capabilities prevent fraudulent activities and minimize financial losses. The system's high availability and reliability ensure uninterrupted transaction processing, maintaining customer satisfaction. If the system were unavailable, the organization would face significant financial losses, reputational damage, and potential regulatory penalties. Therefore, the system is a mission-critical asset, essential for the organization's financial stability and operational efficiency. The shared copybooks like [CIPAUDTY](cpy/CIPAUDTY.cpy.md) and [CIPAUSMY](cpy/CIPAUSMY.cpy.md) highlight the importance of data consistency across different parts of the system.
+The system delivers significant business value by enabling secure and efficient financial transaction processing. Its real-time authorization capabilities minimize fraud risks and protect the organization's financial assets. The system's reporting capabilities provide valuable insights into transaction patterns, enabling data-driven decision-making. If the system were unavailable, the organization would face significant financial losses, reputational damage, and regulatory penalties. Therefore, the system is a mission-critical component of the organization's financial infrastructure.
+```
+
+
 ## 2. Architecture Overview
 
-The system architecture is structured around a combination of batch and online processing, with a clear separation of concerns between data access, business logic, and external integrations. The core components interact through a combination of direct program calls, shared data access, and asynchronous messaging.
+The system architecture is a multi-layered design, encompassing batch processing, online transaction processing, and data management components. The architecture leverages COBOL programs, JCL jobs, CICS transactions, and IMS databases to deliver its functionality.
 
 ```mermaid
 flowchart TD
@@ -102,350 +106,556 @@ flowchart TD
     class CBLTDLI,CDEMO_TO_PROGRAM,DFSRRC00,MQCLOSE,MQGET,MQOPEN,MQPUT1,WS_PGM_AUTH_FRAUD missing
 ```
 
-The architecture includes several key entry points: [CBPAUP0J](jcl/CBPAUP0J.jcl.md) and [DBPAUTP0](jcl/DBPAUTP0.jcl.md) for batch processing, and CICS transactions for online authorizations. The [PAUDBUNL](cbl/PAUDBUNL.CBL.md) program also serves as an entry point for certain functionalities.
+The system has several entry points, including [CBPAUP0J](jcl/CBPAUP0J.jcl.md), [DBPAUTP0](jcl/DBPAUTP0.jcl.md), [LOADPADB](jcl/LOADPADB.JCL.md), and [PAUDBUNL](cbl/PAUDBUNL.CBL.md). These programs initiate different workflows within the system. [CBPAUP0J](jcl/CBPAUP0J.jcl.md) and [DBPAUTP0](jcl/DBPAUTP0.jcl.md) appear to be batch jobs, while [PAUDBUNL](cbl/PAUDBUNL.CBL.md) likely initiates an IMS transaction.
 
-The online transaction processing layer is primarily managed by CICS. Programs like [COPAUA0C](cbl/COPAUA0C.cbl.md), [COPAUS0C](cbl/COPAUS0C.cbl.md), and [COPAUS1C](cbl/COPAUS1C.cbl.md) handle incoming transaction requests, perform authorization checks, and generate responses. These programs often interact with IMS databases to retrieve account information and update transaction history. The [COPAUA0C](cbl/COPAUA0C.cbl.md) program, a central hub, uses IBM MQ for messaging with external systems.
+**Batch Layer:** The batch layer is responsible for data extraction, transformation, and loading (ETL) processes, as well as report generation. JCL jobs schedule and execute COBOL programs to perform these tasks. For example, [DBPAUTP0](jcl/DBPAUTP0.jcl.md) likely performs database updates.
 
-The batch processing layer is responsible for tasks such as data extraction, reporting, and system maintenance. JCL jobs like [CBPAUP0J](jcl/CBPAUP0J.jcl.md) and [DBPAUTP0](jcl/DBPAUTP0.jcl.md) execute COBOL programs that perform these tasks. For example, [DBPAUTP0](jcl/DBPAUTP0.jcl.md) interacts with IMS databases using [DFSRRC00](DFSRRC00) to perform database updates.
+**Online Layer:** The online layer handles real-time transaction processing via CICS. COBOL programs within the CICS environment process transaction requests, validate data, and interact with external systems. [COPAUA0C](cbl/COPAUA0C.cbl.md) appears to be a central component in this layer, handling MQ messaging for transaction processing.
 
-Data access is primarily handled through IMS databases. Programs use DL/I calls (via [CBLTDLI](CBLTDLI)) to access and manipulate data within these databases. The copybooks [IMSFUNCS](cpy/IMSFUNCS.cpy.md) and [PAUTBPCB](cpy/PAUTBPCB.cpy.md) define the data structures used for IMS communication.
+**Data Access:** The system relies heavily on IMS databases for data storage and retrieval. COBOL programs use DL/I calls to access and manipulate data within the IMS databases. The [PAUDBUNL](cbl/PAUDBUNL.CBL.md) program, for instance, likely interacts with IMS databases through [IMSFUNCS](cpy/IMSFUNCS.cpy.md).
 
-The system integrates with external systems for fraud detection and other services. This integration is facilitated through IBM MQ, allowing for asynchronous communication and decoupling of components. Programs like [COPAUA0C](cbl/COPAUA0C.cbl.md) use MQ to send and receive messages from external systems.
+**Integration Points:** The system integrates with various external systems, including credit card networks, banking institutions, and fraud detection services. These integrations are facilitated through MQ messaging and potentially through direct calls to external APIs. [COPAUA0C](cbl/COPAUA0C.cbl.md) interacts with MQ functions, suggesting it plays a key role in these integrations. [COPAUS1C](cbl/COPAUS1C.cbl.md) calls [WS_PGM_AUTH_FRAUD](WS_PGM_AUTH_FRAUD), indicating a possible integration point with a fraud detection system.
 
-The shared copybooks, such as [CIPAUDTY](cpy/CIPAUDTY.cpy.md) and [CIPAUSMY](cpy/CIPAUSMY.cpy.md), are included in multiple programs, indicating a common data structure and logic used across the system. This promotes code reuse and ensures consistency in data handling.
+**Component Interactions:** The system's components interact through call chains, data flow, and messaging. COBOL programs call each other to perform specific tasks, passing data through shared memory or data structures defined in copybooks. JCL jobs schedule and execute COBOL programs, orchestrating batch processes. CICS transactions invoke COBOL programs to process online requests. MQ messaging enables asynchronous communication between components and external systems. For example, [COPAUA0C](cbl/COPAUA0C.cbl.md) uses MQ to send and receive messages, while [COPAUS0C](cbl/COPAUS0C.cbl.md) calls [CDEMO_TO_PROGRAM](CDEMO_TO_PROGRAM), suggesting a call to another program.
+
 
 ## 3. Component Catalog
 
-This section provides a comprehensive catalog of all documented components within the system, categorized by type. Each entry includes a brief description of the component's purpose and a link to its detailed documentation.
+This section provides a catalog of the system's components, organized by type. Each entry includes a brief description of the component's purpose and a link to its detailed documentation.
+
+**COBOL Programs**
 
 | Component | Type | Purpose | Doc Link |
 |---|---|---|---|
-| **COBOL Programs** | | | |
-| [PAUDBUNL](cbl/PAUDBUNL.CBL.md) | COBOL Program | ❓ QUESTION: What is the purpose of PAUDBUNL? | [PAUDBUNL](cbl/PAUDBUNL.CBL.md) |
-| [COPAUS1C](cbl/COPAUS1C.cbl.md) | COBOL Program | ❓ QUESTION: What is the purpose of COPAUS1C? | [COPAUS1C](cbl/COPAUS1C.cbl.md) |
-| [COPAUA0C](cbl/COPAUA0C.cbl.md) | COBOL Program | ❓ QUESTION: What is the purpose of COPAUA0C? | [COPAUA0C](cbl/COPAUA0C.cbl.md) |
-| [PAUDBLOD](cbl/PAUDBLOD.CBL.md) | COBOL Program | ❓ QUESTION: What is the purpose of PAUDBLOD? | [PAUDBLOD](cbl/PAUDBLOD.CBL.md) |
-| [DBUNLDGS](cbl/DBUNLDGS.CBL.md) | COBOL Program | ❓ QUESTION: What is the purpose of DBUNLDGS? | [DBUNLDGS](cbl/DBUNLDGS.CBL.md) |
-| [CBPAUP0C](cbl/CBPAUP0C.cbl.md) | COBOL Program | ❓ QUESTION: What is the purpose of CBPAUP0C? | [CBPAUP0C](cbl/CBPAUP0C.cbl.md) |
-| [COPAUS0C](cbl/COPAUS0C.cbl.md) | COBOL Program | ❓ QUESTION: What is the purpose of COPAUS0C? | [COPAUS0C](cbl/COPAUS0C.cbl.md) |
-| [COPAUS2C](cbl/COPAUS2C.cbl.md) | COBOL Program | ❓ QUESTION: What is the purpose of COPAUS2C? | [COPAUS2C](cbl/COPAUS2C.cbl.md) |
-| **JCL Jobs** | | | |
-| [UNLDPADB](jcl/UNLDPADB.JCL.md) | JCL Job | ❓ QUESTION: What is the purpose of UNLDPADB? | [UNLDPADB](jcl/UNLDPADB.JCL.md) |
-| [LOADPADB](jcl/LOADPADB.JCL.md) | JCL Job | ❓ QUESTION: What is the purpose of LOADPADB? | [LOADPADB](jcl/LOADPADB.JCL.md) |
-| [UNLDGSAM](jcl/UNLDGSAM.JCL.md) | JCL Job | ❓ QUESTION: What is the purpose of UNLDGSAM? | [UNLDGSAM](jcl/UNLDGSAM.JCL.md) |
-| [DBPAUTP0](jcl/DBPAUTP0.jcl.md) | JCL Job | ❓ QUESTION: What is the purpose of DBPAUTP0? | [DBPAUTP0](jcl/DBPAUTP0.jcl.md) |
-| [CBPAUP0J](jcl/CBPAUP0J.jcl.md) | JCL Job | ❓ QUESTION: What is the purpose of CBPAUP0J? | [CBPAUP0J](jcl/CBPAUP0J.jcl.md) |
-| **Copybooks** | | | |
-| [PADFLPCB](cpy/PADFLPCB.CPY.md) | Copybook | ❓ QUESTION: What is the purpose of PADFLPCB? | [PADFLPCB](cpy/PADFLPCB.CPY.md) |
-| [CIPAUSMY](cpy/CIPAUSMY.cpy.md) | Copybook | Defines data structures related to user management. | [CIPAUSMY](cpy/CIPAUSMY.cpy.md) |
-| [CCPAURQY](cpy/CCPAURQY.cpy.md) | Copybook | ❓ QUESTION: What is the purpose of CCPAURQY? | [CCPAURQY](cpy/CCPAURQY.cpy.md) |
-| [CIPAUDTY](cpy/CIPAUDTY.cpy.md) | Copybook | Defines data structures related to audit trails. | [CIPAUDTY](cpy/CIPAUDTY.cpy.md) |
-| [PAUTBPCB](cpy/PAUTBPCB.CPY.md) | Copybook | ❓ QUESTION: What is the purpose of PAUTBPCB? | [PAUTBPCB](cpy/PAUTBPCB.CPY.md) |
-| [PASFLPCB](cpy/PASFLPCB.CPY.md) | Copybook | ❓ QUESTION: What is the purpose of PASFLPCB? | [PASFLPCB](cpy/PASFLPCB.CPY.md) |
-| [IMSFUNCS](cpy/IMSFUNCS.cpy.md) | Copybook | ❓ QUESTION: What is the purpose of IMSFUNCS? | [IMSFUNCS](cpy/IMSFUNCS.cpy.md) |
-| [CCPAUERY](cpy/CCPAUERY.cpy.md) | Copybook | ❓ QUESTION: What is the purpose of CCPAUERY? | [CCPAUERY](cpy/CCPAUERY.cpy.md) |
-| [CCPAURLY](cpy/CCPAURLY.cpy.md) | Copybook | ❓ QUESTION: What is the purpose of CCPAURLY? | [CCPAURLY](cpy/CCPAURLY.cpy.md) |
-| **IMS Definitions** | | | |
-| [DBPAUTP0](ims/DBPAUTP0.dbd.md) | IMS DBD | ❓ QUESTION: What is the purpose of DBPAUTP0? | [DBPAUTP0](ims/DBPAUTP0.dbd.md) |
-| [DBPAUTX0](ims/DBPAUTX0.dbd.md) | IMS DBD | ❓ QUESTION: What is the purpose of DBPAUTX0? | [DBPAUTX0](ims/DBPAUTX0.dbd.md) |
-| [PADFLDBD](ims/PADFLDBD.DBD.md) | IMS DBD | ❓ QUESTION: What is the purpose of PADFLDBD? | [PADFLDBD](ims/PADFLDBD.DBD.md) |
-| [PSBPAUTL](ims/PSBPAUTL.psb.md) | IMS PSB | ❓ QUESTION: What is the purpose of PSBPAUTL? | [PSBPAUTL](ims/PSBPAUTL.psb.md) |
-| [PSBPAUTB](ims/PSBPAUTB.psb.md) | IMS PSB | ❓ QUESTION: What is the purpose of PSBPAUTB? | [PSBPAUTB](ims/PSBPAUTB.psb.md) |
-| [PASFLDBD](ims/PASFLDBD.DBD.md) | IMS DBD | ❓ QUESTION: What is the purpose of PASFLDBD? | [PASFLDBD](ims/PASFLDBD.DBD.md) |
-| [PAUTBUNL](ims/PAUTBUNL.PSB.md) | IMS PSB | ❓ QUESTION: What is the purpose of PAUTBUNL? | [PAUTBUNL](ims/PAUTBUNL.PSB.md) |
-| [DLIGSAMP](ims/DLIGSAMP.PSB.md) | IMS PSB | ❓ QUESTION: What is the purpose of DLIGSAMP? | [DLIGSAMP](ims/DLIGSAMP.PSB.md) |
-| **BMS Maps** | | | |
-| [COPAU00](bms/COPAU00.bms.md) | BMS Map | ❓ QUESTION: What is the purpose of COPAU00? | [COPAU00](bms/COPAU00.bms.md) |
-| [COPAU01](bms/COPAU01.bms.md) | BMS Map | ❓ QUESTION: What is the purpose of COPAU01? | [COPAU01](bms/COPAU01.bms.md) |
-| [COPAU00](cpy-bms/COPAU00.cpy.md) | BMS Copybook | ❓ QUESTION: What is the purpose of COPAU00? | [COPAU00](cpy-bms/COPAU00.cpy.md) |
-| [COPAU01](cpy-bms/COPAU01.cpy.md) | BMS Copybook | ❓ QUESTION: What is the purpose of COPAU01? | [COPAU01](cpy-bms/COPAU01.cpy.md) |
-| **DDL Definitions** | | | |
-| [XAUTHFRD](ddl/XAUTHFRD.ddl.md) | DDL Definition | ❓ QUESTION: What is the purpose of XAUTHFRD? | [XAUTHFRD](ddl/XAUTHFRD.ddl.md) |
-| [AUTHFRDS](ddl/AUTHFRDS.ddl.md) | DDL Definition | ❓ QUESTION: What is the purpose of AUTHFRDS? | [AUTHFRDS](ddl/AUTHFRDS.ddl.md) |
+| PAUDBUNL | COBOL Program | ❓ QUESTION: Purpose of PAUDBUNL | [PAUDBUNL](cbl/PAUDBUNL.CBL.md) |
+| COPAUS1C | COBOL Program | ❓ QUESTION: Purpose of COPAUS1C | [COPAUS1C](cbl/COPAUS1C.cbl.md) |
+| COPAUA0C | COBOL Program | ❓ QUESTION: Purpose of COPAUA0C | [COPAUA0C](cbl/COPAUA0C.cbl.md) |
+| PAUDBLOD | COBOL Program | ❓ QUESTION: Purpose of PAUDBLOD | [PAUDBLOD](cbl/PAUDBLOD.CBL.md) |
+| DBUNLDGS | COBOL Program | ❓ QUESTION: Purpose of DBUNLDGS | [DBUNLDGS](cbl/DBUNLDGS.CBL.md) |
+| CBPAUP0C | COBOL Program | ❓ QUESTION: Purpose of CBPAUP0C | [CBPAUP0C](cbl/CBPAUP0C.cbl.md) |
+| COPAUS0C | COBOL Program | ❓ QUESTION: Purpose of COPAUS0C | [COPAUS0C](cbl/COPAUS0C.cbl.md) |
+| COPAUS2C | COBOL Program | ❓ QUESTION: Purpose of COPAUS2C | [COPAUS2C](cbl/COPAUS2C.cbl.md) |
+
+**JCL Jobs**
+
+| Component | Type | Purpose | Doc Link |
+|---|---|---|---|
+| UNLDPADB | JCL Job | ❓ QUESTION: Purpose of UNLDPADB | [UNLDPADB](jcl/UNLDPADB.JCL.md) |
+| LOADPADB | JCL Job | ❓ QUESTION: Purpose of LOADPADB | [LOADPADB](jcl/LOADPADB.JCL.md) |
+| UNLDGSAM | JCL Job | ❓ QUESTION: Purpose of UNLDGSAM | [UNLDGSAM](jcl/UNLDGSAM.JCL.md) |
+| DBPAUTP0 | JCL Job | ❓ QUESTION: Purpose of DBPAUTP0 | [DBPAUTP0](jcl/DBPAUTP0.jcl.md) |
+| CBPAUP0J | JCL Job | ❓ QUESTION: Purpose of CBPAUP0J | [CBPAUP0J](jcl/CBPAUP0J.jcl.md) |
+
+**Copybooks**
+
+| Component | Type | Purpose | Doc Link |
+|---|---|---|---|
+| PADFLPCB | Copybook | ❓ QUESTION: Purpose of PADFLPCB | [PADFLPCB](cpy/PADFLPCB.CPY.md) |
+| CIPAUSMY | Copybook | ❓ QUESTION: Purpose of CIPAUSMY | [CIPAUSMY](cpy/CIPAUSMY.cpy.md) |
+| CCPAURQY | Copybook | ❓ QUESTION: Purpose of CCPAURQY | [CCPAURQY](cpy/CCPAURQY.cpy.md) |
+| CIPAUDTY | Copybook | ❓ QUESTION: Purpose of CIPAUDTY | [CIPAUDTY](cpy/CIPAUDTY.cpy.md) |
+| PAUTBPCB | Copybook | ❓ QUESTION: Purpose of PAUTBPCB | [PAUTBPCB](cpy/PAUTBPCB.CPY.md) |
+| PASFLPCB | Copybook | ❓ QUESTION: Purpose of PASFLPCB | [PASFLPCB](cpy/PASFLPCB.CPY.md) |
+| IMSFUNCS | Copybook | ❓ QUESTION: Purpose of IMSFUNCS | [IMSFUNCS](cpy/IMSFUNCS.cpy.md) |
+| CCPAUERY | Copybook | ❓ QUESTION: Purpose of CCPAUERY | [CCPAUERY](cpy/CCPAUERY.cpy.md) |
+| CCPAURLY | Copybook | ❓ QUESTION: Purpose of CCPAURLY | [CCPAURLY](cpy/CCPAURLY.cpy.md) |
+
+**BMS Maps**
+
+| Component | Type | Purpose | Doc Link |
+|---|---|---|---|
+| COPAU00 | BMS Map | ❓ QUESTION: Purpose of COPAU00 | [COPAU00](bms/COPAU00.bms.md) |
+| COPAU01 | BMS Map | ❓ QUESTION: Purpose of COPAU01 | [COPAU01](bms/COPAU01.bms.md) |
+
+**IMS Database Definitions (DBD)**
+
+| Component | Type | Purpose | Doc Link |
+|---|---|---|---|
+| DBPAUTP0 | IMS DBD | ❓ QUESTION: Purpose of DBPAUTP0 | [DBPAUTP0](ims/DBPAUTP0.dbd.md) |
+| DBPAUTX0 | IMS DBD | ❓ QUESTION: Purpose of DBPAUTX0 | [DBPAUTX0](ims/DBPAUTX0.dbd.md) |
+| PADFLDBD | IMS DBD | ❓ QUESTION: Purpose of PADFLDBD | [PADFLDBD](ims/PADFLDBD.DBD.md) |
+| PASFLDBD | IMS DBD | ❓ QUESTION: Purpose of PASFLDBD | [PASFLDBD](ims/PASFLDBD.DBD.md) |
+
+**IMS Program Specification Blocks (PSB)**
+
+| Component | Type | Purpose | Doc Link |
+|---|---|---|---|
+| PSBPAUTL | IMS PSB | ❓ QUESTION: Purpose of PSBPAUTL | [PSBPAUTL](ims/PSBPAUTL.psb.md) |
+| PSBPAUTB | IMS PSB | ❓ QUESTION: Purpose of PSBPAUTB | [PSBPAUTB](ims/PSBPAUTB.psb.md) |
+| PAUTBUNL | IMS PSB | ❓ QUESTION: Purpose of PAUTBUNL | [PAUTBUNL](ims/PAUTBUNL.PSB.md) |
+| DLIGSAMP | IMS PSB | ❓ QUESTION: Purpose of DLIGSAMP | [DLIGSAMP](ims/DLIGSAMP.PSB.md) |
+
+**Copybooks (BMS)**
+
+| Component | Type | Purpose | Doc Link |
+|---|---|---|---|
+| COPAU00 | BMS Copybook | ❓ QUESTION: Purpose of COPAU00 | [COPAU00](cpy-bms/COPAU00.cpy.md) |
+| COPAU01 | BMS Copybook | ❓ QUESTION: Purpose of COPAU01 | [COPAU01](cpy-bms/COPAU01.cpy.md) |
+
+**DDL**
+
+| Component | Type | Purpose | Doc Link |
+|---|---|---|---|
+| XAUTHFRD | DDL | ❓ QUESTION: Purpose of XAUTHFRD | [XAUTHFRD](ddl/XAUTHFRD.ddl.md) |
+| AUTHFRDS | DDL | ❓ QUESTION: Purpose of AUTHFRDS | [AUTHFRDS](ddl/AUTHFRDS.ddl.md) |
+```
+
+
 ## 4. Subsystem Breakdown
 
-This section details the major subsystems within the authorization system, outlining their responsibilities, components, and interactions.
+This section describes the logical subsystems within the system, grouping programs based on shared functionality and data access.
 
-### 4.1. Online Authorization Subsystem
+**1. Online Transaction Processing Subsystem**
 
-This subsystem handles real-time authorization requests via CICS. It's responsible for validating transactions, applying fraud rules, and communicating with external systems.
+*   **Programs:** [COPAUA0C](cbl/COPAUA0C.cbl.md), [COPAUS0C](cbl/COPAUS0C.cbl.md), [COPAUS1C](cbl/COPAUS1C.cbl.md), [COPAUS2C](cbl/COPAUS2C.cbl.md)
+*   **Description:** This subsystem is responsible for handling real-time transaction authorization requests. It receives transaction data, validates account information, applies fraud detection rules, and routes the request to the appropriate authorization network. It utilizes CICS for online transaction processing.
+*   **Interactions:** This subsystem interacts with the Batch Processing Subsystem for data updates and reporting. It also integrates with external systems such as credit card networks and fraud detection services via MQ messaging, as suggested by the MQ calls in [COPAUA0C](cbl/COPAUA0C.cbl.md). The shared copybooks [CVACT01Y](CVACT01Y), [CVACT03Y](CVACT03Y), and [CVCUS01Y](CVCUS01Y) suggest that [COPAUA0C](cbl/COPAUA0C.cbl.md) and [COPAUS0C](cbl/COPAUS0C.cbl.md) share data structures related to customer and account information.
 
-*   **Key Programs:**
-    *   [COPAUA0C](cbl/COPAUA0C.cbl.md): This program appears to be a central component, interacting with MQ for messaging and likely handling core authorization logic.
-    *   [COPAUS0C](cbl/COPAUS0C.cbl.md): This program likely handles user session management and screen interactions within the CICS environment.
-    *   [COPAUS1C](cbl/COPAUS1C.cbl.md): This program interacts with [WS_PGM_AUTH_FRAUD](WS_PGM_AUTH_FRAUD), suggesting it's involved in fraud detection.
+**2. Batch Processing Subsystem**
 
-*   **Shared Copybooks:**
-    *   [CVACT01Y](CVACT01Y.cpy.md), [CVACT03Y](CVACT03Y.cpy.md), [CVCUS01Y](CVCUS01Y.cpy.md): These copybooks are shared between [COPAUA0C](cbl/COPAUA0C.cbl.md) and [COPAUS0C](cbl/COPAUS0C.cbl.md), suggesting they define common data structures for customer and account information used in online transactions.
-    *   [COCOM01Y](COCOM01Y.cpy.md), [COTTL01Y](COTTL01Y.cpy.md), [CSDAT01Y](CSDAT01Y.cpy.md), [CSMSG01Y](CSMSG01Y.cpy.md), [CSMSG02Y](CSMSG02Y.cpy.md), [DFHAID](DFHAID.cpy.md), [DFHBMSCA](DFHBMSCA.cpy.md): These copybooks are shared between [COPAUS1C](cbl/COPAUS1C.cbl.md) and [COPAUS0C](cbl/COPAUS0C.cbl.md), suggesting they define common screen layouts and communication areas for CICS transactions.
+*   **Programs:** [CBPAUP0C](cbl/CBPAUP0C.cbl.md), [DBUNLDGS](cbl/DBUNLDGS.cbl.md), [PAUDBLOD](cbl/PAUDBLOD.CBL.md)
+*   **Description:** This subsystem performs batch-oriented tasks such as data extraction, transformation, loading, and report generation. It is scheduled and executed using JCL jobs.
+*   **Interactions:** This subsystem interacts with the Online Transaction Processing Subsystem by providing updated account information and processing settlement data. [DBUNLDGS](cbl/DBUNLDGS.cbl.md) calls [CBPAUP0C](cbl/CBPAUP0C.cbl.md), suggesting a data loading or update process.
 
-*   **Interactions:**
-    *   The Online Authorization Subsystem interacts with the Batch Processing Subsystem (see below) to update account information and fraud rules.
-    *   It uses IBM MQ for communication with external systems, potentially for authorization or fraud checking.
+**3. IMS Data Management Subsystem**
 
-### 4.2. Batch Processing Subsystem
+*   **Programs:** [PAUDBUNL](cbl/PAUDBUNL.CBL.md)
+*   **Description:** This subsystem manages the system's data stored in IMS databases. It provides data access services to other subsystems.
+*   **Interactions:** This subsystem interacts with both the Online Transaction Processing and Batch Processing subsystems by providing access to account and transaction data. [PAUDBUNL](cbl/PAUDBUNL.CBL.md) uses [IMSFUNCS](cpy/IMSFUNCS.cpy.md), indicating its role in accessing IMS databases.
 
-This subsystem performs scheduled batch jobs for tasks such as database updates, report generation, and data unloading.
+**4. Data Unload/Load Subsystem**
 
-*   **Key Programs:**
-    *   [CBPAUP0J](jcl/CBPAUP0J.jcl.md): This JCL job likely executes COBOL programs to update the PAUTH database.
-    *   [DBPAUTP0](jcl/DBPAUTP0.jcl.md): This JCL job likely performs database maintenance or reporting tasks on the PAUTH database.
-    *   [PAUDBUNL](cbl/PAUDBUNL.CBL.md): This program unloads data from IMS databases.
-    *   [DBUNLDGS](cbl/DBUNLDGS.CBL.md): This program unloads data, potentially for archiving or reporting.
-    *   [UNLDPADB](jcl/UNLDPADB.JCL.md): This JCL job unloads the PADB database.
-    *   [LOADPADB](jcl/LOADPADB.JCL.md): This JCL job loads the PADB database.
-    *   [UNLDGSAM](jcl/UNLDGSAM.JCL.md): This JCL job unloads the GSAM database.
+*   **Programs:** [UNLDPADB](jcl/UNLDPADB.JCL.md), [LOADPADB](jcl/LOADPADB.JCL.md)
+*   **Description:** This subsystem is responsible for unloading and loading data, likely for backup, recovery, or migration purposes.
+*   **Interactions:** This subsystem likely interacts with the IMS Data Management Subsystem to extract data and load data into the IMS databases.
 
-*   **JCL Context:**
-    *   [CBPAUP0J](jcl/CBPAUP0J.jcl.md) executes [DFSRRC00](DFSRRC00), which indicates it's an IMS batch job.
-    *   [DBPAUTP0](jcl/DBPAUTP0.jcl.md) also executes [DFSRRC00](DFSRRC00), suggesting it's another IMS batch job.
+**5. Reporting Subsystem**
 
-*   **Shared Copybooks:**
-    *   [CIPAUDTY](cpy/CIPAUDTY.cpy.md): This copybook is shared across multiple programs ([PAUDBUNL](cbl/PAUDBUNL.CBL.md), [COPAUS1C](cbl/COPAUS1C.cbl.md), [COPAUA0C](cbl/COPAUA0C.cbl.md), [PAUDBLOD](cbl/PAUDBLOD.CBL.md), [DBUNLDGS](cbl/DBUNLDGS.CBL.md), [CBPAUP0C](cbl/CBPAUP0C.cbl.md), [COPAUS0C](cbl/COPAUS0C.cbl.md), [COPAUS2C](cbl/COPAUS2C.cbl.md)), suggesting it defines a common audit trail record structure.
-    *   [CIPAUSMY](cpy/CIPAUSMY.cpy.md): This copybook is also widely shared ([PAUDBUNL](cbl/PAUDBUNL.CBL.md), [COPAUS1C](cbl/COPAUS1C.cbl.md), [COPAUA0C](cbl/COPAUA0C.cbl.md), [PAUDBLOD](cbl/PAUDBLOD.CBL.md), [DBUNLDGS](cbl/DBUNLDGS.CBL.md), [CBPAUP0C](cbl/CBPAUP0C.cbl.md), [COPAUS0C](cbl/COPAUS0C.cbl.md)), likely defining user-related data structures.
-    *   [IMSFUNCS](cpy/IMSFUNCS.cpy.md): This copybook is included by [PAUDBUNL](cbl/PAUDBUNL.CBL.md), [PAUDBLOD](cbl/PAUDBLOD.CBL.md), and [DBUNLDGS](cbl/DBUNLDGS.CBL.md), indicating these programs interact with IMS databases.
-    *   [PAUTBPCB](cpy/PAUTBPCB.CPY.md): This copybook is included by [PAUDBUNL](cbl/PAUDBUNL.CBL.md), [PAUDBLOD](cbl/PAUDBLOD.CBL.md), and [DBUNLDGS](cbl/DBUNLDGS.CBL.md). ❓ QUESTION: What data does this copybook define?
+*   **Programs:** TBD (Further investigation needed)
+*   **Description:** This subsystem generates reports on transaction activity, fraud detection, and system performance.
+*   **Interactions:** This subsystem interacts with the Online Transaction Processing and Batch Processing subsystems to gather data for reporting.
 
-*   **Interactions:**
-    *   The Batch Processing Subsystem updates the IMS databases used by the Online Authorization Subsystem.
-    *   It may also generate reports for fraud analysis or system monitoring.
+The copybooks [CIPAUDTY](cpy/CIPAUDTY.cpy.md) and [CIPAUSMY](cpy/CIPAUSMY.cpy.md) are included by [PAUDBUNL](cbl/PAUDBUNL.CBL.md), [COPAUS1C](cbl/COPAUS1C.cbl.md), [COPAUA0C](cbl/COPAUA0C.cbl.md), [PAUDBLOD](cbl/PAUDBLOD.CBL.md), [DBUNLDGS](cbl/DBUNLDGS.cbl.md), [CBPAUP0C](cbl/CBPAUP0C.cbl.md), [COPAUS0C](cbl/COPAUS0C.cbl.md), and [COPAUS2C](cbl/COPAUS2C.cbl.md), indicating that these programs share common data structures related to transaction processing and authorization.
 
-### 4.3. IMS Database Management Subsystem
 
-This subsystem encompasses the IMS database definitions and related utilities.
 
-*   **Key Components:**
-    *   [DBPAUTP0](ims/DBPAUTP0.dbd.md), [DBPAUTX0](ims/DBPAUTX0.dbd.md), [PADFLDBD](ims/PADFLDBD.DBD.md), [PASFLDBD](ims/PASFLDBD.DBD.md): These are DBDs (Database Description) that define the structure of the IMS databases.
-    *   [PSBPAUTL](ims/PSBPAUTL.psb.md), [PSBPAUTB](ims/PSBPAUTB.psb.md), [PAUTBUNL](ims/PAUTBUNL.PSB.md), [DLIGSAMP](ims/DLIGSAMP.PSB.md): These are PSBs (Program Specification Block) that define the program's view of the IMS databases.
-
-*   **Interactions:**
-    *   The IMS Database Management Subsystem defines the data structures used by both the Online Authorization and Batch Processing subsystems.
-
-### 4.4. Data Definitions Subsystem
-
-This subsystem defines the data structures used throughout the system, including database definitions and file layouts.
-
-*   **Key Components:**
-    *   [XAUTHFRD](ddl/XAUTHFRD.ddl.md): ❓ QUESTION: What does this DDL define?
-    *   [AUTHFRDS](ddl/AUTHFRDS.ddl.md): ❓ QUESTION: What does this DDL define?
-
-*   **Interactions:**
-    *   This subsystem provides the data definitions used by the other subsystems.
 ## 5. Data Architecture
 
-This section describes the data architecture of the authorization system, including key datasets, data flow patterns, and shared data structures.
+This section describes the data architecture of the system, including key datasets, data flows, and data access patterns. The system relies on a combination of IMS databases and sequential files for data storage.
 
-### 5.1. Key Datasets
+**Key Datasets and Data Flows**
 
-The system relies on a combination of IMS databases and sequential files for storing and processing data.
+Due to the limitations of the available tools, I am unable to determine the exact names and purposes of the key datasets. However, I can infer some information based on the programs that interact with IMS and the shared copybooks.
 
-*   **IMS Databases:**
-    *   `OEM.IMS.IMSP.PAUTHDB`: This appears to be a central database for authorization data. It is read by 6 programs. ❓ QUESTION: What is the structure of this database?
-    *   `OEM.IMS.IMSP.PAUTHDBX`: This database is read by 6 programs. ❓ QUESTION: What is the structure of this database and how does it relate to PAUTHDB?
+1.  **IMS Databases:** The system utilizes IMS databases for storing critical transaction and account information. The programs [PAUDBUNL](cbl/PAUDBUNL.CBL.md), [PAUDBLOD](cbl/PAUDBLOD.CBL.md), and [DBUNLDGS](cbl/DBUNLDGS.cbl.md) interact with IMS databases through the [IMSFUNCS](cpy/IMSFUNCS.cpy.md) copybook. The IMS DBDs [DBPAUTP0](ims/DBPAUTP0.dbd.md), [DBPAUTX0](ims/DBPAUTX0.dbd.md), [PADFLDBD](ims/PADFLDBD.DBD.md), and [PASFLDBD](ims/PASFLDBD.DBD.md) define the structure of these databases. The PSBs [PSBPAUTL](ims/PSBPAUTL.psb.md), [PSBPAUTB](ims/PSBPAUTB.psb.md), [PAUTBUNL](ims/PAUTBUNL.PSB.md), and [DLIGSAMP](ims/DLIGSAMP.PSB.md) define the program's view of the IMS databases.
 
-*   **Sequential Files:**
-    *   `OEMPP.IMS.V15R01MB.PROCLIB(DFSVSMDB)`: This PROCLIB member is read by 8 programs. ❓ QUESTION: What is the purpose of this file?
+2.  **Sequential Files:** The system also uses sequential files for various purposes, such as transaction logging, report generation, and data exchange with external systems. The JCL jobs [UNLDPADB](jcl/UNLDPADB.JCL.md) and [LOADPADB](jcl/LOADPADB.JCL.md) likely interact with sequential files for data unloading and loading.
 
-### 5.2. Data Flow Patterns
+**Data Flow Patterns**
 
-The system exhibits both sequential and random data access patterns. IMS databases provide random access capabilities, while sequential files are used for batch processing and data transfer.
+1.  **Online Transaction Processing:** Transaction requests are received by the Online Transaction Processing Subsystem, which validates the data and updates the IMS databases.
+2.  **Batch Processing:** The Batch Processing Subsystem extracts data from the IMS databases and sequential files, performs transformations, and generates reports.
+3.  **Data Unload/Load:** The Data Unload/Load Subsystem unloads data from the IMS databases to sequential files for backup and recovery purposes, and loads data from sequential files to the IMS databases.
 
-*   **IMS Data Flow:**
-    *   The [PAUDBUNL](cbl/PAUDBUNL.CBL.md) program unloads data from IMS databases. This data may then be used for reporting or archiving.
-    *   The [CBPAUP0J](jcl/CBPAUP0J.jcl.md) and [DBPAUTP0](jcl/DBPAUTP0.jcl.md) jobs likely update the IMS databases.
+**Shared Data Structures**
 
-*   **Sequential Data Flow:**
-    *   Batch jobs read sequential files containing transaction data or updates.
-    *   Reports are generated as sequential files.
+The copybooks [CIPAUDTY](cpy/CIPAUDTY.cpy.md) and [CIPAUSMY](cpy/CIPAUSMY.cpy.md) are shared by multiple programs, indicating that these programs share common data structures related to transaction processing and authorization. These copybooks likely define the format of transaction records and account information.
 
-### 5.3. Shared Data Structures
+**Data Flow Table (Example - Incomplete due to tool limitations)**
 
-Copybooks are used extensively to define shared data structures across programs. This ensures consistency and reduces redundancy.
+| Producer | Consumer | Dataset | Description |
+|---|---|---|---|
+| Online Transaction Processing Subsystem | IMS Databases | Transaction Data | Updates transaction records in IMS |
+| Batch Processing Subsystem | Sequential Files | Report Data | Writes report data to sequential files |
+| [PAUDBUNL](cbl/PAUDBUNL.CBL.md) | IMS Databases | Account Data | Reads and updates account information |
 
-*   **Key Copybooks:**
-    *   [CIPAUDTY](cpy/CIPAUDTY.cpy.md): Defines the structure of audit trail records.
-    *   [CIPAUSMY](cpy/CIPAUSMY.cpy.md): Defines the structure of user-related data.
-    *   [COCOM01Y](COCOM01Y.cpy.md), [COTTL01Y](COTTL01Y.cpy.md), [CSDAT01Y](CSDAT01Y.cpy.md), [CSMSG01Y](CSMSG01Y.cpy.md), [CSMSG02Y](CSMSG02Y.cpy.md): Define common screen layouts and communication areas for CICS transactions.
-    *   [CVACT01Y](CVACT01Y.cpy.md), [CVACT03Y](CVACT03Y.cpy.md), [CVCUS01Y](CVCUS01Y.cpy.md): Define common data structures for customer and account information.
+**Further Investigation Needed**
 
-### 5.4. Data Flow Table
+Due to the limitations of the available tools, further investigation is needed to fully understand the system's data architecture. Specifically, it is necessary to identify the names and purposes of the key datasets, the programs that read and write each dataset, and the data flow patterns.
 
-The following table illustrates the producer-consumer relationships between programs and datasets:
 
-| Producer Program(s) | Dataset | Consumer Program(s) |
-|---|---|---|
-| [PAUDBUNL](cbl/PAUDBUNL.CBL.md) | IMS Database (e.g., PAUTHDB) | Reporting/Archiving processes |
-| [CBPAUP0J](jcl/CBPAUP0J.jcl.md), [DBPAUTP0](jcl/DBPAUTP0.jcl.md) | IMS Database (e.g., PAUTHDB) | [COPAUA0C](cbl/COPAUA0C.cbl.md), [COPAUS0C](cbl/COPAUS0C.cbl.md) |
-| ❓ QUESTION: Which program creates this file? | `OEMPP.IMS.V15R01MB.PROCLIB(DFSVSMDB)` | 8 programs |
 
 ## 6. Integration Points
 
-This section describes the integration points of the authorization system, including external interfaces, batch job scheduling, and CICS transaction entry points.
+This section documents the external interfaces and integration points of the system, outlining how it interacts with other systems and components.
 
-### 6.1. External System Interfaces
+**1. MQ Messaging Interface**
 
-The system integrates with external systems through IBM MQ messaging and potentially through file transfers.
+*   **Description:** The system utilizes IBM MQ for asynchronous communication with external systems. This allows for loosely coupled integration and reliable message delivery.
+*   **Programs:** [COPAUA0C](cbl/COPAUA0C.cbl.md) interacts with MQ functions (MQOPEN, MQGET, MQPUT1, MQCLOSE), indicating its role in sending and receiving messages.
+*   **Details:** The specific MQ queues used and the message formats exchanged are not currently known and require further investigation. ❓ QUESTION: What are the specific MQ queues used by COPAUA0C?
 
-*   **IBM MQ:**
-    *   [COPAUA0C](cbl/COPAUA0C.cbl.md) interacts with MQOPEN, MQGET, MQPUT1, and MQCLOSE, indicating it uses IBM MQ for sending and receiving messages. ❓ QUESTION: What external systems does it communicate with via MQ? What is the message format?
+**2. Batch Job Scheduling and Execution**
 
-*   **File Transfers:**
-    *   The system may receive transaction data or updates from external systems via file transfers. ❓ QUESTION: What are the file formats and transfer protocols used?
+*   **Description:** The system relies on JCL jobs for scheduling and executing batch processes. These jobs are typically scheduled using a job scheduler such as CA-7 or IBM Workload Scheduler.
+*   **Entry Points:** The JCL jobs [CBPAUP0J](jcl/CBPAUP0J.jcl.md), [DBPAUTP0](jcl/DBPAUTP0.jcl.md), [LOADPADB](jcl/LOADPADB.JCL.md), [UNLDPADB](jcl/UNLDPADB.JCL.md), and [UNLDGSAM](jcl/UNLDGSAM.JCL.md) serve as entry points for batch processing.
+*   **Details:** The specific scheduling dependencies and execution frequencies of these jobs are not currently known and require further investigation. ❓ QUESTION: What are the scheduling dependencies and execution frequencies of the batch jobs?
 
-### 6.2. Batch Job Scheduling
+**3. CICS Transaction Interface**
 
-Batch jobs are scheduled to perform database updates, report generation, and data unloading.
+*   **Description:** The system provides a CICS transaction interface for real-time transaction processing. External systems can initiate transactions by sending requests to specific CICS transaction IDs.
+*   **Entry Points:** The specific CICS transaction IDs used by the system are not currently known and require further investigation. ❓ QUESTION: What are the CICS transaction IDs used by the system?
+*   **Details:** The format of the transaction requests and responses is also not currently known and requires further investigation. ❓ QUESTION: What is the format of the transaction requests and responses?
 
-*   **Entry Points:**
-    *   [CBPAUP0J](jcl/CBPAUP0J.jcl.md), [DBPAUTP0](jcl/DBPAUTP0.jcl.md), [UNLDPADB](jcl/UNLDPADB.JCL.md), [LOADPADB](jcl/LOADPADB.JCL.md), [UNLDGSAM](jcl/UNLDGSAM.JCL.md) are entry point JCL jobs, meaning they are not called by other jobs. ❓ QUESTION: How are these jobs scheduled (e.g., via a scheduler like CA-7 or manually)? What are their dependencies?
+**4. External System Integration (Fraud Detection)**
 
-### 6.3. CICS Transaction Entry Points
+*   **Description:** The system integrates with external fraud detection services to enhance its fraud prevention capabilities.
+*   **Programs:** [COPAUS1C](cbl/COPAUS1C.cbl.md) calls [WS_PGM_AUTH_FRAUD](WS_PGM_AUTH_FRAUD), suggesting an integration point with a fraud detection system.
+*   **Details:** The specific API used for integration and the data exchanged with the fraud detection service are not currently known and require further investigation. ❓ QUESTION: What API is used for integration with the fraud detection service, and what data is exchanged?
 
-The system provides CICS transactions for online authorization and user management.
+**5. File-Based Interface**
 
-*   **Transaction IDs:**
-    *   The specific transaction IDs used to access the CICS applications are not explicitly documented. ❓ QUESTION: What are the CICS transaction IDs for the online authorization system? How are they secured?
+*   **Description:** The system may exchange data with external systems using file-based interfaces. This typically involves reading data from input files and writing data to output files.
+*   **Details:** The specific file formats, file names, and data exchange protocols are not currently known and require further investigation. ❓ QUESTION: What are the file formats, file names, and data exchange protocols used for file-based interfaces?
 
-### 6.4. Cross-System Data Exchanges
+**Summary Table**
 
-The system exchanges data with other systems for authorization and fraud detection purposes.
+| Integration Point | Description | Technology | Details |
+|---|---|---|---|
+| MQ Messaging | Asynchronous communication with external systems | IBM MQ | Specific queues and message formats unknown |
+| Batch Job Scheduling | Scheduled execution of batch processes | JCL, Job Scheduler | Scheduling dependencies and execution frequencies unknown |
+| CICS Transactions | Real-time transaction processing | CICS | Transaction IDs and request/response formats unknown |
+| Fraud Detection | Integration with external fraud detection services | API | API details and data exchanged unknown |
+| File-Based Interface | Data exchange with external systems | Sequential Files | File formats, file names, and data exchange protocols unknown |
 
-*   **Fraud Detection:**
-    *   [COPAUS1C](cbl/COPAUS1C.cbl.md) calls [WS_PGM_AUTH_FRAUD](WS_PGM_AUTH_FRAUD), suggesting it interacts with an external fraud detection system. ❓ QUESTION: What is the interface to WS_PGM_AUTH_FRAUD? What data is exchanged?
 
-*   **Account Information:**
-    *   The system likely exchanges account information with other systems for authorization purposes. ❓ QUESTION: What systems are involved in account information exchange? What data is exchanged? What protocols are used?
+
 ## 7. Business Rules
 
-This section documents the key business rules implemented within the authorization system. These rules govern how transactions are processed, data is validated, and decisions are made.
+This section documents the business rules implemented within the system, categorized by business domain. Due to the limitations of the available tools and the lack of specific skills documenting business rules, this section provides a general overview based on the system's functionality. Further investigation is needed to extract specific business rules from the source code.
 
-Unfortunately, I was unable to find any skills specifically documenting business rules. Therefore, this section will be populated based on analysis of program logic. Further investigation is needed to fully document the business rules.
+**1. Authorization Rules**
 
-### 7.1. Authorization Rules
+*   **Description:** These rules govern the authorization of financial transactions. They determine whether a transaction should be approved or declined based on factors such as account balance, credit limit, transaction amount, and fraud risk.
+*   **Source Programs:** [COPAUA0C](cbl/COPAUA0C.cbl.md), [COPAUS1C](cbl/COPAUS1C.cbl.md), [COPAUS0C](cbl/COPAUS0C.cbl.md)
+*   **Examples:**
+    *   If the transaction amount exceeds the account balance, decline the transaction.
+    *   If the transaction amount exceeds the credit limit, decline the transaction.
+    *   If the transaction is flagged as potentially fraudulent, decline the transaction.
+*   **Details:** The specific authorization rules implemented in the system are not currently known and require further investigation. ❓ QUESTION: What are the specific authorization rules implemented in the system?
 
-These rules govern whether a transaction is authorized or declined.
+**2. Fraud Detection Rules**
 
-*   **Fraud Detection:**
-    *   [COPAUS1C](cbl/COPAUS1C.cbl.md) interacts with [WS_PGM_AUTH_FRAUD](WS_PGM_AUTH_FRAUD), suggesting that fraud detection logic is applied during authorization. ❓ QUESTION: What specific fraud rules are implemented in WS_PGM_AUTH_FRAUD? What data elements are used in the fraud scoring?
+*   **Description:** These rules identify potentially fraudulent transactions based on patterns and anomalies. They may involve analyzing transaction history, geographic location, and other factors.
+*   **Source Programs:** [COPAUS1C](cbl/COPAUS1C.cbl.md) (integration with [WS_PGM_AUTH_FRAUD](WS_PGM_AUTH_FRAUD))
+*   **Examples:**
+    *   If the transaction originates from a high-risk country, flag it as potentially fraudulent.
+    *   If the transaction amount is significantly higher than the average transaction amount for the account, flag it as potentially fraudulent.
+    *   If multiple transactions occur in rapid succession from different locations, flag them as potentially fraudulent.
+*   **Details:** The specific fraud detection rules implemented in the system are not currently known and require further investigation. ❓ QUESTION: What are the specific fraud detection rules implemented in the system?
 
-### 7.2. Data Validation Rules
+**3. Account Validation Rules**
 
-These rules ensure the integrity and consistency of data.
+*   **Description:** These rules validate account information to ensure that it is accurate and consistent. They may involve checking the account number, account type, and other account details.
+*   **Source Programs:** [COPAUA0C](cbl/COPAUA0C.cbl.md), [COPAUS0C](cbl/COPAUS0C.cbl.md)
+*   **Examples:**
+    *   If the account number is invalid, reject the transaction.
+    *   If the account type is not supported, reject the transaction.
+    *   If the account is closed, reject the transaction.
+*   **Details:** The specific account validation rules implemented in the system are not currently known and require further investigation. ❓ QUESTION: What are the specific account validation rules implemented in the system?
 
-*   ❓ QUESTION: What data validation rules are enforced in the system? Which programs enforce these rules?
+**4. Reporting Rules**
 
-### 7.3. Reporting Rules
+*   **Description:** These rules govern the generation of reports on transaction activity, fraud detection, and system performance. They may involve filtering, aggregating, and formatting data.
+*   **Source Programs:** TBD (Further investigation needed)
+*   **Examples:**
+    *   Generate a daily report of all authorized transactions.
+    *   Generate a weekly report of all fraudulent transactions.
+    *   Generate a monthly report of system performance metrics.
+*   **Details:** The specific reporting rules implemented in the system are not currently known and require further investigation. ❓ QUESTION: What are the specific reporting rules implemented in the system?
 
-These rules govern how data is aggregated and presented in reports.
+**5. Processing Constraints**
 
-*   ❓ QUESTION: What reporting rules are implemented in the system? Which programs generate the reports? What are the report formats?
+*   **Description:** These are limitations or restrictions on how the system processes data.
+*   **Source Programs:** All
+*   **Examples:**
+    *   Maximum transaction amount allowed.
+    *   Maximum number of transactions per account per day.
+    *   Data retention policies.
+*   **Details:** The specific processing constraints are not currently known and require further investigation. ❓ QUESTION: What are the specific processing constraints in the system?
+
+Due to the limitations of the available tools, further investigation is needed to fully document the business rules implemented within the system. Specifically, it is necessary to extract the rules from the source code and document them in a structured format.
+
+
+
 ## 8. Error Handling Patterns
 
-This section documents the common error handling patterns used throughout the authorization system. Understanding these patterns is crucial for diagnosing and resolving issues.
+This section documents the common error handling patterns employed throughout the system. Due to the limitations of the available tools and the lack of specific skills documenting error handling, this section provides a general overview based on common mainframe practices. Further investigation is needed to extract specific error handling implementations from the source code.
 
-Unfortunately, I was unable to find any skills specifically documenting error handling patterns. Therefore, this section will be populated based on analysis of program logic. Further investigation is needed to fully document the error handling patterns.
+**1. Abend Codes**
 
-### 8.1. Common Error Codes
+*   **Description:** In the event of a critical error, the system may terminate with an abend (abnormal end) code. These codes provide information about the type of error that occurred and can be used to diagnose the problem.
+*   **Details:** The specific abend codes used by the system and their meanings are not currently known and require further investigation. ❓ QUESTION: What are the specific abend codes used by the system, and what do they mean?
+*   **Example:** A common abend code in CICS is ASRA (program check), indicating a program error such as a division by zero or an invalid memory access.
 
-The system uses a combination of abend codes and return codes to indicate errors.
+**2. Return Codes**
 
-*   ❓ QUESTION: What are the common abend codes used in batch jobs? What do they signify?
-*   ❓ QUESTION: What are the common return codes used in COBOL programs? What do they signify?
+*   **Description:** COBOL programs often use return codes to indicate the success or failure of a particular operation. A return code of 0 typically indicates success, while non-zero return codes indicate errors.
+*   **Details:** The specific return codes used by the system and their meanings are not currently known and require further investigation. ❓ QUESTION: What are the specific return codes used by the system, and what do they mean?
+*   **Example:** A return code of 8 might indicate that a record was not found, while a return code of 12 might indicate a data validation error.
 
-### 8.2. Recovery Procedures
+**3. Recovery Procedures and Restart Logic**
 
-The system implements various recovery procedures to handle errors and ensure data integrity.
+*   **Description:** The system may implement recovery procedures to handle errors and restart logic to resume processing after an interruption. This may involve backing out incomplete transactions, restoring data to a consistent state, and restarting the program from a known point.
+*   **Details:** The specific recovery procedures and restart logic implemented in the system are not currently known and require further investigation. ❓ QUESTION: What are the specific recovery procedures and restart logic implemented in the system?
+*   **Example:** In CICS, the EXEC CICS SYNCPOINT ROLLBACK command can be used to back out an incomplete transaction.
 
-*   ❓ QUESTION: What recovery procedures are implemented for IMS database errors?
-*   ❓ QUESTION: What restart logic is implemented in batch jobs?
+**4. Logging and Monitoring**
 
-### 8.3. Logging and Monitoring
+*   **Description:** The system likely uses logging and monitoring to track errors and system events. This information can be used to diagnose problems, identify trends, and improve system performance.
+*   **Details:** The specific logging and monitoring tools and techniques used by the system are not currently known and require further investigation. ❓ QUESTION: What are the specific logging and monitoring tools and techniques used by the system?
+*   **Example:** The system may write error messages to the CICS log or to a separate error log file.
 
-The system uses logging and monitoring to track errors and system performance.
+**5. Error Escalation**
 
-*   ❓ QUESTION: What logging mechanisms are used in the system (e.g., SMF records, SYSLOG)?
-*   ❓ QUESTION: What monitoring tools are used to track system health?
+*   **Description:** The system may implement an error escalation chain to ensure that errors are handled appropriately. This may involve notifying system administrators or other personnel when critical errors occur.
+*   **Details:** The specific error escalation chain implemented in the system is not currently known and requires further investigation. ❓ QUESTION: What is the specific error escalation chain implemented in the system?
 
-### 8.4. Error Escalation
+**6. Error Handling in COBOL Programs**
 
-The system implements error escalation procedures to ensure that critical errors are addressed promptly.
+*   **Description:** COBOL programs use `ON SIZE ERROR` and `INVALID KEY` clauses to handle specific errors during arithmetic operations and file I/O.
+*   **Example:**
+    ```cobol
+    COMPUTE WS-RESULT = WS-VAR1 / WS-VAR2
+      ON SIZE ERROR
+        PERFORM HANDLE-DIVISION-BY-ZERO.
+    ```
 
-*   ❓ QUESTION: What are the error escalation chains in the system? Who is responsible for responding to different types of errors?
+**7. CICS Error Handling**
+
+*   **Description:** CICS programs use the `EXEC CICS HANDLE CONDITION` command to handle various CICS conditions such as `ERROR`, `NOTFND`, and `LENGERR`.
+*   **Example:**
+    ```cobol
+    EXEC CICS HANDLE CONDITION
+         ERROR(ERROR-ROUTINE)
+         NOTFND(NOTFND-ROUTINE)
+    END-EXEC.
+    ```
+
+Due to the limitations of the available tools, further investigation is needed to fully document the error handling patterns implemented within the system. Specifically, it is necessary to examine the source code to identify the specific error handling techniques used by each program.
+
+
+
 ## 9. Open Questions and Uncertainties
 
-This section consolidates the open questions and uncertainties identified during the documentation process. Addressing these questions is crucial for a complete understanding of the authorization system.
+This section consolidates the open questions and uncertainties identified during the documentation process. Addressing these questions is crucial for a complete understanding of the system.
 
-### 9.1. Architecture
+**1. Architecture**
 
-*   **What is the purpose of PAUDBUNL?** Understanding the specific function of this program is essential for grasping the data unloading process. Resolution: Analyze the source code of [PAUDBUNL](cbl/PAUDBUNL.CBL.md) and related JCL.
-*   **What is the purpose of COPAUS1C?** Understanding the specific function of this program is essential for grasping the online authorization process. Resolution: Analyze the source code of [COPAUS1C](cbl/COPAUS1C.cbl.md) and related BMS maps.
-*   **What is the purpose of COPAUA0C?** Understanding the specific function of this program is essential for grasping the online authorization process. Resolution: Analyze the source code of [COPAUA0C](cbl/COPAUA0C.cbl.md) and related MQ interfaces.
-*   **What is the purpose of PAUDBLOD?** Understanding the specific function of this program is essential for grasping the data loading process. Resolution: Analyze the source code of [PAUDBLOD](cbl/PAUDBLOD.CBL.md) and related JCL.
-*   **What is the purpose of DBUNLDGS?** Understanding the specific function of this program is essential for grasping the data unloading process. Resolution: Analyze the source code of [DBUNLDGS](cbl/DBUNLDGS.CBL.md) and related JCL.
-*   **What is the purpose of CBPAUP0C?** Understanding the specific function of this program is essential for grasping the batch processing. Resolution: Analyze the source code of [CBPAUP0C](cbl/CBPAUP0C.cbl.md) and related JCL.
-*   **What is the purpose of COPAUS0C?** Understanding the specific function of this program is essential for grasping the online authorization process. Resolution: Analyze the source code of [COPAUS0C](cbl/COPAUS0C.cbl.md) and related BMS maps.
-*   **What is the purpose of COPAUS2C?** Understanding the specific function of this program is essential for grasping the batch processing. Resolution: Analyze the source code of [COPAUS2C](cbl/COPAUS2C.cbl.md) and related JCL.
-*   **What is the purpose of UNLDPADB?** Understanding the specific function of this JCL job is essential for grasping the data unloading process. Resolution: Analyze the JCL code of [UNLDPADB](jcl/UNLDPADB.JCL.md).
-*   **What is the purpose of LOADPADB?** Understanding the specific function of this JCL job is essential for grasping the data loading process. Resolution: Analyze the JCL code of [LOADPADB](jcl/LOADPADB.JCL.md).
-*   **What is the purpose of UNLDGSAM?** Understanding the specific function of this JCL job is essential for grasping the data unloading process. Resolution: Analyze the JCL code of [UNLDGSAM](jcl/UNLDGSAM.JCL.md).
-*   **What is the purpose of DBPAUTP0?** Understanding the specific function of this JCL job is essential for grasping the batch processing. Resolution: Analyze the JCL code of [DBPAUTP0](jcl/DBPAUTP0.jcl.md).
-*   **What is the purpose of CBPAUP0J?** Understanding the specific function of this JCL job is essential for grasping the batch processing. Resolution: Analyze the JCL code of [CBPAUP0J](jcl/CBPAUP0J.jcl.md).
-*   **What is the purpose of PADFLPCB?** Understanding the specific function of this copybook is essential for grasping the data structures used in the system. Resolution: Analyze the copybook code of [PADFLPCB](cpy/PADFLPCB.CPY.md).
-*   **What is the purpose of CCPAURQY?** Understanding the specific function of this copybook is essential for grasping the data structures used in the system. Resolution: Analyze the copybook code of [CCPAURQY](cpy/CCPAURQY.cpy.md).
-*   **What is the purpose of PAUTBPCB?** Understanding the specific function of this copybook is essential for grasping the data structures used in the system. Resolution: Analyze the copybook code of [PAUTBPCB](cpy/PAUTBPCB.CPY.md).
-*   **What is the purpose of PASFLPCB?** Understanding the specific function of this copybook is essential for grasping the data structures used in the system. Resolution: Analyze the copybook code of [PASFLPCB](cpy/PASFLPCB.CPY.md).
-*   **What is the purpose of IMSFUNCS?** Understanding the specific function of this copybook is essential for grasping the data structures used in the system. Resolution: Analyze the copybook code of [IMSFUNCS](cpy/IMSFUNCS.cpy.md).
-*   **What is the purpose of CCPAUERY?** Understanding the specific function of this copybook is essential for grasping the data structures used in the system. Resolution: Analyze the copybook code of [CCPAUERY](cpy/CCPAUERY.cpy.md).
-*   **What is the purpose of CCPAURLY?** Understanding the specific function of this copybook is essential for grasping the data structures used in the system. Resolution: Analyze the copybook code of [CCPAURLY](cpy/CCPAURLY.cpy.md).
-*   **What is the purpose of DBPAUTP0?** Understanding the specific function of this IMS DBD is essential for grasping the data structures used in the system. Resolution: Analyze the DBD code of [DBPAUTP0](ims/DBPAUTP0.dbd.md).
-*   **What is the purpose of DBPAUTX0?** Understanding the specific function of this IMS DBD is essential for grasping the data structures used in the system. Resolution: Analyze the DBD code of [DBPAUTX0](ims/DBPAUTX0.dbd.md).
-*   **What is the purpose of PADFLDBD?** Understanding the specific function of this IMS DBD is essential for grasping the data structures used in the system. Resolution: Analyze the DBD code of [PADFLDBD](ims/PADFLDBD.DBD.md).
-*   **What is the purpose of PSBPAUTL?** Understanding the specific function of this IMS PSB is essential for grasping the data structures used in the system. Resolution: Analyze the PSB code of [PSBPAUTL](ims/PSBPAUTL.psb.md).
-*   **What is the purpose of PSBPAUTB?** Understanding the specific function of this IMS PSB is essential for grasping the data structures used in the system. Resolution: Analyze the PSB code of [PSBPAUTB](ims/PSBPAUTB.psb.md).
-*   **What is the purpose of PASFLDBD?** Understanding the specific function of this IMS DBD is essential for grasping the data structures used in the system. Resolution: Analyze the DBD code of [PASFLDBD](ims/PASFLDBD.DBD.md).
-*   **What is the purpose of PAUTBUNL?** Understanding the specific function of this IMS PSB is essential for grasping the data structures used in the system. Resolution: Analyze the PSB code of [PAUTBUNL](ims/PAUTBUNL.PSB.md).
-*   **What is the purpose of DLIGSAMP?** Understanding the specific function of this IMS PSB is essential for grasping the data structures used in the system. Resolution: Analyze the PSB code of [DLIGSAMP](ims/DLIGSAMP.PSB.md).
-*   **What is the purpose of COPAU00?** Understanding the specific function of this BMS map is essential for grasping the user interface. Resolution: Analyze the BMS code of [COPAU00](bms/COPAU00.bms.md).
-*   **What is the purpose of COPAU01?** Understanding the specific function of this BMS map is essential for grasping the user interface. Resolution: Analyze the BMS code of [COPAU01](bms/COPAU01.bms.md).
-*   **What is the purpose of XAUTHFRD?** Understanding the specific function of this DDL definition is essential for grasping the data structures used in the system. Resolution: Analyze the DDL code of [XAUTHFRD](ddl/XAUTHFRD.ddl.md).
-*   **What is the purpose of AUTHFRDS?** Understanding the specific function of this DDL definition is essential for grasping the data structures used in the system. Resolution: Analyze the DDL code of [AUTHFRDS](ddl/AUTHFRDS.ddl.md).
+*   **Question:** What are the specific MQ queues used by [COPAUA0C](cbl/COPAUA0C.cbl.md)?
+    *   **Why it matters:** Understanding the MQ queues used by [COPAUA0C](cbl/COPAUA0C.cbl.md) is essential for understanding the system's integration with external systems.
+    *   **How it might be resolved:** Examine the source code of [COPAUA0C](cbl/COPAUA0C.cbl.md) and related configuration files to identify the MQ queue names.
 
-### 9.2. Data Flow
+*   **Question:** What are the CICS transaction IDs used by the system?
+    *   **Why it matters:** Knowing the CICS transaction IDs is crucial for understanding how external systems initiate transactions within the system.
+    *   **How it might be resolved:** Examine the CICS region definitions and transaction routing configurations to identify the CICS transaction IDs.
 
-*   **What is the structure of the `OEM.IMS.IMSP.PAUTHDB` database?** Understanding the database structure is crucial for understanding how authorization data is stored and accessed. Resolution: Analyze the DBD and PSB definitions for this database.
-*   **What is the structure of the `OEM.IMS.IMSP.PAUTHDBX` database and how does it relate to PAUTHDB?** Understanding the database structure is crucial for understanding how authorization data is stored and accessed. Resolution: Analyze the DBD and PSB definitions for this database.
-*   **What is the purpose of the `OEMPP.IMS.V15R01MB.PROCLIB(DFSVSMDB)` file?** Understanding the purpose of this file is crucial for understanding the data flow within the system. Resolution: Analyze the contents of this file and the programs that read it.
-*   **Which program creates the `OEMPP.IMS.V15R01MB.PROCLIB(DFSVSMDB)` file?** Knowing the data producer is essential for tracing data flow. Resolution: Analyze JCL and program dependencies to identify the creator.
+**2. Data Flow**
 
-### 9.3. Integration
+*   **Question:** What are the file formats, file names, and data exchange protocols used for file-based interfaces?
+    *   **Why it matters:** Understanding the file-based interfaces is important for understanding how the system exchanges data with external systems.
+    *   **How it might be resolved:** Examine the JCL jobs and COBOL programs that interact with files to identify the file formats, file names, and data exchange protocols.
 
-*   **What external systems does [COPAUA0C](cbl/COPAUA0C.cbl.md) communicate with via MQ? What is the message format?** Understanding the external interfaces is crucial for understanding the system's interactions with other systems. Resolution: Analyze the MQ message structures used by [COPAUA0C](cbl/COPAUA0C.cbl.md) and related documentation.
-*   **What are the file formats and transfer protocols used for file transfers?** Understanding the file transfer mechanisms is crucial for understanding the system's interactions with other systems. Resolution: Analyze JCL and program code related to file transfers.
-*   **How are the entry point JCL jobs scheduled (e.g., via a scheduler like CA-7 or manually)? What are their dependencies?** Understanding the scheduling of batch jobs is crucial for understanding the system's overall operation. Resolution: Consult with system operators or analyze scheduling configurations.
-*   **What are the CICS transaction IDs for the online authorization system? How are they secured?** Understanding the CICS transaction entry points is crucial for understanding how users interact with the system. Resolution: Consult with CICS administrators or analyze CICS definitions.
-*   **What is the interface to WS_PGM_AUTH_FRAUD? What data is exchanged?** Understanding the interface to the fraud detection system is crucial for understanding how fraud is detected. Resolution: Analyze the code for [COPAUS1C](cbl/COPAUS1C.cbl.md) and the documentation for WS_PGM_AUTH_FRAUD.
-*   **What systems are involved in account information exchange? What data is exchanged? What protocols are used?** Understanding the account information exchange is crucial for understanding the system's interactions with other systems. Resolution: Analyze program code and system documentation related to account information.
+**3. Business Rules**
 
-### 9.4. Business Rules
+*   **Question:** What are the specific authorization rules implemented in the system?
+    *   **Why it matters:** Understanding the authorization rules is crucial for ensuring the security and integrity of financial transactions.
+    *   **How it might be resolved:** Examine the source code of the authorization programs ([COPAUA0C](cbl/COPAUA0C.cbl.md), [COPAUS1C](cbl/COPAUS1C.cbl.md), [COPAUS0C](cbl/COPAUS0C.cbl.md)) to identify the specific authorization rules.
 
-*   **What specific fraud rules are implemented in WS_PGM_AUTH_FRAUD? What data elements are used in the fraud scoring?** Understanding the fraud rules is crucial for understanding how fraud is detected. Resolution: Analyze the code for WS_PGM_AUTH_FRAUD and related documentation.
-*   **What data validation rules are enforced in the system? Which programs enforce these rules?** Understanding the data validation rules is crucial for understanding how data integrity is maintained. Resolution: Analyze program code for data validation logic.
-*   **What reporting rules are implemented in the system? Which programs generate the reports? What are the report formats?** Understanding the reporting rules is crucial for understanding how data is presented. Resolution: Analyze program code for reporting logic and report definitions.
+*   **Question:** What are the specific fraud detection rules implemented in the system?
+    *   **Why it matters:** Understanding the fraud detection rules is crucial for preventing fraudulent transactions and minimizing financial losses.
+    *   **How it might be resolved:** Examine the source code of the fraud detection programs (e.g., [COPAUS1C](cbl/COPAUS1C.cbl.md) and the external fraud detection system) to identify the specific fraud detection rules.
 
-### 9.5. Error Handling
+*   **Question:** What are the specific account validation rules implemented in the system?
+    *   **Why it matters:** Understanding the account validation rules is crucial for ensuring the accuracy and consistency of account information.
+    *   **How it might be resolved:** Examine the source code of the account validation programs ([COPAUA0C](cbl/COPAUA0C.cbl.md), [COPAUS0C](cbl/COPAUS0C.cbl.md)) to identify the specific account validation rules.
 
-*   **What are the common abend codes used in batch jobs? What do they signify?** Understanding the abend codes is crucial for diagnosing batch job failures. Resolution: Analyze JCL and system documentation for abend code definitions.
-*   **What are the common return codes used in COBOL programs? What do they signify?** Understanding the return codes is crucial for diagnosing program errors. Resolution: Analyze COBOL program code for return code definitions.
-*   **What recovery procedures are implemented for IMS database errors?** Understanding the recovery procedures is crucial for ensuring data integrity. Resolution: Analyze IMS configuration and program code for recovery logic.
-*   **What restart logic is implemented in batch jobs?** Understanding the restart logic is crucial for ensuring that batch jobs can recover from failures. Resolution: Analyze JCL and program code for restart logic.
-*   **What logging mechanisms are used in the system (e.g., SMF records, SYSLOG)?** Understanding the logging mechanisms is crucial for monitoring system health and diagnosing errors. Resolution: Analyze system configuration and program code for logging logic.
-*   **What monitoring tools are used to track system health?** Understanding the monitoring tools is crucial for ensuring system availability. Resolution: Consult with system operators or analyze monitoring configurations.
-*   **What are the error escalation chains in the system? Who is responsible for responding to different types of errors?** Understanding the error escalation chains is crucial for ensuring that critical errors are addressed promptly. Resolution: Consult with system operators or analyze incident management procedures.
+**4. Error Handling**
 
-### 9.6. Assumptions
+*   **Question:** What are the specific abend codes used by the system, and what do they mean?
+    *   **Why it matters:** Understanding the abend codes is essential for diagnosing and resolving system errors.
+    *   **How it might be resolved:** Examine the system documentation and source code to identify the abend codes and their meanings.
 
-*   The documentation assumes a basic understanding of mainframe concepts such as JCL, COBOL, CICS, and IMS.
-*   The documentation assumes that the source code accurately reflects the current state of the system.
+*   **Question:** What are the specific return codes used by the system, and what do they mean?
+    *   **Why it matters:** Understanding the return codes is essential for understanding the success or failure of program operations.
+    *   **How it might be resolved:** Examine the source code of the COBOL programs to identify the return codes and their meanings.
+
+*   **Question:** What are the specific recovery procedures and restart logic implemented in the system?
+    *   **Why it matters:** Understanding the recovery procedures and restart logic is crucial for ensuring system availability and data integrity.
+    *   **How it might be resolved:** Examine the system documentation and source code to identify the recovery procedures and restart logic.
+
+*   **Question:** What are the specific logging and monitoring tools and techniques used by the system?
+    *   **Why it matters:** Understanding the logging and monitoring tools and techniques is essential for diagnosing problems, identifying trends, and improving system performance.
+    *   **How it might be resolved:** Examine the system configuration and operational procedures to identify the logging and monitoring tools and techniques.
+
+**5. Component Purposes**
+
+*   **Question:** Purpose of PAUDBUNL
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of COPAUS1C
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of COPAUA0C
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of PAUDBLOD
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of DBUNLDGS
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of CBPAUP0C
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of COPAUS0C
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of COPAUS2C
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of UNLDPADB
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of LOADPADB
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of UNLDGSAM
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of DBPAUTP0
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of CBPAUP0J
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of PADFLPCB
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of CIPAUSMY
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of CCPAURQY
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of CIPAUDTY
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of PAUTBPCB
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of PASFLPCB
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of IMSFUNCS
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of CCPAUERY
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of CCPAURLY
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of COPAU00 (BMS Map)
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of COPAU01 (BMS Map)
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of DBPAUTP0 (IMS DBD)
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of DBPAUTX0 (IMS DBD)
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of PADFLDBD (IMS DBD)
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of PASFLDBD (IMS DBD)
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of PSBPAUTL (IMS PSB)
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of PSBPAUTB (IMS PSB)
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of PAUTBUNL (IMS PSB)
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of DLIGSAMP (IMS PSB)
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of COPAU00 (BMS Copybook)
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of COPAU01 (BMS Copybook)
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of XAUTHFRD (DDL)
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+*   **Question:** Purpose of AUTHFRDS (DDL)
+    *   **Why it matters:** Understanding the purpose of each component is crucial for understanding the overall system architecture.
+    *   **How it might be resolved:** Examine the program's source code, related documentation, and JCL context to determine its purpose.
+
+**6. Integration Points**
+
+*   **Question:** What are the scheduling dependencies and execution frequencies of the batch jobs?
+    *   **Why it matters:** Understanding the scheduling dependencies and execution frequencies of the batch jobs is crucial for understanding the system's batch processing cycle.
+    *   **How it might be resolved:** Examine the job scheduler configuration to identify the scheduling dependencies and execution frequencies.
+
+*   **Question:** What API is used for integration with the fraud detection service, and what data is exchanged?
+    *   **Why it matters:** Understanding the integration with the fraud detection service is crucial for understanding the system's fraud prevention capabilities.
+    *   **How it might be resolved:** Examine the source code of [COPAUS1C](cbl/COPAUS1C.cbl.md) and the documentation for the fraud detection service to identify the API and data exchanged.
+
+**Assumptions Made**
+
+*   Due to the limitations of the available tools, it was assumed that the system follows common mainframe practices for error handling and data access.
+*   It was assumed that the copybooks shared by multiple programs define common data structures related to transaction processing and authorization.
+
+**Implications of Assumptions**
+
+*   The documentation may not accurately reflect the specific error handling techniques and data access patterns used by the system.
+*   The documentation may not fully capture the complexity of the system's data architecture.
+
+Addressing these open questions and uncertainties is essential for creating a complete and accurate understanding of the system.
+
 
 ## Flows
 

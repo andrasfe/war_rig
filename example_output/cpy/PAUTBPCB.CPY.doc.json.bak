@@ -1,15 +1,15 @@
 {
   "header": {
     "program_id": "PAUTBPCB",
-    "file_name": "cpy/PAUTBPCB.CPY",
+    "file_name": "PAUTBPCB.CPY",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-03T16:50:07.888440",
+    "analyzed_at": "2026-03-04T03:32:15.607678",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the structure PAUTBPCB, which is likely used to interface with an IMS database PCB (Program Communication Block). It contains fields related to database name, segment level, processing options, segment name, and key feedback information.",
+    "summary": "This copybook defines the structure PAUTBPCB, which appears to be related to IMS PCB (Program Communication Block) information. It contains fields for database name, segment level, PCB status, processing options, segment name, key feedback length, number of sensitive segments, and key feedback area.",
     "business_context": null,
     "program_type": "COPYBOOK",
     "citations": [
@@ -36,7 +36,7 @@
     {
       "paragraph_name": "PAUTBPCB",
       "summary": null,
-      "purpose": "This copybook defines the structure of PAUTBPCB, which appears to be related to IMS database interaction, specifically with a PCB (Program Communication Block). The structure includes fields such as PAUT-DBDNAME (database name), PAUT-SEG-LEVEL (segment level), PAUT-PCB-STATUS (PCB status), and PAUT-PCB-PROCOPT (processing options) which are standard elements found in IMS PCBs. It also contains fields for PAUT-SEG-NAME (segment name), PAUT-KEYFB-NAME (key feedback name), PAUT-NUM-SENSEGS (number of sensitive segments), and PAUT-KEYFB (key feedback area). The FILLER field is used for padding or alignment purposes. This copybook is likely included in COBOL programs that interact with an IMS database to access and manipulate data within the database segments. The PAUT-KEYFB field is a 255-byte field that likely holds the key feedback information after an IMS database call.",
+      "purpose": "This copybook defines the data structure PAUTBPCB, which is likely used to hold information related to an IMS Program Communication Block (PCB). The structure includes fields such as PAUT-DBDNAME (database name), PAUT-SEG-LEVEL (segment level), PAUT-PCB-STATUS (PCB status), PAUT-PCB-PROCOPT (processing options), PAUT-SEG-NAME (segment name), PAUT-KEYFB-NAME (key feedback length), PAUT-NUM-SENSEGS (number of sensitive segments), and PAUT-KEYFB (key feedback area). The PAUT-KEYFB field is defined as PIC X(255), suggesting it's designed to hold a variable-length key feedback string. The copybook does not perform any processing logic itself; it simply defines the data structure for use by other programs. The intended use is for programs interacting with an IMS database to access PCB information.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -92,9 +92,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "The exact purpose and usage of this copybook within a larger application is unclear without more context.",
-      "context": "The copybook defines a data structure, but its specific role in data processing or interaction with other modules is unknown.",
-      "suggestion": "Analyze the COBOL programs that include this copybook to understand how the PAUTBPCB structure is used."
+      "question": "What is the specific purpose of each field within the PAUTBPCB structure in the context of IMS?",
+      "context": "The copybook defines the structure, but the exact meaning and usage of each field are unclear without additional context.",
+      "suggestion": "Review the IMS documentation or related programs that use this copybook to understand the field definitions."
     }
   ],
   "resolved_questions": [],

@@ -18,4 +18,15 @@
               PERFORM 5500-READ-AUTH-SUMMRY  THRU 5500-EXIT                     
                                                                                 
               PERFORM 5600-READ-PROFILE-DATA THRU 5600-EXIT                     
+           END-IF                                                               
+                                                                                
+           PERFORM 6000-MAKE-DECISION        THRU 6000-EXIT                     
+                                                                                
+           PERFORM 7100-SEND-RESPONSE        THRU 7100-EXIT                     
+                                                                                
+           IF CARD-FOUND-XREF                                                   
+              PERFORM 8000-WRITE-AUTH-TO-DB  THRU 8000-EXIT                     
+           END-IF                                                               
+           .                                                                    
+      *                                                                         
 ```

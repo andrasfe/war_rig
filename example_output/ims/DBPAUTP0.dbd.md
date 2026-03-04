@@ -2,13 +2,10 @@
 
 **File**: `ims/DBPAUTP0.dbd`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-03-03 16:47:06.150981
+**Analyzed**: 2026-03-04 03:30:03.580288
 
 ## Purpose
 
-This file defines the Database Description (DBD) for DBPAUTP0, which describes the structure and characteristics of an IMS database. It specifies the database's organization as HIDAM with VSAM access, defines segments (PAUTSUM0, PAUTDTL1) and their fields, and establishes relationships between them.
+This Database Description (DBD) file defines the structure and characteristics of the DBPAUTP0 database for IMS (Information Management System). It specifies the database organization, segment definitions, fields within those segments, and relationships between segments. The database stores pending authorization summary and detail information.
 
-## Open Questions
-
-- ? What is the purpose of the EXIT parameter in the DBD statement?
-  - Context: The documentation does not explain the specific functions of the exit routines defined in the EXIT parameter.
+**Business Context**: This DBD likely supports a business process involving authorization workflows, potentially for financial transactions or access control.
