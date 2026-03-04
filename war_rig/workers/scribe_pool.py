@@ -2628,21 +2628,28 @@ class ScribeWorker:
         source_path = Path(plan["source_path"])
         file_type = self._determine_file_type(ticket.file_name)
 
-        # Get function bodies from Citadel
-        try:
-            bodies = self._citadel.get_function_bodies(str(source_path), batch_names)
-        except Exception as e:
-            logger.warning(
-                f"Worker {self.worker_id}: Citadel body extraction failed for "
-                f"batch {batch_idx}: {e}"
-            )
-            bodies = {}
+        # When a ProLeap .ast file exists, skip Citadel body extraction and
+        # use raw source lines via the AST-accurate line ranges in the outline.
+        ast_file = source_path.with_suffix(source_path.suffix + ".ast")
+        has_ast = ast_file.exists()
+
+        bodies: dict[str, str | None] = {}
+        if not has_ast:
+            try:
+                bodies = self._citadel.get_function_bodies(
+                    str(source_path), batch_names,
+                )
+            except Exception as e:
+                logger.warning(
+                    f"Worker {self.worker_id}: Citadel body extraction failed for "
+                    f"batch {batch_idx}: {e}"
+                )
 
         # Assemble source code for this batch
         batch_source_parts: list[str] = []
         fallback_count = 0
 
-        # Read source lines for line-range fallback
+        # Read source lines for line-range extraction
         source_lines: list[str] = []
         if source_path.exists():
             try:
@@ -2671,8 +2678,9 @@ class ScribeWorker:
                     fallback_count += 1
 
         if fallback_count > 0:
+            label = "AST line-range" if has_ast else "line-range fallback"
             logger.info(
-                f"Worker {self.worker_id}: Used line-range fallback for "
+                f"Worker {self.worker_id}: Used {label} for "
                 f"{fallback_count}/{len(batch)} paragraphs in batch {batch_idx}"
             )
 
@@ -3451,6 +3459,23 @@ class ScribeWorker:
                 "calls": calls,
             })
 
+        # Override outline line ranges with ProLeap AST boundaries when available
+        ast_file = Path(source_path).with_suffix(Path(source_path).suffix + ".ast")
+        if ast_file.exists():
+            try:
+                ast_ranges = self._citadel.load_cobol_ast_ranges(ast_file)
+                outline = self._merge_outline_with_ast(outline, ast_ranges)
+                logger.info(
+                    f"Worker {self.worker_id}: Merged AST paragraph ranges for "
+                    f"{ticket.file_name} ({len(ast_ranges)} AST paragraphs)"
+                )
+            except Exception:
+                logger.warning(
+                    f"Worker {self.worker_id}: Failed to load AST ranges from "
+                    f"{ast_file}, using regex outline",
+                    exc_info=True,
+                )
+
         is_large = (
             total_lines >= self.config.citadel_guided_threshold_lines
             or paragraph_count >= self.config.citadel_guided_threshold_paragraphs
@@ -3527,6 +3552,63 @@ class ScribeWorker:
             ):
                 names.add(p.paragraph_name.lower())
         return names
+
+    @staticmethod
+    def _merge_outline_with_ast(
+        outline: list[dict],
+        ast_ranges: list[dict],
+    ) -> list[dict]:
+        """Merge ProLeap AST paragraph ranges into the regex-based outline.
+
+        For paragraphs present in both, AST line ranges override the regex
+        values.  Paragraphs found only in the AST are appended (regex
+        missed them).  The ``calls`` list from the original outline is
+        preserved since AST data does not contain call information.
+
+        Args:
+            outline: Regex-based outline entries with ``name``,
+                ``line_start``, ``line_end``, ``line_count``, ``calls``.
+            ast_ranges: AST entries with ``name``, ``line_start``,
+                ``line_end``, ``line_count``.
+
+        Returns:
+            Merged outline sorted by ``line_start``.
+        """
+        ast_lookup: dict[str, dict] = {
+            r["name"].upper(): r for r in ast_ranges
+        }
+
+        seen_names: set[str] = set()
+        merged: list[dict] = []
+
+        for entry in outline:
+            name_upper = entry["name"].upper()
+            seen_names.add(name_upper)
+            ast_info = ast_lookup.get(name_upper)
+            if ast_info:
+                merged.append({
+                    "name": entry["name"],
+                    "line_start": ast_info["line_start"],
+                    "line_end": ast_info["line_end"],
+                    "line_count": ast_info["line_count"],
+                    "calls": entry.get("calls", []),
+                })
+            else:
+                merged.append(entry)
+
+        # Add AST-only paragraphs that regex missed
+        for r in ast_ranges:
+            if r["name"].upper() not in seen_names:
+                merged.append({
+                    "name": r["name"],
+                    "line_start": r["line_start"],
+                    "line_end": r["line_end"],
+                    "line_count": r["line_count"],
+                    "calls": [],
+                })
+
+        merged.sort(key=lambda e: e.get("line_start", 0))
+        return merged
 
     async def _process_citadel_resume(
         self,
@@ -3757,6 +3839,7 @@ class ScribeWorker:
         self,
         outline: list[dict],
         source_path: Path,
+        use_line_ranges: bool = False,
     ) -> tuple[list[list[dict]], dict[str, str | None]]:
         """Calculate batches based on token budget AND paragraph limit.
 
@@ -3769,6 +3852,11 @@ class ScribeWorker:
         Args:
             outline: Citadel paragraph outline with names and line counts.
             source_path: Path to source file for fetching function bodies.
+            use_line_ranges: When True, skip ``get_function_bodies()`` and
+                estimate paragraph size from ``line_count * 50`` chars
+                (average COBOL line width including comments).  Returns an
+                empty ``all_bodies`` dict so callers fall through to
+                line-range extraction from raw source.
 
         Returns:
             Tuple of (batches, all_bodies) where batches is a list of paragraph
@@ -3792,30 +3880,39 @@ class ScribeWorker:
         logger.debug(
             f"Worker {self.worker_id}: Dynamic batching with {max_tokens} max tokens, "
             f"{available_chars} chars available for source code"
+            f"{' (AST line-range mode)' if use_line_ranges else ''}"
         )
 
         batches: list[list[dict]] = []
         current_batch: list[dict] = []
         current_chars = 0
 
-        # Get all paragraph names for body size estimation
-        all_names = [p.get("name", "") for p in outline if p.get("name")]
-
-        # Fetch all bodies upfront for size estimation (cached by Citadel)
-        try:
-            all_bodies = self._citadel.get_function_bodies(str(source_path), all_names)
-        except Exception as e:
-            logger.warning(f"Worker {self.worker_id}: Failed to get bodies for sizing: {e}")
-            all_bodies = {}
+        # When AST line ranges are available, skip Citadel body extraction —
+        # we'll use raw source lines directly.  Otherwise fetch bodies for
+        # accurate size estimation.
+        all_bodies: dict[str, str | None] = {}
+        if not use_line_ranges:
+            all_names = [p.get("name", "") for p in outline if p.get("name")]
+            try:
+                all_bodies = self._citadel.get_function_bodies(
+                    str(source_path), all_names,
+                )
+            except Exception as e:
+                logger.warning(
+                    f"Worker {self.worker_id}: Failed to get bodies for sizing: {e}"
+                )
 
         for para in outline:
             name = para.get("name", "")
             if not name:
                 continue
 
-            # Estimate size from raw body length
-            body = all_bodies.get(name, "")
-            para_chars = len(body) if body else para.get("line_count", 10) * 40
+            if use_line_ranges:
+                # Estimate ~50 chars per COBOL line (including comments)
+                para_chars = para.get("line_count", 10) * 50
+            else:
+                body = all_bodies.get(name, "")
+                para_chars = len(body) if body else para.get("line_count", 10) * 40
 
             # Add outline overhead per paragraph (~100 chars for the outline entry)
             para_chars += 100
@@ -3903,8 +4000,15 @@ class ScribeWorker:
         """
         assert self._citadel is not None
 
+        # When a ProLeap .ast file exists, use line-range sizing (skip
+        # get_function_bodies) — AST ranges are already merged into the outline.
+        ast_file = Path(source_path).with_suffix(Path(source_path).suffix + ".ast")
+        has_ast = ast_file.exists()
+
         # Use dynamic batching based on token budget instead of fixed paragraph count
-        batches, prefetched_bodies = self._calculate_dynamic_batches(outline, source_path)
+        batches, prefetched_bodies = self._calculate_dynamic_batches(
+            outline, source_path, use_line_ranges=has_ast,
+        )
         total_batches = len(batches)
 
         # ── Ticket-dispatch mode (multi-batch only) ──────────────────
@@ -4007,10 +4111,11 @@ class ScribeWorker:
                         batch_source_parts.append("")
                         fallback_count += 1
             if fallback_count > 0:
+                label = "AST line-range" if has_ast else "line-range fallback"
                 logger.info(
-                    f"Worker {self.worker_id}: Used line-range fallback "
+                    f"Worker {self.worker_id}: Used {label} "
                     f"for {fallback_count}/{len(batch)} paragraphs in batch "
-                    f"{batch_idx} (bodies not extractable)"
+                    f"{batch_idx}"
                 )
             batch_source = (
                 "\n".join(batch_source_parts)

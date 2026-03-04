@@ -2067,6 +2067,36 @@ class Citadel:
         para_asts = {name: str(tree) for name, tree in trees.items()}
         return para_asts, full_text
 
+    def load_cobol_ast_ranges(self, ast_path: str | Path) -> list[dict[str, Any]]:
+        """Return paragraph line ranges from a ``.ast`` JSON file.
+
+        Extracts name, line_start, line_end, and line_count for each
+        paragraph recorded by ProLeap.  Paragraphs missing a name or
+        valid line range are silently skipped.
+
+        Args:
+            ast_path: Path to the ``.ast`` JSON file.
+
+        Returns:
+            List of dicts with keys ``name``, ``line_start``,
+            ``line_end``, ``line_count``.
+        """
+        raw = Path(ast_path).read_text(encoding="utf-8")
+        data = json.loads(raw)
+        result: list[dict[str, Any]] = []
+        for para in data.get("paragraphs", []):
+            name = para.get("name", "")
+            ls = para.get("line_start", 0)
+            le = para.get("line_end", 0)
+            if name and ls and le:
+                result.append({
+                    "name": name,
+                    "line_start": ls,
+                    "line_end": le,
+                    "line_count": le - ls + 1,
+                })
+        return result
+
     def get_callouts_compact(self, path: str | Path) -> list[dict[str, Any]]:
         """
         Get compact callouts from a file or directory for Tier 1 review.
