@@ -4,15 +4,16 @@
     "file_name": "CCPAUERY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-04T03:32:23.262352",
+    "analyzed_at": "2026-03-04T04:44:23.364747",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the ERROR-LOG-RECORD data structure, used for logging errors and informational messages within an application. It includes fields for date, time, application name, program name, location, error level, subsystem, error codes, message, and event key.",
-    "business_context": "Used for application error logging and tracking.",
+    "summary": "This copybook defines the ERROR-LOG-RECORD structure, which is used for logging errors and informational messages within an application. It includes fields for date, time, application name, program name, location, error level, subsystem, error codes, message, and event key.",
+    "business_context": null,
     "program_type": "COPYBOOK",
     "citations": [
+      2,
       19,
       39
     ]
@@ -36,7 +37,7 @@
     {
       "paragraph_name": "ERROR-LOG-RECORD",
       "summary": null,
-      "purpose": "This data structure defines the format for error log records. It contains fields to capture the date and time of the error (ERR-DATE, ERR-TIME), the application and program where the error occurred (ERR-APPLICATION, ERR-PROGRAM), and the location within the program (ERR-LOCATION). It also includes fields to categorize the severity and source of the error, using ERR-LEVEL and ERR-SUBSYSTEM respectively. The ERR-LEVEL field uses 88-level condition names to define possible values such as 'L' for Log, 'I' for Info, 'W' for Warning, and 'C' for Critical. Similarly, ERR-SUBSYSTEM uses 88-level condition names to define the subsystem where the error originated, such as 'A' for Application, 'C' for CICS, 'I' for IMS, 'D' for DB2, 'M' for MQ, and 'F' for File. The structure also includes two error code fields (ERR-CODE-1, ERR-CODE-2), a message field (ERR-MESSAGE), and an event key field (ERR-EVENT-KEY) for identifying specific events. This record is intended to be used for consistent and structured error logging across different applications and subsystems.",
+      "purpose": "This data structure defines the format for error log records. It contains fields for capturing the date and time of the error (ERR-DATE, ERR-TIME), the application and program where the error occurred (ERR-APPLICATION, ERR-PROGRAM), the location within the program (ERR-LOCATION), the severity level of the error (ERR-LEVEL), and the subsystem where the error originated (ERR-SUBSYSTEM). It also includes fields for two error codes (ERR-CODE-1, ERR-CODE-2), a descriptive error message (ERR-MESSAGE), and an event key for tracking purposes (ERR-EVENT-KEY). The ERR-LEVEL field uses 88-level condition names to define specific error levels such as ERR-LOG, ERR-INFO, ERR-WARNING, and ERR-CRITICAL. Similarly, the ERR-SUBSYSTEM field uses 88-level condition names to define the subsystem where the error occurred, such as ERR-APP, ERR-CICS, ERR-IMS, ERR-DB2, ERR-MQ, and ERR-FILE. This structure serves as a template for creating and storing error information within the system.",
       "called_by": [],
       "calls": [],
       "citation": [

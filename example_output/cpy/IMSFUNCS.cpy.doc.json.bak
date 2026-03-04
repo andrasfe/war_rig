@@ -4,13 +4,13 @@
     "file_name": "IMSFUNCS.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-04T03:32:16.036892",
+    "analyzed_at": "2026-03-04T04:44:16.024875",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines a set of constants representing IMS function codes and a parameter count. These constants are used in IMS (Information Management System) database calls within COBOL programs.",
-    "business_context": "This copybook supports IMS database interactions within the application.",
+    "summary": "This copybook defines a set of constants representing IMS function codes and a parameter count. These constants are used when making calls to IMS databases.",
+    "business_context": null,
     "program_type": "COPYBOOK",
     "citations": [
       17,
@@ -36,7 +36,7 @@
     {
       "paragraph_name": "FUNC-CODES",
       "summary": null,
-      "purpose": "This data structure defines a series of constants representing IMS (Information Management System) function codes. These codes are used when making calls to the IMS database to specify the type of operation to be performed. Each function code is a 4-character alphanumeric field, and they include codes for operations such as 'GU' (Get Unique), 'GHU' (Get Hold Unique), 'GN' (Get Next), 'GHN' (Get Hold Next), 'GNP' (Get Next within Parent), 'GHNP' (Get Hold Next within Parent), 'REPL' (Replace), 'ISRT' (Insert), and 'DLET' (Delete). These codes are used to build the Application Program Specification Block (PSB) when interacting with IMS.",
+      "purpose": "This data structure defines a set of constants that represent different IMS (Information Management System) function codes. These codes are used when making calls to the IMS database to specify the type of operation to be performed. The function codes include 'GU' (Get Unique), 'GHU' (Get Hold Unique), 'GN' (Get Next), 'GHN' (Get Hold Next), 'GNP' (Get Next within Parent), 'GHNP' (Get Hold Next within Parent), 'REPL' (Replace), 'ISRT' (Insert), and 'DLET' (Delete). Each function code is a 4-character alphanumeric field with a predefined value. These values are used in the program logic to determine the specific IMS operation to be executed. The structure itself does not perform any processing but provides a central location for defining and accessing these IMS function codes.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -48,18 +48,28 @@
       "is_dead_code": true,
       "dead_code_reason": "Record layout 'FUNC-CODES' is never used by any program",
       "metadata": null
+    },
+    {
+      "paragraph_name": "PARMCOUNT",
+      "summary": null,
+      "purpose": "This data item defines a constant that represents the number of parameters expected by the IMS call. It is defined as a signed 5-digit integer in COMP-5 format, which is a binary representation. The value is initialized to +4, indicating that the IMS call expects four parameters. This constant is likely used to validate the number of parameters passed to the IMS call, ensuring that the call is correctly formatted. This validation helps prevent errors during IMS database interaction. The data item does not perform any processing but provides a central location for defining the expected parameter count for IMS calls.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        27,
+        27
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
     }
   ],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
-    {
-      "question": "Where is this copybook used?",
-      "context": "Cannot determine the programs that include this copybook from the copybook itself.",
-      "suggestion": "Search the codebase for programs that include this copybook."
-    }
-  ],
+  "open_questions": [],
   "resolved_questions": [],
   "dead_code": [
     {

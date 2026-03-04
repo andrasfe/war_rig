@@ -3,7 +3,6 @@
     "caller": "MAIN-PARA",
     "callee": "FRAUD-UPDATE",
     "inputs": [
-      "SQLCODE",
       "CARD-NUM",
       "AUTH-TS",
       "AUTH-TYPE",
@@ -38,6 +37,6 @@
       "WS-SQLCODE",
       "WS-SQLSTATE"
     ],
-    "purpose": "Updates an existing fraud authorization record in the database when an insert fails due to a duplicate key."
+    "purpose": "Updates an existing fraud authorization record in the AUTHFRDS table when a duplicate key error occurs during insert."
   }
 ]

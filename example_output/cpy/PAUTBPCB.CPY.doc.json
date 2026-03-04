@@ -4,14 +4,14 @@
     "file_name": "PAUTBPCB.CPY",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-04T03:32:15.607678",
+    "analyzed_at": "2026-03-04T04:44:09.462483",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the structure PAUTBPCB, which appears to be related to IMS PCB (Program Communication Block) information. It contains fields for database name, segment level, PCB status, processing options, segment name, key feedback length, number of sensitive segments, and key feedback area.",
-    "business_context": null,
-    "program_type": "COPYBOOK",
+    "summary": "This copybook defines the structure `PAUTBPCB`, which is likely used to interact with an IMS database PCB (Program Communication Block). It contains fields related to the database name, segment level, PCB status, processing options, segment name, key feedback, number of sensitive segments, and key feedback area. The copybook is intended for use in COBOL programs interacting with IMS.",
+    "business_context": "UNKNOWN",
+    "program_type": "SUBROUTINE",
     "citations": [
       17,
       26
@@ -36,7 +36,7 @@
     {
       "paragraph_name": "PAUTBPCB",
       "summary": null,
-      "purpose": "This copybook defines the data structure PAUTBPCB, which is likely used to hold information related to an IMS Program Communication Block (PCB). The structure includes fields such as PAUT-DBDNAME (database name), PAUT-SEG-LEVEL (segment level), PAUT-PCB-STATUS (PCB status), PAUT-PCB-PROCOPT (processing options), PAUT-SEG-NAME (segment name), PAUT-KEYFB-NAME (key feedback length), PAUT-NUM-SENSEGS (number of sensitive segments), and PAUT-KEYFB (key feedback area). The PAUT-KEYFB field is defined as PIC X(255), suggesting it's designed to hold a variable-length key feedback string. The copybook does not perform any processing logic itself; it simply defines the data structure for use by other programs. The intended use is for programs interacting with an IMS database to access PCB information.",
+      "purpose": "This copybook defines the data structure `PAUTBPCB` which represents a Program Communication Block (PCB) used in IMS (Information Management System) database interactions. The PCB provides a communication interface between a COBOL program and the IMS database. The structure contains fields that describe the database being accessed (`PAUT-DBDNAME`, line 18), the segment level (`PAUT-SEG-LEVEL`, line 19), the status of the PCB (`PAUT-PCB-STATUS`, line 20), and the processing options used (`PAUT-PCB-PROCOPT`, line 21). It also includes information about the segment name (`PAUT-SEG-NAME`, line 23), key feedback (`PAUT-KEYFB-NAME`, line 24 and `PAUT-KEYFB`, line 26), and the number of sensitive segments (`PAUT-NUM-SENSEGS`, line 25). This structure is likely used to pass information to and from IMS during database operations, allowing the COBOL program to access and manipulate data within the IMS database. The `FILLER` field (line 22) is used for alignment purposes and does not contain meaningful data. The `PAUT-KEYFB` field (line 26) is a 255-byte field that contains the key feedback information from the IMS database.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -46,37 +46,37 @@
       "outgoing_calls": [],
       "incoming_calls": [
         {
-          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
           "function": "PAUDBUNL",
           "line": 150,
           "call_type": "includes"
         },
         {
-          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
           "function": "PAUDBLOD",
           "line": 161,
           "call_type": "includes"
         },
         {
-          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
           "function": "DBUNLDGS",
           "line": 154,
           "call_type": "includes"
         },
         {
-          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
           "function": "PAUDBUNL",
           "line": 1,
           "call_type": "includes"
         },
         {
-          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
           "function": "PAUDBLOD",
           "line": 1,
           "call_type": "includes"
         },
         {
-          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
           "function": "DBUNLDGS",
           "line": 1,
           "call_type": "includes"
@@ -92,9 +92,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the specific purpose of each field within the PAUTBPCB structure in the context of IMS?",
-      "context": "The copybook defines the structure, but the exact meaning and usage of each field are unclear without additional context.",
-      "suggestion": "Review the IMS documentation or related programs that use this copybook to understand the field definitions."
+      "question": "What is the specific purpose of each field within the PAUTBPCB structure in the context of IMS database interaction?",
+      "context": "The copybook defines the structure, but the exact usage of each field within an IMS environment is unclear without further context or program code.",
+      "suggestion": "Review the COBOL programs that include this copybook to understand how each field is used during IMS database operations."
     }
   ],
   "resolved_questions": [],

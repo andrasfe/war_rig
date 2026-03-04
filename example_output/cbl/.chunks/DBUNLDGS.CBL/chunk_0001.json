@@ -7,12 +7,12 @@
       "file_name": "DBUNLDGS.CBL",
       "file_type": "COBOL",
       "analyzed_by": "WAR_RIG",
-      "analyzed_at": "2026-03-04T03:31:15.193951",
+      "analyzed_at": "2026-03-04T04:43:26.127910",
       "iteration_count": 1,
       "final_status": null
     },
     "purpose": {
-      "summary": "This COBOL program contains subroutines related to inserting a child segment into a GSAM database and closing files. It also includes an abend routine to terminate the program.",
+      "summary": "This COBOL program contains subroutines related to inserting a child segment into a GSAM database and closing files. It also includes an abend routine.",
       "business_context": null,
       "program_type": "SUBROUTINE",
       "citations": [
@@ -27,7 +27,7 @@
       {
         "program_name": "CBLTDLI",
         "call_type": "STATIC_CALL",
-        "purpose": "To insert a child segment into a GSAM database.",
+        "purpose": "Insert a child segment into the GSAM database.",
         "parameters": [
           "FUNC-ISRT",
           "PADFLPCB",
@@ -52,7 +52,7 @@
       {
         "paragraph_name": "3200-INSERT-CHILD-SEG-GSAM",
         "summary": null,
-        "purpose": "This paragraph is responsible for inserting a child segment into a GSAM database. It calls the CBLTDLI routine with the function code FUNC-ISRT, the PCB PADFLPCB, and the data to be inserted PENDING-AUTH-DETAILS. After the call, it checks the PCB status. If the status is not spaces, it displays error messages including the PCB status and the KFB area, and then performs 9999-ABEND to terminate the program. The purpose of this paragraph is to ensure that the child segment is successfully inserted into the GSAM database and to handle any errors that may occur during the insertion process.",
+        "purpose": "This paragraph is responsible for inserting a child segment into a GSAM database. It calls the CBLTDLI routine with the 'FUNC-ISRT' function code, the 'PADFLPCB' PCB, and the 'PENDING-AUTH-DETAILS' segment data. After the call, it checks the 'PADFL-PCB-STATUS' field. If the status is not spaces, it displays an error message including the PCB status and the key feedback area, and then calls the 9999-ABEND paragraph to terminate the program. The purpose of the GSAM insert is to add pending authorization details to the GSAM database.",
         "called_by": [],
         "calls": [
           "CBLTDLI",
@@ -71,7 +71,7 @@
       {
         "paragraph_name": "3200-EXIT",
         "summary": null,
-        "purpose": "This paragraph provides a standard exit point from the 3200-INSERT-CHILD-SEG-GSAM paragraph. It contains a simple EXIT statement to return control to the calling paragraph. It serves as a clean and consistent way to leave the 3200-INSERT-CHILD-SEG-GSAM paragraph after the IMS call and error checking have been performed. This ensures proper program flow and maintainability.",
+        "purpose": "This paragraph serves as the exit point for the 3200-INSERT-CHILD-SEG-GSAM paragraph. It simply contains an EXIT statement, which returns control to the calling paragraph. It does not perform any data manipulation or error handling.",
         "called_by": [],
         "calls": [],
         "citation": [
@@ -87,12 +87,12 @@
       {
         "paragraph_name": "4000-FILE-CLOSE",
         "summary": null,
-        "purpose": "This paragraph is responsible for closing the file. It displays a message 'CLOSING THE FILE' to the console. The paragraph's primary purpose is to ensure that the file is properly closed, releasing any resources held by the program. It does not take any input or produce any specific output other than the display message. It does not call any other paragraphs or programs. There is no error handling within this paragraph. The paragraph is a simple routine to close the file and provide a notification that the file is being closed.",
+        "purpose": "This paragraph is responsible for closing a file. It displays a message 'CLOSING THE FILE' to the console. The specific file being closed is not evident from the code snippet. It's likely that the actual file close operation is performed by a called subroutine or is handled elsewhere in the complete program. This paragraph only provides a display message.",
         "called_by": [],
         "calls": [],
         "citation": [
           21,
-          23
+          22
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -103,7 +103,7 @@
       {
         "paragraph_name": "4000-EXIT",
         "summary": null,
-        "purpose": "This paragraph provides a standard exit point from the 4000-FILE-CLOSE paragraph. It contains a simple EXIT statement to return control to the calling paragraph. It serves as a clean and consistent way to leave the 4000-FILE-CLOSE paragraph after the file closing process has been initiated. This ensures proper program flow and maintainability.",
+        "purpose": "This paragraph serves as the exit point for the 4000-FILE-CLOSE paragraph. It contains an EXIT statement, which returns control to the calling paragraph. It does not perform any data manipulation or error handling.",
         "called_by": [],
         "calls": [],
         "citation": [
@@ -119,7 +119,7 @@
       {
         "paragraph_name": "9999-ABEND",
         "summary": null,
-        "purpose": "This paragraph is the abend routine for the program. It displays the message 'DBUNLDGS ABENDING ...' to the console. It then sets the RETURN-CODE to 16, indicating an abnormal termination. Finally, it executes a GOBACK statement to terminate the program and return control to the operating system. The primary purpose of this paragraph is to handle unrecoverable errors and terminate the program gracefully with an appropriate return code. It does not take any input or produce any output other than the display message and the return code. It does not call any other paragraphs or programs. There is no specific error handling within this paragraph, as it is the error handling routine itself.",
+        "purpose": "This paragraph is the abend routine for the program. It displays the message 'DBUNLDGS ABENDING ...' to the console. It then sets the RETURN-CODE to 16, indicating an abnormal termination. Finally, it executes a GOBACK statement to terminate the program and return control to the operating system.",
         "called_by": [
           "3200-INSERT-CHILD-SEG-GSAM"
         ],
@@ -137,7 +137,7 @@
       {
         "paragraph_name": "9999-EXIT",
         "summary": null,
-        "purpose": "This paragraph provides a standard exit point from other paragraphs. It contains a simple EXIT statement to return control to the calling paragraph. It serves as a clean and consistent way to leave a paragraph. This ensures proper program flow and maintainability.",
+        "purpose": "This paragraph serves as the exit point for a paragraph, likely related to error handling or program termination. It contains an EXIT statement, which returns control to the calling paragraph. It does not perform any data manipulation or error handling.",
         "called_by": [],
         "calls": [],
         "citation": [
@@ -154,7 +154,7 @@
     "error_handling": [
       {
         "condition": "PADFL-PCB-STATUS NOT EQUAL TO SPACES",
-        "action": "DISPLAY error messages and PERFORM 9999-ABEND",
+        "action": "DISPLAY error messages and ABEND",
         "citation": [
           12,
           15
@@ -163,12 +163,18 @@
     ],
     "sql_operations": [],
     "cics_operations": [],
-    "open_questions": [],
+    "open_questions": [
+      {
+        "question": "What file is being closed in 4000-FILE-CLOSE?",
+        "context": "The code only displays a message, but doesn't show the actual close operation.",
+        "suggestion": "Examine the calling paragraphs or other parts of the program to identify the file being closed."
+      }
+    ],
     "resolved_questions": [],
     "dead_code": [],
     "call_semantics": [],
     "flow_diagram": null,
     "copybooks_not_found": []
   },
-  "saved_at": "2026-03-03T20:31:15.194967"
+  "saved_at": "2026-03-03T21:43:26.128972"
 }

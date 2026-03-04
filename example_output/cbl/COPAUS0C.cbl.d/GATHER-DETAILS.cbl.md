@@ -1,19 +1,22 @@
 ```cobol
-      *- PENDING AUTHORIZATION DETAILS SEGMENT - CHILD
-       01 PENDING-AUTH-DETAILS.
-       COPY CIPAUDTY.
-
-
-       COPY DFHAID.
-       COPY DFHBMSCA.
-
-       LINKAGE SECTION.
-       01  DFHCOMMAREA.
-         05  LK-COMMAREA                           PIC X(01)
-             OCCURS 1 TO 32767 TIMES DEPENDING ON EIBCALEN.
-
-       PROCEDURE DIVISION.
+       GATHER-DETAILS.
       *****************************************************************
-       MAIN-PARA.
+
+           MOVE -1       TO ACCTIDL OF COPAU0AI
+
+           MOVE 0        TO CDEMO-CPVS-PAGE-NUM
+
+           IF WS-ACCT-ID NOT = LOW-VALUES
+              PERFORM GATHER-ACCOUNT-DETAILS
+
+              PERFORM INITIALIZE-AUTH-DATA
+
+              IF FOUND-PAUT-SMRY-SEG
+                 PERFORM PROCESS-PAGE-FORWARD
+              END-IF
+           END-IF
+           .
+
+
       *****************************************************************
 ```

@@ -2,24 +2,24 @@
 
 **File**: `jcl/CBPAUP0J.jcl`
 **Type**: FileType.JCL
-**Analyzed**: 2026-03-04 03:33:46.562955
+**Analyzed**: 2026-03-04 04:45:52.103162
 
 ## Purpose
 
-This JCL job executes an IMS program (DFSRRC00) to delete expired authorizations using a BMP (Batch Message Processing) region. It specifies the program CBPAUP0C and PSB PSBPAUTB for the IMS execution.
+This JCL executes an IMS program (DFSRRC00) to delete expired authorizations using a BMP (Batch Message Processing) region. It specifies the program CBPAUP0C and PSB (Program Specification Block) named PSBPAUTB.
 
-**Business Context**: This job likely serves to maintain security and compliance by removing outdated access permissions within the IMS system.
+**Business Context**: This job likely supports security and compliance by removing outdated access permissions.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| SYSIN | IOType.PARAMETER | Contains input parameters for the IMS program, including parameters related to date and time. The example shows '00,00001,00001,Y'. |
-| IMS.SDFSRESL | IOType.FILE_SEQUENTIAL | IMS RESLIB library containing the IMS runtime environment. |
+| IMS.SDFSRESL | IOType.FILE_SEQUENTIAL | IMS RESLIB library containing IMS modules. |
+| XXXXXXXX.PROD.LOADLIB | IOType.FILE_SEQUENTIAL | Application load library containing the CBPAUP0C program. |
 | IMS.PROCLIB | IOType.FILE_SEQUENTIAL | IMS procedure library. |
-| IMS.PSBLIB | IOType.FILE_SEQUENTIAL | IMS PSB library containing program specification blocks. |
-| IMS.DBDLIB | IOType.FILE_SEQUENTIAL | IMS DBD library containing database description blocks. |
-| XXXXXXXX.PROD.LOADLIB | IOType.FILE_SEQUENTIAL | Application load library (likely contains CBPAUP0C). |
+| IMS.PSBLIB | IOType.FILE_SEQUENTIAL | IMS PSB library containing PSBPAUTB. |
+| IMS.DBDLIB | IOType.FILE_SEQUENTIAL | IMS DBD library. |
+| SYSIN | IOType.FILE_SEQUENTIAL | Input control statements for the IMS program. Contains parameters '00,00001,00001,Y'. |
 
 ## Outputs
 
@@ -28,24 +28,28 @@ This JCL job executes an IMS program (DFSRRC00) to delete expired authorizations
 | SYSOUX | IOType.REPORT | System output. |
 | SYSOUT | IOType.REPORT | System output. |
 | SYSABOUT | IOType.REPORT | System output for ABEND information. |
-| ABENDAID | IOType.REPORT | System output for ABEND aid. |
+| ABENDAID | IOType.REPORT | System output for ABEND aid information. |
 | SYSPRINT | IOType.REPORT | System print output. |
-| SYSUDUMP | IOType.REPORT | System dump output. |
+| SYSUDUMP | IOType.REPORT | System user dump output. |
 | IMSERR | IOType.REPORT | IMS error output. |
-| IEFRDER | IOType.OTHER | Dummy dataset for logging. |
-| IMSLOGR | IOType.OTHER | Dummy dataset for IMS logging. |
+| IEFRDER | IOType.OTHER | Dummy dataset for IEFRDER. |
+| IMSLOGR | IOType.OTHER | Dummy dataset for IMSLOGR. |
+
+## Called Programs
+
+| Program | Call Type | Purpose |
+|---------|-----------|---------|
+| DFSRRC00 | CallType.STATIC_CALL | IMS control region program, used to execute a BMP application. |
 
 ## Paragraphs/Procedures
 
 ### STEP01
-This step executes the IMS program DFSRRC00, which is a control region program for IMS. The PARM parameter specifies that it will run as a BMP (Batch Message Processing) region, executing the program CBPAUP0C using the PSB PSBPAUTB. The STEPLIB DD statements define the libraries needed to execute the IMS program, including the IMS RESLIB and a production load library. DFSRESLB points to the IMS RESLIB. PROCLIB points to the IMS procedure library. DFSSEL points to the IMS RESLIB. IMS DD statements define the PSBLIB and DBDLIB. SYSIN provides input parameters to the CBPAUP0C program. The remaining DD statements define various output datasets for system messages, dumps, and logging. IEFRDER and IMSLOGR are DUMMY datasets, indicating that logging is suppressed.
+This step executes the IMS program DFSRRC00 in a BMP region to delete expired authorizations. It specifies the program to be executed (CBPAUP0C) and the PSB to be used (PSBPAUTB) via the PARM parameter. The STEPLIB DD statements define the libraries containing the IMS modules and the application load library. DFSRESLB defines the IMS RESLIB. PROCLIB defines the IMS procedure library. The SYSIN DD statement provides input control statements to the IMS program. Several SYSOUT DD statements define the output datasets for various system messages and dumps. IEFRDER and IMSLOGR are defined as DUMMY datasets, possibly indicating that logging or recovery is not enabled for this execution.
 
 ## Open Questions
 
-- ? What is the exact purpose and format of the SYSIN input?
-  - Context: The provided SYSIN data '00,00001,00001,Y' is not self-explanatory without further documentation or the CBPAUP0C source code.
-- ? What specific error conditions are handled by the IMS program CBPAUP0C?
-  - Context: The JCL does not provide details on the error handling within the CBPAUP0C program itself.
+- ? What is the exact purpose of the parameters passed in the SYSIN DD statement?
+  - Context: The meaning of '00,00001,00001,Y' is unclear without further information about the CBPAUP0C program.
 
 ## Sequence Diagram
 

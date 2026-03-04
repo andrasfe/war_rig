@@ -1,80 +1,83 @@
 ```cobol
-             88 DATABASE-UNAVAILABLE         VALUE 'BA'.                        
-             88 PSB-SCHEDULED-MORE-THAN-ONCE VALUE 'TC'.                        
-             88 COULD-NOT-SCHEDULE-PSB       VALUE 'TE'.                        
-             88 RETRY-CONDITION              VALUE 'BA', 'FH', 'TE'.            
-          05 WS-IMS-PSB-SCHD-FLG             PIC X(1).                          
-             88  IMS-PSB-SCHD                VALUE 'Y'.                         
-             88  IMS-PSB-NOT-SCHD            VALUE 'N'.                         
-                                                                                
-                                                                                
-       01  WS-SWITCHES.                                                         
-           05 WS-XREF-READ-FLG           PIC X(1).                              
-              88 ACCT-NFOUND-XREF                  VALUE 'N'.                   
-              88 ACCT-FOUND-XREF                   VALUE 'Y'.                   
-           05 WS-ACCT-MASTER-READ-FLG    PIC X(1).                              
-              88 FOUND-ACCT-IN-MSTR                VALUE 'Y'.                   
-              88 NFOUND-ACCT-IN-MSTR               VALUE 'N'.                   
-           05 WS-CUST-MASTER-READ-FLG    PIC X(1).                              
-              88 FOUND-CUST-IN-MSTR                VALUE 'Y'.                   
-              88 NFOUND-CUST-IN-MSTR               VALUE 'N'.                   
-           05 WS-PAUT-SMRY-SEG-FLG       PIC X(1).                              
-              88 FOUND-PAUT-SMRY-SEG               VALUE 'Y'.                   
-              88 NFOUND-PAUT-SMRY-SEG              VALUE 'N'.                   
-           05 WS-ERR-FLG                 PIC X(1)  VALUE 'N'.                   
-              88 ERR-FLG-ON                        VALUE 'Y'.                   
-              88 ERR-FLG-OFF                       VALUE 'N'.                   
-           05 WS-AUTHS-EOF               PIC X(1)  VALUE 'N'.                   
-              88 AUTHS-EOF                         VALUE 'Y'.                   
-              88 AUTHS-NOT-EOF                     VALUE 'N'.                   
-           05 WS-SEND-ERASE-FLG          PIC X(1)  VALUE 'Y'.                   
-              88 SEND-ERASE-YES                    VALUE 'Y'.                   
-              88 SEND-ERASE-NO                     VALUE 'N'.                   
-                                                                                
-       COPY COCOM01Y.                                                           
-          05 CDEMO-CPVS-INFO.                                                   
-             10 CDEMO-CPVS-PAU-SEL-FLG     PIC X(01).                           
-             10 CDEMO-CPVS-PAU-SELECTED    PIC X(08).                           
-             10 CDEMO-CPVS-PAUKEY-PREV-PG  PIC X(08) OCCURS 20 TIMES.           
-             10 CDEMO-CPVS-PAUKEY-LAST     PIC X(08).                           
-             10 CDEMO-CPVS-PAGE-NUM        PIC S9(04) COMP.                     
-             10 CDEMO-CPVS-NEXT-PAGE-FLG   PIC X(01) VALUE 'N'.                 
-                88 NEXT-PAGE-YES                     VALUE 'Y'.                 
-                88 NEXT-PAGE-NO                      VALUE 'N'.                 
-             10 CDEMO-CPVS-AUTH-KEYS       PIC X(08) OCCURS 5 TIMES.            
-                                                                                
-      *BMS Copybook
-       COPY COPAU00.
+       PROCESS-ENTER-KEY.
+      *****************************************************************
 
-      *Screen Titles
-       COPY COTTL01Y.
+           IF ACCTIDI OF COPAU0AI = SPACES OR LOW-VALUES
+              MOVE LOW-VALUES                 TO WS-ACCT-ID
 
-      *Current Date
-       COPY CSDAT01Y.
+              MOVE 'Y'                        TO WS-ERR-FLG
+              MOVE
+              'Please enter Acct Id...'       TO WS-MESSAGE
 
-      *Common Messages
-       COPY CSMSG01Y.
+              MOVE -1                         TO ACCTIDL OF COPAU0AI
+           ELSE
+              IF ACCTIDI OF COPAU0AI IS NOT NUMERIC
+                MOVE LOW-VALUES               TO WS-ACCT-ID
 
-      *Abend Variables
-       COPY CSMSG02Y.
+                MOVE 'Y'                      TO WS-ERR-FLG
+                MOVE
+                'Acct Id must be Numeric ...' TO WS-MESSAGE
 
-      *ACCOUNT RECORD LAYOUT
-       COPY CVACT01Y.
+                MOVE -1                       TO ACCTIDL OF COPAU0AI
 
-      *CUSTOMER RECORD LAYOUT
-       COPY CVACT02Y.
+              ELSE
+                MOVE ACCTIDI OF COPAU0AI      TO WS-ACCT-ID
+                                                 CDEMO-ACCT-ID
+                EVALUATE TRUE
+                  WHEN SEL0001I OF COPAU0AI NOT = SPACES AND LOW-VALUES
+                   MOVE SEL0001I OF COPAU0AI TO CDEMO-CPVS-PAU-SEL-FLG
+                   MOVE CDEMO-CPVS-AUTH-KEYS(1)
+                                             TO CDEMO-CPVS-PAU-SELECTED
+                  WHEN SEL0002I OF COPAU0AI NOT = SPACES AND LOW-VALUES
+                   MOVE SEL0002I OF COPAU0AI TO CDEMO-CPVS-PAU-SEL-FLG
+                   MOVE CDEMO-CPVS-AUTH-KEYS(2)
+                                             TO CDEMO-CPVS-PAU-SELECTED
+                  WHEN SEL0003I OF COPAU0AI NOT = SPACES AND LOW-VALUES
+                   MOVE SEL0003I OF COPAU0AI TO CDEMO-CPVS-PAU-SEL-FLG
+                   MOVE CDEMO-CPVS-AUTH-KEYS(3)
+                                             TO CDEMO-CPVS-PAU-SELECTED
+                  WHEN SEL0004I OF COPAU0AI NOT = SPACES AND LOW-VALUES
+                   MOVE SEL0004I OF COPAU0AI TO CDEMO-CPVS-PAU-SEL-FLG
+                   MOVE CDEMO-CPVS-AUTH-KEYS(4)
+                                             TO CDEMO-CPVS-PAU-SELECTED
+                  WHEN SEL0005I OF COPAU0AI NOT = SPACES AND LOW-VALUES
+                   MOVE SEL0005I OF COPAU0AI TO CDEMO-CPVS-PAU-SEL-FLG
+                   MOVE CDEMO-CPVS-AUTH-KEYS(5)
+                                             TO CDEMO-CPVS-PAU-SELECTED
+                  WHEN OTHER
+                   MOVE SPACES   TO CDEMO-CPVS-PAU-SEL-FLG
+                   MOVE SPACES   TO CDEMO-CPVS-PAU-SELECTED
+                END-EVALUATE
+                IF (CDEMO-CPVS-PAU-SEL-FLG NOT = SPACES AND LOW-VALUES)
+                   AND
+                   (CDEMO-CPVS-PAU-SELECTED NOT = SPACES AND LOW-VALUES)
+                   EVALUATE CDEMO-CPVS-PAU-SEL-FLG
+                     WHEN 'S'
+                     WHEN 's'
+                        MOVE WS-PGM-AUTH-DTL  TO CDEMO-TO-PROGRAM
+                        MOVE WS-CICS-TRANID   TO CDEMO-FROM-TRANID
+                        MOVE WS-PGM-AUTH-SMRY TO CDEMO-FROM-PROGRAM
+                        MOVE 0                TO CDEMO-PGM-CONTEXT
+                        SET CDEMO-PGM-ENTER   TO TRUE
 
-      *CARD XREF LAYOUT
-       COPY CVACT03Y.
+                        EXEC CICS
+                            XCTL PROGRAM(CDEMO-TO-PROGRAM)
+                            COMMAREA(CARDDEMO-COMMAREA)
+                        END-EXEC
+                     WHEN OTHER
+                       MOVE
+                       'Invalid selection. Valid value is S'
+                                              TO WS-MESSAGE
+                       MOVE -1                TO ACCTIDL OF COPAU0AI
+                   END-EVALUATE
+                END-IF
 
-      *CUSTOMER LAYOUT
-       COPY CVCUS01Y.
+              END-IF
+           END-IF
 
-      *----------------------------------------------------------------*
-      *  IMS SEGMENT LAYOUT
-      *----------------------------------------------------------------*
+           PERFORM GATHER-DETAILS
+           .
 
-      *- PENDING AUTHORIZATION SUMMARY SEGMENT - ROOT
-       01 PENDING-AUTH-SUMMARY.
-       COPY CIPAUSMY.
+
+      *****************************************************************
 ```

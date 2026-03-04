@@ -4,39 +4,22 @@
     "file_name": "jcl/LOADPADB.JCL",
     "file_type": "JCL",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-04T03:33:04.620980",
+    "analyzed_at": "2026-03-04T04:45:13.845013",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This JCL job executes an IMS program (DFSRRC00) to load the PAUTDB database. It specifies the program to execute, the PSB and parameters, and defines the input and output datasets required for the load process.",
-    "business_context": "Loading and initializing the PAUTDB database for IMS application usage.",
+    "summary": "This JCL job executes an IMS program DFSRRC00 to load the PAUTDB database using the BMP (Batch Message Processing) region. It specifies the program, PSB, and necessary datasets for the IMS environment.",
+    "business_context": "This job is likely part of a larger process for database maintenance or initial data loading within an IMS environment.",
     "program_type": "BATCH",
     "citations": [
       26,
       27,
-      36
+      33,
+      34
     ]
   },
   "inputs": [
-    {
-      "name": "AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "Input file containing root segment data for the PAUTDB database.",
-      "copybook": null,
-      "citation": [
-        36
-      ]
-    },
-    {
-      "name": "AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO",
-      "io_type": "FILE_SEQUENTIAL",
-      "description": "Input file containing child segment data for the PAUTDB database.",
-      "copybook": null,
-      "citation": [
-        38
-      ]
-    },
     {
       "name": "OEMA.IMS.IMSP.SDFSRESL",
       "io_type": "FILE_SEQUENTIAL",
@@ -50,7 +33,7 @@
     {
       "name": "OEMA.IMS.IMSP.SDFSRESL.V151",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS RESLIB library, version 151.",
+      "description": "IMS RESLIB library version 151.",
       "copybook": null,
       "citation": [
         29
@@ -81,6 +64,24 @@
       "copybook": null,
       "citation": [
         34
+      ]
+    },
+    {
+      "name": "AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Input file for the PAUTDB root segment.",
+      "copybook": null,
+      "citation": [
+        36
+      ]
+    },
+    {
+      "name": "AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Input file for the PAUTDB child segment.",
+      "copybook": null,
+      "citation": [
+        38
       ]
     },
     {
@@ -126,7 +127,7 @@
     {
       "program_name": "DFSRRC00",
       "call_type": "STATIC_CALL",
-      "purpose": "Executes the IMS program to load the PAUTDB database.",
+      "purpose": "Executes the IMS program specified in the PARM parameter.",
       "parameters": [
         "BMP",
         "PAUDBLOD",
@@ -142,22 +143,7 @@
   },
   "business_rules": [],
   "data_flow": {
-    "reads_from": [
-      {
-        "source": "AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO",
-        "fields_used": [],
-        "citation": [
-          36
-        ]
-      },
-      {
-        "source": "AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO",
-        "fields_used": [],
-        "citation": [
-          38
-        ]
-      }
-    ],
+    "reads_from": [],
     "writes_to": [],
     "transforms": []
   },
@@ -166,80 +152,14 @@
     {
       "paragraph_name": "LOADPADB",
       "summary": null,
-      "purpose": "This JCL defines the job LOADPADB, which is responsible for loading the PAUTDB database within an IMS environment. The job card specifies job name 'M2APP', CLASS 'A', MSGCLASS 'H', MSGLEVEL (1,1), REGION '0M', NOTIFY user ID, and TIME limit of 1440 minutes. It sets up the environment for executing an IMS program to perform the database load. The job leverages the DFSRRC00 program with specific parameters to initiate the load process. It defines the necessary datasets for the IMS environment, including RESLIB, PSBLIB, and DBDLIB, as well as the input files containing the data to be loaded into the PAUTDB database. The job also defines output datasets for system messages, dumps, and IMS errors.",
+      "purpose": "This JCL defines a job named LOADPADB to execute an IMS batch program. The job specifies job characteristics such as class, message class, region size, user ID for notification, and time limit. It then executes the IMS program DFSRRC00, which is a control region program, in BMP mode to load the PAUTDB database. The PARM parameter passes the BMP region type, the program name PAUDBLOD, and the PSB name PSBPAUTB to the IMS control region. The JCL defines the necessary datasets for the IMS environment, including RESLIB, PSBLIB, DBDLIB, and the input files for the PAUTDB database. It also defines dummy datasets for IMS logging and error reporting datasets for SYSPRINT, SYSUDUMP and IMSERR.",
       "called_by": [],
-      "calls": [
-        "STEP01"
-      ],
+      "calls": [],
       "citation": [
         1,
         51
       ],
       "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "STEP01",
-      "summary": null,
-      "purpose": "This step executes the IMS program DFSRRC00, which is responsible for loading the PAUTDB database. The PARM parameter specifies 'BMP' to indicate a Batch Message Processing program, 'PAUDBLOD' which is likely the program name or a control parameter, and 'PSBPAUTB' which is the PSB (Program Specification Block) name. The STEPLIB DD statements define the libraries containing the executable code for the IMS program, including the IMS RESLIB and an application load library. The DFSRESLB DD statement specifies the IMS RESLIB. The IMS DD statements define the PSBLIB and DBDLIB, which contain the program and database definitions. INFILE1 and INFILE2 DD statements define the input datasets containing the root and child segment data for the PAUTDB database. The DFSVSAMP DD statement defines the VSAM parameters. The SYSPRINT, SYSUDUMP, and IMSERR DD statements define the output datasets for system messages, dumps, and IMS errors.",
-      "called_by": [
-        "LOADPADB"
-      ],
-      "calls": [],
-      "citation": [
-        26,
-        51
-      ],
-      "outgoing_calls": [
-        {
-          "target": "DFSRRC00",
-          "call_type": "executes",
-          "line": 26
-        },
-        {
-          "target": "OEMA.IMS.IMSP.SDFSRESL",
-          "call_type": "references",
-          "line": 28
-        },
-        {
-          "target": "OEMA.IMS.IMSP.SDFSRESL.V151",
-          "call_type": "references",
-          "line": 29
-        },
-        {
-          "target": "AWS.M2.CARDDEMO.LOADLIB",
-          "call_type": "references",
-          "line": 30
-        },
-        {
-          "target": "OEMA.IMS.IMSP.SDFSRESL",
-          "call_type": "references",
-          "line": 31
-        },
-        {
-          "target": "OEM.IMS.IMSP.PSBLIB",
-          "call_type": "references",
-          "line": 33
-        },
-        {
-          "target": "OEM.IMS.IMSP.DBDLIB",
-          "call_type": "references",
-          "line": 34
-        },
-        {
-          "target": "AWS.M2.CARDDEMO.PAUTDB.ROOT.FILEO",
-          "call_type": "references",
-          "line": 36
-        },
-        {
-          "target": "AWS.M2.CARDDEMO.PAUTDB.CHILD.FILEO",
-          "call_type": "references",
-          "line": 38
-        }
-      ],
       "incoming_calls": [],
       "is_dead_code": false,
       "dead_code_reason": null,

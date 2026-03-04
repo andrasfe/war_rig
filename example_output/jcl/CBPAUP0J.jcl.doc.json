@@ -1,16 +1,16 @@
 {
   "header": {
     "program_id": "CBPAUP0J",
-    "file_name": "jcl/CBPAUP0J.jcl",
+    "file_name": "CBPAUP0J.jcl",
     "file_type": "JCL",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-04T03:33:46.562955",
+    "analyzed_at": "2026-03-04T04:45:52.103162",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This JCL job executes an IMS program (DFSRRC00) to delete expired authorizations using a BMP (Batch Message Processing) region. It specifies the program CBPAUP0C and PSB PSBPAUTB for the IMS execution.",
-    "business_context": "This job likely serves to maintain security and compliance by removing outdated access permissions within the IMS system.",
+    "summary": "This JCL executes an IMS program (DFSRRC00) to delete expired authorizations using a BMP (Batch Message Processing) region. It specifies the program CBPAUP0C and PSB (Program Specification Block) named PSBPAUTB.",
+    "business_context": "This job likely supports security and compliance by removing outdated access permissions.",
     "program_type": "BATCH",
     "citations": [
       21,
@@ -20,24 +20,23 @@
   },
   "inputs": [
     {
-      "name": "SYSIN",
-      "io_type": "PARAMETER",
-      "description": "Contains input parameters for the IMS program, including parameters related to date and time. The example shows '00,00001,00001,Y'.",
-      "copybook": null,
-      "citation": [
-        36,
-        37
-      ]
-    },
-    {
       "name": "IMS.SDFSRESL",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS RESLIB library containing the IMS runtime environment.",
+      "description": "IMS RESLIB library containing IMS modules.",
       "copybook": null,
       "citation": [
         26,
         28,
         31
+      ]
+    },
+    {
+      "name": "XXXXXXXX.PROD.LOADLIB",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Application load library containing the CBPAUP0C program.",
+      "copybook": null,
+      "citation": [
+        27
       ]
     },
     {
@@ -52,7 +51,7 @@
     {
       "name": "IMS.PSBLIB",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS PSB library containing program specification blocks.",
+      "description": "IMS PSB library containing PSBPAUTB.",
       "copybook": null,
       "citation": [
         33
@@ -61,19 +60,20 @@
     {
       "name": "IMS.DBDLIB",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS DBD library containing database description blocks.",
+      "description": "IMS DBD library.",
       "copybook": null,
       "citation": [
         34
       ]
     },
     {
-      "name": "XXXXXXXX.PROD.LOADLIB",
+      "name": "SYSIN",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "Application load library (likely contains CBPAUP0C).",
+      "description": "Input control statements for the IMS program. Contains parameters '00,00001,00001,Y'.",
       "copybook": null,
       "citation": [
-        27
+        36,
+        37
       ]
     }
   ],
@@ -108,7 +108,7 @@
     {
       "name": "ABENDAID",
       "io_type": "REPORT",
-      "description": "System output for ABEND aid.",
+      "description": "System output for ABEND aid information.",
       "copybook": null,
       "citation": [
         42
@@ -126,7 +126,7 @@
     {
       "name": "SYSUDUMP",
       "io_type": "REPORT",
-      "description": "System dump output.",
+      "description": "System user dump output.",
       "copybook": null,
       "citation": [
         46
@@ -144,7 +144,7 @@
     {
       "name": "IEFRDER",
       "io_type": "OTHER",
-      "description": "Dummy dataset for logging.",
+      "description": "Dummy dataset for IEFRDER.",
       "copybook": null,
       "citation": [
         43
@@ -153,14 +153,26 @@
     {
       "name": "IMSLOGR",
       "io_type": "OTHER",
-      "description": "Dummy dataset for IMS logging.",
+      "description": "Dummy dataset for IMSLOGR.",
       "copybook": null,
       "citation": [
         44
       ]
     }
   ],
-  "called_programs": [],
+  "called_programs": [
+    {
+      "program_name": "DFSRRC00",
+      "call_type": "STATIC_CALL",
+      "purpose": "IMS control region program, used to execute a BMP application.",
+      "parameters": [
+        "BMP",
+        "CBPAUP0C",
+        "PSBPAUTB"
+      ],
+      "citation": 24
+    }
+  ],
   "calling_context": {
     "called_by": [],
     "entry_points": [],
@@ -177,7 +189,7 @@
     {
       "paragraph_name": "STEP01",
       "summary": null,
-      "purpose": "This step executes the IMS program DFSRRC00, which is a control region program for IMS. The PARM parameter specifies that it will run as a BMP (Batch Message Processing) region, executing the program CBPAUP0C using the PSB PSBPAUTB. The STEPLIB DD statements define the libraries needed to execute the IMS program, including the IMS RESLIB and a production load library. DFSRESLB points to the IMS RESLIB. PROCLIB points to the IMS procedure library. DFSSEL points to the IMS RESLIB. IMS DD statements define the PSBLIB and DBDLIB. SYSIN provides input parameters to the CBPAUP0C program. The remaining DD statements define various output datasets for system messages, dumps, and logging. IEFRDER and IMSLOGR are DUMMY datasets, indicating that logging is suppressed.",
+      "purpose": "This step executes the IMS program DFSRRC00 in a BMP region to delete expired authorizations. It specifies the program to be executed (CBPAUP0C) and the PSB to be used (PSBPAUTB) via the PARM parameter. The STEPLIB DD statements define the libraries containing the IMS modules and the application load library. DFSRESLB defines the IMS RESLIB. PROCLIB defines the IMS procedure library. The SYSIN DD statement provides input control statements to the IMS program. Several SYSOUT DD statements define the output datasets for various system messages and dumps. IEFRDER and IMSLOGR are defined as DUMMY datasets, possibly indicating that logging or recovery is not enabled for this execution.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -237,14 +249,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the exact purpose and format of the SYSIN input?",
-      "context": "The provided SYSIN data '00,00001,00001,Y' is not self-explanatory without further documentation or the CBPAUP0C source code.",
-      "suggestion": "Examine the CBPAUP0C source code or related documentation to understand the SYSIN format and meaning."
-    },
-    {
-      "question": "What specific error conditions are handled by the IMS program CBPAUP0C?",
-      "context": "The JCL does not provide details on the error handling within the CBPAUP0C program itself.",
-      "suggestion": "Analyze the CBPAUP0C source code to identify specific error conditions and their handling."
+      "question": "What is the exact purpose of the parameters passed in the SYSIN DD statement?",
+      "context": "The meaning of '00,00001,00001,Y' is unclear without further information about the CBPAUP0C program.",
+      "suggestion": "Review the documentation or source code for CBPAUP0C."
     }
   ],
   "resolved_questions": [],

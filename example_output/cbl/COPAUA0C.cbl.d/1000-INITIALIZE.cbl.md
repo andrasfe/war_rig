@@ -1,21 +1,20 @@
 ```cobol
-       1000-INITIALIZE.                                                         
-      * ------------------------------------------------------------- *         
-      *                                                                         
-           EXEC CICS RETRIEVE                                                   
-             INTO(MQTM)                                                         
-             NOHANDLE                                                           
-           END-EXEC                                                             
-           IF EIBRESP = DFHRESP(NORMAL)                                         
-              MOVE MQTM-QNAME              TO WS-REQUEST-QNAME                  
-              MOVE MQTM-TRIGGERDATA        TO WS-TRIGGER-DATA                   
-           END-IF                                                               
+      * You may obtain a copy of the License at
+      *
+      *    http://www.apache.org/licenses/LICENSE-2.0
+      *
+      * Unless required by applicable law or agreed to in writing,
+      * software distributed under the License is distributed on an
+      * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+      * either express or implied. See the License for the specific
+      * language governing permissions and limitations under the License
+      ******************************************************************
+       IDENTIFICATION DIVISION.
+       PROGRAM-ID. COPAUA0C.                                                    
+       AUTHOR.     SOUMA GHOSH.                                                 
                                                                                 
-           MOVE 5000                       TO WS-WAIT-INTERVAL                  
+       ENVIRONMENT DIVISION.                                                    
+       CONFIGURATION SECTION.                                                   
                                                                                 
-           PERFORM 1100-OPEN-REQUEST-QUEUE THRU 1100-EXIT                       
-                                                                                
-           PERFORM 3100-READ-REQUEST-MQ    THRU 3100-EXIT                       
-           .                                                                    
-      *                                                                         
+       DATA DIVISION.                                                           
 ```

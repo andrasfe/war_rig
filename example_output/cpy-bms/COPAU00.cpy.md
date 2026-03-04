@@ -2,13 +2,13 @@
 
 **File**: `cpy-bms/COPAU00.cpy`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-03-04 03:32:52.083257
+**Analyzed**: 2026-03-04 04:45:03.054289
 
 ## Purpose
 
-This copybook defines the data structures COPAU0AI and COPAU0AO, which are used for screen input and output related to transaction processing. It includes fields for transaction names, titles, dates, amounts, selection options, and error messages.
+This copybook defines data structures used for BMS map definitions, specifically for screen input and output fields related to transaction processing and date display. It includes definitions for field lengths, attributes, and input/output areas.
 
-**Business Context**: This copybook is likely used in online CICS applications for user interface definition and data transfer between the application and the screen.
+**Business Context**: Defines the layout for user interface elements in a CICS environment, facilitating data exchange between the application and the user.
 
 ## Paragraphs/Procedures
 
@@ -16,7 +16,7 @@ This copybook defines the data structures COPAU0AI and COPAU0AO, which are used 
 *Record layout 'COPAU0AI' is never used by any program*
 
 ### COPAU0AO
-This paragraph defines the data structure COPAU0AO, which redefines COPAU0AI. It provides an alternative view of the data, breaking down some of the fields into smaller components. Specifically, it redefines TRNNAMEF into TRNNAMEC, TRNNAMEP, TRNNAMEH, TRNNAMEV, and TRNNAMEO, and TITLE01F into TITLE01C, TITLE01P, TITLE01H, TITLE01V, and TITLE01O. This redefinition allows the program to access the same data in different formats, potentially for display or processing purposes. The 'C', 'P', 'H', and 'V' suffixes might represent different attributes or parts of the original fields.
+This paragraph redefines the COPAU0AI data structure as COPAU0AO, providing an alternate view of the same memory area. This redefinition allows accessing parts of the original fields using different names and formats. Specifically, it redefines TRNNAMEL, TRNNAMEF, and TRNNAMEI into TRNNAMEC, TRNNAMEP, TRNNAMEH, TRNNAMEV, and TRNNAMEO, and similarly for TITLE01L, TITLE01F, and TITLE01I into TITLE01C, TITLE01P, TITLE01H, TITLE01V, and TITLE01O, and CURDATEL and CURDATEF into CURDATEC. This is likely done to facilitate easier manipulation or display of the data on a BMS screen. No processing or logic is performed within this paragraph; it only provides a redefinition of the data structure. It allows different parts of the program to view the same data in different ways.
 
 ### COPAU00
 [Citadel] Paragraph identified by static analysis
@@ -31,5 +31,5 @@ The following artifacts were identified as dead code by static analysis:
 
 ## Open Questions
 
-- ? What is the exact purpose of each field suffix (C, P, H, V, O) in the redefined data structure COPAU0AO?
-  - Context: The code provides no explicit comments or documentation explaining the meaning of these suffixes.
+- ? What is the exact purpose of each field within the COPAU0AI and COPAU0AO structures?
+  - Context: The copybook only defines the structure, not the specific usage of each field.

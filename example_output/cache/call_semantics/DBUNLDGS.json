@@ -7,59 +7,60 @@
       "CURRENT-DATE",
       "CURRENT-YYDDD"
     ],
-    "purpose": "Initializes program by accepting current date and displaying startup messages."
+    "purpose": "Initializes the program by accepting the current date and displaying startup messages."
   },
   {
     "caller": "MAIN-PARA",
     "callee": "2000-FIND-NEXT-AUTH-SUMMARY",
-    "inputs": [
-      "WS-END-OF-ROOT-SEG"
-    ],
+    "inputs": [],
     "outputs": [
       "WS-NO-SUMRY-READ",
       "WS-AUTH-SMRY-PROC-CNT",
       "OPFIL1-REC",
       "ROOT-SEG-KEY",
       "CHILD-SEG-REC",
-      "WS-END-OF-AUTHDB",
-      "WS-END-OF-ROOT-SEG"
+      "WS-END-OF-ROOT-SEG",
+      "WS-END-OF-AUTHDB"
     ],
-    "purpose": "Reads the next authorization summary from IMS, updates counters, and processes associated details if account ID is numeric."
+    "purpose": "Reads the next authorization summary from IMS, updates counters, and processes associated details if the account ID is numeric."
   },
   {
     "caller": "MAIN-PARA",
     "callee": "4000-FILE-CLOSE",
     "inputs": [],
     "outputs": [],
-    "purpose": "Displays a message indicating the file closing process."
+    "purpose": "Displays a message indicating the file is being closed before program termination."
   },
   {
     "caller": "2000-FIND-NEXT-AUTH-SUMMARY",
     "callee": "3100-INSERT-PARENT-SEG-GSAM",
-    "inputs": [],
+    "inputs": [
+      "PENDING-AUTH-SUMMARY"
+    ],
     "outputs": [],
-    "purpose": "Inserts the parent authorization segment into GSAM file using IMS call and abends on failure."
+    "purpose": "Inserts the parent authorization summary segment into the GSAM file and abends if the insertion fails."
   },
   {
     "caller": "2000-FIND-NEXT-AUTH-SUMMARY",
     "callee": "3000-FIND-NEXT-AUTH-DTL",
     "inputs": [
-      "WS-END-OF-CHILD-SEG"
+      "ROOT-SEG-KEY"
     ],
     "outputs": [
-      "WS-END-OF-CHILD-SEG",
       "WS-NO-SUMRY-READ",
       "WS-AUTH-SMRY-PROC-CNT",
-      "CHILD-SEG-REC"
+      "CHILD-SEG-REC",
+      "WS-END-OF-CHILD-SEG",
+      "WS-MORE-AUTHS-FLAG"
     ],
-    "purpose": "Finds the next authorization detail segment for the current parent and inserts it into GSAM, setting end-of-child flag when no more exist."
+    "purpose": "Retrieves the next authorization detail segment for the current parent and inserts it into GSAM, setting end-of-child flag when no more exist."
   },
   {
     "caller": "2000-FIND-NEXT-AUTH-SUMMARY",
     "callee": "9999-ABEND",
     "inputs": [],
     "outputs": [],
-    "purpose": "Terminates the program with return code 16 when an IMS database call fails unexpectedly."
+    "purpose": "Terminates the program with a return code of 16 when an IMS GN call for auth summary fails."
   },
   {
     "caller": "3000-FIND-NEXT-AUTH-DTL",
@@ -68,30 +69,29 @@
       "PENDING-AUTH-DETAILS"
     ],
     "outputs": [
-      "PADFL-PCB-STATUS",
-      "PADFL-KEYFB"
+      "CHILD-SEG-REC"
     ],
-    "purpose": "Inserts the current authorization detail record into the GSAM output file using IMS DL/I call."
+    "purpose": "Writes the current authorization detail record to the GSAM output file after retrieving it from IMS."
   },
   {
     "caller": "3000-FIND-NEXT-AUTH-DTL",
     "callee": "9999-ABEND",
     "inputs": [],
     "outputs": [],
-    "purpose": "Terminates the program with return code 16 when a GNP call to retrieve the next child segment fails."
+    "purpose": "Terminates the program with a return code of 16 when an IMS GNP call for auth detail fails."
   },
   {
     "caller": "3100-INSERT-PARENT-SEG-GSAM",
     "callee": "9999-ABEND",
     "inputs": [],
     "outputs": [],
-    "purpose": "Terminates the program with return code 16 when an ISRT call to insert a parent segment into GSAM fails."
+    "purpose": "Terminates the program with a return code of 16 when inserting a parent segment into GSAM fails."
   },
   {
     "caller": "3200-INSERT-CHILD-SEG-GSAM",
     "callee": "9999-ABEND",
     "inputs": [],
     "outputs": [],
-    "purpose": "Terminates the program with return code 16 when an ISRT call to insert a child segment into GSAM fails."
+    "purpose": "Terminates the program with a return code of 16 when inserting a child segment into GSAM fails."
   }
 ]

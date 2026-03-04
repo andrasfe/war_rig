@@ -4,13 +4,13 @@
     "file_name": "COPAU01.bms",
     "file_type": "BMS",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-04T03:31:38.275332",
+    "analyzed_at": "2026-03-04T04:43:47.847360",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This BMS map defines the screen layout for displaying pending authorization details in the CardDemo application. It includes fields for card number, authorization details, merchant information, and function key options.",
-    "business_context": "This screen is used to view and manage pending card authorizations, likely as part of a fraud detection or transaction monitoring system.",
+    "summary": "This BMS map defines the screen layout for displaying pending authorization details in the CardDemo application. It includes fields for transaction details, card information, authorization responses, merchant details, and function key options.",
+    "business_context": "This screen is used to view authorization details within a card management or transaction processing system.",
     "program_type": "ONLINE_CICS",
     "citations": [
       2,
@@ -37,7 +37,7 @@
     {
       "paragraph_name": "COPAU01",
       "summary": null,
-      "purpose": "This DFHMSD macro defines the map set COPAU01, which encapsulates the screen definition. It specifies various attributes for the map set, including control options (ALARM, FREEKB), extended attributes (EXTATT=YES), the programming language (LANG=COBOL), input/output mode (MODE=INOUT), storage allocation (STORAGE=AUTO), terminal I/O area prefix (TIOAPFX=YES), and the map type based on the system parameter &&SYSPARM (TYPE=&&SYSPARM). The CTRL parameter enables the alarm and releases the keyboard after input. EXTATT enables extended attributes for color and highlighting. LANG specifies COBOL as the programming language. MODE specifies that the map can be used for both input and output. STORAGE specifies automatic storage allocation. TIOAPFX includes a prefix in the terminal I/O area. TYPE determines the type of map generated based on the system parameter.",
+      "purpose": "This DFHMSD macro defines the map set COPAU01, which represents the entire BMS map. It specifies various attributes for the map set, including control options (ALARM, FREEKB), extended attributes (EXTATT=YES), the programming language (LANG=COBOL), input/output mode (MODE=INOUT), storage allocation (STORAGE=AUTO), terminal I/O area prefix (TIOAPFX=YES), and the map type (TYPE=&&SYSPARM). The CTRL parameter enables the alarm and keyboard freeing functions. EXTATT enables extended attributes. LANG specifies COBOL as the programming language. MODE specifies that the map can be used for both input and output. STORAGE specifies automatic storage allocation. TIOAPFX specifies that a terminal I/O area prefix should be used. TYPE specifies the map type based on the system parameter. This mapset contains the map COPAU1A.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -53,12 +53,12 @@
     {
       "paragraph_name": "COPAU1A",
       "summary": null,
-      "purpose": "This DFHMDI macro defines the map COPAU1A, which represents the screen layout within the COPAU01 mapset. It sets the screen size to 24 lines by 80 columns (SIZE=(24,80)) and positions the map at the top-left corner of the screen (COLUMN=1, LINE=1). This macro acts as a container for the individual fields defined by DFHMDF macros, arranging them on the screen. It defines the overall dimensions and placement of the screen elements that make up the 'View Authorization Details' display.",
+      "purpose": "This DFHMDI macro defines the map COPAU1A, which represents a single screen layout within the COPAU01 mapset. It specifies the screen's column and line position (COLUMN=1, LINE=1) and its size (SIZE=(24,80)), defining a standard 24x80 screen. The map contains various DFHMDF macros that define the individual fields on the screen, including labels, input fields, and output fields. These fields are positioned using the POS parameter, and their lengths are defined using the LENGTH parameter. Attributes such as color (COLOR), intensity (ATTRB), and initial values (INITIAL) are also specified for each field. The map includes fields for displaying transaction details (TRNNAME), current date (CURDATE), program name (PGMNAME), current time (CURTIME), card number (CARDNUM), authorization date (AUTHDT), authorization time (AUTHTM), authorization response (AUTHRSP), response reason (AUTHRSN), authorization code (AUTHCD), amount (AUTHAMT), POS entry mode (POSEMD), authorization source (AUTHSRC), MCC code (MCCCD), card expiration date (CRDEXP), authorization type (AUTHTYP), transaction ID (TRNID), match status (AUTHMTC), fraud status (AUTHFRD), merchant details (MERNAME, MERID, MERCITY, MERST, MERZIP), and an error message area (ERRMSG).",
       "called_by": [],
       "calls": [],
       "citation": [
         26,
-        28
+        293
       ],
       "outgoing_calls": [],
       "incoming_calls": [],

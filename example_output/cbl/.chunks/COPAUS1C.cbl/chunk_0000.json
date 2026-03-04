@@ -7,18 +7,18 @@
       "file_name": "cbl/COPAUS1C.cbl",
       "file_type": "COBOL",
       "analyzed_by": "WAR_RIG",
-      "analyzed_at": "2026-03-04T03:22:49.004664",
+      "analyzed_at": "2026-03-04T04:39:26.412530",
       "iteration_count": 1,
       "final_status": null
     },
     "purpose": {
-      "summary": "COPAUS1C is a CICS program that displays authorization details and allows users to mark authorizations as fraudulent. It retrieves authorization information based on account ID and authorization key, presents the data on a screen, and provides options to navigate through authorizations or report fraud.",
+      "summary": "The COPAUS1C program is a CICS transaction that displays authorization details and allows users to mark authorizations as fraudulent. It receives input from a calling program via the COMMAREA, displays an authorization view screen (COPAU1A), and allows the user to navigate through authorizations and mark them as fraudulent, linking to another program (WS-PGM-AUTH-FRAUD) to update the fraud details.",
       "business_context": "This program is used to view and manage authorization details, specifically to identify and report fraudulent authorizations.",
       "program_type": "ONLINE_CICS",
       "citations": [
-        1,
         34,
-        87
+        48,
+        94
       ]
     },
     "inputs": [
@@ -36,8 +36,8 @@
       {
         "name": "COPAU1AI",
         "io_type": "CICS_MAP",
-        "description": "Input map received from the CICS terminal, containing user input such as function keys.",
-        "copybook": null,
+        "description": "Input map structure received from the CICS terminal, containing user input from the COPAU1A screen.",
+        "copybook": "COPAU01",
         "citation": [
           248
         ]
@@ -47,11 +47,20 @@
       {
         "name": "COPAU1AO",
         "io_type": "CICS_MAP",
-        "description": "Output map sent to the CICS terminal, displaying authorization details and messages.",
-        "copybook": null,
+        "description": "Output map structure sent to the CICS terminal, containing authorization details and header information for the COPAU1A screen.",
+        "copybook": "COPAU01",
         "citation": [
           229,
           237
+        ]
+      },
+      {
+        "name": "WS-FRAUD-DATA",
+        "io_type": "CICS_COMMAREA",
+        "description": "Communication area passed to the WS-PGM-AUTH-FRAUD program, containing fraud details.",
+        "copybook": null,
+        "citation": [
+          96
         ]
       }
     ],
@@ -59,7 +68,7 @@
       {
         "program_name": "CDEMO-TO-PROGRAM",
         "call_type": "CICS_XCTL",
-        "purpose": "Transfers control back to the calling program (CDEMO) after processing is complete or when the user presses PF3.",
+        "purpose": "Transfers control back to the calling program (CDEMO) after processing or when the user presses PF3.",
         "parameters": [
           "CARDDEMO-COMMAREA"
         ],
@@ -68,7 +77,7 @@
       {
         "program_name": "WS-PGM-AUTH-FRAUD",
         "call_type": "CICS_LINK",
-        "purpose": "Links to a program responsible for updating fraud details.",
+        "purpose": "Links to a program that handles fraud reporting and updates.",
         "parameters": [
           "WS-FRAUD-DATA"
         ],
@@ -84,7 +93,7 @@
       {
         "rule_id": "BR001",
         "description": "If the account ID is numeric and an authorization key is selected, read the authorization record.",
-        "logic_summary": "Checks if CDEMO-ACCT-ID is numeric and CDEMO-CPVD-PAU-SELECTED is not spaces or low-values before reading the authorization record.",
+        "logic_summary": "Checks if CDEMO-ACCT-ID is numeric and CDEMO-CPVD-PAU-SELECTED is not spaces or low-values. If both conditions are true, READ-AUTH-RECORD is performed.",
         "conditions": [
           "CDEMO-ACCT-ID IS NUMERIC",
           "CDEMO-CPVD-PAU-SELECTED NOT = SPACES AND LOW-VALUES"
@@ -96,44 +105,41 @@
       },
       {
         "rule_id": "BR002",
-        "description": "Determine the action to take based on whether the authorization is already marked as fraudulent.",
-        "logic_summary": "Checks if PA-FRAUD-CONFIRMED is set. If true, remove the fraud flag; otherwise, set the fraud flag.",
+        "description": "If the authorization is already marked as fraudulent, remove the fraud flag; otherwise, set the fraud flag.",
+        "logic_summary": "Checks if PA-FRAUD-CONFIRMED is set. If true, sets PA-FRAUD-REMOVED to true and WS-REMOVE-FRAUD to true. Otherwise, sets PA-FRAUD-CONFIRMED to true and WS-REPORT-FRAUD to true.",
         "conditions": [
           "PA-FRAUD-CONFIRMED"
         ],
         "citation": [
-          82
+          82,
+          86
         ]
       },
       {
         "rule_id": "BR003",
-        "description": "Determine the response code description based on PA-AUTH-RESP-CODE.",
-        "logic_summary": "If PA-AUTH-RESP-CODE is '00', the authorization is approved, otherwise it is declined.",
+        "description": "Determine authorization response status based on PA-AUTH-RESP-CODE.",
+        "logic_summary": "If PA-AUTH-RESP-CODE is '00', the authorization is approved, and AUTHRSPO is set to 'A' with a green color. Otherwise, the authorization is declined, and AUTHRSPO is set to 'D' with a red color.",
         "conditions": [
           "PA-AUTH-RESP-CODE = '00'"
         ],
         "citation": [
-          157
+          157,
+          161
         ]
       }
     ],
     "data_flow": {
       "reads_from": [
         {
-          "source": "CARDDEMO-COMMAREA",
+          "source": "DFHCOMMAREA",
           "fields_used": [
             "CDEMO-ACCT-ID",
-            "CDEMO-CPVD-PAU-SELECTED",
-            "CDEMO-TO-PROGRAM",
-            "CDEMO-FROM-TRANID",
-            "CDEMO-FROM-PROGRAM"
+            "CDEMO-CPVD-PAU-SELECTED"
           ],
           "citation": [
             17,
             59,
-            60,
-            208,
-            209
+            60
           ]
         },
         {
@@ -141,6 +147,13 @@
           "fields_used": [],
           "citation": [
             248
+          ]
+        },
+        {
+          "source": "PENDING-AUTH-DETAILS",
+          "fields_used": [],
+          "citation": [
+            90
           ]
         }
       ],
@@ -153,7 +166,6 @@
             "AUTHTMO",
             "AUTHAMTO",
             "AUTHRSPO",
-            "AUTHRSPC",
             "AUTHRSNO",
             "AUTHCDO",
             "POSEMDO",
@@ -168,14 +180,7 @@
             "MERIDO",
             "MERCITYO",
             "MERSTO",
-            "MERZIPO",
-            "ERRMSGO",
-            "TITLE01O",
-            "TITLE02O",
-            "TRNNAMEO",
-            "PGMNAMEO",
-            "CURDATEO",
-            "CURTIMEO"
+            "MERZIPO"
           ],
           "citation": [
             141,
@@ -195,18 +200,25 @@
             187,
             188,
             191,
+            195,
             198,
             199,
             200,
             201,
-            202,
-            222,
-            257,
-            258,
-            259,
-            260,
-            266,
-            272
+            202
+          ]
+        },
+        {
+          "destination": "DFHCOMMAREA",
+          "fields_written": [
+            "CDEMO-FROM-TRANID",
+            "CDEMO-FROM-PROGRAM",
+            "CDEMO-PGM-CONTEXT"
+          ],
+          "citation": [
+            208,
+            209,
+            210
           ]
         }
       ],
@@ -214,7 +226,7 @@
         {
           "input_field": "PA-AUTH-ORIG-DATE",
           "output_field": "AUTHDTO",
-          "transformation_description": "Formats the authorization date from PA-AUTH-ORIG-DATE into AUTHDTO.",
+          "transformation_description": "Formats the authorization date from YYMMDD to MM/DD/YY.",
           "citation": [
             143,
             144,
@@ -226,63 +238,12 @@
         {
           "input_field": "PA-AUTH-ORIG-TIME",
           "output_field": "AUTHTMO",
-          "transformation_description": "Formats the authorization time from PA-AUTH-ORIG-TIME into AUTHTMO.",
+          "transformation_description": "Formats the authorization time from HHMMSS to HH:MM:SS.",
           "citation": [
             149,
             150,
             151,
             152
-          ]
-        },
-        {
-          "input_field": "PA-APPROVED-AMT",
-          "output_field": "AUTHAMTO",
-          "transformation_description": "Moves the approved amount from PA-APPROVED-AMT to AUTHAMTO.",
-          "citation": [
-            154,
-            155
-          ]
-        },
-        {
-          "input_field": "PA-AUTH-RESP-CODE",
-          "output_field": "AUTHRSPO",
-          "transformation_description": "Sets the authorization response based on PA-AUTH-RESP-CODE. 'A' for approved ('00'), 'D' for declined.",
-          "citation": [
-            157,
-            161
-          ]
-        },
-        {
-          "input_field": "PA-CARD-EXPIRY-DATE",
-          "output_field": "CRDEXPO",
-          "transformation_description": "Formats the card expiry date from PA-CARD-EXPIRY-DATE into CRDEXPO.",
-          "citation": [
-            182,
-            183,
-            184
-          ]
-        },
-        {
-          "input_field": "WS-CURDATE-DATA",
-          "output_field": "CURDATEO",
-          "transformation_description": "Formats the current date into CURDATEO.",
-          "citation": [
-            255,
-            262,
-            263,
-            264,
-            266
-          ]
-        },
-        {
-          "input_field": "WS-CURTIME-DATA",
-          "output_field": "CURTIMEO",
-          "transformation_description": "Formats the current time into CURTIMEO.",
-          "citation": [
-            268,
-            269,
-            270,
-            272
           ]
         }
       ]
@@ -290,22 +251,22 @@
     "copybooks_used": [
       {
         "copybook_name": "CARDDEMO-COMMAREA",
-        "purpose": "Defines the communication area passed between CICS programs.",
+        "purpose": "Defines the communication area passed between CICS programs in the CARDDEMO application.",
         "location": "LINKAGE",
         "citation": 12
       },
       {
         "copybook_name": "COPAU01",
-        "purpose": "Defines the input and output maps for the COPAU1A screen.",
-        "location": "WORKING_STORAGE",
-        "citation": 228
+        "purpose": "Defines the map structure for the COPAU1A screen.",
+        "location": "FILE_SECTION",
+        "citation": 227
       }
     ],
     "paragraphs": [
       {
         "paragraph_name": "COPAUS1C",
         "summary": null,
-        "purpose": "This is the program-id paragraph, it does not contain any executable code.",
+        "purpose": "This is the program ID. It does not contain any executable code.",
         "called_by": [],
         "calls": [],
         "citation": [
@@ -321,7 +282,7 @@
       {
         "paragraph_name": "MAIN-PARA",
         "summary": null,
-        "purpose": "This is the main control paragraph for the COPAUS1C program. It determines the program's flow based on whether it's the first time the program is entered (EIBCALEN = 0) or a subsequent re-entry. If it's the first entry, it initializes the CARDDEMO-COMMAREA, sets the CDEMO-TO-PROGRAM field, and performs RETURN-TO-PREV-SCREEN to return to the calling program. Otherwise, it receives the COMMAREA, checks for re-entry, and calls other paragraphs based on the EIBAID (AID key pressed). Depending on the AID key, it performs PROCESS-ENTER-KEY, RETURN-TO-PREV-SCREEN, MARK-AUTH-FRAUD, or PROCESS-PF8-KEY, followed by SEND-AUTHVIEW-SCREEN to display the updated screen. Finally, it returns control to CICS with the updated COMMAREA.",
+        "purpose": "This paragraph serves as the main control flow for the COPAUS1C program. It first initializes the error flag and message. It checks if the COMMAREA is empty (EIBCALEN = 0), indicating a first-time call, and initializes the CARDDEMO-COMMAREA, moves the program ID to CDEMO-TO-PROGRAM, and performs RETURN-TO-PREV-SCREEN to return to the calling program. Otherwise, it moves the DFHCOMMAREA to CARDDEMO-COMMAREA and checks if the program is re-entered. If not, it sets the re-enter flag and performs PROCESS-ENTER-KEY and SEND-AUTHVIEW-SCREEN. If it is a re-entry, it receives the screen input, evaluates the EIBAID (AID key pressed), and performs different actions based on the key pressed, such as processing the ENTER key, PF3 (returning to the previous screen), PF5 (marking authorization as fraud), or PF8 (processing the next authorization). Finally, it returns control to CICS with the updated COMMAREA.",
         "called_by": [],
         "calls": [
           "RETURN-TO-PREV-SCREEN",
@@ -331,7 +292,9 @@
           "PROCESS-ENTER-KEY",
           "RETURN-TO-PREV-SCREEN",
           "MARK-AUTH-FRAUD",
+          "SEND-AUTHVIEW-SCREEN",
           "PROCESS-PF8-KEY",
+          "SEND-AUTHVIEW-SCREEN",
           "PROCESS-ENTER-KEY",
           "SEND-AUTHVIEW-SCREEN"
         ],
@@ -348,7 +311,7 @@
       {
         "paragraph_name": "PROCESS-ENTER-KEY",
         "summary": null,
-        "purpose": "This paragraph processes the ENTER key press. It first initializes the COPAU1AO map. It then checks if the account ID (CDEMO-ACCT-ID) is numeric and an authorization key (CDEMO-CPVD-PAU-SELECTED) has been selected. If both conditions are met, it moves the account ID and authorization key to working storage variables and performs READ-AUTH-RECORD to retrieve the authorization details. If IMS-PSB-SCHD is set, it performs TAKE-SYNCPOINT. If either condition is not met, it sets the ERR-FLG-ON flag. Finally, it performs POPULATE-AUTH-DETAILS to populate the output map with the retrieved authorization details.",
+        "purpose": "This paragraph processes the ENTER key press. It initializes the COPAU1AO map. If the account ID (CDEMO-ACCT-ID) is numeric and an authorization key (CDEMO-CPVD-PAU-SELECTED) is selected, it moves the account ID and authorization key to working storage variables (WS-ACCT-ID, WS-AUTH-KEY) and performs READ-AUTH-RECORD to retrieve the authorization details. If IMS-PSB-SCHD is set, it performs TAKE-SYNCPOINT. If the account ID is not numeric or no authorization key is selected, it sets the error flag. Finally, it performs POPULATE-AUTH-DETAILS to populate the screen fields with the authorization details.",
         "called_by": [
           "MAIN-PARA"
         ],
@@ -370,7 +333,7 @@
       {
         "paragraph_name": "MARK-AUTH-FRAUD",
         "summary": null,
-        "purpose": "This paragraph handles the process of marking an authorization as fraudulent or removing the fraud flag. It moves the account ID and authorization key from the COMMAREA to working storage. It then calls READ-AUTH-RECORD to retrieve the authorization record. Based on the PA-FRAUD-CONFIRMED flag, it either sets the PA-FRAUD-REMOVED flag or the PA-FRAUD-CONFIRMED flag. It then moves data to WS-FRAUD-DATA and links to the WS-PGM-AUTH-FRAUD program to update the fraud details. If the link is successful and the update is successful, it performs UPDATE-AUTH-DETAILS. Otherwise, it moves an error message to WS-MESSAGE and performs ROLL-BACK. If the link fails, it performs ROLL-BACK. Finally, it moves the authorization key back to the COMMAREA and performs POPULATE-AUTH-DETAILS to refresh the screen.",
+        "purpose": "This paragraph handles the process of marking an authorization as fraudulent. It moves the account ID and authorization key to working storage. It then performs READ-AUTH-RECORD to retrieve the authorization details. If the authorization is already marked as fraud confirmed, it removes the fraud flag; otherwise, it sets the fraud flag. It moves the pending authorization details and account/customer IDs to the WS-FRAUD-DATA area. It then links to the WS-PGM-AUTH-FRAUD program to update the fraud details. If the link is successful and the fraud update is successful, it performs UPDATE-AUTH-DETAILS. Otherwise, it moves an error message and performs ROLL-BACK. If the link fails, it performs ROLL-BACK. Finally, it moves the authorization key to CDEMO-CPVD-PAU-SELECTED and performs POPULATE-AUTH-DETAILS to refresh the screen.",
         "called_by": [
           "MAIN-PARA"
         ],
@@ -394,7 +357,7 @@
       {
         "paragraph_name": "PROCESS-PF8-KEY",
         "summary": null,
-        "purpose": "This paragraph handles the processing when the PF8 key is pressed, which is intended to display the next authorization record. It moves the account ID and authorization key from the COMMAREA to working storage. It then performs READ-AUTH-RECORD to read the current authorization record and READ-NEXT-AUTH-RECORD to read the next authorization record. If IMS-PSB-SCHD is set, it performs TAKE-SYNCPOINT. If AUTHS-EOF is set, it indicates that the end of the authorizations has been reached, sets SEND-ERASE-NO to TRUE, and moves a message to WS-MESSAGE. Otherwise, it moves the authorization key to the COMMAREA and performs POPULATE-AUTH-DETAILS to display the next authorization record.",
+        "purpose": "This paragraph handles the processing when the PF8 key is pressed, which is intended to display the next authorization record. It moves the account ID and authorization key from the COMMAREA to working storage. It then performs READ-AUTH-RECORD to read the current authorization record and READ-NEXT-AUTH-RECORD to read the next authorization record. If IMS-PSB-SCHD is set, it performs TAKE-SYNCPOINT. If the end of file (AUTHS-EOF) is reached, it sets SEND-ERASE-NO to TRUE and moves a message indicating that the last authorization has been reached to WS-MESSAGE. Otherwise, it moves the authorization key to CDEMO-CPVD-PAU-SELECTED and performs POPULATE-AUTH-DETAILS to display the next authorization details.",
         "called_by": [
           "MAIN-PARA"
         ],
@@ -417,12 +380,11 @@
       {
         "paragraph_name": "POPULATE-AUTH-DETAILS",
         "summary": null,
-        "purpose": "This paragraph populates the output map (COPAU1AO) with the authorization details retrieved from the authorization record. It moves various fields from the PA- prefixed fields to the corresponding fields in the output map, such as card number, authorization date and time, approved amount, response code, processing code, POS entry mode, message source, merchant category code, card expiry date, authorization type, transaction ID, match status, fraud information, and merchant details. It also handles the formatting of the authorization date and time. It uses SEARCH ALL to find the decline reason description based on the PA-AUTH-RESP-REASON. If ERR-FLG-OFF is set, it populates the map fields; otherwise, it skips the population.",
+        "purpose": "This paragraph populates the authorization details on the screen (COPAU1AO) using data from the PA- (Pending Authorization) fields. It moves the card number, authorization date (formatted), authorization time (formatted), and approved amount to the corresponding output fields. It determines the authorization response status ('A' for Approved, 'D' for Declined) based on the PA-AUTH-RESP-CODE and sets the corresponding color. It searches the WS-DECLINE-REASON-TAB to find the description for the decline reason code. It moves other authorization details like processing code, POS entry mode, message source, merchant category code, card expiry date, authorization type, transaction ID, match status, fraud information, and merchant information to the output map. This paragraph is responsible for formatting and displaying the authorization information on the screen.",
         "called_by": [
           "PROCESS-ENTER-KEY",
           "MARK-AUTH-FRAUD",
-          "PROCESS-PF8-KEY",
-          "READ-AUTH-RECORD"
+          "PROCESS-PF8-KEY"
         ],
         "calls": [],
         "citation": [
@@ -438,7 +400,7 @@
       {
         "paragraph_name": "RETURN-TO-PREV-SCREEN",
         "summary": null,
-        "purpose": "This paragraph prepares to return to the calling program (CDEMO). It moves the current transaction ID (WS-CICS-TRANID) and program ID (WS-PGM-AUTH-DTL) to the CARDDEMO-COMMAREA. It sets CDEMO-PGM-CONTEXT to ZEROS and CDEMO-PGM-ENTER to TRUE. Finally, it performs a CICS XCTL to transfer control to the program specified in CDEMO-TO-PROGRAM, passing the CARDDEMO-COMMAREA.",
+        "purpose": "This paragraph prepares to return to the calling program (CDEMO). It moves the current transaction ID (WS-CICS-TRANID) and program ID (WS-PGM-AUTH-DTL) to the CARDDEMO-COMMAREA. It sets the program context to ZEROS and sets the CDEMO-PGM-ENTER flag to TRUE. It then performs a CICS XCTL to transfer control to the program specified in CDEMO-TO-PROGRAM, passing the CARDDEMO-COMMAREA.",
         "called_by": [
           "MAIN-PARA"
         ],
@@ -458,7 +420,7 @@
       {
         "paragraph_name": "SEND-AUTHVIEW-SCREEN",
         "summary": null,
-        "purpose": "This paragraph sends the COPAU1A screen to the terminal. It first performs POPULATE-HEADER-INFO to populate the header fields of the map. It then moves any message in WS-MESSAGE to the ERRMSGO field of the map. It sets the CARDNUML field to -1. Based on the SEND-ERASE-YES flag, it either sends the map with the ERASE option (clearing the screen) or without the ERASE option. The CURSOR option is used to position the cursor on the screen.",
+        "purpose": "This paragraph sends the COPAU1A screen to the terminal. It first performs POPULATE-HEADER-INFO to populate the header information on the screen. It moves the message in WS-MESSAGE to the error message field (ERRMSGO) on the screen. It moves -1 to CARDNUML to set the cursor position. If SEND-ERASE-YES is set, it sends the map with the ERASE option, clearing the screen before sending the map. Otherwise, it sends the map without the ERASE option, overlaying the new data on the existing screen.",
         "called_by": [
           "MAIN-PARA"
         ],
@@ -478,7 +440,7 @@
       {
         "paragraph_name": "RECEIVE-AUTHVIEW-SCREEN",
         "summary": null,
-        "purpose": "This paragraph receives data from the COPAU1A screen. It executes a CICS RECEIVE command to receive the map data into COPAU1AI. NOHANDLE is specified to suppress exception handling.",
+        "purpose": "This paragraph receives data from the COPAU1A screen. It executes a CICS RECEIVE command to receive the data from the map into the COPAU1AI structure. NOHANDLE is specified to suppress exception handling.",
         "called_by": [
           "MAIN-PARA"
         ],
@@ -496,7 +458,7 @@
       {
         "paragraph_name": "POPULATE-HEADER-INFO",
         "summary": null,
-        "purpose": "This paragraph populates the header information in the output map (COPAU1AO). It moves the current date to WS-CURDATE-DATA using the FUNCTION CURRENT-DATE. It then moves the title fields (CCDA-TITLE01 and CCDA-TITLE02), transaction ID (WS-CICS-TRANID), and program name (WS-PGM-AUTH-DTL) to the corresponding fields in the output map. Finally, it formats the current date and time into the CURDATEO and CURTIMEO fields of the output map.",
+        "purpose": "This paragraph populates the header information on the COPAU1A screen. It moves the current date to WS-CURDATE-DATA using the FUNCTION CURRENT-DATE. It moves the title fields (CCDA-TITLE01, CCDA-TITLE02), transaction name (WS-CICS-TRANID), and program name (WS-PGM-AUTH-DTL) to the corresponding output fields in the COPAU1AO map. It formats the current date and time into the required output formats.",
         "called_by": [
           "SEND-AUTHVIEW-SCREEN"
         ],
@@ -514,11 +476,20 @@
     ],
     "error_handling": [
       {
-        "condition": "EIBRESP NOT = DFHRESP(NORMAL) after CICS LINK",
-        "action": "ROLL-BACK",
+        "condition": "EIBRESP NOT = DFHRESP(NORMAL) during LINK to WS-PGM-AUTH-FRAUD",
+        "action": "ROLL-BACK is performed.",
         "citation": [
           99,
           107
+        ]
+      },
+      {
+        "condition": "WS-FRD-UPDT-SUCCESS is false after LINK to WS-PGM-AUTH-FRAUD",
+        "action": "MOVE WS-FRD-ACT-MSG to WS-MESSAGE and ROLL-BACK is performed.",
+        "citation": [
+          100,
+          103,
+          104
         ]
       }
     ],
@@ -539,13 +510,13 @@
       {
         "command": "SEND MAP",
         "resource": "COPAU1A",
-        "purpose": "Sends the map to the terminal.",
+        "purpose": "Sends the COPAU1A map to the terminal.",
         "citation": 227
       },
       {
         "command": "RECEIVE MAP",
         "resource": "COPAU1A",
-        "purpose": "Receives the map from the terminal.",
+        "purpose": "Receives data from the COPAU1A map.",
         "citation": 246
       },
       {
@@ -558,18 +529,18 @@
     "open_questions": [
       {
         "question": "What is the purpose of the TAKE-SYNCPOINT paragraph?",
-        "context": "The source code calls TAKE-SYNCPOINT after READ-AUTH-RECORD in PROCESS-ENTER-KEY and PROCESS-PF8-KEY, but the implementation of TAKE-SYNCPOINT is not provided in the source code.",
-        "suggestion": "Examine the TAKE-SYNCPOINT paragraph's implementation to understand its role in transaction management."
+        "context": "The code calls TAKE-SYNCPOINT, but the paragraph itself is not defined in the provided source. Its purpose is unclear without further context.",
+        "suggestion": "Examine the broader system documentation or related code to understand the purpose of TAKE-SYNCPOINT."
       },
       {
         "question": "What is the purpose of the ROLL-BACK paragraph?",
-        "context": "The source code calls ROLL-BACK after a failed LINK or UPDATE-AUTH-DETAILS, but the implementation of ROLL-BACK is not provided in the source code.",
-        "suggestion": "Examine the ROLL-BACK paragraph's implementation to understand its role in transaction management."
+        "context": "The code calls ROLL-BACK, but the paragraph itself is not defined in the provided source. Its purpose is unclear without further context.",
+        "suggestion": "Examine the broader system documentation or related code to understand the purpose of ROLL-BACK."
       },
       {
         "question": "What is the purpose of the READ-AUTH-RECORD and READ-NEXT-AUTH-RECORD paragraphs?",
-        "context": "The source code calls READ-AUTH-RECORD and READ-NEXT-AUTH-RECORD to retrieve authorization details, but the implementation is not provided in the source code.",
-        "suggestion": "Examine the READ-AUTH-RECORD and READ-NEXT-AUTH-RECORD paragraph's implementation to understand how authorization details are retrieved."
+        "context": "The code calls READ-AUTH-RECORD and READ-NEXT-AUTH-RECORD, but the paragraphs themselves are not defined in the provided source. Their purpose is unclear without further context.",
+        "suggestion": "Examine the broader system documentation or related code to understand the purpose of READ-AUTH-RECORD and READ-NEXT-AUTH-RECORD."
       }
     ],
     "resolved_questions": [],
@@ -578,5 +549,5 @@
     "flow_diagram": null,
     "copybooks_not_found": []
   },
-  "saved_at": "2026-03-03T20:22:49.006312"
+  "saved_at": "2026-03-03T21:39:26.414086"
 }

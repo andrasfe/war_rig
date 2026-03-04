@@ -20,21 +20,20 @@
     "outputs": [
       "WS-MSG-PROCESSED"
     ],
-    "purpose": "Processes incoming authorization requests in a loop until no more messages are available or the processing limit is reached."
+    "purpose": "Processes incoming authorization requests in a loop until the message limit is reached or no more messages are available."
   },
   {
     "caller": "MAIN-PARA",
     "callee": "9000-TERMINATE",
     "inputs": [],
     "outputs": [],
-    "purpose": "Terminates IMS processing if scheduled and closes the request queue as part of program cleanup."
+    "purpose": "Terminates IMS processing if scheduled and closes the request queue before program exit."
   },
   {
     "caller": "1000-INITIALIZE",
     "callee": "1100-OPEN-REQUEST-QUEUE",
     "inputs": [
-      "WS-REQUEST-QNAME",
-      "WS-OPTIONS"
+      "WS-REQUEST-QNAME"
     ],
     "outputs": [
       "WS-REQUEST-MQ-OPEN",
@@ -46,14 +45,13 @@
       "ERR-CODE-2",
       "ERR-MESSAGE"
     ],
-    "purpose": "Opens the request message queue using MQOPEN and sets error flags if the operation fails."
+    "purpose": "Opens the request message queue using the queue name and sets error flags if the open operation fails."
   },
   {
     "caller": "1000-INITIALIZE",
     "callee": "3100-READ-REQUEST-MQ",
     "inputs": [
-      "WS-WAIT-INTERVAL",
-      "PA-CARD-NUM"
+      "WS-WAIT-INTERVAL"
     ],
     "outputs": [
       "WS-SAVE-CORRELID",
@@ -68,7 +66,7 @@
       "ERR-MESSAGE",
       "ERR-EVENT-KEY"
     ],
-    "purpose": "Reads a message from the request queue using MQGET and handles success or failure by setting correlation and reply queue information or logging errors."
+    "purpose": "Reads a message from the request queue with a wait interval and updates correlation and reply queue information if successful, or logs an error if not."
   },
   {
     "caller": "1100-OPEN-REQUEST-QUEUE",
@@ -78,10 +76,9 @@
       "WS-PGM-AUTH",
       "WS-COMPCODE",
       "WS-REASON",
-      "ERR-LOCATION",
       "ERR-CRITICAL",
       "ERR-MQ",
-      "WS-CODE-DISPLAY",
+      "ERR-LOCATION",
       "ERR-CODE-1",
       "ERR-CODE-2",
       "ERR-MESSAGE"
@@ -91,7 +88,7 @@
       "WS-CUR-DATE-X6",
       "WS-CUR-TIME-X6"
     ],
-    "purpose": "Logs an error message to the CICS transient data queue when opening the request MQ fails."
+    "purpose": "Logs an error message to the CICS transient data queue when opening the request MQ fails, including timestamp and error details."
   },
   {
     "caller": "1200-SCHEDULE-PSB",
@@ -99,12 +96,9 @@
     "inputs": [
       "WS-CICS-TRANID",
       "WS-PGM-AUTH",
-      "ERR-LOCATION",
       "ERR-CRITICAL",
       "ERR-CICS",
-      "WS-COMPCODE",
-      "WS-REASON",
-      "WS-CODE-DISPLAY",
+      "ERR-LOCATION",
       "ERR-CODE-1",
       "ERR-CODE-2",
       "ERR-MESSAGE",
@@ -115,7 +109,7 @@
       "WS-CUR-DATE-X6",
       "WS-CUR-TIME-X6"
     ],
-    "purpose": "Logs an error message to the CICS transient data queue if a critical error occurs during PSB scheduling."
+    "purpose": "Logs an error message to the CICS transient data queue if scheduling the PSB fails, including timestamp and error context."
   },
   {
     "caller": "2000-MAIN-PROCESS",
@@ -146,34 +140,39 @@
       "PA-RQ-TRANSACTION-AMT",
       "WS-TRANSACTION-AMT"
     ],
-    "purpose": "Extracts and parses the request message fields from the MQ input buffer into working storage variables for further processing."
+    "purpose": "Extracts and parses fields from the incoming message buffer into working storage variables for further processing."
   },
   {
     "caller": "2000-MAIN-PROCESS",
     "callee": "5000-PROCESS-AUTH",
     "inputs": [
-      "PA-RQ-CARD-NUM"
+      "PA-RQ-CARD-NUM",
+      "PA-RQ-TRANSACTION-AMT",
+      "PA-RQ-AUTH-TYPE",
+      "PA-RQ-PROCESSING-CODE",
+      "PA-RQ-MERCHANT-CATAGORY-CODE",
+      "PA-RQ-ACQR-COUNTRY-CODE",
+      "PA-RQ-POS-ENTRY-MODE"
     ],
     "outputs": [
       "APPROVE-AUTH",
       "CARD-FOUND-XREF",
-      "FOUND-ACCT-IN-MSTR",
-      "PA-RQ-ACCT-NUM",
-      "PA-RQ-CUST-ID",
-      "WS-AVAILABLE-AMT",
-      "PA-RQ-AUTH-DECISION",
-      "PA-RQ-AUTH-RESPONSE-CODE",
-      "PA-RQ-AUTH-AMOUNT"
+      "FOUND-ACCT-IN-MSTR"
     ],
-    "purpose": "Processes the authorization request by reading related records and making an approval decision based on customer and account data."
+    "purpose": "Processes an authorization request by reading related records, evaluating rules, and determining approval status."
   },
   {
     "caller": "2000-MAIN-PROCESS",
     "callee": "3100-READ-REQUEST-MQ",
     "inputs": [
       "WS-WAIT-INTERVAL",
+      "MQMI-NONE",
+      "MQCI-NONE",
+      "MQFMT-STRING",
       "W01-HCONN-REQUEST",
-      "W01-HOBJ-REQUEST"
+      "W01-HOBJ-REQUEST",
+      "W01-BUFFLEN",
+      "W01-GET-BUFFER"
     ],
     "outputs": [
       "MQGMO-OPTIONS",
@@ -195,7 +194,7 @@
       "ERR-MESSAGE",
       "ERR-EVENT-KEY"
     ],
-    "purpose": "Reads the next message from the request MQ, setting up message options and handling errors if no message is available or retrieval fails."
+    "purpose": "Reads the next message from the request MQ, updates message data and status, and logs an error if the read fails."
   },
   {
     "caller": "3100-READ-REQUEST-MQ",
@@ -203,37 +202,51 @@
     "inputs": [
       "WS-CICS-TRANID",
       "WS-PGM-AUTH",
-      "WS-COMPCODE",
-      "WS-REASON",
-      "PA-CARD-NUM",
-      "WS-CODE-DISPLAY"
-    ],
-    "outputs": [
-      "WS-ABS-TIME",
       "WS-CUR-DATE-X6",
-      "WS-CUR-TIME-X6"
+      "WS-CUR-TIME-X6",
+      "ERR-LOCATION",
+      "ERR-CRITICAL",
+      "ERR-CICS",
+      "WS-CODE-DISPLAY",
+      "ERR-CODE-1",
+      "ERR-CODE-2",
+      "ERR-MESSAGE",
+      "PA-CARD-NUM",
+      "ERR-EVENT-KEY"
     ],
-    "purpose": "Logs an error message with timestamp, program context, and reason codes when reading from the request MQ fails."
+    "outputs": [],
+    "purpose": "Logs an error message to the CICS TD queue with timestamp, program, transaction, and error details when reading from the request MQ fails."
   },
   {
     "caller": "5000-PROCESS-AUTH",
     "callee": "1200-SCHEDULE-PSB",
     "inputs": [],
     "outputs": [],
-    "purpose": "Calls a placeholder paragraph that does nothing, likely intended for future PSB scheduling in IMS."
+    "purpose": "Calls a paragraph that contains no executable statements, so it performs no action."
   },
   {
     "caller": "5000-PROCESS-AUTH",
     "callee": "5100-READ-XREF-RECORD",
     "inputs": [
-      "PA-RQ-CARD-NUM"
+      "PA-RQ-CARD-NUM",
+      "WS-CCXREF-FILE"
     ],
     "outputs": [
-      "CARD-XREF-RECORD",
+      "CARD-FOUND-XREF",
+      "CARD-NFOUND-XREF",
+      "NFOUND-ACCT-IN-MSTR",
+      "ERR-LOCATION",
+      "ERR-WARNING",
+      "ERR-APP",
+      "ERR-MESSAGE",
+      "ERR-EVENT-KEY",
       "WS-RESP-CD",
-      "WS-REAS-CD"
+      "WS-REAS-CD",
+      "WS-CODE-DISPLAY",
+      "ERR-CODE-1",
+      "ERR-CODE-2"
     ],
-    "purpose": "Reads the card cross-reference record using the card number to find associated account and customer IDs."
+    "purpose": "Reads the card cross-reference record using the card number and sets status flags or logs errors based on the result."
   },
   {
     "caller": "5000-PROCESS-AUTH",
@@ -243,11 +256,20 @@
       "WS-ACCTFILENAME"
     ],
     "outputs": [
-      "ACCOUNT-RECORD",
+      "FOUND-ACCT-IN-MSTR",
+      "NFOUND-ACCT-IN-MSTR",
+      "ERR-LOCATION",
+      "ERR-WARNING",
+      "ERR-APP",
+      "ERR-MESSAGE",
+      "ERR-EVENT-KEY",
       "WS-RESP-CD",
-      "WS-REAS-CD"
+      "WS-REAS-CD",
+      "WS-CODE-DISPLAY",
+      "ERR-CODE-1",
+      "ERR-CODE-2"
     ],
-    "purpose": "Reads the account master record using the account ID obtained from the XREF to validate account existence."
+    "purpose": "Reads the account record using the account ID from the XREF and sets status flags or logs errors if the account is not found or read fails."
   },
   {
     "caller": "5000-PROCESS-AUTH",
@@ -257,11 +279,20 @@
       "WS-CUSTFILENAME"
     ],
     "outputs": [
-      "CUSTOMER-RECORD",
+      "FOUND-CUST-IN-MSTR",
+      "NFOUND-CUST-IN-MSTR",
+      "ERR-LOCATION",
+      "ERR-WARNING",
+      "ERR-APP",
+      "ERR-MESSAGE",
+      "ERR-EVENT-KEY",
       "WS-RESP-CD",
-      "WS-REAS-CD"
+      "WS-REAS-CD",
+      "WS-CODE-DISPLAY",
+      "ERR-CODE-1",
+      "ERR-CODE-2"
     ],
-    "purpose": "Reads the customer master record using the customer ID obtained from the XREF to validate customer existence."
+    "purpose": "Reads the customer record using the customer ID from the XREF and sets status flags or logs errors if the customer is not found or read fails."
   },
   {
     "caller": "5000-PROCESS-AUTH",
@@ -281,7 +312,7 @@
       "ERR-MESSAGE",
       "ERR-EVENT-KEY"
     ],
-    "purpose": "Reads the pending authorization summary segment from IMS using the account ID from the cross-reference record."
+    "purpose": "Reads the pending authorization summary from IMS using the account ID from the cross-reference record."
   },
   {
     "caller": "5000-PROCESS-AUTH",
@@ -302,6 +333,11 @@
       "ACCT-CREDIT-LIMIT",
       "ACCT-CURR-BAL",
       "DECLINE-AUTH",
+      "AUTH-RESP-APPROVED",
+      "PA-RQ-CARD-NUM",
+      "PA-RQ-TRANSACTION-ID",
+      "PA-RQ-AUTH-TIME",
+      "PA-RQ-TRANSACTION-AMT",
       "CARD-NFOUND-XREF",
       "NFOUND-ACCT-IN-MSTR",
       "NFOUND-CUST-IN-MSTR",
@@ -309,32 +345,26 @@
       "CARD-NOT-ACTIVE",
       "ACCOUNT-CLOSED",
       "CARD-FRAUD",
-      "MERCHANT-FRAUD",
-      "PA-RQ-CARD-NUM",
-      "PA-RQ-TRANSACTION-ID",
-      "PA-RQ-AUTH-TIME",
-      "PA-RQ-TRANSACTION-AMT",
-      "WS-APPROVED-AMT",
-      "WS-APPROVED-AMT-DIS"
+      "MERCHANT-FRAUD"
     ],
     "outputs": [
-      "APPROVE-AUTH",
+      "WS-AVAILABLE-AMT",
       "DECLINE-AUTH",
       "INSUFFICIENT-FUND",
-      "AUTH-RESP-APPROVED",
       "AUTH-RESP-DECLINED",
+      "AUTH-RESP-APPROVED",
       "PA-RL-CARD-NUM",
       "PA-RL-TRANSACTION-ID",
       "PA-RL-AUTH-ID-CODE",
       "PA-RL-AUTH-RESP-CODE",
       "PA-RL-APPROVED-AMT",
-      "PA-RL-AUTH-RESP-REASON",
       "WS-APPROVED-AMT",
+      "PA-RL-AUTH-RESP-REASON",
       "WS-APPROVED-AMT-DIS",
       "W02-PUT-BUFFER",
       "WS-RESP-LENGTH"
     ],
-    "purpose": "Makes an authorization decision based on account and transaction data, sets response fields accordingly, and formats the response message."
+    "purpose": "Makes an authorization decision based on account and transaction data, sets response codes and amounts accordingly."
   },
   {
     "caller": "5000-PROCESS-AUTH",
@@ -352,7 +382,9 @@
       "MQM-OD-REPLY",
       "MQM-MD-REPLY",
       "MQM-PUT-MESSAGE-OPTIONS",
-      "W02-PUT-BUFFER"
+      "W02-BUFFLEN",
+      "W02-PUT-BUFFER",
+      "PA-CARD-NUM"
     ],
     "outputs": [
       "WS-COMPCODE",
@@ -365,28 +397,28 @@
       "ERR-MESSAGE",
       "ERR-EVENT-KEY"
     ],
-    "purpose": "Sends the authorization response message to the reply queue using MQPUT1 and logs an error if the operation fails."
+    "purpose": "Sends the authorization response message to the reply queue using MQPUT1."
   },
   {
     "caller": "5000-PROCESS-AUTH",
     "callee": "8000-WRITE-AUTH-TO-DB",
     "inputs": [],
     "outputs": [],
-    "purpose": "Updates the authorization summary and inserts the new authorization record into the database via subordinate performs."
+    "purpose": "Writes the authorization record to the database by performing update and insert operations."
   },
   {
     "caller": "5100-READ-XREF-RECORD",
     "callee": "9500-LOG-ERROR",
     "inputs": [
-      "WS-CICS-TRANID",
-      "WS-PGM-AUTH",
-      "WS-CUR-DATE-X6",
-      "WS-CUR-TIME-X6",
       "ERR-LOCATION",
       "ERR-WARNING",
       "ERR-APP",
       "ERR-MESSAGE",
       "ERR-EVENT-KEY",
+      "WS-CICS-TRANID",
+      "WS-PGM-AUTH",
+      "WS-CUR-DATE-X6",
+      "WS-CUR-TIME-X6",
       "ERR-CRITICAL",
       "ERR-CICS",
       "WS-RESP-CD",
@@ -396,21 +428,21 @@
     "outputs": [
       "WS-ABS-TIME"
     ],
-    "purpose": "Logs an error message with timestamp, program and transaction details to the CSSL queue when reading the XREF file fails."
+    "purpose": "Logs an error message with timestamp and program context to the CSSL queue, and terminates the program if the error is critical."
   },
   {
     "caller": "5100-READ-XREF-RECORD",
     "callee": "9500-LOG-ERROR",
     "inputs": [
-      "WS-CICS-TRANID",
-      "WS-PGM-AUTH",
-      "WS-CUR-DATE-X6",
-      "WS-CUR-TIME-X6",
       "ERR-LOCATION",
       "ERR-WARNING",
       "ERR-APP",
       "ERR-MESSAGE",
       "ERR-EVENT-KEY",
+      "WS-CICS-TRANID",
+      "WS-PGM-AUTH",
+      "WS-CUR-DATE-X6",
+      "WS-CUR-TIME-X6",
       "ERR-CRITICAL",
       "ERR-CICS",
       "WS-RESP-CD",
@@ -420,21 +452,21 @@
     "outputs": [
       "WS-ABS-TIME"
     ],
-    "purpose": "Logs an error message with timestamp, program and transaction details to the CSSL queue when reading the XREF file fails."
+    "purpose": "Logs an error message with timestamp and program context to the CSSL queue, and terminates the program if the error is critical."
   },
   {
     "caller": "5200-READ-ACCT-RECORD",
     "callee": "9500-LOG-ERROR",
     "inputs": [
-      "WS-CICS-TRANID",
-      "WS-PGM-AUTH",
-      "WS-CUR-DATE-X6",
-      "WS-CUR-TIME-X6",
       "ERR-LOCATION",
       "ERR-WARNING",
       "ERR-APP",
       "ERR-MESSAGE",
       "ERR-EVENT-KEY",
+      "WS-CICS-TRANID",
+      "WS-PGM-AUTH",
+      "WS-CUR-DATE-X6",
+      "WS-CUR-TIME-X6",
       "ERR-CRITICAL",
       "ERR-CICS",
       "WS-RESP-CD",
@@ -444,21 +476,21 @@
     "outputs": [
       "WS-ABS-TIME"
     ],
-    "purpose": "Logs an error message with timestamp, program and transaction details to the CSSL queue when reading the ACCT file fails."
+    "purpose": "Logs an error message with timestamp and program context to the CSSL queue, and terminates the program if the error is critical."
   },
   {
     "caller": "5200-READ-ACCT-RECORD",
     "callee": "9500-LOG-ERROR",
     "inputs": [
-      "WS-CICS-TRANID",
-      "WS-PGM-AUTH",
-      "WS-CUR-DATE-X6",
-      "WS-CUR-TIME-X6",
       "ERR-LOCATION",
       "ERR-WARNING",
       "ERR-APP",
       "ERR-MESSAGE",
       "ERR-EVENT-KEY",
+      "WS-CICS-TRANID",
+      "WS-PGM-AUTH",
+      "WS-CUR-DATE-X6",
+      "WS-CUR-TIME-X6",
       "ERR-CRITICAL",
       "ERR-CICS",
       "WS-RESP-CD",
@@ -468,21 +500,21 @@
     "outputs": [
       "WS-ABS-TIME"
     ],
-    "purpose": "Logs an error message with timestamp, program and transaction details to the CSSL queue when reading the ACCT file fails."
+    "purpose": "Logs an error message with timestamp and program context to the CSSL queue, and terminates the program if the error is critical."
   },
   {
     "caller": "5300-READ-CUST-RECORD",
     "callee": "9500-LOG-ERROR",
     "inputs": [
-      "WS-CICS-TRANID",
-      "WS-PGM-AUTH",
-      "WS-CUR-DATE-X6",
-      "WS-CUR-TIME-X6",
       "ERR-LOCATION",
       "ERR-WARNING",
       "ERR-APP",
       "ERR-MESSAGE",
       "ERR-EVENT-KEY",
+      "WS-CICS-TRANID",
+      "WS-PGM-AUTH",
+      "WS-CUR-DATE-X6",
+      "WS-CUR-TIME-X6",
       "ERR-CRITICAL",
       "ERR-CICS",
       "WS-RESP-CD",
@@ -492,7 +524,7 @@
     "outputs": [
       "WS-ABS-TIME"
     ],
-    "purpose": "Logs an error message with timestamp, program and transaction details to the CSSL queue when reading the CUST file fails."
+    "purpose": "Logs an error message with timestamp and program context to the CSSL queue, and terminates the program if the error is critical."
   },
   {
     "caller": "5300-READ-CUST-RECORD",
@@ -508,13 +540,16 @@
       "ERR-WARNING",
       "ERR-APP",
       "ERR-CICS",
-      "ERR-CODE-1",
-      "ERR-CODE-2",
       "ERR-MESSAGE",
-      "ERR-EVENT-KEY"
+      "ERR-EVENT-KEY",
+      "ERR-CODE-1",
+      "ERR-CODE-2"
     ],
-    "outputs": [],
-    "purpose": "Logs an error message to the CSSL queue with timestamp and error details when a customer record read fails."
+    "outputs": [
+      "WS-CUR-DATE-X6",
+      "WS-CUR-TIME-X6"
+    ],
+    "purpose": "Logs an error message to the CSSL queue with timestamp and error details when customer record read fails."
   },
   {
     "caller": "5500-READ-AUTH-SUMMRY",
@@ -532,8 +567,11 @@
       "ERR-MESSAGE",
       "ERR-EVENT-KEY"
     ],
-    "outputs": [],
-    "purpose": "Logs an error message to the CSSL queue with timestamp and error details when reading the authorization summary from IMS fails."
+    "outputs": [
+      "WS-CUR-DATE-X6",
+      "WS-CUR-TIME-X6"
+    ],
+    "purpose": "Logs an error message to the CSSL queue with timestamp and error details when IMS read of authorization summary fails."
   },
   {
     "caller": "7100-SEND-RESPONSE",
@@ -550,13 +588,16 @@
       "WS-COMPCODE",
       "WS-CODE-DISPLAY",
       "WS-REASON",
-      "ERR-CODE-1",
-      "ERR-CODE-2",
       "ERR-MESSAGE",
-      "ERR-EVENT-KEY"
+      "ERR-EVENT-KEY",
+      "ERR-CODE-1",
+      "ERR-CODE-2"
     ],
-    "outputs": [],
-    "purpose": "Logs an error message to the CSSL queue with timestamp and error details when sending a response to the MQ queue fails."
+    "outputs": [
+      "WS-CUR-DATE-X6",
+      "WS-CUR-TIME-X6"
+    ],
+    "purpose": "Logs an error message to the CSSL queue with timestamp and error details when sending a response to MQ fails."
   },
   {
     "caller": "8000-WRITE-AUTH-TO-DB",
@@ -570,19 +611,14 @@
       "AUTH-RESP-APPROVED",
       "WS-APPROVED-AMT",
       "PA-TRANSACTION-AMT",
-      "FOUND-PAUT-SMRY-SEG"
+      "FOUND-PAUT-SMRY-SEG",
+      "PENDING-AUTH-SUMMARY"
     ],
     "outputs": [
       "PENDING-AUTH-SUMMARY",
-      "IMS-RETURN-CODE",
-      "ERR-LOCATION",
-      "ERR-CRITICAL",
-      "ERR-IMS",
-      "ERR-CODE-1",
-      "ERR-MESSAGE",
-      "ERR-EVENT-KEY"
+      "IMS-RETURN-CODE"
     ],
-    "purpose": "Updates or inserts the pending authorization summary segment in IMS and logs an error if the operation fails."
+    "purpose": "Updates or inserts the pending authorization summary segment in IMS based on account and transaction data."
   },
   {
     "caller": "8000-WRITE-AUTH-TO-DB",
@@ -623,16 +659,36 @@
       "WS-TIME-WITH-MS",
       "PA-AUTH-DATE-9C",
       "PA-AUTH-TIME-9C",
-      "PENDING-AUTH-DETAILS",
-      "IMS-RETURN-CODE",
-      "ERR-LOCATION",
-      "ERR-CRITICAL",
-      "ERR-IMS",
-      "ERR-CODE-1",
-      "ERR-MESSAGE",
-      "ERR-EVENT-KEY"
+      "PA-AUTH-ORIG-DATE",
+      "PA-AUTH-ORIG-TIME",
+      "PA-CARD-NUM",
+      "PA-AUTH-TYPE",
+      "PA-CARD-EXPIRY-DATE",
+      "PA-MESSAGE-TYPE",
+      "PA-MESSAGE-SOURCE",
+      "PA-PROCESSING-CODE",
+      "PA-TRANSACTION-AMT",
+      "PA-MERCHANT-CATAGORY-CODE",
+      "PA-ACQR-COUNTRY-CODE",
+      "PA-POS-ENTRY-MODE",
+      "PA-MERCHANT-ID",
+      "PA-MERCHANT-NAME",
+      "PA-MERCHANT-CITY",
+      "PA-MERCHANT-STATE",
+      "PA-MERCHANT-ZIP",
+      "PA-TRANSACTION-ID",
+      "PA-AUTH-ID-CODE",
+      "PA-AUTH-RESP-CODE",
+      "PA-AUTH-RESP-REASON",
+      "PA-APPROVED-AMT",
+      "PA-MATCH-PENDING",
+      "PA-MATCH-AUTH-DECLINED",
+      "PA-AUTH-FRAUD",
+      "PA-FRAUD-RPT-DATE",
+      "PA-ACCT-ID",
+      "IMS-RETURN-CODE"
     ],
-    "purpose": "Inserts a new authorization detail record into IMS with computed timestamps and logs an error if the insertion fails."
+    "purpose": "Inserts a new pending authorization detail record into IMS with current timestamp and transaction data."
   },
   {
     "caller": "8400-UPDATE-SUMMARY",
@@ -691,7 +747,7 @@
       "WS-REQUEST-MQ-OPEN"
     ],
     "outputs": [],
-    "purpose": "Closes the request MQ if it is currently open by calling MQCLOSE."
+    "purpose": "Closes the request message queue if it is currently open."
   },
   {
     "caller": "9100-CLOSE-REQUEST-QUEUE",
@@ -717,7 +773,7 @@
       "WS-CUR-DATE-X6",
       "WS-CUR-TIME-X6"
     ],
-    "purpose": "Logs a warning message to the CSSL queue when the request MQ fails to close."
+    "purpose": "Logs a warning message to the CSSL queue when the attempt to close the request MQ fails."
   },
   {
     "caller": "9500-LOG-ERROR",
@@ -726,13 +782,13 @@
       "ERR-CRITICAL"
     ],
     "outputs": [],
-    "purpose": "Terminates the program by performing cleanup and issuing a CICS RETURN when a critical error occurs."
+    "purpose": "Terminates the program by performing cleanup and issuing a CICS RETURN when a critical error is encountered."
   },
   {
     "caller": "9990-END-ROUTINE",
     "callee": "9000-TERMINATE",
     "inputs": [],
     "outputs": [],
-    "purpose": "Performs termination tasks including IMS termination and closing the request queue if applicable."
+    "purpose": "Performs termination tasks including conditional IMS termination and closing the request queue."
   }
 ]

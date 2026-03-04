@@ -1,86 +1,88 @@
 ```cobol
-
-           PERFORM GATHER-DETAILS
-           .
-
-
-      *****************************************************************
-       GATHER-DETAILS.
+       POPULATE-AUTH-LIST.
       *****************************************************************
 
-           MOVE -1       TO ACCTIDL OF COPAU0AI
+           MOVE PA-APPROVED-AMT           TO WS-AUTH-AMT
 
-           MOVE 0        TO CDEMO-CPVS-PAGE-NUM
+           MOVE PA-AUTH-ORIG-TIME(1:2)    TO WS-AUTH-TIME(1:2)
+           MOVE PA-AUTH-ORIG-TIME(3:2)    TO WS-AUTH-TIME(4:2)
+           MOVE PA-AUTH-ORIG-TIME(5:2)    TO WS-AUTH-TIME(7:2)
 
-           IF WS-ACCT-ID NOT = LOW-VALUES
-              PERFORM GATHER-ACCOUNT-DETAILS
+           MOVE PA-AUTH-ORIG-DATE(1:2)    TO WS-CURDATE-YY
+           MOVE PA-AUTH-ORIG-DATE(3:2)    TO WS-CURDATE-MM
+           MOVE PA-AUTH-ORIG-DATE(5:2)    TO WS-CURDATE-DD
+           MOVE WS-CURDATE-MM-DD-YY       TO WS-AUTH-DATE
 
-              PERFORM INITIALIZE-AUTH-DATA
-
-              IF FOUND-PAUT-SMRY-SEG
-                 PERFORM PROCESS-PAGE-FORWARD
-              END-IF
-           END-IF
-           .
-
-
-      *****************************************************************
-       PROCESS-PF7-KEY.
-      *****************************************************************
-
-           IF CDEMO-CPVS-PAGE-NUM > 1
-              COMPUTE CDEMO-CPVS-PAGE-NUM = CDEMO-CPVS-PAGE-NUM - 1
-
-              MOVE CDEMO-CPVS-PAUKEY-PREV-PG(CDEMO-CPVS-PAGE-NUM)
-                                           TO WS-AUTH-KEY-SAVE
-              PERFORM GET-AUTH-SUMMARY
-
-              SET SEND-ERASE-NO            TO TRUE
-
-              SET NEXT-PAGE-YES            TO TRUE
-              MOVE -1                      TO ACCTIDL OF COPAU0AI
-
-              PERFORM INITIALIZE-AUTH-DATA
-
-              PERFORM PROCESS-PAGE-FORWARD
+           IF PA-AUTH-RESP-CODE = '00'
+              MOVE 'A'               TO WS-AUTH-APRV-STAT
            ELSE
-              MOVE 'You are already at the top of the page...' TO
-                               WS-MESSAGE
-              SET SEND-ERASE-NO            TO TRUE
-           END-IF
-           .
-
-      *****************************************************************
-       PROCESS-PF8-KEY.
-      *****************************************************************
-
-           IF CDEMO-CPVS-PAUKEY-LAST = SPACES OR LOW-VALUES
-               MOVE LOW-VALUES             TO WS-AUTH-KEY-SAVE
-           ELSE
-               MOVE CDEMO-CPVS-PAUKEY-LAST TO WS-AUTH-KEY-SAVE
-
-               PERFORM GET-AUTH-SUMMARY
-               PERFORM REPOSITION-AUTHORIZATIONS
+              MOVE 'D'               TO WS-AUTH-APRV-STAT
            END-IF
 
-           MOVE -1                         TO ACCTIDL OF COPAU0AI
+           EVALUATE WS-IDX
+               WHEN 1
+                   MOVE PA-AUTHORIZATION-KEY
+                                          TO CDEMO-CPVS-AUTH-KEYS(1)
 
-           SET SEND-ERASE-NO               TO TRUE
+                   MOVE PA-TRANSACTION-ID TO TRNID01I OF COPAU0AI
+                   MOVE WS-AUTH-DATE      TO PDATE01I OF COPAU0AI
+                   MOVE WS-AUTH-TIME      TO PTIME01I OF COPAU0AI
+                   MOVE PA-AUTH-TYPE      TO PTYPE01I OF COPAU0AI
+                   MOVE WS-AUTH-APRV-STAT TO PAPRV01I OF COPAU0AI
+                   MOVE PA-MATCH-STATUS   TO PSTAT01I OF COPAU0AI
+                   MOVE WS-AUTH-AMT       TO PAMT001I OF COPAU0AI
+                   MOVE DFHBMUNP          TO SEL0001A OF COPAU0AI
+               WHEN 2
+                   MOVE PA-AUTHORIZATION-KEY
+                                          TO CDEMO-CPVS-AUTH-KEYS(2)
 
-           IF NEXT-PAGE-YES
-               PERFORM INITIALIZE-AUTH-DATA
+                   MOVE PA-TRANSACTION-ID TO TRNID02I OF COPAU0AI
+                   MOVE WS-AUTH-DATE      TO PDATE02I OF COPAU0AI
+                   MOVE WS-AUTH-TIME      TO PTIME02I OF COPAU0AI
+                   MOVE PA-AUTH-TYPE      TO PTYPE02I OF COPAU0AI
+                   MOVE WS-AUTH-APRV-STAT TO PAPRV02I OF COPAU0AI
+                   MOVE PA-MATCH-STATUS   TO PSTAT02I OF COPAU0AI
+                   MOVE WS-AUTH-AMT       TO PAMT002I OF COPAU0AI
+                   MOVE DFHBMUNP          TO SEL0002A OF COPAU0AI
+               WHEN 3
+                   MOVE PA-AUTHORIZATION-KEY
+                                          TO CDEMO-CPVS-AUTH-KEYS(3)
 
-               PERFORM PROCESS-PAGE-FORWARD
-           ELSE
-               MOVE 'You are already at the bottom of the page...'
-                                           TO WS-MESSAGE
-           END-IF
-           .
+                   MOVE PA-TRANSACTION-ID TO TRNID03I OF COPAU0AI
+                   MOVE WS-AUTH-DATE      TO PDATE03I OF COPAU0AI
+                   MOVE WS-AUTH-TIME      TO PTIME03I OF COPAU0AI
+                   MOVE PA-AUTH-TYPE      TO PTYPE03I OF COPAU0AI
+                   MOVE WS-AUTH-APRV-STAT TO PAPRV03I OF COPAU0AI
+                   MOVE PA-MATCH-STATUS   TO PSTAT03I OF COPAU0AI
+                   MOVE WS-AUTH-AMT       TO PAMT003I OF COPAU0AI
+                   MOVE DFHBMUNP          TO SEL0003A OF COPAU0AI
+               WHEN 4
+                   MOVE PA-AUTHORIZATION-KEY
+                                          TO CDEMO-CPVS-AUTH-KEYS(4)
+
+                   MOVE PA-TRANSACTION-ID TO TRNID04I OF COPAU0AI
+                   MOVE WS-AUTH-DATE      TO PDATE04I OF COPAU0AI
+                   MOVE WS-AUTH-TIME      TO PTIME04I OF COPAU0AI
+                   MOVE PA-AUTH-TYPE      TO PTYPE04I OF COPAU0AI
+                   MOVE WS-AUTH-APRV-STAT TO PAPRV04I OF COPAU0AI
+                   MOVE PA-MATCH-STATUS   TO PSTAT04I OF COPAU0AI
+                   MOVE WS-AUTH-AMT       TO PAMT004I OF COPAU0AI
+                   MOVE DFHBMUNP          TO SEL0004A OF COPAU0AI
+               WHEN 5
+                   MOVE PA-AUTHORIZATION-KEY
+                                          TO CDEMO-CPVS-AUTH-KEYS(5)
+
+                   MOVE PA-TRANSACTION-ID TO TRNID05I OF COPAU0AI
+                   MOVE WS-AUTH-DATE      TO PDATE05I OF COPAU0AI
+                   MOVE WS-AUTH-TIME      TO PTIME05I OF COPAU0AI
+                   MOVE PA-AUTH-TYPE      TO PTYPE05I OF COPAU0AI
+                   MOVE WS-AUTH-APRV-STAT TO PAPRV05I OF COPAU0AI
+                   MOVE PA-MATCH-STATUS   TO PSTAT05I OF COPAU0AI
+                   MOVE WS-AUTH-AMT       TO PAMT005I OF COPAU0AI
+                   MOVE DFHBMUNP          TO SEL0005A OF COPAU0AI
+               WHEN OTHER
+                   CONTINUE
+           END-EVALUATE.
 
       *****************************************************************
-       PROCESS-PAGE-FORWARD.
-      *****************************************************************
-
-           IF ERR-FLG-OFF
-
 ```

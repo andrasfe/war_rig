@@ -2,7 +2,7 @@
 
 **File**: `ddl/XAUTHFRD.ddl`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-03-04 03:32:29.863296
+**Analyzed**: 2026-03-04 04:44:44.827514
 
 ## Purpose
 

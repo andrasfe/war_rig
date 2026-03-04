@@ -1,10 +1,10 @@
 {
   "header": {
     "program_id": "XAUTHFRD",
-    "file_name": "XAUTHFRD.ddl",
+    "file_name": "ddl/XAUTHFRD.ddl",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-04T03:32:29.863296",
+    "analyzed_at": "2026-03-04T04:44:44.827514",
     "iteration_count": 1,
     "final_status": null
   },
@@ -38,12 +38,12 @@
     {
       "paragraph_name": "XAUTHFRD",
       "summary": null,
-      "purpose": "This DDL script creates a unique index named XAUTHFRD within the CARDDEMO schema. The index is created on the AUTHFRDS table, also within the CARDDEMO schema. The index key consists of two columns: CARD_NUM, which is indexed in ascending order, and AUTH_TS, which is indexed in descending order. The 'COPY YES' clause indicates that the index should be copied, likely for performance or data availability reasons. This index likely serves to enforce uniqueness based on the combination of card number and timestamp, and to optimize queries that filter or sort by these columns. The creation of this index does not directly consume any input data, but it relies on the existence of the CARDDEMO.AUTHFRDS table and its columns. The output of this script is the creation of the index itself within the database system.",
+      "purpose": "This DDL script creates a unique index named `CARDDEMO.XAUTHFRD` on the `CARDDEMO.AUTHFRDS` table [1, 2]. The index is designed to improve the performance of queries that filter or sort data based on the `CARD_NUM` and `AUTH_TS` columns. The index key consists of two columns: `CARD_NUM` which is sorted in ascending order (`ASC`) and `AUTH_TS` which is sorted in descending order (`DESC`) [3]. The `CARD_NUM` likely represents a card number, and `AUTH_TS` likely represents an authorization timestamp. The `COPY YES` clause indicates that the index should be copied during certain operations, such as database reorganizations or backups [4]. This ensures that the index remains available and consistent even after these operations. The script does not involve any explicit input or output files, but it implicitly interacts with the database system to create and manage the index.",
       "called_by": [],
       "calls": [],
       "citation": [
         1,
-        4
+        5
       ],
       "outgoing_calls": [],
       "incoming_calls": [],

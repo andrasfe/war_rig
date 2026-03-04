@@ -4,13 +4,13 @@
     "file_name": "PADFLPCB.CPY",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-04T03:32:08.598787",
+    "analyzed_at": "2026-03-04T04:43:52.131489",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the structure of PADFLPCB, which appears to be a PCB (Program Communication Block) used in IMS (Information Management System) for database communication. It contains fields related to the database name, segment level, PCB status, processing options, segment name, key feedback, number of sensitive segments, and key feedback area.",
-    "business_context": "UNKNOWN",
+    "summary": "This copybook defines the data structure for the PCB (Program Communication Block) used in IMS (Information Management System) DL/I (Data Language/I) calls. It contains fields related to database name, segment level, PCB status, processing options, segment name, feedback information, and key feedback area.",
+    "business_context": null,
     "program_type": "COPYBOOK",
     "citations": [
       17,
@@ -36,7 +36,7 @@
     {
       "paragraph_name": "PADFLPCB",
       "summary": null,
-      "purpose": "This copybook defines the structure of the PADFLPCB, which is likely a Program Communication Block (PCB) used within an IMS (Information Management System) environment for interacting with databases. The PCB provides a communication interface between the application program and the IMS database. It contains various fields that describe the database, segment information, and processing options. PADFL-DBDNAME (line 18) stores the name of the database. PADFL-SEG-LEVEL (line 19) indicates the segment level. PADFL-PCB-STATUS (line 20) provides the status of the PCB. PADFL-PCB-PROCOPT (line 21) specifies the processing options. PADFL-SEG-NAME (line 23) contains the name of the segment. PADFL-KEYFB-NAME (line 24) and PADFL-NUM-SENSEGS (line 25) store key feedback name and number of sensitive segments respectively. PADFL-KEYFB (line 26) is a larger field that holds the key feedback area, providing information about the last accessed segment's key.",
+      "purpose": "This copybook defines the structure of the Program Communication Block (PCB) used in IMS DL/I calls. The PCB provides information about the database and the results of DL/I operations. PADFL-DBDNAME (line 18) contains the name of the database. PADFL-SEG-LEVEL (line 19) indicates the segment level being accessed. PADFL-PCB-STATUS (line 20) holds the status code returned by the DL/I call. PADFL-PCB-PROCOPT (line 21) specifies the processing options used for the call. PADFL-SEG-NAME (line 23) contains the name of the segment being accessed. PADFL-KEYFB-NAME (line 24) and PADFL-NUM-SENSEGS (line 25) provide feedback information related to the key and number of sensitive segments. PADFL-KEYFB (line 26) is a 255-byte field that holds the key feedback area, containing the concatenated keys of the segments accessed during the DL/I call. This copybook is typically included in programs that interact with IMS databases using DL/I.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -46,13 +46,13 @@
       "outgoing_calls": [],
       "incoming_calls": [
         {
-          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
           "function": "DBUNLDGS",
           "line": 156,
           "call_type": "includes"
         },
         {
-          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
           "function": "DBUNLDGS",
           "line": 1,
           "call_type": "includes"
@@ -66,18 +66,7 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
-    {
-      "question": "What is the specific purpose of this PCB within the larger application?",
-      "context": "The copybook only defines the structure, not its usage.",
-      "suggestion": "Analyze the programs that include this copybook to understand how these fields are used."
-    },
-    {
-      "question": "What are the possible values and meanings of PADFL-PCB-STATUS and PADFL-PCB-PROCOPT?",
-      "context": "The copybook does not provide any information about valid values.",
-      "suggestion": "Consult IMS documentation or related program source code."
-    }
-  ],
+  "open_questions": [],
   "resolved_questions": [],
   "dead_code": [
     {

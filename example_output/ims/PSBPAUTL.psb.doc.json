@@ -4,12 +4,12 @@
     "file_name": "PSBPAUTL.psb",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-04T03:29:48.965799",
+    "analyzed_at": "2026-03-04T04:42:01.536582",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This file defines a Program Specification Block (PSB) named PSBPAUTL for an IMS database application. It specifies the database (DBPAUTP0), processing options, key length, and segment hierarchy used by the application to access the database.",
+    "summary": "This PSB (Program Specification Block) defines the interface for accessing the DBPAUTP0 database within an IMS (Information Management System) environment. It specifies the PCB (Program Communication Block) configuration, including the database name, processing options, key length, and sensitive segments (SENSEG) for data access. The PSBGEN statement indicates that this PSB is generated for assembly language.",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
@@ -36,13 +36,7 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
-    {
-      "question": "What is the purpose of the PAUTLPCB PCB definition?",
-      "context": "The exact function of the PCB and its usage within the IMS application is unclear without further context.",
-      "suggestion": "Review the application code that uses this PSB to understand how the PCB is utilized."
-    }
-  ],
+  "open_questions": [],
   "resolved_questions": [],
   "dead_code": [],
   "call_semantics": [],

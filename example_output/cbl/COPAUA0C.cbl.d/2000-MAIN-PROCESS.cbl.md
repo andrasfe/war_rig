@@ -1,26 +1,25 @@
 ```cobol
-       2000-MAIN-PROCESS.                                                       
-      * ------------------------------------------------------------- *         
-      *                                                                         
-           PERFORM UNTIL NO-MORE-MSG-AVAILABLE OR WS-LOOP-END                   
+       01  W01-HOBJ-REQUEST            PIC S9(9) BINARY.                        
+       01  W01-BUFFLEN                 PIC S9(9) BINARY.                        
+       01  W01-DATALEN                 PIC S9(9) BINARY.                        
+       01  W01-GET-BUFFER              PIC X(500).                              
                                                                                 
-             PERFORM 2100-EXTRACT-REQUEST-MSG THRU 2100-EXIT                    
+       01  W02-HCONN-REPLY             PIC S9(9) BINARY VALUE ZERO.             
+       01  W02-BUFFLEN                 PIC S9(9) BINARY.                        
+       01  W02-DATALEN                 PIC S9(9) BINARY.                        
+       01  W02-PUT-BUFFER              PIC X(200).                              
                                                                                 
-             PERFORM 5000-PROCESS-AUTH        THRU 5000-EXIT                    
-                                                                                
-             ADD 1                            TO WS-MSG-PROCESSED               
-                                                                                
-             EXEC CICS                                                          
-                  SYNCPOINT                                                     
-             END-EXEC                                                           
-             SET IMS-PSB-NOT-SCHD            TO TRUE                            
-                                                                                
-             IF WS-MSG-PROCESSED > WS-REQSTS-PROCESS-LIMIT                      
-                SET  WS-LOOP-END             TO TRUE                            
-             ELSE                                                               
-                PERFORM 3100-READ-REQUEST-MQ THRU 3100-EXIT                     
-             END-IF                                                             
-           END-PERFORM                                                          
-           .                                                                    
-      *                                                                         
+       01  WS-SWITCHES.                                                         
+           05 WS-AUTH-RESP-FLG         PIC X(01).                               
+              88 AUTH-RESP-APPROVED    VALUE 'A'.                               
+              88 AUTH-RESP-DECLINED    VALUE 'D'.                               
+           05 WS-MSG-LOOP-FLG          PIC X(01) VALUE 'N'.                     
+              88 WS-LOOP-END           VALUE 'E'.                               
+           05 WS-MSG-AVAILABLE-FLG     PIC X(01) VALUE 'M'.                     
+              88 NO-MORE-MSG-AVAILABLE VALUE 'N'.                               
+              88 MORE-MSG-AVAILABLE    VALUE 'M'.                               
+           05 WS-REQUEST-MQ-FLG        PIC X(01) VALUE 'C'.                     
+              88 WS-REQUEST-MQ-OPEN    VALUE 'O'.                               
+              88 WS-REQUEST-MQ-CLSE    VALUE 'C'.                               
+           05 WS-REPLY-MQ-FLG          PIC X(01) VALUE 'C'.                     
 ```

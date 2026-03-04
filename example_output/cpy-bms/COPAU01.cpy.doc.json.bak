@@ -4,13 +4,13 @@
     "file_name": "COPAU01.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-04T03:32:49.733282",
+    "analyzed_at": "2026-03-04T04:45:09.035410",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the data structure COPAU1AI and its redefinition COPAU1AO, which are used for screen input/output. It contains fields related to transaction details, titles, dates, times, card numbers, authorization details, merchant information, and error messages.",
-    "business_context": "This copybook is likely used in an online CICS application to format data displayed on a screen and receive input from a user, possibly related to payment authorization or transaction processing.",
+    "summary": "This copybook, COPAU01.cpy, defines the data structures COPAU1AI and COPAU1AO, which are used for screen input and output related to authorization processing. The copybook includes fields for transaction name, titles, current date and time, card number, authorization details, merchant information, and error messages.",
+    "business_context": "This copybook is likely used in online CICS applications related to credit card authorization and transaction processing.",
     "program_type": "COPYBOOK",
     "citations": [
       17,
@@ -36,7 +36,7 @@
     {
       "paragraph_name": "COPAU1AI",
       "summary": null,
-      "purpose": "This data structure defines the input/output fields for a screen. It includes fields for transaction name (TRNNAMEL, TRNNAMEF, TRNNAMEI), titles (TITLE01L, TITLE01F, TITLE01I, TITLE02L, TITLE02F, TITLE02I), current date and time (CURDATEL, CURDATEF, CURDATEI, CURTIMEL, CURTIMEF, CURTIMEI), card number (CARDNUML, CARDNUMF, CARDNUMI), authorization details (AUTHDTL, AUTHDTF, AUTHDTI, AUTHTML, AUTHTMF, AUTHTMI, AUTHRSPL, AUTHRSPF, AUTHRSPI, AUTHRSNL, AUTHRSNF, AUTHRSNI, AUTHCDL, AUTHCDF, AUTHCDI, AUTHAMTL, AUTHAMTF, AUTHAMTI), POS entry mode (POSEMDL, POSEMDF, POSEMDI), authorization source (AUTHSRCL, AUTHSRCF, AUTHSRCI), MCC code (MCCCDL, MCCCDF, MCCCDI), card expiry (CRDEXPL, CRDEXPF, CRDEXPI), authorization type (AUTHTYPL, AUTHTYPF, AUTHTYPI), transaction ID (TRNIDL, TRNIDF, TRNIDI), authorization match (AUTHMTCL, AUTHMTCF, AUTHMTCI), authorization fraud (AUTHFRDL, AUTHFRDF, AUTHFRDI), merchant information (MERNAMEL, MERNAMEF, MERNAMEI, MERIDL, MERIDF, MERIDI, MERCITYL, MERCITYF, MERCITYI, MERSTL, MERSTF, MERSTI, MERZIPL, MERZIPF, MERZIPI), and error message (ERRMSGL, ERRMSGF, ERRMSGI). The 'L' fields represent the length of the corresponding input field, the 'F' fields are single-character flags, and the 'I' fields contain the actual input data. The 'COMP' attribute suggests these length fields are binary.",
+      "purpose": "This data structure defines the input fields for a CICS screen related to authorization processing. It contains fields for transaction name (TRNNAMEL, TRNNAMEF, TRNNAMEI), titles (TITLE01L, TITLE01F, TITLE01I, TITLE02L, TITLE02F, TITLE02I), current date and time (CURDATEL, CURDATEF, CURDATEI, CURTIMEL, CURTIMEF, CURTIMEI), card number (CARDNUML, CARDNUMF, CARDNUMI), authorization details (AUTHDTL, AUTHDTF, AUTHDTI, AUTHTML, AUTHTMF, AUTHTMI, AUTHRSPL, AUTHRSPF, AUTHRSP, AUTHRSNL, AUTHRSNF, AUTHRSNI, AUTHCDL, AUTHCDF, AUTHCDI, AUTHAMTL, AUTHAMTF, AUTHAMTI), POS entry mode (POSEMDL, POSEMDF, POSEMDI), authorization source (AUTHSRCL, AUTHSRCF, AUTHSRCI), MCC code (MCCCDL, MCCCDF, MCCCDI), card expiry (CRDEXPL, CRDEXPF, CRDEXPI), authorization type (AUTHTYPL, AUTHTYPF, AUTHTYPI), transaction ID (TRNIDL, TRNIDF, TRNIDI), authorization match (AUTHMTCL, AUTHMTCF, AUTHMTCI), authorization fraud (AUTHFRDL, AUTHFRDF, AUTHFRDI), merchant information (MERNAMEL, MERNAMEF, MERNAMEI, MERIDL, MERIDF, MERIDI, MERCITYL, MERCITYF, MERCITYI, MERSTL, MERSTF, MERSTI, MERZIPL, MERZIPF, MERZIPI), and error messages (ERRMSGL, ERRMSGF, ERRMSGI). Each field is defined with its length, format, and input/output attributes for screen display and data entry.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -54,7 +54,7 @@
     {
       "paragraph_name": "COPAU1AO",
       "summary": null,
-      "purpose": "This data structure redefines COPAU1AI to provide a different view of the same data. Instead of length and flag fields, it uses single-character fields ('C', 'P', 'H', 'V') and output fields ('O') for each data element. The 'C', 'P', 'H', and 'V' fields likely represent control characters or attributes for screen display, while the 'O' fields contain the actual output data to be displayed on the screen. This redefinition allows the program to easily format and display the data on a CICS screen. The FILLER fields are used to align the data correctly within the structure. This structure is used to populate the BMS map fields for output.",
+      "purpose": "This data structure redefines COPAU1AI and defines the output fields for a CICS screen related to authorization processing. It uses the same storage as COPAU1AI but provides a different view of the data, allowing the program to format the output for display. The fields are named with suffixes 'C', 'P', 'H', 'V', and 'O' to represent control characters, protected attributes, highlight attributes, validation attributes, and output values, respectively. This structure includes output fields for transaction name (TRNNAMEC, TRNNAMEP, TRNNAMEH, TRNNAMEV, TRNNAMEO), titles (TITLE01C, TITLE01P, TITLE01H, TITLE01V, TITLE01O, TITLE02C, TITLE02P, TITLE02H, TITLE02V, TITLE02O), current date and time (CURDATEC, CURDATEP, CURDATEH, CURDATEV, CURDATEO, CURTIMEC, CURTIMEP, CURTIMEH, CURTIMEV, CURTIMEO), card number (CARDNUMC, CARDNUMP, CARDNUMH, CARDNUMV, CARDNUMO), authorization details (AUTHDTC, AUTHDTP, AUTHDTH, AUTHDTV, AUTHDTO, AUTHTMC, AUTHTMP, AUTHTMH, AUTHTMV, AUTHTMO, AUTHRSPC, AUTHRSPP, AUTHRSPH, AUTHRSPV, AUTHRSPO, AUTHRSNC, AUTHRSNP, AUTHRSNH, AUTHRSNV, AUTHRSNO, AUTHCDC, AUTHCDP, AUTHCDH, AUTHCDV, AUTHCDO, AUTHAMTC, AUTHAMTP, AUTHAMTH, AUTHAMTV, AUTHAMTO), POS entry mode (POSEMDC, POSEMDP, POSEMDH, POSEMDV, POSEMDO), authorization source (AUTHSRCC, AUTHSRCP, AUTHSRCH, AUTHSRCV, AUTHSRCO), MCC code (MCCCDC, MCCCDP, MCCCDH, MCCCDV, MCCCDO), card expiry (CRDEXPC, CRDEXPP, CRDEXPH, CRDEXPV, CRDEXPO), authorization type (AUTHTYPC, AUTHTYPP, AUTHTYPH, AUTHTYPV, AUTHTYPO), transaction ID (TRNIDC, TRNIDP, TRNIDH, TRNIDV, TRNIDO), authorization match (AUTHMTCC, AUTHMTCP, AUTHMTCH, AUTHMTCV, AUTHMTCO), authorization fraud (AUTHFRDC, AUTHFRDP, AUTHFRDH, AUTHFRDV, AUTHFRDO), merchant information (MERNAMEC, MERNAMEP, MERNAMEH, MERNAMEV, MERNAMEO, MERIDC, MERIDP, MERIDH, MERIDV, MERIDO, MERCITYC, MERCITYP, MERCITYH, MERCITYV, MERCITYO, MERSTC, MERSTP, MERSTH, MERSTV, MERSTO, MERZIPC, MERZIPP, MERZIPH, MERZIPV, MERZIPO), and error messages (ERRMSGC, ERRMSGP, ERRMSGH, ERRMSGV, ERRMSGO).",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -71,13 +71,7 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
-    {
-      "question": "What is the exact purpose of the 'C', 'P', 'H', and 'V' fields in the COPAU1AO redefinition?",
-      "context": "The code only shows the data structure definition, not how these fields are used.",
-      "suggestion": "Examine the BMS map definition and the COBOL code that uses this copybook to understand how these fields control the screen display attributes."
-    }
-  ],
+  "open_questions": [],
   "resolved_questions": [],
   "dead_code": [
     {

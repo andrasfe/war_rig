@@ -4,18 +4,17 @@
     "file_name": "PSBPAUTB.psb",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-04T03:32:42.026792",
+    "analyzed_at": "2026-03-04T04:44:54.815797",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This PSB (Program Specification Block) defines the program's interface to the IMS database DBPAUTP0. It specifies the segments (PAUTSUM0, PAUTDTL1) that the program is authorized to access and the type of access granted.",
+    "summary": "This file defines a Program Specification Block (PSB) named PSBPAUTB for an IMS database application. It specifies the database (DBPAUTP0), processing options, and segment hierarchy for accessing data.",
     "business_context": null,
-    "program_type": "UTILITY",
+    "program_type": "OTHER",
     "citations": [
       17,
-      18,
-      19
+      20
     ]
   },
   "inputs": [],
@@ -39,9 +38,14 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the purpose of this PSB in the broader application context?",
-      "context": "The PSB definition provides technical details but lacks business context.",
-      "suggestion": "Review application documentation or consult with subject matter experts."
+      "question": "What is the specific purpose of the DBPAUTP0 database?",
+      "context": "The PSB definition refers to a database named DBPAUTP0, but its function is not described in this file.",
+      "suggestion": "Consult the DBD (Database Description) for DBPAUTP0."
+    },
+    {
+      "question": "What is the meaning of PROCOPT=AP?",
+      "context": "The processing option 'AP' is used, but its specific implications are unclear without further context.",
+      "suggestion": "Refer to IMS documentation for PROCOPT values."
     }
   ],
   "resolved_questions": [],

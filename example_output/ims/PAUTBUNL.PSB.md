@@ -2,13 +2,15 @@
 
 **File**: `ims/PAUTBUNL.PSB`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-03-04 03:30:02.454296
+**Analyzed**: 2026-03-04 04:42:05.661695
 
 ## Purpose
 
-This PSB (Program Specification Block) defines the database access and processing characteristics for an IMS (Information Management System) application. It specifies the database (DBPAUTP0), the processing options (GOTP), key length, and the segments (PAUTSUM0, PAUTDTL1) that the program will access. The PSB is generated for COBOL and indicates compatibility is not required.
+This PSB (Program Specification Block) defines the database access characteristics for an IMS (Information Management System) application. It specifies the database (DBPAUTP0), the processing options (GOTP), key length, and the segments (PAUTSUM0, PAUTDTL1) that the program is allowed to access within that database.
+
+**Business Context**: UNKNOWN
 
 ## Open Questions
 
-- ? What is the purpose of PROCOPT=GOTP?
-  - Context: The meaning of GOTP is unclear without additional IMS documentation.
+- ? What is the business purpose of the PAUTBUNL PSB and the associated database DBPAUTP0?
+  - Context: The code only defines the structure and access rights, not the business logic.

@@ -4,17 +4,18 @@
     "file_name": "COPAU00.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-04T03:32:52.083257",
+    "analyzed_at": "2026-03-04T04:45:03.054289",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the data structures COPAU0AI and COPAU0AO, which are used for screen input and output related to transaction processing. It includes fields for transaction names, titles, dates, amounts, selection options, and error messages.",
-    "business_context": "This copybook is likely used in online CICS applications for user interface definition and data transfer between the application and the screen.",
+    "summary": "This copybook defines data structures used for BMS map definitions, specifically for screen input and output fields related to transaction processing and date display. It includes definitions for field lengths, attributes, and input/output areas.",
+    "business_context": "Defines the layout for user interface elements in a CICS environment, facilitating data exchange between the application and the user.",
     "program_type": "COPYBOOK",
     "citations": [
       24,
-      391
+      31,
+      376
     ]
   },
   "inputs": [],
@@ -36,12 +37,12 @@
     {
       "paragraph_name": "COPAU0AI",
       "summary": null,
-      "purpose": "This paragraph defines the data structure COPAU0AI, which appears to be used for screen input and output. It contains various fields including TRNNAMEL, TRNNAMEF, TRNNAMEI for transaction name related data; TITLE01L, TITLE01F, TITLE01I for title information; CURDATEL, CURDATEF for current date; PAMT001L, PAMT001F, PAMT001I through PAMT005L, PAMT005F, PAMT005I for amount fields; SEL0005L, SEL0005F, SEL0005I for selection options; and ERRMSGL, ERRMSGF, ERRMSGI for error messages. The 'L' suffix likely represents the length of the field, 'F' is a flag, and 'I' is the actual data. This data structure is likely used to map data between the COBOL program and a BMS map.",
+      "purpose": "This paragraph defines a data structure, COPAU0AI, which appears to be used for BMS map input and output. It contains fields for transaction names (TRNNAMEL, TRNNAMEF, TRNNAMEI), titles (TITLE01L, TITLE01F, TITLE01I), and the current date (CURDATEL, CURDATEF). The 'L' fields likely represent the length of the associated data, 'F' fields are single-character attribute bytes, and 'I' fields contain the actual data. The structure includes filler fields to ensure proper alignment and spacing within the BMS map. This paragraph does not perform any processing logic; it only defines the data structure. It's used to define the input/output layout for a screen.",
       "called_by": [],
       "calls": [],
       "citation": [
         24,
-        390
+        32
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
@@ -54,7 +55,7 @@
     {
       "paragraph_name": "COPAU0AO",
       "summary": null,
-      "purpose": "This paragraph defines the data structure COPAU0AO, which redefines COPAU0AI. It provides an alternative view of the data, breaking down some of the fields into smaller components. Specifically, it redefines TRNNAMEF into TRNNAMEC, TRNNAMEP, TRNNAMEH, TRNNAMEV, and TRNNAMEO, and TITLE01F into TITLE01C, TITLE01P, TITLE01H, TITLE01V, and TITLE01O. This redefinition allows the program to access the same data in different formats, potentially for display or processing purposes. The 'C', 'P', 'H', and 'V' suffixes might represent different attributes or parts of the original fields.",
+      "purpose": "This paragraph redefines the COPAU0AI data structure as COPAU0AO, providing an alternate view of the same memory area. This redefinition allows accessing parts of the original fields using different names and formats. Specifically, it redefines TRNNAMEL, TRNNAMEF, and TRNNAMEI into TRNNAMEC, TRNNAMEP, TRNNAMEH, TRNNAMEV, and TRNNAMEO, and similarly for TITLE01L, TITLE01F, and TITLE01I into TITLE01C, TITLE01P, TITLE01H, TITLE01V, and TITLE01O, and CURDATEL and CURDATEF into CURDATEC. This is likely done to facilitate easier manipulation or display of the data on a BMS screen. No processing or logic is performed within this paragraph; it only provides a redefinition of the data structure. It allows different parts of the program to view the same data in different ways.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -80,13 +81,13 @@
       "outgoing_calls": [],
       "incoming_calls": [
         {
-          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
           "function": "COPAUS0C",
           "line": 129,
           "call_type": "includes"
         },
         {
-          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
           "function": "COPAUS0C",
           "line": 1,
           "call_type": "includes"
@@ -102,9 +103,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the exact purpose of each field suffix (C, P, H, V, O) in the redefined data structure COPAU0AO?",
-      "context": "The code provides no explicit comments or documentation explaining the meaning of these suffixes.",
-      "suggestion": "Review related BMS map definitions or application documentation to understand the intended use of these fields."
+      "question": "What is the exact purpose of each field within the COPAU0AI and COPAU0AO structures?",
+      "context": "The copybook only defines the structure, not the specific usage of each field.",
+      "suggestion": "Review the BMS map definitions and the programs that use this copybook."
     }
   ],
   "resolved_questions": [],

@@ -39,4 +39,5 @@
       *     DISPLAY 'SEG LEVEL: ' PAUT-SEG-LEVEL                        02030002
       *     DISPLAY 'PCB STATU: ' PAUT-PCB-STATUS                       02040002
       *     DISPLAY 'SEG NAME   : ' PAUT-SEG-NAME                       02050002
+      *     DISPLAY ' *******************************'                  02060000
 ```

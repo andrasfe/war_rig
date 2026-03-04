@@ -21,7 +21,4 @@
                     DISPLAY 'AUTH DETAIL READ FAILED  :' DIBSTAT
                     DISPLAY 'SUMMARY AUTH APP ID      :' PA-ACCT-ID
                     DISPLAY 'DETAIL READ BEFORE ABEND :' WS-NO-DTL-READ
-                    PERFORM 9999-ABEND
-            END-EVALUATE
-            .
 ```

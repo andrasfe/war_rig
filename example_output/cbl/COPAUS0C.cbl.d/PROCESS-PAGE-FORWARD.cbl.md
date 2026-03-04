@@ -1,42 +1,45 @@
 ```cobol
+       PROCESS-PAGE-FORWARD.
+      *****************************************************************
+
+           IF ERR-FLG-OFF
+
+               MOVE 1             TO  WS-IDX
+
+               MOVE LOW-VALUES    TO CDEMO-CPVS-PAUKEY-LAST
+
+               PERFORM UNTIL WS-IDX > 5 OR AUTHS-EOF OR ERR-FLG-ON
+                   IF EIBAID = DFHPF7 AND WS-IDX = 1
+                      PERFORM REPOSITION-AUTHORIZATIONS
+                   ELSE
+                      PERFORM GET-AUTHORIZATIONS
+                   END-IF
+                   IF AUTHS-NOT-EOF AND ERR-FLG-OFF
+                       PERFORM POPULATE-AUTH-LIST
+                       COMPUTE WS-IDX = WS-IDX + 1
+
+                       MOVE PA-AUTHORIZATION-KEY TO
+                                             CDEMO-CPVS-PAUKEY-LAST
+                       IF WS-IDX = 2
+                          COMPUTE CDEMO-CPVS-PAGE-NUM =
+                                  CDEMO-CPVS-PAGE-NUM + 1
+                          MOVE PA-AUTHORIZATION-KEY TO
+                          CDEMO-CPVS-PAUKEY-PREV-PG(CDEMO-CPVS-PAGE-NUM)
                        END-IF
+                   END-IF
+               END-PERFORM
 
-                       PERFORM SEND-PAULST-SCREEN
-                     WHEN DFHPF3
-                       MOVE WS-PGM-MENU        TO CDEMO-TO-PROGRAM
-                       PERFORM RETURN-TO-PREV-SCREEN
-                       PERFORM SEND-PAULST-SCREEN
-                     WHEN DFHPF7
-                       PERFORM PROCESS-PF7-KEY
-                       PERFORM SEND-PAULST-SCREEN
-                     WHEN DFHPF8
-                       PERFORM PROCESS-PF8-KEY
-                       PERFORM SEND-PAULST-SCREEN
-                     WHEN OTHER
-                       MOVE 'Y'              TO WS-ERR-FLG
-                       MOVE -1               TO ACCTIDL OF COPAU0AI
-                       MOVE CCDA-MSG-INVALID-KEY  TO WS-MESSAGE
-                       PERFORM SEND-PAULST-SCREEN
-                  END-EVALUATE
+               IF AUTHS-NOT-EOF AND ERR-FLG-OFF
+                   PERFORM GET-AUTHORIZATIONS
+                   IF AUTHS-NOT-EOF AND ERR-FLG-OFF
+                       SET NEXT-PAGE-YES TO TRUE
+                   ELSE
+                       SET NEXT-PAGE-NO TO TRUE
+                   END-IF
                END-IF
-           END-IF
 
-           EXEC CICS RETURN
-                     TRANSID (WS-CICS-TRANID)
-                     COMMAREA (CARDDEMO-COMMAREA)
-           END-EXEC.
+           END-IF.
 
 
       *****************************************************************
-       PROCESS-ENTER-KEY.
-      *****************************************************************
-
-           IF ACCTIDI OF COPAU0AI = SPACES OR LOW-VALUES
-              MOVE LOW-VALUES                 TO WS-ACCT-ID
-
-              MOVE 'Y'                        TO WS-ERR-FLG
-              MOVE
-              'Please enter Acct Id...'       TO WS-MESSAGE
-
-              MOVE -1                         TO ACCTIDL OF COPAU0AI
 ```

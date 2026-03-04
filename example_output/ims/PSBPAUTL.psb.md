@@ -2,13 +2,8 @@
 
 **File**: `ims/PSBPAUTL.psb`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-03-04 03:29:48.965799
+**Analyzed**: 2026-03-04 04:42:01.536582
 
 ## Purpose
 
-This file defines a Program Specification Block (PSB) named PSBPAUTL for an IMS database application. It specifies the database (DBPAUTP0), processing options, key length, and segment hierarchy used by the application to access the database.
-
-## Open Questions
-
-- ? What is the purpose of the PAUTLPCB PCB definition?
-  - Context: The exact function of the PCB and its usage within the IMS application is unclear without further context.
+This PSB (Program Specification Block) defines the interface for accessing the DBPAUTP0 database within an IMS (Information Management System) environment. It specifies the PCB (Program Communication Block) configuration, including the database name, processing options, key length, and sensitive segments (SENSEG) for data access. The PSBGEN statement indicates that this PSB is generated for assembly language.

@@ -11,7 +11,7 @@
       "END-ROOT-SEG-FILE",
       "END-CHILD-SEG-FILE"
     ],
-    "purpose": "Initializes the program by accepting current date values and opening input files INFILE1 and INFILE2, validating their status."
+    "purpose": "Initializes the program by accepting current date values and opening input files INFILE1 and INFILE2, setting up file status flags."
   },
   {
     "caller": "MAIN-PARA",
@@ -39,7 +39,7 @@
       "PENDING-AUTH-DETAILS",
       "END-CHILD-SEG-FILE"
     ],
-    "purpose": "Reads a record from INFILE2, validates the root segment key, and loads child segment data for insertion if valid."
+    "purpose": "Reads a record from INFILE2, validates the root segment key, and populates child segment data for insertion if valid, or sets end-of-file flag."
   },
   {
     "caller": "MAIN-PARA",
@@ -58,14 +58,14 @@
     "outputs": [
       "RETURN-CODE"
     ],
-    "purpose": "Terminates the program abnormally by setting the return code to 16 and displaying an abend message."
+    "purpose": "Terminates the program abnormally by setting RETURN-CODE to 16 and displaying an abend message."
   },
   {
     "caller": "1000-INITIALIZE",
     "callee": "9999-ABEND",
     "inputs": [],
     "outputs": [],
-    "purpose": "Abends the program with return code 16 if an error occurs during file opening."
+    "purpose": "Abends the program with return code 16 when an input file fails to open."
   },
   {
     "caller": "2000-READ-ROOT-SEG-FILE",
@@ -83,7 +83,7 @@
       "PAUT-PCB-STATUS"
     ],
     "outputs": [],
-    "purpose": "Abends the program if the root segment insertion fails with an unexpected IMS status code."
+    "purpose": "Abends the program if the root segment insertion into IMS fails with an unexpected status code."
   },
   {
     "caller": "3000-READ-CHILD-SEG-FILE",
@@ -92,28 +92,30 @@
       "ROOT-SEG-KEY",
       "CHILD-SEG-REC"
     ],
-    "outputs": [],
-    "purpose": "Inserts a child segment into the IMS database after validating and preparing data from INFILE2."
+    "outputs": [
+      "QUAL-SSA-KEY-VALUE"
+    ],
+    "purpose": "Inserts a child segment into the IMS database after setting up the qualifying SSA with the root key."
   },
   {
     "caller": "3100-INSERT-CHILD-SEG",
     "callee": "3200-INSERT-IMS-CALL",
     "inputs": [],
     "outputs": [],
-    "purpose": "Performs an IMS insert call to add a child segment after successfully retrieving the parent segment."
+    "purpose": "Performs an IMS insert call to add a child segment after successfully retrieving the parent root segment."
   },
   {
     "caller": "3100-INSERT-CHILD-SEG",
     "callee": "9999-ABEND",
     "inputs": [],
     "outputs": [],
-    "purpose": "Abends the program with return code 16 when the GU call to the root segment fails."
+    "purpose": "Abends the program with return code 16 when a root GU call fails."
   },
   {
     "caller": "3200-INSERT-IMS-CALL",
     "callee": "9999-ABEND",
     "inputs": [],
     "outputs": [],
-    "purpose": "Abends the program with return code 16 when the ISRT call for the child segment fails."
+    "purpose": "Abends the program with return code 16 when an insert call for a child segment fails."
   }
 ]

@@ -7,49 +7,46 @@
       "file_name": "CBPAUP0C.cbl",
       "file_type": "COBOL",
       "analyzed_by": "WAR_RIG",
-      "analyzed_at": "2026-03-04T03:23:36.752219",
+      "analyzed_at": "2026-03-04T04:40:17.292164",
       "iteration_count": 1,
       "final_status": null
     },
     "purpose": {
-      "summary": "CBPAUP0C is a batch program that reads pending authorization summary and detail records from an IMS database, checks if the authorization details are expired based on a configurable expiry period, and deletes the expired authorization details. It also deletes authorization summaries if all associated details have been deleted and takes checkpoints periodically.",
-      "business_context": "This program is used to purge expired authorization records from the system, likely to reduce database size and improve performance of authorization processing.",
+      "summary": "This program purges expired authorization details from the IMS PAUTSUM0 and PAUTDTL1 segments. It reads authorization summary records and then iterates through the associated detail records, deleting those that have exceeded the expiry period defined by the P-EXPIRY-DAYS parameter. The program also updates authorization summary counts and amounts based on the deleted detail records.",
+      "business_context": "This program is used to maintain the authorization database by removing expired authorization records, ensuring that the database remains efficient and contains only relevant data.",
       "program_type": "BATCH",
       "citations": [
         9,
         14,
-        23
+        148
       ]
     },
     "inputs": [
       {
-        "name": "PENDING-AUTH-SUMMARY",
+        "name": "PAUTSUM0",
         "io_type": "IMS_SEGMENT",
-        "description": "Pending authorization summary records from the IMS database.",
+        "description": "Pending Authorization Summary segment, containing summary information for pending authorizations.",
         "copybook": "PAUTSUM0",
         "citation": [
-          89,
-          90
+          89
         ]
       },
       {
-        "name": "PENDING-AUTH-DETAILS",
+        "name": "PAUTDTL1",
         "io_type": "IMS_SEGMENT",
-        "description": "Pending authorization detail records from the IMS database.",
+        "description": "Pending Authorization Detail segment, containing details for individual pending authorizations.",
         "copybook": "PAUTDTL1",
         "citation": [
-          120,
-          121
+          120
         ]
       },
       {
         "name": "SYSIN",
         "io_type": "PARAMETER",
-        "description": "Parameter input containing expiry days, checkpoint frequency, debug flag, and display frequency.",
+        "description": "Input parameter string containing expiry days (P-EXPIRY-DAYS), checkpoint frequency (P-CHKP-FREQ), checkpoint display frequency (P-CHKP-DIS-FREQ), and debug flag (P-DEBUG-FLAG).",
         "copybook": null,
         "citation": [
-          55,
-          58
+          55
         ]
       }
     ],
@@ -79,9 +76,9 @@
       {
         "rule_id": "BR001",
         "description": "Authorization details are considered expired if the difference between the current date and the authorization date is greater than or equal to the expiry days specified in the input parameter.",
-        "logic_summary": "The program calculates the difference between the current date (CURRENT-YYDDD) and the authorization date (PA-AUTH-DATE-9C), and compares it with the expiry days (WS-EXPIRY-DAYS).",
+        "logic_summary": "The program calculates the difference between the current date (CURRENT-YYDDD) and the authorization date (PA-AUTH-DATE-9C) and compares it to the expiry days (WS-EXPIRY-DAYS).",
         "conditions": [
-          "WS-DAY-DIFF >= WS-EXPIRY-DAYS"
+          "IF WS-DAY-DIFF >= WS-EXPIRY-DAYS"
         ],
         "citation": [
           146,
@@ -90,66 +87,44 @@
       },
       {
         "rule_id": "BR002",
-        "description": "If an authorization detail is expired and the authorization response code is '00' (approved), the approved authorization count and amount in the summary record are decremented.",
-        "logic_summary": "The program checks if PA-AUTH-RESP-CODE is '00' and then subtracts 1 from PA-APPROVED-AUTH-CNT and PA-APPROVED-AMT.",
+        "description": "When an authorization detail is deleted, the corresponding approved or declined counts and amounts in the authorization summary are updated based on the authorization response code.",
+        "logic_summary": "If the authorization response code (PA-AUTH-RESP-CODE) is '00', the approved count (PA-APPROVED-AUTH-CNT) and amount (PA-APPROVED-AUTH-AMT) are decremented. Otherwise, the declined count (PA-DECLINED-AUTH-CNT) and amount (PA-TRANSACTION-AMT) are decremented.",
         "conditions": [
-          "PA-AUTH-RESP-CODE = '00'"
+          "IF PA-AUTH-RESP-CODE = '00'"
         ],
         "citation": [
           151,
           152,
-          153
-        ]
-      },
-      {
-        "rule_id": "BR003",
-        "description": "If an authorization detail is expired and the authorization response code is not '00' (declined), the declined authorization count and amount in the summary record are decremented.",
-        "logic_summary": "The program checks if PA-AUTH-RESP-CODE is not '00' and then subtracts 1 from PA-DECLINED-AUTH-CNT and PA-TRANSACTION-AMT.",
-        "conditions": [
-          "PA-AUTH-RESP-CODE not = '00'"
-        ],
-        "citation": [
-          154,
+          153,
           155,
           156
-        ]
-      },
-      {
-        "rule_id": "BR004",
-        "description": "Authorization summary records are deleted if both the approved and declined authorization counts are less than or equal to 0.",
-        "logic_summary": "The program checks if PA-APPROVED-AUTH-CNT and PA-DECLINED-AUTH-CNT are both less than or equal to 0.",
-        "conditions": [
-          "PA-APPROVED-AUTH-CNT <= 0 AND PA-APPROVED-AUTH-CNT <= 0"
-        ],
-        "citation": [
-          23
         ]
       }
     ],
     "data_flow": {
       "reads_from": [
         {
-          "source": "PENDING-AUTH-SUMMARY",
+          "source": "PAUTSUM0",
           "fields_used": [
             "PA-ACCT-ID",
             "PA-APPROVED-AUTH-CNT",
             "PA-APPROVED-AUTH-AMT",
-            "PA-DECLINED-AUTH-CNT"
+            "PA-DECLINED-AUTH-CNT",
+            "PA-DECLINED-AUTH-AMT"
           ],
           "citation": [
-            90
+            89
           ]
         },
         {
-          "source": "PENDING-AUTH-DETAILS",
+          "source": "PAUTDTL1",
           "fields_used": [
             "PA-AUTH-DATE-9C",
             "PA-AUTH-RESP-CODE",
-            "PA-APPROVED-AMT",
             "PA-TRANSACTION-AMT"
           ],
           "citation": [
-            121
+            120
           ]
         },
         {
@@ -170,15 +145,15 @@
         {
           "input_field": "PA-AUTH-DATE-9C",
           "output_field": "WS-AUTH-DATE",
-          "transformation_description": "Calculates the authorization date by subtracting it from 99999. This is likely done to facilitate date comparisons.",
+          "transformation_description": "Calculates the authorization date by subtracting PA-AUTH-DATE-9C from 99999.",
           "citation": [
             144
           ]
         },
         {
-          "input_field": "CURRENT-YYDDD",
+          "input_field": "CURRENT-YYDDD, WS-AUTH-DATE",
           "output_field": "WS-DAY-DIFF",
-          "transformation_description": "Calculates the difference between the current date and the calculated authorization date.",
+          "transformation_description": "Calculates the difference in days between the current date and the authorization date.",
           "citation": [
             146
           ]
@@ -188,22 +163,41 @@
     "copybooks_used": [
       {
         "copybook_name": "PAUTSUM0",
-        "purpose": "Defines the structure of the pending authorization summary IMS segment.",
-        "location": "WORKING_STORAGE",
+        "purpose": "Defines the structure of the Pending Authorization Summary (PAUTSUM0) IMS segment.",
+        "location": "OTHER",
         "citation": 89
       },
       {
         "copybook_name": "PAUTDTL1",
-        "purpose": "Defines the structure of the pending authorization detail IMS segment.",
-        "location": "WORKING_STORAGE",
+        "purpose": "Defines the structure of the Pending Authorization Detail (PAUTDTL1) IMS segment.",
+        "location": "OTHER",
         "citation": 120
       }
     ],
     "paragraphs": [
       {
+        "paragraph_name": "CBPAUP0C",
+        "summary": null,
+        "purpose": "This is the program entry point. It calls CIPAUSMY and CIPAUDTY, but the purpose of these calls is unknown as no further information is available in the provided code snippet.",
+        "called_by": [],
+        "calls": [
+          "CIPAUSMY",
+          "CIPAUDTY"
+        ],
+        "citation": [
+          1,
+          1
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
         "paragraph_name": "MAIN-PARA",
         "summary": null,
-        "purpose": "This is the main control paragraph of the CBPAUP0C program. It orchestrates the process of reading authorization summaries and details, checking for expired authorizations, and deleting them. The paragraph first calls 1000-INITIALIZE to set up the program environment. Then, it enters a main loop that continues until either an error flag (ERR-FLG-ON) is set or the end of the authorization database (END-OF-AUTHDB) is reached. Inside the main loop, it retrieves authorization details using 3000-FIND-NEXT-AUTH-DTL within a nested loop that continues until no more authorization details (NO-MORE-AUTHS) are found for the current summary. For each detail, it calls 4000-CHECK-IF-EXPIRED to determine if the authorization has expired, and if so, calls 5000-DELETE-AUTH-DTL to delete the detail record. After processing all details for a summary, it checks if both approved and declined authorization counts are less than or equal to zero; if so, it calls 6000-DELETE-AUTH-SUMMARY to delete the summary record.  Periodically, based on WS-AUTH-SMRY-PROC-CNT exceeding P-CHKP-FREQ, it calls 9000-TAKE-CHECKPOINT to take a checkpoint. Finally, after processing all summaries, it calls 9000-TAKE-CHECKPOINT again and displays summary statistics.",
+        "purpose": "This paragraph is the main control loop of the program. It first initializes program variables by performing 1000-INITIALIZE. Then, it enters a loop that continues until either an error flag (ERR-FLG-ON) is set or the end of the authorization database (END-OF-AUTHDB) is reached. Inside this loop, it retrieves the next authorization summary record using 2000-FIND-NEXT-AUTH-SUMMARY.  For each summary record, it enters another loop to process authorization detail records using 3000-FIND-NEXT-AUTH-DTL until no more detail records are found (NO-MORE-AUTHS).  Within the inner loop, 4000-CHECK-IF-EXPIRED determines if the detail record is expired, and if so, 5000-DELETE-AUTH-DTL deletes it. After processing all detail records for a summary, 6000-DELETE-AUTH-SUMMARY is performed if the approved authorization count is zero.  A checkpoint is taken using 9000-TAKE-CHECKPOINT if the number of processed summary records exceeds a predefined frequency (P-CHKP-FREQ). Finally, the program displays summary statistics before terminating.",
         "called_by": [],
         "calls": [
           "1000-INITIALIZE",
@@ -212,13 +206,11 @@
           "4000-CHECK-IF-EXPIRED",
           "5000-DELETE-AUTH-DTL",
           "6000-DELETE-AUTH-SUMMARY",
-          "9000-TAKE-CHECKPOINT",
-          "2000-FIND-NEXT-AUTH-SUMMARY",
           "9000-TAKE-CHECKPOINT"
         ],
         "citation": [
-          136,
-          182
+          3,
+          47
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -229,14 +221,14 @@
       {
         "paragraph_name": "1000-INITIALIZE",
         "summary": null,
-        "purpose": "This paragraph initializes the program by accepting the current date and parameters from SYSIN. It accepts the current date and day of the year. It then displays the starting message, the parameters received, and today's date. It checks if the expiry days (P-EXPIRY-DAYS) from the input parameters are numeric; if so, it moves the value to WS-EXPIRY-DAYS; otherwise, it defaults to 5. It also checks if the checkpoint frequency (P-CHKP-FREQ) and display frequency (P-CHKP-DIS-FREQ) are spaces, 0, or low-values; if so, it defaults them to 5 and 10 respectively. Finally, it checks if the debug flag (P-DEBUG-FLAG) is not 'Y'; if so, it sets it to 'N'.",
+        "purpose": "This paragraph initializes program variables and reads input parameters. It accepts the current date and day from the system. It then accepts parameters from SYSIN into PRM-INFO and displays them. It checks if P-EXPIRY-DAYS is numeric; if so, it moves it to WS-EXPIRY-DAYS; otherwise, it defaults WS-EXPIRY-DAYS to 5. It also checks if P-CHKP-FREQ and P-CHKP-DIS-FREQ are spaces, 0, or LOW-VALUES; if so, it defaults them to 5 and 10 respectively. Finally, it checks if P-DEBUG-FLAG is not 'Y'; if so, it defaults it to 'N'.",
         "called_by": [
           "MAIN-PARA"
         ],
         "calls": [],
         "citation": [
-          183,
-          211
+          49,
+          77
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -247,14 +239,14 @@
       {
         "paragraph_name": "1000-EXIT",
         "summary": null,
-        "purpose": "This paragraph simply contains the EXIT statement and serves as the exit point for the 1000-INITIALIZE paragraph. It does not perform any specific logic or operations.",
+        "purpose": "This paragraph simply contains the EXIT statement, marking the end of the 1000-INITIALIZE paragraph. It serves as a target for the PERFORM THRU statement in MAIN-PARA.",
         "called_by": [
           "MAIN-PARA"
         ],
         "calls": [],
         "citation": [
-          212,
-          215
+          78,
+          79
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -265,7 +257,7 @@
       {
         "paragraph_name": "2000-FIND-NEXT-AUTH-SUMMARY",
         "summary": null,
-        "purpose": "This paragraph retrieves the next pending authorization summary record from the IMS database. It first checks if the debug flag is on and displays the current summary read count. It then executes a DLI GN (Get Next) command to read the next PAUTSUM0 segment into PENDING-AUTH-SUMMARY. The DIBSTAT value is evaluated to determine the outcome of the read. If DIBSTAT is '  ' (success), it sets NOT-END-OF-AUTHDB to TRUE, increments the summary read count (WS-NO-SUMRY-READ) and the summary process count (WS-AUTH-SMRY-PROC-CNT), and moves the account ID (PA-ACCT-ID) to WS-CURR-APP-ID. If DIBSTAT is 'GB' (end of database), it sets END-OF-AUTHDB to TRUE. If DIBSTAT is any other value, it displays an error message and abends the program by calling 9999-ABEND.",
+        "purpose": "This paragraph retrieves the next authorization summary record from the IMS database. It first checks if the debug flag is on and displays the current summary read count. It then executes a DLI GN (Get Next) command to read the PAUTSUM0 segment into PENDING-AUTH-SUMMARY. The DIBSTAT return code is evaluated. If it's spaces, NOT-END-OF-AUTHDB is set to TRUE, the summary read count (WS-NO-SUMRY-READ) and the summary process count (WS-AUTH-SMRY-PROC-CNT) are incremented, and the account ID (PA-ACCT-ID) is moved to WS-CURR-APP-ID. If DIBSTAT is 'GB', END-OF-AUTHDB is set to TRUE. If DIBSTAT is any other value, an error message is displayed, and the program abends by performing 9999-ABEND.",
         "called_by": [
           "MAIN-PARA"
         ],
@@ -273,8 +265,8 @@
           "9999-ABEND"
         ],
         "citation": [
-          216,
-          242
+          81,
+          107
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -285,14 +277,14 @@
       {
         "paragraph_name": "2000-EXIT",
         "summary": null,
-        "purpose": "This paragraph simply contains the EXIT statement and serves as the exit point for the 2000-FIND-NEXT-AUTH-SUMMARY paragraph. It does not perform any specific logic or operations.",
+        "purpose": "This paragraph simply contains the EXIT statement, marking the end of the 2000-FIND-NEXT-AUTH-SUMMARY paragraph. It serves as a target for the PERFORM THRU statement in MAIN-PARA.",
         "called_by": [
           "MAIN-PARA"
         ],
         "calls": [],
         "citation": [
-          243,
-          247
+          109,
+          110
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -303,7 +295,7 @@
       {
         "paragraph_name": "3000-FIND-NEXT-AUTH-DTL",
         "summary": null,
-        "purpose": "This paragraph retrieves the next pending authorization detail record from the IMS database for the current summary record. It first checks if the debug flag is on and displays the current detail read count. It then executes a DLI GNP (Get Next within Parent) command to read the next PAUTDTL1 segment into PENDING-AUTH-DETAILS. The DIBSTAT value is evaluated to determine the outcome of the read. If DIBSTAT is '  ' (success), it sets MORE-AUTHS to TRUE and increments the detail read count (WS-NO-DTL-READ). If DIBSTAT is 'GE' or 'GB' (end of segment or database), it sets NO-MORE-AUTHS to TRUE. If DIBSTAT is any other value, it displays an error message, the summary account ID, the detail read count, and abends the program by calling 9999-ABEND.",
+        "purpose": "This paragraph retrieves the next authorization detail record from the IMS database. It first checks if the debug flag is on and displays the current detail read count. It then executes a DLI GNP (Get Next within Parent) command to read the PAUTDTL1 segment into PENDING-AUTH-DETAILS. The DIBSTAT return code is evaluated. If it's spaces, MORE-AUTHS is set to TRUE, and the detail read count (WS-NO-DTL-READ) is incremented. If DIBSTAT is 'GE' or 'GB', NO-MORE-AUTHS is set to TRUE. If DIBSTAT is any other value, an error message is displayed, and the program abends by performing 9999-ABEND.",
         "called_by": [
           "MAIN-PARA"
         ],
@@ -311,8 +303,8 @@
           "9999-ABEND"
         ],
         "citation": [
-          248,
-          272
+          112,
+          136
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -323,14 +315,14 @@
       {
         "paragraph_name": "3000-EXIT",
         "summary": null,
-        "purpose": "This paragraph simply contains the EXIT statement and serves as the exit point for the 3000-FIND-NEXT-AUTH-DTL paragraph. It does not perform any specific logic or operations.",
+        "purpose": "This paragraph simply contains the EXIT statement, marking the end of the 3000-FIND-NEXT-AUTH-DTL paragraph. It serves as a target for the PERFORM THRU statement in MAIN-PARA.",
         "called_by": [
           "MAIN-PARA"
         ],
         "calls": [],
         "citation": [
-          273,
-          276
+          138,
+          139
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -341,14 +333,14 @@
       {
         "paragraph_name": "4000-CHECK-IF-EXPIRED",
         "summary": null,
-        "purpose": "This paragraph checks if the current authorization detail record is expired based on the configured expiry period. It calculates the authorization date (WS-AUTH-DATE) by subtracting the PA-AUTH-DATE-9C from 99999. It then calculates the difference (WS-DAY-DIFF) between the current date (CURRENT-YYDDD) and the calculated authorization date. If the difference is greater than or equal to the expiry days (WS-EXPIRY-DAYS), it sets QUALIFIED-FOR-DELETE to TRUE. If the authorization response code (PA-AUTH-RESP-CODE) is '00' (approved), it decrements the approved authorization count (PA-APPROVED-AUTH-CNT) and amount (PA-APPROVED-AUTH-AMT) in the summary record. Otherwise (declined), it decrements the declined authorization count (PA-DECLINED-AUTH-CNT) and transaction amount (PA-TRANSACTION-AMT) in the summary record. If the authorization is not expired, it sets NOT-QUALIFIED-FOR-DELETE to TRUE.",
+        "purpose": "This paragraph determines if an authorization detail record is expired based on the authorization date and the expiry days. It calculates the authorization date (WS-AUTH-DATE) by subtracting the PA-AUTH-DATE-9C from 99999. It then calculates the difference in days (WS-DAY-DIFF) between the current date (CURRENT-YYDDD) and the calculated authorization date. If the difference is greater than or equal to the expiry days (WS-EXPIRY-DAYS), QUALIFIED-FOR-DELETE is set to TRUE. If the authorization response code (PA-AUTH-RESP-CODE) is '00', the approved authorization count and amount in the summary record are decremented. Otherwise, the declined authorization count and amount are decremented. If the detail record is not expired, NOT-QUALIFIED-FOR-DELETE is set to TRUE.",
         "called_by": [
           "MAIN-PARA"
         ],
         "calls": [],
         "citation": [
-          277,
-          298
+          141,
+          162
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -359,14 +351,14 @@
       {
         "paragraph_name": "4000-EXIT",
         "summary": null,
-        "purpose": "This paragraph simply contains the EXIT statement and serves as the exit point for the 4000-CHECK-IF-EXPIRED paragraph. It does not perform any specific logic or operations.",
+        "purpose": "This paragraph simply contains the EXIT statement, marking the end of the 4000-CHECK-IF-EXPIRED paragraph. It serves as a target for the PERFORM THRU statement in MAIN-PARA.",
         "called_by": [
           "MAIN-PARA"
         ],
         "calls": [],
         "citation": [
-          299,
-          302
+          164,
+          165
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -377,17 +369,11 @@
     ],
     "error_handling": [
       {
-        "condition": "DIBSTAT not equal to '  ', 'GB', or 'GE' in 2000-FIND-NEXT-AUTH-SUMMARY",
+        "condition": "DIBSTAT not equal to ' ' , 'GB', 'GE'",
         "action": "DISPLAY error message and ABEND",
         "citation": [
           102,
-          105
-        ]
-      },
-      {
-        "condition": "DIBSTAT not equal to '  ', 'GB', or 'GE' in 3000-FIND-NEXT-AUTH-DTL",
-        "action": "DISPLAY error message and ABEND",
-        "citation": [
+          105,
           131,
           134
         ]
@@ -397,24 +383,24 @@
     "cics_operations": [],
     "open_questions": [
       {
-        "question": "What are the purposes of called programs CIPAUSMY and CIPAUDTY?",
-        "context": "The code calls these programs but their purpose is not clear from the provided source.",
-        "suggestion": "Examine the source code of CIPAUSMY and CIPAUDTY or consult existing documentation."
+        "question": "What is the purpose of CIPAUSMY and CIPAUDTY?",
+        "context": "The code calls these programs but provides no context as to their function or parameters.",
+        "suggestion": "Examine the source code or documentation for CIPAUSMY and CIPAUDTY to determine their purpose."
       },
       {
-        "question": "What is the structure of the PRM-INFO parameter received from SYSIN?",
-        "context": "The code accepts PRM-INFO from SYSIN, but the structure and meaning of the individual fields within PRM-INFO are not defined in the provided source.",
-        "suggestion": "Check the program documentation or related copybooks to determine the structure of PRM-INFO."
+        "question": "What is the structure of the PAUTSUM0 and PAUTDTL1 copybooks?",
+        "context": "The code uses these copybooks to define the IMS segment structures, but the copybook definitions are not provided.",
+        "suggestion": "Obtain the PAUTSUM0 and PAUTDTL1 copybook definitions to understand the structure of the IMS segments."
       },
       {
         "question": "What is the purpose of the 9000-TAKE-CHECKPOINT paragraph?",
-        "context": "The code calls 9000-TAKE-CHECKPOINT, but the source code for this paragraph is not provided.",
-        "suggestion": "Examine the source code of 9000-TAKE-CHECKPOINT or consult existing documentation."
+        "context": "The code calls this paragraph to take a checkpoint, but the implementation is not provided.",
+        "suggestion": "Examine the source code for 9000-TAKE-CHECKPOINT to determine its purpose."
       },
       {
         "question": "What is the purpose of the 5000-DELETE-AUTH-DTL and 6000-DELETE-AUTH-SUMMARY paragraphs?",
-        "context": "The code calls 5000-DELETE-AUTH-DTL and 6000-DELETE-AUTH-SUMMARY, but the source code for these paragraphs is not provided.",
-        "suggestion": "Examine the source code of 5000-DELETE-AUTH-DTL and 6000-DELETE-AUTH-SUMMARY or consult existing documentation."
+        "context": "The code calls these paragraphs to delete authorization details and summaries, but the implementation is not provided.",
+        "suggestion": "Examine the source code for 5000-DELETE-AUTH-DTL and 6000-DELETE-AUTH-SUMMARY to determine their purpose."
       }
     ],
     "resolved_questions": [],
@@ -423,5 +409,5 @@
     "flow_diagram": null,
     "copybooks_not_found": []
   },
-  "saved_at": "2026-03-03T20:23:36.753542"
+  "saved_at": "2026-03-03T21:40:17.293584"
 }

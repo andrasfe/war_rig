@@ -1,6 +1,6 @@
 {
   "file_name": "cbl/CBPAUP0C.cbl",
-  "source_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+  "source_path": "examples/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
   "total_batches": 2,
   "batches": [
     [
@@ -565,6 +565,6 @@
   "cycle_number": 1,
   "program_id": "CBPAUP0C",
   "copybook_contents": {},
-  "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+  "file_path": "examples/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
   "feedback_context": null
 }

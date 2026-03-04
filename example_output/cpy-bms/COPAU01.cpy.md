@@ -2,13 +2,13 @@
 
 **File**: `cpy-bms/COPAU01.cpy`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-03-04 03:32:49.733282
+**Analyzed**: 2026-03-04 04:45:09.035410
 
 ## Purpose
 
-This copybook defines the data structure COPAU1AI and its redefinition COPAU1AO, which are used for screen input/output. It contains fields related to transaction details, titles, dates, times, card numbers, authorization details, merchant information, and error messages.
+This copybook, COPAU01.cpy, defines the data structures COPAU1AI and COPAU1AO, which are used for screen input and output related to authorization processing. The copybook includes fields for transaction name, titles, current date and time, card number, authorization details, merchant information, and error messages.
 
-**Business Context**: This copybook is likely used in an online CICS application to format data displayed on a screen and receive input from a user, possibly related to payment authorization or transaction processing.
+**Business Context**: This copybook is likely used in online CICS applications related to credit card authorization and transaction processing.
 
 ## Paragraphs/Procedures
 
@@ -16,7 +16,7 @@ This copybook defines the data structure COPAU1AI and its redefinition COPAU1AO,
 *Record layout 'COPAU1AI' is never used by any program*
 
 ### COPAU1AO
-This data structure redefines COPAU1AI to provide a different view of the same data. Instead of length and flag fields, it uses single-character fields ('C', 'P', 'H', 'V') and output fields ('O') for each data element. The 'C', 'P', 'H', and 'V' fields likely represent control characters or attributes for screen display, while the 'O' fields contain the actual output data to be displayed on the screen. This redefinition allows the program to easily format and display the data on a CICS screen. The FILLER fields are used to align the data correctly within the structure. This structure is used to populate the BMS map fields for output.
+This data structure redefines COPAU1AI and defines the output fields for a CICS screen related to authorization processing. It uses the same storage as COPAU1AI but provides a different view of the data, allowing the program to format the output for display. The fields are named with suffixes 'C', 'P', 'H', 'V', and 'O' to represent control characters, protected attributes, highlight attributes, validation attributes, and output values, respectively. This structure includes output fields for transaction name (TRNNAMEC, TRNNAMEP, TRNNAMEH, TRNNAMEV, TRNNAMEO), titles (TITLE01C, TITLE01P, TITLE01H, TITLE01V, TITLE01O, TITLE02C, TITLE02P, TITLE02H, TITLE02V, TITLE02O), current date and time (CURDATEC, CURDATEP, CURDATEH, CURDATEV, CURDATEO, CURTIMEC, CURTIMEP, CURTIMEH, CURTIMEV, CURTIMEO), card number (CARDNUMC, CARDNUMP, CARDNUMH, CARDNUMV, CARDNUMO), authorization details (AUTHDTC, AUTHDTP, AUTHDTH, AUTHDTV, AUTHDTO, AUTHTMC, AUTHTMP, AUTHTMH, AUTHTMV, AUTHTMO, AUTHRSPC, AUTHRSPP, AUTHRSPH, AUTHRSPV, AUTHRSPO, AUTHRSNC, AUTHRSNP, AUTHRSNH, AUTHRSNV, AUTHRSNO, AUTHCDC, AUTHCDP, AUTHCDH, AUTHCDV, AUTHCDO, AUTHAMTC, AUTHAMTP, AUTHAMTH, AUTHAMTV, AUTHAMTO), POS entry mode (POSEMDC, POSEMDP, POSEMDH, POSEMDV, POSEMDO), authorization source (AUTHSRCC, AUTHSRCP, AUTHSRCH, AUTHSRCV, AUTHSRCO), MCC code (MCCCDC, MCCCDP, MCCCDH, MCCCDV, MCCCDO), card expiry (CRDEXPC, CRDEXPP, CRDEXPH, CRDEXPV, CRDEXPO), authorization type (AUTHTYPC, AUTHTYPP, AUTHTYPH, AUTHTYPV, AUTHTYPO), transaction ID (TRNIDC, TRNIDP, TRNIDH, TRNIDV, TRNIDO), authorization match (AUTHMTCC, AUTHMTCP, AUTHMTCH, AUTHMTCV, AUTHMTCO), authorization fraud (AUTHFRDC, AUTHFRDP, AUTHFRDH, AUTHFRDV, AUTHFRDO), merchant information (MERNAMEC, MERNAMEP, MERNAMEH, MERNAMEV, MERNAMEO, MERIDC, MERIDP, MERIDH, MERIDV, MERIDO, MERCITYC, MERCITYP, MERCITYH, MERCITYV, MERCITYO, MERSTC, MERSTP, MERSTH, MERSTV, MERSTO, MERZIPC, MERZIPP, MERZIPH, MERZIPV, MERZIPO), and error messages (ERRMSGC, ERRMSGP, ERRMSGH, ERRMSGV, ERRMSGO).
 
 ## Dead Code
 
@@ -25,8 +25,3 @@ The following artifacts were identified as dead code by static analysis:
 | Artifact | Type | Line | Reason |
 |----------|------|------|--------|
 | COPAU1AI | record_layout | 1 | Record layout 'COPAU1AI' is never used by any program |
-
-## Open Questions
-
-- ? What is the exact purpose of the 'C', 'P', 'H', and 'V' fields in the COPAU1AO redefinition?
-  - Context: The code only shows the data structure definition, not how these fields are used.

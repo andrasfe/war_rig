@@ -4,13 +4,13 @@
     "file_name": "PASFLPCB.CPY",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-04T03:32:23.822484",
+    "analyzed_at": "2026-03-04T04:44:31.966841",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the structure PASFLPCB, which appears to be related to IMS database Program Communication Blocks (PCBs). It contains fields for database name, segment level, PCB status, processing options, segment name, key feedback length, number of sensitive segments, and key feedback area.",
-    "business_context": "UNKNOWN",
+    "summary": "This copybook defines the structure of the PASFLPCB, which appears to be a PCB (Program Communication Block) related to IMS (Information Management System). It contains fields for database name, segment level, PCB status, processing options, segment name, key feedback length, number of sensitive segments, and key feedback area.",
+    "business_context": null,
     "program_type": "COPYBOOK",
     "citations": [
       17,
@@ -36,7 +36,7 @@
     {
       "paragraph_name": "PASFLPCB",
       "summary": null,
-      "purpose": "This copybook defines the data structure PASFLPCB, which is likely used to represent an IMS PCB (Program Communication Block). The structure contains information about the database, segment, and key feedback area. PASFL-DBDNAME (line 18) stores the name of the database. PASFL-SEG-LEVEL (line 19) indicates the segment level. PASFL-PCB-STATUS (line 20) provides the status of the PCB. PASFL-PCB-PROCOPT (line 21) specifies the processing options. PASFL-SEG-NAME (line 23) stores the name of the segment. PASFL-KEYFB-NAME (line 24) and PASFL-NUM-SENSEGS (line 25) define the key feedback length and number of sensitive segments, respectively. PASFL-KEYFB (line 26) is a 100-byte field that likely holds the key feedback area. This copybook is used to define the structure in WORKING-STORAGE or LINKAGE SECTION of COBOL programs that interact with IMS databases.",
+      "purpose": "This copybook defines the structure of the PASFLPCB data area, which is likely used for communication between a COBOL program and the IMS database system. The PASFLPCB contains information about the database, segment level, PCB status, processing options, segment name, key feedback length, number of sensitive segments, and the key feedback area. The PASFL-DBDNAME (line 18) field specifies the name of the database. The PASFL-SEG-LEVEL (line 19) indicates the segment level within the database hierarchy. PASFL-PCB-STATUS (line 20) provides the status of the PCB after an IMS call. PASFL-PCB-PROCOPT (line 21) defines the processing options used for accessing the database. PASFL-SEG-NAME (line 23) specifies the name of the segment being accessed. PASFL-KEYFB-NAME (line 24) and PASFL-NUM-SENSEGS (line 25) provide information about the key feedback area and the number of sensitive segments, respectively. PASFL-KEYFB (line 26) is the actual key feedback area, which contains the key of the last accessed segment. This copybook does not perform any processing or call any other programs; it simply defines a data structure.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -46,13 +46,13 @@
       "outgoing_calls": [],
       "incoming_calls": [
         {
-          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
           "function": "DBUNLDGS",
           "line": 155,
           "call_type": "includes"
         },
         {
-          "file": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
           "function": "DBUNLDGS",
           "line": 1,
           "call_type": "includes"
@@ -68,9 +68,9 @@
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the specific purpose of this PCB structure within the larger application?",
-      "context": "The copybook provides the structure definition, but the context of its usage is unclear.",
-      "suggestion": "Analyze the programs that include this copybook to understand how the PCB fields are used."
+      "question": "What is the specific purpose of this PCB within the broader application?",
+      "context": "The copybook defines the structure, but not the context of its usage.",
+      "suggestion": "Review the programs that include this copybook."
     }
   ],
   "resolved_questions": [],

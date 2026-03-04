@@ -7,18 +7,18 @@
       "file_name": "COPAUA0C.cbl",
       "file_type": "COBOL",
       "analyzed_by": "WAR_RIG",
-      "analyzed_at": "2026-03-04T03:23:06.840496",
+      "analyzed_at": "2026-03-04T04:39:30.289826",
       "iteration_count": 1,
       "final_status": null
     },
     "purpose": {
-      "summary": "COPAUA0C is a CICS COBOL program that processes authorization requests from a message queue, validates them, and updates relevant systems. It retrieves messages from a request queue, processes each request, and then either continues processing or terminates based on predefined limits or the absence of further messages.",
+      "summary": "COPAUA0C is a CICS COBOL program that processes authorization requests from a message queue, validates them, and updates relevant IMS databases. It retrieves messages from a request queue, processes each request, and synchronizes with CICS before terminating.",
       "business_context": "This program is likely part of a larger transaction processing system, handling authorization requests for financial transactions.",
       "program_type": "ONLINE_CICS",
       "citations": [
         5,
         6,
-        103
+        7
       ]
     },
     "inputs": [
@@ -40,7 +40,7 @@
         "copybook": null,
         "citation": [
           26,
-          37
+          28
         ]
       }
     ],
@@ -49,7 +49,7 @@
       {
         "program_name": "MQOPEN",
         "call_type": "STATIC_CALL",
-        "purpose": "Opens the request message queue for processing.",
+        "purpose": "Opens the request message queue.",
         "parameters": [
           "W01-HCONN-REQUEST",
           "MQM-OD-REQUEST",
@@ -59,35 +59,6 @@
           "WS-REASON"
         ],
         "citation": 41
-      },
-      {
-        "program_name": "MQGET",
-        "call_type": "STATIC_CALL",
-        "purpose": "Reads messages from the request queue.",
-        "parameters": [
-          "W01-HCONN-REQUEST",
-          "W01-HOBJ-REQUEST",
-          "MQM-MD-REQUEST",
-          "MQM-GMO-REQUEST",
-          "WS-REQUEST-MSG-LENGTH",
-          "WS-REQUEST-MSG",
-          "WS-COMPCODE",
-          "WS-REASON"
-        ],
-        "citation": 392
-      },
-      {
-        "program_name": "MQCLOSE",
-        "call_type": "STATIC_CALL",
-        "purpose": "Closes the request message queue.",
-        "parameters": [
-          "W01-HCONN-REQUEST",
-          "W01-HOBJ-REQUEST",
-          "MQCO-NONE",
-          "WS-COMPCODE",
-          "WS-REASON"
-        ],
-        "citation": 920
       },
       {
         "program_name": "CMQODV",
@@ -109,76 +80,6 @@
         "purpose": "UNKNOWN",
         "parameters": [],
         "citation": 23
-      },
-      {
-        "program_name": "CMQZV",
-        "call_type": "OTHER",
-        "purpose": "UNKNOWN",
-        "parameters": [],
-        "citation": 23
-      },
-      {
-        "program_name": "CMQOV",
-        "call_type": "OTHER",
-        "purpose": "UNKNOWN",
-        "parameters": [],
-        "citation": 23
-      },
-      {
-        "program_name": "CMQPV",
-        "call_type": "OTHER",
-        "purpose": "UNKNOWN",
-        "parameters": [],
-        "citation": 23
-      },
-      {
-        "program_name": "CMQSV",
-        "call_type": "OTHER",
-        "purpose": "UNKNOWN",
-        "parameters": [],
-        "citation": 23
-      },
-      {
-        "program_name": "CMQHV",
-        "call_type": "OTHER",
-        "purpose": "UNKNOWN",
-        "parameters": [],
-        "citation": 23
-      },
-      {
-        "program_name": "CMQBV",
-        "call_type": "OTHER",
-        "purpose": "UNKNOWN",
-        "parameters": [],
-        "citation": 23
-      },
-      {
-        "program_name": "CMQXV",
-        "call_type": "OTHER",
-        "purpose": "UNKNOWN",
-        "parameters": [],
-        "citation": 23
-      },
-      {
-        "program_name": "CMQLV",
-        "call_type": "OTHER",
-        "purpose": "UNKNOWN",
-        "parameters": [],
-        "citation": 23
-      },
-      {
-        "program_name": "CMQMV",
-        "call_type": "OTHER",
-        "purpose": "UNKNOWN",
-        "parameters": [],
-        "citation": 23
-      },
-      {
-        "program_name": "CMQCV",
-        "call_type": "OTHER",
-        "purpose": "UNKNOWN",
-        "parameters": [],
-        "citation": 23
       }
     ],
     "calling_context": {
@@ -186,23 +87,7 @@
       "entry_points": [],
       "linkage_section": []
     },
-    "business_rules": [
-      {
-        "rule_id": "BR001",
-        "description": "The program processes messages from the request queue until either no more messages are available or a predefined limit (WS-REQSTS-PROCESS-LIMIT) is reached.",
-        "logic_summary": "The PERFORM UNTIL loop in 2000-MAIN-PROCESS continues as long as NO-MORE-MSG-AVAILABLE is false and WS-LOOP-END is false. WS-LOOP-END is set to true when WS-MSG-PROCESSED exceeds WS-REQSTS-PROCESS-LIMIT.",
-        "conditions": [
-          "NO-MORE-MSG-AVAILABLE",
-          "WS-LOOP-END",
-          "WS-MSG-PROCESSED > WS-REQSTS-PROCESS-LIMIT"
-        ],
-        "citation": [
-          103,
-          116,
-          117
-        ]
-      }
-    ],
+    "business_rules": [],
     "data_flow": {
       "reads_from": [
         {
@@ -212,18 +97,7 @@
             "MQTM-TRIGGERDATA"
           ],
           "citation": [
-            16,
-            20,
-            21
-          ]
-        },
-        {
-          "source": "REQUEST-QUEUE",
-          "fields_used": [
-            "WS-REQUEST-MSG"
-          ],
-          "citation": [
-            413
+            16
           ]
         }
       ],
@@ -233,41 +107,9 @@
     "copybooks_used": [],
     "paragraphs": [
       {
-        "paragraph_name": "COPAUA0C",
-        "summary": null,
-        "purpose": "This is the program identifier. It does not contain any executable code but serves as the entry point for the program's definition. It implicitly defines the program's name and type. The paragraph calls several CMQ*V programs, but their purpose is unknown.",
-        "called_by": [],
-        "calls": [
-          "CMQODV",
-          "CMQMDV",
-          "CMQODV",
-          "CMQMDV",
-          "CMQV",
-          "CMQZV",
-          "CMQOV",
-          "CMQPV",
-          "CMQSV",
-          "CMQHV",
-          "CMQBV",
-          "CMQXV",
-          "CMQLV",
-          "CMQMV",
-          "CMQCV"
-        ],
-        "citation": [
-          23,
-          23
-        ],
-        "outgoing_calls": [],
-        "incoming_calls": [],
-        "is_dead_code": false,
-        "dead_code_reason": null,
-        "metadata": null
-      },
-      {
         "paragraph_name": "MAIN-PARA",
         "summary": null,
-        "purpose": "This paragraph serves as the main control flow for the COPAUA0C program. It orchestrates the initialization, main processing, and termination routines. It first performs 1000-INITIALIZE to set up the environment and open the necessary resources. Then, it calls 2000-MAIN-PROCESS to handle the core business logic of processing authorization requests. Finally, it executes 9000-TERMINATE to close resources and prepare for program termination. After the termination routine, the program returns control to CICS.",
+        "purpose": "This is the main control paragraph of the COPAUA0C program. It orchestrates the initialization, main processing, and termination routines. It first calls 1000-INITIALIZE to set up the environment and open the necessary resources. Then, it calls 2000-MAIN-PROCESS to handle the core business logic of processing authorization requests. Finally, it calls 9000-TERMINATE to close resources and clean up before returning control to CICS. The paragraph ends with an EXEC CICS RETURN statement, which terminates the CICS transaction.",
         "called_by": [],
         "calls": [
           "1000-INITIALIZE",
@@ -275,8 +117,8 @@
           "9000-TERMINATE"
         ],
         "citation": [
-          220,
-          229
+          3,
+          10
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -287,7 +129,7 @@
       {
         "paragraph_name": "1000-INITIALIZE",
         "summary": null,
-        "purpose": "This paragraph initializes the program environment. It retrieves MQTM data from CICS, which contains the request queue name and trigger data, and moves this data to working storage. It sets the wait interval for reading messages from the queue to 5000. It then performs 1100-OPEN-REQUEST-QUEUE to open the request queue and 3100-READ-REQUEST-MQ to read the first request message from the queue. The retrieved MQTM data is used to populate WS-REQUEST-QNAME and WS-TRIGGER-DATA.",
+        "purpose": "This paragraph initializes the program environment. It retrieves the MQTM (Message Queue Trigger Monitor) data using EXEC CICS RETRIEVE to obtain the queue name and trigger data. It moves the queue name and trigger data from the MQTM to working storage variables WS-REQUEST-QNAME and WS-TRIGGER-DATA, respectively. It sets the WS-WAIT-INTERVAL to 5000. It then performs 1100-OPEN-REQUEST-QUEUE to open the request queue and 3100-READ-REQUEST-MQ to read the first message from the queue. Error handling is performed via RESP checks, although the specific error handling logic is not detailed in this code snippet.",
         "called_by": [
           "MAIN-PARA"
         ],
@@ -296,8 +138,8 @@
           "3100-READ-REQUEST-MQ"
         ],
         "citation": [
-          230,
-          248
+          12,
+          29
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -308,14 +150,14 @@
       {
         "paragraph_name": "1000-EXIT",
         "summary": null,
-        "purpose": "This paragraph is a simple exit point for the 1000-INITIALIZE paragraph, ensuring proper control flow.",
+        "purpose": "This paragraph serves as the exit point for the 1000-INITIALIZE paragraph. It contains only the EXIT statement, which allows control to return to the calling paragraph (MAIN-PARA). It does not perform any specific actions or logic.",
         "called_by": [
-          "MAIN-PARA"
+          "1000-INITIALIZE"
         ],
         "calls": [],
         "citation": [
-          249,
-          254
+          31,
+          32
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -326,16 +168,17 @@
       {
         "paragraph_name": "1100-OPEN-REQUEST-QUEUE",
         "summary": null,
-        "purpose": "This paragraph opens the request queue for processing. It moves MQOT-Q to MQOD-OBJECTTYPE and WS-REQUEST-QNAME to MQOD-OBJECTNAME to define the queue to be opened. It computes WS-OPTIONS as MQOO-INPUT-SHARED, indicating that the queue is opened for shared input. It then calls MQOPEN to open the queue, passing the connection handle, object descriptor, options, object handle, completion code, and reason code. If the completion code is MQCC-OK, it sets WS-REQUEST-MQ-OPEN to TRUE; otherwise, it logs an error using 9500-LOG-ERROR, setting various error codes and messages.",
+        "purpose": "This paragraph opens the request queue for processing messages. It moves MQOT-Q to MQOD-OBJECTTYPE OF MQM-OD-REQUEST and WS-REQUEST-QNAME to MQOD-OBJECTNAME OF MQM-OD-REQUEST to define the queue object. It computes WS-OPTIONS as MQOO-INPUT-SHARED, specifying that the queue is opened for shared input. It then calls the MQOPEN API to open the queue, passing the connection handle, object descriptor, options, object handle, completion code, and reason code. If the completion code (WS-COMPCODE) is MQCC-OK, it sets WS-REQUEST-MQ-OPEN to TRUE. Otherwise, it logs an error using 9500-LOG-ERROR, setting various error fields and flags to indicate a critical MQ error.",
         "called_by": [
           "1000-INITIALIZE"
         ],
         "calls": [
+          "MQOPEN",
           "9500-LOG-ERROR"
         ],
         "citation": [
-          255,
-          285
+          34,
+          63
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -346,14 +189,14 @@
       {
         "paragraph_name": "1100-EXIT",
         "summary": null,
-        "purpose": "This paragraph is a simple exit point for the 1100-OPEN-REQUEST-QUEUE paragraph, ensuring proper control flow.",
+        "purpose": "This paragraph serves as the exit point for the 1100-OPEN-REQUEST-QUEUE paragraph. It contains only the EXIT statement, which allows control to return to the calling paragraph (1000-INITIALIZE). It does not perform any specific actions or logic.",
         "called_by": [
-          "1000-INITIALIZE"
+          "1100-OPEN-REQUEST-QUEUE"
         ],
         "calls": [],
         "citation": [
-          286,
-          291
+          65,
+          66
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -364,14 +207,14 @@
       {
         "paragraph_name": "1200-SCHEDULE-PSB",
         "summary": null,
-        "purpose": "This paragraph schedules a PSB (Program Specification Block) for IMS database access. It executes a DLI SCHD command with the PSB-NAME. If the PSB has been scheduled more than once, it terminates the PSB and schedules it again. If the scheduling is successful (STATUS-OK), it sets IMS-PSB-SCHD to TRUE; otherwise, it logs an error using 9500-LOG-ERROR, setting various error codes and messages. The IMS-RETURN-CODE is updated with the DIBSTAT value after each SCHD call.",
+        "purpose": "This paragraph schedules a PSB (Program Specification Block) in IMS. It uses the EXEC DLI SCHD command to schedule the PSB specified by PSB-NAME. It checks the DIBSTAT (Data Base Interface Status) after the SCHD call and moves it to IMS-RETURN-CODE. If the PSB was scheduled more than once (PSB-SCHEDULED-MORE-THAN-ONCE), it terminates the PSB using EXEC DLI TERM and then schedules it again. If the status is OK (STATUS-OK), it sets IMS-PSB-SCHD to TRUE. Otherwise, it logs an error using 9500-LOG-ERROR, setting various error fields and flags to indicate a critical IMS error.",
         "called_by": [],
         "calls": [
           "9500-LOG-ERROR"
         ],
         "citation": [
-          292,
-          318
+          68,
+          94
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -382,12 +225,14 @@
       {
         "paragraph_name": "1200-EXIT",
         "summary": null,
-        "purpose": "This paragraph is a simple exit point for the 1200-SCHEDULE-PSB paragraph, ensuring proper control flow.",
-        "called_by": [],
+        "purpose": "This paragraph serves as the exit point for the 1200-SCHEDULE-PSB paragraph. It contains only the EXIT statement, which allows control to return to the calling paragraph. It does not perform any specific actions or logic.",
+        "called_by": [
+          "1200-SCHEDULE-PSB"
+        ],
         "calls": [],
         "citation": [
-          319,
-          322
+          96,
+          97
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -398,7 +243,7 @@
       {
         "paragraph_name": "2000-MAIN-PROCESS",
         "summary": null,
-        "purpose": "This paragraph is the main processing loop of the program. It repeatedly performs 2100-EXTRACT-REQUEST-MSG to extract the request message, 5000-PROCESS-AUTH to process the authorization, and then increments WS-MSG-PROCESSED. It issues a CICS SYNCPOINT to commit changes. If WS-MSG-PROCESSED exceeds WS-REQSTS-PROCESS-LIMIT, it sets WS-LOOP-END to TRUE to terminate the loop. Otherwise, it performs 3100-READ-REQUEST-MQ to read the next request message. The loop continues until NO-MORE-MSG-AVAILABLE is TRUE or WS-LOOP-END is TRUE. IMS-PSB-NOT-SCHD is set to TRUE after each SYNCPOINT.",
+        "purpose": "This paragraph is the main processing loop of the program. It repeatedly processes authorization requests until either NO-MORE-MSG-AVAILABLE is TRUE or WS-LOOP-END is TRUE. Inside the loop, it first performs 2100-EXTRACT-REQUEST-MSG to extract the request message. Then, it performs 5000-PROCESS-AUTH to process the authorization request. It increments WS-MSG-PROCESSED to keep track of the number of messages processed. It issues an EXEC CICS SYNCPOINT to synchronize the CICS transaction. It sets IMS-PSB-NOT-SCHD to TRUE. If WS-MSG-PROCESSED exceeds WS-REQSTS-PROCESS-LIMIT, it sets WS-LOOP-END to TRUE to terminate the loop. Otherwise, it performs 3100-READ-REQUEST-MQ to read the next request message.",
         "called_by": [
           "MAIN-PARA"
         ],
@@ -408,8 +253,8 @@
           "3100-READ-REQUEST-MQ"
         ],
         "citation": [
-          323,
-          346
+          100,
+          122
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -420,14 +265,14 @@
       {
         "paragraph_name": "2000-EXIT",
         "summary": null,
-        "purpose": "This paragraph is a simple exit point for the 2000-MAIN-PROCESS paragraph, ensuring proper control flow.",
+        "purpose": "This paragraph serves as the exit point for the 2000-MAIN-PROCESS paragraph. It contains only the EXIT statement, which allows control to return to the calling paragraph (MAIN-PARA). It does not perform any specific actions or logic.",
         "called_by": [
-          "MAIN-PARA"
+          "2000-MAIN-PROCESS"
         ],
         "calls": [],
         "citation": [
-          347,
-          350
+          124,
+          125
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -439,29 +284,17 @@
     "error_handling": [
       {
         "condition": "WS-COMPCODE NOT = MQCC-OK",
-        "action": "Log error and set error flags",
+        "action": "Log error and set critical error flags.",
         "citation": [
           52,
-          53,
-          54,
-          55,
-          56,
-          57,
-          58,
-          59,
-          60,
           61
         ]
       },
       {
-        "condition": "STATUS-OK is false",
-        "action": "Log error and set error flags",
+        "condition": "STATUS-OK is false after SCHD",
+        "action": "Log error and set critical error flags.",
         "citation": [
           87,
-          88,
-          89,
-          90,
-          91,
           92
         ]
       }
@@ -471,7 +304,7 @@
       {
         "command": "RETRIEVE",
         "resource": "MQTM",
-        "purpose": "Retrieves the MQTM from the CICS terminal.",
+        "purpose": "Retrieves the MQTM data from the CICS terminal.",
         "citation": 15
       },
       {
@@ -483,25 +316,20 @@
       {
         "command": "SYNCPOINT",
         "resource": null,
-        "purpose": "Synchronizes the CICS environment.",
+        "purpose": "Synchronizes the CICS transaction.",
         "citation": 112
       }
     ],
     "open_questions": [
       {
-        "question": "What is the purpose of the CMQ*V programs called in the COPAUA0C paragraph?",
-        "context": "The program calls several CMQ*V programs, but their functionality is not clear from the provided code snippet.",
-        "suggestion": "Review external documentation or related code to understand the purpose of these programs."
+        "question": "What is the purpose of the CMQODV, CMQMDV, and CMQV programs?",
+        "context": "These programs are called but their purpose is not clear from the code.",
+        "suggestion": "Check external documentation or other related programs."
       },
       {
-        "question": "What is the structure and content of the WS-REQUEST-MSG?",
-        "context": "The program reads a message from the request queue into WS-REQUEST-MSG, but the structure and content of this message are not defined in the provided code.",
-        "suggestion": "Examine the copybook associated with WS-REQUEST-MSG to understand its structure and the data it contains."
-      },
-      {
-        "question": "What is the purpose of the PSB scheduled in 1200-SCHEDULE-PSB?",
-        "context": "The paragraph schedules a PSB for IMS database access, but the specific purpose and the data accessed are not clear.",
-        "suggestion": "Review the PSB definition to understand the IMS databases and segments accessed by this program."
+        "question": "What is the structure and content of the messages in the request queue?",
+        "context": "The program reads messages from the request queue, but the format of the messages is not defined in this code snippet.",
+        "suggestion": "Examine related copybooks or message definitions."
       }
     ],
     "resolved_questions": [],
@@ -510,5 +338,5 @@
     "flow_diagram": null,
     "copybooks_not_found": []
   },
-  "saved_at": "2026-03-03T20:23:06.841805"
+  "saved_at": "2026-03-03T21:39:30.290999"
 }

@@ -4,16 +4,16 @@
   "template": {
     "header": {
       "program_id": "PAUDBLOD",
-      "file_name": "cbl/PAUDBLOD.CBL",
+      "file_name": "PAUDBLOD.CBL",
       "file_type": "COBOL",
       "analyzed_by": "WAR_RIG",
-      "analyzed_at": "2026-03-04T03:23:11.126617",
+      "analyzed_at": "2026-03-04T04:39:48.005847",
       "iteration_count": 1,
       "final_status": null
     },
     "purpose": {
       "summary": "The COBOL program PAUDBLOD reads root and child segment files (INFILE1 and INFILE2), and inserts them into an IMS database. It reads PENDING-AUTH-SUMMARY records from INFILE1 and inserts them as root segments, then reads PENDING-AUTH-DETAILS records from INFILE2 and inserts them as child segments related to the root segments.",
-      "business_context": "UNKNOWN",
+      "business_context": null,
       "program_type": "BATCH",
       "citations": [
         9,
@@ -25,8 +25,8 @@
       {
         "name": "INFILE1",
         "io_type": "FILE_SEQUENTIAL",
-        "description": "Input file containing PENDING-AUTH-SUMMARY records to be inserted as root segments in the IMS database.",
-        "copybook": "PENDING-AUTH-SUMMARY",
+        "description": "Sequential file containing PENDING-AUTH-SUMMARY records to be inserted as root segments in the IMS database.",
+        "copybook": null,
         "citation": [
           34,
           57
@@ -35,8 +35,8 @@
       {
         "name": "INFILE2",
         "io_type": "FILE_SEQUENTIAL",
-        "description": "Input file containing PENDING-AUTH-DETAILS records to be inserted as child segments in the IMS database.",
-        "copybook": "PENDING-AUTH-DETAILS",
+        "description": "Sequential file containing PENDING-AUTH-DETAILS records to be inserted as child segments in the IMS database.",
+        "copybook": null,
         "citation": [
           42,
           104
@@ -56,41 +56,11 @@
           "ROOT-UNQUAL-SSA"
         ],
         "citation": 77
-      },
-      {
-        "program_name": "IMSFUNCS",
-        "call_type": "OTHER",
-        "purpose": "UNKNOWN",
-        "parameters": [],
-        "citation": 0
-      },
-      {
-        "program_name": "CIPAUSMY",
-        "call_type": "OTHER",
-        "purpose": "UNKNOWN",
-        "parameters": [],
-        "citation": 0
-      },
-      {
-        "program_name": "CIPAUDTY",
-        "call_type": "OTHER",
-        "purpose": "UNKNOWN",
-        "parameters": [],
-        "citation": 0
-      },
-      {
-        "program_name": "PAUTBPCB",
-        "call_type": "OTHER",
-        "purpose": "UNKNOWN",
-        "parameters": [],
-        "citation": 0
       }
     ],
     "calling_context": {
       "called_by": [],
-      "entry_points": [
-        "DLITCBL"
-      ],
+      "entry_points": [],
       "linkage_section": [
         "PAUTBPCB"
       ]
@@ -118,47 +88,45 @@
           ]
         }
       ],
-      "writes_to": [],
-      "transforms": [
+      "writes_to": [
         {
-          "input_field": "INFIL1-REC",
-          "output_field": "PENDING-AUTH-SUMMARY",
-          "transformation_description": "Moves the input record to the pending auth summary record.",
+          "destination": "PENDING-AUTH-SUMMARY",
+          "fields_written": [
+            "INFIL1-REC"
+          ],
           "citation": [
             60
           ]
         },
         {
-          "input_field": "CHILD-SEG-REC",
-          "output_field": "PENDING-AUTH-DETAILS",
-          "transformation_description": "Moves the child segment record to the pending auth details record.",
+          "destination": "PENDING-AUTH-DETAILS",
+          "fields_written": [
+            "CHILD-SEG-REC"
+          ],
           "citation": [
             112
           ]
         },
         {
-          "input_field": "ROOT-SEG-KEY",
-          "output_field": "QUAL-SSA-KEY-VALUE",
-          "transformation_description": "Moves the root segment key to the qualified SSA key value.",
+          "destination": "QUAL-SSA-KEY-VALUE",
+          "fields_written": [
+            "ROOT-SEG-KEY"
+          ],
           "citation": [
             109
           ]
         }
-      ]
+      ],
+      "transforms": []
     },
     "copybooks_used": [],
     "paragraphs": [
       {
         "paragraph_name": "PAUDBLOD",
         "summary": null,
-        "purpose": "This is the program entry point. It is called using 'DLITCBL' and 'PAUTBPCB'. It displays 'STARTING PAUDBLOD' to the console. The program then performs MAIN-PARA.",
+        "purpose": "This is the program-id paragraph. It does not contain any executable logic.",
         "called_by": [],
-        "calls": [
-          "IMSFUNCS",
-          "CIPAUSMY",
-          "CIPAUDTY",
-          "PAUTBPCB"
-        ],
+        "calls": [],
         "citation": [
           1,
           1
@@ -172,7 +140,7 @@
       {
         "paragraph_name": "MAIN-PARA",
         "summary": null,
-        "purpose": "This paragraph is the main control flow of the program. It first calls 1000-INITIALIZE to open files and perform initial setup. Then, it enters a loop to read root segments from INFILE1 using 2000-READ-ROOT-SEG-FILE until the end-of-file is reached (END-ROOT-SEG-FILE = 'Y'). Subsequently, it enters another loop to read child segments from INFILE2 using 3000-READ-CHILD-SEG-FILE until the end-of-file is reached (END-CHILD-SEG-FILE = 'Y'). Finally, it calls 4000-FILE-CLOSE to close the input files. The program then terminates using GOBACK.",
+        "purpose": "This paragraph serves as the main control flow for the PAUDBLOD program. It first calls 1000-INITIALIZE to open the input files (INFILE1 and INFILE2) and perform initial setup. Then, it enters a loop that reads root segment records from INFILE1 using 2000-READ-ROOT-SEG-FILE until the end-of-file is reached (END-ROOT-SEG-FILE = 'Y'). Subsequently, it enters another loop to read child segment records from INFILE2 using 3000-READ-CHILD-SEG-FILE until the end-of-file is reached (END-CHILD-SEG-FILE = 'Y'). Finally, it calls 4000-FILE-CLOSE to close the input files before terminating the program.",
         "called_by": [],
         "calls": [
           "1000-INITIALIZE",
@@ -181,8 +149,8 @@
           "4000-FILE-CLOSE"
         ],
         "citation": [
-          169,
-          189
+          3,
+          21
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -193,15 +161,15 @@
       {
         "paragraph_name": "1000-INITIALIZE",
         "summary": null,
-        "purpose": "This paragraph initializes the program by accepting the current date and displaying it. It then opens INFILE1 and INFILE2 for input. If either file fails to open (WS-INFIL1-STATUS or WS-INFIL2-STATUS is not spaces or '00'), an error message is displayed, and the program abends by calling 9999-ABEND. The paragraph checks the file status after each OPEN statement. If the file status is not equal to spaces or '00', an error message is displayed along with the file status, and the program terminates by calling 9999-ABEND.",
+        "purpose": "This paragraph initializes the program by accepting the current date and opening the input files INFILE1 and INFILE2. It first accepts the current date and day from the system. Then, it opens INFILE1 and checks the file status (WS-INFIL1-STATUS). If the file status is not spaces or '00', it displays an error message and calls 9999-ABEND to terminate the program. Similarly, it opens INFILE2 and checks the file status (WS-INFIL2-STATUS). If the file status is not spaces or '00', it displays an error message and calls 9999-ABEND to terminate the program.",
         "called_by": [],
         "calls": [
           "9999-ABEND",
           "9999-ABEND"
         ],
         "citation": [
-          190,
-          217
+          23,
+          48
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -212,12 +180,12 @@
       {
         "paragraph_name": "1000-EXIT",
         "summary": null,
-        "purpose": "This paragraph simply contains an EXIT statement and serves as the exit point for the 1000-INITIALIZE paragraph.",
+        "purpose": "This paragraph is the exit point for the 1000-INITIALIZE paragraph. It simply contains an EXIT statement to return control to the calling paragraph.",
         "called_by": [],
         "calls": [],
         "citation": [
-          218,
-          221
+          50,
+          51
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -228,14 +196,14 @@
       {
         "paragraph_name": "2000-READ-ROOT-SEG-FILE",
         "summary": null,
-        "purpose": "This paragraph reads a record from INFILE1. If the read is successful (WS-INFIL1-STATUS is spaces or '00'), the INFIL1-REC is moved to PENDING-AUTH-SUMMARY, and 2100-INSERT-ROOT-SEG is performed to insert the root segment into the IMS database. If the read results in an end-of-file condition (WS-INFIL1-STATUS is '10'), END-ROOT-SEG-FILE is set to 'Y'. If any other error occurs during the read, an error message is displayed. The file status is checked after the READ statement. If the status is spaces or '00', the record is processed. If the status is '10', it indicates end-of-file, and END-ROOT-SEG-FILE is set to 'Y'. Otherwise, an error message is displayed.",
+        "purpose": "This paragraph reads records from INFILE1 and processes them as root segments. It reads a record from INFILE1 and checks the file status (WS-INFIL1-STATUS). If the file status is spaces or '00', it moves the INFIL1-REC to PENDING-AUTH-SUMMARY and performs 2100-INSERT-ROOT-SEG to insert the root segment into the IMS database. If the file status is '10', it sets END-ROOT-SEG-FILE to 'Y' to indicate the end of the file. If the file status is anything else, it displays an error message.",
         "called_by": [],
         "calls": [
           "2100-INSERT-ROOT-SEG"
         ],
         "citation": [
-          222,
-          238
+          53,
+          68
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -246,12 +214,12 @@
       {
         "paragraph_name": "2000-EXIT",
         "summary": null,
-        "purpose": "This paragraph simply contains an EXIT statement and serves as the exit point for the 2000-READ-ROOT-SEG-FILE paragraph.",
+        "purpose": "This paragraph is the exit point for the 2000-READ-ROOT-SEG-FILE paragraph. It simply contains an EXIT statement to return control to the calling paragraph.",
         "called_by": [],
         "calls": [],
         "citation": [
-          239,
-          241
+          71,
+          72
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -262,15 +230,15 @@
       {
         "paragraph_name": "2100-INSERT-ROOT-SEG",
         "summary": null,
-        "purpose": "This paragraph inserts a root segment into the IMS database using a CBLTDLI call with FUNC-ISRT. It uses PAUTBPCB, PENDING-AUTH-SUMMARY, and ROOT-UNQUAL-SSA as parameters. After the call, it checks the PAUT-PCB-STATUS. If the status is spaces, it displays 'ROOT INSERT SUCCESS'. If the status is 'II', it displays 'ROOT SEGMENT ALREADY IN DB'. If the status is neither spaces nor 'II', it displays 'ROOT INSERT FAILED' along with the PAUT-PCB-STATUS and calls 9999-ABEND to terminate the program. The paragraph checks the IMS PCB status after the ISRT call to determine if the insert was successful. Different messages are displayed based on the PCB status, and the program abends if the insert fails.",
+        "purpose": "This paragraph inserts a root segment into the IMS database using the CBLTDLI call. It calls CBLTDLI with the FUNC-ISRT function code, PAUTBPCB, PENDING-AUTH-SUMMARY, and ROOT-UNQUAL-SSA. After the call, it checks the PAUT-PCB-STATUS. If the status is spaces, it displays 'ROOT INSERT SUCCESS'. If the status is 'II', it displays 'ROOT SEGMENT ALREADY IN DB'. If the status is anything else, it displays an error message and performs 9999-ABEND to terminate the program.",
         "called_by": [],
         "calls": [
           "CBLTDLI",
           "9999-ABEND"
         ],
         "citation": [
-          242,
-          263
+          75,
+          96
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -281,12 +249,12 @@
       {
         "paragraph_name": "2100-EXIT",
         "summary": null,
-        "purpose": "This paragraph simply contains an EXIT statement and serves as the exit point for the 2100-INSERT-ROOT-SEG paragraph.",
+        "purpose": "This paragraph is the exit point for the 2100-INSERT-ROOT-SEG paragraph. It simply contains an EXIT statement to return control to the calling paragraph.",
         "called_by": [],
         "calls": [],
         "citation": [
-          264,
-          268
+          98,
+          99
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -297,14 +265,14 @@
       {
         "paragraph_name": "3000-READ-CHILD-SEG-FILE",
         "summary": null,
-        "purpose": "This paragraph reads a record from INFILE2. If the read is successful (WS-INFIL2-STATUS is spaces or '00') and ROOT-SEG-KEY is numeric, ROOT-SEG-KEY is moved to QUAL-SSA-KEY-VALUE, CHILD-SEG-REC is moved to PENDING-AUTH-DETAILS, and 3100-INSERT-CHILD-SEG is performed to insert the child segment into the IMS database. If the read results in an end-of-file condition (WS-INFIL2-STATUS is '10'), END-CHILD-SEG-FILE is set to 'Y'. If any other error occurs during the read, an error message is displayed. The file status is checked after the READ statement. If the status is spaces or '00', and the ROOT-SEG-KEY is numeric, the data is moved and the child segment is inserted. If the status is '10', it indicates end-of-file, and END-CHILD-SEG-FILE is set to 'Y'. Otherwise, an error message is displayed.",
+        "purpose": "This paragraph reads records from INFILE2 and processes them as child segments. It reads a record from INFILE2 and checks the file status (WS-INFIL2-STATUS). If the file status is spaces or '00', and if ROOT-SEG-KEY is numeric, it moves ROOT-SEG-KEY to QUAL-SSA-KEY-VALUE, moves CHILD-SEG-REC to PENDING-AUTH-DETAILS, and performs 3100-INSERT-CHILD-SEG to insert the child segment into the IMS database. If the file status is '10', it sets END-CHILD-SEG-FILE to 'Y' to indicate the end of the file. If the file status is anything else, it displays an error message.",
         "called_by": [],
         "calls": [
           "3100-INSERT-CHILD-SEG"
         ],
         "citation": [
-          269,
-          289
+          101,
+          121
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -315,12 +283,12 @@
       {
         "paragraph_name": "3000-EXIT",
         "summary": null,
-        "purpose": "This paragraph simply contains an EXIT statement and serves as the exit point for the 3000-READ-CHILD-SEG-FILE paragraph.",
+        "purpose": "This paragraph is the exit point for the 3000-READ-CHILD-SEG-FILE paragraph. It simply contains an EXIT statement to return control to the calling paragraph.",
         "called_by": [],
         "calls": [],
         "citation": [
-          290,
-          291
+          123,
+          124
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -332,41 +300,42 @@
     "error_handling": [
       {
         "condition": "WS-INFIL1-STATUS NOT = SPACES OR '00'",
-        "action": "DISPLAY error message and ABEND",
+        "action": "DISPLAY 'ERROR IN OPENING INFILE1:' WS-INFIL1-STATUS and PERFORM 9999-ABEND",
         "citation": [
-          202
+          35,
+          39
         ]
       },
       {
         "condition": "WS-INFIL2-STATUS NOT = SPACES OR '00'",
-        "action": "DISPLAY error message and ABEND",
+        "action": "DISPLAY 'ERROR IN OPENING INFILE2:' WS-INFIL2-STATUS and PERFORM 9999-ABEND",
         "citation": [
-          210
+          43,
+          47
         ]
       },
       {
-        "condition": "WS-INFIL1-STATUS NOT = SPACES OR '00' AND NOT = '10'",
-        "action": "DISPLAY error message",
+        "condition": "WS-INFIL1-STATUS NOT = SPACES OR '00' and NOT = '10'",
+        "action": "DISPLAY 'ERROR READING ROOT SEG INFILE'",
         "citation": [
-          228,
-          232
+          59,
+          67
         ]
       },
       {
-        "condition": "PAUT-PCB-STATUS NOT = SPACES AND NOT = 'II'",
-        "action": "DISPLAY error message and ABEND",
+        "condition": "PAUT-PCB-STATUS NOT EQUAL TO SPACES AND 'II'",
+        "action": "DISPLAY 'ROOT INSERT FAILED  :' PAUT-PCB-STATUS and PERFORM 9999-ABEND",
         "citation": [
-          253,
-          256,
-          259
+          92,
+          94
         ]
       },
       {
-        "condition": "WS-INFIL2-STATUS NOT = SPACES OR '00' AND NOT = '10'",
-        "action": "DISPLAY error message",
+        "condition": "WS-INFIL2-STATUS NOT = SPACES OR '00' and NOT = '10'",
+        "action": "DISPLAY 'ERROR READING CHILD SEG INFILE'",
         "citation": [
-          274,
-          284
+          106,
+          119
         ]
       }
     ],
@@ -374,29 +343,19 @@
     "cics_operations": [],
     "open_questions": [
       {
-        "question": "What is the purpose of the called programs IMSFUNCS, CIPAUSMY, CIPAUDTY, and PAUTBPCB?",
-        "context": "The program calls these programs, but their purpose is not clear from the code.",
-        "suggestion": "Review the program documentation or contact the developers to determine the purpose of these programs."
-      },
-      {
-        "question": "What is the structure of the INFILE1-REC and INFILE2-REC?",
+        "question": "What is the structure of INFILE1-REC and CHILD-SEG-REC?",
         "context": "The copybooks for these files are not provided.",
-        "suggestion": "Obtain the copybooks for INFILE1-REC and INFILE2-REC to understand the structure of the input files."
+        "suggestion": "Obtain the copybooks for INFILE1 and INFILE2 to understand the data structures."
       },
       {
-        "question": "What is the structure of the PENDING-AUTH-SUMMARY and PENDING-AUTH-DETAILS?",
-        "context": "The copybooks for these data structures are not provided.",
-        "suggestion": "Obtain the copybooks for PENDING-AUTH-SUMMARY and PENDING-AUTH-DETAILS to understand the structure of the data."
+        "question": "What is the purpose of the PAUTBPCB parameter?",
+        "context": "It is used in the CBLTDLI call, but its exact role is unclear without more context.",
+        "suggestion": "Consult IMS documentation or subject matter experts to understand the function of PAUTBPCB."
       },
       {
-        "question": "What is the purpose of ROOT-UNQUAL-SSA?",
-        "context": "The purpose of this variable is not clear from the code.",
-        "suggestion": "Review the program documentation or contact the developers to determine the purpose of this variable."
-      },
-      {
-        "question": "What is the business context of this program?",
-        "context": "The business context is not clear from the code.",
-        "suggestion": "Review the program documentation or contact the developers to determine the business context of this program."
+        "question": "What is the format and purpose of ROOT-SEG-KEY and QUAL-SSA-KEY-VALUE?",
+        "context": "ROOT-SEG-KEY is moved to QUAL-SSA-KEY-VALUE, but their exact purpose is unclear.",
+        "suggestion": "Examine related documentation or code to understand the relationship between root and child segments."
       }
     ],
     "resolved_questions": [],
@@ -405,5 +364,5 @@
     "flow_diagram": null,
     "copybooks_not_found": []
   },
-  "saved_at": "2026-03-03T20:23:11.127887"
+  "saved_at": "2026-03-03T21:39:48.007014"
 }
