@@ -113,6 +113,7 @@ class MinionScribePool:
         self.num_workers = config.num_minion_scribes
         self.batch_size = config.minion_scribe_batch_size
         self.model = config.minion_scribe_model
+        self.max_retries: int = getattr(config, "minion_scribe_max_retries", 3)
         self._provider = provider or get_provider_from_env()
         self._beads_client = beads_client
 
@@ -487,65 +488,88 @@ class MinionScribePool:
                 )
 
             start_time = time.time()
-            try:
-                logger.info(
-                    f"MinionScribe-{worker_id}: Processing batch "
-                    f"{batch_index + 1}/{total_batches} ({len(batch)} edges)"
-                    + (f" [sub-ticket: {sub_ticket_id}]" if sub_ticket_id else "")
-                )
+            last_error: Exception | None = None
 
-                # Process this batch using the analyzer
-                batch_semantics = await self._process_batch(
-                    analyzer=analyzer,
-                    batch=batch,
-                    source_path=source_path,
-                    citadel_context=citadel_context,
-                    working_storage=working_storage,
-                )
+            for attempt in range(1, self.max_retries + 2):  # 1 initial + max_retries
+                try:
+                    if attempt == 1:
+                        logger.info(
+                            f"MinionScribe-{worker_id}: Processing batch "
+                            f"{batch_index + 1}/{total_batches} ({len(batch)} edges)"
+                            + (f" [sub-ticket: {sub_ticket_id}]" if sub_ticket_id else "")
+                        )
+                    else:
+                        logger.info(
+                            f"MinionScribe-{worker_id}: Retry {attempt - 1}/"
+                            f"{self.max_retries} for batch {batch_index + 1}"
+                        )
 
+                    batch_semantics = await self._process_batch(
+                        analyzer=analyzer,
+                        batch=batch,
+                        source_path=source_path,
+                        citadel_context=citadel_context,
+                        working_storage=working_storage,
+                    )
+
+                    duration = time.time() - start_time
+
+                    result = BatchResult(
+                        batch_index=batch_index,
+                        semantics=batch_semantics,
+                        success=True,
+                        duration_seconds=duration,
+                        sub_ticket_id=sub_ticket_id,
+                    )
+                    batch_results[batch_index] = result
+
+                    logger.debug(
+                        f"MinionScribe-{worker_id}: Completed batch {batch_index + 1} "
+                        f"with {len(batch_semantics)} semantics in {duration:.2f}s"
+                        + (f" (after {attempt - 1} retries)" if attempt > 1 else "")
+                    )
+
+                    if sub_ticket_id:
+                        self._update_sub_ticket_success(sub_ticket_id, result)
+
+                    last_error = None
+                    break
+
+                except Exception as e:
+                    last_error = e
+                    if attempt <= self.max_retries:
+                        delay = min(2 ** (attempt - 1), 30)
+                        logger.warning(
+                            f"MinionScribe-{worker_id}: Batch {batch_index + 1} "
+                            f"attempt {attempt} failed: {e}. "
+                            f"Retrying in {delay}s..."
+                        )
+                        await asyncio.sleep(delay)
+
+            if last_error is not None:
                 duration = time.time() - start_time
-
-                # Store results
-                result = BatchResult(
-                    batch_index=batch_index,
-                    semantics=batch_semantics,
-                    success=True,
-                    duration_seconds=duration,
-                    sub_ticket_id=sub_ticket_id,
+                error_msg = (
+                    f"Batch {batch_index + 1} failed after "
+                    f"{self.max_retries + 1} attempts: {last_error}"
                 )
-                batch_results[batch_index] = result
-
-                logger.debug(
-                    f"MinionScribe-{worker_id}: Completed batch {batch_index + 1} "
-                    f"with {len(batch_semantics)} semantics in {duration:.2f}s"
-                )
-
-                # Update sub-ticket with success
-                if sub_ticket_id:
-                    self._update_sub_ticket_success(sub_ticket_id, result)
-
-            except Exception as e:
-                duration = time.time() - start_time
-                error_msg = f"Batch {batch_index + 1} failed: {e}"
                 logger.warning(f"MinionScribe-{worker_id}: {error_msg}")
 
-                # Return empty semantics for failed batch
                 result = BatchResult(
                     batch_index=batch_index,
                     semantics=self._empty_semantics_for_batch(batch),
                     success=False,
-                    error=str(e),
+                    error=str(last_error),
                     duration_seconds=duration,
                     sub_ticket_id=sub_ticket_id,
                 )
                 batch_results[batch_index] = result
 
-                # Update sub-ticket with failure
                 if sub_ticket_id:
-                    self._update_sub_ticket_failure(sub_ticket_id, str(e), duration)
+                    self._update_sub_ticket_failure(
+                        sub_ticket_id, str(last_error), duration,
+                    )
 
-            finally:
-                work_queue.task_done()
+            work_queue.task_done()
 
     async def _process_batch(
         self,

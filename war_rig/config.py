@@ -410,6 +410,12 @@ class WarRigConfig(BaseSettings):
         le=20,
         description="Number of call edges per Minion Scribe LLM request",
     )
+    minion_scribe_max_retries: int = Field(
+        default=3,
+        ge=0,
+        le=10,
+        description="Maximum retry attempts per Minion Scribe batch before marking as failed",
+    )
 
     # Cycle limits for agents
     max_challenger_cycles: int = Field(

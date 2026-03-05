@@ -482,6 +482,7 @@ class TestParallelProcessing:
         """Test that errors in individual batches are handled gracefully."""
         mock_config.num_minion_scribes = 2
         mock_config.minion_scribe_batch_size = 2
+        mock_config.minion_scribe_max_retries = 0
 
         call_count = 0
 
@@ -544,6 +545,104 @@ class TestParallelProcessing:
         # Failed batch should have empty semantics
         failed = [cs for cs in result if not cs.inputs]
         assert len(failed) >= 2
+
+    async def test_worker_retries_on_transient_failure(self, mock_config, mock_provider):
+        """Test that transient failures are retried and eventually succeed."""
+        mock_config.num_minion_scribes = 1
+        mock_config.minion_scribe_batch_size = 5
+        mock_config.minion_scribe_max_retries = 2
+
+        call_count = 0
+
+        async def mock_analyze_batch_with_transient_error(
+            batch, bodies, working_storage, file_name
+        ):
+            nonlocal call_count
+            call_count += 1
+            if call_count <= 2:
+                raise Exception("Rate limit")
+            return [
+                CallSemantics(
+                    caller=caller,
+                    callee=callee,
+                    inputs=["VAR1"],
+                    outputs=["VAR2"],
+                    purpose="Recovered",
+                )
+                for caller, callee in batch
+            ]
+
+        pool = MinionScribePool(config=mock_config, provider=mock_provider)
+
+        with patch(
+            "war_rig.workers.minion_scribe_pool.CallSemanticsAnalyzer"
+        ) as MockAnalyzer:
+            mock_analyzer = MagicMock()
+            mock_analyzer._get_function_bodies = MagicMock(return_value={})
+            mock_analyzer._truncate_working_storage = MagicMock(return_value=None)
+            mock_analyzer._analyze_batch = AsyncMock(
+                side_effect=mock_analyze_batch_with_transient_error
+            )
+            MockAnalyzer.return_value = mock_analyzer
+
+            citadel_context = [
+                {
+                    "name": "MAIN",
+                    "calls": [
+                        {"target": "PARA-1", "type": "performs"},
+                    ],
+                }
+            ]
+
+            result = await pool.analyze_file(
+                source_path=Path("/test/PROGRAM.cbl"),
+                citadel_context=citadel_context,
+            )
+
+        # Should succeed after 2 failed attempts + 1 success = 3 calls
+        assert call_count == 3
+        assert len(result) == 1
+        assert result[0].purpose == "Recovered"
+
+    async def test_worker_exhausts_retries(self, mock_config, mock_provider):
+        """Test that after exhausting retries the batch is marked failed."""
+        mock_config.num_minion_scribes = 1
+        mock_config.minion_scribe_batch_size = 5
+        mock_config.minion_scribe_max_retries = 1
+
+        async def always_fail(batch, bodies, working_storage, file_name):
+            raise Exception("Permanent error")
+
+        pool = MinionScribePool(config=mock_config, provider=mock_provider)
+
+        with patch(
+            "war_rig.workers.minion_scribe_pool.CallSemanticsAnalyzer"
+        ) as MockAnalyzer:
+            mock_analyzer = MagicMock()
+            mock_analyzer._get_function_bodies = MagicMock(return_value={})
+            mock_analyzer._truncate_working_storage = MagicMock(return_value=None)
+            mock_analyzer._analyze_batch = AsyncMock(side_effect=always_fail)
+            MockAnalyzer.return_value = mock_analyzer
+
+            citadel_context = [
+                {
+                    "name": "MAIN",
+                    "calls": [
+                        {"target": "PARA-1", "type": "performs"},
+                    ],
+                }
+            ]
+
+            result = await pool.analyze_file(
+                source_path=Path("/test/PROGRAM.cbl"),
+                citadel_context=citadel_context,
+            )
+
+        # 1 initial + 1 retry = 2 calls total
+        assert mock_analyzer._analyze_batch.call_count == 2
+        # Should return empty semantics for the failed batch
+        assert len(result) == 1
+        assert not result[0].inputs
 
 
 # =============================================================================
