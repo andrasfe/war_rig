@@ -1000,8 +1000,11 @@ class ChallengerWorker:
                 return
 
             # Run structural pre-check using Citadel if available
+            # Skip for COPYBOOK files — Citadel returns record layouts/fields
+            # as artifacts, not paragraphs, so the precheck creates false positives.
             structural_issues: list[ChallengerQuestion] | None = None
-            if self._citadel:
+            is_copybook = state.get("file_type") == FileType.COPYBOOK
+            if self._citadel and not is_copybook:
                 # Resolve file path from state metadata or ticket
                 file_path = None
                 if ticket.metadata:
@@ -1023,8 +1026,13 @@ class ChallengerWorker:
 
             # Always check for incomplete Citadel stub paragraphs, even
             # when the full Citadel pre-check was skipped (no citadel context).
+            # Skip for copybooks — they don't have COBOL paragraphs.
             template = state.get("template")
-            if template is not None and isinstance(template, DocumentationTemplate):
+            if (
+                template is not None
+                and isinstance(template, DocumentationTemplate)
+                and not is_copybook
+            ):
                 stub_prefix = "[Citadel] Paragraph identified by static analysis"
                 stub_issues: list[ChallengerQuestion] = []
                 for p in template.paragraphs:

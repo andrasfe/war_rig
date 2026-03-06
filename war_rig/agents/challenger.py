@@ -243,6 +243,24 @@ These sections MUST be SOLID for approval:
 - Outputs
 - Business Rules (at least one with citation)
 
+## File Type Awareness
+
+Different file types have different applicable sections. Do NOT flag sections as missing
+when they legitimately don't apply:
+
+- **COPYBOOK** (.cpy/.copy): Data layout definitions included via COPY statements.
+  They do NOT have: called_programs, data_flow, business_rules, error_handling,
+  inputs, outputs, cics_operations, sql_operations, paragraphs.
+  They DO have: purpose (what data structure is defined), field descriptions.
+  For copybooks, critical sections are ONLY: purpose.
+
+- **JCL/PROC**: Job control, not executable programs.
+  They do NOT have: called_programs, copybooks, cics_operations, sql_operations.
+  Focus on: purpose, job steps, dataset usage.
+
+- **BMS**: Screen map definitions.
+  Focus on: purpose, screen layout, field definitions.
+
 ## Output Format
 
 Respond with valid JSON containing:
@@ -411,7 +429,16 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
         parts.append(f"4. Ask up to {input_data.max_questions} questions")
         parts.append("5. Provide a per-section assessment")
         parts.append("")
-        parts.append("Focus on critical sections: Purpose, Inputs, Outputs, Business Rules")
+        if input_data.file_type == FileType.COPYBOOK:
+            parts.append(
+                "This is a COPYBOOK file (data layout definition). "
+                "Focus ONLY on: purpose and field descriptions. "
+                "Do NOT flag empty sections for called_programs, data_flow, "
+                "business_rules, error_handling, inputs, outputs, paragraphs, "
+                "sql_operations, or cics_operations — these do not apply to copybooks."
+            )
+        else:
+            parts.append("Focus on critical sections: Purpose, Inputs, Outputs, Business Rules")
 
         # Strict formatting instructions (added on retry after parse failure)
         if input_data.formatting_strict:
