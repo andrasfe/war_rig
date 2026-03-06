@@ -298,7 +298,7 @@ class TestFeedbackInjection:
     """Tests for the inject operation."""
 
     def test_inject_all_created(self, tickets_file):
-        """Test injecting feedback into all eligible tickets (CREATED + COMPLETED)."""
+        """Test injecting global feedback into CREATED tickets only."""
         injector = FeedbackInjector(tickets_file)
         injector.load()
 
@@ -311,10 +311,27 @@ class TestFeedbackInjection:
         result = injector.inject(human_ctx)
 
         assert result.success is True
-        # Injects into CREATED (PROG1, PROG2) and COMPLETED (PROG4)
-        assert result.tickets_modified == 3
+        # Global notes only inject into CREATED tickets (PROG1, PROG2)
+        # COMPLETED (PROG4) is NOT reset unless explicitly targeted
+        assert result.tickets_modified == 2
         assert "PROG1.cbl" in result.modified_files
         assert "PROG2.cbl" in result.modified_files
+
+    def test_inject_resets_completed_when_targeted(self, tickets_file):
+        """Test that COMPLETED tickets are reset to CREATED when targeted by file."""
+        injector = FeedbackInjector(tickets_file)
+        injector.load()
+
+        human_note = HumanFeedbackNote(
+            category=HumanFeedbackCategory.INSTRUCTION,
+            description="Fix paragraph labels",
+            affected_files=["PROG4.cbl"],
+        )
+        human_ctx = HumanFeedbackContext(notes=[human_note])
+
+        result = injector.inject(human_ctx)
+
+        assert result.success is True
         assert "PROG4.cbl" in result.modified_files
 
         # COMPLETED ticket (PROG4) should be reset to CREATED
@@ -338,8 +355,8 @@ class TestFeedbackInjection:
 
         assert result.success is True
         assert result.tickets_modified == 1
-        # PROG2 (created) and PROG4 (completed) are skipped by target filter
-        assert result.tickets_skipped == 2
+        # PROG2 (created) skipped by target filter
+        assert result.tickets_skipped == 1
         assert "PROG1.cbl" in result.modified_files
         assert "PROG2.cbl" not in result.modified_files
 
@@ -357,8 +374,8 @@ class TestFeedbackInjection:
 
         assert result.success is True
         assert result.tickets_cancelled == 1
-        # PROG2 (created) and PROG4 (completed) still modified
-        assert result.tickets_modified == 2
+        # PROG2 (created) still modified; PROG4 (completed) not targeted
+        assert result.tickets_modified == 1
 
         # Verify ticket was cancelled
         injector2 = FeedbackInjector(tickets_file)
@@ -424,10 +441,9 @@ class TestFeedbackInjection:
         prog3 = next(t for t in data["tickets"] if t["file_name"] == "PROG3.cbl")
         assert "human_feedback_injected" not in prog3.get("metadata", {})
 
-        # COMPLETED ticket (PROG4) IS modified and reset to CREATED
+        # COMPLETED ticket (PROG4) NOT modified by global notes
         prog4 = next(t for t in data["tickets"] if t["file_name"] == "PROG4.cbl")
-        assert prog4["metadata"]["human_feedback_injected"] is True
-        assert prog4["state"] == "created"
+        assert "human_feedback_injected" not in prog4.get("metadata", {})
 
     def test_inject_empty_context(self, tickets_file):
         """Test injecting empty feedback context still updates metadata."""
@@ -439,8 +455,8 @@ class TestFeedbackInjection:
         result = injector.inject(human_ctx)
 
         assert result.success is True
-        # CREATED (PROG1, PROG2) + COMPLETED (PROG4)
-        assert result.tickets_modified == 3
+        # Only CREATED tickets (PROG1, PROG2) — PROG4 not targeted
+        assert result.tickets_modified == 2
 
     def test_inject_file_specific_notes(self, tickets_file):
         """Test that file-specific notes only apply to those files."""

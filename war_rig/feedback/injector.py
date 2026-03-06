@@ -264,12 +264,6 @@ class FeedbackInjector:
         """
         result = InjectionResult()
 
-        # States eligible for feedback injection
-        injectable_states = {
-            TicketState.CREATED.value,
-            TicketState.COMPLETED.value,
-        }
-
         try:
             if self._data is None:
                 self.load()
@@ -281,8 +275,21 @@ class FeedbackInjector:
                 state = ticket.get("state", "")
                 file_name = ticket.get("file_name", "")
 
-                # Only process CREATED and COMPLETED tickets
-                if state not in injectable_states:
+                # CREATED tickets: always eligible
+                # COMPLETED tickets: only if explicitly targeted by file name
+                #   (via target_files arg or file-specific notes)
+                if state == TicketState.COMPLETED.value:
+                    file_targeted = (
+                        (target_files and file_name in target_files)
+                        or any(
+                            file_name in note.affected_files
+                            for note in human_ctx.notes
+                            if note.affected_files
+                        )
+                    )
+                    if not file_targeted:
+                        continue
+                elif state != TicketState.CREATED.value:
                     continue
 
                 # Filter by target files if specified
