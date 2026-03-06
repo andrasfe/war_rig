@@ -597,9 +597,10 @@ class HumanFeedbackConsole:
             self.console.print(f"  Tickets skipped: {result.tickets_skipped}")
 
             if result.modified_files:
-                self.console.print(f"\n[dim]Modified files: {', '.join(result.modified_files[:10])}")
+                files_text = ", ".join(result.modified_files[:10])
                 if len(result.modified_files) > 10:
-                    self.console.print(f"  ... and {len(result.modified_files) - 10} more[/dim]")
+                    files_text += f"\n  ... and {len(result.modified_files) - 10} more"
+                self.console.print(f"\n[dim]Modified files: {files_text}[/dim]")
 
             # Clear staging file after successful injection
             self._clear_staging()
