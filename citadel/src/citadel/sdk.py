@@ -2020,11 +2020,11 @@ class Citadel:
                 if para.line_start <= ln.line_number <= para.line_end
             ]
 
-        # Build ASTs for all paragraphs via ProLeap grammar-based parser.
-        from citadel.cobol.proleap_bridge import parse_proleap
+        # Build ASTs for all paragraphs via pure-Python Cobalt parser.
+        from cobalt.generator import build_ast_from_parsed
 
-        paragraph_ast_trees, full_ast_text, raw_ast_json = parse_proleap(
-            source_path, copybook_dirs=cb_dirs,
+        paragraph_ast_trees, full_ast_text, raw_ast_json = build_ast_from_parsed(
+            para_source_lines, data_items, program_id,
         )
 
         return CobolParseResult(
@@ -2060,7 +2060,7 @@ class Citadel:
         Returns:
             Tuple of (paragraph_name → formatted AST string, full AST text).
         """
-        from citadel.cobol.proleap_bridge import load_ast_json
+        from cobalt.generator import load_ast_json
 
         raw = Path(ast_path).read_text(encoding="utf-8")
         trees, full_text = load_ast_json(raw)

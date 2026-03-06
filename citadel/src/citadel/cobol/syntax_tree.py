@@ -289,6 +289,7 @@ class _RawStatement:
 
 def _assemble_statements(
     lines: list[SourceLine],
+    preserve_newlines: bool = False,
 ) -> list[_RawStatement]:
     """Assemble SourceLines into complete COBOL statements."""
     code_lines = [
@@ -349,6 +350,8 @@ def _assemble_statements(
         # Check if line starts a new statement
         starts_new = bool(_STMT_START_RE.match(text))
 
+        sep = "\n" if preserve_newlines else " "
+
         if starts_new:
             if current_text:
                 statements.append(_RawStatement(
@@ -359,7 +362,7 @@ def _assemble_statements(
             current_end = line.line_number
         else:
             if current_text:
-                current_text += " " + text
+                current_text += sep + text
                 current_end = line.line_number
             else:
                 current_text = text
@@ -681,6 +684,7 @@ def build_paragraph_ast(
     paragraph_name: str,
     lines: list[SourceLine],
     data_items: list | None = None,
+    preserve_newlines: bool = False,
 ) -> ParagraphSyntaxTree:
     """Build a syntax tree for a single COBOL paragraph.
 
@@ -689,17 +693,20 @@ def build_paragraph_ast(
         lines: SourceLines belonging to this paragraph.
         data_items: Optional DataItem list (reserved for future
             variable annotation on nodes).
+        preserve_newlines: When True, use newlines instead of spaces
+            to join continuation lines (EXEC blocks always use spaces).
 
     Returns:
         ParagraphSyntaxTree with nested statement nodes.
     """
-    raw_stmts = _assemble_statements(lines)
+    raw_stmts = _assemble_statements(lines, preserve_newlines)
     return _build_tree(paragraph_name, raw_stmts)
 
 
 def build_file_ast(
     paragraph_source_lines: dict[str, list[SourceLine]],
     data_items: list | None = None,
+    preserve_newlines: bool = False,
 ) -> dict[str, ParagraphSyntaxTree]:
     """Build ASTs for all paragraphs in a file.
 
@@ -708,13 +715,17 @@ def build_file_ast(
             to the list of SourceLines belonging to that paragraph.
         data_items: Optional DataItem list (reserved for future
             variable annotation on nodes).
+        preserve_newlines: When True, use newlines instead of spaces
+            to join continuation lines (EXEC blocks always use spaces).
 
     Returns:
         Dict mapping uppercase paragraph name to its syntax tree.
     """
     trees: dict[str, ParagraphSyntaxTree] = {}
     for name, lines in paragraph_source_lines.items():
-        trees[name] = build_paragraph_ast(name, lines, data_items)
+        trees[name] = build_paragraph_ast(
+            name, lines, data_items, preserve_newlines,
+        )
     return trees
 
 

@@ -37,6 +37,7 @@ dependencies = [
     "openai>=1.0.0",
     "httpx>=0.25.0",
     "citadel",
+    "cobalt",
     "codewhisper",
     "llm-providers",
     "aiosqlite>=0.22.1",
@@ -83,6 +84,7 @@ markers = [
 
 [tool.uv.sources]
 citadel = { path = "citadel", editable = true }
+cobalt = { path = "cobalt", editable = true }
 llm-providers = { path = "llm-providers", editable = true }
 codewhisper = { path = "codewhisper", editable = true }
 

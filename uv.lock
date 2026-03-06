@@ -182,6 +182,21 @@ wheels = [
 ]
 
 [[package]]
+name = "cobalt"
+version = "0.1.0"
+source = { editable = "cobalt" }
+dependencies = [
+    { name = "citadel" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "citadel" },
+    { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0.0" },
+]
+provides-extras = ["dev"]
+
+[[package]]
 name = "codewhisper"
 version = "0.1.0"
 source = { editable = "codewhisper" }
@@ -1757,6 +1772,7 @@ source = { editable = "." }
 dependencies = [
     { name = "aiosqlite" },
     { name = "citadel" },
+    { name = "cobalt" },
     { name = "codewhisper" },
     { name = "httpx" },
     { name = "langchain-anthropic" },
@@ -1787,6 +1803,7 @@ dev = [
 requires-dist = [
     { name = "aiosqlite", specifier = ">=0.22.1" },
     { name = "citadel", editable = "citadel" },
+    { name = "cobalt", editable = "cobalt" },
     { name = "codewhisper", editable = "codewhisper" },
     { name = "httpx", specifier = ">=0.25.0" },
     { name = "langchain-anthropic", specifier = ">=0.2.0" },
