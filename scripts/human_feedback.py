@@ -173,14 +173,16 @@ class HumanFeedbackConsole:
             elif choice == "3":
                 self._skip_files()
             elif choice == "4":
-                self._override_critical_sections()
+                self._close_copybook_tickets()
             elif choice == "5":
-                self._add_global_instructions()
+                self._override_critical_sections()
             elif choice == "6":
-                self._view_current_feedback()
+                self._add_global_instructions()
             elif choice == "7":
-                self._view_feedback_queue()
+                self._view_current_feedback()
             elif choice == "8":
+                self._view_feedback_queue()
+            elif choice == "9":
                 return self._inject_and_exit()
             elif choice == "q" or choice == "Q":
                 return self._quit_without_injecting()
@@ -231,21 +233,25 @@ class HumanFeedbackConsole:
 [1] Add quality note
 [2] Prioritize specific file(s)
 [3] Skip/cancel file(s)
-[4] Override critical sections
-[5] Add global instructions
+[4] Close all .cpy (copybook) tickets
+
+[bold]--- Configure ---[/bold]
+
+[5] Override critical sections
+[6] Add global instructions
 
 [bold]--- View ---[/bold]
 
-[6] View current Imperator feedback (for a ticket)
-[7] View pending human feedback queue
+[7] View current Imperator feedback (for a ticket)
+[8] View pending human feedback queue
 
 [bold]--- Actions ---[/bold]
 
-[8] Inject feedback and exit
+[9] Inject feedback and exit
 [q] Quit without injecting
 """
         self.console.print(menu_text)
-        return Prompt.ask("Choice", default="8")
+        return Prompt.ask("Choice", default="9")
 
     def _add_quality_note(self) -> None:
         """Add a quality note through interactive prompts."""
@@ -363,6 +369,38 @@ class HumanFeedbackConsole:
                     self.human_context.skip_files.append(f)
             self._save_staging()
             self.console.print(f"[green]Will skip: {', '.join(files)} (auto-saved)[/green]")
+
+    def _close_copybook_tickets(self) -> None:
+        """Add all .cpy (copybook) files to the skip list for cancellation."""
+        self.console.print("\n[bold]Close All Copybook (.cpy) Tickets[/bold]\n")
+
+        injectable_tickets = self.injector.get_injectable_tickets()
+        cpy_files = [
+            t.get("file_name", "")
+            for t in injectable_tickets
+            if t.get("file_name", "").lower().endswith(".cpy")
+        ]
+
+        if not cpy_files:
+            self.console.print("[yellow]No .cpy tickets found among injectable tickets.[/yellow]")
+            return
+
+        self.console.print(f"Found [cyan]{len(cpy_files)}[/cyan] copybook ticket(s):")
+        for f in cpy_files[:20]:
+            self.console.print(f"  {f}")
+        if len(cpy_files) > 20:
+            self.console.print(f"  ... and {len(cpy_files) - 20} more")
+
+        if Confirm.ask(f"\nCancel all {len(cpy_files)} copybook ticket(s)?"):
+            added = 0
+            for f in cpy_files:
+                if f not in self.human_context.skip_files:
+                    self.human_context.skip_files.append(f)
+                    added += 1
+            self._save_staging()
+            self.console.print(
+                f"[green]Added {added} copybook file(s) to skip list (auto-saved)[/green]"
+            )
 
     def _override_critical_sections(self) -> None:
         """Set critical sections override."""
