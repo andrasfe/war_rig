@@ -189,7 +189,13 @@ _DIVISION_HEADER_RE = re.compile(
     r"^\s*\w+\s+DIVISION\b", re.IGNORECASE
 )
 _PARA_NAME_ONLY_RE = re.compile(
-    r"^([A-Za-z0-9][A-Za-z0-9_-]*)$"
+    r"^([A-Za-z0-9][A-Za-z0-9_-]*)(?:\s*\.\s*$|\s*$)"
+)
+# Matches paragraph header with trailing junk (e.g. identification area
+# content that bleeds into Area B in short lines).  The name must be
+# followed by "." which distinguishes it from a regular statement.
+_PARA_NAME_TRAILING_RE = re.compile(
+    r"^([A-Za-z0-9][A-Za-z0-9_-]*)\s*\.\s+\S"
 )
 _IS_VARNAME_RE = re.compile(
     r"^[A-Za-z][A-Za-z0-9_-]*$"
@@ -426,6 +432,10 @@ class ProcedureDivisionParser:
                 continue
 
             name_match = _PARA_NAME_ONLY_RE.match(text)
+            if not name_match:
+                name_match = _PARA_NAME_TRAILING_RE.match(
+                    line.text.strip()
+                )
             if name_match:
                 para_name = name_match.group(1).upper()
                 para_starts.append(

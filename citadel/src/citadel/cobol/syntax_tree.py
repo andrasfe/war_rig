@@ -157,6 +157,9 @@ _STMT_VERB_RE = re.compile(
 _PARA_HEADER_RE = re.compile(
     r"^[A-Za-z0-9][A-Za-z0-9_-]*\s*\.?\s*$"
 )
+_PARA_HEADER_TRAILING_RE = re.compile(
+    r"^[A-Za-z0-9][A-Za-z0-9_-]*\s*\.\s+\S"
+)
 
 _STMT_START_RE = re.compile(
     r"^\s*(?:MOVE|COMPUTE|ADD|SUBTRACT|MULTIPLY|DIVIDE"
@@ -310,10 +313,14 @@ def _assemble_statements(
         if not text:
             continue
 
-        # Skip paragraph header lines (Area A, name only)
+        # Skip paragraph header lines (Area A, name only or with
+        # trailing identification-area content)
         if (
             line.area_a.strip()
-            and _PARA_HEADER_RE.match(text.rstrip("."))
+            and (
+                _PARA_HEADER_RE.match(text.rstrip("."))
+                or _PARA_HEADER_TRAILING_RE.match(text)
+            )
         ):
             continue
 
