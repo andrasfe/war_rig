@@ -133,6 +133,22 @@ class FeedbackInjector:
                 os.unlink(temp_path)
             raise
 
+    def get_injectable_tickets(self) -> list[dict[str, Any]]:
+        """Get all tickets eligible for feedback injection.
+
+        Returns tickets in CREATED or COMPLETED state. COMPLETED tickets
+        will be reset to CREATED upon injection so they are re-processed.
+
+        Returns:
+            List of ticket dictionaries eligible for injection.
+        """
+        if self._data is None:
+            self.load()
+
+        injectable_states = {TicketState.CREATED.value, TicketState.COMPLETED.value}
+        tickets = self._data.get("tickets", [])
+        return [t for t in tickets if t.get("state", "") in injectable_states]
+
     def get_created_tickets(self) -> list[dict[str, Any]]:
         """Get all tickets in CREATED state eligible for feedback injection.
 
@@ -232,17 +248,27 @@ class FeedbackInjector:
         human_ctx: HumanFeedbackContext,
         target_files: list[str] | None = None,
     ) -> InjectionResult:
-        """Inject human feedback into CREATED tickets.
+        """Inject human feedback into eligible tickets.
+
+        Injects into CREATED tickets directly. For COMPLETED tickets,
+        resets them back to CREATED so the next batch run will re-process
+        them with the injected feedback.
 
         Args:
             human_ctx: Human feedback context to inject.
             target_files: If specified, only inject into these files.
-                If None, inject into all CREATED tickets.
+                If None, inject into all eligible tickets.
 
         Returns:
             InjectionResult with statistics about the injection.
         """
         result = InjectionResult()
+
+        # States eligible for feedback injection
+        injectable_states = {
+            TicketState.CREATED.value,
+            TicketState.COMPLETED.value,
+        }
 
         try:
             if self._data is None:
@@ -255,8 +281,8 @@ class FeedbackInjector:
                 state = ticket.get("state", "")
                 file_name = ticket.get("file_name", "")
 
-                # Only process CREATED tickets
-                if state != TicketState.CREATED.value:
+                # Only process CREATED and COMPLETED tickets
+                if state not in injectable_states:
                     continue
 
                 # Filter by target files if specified
@@ -289,6 +315,15 @@ class FeedbackInjector:
                 ticket["metadata"]["feedback_context"] = merged_ctx
                 ticket["metadata"]["human_feedback_injected"] = True
                 ticket["metadata"]["human_feedback_at"] = datetime.utcnow().isoformat()
+
+                # Reset COMPLETED tickets to CREATED so batch re-processes them
+                if state == TicketState.COMPLETED.value:
+                    ticket["state"] = TicketState.CREATED.value
+                    ticket["metadata"]["reset_for_feedback"] = True
+                    logger.info(
+                        f"Reset COMPLETED ticket for {file_name} to CREATED "
+                        f"for re-processing with feedback"
+                    )
 
                 # Mark as prioritized if applicable
                 if human_ctx.is_prioritized(file_name):
@@ -332,6 +367,7 @@ class FeedbackInjector:
         by_state: dict[str, int] = {}
         by_type: dict[str, int] = {}
         created_files: list[str] = []
+        injected_count = 0
 
         for ticket in tickets:
             state = ticket.get("state", "unknown")
@@ -343,11 +379,16 @@ class FeedbackInjector:
             if state == TicketState.CREATED.value:
                 created_files.append(ticket.get("file_name", "unknown"))
 
+            metadata = ticket.get("metadata", {})
+            if metadata.get("human_feedback_injected"):
+                injected_count += 1
+
         return {
             "total_tickets": len(tickets),
             "by_state": by_state,
             "by_type": by_type,
             "created_files": created_files,
+            "injected_count": injected_count,
             "current_cycle": self._data.get("current_cycle", 1),
             "saved_at": self._data.get("saved_at"),
         }

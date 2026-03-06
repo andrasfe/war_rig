@@ -298,7 +298,7 @@ class TestFeedbackInjection:
     """Tests for the inject operation."""
 
     def test_inject_all_created(self, tickets_file):
-        """Test injecting feedback into all CREATED tickets."""
+        """Test injecting feedback into all eligible tickets (CREATED + COMPLETED)."""
         injector = FeedbackInjector(tickets_file)
         injector.load()
 
@@ -311,9 +311,17 @@ class TestFeedbackInjection:
         result = injector.inject(human_ctx)
 
         assert result.success is True
-        assert result.tickets_modified == 2
+        # Injects into CREATED (PROG1, PROG2) and COMPLETED (PROG4)
+        assert result.tickets_modified == 3
         assert "PROG1.cbl" in result.modified_files
         assert "PROG2.cbl" in result.modified_files
+        assert "PROG4.cbl" in result.modified_files
+
+        # COMPLETED ticket (PROG4) should be reset to CREATED
+        data = injector._data
+        prog4 = next(t for t in data["tickets"] if t["file_name"] == "PROG4.cbl")
+        assert prog4["state"] == "created"
+        assert prog4["metadata"]["reset_for_feedback"] is True
 
     def test_inject_specific_files(self, tickets_file):
         """Test injecting feedback into specific files only."""
@@ -330,7 +338,8 @@ class TestFeedbackInjection:
 
         assert result.success is True
         assert result.tickets_modified == 1
-        assert result.tickets_skipped == 1
+        # PROG2 (created) and PROG4 (completed) are skipped by target filter
+        assert result.tickets_skipped == 2
         assert "PROG1.cbl" in result.modified_files
         assert "PROG2.cbl" not in result.modified_files
 
@@ -348,7 +357,8 @@ class TestFeedbackInjection:
 
         assert result.success is True
         assert result.tickets_cancelled == 1
-        assert result.tickets_modified == 1  # PROG2.cbl still modified
+        # PROG2 (created) and PROG4 (completed) still modified
+        assert result.tickets_modified == 2
 
         # Verify ticket was cancelled
         injector2 = FeedbackInjector(tickets_file)
@@ -394,28 +404,30 @@ class TestFeedbackInjection:
         assert prog1["metadata"]["human_feedback_injected"] is True
         assert "human_feedback_at" in prog1["metadata"]
 
-    def test_inject_does_not_modify_non_created(self, tickets_file):
-        """Test that injection does not modify non-CREATED tickets."""
+    def test_inject_does_not_modify_in_progress(self, tickets_file):
+        """Test that injection does not modify IN_PROGRESS tickets."""
         injector = FeedbackInjector(tickets_file)
         injector.load()
 
         human_note = HumanFeedbackNote(
             category=HumanFeedbackCategory.INSTRUCTION,
-            description="Should not apply",
+            description="Should not apply to in_progress",
         )
         human_ctx = HumanFeedbackContext(notes=[human_note])
 
         injector.inject(human_ctx)
 
-        # Verify in_progress and completed tickets not modified
+        # Verify in_progress ticket not modified
         injector2 = FeedbackInjector(tickets_file)
         data = injector2.load()
 
         prog3 = next(t for t in data["tickets"] if t["file_name"] == "PROG3.cbl")
         assert "human_feedback_injected" not in prog3.get("metadata", {})
 
+        # COMPLETED ticket (PROG4) IS modified and reset to CREATED
         prog4 = next(t for t in data["tickets"] if t["file_name"] == "PROG4.cbl")
-        assert "human_feedback_injected" not in prog4.get("metadata", {})
+        assert prog4["metadata"]["human_feedback_injected"] is True
+        assert prog4["state"] == "created"
 
     def test_inject_empty_context(self, tickets_file):
         """Test injecting empty feedback context still updates metadata."""
@@ -427,7 +439,8 @@ class TestFeedbackInjection:
         result = injector.inject(human_ctx)
 
         assert result.success is True
-        assert result.tickets_modified == 2
+        # CREATED (PROG1, PROG2) + COMPLETED (PROG4)
+        assert result.tickets_modified == 3
 
     def test_inject_file_specific_notes(self, tickets_file):
         """Test that file-specific notes only apply to those files."""

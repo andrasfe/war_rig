@@ -28,6 +28,7 @@ Examples:
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -83,11 +84,39 @@ class HumanFeedbackConsole:
         self.console = Console()
         self.injector = FeedbackInjector(tickets_file)
 
-        # Human feedback to inject
-        self.human_context = HumanFeedbackContext()
+        # Staging file for persisting feedback across script runs
+        self._staging_file = tickets_file.parent / ".war_rig_feedback_staging.json"
+
+        # Human feedback to inject — load from staging if available
+        self.human_context = self._load_staging()
 
         # Load tickets
         self.injector.load()
+
+    def _load_staging(self) -> HumanFeedbackContext:
+        """Load pending feedback from staging file if it exists."""
+        if self._staging_file.exists():
+            try:
+                with open(self._staging_file) as f:
+                    data = json.load(f)
+                ctx = HumanFeedbackContext.model_validate(data)
+                return ctx
+            except Exception:
+                pass
+        return HumanFeedbackContext()
+
+    def _save_staging(self) -> None:
+        """Persist pending feedback to staging file."""
+        try:
+            with open(self._staging_file, "w") as f:
+                json.dump(self.human_context.model_dump(mode="json"), f, indent=2, default=str)
+        except Exception as e:
+            self.console.print(f"[dim]Warning: Could not save staging file: {e}[/dim]")
+
+    def _clear_staging(self) -> None:
+        """Remove the staging file after successful injection."""
+        if self._staging_file.exists():
+            self._staging_file.unlink()
 
     def run(self) -> int:
         """Run the interactive feedback console.
@@ -97,18 +126,38 @@ class HumanFeedbackConsole:
         """
         self._print_header()
 
-        # Check for CREATED tickets
-        created_tickets = self.injector.get_created_tickets()
-        if not created_tickets:
+        # Check for injectable tickets (CREATED + COMPLETED)
+        injectable_tickets = self.injector.get_injectable_tickets()
+        if not injectable_tickets:
             self.console.print(
-                "[yellow]No CREATED tickets found. "
-                "Feedback can only be injected into tickets that haven't started processing.[/yellow]"
+                "[yellow]No injectable tickets found. "
+                "Feedback can be injected into CREATED or COMPLETED tickets.[/yellow]"
             )
             return 0
 
-        self.console.print(
-            f"Found [green]{len(created_tickets)}[/green] CREATED tickets ready for feedback injection.\n"
+        created_count = sum(
+            1 for t in injectable_tickets
+            if t.get("state") == "created"
         )
+        completed_count = sum(
+            1 for t in injectable_tickets
+            if t.get("state") == "completed"
+        )
+        parts = []
+        if created_count:
+            parts.append(f"{created_count} CREATED")
+        if completed_count:
+            parts.append(f"{completed_count} COMPLETED (will be reset for re-processing)")
+        self.console.print(
+            f"Found [green]{len(injectable_tickets)}[/green] injectable tickets: {', '.join(parts)}.\n"
+        )
+
+        # Show if there's pending staged feedback
+        if self.human_context.notes:
+            self.console.print(
+                f"[cyan]Loaded {len(self.human_context.notes)} pending note(s) "
+                f"from previous session.[/cyan]\n"
+            )
 
         # Show ticket summary
         self._show_ticket_summary()
@@ -153,10 +202,21 @@ class HumanFeedbackConsole:
         table.add_column("Count", justify="right")
 
         for state, count in sorted(summary["by_state"].items()):
-            style = "green" if state == "created" else "dim"
+            if state == "created":
+                style = "green"
+            elif state == "completed":
+                style = "blue"
+            else:
+                style = "dim"
             table.add_row(state, str(count), style=style)
 
         self.console.print(table)
+
+        injected = summary.get("injected_count", 0)
+        if injected:
+            self.console.print(
+                f"[yellow]Feedback already injected into {injected} ticket(s)[/yellow]"
+            )
         self.console.print(f"Current cycle: {summary['current_cycle']}\n")
 
     def _show_menu(self) -> str:
@@ -239,10 +299,10 @@ class HumanFeedbackConsole:
             affected_sections = [s.strip() for s in sections_input.split(",") if s.strip()]
 
         # Affected files
-        created_files = [t.get("file_name", "") for t in self.injector.get_created_tickets()]
-        self.console.print(f"\nCREATED files: {', '.join(created_files[:10])}")
-        if len(created_files) > 10:
-            self.console.print(f"  ... and {len(created_files) - 10} more")
+        injectable_files = [t.get("file_name", "") for t in self.injector.get_injectable_tickets()]
+        self.console.print(f"\nInjectable files: {', '.join(injectable_files[:10])}")
+        if len(injectable_files) > 10:
+            self.console.print(f"  ... and {len(injectable_files) - 10} more")
 
         files_input = Prompt.ask("Affected files (comma-separated, or Enter for all)", default="")
         affected_files = []
@@ -260,15 +320,16 @@ class HumanFeedbackConsole:
         )
 
         self.human_context.notes.append(note)
-        self.console.print(f"\n[green]Added note: {note.note_id}[/green]")
+        self._save_staging()
+        self.console.print(f"\n[green]Added note: {note.note_id} (auto-saved)[/green]")
         self._show_note(note)
 
     def _prioritize_files(self) -> None:
         """Add files to the priority list."""
         self.console.print("\n[bold]Prioritize Files[/bold]\n")
 
-        created_files = [t.get("file_name", "") for t in self.injector.get_created_tickets()]
-        self.console.print(f"CREATED files: {', '.join(created_files)}")
+        injectable_files = [t.get("file_name", "") for t in self.injector.get_injectable_tickets()]
+        self.console.print(f"Injectable files: {', '.join(injectable_files)}")
 
         files_input = Prompt.ask("Files to prioritize (comma-separated)")
         if not files_input.strip():
@@ -279,15 +340,16 @@ class HumanFeedbackConsole:
             if f not in self.human_context.prioritize_files:
                 self.human_context.prioritize_files.append(f)
 
-        self.console.print(f"[green]Prioritized: {', '.join(files)}[/green]")
+        self._save_staging()
+        self.console.print(f"[green]Prioritized: {', '.join(files)} (auto-saved)[/green]")
 
     def _skip_files(self) -> None:
         """Add files to the skip list (their tickets will be cancelled)."""
         self.console.print("\n[bold]Skip/Cancel Files[/bold]\n")
         self.console.print("[yellow]Warning: Skipped files will have their tickets CANCELLED.[/yellow]\n")
 
-        created_files = [t.get("file_name", "") for t in self.injector.get_created_tickets()]
-        self.console.print(f"CREATED files: {', '.join(created_files)}")
+        injectable_files = [t.get("file_name", "") for t in self.injector.get_injectable_tickets()]
+        self.console.print(f"Injectable files: {', '.join(injectable_files)}")
 
         files_input = Prompt.ask("Files to skip (comma-separated)")
         if not files_input.strip():
@@ -299,7 +361,8 @@ class HumanFeedbackConsole:
             for f in files:
                 if f not in self.human_context.skip_files:
                     self.human_context.skip_files.append(f)
-            self.console.print(f"[green]Will skip: {', '.join(files)}[/green]")
+            self._save_staging()
+            self.console.print(f"[green]Will skip: {', '.join(files)} (auto-saved)[/green]")
 
     def _override_critical_sections(self) -> None:
         """Set critical sections override."""
@@ -322,10 +385,12 @@ class HumanFeedbackConsole:
 
         if sections_input.lower() == "clear":
             self.human_context.critical_sections_override = None
+            self._save_staging()
             self.console.print("[green]Critical sections override cleared.[/green]")
         else:
             sections = [s.strip() for s in sections_input.split(",") if s.strip()]
             self.human_context.critical_sections_override = sections
+            self._save_staging()
             self.console.print(f"[green]Critical sections set to: {', '.join(sections)}[/green]")
 
     def _add_global_instructions(self) -> None:
@@ -343,42 +408,49 @@ class HumanFeedbackConsole:
 
         if instructions.lower() == "clear":
             self.human_context.global_instructions = None
+            self._save_staging()
             self.console.print("[green]Global instructions cleared.[/green]")
         elif instructions.strip():
             self.human_context.global_instructions = instructions.strip()
+            self._save_staging()
             self.console.print("[green]Global instructions set.[/green]")
 
     def _view_current_feedback(self) -> None:
         """View current Imperator feedback for a specific ticket."""
         self.console.print("\n[bold]View Current Imperator Feedback[/bold]\n")
 
-        created_tickets = self.injector.get_created_tickets()
-        if not created_tickets:
-            self.console.print("[yellow]No CREATED tickets available.[/yellow]")
+        injectable_tickets = self.injector.get_injectable_tickets()
+        if not injectable_tickets:
+            self.console.print("[yellow]No injectable tickets available.[/yellow]")
             return
 
         # List available tickets
         table = Table(show_header=True)
         table.add_column("#", style="dim")
         table.add_column("File", style="cyan")
+        table.add_column("State")
         table.add_column("Program ID")
-        table.add_column("Type")
+        table.add_column("Injected?")
 
-        for i, ticket in enumerate(created_tickets, 1):
+        for i, ticket in enumerate(injectable_tickets, 1):
+            metadata = ticket.get("metadata", {})
+            injected = metadata.get("human_feedback_injected", False)
+            state = ticket.get("state", "unknown")
             table.add_row(
                 str(i),
                 ticket.get("file_name", "unknown"),
+                state,
                 ticket.get("program_id", "unknown"),
-                ticket.get("ticket_type", "unknown"),
+                "[green]Yes[/green]" if injected else "[dim]No[/dim]",
             )
 
         self.console.print(table)
 
-        choice = Prompt.ask(f"Select ticket (1-{len(created_tickets)})", default="1")
+        choice = Prompt.ask(f"Select ticket (1-{len(injectable_tickets)})", default="1")
         try:
             idx = int(choice) - 1
-            if 0 <= idx < len(created_tickets):
-                ticket = created_tickets[idx]
+            if 0 <= idx < len(injectable_tickets):
+                ticket = injectable_tickets[idx]
                 self._show_ticket_feedback(ticket)
             else:
                 self.console.print("[red]Invalid selection.[/red]")
@@ -528,6 +600,12 @@ class HumanFeedbackConsole:
                 self.console.print(f"\n[dim]Modified files: {', '.join(result.modified_files[:10])}")
                 if len(result.modified_files) > 10:
                     self.console.print(f"  ... and {len(result.modified_files) - 10} more[/dim]")
+
+            # Clear staging file after successful injection
+            self._clear_staging()
+            self.console.print(
+                "\n[cyan]Run 'batch' now to re-process tickets with injected feedback.[/cyan]"
+            )
 
             return 0
         else:
