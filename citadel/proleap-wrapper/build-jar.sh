@@ -12,30 +12,54 @@ cd "$SCRIPT_DIR"
 TARGET_JAR="$SCRIPT_DIR/target/proleap-wrapper-fat.jar"
 
 # ── JDK 17 detection ────────────────────────────────────────────────
+_java_major() {
+    # Extract major version number from a java binary
+    "$1" -version 2>&1 | head -1 | sed 's/.*"\([0-9]*\)\..*/\1/'
+}
+
 find_java17() {
+    local ver
     # 1. Explicit override
-    if [[ -n "${JAVA17_HOME:-}" ]] && "$JAVA17_HOME/bin/java" -version 2>&1 | grep -q '"17\.\|"18\.\|"19\.\|"20\.\|"21\.\|"22\.\|"23\.\|"24\.\|"25\.'; then
-        echo "$JAVA17_HOME"
-        return 0
-    fi
-    # 2. JAVA_HOME if >= 17
-    if [[ -n "${JAVA_HOME:-}" ]] && "$JAVA_HOME/bin/java" -version 2>&1 | grep -q '"17\.\|"18\.\|"19\.\|"20\.\|"21\.\|"22\.\|"23\.\|"24\.\|"25\.'; then
-        echo "$JAVA_HOME"
-        return 0
-    fi
-    # 3. java on PATH
-    if command -v java >/dev/null 2>&1; then
-        local ver
-        ver="$(java -version 2>&1 | head -1 | sed 's/.*"\([0-9]*\)\..*/\1/')"
+    if [[ -n "${JAVA17_HOME:-}" ]] && [[ -x "$JAVA17_HOME/bin/java" ]]; then
+        ver="$(_java_major "$JAVA17_HOME/bin/java")"
         if [[ "$ver" -ge 17 ]] 2>/dev/null; then
-            # Derive JAVA_HOME from java binary
-            local java_bin
-            java_bin="$(readlink -f "$(command -v java)")"
-            echo "$(dirname "$(dirname "$java_bin")")"
+            echo "$JAVA17_HOME"
             return 0
         fi
     fi
-    # 4. Well-known local path from our download
+    # 2. JAVA_HOME if >= 17
+    if [[ -n "${JAVA_HOME:-}" ]] && [[ -x "$JAVA_HOME/bin/java" ]]; then
+        ver="$(_java_major "$JAVA_HOME/bin/java")"
+        if [[ "$ver" -ge 17 ]] 2>/dev/null; then
+            echo "$JAVA_HOME"
+            return 0
+        fi
+    fi
+    # 3. macOS: use /usr/libexec/java_home
+    if [[ -x "/usr/libexec/java_home" ]]; then
+        local jh
+        jh="$(/usr/libexec/java_home 2>/dev/null)" || true
+        if [[ -n "$jh" ]] && [[ -x "$jh/bin/java" ]]; then
+            ver="$(_java_major "$jh/bin/java")"
+            if [[ "$ver" -ge 17 ]] 2>/dev/null; then
+                echo "$jh"
+                return 0
+            fi
+        fi
+    fi
+    # 4. java on PATH — resolve real path (works on both macOS and Linux)
+    if command -v java >/dev/null 2>&1; then
+        ver="$(_java_major java)"
+        if [[ "$ver" -ge 17 ]] 2>/dev/null; then
+            local java_bin
+            java_bin="$(python3 -c "import os,sys; print(os.path.realpath(sys.argv[1]))" "$(command -v java)" 2>/dev/null)" || true
+            if [[ -n "$java_bin" ]]; then
+                echo "$(dirname "$(dirname "$java_bin")")"
+                return 0
+            fi
+        fi
+    fi
+    # 5. Well-known local path from our download
     if [[ -x "/tmp/jdk-17.0.2/bin/java" ]]; then
         echo "/tmp/jdk-17.0.2"
         return 0
