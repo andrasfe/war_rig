@@ -1160,7 +1160,7 @@ class ScribeWorker:
     async def _validated_invoke(
         self,
         scribe_input: ScribeInput,
-        max_reductions: int = 5,
+        max_reductions: int = 7,
     ) -> ScribeOutput:
         """Invoke ScribeAgent after validating prompt size.
 
@@ -1168,11 +1168,15 @@ class ScribeWorker:
         ``max_prompt_tokens``, the method applies reduction strategies in
         order until the prompt fits or cannot be reduced further.
 
-        Reduction strategy (applied in order):
+        Reduction strategies (applied in order):
         1. Remove outline paragraphs (last first) if > 1 paragraph.
         2. Truncate source code to fit the remaining token budget.
-        3. Trim large copybooks to a per-copybook character limit.
-        4. Drop previous_template (context, not essential).
+        3. Summarize previous_template into compact markdown.
+        4. Summarize copybooks into structural skeletons.
+        5. Drop previous_template entirely (last resort).
+
+        Strategies 3-4 *compress* rather than discard, preserving information
+        in a smaller form.
 
         Paragraphs removed from the outline are **not** lost — the caller
         is expected to handle them in a subsequent batch or gap-fill pass.
@@ -1223,46 +1227,54 @@ class ScribeWorker:
                     f"{len(scribe_input.source_code)} to {max_chars} chars "
                     f"(~{over} tokens over budget)"
                 )
-                scribe_input = ScribeInput(
-                    source_code=scribe_input.source_code[:max_chars],
-                    file_name=scribe_input.file_name,
-                    file_type=scribe_input.file_type,
-                    iteration=scribe_input.iteration,
-                    copybook_contents=scribe_input.copybook_contents,
-                    formatting_strict=scribe_input.formatting_strict,
-                    feedback_context=scribe_input.feedback_context,
-                    citadel_outline=scribe_input.citadel_outline,
-                    pattern_insights=scribe_input.pattern_insights,
-                    preprocessor_result=scribe_input.preprocessor_result,
-                    previous_template=scribe_input.previous_template,
-                    challenger_questions=scribe_input.challenger_questions,
-                    chrome_tickets=scribe_input.chrome_tickets,
+                scribe_input = scribe_input.model_copy(
+                    update={"source_code": scribe_input.source_code[:max_chars]},
+                )
+                break  # source truncation is a hard stop — re-estimating won't help
+
+            # Strategy 3: summarize previous_template into compact markdown
+            if (
+                scribe_input.previous_template is not None
+                and not scribe_input.previous_template_summary
+            ):
+                summary = self._summarize_template_compact(
+                    scribe_input.previous_template,
+                )
+                logger.info(
+                    f"Worker {self.worker_id}: Summarizing previous_template "
+                    f"(~{estimate.previous_template} tokens) to compact markdown"
+                )
+                scribe_input = scribe_input.model_copy(
+                    update={
+                        "previous_template": None,
+                        "previous_template_summary": summary,
+                        "iteration": 1,
+                    },
                 )
                 continue
 
-            # Strategy 3: trim large copybooks
+            # Strategy 4: summarize copybooks into structural skeletons
             if scribe_input.copybook_contents and estimate.copybook_contents > 0:
-                trimmed = self._trim_copybooks(
-                    scribe_input.copybook_contents, max_tokens, estimator,
+                summarized = self._summarize_copybooks(
+                    scribe_input.copybook_contents,
                 )
-                if trimmed is not None:
-                    logger.warning(
-                        f"Worker {self.worker_id}: Trimming copybooks "
-                        f"(~{estimate.copybook_contents} tokens) to fit budget"
-                    )
-                    scribe_input = scribe_input.model_copy(
-                        update={"copybook_contents": trimmed},
-                    )
-                    continue
-
-            # Strategy 4: drop previous_template
-            if scribe_input.previous_template is not None:
-                logger.warning(
-                    f"Worker {self.worker_id}: Dropping previous_template "
-                    f"(~{estimate.previous_template} tokens) to fit budget"
+                logger.info(
+                    f"Worker {self.worker_id}: Summarizing copybooks "
+                    f"(~{estimate.copybook_contents} tokens) to structural skeletons"
                 )
                 scribe_input = scribe_input.model_copy(
-                    update={"previous_template": None},
+                    update={"copybook_contents": summarized},
+                )
+                continue
+
+            # Strategy 5: drop previous_template summary entirely
+            if scribe_input.previous_template_summary:
+                logger.warning(
+                    f"Worker {self.worker_id}: Dropping previous_template_summary "
+                    f"to fit budget (~{over} tokens over)"
+                )
+                scribe_input = scribe_input.model_copy(
+                    update={"previous_template_summary": ""},
                 )
                 continue
 
@@ -1276,46 +1288,189 @@ class ScribeWorker:
         return await self.scribe_agent.ainvoke(scribe_input)
 
     @staticmethod
-    def _trim_copybooks(
-        copybooks: dict[str, str],
-        max_tokens: int,
-        estimator: TokenEstimator,
-    ) -> dict[str, str] | None:
-        """Trim copybook contents to fit within a token budget.
+    def _summarize_template_compact(
+        template: DocumentationTemplate,
+        max_items: int = 5,
+    ) -> str:
+        """Create a compact markdown summary of a DocumentationTemplate.
 
-        Allocates at most 20% of the total token budget for copybooks.
-        Sorts copybooks by size and truncates the largest ones first.
+        Deterministic heuristic extraction (no LLM call) that produces a
+        human-readable summary at ~10-20% of the full JSON size.  Preserves:
+        purpose, inputs, outputs, called programs, paragraph names + one-line
+        purposes, business rules, error handling.
 
-        Returns None if copybooks are already small enough or empty.
+        Based on the Imperator's ``_summarize_template`` pattern.
+
+        Args:
+            template: The DocumentationTemplate to summarize.
+            max_items: Maximum items to show for list sections.
+
+        Returns:
+            Compact markdown text summarizing the template.
         """
-        if not copybooks:
-            return None
+        parts: list[str] = []
 
-        # Allow copybooks up to 20% of total budget
-        copybook_budget_tokens = max_tokens // 5
-        total_text = "\n".join(copybooks.values())
-        current_tokens = estimator.estimate_source_tokens(total_text)
+        # Purpose section
+        if template.purpose:
+            parts.append(f"**Purpose**: {template.purpose.summary or 'Not specified'}")
+            if template.purpose.program_type:
+                parts.append(f"**Type**: {template.purpose.program_type}")
+            if template.purpose.business_context:
+                parts.append(f"**Business Context**: {template.purpose.business_context}")
 
-        if current_tokens <= copybook_budget_tokens:
-            return None
+        # Inputs
+        if template.inputs:
+            names = [inp.name for inp in template.inputs[:max_items]]
+            remaining = len(template.inputs) - max_items
+            s = ", ".join(names)
+            if remaining > 0:
+                s += f", +{remaining} more"
+            parts.append(f"**Inputs** ({len(template.inputs)}): {s}")
 
-        # Per-copybook character limit (distribute budget evenly)
-        per_copybook_chars = max(
-            500,
-            int(copybook_budget_tokens * estimator.cobol_chars_per_token / len(copybooks)),
+        # Outputs
+        if template.outputs:
+            names = [out.name for out in template.outputs[:max_items]]
+            remaining = len(template.outputs) - max_items
+            s = ", ".join(names)
+            if remaining > 0:
+                s += f", +{remaining} more"
+            parts.append(f"**Outputs** ({len(template.outputs)}): {s}")
+
+        # Called programs
+        if template.called_programs:
+            names = [cp.program_name for cp in template.called_programs[:max_items]]
+            remaining = len(template.called_programs) - max_items
+            s = ", ".join(names)
+            if remaining > 0:
+                s += f", +{remaining} more"
+            parts.append(f"**Calls** ({len(template.called_programs)}): {s}")
+
+        # Called by
+        if template.calling_context and template.calling_context.called_by:
+            callers = template.calling_context.called_by[:max_items]
+            remaining = len(template.calling_context.called_by) - max_items
+            s = ", ".join(callers)
+            if remaining > 0:
+                s += f", +{remaining} more"
+            parts.append(f"**Called By**: {s}")
+
+        # Copybooks used
+        if template.copybooks_used:
+            names = [cb.copybook_name for cb in template.copybooks_used[:max_items]]
+            remaining = len(template.copybooks_used) - max_items
+            s = ", ".join(names)
+            if remaining > 0:
+                s += f", +{remaining} more"
+            parts.append(f"**Copybooks** ({len(template.copybooks_used)}): {s}")
+
+        # Paragraphs — name + one-line purpose
+        if template.paragraphs:
+            parts.append(f"**Paragraphs** ({len(template.paragraphs)}):")
+            for para in template.paragraphs:
+                name = para.paragraph_name or "?"
+                purpose = para.purpose or para.summary or ""
+                if len(purpose) > 80:
+                    purpose = purpose[:80] + "..."
+                parts.append(f"  - {name}: {purpose}" if purpose else f"  - {name}")
+
+        # Business rules
+        if template.business_rules:
+            parts.append(f"**Business Rules** ({len(template.business_rules)}):")
+            for rule in template.business_rules[:3]:
+                desc = rule.description or "No description"
+                if len(desc) > 100:
+                    desc = desc[:100] + "..."
+                parts.append(f"  - {desc}")
+            if len(template.business_rules) > 3:
+                parts.append(f"  - (+{len(template.business_rules) - 3} more rules)")
+
+        # Error handling
+        if template.error_handling:
+            parts.append(f"**Error Handlers**: {len(template.error_handling)} defined")
+
+        # SQL / CICS operations
+        if template.sql_operations:
+            parts.append(f"**SQL Operations**: {len(template.sql_operations)}")
+        if template.cics_operations:
+            parts.append(f"**CICS Operations**: {len(template.cics_operations)}")
+
+        # Open questions
+        if template.open_questions:
+            parts.append(f"**Open Questions**: {len(template.open_questions)}")
+            for q in template.open_questions[:2]:
+                parts.append(f"  - {q.question}")
+            if len(template.open_questions) > 2:
+                parts.append(f"  - (+{len(template.open_questions) - 2} more)")
+
+        return "\n".join(parts)
+
+    @staticmethod
+    def _summarize_copybooks(copybooks: dict[str, str]) -> dict[str, str]:
+        """Extract structural skeletons from copybook/COBOL file contents.
+
+        For data-oriented content (.cpy copybooks): keeps level-number
+        definitions (01/05/10/etc. with PIC clauses).
+
+        For procedural content (.cbl COBOL programs): also keeps division/
+        section headers, paragraph headers, CALL/PERFORM statements, and
+        COPY/REPLACE directives.
+
+        This preserves what the Scribe needs (data layouts and call/flow
+        structure) while dramatically reducing size.
+
+        Deterministic, no LLM call.
+
+        Args:
+            copybooks: Mapping of copybook name to full content.
+
+        Returns:
+            Mapping of copybook name to structural skeleton text.
+        """
+        # Data-definition lines: level number + name
+        level_re = re.compile(
+            r"^\s*\d{0,6}\s*(0[1-9]|[1-4]\d|49|66|77|88)\s+\S+",
+        )
+        # Division / section headers (e.g. "PROCEDURE DIVISION", "WORKING-STORAGE SECTION")
+        division_re = re.compile(
+            r"^\s*\d{0,6}\s+\S+\s+(DIVISION|SECTION)\b",
+            re.IGNORECASE,
+        )
+        # Paragraph headers: a name starting in area A (cols 8-11) ending with period
+        # Matches lines like "       2000-PROCESS-RECORD." with optional line numbers
+        para_header_re = re.compile(
+            r"^\s*\d{0,6}\s{0,4}[A-Z][A-Z0-9_-]+\s*\.\s*$",
+            re.IGNORECASE,
+        )
+        # Key procedural statements: CALL, PERFORM
+        stmt_re = re.compile(
+            r"^\s*\d{0,6}\s+(CALL|PERFORM)\s",
+            re.IGNORECASE,
         )
 
-        trimmed: dict[str, str] = {}
+        summarized: dict[str, str] = {}
         for name, content in copybooks.items():
-            if len(content) > per_copybook_chars:
-                trimmed[name] = (
-                    content[:per_copybook_chars]
-                    + f"\n... [TRUNCATED — {len(content) - per_copybook_chars} chars omitted]"
-                )
+            kept: list[str] = []
+            for line in content.splitlines():
+                stripped = line.strip()
+                if (
+                    level_re.match(stripped)
+                    or division_re.match(stripped)
+                    or para_header_re.match(stripped)
+                    or stmt_re.match(stripped)
+                    or stripped.upper().startswith(("COPY ", "REPLACE "))
+                ):
+                    kept.append(line)
+            if kept:
+                summarized[name] = "\n".join(kept)
             else:
-                trimmed[name] = content
-
-        return trimmed
+                # Fallback: keep first 20 lines as a hint
+                all_lines = content.splitlines()
+                summarized[name] = "\n".join(all_lines[:20]) + (
+                    f"\n... [{len(all_lines) - 20} lines omitted]"
+                    if len(all_lines) > 20
+                    else ""
+                )
+        return summarized
 
     # ── Worker run loop ─────────────────────────────────────────────
 

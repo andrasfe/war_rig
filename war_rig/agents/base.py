@@ -447,10 +447,16 @@ class BaseAgent(ABC, Generic[InputT, OutputT]):
                     )
                     temperature = 1.0
 
+            # Pass max_completion_tokens to cap output size
+            provider_kwargs: dict[str, Any] = {}
+            if hasattr(self.config, "max_completion_tokens") and self.config.max_completion_tokens:
+                provider_kwargs["max_tokens"] = self.config.max_completion_tokens
+
             response = await self._provider.complete(
                 messages=messages,
                 model=self.config.model,
                 temperature=temperature,
+                **provider_kwargs,
             )
 
             content = response.content

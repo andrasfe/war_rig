@@ -83,6 +83,10 @@ class ScribeInput(AgentInput):
         default=None,
         description="Aggregated analysis pattern insights to guide documentation (from PatternAggregator)",
     )
+    previous_template_summary: str = Field(
+        default="",
+        description="Compact markdown summary of previous_template (used when full template is too large)",
+    )
     knowledge_graph_context: str = Field(
         default="",
         description="Formatted knowledge graph context for system-level relationship awareness",
@@ -504,7 +508,17 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
             parts.append("")
 
         # Previous template for subsequent iterations
-        if input_data.previous_template and input_data.iteration > 1:
+        if input_data.previous_template_summary:
+            parts.append("## Previous Documentation Summary (condensed for token budget)")
+            parts.append(input_data.previous_template_summary)
+            parts.append("")
+            parts.append(
+                "Note: The full previous template was too large to include. "
+                "Use the summary above for context. Generate a complete new "
+                "template from the source code."
+            )
+            parts.append("")
+        elif input_data.previous_template and input_data.iteration > 1:
             parts.append("## Previous Documentation (to update)")
             parts.append("```json")
             parts.append(input_data.previous_template.model_dump_json(indent=2))

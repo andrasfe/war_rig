@@ -185,10 +185,14 @@ class TokenEstimator:
             total_copybook_text = "\n".join(scribe_input.copybook_contents.values())
             estimate.copybook_contents = self.estimate_source_tokens(total_copybook_text)
 
-        # Previous template (for updates)
+        # Previous template (for updates) — full JSON or compact summary
         if scribe_input.previous_template:
             template_json = scribe_input.previous_template.model_dump_json()
             estimate.previous_template = self.estimate_tokens(template_json)
+        elif getattr(scribe_input, "previous_template_summary", ""):
+            estimate.previous_template = self.estimate_tokens(
+                scribe_input.previous_template_summary,
+            )
 
         # Challenger questions and Chrome tickets
         questions_text = ""
