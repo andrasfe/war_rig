@@ -36,9 +36,12 @@ from __future__ import annotations
 import logging
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from citadel.graph.model import Artifact, DependencyGraph
+
+if TYPE_CHECKING:
+    from citadel.cobol.syntax_tree import ParagraphSyntaxTree
 
 logger = logging.getLogger(__name__)
 
@@ -346,6 +349,113 @@ def _build_reason(
         f"Artifact '{artifact.canonical_name}' ({art_type}) is never "
         f"referenced by any other artifact in the dependency graph",
     )
+
+
+def find_dead_code_ast(
+    paragraph_asts: dict[str, ParagraphSyntaxTree],
+    paragraph_order: list[str] | None = None,
+) -> list[DeadCodeItem]:
+    """Find dead code paragraphs using AST-based intra-file analysis.
+
+    Walks every ParagraphSyntaxTree and collects all referenced paragraph
+    names from PERFORM, PERFORM_THRU, PERFORM_UNTIL, and GO_TO nodes.
+    Any paragraph NOT in the referenced set (and not the first paragraph)
+    is a dead code candidate.
+
+    Args:
+        paragraph_asts: Mapping of uppercase paragraph name to its syntax
+            tree, as returned by ``build_file_ast()`` or loaded from a
+            ``.ast`` JSON file.
+        paragraph_order: Ordered list of paragraph names (as they appear
+            in source). Used to determine the first paragraph (entry point)
+            and to expand PERFORM THRU ranges. If None, the dict key order
+            is used.
+
+    Returns:
+        List of DeadCodeItem instances with artifact_type="paragraph".
+    """
+    from citadel.cobol.syntax_tree import StatementType
+
+    if not paragraph_asts:
+        return []
+
+    # Determine paragraph order
+    if paragraph_order is None:
+        ordered_names = list(paragraph_asts.keys())
+    else:
+        ordered_names = [n.upper() for n in paragraph_order]
+
+    # Build a name-to-index lookup for PERFORM THRU range expansion
+    name_to_index: dict[str, int] = {
+        name: idx for idx, name in enumerate(ordered_names)
+    }
+
+    # Collect all referenced paragraph names
+    referenced: set[str] = set()
+
+    target_types = frozenset({
+        StatementType.PERFORM,
+        StatementType.PERFORM_UNTIL,
+        StatementType.GO_TO,
+    })
+
+    for tree in paragraph_asts.values():
+        for node in tree.walk():
+            if node.node_type in target_types:
+                target = node.attributes.get("target")
+                if target:
+                    referenced.add(target.upper())
+
+            elif node.node_type == StatementType.PERFORM_THRU:
+                start_name = node.attributes.get("target", "")
+                thru_name = node.attributes.get("thru", "")
+                if start_name:
+                    referenced.add(start_name.upper())
+                if thru_name:
+                    referenced.add(thru_name.upper())
+
+                # Add all paragraphs between start and thru (inclusive)
+                start_idx = name_to_index.get(start_name.upper())
+                thru_idx = name_to_index.get(thru_name.upper())
+                if start_idx is not None and thru_idx is not None:
+                    lo, hi = min(start_idx, thru_idx), max(start_idx, thru_idx)
+                    for idx in range(lo, hi + 1):
+                        referenced.add(ordered_names[idx])
+
+    # First paragraph (index 0) is always an entry point
+    first_paragraph = ordered_names[0] if ordered_names else None
+
+    # Any paragraph NOT referenced and NOT the entry point = dead code
+    dead_items: list[DeadCodeItem] = []
+    for name in ordered_names:
+        if name not in paragraph_asts:
+            continue
+        if name == first_paragraph:
+            continue
+        if name in referenced:
+            continue
+
+        tree = paragraph_asts[name]
+        dead_items.append(
+            DeadCodeItem(
+                name=name,
+                artifact_type="paragraph",
+                file=None,
+                line=tree.root.line_start if tree.root.line_start else None,
+                reason=(
+                    f"Paragraph '{name}' is never PERFORMed, GO TO'd, or "
+                    f"included in a PERFORM THRU range within this file"
+                ),
+            )
+        )
+
+    logger.info(
+        "AST-based dead code: found %d candidates out of %d paragraphs",
+        len(dead_items),
+        len(paragraph_asts),
+    )
+
+    return dead_items
 
 
 def dead_code_to_dicts(items: list[DeadCodeItem]) -> list[dict[str, Any]]:

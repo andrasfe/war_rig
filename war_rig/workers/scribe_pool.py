@@ -276,22 +276,9 @@ class ScribeWorker:
         # Keyed by file_name → dict of uppercase paragraph name → formatted AST string
         self._file_asts: dict[str, dict[str, str]] = {}
 
-        # Cache dead code detection results (keyed by normalized file path)
-        self._dead_code_by_file: dict[str, list[dict]] = {}
-        if self._citadel and dependency_graph_path and dependency_graph_path.exists():
-            try:
-                all_dead = self._citadel.get_dead_code(str(dependency_graph_path))
-                for item in all_dead:
-                    file_key = item.get("file", "")
-                    if file_key:
-                        self._dead_code_by_file.setdefault(file_key, []).append(item)
-                if all_dead:
-                    logger.debug(
-                        f"Worker {worker_id}: Cached {len(all_dead)} dead code items "
-                        f"across {len(self._dead_code_by_file)} files"
-                    )
-            except Exception as e:
-                logger.debug(f"Worker {worker_id}: Dead code detection failed: {e}")
+        # Cache per-file parse results for AST-based dead code detection
+        # Keyed by file_name → CobolParseResult (or None if loaded from .ast file)
+        self._parse_results: dict[str, Any] = {}
 
         # Cache callers lookup from dependency graph (keyed by "file_path:PARA_NAME")
         # This replaces per-paragraph get_callers() calls which trigger expensive
@@ -621,40 +608,6 @@ class ScribeWorker:
 
         return chunks
 
-    def _find_perform_thru_targets(self, file_path: str) -> set[str]:
-        """Find paragraph names used as PERFORM THRU range endpoints.
-
-        Reads the source file and extracts all paragraph names that appear
-        as the second operand in PERFORM ... THRU/THROUGH statements. These
-        paragraphs serve as range markers and should not be flagged as dead
-        code even if they have no other incoming references.
-
-        Args:
-            file_path: Path to the COBOL source file.
-
-        Returns:
-            Set of paragraph names (uppercased) used as THRU endpoints.
-        """
-        thru_targets: set[str] = set()
-        try:
-            source = Path(file_path).read_text(encoding="utf-8", errors="replace")
-            # Match PERFORM <name> THRU/THROUGH <name>
-            # The second capture group is the THRU target paragraph
-            pattern = re.compile(
-                r"\bPERFORM\s+[A-Z0-9][A-Z0-9-]*"
-                r"\s+(?:THRU|THROUGH)\s+"
-                r"([A-Z0-9][A-Z0-9-]*)",
-                re.IGNORECASE,
-            )
-            for match in pattern.finditer(source):
-                thru_targets.add(match.group(1).upper())
-        except Exception as e:
-            logger.debug(
-                f"Worker {self.worker_id}: Could not read {file_path} for "
-                f"PERFORM THRU analysis: {e}"
-            )
-        return thru_targets
-
     @staticmethod
     def _find_exit_convention_paragraphs(
         template: DocumentationTemplate,
@@ -700,6 +653,106 @@ class ScribeWorker:
                 exit_paras.add(name)
 
         return exit_paras
+
+    def _detect_dead_code_ast(
+        self,
+        file_path: str,
+        template: DocumentationTemplate,
+    ) -> list[dict]:
+        """Detect dead code using AST-based intra-file analysis.
+
+        Uses ParagraphSyntaxTree data to find paragraphs not referenced by
+        any PERFORM, GO TO, or PERFORM THRU within the same file. Still
+        applies the EXIT convention filter as a secondary check.
+
+        Args:
+            file_path: Path to the source file.
+            template: The documentation template (for EXIT convention filter).
+
+        Returns:
+            List of dead code item dicts.
+        """
+        from citadel.analysis.dead_code import find_dead_code_ast
+
+        source_path = Path(file_path)
+
+        # Get ParagraphSyntaxTree dict from cached parse result or .ast file
+        paragraph_trees = None
+        paragraph_order = None
+        file_name = source_path.name
+
+        # Check parse result cache first
+        cached = self._parse_results.get(file_name)
+        if cached is not None:
+            paragraph_trees = cached._paragraph_asts
+            paragraph_order = cached.paragraph_names
+        else:
+            # Try .ast JSON file
+            ast_file = source_path.with_suffix(source_path.suffix + ".ast")
+            if ast_file.exists():
+                try:
+                    from cobalt.generator import load_ast_json
+
+                    json_text = ast_file.read_text(encoding="utf-8")
+                    paragraph_trees, _full = load_ast_json(json_text)
+                    paragraph_order = list(paragraph_trees.keys())
+                except Exception as e:
+                    logger.debug(
+                        f"Worker {self.worker_id}: Could not load AST for "
+                        f"dead code detection: {e}"
+                    )
+
+        if not paragraph_trees:
+            return []
+
+        dead_items = find_dead_code_ast(paragraph_trees, paragraph_order)
+
+        if not dead_items:
+            return []
+
+        # Filter EXIT convention paragraphs
+        exit_convention = self._find_exit_convention_paragraphs(template)
+        if exit_convention:
+            original_count = len(dead_items)
+            dead_items = [
+                item for item in dead_items
+                if item.name.upper() not in exit_convention
+            ]
+            filtered = original_count - len(dead_items)
+            if filtered > 0:
+                logger.info(
+                    f"Worker {self.worker_id}: Filtered {filtered} "
+                    f"EXIT convention paragraph(s) from dead code"
+                )
+
+        # Build lookup of dead paragraph names
+        dead_names: dict[str, Any] = {}
+        for item in dead_items:
+            dead_names[item.name.lower()] = item
+
+        # Mark paragraphs as dead code on the template
+        for para in template.paragraphs:
+            if para.paragraph_name and para.paragraph_name.lower() in dead_names:
+                dead_item = dead_names[para.paragraph_name.lower()]
+                para.is_dead_code = True
+                para.dead_code_reason = dead_item.reason
+
+        # Populate template.dead_code
+        template.dead_code = [
+            DeadCodeItem(
+                name=item.name,
+                artifact_type=item.artifact_type,
+                line=item.line,
+                reason=item.reason,
+            )
+            for item in dead_items
+        ]
+
+        return [
+            {"name": item.name, "type": item.artifact_type,
+             "line": item.line, "reason": item.reason}
+            for item in dead_items
+        ]
 
     async def _enrich_paragraphs_with_citadel(
         self,
@@ -832,53 +885,8 @@ class ScribeWorker:
                 except Exception:
                     pass
 
-        # Mark dead code paragraphs and build dead_code section
-        dead_code_items = citadel_context.get("dead_code", [])
-        if dead_code_items:
-            # Filter false-positive dead code for paragraphs:
-            # 1. PERFORM THRU endpoints — the Y in PERFORM X THRU Y may lack
-            #    explicit incoming edges in the dependency graph.
-            # 2. Convention-based EXIT paragraphs — COBOL programs use naming
-            #    patterns like 9500-EXIT paired with 9500-LOG-ERROR. These are
-            #    range markers even when the PERFORM doesn't use THRU syntax.
-            thru_targets = self._find_perform_thru_targets(file_path)
-            exit_convention = self._find_exit_convention_paragraphs(template)
-            exclude = thru_targets | exit_convention
-            if exclude:
-                original_count = len(dead_code_items)
-                dead_code_items = [
-                    item for item in dead_code_items
-                    if item.get("name", "").upper() not in exclude
-                ]
-                filtered_count = original_count - len(dead_code_items)
-                if filtered_count > 0:
-                    logger.info(
-                        f"Worker {self.worker_id}: Filtered {filtered_count} "
-                        f"false-positive dead code paragraph(s)"
-                    )
-
-            # Build lookup of dead paragraph names (case-insensitive)
-            dead_names = {}
-            for item in dead_code_items:
-                dead_names[item.get("name", "").lower()] = item
-
-            # Mark paragraphs as dead code
-            for para in template.paragraphs:
-                if para.paragraph_name and para.paragraph_name.lower() in dead_names:
-                    item = dead_names[para.paragraph_name.lower()]
-                    para.is_dead_code = True
-                    para.dead_code_reason = item.get("reason", "Never referenced")
-
-            # Add all dead code items to the template section
-            template.dead_code = [
-                DeadCodeItem(
-                    name=item.get("name", ""),
-                    artifact_type=item.get("type", "unknown"),
-                    line=item.get("line"),
-                    reason=item.get("reason", "Never referenced"),
-                )
-                for item in dead_code_items
-            ]
+        # AST-based dead code detection (replaces graph-based approach)
+        self._detect_dead_code_ast(file_path, template)
 
         logger.debug(
             f"Worker {self.worker_id}: Enriched {len(template.paragraphs)} paragraphs "
@@ -3341,6 +3349,10 @@ class ScribeWorker:
 
         # Cache for markdown generation in _save_template
         self._file_asts[file_name] = paragraph_asts
+
+        # Cache parse result for AST-based dead code detection
+        if parse_result is not None:
+            self._parse_results[file_name] = parse_result
 
         # Record missing copybooks for template metadata
         if parse_result and parse_result.copybooks_not_found:

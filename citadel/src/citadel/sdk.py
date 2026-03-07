@@ -1729,6 +1729,60 @@ class Citadel:
 
         return dead_code_to_dicts(dead_items)
 
+    def get_dead_code_ast(
+        self,
+        path: str | Path,
+        copybook_dirs: list[str | Path] | None = None,
+    ) -> list[dict[str, Any]]:
+        """Find dead code paragraphs using AST-based intra-file analysis.
+
+        Parses a COBOL file, builds per-paragraph syntax trees, then
+        identifies paragraphs not referenced by any PERFORM, GO TO, or
+        PERFORM THRU statement within the same file.
+
+        This is more accurate than ``get_dead_code()`` for paragraph-level
+        analysis because it uses the AST's structured node data rather than
+        a potentially incomplete cross-file dependency graph.
+
+        Args:
+            path: Path to a COBOL source file (.cbl).
+            copybook_dirs: Optional directories to search for copybooks.
+
+        Returns:
+            List of dictionaries with keys: name, type, file, line, reason.
+        """
+        from citadel.analysis.dead_code import find_dead_code_ast
+
+        source_path = Path(path)
+
+        # Try pre-generated .ast JSON file first
+        ast_file = source_path.with_suffix(source_path.suffix + ".ast")
+        if ast_file.exists():
+            from cobalt.generator import load_ast_json
+
+            json_text = ast_file.read_text(encoding="utf-8")
+            paragraph_trees, _full_text = load_ast_json(json_text)
+            paragraph_order = list(paragraph_trees.keys())
+        else:
+            parse_result = self.parse_cobol(source_path, copybook_dirs=copybook_dirs)
+            paragraph_trees = parse_result._paragraph_asts
+            paragraph_order = parse_result.paragraph_names
+
+        dead_items = find_dead_code_ast(paragraph_trees, paragraph_order)
+
+        # Set file path on all items
+        file_str = str(source_path)
+        return [
+            {
+                "name": item.name,
+                "type": item.artifact_type,
+                "file": file_str,
+                "line": item.line,
+                "reason": item.reason,
+            }
+            for item in dead_items
+        ]
+
     def get_flow_diagram(
         self,
         file_path: str | Path,
@@ -2957,6 +3011,26 @@ def get_dead_code(
     """
     citadel = Citadel()
     return citadel.get_dead_code(path, exclude_types, include_only_types)
+
+
+def get_dead_code_ast(
+    path: str | Path,
+    copybook_dirs: list[str | Path] | None = None,
+) -> list[dict[str, Any]]:
+    """
+    Find dead code paragraphs using AST-based intra-file analysis.
+
+    Convenience function for quick AST-based dead code detection.
+
+    Args:
+        path: Path to a COBOL source file (.cbl).
+        copybook_dirs: Optional directories to search for copybooks.
+
+    Returns:
+        List of dictionaries with keys: name, type, file, line, reason.
+    """
+    citadel = Citadel()
+    return citadel.get_dead_code_ast(path, copybook_dirs)
 
 
 def get_flow_diagram(

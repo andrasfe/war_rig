@@ -2171,305 +2171,67 @@ class TestPerformThruDeadCodeFilter:
     """Tests for Bug 2 fix: EXIT paragraphs used as PERFORM THRU range
     endpoints should not be flagged as dead code."""
 
-    def test_find_perform_thru_targets_basic(
+    def test_detect_dead_code_ast_with_perform_thru(
         self, mock_config, mock_beads_client, tmp_path
     ):
-        """Test extraction of PERFORM THRU target paragraph names."""
-        source = """\
-       IDENTIFICATION DIVISION.
-       PROGRAM-ID. TESTPROG.
-       PROCEDURE DIVISION.
-       0000-MAIN.
-           PERFORM 1000-INITIALIZE THRU 1000-EXIT.
-           PERFORM 2000-PROCESS THRU 2000-EXIT.
-           STOP RUN.
-       1000-INITIALIZE.
-           DISPLAY 'INIT'.
-       1000-EXIT.
-           EXIT.
-       2000-PROCESS.
-           DISPLAY 'PROCESS'.
-       2000-EXIT.
-           EXIT.
-"""
-        source_file = tmp_path / "TESTPROG.cbl"
-        source_file.write_text(source)
-
-        worker = ScribeWorker(
-            worker_id="scribe-1",
-            config=mock_config,
-            beads_client=mock_beads_client,
-            output_directory=tmp_path / "output",
+        """AST-based detection: PERFORM THRU targets are NOT dead code."""
+        from citadel.cobol.syntax_tree import (
+            ParagraphSyntaxTree,
+            StatementType,
+            SyntaxNode,
         )
 
-        targets = worker._find_perform_thru_targets(str(source_file))
+        # Build mock ASTs simulating: 0000-MAIN PERFORMs 1000-INIT THRU 1000-EXIT
+        def _make_tree(name, children=None):
+            root = SyntaxNode(
+                node_type=StatementType.PARAGRAPH,
+                source_text="",
+                line_start=1,
+                line_end=10,
+                children=children or [],
+                attributes={"name": name},
+            )
+            return ParagraphSyntaxTree(
+                paragraph_name=name,
+                root=root,
+                statement_count=len(children or []),
+                max_nesting_depth=0,
+            )
 
-        assert "1000-EXIT" in targets
-        assert "2000-EXIT" in targets
-        assert "1000-INITIALIZE" not in targets
-        assert "2000-PROCESS" not in targets
+        main_tree = _make_tree("0000-MAIN", [
+            SyntaxNode(
+                node_type=StatementType.PERFORM_THRU,
+                source_text="PERFORM 1000-INIT THRU 1000-EXIT",
+                line_start=2, line_end=2,
+                attributes={"target": "1000-INIT", "thru": "1000-EXIT"},
+            ),
+        ])
 
-    def test_find_perform_thru_targets_through_keyword(
-        self, mock_config, mock_beads_client, tmp_path
-    ):
-        """Test extraction with THROUGH keyword (synonym for THRU)."""
-        source = """\
-       PROCEDURE DIVISION.
-       0000-MAIN.
-           PERFORM 1000-INIT THROUGH 1000-EXIT.
-"""
-        source_file = tmp_path / "TESTPROG.cbl"
-        source_file.write_text(source)
-
-        worker = ScribeWorker(
-            worker_id="scribe-1",
-            config=mock_config,
-            beads_client=mock_beads_client,
-            output_directory=tmp_path / "output",
-        )
-
-        targets = worker._find_perform_thru_targets(str(source_file))
-
-        assert "1000-EXIT" in targets
-
-    def test_find_perform_thru_targets_case_insensitive(
-        self, mock_config, mock_beads_client, tmp_path
-    ):
-        """Test that THRU pattern matching is case-insensitive."""
-        source = """\
-       PROCEDURE DIVISION.
-           perform 1000-init thru 1000-exit.
-"""
-        source_file = tmp_path / "TESTPROG.cbl"
-        source_file.write_text(source)
-
-        worker = ScribeWorker(
-            worker_id="scribe-1",
-            config=mock_config,
-            beads_client=mock_beads_client,
-            output_directory=tmp_path / "output",
-        )
-
-        targets = worker._find_perform_thru_targets(str(source_file))
-
-        # Should be uppercased in the result set
-        assert "1000-EXIT" in targets
-
-    def test_find_perform_thru_targets_nonexistent_file(
-        self, mock_config, mock_beads_client, tmp_path
-    ):
-        """Test graceful handling of missing file."""
-        worker = ScribeWorker(
-            worker_id="scribe-1",
-            config=mock_config,
-            beads_client=mock_beads_client,
-            output_directory=tmp_path / "output",
-        )
-
-        targets = worker._find_perform_thru_targets("/nonexistent/file.cbl")
-
-        assert targets == set()
-
-    def test_find_perform_thru_targets_no_thru(
-        self, mock_config, mock_beads_client, tmp_path
-    ):
-        """Test file with PERFORM but no THRU."""
-        source = """\
-       PROCEDURE DIVISION.
-       0000-MAIN.
-           PERFORM 1000-INIT.
-           PERFORM 2000-PROCESS.
-"""
-        source_file = tmp_path / "TESTPROG.cbl"
-        source_file.write_text(source)
-
-        worker = ScribeWorker(
-            worker_id="scribe-1",
-            config=mock_config,
-            beads_client=mock_beads_client,
-            output_directory=tmp_path / "output",
-        )
-
-        targets = worker._find_perform_thru_targets(str(source_file))
-
-        assert targets == set()
-
-    @pytest.mark.asyncio
-    async def test_dead_code_exit_paragraphs_filtered(
-        self, mock_config, mock_beads_client, tmp_path
-    ):
-        """EXIT paragraphs in PERFORM THRU should not be marked as dead code."""
-        from war_rig.models.templates import DocumentationTemplate, Paragraph
-
-        # Create source with PERFORM THRU
-        source = """\
-       PROCEDURE DIVISION.
-       0000-MAIN.
-           PERFORM 1000-INIT THRU 1000-EXIT.
-           PERFORM 2000-PROCESS THRU 2000-EXIT.
-       1000-INIT.
-           DISPLAY 'INIT'.
-       1000-EXIT.
-           EXIT.
-       2000-PROCESS.
-           DISPLAY 'PROCESS'.
-       2000-EXIT.
-           EXIT.
-       9999-UNUSED.
-           DISPLAY 'NEVER CALLED'.
-"""
-        source_file = tmp_path / "TESTPROG.cbl"
-        source_file.write_text(source)
-
-        worker = ScribeWorker(
-            worker_id="scribe-1",
-            config=mock_config,
-            beads_client=mock_beads_client,
-            output_directory=tmp_path / "output",
-        )
-        mock_citadel = MagicMock()
-        mock_citadel.get_callers.return_value = []
-        mock_citadel.get_function_body.return_value = None
-        worker._citadel = mock_citadel
-
-        template = DocumentationTemplate(
-            paragraphs=[
-                Paragraph(paragraph_name="0000-MAIN", purpose="Main entry"),
-                Paragraph(paragraph_name="1000-INIT", purpose="Initialize"),
-                Paragraph(paragraph_name="1000-EXIT", purpose="Exit init"),
-                Paragraph(paragraph_name="2000-PROCESS", purpose="Process"),
-                Paragraph(paragraph_name="2000-EXIT", purpose="Exit process"),
-                Paragraph(paragraph_name="9999-UNUSED", purpose="Unused"),
-            ]
-        )
-
-        citadel_context = {
-            "functions": [
-                {"name": "0000-MAIN", "type": "paragraph", "line": 3, "calls": []},
-                {"name": "1000-INIT", "type": "paragraph", "line": 6, "calls": []},
-                {"name": "1000-EXIT", "type": "paragraph", "line": 8, "calls": []},
-                {"name": "2000-PROCESS", "type": "paragraph", "line": 10, "calls": []},
-                {"name": "2000-EXIT", "type": "paragraph", "line": 12, "calls": []},
-                {"name": "9999-UNUSED", "type": "paragraph", "line": 14, "calls": []},
-            ],
-            "dead_code": [
-                {
-                    "name": "1000-EXIT",
-                    "type": "paragraph",
-                    "line": 8,
-                    "reason": "Paragraph '1000-EXIT' is never PERFORMed",
-                },
-                {
-                    "name": "2000-EXIT",
-                    "type": "paragraph",
-                    "line": 12,
-                    "reason": "Paragraph '2000-EXIT' is never PERFORMed",
-                },
-                {
-                    "name": "9999-UNUSED",
-                    "type": "paragraph",
-                    "line": 14,
-                    "reason": "Paragraph '9999-UNUSED' is never PERFORMed",
-                },
-            ],
+        asts = {
+            "0000-MAIN": main_tree,
+            "1000-INIT": _make_tree("1000-INIT"),
+            "1000-EXIT": _make_tree("1000-EXIT"),
+            "9999-UNUSED": _make_tree("9999-UNUSED"),
         }
+        order = ["0000-MAIN", "1000-INIT", "1000-EXIT", "9999-UNUSED"]
 
-        result = await worker._enrich_paragraphs_with_citadel(
-            template, str(source_file), citadel_context
-        )
+        from citadel.analysis.dead_code import find_dead_code_ast
 
-        # EXIT paragraphs should NOT be flagged as dead code
-        exit_1000 = next(
-            p for p in result.paragraphs if p.paragraph_name == "1000-EXIT"
-        )
-        assert exit_1000.is_dead_code is False
-        assert exit_1000.dead_code_reason is None
+        dead = find_dead_code_ast(asts, order)
 
-        exit_2000 = next(
-            p for p in result.paragraphs if p.paragraph_name == "2000-EXIT"
-        )
-        assert exit_2000.is_dead_code is False
-        assert exit_2000.dead_code_reason is None
+        dead_names = {item.name for item in dead}
+        # PERFORM THRU range covers 1000-INIT and 1000-EXIT
+        assert "1000-INIT" not in dead_names
+        assert "1000-EXIT" not in dead_names
+        # 9999-UNUSED is truly dead
+        assert "9999-UNUSED" in dead_names
+        # 0000-MAIN is entry point (first paragraph)
+        assert "0000-MAIN" not in dead_names
 
-        # Truly unused paragraph SHOULD still be flagged
-        unused = next(p for p in result.paragraphs if p.paragraph_name == "9999-UNUSED")
-        assert unused.is_dead_code is True
-        assert unused.dead_code_reason is not None
-
-        # Dead code section should only contain 9999-UNUSED
-        assert len(result.dead_code) == 1
-        assert result.dead_code[0].name == "9999-UNUSED"
-
-    @pytest.mark.asyncio
-    async def test_dead_code_no_thru_keeps_all_dead_items(
+    def test_detect_dead_code_ast_no_ast_data(
         self, mock_config, mock_beads_client, tmp_path
     ):
-        """When no PERFORM THRU in source, all dead code items should remain."""
-        from war_rig.models.templates import DocumentationTemplate, Paragraph
-
-        source = """\
-       PROCEDURE DIVISION.
-       0000-MAIN.
-           PERFORM 1000-INIT.
-       1000-INIT.
-           DISPLAY 'INIT'.
-       9999-UNUSED.
-           EXIT.
-"""
-        source_file = tmp_path / "TESTPROG.cbl"
-        source_file.write_text(source)
-
-        worker = ScribeWorker(
-            worker_id="scribe-1",
-            config=mock_config,
-            beads_client=mock_beads_client,
-            output_directory=tmp_path / "output",
-        )
-        mock_citadel = MagicMock()
-        mock_citadel.get_callers.return_value = []
-        mock_citadel.get_function_body.return_value = None
-        worker._citadel = mock_citadel
-
-        template = DocumentationTemplate(
-            paragraphs=[
-                Paragraph(paragraph_name="0000-MAIN", purpose="Main"),
-                Paragraph(paragraph_name="1000-INIT", purpose="Init"),
-                Paragraph(paragraph_name="9999-UNUSED", purpose="Unused"),
-            ]
-        )
-
-        citadel_context = {
-            "functions": [
-                {"name": "0000-MAIN", "type": "paragraph", "line": 3, "calls": []},
-                {"name": "1000-INIT", "type": "paragraph", "line": 5, "calls": []},
-                {"name": "9999-UNUSED", "type": "paragraph", "line": 7, "calls": []},
-            ],
-            "dead_code": [
-                {
-                    "name": "9999-UNUSED",
-                    "type": "paragraph",
-                    "line": 7,
-                    "reason": "Paragraph '9999-UNUSED' is never PERFORMed",
-                },
-            ],
-        }
-
-        result = await worker._enrich_paragraphs_with_citadel(
-            template, str(source_file), citadel_context
-        )
-
-        # 9999-UNUSED should still be dead code
-        unused = next(p for p in result.paragraphs if p.paragraph_name == "9999-UNUSED")
-        assert unused.is_dead_code is True
-
-        assert len(result.dead_code) == 1
-        assert result.dead_code[0].name == "9999-UNUSED"
-
-    @pytest.mark.asyncio
-    async def test_dead_code_missing_source_file_still_works(
-        self, mock_config, mock_beads_client, tmp_path
-    ):
-        """When source file is missing, dead code items are kept (no crash)."""
+        """When no AST data is available, no dead code is detected."""
         from war_rig.models.templates import DocumentationTemplate, Paragraph
 
         worker = ScribeWorker(
@@ -2478,10 +2240,6 @@ class TestPerformThruDeadCodeFilter:
             beads_client=mock_beads_client,
             output_directory=tmp_path / "output",
         )
-        mock_citadel = MagicMock()
-        mock_citadel.get_callers.return_value = []
-        mock_citadel.get_function_body.return_value = None
-        worker._citadel = mock_citadel
 
         template = DocumentationTemplate(
             paragraphs=[
@@ -2489,116 +2247,9 @@ class TestPerformThruDeadCodeFilter:
             ]
         )
 
-        citadel_context = {
-            "functions": [
-                {"name": "1000-EXIT", "type": "paragraph", "line": 8, "calls": []},
-            ],
-            "dead_code": [
-                {
-                    "name": "1000-EXIT",
-                    "type": "paragraph",
-                    "line": 8,
-                    "reason": "Paragraph '1000-EXIT' is never PERFORMed",
-                },
-            ],
-        }
-
-        # Source file doesn't exist - _find_perform_thru_targets returns empty set
-        result = await worker._enrich_paragraphs_with_citadel(
-            template, "/nonexistent/PROG.cbl", citadel_context
-        )
-
-        # 1000-EXIT has no sibling paragraph — still dead
-        exit_para = result.paragraphs[0]
-        assert exit_para.is_dead_code is True
-        assert len(result.dead_code) == 1
-
-    @pytest.mark.asyncio
-    async def test_dead_code_exit_convention_without_thru(
-        self, mock_config, mock_beads_client, tmp_path
-    ):
-        """EXIT paragraphs with sibling paragraphs are filtered even without THRU."""
-        from war_rig.models.templates import DocumentationTemplate, Paragraph
-
-        # Source with NO PERFORM THRU — just direct PERFORMs
-        source = """\
-       PROCEDURE DIVISION.
-       0000-MAIN.
-           PERFORM 9500-LOG-ERROR.
-           PERFORM 9990-END-ROUTINE.
-       9500-LOG-ERROR.
-           DISPLAY 'ERROR'.
-       9500-EXIT.
-           EXIT.
-       9990-END-ROUTINE.
-           DISPLAY 'ENDING'.
-       9990-EXIT.
-           EXIT.
-       9999-ORPHAN-EXIT.
-           EXIT.
-"""
-        source_file = tmp_path / "TESTPROG.cbl"
-        source_file.write_text(source)
-
-        worker = ScribeWorker(
-            worker_id="scribe-1",
-            config=mock_config,
-            beads_client=mock_beads_client,
-            output_directory=tmp_path / "output",
-        )
-        mock_citadel = MagicMock()
-        mock_citadel.get_callers.return_value = []
-        mock_citadel.get_function_body.return_value = None
-        worker._citadel = mock_citadel
-
-        template = DocumentationTemplate(
-            paragraphs=[
-                Paragraph(paragraph_name="0000-MAIN", purpose="Main"),
-                Paragraph(paragraph_name="9500-LOG-ERROR", purpose="Log"),
-                Paragraph(paragraph_name="9500-EXIT", purpose="Exit log"),
-                Paragraph(paragraph_name="9990-END-ROUTINE", purpose="End"),
-                Paragraph(paragraph_name="9990-EXIT", purpose="Exit end"),
-                Paragraph(paragraph_name="9999-ORPHAN-EXIT", purpose="Orphan"),
-            ]
-        )
-
-        citadel_context = {
-            "functions": [],
-            "dead_code": [
-                {"name": "9500-EXIT", "type": "paragraph", "line": 7,
-                 "reason": "Paragraph '9500-EXIT' is never PERFORMed"},
-                {"name": "9990-EXIT", "type": "paragraph", "line": 11,
-                 "reason": "Paragraph '9990-EXIT' is never PERFORMed"},
-                {"name": "9999-ORPHAN-EXIT", "type": "paragraph", "line": 13,
-                 "reason": "Paragraph '9999-ORPHAN-EXIT' is never PERFORMed"},
-            ],
-        }
-
-        result = await worker._enrich_paragraphs_with_citadel(
-            template, str(source_file), citadel_context
-        )
-
-        # 9500-EXIT has sibling 9500-LOG-ERROR → convention-filtered, NOT dead
-        exit_9500 = next(
-            p for p in result.paragraphs if p.paragraph_name == "9500-EXIT"
-        )
-        assert exit_9500.is_dead_code is False
-
-        # 9990-EXIT has sibling 9990-END-ROUTINE → convention-filtered, NOT dead
-        exit_9990 = next(
-            p for p in result.paragraphs if p.paragraph_name == "9990-EXIT"
-        )
-        assert exit_9990.is_dead_code is False
-
-        # 9999-ORPHAN-EXIT has NO sibling "9999-*" (only itself) → stays dead
-        orphan = next(
-            p for p in result.paragraphs if p.paragraph_name == "9999-ORPHAN-EXIT"
-        )
-        assert orphan.is_dead_code is True
-
-        # Dead code section should only contain the orphan
-        assert len(result.dead_code) == 1
-        assert result.dead_code[0].name == "9999-ORPHAN-EXIT"
+        # No parse results cached, no .ast file → empty result, no crash
+        result = worker._detect_dead_code_ast("/nonexistent/PROG.cbl", template)
+        assert result == []
 
     def test_find_exit_convention_paragraphs(
         self, mock_config, mock_beads_client, tmp_path

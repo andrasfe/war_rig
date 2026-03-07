@@ -701,6 +701,18 @@ class DeadCodeItem(BaseModel):
     reason: str = Field(description="Why this is considered dead code")
 
 
+class ResolvedDeadCode(BaseModel):
+    """A dead code candidate resolved by automated CodeWhisper analysis."""
+
+    name: str = Field(description="Name of the dead code candidate")
+    original_reason: str = Field(description="Original static analysis reason")
+    is_dead: bool = Field(description="True = confirmed dead, False = false positive")
+    explanation: str = Field(description="CodeWhisper investigation answer")
+    resolved_by: str = Field(default="CODEWHISPER", description="What resolved this")
+    cycle_resolved: int = Field(default=1, description="Which cycle this was resolved in")
+    tool_calls_used: int = Field(default=0, description="Number of tool calls used")
+
+
 class DocumentationTemplate(BaseModel):
     """Complete documentation template for COBOL/PL/I programs.
 
@@ -772,6 +784,10 @@ class DocumentationTemplate(BaseModel):
         default_factory=list,
         description="Artifacts identified as dead code by static analysis",
     )
+    dead_code_resolved: list[ResolvedDeadCode] = Field(
+        default_factory=list,
+        description="Dead code candidates resolved by automated analysis",
+    )
     call_semantics: list[CallSemantics] = Field(
         default_factory=list,
         description="Data flow semantics for paragraph calls (LLM-inferred)",
@@ -841,6 +857,8 @@ class DocumentationTemplate(BaseModel):
                 ]
             elif key == "dead_code" and isinstance(value, list):
                 constructed[key] = [DeadCodeItem.model_construct(**v) if isinstance(v, dict) else v for v in value]
+            elif key == "dead_code_resolved" and isinstance(value, list):
+                constructed[key] = [ResolvedDeadCode.model_construct(**v) if isinstance(v, dict) else v for v in value]
             elif key == "call_semantics" and isinstance(value, list):
                 constructed[key] = [CallSemantics.model_construct(**v) if isinstance(v, dict) else v for v in value]
             else:

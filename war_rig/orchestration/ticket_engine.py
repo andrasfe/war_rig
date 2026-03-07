@@ -88,6 +88,7 @@ class OrchestrationStatus(str, Enum):
     REVIEWING = "reviewing"
     PROCESSING_FEEDBACK = "processing_feedback"
     RESOLVING_QUESTIONS = "resolving_questions"
+    RESOLVING_DEAD_CODE = "resolving_dead_code"
     COMPLETED = "completed"
     STOPPED = "stopped"
     FAILED = "failed"
@@ -497,6 +498,10 @@ class TicketOrchestrator:
                 # Resolve open questions using CodeWhisper (best-effort)
                 if self.config.question_resolution.enabled:
                     await self._resolve_open_questions(review_result)
+
+                # Resolve dead code candidates using CodeWhisper (best-effort)
+                if self.config.dead_code_resolution.enabled:
+                    await self._resolve_dead_code_candidates()
 
                 # Always capture feedback context for next cycle (even if we have gaps)
                 # This ensures quality notes propagate to all subsequent work
@@ -2528,6 +2533,30 @@ class TicketOrchestrator:
             )
         except Exception as e:
             logger.warning(f"Question resolution failed (non-fatal): {e}")
+
+    async def _resolve_dead_code_candidates(self) -> None:
+        """Resolve dead code candidates using CodeWhisper SDK. Best-effort, non-fatal."""
+        from war_rig.orchestration.dead_code_resolver import DeadCodeResolver
+
+        self._state.status = OrchestrationStatus.RESOLVING_DEAD_CODE
+        self._state.status_message = "Resolving dead code candidates..."
+        try:
+            resolver = DeadCodeResolver(
+                config=self.config.dead_code_resolution,
+                output_directory=self.config.output_directory,
+                input_directory=self._input_directory,
+                cycle=self._state.cycle,
+            )
+            result = await resolver.resolve_all()
+            logger.info(
+                f"Resolved {result.candidates_resolved}/"
+                f"{result.candidates_found} dead code candidates "
+                f"({result.confirmed_dead} confirmed, "
+                f"{result.false_positives} false positives) "
+                f"in {result.duration_seconds:.1f}s"
+            )
+        except Exception as e:
+            logger.warning(f"Dead code resolution failed (non-fatal): {e}")
 
     async def _handle_imperator_feedback(
         self,

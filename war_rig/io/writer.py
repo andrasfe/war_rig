@@ -512,6 +512,29 @@ class DocumentationWriter:
                     lines.append(f"  *Confidence: {rq.confidence}*")
             lines.append("")
 
+        # Resolved Dead Code Analysis
+        if template.dead_code_resolved:
+            lines.append("## Resolved Dead Code Analysis")
+            lines.append("")
+            lines.append("| Paragraph | Verdict | Explanation |")
+            lines.append("|-----------|---------|-------------|")
+            for rdc in template.dead_code_resolved:
+                if isinstance(rdc, dict):
+                    name = rdc.get("name", "")
+                    is_dead = rdc.get("is_dead", True)
+                    explanation = rdc.get("explanation", "")
+                else:
+                    name = rdc.name
+                    is_dead = rdc.is_dead
+                    explanation = rdc.explanation
+                verdict = "Confirmed Dead" if is_dead else "False Positive"
+                # Truncate long explanations for table
+                short_explanation = explanation.replace("\n", " ")
+                if len(short_explanation) > 120:
+                    short_explanation = short_explanation[:117] + "..."
+                lines.append(f"| {name} | {verdict} | {short_explanation} |")
+            lines.append("")
+
         # Sequence Diagram (if paragraphs with calls exist)
         sequence_diagram = self._render_sequence_diagram(template)
         if sequence_diagram:

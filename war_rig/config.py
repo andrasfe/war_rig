@@ -183,6 +183,17 @@ class QuestionResolutionConfig(BaseModel):
     resolve_readme_questions: bool = Field(default=True)
 
 
+class DeadCodeResolutionConfig(BaseModel):
+    """Configuration for automatic dead code resolution via CodeWhisper."""
+
+    enabled: bool = Field(default=False)
+    max_candidates_per_cycle: int = Field(default=15)
+    timeout_per_candidate: int = Field(default=90)
+    codewhisper_max_iterations: int = Field(default=6)
+    codewhisper_temperature: float = Field(default=0.1)
+    codewhisper_max_tokens: int = Field(default=1024)
+
+
 class KnowledgeGraphConfig(BaseModel):
     """Configuration for the knowledge graph subsystem.
 
@@ -613,6 +624,14 @@ class WarRigConfig(BaseSettings):
     beads_enabled: bool = Field(default=False)
     beads_dry_run: bool = Field(default=False)
 
+    # Dead code resolution (automatic via CodeWhisper)
+    dead_code_resolution_enabled: bool = Field(default=False)
+    dead_code_resolution_max_per_cycle: int = Field(default=15)
+    dead_code_resolution_timeout: int = Field(default=90)
+    dead_code_resolution_cw_max_iterations: int = Field(default=6)
+    dead_code_resolution_cw_temperature: float = Field(default=0.1)
+    dead_code_resolution_cw_max_tokens: int = Field(default=1024)
+
     # Question resolution (automatic via CodeWhisper)
     question_resolution_enabled: bool = Field(default=False)
     question_resolution_max_per_cycle: int = Field(default=10)
@@ -748,6 +767,18 @@ class WarRigConfig(BaseSettings):
             codewhisper_temperature=self.question_resolution_cw_temperature,
             codewhisper_max_tokens=self.question_resolution_cw_max_tokens,
             resolve_readme_questions=self.question_resolution_resolve_readme,
+        )
+
+    @property
+    def dead_code_resolution(self) -> DeadCodeResolutionConfig:
+        """Get dead code resolution configuration."""
+        return DeadCodeResolutionConfig(
+            enabled=self.dead_code_resolution_enabled,
+            max_candidates_per_cycle=self.dead_code_resolution_max_per_cycle,
+            timeout_per_candidate=self.dead_code_resolution_timeout,
+            codewhisper_max_iterations=self.dead_code_resolution_cw_max_iterations,
+            codewhisper_temperature=self.dead_code_resolution_cw_temperature,
+            codewhisper_max_tokens=self.dead_code_resolution_cw_max_tokens,
         )
 
     @property
