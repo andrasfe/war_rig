@@ -299,6 +299,55 @@ class KnowledgeGraphManager:
                 exc_info=True,
             )
 
+    async def ingest_ast(
+        self,
+        paragraph_asts: dict,
+        program_name: str,
+        file_name: str,
+        source_pass: str = "ast",
+    ) -> None:
+        """Ingest triples from Cobalt AST (ParagraphSyntaxTree objects).
+
+        Extracts deterministic triples from the syntax tree: PERFORM,
+        CALL, EXEC SQL, etc. Replaces ingest_citadel_context() as the
+        primary KG seeding path for COBOL files.
+
+        Args:
+            paragraph_asts: Mapping of paragraph name to ParagraphSyntaxTree.
+            program_name: Program name for PROGRAM-level triples.
+            file_name: Source file name for provenance tracking.
+            source_pass: Pass identifier for provenance tracking.
+        """
+        if not self.enabled:
+            return
+        if self._coordinator is None:
+            return
+
+        try:
+            raw_triples = self._extractor.extract_from_ast(
+                paragraph_asts, program_name, file_name, source_pass
+            )
+            if not raw_triples:
+                logger.debug(
+                    "No triples extracted from AST for %s",
+                    file_name,
+                )
+                return
+
+            triples = await self._coordinator.ingest_raw_triples(raw_triples)
+            if triples:
+                logger.info(
+                    "Ingested %d AST triples for %s",
+                    len(triples),
+                    file_name,
+                )
+        except Exception:
+            logger.warning(
+                "Failed to ingest AST triples for %s",
+                file_name,
+                exc_info=True,
+            )
+
     async def ingest_documentation_template(
         self,
         template: DocumentationTemplate,

@@ -1165,14 +1165,14 @@ class ScribeWorker:
         """Invoke ScribeAgent after validating prompt size.
 
         Estimates token count for the full prompt.  If the estimate exceeds
-        ``max_prompt_tokens``, the method reduces the source code (or the
-        Citadel outline, if present) and retries until the prompt fits.
+        ``max_prompt_tokens``, the method applies reduction strategies in
+        order until the prompt fits or cannot be reduced further.
 
         Reduction strategy (applied in order):
-        1. If the outline has > 1 paragraph, remove the last paragraph and
-           trim the corresponding source text.  Repeat until under budget.
-        2. If a single paragraph (or no outline), truncate ``source_code``
-           to the character limit derived from the remaining token budget.
+        1. Remove outline paragraphs (last first) if > 1 paragraph.
+        2. Truncate source code to fit the remaining token budget.
+        3. Trim large copybooks to a per-copybook character limit.
+        4. Drop previous_template (context, not essential).
 
         Paragraphs removed from the outline are **not** lost — the caller
         is expected to handle them in a subsequent batch or gap-fill pass.
@@ -1238,7 +1238,33 @@ class ScribeWorker:
                     challenger_questions=scribe_input.challenger_questions,
                     chrome_tickets=scribe_input.chrome_tickets,
                 )
-                break
+                continue
+
+            # Strategy 3: trim large copybooks
+            if scribe_input.copybook_contents and estimate.copybook_contents > 0:
+                trimmed = self._trim_copybooks(
+                    scribe_input.copybook_contents, max_tokens, estimator,
+                )
+                if trimmed is not None:
+                    logger.warning(
+                        f"Worker {self.worker_id}: Trimming copybooks "
+                        f"(~{estimate.copybook_contents} tokens) to fit budget"
+                    )
+                    scribe_input = scribe_input.model_copy(
+                        update={"copybook_contents": trimmed},
+                    )
+                    continue
+
+            # Strategy 4: drop previous_template
+            if scribe_input.previous_template is not None:
+                logger.warning(
+                    f"Worker {self.worker_id}: Dropping previous_template "
+                    f"(~{estimate.previous_template} tokens) to fit budget"
+                )
+                scribe_input = scribe_input.model_copy(
+                    update={"previous_template": None},
+                )
+                continue
 
             # Cannot reduce further
             logger.error(
@@ -1248,6 +1274,48 @@ class ScribeWorker:
             break
 
         return await self.scribe_agent.ainvoke(scribe_input)
+
+    @staticmethod
+    def _trim_copybooks(
+        copybooks: dict[str, str],
+        max_tokens: int,
+        estimator: TokenEstimator,
+    ) -> dict[str, str] | None:
+        """Trim copybook contents to fit within a token budget.
+
+        Allocates at most 20% of the total token budget for copybooks.
+        Sorts copybooks by size and truncates the largest ones first.
+
+        Returns None if copybooks are already small enough or empty.
+        """
+        if not copybooks:
+            return None
+
+        # Allow copybooks up to 20% of total budget
+        copybook_budget_tokens = max_tokens // 5
+        total_text = "\n".join(copybooks.values())
+        current_tokens = estimator.estimate_source_tokens(total_text)
+
+        if current_tokens <= copybook_budget_tokens:
+            return None
+
+        # Per-copybook character limit (distribute budget evenly)
+        per_copybook_chars = max(
+            500,
+            int(copybook_budget_tokens * estimator.cobol_chars_per_token / len(copybooks)),
+        )
+
+        trimmed: dict[str, str] = {}
+        for name, content in copybooks.items():
+            if len(content) > per_copybook_chars:
+                trimmed[name] = (
+                    content[:per_copybook_chars]
+                    + f"\n... [TRUNCATED — {len(content) - per_copybook_chars} chars omitted]"
+                )
+            else:
+                trimmed[name] = content
+
+        return trimmed
 
     # ── Worker run loop ─────────────────────────────────────────────
 
@@ -3313,7 +3381,7 @@ class ScribeWorker:
         self,
         source_path: Path,
         file_name: str,
-    ) -> tuple[Any, dict[str, str], str]:
+    ) -> tuple[Any, dict[str, str], str, dict | None]:
         """Build full-file AST for a COBOL source file via Citadel.
 
         Parses the file, builds ASTs for all paragraphs, and caches the
@@ -3325,21 +3393,38 @@ class ScribeWorker:
             file_name: Logical file name (ticket key) for caching.
 
         Returns:
-            Tuple of (parse_result, paragraph_asts, full_ast_text) where
-            paragraph_asts maps uppercase paragraph name to its formatted
-            AST string.
+            Tuple of (parse_result, paragraph_asts, full_ast_text,
+            paragraph_trees) where paragraph_asts maps uppercase paragraph
+            name to its formatted AST string, and paragraph_trees maps to
+            ParagraphSyntaxTree objects (or None if unavailable).
         """
         assert self._citadel is not None
+
+        paragraph_trees: dict | None = None
 
         # Use pre-generated .ast JSON file if it exists (avoids re-invoking ProLeap)
         ast_file = Path(source_path).with_suffix(Path(source_path).suffix + ".ast")
         if ast_file.exists():
             paragraph_asts, full_ast_text = self._citadel.load_cobol_ast(ast_file)
             parse_result = None
+            # Also load ParagraphSyntaxTree objects for KG ingestion
+            try:
+                from cobalt.generator import (
+                    load_ast_json,  # type: ignore[import-not-found]
+                )
+
+                json_text = ast_file.read_text(encoding="utf-8")
+                paragraph_trees, _ = load_ast_json(json_text)
+            except Exception:
+                logger.debug(
+                    f"Worker {self.worker_id}: Could not load AST trees "
+                    f"from {ast_file} for KG ingestion"
+                )
         else:
             parse_result = self._citadel.parse_cobol(source_path, copybook_dirs=self._copybook_dirs)
             paragraph_asts = parse_result.paragraph_asts  # name → str(tree)
             full_ast_text = parse_result.full_ast
+            paragraph_trees = parse_result._paragraph_asts
 
         # Guard against mock/invalid returns
         if not isinstance(full_ast_text, str):
@@ -3370,7 +3455,7 @@ class ScribeWorker:
             f"{len(paragraph_asts)} paragraphs, "
             f"{len(full_ast_text)} chars"
         )
-        return parse_result, paragraph_asts, full_ast_text
+        return parse_result, paragraph_asts, full_ast_text, paragraph_trees
 
     async def _process_citadel_guided_documentation(
         self,
@@ -3433,21 +3518,6 @@ class ScribeWorker:
                 if name:
                     func_calls_by_name[name.lower()] = func.get("calls", [])
 
-            # Seed knowledge graph from Citadel's static analysis
-            if self.kg_manager and self.kg_manager.enabled:
-                try:
-                    await self.kg_manager.ingest_citadel_context(
-                        citadel_context,
-                        ticket.file_name,
-                        f"citadel_pass_{ticket.cycle_number}",
-                    )
-                except Exception:
-                    logger.warning(
-                        f"Worker {self.worker_id}: Failed to ingest Citadel "
-                        f"triples for {ticket.file_name}",
-                        exc_info=True,
-                    )
-
         outline = []
         for para in paragraphs:
             name = para.get("name", "")
@@ -3497,9 +3567,26 @@ class ScribeWorker:
         pattern_insights = self._get_pattern_insights(str(source_path), outline)
 
         # Build AST for markdown generation (still needed for _save_template)
-        _parse_result, paragraph_asts, full_ast_text = self._build_cobol_ast(
-            source_path, ticket.file_name,
+        _parse_result, paragraph_asts, full_ast_text, paragraph_trees = (
+            self._build_cobol_ast(source_path, ticket.file_name)
         )
+
+        # Seed knowledge graph from AST (replaces Citadel context ingestion)
+        if self.kg_manager and self.kg_manager.enabled and paragraph_trees:
+            try:
+                program_name = Path(ticket.file_name).stem.upper()
+                await self.kg_manager.ingest_ast(
+                    paragraph_trees,
+                    program_name,
+                    ticket.file_name,
+                    f"ast_pass_{ticket.cycle_number}",
+                )
+            except Exception:
+                logger.warning(
+                    f"Worker {self.worker_id}: Failed to ingest AST "
+                    f"triples for {ticket.file_name}",
+                    exc_info=True,
+                )
 
         # --- Resume mode: if a previous template exists with incomplete stubs,
         # only re-process the stub paragraphs and keep already-documented ones.

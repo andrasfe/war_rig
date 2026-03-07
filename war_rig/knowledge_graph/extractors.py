@@ -11,6 +11,7 @@ graph context even on Pass 1.
 
 Supported extractions:
 - COBOL: CALLS, READS, WRITES, INCLUDES, PERFORMS, QUERIES, MODIFIES
+- COBOL AST: PERFORMS, CALLS from ParagraphSyntaxTree nodes
 - JCL: CONTAINS_STEP, EXECUTES, DEFINES_INPUT, DEFINES_OUTPUT
 
 Example:
@@ -21,14 +22,21 @@ Example:
     raw_triples = extractor.extract_from_cobol(cobol_structure)
 """
 
+from __future__ import annotations
+
 import logging
+import re
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from war_rig.knowledge_graph.models import EntityType, RawTriple, RelationType
 from war_rig.models.templates import DocumentationTemplate, IOType
 from war_rig.preprocessors.base import PreprocessorResult
 from war_rig.preprocessors.cobol import COBOLStructure
 from war_rig.preprocessors.jcl import JCLStructure
+
+if TYPE_CHECKING:
+    from citadel.cobol.syntax_tree import ParagraphSyntaxTree
 
 logger = logging.getLogger(__name__)
 
@@ -325,6 +333,153 @@ class TripleExtractor:
             file_name,
         )
         return triples
+
+    # Regex for extracting table name from EXEC SQL text
+    _SQL_TABLE_RE = re.compile(
+        r"\b(?:FROM|INTO|UPDATE|DELETE\s+FROM|INSERT\s+INTO)\s+(\w+)",
+        re.IGNORECASE,
+    )
+    _SQL_OP_RE = re.compile(
+        r"\b(SELECT|INSERT|UPDATE|DELETE|DECLARE\s+\w+\s+CURSOR)\b",
+        re.IGNORECASE,
+    )
+
+    def extract_from_ast(
+        self,
+        paragraph_asts: dict[str, ParagraphSyntaxTree],
+        program_name: str,
+        file_name: str,
+        source_pass: str = "ast",
+    ) -> list[RawTriple]:
+        """Extract triples from Cobalt AST (ParagraphSyntaxTree).
+
+        Walks every paragraph's syntax tree and extracts:
+        - PERFORM/PERFORM_THRU/PERFORM_UNTIL → PARAGRAPH PERFORMS PARAGRAPH
+        - GO_TO → PARAGRAPH PERFORMS PARAGRAPH (control flow reference)
+        - CALL → PROGRAM CALLS PROGRAM
+        - EXEC_SQL → PROGRAM QUERIES/MODIFIES DB_TABLE
+
+        This replaces extract_from_citadel_context() as the primary KG
+        seeding path for COBOL files, using the fully-parsed AST instead
+        of the Citadel function call graph.
+
+        Args:
+            paragraph_asts: Mapping of paragraph name to syntax tree.
+            program_name: Program name for PROGRAM-level triples.
+            file_name: Source file name for provenance.
+            source_pass: Pass identifier for provenance.
+
+        Returns:
+            List of extracted RawTriple objects.
+        """
+        from citadel.cobol.syntax_tree import StatementType
+
+        triples: list[RawTriple] = []
+        seen: set[tuple[str, str, str]] = set()
+
+        def _add(
+            pred: RelationType,
+            subj_type: EntityType,
+            subj_name: str,
+            obj_type: EntityType,
+            obj_name: str,
+        ) -> None:
+            key = (pred.value, subj_name, obj_name)
+            if key in seen:
+                return
+            seen.add(key)
+            triples.append(RawTriple(
+                subject_type=subj_type,
+                subject_name=subj_name,
+                predicate=pred,
+                object_type=obj_type,
+                object_name=obj_name,
+                source_pass=source_pass,
+                source_artifact=file_name,
+            ))
+
+        perform_types = frozenset({
+            StatementType.PERFORM,
+            StatementType.PERFORM_UNTIL,
+            StatementType.PERFORM_THRU,
+            StatementType.GO_TO,
+        })
+
+        for para_name, tree in paragraph_asts.items():
+            for node in tree.walk():
+                if node.node_type in perform_types:
+                    target = node.attributes.get("target")
+                    if target:
+                        _add(
+                            RelationType.PERFORMS,
+                            EntityType.PARAGRAPH, para_name.upper(),
+                            EntityType.PARAGRAPH, target.upper(),
+                        )
+                    # PERFORM_THRU also references the thru endpoint
+                    thru = node.attributes.get("thru")
+                    if thru:
+                        _add(
+                            RelationType.PERFORMS,
+                            EntityType.PARAGRAPH, para_name.upper(),
+                            EntityType.PARAGRAPH, thru.upper(),
+                        )
+
+                elif node.node_type == StatementType.CALL:
+                    target = node.attributes.get("target")
+                    if target:
+                        _add(
+                            RelationType.CALLS,
+                            EntityType.PROGRAM, program_name,
+                            EntityType.PROGRAM, target.upper(),
+                        )
+
+                elif node.node_type == StatementType.EXEC_SQL:
+                    raw = node.attributes.get("raw_text", "")
+                    if raw:
+                        self._extract_sql_triples(
+                            raw, program_name, file_name,
+                            source_pass, _add,
+                        )
+
+        logger.info(
+            "Extracted %d triples from AST for %s (%s)",
+            len(triples),
+            program_name,
+            file_name,
+        )
+        return triples
+
+    def _extract_sql_triples(
+        self,
+        sql_text: str,
+        program_name: str,
+        file_name: str,
+        source_pass: str,
+        _add: object,
+    ) -> None:
+        """Extract QUERIES/MODIFIES triples from EXEC SQL text."""
+        op_match = self._SQL_OP_RE.search(sql_text)
+        if not op_match:
+            return
+        op = op_match.group(1).upper().split()[0]  # First word (SELECT/INSERT/...)
+
+        table_match = self._SQL_TABLE_RE.search(sql_text)
+        if not table_match:
+            return
+        table = table_match.group(1).upper()
+
+        if op in ("SELECT", "DECLARE"):
+            predicate = RelationType.QUERIES
+        elif op in ("INSERT", "UPDATE", "DELETE"):
+            predicate = RelationType.MODIFIES
+        else:
+            return
+
+        _add(  # type: ignore[operator]
+            predicate,
+            EntityType.PROGRAM, program_name,
+            EntityType.DB_TABLE, table,
+        )
 
     def extract_from_template(
         self,
