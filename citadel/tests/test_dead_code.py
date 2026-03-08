@@ -130,34 +130,27 @@ class TestEmptyGraph:
 class TestAllDead:
     """Edge case: every artifact is dead code."""
 
-    def test_all_paragraphs_dead(self):
-        """Paragraphs with no incoming edges and no entry point status."""
+    def test_paragraphs_excluded_from_graph_detection(self):
+        """Paragraphs are excluded from graph-based detection (use AST instead)."""
         artifacts = dict([
-            # A program (entry point, not dead)
             _make_artifact("program::MAIN", "MAIN", ArtifactType.PROGRAM,
                            file_path="MAIN.cbl", line_start=1),
-            # Paragraph that is first in file (entry point, not dead)
             _make_artifact("paragraph::MAIN-PARA", "MAIN-PARA",
                            ArtifactType.PARAGRAPH,
                            file_path="MAIN.cbl", line_start=50),
-            # Paragraphs that are NOT first in file (dead)
             _make_artifact("paragraph::DEAD-A", "DEAD-A",
                            ArtifactType.PARAGRAPH,
                            file_path="MAIN.cbl", line_start=100),
-            _make_artifact("paragraph::DEAD-B", "DEAD-B",
-                           ArtifactType.PARAGRAPH,
-                           file_path="MAIN.cbl", line_start=150),
         ])
         graph = _make_graph(artifacts)
 
         dead = find_dead_code(graph)
 
+        # No paragraphs should appear — graph can't detect intra-file refs
         dead_names = {item.name for item in dead}
-        assert "DEAD-A" in dead_names
-        assert "DEAD-B" in dead_names
-        # Entry points should NOT be flagged
-        assert "MAIN" not in dead_names
+        assert "DEAD-A" not in dead_names
         assert "MAIN-PARA" not in dead_names
+        assert "MAIN" not in dead_names
 
     def test_single_dead_copybook(self):
         """A copybook that nobody includes is dead code."""
@@ -256,16 +249,14 @@ class TestEntryPointExclusion:
 
         assert len(dead) == 0
 
-    def test_first_paragraph_is_entry_point(self):
-        """The first paragraph in a COBOL program is an entry point."""
+    def test_paragraphs_always_excluded(self):
+        """All paragraphs are excluded from graph-based detection."""
         artifacts = dict([
             _make_artifact("program::MAIN", "MAIN", ArtifactType.PROGRAM,
                            file_path="MAIN.cbl", line_start=1),
-            # First paragraph (line 50 is earliest)
             _make_artifact("paragraph::MAIN-PARA", "MAIN-PARA",
                            ArtifactType.PARAGRAPH,
                            file_path="MAIN.cbl", line_start=50),
-            # Second paragraph (line 100) -- this is NOT the first
             _make_artifact("paragraph::HELPER", "HELPER",
                            ArtifactType.PARAGRAPH,
                            file_path="MAIN.cbl", line_start=100),
@@ -275,40 +266,8 @@ class TestEntryPointExclusion:
         dead = find_dead_code(graph)
 
         dead_names = {item.name for item in dead}
-        assert "MAIN-PARA" not in dead_names  # First paragraph = entry point
-        assert "HELPER" in dead_names  # Second paragraph = dead
-
-    def test_first_paragraph_per_file(self):
-        """Each file gets its own first-paragraph entry point."""
-        artifacts = dict([
-            _make_artifact("program::PROG1", "PROG1", ArtifactType.PROGRAM,
-                           file_path="PROG1.cbl", line_start=1),
-            _make_artifact("paragraph::P1-MAIN", "P1-MAIN",
-                           ArtifactType.PARAGRAPH,
-                           file_path="PROG1.cbl", line_start=50),
-            _make_artifact("paragraph::P1-DEAD", "P1-DEAD",
-                           ArtifactType.PARAGRAPH,
-                           file_path="PROG1.cbl", line_start=100),
-            _make_artifact("program::PROG2", "PROG2", ArtifactType.PROGRAM,
-                           file_path="PROG2.cbl", line_start=1),
-            _make_artifact("paragraph::P2-MAIN", "P2-MAIN",
-                           ArtifactType.PARAGRAPH,
-                           file_path="PROG2.cbl", line_start=50),
-            _make_artifact("paragraph::P2-DEAD", "P2-DEAD",
-                           ArtifactType.PARAGRAPH,
-                           file_path="PROG2.cbl", line_start=100),
-        ])
-        graph = _make_graph(artifacts)
-
-        dead = find_dead_code(graph)
-
-        dead_names = {item.name for item in dead}
-        # First paragraphs are entry points
-        assert "P1-MAIN" not in dead_names
-        assert "P2-MAIN" not in dead_names
-        # Non-first paragraphs without references are dead
-        assert "P1-DEAD" in dead_names
-        assert "P2-DEAD" in dead_names
+        assert "MAIN-PARA" not in dead_names
+        assert "HELPER" not in dead_names
 
 
 class TestDifferentArtifactTypes:
@@ -391,21 +350,12 @@ class TestDifferentArtifactTypes:
             _make_artifact("paragraph::MAIN-PARA", "MAIN-PARA",
                            ArtifactType.PARAGRAPH,
                            file_path="MAIN.cbl", line_start=50),
-            _make_artifact("paragraph::USED-PARA", "USED-PARA",
-                           ArtifactType.PARAGRAPH,
-                           file_path="MAIN.cbl", line_start=100),
-            _make_artifact("paragraph::DEAD-PARA", "DEAD-PARA",
-                           ArtifactType.PARAGRAPH,
-                           file_path="MAIN.cbl", line_start=150),
             _make_artifact("copybook::USED-CPY", "USED-CPY",
                            ArtifactType.COPYBOOK, file_path="USED.cpy"),
             _make_artifact("copybook::DEAD-CPY", "DEAD-CPY",
                            ArtifactType.COPYBOOK, file_path="DEAD.cpy"),
         ])
         relationships = [
-            _make_relationship("paragraph::MAIN-PARA",
-                               "paragraph::USED-PARA",
-                               RelationshipType.PERFORMS),
             _make_relationship("program::MAIN", "copybook::USED-CPY",
                                RelationshipType.INCLUDES),
         ]
@@ -414,12 +364,11 @@ class TestDifferentArtifactTypes:
         dead = find_dead_code(graph)
 
         dead_names = {item.name for item in dead}
-        assert "DEAD-PARA" in dead_names
+        # Paragraphs excluded from graph-based detection
+        assert "MAIN-PARA" not in dead_names
         assert "DEAD-CPY" in dead_names
-        assert "USED-PARA" not in dead_names
         assert "USED-CPY" not in dead_names
         assert "MAIN" not in dead_names
-        assert "MAIN-PARA" not in dead_names
 
 
 class TestTypeFiltering:
@@ -434,13 +383,6 @@ class TestTypeFiltering:
             _make_artifact("table::DEAD", "DEAD-TBL", ArtifactType.TABLE,
                            category=ArtifactCategory.DATA,
                            file_path="DDL.sql", language="sql"),
-            _make_artifact("paragraph::DEAD", "DEAD-PARA",
-                           ArtifactType.PARAGRAPH,
-                           file_path="MAIN.cbl", line_start=200),
-            # Make a first paragraph so DEAD-PARA is not the first
-            _make_artifact("paragraph::FIRST", "FIRST-PARA",
-                           ArtifactType.PARAGRAPH,
-                           file_path="MAIN.cbl", line_start=50),
         ])
         return _make_graph(artifacts)
 
@@ -451,7 +393,7 @@ class TestTypeFiltering:
 
         dead_types = {item.artifact_type for item in dead}
         assert "table" not in dead_types
-        assert "copybook" in dead_types or "paragraph" in dead_types
+        assert "copybook" in dead_types
 
     def test_include_only_types(self):
         """Including only copybook type should limit results."""
@@ -474,22 +416,6 @@ class TestTypeFiltering:
 
 class TestReasonMessages:
     """Tests for human-readable reason messages."""
-
-    def test_paragraph_reason(self):
-        """Paragraph dead code should mention PERFORM."""
-        artifacts = dict([
-            _make_artifact("paragraph::FIRST", "FIRST",
-                           ArtifactType.PARAGRAPH,
-                           file_path="X.cbl", line_start=10),
-            _make_artifact("paragraph::DEAD", "DEAD",
-                           ArtifactType.PARAGRAPH,
-                           file_path="X.cbl", line_start=50),
-        ])
-        graph = _make_graph(artifacts)
-        dead = find_dead_code(graph)
-
-        dead_para = [d for d in dead if d.name == "DEAD"][0]
-        assert "PERFORM" in dead_para.reason
 
     def test_copybook_reason(self):
         """Copybook dead code should mention COPY."""
@@ -525,18 +451,16 @@ class TestSorting:
                            file_path="B.cpy"),
             _make_artifact("copybook::A", "A", ArtifactType.COPYBOOK,
                            file_path="A.cpy"),
-            # A paragraph (different type, should come after copybook)
-            _make_artifact("paragraph::FIRST", "FIRST",
-                           ArtifactType.PARAGRAPH,
-                           file_path="X.cbl", line_start=10),
-            _make_artifact("paragraph::Z", "Z", ArtifactType.PARAGRAPH,
-                           file_path="X.cbl", line_start=100),
+            # A table (different type, should come after copybook)
+            _make_artifact("table::Z", "Z", ArtifactType.TABLE,
+                           category=ArtifactCategory.DATA,
+                           file_path="DDL.sql", language="sql"),
         ])
         graph = _make_graph(artifacts)
         dead = find_dead_code(graph)
 
         types = [item.artifact_type for item in dead]
-        # Copybooks come before paragraphs alphabetically
+        # Copybooks come before tables alphabetically
         assert types == sorted(types)
 
 
@@ -620,10 +544,9 @@ class TestComplexGraph:
         """
         Simulates a small mainframe codebase:
         - JCL procedure STEP1 executes PROG-A
-        - PROG-A performs INIT-PARA, PROCESS-PARA
         - PROG-A includes COMMON-CPY
-        - DEAD-PARA is never performed
         - DEAD-CPY is never included
+        - Paragraphs are excluded from graph-based detection
         """
         artifacts = dict([
             _make_artifact("procedure::STEP1", "STEP1",
@@ -635,12 +558,6 @@ class TestComplexGraph:
             _make_artifact("paragraph::INIT-PARA", "INIT-PARA",
                            ArtifactType.PARAGRAPH,
                            file_path="PROGA.cbl", line_start=50),
-            _make_artifact("paragraph::PROCESS-PARA", "PROCESS-PARA",
-                           ArtifactType.PARAGRAPH,
-                           file_path="PROGA.cbl", line_start=100),
-            _make_artifact("paragraph::DEAD-PARA", "DEAD-PARA",
-                           ArtifactType.PARAGRAPH,
-                           file_path="PROGA.cbl", line_start=150),
             _make_artifact("copybook::COMMON-CPY", "COMMON-CPY",
                            ArtifactType.COPYBOOK, file_path="COMMON.cpy"),
             _make_artifact("copybook::DEAD-CPY", "DEAD-CPY",
@@ -649,54 +566,19 @@ class TestComplexGraph:
         relationships = [
             _make_relationship("procedure::STEP1", "program::PROG-A",
                                RelationshipType.EXECUTES),
-            _make_relationship("paragraph::INIT-PARA",
-                               "paragraph::PROCESS-PARA",
-                               RelationshipType.PERFORMS),
             _make_relationship("program::PROG-A", "copybook::COMMON-CPY",
                                RelationshipType.INCLUDES),
-            _make_relationship("program::PROG-A", "paragraph::INIT-PARA",
-                               RelationshipType.PERFORMS),
         ]
         graph = _make_graph(artifacts, relationships)
 
         dead = find_dead_code(graph)
 
         dead_names = {item.name for item in dead}
-        # Should flag dead items
-        assert "DEAD-PARA" in dead_names
         assert "DEAD-CPY" in dead_names
-        # Should NOT flag live items
-        assert "STEP1" not in dead_names  # procedure entry point
-        assert "PROG-A" not in dead_names  # program entry point
-        assert "INIT-PARA" not in dead_names  # referenced by PROG-A
-        assert "PROCESS-PARA" not in dead_names  # referenced by INIT-PARA
-        assert "COMMON-CPY" not in dead_names  # included by PROG-A
-
-    def test_cross_program_paragraph_reference(self):
-        """
-        A paragraph referenced from another program should not be dead.
-        """
-        artifacts = dict([
-            _make_artifact("program::PROG-A", "PROG-A",
-                           ArtifactType.PROGRAM,
-                           file_path="PROGA.cbl"),
-            _make_artifact("program::PROG-B", "PROG-B",
-                           ArtifactType.PROGRAM,
-                           file_path="PROGB.cbl"),
-            _make_artifact("paragraph::SHARED-PARA", "SHARED-PARA",
-                           ArtifactType.PARAGRAPH,
-                           file_path="PROGA.cbl", line_start=50),
-        ])
-        relationships = [
-            _make_relationship("program::PROG-B", "paragraph::SHARED-PARA",
-                               RelationshipType.CALLS),
-        ]
-        graph = _make_graph(artifacts, relationships)
-
-        dead = find_dead_code(graph)
-
-        dead_names = {item.name for item in dead}
-        assert "SHARED-PARA" not in dead_names
+        assert "STEP1" not in dead_names
+        assert "PROG-A" not in dead_names
+        assert "INIT-PARA" not in dead_names  # paragraphs excluded
+        assert "COMMON-CPY" not in dead_names
 
     def test_artifact_without_source_location(self):
         """Artifacts without defined_in should still be analyzed."""

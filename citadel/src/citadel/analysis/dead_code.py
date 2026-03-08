@@ -133,10 +133,7 @@ def find_dead_code(
     # Step 2: Identify which programs are JCL-executed entry points.
     jcl_executed_programs = _find_jcl_executed_programs(graph)
 
-    # Step 3: Identify first paragraphs per program (COBOL entry points).
-    first_paragraphs = _find_first_paragraphs(graph)
-
-    # Step 4: Scan all artifacts for dead code.
+    # Step 3: Scan all artifacts for dead code.
     dead_items: list[DeadCodeItem] = []
 
     for artifact_id, artifact in graph.artifacts.items():
@@ -156,7 +153,7 @@ def find_dead_code(
 
         # Check if this is a legitimate entry point.
         if _is_entry_point(
-            artifact_id, artifact, jcl_executed_programs, first_paragraphs
+            artifact_id, artifact, jcl_executed_programs
         ):
             continue  # Entry point, expected to have no callers.
 
@@ -209,51 +206,10 @@ def _find_jcl_executed_programs(graph: DependencyGraph) -> set[str]:
     return executed
 
 
-def _find_first_paragraphs(graph: DependencyGraph) -> set[str]:
-    """
-    Find the first paragraph defined in each COBOL program.
-
-    In COBOL, execution starts at the first paragraph after
-    PROCEDURE DIVISION. This paragraph is implicitly called by the
-    runtime and should not be flagged as dead code.
-
-    Heuristic: Group paragraphs by their containing file, then
-    identify the paragraph with the lowest line_start in each file.
-
-    Args:
-        graph: The dependency graph to analyze.
-
-    Returns:
-        Set of artifact IDs for first paragraphs.
-    """
-    # Group paragraphs by file.
-    paragraphs_by_file: dict[str, list[tuple[int, str]]] = defaultdict(list)
-
-    for artifact_id, artifact in graph.artifacts.items():
-        if artifact.artifact_type.value != "paragraph":
-            continue
-        if artifact.defined_in is None:
-            continue
-
-        file_path = artifact.defined_in.file_path
-        line_start = artifact.defined_in.line_start
-        paragraphs_by_file[file_path].append((line_start, artifact_id))
-
-    # For each file, the paragraph with the lowest line number is the
-    # entry point.
-    first_paras: set[str] = set()
-    for file_path, paragraphs in paragraphs_by_file.items():
-        paragraphs.sort(key=lambda x: x[0])
-        first_paras.add(paragraphs[0][1])
-
-    return first_paras
-
-
 def _is_entry_point(
     artifact_id: str,
     artifact: Artifact,
     jcl_executed_programs: set[str],
-    first_paragraphs: set[str],
 ) -> bool:
     """
     Determine whether an artifact is a legitimate entry point.
@@ -265,7 +221,6 @@ def _is_entry_point(
         artifact_id: The artifact's graph ID.
         artifact: The artifact instance.
         jcl_executed_programs: Set of artifact IDs for JCL-executed programs.
-        first_paragraphs: Set of artifact IDs for first paragraphs.
 
     Returns:
         True if the artifact is an entry point.
@@ -282,11 +237,12 @@ def _is_entry_point(
     if art_type == "program":
         return True
 
-    # The first paragraph in a COBOL program is an implicit entry point.
-    if art_type == "paragraph" and artifact_id in first_paragraphs:
-        return True
-
-    return False
+    # Paragraphs are always excluded from graph-based dead code detection.
+    # The dependency graph only contains cross-file relationships, but
+    # paragraphs are referenced via intra-file PERFORM/GO TO statements
+    # that aren't in the graph.  Use find_dead_code_ast() for accurate
+    # paragraph-level dead code detection.
+    return art_type == "paragraph"
 
 
 def _build_reason(
