@@ -19,6 +19,7 @@ from citadel.cobol.syntax_tree import (
     SyntaxNode,
     build_file_ast,
     format_file_ast,
+    validate_file_ast,
 )
 
 _PROGRAM_ID_RE = re.compile(
@@ -88,6 +89,22 @@ def build_ast_from_parsed(
     trees = build_file_ast(
         para_source_lines, data_items, preserve_newlines=True,
     )
+
+    # Validate AST against source
+    issues = validate_file_ast(trees, para_source_lines)
+    if issues:
+        import logging
+        _logger = logging.getLogger(__name__)
+        _logger.warning(
+            "AST validation: %d issues in %s", len(issues), program_id,
+        )
+        for issue in issues[:10]:
+            _logger.warning(
+                "  %s [%s] L%d: %s — %s",
+                issue.paragraph, issue.node_type, issue.line,
+                issue.issue, issue.source_text,
+            )
+
     full_text = format_file_ast(trees)
     raw_json = _serialize_to_json(trees, program_id)
     return trees, full_text, raw_json

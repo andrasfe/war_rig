@@ -1037,6 +1037,192 @@ def build_file_ast(
     return trees
 
 
+@dataclass
+class ASTValidationIssue:
+    """A single AST validation finding."""
+
+    paragraph: str
+    node_type: str
+    line: int
+    issue: str
+    source_text: str
+
+
+def validate_file_ast(
+    trees: dict[str, ParagraphSyntaxTree],
+    source_lines: dict[str, list[SourceLine]] | None = None,
+) -> list[ASTValidationIssue]:
+    """Validate AST consistency after generation.
+
+    Checks that each node's ``node_type`` is consistent with its
+    ``source_text`` and that structural invariants hold.  Optionally
+    cross-checks line numbers against the original source lines.
+
+    Args:
+        trees: Paragraph ASTs as returned by ``build_file_ast()``.
+        source_lines: Optional mapping of paragraph name to its
+            ``SourceLine`` list for line-level cross-checks.
+
+    Returns:
+        List of validation issues found (empty = clean).
+    """
+    issues: list[ASTValidationIssue] = []
+
+    # Map node_type -> expected keyword(s) in source_text
+    _keyword_map: dict[StatementType, tuple[str, ...]] = {
+        StatementType.IF: ("IF",),
+        StatementType.EVALUATE: ("EVALUATE",),
+        StatementType.PERFORM: ("PERFORM",),
+        StatementType.PERFORM_THRU: ("PERFORM",),
+        StatementType.PERFORM_UNTIL: ("PERFORM",),
+        StatementType.PERFORM_INLINE: ("PERFORM",),
+        StatementType.MOVE: ("MOVE",),
+        StatementType.COMPUTE: ("COMPUTE",),
+        StatementType.ADD: ("ADD",),
+        StatementType.SUBTRACT: ("SUBTRACT",),
+        StatementType.MULTIPLY: ("MULTIPLY",),
+        StatementType.DIVIDE: ("DIVIDE",),
+        StatementType.CALL: ("CALL",),
+        StatementType.GO_TO: ("GO",),
+        StatementType.GOBACK: ("GOBACK",),
+        StatementType.STOP_RUN: ("STOP",),
+        StatementType.READ_STMT: ("READ",),
+        StatementType.WRITE_STMT: ("WRITE",),
+        StatementType.REWRITE: ("REWRITE",),
+        StatementType.OPEN: ("OPEN",),
+        StatementType.CLOSE: ("CLOSE",),
+        StatementType.DISPLAY: ("DISPLAY",),
+        StatementType.ACCEPT: ("ACCEPT",),
+        StatementType.SET: ("SET",),
+        StatementType.INITIALIZE: ("INITIALIZE",),
+        StatementType.STRING_STMT: ("STRING",),
+        StatementType.UNSTRING: ("UNSTRING",),
+        StatementType.INSPECT: ("INSPECT",),
+        StatementType.SORT: ("SORT",),
+        StatementType.SEARCH: ("SEARCH",),
+        StatementType.EXEC_SQL: ("EXEC",),
+        StatementType.EXEC_CICS: ("EXEC",),
+        StatementType.EXEC_DLI: ("EXEC",),
+        StatementType.EXEC_OTHER: ("EXEC",),
+        StatementType.EXIT: ("EXIT",),
+        StatementType.ALTER: ("ALTER",),
+    }
+
+    # Build source line lookup for cross-checking
+    line_lookup: dict[int, str] = {}
+    if source_lines:
+        for lines in source_lines.values():
+            for sl in lines:
+                line_lookup[sl.line_number] = sl.text
+
+    for para_name, tree in trees.items():
+        prev_end = tree.root.line_start
+
+        for node in tree.walk():
+            if node.node_type == StatementType.PARAGRAPH:
+                continue
+
+            text_upper = node.source_text.upper().strip()
+
+            # Check 1: keyword present in source_text
+            expected = _keyword_map.get(node.node_type)
+            if (
+                expected
+                and node.node_type != StatementType.UNKNOWN
+                and not any(kw in text_upper for kw in expected)
+            ):
+                issues.append(ASTValidationIssue(
+                    paragraph=para_name,
+                    node_type=node.node_type.value,
+                    line=node.line_start,
+                    issue=(
+                        f"Expected keyword {expected} not found "
+                        f"in source_text"
+                    ),
+                    source_text=node.source_text[:80],
+                ))
+
+            # Check 2: line_start <= line_end
+            if node.line_start > node.line_end:
+                issues.append(ASTValidationIssue(
+                    paragraph=para_name,
+                    node_type=node.node_type.value,
+                    line=node.line_start,
+                    issue=(
+                        f"line_start ({node.line_start}) > "
+                        f"line_end ({node.line_end})"
+                    ),
+                    source_text=node.source_text[:80],
+                ))
+
+            # Check 3: PERFORM/CALL target in attributes matches source
+            target = node.attributes.get("target")
+            if (
+                target
+                and node.node_type in (
+                    StatementType.PERFORM,
+                    StatementType.PERFORM_THRU,
+                    StatementType.PERFORM_UNTIL,
+                    StatementType.CALL,
+                )
+                and target.upper() not in text_upper
+            ):
+                    issues.append(ASTValidationIssue(
+                        paragraph=para_name,
+                        node_type=node.node_type.value,
+                        line=node.line_start,
+                        issue=(
+                            f"Target '{target}' not found in "
+                            f"source_text"
+                        ),
+                        source_text=node.source_text[:80],
+                    ))
+
+            # Check 4: cross-check against original source line
+            if line_lookup and node.line_start in line_lookup:
+                src_line = line_lookup[node.line_start].upper()
+                if (
+                    expected
+                    and not any(kw in src_line for kw in expected)
+                    and node.line_start == node.line_end
+                ):
+                        issues.append(ASTValidationIssue(
+                            paragraph=para_name,
+                            node_type=node.node_type.value,
+                            line=node.line_start,
+                            issue=(
+                                f"Source line {node.line_start} "
+                                f"doesn't contain expected keyword "
+                                f"{expected}"
+                            ),
+                            source_text=line_lookup[node.line_start][:80],
+                        ))
+
+            # Check 5: line ordering within paragraph (non-container nodes)
+            if (
+                node.node_type not in _CONTAINER_TYPES
+                and node.node_type != StatementType.ELSE
+                and node.node_type != StatementType.WHEN
+                and node.line_start < prev_end
+                and node.children == []
+            ):
+                issues.append(ASTValidationIssue(
+                    paragraph=para_name,
+                    node_type=node.node_type.value,
+                    line=node.line_start,
+                    issue=(
+                        f"Line {node.line_start} is before previous "
+                        f"node's line_end {prev_end}"
+                    ),
+                    source_text=node.source_text[:80],
+                ))
+
+            if node.children == []:
+                prev_end = node.line_end
+
+    return issues
+
+
 def format_file_ast(
     trees: dict[str, ParagraphSyntaxTree],
 ) -> str:
