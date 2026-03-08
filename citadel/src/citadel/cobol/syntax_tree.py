@@ -59,6 +59,7 @@ class StatementType(Enum):
     CLOSE = "CLOSE"
     SORT = "SORT"
     SEARCH = "SEARCH"
+    START_STMT = "START"
 
     # EXEC blocks
     EXEC_SQL = "EXEC_SQL"
@@ -94,6 +95,12 @@ _END_EVALUATE_RE = re.compile(
 _END_PERFORM_RE = re.compile(
     r"^\s*END-PERFORM\b", re.IGNORECASE
 )
+_END_START_RE = re.compile(
+    r"^\s*END-START\b", re.IGNORECASE
+)
+_END_SEARCH_RE = re.compile(
+    r"^\s*END-SEARCH\b", re.IGNORECASE
+)
 
 _IF_START_RE = re.compile(r"^\s*IF\b", re.IGNORECASE)
 _ELSE_RE = re.compile(r"^\s*ELSE\b", re.IGNORECASE)
@@ -101,6 +108,7 @@ _EVALUATE_START_RE = re.compile(
     r"^\s*EVALUATE\b", re.IGNORECASE
 )
 _WHEN_RE = re.compile(r"^\s*WHEN\b", re.IGNORECASE)
+_START_RE = re.compile(r"^\s*START\b", re.IGNORECASE)
 
 _PERFORM_UNTIL_INLINE_RE = re.compile(
     r"^\s*PERFORM\s+UNTIL\b", re.IGNORECASE
@@ -126,7 +134,8 @@ _MOVE_RE = re.compile(
     r"\bMOVE\s+(.+?)\s+TO\s+(.+)", re.IGNORECASE
 )
 _COMPUTE_RE = re.compile(
-    r"\bCOMPUTE\s+([A-Za-z][A-Za-z0-9_-]*)\s*=\s*(.+)",
+    r"\bCOMPUTE\s+(?P<target>[A-Za-z][A-Za-z0-9_-]*)"
+    r"\s+(?:ROUNDED\s+)?(?:=|EQUAL(?:\s+TO)?)\s*(?P<expr>.+)",
     re.IGNORECASE,
 )
 _CALL_RE = re.compile(r"\bCALL\b", re.IGNORECASE)
@@ -150,7 +159,7 @@ _STMT_VERB_RE = re.compile(
     r"^\s*(?P<verb>MOVE|COMPUTE|ADD|SUBTRACT|MULTIPLY"
     r"|DIVIDE|SET|INITIALIZE|STRING|UNSTRING|INSPECT"
     r"|ACCEPT|DISPLAY|READ|WRITE|REWRITE|OPEN|CLOSE"
-    r"|SORT|SEARCH)\b",
+    r"|SORT|SEARCH)(?=\s|\.|$)",
     re.IGNORECASE,
 )
 
@@ -165,10 +174,18 @@ _STMT_START_RE = re.compile(
     r"^\s*(?:MOVE|COMPUTE|ADD|SUBTRACT|MULTIPLY|DIVIDE"
     r"|SET|INITIALIZE|STRING|UNSTRING|INSPECT"
     r"|ACCEPT|DISPLAY|READ|WRITE|REWRITE|OPEN|CLOSE"
-    r"|SORT|SEARCH|IF|ELSE|EVALUATE|WHEN|PERFORM|CALL"
+    r"|SORT|SEARCH|START|IF|ELSE|EVALUATE|WHEN|PERFORM|CALL"
     r"|GOBACK|STOP|GO|EXIT|ALTER|CONTINUE"
-    r"|END-IF|END-EVALUATE|END-PERFORM|NOT)\b",
+    r"|END-IF|END-EVALUATE|END-PERFORM|END-START|END-SEARCH)\b"
+    r"(?=\s|\.|$)",
     re.IGNORECASE,
+)
+
+_EMBEDDED_PERFORM_RE = re.compile(
+    r"(?<!END-)\bPERFORM\b", re.IGNORECASE
+)
+_EMBEDDED_IF_RE = re.compile(
+    r"\bIF\s*\(", re.IGNORECASE
 )
 
 _IF_STRIP_RE = re.compile(r"^\s*IF\s+", re.IGNORECASE)
@@ -186,6 +203,22 @@ _PERFORM_UNTIL_STRIP_RE = re.compile(
 )
 _PERFORM_STRIP_RE = re.compile(
     r"^\s*PERFORM\s+", re.IGNORECASE
+)
+_IF_INLINE_SPLIT_RE = re.compile(
+    r"^\s*IF\s+(?P<cond>.+?)\s+"
+    r"(?P<rest>(?:THEN\s+)?(?:MOVE|COMPUTE|ADD|SUBTRACT|MULTIPLY|DIVIDE"
+    r"|SET|INITIALIZE|STRING|UNSTRING|INSPECT|ACCEPT|DISPLAY|READ|WRITE"
+    r"|REWRITE|OPEN|CLOSE|SORT|SEARCH|START|PERFORM|CALL|GOBACK|STOP|GO"
+    r"|EXIT|ALTER|CONTINUE)(?=\s|\.|$).*)$",
+    re.IGNORECASE,
+)
+_IF_THEN_IF_SPLIT_RE = re.compile(
+    r"^\s*IF\s+(?P<outer>.+?)\s+THEN\s+(?P<inner>IF\b.+)$",
+    re.IGNORECASE,
+)
+_ELSE_IF_SPLIT_RE = re.compile(
+    r"^\s*ELSE\s+(?P<inner>IF\b.+)$",
+    re.IGNORECASE,
 )
 
 
@@ -288,6 +321,7 @@ class _RawStatement:
     text: str
     line_start: int
     line_end: int
+    period_terminated: bool
 
 
 def _assemble_statements(
@@ -313,22 +347,24 @@ def _assemble_statements(
         if not text:
             continue
 
-        # Skip paragraph header lines (Area A, name only or with
-        # trailing identification-area content)
-        if (
-            line.area_a.strip()
-            and (
-                _PARA_HEADER_RE.match(text.rstrip("."))
-                or _PARA_HEADER_TRAILING_RE.match(text)
-            )
-        ):
-            continue
+        # Skip paragraph header lines (Area A, name only). If the header
+        # shares a line with a statement (e.g., "PARA. EXIT."), keep the
+        # trailing statement text.
+        if line.area_a.strip():
+            if _PARA_HEADER_TRAILING_RE.match(text):
+                parts = text.split(".", 1)
+                text = parts[1].strip() if len(parts) > 1 else ""
+                if not text:
+                    continue
+            elif _PARA_HEADER_RE.match(text.rstrip(".")):
+                continue
 
         # EXEC blocks: accumulate until END-EXEC
         if _EXEC_START_RE.search(text) and not in_exec:
             if current_text:
                 statements.append(_RawStatement(
                     current_text, current_start, current_end,
+                    current_text.rstrip().endswith("."),
                 ))
                 current_text = ""
             in_exec = True
@@ -339,6 +375,7 @@ def _assemble_statements(
                 in_exec = False
                 statements.append(_RawStatement(
                     current_text, current_start, current_end,
+                    current_text.rstrip().endswith("."),
                 ))
                 current_text = ""
             continue
@@ -350,6 +387,7 @@ def _assemble_statements(
                 in_exec = False
                 statements.append(_RawStatement(
                     current_text, current_start, current_end,
+                    current_text.rstrip().endswith("."),
                 ))
                 current_text = ""
             continue
@@ -363,6 +401,7 @@ def _assemble_statements(
             if current_text:
                 statements.append(_RawStatement(
                     current_text, current_start, current_end,
+                    current_text.rstrip().endswith("."),
                 ))
             current_text = text
             current_start = line.line_number
@@ -380,15 +419,163 @@ def _assemble_statements(
         if current_text.rstrip().endswith("."):
             statements.append(_RawStatement(
                 current_text, current_start, current_end,
+                current_text.rstrip().endswith("."),
             ))
             current_text = ""
 
     if current_text:
         statements.append(_RawStatement(
             current_text, current_start, current_end,
+            current_text.rstrip().endswith("."),
         ))
 
-    return statements
+    return _split_embedded_performs(statements)
+
+
+def _split_embedded_performs(
+    statements: list[_RawStatement],
+) -> list[_RawStatement]:
+    """Split statements that embed a PERFORM after another verb."""
+    result: list[_RawStatement] = []
+
+    for stmt in statements:
+        text = stmt.text
+        if (
+            _IF_START_RE.match(text)
+            or _EVALUATE_START_RE.match(text)
+            or _WHEN_RE.match(text)
+        ):
+            result.append(stmt)
+            continue
+
+        parts: list[_RawStatement] = []
+        working = text
+        while True:
+            perform_match = _EMBEDDED_PERFORM_RE.search(working)
+            if_match = _EMBEDDED_IF_RE.search(working)
+
+            candidates = [
+                match
+                for match in (perform_match, if_match)
+                if match and match.start() > 0
+            ]
+            if not candidates:
+                break
+
+            match = min(candidates, key=lambda m: m.start())
+            before = working[:match.start()].rstrip()
+            after = working[match.start():].lstrip()
+            if before:
+                parts.append(_RawStatement(
+                    before,
+                    stmt.line_start,
+                    stmt.line_end,
+                    stmt.period_terminated,
+                ))
+            working = after
+
+        if parts:
+            if working:
+                parts.append(_RawStatement(
+                    working,
+                    stmt.line_start,
+                    stmt.line_end,
+                    stmt.period_terminated,
+                ))
+            result.extend(parts)
+        else:
+            result.append(stmt)
+
+    return _split_inline_if_statements(result)
+
+
+def _split_inline_if_statements(
+    statements: list[_RawStatement],
+) -> list[_RawStatement]:
+    """Split one-line IF statements that contain inline actions."""
+    result: list[_RawStatement] = []
+
+    for idx, stmt in enumerate(statements):
+        text = stmt.text.strip()
+
+        else_if_match = _ELSE_IF_SPLIT_RE.match(text)
+        if else_if_match:
+            result.append(_RawStatement(
+                text="ELSE",
+                line_start=stmt.line_start,
+                line_end=stmt.line_end,
+                period_terminated=False,
+            ))
+            result.append(_RawStatement(
+                text=else_if_match.group("inner").strip(),
+                line_start=stmt.line_start,
+                line_end=stmt.line_end,
+                period_terminated=stmt.period_terminated,
+            ))
+            continue
+
+        then_if_match = _IF_THEN_IF_SPLIT_RE.match(text)
+        if then_if_match:
+            outer_if = f"IF {then_if_match.group('outer').strip()}"
+            inner_if = then_if_match.group("inner").strip()
+            result.append(_RawStatement(
+                text=outer_if,
+                line_start=stmt.line_start,
+                line_end=stmt.line_end,
+                period_terminated=False,
+            ))
+            result.append(_RawStatement(
+                text=inner_if,
+                line_start=stmt.line_start,
+                line_end=stmt.line_end,
+                period_terminated=stmt.period_terminated,
+            ))
+            continue
+
+        match = _IF_INLINE_SPLIT_RE.match(text)
+        if not match:
+            result.append(stmt)
+            continue
+
+        cond = match.group("cond").strip()
+        rest = match.group("rest").strip()
+        rest = re.sub(r"^THEN\s+", "", rest, flags=re.IGNORECASE)
+        rest_is_if = bool(_IF_START_RE.match(rest))
+        has_then = bool(re.search(r"\bTHEN\b", text, re.IGNORECASE))
+        next_is_else = (
+            idx + 1 < len(statements)
+            and bool(_ELSE_RE.match(statements[idx + 1].text.strip()))
+        )
+
+        if_stmt = f"IF {cond}"
+        end_marker = _RawStatement(
+            text="END-IF",
+            line_start=stmt.line_start,
+            line_end=stmt.line_end,
+            period_terminated=False,
+        )
+
+        result.append(_RawStatement(
+            text=if_stmt,
+            line_start=stmt.line_start,
+            line_end=stmt.line_end,
+            period_terminated=False,
+        ))
+        result.append(_RawStatement(
+            text=rest,
+            line_start=stmt.line_start,
+            line_end=stmt.line_end,
+            period_terminated=stmt.period_terminated and (
+                rest_is_if or next_is_else or has_then
+            ),
+        ))
+
+        if not rest_is_if and not next_is_else and not has_then:
+            if stmt.period_terminated:
+                end_marker.period_terminated = True
+            result.append(end_marker)
+
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -409,6 +596,10 @@ def _classify(
         return StatementType.UNKNOWN, {"_end": "EVALUATE"}
     if _END_PERFORM_RE.match(stripped):
         return StatementType.UNKNOWN, {"_end": "PERFORM"}
+    if _END_START_RE.match(stripped):
+        return StatementType.UNKNOWN, {"_end": "START"}
+    if _END_SEARCH_RE.match(stripped):
+        return StatementType.UNKNOWN, {"_end": "SEARCH"}
 
     # --- Control flow ---
     if _IF_START_RE.match(stripped):
@@ -434,6 +625,12 @@ def _classify(
         attrs["value"] = value
         return StatementType.WHEN, attrs
 
+    if stripped.upper().startswith("SEARCH "):
+        return StatementType.SEARCH, {"_container": "SEARCH"}
+
+    if _START_RE.match(stripped):
+        return StatementType.START_STMT, {"_container": "START"}
+
     # --- PERFORM variants (order matters) ---
     if _PERFORM_UNTIL_INLINE_RE.match(stripped):
         cond = _PERFORM_UNTIL_STRIP_RE.sub(
@@ -451,13 +648,13 @@ def _classify(
 
     m = _PERFORM_THRU_RE.match(stripped)
     if m:
-        attrs["target"] = m.group(1).upper()
-        attrs["thru"] = m.group(2).upper()
+        attrs["target"] = m.group(1).upper().rstrip(".")
+        attrs["thru"] = m.group(2).upper().rstrip(".")
         return StatementType.PERFORM_THRU, attrs
 
     m = _PERFORM_UNTIL_NAMED_RE.match(stripped)
     if m:
-        attrs["target"] = m.group(1).upper()
+        attrs["target"] = m.group(1).upper().rstrip(".")
         cond = stripped[m.end():].strip().rstrip(".")
         attrs["condition"] = cond
         return StatementType.PERFORM_UNTIL, attrs
@@ -496,10 +693,29 @@ def _classify(
 
     m = _COMPUTE_RE.search(stripped)
     if m:
-        attrs["target"] = m.group(1).upper()
+        attrs["target"] = m.group("target").upper()
         attrs["expression"] = (
-            m.group(2).strip().rstrip(".")
+            m.group("expr").strip().rstrip(".")
         )
+        return StatementType.COMPUTE, attrs
+
+    if stripped.upper().startswith("COMPUTE ") and "=" in stripped:
+        body = stripped[8:].rstrip(".")
+        left, right = body.split("=", 1)
+        left = left.strip()
+        right = right.strip().rstrip(".")
+        left_tokens = [tok for tok in left.split() if tok]
+        target = ""
+        for token in left_tokens:
+            if token.upper() == "ROUNDED":
+                continue
+            target = token.rstrip(",")
+            break
+        if target:
+            attrs["target"] = target.upper()
+        attrs["expression"] = right
+        if any(tok.upper() == "ROUNDED" for tok in left_tokens):
+            attrs["rounded"] = True
         return StatementType.COMPUTE, attrs
 
     # --- Verb-based classification ---
@@ -571,17 +787,21 @@ _CONTAINER_TYPES = frozenset({
     StatementType.EVALUATE,
     StatementType.WHEN,
     StatementType.PERFORM_INLINE,
+    StatementType.SEARCH,
 })
 
 _END_TYPE_MAP = {
     "IF": StatementType.IF,
     "EVALUATE": StatementType.EVALUATE,
     "PERFORM": StatementType.PERFORM_INLINE,
+    "SEARCH": StatementType.SEARCH,
 }
 
 
 def _pop_to_end(
-    stack: list[SyntaxNode], end_target: str
+    stack: list[SyntaxNode],
+    container_tags: list[str | None],
+    end_target: str,
 ) -> None:
     """Pop the stack back past the matching container."""
     target = _END_TYPE_MAP.get(end_target)
@@ -590,14 +810,17 @@ def _pop_to_end(
     while len(stack) > 1:
         if stack[-1].node_type == target:
             stack.pop()
+            container_tags.pop()
             return
         # Also pop through ELSE/WHEN which are children
         # of the target container
         stack.pop()
+        container_tags.pop()
 
 
 def _pop_to_type(
     stack: list[SyntaxNode],
+    container_tags: list[str | None],
     target: StatementType,
 ) -> None:
     """Pop back to (but not past) a node of the given type."""
@@ -605,15 +828,65 @@ def _pop_to_type(
         if stack[-1].node_type == target:
             return
         stack.pop()
+        container_tags.pop()
+
+
+def _pop_to_else_target(
+    stack: list[SyntaxNode],
+    container_tags: list[str | None],
+) -> None:
+    """Pop to ELSE owner: nearest unmatched IF, else nearest IF fallback."""
+    target_index: int | None = None
+    fallback_index: int | None = None
+
+    for idx in range(len(stack) - 1, 0, -1):
+        node = stack[idx]
+        if node.node_type != StatementType.IF:
+            continue
+        if fallback_index is None:
+            fallback_index = idx
+        has_else_child = any(
+            child.node_type == StatementType.ELSE
+            for child in node.children
+        )
+        if not has_else_child:
+            target_index = idx
+            break
+
+    if target_index is None:
+        target_index = fallback_index
+    if target_index is None:
+        return
+
+    while len(stack) - 1 > target_index:
+        stack.pop()
+        container_tags.pop()
+
+
+def _pop_to_container_tag(
+    stack: list[SyntaxNode],
+    container_tags: list[str | None],
+    tag: str,
+) -> None:
+    """Pop back past a custom container tag (e.g., START/END-START)."""
+    while len(stack) > 1:
+        if container_tags[-1] == tag:
+            stack.pop()
+            container_tags.pop()
+            return
+        stack.pop()
+        container_tags.pop()
 
 
 def _build_tree(
     paragraph_name: str,
     raw_stmts: list[_RawStatement],
+    para_line_start: int,
+    para_line_end: int,
 ) -> ParagraphSyntaxTree:
     """Build a syntax tree from assembled statements."""
-    line_start = raw_stmts[0].line_start if raw_stmts else 0
-    line_end = raw_stmts[-1].line_end if raw_stmts else 0
+    line_start = para_line_start or (raw_stmts[0].line_start if raw_stmts else 0)
+    line_end = para_line_end or (raw_stmts[-1].line_end if raw_stmts else 0)
 
     root = SyntaxNode(
         node_type=StatementType.PARAGRAPH,
@@ -624,6 +897,7 @@ def _build_tree(
     )
 
     stack: list[SyntaxNode] = [root]
+    container_tags: list[str | None] = [None]
     statement_count = 0
     max_depth = 0
 
@@ -632,7 +906,15 @@ def _build_tree(
 
         # END-* markers: pop back past the matching opener
         if "_end" in attrs:
-            _pop_to_end(stack, attrs["_end"])
+            if attrs["_end"] == "START":
+                _pop_to_container_tag(
+                    stack, container_tags, "START"
+                )
+            else:
+                _pop_to_end(stack, container_tags, attrs["_end"])
+            if stmt.period_terminated:
+                stack = [root]
+                container_tags = [None]
             continue
 
         node = SyntaxNode(
@@ -649,9 +931,10 @@ def _build_tree(
 
         if stmt_type == StatementType.ELSE:
             # Pop back to the IF, add ELSE as its child
-            _pop_to_type(stack, StatementType.IF)
+            _pop_to_else_target(stack, container_tags)
             stack[-1].children.append(node)
             stack.append(node)
+            container_tags.append(None)
 
         elif stmt_type == StatementType.WHEN:
             # Pop any previous WHEN, stay inside EVALUATE
@@ -661,12 +944,20 @@ def _build_tree(
                 == StatementType.WHEN
             ):
                 stack.pop()
+                container_tags.pop()
             stack[-1].children.append(node)
             stack.append(node)
+            container_tags.append(None)
 
-        elif stmt_type in _CONTAINER_TYPES:
+        elif (
+            stmt_type in _CONTAINER_TYPES
+            or attrs.get("_container") == "START"
+        ):
             stack[-1].children.append(node)
             stack.append(node)
+            container_tags.append(
+                attrs.get("_container")
+            )
             depth = len(stack) - 1
             if depth > max_depth:
                 max_depth = depth
@@ -674,6 +965,10 @@ def _build_tree(
         else:
             # Leaf node
             stack[-1].children.append(node)
+
+        if stmt.period_terminated:
+            stack = [root]
+            container_tags = [None]
 
     return ParagraphSyntaxTree(
         paragraph_name=paragraph_name,
@@ -707,7 +1002,13 @@ def build_paragraph_ast(
         ParagraphSyntaxTree with nested statement nodes.
     """
     raw_stmts = _assemble_statements(lines, preserve_newlines)
-    return _build_tree(paragraph_name, raw_stmts)
+    if lines:
+        para_line_start = lines[0].line_number
+        para_line_end = lines[-1].line_number
+    else:
+        para_line_start = 0
+        para_line_end = 0
+    return _build_tree(paragraph_name, raw_stmts, para_line_start, para_line_end)
 
 
 def build_file_ast(
