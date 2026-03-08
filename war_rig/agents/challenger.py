@@ -16,6 +16,7 @@ import logging
 import re
 from typing import Any
 
+from json_repair import repair_json
 from pydantic import Field
 
 from war_rig.agents.base import AgentInput, AgentOutput, BaseAgent
@@ -474,7 +475,9 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
             try:
                 data = json.loads(json_str, strict=False)
             except json.JSONDecodeError:
-                repaired = self._repair_json(json_str)
+                repaired = repair_json(json_str, return_objects=False)
+                if not repaired or repaired == '""':
+                    raise ValueError("JSON repair produced empty result") from None
                 data = json.loads(repaired, strict=False)
                 logger.info("Challenger JSON repair succeeded")
 
@@ -515,23 +518,6 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                 success=False,
                 error=f"Failed to parse response: {e}",
             )
-
-    @staticmethod
-    def _repair_json(json_str: str) -> str:
-        """Repair common LLM JSON errors.
-
-        Fixes trailing commas, missing commas between array elements,
-        and unescaped control characters inside strings.
-        """
-        # Remove trailing commas before ] or }
-        repaired = re.sub(r',(\s*[}\]])', r'\1', json_str)
-        # Insert missing commas between adjacent objects/arrays in arrays:
-        #   }  {  →  }, {    and  }  "  →  }, "   and  ]  {  →  ], {
-        repaired = re.sub(r'(\})\s*(\{)', r'\1, \2', repaired)
-        repaired = re.sub(r'(\})\s*(")', r'\1, \2', repaired)
-        repaired = re.sub(r'(\])\s*(\{)', r'\1, \2', repaired)
-        # Parse with strict=False to tolerate control characters in strings
-        return repaired
 
     def _create_error_output(self, error: str, input_data: ChallengerInput) -> ChallengerOutput:
         """Create an error output.

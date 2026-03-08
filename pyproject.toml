@@ -41,6 +41,7 @@ dependencies = [
     "codewhisper",
     "llm-providers",
     "aiosqlite>=0.22.1",
+    "json-repair>=0.30.0",
 ]
 
 [project.optional-dependencies]

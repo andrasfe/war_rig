@@ -17,6 +17,7 @@ import json
 import logging
 import re
 
+from json_repair import repair_json
 from pydantic import Field, ValidationError
 
 from war_rig.agents.base import AgentInput, AgentOutput, BaseAgent
@@ -623,33 +624,6 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
 
         return "\n".join(parts)
 
-    def _repair_json(self, json_str: str) -> str:
-        """Attempt to repair common JSON errors.
-
-        Fixes:
-        - Trailing commas before ] or }
-        - Single quotes instead of double quotes (in some cases)
-        - Unescaped newlines in strings
-
-        Args:
-            json_str: Potentially malformed JSON string.
-
-        Returns:
-            Repaired JSON string.
-        """
-        import re as repair_re
-
-        # Remove trailing commas before ] or }
-        # Match: comma followed by optional whitespace then ] or }
-        repaired = repair_re.sub(r',(\s*[}\]])', r'\1', json_str)
-
-        # Try to fix unescaped newlines within strings (common LLM error)
-        # This is tricky - we need to find strings and escape newlines inside them
-        # For now, just replace literal newlines that aren't \n
-        # repaired = repaired.replace('\n', '\\n')  # Too aggressive, breaks valid JSON
-
-        return repaired
-
     def _parse_template_lenient(self, template_data: dict) -> DocumentationTemplate | None:
         """Parse template with lenient validation.
 
@@ -733,16 +707,21 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
 
             # First try parsing as-is
             try:
-                data = json.loads(json_str)
+                data = json.loads(json_str, strict=False)
             except json.JSONDecodeError as e:
-                # Try to repair common JSON errors
                 logger.debug("JSON parse failed, attempting repair...")
-                repaired = self._repair_json(json_str)
+                repaired = repair_json(json_str, return_objects=False)
+                if not repaired or repaired == '""':
+                    return ScribeOutput(
+                        success=False,
+                        error=f"JSON parse error: {e}",
+                        raw_response=response,
+                        recoverable=True,
+                    )
                 try:
-                    data = json.loads(repaired)
+                    data = json.loads(repaired, strict=False)
                     logger.info("JSON repair succeeded")
                 except json.JSONDecodeError:
-                    # JSON repair failed - recoverable with stronger model
                     return ScribeOutput(
                         success=False,
                         error=f"JSON parse error: {e}",
