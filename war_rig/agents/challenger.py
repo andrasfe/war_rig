@@ -470,7 +470,13 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
             if not json_match:
                 raise ValueError("No JSON object found in response")
 
-            data = json.loads(json_match.group())
+            json_str = json_match.group()
+            try:
+                data = json.loads(json_str, strict=False)
+            except json.JSONDecodeError:
+                repaired = self._repair_json(json_str)
+                data = json.loads(repaired, strict=False)
+                logger.info("Challenger JSON repair succeeded")
 
             # Parse questions
             questions = []
@@ -509,6 +515,23 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                 success=False,
                 error=f"Failed to parse response: {e}",
             )
+
+    @staticmethod
+    def _repair_json(json_str: str) -> str:
+        """Repair common LLM JSON errors.
+
+        Fixes trailing commas, missing commas between array elements,
+        and unescaped control characters inside strings.
+        """
+        # Remove trailing commas before ] or }
+        repaired = re.sub(r',(\s*[}\]])', r'\1', json_str)
+        # Insert missing commas between adjacent objects/arrays in arrays:
+        #   }  {  →  }, {    and  }  "  →  }, "   and  ]  {  →  ], {
+        repaired = re.sub(r'(\})\s*(\{)', r'\1, \2', repaired)
+        repaired = re.sub(r'(\})\s*(")', r'\1, \2', repaired)
+        repaired = re.sub(r'(\])\s*(\{)', r'\1, \2', repaired)
+        # Parse with strict=False to tolerate control characters in strings
+        return repaired
 
     def _create_error_output(self, error: str, input_data: ChallengerInput) -> ChallengerOutput:
         """Create an error output.
