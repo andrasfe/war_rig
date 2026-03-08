@@ -469,7 +469,18 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
             # Try to extract JSON from response
             json_match = re.search(r"\{[\s\S]*\}", response)
             if not json_match:
-                raise ValueError("No JSON object found in response")
+                # LLM returned prose instead of JSON — treat as "no issues"
+                logger.warning(
+                    "Challenger returned prose instead of JSON, "
+                    "treating as pass-through: %s", response[:200],
+                )
+                return ChallengerOutput(
+                    success=True,
+                    questions=[],
+                    assessment=None,
+                    issues_found=[],
+                    suggested_corrections=[],
+                )
 
             json_str = json_match.group()
             try:
