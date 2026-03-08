@@ -466,13 +466,22 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
             Parsed ChallengerOutput.
         """
         try:
+            # Strip markdown code fences if present
+            cleaned = re.sub(r"^```(?:json)?\s*\n?", "", response.strip())
+            cleaned = re.sub(r"\n?```\s*$", "", cleaned)
+
             # Try to extract JSON from response
-            json_match = re.search(r"\{[\s\S]*\}", response)
-            if not json_match:
-                # LLM returned prose instead of JSON — treat as "no issues"
-                logger.warning(
-                    "Challenger returned prose instead of JSON, "
-                    "treating as pass-through: %s", response[:200],
+            json_match = re.search(r"\{[\s\S]*\}", cleaned)
+            if json_match:
+                json_str = json_match.group()
+            elif "{" in cleaned:
+                # Truncated JSON (e.g. max_tokens cut off closing braces)
+                json_str = cleaned[cleaned.index("{"):]
+            else:
+                # Genuine prose response — treat as "no issues"
+                logger.info(
+                    "Challenger returned prose (no JSON), treating as "
+                    "pass-through: %s", cleaned[:200],
                 )
                 return ChallengerOutput(
                     success=True,
@@ -482,7 +491,6 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
                     suggested_corrections=[],
                 )
 
-            json_str = json_match.group()
             try:
                 data = json.loads(json_str, strict=False)
             except json.JSONDecodeError:
