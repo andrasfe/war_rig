@@ -194,53 +194,6 @@ class DeadCodeResolutionConfig(BaseModel):
     codewhisper_max_tokens: int = Field(default=1024)
 
 
-class KnowledgeGraphConfig(BaseModel):
-    """Configuration for the knowledge graph subsystem.
-
-    Controls graph construction, context injection, and convergence tracking.
-    The knowledge graph captures structural relationships between mainframe
-    artifacts and feeds them back as context into subsequent documentation passes.
-    """
-
-    enabled: bool = Field(
-        default=False,
-        description="Enable knowledge graph construction during documentation passes",
-    )
-    db_path: str = Field(
-        default="./output/knowledge_graph.db",
-        description="Path to the SQLite database file for the graph store",
-    )
-    max_context_tokens: int = Field(
-        default=500,
-        ge=100,
-        le=2000,
-        description="Maximum tokens for graph context injection into prompts",
-    )
-    neighborhood_hops: int = Field(
-        default=2,
-        ge=1,
-        le=5,
-        description="Number of hops for neighborhood queries",
-    )
-    convergence_threshold: float = Field(
-        default=0.05,
-        ge=0.0,
-        le=1.0,
-        description="Triple delta threshold for convergence (0.05 = 5%)",
-    )
-    extract_from_preprocessors: bool = Field(
-        default=True,
-        description="Extract ground-truth triples from preprocessor output (JCL, COBOL)",
-    )
-    emit_triples_from_scribe: bool = Field(
-        default=True,
-        description="Instruct Scribe to emit triples in output",
-    )
-    challenger_cross_check: bool = Field(
-        default=True,
-        description="Enable Challenger structural cross-check against graph",
-    )
-
 
 class LoggingConfig(BaseModel):
     """Configuration for logging."""
@@ -528,44 +481,16 @@ class WarRigConfig(BaseSettings):
         description="Files with more paragraphs than this use batched processing",
     )
 
-    # Knowledge graph
-    knowledge_graph_enabled: bool = Field(
-        default=False,
-        description="Enable knowledge graph construction during documentation passes",
+    # Cross-file context
+    cross_file_context_enabled: bool = Field(
+        default=True,
+        description="Enable cross-file context injection into Scribe/Challenger prompts",
     )
-    knowledge_graph_db_path: str = Field(
-        default="./output/knowledge_graph.db",
-        description="Path to the SQLite database for the graph store",
-    )
-    knowledge_graph_max_context_tokens: int = Field(
+    cross_file_context_max_tokens: int = Field(
         default=500,
         ge=100,
         le=2000,
-        description="Maximum tokens for graph context injection into prompts",
-    )
-    knowledge_graph_neighborhood_hops: int = Field(
-        default=2,
-        ge=1,
-        le=5,
-        description="Number of hops for neighborhood queries",
-    )
-    knowledge_graph_convergence_threshold: float = Field(
-        default=0.05,
-        ge=0.0,
-        le=1.0,
-        description="Triple delta threshold for convergence (0.05 = 5%)",
-    )
-    knowledge_graph_extract_from_preprocessors: bool = Field(
-        default=True,
-        description="Extract ground-truth triples from preprocessor output",
-    )
-    knowledge_graph_emit_triples_from_scribe: bool = Field(
-        default=True,
-        description="Instruct Scribe to emit triples in output",
-    )
-    knowledge_graph_challenger_cross_check: bool = Field(
-        default=True,
-        description="Enable Challenger structural cross-check against graph",
+        description="Maximum token budget for cross-file context blocks",
     )
 
     # Agentic README generation (via CodeWhisper SDK)
@@ -791,20 +716,6 @@ class WarRigConfig(BaseSettings):
             for d in self.extra_copybook_dirs.split(",")
             if d.strip()
         ]
-
-    @property
-    def knowledge_graph(self) -> KnowledgeGraphConfig:
-        """Get knowledge graph configuration."""
-        return KnowledgeGraphConfig(
-            enabled=self.knowledge_graph_enabled,
-            db_path=self.knowledge_graph_db_path,
-            max_context_tokens=self.knowledge_graph_max_context_tokens,
-            neighborhood_hops=self.knowledge_graph_neighborhood_hops,
-            convergence_threshold=self.knowledge_graph_convergence_threshold,
-            extract_from_preprocessors=self.knowledge_graph_extract_from_preprocessors,
-            emit_triples_from_scribe=self.knowledge_graph_emit_triples_from_scribe,
-            challenger_cross_check=self.knowledge_graph_challenger_cross_check,
-        )
 
     def get_agent_config(self, agent_name: str) -> ModelConfig:
         """Get configuration for a specific agent by name.

@@ -35,6 +35,7 @@ from pathlib import Path
 from typing import Any
 
 from war_rig.agents.challenger import ChallengerAgent, ChallengerInput, ChallengerOutput
+from war_rig.analysis.cross_file_context import CrossFileContext
 from war_rig.analysis.pattern_aggregator import PatternAggregator
 from war_rig.beads import (
     BeadsClient,
@@ -45,7 +46,6 @@ from war_rig.beads import (
 )
 from war_rig.chunking import TokenEstimator
 from war_rig.config import WarRigConfig
-from war_rig.knowledge_graph.manager import KnowledgeGraphManager
 from war_rig.models.templates import DocumentationTemplate, FileType
 from war_rig.models.tickets import (
     ChallengerQuestion,
@@ -150,7 +150,7 @@ class ChallengerWorker:
         file_lock_manager: FileLockManager | None = None,
         exit_on_error: bool = True,
         dependency_graph_path: Path | None = None,
-        kg_manager: KnowledgeGraphManager | None = None,
+        cross_file_context: CrossFileContext | None = None,
     ):
         """Initialize the ChallengerWorker.
 
@@ -170,8 +170,8 @@ class ChallengerWorker:
             dependency_graph_path: Optional path to Citadel dependency graph JSON.
                 When provided, workers can use Citadel for structural pre-checks
                 comparing static analysis facts against documentation templates.
-            kg_manager: Optional KnowledgeGraphManager for injecting graph context
-                into Challenger prompts for structural cross-checking.
+            cross_file_context: Optional CrossFileContext for injecting cross-file
+                relationship context into Challenger prompts.
         """
         self.worker_id = worker_id
         self.config = config
@@ -180,7 +180,7 @@ class ChallengerWorker:
         self.upstream_active_check = upstream_active_check
         self.file_lock_manager = file_lock_manager
         self.exit_on_error = exit_on_error
-        self.kg_manager = kg_manager
+        self.cross_file_context = cross_file_context
         # Resolve to absolute path for consistent file access
         self.output_directory = config.output_directory.resolve()
         self._input_directory = config.input_directory.resolve()
@@ -1650,17 +1650,17 @@ class ChallengerWorker:
                 max_source_tokens = max_prompt_tokens - 6000
                 sampled_code, _ = self._sample_source_code(source_code, max_source_tokens)
 
-            # Get knowledge graph context for Challenger cross-checking
+            # Get cross-file context for Challenger cross-checking
             kg_context = ""
-            if self.kg_manager and self.kg_manager.enabled:
+            if self.cross_file_context is not None:
                 try:
                     program_name = state["file_name"].split(".")[0]
-                    kg_context = await self.kg_manager.get_challenger_context(
+                    kg_context = self.cross_file_context.get_challenger_context(
                         program_name
                     )
                 except Exception:
                     logger.warning(
-                        "Worker %s: Failed to get KG context for %s",
+                        "Worker %s: Failed to get cross-file context for %s",
                         self.worker_id,
                         state["file_name"],
                         exc_info=True,
@@ -2172,7 +2172,7 @@ class ChallengerWorkerPool:
         file_lock_manager: FileLockManager | None = None,
         exit_on_error: bool | None = None,
         dependency_graph_path: Path | None = None,
-        kg_manager: KnowledgeGraphManager | None = None,
+        cross_file_context: CrossFileContext | None = None,
     ):
         """Initialize the ChallengerWorkerPool.
 
@@ -2194,8 +2194,8 @@ class ChallengerWorkerPool:
                 Defaults to config.exit_on_error.
             dependency_graph_path: Optional path to Citadel dependency graph JSON.
                 When provided, workers can use Citadel for structural pre-checks.
-            kg_manager: Optional KnowledgeGraphManager for injecting graph context
-                into Challenger prompts for structural cross-checking.
+            cross_file_context: Optional CrossFileContext for injecting cross-file
+                relationship context into Challenger prompts.
         """
         self.num_workers = num_workers
         self.config = config
@@ -2217,7 +2217,7 @@ class ChallengerWorkerPool:
                 file_lock_manager=file_lock_manager,
                 exit_on_error=self.exit_on_error,
                 dependency_graph_path=dependency_graph_path,
-                kg_manager=kg_manager,
+                cross_file_context=cross_file_context,
             )
             self.workers.append(worker)
 

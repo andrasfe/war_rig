@@ -2,21 +2,20 @@
 
 Replaces the monolithic generate_system_design() prompt with an
 investigative flow where the Imperator uses CodeWhisper tools to build
-each README section through focused queries against skills (documentation),
-the knowledge graph (structural relationships), and citadel (code analysis).
+each README section through focused queries against skills (documentation)
+and citadel (code analysis).
 
 Architecture:
-    AgenticReadmeGenerator creates a CodeWhisper SDK instance with skills,
-    KG tools, and citadel tools registered. It then generates 9 README
-    sections sequentially in a single conversation, allowing later sections
-    to benefit from earlier context. An optional merge pass fixes
+    AgenticReadmeGenerator creates a CodeWhisper SDK instance with skills
+    and citadel tools registered. It then generates 9 README sections
+    sequentially in a single conversation, allowing later sections to
+    benefit from earlier context. An optional merge pass fixes
     cross-references and deduplication.
 
 Example:
     generator = AgenticReadmeGenerator(
         code_dir=Path("./input"),
         skills_dir=Path("./output/skills"),
-        kg_manager=kg_manager,
     )
     result = await generator.generate(structural_context, sequence_diagrams)
 """
@@ -27,12 +26,8 @@ import logging
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import TYPE_CHECKING
 
 from war_rig.agents.imperator import InlineQuestion, SystemDesignOutput
-
-if TYPE_CHECKING:
-    from war_rig.knowledge_graph.manager import KnowledgeGraphManager
 
 logger = logging.getLogger(__name__)
 
@@ -70,14 +65,12 @@ class ReadmeSection:
         prompt_template: Prompt text instructing the agent on how to
             generate this section. May reference tools to use.
         min_sentences: Minimum expected sentence count for quality check.
-        requires_kg: Whether this section benefits from KG tools.
     """
 
     number: int
     name: str
     prompt_template: str
     min_sentences: int = 5
-    requires_kg: bool = False
 
 
 # The 9 canonical README sections
@@ -107,7 +100,7 @@ Instructions:
 
 Output ONLY the markdown for this section (starting with ## 1. Executive Summary).""",
         min_sentences=20,
-        requires_kg=True,
+
     ),
     ReadmeSection(
         number=2,
@@ -127,7 +120,7 @@ Link every program mentioned: [NAME](NAME.ext.md)
 
 Output ONLY the markdown for this section (starting with ## 2. Architecture Overview).""",
         min_sentences=10,
-        requires_kg=True,
+
     ),
     ReadmeSection(
         number=3,
@@ -167,7 +160,7 @@ Instructions:
 
 Output ONLY the markdown for this section (starting with ## 4. Subsystem Breakdown).""",
         min_sentences=10,
-        requires_kg=True,
+
     ),
     ReadmeSection(
         number=5,
@@ -189,7 +182,7 @@ Instructions:
 
 Output ONLY the markdown for this section (starting with ## 5. Data Architecture).""",
         min_sentences=8,
-        requires_kg=True,
+
     ),
     ReadmeSection(
         number=6,
@@ -211,7 +204,7 @@ Instructions:
 
 Output ONLY the markdown for this section (starting with ## 6. Integration Points).""",
         min_sentences=5,
-        requires_kg=True,
+
     ),
     ReadmeSection(
         number=7,
@@ -456,14 +449,13 @@ def _parse_inline_questions(markdown: str, cycle: int = 1) -> list[InlineQuestio
 class AgenticReadmeGenerator:
     """Generate README.md through agentic investigation via CodeWhisper SDK.
 
-    Creates a CodeWhisper SDK instance with skills, KG tools, and citadel
-    tools registered, then generates each README section sequentially through
+    Creates a CodeWhisper SDK instance with skills and citadel tools
+    registered, then generates each README section sequentially through
     focused tool-based investigation.
 
     Args:
         code_dir: Path to source code directory.
         skills_dir: Path to skills directory (documentation).
-        kg_manager: Optional knowledge graph manager for KG tools.
         config: Generator configuration.
     """
 
@@ -471,12 +463,10 @@ class AgenticReadmeGenerator:
         self,
         code_dir: Path,
         skills_dir: Path | None = None,
-        kg_manager: KnowledgeGraphManager | None = None,
         config: AgenticReadmeConfig | None = None,
     ) -> None:
         self._code_dir = code_dir
         self._skills_dir = skills_dir
-        self._kg_manager = kg_manager
         self._config = config or AgenticReadmeConfig()
 
     async def generate(
@@ -508,13 +498,6 @@ class AgenticReadmeGenerator:
         generated_sections: dict[str, str] = {}
 
         for section in SECTIONS:
-            # Skip KG-dependent sections if KG is not available
-            if section.requires_kg and (
-                self._kg_manager is None or not self._kg_manager.enabled
-            ):
-                # Still generate but note KG unavailability in prompt
-                pass
-
             logger.info(
                 "Generating README section %d: %s", section.number, section.name
             )
@@ -603,14 +586,6 @@ class AgenticReadmeGenerator:
             config=config,
         )
 
-        # Register KG tools if manager is available and enabled
-        if self._kg_manager is not None and self._kg_manager.enabled:
-            from war_rig.agents.kg_tools import create_kg_tools
-
-            kg_tools = create_kg_tools(self._kg_manager)
-            sdk.tool_registry.register_all(kg_tools)
-            logger.info("Registered %d KG tools in CodeWhisper SDK", len(kg_tools))
-
         return sdk
 
     def _build_section_prompt(
@@ -630,15 +605,6 @@ class AgenticReadmeGenerator:
             The prompt string.
         """
         parts = [section.prompt_template]
-
-        # Add note about KG unavailability if needed
-        if section.requires_kg and (
-            self._kg_manager is None or not self._kg_manager.enabled
-        ):
-            parts.append(
-                "\n\nNote: Knowledge graph tools are not available. "
-                "Use search_skills and citadel tools instead for structural information."
-            )
 
         return "\n".join(parts)
 

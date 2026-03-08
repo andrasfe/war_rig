@@ -45,6 +45,7 @@ from typing import Any
 
 from war_rig.agents.scribe import ScribeAgent, ScribeInput, ScribeOutput
 from war_rig.analysis.call_semantics import CallSemanticsAnalyzer
+from war_rig.analysis.cross_file_context import CrossFileContext
 from war_rig.analysis.pattern_aggregator import PatternAggregator
 from war_rig.beads import (
     BeadsClient,
@@ -61,7 +62,6 @@ from war_rig.chunking import (
     TokenEstimator,
 )
 from war_rig.config import WarRigConfig
-from war_rig.knowledge_graph.manager import KnowledgeGraphManager
 from war_rig.models.templates import (
     CallerReference,
     DeadCodeItem,
@@ -214,7 +214,7 @@ class ScribeWorker:
         exit_on_error: bool = True,
         dependency_graph_path: Path | None = None,
         minion_pool: MinionScribePool | None = None,
-        kg_manager: KnowledgeGraphManager | None = None,
+        cross_file_context: CrossFileContext | None = None,
         copybook_dirs: list[Path] | None = None,
     ):
         """Initialize the Scribe worker.
@@ -238,9 +238,8 @@ class ScribeWorker:
             minion_pool: Optional shared MinionScribePool for parallel call semantics
                 processing. When provided, this pool is used instead of creating
                 a per-worker pool. This enables resource sharing across workers.
-            kg_manager: Optional KnowledgeGraphManager for context injection
-                and triple ingestion. When provided, workers inject graph context
-                into Scribe prompts and ingest triples from output.
+            cross_file_context: Optional CrossFileContext for injecting cross-file
+                relationship context into Scribe prompts.
         """
         self.worker_id = worker_id
         self.config = config
@@ -252,7 +251,7 @@ class ScribeWorker:
         self.poll_interval = poll_interval
         self.idle_timeout = idle_timeout
         self.file_lock_manager = file_lock_manager
-        self.kg_manager = kg_manager
+        self.cross_file_context = cross_file_context
         self._copybook_dirs = copybook_dirs or []
 
         # Ensure output directory exists
@@ -2541,16 +2540,6 @@ class ScribeWorker:
                 f"Worker {self.worker_id}: Saved documentation to {doc_path}"
             )
 
-            # Enrich the knowledge graph from the template's structured data
-            if self.kg_manager and self.kg_manager.enabled:
-                try:
-                    loop = asyncio.get_running_loop()
-                    loop.create_task(
-                        self.kg_manager.ingest_documentation_template(template)
-                    )
-                except RuntimeError:
-                    pass  # No running event loop
-
             # Also save human-readable markdown alongside the .doc.json
             # Note: .bak files are created separately and do not get .md files
             try:
@@ -2952,21 +2941,6 @@ class ScribeWorker:
             self._save_chunk(
                 ticket.file_name, batch_idx, output.template, total_batches
             )
-
-            # Ingest KG triples from this batch
-            if self.kg_manager and self.kg_manager.enabled and output.raw_response:
-                try:
-                    await self.kg_manager.ingest_scribe_output(
-                        output.raw_response,
-                        f"pass_{ticket.cycle_number}_batch_{batch_idx}",
-                        ticket.file_name,
-                    )
-                except Exception:
-                    logger.warning(
-                        "Worker %s: Failed to ingest KG triples for %s batch %d",
-                        self.worker_id, ticket.file_name, batch_idx,
-                        exc_info=True,
-                    )
 
             return output.template
 
@@ -3726,23 +3700,6 @@ class ScribeWorker:
             self._build_cobol_ast(source_path, ticket.file_name)
         )
 
-        # Seed knowledge graph from AST (replaces Citadel context ingestion)
-        if self.kg_manager and self.kg_manager.enabled and paragraph_trees:
-            try:
-                program_name = Path(ticket.file_name).stem.upper()
-                await self.kg_manager.ingest_ast(
-                    paragraph_trees,
-                    program_name,
-                    ticket.file_name,
-                    f"ast_pass_{ticket.cycle_number}",
-                )
-            except Exception:
-                logger.warning(
-                    f"Worker {self.worker_id}: Failed to ingest AST "
-                    f"triples for {ticket.file_name}",
-                    exc_info=True,
-                )
-
         # --- Resume mode: if a previous template exists with incomplete stubs,
         # only re-process the stub paragraphs and keep already-documented ones.
         previous_template = self._load_previous_template(ticket.file_name)
@@ -4050,20 +4007,6 @@ class ScribeWorker:
 
         output = await self._validated_invoke(scribe_input)
 
-        # Ingest KG triples from Scribe output
-        if self.kg_manager and self.kg_manager.enabled and output.success and output.raw_response:
-            try:
-                await self.kg_manager.ingest_scribe_output(
-                    output.raw_response,
-                    f"pass_{ticket.cycle_number}",
-                    ticket.file_name,
-                )
-            except Exception:
-                logger.warning(
-                    "Worker %s: Failed to ingest KG triples for %s",
-                    self.worker_id, ticket.file_name,
-                    exc_info=True,
-                )
 
         # Gap-fill: check if any paragraphs from the outline are missing
         if output.success and output.template:
@@ -4404,21 +4347,6 @@ class ScribeWorker:
                 )
                 batches_processed += 1
 
-                # Ingest KG triples from this batch's Scribe output
-                if self.kg_manager and self.kg_manager.enabled and output.raw_response:
-                    try:
-                        await self.kg_manager.ingest_scribe_output(
-                            output.raw_response,
-                            f"pass_{ticket.cycle_number}_batch_{batch_idx}",
-                            ticket.file_name,
-                        )
-                    except Exception:
-                        logger.warning(
-                            "Worker %s: Failed to ingest KG triples for %s batch %d",
-                            self.worker_id, ticket.file_name, batch_idx,
-                            exc_info=True,
-                        )
-
                 if merged_template is None:
                     # First batch: use the full template
                     merged_template = output.template
@@ -4678,21 +4606,6 @@ class ScribeWorker:
             gap_output = await self._validated_invoke(scribe_input)
 
             if gap_output.success and gap_output.template:
-                # Ingest KG triples from gap-fill output
-                if self.kg_manager and self.kg_manager.enabled and gap_output.raw_response:
-                    try:
-                        await self.kg_manager.ingest_scribe_output(
-                            gap_output.raw_response,
-                            f"pass_{ticket.cycle_number}_gapfill_{batch_idx}",
-                            ticket.file_name,
-                        )
-                    except Exception:
-                        logger.warning(
-                            "Worker %s: Failed to ingest KG gap-fill triples for %s",
-                            self.worker_id, ticket.file_name,
-                            exc_info=True,
-                        )
-
                 # Merge gap-filled paragraphs
                 for para in gap_output.template.paragraphs:
                     if para.paragraph_name and para.paragraph_name.lower() not in documented:
@@ -4838,15 +4751,15 @@ class ScribeWorker:
                 f"{ticket.file_name} (cycle {ticket.cycle_number})"
             )
 
-        # Get knowledge graph context for prompt injection
+        # Get cross-file context for prompt injection
         kg_context = ""
-        if self.kg_manager and self.kg_manager.enabled:
+        if self.cross_file_context is not None:
             try:
                 program_name = ticket.program_id or ticket.file_name.split(".")[0]
-                kg_context = await self.kg_manager.get_scribe_context(program_name)
+                kg_context = self.cross_file_context.get_context(program_name)
             except Exception:
                 logger.warning(
-                    "Worker %s: Failed to get KG context for %s",
+                    "Worker %s: Failed to get cross-file context for %s",
                     self.worker_id,
                     ticket.file_name,
                     exc_info=True,
@@ -4869,21 +4782,6 @@ class ScribeWorker:
         )
 
         output = await self._validated_invoke(scribe_input)
-
-        # Ingest triples from Scribe output into knowledge graph
-        if self.kg_manager and self.kg_manager.enabled and output.success and output.raw_response:
-            try:
-                source_pass = f"pass_{ticket.cycle_number}"
-                await self.kg_manager.ingest_scribe_output(
-                    output.raw_response, source_pass, ticket.file_name
-                )
-            except Exception:
-                logger.warning(
-                    "Worker %s: Failed to ingest KG triples for %s",
-                    self.worker_id,
-                    ticket.file_name,
-                    exc_info=True,
-                )
 
         # Merge with previous template to preserve paragraphs when source was sampled
         # The LLM may only regenerate paragraphs for the sampled code, losing others
@@ -6387,7 +6285,7 @@ class ScribeWorkerPool:
         file_lock_manager: FileLockManager | None = None,
         exit_on_error: bool | None = None,
         dependency_graph_path: Path | None = None,
-        kg_manager: KnowledgeGraphManager | None = None,
+        cross_file_context: CrossFileContext | None = None,
         copybook_dirs: list[Path] | None = None,
     ):
         """Initialize the Scribe worker pool.
@@ -6410,8 +6308,8 @@ class ScribeWorkerPool:
             dependency_graph_path: Optional path to Citadel dependency graph JSON.
                 When provided, workers can use the graph to understand code
                 relationships and improve documentation quality.
-            kg_manager: Optional KnowledgeGraphManager for context injection
-                and triple ingestion. Passed through to individual workers.
+            cross_file_context: Optional CrossFileContext for injecting cross-file
+                relationship context. Passed through to individual workers.
             copybook_dirs: Directories to search for COBOL copybook files.
                 Passed through to individual workers for COPY resolution.
         """
@@ -6425,7 +6323,7 @@ class ScribeWorkerPool:
         self.file_lock_manager = file_lock_manager
         self.exit_on_error = exit_on_error if exit_on_error is not None else config.exit_on_error
         self.dependency_graph_path = dependency_graph_path
-        self.kg_manager = kg_manager
+        self.cross_file_context = cross_file_context
         self.copybook_dirs = copybook_dirs or []
 
         # Create shared MinionScribePool for call semantics processing
@@ -6473,7 +6371,7 @@ class ScribeWorkerPool:
                 exit_on_error=self.exit_on_error,
                 dependency_graph_path=self.dependency_graph_path,
                 minion_pool=self._minion_pool,
-                kg_manager=self.kg_manager,
+                cross_file_context=self.cross_file_context,
                 copybook_dirs=self.copybook_dirs,
             )
             for i in range(self.num_workers)

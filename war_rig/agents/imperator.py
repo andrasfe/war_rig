@@ -328,12 +328,6 @@ class HolisticReviewInputCompact(BaseModel):
         description="Compact KG health summary for structural awareness",
     )
 
-    # Structural validation findings
-    structural_findings: str | None = Field(
-        default=None,
-        description="Compact structural cross-check findings from KG validation",
-    )
-
     # Configuration
     max_cycles: int = Field(
         default=5,
@@ -515,12 +509,6 @@ class HolisticReviewInput(AgentInput):
     knowledge_graph_summary: str | None = Field(
         default=None,
         description="Compact KG health summary for structural awareness",
-    )
-
-    # Structural validation findings
-    structural_findings: str | None = Field(
-        default=None,
-        description="Compact structural cross-check findings from KG validation",
     )
 
     # Configuration
@@ -1420,15 +1408,6 @@ SATISFIED: All files meet quality standards, cross-file issues resolved, documen
 NEEDS_CLARIFICATION: Questions need to be answered before approval can be granted
 FORCED_COMPLETE: Max cycles reached, accept current state despite issues
 
-## Structural Cross-Check Findings
-
-The "Structural Cross-Check" section (if present) shows mismatches between the
-knowledge graph (built from static AST analysis) and the documentation. These are
-INFORMATIONAL ONLY — do NOT issue Chrome tickets or clarification requests for them.
-The Scribe documents what it sees in source code; it cannot change the knowledge graph.
-Structural mismatches are tracked separately and resolved outside the Scribe cycle.
-Include them in quality_notes for awareness, but never as actionable file_feedback.
-
 ## Avoiding Repetition
 
 You will be provided with previous clarification requests. Do NOT ask the same questions again.
@@ -1555,11 +1534,6 @@ Respond ONLY with valid JSON. Do not include markdown code fences or explanatory
         # Knowledge graph health (if available)
         if input_data.knowledge_graph_summary:
             parts.append(input_data.knowledge_graph_summary)
-            parts.append("")
-
-        # Structural cross-check findings (if available)
-        if input_data.structural_findings:
-            parts.append(input_data.structural_findings)
             parts.append("")
 
         # Quality metrics
@@ -2121,14 +2095,6 @@ You are receiving SUMMARIES only (not full documentation) to enable efficient re
 3. **Quality Indicators**: Are confidence levels appropriate? Are there unresolved questions?
 4. **Shared Resources**: Are copybooks used consistently?
 
-## Structural Cross-Check Findings
-
-The "Structural Cross-Check" section (if present) shows mismatches between the
-knowledge graph (built from static AST analysis) and the documentation. These are
-INFORMATIONAL ONLY — do NOT issue file_feedback Chrome tickets for them.
-The Scribe documents what it sees in source code; it cannot change the knowledge graph.
-Include them in quality_notes for awareness, but never as actionable file_feedback.
-
 ## Decision Criteria
 
 SATISFIED: Documentation summaries show good coverage, consistent cross-references, acceptable confidence
@@ -2222,11 +2188,6 @@ Respond ONLY with valid JSON. Do not include markdown code fences."""
         # Knowledge graph health (if available)
         if input_data.knowledge_graph_summary:
             parts.append(input_data.knowledge_graph_summary)
-            parts.append("")
-
-        # Structural cross-check findings (if available)
-        if input_data.structural_findings:
-            parts.append(input_data.structural_findings)
             parts.append("")
 
         # Task instructions
@@ -3289,8 +3250,8 @@ and architecture after reading your overview."""
             cross_file_call_semantics: Optional dict mapping
                 ``"CALLER->CALLEE"`` to semantics with inputs, outputs,
                 and purpose.  Injected as a compact table into the prompt.
-            kg_system_summary: Optional pre-formatted knowledge graph
-                system summary (from ``KnowledgeGraphManager.get_system_summary``).
+            kg_system_summary: Optional pre-formatted system architecture
+                summary for context.
             entry_points: Optional list of program names that have no
                 callers (likely batch or CICS entry points).
             call_chains: Optional list of call chain lists representing
@@ -3731,7 +3692,6 @@ This creates a navigable documentation web.
         existing_content: str | None = None,
         sequence_diagrams: list[str] | None = None,
         cross_file_call_semantics: dict[str, dict] | None = None,
-        kg_manager=None,
         kg_system_summary: str | None = None,
         entry_points: list[str] | None = None,
         call_chains: list[list[str]] | None = None,
@@ -3752,7 +3712,6 @@ This creates a navigable documentation web.
             existing_content: Existing README.md content if any.
             sequence_diagrams: Mermaid sequence diagrams to append.
             cross_file_call_semantics: Call semantics enrichment data.
-            kg_manager: Optional knowledge graph manager.
             kg_system_summary: Pre-formatted KG system summary.
             entry_points: Programs with no callers.
             call_chains: Typical execution flow chains.
@@ -3799,7 +3758,6 @@ This creates a navigable documentation web.
             generator = AgenticReadmeGenerator(
                 code_dir=code_dir,
                 skills_dir=skills_dir,
-                kg_manager=kg_manager,
                 config=config,
             )
 

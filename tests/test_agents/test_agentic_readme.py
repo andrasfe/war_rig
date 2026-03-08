@@ -28,16 +28,16 @@ class TestReadmeSection:
         assert section.number == 1
         assert section.name == "Test Section"
         assert section.min_sentences == 5
-        assert section.requires_kg is False
+        assert section.min_sentences == 5
 
     def test_section_with_kg(self):
         section = ReadmeSection(
             number=1,
             name="Data",
             prompt_template="Query data.",
-            requires_kg=True,
+            min_sentences=10,
         )
-        assert section.requires_kg is True
+        assert section.min_sentences == 10
 
     def test_nine_sections_defined(self):
         assert len(SECTIONS) == 9
@@ -319,15 +319,14 @@ class TestAgenticReadmeGenerator:
         assert "Executive Summary" in prompt
         assert "search_skills" in prompt
 
-    def test_build_section_prompt_kg_unavailable(self, structural_context):
-        """Test prompt notes KG unavailability."""
+    def test_build_section_prompt_no_context(self, structural_context):
+        """Test prompt works without cross-file context."""
         gen = AgenticReadmeGenerator(
             code_dir=Path("/tmp/code"),
-            kg_manager=None,
         )
-        section = SECTIONS[0]  # Has requires_kg=True
+        section = SECTIONS[0]
         prompt = gen._build_section_prompt(section, structural_context, {})
-        assert "not available" in prompt
+        assert isinstance(prompt, str)
 
     def test_assemble_document(self, generator):
         """Test document assembly."""
@@ -358,35 +357,10 @@ class TestAgenticReadmeGenerator:
         result = AgenticReadmeGenerator._format_flows_section([])
         assert result == ""
 
-    async def test_create_sdk_with_kg(self):
-        """Test SDK creation registers KG tools."""
-        mock_manager = MagicMock()
-        mock_manager.enabled = True
-
+    async def test_create_sdk(self):
+        """Test SDK creation."""
         gen = AgenticReadmeGenerator(
             code_dir=Path("/tmp/code"),
-            skills_dir=Path("/tmp/skills"),
-            kg_manager=mock_manager,
-        )
-
-        with patch("war_rig.providers.get_provider_from_env") as mock_prov, \
-             patch("codewhisper.sdk.CodeWhisper") as mock_cw_cls, \
-             patch("war_rig.agents.kg_tools.create_kg_tools") as mock_kg_tools:
-            mock_prov.return_value = MagicMock()
-            mock_sdk_instance = MagicMock()
-            mock_cw_cls.return_value = mock_sdk_instance
-            mock_kg_tools.return_value = [MagicMock(), MagicMock()]
-
-            gen._create_sdk()
-
-            mock_kg_tools.assert_called_once_with(mock_manager)
-            mock_sdk_instance.tool_registry.register_all.assert_called_once()
-
-    async def test_create_sdk_without_kg(self):
-        """Test SDK creation skips KG tools when manager is None."""
-        gen = AgenticReadmeGenerator(
-            code_dir=Path("/tmp/code"),
-            kg_manager=None,
         )
 
         with patch("war_rig.providers.get_provider_from_env") as mock_prov, \
@@ -396,5 +370,3 @@ class TestAgenticReadmeGenerator:
             mock_cw_cls.return_value = mock_sdk_instance
 
             gen._create_sdk()
-
-            mock_sdk_instance.tool_registry.register_all.assert_not_called()
