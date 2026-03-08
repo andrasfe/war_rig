@@ -1,7 +1,7 @@
 [project]
 name = "cobalt"
 version = "0.1.0"
-description = "Pure-Python COBOL AST generator — drop-in replacement for ProLeap"
+description = "Pure-Python COBOL AST generator"
 requires-python = ">=3.11"
 license = { text = "MIT" }
 authors = [

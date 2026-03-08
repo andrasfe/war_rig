@@ -1,8 +1,8 @@
-"""Pure-Python COBOL AST generator — drop-in replacement for ProLeap.
+"""Pure-Python COBOL AST generator.
 
 Reuses the citadel parsing stack (SourceReader, DataDivisionParser,
-ProcedureDivisionParser, syntax_tree) and adds JSON serialization
-compatible with the ProLeap JSON schema.
+ProcedureDivisionParser, syntax_tree) and produces JSON-serialized
+paragraph-level syntax trees.
 """
 
 from __future__ import annotations
@@ -31,10 +31,10 @@ def parse_cobol_ast(
     source_path: str | Path,
     copybook_dirs: list[str | Path] | None = None,
 ) -> tuple[dict[str, ParagraphSyntaxTree], str, str]:
-    """Drop-in replacement for ``parse_proleap()``.
+    """Parse a COBOL source file and return paragraph-level ASTs.
 
     Parses a COBOL source file entirely in Python and returns AST
-    structures plus a ProLeap-compatible JSON string.
+    structures plus a JSON string.
 
     Args:
         source_path: Path to the COBOL source file.
@@ -125,7 +125,7 @@ def _serialize_to_json(
     trees: dict[str, ParagraphSyntaxTree],
     program_id: str,
 ) -> str:
-    """Serialize ParagraphSyntaxTree dict to ProLeap-compatible JSON."""
+    """Serialize ParagraphSyntaxTree dict to JSON."""
     paragraphs: list[dict[str, Any]] = []
     for tree in trees.values():
         para_dict: dict[str, Any] = {
@@ -161,7 +161,7 @@ def _serialize_node(node: SyntaxNode) -> dict[str, Any]:
 
 
 # ---------------------------------------------------------------------------
-# JSON → ParagraphSyntaxTree deserialization (formerly in proleap_bridge)
+# JSON → ParagraphSyntaxTree deserialization
 # ---------------------------------------------------------------------------
 
 _TYPE_MAP: dict[str, StatementType] = {
@@ -215,7 +215,7 @@ def load_ast_json(
     """Load a ``.ast`` JSON file and return AST structures.
 
     Args:
-        json_text: Raw JSON string (same format as Cobalt/ProLeap output).
+        json_text: Raw JSON string (Cobalt AST format).
 
     Returns:
         Tuple of (paragraph_name -> ParagraphSyntaxTree, full_ast_text).

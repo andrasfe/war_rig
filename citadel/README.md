@@ -39,44 +39,14 @@ For development:
 uv pip install -e ".[dev]"
 ```
 
-### ProLeap COBOL Parser (required for COBOL AST generation)
+### COBOL AST Generation
 
-Citadel uses [ProLeap](https://github.com/uwol/proleap-cobol-parser) (MIT licensed)
-for grammar-based COBOL AST generation. This requires **JDK 17+**.
-
-**Automatic setup** — the build script handles everything (downloads Maven if needed,
-clones and builds ProLeap from source, builds the fat JAR):
-
-```bash
-cd citadel/proleap-wrapper
-./build-jar.sh
-```
-
-**Manual setup** — if you already have JDK 17+ and Maven 3.6+:
-
-```bash
-# 1. Build ProLeap from source (not on Maven Central)
-git clone --depth 1 https://github.com/uwol/proleap-cobol-parser.git /tmp/proleap-cobol-parser
-mvn install -q -DskipTests -f /tmp/proleap-cobol-parser/pom.xml
-
-# 2. Build the wrapper fat JAR
-cd citadel/proleap-wrapper
-mvn package -q -DskipTests
-```
-
-The fat JAR is built at `citadel/proleap-wrapper/target/proleap-wrapper-fat.jar`.
-
-**Environment variables:**
-
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `PROLEAP_JAR_PATH` | auto-detected | Explicit path to the fat JAR |
-| `PROLEAP_JAVA_HOME` | `JAVA_HOME` / `PATH` | Path to a JDK 17+ install |
-| `PROLEAP_TIMEOUT` | `120` | Subprocess timeout in seconds |
+Citadel uses [Cobalt](../cobalt/) — a pure-Python COBOL parser — for AST generation.
+No JDK or external dependencies required.
 
 Missing copybooks (IBM MQ, CICS, DB2, or any external dependency) are handled
-automatically — the wrapper creates empty stubs at parse time so the procedure
-division structure is always extracted.
+automatically — the parser skips missing copybooks so the procedure division
+structure is always extracted.
 
 ## SDK Usage (for Agents)
 
@@ -539,20 +509,13 @@ citadel/
 │   ├── cli.py           # Command-line interface
 │   ├── orchestrator.py  # Main analysis coordinator
 │   ├── cobol/           # Structural COBOL parser + syntax tree
-│   │   ├── syntax_tree.py      # SyntaxNode/ParagraphSyntaxTree types
-│   │   └── proleap_bridge.py   # Python ↔ ProLeap subprocess bridge
+│   │   └── syntax_tree.py      # SyntaxNode/ParagraphSyntaxTree types
 │   ├── analysis/        # Graph analysis (sequence finder, dead code, flow diagrams)
 │   ├── discovery/       # File discovery
 │   ├── specs/           # Language specifications
 │   ├── parser/          # Pattern-based parsing
 │   ├── resolver/        # Reference resolution
 │   └── graph/           # Graph building and export
-├── proleap-wrapper/     # Java wrapper around ProLeap COBOL parser
-│   ├── build-jar.sh     # Auto-build script (downloads JDK/Maven if needed)
-│   ├── pom.xml          # Maven project (shade plugin → fat JAR)
-│   └── src/main/java/citadel/proleap/
-│       ├── ProLeapWrapper.java      # CLI entry point + auto-stub retry
-│       └── JsonAstSerializer.java   # ASG → JSON serialization
 └── specs/builtin/       # Built-in language specs (YAML)
 ```
 

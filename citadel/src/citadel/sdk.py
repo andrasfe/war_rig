@@ -346,7 +346,7 @@ class CobolParseResult:
     """Internal: all paragraph trees formatted as a single string."""
 
     raw_ast_json: str = field(default="", repr=False)
-    """Raw JSON output from ProLeap parser."""
+    """Raw JSON output from AST parser."""
 
     copybooks_not_found: list[str] = field(default_factory=list)
     """Copybook names referenced via COPY but not resolved."""
@@ -2106,7 +2106,7 @@ class Citadel:
         """Load a pre-generated ``.ast`` JSON file.
 
         Returns the same (paragraph_asts, full_ast) as ``parse_cobol``
-        but without invoking the ProLeap Java subprocess.
+        but from a pre-generated file rather than re-parsing.
 
         Args:
             ast_path: Path to the ``.ast`` JSON file.
@@ -2125,7 +2125,7 @@ class Citadel:
         """Return paragraph line ranges from a ``.ast`` JSON file.
 
         Extracts name, line_start, line_end, and line_count for each
-        paragraph recorded by ProLeap.  Paragraphs missing a name or
+        paragraph.  Paragraphs missing a name or
         valid line range are silently skipped.
 
         Args:

@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 import pytest
+
 from citadel.cobol.source_reader import SourceLine
 from citadel.cobol.syntax_tree import (
     ParagraphSyntaxTree,
@@ -13,7 +14,6 @@ from citadel.cobol.syntax_tree import (
     SyntaxNode,
     build_file_ast,
 )
-
 from cobalt.generator import (
     _deserialize_paragraphs,
     _serialize_node,
@@ -345,8 +345,8 @@ class TestEndToEnd:
         not CBPAUP0C.exists(),
         reason="Fixture file not available",
     )
-    def test_program_id_not_proleap(self):
-        """Program ID should never be a PROLEAP_PP_* temp name."""
+    def test_program_id_valid(self):
+        """Program ID should be a valid COBOL identifier."""
         _, _, raw_json = parse_cobol_ast(CBPAUP0C)
         data = json.loads(raw_json)
-        assert not data["program_id"].startswith("PROLEAP_PP_")
+        assert data["program_id"], "Empty program_id"

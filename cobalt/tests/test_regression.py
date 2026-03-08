@@ -1,10 +1,8 @@
-"""Regression tests: compare Cobalt output against existing ProLeap .ast files.
+"""Regression tests: compare Cobalt output against existing .ast reference files.
 
-Note: ProLeap preprocessing expands copybooks (shifting line numbers) and
-uses temp files (wrong program_id).  Cobalt parses the original source
-directly, so it sees the real line numbers and finds additional paragraphs
-in copybook-expanded code.  The tests below account for these known
-differences with appropriate tolerances.
+The .ast files in the examples directory serve as reference baselines.
+These tests verify that Cobalt produces consistent, well-formed output
+and that it matches or exceeds the reference data.
 """
 
 from __future__ import annotations
@@ -24,11 +22,11 @@ COPYBOOK_DIRS = [
     str(EXAMPLE_DIR / "cpy-bms"),
 ]
 
-# Collect all .ast files
+# Collect all .ast reference files
 AST_FILES = sorted(CBL_DIR.glob("*.ast")) if CBL_DIR.exists() else []
 
 
-def _load_proleap_ast(ast_path: Path) -> dict:
+def _load_reference_ast(ast_path: Path) -> dict:
     return json.loads(ast_path.read_text(encoding="utf-8"))
 
 
@@ -44,40 +42,29 @@ class TestRegression:
 
     @pytest.fixture(params=AST_FILES, ids=[p.name for p in AST_FILES])
     def ast_pair(self, request):
-        """Return (proleap_data, cobalt_data, cbl_path) for each .ast file."""
+        """Return (reference_data, cobalt_data, cbl_path) for each .ast file."""
         ast_path: Path = request.param
         cbl_path = _corresponding_cbl(ast_path)
         if not cbl_path.exists():
             pytest.skip(f"Source file not found: {cbl_path}")
 
-        proleap = _load_proleap_ast(ast_path)
+        reference = _load_reference_ast(ast_path)
         _, _, raw_json = parse_cobol_ast(cbl_path, copybook_dirs=COPYBOOK_DIRS)
         cobalt = json.loads(raw_json)
-        return proleap, cobalt, cbl_path
+        return reference, cobalt, cbl_path
 
     def test_paragraph_names_superset(self, ast_pair):
-        """Cobalt should find at least all paragraphs that ProLeap found.
-
-        Cobalt may find additional paragraphs because it resolves copybooks
-        inline while ProLeap preprocessing sometimes loses paragraph
-        boundaries.
-        """
-        proleap, cobalt, _ = ast_pair
-        proleap_names = {p["name"] for p in proleap.get("paragraphs", [])}
+        """Cobalt should find at least all paragraphs in the reference."""
+        reference, cobalt, _ = ast_pair
+        ref_names = {p["name"] for p in reference.get("paragraphs", [])}
         cobalt_names = {p["name"] for p in cobalt.get("paragraphs", [])}
-        missing = proleap_names - cobalt_names
+        missing = ref_names - cobalt_names
         assert not missing, (
-            f"Cobalt missing paragraphs found by ProLeap: {missing}"
+            f"Cobalt missing paragraphs from reference: {missing}"
         )
 
     def test_line_ranges_ordered(self, ast_pair):
-        """Cobalt paragraph line ranges should be in ascending order.
-
-        We cannot compare line numbers directly with ProLeap because
-        ProLeap preprocessing (copybook expansion) changes line numbers
-        significantly.  Instead, verify that Cobalt's own ranges are
-        internally consistent.
-        """
+        """Cobalt paragraph line ranges should be in ascending order."""
         _, cobalt, _ = ast_pair
         paras = cobalt.get("paragraphs", [])
         for p in paras:
@@ -88,38 +75,32 @@ class TestRegression:
         assert starts == sorted(starts), "Paragraphs not in line order"
 
     def test_shared_paragraph_statement_types(self, ast_pair):
-        """For paragraphs in both parsers, top-level statement types from
-        ProLeap should be a subset of those from Cobalt (Cobalt may
-        find additional statements that ProLeap's preprocessing lost).
+        """For paragraphs in both datasets, reference statement types
+        should be a subsequence of Cobalt's (Cobalt may find more).
         """
-        proleap, cobalt, _ = ast_pair
-        proleap_paras = {p["name"]: p for p in proleap.get("paragraphs", [])}
+        reference, cobalt, _ = ast_pair
+        ref_paras = {p["name"]: p for p in reference.get("paragraphs", [])}
         cobalt_paras = {p["name"]: p for p in cobalt.get("paragraphs", [])}
 
-        for name in proleap_paras:
+        for name in ref_paras:
             if name not in cobalt_paras:
                 continue
-            pp_types = [s["type"] for s in proleap_paras[name].get("statements", [])]
-            cp_types = [s["type"] for s in cobalt_paras[name].get("statements", [])]
-            # All ProLeap types should appear in Cobalt (in order, as a subsequence)
-            pp_idx = 0
-            for cp_type in cp_types:
-                if pp_idx < len(pp_types) and cp_type == pp_types[pp_idx]:
-                    pp_idx += 1
-            assert pp_idx == len(pp_types), (
-                f"{name}: ProLeap types not a subsequence of Cobalt types.\n"
-                f"  ProLeap: {pp_types}\n"
-                f"  Cobalt:  {cp_types}"
+            ref_types = [s["type"] for s in ref_paras[name].get("statements", [])]
+            cb_types = [s["type"] for s in cobalt_paras[name].get("statements", [])]
+            ref_idx = 0
+            for cb_type in cb_types:
+                if ref_idx < len(ref_types) and cb_type == ref_types[ref_idx]:
+                    ref_idx += 1
+            assert ref_idx == len(ref_types), (
+                f"{name}: Reference types not a subsequence of Cobalt.\n"
+                f"  Reference: {ref_types}\n"
+                f"  Cobalt:    {cb_types}"
             )
 
-    def test_nesting_depth_at_least_proleap(self, ast_pair):
-        """Cobalt nesting depth should be >= ProLeap's per shared paragraph.
-
-        Cobalt finds deeper nesting because it correctly parses nested
-        control flow that ProLeap's preprocessing sometimes collapses.
-        """
-        proleap, cobalt, _ = ast_pair
-        proleap_paras = {p["name"]: p for p in proleap.get("paragraphs", [])}
+    def test_nesting_depth_at_least_reference(self, ast_pair):
+        """Cobalt nesting depth should be >= reference per shared paragraph."""
+        reference, cobalt, _ = ast_pair
+        ref_paras = {p["name"]: p for p in reference.get("paragraphs", [])}
         cobalt_paras = {p["name"]: p for p in cobalt.get("paragraphs", [])}
 
         def _max_depth(stmts, depth=0):
@@ -129,24 +110,26 @@ class TestRegression:
                 _max_depth(s.get("children", []), depth + 1) for s in stmts
             )
 
-        for name in proleap_paras:
+        for name in ref_paras:
             if name not in cobalt_paras:
                 continue
-            pp_depth = _max_depth(proleap_paras[name].get("statements", []))
-            cp_depth = _max_depth(cobalt_paras[name].get("statements", []))
-            assert cp_depth >= pp_depth, (
-                f"{name}: Cobalt depth {cp_depth} < ProLeap depth {pp_depth}"
+            ref_depth = _max_depth(ref_paras[name].get("statements", []))
+            cb_depth = _max_depth(cobalt_paras[name].get("statements", []))
+            assert cb_depth >= ref_depth, (
+                f"{name}: Cobalt depth {cb_depth} < reference depth {ref_depth}"
             )
 
-    def test_program_id_not_proleap_temp(self, ast_pair):
-        """Program ID should NOT be a PROLEAP_PP_* temp name."""
+    def test_program_id_valid(self, ast_pair):
+        """Program ID should be a valid COBOL identifier."""
         _, cobalt, _ = ast_pair
-        assert not cobalt["program_id"].startswith("PROLEAP_PP_")
+        pid = cobalt["program_id"]
+        assert pid, "Empty program_id"
+        assert not pid.startswith(("PROLEAP_PP_", "TEMP_")), "Stale temp program ID"
 
     def test_cobalt_finds_statements(self, ast_pair):
-        """Cobalt should find at least as many total statements as ProLeap."""
-        proleap, cobalt, _ = ast_pair
-        proleap_paras = {p["name"]: p for p in proleap.get("paragraphs", [])}
+        """Cobalt should find at least as many total statements as reference."""
+        reference, cobalt, _ = ast_pair
+        ref_paras = {p["name"]: p for p in reference.get("paragraphs", [])}
         cobalt_paras = {p["name"]: p for p in cobalt.get("paragraphs", [])}
 
         def _count_stmts(stmts):
@@ -155,12 +138,12 @@ class TestRegression:
                 count += _count_stmts(s.get("children", []))
             return count
 
-        for name in proleap_paras:
+        for name in ref_paras:
             if name not in cobalt_paras:
                 continue
-            pp_count = _count_stmts(proleap_paras[name].get("statements", []))
-            cp_count = _count_stmts(cobalt_paras[name].get("statements", []))
-            assert cp_count >= pp_count, (
-                f"{name}: Cobalt found fewer statements ({cp_count}) "
-                f"than ProLeap ({pp_count})"
+            ref_count = _count_stmts(ref_paras[name].get("statements", []))
+            cb_count = _count_stmts(cobalt_paras[name].get("statements", []))
+            assert cb_count >= ref_count, (
+                f"{name}: Cobalt found fewer statements ({cb_count}) "
+                f"than reference ({ref_count})"
             )

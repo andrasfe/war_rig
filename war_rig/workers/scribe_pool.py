@@ -2848,7 +2848,7 @@ class ScribeWorker:
         source_path = Path(plan["source_path"])
         file_type = self._determine_file_type(ticket.file_name)
 
-        # When a ProLeap .ast file exists, skip Citadel body extraction and
+        # When a Cobalt .ast file exists, skip Citadel body extraction and
         # use raw source lines via the AST-accurate line ranges in the outline.
         ast_file = source_path.with_suffix(source_path.suffix + ".ast")
         has_ast = ast_file.exists()
@@ -3531,7 +3531,7 @@ class ScribeWorker:
 
         paragraph_trees: dict | None = None
 
-        # Use pre-generated .ast JSON file if it exists (avoids re-invoking ProLeap)
+        # Use pre-generated .ast JSON file if it exists (avoids re-invoking Cobalt)
         ast_file = Path(source_path).with_suffix(Path(source_path).suffix + ".ast")
         if ast_file.exists():
             paragraph_asts, full_ast_text = self._citadel.load_cobol_ast(ast_file)
@@ -3670,7 +3670,7 @@ class ScribeWorker:
                 "calls": calls,
             })
 
-        # Override outline line ranges with ProLeap AST boundaries when available
+        # Override outline line ranges with Cobalt AST boundaries when available
         ast_file = Path(source_path).with_suffix(Path(source_path).suffix + ".ast")
         if ast_file.exists():
             try:
@@ -3769,7 +3769,7 @@ class ScribeWorker:
         outline: list[dict],
         ast_ranges: list[dict],
     ) -> list[dict]:
-        """Merge ProLeap AST paragraph ranges into the regex-based outline.
+        """Merge Cobalt AST paragraph ranges into the regex-based outline.
 
         For paragraphs present in both, AST line ranges override the regex
         values.  Paragraphs found only in the AST are appended (regex
@@ -4197,7 +4197,7 @@ class ScribeWorker:
         """
         assert self._citadel is not None
 
-        # When a ProLeap .ast file exists, use line-range sizing (skip
+        # When a Cobalt .ast file exists, use line-range sizing (skip
         # get_function_bodies) — AST ranges are already merged into the outline.
         ast_file = Path(source_path).with_suffix(Path(source_path).suffix + ".ast")
         has_ast = ast_file.exists()
