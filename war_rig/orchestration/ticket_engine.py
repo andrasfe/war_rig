@@ -2612,8 +2612,25 @@ class TicketOrchestrator:
             )
 
         # Create tickets from file-level feedback (Chrome tickets)
+        # Filter out structural cross-check issues — these are KG vs doc
+        # mismatches that the Scribe cannot resolve by re-documenting.
+        _STRUCTURAL_PATTERNS = (
+            "structural cross-check",
+            "cross-check mismatch",
+            "call graph analysis",
+            "divergence between the call graph",
+            "kg has",
+            "no kg evidence",
+        )
         for file_name, chrome_tickets in review_output.file_feedback.items():
             for ticket in chrome_tickets:
+                desc_lower = ticket.description.lower()
+                if any(pat in desc_lower for pat in _STRUCTURAL_PATTERNS):
+                    logger.info(
+                        f"Filtering structural cross-check Chrome ticket "
+                        f"for {file_name}: {ticket.description[:80]}..."
+                    )
+                    continue
                 clarification_requests.append(
                     ClarificationRequest(
                         file_name=file_name,

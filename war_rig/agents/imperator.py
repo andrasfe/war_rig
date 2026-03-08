@@ -1420,6 +1420,15 @@ SATISFIED: All files meet quality standards, cross-file issues resolved, documen
 NEEDS_CLARIFICATION: Questions need to be answered before approval can be granted
 FORCED_COMPLETE: Max cycles reached, accept current state despite issues
 
+## Structural Cross-Check Findings
+
+The "Structural Cross-Check" section (if present) shows mismatches between the
+knowledge graph (built from static AST analysis) and the documentation. These are
+INFORMATIONAL ONLY — do NOT issue Chrome tickets or clarification requests for them.
+The Scribe documents what it sees in source code; it cannot change the knowledge graph.
+Structural mismatches are tracked separately and resolved outside the Scribe cycle.
+Include them in quality_notes for awareness, but never as actionable file_feedback.
+
 ## Avoiding Repetition
 
 You will be provided with previous clarification requests. Do NOT ask the same questions again.
@@ -2111,6 +2120,14 @@ You are receiving SUMMARIES only (not full documentation) to enable efficient re
 2. **Coverage**: Are all key programs documented? Are there gaps in the call chain?
 3. **Quality Indicators**: Are confidence levels appropriate? Are there unresolved questions?
 4. **Shared Resources**: Are copybooks used consistently?
+
+## Structural Cross-Check Findings
+
+The "Structural Cross-Check" section (if present) shows mismatches between the
+knowledge graph (built from static AST analysis) and the documentation. These are
+INFORMATIONAL ONLY — do NOT issue file_feedback Chrome tickets for them.
+The Scribe documents what it sees in source code; it cannot change the knowledge graph.
+Include them in quality_notes for awareness, but never as actionable file_feedback.
 
 ## Decision Criteria
 
