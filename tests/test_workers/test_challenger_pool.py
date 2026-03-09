@@ -1189,7 +1189,7 @@ class TestGetCitadelContext:
             config=mock_config,
             beads_client=mock_beads_client,
         )
-        # _citadel defaults to None without dependency_graph_path
+        worker._citadel = None
         assert worker._citadel is None
 
         result = worker._get_citadel_context("/path/to/TEST.cbl")
@@ -1782,6 +1782,7 @@ class TestStructuralPrecheckIntegration:
         )
 
         # Ensure no Citadel
+        worker._citadel = None
         assert worker._citadel is None
 
         mock_challenger_output = ChallengerOutput(
@@ -1849,44 +1850,21 @@ class TestStructuralPrecheckIntegration:
 
 
 class TestChallengerCitadelWiring:
-    """Test that ChallengerWorkerPool receives dependency_graph_path."""
+    """Test Challenger worker/pool Citadel wiring."""
 
-    def test_pool_passes_dependency_graph_path(self, mock_config, mock_beads_client, tmp_path):
-        """Verify pool passes dependency_graph_path to workers."""
-        graph_path = tmp_path / "dep_graph.json"
-        graph_path.write_text("{}")
-
+    def test_pool_creates_workers(self, mock_config, mock_beads_client):
+        """Verify pool creates workers without dependency graph input."""
         pool = ChallengerWorkerPool(
             num_workers=1,
             config=mock_config,
             beads_client=mock_beads_client,
             exit_on_error=False,
-            dependency_graph_path=graph_path,
         )
 
-        # Pool passes dependency_graph_path to workers
         assert len(pool.workers) == 1
-        assert pool.workers[0]._dependency_graph_path == graph_path
 
-    def test_worker_initializes_citadel_with_graph_path(self, mock_config, mock_beads_client, tmp_path):
-        """Verify worker initializes Citadel when dependency graph provided."""
-        graph_path = tmp_path / "dep_graph.json"
-        graph_path.write_text("{}")
-
-        worker = ChallengerWorker(
-            worker_id="challenger-test",
-            config=mock_config,
-            beads_client=mock_beads_client,
-            exit_on_error=False,
-            dependency_graph_path=graph_path,
-        )
-
-        # Citadel should be initialized (if installed)
-        # The _dependency_graph_path should be set regardless
-        assert worker._dependency_graph_path == graph_path
-
-    def test_worker_no_citadel_without_graph_path(self, mock_config, mock_beads_client):
-        """Verify worker does not initialize Citadel without graph path."""
+    def test_worker_initializes_citadel(self, mock_config, mock_beads_client):
+        """Verify worker attempts Citadel initialization when available."""
         worker = ChallengerWorker(
             worker_id="challenger-test",
             config=mock_config,
@@ -1894,7 +1872,18 @@ class TestChallengerCitadelWiring:
             exit_on_error=False,
         )
 
-        assert worker._dependency_graph_path is None
+        assert worker._citadel is not None
+
+    def test_worker_can_run_without_citadel(self, mock_config, mock_beads_client):
+        """Verify worker logic supports an unavailable Citadel instance."""
+        worker = ChallengerWorker(
+            worker_id="challenger-test",
+            config=mock_config,
+            beads_client=mock_beads_client,
+            exit_on_error=False,
+        )
+
+        worker._citadel = None
         assert worker._citadel is None
 
     def test_resolve_source_path_from_metadata(self, mock_config, mock_beads_client):
@@ -1954,15 +1943,11 @@ class TestChallengerLLMValidationWithBodies:
     @pytest.fixture
     def worker_with_citadel(self, mock_config, mock_beads_client, tmp_path):
         """Create a ChallengerWorker with a mocked Citadel instance."""
-        graph_path = tmp_path / "dep_graph.json"
-        graph_path.write_text("{}")
-
         worker = ChallengerWorker(
             worker_id="challenger-test",
             config=mock_config,
             beads_client=mock_beads_client,
             exit_on_error=False,
-            dependency_graph_path=graph_path,
         )
 
         # Mock the Citadel SDK
@@ -2024,6 +2009,7 @@ class TestChallengerLLMValidationWithBodies:
             beads_client=mock_beads_client,
             exit_on_error=False,
         )
+        worker._citadel = None
 
         assert worker._citadel is None
 

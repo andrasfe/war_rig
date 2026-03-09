@@ -63,7 +63,6 @@ from war_rig.chunking import (
 )
 from war_rig.config import WarRigConfig
 from war_rig.models.templates import (
-    CallerReference,
     DeadCodeItem,
     DocumentationTemplate,
     FileType,
@@ -212,7 +211,6 @@ class ScribeWorker:
         idle_timeout: float = 30.0,
         file_lock_manager: FileLockManager | None = None,
         exit_on_error: bool = True,
-        dependency_graph_path: Path | None = None,
         minion_pool: MinionScribePool | None = None,
         cross_file_context: CrossFileContext | None = None,
         copybook_dirs: list[Path] | None = None,
@@ -232,9 +230,6 @@ class ScribeWorker:
                 processing and skip files that are locked by other workers.
             exit_on_error: If True, raise FatalWorkerError on processing errors
                 instead of just logging. Default True.
-            dependency_graph_path: Optional path to Citadel dependency graph JSON.
-                When provided, workers can use Citadel to enrich documentation
-                with function call references and cross-file relationships.
             minion_pool: Optional shared MinionScribePool for parallel call semantics
                 processing. When provided, this pool is used instead of creating
                 a per-worker pool. This enables resource sharing across workers.
@@ -260,16 +255,15 @@ class ScribeWorker:
         # Initialize the Scribe agent
         self._scribe_agent: ScribeAgent | None = None
 
-        # Initialize Citadel SDK if dependency graph path available
+        # Initialize Citadel SDK for AST and COBOL parsing support.
         self._citadel = None
-        self._dependency_graph_path = dependency_graph_path
-        if dependency_graph_path and dependency_graph_path.exists():
-            try:
-                from citadel import Citadel
-                self._citadel = Citadel()
-                logger.debug(f"Worker {worker_id}: Citadel SDK initialized")
-            except ImportError:
-                logger.debug(f"Worker {worker_id}: Citadel SDK not available")
+        try:
+            from citadel import Citadel
+
+            self._citadel = Citadel()
+            logger.debug(f"Worker {worker_id}: Citadel SDK initialized")
+        except ImportError:
+            logger.debug(f"Worker {worker_id}: Citadel SDK not available")
 
         # Cache per-file paragraph ASTs for markdown generation and prompts
         # Keyed by file_name → dict of uppercase paragraph name → formatted AST string
@@ -278,18 +272,6 @@ class ScribeWorker:
         # Cache per-file parse results for AST-based dead code detection
         # Keyed by file_name → CobolParseResult (or None if loaded from .ast file)
         self._parse_results: dict[str, Any] = {}
-
-        # Cache callers lookup from dependency graph (keyed by "file_path:PARA_NAME")
-        # This replaces per-paragraph get_callers() calls which trigger expensive
-        # directory scans. See ticket war_rig-7831.
-        self._callers_lookup: dict[str, list[dict]] = {}
-        if dependency_graph_path and dependency_graph_path.exists():
-            self._callers_lookup = self._build_callers_lookup(dependency_graph_path)
-            if self._callers_lookup:
-                logger.debug(
-                    f"Worker {worker_id}: Built callers lookup with "
-                    f"{len(self._callers_lookup)} entries from dependency graph"
-                )
 
         # Worker state
         self._status = WorkerStatus(
@@ -356,94 +338,6 @@ class ScribeWorker:
             Current WorkerStatus with state and statistics.
         """
         return self._status
-
-    def _build_callers_lookup(
-        self, graph_path: Path
-    ) -> dict[str, list[dict]]:
-        """Build callers lookup from dependency graph.
-
-        Parses the dependency graph JSON and builds an inverted index mapping
-        each (file_path, paragraph_name) to its list of callers. This replaces
-        the expensive per-paragraph get_callers() calls which trigger full
-        directory scans.
-
-        The lookup key is "file_path:PARA_NAME" where file_path is the absolute
-        path where the paragraph is defined and PARA_NAME is uppercase.
-
-        Args:
-            graph_path: Path to the dependency_graph.json file.
-
-        Returns:
-            Dictionary mapping "file_path:PARA_NAME" to list of caller dicts.
-            Each caller dict contains: file, function, line, type.
-            Returns empty dict if graph cannot be loaded.
-        """
-        try:
-            with open(graph_path, encoding="utf-8") as f:
-                graph = json.load(f)
-        except (OSError, json.JSONDecodeError) as e:
-            logger.warning(
-                f"Worker {self.worker_id}: Failed to load dependency graph "
-                f"from {graph_path}: {e}"
-            )
-            return {}
-
-        artifacts = graph.get("artifacts", {})
-        relationships = graph.get("relationships", [])
-
-        # Build lookup: target_file_path:TARGET_NAME -> list of callers
-        lookup: dict[str, list[dict]] = {}
-
-        for rel in relationships:
-            # Skip non-call relationships (e.g., data dependencies)
-            rel_type = rel.get("relationship_type", "")
-            if rel_type not in ("performs", "calls", "includes", "invokes"):
-                continue
-
-            from_artifact_id = rel.get("from_artifact", "")
-            to_artifact_id = rel.get("to_artifact", "")
-            location = rel.get("location", {})
-
-            if not to_artifact_id:
-                continue
-
-            # Get the target artifact's definition location
-            target_artifact = artifacts.get(to_artifact_id, {})
-            target_defined_in = target_artifact.get("defined_in", {})
-            target_file = target_defined_in.get("file_path", "")
-
-            if not target_file:
-                continue
-
-            # Extract the target paragraph name from artifact ID
-            # Format: "paragraph::NAME" or "program::NAME"
-            target_name = ""
-            if "::" in to_artifact_id:
-                target_name = to_artifact_id.split("::", 1)[1]
-
-            if not target_name:
-                continue
-
-            # Build the lookup key
-            key = f"{target_file}:{target_name.upper()}"
-
-            # Extract caller function name from from_artifact_id
-            caller_name = ""
-            if "::" in from_artifact_id:
-                caller_name = from_artifact_id.split("::", 1)[1]
-
-            # Build caller entry matching get_callers() format
-            caller_entry = {
-                "file": location.get("file_path", ""),
-                "function": caller_name,
-                "line": location.get("line_start"),
-                "type": rel_type,
-            }
-
-            if caller_entry["file"]:
-                lookup.setdefault(key, []).append(caller_entry)
-
-        return lookup
 
     def _update_state(self, state: WorkerState, ticket_id: str | None = None) -> None:
         """Update worker state and record activity time.
@@ -846,29 +740,8 @@ class ScribeWorker:
                     if c.get("target")
                 ]
 
-            # Add incoming calls (callers) from cached dependency graph lookup.
-            # This replaces the expensive per-paragraph get_callers() calls which
-            # trigger full directory scans. See ticket war_rig-7831.
-            lookup_key = f"{file_path}:{para_name.upper()}"
-            callers = self._callers_lookup.get(lookup_key, [])
-
-            # Fallback: try with resolved path if direct lookup fails
-            if not callers and file_path:
-                resolved_path = str(Path(file_path).resolve())
-                if resolved_path != file_path:
-                    lookup_key = f"{resolved_path}:{para_name.upper()}"
-                    callers = self._callers_lookup.get(lookup_key, [])
-
-            para.incoming_calls = [
-                CallerReference(
-                    file=c.get("file", ""),
-                    function=c.get("function", ""),
-                    line=c.get("line"),
-                    call_type=c.get("type", "performs"),
-                )
-                for c in callers
-                if c.get("file") and c.get("function")
-            ]
+            # Incoming calls are currently not enriched in graphless mode.
+            para.incoming_calls = []
 
             # Chunk large function bodies for metadata tracking
             body = all_bodies.get(para_name)
@@ -6284,7 +6157,6 @@ class ScribeWorkerPool:
         idle_timeout: float = 30.0,
         file_lock_manager: FileLockManager | None = None,
         exit_on_error: bool | None = None,
-        dependency_graph_path: Path | None = None,
         cross_file_context: CrossFileContext | None = None,
         copybook_dirs: list[Path] | None = None,
     ):
@@ -6305,9 +6177,6 @@ class ScribeWorkerPool:
                 process tickets for the same output file.
             exit_on_error: If True, workers will raise FatalWorkerError on errors.
                 Defaults to config.exit_on_error.
-            dependency_graph_path: Optional path to Citadel dependency graph JSON.
-                When provided, workers can use the graph to understand code
-                relationships and improve documentation quality.
             cross_file_context: Optional CrossFileContext for injecting cross-file
                 relationship context. Passed through to individual workers.
             copybook_dirs: Directories to search for COBOL copybook files.
@@ -6322,7 +6191,6 @@ class ScribeWorkerPool:
         self.idle_timeout = idle_timeout
         self.file_lock_manager = file_lock_manager
         self.exit_on_error = exit_on_error if exit_on_error is not None else config.exit_on_error
-        self.dependency_graph_path = dependency_graph_path
         self.cross_file_context = cross_file_context
         self.copybook_dirs = copybook_dirs or []
 
@@ -6369,7 +6237,6 @@ class ScribeWorkerPool:
                 idle_timeout=self.idle_timeout,
                 file_lock_manager=self.file_lock_manager,
                 exit_on_error=self.exit_on_error,
-                dependency_graph_path=self.dependency_graph_path,
                 minion_pool=self._minion_pool,
                 cross_file_context=self.cross_file_context,
                 copybook_dirs=self.copybook_dirs,

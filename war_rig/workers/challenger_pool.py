@@ -149,7 +149,6 @@ class ChallengerWorker:
         upstream_active_check: Callable[[], bool] | None = None,
         file_lock_manager: FileLockManager | None = None,
         exit_on_error: bool = True,
-        dependency_graph_path: Path | None = None,
         cross_file_context: CrossFileContext | None = None,
     ):
         """Initialize the ChallengerWorker.
@@ -167,9 +166,6 @@ class ChallengerWorker:
                 processing and skip files that are locked by other workers.
             exit_on_error: If True, raise FatalWorkerError on processing errors
                 instead of just logging. Default True.
-            dependency_graph_path: Optional path to Citadel dependency graph JSON.
-                When provided, workers can use Citadel for structural pre-checks
-                comparing static analysis facts against documentation templates.
             cross_file_context: Optional CrossFileContext for injecting cross-file
                 relationship context into Challenger prompts.
         """
@@ -191,33 +187,18 @@ class ChallengerWorker:
             api_config=config.api,
         )
 
-        # Initialize Citadel SDK if dependency graph path available
+        # Initialize Citadel SDK if available.
         self._citadel = None
-        self._dependency_graph_path = dependency_graph_path
-        if dependency_graph_path and dependency_graph_path.exists():
-            try:
-                from citadel import Citadel
-                self._citadel = Citadel()
-                logger.debug(f"Worker {worker_id}: Citadel SDK initialized")
-            except ImportError:
-                logger.debug(f"Worker {worker_id}: Citadel SDK not available")
+        try:
+            from citadel import Citadel
+
+            self._citadel = Citadel()
+            logger.debug(f"Worker {worker_id}: Citadel SDK initialized")
+        except ImportError:
+            logger.debug(f"Worker {worker_id}: Citadel SDK not available")
 
         # Cache dead code detection results (keyed by normalized file path)
         self._dead_code_by_file: dict[str, list[dict[str, Any]]] = {}
-        if self._citadel and dependency_graph_path and dependency_graph_path.exists():
-            try:
-                all_dead = self._citadel.get_dead_code(str(dependency_graph_path))
-                for item in all_dead:
-                    file_key = item.get("file", "")
-                    if file_key:
-                        self._dead_code_by_file.setdefault(file_key, []).append(item)
-                if all_dead:
-                    logger.debug(
-                        f"Worker {worker_id}: Cached {len(all_dead)} dead code items "
-                        f"across {len(self._dead_code_by_file)} files"
-                    )
-            except Exception as e:
-                logger.debug(f"Worker {worker_id}: Dead code detection failed: {e}")
 
         # Per-paragraph AST cache (keyed by file path)
         self._paragraph_ast_cache: dict[str, dict[str, str]] = {}
@@ -2171,7 +2152,6 @@ class ChallengerWorkerPool:
         upstream_active_check: Callable[[], bool] | None = None,
         file_lock_manager: FileLockManager | None = None,
         exit_on_error: bool | None = None,
-        dependency_graph_path: Path | None = None,
         cross_file_context: CrossFileContext | None = None,
     ):
         """Initialize the ChallengerWorkerPool.
@@ -2192,8 +2172,6 @@ class ChallengerWorkerPool:
                 process tickets for the same output file.
             exit_on_error: If True, workers will raise FatalWorkerError on errors.
                 Defaults to config.exit_on_error.
-            dependency_graph_path: Optional path to Citadel dependency graph JSON.
-                When provided, workers can use Citadel for structural pre-checks.
             cross_file_context: Optional CrossFileContext for injecting cross-file
                 relationship context into Challenger prompts.
         """
@@ -2216,7 +2194,6 @@ class ChallengerWorkerPool:
                 upstream_active_check=upstream_active_check,
                 file_lock_manager=file_lock_manager,
                 exit_on_error=self.exit_on_error,
-                dependency_graph_path=dependency_graph_path,
                 cross_file_context=cross_file_context,
             )
             self.workers.append(worker)

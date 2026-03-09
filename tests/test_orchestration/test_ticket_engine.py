@@ -419,10 +419,8 @@ class TestTicketOrchestratorRunBatch:
         # Mock beads client to return completed tickets
         mock_beads_client.get_tickets_by_state.return_value = sample_pm_tickets
 
-        # Mock Citadel graph generation and upfront artifacts
+        # Mock upfront artifacts and worker cycle
         with patch.object(
-            orchestrator, "_generate_citadel_graph", new_callable=AsyncMock
-        ), patch.object(
             orchestrator, "_generate_upfront_artifacts"
         ), patch.object(
             orchestrator, "_run_worker_cycle", new_callable=AsyncMock
@@ -474,10 +472,8 @@ class TestTicketOrchestratorRunBatch:
         # Mock beads client
         mock_beads_client.get_tickets_by_state.return_value = sample_pm_tickets
 
-        # Mock Citadel graph generation, upfront artifacts, and worker cycles
+        # Mock upfront artifacts and worker cycles
         with patch.object(
-            orchestrator, "_generate_citadel_graph", new_callable=AsyncMock
-        ), patch.object(
             orchestrator, "_generate_upfront_artifacts"
         ), patch.object(
             orchestrator, "_run_worker_cycle", new_callable=AsyncMock
@@ -1128,12 +1124,12 @@ class TestMaxTicketRetriesExceededException:
 
 
 # =============================================================================
-# Dead Code Filtering Tests
+# System Overview Tests
 # =============================================================================
 
 
-class TestDeadCodeFiltering:
-    """Tests for dead code filtering in system overview generation."""
+class TestSystemOverviewPrograms:
+    """Tests for system overview program collection in graphless mode."""
 
     @pytest.fixture
     def doc_files_dir(self, tmp_path: Path) -> Path:
@@ -1141,7 +1137,6 @@ class TestDeadCodeFiltering:
         doc_dir = tmp_path / "output" / "final" / "programs"
         doc_dir.mkdir(parents=True)
 
-        # Create sample doc files (including one that will be dead code)
         for name in ["PROG1", "PROG2", "DEADCOPY", "PROG3"]:
             doc_file = doc_dir / f"{name}.doc.json"
             doc_file.write_text(
@@ -1155,27 +1150,14 @@ class TestDeadCodeFiltering:
 
         return doc_dir
 
-    @pytest.fixture
-    def dependency_graph_file(self, tmp_path: Path) -> Path:
-        """Create a minimal dependency graph JSON file."""
-        graph_file = tmp_path / "graph.json"
-        # Minimal graph structure that get_dead_code can parse
-        graph_file.write_text(
-            '{"artifacts": {}, "relationships": [], "unresolved": [], '
-            '"files_analyzed": []}'
-        )
-        return graph_file
-
     @pytest.mark.asyncio
-    async def test_filters_dead_code_from_overview(
+    async def test_includes_all_program_docs(
         self,
         mock_config: MagicMock,
         mock_beads_client: MagicMock,
         doc_files_dir: Path,
-        dependency_graph_file: Path,
     ) -> None:
-        """Test that dead code files are filtered from system overview."""
-        # Configure output directory to match doc_files_dir parent
+        """System overview includes all documentation files without graph filtering."""
         mock_config.output_directory = doc_files_dir.parent.parent
 
         orchestrator = TicketOrchestrator(
@@ -1183,75 +1165,6 @@ class TestDeadCodeFiltering:
             beads_client=mock_beads_client,
             use_mock=True,
         )
-
-        # Set up state with dependency graph path
-        orchestrator._state.dependency_graph_path = dependency_graph_file
-
-        # Create a SYSTEM_OVERVIEW ticket
-        overview_ticket = ProgramManagerTicket(
-            ticket_id="war_rig-overview-001",
-            ticket_type=TicketType.SYSTEM_OVERVIEW,
-            state=TicketState.CREATED,
-            file_name="SYSTEM_OVERVIEW",
-            program_id="SYSTEM_OVERVIEW",
-            cycle_number=1,
-        )
-        mock_beads_client._pm_ticket_cache = {
-            "war_rig-overview-001": overview_ticket
-        }
-
-        # Mock get_dead_code to return DEADCOPY as dead
-        with patch(
-            "war_rig.orchestration.ticket_engine.get_dead_code"
-        ) as mock_get_dead_code:
-            mock_get_dead_code.return_value = [
-                {"name": "DEADCOPY", "type": "copybook", "reason": "Never referenced"}
-            ]
-
-            # Mock the imperator to track what programs it receives
-            captured_programs = []
-
-            async def capture_overview(input_data, use_mock=False):
-                captured_programs.extend(input_data.programs)
-                from war_rig.agents.imperator import SystemOverviewOutput
-
-                return SystemOverviewOutput(
-                    success=True,
-                    markdown="# System Overview\nTest",
-                )
-
-            orchestrator.imperator.generate_system_overview = capture_overview
-
-            await orchestrator._process_system_overview()
-
-            # Verify get_dead_code was called with the graph path
-            mock_get_dead_code.assert_called_once_with(str(dependency_graph_file))
-
-            # Verify DEADCOPY was filtered out
-            program_ids = [p.program_id for p in captured_programs]
-            assert "PROG1" in program_ids
-            assert "PROG2" in program_ids
-            assert "PROG3" in program_ids
-            assert "DEADCOPY" not in program_ids
-
-    @pytest.mark.asyncio
-    async def test_no_filtering_without_dependency_graph(
-        self,
-        mock_config: MagicMock,
-        mock_beads_client: MagicMock,
-        doc_files_dir: Path,
-    ) -> None:
-        """Test that no filtering occurs when dependency graph is not available."""
-        mock_config.output_directory = doc_files_dir.parent.parent
-
-        orchestrator = TicketOrchestrator(
-            config=mock_config,
-            beads_client=mock_beads_client,
-            use_mock=True,
-        )
-
-        # No dependency graph path set
-        orchestrator._state.dependency_graph_path = None
 
         overview_ticket = ProgramManagerTicket(
             ticket_id="war_rig-overview-001",
@@ -1278,130 +1191,7 @@ class TestDeadCodeFiltering:
 
         orchestrator.imperator.generate_system_overview = capture_overview
 
-        with patch(
-            "war_rig.orchestration.ticket_engine.get_dead_code"
-        ) as mock_get_dead_code:
-            await orchestrator._process_system_overview()
+        await orchestrator._process_system_overview()
 
-            # get_dead_code should not be called when no graph path
-            mock_get_dead_code.assert_not_called()
-
-            # All programs should be included
-            program_ids = [p.program_id for p in captured_programs]
-            assert len(program_ids) == 4
-
-    @pytest.mark.asyncio
-    async def test_filtering_handles_exception_gracefully(
-        self,
-        mock_config: MagicMock,
-        mock_beads_client: MagicMock,
-        doc_files_dir: Path,
-        dependency_graph_file: Path,
-    ) -> None:
-        """Test that exceptions in dead code filtering are handled gracefully."""
-        mock_config.output_directory = doc_files_dir.parent.parent
-
-        orchestrator = TicketOrchestrator(
-            config=mock_config,
-            beads_client=mock_beads_client,
-            use_mock=True,
-        )
-
-        orchestrator._state.dependency_graph_path = dependency_graph_file
-
-        overview_ticket = ProgramManagerTicket(
-            ticket_id="war_rig-overview-001",
-            ticket_type=TicketType.SYSTEM_OVERVIEW,
-            state=TicketState.CREATED,
-            file_name="SYSTEM_OVERVIEW",
-            program_id="SYSTEM_OVERVIEW",
-            cycle_number=1,
-        )
-        mock_beads_client._pm_ticket_cache = {
-            "war_rig-overview-001": overview_ticket
-        }
-
-        captured_programs = []
-
-        async def capture_overview(input_data, use_mock=False):
-            captured_programs.extend(input_data.programs)
-            from war_rig.agents.imperator import SystemOverviewOutput
-
-            return SystemOverviewOutput(
-                success=True,
-                markdown="# System Overview\nTest",
-            )
-
-        orchestrator.imperator.generate_system_overview = capture_overview
-
-        with patch(
-            "war_rig.orchestration.ticket_engine.get_dead_code"
-        ) as mock_get_dead_code:
-            # Simulate an error in get_dead_code
-            mock_get_dead_code.side_effect = ValueError("Invalid graph format")
-
-            # Should not raise, just log warning and continue
-            await orchestrator._process_system_overview()
-
-            # All programs should still be included when filtering fails
-            program_ids = [p.program_id for p in captured_programs]
-            assert len(program_ids) == 4
-
-    @pytest.mark.asyncio
-    async def test_filtering_case_insensitive(
-        self,
-        mock_config: MagicMock,
-        mock_beads_client: MagicMock,
-        doc_files_dir: Path,
-        dependency_graph_file: Path,
-    ) -> None:
-        """Test that dead code matching is case-insensitive."""
-        mock_config.output_directory = doc_files_dir.parent.parent
-
-        orchestrator = TicketOrchestrator(
-            config=mock_config,
-            beads_client=mock_beads_client,
-            use_mock=True,
-        )
-
-        orchestrator._state.dependency_graph_path = dependency_graph_file
-
-        overview_ticket = ProgramManagerTicket(
-            ticket_id="war_rig-overview-001",
-            ticket_type=TicketType.SYSTEM_OVERVIEW,
-            state=TicketState.CREATED,
-            file_name="SYSTEM_OVERVIEW",
-            program_id="SYSTEM_OVERVIEW",
-            cycle_number=1,
-        )
-        mock_beads_client._pm_ticket_cache = {
-            "war_rig-overview-001": overview_ticket
-        }
-
-        captured_programs = []
-
-        async def capture_overview(input_data, use_mock=False):
-            captured_programs.extend(input_data.programs)
-            from war_rig.agents.imperator import SystemOverviewOutput
-
-            return SystemOverviewOutput(
-                success=True,
-                markdown="# System Overview\nTest",
-            )
-
-        orchestrator.imperator.generate_system_overview = capture_overview
-
-        with patch(
-            "war_rig.orchestration.ticket_engine.get_dead_code"
-        ) as mock_get_dead_code:
-            # Return dead code with lowercase name (file is DEADCOPY)
-            mock_get_dead_code.return_value = [
-                {"name": "deadcopy", "type": "copybook", "reason": "Never referenced"}
-            ]
-
-            await orchestrator._process_system_overview()
-
-            # DEADCOPY should still be filtered despite case mismatch
-            program_ids = [p.program_id for p in captured_programs]
-            assert "DEADCOPY" not in program_ids
-            assert len(program_ids) == 3
+        program_ids = [p.program_id for p in captured_programs]
+        assert set(program_ids) == {"PROG1", "PROG2", "DEADCOPY", "PROG3"}
