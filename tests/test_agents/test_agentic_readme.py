@@ -122,7 +122,7 @@ class TestAgenticReadmeConfig:
         config = AgenticReadmeConfig()
         assert config.max_iterations_per_section == 10
         assert config.temperature == 0.3
-        assert config.max_tokens == 4096
+        assert config.max_tokens == 16384
         assert config.use_minion is True
         assert config.merge_pass_enabled is True
 
@@ -292,9 +292,9 @@ class TestAgenticReadmeGenerator:
             nonlocal call_count
             call_count += 1
             result = MagicMock()
-            if "Review and clean up" in prompt:
-                # Merge pass - return something substantial
-                result.content = "# System Design Document\n\n" + "Merged content.\n" * 50
+            if "Review the complete README" in prompt:
+                # Merge pass - return edit instructions
+                result.content = "NONE"
             else:
                 result.content = f"## Section {call_count}\n\nContent.\n"
             result.tool_calls_made = 0

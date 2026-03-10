@@ -354,7 +354,7 @@ class AgenticReadmeConfig:
 
     max_iterations_per_section: int = 10
     temperature: float = 0.3
-    max_tokens: int = 4096
+    max_tokens: int = 16384
     use_minion: bool = True
     merge_pass_enabled: bool = True
 
@@ -616,6 +616,9 @@ class AgenticReadmeGenerator:
     ) -> str:
         """Generate one section via SDK.complete().
 
+        If the response appears truncated (ends mid-sentence or mid-table),
+        sends a continuation prompt to get the rest.
+
         Args:
             sdk: The CodeWhisper SDK instance.
             section: The section definition.
@@ -634,7 +637,60 @@ class AgenticReadmeGenerator:
             result.iterations,
         )
 
+        # Check for truncation and continue if needed (up to 2 continuations)
+        for attempt in range(2):
+            if not self._looks_truncated(content):
+                break
+            logger.info(
+                "Section %d appears truncated (%d chars), requesting continuation",
+                section.number,
+                len(content),
+            )
+            cont_result = await sdk.complete(
+                "Your previous response was cut off. Continue EXACTLY where "
+                "you left off — do NOT repeat what you already wrote. "
+                "Output ONLY the remaining content."
+            )
+            continuation = _strip_markdown_fences(cont_result.content.strip())
+            if continuation:
+                content = content + "\n" + continuation
+
         return content
+
+    @staticmethod
+    def _looks_truncated(text: str) -> bool:
+        """Heuristic check for truncated LLM output.
+
+        Returns True if the text appears to end mid-sentence, mid-table
+        row, or mid-list item.
+        """
+        if not text:
+            return False
+
+        stripped = text.rstrip()
+        if not stripped:
+            return False
+
+        last_line = stripped.rsplit("\n", 1)[-1].strip()
+
+        # Ends mid-table row (has | but doesn't end with |)
+        if "|" in last_line and not last_line.endswith("|"):
+            return True
+
+        # Ends with a comma, colon, or opening bracket (mid-sentence)
+        if last_line[-1] in (",", ":", "(", "["):
+            return True
+
+        # Ends mid-word (last line has no sentence-ending punctuation and
+        # doesn't look like a header, list item, or code block)
+        if (
+            not last_line.endswith((".", "!", "?", "```", "|", "*"))
+            and not last_line.startswith(("#", "-", "*", ">", "|", "```"))
+            and len(last_line) > 20
+        ):
+            return True
+
+        return False
 
     async def _merge_sections(
         self,
@@ -643,6 +699,10 @@ class AgenticReadmeGenerator:
         structural_context: StructuralContext,
     ) -> str:
         """Run a merge pass to fix cross-references and deduplication.
+
+        Instead of asking the LLM to re-output the entire document (which
+        fails for large programs due to token limits), this asks for a
+        compact list of find/replace edits.
 
         Args:
             sdk: The CodeWhisper SDK instance (continuing conversation).
@@ -653,33 +713,51 @@ class AgenticReadmeGenerator:
             The merged/cleaned markdown.
         """
         merge_prompt = """\
-Review and clean up the complete README document assembled from all sections above.
+Review the complete README document assembled from all sections above.
 
-Fix the following issues:
-1. **Cross-references**: Ensure all section cross-references (e.g., "see Section 5")
-   point to correct section numbers and names
-2. **Deduplication**: Remove redundant content that appears in multiple sections
-3. **Link consistency**: Ensure all component links use consistent paths from the
-   documentation file paths table
-4. **Flow**: Ensure smooth transitions between sections
-5. **Missing links**: Add documentation links for any component mentioned without one
+Identify issues in these categories:
+1. **Cross-references**: Section cross-references pointing to wrong numbers
+2. **Broken links**: Component links that don't match the documentation file paths table
+3. **Deduplication**: Paragraphs repeated verbatim across sections
 
-Output the COMPLETE cleaned-up README.md document.
-Do NOT summarize or truncate — output the full document."""
+For each issue found, output a JSON edit in this exact format (one per line):
+
+{"find": "exact text to find", "replace": "corrected text"}
+
+Rules:
+- Output ONLY the JSON edit lines, nothing else
+- "find" must be an EXACT substring of the current document
+- Keep edits minimal — fix only the broken part, not whole paragraphs
+- If no issues found, output: NONE"""
 
         result = await sdk.complete(merge_prompt)
-        merged = _strip_markdown_fences(result.content.strip())
+        response = result.content.strip()
 
-        # Only use merged version if it's substantial (not a summary)
-        if len(merged) > len(assembled_markdown) * 0.5:
-            return merged
+        if response == "NONE" or not response:
+            logger.info("Merge pass: no edits needed")
+            return assembled_markdown
 
-        logger.warning(
-            "Merge pass output too short (%d vs %d chars), keeping original",
-            len(merged),
-            len(assembled_markdown),
-        )
-        return assembled_markdown
+        # Apply edits
+        import json as _json
+
+        merged = assembled_markdown
+        edits_applied = 0
+        for line in response.splitlines():
+            line = line.strip()
+            if not line or not line.startswith("{"):
+                continue
+            try:
+                edit = _json.loads(line)
+                find_text = edit.get("find", "")
+                replace_text = edit.get("replace", "")
+                if find_text and find_text in merged:
+                    merged = merged.replace(find_text, replace_text, 1)
+                    edits_applied += 1
+            except (_json.JSONDecodeError, AttributeError):
+                continue
+
+        logger.info("Merge pass: applied %d edits", edits_applied)
+        return merged
 
     def _assemble_document(
         self,
