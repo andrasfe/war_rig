@@ -910,11 +910,21 @@ def generate_readme(
     if programs_dir.exists():
         doc_count = len(list(programs_dir.glob("*.json")))
     else:
-        # Check type-organized structure
-        for subdir in ["cbl", "cpy", "ims", "jcl", "bms", "ddl", "asm", "pli"]:
+        # Check type-organized structure (including nested project dirs)
+        for subdir in ["cbl", "cpy", "ims", "jcl", "bms", "ddl", "asm", "pli", "src"]:
             type_dir = output_dir / subdir
             if type_dir.exists():
                 doc_count += len(list(type_dir.glob("*.doc.json")))
+            # Also check one level deeper (output/XYZ/cbl/, output/XYZ/cpy/, etc.)
+            for nested in output_dir.iterdir():
+                if nested.is_dir():
+                    nested_type = nested / subdir
+                    if nested_type.exists():
+                        doc_count += len(list(nested_type.glob("*.doc.json")))
+
+    # Fallback: recursive search
+    if doc_count == 0:
+        doc_count = len(list(output_dir.rglob("*.doc.json")))
 
     if doc_count == 0:
         console.print(f"[red]No documentation found in {output_dir}[/red]")
@@ -1226,21 +1236,29 @@ def _generate_readme_internal(
         doc_files = list(programs_dir.glob("*.doc.json")) + list(programs_dir.glob("*.json"))
     else:
         # Try type-organized structure (cbl/, cpy/, ims/, jcl/, etc.)
-        for subdir in ["cbl", "cpy", "ims", "jcl", "bms", "ddl", "asm", "pli"]:
+        # Also check one level deeper for nested project dirs (output/XYZ/cbl/)
+        _type_subdirs = ["cbl", "cpy", "ims", "jcl", "bms", "ddl", "asm", "pli", "src"]
+        for subdir in _type_subdirs:
             type_dir = output_dir / subdir
             if type_dir.exists():
                 doc_files.extend(type_dir.glob("*.doc.json"))
+        for nested in output_dir.iterdir():
+            if nested.is_dir() and nested.name not in ("final", "cache", "chunks"):
+                for subdir in _type_subdirs:
+                    nested_type = nested / subdir
+                    if nested_type.exists():
+                        doc_files.extend(nested_type.glob("*.doc.json"))
 
-        # Also check root for flat structure
+        # Fallback: recursive search
         if not doc_files:
-            doc_files = list(output_dir.glob("*.doc.json"))
+            doc_files = list(output_dir.rglob("*.doc.json"))
 
     if not doc_files:
         raise FileNotFoundError(
             f"No documentation found. Checked:\n"
             f"  - {output_dir}/final/programs/\n"
-            f"  - {output_dir}/cbl/, cpy/, ims/, jcl/, etc.\n"
-            f"  - {output_dir}/*.doc.json"
+            f"  - {output_dir}/**/{{cbl,cpy,ims,jcl,...}}/*.doc.json\n"
+            f"  - {output_dir}/**/*.doc.json"
         )
 
     # Collect file documentation
