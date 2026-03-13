@@ -67,11 +67,12 @@ def is_stub_paragraph(paragraph) -> bool:
     return False
 
 
-def analyze_file(doc_path: Path) -> dict:
+def analyze_file(doc_path: Path, output_dir: Path) -> dict:
     """Analyze a .doc.json file for stub paragraphs.
 
     Args:
         doc_path: Path to the .doc.json file.
+        output_dir: Root output directory (to compute relative paths).
 
     Returns:
         Dict with analysis results.
@@ -94,13 +95,19 @@ def analyze_file(doc_path: Path) -> dict:
             else:
                 documented.append(name)
 
+        # Derive file_name as the path the scribe uses:
+        # e.g. output/cbl/PROG.cbl.doc.json -> cbl/PROG.cbl
+        rel = doc_path.relative_to(output_dir)
+        # Strip .doc.json suffix -> cbl/PROG.cbl
+        file_name = str(rel).replace(".doc.json", "")
+
         return {
             'path': doc_path,
             'total_paragraphs': total,
             'stub_count': len(stubs),
             'documented_count': len(documented),
             'stub_names': stubs,
-            'file_name': doc_path.stem.replace('.doc', ''),
+            'file_name': file_name,
             'needs_fix': len(stubs) > 0,
         }
     except Exception as e:
@@ -127,7 +134,7 @@ def find_files_with_stubs(output_dir: Path, verbose: bool = False) -> list[dict]
         if ".bak" in str(doc_path):
             continue
 
-        analysis = analyze_file(doc_path)
+        analysis = analyze_file(doc_path, output_dir)
 
         if 'error' in analysis:
             print(f"Error reading {doc_path}: {analysis['error']}", file=sys.stderr)
@@ -146,8 +153,50 @@ def find_files_with_stubs(output_dir: Path, verbose: bool = False) -> list[dict]
     return results
 
 
-def create_redoc_tickets(files_to_fix: list[dict], input_dir: Path, dry_run: bool = False) -> int:
+def find_source_file(file_name: str, input_dir: Path) -> Path | None:
+    """Locate the COBOL source file for a given file_name.
+
+    Args:
+        file_name: Relative file name (e.g. cbl/PROG.cbl).
+        input_dir: Root directory to search.
+
+    Returns:
+        Path to the source file if found.
+    """
+    # Direct match (file_name might include subdir like cbl/PROG.cbl)
+    candidate = input_dir / file_name
+    if candidate.exists():
+        return candidate
+
+    # Try just the basename
+    basename = Path(file_name).name
+    candidate = input_dir / basename
+    if candidate.exists():
+        return candidate
+
+    # Recursive search
+    for candidate in input_dir.rglob(basename):
+        if candidate.is_file():
+            return candidate
+
+    # Case-insensitive recursive search
+    basename_upper = basename.upper()
+    for candidate in input_dir.rglob("*"):
+        if candidate.is_file() and candidate.name.upper() == basename_upper:
+            return candidate
+
+    return None
+
+
+def create_redoc_tickets(
+    files_to_fix: list[dict],
+    input_dir: Path,
+    dry_run: bool = False,
+) -> int:
     """Create re-documentation tickets for files with stubs.
+
+    Leaves .doc.json intact so the scribe resume path can detect the
+    stubs and re-process only those paragraphs.
 
     Args:
         files_to_fix: List of file analysis results.
@@ -174,22 +223,8 @@ def create_redoc_tickets(files_to_fix: list[dict], input_dir: Path, dry_run: boo
 
     for f in files_to_fix:
         file_name = f['file_name']
-        doc_path = f['path']
 
-        # Try to find the source file
-        source_path = None
-        for ext in ['', '.cbl', '.cob', '.CBL', '.COB']:
-            candidate = input_dir / (file_name.replace('.cbl', '').replace('.CBL', '') + ext)
-            if candidate.exists():
-                source_path = candidate
-                break
-
-        # Also search recursively
-        if not source_path:
-            for candidate in input_dir.rglob(f"*{file_name}*"):
-                if candidate.is_file() and candidate.suffix.lower() in ['.cbl', '.cob', '.cobol']:
-                    source_path = candidate
-                    break
+        source_path = find_source_file(file_name, input_dir)
 
         metadata = {
             'stub_paragraphs': f['stub_names'],
@@ -199,20 +234,25 @@ def create_redoc_tickets(files_to_fix: list[dict], input_dir: Path, dry_run: boo
 
         if source_path:
             metadata['file_path'] = str(source_path)
+        else:
+            print(f"  Warning: Source file not found for {file_name}", file=sys.stderr)
+
+        program_id = Path(file_name).stem.split('.')[0].upper()
 
         try:
-            # Keep .doc.json intact — the stubs are already there and the
-            # scribe resume path needs them to know which paragraphs to redo.
             ticket = client.create_pm_ticket(
                 ticket_type=TicketType.DOCUMENTATION,
                 file_name=file_name,
-                program_id=file_name.split('.')[0].upper(),
+                program_id=program_id,
                 cycle_number=1,
                 priority=BeadsPriority.HIGH,
                 metadata=metadata,
             )
-            print(f"Created ticket {ticket.ticket_id} for {file_name} ({f['stub_count']} stubs)")
-            created += 1
+            if ticket:
+                print(f"Created ticket {ticket.ticket_id} for {file_name} ({f['stub_count']} stubs)")
+                created += 1
+            else:
+                print(f"  Warning: Failed to create ticket for {file_name}", file=sys.stderr)
         except Exception as e:
             print(f"Error creating ticket for {file_name}: {e}", file=sys.stderr)
 
@@ -235,7 +275,7 @@ def main():
         "--input-dir",
         type=Path,
         default=None,
-        help="Directory containing source files (for ticket metadata)",
+        help="Directory containing COBOL source files (for finding source paths)",
     )
     parser.add_argument(
         "--dry-run",
@@ -281,10 +321,10 @@ def main():
     input_dir = args.input_dir or args.output_dir.parent
     print(f"\nCreating re-documentation tickets (input_dir: {input_dir})...")
 
-    created = create_redoc_tickets(files_with_stubs, input_dir, dry_run=args.dry_run)
+    created = create_redoc_tickets(files_to_fix=files_with_stubs, input_dir=input_dir, dry_run=args.dry_run)
 
     if not args.dry_run:
-        print(f"\nCreated {created} tickets. Run the scribe pool to process them.")
+        print(f"\nCreated {created} tickets. Run with --no-new-tickets to process them.")
 
 
 if __name__ == "__main__":

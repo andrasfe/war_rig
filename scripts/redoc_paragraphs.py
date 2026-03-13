@@ -134,12 +134,31 @@ def mark_as_stubs(
     return modified
 
 
-def create_ticket(file_name: str, para_names: list[str]) -> str | None:
-    """Create a DOCUMENTATION ticket for the file."""
+def create_ticket(
+    file_name: str,
+    para_names: list[str],
+    source_path: Path | None = None,
+) -> str | None:
+    """Create a DOCUMENTATION ticket for the file.
+
+    Args:
+        file_name: Relative file name as the scribe expects it
+            (e.g. ``cbl/COPAUA0C.cbl``).
+        para_names: Paragraph names to re-document.
+        source_path: Optional resolved path to the source file.
+    """
     from war_rig.beads import BeadsClient, BeadsPriority, TicketType
 
     client = BeadsClient()
-    program_id = file_name.split(".")[0].upper()
+    program_id = Path(file_name).stem.split(".")[0].upper()
+
+    metadata: dict = {
+        "stub_paragraphs": para_names,
+        "stub_count": len(para_names),
+        "redocumentation": True,
+    }
+    if source_path:
+        metadata["file_path"] = str(source_path)
 
     ticket = client.create_pm_ticket(
         ticket_type=TicketType.DOCUMENTATION,
@@ -147,11 +166,7 @@ def create_ticket(file_name: str, para_names: list[str]) -> str | None:
         program_id=program_id,
         cycle_number=1,
         priority=BeadsPriority.HIGH,
-        metadata={
-            "stub_paragraphs": para_names,
-            "stub_count": len(para_names),
-            "redocumentation": True,
-        },
+        metadata=metadata,
     )
     return ticket.ticket_id if ticket else None
 
@@ -249,19 +264,23 @@ def main() -> None:
         else:
             print("No paragraphs modified.")
 
+    # Derive scribe-compatible file_name from .doc.json path
+    # e.g. output/cbl/PROG.cbl.doc.json -> cbl/PROG.cbl
+    rel_file_name = str(doc_json.relative_to(args.output_dir)).replace(".doc.json", "")
+
     # Create ticket
     if args.ticket and not args.dry_run:
-        ticket_id = create_ticket(file_name, args.paragraphs)
+        ticket_id = create_ticket(rel_file_name, args.paragraphs)
         if ticket_id:
             print(f"Created ticket: {ticket_id}")
         else:
             print("Warning: Failed to create ticket", file=sys.stderr)
     elif args.ticket and args.dry_run:
-        print(f"{prefix}Would create DOCUMENTATION ticket for {file_name}")
+        print(f"{prefix}Would create DOCUMENTATION ticket for {rel_file_name}")
 
     if modified and not args.dry_run and not args.ticket:
         print(f"\nRun with --ticket to create a ticket, or rerun:")
-        print(f"  war-rig run --file {file_name}")
+        print(f"  war-rig run --file {rel_file_name}")
 
 
 if __name__ == "__main__":
