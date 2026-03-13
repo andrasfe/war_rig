@@ -201,12 +201,8 @@ def create_redoc_tickets(files_to_fix: list[dict], input_dir: Path, dry_run: boo
             metadata['file_path'] = str(source_path)
 
         try:
-            # Delete the existing doc file so it gets regenerated fresh
-            doc_path.unlink()
-            md_path = doc_path.with_suffix('').with_suffix('.md')
-            if md_path.exists():
-                md_path.unlink()
-
+            # Keep .doc.json intact — the stubs are already there and the
+            # scribe resume path needs them to know which paragraphs to redo.
             ticket = client.create_pm_ticket(
                 ticket_type=TicketType.DOCUMENTATION,
                 file_name=file_name,
