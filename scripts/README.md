@@ -50,6 +50,27 @@ Check status of War Rig processing jobs.
 ### `validate_cobol_analysis_patterns.py`
 Validate COBOL analysis patterns against test cases.
 
+### `redoc_paragraphs.py`
+Re-document specific paragraphs in a COBOL program by name.
+
+Marks named paragraphs as stubs in the `.doc.json` so the scribe resume path re-processes only those paragraphs on the next run. Optionally creates a DOCUMENTATION ticket for `--no-new-tickets` batch runs.
+
+```bash
+# List all paragraphs and their status
+python scripts/redoc_paragraphs.py COPAUA0C.cbl -o ./output --list
+
+# Mark specific paragraphs for re-documentation (dry run)
+python scripts/redoc_paragraphs.py COPAUA0C.cbl -o ./output \
+    -p MAIN-PARA -p 6000-MAKE-DECISION --dry-run
+
+# Mark paragraphs and create a ticket
+python scripts/redoc_paragraphs.py COPAUA0C.cbl -o ./output \
+    -p MAIN-PARA -p 6000-MAKE-DECISION --ticket
+
+# Then rerun without creating new tickets
+war-rig run --no-new-tickets
+```
+
 ## Ticket Management
 
 ### `ticket_manager.py`
@@ -104,7 +125,20 @@ Kill running worker processes.
    # Then run the scribe pool
    ```
 
-3. **Reprocess a single file**:
+3. **Re-document specific paragraphs**:
+   ```bash
+   # See which paragraphs exist
+   python scripts/redoc_paragraphs.py FILE.cbl -o ./output --list
+
+   # Mark bad paragraphs as stubs and create a ticket
+   python scripts/redoc_paragraphs.py FILE.cbl -o ./output \
+       -p PARA-NAME -p OTHER-PARA --ticket
+
+   # Rerun (only the stubbed paragraphs get re-processed)
+   war-rig run --no-new-tickets
+   ```
+
+4. **Reprocess a single file**:
    ```bash
    # Delete the doc file
    rm output/path/to/FILE.cbl.doc.json
