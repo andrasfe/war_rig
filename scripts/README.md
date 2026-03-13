@@ -33,7 +33,7 @@ python scripts/fix_stub_paragraphs.py --output-dir ./output --report-only
 python scripts/fix_stub_paragraphs.py --output-dir ./output --dry-run
 
 # Create tickets to re-document files with stubs
-python scripts/fix_stub_paragraphs.py --output-dir ./output --input-dir ./source
+python scripts/fix_stub_paragraphs.py --output-dir ./output --input-dir ./input
 ```
 
 ## Analysis & Reporting
@@ -120,8 +120,8 @@ Kill running worker processes.
    # Check which files need fixing
    python scripts/fix_stub_paragraphs.py --output-dir ./output --report-only
 
-   # Create tickets and reprocess
-   python scripts/fix_stub_paragraphs.py --output-dir ./output --input-dir ./source
+   # Create tickets and reprocess (--input-dir points to the COBOL source)
+   python scripts/fix_stub_paragraphs.py --output-dir ./output --input-dir ./input
    # Then run the scribe pool
    ```
 
