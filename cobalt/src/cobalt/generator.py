@@ -63,6 +63,7 @@ def parse_cobol_ast(
         para_source_lines[para.name] = [
             ln for ln in source.lines
             if para.line_start <= ln.line_number <= para.line_end
+            and not ln.copybook_source
         ]
 
     program_id = _extract_program_id(source)

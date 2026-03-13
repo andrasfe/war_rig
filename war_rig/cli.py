@@ -1215,12 +1215,11 @@ def _generate_readme_internal(
     """
     import json
 
-    from war_rig.agents.imperator import (
-        FileDocumentation,
-        HolisticReviewInput,
-        ImperatorAgent,
+    from war_rig.agents.agentic_readme import (
+        AgenticReadmeGenerator,
+        StructuralContext,
     )
-    from war_rig.models.assessments import ConfidenceLevel
+    from war_rig.agents.imperator import FileDocumentation
     from war_rig.models.templates import DocumentationTemplate
 
     output_dir = cfg.output_directory
@@ -1263,7 +1262,6 @@ def _generate_readme_internal(
 
     # Collect file documentation
     file_docs: list[FileDocumentation] = []
-    per_file_confidence: dict[str, ConfidenceLevel] = {}
 
     # Deduplicate by stem
     seen_stems: set[str] = set()
@@ -1300,7 +1298,6 @@ def _generate_readme_internal(
                     iteration_count=header.get("iteration_count", 1),
                 )
             )
-            per_file_confidence[file_name] = ConfidenceLevel.MEDIUM
 
         except Exception as e:
             console.print(f"[yellow]Warning: Skipping {doc_file.name}: {e}[/yellow]")
@@ -1390,44 +1387,57 @@ def _generate_readme_internal(
         except Exception as e:
             console.print(f"[yellow]Warning: Sequence diagram generation failed: {e}[/yellow]")
 
-    # Build HolisticReviewInput
-    review_input = HolisticReviewInput(
-        batch_id="cli-readme",
-        cycle=1,
-        file_documentation=file_docs,
+    # Build doc path table for structural context
+    doc_path_rows = ["| Component | Type | Doc Path |", "|---|---|---|"]
+    for fd in file_docs:
+        ext = Path(fd.file_name).suffix.lstrip(".").upper() or "SRC"
+        doc_path_rows.append(f"| {fd.program_id} | {ext} | `{fd.file_name}.md` |")
+    doc_path_table = "\n".join(doc_path_rows)
+
+    # Identify entry points (programs that are never called by others)
+    all_called: set[str] = set()
+    for targets in call_graph.values():
+        all_called.update(targets)
+    entry_points = [
+        fd.program_id for fd in file_docs
+        if fd.program_id not in all_called
+    ]
+
+    # Build call chains (simple: entry_point → direct callees)
+    call_chains: list[list[str]] = []
+    for ep in entry_points[:5]:
+        if ep in call_graph:
+            for target in call_graph[ep][:3]:
+                chain = [ep, target]
+                # Extend one more level
+                if target in call_graph:
+                    chain.append(call_graph[target][0])
+                call_chains.append(chain)
+
+    # Build structural context for agentic generation
+    structural_context = StructuralContext(
+        call_graph_mermaid=call_graph_markdown or "",
+        entry_points=entry_points,
+        call_chains=call_chains,
         shared_copybooks=shared_copybooks,
-        call_graph=call_graph,
-        call_graph_markdown=call_graph_markdown,
-        data_flow=data_flow,
-        per_file_confidence=per_file_confidence,
-        per_file_issues={},
-        previous_clarification_requests=[],
-        previous_chrome_tickets=[],
-        resolution_status={},
-        max_cycles=5,
+        doc_path_table=doc_path_table,
     )
 
-    # Generate README using Imperator
-    imperator = ImperatorAgent(
-        config=cfg.imperator,
-        api_config=cfg.api,
+    # Generate README using agentic path (incremental sections via tool calls)
+    generator = AgenticReadmeGenerator(
+        code_dir=source_dir or output_dir,
+        skills_dir=output_dir,
     )
 
-    # Check for existing README to enhance
-    existing_readme: str | None = None
+    console.print(
+        f"[dim]Generating README with agentic path "
+        f"({len(file_docs)} components, {len(entry_points)} entry points)[/dim]"
+    )
+
     readme_path = output_dir / "README.md"
-    if readme_path.exists():
-        try:
-            existing_readme = readme_path.read_text(encoding="utf-8")
-            console.print("[dim]Found existing README.md - will enhance[/dim]")
-        except Exception:
-            pass
-
     result = asyncio.run(
-        imperator.generate_system_design(
-            review_input,
-            existing_content=existing_readme,
-            use_mock=mock,
+        generator.generate(
+            structural_context,
             sequence_diagrams=sequence_diagrams if sequence_diagrams else None,
         )
     )

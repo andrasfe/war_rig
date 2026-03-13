@@ -260,8 +260,6 @@ class SyntaxNode:
         connector = "" if is_root else ("└── " if is_last else "├── ")
         label = self.node_type.value
         text = self.source_text
-        if len(text) > 72:
-            text = text[:69] + "..."
         if text:
             line = f"{prefix}{connector}{label}: {text}"
         else:

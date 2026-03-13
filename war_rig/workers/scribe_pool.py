@@ -4521,6 +4521,24 @@ class ScribeWorker:
                     )
                     continue
 
+                # Truncate very long bodies to avoid overwhelming the LLM.
+                # Keep the first and last portions so the LLM can still
+                # understand the paragraph's purpose and flow.
+                max_body_chars = int(
+                    (self.config.scribe.max_prompt_tokens - 6000) * 3.5
+                )
+                if len(body) > max_body_chars:
+                    half = max_body_chars // 2
+                    body = (
+                        body[:half]
+                        + f"\n      *> ... ({len(body) - max_body_chars} chars omitted) ...\n"
+                        + body[-half:]
+                    )
+                    logger.info(
+                        f"Worker {self.worker_id}: Truncated body for {name} "
+                        f"to ~{max_body_chars} chars for solo retry"
+                    )
+
                 try:
                     solo_input = ScribeInput(
                         source_code=body,
