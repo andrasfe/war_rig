@@ -215,14 +215,21 @@ def create_redoc_tickets(
         return 0
 
     try:
-        from war_rig.beads import BeadsPriority, TicketType, get_beads_client
+        from war_rig.beads import BeadsClient, BeadsPriority, TicketType
     except ImportError:
         print("Error: Could not import beads. Make sure war_rig is installed.", file=sys.stderr)
         return 0
 
-    client = get_beads_client(
-        tickets_file=output_dir / ".war_rig_tickets.json",
-    )
+    tickets_file = output_dir / ".war_rig_tickets.json"
+    if not tickets_file.exists():
+        print(
+            f"Error: No tickets file at {tickets_file} — was the orchestrator "
+            f"run against this output directory?",
+            file=sys.stderr,
+        )
+        return 0
+
+    client = BeadsClient(tickets_file=tickets_file)
     created = 0
 
     for f in files_to_fix:

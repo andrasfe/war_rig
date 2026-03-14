@@ -149,11 +149,16 @@ def create_ticket(
         output_dir: Output directory (tickets file written here).
         source_path: Optional resolved path to the source file.
     """
-    from war_rig.beads import BeadsPriority, TicketType, get_beads_client
+    from war_rig.beads import BeadsClient, BeadsPriority, TicketType
 
-    client = get_beads_client(
-        tickets_file=output_dir / ".war_rig_tickets.json",
-    )
+    tickets_file = output_dir / ".war_rig_tickets.json"
+    if not tickets_file.exists():
+        raise FileNotFoundError(
+            f"No tickets file at {tickets_file} — was the orchestrator "
+            f"run against this output directory?"
+        )
+
+    client = BeadsClient(tickets_file=tickets_file)
     program_id = Path(file_name).stem.split(".")[0].upper()
 
     metadata: dict = {
