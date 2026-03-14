@@ -1033,6 +1033,7 @@ class ScribeWorker:
         self,
         scribe_input: ScribeInput,
         max_reductions: int = 7,
+        paragraph_bodies: dict[str, str] | None = None,
     ) -> ScribeOutput:
         """Invoke ScribeAgent after validating prompt size.
 
@@ -1081,6 +1082,20 @@ class ScribeWorker:
                     f"(limit {max_tokens}), removing paragraph {removed_name} "
                     f"from outline (attempt {attempt + 1})"
                 )
+                # Rebuild source_code from remaining paragraphs' bodies
+                if paragraph_bodies:
+                    remaining_names = [
+                        p.get("name", "") for p in scribe_input.citadel_outline
+                    ]
+                    remaining_parts = [
+                        paragraph_bodies[n]
+                        for n in remaining_names
+                        if n in paragraph_bodies
+                    ]
+                    if remaining_parts:
+                        scribe_input = scribe_input.model_copy(
+                            update={"source_code": "\n\n".join(remaining_parts)},
+                        )
                 continue
 
             # Strategy 2: truncate source code
@@ -2740,6 +2755,7 @@ class ScribeWorker:
 
         # Assemble source code for this batch
         batch_source_parts: list[str] = []
+        para_bodies: dict[str, str] = {}
         fallback_count = 0
 
         # Read source lines for line-range extraction
@@ -2756,6 +2772,8 @@ class ScribeWorker:
             if body:
                 batch_source_parts.append(body)
                 batch_source_parts.append("")
+                if name:
+                    para_bodies[name] = body
             elif source_lines:
                 line_start = para_info.get("line_start")
                 line_end = para_info.get("line_end")
@@ -2763,11 +2781,12 @@ class ScribeWorker:
                     extracted = source_lines[
                         line_start - 1 : min(line_end, len(source_lines))
                     ]
-                    batch_source_parts.append(
-                        f"* Paragraph: {name} (lines {line_start}-{line_end})"
-                    )
+                    header = f"* Paragraph: {name} (lines {line_start}-{line_end})"
+                    batch_source_parts.append(header)
                     batch_source_parts.extend(extracted)
                     batch_source_parts.append("")
+                    if name:
+                        para_bodies[name] = header + "\n" + "\n".join(extracted)
                     fallback_count += 1
 
         if fallback_count > 0:
@@ -2808,7 +2827,9 @@ class ScribeWorker:
             f"({len(batch_names)} paragraphs) for {ticket.file_name}"
         )
 
-        output = await self._validated_invoke(scribe_input)
+        output = await self._validated_invoke(
+            scribe_input, paragraph_bodies=para_bodies or None,
+        )
 
         if output.success and output.template:
             self._save_chunk(
@@ -3750,21 +3771,15 @@ class ScribeWorker:
             f"{ticket.file_name}"
         )
 
-        # Decide single-pass vs. batched based on stub count
-        stub_is_large = len(stub_outline) >= self.config.citadel_guided_threshold_paragraphs
-
-        if stub_is_large:
-            stub_output = await self._process_citadel_batched(
-                ticket, source_code, file_type, formatting_strict,
-                stub_outline, source_path, stats, pattern_insights,
-                ticket_dispatch=False,
-                paragraph_asts=paragraph_asts,
-            )
-        else:
-            stub_output = await self._process_citadel_single_pass(
-                ticket, source_code, file_type, formatting_strict,
-                stub_outline, pattern_insights,
-            )
+        # Always use batched path for resume — it extracts per-paragraph
+        # source via line ranges, avoiding the full-file + full-template
+        # overhead that makes single-pass prompts explode for large files.
+        stub_output = await self._process_citadel_batched(
+            ticket, source_code, file_type, formatting_strict,
+            stub_outline, source_path, stats, pattern_insights,
+            ticket_dispatch=False,
+            paragraph_asts=paragraph_asts,
+        )
 
         if not stub_output.success or not stub_output.template:
             logger.warning(
