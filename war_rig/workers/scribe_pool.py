@@ -2631,12 +2631,18 @@ class ScribeWorker:
         stats: dict,
         source_path: Path,
         ticket: ProgramManagerTicket,
+        previous_template: DocumentationTemplate | None = None,
     ) -> None:
         """Save the batch plan so continuation tickets can reconstruct it.
 
         The plan is stored as ``_batch_plan.json`` alongside the chunk files.
         It contains the full outline and per-batch paragraph assignments so
         continuation tickets don't need to recalculate batches.
+
+        When ``previous_template`` is provided (resume mode), it is saved as
+        a separate ``_previous_template.json`` file and the plan records
+        ``resume_mode: true`` so that synthesis knows to merge chunks into
+        the previous template rather than building a fresh one.
 
         Args:
             file_name: Source file name.
@@ -2645,11 +2651,12 @@ class ScribeWorker:
             stats: File stats from Citadel.
             source_path: Resolved source file path.
             ticket: The originating DOCUMENTATION ticket.
+            previous_template: Previous template to merge into (resume mode).
         """
         chunks_dir = self._get_chunks_dir(file_name)
         chunks_dir.mkdir(parents=True, exist_ok=True)
 
-        plan = {
+        plan: dict[str, Any] = {
             "file_name": file_name,
             "source_path": str(source_path),
             "total_batches": len(batches),
@@ -2662,6 +2669,7 @@ class ScribeWorker:
             "copybook_contents": ticket.metadata.get("copybook_contents", {}),
             "file_path": ticket.metadata.get("file_path"),
             "feedback_context": ticket.metadata.get("feedback_context"),
+            "resume_mode": previous_template is not None,
         }
 
         plan_path = chunks_dir / "_batch_plan.json"
@@ -2677,6 +2685,25 @@ class ScribeWorker:
                 f"Worker {self.worker_id}: Failed to save batch plan for "
                 f"{file_name}: {e}"
             )
+
+        # Save previous template separately (resume mode)
+        if previous_template is not None:
+            prev_path = chunks_dir / "_previous_template.json"
+            try:
+                with open(prev_path, "w") as f:
+                    json.dump(
+                        previous_template.model_dump(mode="json"),
+                        f, indent=2, default=str,
+                    )
+                logger.debug(
+                    f"Worker {self.worker_id}: Saved previous template for "
+                    f"resume synthesis of {file_name}"
+                )
+            except Exception as e:
+                logger.warning(
+                    f"Worker {self.worker_id}: Failed to save previous template "
+                    f"for {file_name}: {e}"
+                )
 
     def _load_batch_plan(self, file_name: str) -> dict | None:
         """Load the batch plan for continuation tickets.
@@ -2984,12 +3011,29 @@ class ScribeWorker:
                 error=f"No chunks found for synthesis of {ticket.file_name}",
             )
 
+        # Resume mode: load previous template if present
+        resume_mode = plan.get("resume_mode", False)
+        previous_template: DocumentationTemplate | None = None
+        if resume_mode:
+            chunks_dir = self._get_chunks_dir(ticket.file_name)
+            prev_path = chunks_dir / "_previous_template.json"
+            if prev_path.exists():
+                try:
+                    with open(prev_path) as f:
+                        previous_template = DocumentationTemplate(**json.load(f))
+                except Exception as e:
+                    logger.warning(
+                        f"Worker {self.worker_id}: Failed to load previous template "
+                        f"for resume synthesis of {ticket.file_name}: {e}"
+                    )
+
         logger.info(
             f"Worker {self.worker_id}: Synthesizing {len(existing)}/{total_batches} "
             f"chunks for {ticket.file_name}"
+            f"{' (resume mode)' if resume_mode else ''}"
         )
 
-        # Merge: first chunk provides the base template, subsequent add paragraphs
+        # Collect all newly documented paragraphs from chunks
         merged_template: DocumentationTemplate | None = None
         all_paragraphs: list[Paragraph] = []
 
@@ -3006,7 +3050,7 @@ class ScribeWorker:
                 error=f"No valid base template for synthesis of {ticket.file_name}",
             )
 
-        # Deduplicate paragraphs
+        # Deduplicate chunk paragraphs
         if all_paragraphs:
             existing_names = {
                 p.paragraph_name.lower()
@@ -3017,6 +3061,53 @@ class ScribeWorker:
                 if para.paragraph_name and para.paragraph_name.lower() not in existing_names:
                     merged_template.paragraphs.append(para)
                     existing_names.add(para.paragraph_name.lower())
+
+        # Resume mode: merge newly documented stubs into previous template
+        if resume_mode and previous_template is not None:
+            new_para_by_name: dict[str, Paragraph] = {}
+            for p in merged_template.paragraphs:
+                if p.paragraph_name:
+                    new_para_by_name[p.paragraph_name.lower()] = p
+
+            merged_paragraphs: list[Paragraph] = []
+            for p in previous_template.paragraphs:
+                key = p.paragraph_name.lower() if p.paragraph_name else ""
+                if key in new_para_by_name:
+                    merged_paragraphs.append(new_para_by_name.pop(key))
+                else:
+                    merged_paragraphs.append(p)
+
+            # Append paragraphs not in the previous template
+            for p in new_para_by_name.values():
+                merged_paragraphs.append(p)
+
+            # Keep shell sections from previous template where chunks
+            # didn't produce meaningful content
+            if not merged_template.purpose or (
+                merged_template.purpose.summary
+                and merged_template.purpose.summary.startswith("[Citadel]")
+            ):
+                merged_template.purpose = previous_template.purpose
+            if not merged_template.inputs and previous_template.inputs:
+                merged_template.inputs = previous_template.inputs
+            if not merged_template.outputs and previous_template.outputs:
+                merged_template.outputs = previous_template.outputs
+            if not merged_template.business_rules and previous_template.business_rules:
+                merged_template.business_rules = previous_template.business_rules
+            if not merged_template.resolved_questions and previous_template.resolved_questions:
+                merged_template.resolved_questions = previous_template.resolved_questions
+            if not merged_template.call_semantics and previous_template.call_semantics:
+                merged_template.call_semantics = previous_template.call_semantics
+            if not merged_template.flow_diagram and previous_template.flow_diagram:
+                merged_template.flow_diagram = previous_template.flow_diagram
+
+            merged_template.paragraphs = merged_paragraphs
+
+            logger.info(
+                f"Worker {self.worker_id}: Resume synthesis for "
+                f"{ticket.file_name} — {len(merged_paragraphs)} total paragraphs "
+                f"({len(existing)} stub batches merged into previous template)"
+            )
 
         # Gap-fill missing paragraphs
         outline = plan.get("outline", [])
@@ -3771,78 +3862,22 @@ class ScribeWorker:
             f"{ticket.file_name}"
         )
 
-        # Always use batched path for resume — it extracts per-paragraph
-        # source via line ranges, avoiding the full-file + full-template
-        # overhead that makes single-pass prompts explode for large files.
-        stub_output = await self._process_citadel_batched(
+        # Clear old chunks from prior runs to avoid total_batches mismatch
+        # warnings.  The previous_template already has all completed work.
+        self._cleanup_chunks(ticket.file_name)
+
+        # Use ticket-dispatch so each batch becomes its own ticket with
+        # only per-paragraph source — avoids oversized prompts and lets
+        # the worker pool parallelise across stubs.
+        # The previous_template is saved alongside the batch plan so that
+        # CHUNK_SYNTHESIS can merge stub results back into it.
+        return await self._process_citadel_batched(
             ticket, source_code, file_type, formatting_strict,
             stub_outline, source_path, stats, pattern_insights,
-            ticket_dispatch=False,
+            ticket_dispatch=True,
             paragraph_asts=paragraph_asts,
+            previous_template=previous_template,
         )
-
-        if not stub_output.success or not stub_output.template:
-            logger.warning(
-                f"Worker {self.worker_id}: Resume processing failed for "
-                f"{ticket.file_name}, returning previous template as-is"
-            )
-            return ScribeOutput(success=True, template=previous_template)
-
-        # Merge: keep all good paragraphs from previous template,
-        # replace stubs with newly documented paragraphs.
-        new_para_by_name: dict[str, Paragraph] = {}
-        for p in stub_output.template.paragraphs:
-            if p.paragraph_name:
-                new_para_by_name[p.paragraph_name.lower()] = p
-
-        merged_paragraphs: list[Paragraph] = []
-        for p in previous_template.paragraphs:
-            key = p.paragraph_name.lower() if p.paragraph_name else ""
-            if key in new_para_by_name:
-                # Replace stub with newly documented paragraph
-                merged_paragraphs.append(new_para_by_name.pop(key))
-            else:
-                # Keep existing good paragraph
-                merged_paragraphs.append(p)
-
-        # Append any paragraphs from stub_output that weren't in the previous
-        # template at all (e.g. new outline entries).
-        for p in new_para_by_name.values():
-            merged_paragraphs.append(p)
-
-        # Use the first batch's shell sections (purpose, inputs, outputs) from
-        # the stub_output if they are non-empty, otherwise keep previous.
-        merged = stub_output.template.model_copy(deep=True)
-        if not merged.purpose or (
-            merged.purpose.summary
-            and merged.purpose.summary.startswith("[Citadel]")
-        ):
-            merged.purpose = previous_template.purpose
-        if not merged.inputs and previous_template.inputs:
-            merged.inputs = previous_template.inputs
-        if not merged.outputs and previous_template.outputs:
-            merged.outputs = previous_template.outputs
-        if not merged.business_rules and previous_template.business_rules:
-            merged.business_rules = previous_template.business_rules
-        if not merged.resolved_questions and previous_template.resolved_questions:
-            merged.resolved_questions = previous_template.resolved_questions
-        if not merged.call_semantics and previous_template.call_semantics:
-            merged.call_semantics = previous_template.call_semantics
-        if not merged.flow_diagram and previous_template.flow_diagram:
-            merged.flow_diagram = previous_template.flow_diagram
-
-        merged.paragraphs = merged_paragraphs
-
-        # Persist and return
-        self._save_template(ticket.file_name, merged)
-
-        logger.info(
-            f"Worker {self.worker_id}: Resume complete for "
-            f"{ticket.file_name} — {len(new_para_by_name)} stubs replaced, "
-            f"{len(merged_paragraphs)} total paragraphs"
-        )
-
-        return ScribeOutput(success=True, template=merged)
 
     async def _process_citadel_single_pass(
         self,
@@ -4046,6 +4081,7 @@ class ScribeWorker:
         pattern_insights: dict | None = None,
         ticket_dispatch: bool = True,
         paragraph_asts: dict[str, str] | None = None,
+        previous_template: DocumentationTemplate | None = None,
     ) -> ScribeOutput:
         """Batched Citadel-guided documentation for large files.
 
@@ -4096,11 +4132,14 @@ class ScribeWorker:
         )
         total_batches = len(batches)
 
-        # ── Ticket-dispatch mode (multi-batch only) ──────────────────
-        if ticket_dispatch and total_batches > 1:
+        # ── Ticket-dispatch mode ──────────────────────────────────────
+        # Also dispatch single batches in resume mode so that synthesis
+        # can merge stub results into the previous template.
+        if ticket_dispatch and (total_batches > 1 or previous_template is not None):
             # Save the batch plan so continuation tickets can pick up
             self._save_batch_plan(
                 ticket.file_name, batches, outline, stats, source_path, ticket,
+                previous_template=previous_template,
             )
 
             # Process batch 0 inline
@@ -4118,14 +4157,21 @@ class ScribeWorker:
                     error=f"Batch 0 failed for {ticket.file_name}",
                 )
 
-            # Create continuation ticket for batch 1
-            self._create_chunk_ticket(
-                ticket, TicketType.CHUNK_CONTINUATION, 1,
-            )
+            # Create next ticket: continuation for batch 1 if more
+            # batches remain, otherwise go straight to synthesis.
+            if total_batches > 1:
+                self._create_chunk_ticket(
+                    ticket, TicketType.CHUNK_CONTINUATION, 1,
+                )
+            else:
+                self._create_chunk_ticket(
+                    ticket, TicketType.CHUNK_SYNTHESIS, -1,
+                )
 
+            remaining = total_batches - 1
             logger.info(
                 f"Worker {self.worker_id}: Ticket-dispatch mode for "
-                f"{ticket.file_name} — batch 0 done, {total_batches - 1} "
+                f"{ticket.file_name} — batch 0 done, {remaining} "
                 f"remaining via continuation tickets"
             )
 
