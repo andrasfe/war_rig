@@ -191,6 +191,7 @@ def find_source_file(file_name: str, input_dir: Path) -> Path | None:
 def create_redoc_tickets(
     files_to_fix: list[dict],
     input_dir: Path,
+    output_dir: Path,
     dry_run: bool = False,
 ) -> int:
     """Create re-documentation tickets for files with stubs.
@@ -201,6 +202,7 @@ def create_redoc_tickets(
     Args:
         files_to_fix: List of file analysis results.
         input_dir: Directory containing source files.
+        output_dir: Output directory (tickets file written here).
         dry_run: If True, don't create tickets.
 
     Returns:
@@ -213,12 +215,14 @@ def create_redoc_tickets(
         return 0
 
     try:
-        from war_rig.beads import BeadsClient, TicketType, BeadsPriority
+        from war_rig.beads import BeadsPriority, TicketType, get_beads_client
     except ImportError:
         print("Error: Could not import beads. Make sure war_rig is installed.", file=sys.stderr)
         return 0
 
-    client = BeadsClient()
+    client = get_beads_client(
+        tickets_file=output_dir / ".war_rig_tickets.json",
+    )
     created = 0
 
     for f in files_to_fix:
@@ -321,7 +325,7 @@ def main():
     input_dir = args.input_dir or args.output_dir.parent
     print(f"\nCreating re-documentation tickets (input_dir: {input_dir})...")
 
-    created = create_redoc_tickets(files_to_fix=files_with_stubs, input_dir=input_dir, dry_run=args.dry_run)
+    created = create_redoc_tickets(files_to_fix=files_with_stubs, input_dir=input_dir, output_dir=args.output_dir, dry_run=args.dry_run)
 
     if not args.dry_run:
         print(f"\nCreated {created} tickets. Run with --no-new-tickets to process them.")

@@ -137,6 +137,7 @@ def mark_as_stubs(
 def create_ticket(
     file_name: str,
     para_names: list[str],
+    output_dir: Path,
     source_path: Path | None = None,
 ) -> str | None:
     """Create a DOCUMENTATION ticket for the file.
@@ -145,11 +146,14 @@ def create_ticket(
         file_name: Relative file name as the scribe expects it
             (e.g. ``cbl/COPAUA0C.cbl``).
         para_names: Paragraph names to re-document.
+        output_dir: Output directory (tickets file written here).
         source_path: Optional resolved path to the source file.
     """
-    from war_rig.beads import BeadsClient, BeadsPriority, TicketType
+    from war_rig.beads import BeadsPriority, TicketType, get_beads_client
 
-    client = BeadsClient()
+    client = get_beads_client(
+        tickets_file=output_dir / ".war_rig_tickets.json",
+    )
     program_id = Path(file_name).stem.split(".")[0].upper()
 
     metadata: dict = {
@@ -270,7 +274,7 @@ def main() -> None:
 
     # Create ticket
     if args.ticket and not args.dry_run:
-        ticket_id = create_ticket(rel_file_name, args.paragraphs)
+        ticket_id = create_ticket(rel_file_name, args.paragraphs, args.output_dir)
         if ticket_id:
             print(f"Created ticket: {ticket_id}")
         else:
