@@ -3186,6 +3186,17 @@ class ScribeWorker:
             if self.file_lock_manager is not None:
                 await self.file_lock_manager.release(output_file, self.worker_id)
 
+        if replaced == 0:
+            expected = plan["batches"][batch_idx][0].get("name", "?")
+            return ScribeOutput(
+                success=False,
+                error=(
+                    f"Paragraph name mismatch: scribe returned "
+                    f"{list(new_by_name.keys())} but no matching stub "
+                    f"found for expected paragraph {expected}"
+                ),
+            )
+
         return ScribeOutput(success=True, template=current)
 
     async def _enrich_existing_template(
