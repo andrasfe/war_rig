@@ -1528,9 +1528,11 @@ class ScribeWorker:
 
         # Try to claim the first available ticket
         for ticket in tickets:
-            # Check file lock BEFORE claiming to avoid wasteful claim-then-release churn
-            # This is an optimization - the actual lock is still acquired in _process_ticket()
-            if self.file_lock_manager is not None:
+            # Check file lock BEFORE claiming to avoid wasteful claim-then-release churn.
+            # Skip this check for parallel-dispatch tickets — they handle
+            # locking narrowly during the patch, not for the full duration.
+            is_parallel = ticket.metadata.get("parallel_dispatch", False)
+            if self.file_lock_manager is not None and not is_parallel:
                 output_file = self._get_output_file_for_ticket(ticket)
                 if await self.file_lock_manager.is_locked_by_other(
                     output_file, self.worker_id
@@ -1585,9 +1587,15 @@ class ScribeWorker:
         output_file = self._get_output_file_for_ticket(ticket)
         lock_acquired = False
 
+        # Parallel-dispatch resume tickets handle locking narrowly inside
+        # _process_resume_paragraph (only during the read-modify-write
+        # patch).  Holding the lock for the full LLM call would serialise
+        # all workers since every ticket targets the same .doc.json.
+        is_parallel_dispatch = ticket.metadata.get("parallel_dispatch", False)
+
         try:
             # Acquire file lock if manager is available
-            if self.file_lock_manager is not None:
+            if self.file_lock_manager is not None and not is_parallel_dispatch:
                 lock_acquired = await self.file_lock_manager.acquire(
                     output_file, self.worker_id
                 )
@@ -2936,6 +2944,7 @@ class ScribeWorker:
         metadata: dict[str, Any] = {
             "chunk_batch_idx": batch_idx,
             "file_path": ticket.metadata.get("file_path"),
+            "parallel_dispatch": ticket.metadata.get("parallel_dispatch", False),
         }
 
         chunk_ticket = self.beads_client.create_pm_ticket(
@@ -3071,41 +3080,50 @@ class ScribeWorker:
                 error=f"Resume paragraph {para_name} failed",
             )
 
-        # Load current template from disk and patch the stub
-        current = self._load_previous_template(ticket.file_name)
-        if current is None:
-            logger.warning(
-                f"Worker {self.worker_id}: No existing template to patch "
-                f"for {ticket.file_name}"
-            )
-            return ScribeOutput(success=False, error="No template to patch")
-
-        # Build lookup of newly documented paragraphs
+        # Build lookup of newly documented paragraphs (before lock)
         new_by_name: dict[str, Paragraph] = {}
         for p in template.paragraphs:
             if p.paragraph_name:
                 new_by_name[p.paragraph_name.lower()] = p
 
-        # Replace matching stubs in the current template
-        replaced = 0
-        for i, p in enumerate(current.paragraphs):
-            key = p.paragraph_name.lower() if p.paragraph_name else ""
-            if key in new_by_name:
-                current.paragraphs[i] = new_by_name[key]
-                replaced += 1
+        # Narrow lock: hold only during read-modify-write of the template.
+        # The LLM call above ran without a lock so all workers can proceed
+        # in parallel — we only serialise the fast disk patch.
+        output_file = self._get_output_file_for_ticket(ticket)
+        if self.file_lock_manager is not None:
+            await self.file_lock_manager.acquire(output_file, self.worker_id)
 
-        if replaced > 0:
-            self._save_template(ticket.file_name, current)
-            logger.info(
-                f"Worker {self.worker_id}: Patched {replaced} paragraph(s) "
-                f"in {ticket.file_name} (batch {batch_idx})"
-            )
-        else:
-            para_names = list(new_by_name.keys())
-            logger.warning(
-                f"Worker {self.worker_id}: No matching stubs found to patch "
-                f"in {ticket.file_name} for {para_names}"
-            )
+        try:
+            current = self._load_previous_template(ticket.file_name)
+            if current is None:
+                logger.warning(
+                    f"Worker {self.worker_id}: No existing template to patch "
+                    f"for {ticket.file_name}"
+                )
+                return ScribeOutput(success=False, error="No template to patch")
+
+            replaced = 0
+            for i, p in enumerate(current.paragraphs):
+                key = p.paragraph_name.lower() if p.paragraph_name else ""
+                if key in new_by_name:
+                    current.paragraphs[i] = new_by_name[key]
+                    replaced += 1
+
+            if replaced > 0:
+                self._save_template(ticket.file_name, current)
+                logger.info(
+                    f"Worker {self.worker_id}: Patched {replaced} paragraph(s) "
+                    f"in {ticket.file_name} (batch {batch_idx})"
+                )
+            else:
+                para_names = list(new_by_name.keys())
+                logger.warning(
+                    f"Worker {self.worker_id}: No matching stubs found to patch "
+                    f"in {ticket.file_name} for {para_names}"
+                )
+        finally:
+            if self.file_lock_manager is not None:
+                await self.file_lock_manager.release(output_file, self.worker_id)
 
         return ScribeOutput(success=True, template=current)
 
@@ -4068,6 +4086,9 @@ class ScribeWorker:
 
         # Process batch 0 inline — directly patch the template
         await self._process_resume_paragraph(ticket, plan, 0)
+
+        # Tag the ticket so continuation tickets inherit parallel_dispatch.
+        ticket.metadata["parallel_dispatch"] = True
 
         # Create continuation tickets for ALL remaining batches at once.
         # Each ticket independently patches the on-disk template.
