@@ -3128,13 +3128,19 @@ class ScribeWorker:
 
         if not template or not template.paragraphs:
             para_name = plan["batches"][batch_idx][0].get("name", "?")
+            if template is None:
+                reason = "scribe returned no template (invoke/parse failure)"
+            elif not template.paragraphs:
+                reason = "scribe returned template with empty paragraphs array"
+            else:
+                reason = "unknown"
             logger.warning(
                 f"Worker {self.worker_id}: Resume paragraph {para_name} "
-                f"failed for {ticket.file_name}"
+                f"failed for {ticket.file_name} — {reason}"
             )
             return ScribeOutput(
                 success=False,
-                error=f"Resume paragraph {para_name} failed",
+                error=f"Resume paragraph {para_name}: {reason}",
             )
 
         # Build lookup of newly documented paragraphs (before lock)
