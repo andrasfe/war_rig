@@ -2885,6 +2885,36 @@ class ScribeWorker:
                 str(source_path), plan.get("outline", [])
             )
 
+        # For parallel-dispatch resume, override feedback_context to tell
+        # the scribe it is re-documenting a single paragraph — not producing
+        # a full template from scratch.  Without this instruction the LLM
+        # struggles to fill out all top-level sections (purpose, inputs, …)
+        # from a single paragraph's source and often fails to parse.
+        if plan.get("parallel_dispatch"):
+            para_names = ", ".join(batch_names)
+            feedback_context = {
+                "quality_notes": [
+                    {
+                        "severity": "high",
+                        "category": "scope",
+                        "description": (
+                            f"You are re-documenting ONLY the paragraph(s): {para_names}. "
+                            "The rest of the program is already documented. "
+                            "Fill in the 'paragraphs' section fully for these paragraphs. "
+                            "Other top-level sections (purpose, inputs, outputs, etc.) "
+                            "can be minimal placeholders — only the paragraphs matter."
+                        ),
+                        "guidance": (
+                            "Focus all effort on producing high-quality paragraph "
+                            "documentation with citations. Do not leave the paragraphs "
+                            "array empty."
+                        ),
+                    }
+                ],
+                "augment_existing": False,
+                "required_citations": True,
+            }
+
         scribe_input = ScribeInput(
             source_code=batch_source,
             file_name=ticket.file_name,
