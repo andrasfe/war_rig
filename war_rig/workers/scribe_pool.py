@@ -2469,6 +2469,22 @@ class ScribeWorker:
             try:
                 cached_asts = self._file_asts.get(file_name)
 
+                # Lazy-load ASTs from .ast file if the in-memory cache is
+                # empty (happens when a different worker handles the ticket).
+                if cached_asts is None and self._citadel is not None:
+                    source_path = self.input_directory / file_name
+                    ast_file = source_path.with_suffix(
+                        source_path.suffix + ".ast"
+                    )
+                    if ast_file.exists():
+                        try:
+                            cached_asts, _ = self._citadel.load_cobol_ast(
+                                ast_file
+                            )
+                            self._file_asts[file_name] = cached_asts
+                        except Exception:
+                            pass
+
                 md_content = self._generate_markdown_from_template(
                     template, file_name, paragraph_asts=cached_asts,
                 )
@@ -3126,26 +3142,6 @@ class ScribeWorker:
         for p in template.paragraphs:
             if p.paragraph_name:
                 new_by_name[p.paragraph_name.lower()] = p
-
-        # Ensure paragraph ASTs are cached so _save_template can include
-        # them in the regenerated .md.  Resume workers don't run the
-        # original _build_full_ast, so the cache is empty.
-        if ticket.file_name not in self._file_asts:
-            source_path = Path(plan["source_path"])
-            ast_file = source_path.with_suffix(source_path.suffix + ".ast")
-            if ast_file.exists() and self._citadel is not None:
-                try:
-                    paragraph_asts, _ = self._citadel.load_cobol_ast(ast_file)
-                    self._file_asts[ticket.file_name] = paragraph_asts
-                    logger.debug(
-                        f"Worker {self.worker_id}: Loaded {len(paragraph_asts)} "
-                        f"paragraph ASTs from {ast_file}"
-                    )
-                except Exception as e:
-                    logger.debug(
-                        f"Worker {self.worker_id}: Could not load ASTs "
-                        f"from {ast_file}: {e}"
-                    )
 
         # Narrow lock: hold only during read-modify-write of the template.
         # The LLM call above ran without a lock so all workers can proceed
