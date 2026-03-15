@@ -2878,6 +2878,7 @@ class ScribeWorker:
         ticket: ProgramManagerTicket,
         ticket_type: TicketType,
         batch_idx: int,
+        priority: BeadsPriority = BeadsPriority.MEDIUM,
     ) -> ProgramManagerTicket | None:
         """Create a CHUNK_CONTINUATION or CHUNK_SYNTHESIS ticket.
 
@@ -2885,6 +2886,7 @@ class ScribeWorker:
             ticket: The parent ticket (DOCUMENTATION or CHUNK_CONTINUATION).
             ticket_type: CHUNK_CONTINUATION or CHUNK_SYNTHESIS.
             batch_idx: Next batch index (for continuation) or -1 (for synthesis).
+            priority: Ticket priority (default MEDIUM).
 
         Returns:
             Created ticket or None on failure.
@@ -2900,7 +2902,7 @@ class ScribeWorker:
             program_id=ticket.program_id,
             cycle_number=ticket.cycle_number,
             parent_ticket_id=ticket.ticket_id,
-            priority=BeadsPriority.MEDIUM,
+            priority=priority,
             metadata=metadata,
         )
 
@@ -3065,6 +3067,57 @@ class ScribeWorker:
 
         return ScribeOutput(success=True, template=current)
 
+    async def _enrich_existing_template(
+        self,
+        ticket: ProgramManagerTicket,
+        plan: dict,
+    ) -> ScribeOutput:
+        """Run enrichment on an already-patched template (resume mode).
+
+        Loads the current ``.doc.json`` from disk (already updated by
+        parallel stub tickets) and runs gap-fill + Citadel enrichment +
+        call semantics to update the file-level summary.
+
+        Args:
+            ticket: The CHUNK_SYNTHESIS ticket.
+            plan: The batch plan dict.
+
+        Returns:
+            ScribeOutput with the enriched template.
+        """
+        current = self._load_previous_template(ticket.file_name)
+        if current is None:
+            return ScribeOutput(
+                success=False,
+                error=f"No template to enrich for {ticket.file_name}",
+            )
+
+        file_type = self._determine_file_type(ticket.file_name)
+        source_path = Path(plan["source_path"])
+        outline = plan.get("outline", [])
+
+        logger.info(
+            f"Worker {self.worker_id}: Resume enrichment for "
+            f"{ticket.file_name} ({len(current.paragraphs)} paragraphs)"
+        )
+
+        # Enrich with Citadel analysis + call semantics
+        current = await self._apply_citadel_enrichment(
+            current, ticket, file_type,
+        )
+        current = await self._enrich_call_semantics(
+            current, ticket, file_type,
+        )
+
+        self._save_template(ticket.file_name, current)
+
+        logger.info(
+            f"Worker {self.worker_id}: Resume enrichment complete for "
+            f"{ticket.file_name}"
+        )
+
+        return ScribeOutput(success=True, template=current)
+
     async def _process_chunk_synthesis(
         self,
         ticket: ProgramManagerTicket,
@@ -3086,6 +3139,11 @@ class ScribeWorker:
                 success=False,
                 error=f"Batch plan not found for {ticket.file_name}",
             )
+
+        # Resume parallel dispatch: stub tickets already patched the
+        # template directly.  Just load it from disk and run enrichment.
+        if plan.get("parallel_dispatch"):
+            return await self._enrich_existing_template(ticket, plan)
 
         total_batches = plan["total_batches"]
         existing = self._load_chunks(ticket.file_name, total_batches)
@@ -3979,9 +4037,18 @@ class ScribeWorker:
                 ticket, TicketType.CHUNK_CONTINUATION, batch_idx,
             )
 
+        # Create a LOW-priority synthesis ticket for enrichment.
+        # It will run after the MEDIUM-priority continuation tickets
+        # and update the file-level summary based on the newly
+        # documented paragraphs.
+        self._create_chunk_ticket(
+            ticket, TicketType.CHUNK_SYNTHESIS, -1,
+            priority=BeadsPriority.LOW,
+        )
+
         logger.info(
             f"Worker {self.worker_id}: Resume dispatched {total_batches} "
-            f"parallel stub tickets for {ticket.file_name}"
+            f"parallel stub tickets + enrichment for {ticket.file_name}"
         )
 
         return ScribeOutput(success=True)
