@@ -3193,6 +3193,23 @@ class ScribeWorker:
                 ),
             )
 
+        # Validate replacement has real content — not still a stub or empty
+        stub_prefix = "[Citadel] Paragraph identified by static analysis"
+        for name, p in new_by_name.items():
+            purpose = (p.purpose or "").strip()
+            if not purpose or purpose.startswith(stub_prefix):
+                logger.warning(
+                    f"Worker {self.worker_id}: Replacement paragraph {name} "
+                    f"still has stub/empty purpose in {ticket.file_name}"
+                )
+                return ScribeOutput(
+                    success=False,
+                    error=(
+                        f"Scribe returned stub/empty content for paragraph "
+                        f"{name} — purpose: {purpose!r}"
+                    ),
+                )
+
         return ScribeOutput(success=True, template=current)
 
     async def _enrich_existing_template(
