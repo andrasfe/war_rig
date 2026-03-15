@@ -2632,6 +2632,7 @@ class ScribeWorker:
         source_path: Path,
         ticket: ProgramManagerTicket,
         previous_template: DocumentationTemplate | None = None,
+        parallel_dispatch: bool = False,
     ) -> None:
         """Save the batch plan so continuation tickets can reconstruct it.
 
@@ -2670,6 +2671,7 @@ class ScribeWorker:
             "file_path": ticket.metadata.get("file_path"),
             "feedback_context": ticket.metadata.get("feedback_context"),
             "resume_mode": previous_template is not None,
+            "parallel_dispatch": parallel_dispatch,
         }
 
         plan_path = chunks_dir / "_batch_plan.json"
@@ -2966,7 +2968,27 @@ class ScribeWorker:
                 f"skipping for {ticket.file_name}"
             )
 
-        # Create next ticket
+        # Parallel dispatch: all continuation tickets were created upfront.
+        # The last one to complete triggers synthesis.
+        if plan.get("parallel_dispatch"):
+            existing = self._load_chunks(ticket.file_name, total_batches)
+            if len(existing) >= total_batches:
+                self._create_chunk_ticket(
+                    ticket, TicketType.CHUNK_SYNTHESIS, -1
+                )
+                logger.info(
+                    f"Worker {self.worker_id}: All {total_batches} chunks "
+                    f"complete, created synthesis ticket for {ticket.file_name}"
+                )
+            else:
+                logger.info(
+                    f"Worker {self.worker_id}: Chunk {batch_idx + 1}/{total_batches} "
+                    f"done for {ticket.file_name} "
+                    f"({len(existing)}/{total_batches} chunks so far)"
+                )
+            return ScribeOutput(success=True)
+
+        # Sequential dispatch: chain to next batch or synthesis
         next_batch = batch_idx + 1
         if next_batch < total_batches:
             self._create_chunk_ticket(
@@ -3862,22 +3884,54 @@ class ScribeWorker:
             f"{ticket.file_name}"
         )
 
-        # Clear old chunks from prior runs to avoid total_batches mismatch
-        # warnings.  The previous_template already has all completed work.
+        # Clear old chunks from prior runs to avoid total_batches mismatch.
         self._cleanup_chunks(ticket.file_name)
 
-        # Use ticket-dispatch so each batch becomes its own ticket with
-        # only per-paragraph source — avoids oversized prompts and lets
-        # the worker pool parallelise across stubs.
-        # The previous_template is saved alongside the batch plan so that
-        # CHUNK_SYNTHESIS can merge stub results back into it.
-        return await self._process_citadel_batched(
-            ticket, source_code, file_type, formatting_strict,
-            stub_outline, source_path, stats, pattern_insights,
-            ticket_dispatch=True,
-            paragraph_asts=paragraph_asts,
+        # One paragraph per batch — each becomes its own ticket so prompts
+        # stay small and the worker pool can parallelise across stubs.
+        batches: list[list[dict]] = [[p] for p in stub_outline]
+        total_batches = len(batches)
+
+        self._save_batch_plan(
+            ticket.file_name, batches, stub_outline, stats,
+            source_path, ticket,
             previous_template=previous_template,
+            parallel_dispatch=True,
         )
+
+        plan = self._load_batch_plan(ticket.file_name)
+        if plan is None:
+            return ScribeOutput(
+                success=False,
+                error=f"Failed to save/load batch plan for {ticket.file_name}",
+            )
+
+        # Process batch 0 inline
+        template = await self._process_single_chunk_batch(ticket, plan, 0)
+        if template is None:
+            logger.warning(
+                f"Worker {self.worker_id}: Batch 0 failed for resume of "
+                f"{ticket.file_name}"
+            )
+
+        # Create continuation tickets for ALL remaining batches at once
+        for batch_idx in range(1, total_batches):
+            self._create_chunk_ticket(
+                ticket, TicketType.CHUNK_CONTINUATION, batch_idx,
+            )
+
+        # If only 1 batch, go straight to synthesis
+        if total_batches <= 1:
+            self._create_chunk_ticket(
+                ticket, TicketType.CHUNK_SYNTHESIS, -1,
+            )
+
+        logger.info(
+            f"Worker {self.worker_id}: Resume dispatched {total_batches} "
+            f"parallel tickets for {ticket.file_name}"
+        )
+
+        return ScribeOutput(success=True)
 
     async def _process_citadel_single_pass(
         self,
@@ -4081,7 +4135,6 @@ class ScribeWorker:
         pattern_insights: dict | None = None,
         ticket_dispatch: bool = True,
         paragraph_asts: dict[str, str] | None = None,
-        previous_template: DocumentationTemplate | None = None,
     ) -> ScribeOutput:
         """Batched Citadel-guided documentation for large files.
 
@@ -4132,14 +4185,11 @@ class ScribeWorker:
         )
         total_batches = len(batches)
 
-        # ── Ticket-dispatch mode ──────────────────────────────────────
-        # Also dispatch single batches in resume mode so that synthesis
-        # can merge stub results into the previous template.
-        if ticket_dispatch and (total_batches > 1 or previous_template is not None):
+        # ── Ticket-dispatch mode (multi-batch only) ──────────────────
+        if ticket_dispatch and total_batches > 1:
             # Save the batch plan so continuation tickets can pick up
             self._save_batch_plan(
                 ticket.file_name, batches, outline, stats, source_path, ticket,
-                previous_template=previous_template,
             )
 
             # Process batch 0 inline
@@ -4157,21 +4207,14 @@ class ScribeWorker:
                     error=f"Batch 0 failed for {ticket.file_name}",
                 )
 
-            # Create next ticket: continuation for batch 1 if more
-            # batches remain, otherwise go straight to synthesis.
-            if total_batches > 1:
-                self._create_chunk_ticket(
-                    ticket, TicketType.CHUNK_CONTINUATION, 1,
-                )
-            else:
-                self._create_chunk_ticket(
-                    ticket, TicketType.CHUNK_SYNTHESIS, -1,
-                )
+            # Create continuation ticket for batch 1
+            self._create_chunk_ticket(
+                ticket, TicketType.CHUNK_CONTINUATION, 1,
+            )
 
-            remaining = total_batches - 1
             logger.info(
                 f"Worker {self.worker_id}: Ticket-dispatch mode for "
-                f"{ticket.file_name} — batch 0 done, {remaining} "
+                f"{ticket.file_name} — batch 0 done, {total_batches - 1} "
                 f"remaining via continuation tickets"
             )
 
