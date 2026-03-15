@@ -1669,9 +1669,15 @@ class ScribeWorker:
                     f"Worker {self.worker_id}: Completed ticket {ticket.ticket_id}"
                 )
 
-                # Create VALIDATION ticket for Challenger to re-validate
-                # This applies to DOCUMENTATION, CLARIFICATION, and CHROME tickets
-                if result.template and ticket.ticket_type in self.COMPATIBLE_TICKET_TYPES:
+                # Create VALIDATION ticket for Challenger to re-validate.
+                # Skip for parallel-dispatch tickets — individual paragraph
+                # patches should not trigger validation.  The synthesis
+                # (enrichment) ticket runs last and triggers validation then.
+                if (
+                    result.template
+                    and ticket.ticket_type in self.COMPATIBLE_TICKET_TYPES
+                    and not ticket.metadata.get("parallel_dispatch")
+                ):
                     # Save template to disk so CLARIFICATION tickets can load it
                     self._save_template(ticket.file_name, result.template)
                     # Citation-validation CHROME tickets get FIX_VERIFICATION
@@ -1734,7 +1740,12 @@ class ScribeWorker:
                         f"Worker {self.worker_id}: Completed ticket {ticket.ticket_id} on retry"
                     )
                     # Create VALIDATION ticket for re-validation
-                    if result.template and ticket.ticket_type in self.COMPATIBLE_TICKET_TYPES:
+                    # Skip for parallel-dispatch — synthesis triggers validation.
+                    if (
+                        result.template
+                        and ticket.ticket_type in self.COMPATIBLE_TICKET_TYPES
+                        and not ticket.metadata.get("parallel_dispatch")
+                    ):
                         # Save template to disk so CLARIFICATION tickets can load it
                         self._save_template(ticket.file_name, result.template)
                         # Citation-validation CHROME tickets get FIX_VERIFICATION
@@ -4137,6 +4148,9 @@ class ScribeWorker:
         # It will run after the MEDIUM-priority continuation tickets
         # and update the file-level summary based on the newly
         # documented paragraphs.
+        # Clear parallel_dispatch so the synthesis ticket triggers
+        # validation — it's the final step after all stubs are patched.
+        ticket.metadata["parallel_dispatch"] = False
         self._create_chunk_ticket(
             ticket, TicketType.CHUNK_SYNTHESIS, -1,
             priority=BeadsPriority.LOW,
