@@ -4005,9 +4005,6 @@ class ScribeWorker:
             f"{ticket.file_name}"
         )
 
-        # Clear old chunks from prior runs to avoid total_batches mismatch.
-        self._cleanup_chunks(ticket.file_name)
-
         # One paragraph per batch — each becomes its own ticket so prompts
         # stay small and the worker pool can parallelise across stubs.
         batches: list[list[dict]] = [[p] for p in stub_outline]
