@@ -4075,11 +4075,17 @@ class ScribeWorker:
         Returns:
             ScribeOutput with merged documentation.
         """
-        # Filter outline to only stub paragraphs
-        stub_outline = [
-            p for p in outline
-            if p.get("name", "").lower() in stub_names
-        ]
+        # Filter outline to only stub paragraphs, deduplicating by name.
+        # The Citadel outline can contain duplicates (e.g. from COPY
+        # expansions) — creating multiple tickets for the same paragraph
+        # wastes LLM calls and the later patch overwrites the earlier one.
+        seen_names: set[str] = set()
+        stub_outline: list[dict] = []
+        for p in outline:
+            key = p.get("name", "").lower()
+            if key in stub_names and key not in seen_names:
+                stub_outline.append(p)
+                seen_names.add(key)
 
         if not stub_outline:
             # No stubs in the outline (shouldn't happen, but be safe)
