@@ -2950,6 +2950,13 @@ class ScribeWorker:
                 error=f"Batch index {batch_idx} exceeds total {total_batches}",
             )
 
+        # Parallel dispatch (resume mode): process the paragraph and
+        # directly patch the on-disk template.  No synthesis step needed.
+        if plan.get("parallel_dispatch"):
+            return await self._process_resume_paragraph(
+                ticket, plan, batch_idx,
+            )
+
         # Check if batch already processed (resumption)
         existing = self._load_chunks(ticket.file_name, total_batches)
         if batch_idx not in existing:
@@ -2968,26 +2975,6 @@ class ScribeWorker:
                 f"skipping for {ticket.file_name}"
             )
 
-        # Parallel dispatch: all continuation tickets were created upfront.
-        # The last one to complete triggers synthesis.
-        if plan.get("parallel_dispatch"):
-            existing = self._load_chunks(ticket.file_name, total_batches)
-            if len(existing) >= total_batches:
-                self._create_chunk_ticket(
-                    ticket, TicketType.CHUNK_SYNTHESIS, -1
-                )
-                logger.info(
-                    f"Worker {self.worker_id}: All {total_batches} chunks "
-                    f"complete, created synthesis ticket for {ticket.file_name}"
-                )
-            else:
-                logger.info(
-                    f"Worker {self.worker_id}: Chunk {batch_idx + 1}/{total_batches} "
-                    f"done for {ticket.file_name} "
-                    f"({len(existing)}/{total_batches} chunks so far)"
-                )
-            return ScribeOutput(success=True)
-
         # Sequential dispatch: chain to next batch or synthesis
         next_batch = batch_idx + 1
         if next_batch < total_batches:
@@ -3001,6 +2988,82 @@ class ScribeWorker:
 
         # Return success with no template — synthesis will produce it
         return ScribeOutput(success=True)
+
+    async def _process_resume_paragraph(
+        self,
+        ticket: ProgramManagerTicket,
+        plan: dict,
+        batch_idx: int,
+    ) -> ScribeOutput:
+        """Process a single stub paragraph and patch the on-disk template.
+
+        Used by parallel-dispatch resume mode.  Each ticket independently
+        documents one paragraph, loads the current ``.doc.json``, replaces
+        the stub, and saves.  No synthesis step needed.
+
+        The file lock manager (acquired by the caller in ``_process_ticket``)
+        prevents concurrent writes to the same output file.
+
+        Args:
+            ticket: The current ticket.
+            plan: The batch plan dict.
+            batch_idx: Which batch (paragraph) to process.
+
+        Returns:
+            ScribeOutput indicating success or failure.
+        """
+        template = await self._process_single_chunk_batch(
+            ticket, plan, batch_idx,
+        )
+
+        if not template or not template.paragraphs:
+            para_name = plan["batches"][batch_idx][0].get("name", "?")
+            logger.warning(
+                f"Worker {self.worker_id}: Resume paragraph {para_name} "
+                f"failed for {ticket.file_name}"
+            )
+            return ScribeOutput(
+                success=False,
+                error=f"Resume paragraph {para_name} failed",
+            )
+
+        # Load current template from disk and patch the stub
+        current = self._load_previous_template(ticket.file_name)
+        if current is None:
+            logger.warning(
+                f"Worker {self.worker_id}: No existing template to patch "
+                f"for {ticket.file_name}"
+            )
+            return ScribeOutput(success=False, error="No template to patch")
+
+        # Build lookup of newly documented paragraphs
+        new_by_name: dict[str, Paragraph] = {}
+        for p in template.paragraphs:
+            if p.paragraph_name:
+                new_by_name[p.paragraph_name.lower()] = p
+
+        # Replace matching stubs in the current template
+        replaced = 0
+        for i, p in enumerate(current.paragraphs):
+            key = p.paragraph_name.lower() if p.paragraph_name else ""
+            if key in new_by_name:
+                current.paragraphs[i] = new_by_name[key]
+                replaced += 1
+
+        if replaced > 0:
+            self._save_template(ticket.file_name, current)
+            logger.info(
+                f"Worker {self.worker_id}: Patched {replaced} paragraph(s) "
+                f"in {ticket.file_name} (batch {batch_idx})"
+            )
+        else:
+            para_names = list(new_by_name.keys())
+            logger.warning(
+                f"Worker {self.worker_id}: No matching stubs found to patch "
+                f"in {ticket.file_name} for {para_names}"
+            )
+
+        return ScribeOutput(success=True, template=current)
 
     async def _process_chunk_synthesis(
         self,
@@ -3906,29 +3969,19 @@ class ScribeWorker:
                 error=f"Failed to save/load batch plan for {ticket.file_name}",
             )
 
-        # Process batch 0 inline
-        template = await self._process_single_chunk_batch(ticket, plan, 0)
-        if template is None:
-            logger.warning(
-                f"Worker {self.worker_id}: Batch 0 failed for resume of "
-                f"{ticket.file_name}"
-            )
+        # Process batch 0 inline — directly patch the template
+        await self._process_resume_paragraph(ticket, plan, 0)
 
-        # Create continuation tickets for ALL remaining batches at once
+        # Create continuation tickets for ALL remaining batches at once.
+        # Each ticket independently patches the on-disk template.
         for batch_idx in range(1, total_batches):
             self._create_chunk_ticket(
                 ticket, TicketType.CHUNK_CONTINUATION, batch_idx,
             )
 
-        # If only 1 batch, go straight to synthesis
-        if total_batches <= 1:
-            self._create_chunk_ticket(
-                ticket, TicketType.CHUNK_SYNTHESIS, -1,
-            )
-
         logger.info(
             f"Worker {self.worker_id}: Resume dispatched {total_batches} "
-            f"parallel tickets for {ticket.file_name}"
+            f"parallel stub tickets for {ticket.file_name}"
         )
 
         return ScribeOutput(success=True)
