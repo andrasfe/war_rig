@@ -123,52 +123,57 @@ class SourceMapReducer:
     ``max_prompt_tokens`` so they scale with the LLM context window.
     """
 
-    # Fraction of available source tokens that triggers map-reduce.
-    TRIGGER_RATIO: float = 0.65
-
-    # Fraction of map-phase prompt budget allocated to source window.
-    WINDOW_SOURCE_RATIO: float = 0.75
-
-    # Overlap between adjacent windows as fraction of window size.
+    # Overlap between adjacent windows as a fraction of window size.
     OVERLAP_RATIO: float = 0.10
 
-    # Map-phase prompt overhead (system + instructions + response buffer).
+    # Map-phase prompt overhead (system + user template + response buffer).
     MAP_OVERHEAD_TOKENS: int = 1500
 
-    # Fraction of the Scribe source budget reserved for the representative
-    # excerpt in the reduced output.
+    # Fraction of available source tokens (after scribe overhead) reserved
+    # for the representative excerpt in the reduced output.
     EXCERPT_RATIO: float = 0.20
 
     # Approximate characters per COBOL source line.
     COBOL_CHARS_PER_LINE: int = 72
+
+    # Scribe prompt overhead: system prompt, template schema, instructions,
+    # outline, copybooks, etc.  Source must fit in what remains.
+    DEFAULT_SCRIBE_OVERHEAD_TOKENS: int = 6000
 
     def __init__(
         self,
         provider: LLMProvider,
         model: str,
         max_prompt_tokens: int,
+        scribe_overhead_tokens: int = DEFAULT_SCRIBE_OVERHEAD_TOKENS,
         temperature: float = 1.0,
         max_concurrency: int = 5,
     ) -> None:
         self._provider = provider
         self._model = model
         self._max_prompt_tokens = max_prompt_tokens
+        self._scribe_overhead = scribe_overhead_tokens
         self._temperature = temperature
         self._max_concurrency = max_concurrency
         self._estimator = TokenEstimator()
 
+        # How many source tokens actually fit in the scribe prompt.
+        self._available_source_tokens = max(
+            1000, max_prompt_tokens - scribe_overhead_tokens,
+        )
+
     # -- public API ---------------------------------------------------------
 
     def needs_map_reduce(self, source_code: str) -> bool:
-        """Check whether *source_code* exceeds the trigger threshold.
+        """Check whether *source_code* exceeds the available source budget.
 
-        The threshold is ``TRIGGER_RATIO * max_prompt_tokens``.  If the
-        estimated token count of *source_code* exceeds that, map-reduce
-        should be applied.
+        Triggers when the source token estimate exceeds
+        ``max_prompt_tokens - scribe_overhead_tokens`` — i.e. the source
+        alone would not fit in the scribe prompt after accounting for
+        system prompt, outline, copybooks, and other non-source content.
         """
-        threshold = int(self._max_prompt_tokens * self.TRIGGER_RATIO)
         tokens = self._estimator.estimate_source_tokens(source_code)
-        return tokens > threshold
+        return tokens > self._available_source_tokens
 
     async def reduce(
         self,
@@ -228,8 +233,8 @@ class SourceMapReducer:
             )
         )
 
-        # 3. Representative excerpt
-        excerpt_tokens = int(self._max_prompt_tokens * self.EXCERPT_RATIO)
+        # 3. Representative excerpt — fraction of what the scribe can fit
+        excerpt_tokens = int(self._available_source_tokens * self.EXCERPT_RATIO)
         excerpt = self._select_representative_excerpt(
             source_lines, excerpt_tokens,
         )
@@ -254,11 +259,13 @@ class SourceMapReducer:
     # -- internals ----------------------------------------------------------
 
     def _compute_window_params(self) -> tuple[int, int]:
-        """Derive (window_lines, overlap_lines) from the token budget."""
-        window_token_budget = int(
-            (self._max_prompt_tokens - self.MAP_OVERHEAD_TOKENS)
-            * self.WINDOW_SOURCE_RATIO
-        )
+        """Derive (window_lines, overlap_lines) from the token budget.
+
+        Each map-phase call uses the full LLM context window.  The source
+        window gets everything after the small map-phase overhead (system
+        prompt + user template + response buffer ≈ 1500 tokens).
+        """
+        window_token_budget = self._max_prompt_tokens - self.MAP_OVERHEAD_TOKENS
         window_chars = int(
             window_token_budget * self._estimator.cobol_chars_per_token
         )

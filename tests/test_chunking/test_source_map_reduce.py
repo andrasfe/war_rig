@@ -69,16 +69,16 @@ class TestNeedsMapReduce:
         assert not reducer.needs_map_reduce(source)
 
     def test_large_source_triggers(self, reducer: SourceMapReducer):
-        # 15000 * 0.65 = 9750 token threshold
-        # At 3.5 chars/token, that's ~34K chars => ~470 lines of 72 chars
-        source = _make_cobol_source(1000)
+        # Threshold = 15000 - 6000 = 9000 tokens
+        # At 3.5 chars/token, that's ~31.5K chars => ~437 lines of 72 chars
+        source = _make_cobol_source(600)
         assert reducer.needs_map_reduce(source)
 
     def test_threshold_scales_with_max_prompt_tokens(
         self, large_reducer: SourceMapReducer,
     ):
-        # 65000 * 0.65 = 42250 token threshold => ~148K chars => ~2050 lines
-        source_small = _make_cobol_source(1500)
+        # Threshold = 65000 - 6000 = 59000 tokens => ~206.5K chars => ~2868 lines
+        source_small = _make_cobol_source(2000)
         source_large = _make_cobol_source(5000)
         assert not large_reducer.needs_map_reduce(source_small)
         assert large_reducer.needs_map_reduce(source_large)
