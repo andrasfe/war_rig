@@ -2861,9 +2861,13 @@ class ScribeWorker:
         )
 
         if output.success and output.template:
-            self._save_chunk(
-                ticket.file_name, batch_idx, output.template, total_batches
-            )
+            # Parallel-dispatch resume patches the template directly in
+            # _process_resume_paragraph — don't overwrite the original
+            # from-scratch chunks.
+            if not plan.get("parallel_dispatch"):
+                self._save_chunk(
+                    ticket.file_name, batch_idx, output.template, total_batches
+                )
 
             return output.template
 
