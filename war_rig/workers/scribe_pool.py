@@ -61,6 +61,7 @@ from war_rig.chunking import (
     GenericChunker,
     TokenEstimator,
 )
+from war_rig.chunking.source_map_reduce import SourceMapReducer
 from war_rig.config import WarRigConfig
 from war_rig.models.templates import (
     DeadCodeItem,
@@ -254,6 +255,7 @@ class ScribeWorker:
 
         # Initialize the Scribe agent
         self._scribe_agent: ScribeAgent | None = None
+        self._source_map_reducer: SourceMapReducer | None = None
 
         # Initialize Citadel SDK for AST and COBOL parsing support.
         self._citadel = None
@@ -329,6 +331,21 @@ class ScribeWorker:
                 api_config=self.config.api,
             )
         return self._scribe_agent
+
+    @property
+    def source_map_reducer(self) -> SourceMapReducer:
+        """Get the SourceMapReducer, creating it lazily."""
+        if self._source_map_reducer is None:
+            model = (
+                getattr(self.config, "summarization_pass1_model", None)
+                or self.config.scribe.model
+            )
+            self._source_map_reducer = SourceMapReducer(
+                provider=self.scribe_agent._provider,
+                model=model,
+                max_prompt_tokens=self.config.scribe.max_prompt_tokens,
+            )
+        return self._source_map_reducer
 
     @property
     def status(self) -> WorkerStatus:
@@ -2831,6 +2848,27 @@ class ScribeWorker:
                 f"Worker {self.worker_id}: Empty source for batch {batch_idx}"
             )
             return None
+
+        # Map-reduce oversized single-paragraph batches instead of
+        # truncating and losing the second half of the source.
+        if len(batch) == 1 and self.source_map_reducer.needs_map_reduce(batch_source):
+            para_name = batch[0].get("name", "")
+            logger.info(
+                f"Worker {self.worker_id}: Paragraph {para_name} exceeds "
+                f"token budget ({len(batch_source)} chars), applying map-reduce"
+            )
+            mr_result = await self.source_map_reducer.reduce(
+                batch_source, paragraph_name=para_name,
+            )
+            batch_source = mr_result.reduced_source
+            # Update para_bodies so Strategy 1 has the reduced source
+            if para_name and para_bodies is not None:
+                para_bodies[para_name] = batch_source
+            logger.info(
+                f"Worker {self.worker_id}: Map-reduce complete for {para_name}: "
+                f"{mr_result.num_windows} windows, "
+                f"saved ~{mr_result.tokens_saved} tokens"
+            )
 
         feedback_context = plan.get("feedback_context") if batch_idx == 0 else None
         pattern_insights = None

@@ -32,6 +32,7 @@ from war_rig.chunking.estimator import TokenEstimator
 from war_rig.chunking.generic_chunker import GenericChunker
 from war_rig.chunking.merger import ChunkMerger
 from war_rig.chunking.models import ChunkContext, ChunkingResult, CodeChunk
+from war_rig.chunking.source_map_reduce import MapReduceResult, SourceMapReducer
 
 __all__ = [
     "CodeChunk",
@@ -41,4 +42,6 @@ __all__ = [
     "COBOLChunker",
     "GenericChunker",
     "ChunkMerger",
+    "MapReduceResult",
+    "SourceMapReducer",
 ]
