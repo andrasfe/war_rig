@@ -997,16 +997,6 @@
       "question": "What is the structure of the MQM-OD-REQUEST?",
       "context": "The code moves data into fields of MQM-OD-REQUEST, but the structure is not defined in the provided code snippet.",
       "suggestion": "Examine the copybook definitions to determine the structure of MQM-OD-REQUEST."
-    },
-    {
-      "question": "What is the purpose of 2100-EXTRACT-REQUEST-MSG and 5000-PROCESS-AUTH?",
-      "context": "These paragraphs are called but not defined in the provided code snippet.",
-      "suggestion": "Examine the source code for these paragraphs to understand their functionality."
-    },
-    {
-      "question": "What are the conditions for NO-MORE-MSG-AVAILABLE?",
-      "context": "This variable controls the main processing loop, but its definition is not provided.",
-      "suggestion": "Examine the source code to determine how NO-MORE-MSG-AVAILABLE is set."
     }
   ],
   "resolved_questions": [
@@ -1018,6 +1008,24 @@
       "resolved_by": "CODEWHISPER",
       "cycle_resolved": 1,
       "tool_calls_used": 1
+    },
+    {
+      "original_question": "What are the conditions for NO-MORE-MSG-AVAILABLE?",
+      "original_context": "This variable controls the main processing loop, but its definition is not provided.",
+      "answer": "The condition for `NO-MORE-MSG-AVAILABLE` to be set to TRUE is when `WS-REASON` is equal to `MQRC-NO-MSG-AVAILABLE`. This occurs in paragraph `2000-MAIN-PROCESS` within the `COPAUA0C.cbl` program, specifically in the `2100-EXTRACT-REQUEST-MSG` paragraph. The program attempts to read a message from the MQ queue, and if no message is available, the MQ reason code `MQRC-NO-MSG-AVAILABLE` is returned in `WS-REASON`.",
+      "confidence": "HIGH",
+      "resolved_by": "CODEWHISPER",
+      "cycle_resolved": 1,
+      "tool_calls_used": 2
+    },
+    {
+      "original_question": "What is the purpose of 2100-EXTRACT-REQUEST-MSG and 5000-PROCESS-AUTH?",
+      "original_context": "These paragraphs are called but not defined in the provided code snippet.",
+      "answer": "Based on the code snippets:\n\n- `2100-EXTRACT-REQUEST-MSG`: This paragraph extracts the request message from `W01-GET-BUFFER`. It uses `UNSTRING` to parse the message, delimited by commas, and stores the extracted values into `PA-RQ-AUTH-DATE`.\n- `5000-PROCESS-AUTH`: This paragraph processes the authorization request. It sets `APPROVE-AUTH` to `TRUE` and then performs `1200-SCHEDULE-PSB`. This suggests it schedules a PSB (Program Specification Block) for IMS processing.",
+      "confidence": "HIGH",
+      "resolved_by": "CODEWHISPER",
+      "cycle_resolved": 1,
+      "tool_calls_used": 2
     }
   ],
   "dead_code": [],
