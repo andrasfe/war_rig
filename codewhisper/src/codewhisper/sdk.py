@@ -498,6 +498,7 @@ class CodeWhisper:
             max_iterations=self._config.max_iterations,
             temperature=self._config.temperature,
             max_tokens=self._config.max_tokens,
+            max_history_tokens=self._config.max_history_tokens,
         )
 
         react_loop = ReActLoop(

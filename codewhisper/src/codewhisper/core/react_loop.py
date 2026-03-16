@@ -106,6 +106,7 @@ class ReActConfig:
     temperature: float = 0.3
     max_tokens: int = 4096
     parallel_tool_execution: bool = True
+    max_history_tokens: int = 0
 
 
 @dataclass
@@ -329,6 +330,10 @@ class ReActLoop:
                 result_message = result.to_message()
                 working_history.append(result_message)
                 messages.append(result_message.to_dict())
+
+            # Trim messages if over token budget (drop oldest non-system)
+            if self._config.max_history_tokens > 0:
+                self._trim_messages(messages)
 
         # Reached max iterations
         reached_max = True
@@ -621,6 +626,60 @@ class ReActLoop:
             return summarized_results
 
         return results
+
+    def _trim_messages(self, messages: list[dict[str, Any]]) -> None:
+        """Drop oldest non-system messages until under token budget.
+
+        Preserves the system message (index 0), the original user prompt
+        (index 1), and the most recent messages. Drops from the middle
+        outward so the LLM keeps the freshest context.
+
+        Args:
+            messages: The mutable messages list used in the ReAct loop.
+        """
+        budget = self._config.max_history_tokens
+        if budget <= 0:
+            return
+
+        dropped = 0
+        while self._estimate_tokens(messages) > budget and len(messages) > 3:
+            # Find the oldest non-system, non-first-user message to drop
+            # Start at index 2 (after system + original user prompt)
+            messages.pop(2)
+            dropped += 1
+
+        if dropped:
+            logger.info(
+                "Trimmed %d messages from ReAct history to stay under %d token budget",
+                dropped,
+                budget,
+            )
+
+    @staticmethod
+    def _estimate_tokens(messages: list[dict[str, Any]]) -> int:
+        """Estimate total tokens in a messages list (~4 chars per token).
+
+        Args:
+            messages: List of message dicts.
+
+        Returns:
+            Estimated token count.
+        """
+        total = 0
+        for msg in messages:
+            content = msg.get("content", "")
+            if content:
+                total += len(content)
+            tool_calls = msg.get("tool_calls")
+            if tool_calls:
+                for tc in tool_calls:
+                    func = tc.get("function", {})
+                    args = func.get("arguments", "")
+                    if isinstance(args, str):
+                        total += len(args)
+                    else:
+                        total += len(str(args))
+        return total // 4
 
     def _generate_max_iterations_summary(self, history: list[Message]) -> str:
         """Generate a summary when max iterations is reached.
