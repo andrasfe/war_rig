@@ -508,6 +508,11 @@ class WarRigConfig(BaseSettings):
         default=True,
         description="Enable merge pass to fix cross-references and deduplicate after section generation",
     )
+    agentic_readme_max_context_tokens: int = Field(
+        default=1_000_000,
+        ge=10_000,
+        description="Maximum context tokens for agentic README generation (should match model context window)",
+    )
 
     # Copybook resolution
     extra_copybook_dirs: str = Field(

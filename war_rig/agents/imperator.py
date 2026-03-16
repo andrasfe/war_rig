@@ -703,6 +703,10 @@ class SystemDesignOutput(BaseModel):
         default_factory=list,
         description="Which sections were updated in this cycle",
     )
+    failed_sections: list[str] = Field(
+        default_factory=list,
+        description="Sections that failed to generate and were omitted",
+    )
 
 
 class ImperatorAgent(BaseAgent[ImperatorInput, ImperatorOutput]):
@@ -3695,6 +3699,7 @@ This creates a navigable documentation web.
         kg_system_summary: str | None = None,
         entry_points: list[str] | None = None,
         call_chains: list[list[str]] | None = None,
+        max_context_tokens: int = 1_000_000,
     ) -> SystemDesignOutput:
         """Generate README.md using agentic investigation via CodeWhisper.
 
@@ -3753,6 +3758,7 @@ This creates a navigable documentation web.
                 max_tokens=4096,
                 use_minion=True,
                 merge_pass_enabled=True,
+                max_context_tokens=max_context_tokens,
             )
 
             generator = AgenticReadmeGenerator(

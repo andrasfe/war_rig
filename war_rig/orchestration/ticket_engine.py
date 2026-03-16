@@ -551,7 +551,10 @@ class TicketOrchestrator:
             ):
                 # Generate README.md at the end (not during holistic review cycles)
                 self._state.status_message = "Generating README.md..."
-                await self._generate_final_readme()
+                try:
+                    await self._generate_final_readme()
+                except Exception as e:
+                    logger.error("README generation failed (non-fatal): %s", e)
 
                 # Chunks are safe to clean up now that README is complete
                 self._cleanup_all_chunks()
@@ -1407,7 +1410,13 @@ class TicketOrchestrator:
                     output.success
                     and output.decision == ImperatorHolisticDecision.SATISFIED
                 ):
-                    await self._generate_readme_after_compact_review()
+                    try:
+                        await self._generate_readme_after_compact_review()
+                    except Exception as e:
+                        logger.error(
+                            "README generation after compact review failed (non-fatal): %s",
+                            e,
+                        )
 
                 return output
 
@@ -1554,6 +1563,7 @@ class TicketOrchestrator:
                 kg_system_summary=kg_system_summary,
                 entry_points=entry_points,
                 call_chains=call_chains,
+                max_context_tokens=self.config.agentic_readme_max_context_tokens,
             )
         else:
             # Monolithic fallback (or mock mode)
@@ -1565,6 +1575,12 @@ class TicketOrchestrator:
                 kg_system_summary=kg_system_summary,
                 entry_points=entry_points,
                 call_chains=call_chains,
+            )
+
+        # Open tickets for any sections that failed to generate
+        if design_output.failed_sections:
+            self._create_readme_section_failure_tickets(
+                design_output.failed_sections
             )
 
         return design_output
@@ -1582,16 +1598,17 @@ class TicketOrchestrator:
         review_input = await self._build_holistic_review_input()
 
         if not review_input.file_documentation:
-            raise RuntimeError(
-                "README generation failed: no documentation available"
-            )
+            logger.warning("README generation skipped: no documentation available")
+            return
 
         design_output = await self._generate_readme_core(review_input)
 
         if not design_output.success or not design_output.markdown:
-            raise RuntimeError(
-                f"README generation failed: {design_output.error or 'LLM returned empty markdown'}"
+            logger.warning(
+                "README generation failed: %s",
+                design_output.error or "LLM returned empty markdown",
             )
+            return
 
         # Sanitize invalid mermaid blocks before writing
         from war_rig.validation.mermaid_validator import sanitize_mermaid_blocks
@@ -1625,16 +1642,17 @@ class TicketOrchestrator:
         review_input = await self._build_holistic_review_input()
 
         if not review_input.file_documentation:
-            raise RuntimeError(
-                "README generation failed: no documentation available"
-            )
+            logger.warning("README generation skipped: no documentation available")
+            return
 
         design_output = await self._generate_readme_core(review_input)
 
         if not design_output.success or not design_output.markdown:
-            raise RuntimeError(
-                f"README generation failed: {design_output.error or 'LLM returned empty markdown'}"
+            logger.warning(
+                "README generation failed: %s",
+                design_output.error or "LLM returned empty markdown",
             )
+            return
 
         # Sanitize invalid mermaid blocks before writing
         from war_rig.validation.mermaid_validator import sanitize_mermaid_blocks
@@ -2607,6 +2625,40 @@ class TicketOrchestrator:
 
         logger.info(f"Created SYSTEM_OVERVIEW ticket: {ticket_id}")
         return ticket
+
+    def _create_readme_section_failure_tickets(
+        self, failed_sections: list[str]
+    ) -> None:
+        """Create bug tickets for README sections that failed to generate.
+
+        Args:
+            failed_sections: List of section names that failed.
+        """
+        from uuid import uuid4
+
+        for section_name in failed_sections:
+            ticket_id = f"README-{uuid4().hex[:8].upper()}"
+            ticket = ProgramManagerTicket(
+                ticket_id=ticket_id,
+                file_name="README.md",
+                program_id=f"README-{section_name}",
+                ticket_type=TicketType.CHROME,
+                state=TicketState.CREATED,
+                cycle_number=self._state.cycle,
+                metadata={
+                    "batch_id": self._state.batch_id,
+                    "section_name": section_name,
+                    "failure_type": "readme_section_generation",
+                    "created_at": datetime.utcnow().isoformat(),
+                },
+            )
+            self.beads_client._pm_ticket_cache[ticket_id] = ticket
+            self.beads_client._save_to_disk()
+            logger.warning(
+                "Created CHROME ticket %s for failed README section: %s",
+                ticket_id,
+                section_name,
+            )
 
     async def _process_system_overview(self) -> SystemOverviewOutput | None:
         """Process the SYSTEM_OVERVIEW ticket by generating the overview document.

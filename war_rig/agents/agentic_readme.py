@@ -357,6 +357,7 @@ class AgenticReadmeConfig:
     max_tokens: int = 16384
     use_minion: bool = True
     merge_pass_enabled: bool = True
+    max_context_tokens: int = 1_000_000
 
 
 # ============================================================================
@@ -446,6 +447,79 @@ def _parse_inline_questions(markdown: str, cycle: int = 1) -> list[InlineQuestio
     return questions
 
 
+_LINK_RE = re.compile(r"\[([^\]]+)\]\([^)]+\.md\)")
+_HEADING_RE = re.compile(r"^#{2,4}\s+(.+)")
+
+
+def _summarise_section(content: str) -> str:
+    """Build a dense one-line summary of a generated README section.
+
+    Extracts sub-headings (topics covered) and linked component names
+    so later sections know what was already discussed and can
+    cross-reference accurately without the full text.
+
+    Args:
+        content: Full markdown of a single section.
+
+    Returns:
+        Condensed summary string (typically 100-300 chars).
+    """
+    # Collect sub-headings as topic list
+    headings: list[str] = []
+    for m in _HEADING_RE.finditer(content):
+        h = m.group(1).strip().rstrip(".")
+        if h and h not in headings:
+            headings.append(h)
+
+    # Collect linked component names (deduplicated, order-preserved)
+    seen: set[str] = set()
+    components: list[str] = []
+    for m in _LINK_RE.finditer(content):
+        name = m.group(1).strip()
+        if name not in seen:
+            seen.add(name)
+            components.append(name)
+
+    parts: list[str] = []
+    if headings:
+        parts.append("Topics: " + ", ".join(headings[:8]))
+    if components:
+        parts.append("Components: " + ", ".join(components[:15]))
+    if not parts:
+        # Fallback: first substantive line
+        for line in content.splitlines():
+            stripped = line.strip()
+            if stripped and not stripped.startswith("#"):
+                parts.append(stripped[:200])
+                break
+    return "; ".join(parts)
+
+
+def _format_previous_sections(sections: dict[str, str]) -> str:
+    """Format previously generated sections as condensed summaries.
+
+    Each section is reduced to its sub-headings and linked component
+    names so later sections can cross-reference without re-injecting
+    megabytes of full text.
+
+    Args:
+        sections: Mapping of section name to generated markdown.
+
+    Returns:
+        Compact markdown listing of previous sections.
+    """
+    parts = [
+        "## Previously Generated Sections",
+        "These sections have already been written. "
+        "Reference them by name for cross-linking but do NOT repeat their content.",
+        "",
+    ]
+    for name, content in sections.items():
+        summary = _summarise_section(content)
+        parts.append(f"- **{name}** — {summary}")
+    return "\n".join(parts)
+
+
 class AgenticReadmeGenerator:
     """Generate README.md through agentic investigation via CodeWhisper SDK.
 
@@ -487,15 +561,12 @@ class AgenticReadmeGenerator:
             SystemDesignOutput with the assembled markdown.
         """
         sdk = self._create_sdk()
-
-        # Inject architect persona and structural context as system messages
-        sdk.add_system_message(ARCHITECT_PROMPT)
         context_str = structural_context.to_context_string()
-        if context_str.strip():
-            sdk.add_system_message(context_str)
 
-        # Generate sections sequentially
+        # Generate sections sequentially, resetting SDK between each
+        # to prevent tool-call history from accumulating past context limits
         generated_sections: dict[str, str] = {}
+        failed_section_names: list[str] = []
 
         for section in SECTIONS:
             logger.info(
@@ -503,6 +574,16 @@ class AgenticReadmeGenerator:
             )
 
             try:
+                # Reset and re-inject context for each section
+                sdk.reset()
+                sdk.add_system_message(ARCHITECT_PROMPT)
+                if context_str.strip():
+                    sdk.add_system_message(context_str)
+                if generated_sections:
+                    sdk.add_system_message(
+                        _format_previous_sections(generated_sections)
+                    )
+
                 prompt = self._build_section_prompt(
                     section, structural_context, generated_sections
                 )
@@ -523,10 +604,8 @@ class AgenticReadmeGenerator:
                     section.name,
                     e,
                 )
-                generated_sections[section.name] = (
-                    f"## {section.number}. {section.name}\n\n"
-                    f"*Section generation failed: {e}*\n"
-                )
+                # Silently omit failed sections from the final README
+                failed_section_names.append(section.name)
 
         # Optional merge pass
         final_markdown = self._assemble_document(
@@ -535,6 +614,11 @@ class AgenticReadmeGenerator:
 
         if self._config.merge_pass_enabled and len(generated_sections) > 3:
             try:
+                # Reset for merge pass — inject the assembled doc explicitly
+                sdk.reset()
+                sdk.add_system_message(ARCHITECT_PROMPT)
+                if context_str.strip():
+                    sdk.add_system_message(context_str)
                 final_markdown = await self._merge_sections(
                     sdk, final_markdown, structural_context
                 )
@@ -555,6 +639,7 @@ class AgenticReadmeGenerator:
             markdown=final_markdown,
             questions=questions,
             sections_updated=sections_updated,
+            failed_sections=failed_section_names,
         )
 
     def _create_sdk(self):
@@ -572,11 +657,15 @@ class AgenticReadmeGenerator:
 
         provider = get_provider_from_env()
 
+        # Reserve 10% of context budget for system prompt + response
+        history_token_budget = int(self._config.max_context_tokens * 0.9)
+
         config = CodeWhisperConfig(
             max_iterations=self._config.max_iterations_per_section,
             temperature=self._config.temperature,
             max_tokens=self._config.max_tokens,
             use_minion=self._config.use_minion,
+            max_history_tokens=history_token_budget,
         )
 
         sdk = CodeWhisper(
@@ -712,23 +801,23 @@ class AgenticReadmeGenerator:
         Returns:
             The merged/cleaned markdown.
         """
-        merge_prompt = """\
-Review the complete README document assembled from all sections above.
-
-Identify issues in these categories:
-1. **Cross-references**: Section cross-references pointing to wrong numbers
-2. **Broken links**: Component links that don't match the documentation file paths table
-3. **Deduplication**: Paragraphs repeated verbatim across sections
-
-For each issue found, output a JSON edit in this exact format (one per line):
-
-{"find": "exact text to find", "replace": "corrected text"}
-
-Rules:
-- Output ONLY the JSON edit lines, nothing else
-- "find" must be an EXACT substring of the current document
-- Keep edits minimal — fix only the broken part, not whole paragraphs
-- If no issues found, output: NONE"""
+        merge_prompt = (
+            "Review the complete README document below.\n\n"
+            "<document>\n"
+            f"{assembled_markdown}\n"
+            "</document>\n\n"
+            "Identify issues in these categories:\n"
+            '1. **Cross-references**: Section cross-references pointing to wrong numbers\n'
+            '2. **Broken links**: Component links that don\'t match the documentation file paths table\n'
+            '3. **Deduplication**: Paragraphs repeated verbatim across sections\n\n'
+            'For each issue found, output a JSON edit in this exact format (one per line):\n\n'
+            '{"find": "exact text to find", "replace": "corrected text"}\n\n'
+            "Rules:\n"
+            '- Output ONLY the JSON edit lines, nothing else\n'
+            '- "find" must be an EXACT substring of the current document\n'
+            '- Keep edits minimal — fix only the broken part, not whole paragraphs\n'
+            "- If no issues found, output: NONE"
+        )
 
         result = await sdk.complete(merge_prompt)
         response = result.content.strip()

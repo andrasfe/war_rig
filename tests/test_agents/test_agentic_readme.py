@@ -255,8 +255,9 @@ class TestAgenticReadmeGenerator:
             result = await generator.generate(structural_context)
 
         assert result.success is True
-        # Failed section should have error message
-        assert "Section generation failed" in result.markdown
+        # Failed section should be silently omitted (not written as error text)
+        assert "Section generation failed" not in result.markdown
+        assert "Component Catalog" not in result.markdown
 
     async def test_generate_appends_sequence_diagrams(
         self, generator, structural_context

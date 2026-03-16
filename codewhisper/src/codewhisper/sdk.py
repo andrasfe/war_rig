@@ -211,6 +211,8 @@ class CodeWhisperConfig:
             large tool outputs before passing to the main model.
         minion_threshold: Character count threshold above which tool outputs
             are summarized by the minion model.
+        max_history_tokens: Maximum estimated tokens in conversation history.
+            When exceeded, oldest non-system messages are dropped. 0 = disabled.
 
     Example:
         config = CodeWhisperConfig(
@@ -227,6 +229,7 @@ class CodeWhisperConfig:
     max_tokens: int = 4096
     use_minion: bool = True
     minion_threshold: int = 32000
+    max_history_tokens: int = 0
 
 
 @dataclass
@@ -561,23 +564,62 @@ class CodeWhisper:
         """Trim conversation history to max_history messages.
 
         Preserves system messages and the most recent messages.
+        Also enforces max_history_tokens if configured.
         """
         if len(self._conversation_history) <= self._config.max_history:
-            return
-
-        # Separate system messages (keep all) and other messages
-        system_messages = [m for m in self._conversation_history if m.role == "system"]
-        other_messages = [m for m in self._conversation_history if m.role != "system"]
-
-        # Keep most recent non-system messages
-        keep_count = self._config.max_history - len(system_messages)
-        if keep_count > 0:
-            other_messages = other_messages[-keep_count:]
+            trimmed = False
         else:
-            other_messages = []
+            trimmed = True
+            # Separate system messages (keep all) and other messages
+            system_messages = [
+                m for m in self._conversation_history if m.role == "system"
+            ]
+            other_messages = [
+                m for m in self._conversation_history if m.role != "system"
+            ]
 
-        self._conversation_history = system_messages + other_messages
-        logger.debug("Trimmed history to %d messages", len(self._conversation_history))
+            # Keep most recent non-system messages
+            keep_count = self._config.max_history - len(system_messages)
+            if keep_count > 0:
+                other_messages = other_messages[-keep_count:]
+            else:
+                other_messages = []
+
+            self._conversation_history = system_messages + other_messages
+
+        # Token-aware trimming (safety net for large tool outputs)
+        if self._config.max_history_tokens > 0:
+            budget = self._config.max_history_tokens
+            while self._estimate_history_tokens() > budget:
+                # Find oldest non-system message to drop
+                for i, msg in enumerate(self._conversation_history):
+                    if msg.role != "system":
+                        self._conversation_history.pop(i)
+                        trimmed = True
+                        break
+                else:
+                    break  # Only system messages left
+
+        if trimmed:
+            logger.debug(
+                "Trimmed history to %d messages", len(self._conversation_history)
+            )
+
+    def _estimate_history_tokens(self) -> int:
+        """Estimate total tokens in conversation history.
+
+        Uses a simple heuristic of ~4 characters per token.
+
+        Returns:
+            Estimated token count.
+        """
+        total_chars = 0
+        for msg in self._conversation_history:
+            total_chars += len(msg.content)
+            if msg.tool_calls:
+                for tc in msg.tool_calls:
+                    total_chars += len(str(tc.arguments))
+        return total_chars // 4
 
     def _messages_to_dicts(self) -> list[dict[str, Any]]:
         """Convert conversation history to API-compatible format.
