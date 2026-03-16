@@ -79,6 +79,7 @@ def _strip_markdown_fences(text: str) -> str:
 
     Handles both a single outer fence and multiple consecutive fenced
     blocks that cover the entire response (the LLM wraps every section).
+    Also strips a trailing bare ``` even without a matching opener.
     """
     stripped = text.strip()
     m = _FENCE_OPEN.match(stripped)
@@ -86,7 +87,12 @@ def _strip_markdown_fences(text: str) -> str:
         inner = stripped[m.end():]
         inner = _FENCE_CLOSE.sub("", inner)
         return inner
-    return text
+
+    # Strip trailing bare ``` even without matching opener
+    if _FENCE_CLOSE.search(stripped):
+        stripped = _FENCE_CLOSE.sub("", stripped)
+
+    return stripped
 
 
 # ============================================================================
