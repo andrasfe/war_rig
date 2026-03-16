@@ -202,15 +202,27 @@ def _resolve_citation(
 # ---------------------------------------------------------------------------
 
 
-def _load_ast_ranges(source_path: Path) -> dict[str, tuple[int, int]]:
+def _load_ast_ranges(
+    source_path: Path, doc_json_path: Path | None = None,
+) -> dict[str, tuple[int, int]]:
     """Load paragraph line ranges from the ``.ast`` file if it exists.
+
+    Searches for the ``.ast`` file next to the source file first, then
+    next to the doc.json file (output dir), since the AST may live in
+    either location depending on the pipeline configuration.
 
     Returns a mapping of uppercase paragraph name to (start, end) 1-indexed
     inclusive line range.  Returns an empty dict when no ``.ast`` file is
     found or it cannot be parsed.
     """
     ast_path = source_path.with_suffix(source_path.suffix + ".ast")
+    if not ast_path.exists() and doc_json_path is not None:
+        # Try next to the doc.json (output dir)
+        candidate = doc_json_path.parent / ast_path.name
+        if candidate.exists():
+            ast_path = candidate
     if not ast_path.exists():
+        logger.debug("No AST file found for %s", source_path)
         return {}
 
     try:
@@ -228,7 +240,9 @@ def _load_ast_ranges(source_path: Path) -> dict[str, tuple[int, int]]:
             ranges[name.upper()] = (ls, le)
 
     if ranges:
-        logger.debug("Loaded %d AST ranges from %s", len(ranges), ast_path)
+        logger.info("Loaded %d AST ranges from %s", len(ranges), ast_path)
+    else:
+        logger.warning("AST file %s had no usable paragraph ranges", ast_path)
     return ranges
 
 
@@ -292,17 +306,15 @@ def split_paragraphs(
         output_dir = doc_json_path.parent / f"{source_path.name}.d"
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    # Prefer deterministic AST line ranges over LLM-generated citations
-    ast_ranges = _load_ast_ranges(source_path)
-
-    # Build index of paragraph start lines for fallback when citations
-    # are missing.  Only look for names we know about from the doc.json.
-    known_names = {
-        p["paragraph_name"].upper()
-        for p in paragraphs
-        if p.get("paragraph_name")
-    }
-    para_line_index = _build_paragraph_index(source_lines, known_names)
+    # AST line ranges are the only authoritative source for paragraph boundaries
+    ast_ranges = _load_ast_ranges(source_path, doc_json_path)
+    if not ast_ranges:
+        logger.error(
+            "No AST file found for %s — cannot split paragraphs without "
+            "authoritative line ranges",
+            source_path,
+        )
+        return []
 
     created: list[Path] = []
     for para in paragraphs:
@@ -310,19 +322,13 @@ def split_paragraphs(
         if not name:
             continue
 
-        # AST ranges are authoritative when available
         ast_range = ast_ranges.get(name.upper())
-        if ast_range is not None:
-            start, end = ast_range
-            logger.debug(
-                "Paragraph %r: using AST range [%d, %d]", name, start, end,
+        if ast_range is None:
+            logger.warning(
+                "Paragraph %r: no AST range found, skipping", name,
             )
-        else:
-            start, end = _resolve_citation(
-                name, para.get("citation"), source_lines, para_line_index,
-            )
-        if start is None:
             continue
+        start, end = ast_range
 
         extracted = source_lines[start - 1 : end]
         if not extracted:

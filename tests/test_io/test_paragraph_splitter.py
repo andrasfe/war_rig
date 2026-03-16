@@ -51,6 +51,31 @@ def _make_doc_json(
     return path
 
 
+def _make_ast_file(
+    source_path: Path,
+    paragraphs: list[dict],
+) -> Path:
+    """Create a .ast JSON file next to the source file.
+
+    Each entry in *paragraphs* should have ``name``, ``line_start``,
+    ``line_end`` keys.
+    """
+    ast_path = source_path.with_suffix(source_path.suffix + ".ast")
+    data = {
+        "paragraphs": [
+            {
+                "name": p["name"],
+                "line_start": p["line_start"],
+                "line_end": p["line_end"],
+                "statements": [],
+            }
+            for p in paragraphs
+        ],
+    }
+    ast_path.write_text(json.dumps(data))
+    return ast_path
+
+
 def _make_markdown(path: Path, content: str) -> Path:
     """Write markdown content to a file."""
     path.write_text(content)
@@ -121,6 +146,10 @@ class TestSplitParagraphs:
     def test_happy_path_extracts_correct_lines(self, tmp_path):
         """Paragraphs are extracted by line range with correct content."""
         source = _make_source_file(tmp_path / "TESTPROG.cbl", num_lines=50)
+        _make_ast_file(source, [
+            {"name": "MAIN-PARA", "line_start": 10, "line_end": 15},
+            {"name": "1000-INIT", "line_start": 20, "line_end": 25},
+        ])
         doc_json = _make_doc_json(
             tmp_path / "TESTPROG.cbl.doc.json",
             paragraphs=[
@@ -160,6 +189,9 @@ class TestSplitParagraphs:
     def test_single_line_paragraph(self, tmp_path):
         """A paragraph citing a single line [n, n] produces a one-line file."""
         source = _make_source_file(tmp_path / "TESTPROG.cbl", num_lines=50)
+        _make_ast_file(source, [
+            {"name": "SINGLE-LINE", "line_start": 23, "line_end": 23},
+        ])
         doc_json = _make_doc_json(
             tmp_path / "TESTPROG.cbl.doc.json",
             paragraphs=[
@@ -198,9 +230,12 @@ class TestSplitParagraphs:
         with pytest.raises(FileNotFoundError):
             split_paragraphs(nonexistent, doc_json)
 
-    def test_missing_citation_skips_paragraph(self, tmp_path):
-        """Paragraphs with null/missing citation are skipped."""
+    def test_missing_ast_range_skips_paragraph(self, tmp_path):
+        """Paragraphs without an AST range are skipped."""
         source = _make_source_file(tmp_path / "TESTPROG.cbl", num_lines=50)
+        _make_ast_file(source, [
+            {"name": "HAS-CITE", "line_start": 1, "line_end": 5},
+        ])
         doc_json = _make_doc_json(
             tmp_path / "TESTPROG.cbl.doc.json",
             paragraphs=[
@@ -222,24 +257,22 @@ class TestSplitParagraphs:
         assert len(result) == 1
         assert result[0].name == "HAS-CITE.cbl.md"
 
-    def test_citation_beyond_file_length(self, tmp_path):
-        """Citation beyond file length does not crash."""
+    def test_no_ast_file_returns_empty(self, tmp_path):
+        """When no .ast file exists, returns empty list immediately."""
         source = _make_source_file(tmp_path / "TESTPROG.cbl", num_lines=10)
         doc_json = _make_doc_json(
             tmp_path / "TESTPROG.cbl.doc.json",
             paragraphs=[
                 {
                     "paragraph_name": "BEYOND",
-                    "citation": [8, 999],
-                    "purpose": "Past end of file",
+                    "citation": [8, 10],
+                    "purpose": "Has citation but no AST",
                 },
             ],
         )
         output_dir = tmp_path / "out"
-        # Should not raise; may produce a partial file or skip
         result = split_paragraphs(source, doc_json, output_dir)
-        # Either creates the file with available lines or skips gracefully
-        assert isinstance(result, list)
+        assert result == []
 
     def test_empty_paragraphs_list(self, tmp_path):
         """Empty paragraphs list returns empty list and creates no files."""
@@ -256,6 +289,9 @@ class TestSplitParagraphs:
     def test_output_directory_created(self, tmp_path):
         """Output directory is created automatically if it does not exist."""
         source = _make_source_file(tmp_path / "TESTPROG.cbl", num_lines=50)
+        _make_ast_file(source, [
+            {"name": "MAIN-PARA", "line_start": 1, "line_end": 5},
+        ])
         doc_json = _make_doc_json(
             tmp_path / "TESTPROG.cbl.doc.json",
             paragraphs=[
@@ -277,6 +313,9 @@ class TestSplitParagraphs:
     def test_default_output_dir(self, tmp_path):
         """When output_dir is None, defaults to source_path.parent / {name}.d."""
         source = _make_source_file(tmp_path / "TESTPROG.cbl", num_lines=50)
+        _make_ast_file(source, [
+            {"name": "MAIN-PARA", "line_start": 1, "line_end": 5},
+        ])
         doc_json = _make_doc_json(
             tmp_path / "TESTPROG.cbl.doc.json",
             paragraphs=[
@@ -297,6 +336,9 @@ class TestSplitParagraphs:
     def test_dead_code_paragraphs_are_still_split(self, tmp_path):
         """Dead code paragraphs are split (is_dead_code is ignored)."""
         source = _make_source_file(tmp_path / "TESTPROG.cbl", num_lines=50)
+        _make_ast_file(source, [
+            {"name": "DEAD-PARA", "line_start": 1, "line_end": 5},
+        ])
         doc_json = _make_doc_json(
             tmp_path / "TESTPROG.cbl.doc.json",
             paragraphs=[
@@ -579,7 +621,10 @@ class TestSplitAllInDirectory:
         doc_dir.mkdir()
 
         # Create two source/doc pairs
-        _make_source_file(source_dir / "PROG1.cbl", num_lines=30)
+        src1 = _make_source_file(source_dir / "PROG1.cbl", num_lines=30)
+        _make_ast_file(src1, [
+            {"name": "MAIN-PARA", "line_start": 1, "line_end": 10},
+        ])
         _make_doc_json(
             doc_dir / "PROG1.cbl.doc.json",
             file_name="PROG1.cbl",
@@ -588,7 +633,10 @@ class TestSplitAllInDirectory:
             ],
         )
 
-        _make_source_file(source_dir / "PROG2.cbl", num_lines=30)
+        src2 = _make_source_file(source_dir / "PROG2.cbl", num_lines=30)
+        _make_ast_file(src2, [
+            {"name": "INIT", "line_start": 1, "line_end": 5},
+        ])
         _make_doc_json(
             doc_dir / "PROG2.cbl.doc.json",
             file_name="PROG2.cbl",
@@ -691,6 +739,9 @@ class TestSplitAndLink:
     def test_combines_split_and_patch(self, tmp_path):
         """Convenience wrapper splits and patches in one call."""
         source = _make_source_file(tmp_path / "TESTPROG.cbl", num_lines=50)
+        _make_ast_file(source, [
+            {"name": "MAIN-PARA", "line_start": 1, "line_end": 10},
+        ])
         doc_json = _make_doc_json(
             tmp_path / "TESTPROG.cbl.doc.json",
             paragraphs=[
@@ -744,6 +795,9 @@ class TestSplitAndLink:
         for ext in (".cbl", ".cob", ".cobol", ".CBL"):
             name = f"PROG{ext}"
             source = _make_source_file(tmp_path / name, num_lines=10)
+            _make_ast_file(source, [
+                {"name": "MAIN", "line_start": 1, "line_end": 5},
+            ])
             doc_json = _make_doc_json(
                 tmp_path / f"{name}.doc.json",
                 file_name=name,
@@ -780,7 +834,11 @@ class TestRunBatchSplit:
         output_dir.mkdir()
 
         # Create realistic source file
-        _make_source_file(input_dir / "MYPROG.cbl", num_lines=100)
+        src = _make_source_file(input_dir / "MYPROG.cbl", num_lines=100)
+        _make_ast_file(src, [
+            {"name": "MAIN-PARA", "line_start": 10, "line_end": 25},
+            {"name": "1000-INIT", "line_start": 26, "line_end": 40},
+        ])
 
         # Create doc.json and markdown in output dir
         _make_doc_json(
@@ -838,6 +896,11 @@ class TestIntegration:
     def test_split_and_link_roundtrip(self, tmp_path):
         """Full roundtrip: split paragraphs then patch markdown links."""
         source = _make_source_file(tmp_path / "TESTPROG.cbl", num_lines=100)
+        _make_ast_file(source, [
+            {"name": "MAIN-PARA", "line_start": 10, "line_end": 25},
+            {"name": "1000-INIT", "line_start": 30, "line_end": 45},
+            {"name": "9999-EXIT", "line_start": 90, "line_end": 92},
+        ])
         doc_json = _make_doc_json(
             tmp_path / "TESTPROG.cbl.doc.json",
             paragraphs=[
@@ -917,7 +980,11 @@ class TestIntegration:
         doc_dir.mkdir()
 
         for prog in ("ALPHA", "BRAVO"):
-            _make_source_file(source_dir / f"{prog}.cbl", num_lines=50)
+            src = _make_source_file(source_dir / f"{prog}.cbl", num_lines=50)
+            _make_ast_file(src, [
+                {"name": "MAIN-PARA", "line_start": 1, "line_end": 10},
+                {"name": "1000-INIT", "line_start": 15, "line_end": 25},
+            ])
             _make_doc_json(
                 doc_dir / f"{prog}.cbl.doc.json",
                 file_name=f"{prog}.cbl",
