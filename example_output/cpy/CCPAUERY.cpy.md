@@ -2,21 +2,15 @@
 
 **File**: `cpy/CCPAUERY.cpy`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-03-04 04:44:23.364747
+**Analyzed**: 2026-03-16 19:55:04.463442
 
 ## Purpose
 
-This copybook defines the ERROR-LOG-RECORD structure, which is used for logging errors and informational messages within an application. It includes fields for date, time, application name, program name, location, error level, subsystem, error codes, message, and event key.
+This copybook defines the structure of an error log record. It includes fields for date, time, application, program, location, error level, subsystem, error codes, message, and event key. This structure is likely used for logging errors and debugging within a larger system.
 
-## Paragraphs/Procedures
+**Business Context**: UNKNOWN
 
-### ~~ERROR-LOG-RECORD~~ (Dead Code)
-*Record layout 'ERROR-LOG-RECORD' is never used by any program*
+## Open Questions
 
-## Dead Code
-
-The following artifacts were identified as dead code by static analysis:
-
-| Artifact | Type | Line | Reason |
-|----------|------|------|--------|
-| ERROR-LOG-RECORD | record_layout | 1 | Record layout 'ERROR-LOG-RECORD' is never used by any program |
+- ? What is the business context for these error logs?
+  - Context: The copybook itself does not provide information about the specific application or system where these error logs are used.

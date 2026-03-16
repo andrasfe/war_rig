@@ -7,93 +7,47 @@
       "file_name": "PAUDBLOD.CBL",
       "file_type": "COBOL",
       "analyzed_by": "WAR_RIG",
-      "analyzed_at": "2026-03-04T04:43:27.190570",
+      "analyzed_at": "2026-03-16T20:01:37.629608",
       "iteration_count": 1,
       "final_status": null
     },
     "purpose": {
-      "summary": "This program inserts child segments into an IMS database. It retrieves a root segment and then inserts a child segment related to that root. The program abends if any IMS calls fail.",
+      "summary": "The COBOL program PAUDBLOD interacts with an IMS database to insert child segments. It retrieves a root segment and then attempts to insert a child segment related to that root. The program includes error handling and file closing routines.",
       "business_context": "UNKNOWN",
       "program_type": "BATCH",
       "citations": [
-        5,
-        31,
-        75
+        2,
+        34,
+        65,
+        81
       ]
     },
-    "inputs": [
-      {
-        "name": "INFILE1",
-        "io_type": "FILE_SEQUENTIAL",
-        "description": "First input file, purpose unknown.",
-        "copybook": null,
-        "citation": [
-          54
-        ]
-      },
-      {
-        "name": "INFILE2",
-        "io_type": "FILE_SEQUENTIAL",
-        "description": "Second input file, purpose unknown.",
-        "copybook": null,
-        "citation": [
-          61
-        ]
-      },
-      {
-        "name": "PAUTBPCB",
-        "io_type": "IMS_SEGMENT",
-        "description": "IMS PCB for the database interaction.",
-        "copybook": null,
-        "citation": [
-          6,
-          32
-        ]
-      },
-      {
-        "name": "PENDING-AUTH-SUMMARY",
-        "io_type": "IMS_SEGMENT",
-        "description": "Root segment data to be retrieved.",
-        "copybook": null,
-        "citation": [
-          7
-        ]
-      },
-      {
-        "name": "PENDING-AUTH-DETAILS",
-        "io_type": "IMS_SEGMENT",
-        "description": "Child segment data to be inserted.",
-        "copybook": null,
-        "citation": [
-          33
-        ]
-      }
-    ],
+    "inputs": [],
     "outputs": [],
     "called_programs": [
       {
         "program_name": "CBLTDLI",
         "call_type": "STATIC_CALL",
-        "purpose": "Performs IMS database calls.",
+        "purpose": "To perform IMS database operations, specifically to retrieve (GU) and insert (ISRT) segments.",
         "parameters": [
           "FUNC-GU",
           "PAUTBPCB",
           "PENDING-AUTH-SUMMARY",
           "ROOT-QUAL-SSA"
         ],
-        "citation": 5
+        "citation": 6
       },
       {
         "program_name": "CBLTDLI",
         "call_type": "STATIC_CALL",
-        "purpose": "Performs IMS database calls.",
+        "purpose": "To perform IMS database operations, specifically to insert (ISRT) a child segment.",
         "parameters": [
           "FUNC-ISRT",
           "PAUTBPCB",
           "PENDING-AUTH-DETAILS",
           "CHILD-UNQUAL-SSA"
         ],
-        "citation": 31
+        "citation": 34
       }
     ],
     "calling_context": {
@@ -112,16 +66,15 @@
       {
         "paragraph_name": "3100-INSERT-CHILD-SEG",
         "summary": null,
-        "purpose": "This paragraph retrieves a root segment from the IMS database and then inserts a child segment. It first initializes PAUT-PCB-STATUS. Then, it calls CBLTDLI with FUNC-GU to retrieve the root segment PENDING-AUTH-SUMMARY using ROOT-QUAL-SSA. If the PCB status is spaces, indicating a successful retrieval, it performs 3200-INSERT-IMS-CALL to insert the child segment. If the root segment retrieval fails (PCB status is not spaces or 'II'), it displays an error message and calls 9999-ABEND to terminate the program. The paragraph uses PAUTBPCB for the PCB and handles potential errors during the root segment retrieval.",
+        "purpose": "This paragraph attempts to retrieve a root segment from the IMS database and then calls another paragraph to insert a child segment. It initializes PAUT-PCB-STATUS (line 5) and then calls CBLTDLI with FUNC-GU to retrieve the root segment using the PAUTBPCB, PENDING-AUTH-SUMMARY, and ROOT-QUAL-SSA (lines 6-9). It checks the PAUT-PCB-STATUS after the call (line 15). If the status is spaces, it assumes the retrieval was successful and calls 3200-INSERT-IMS-CALL to insert the child segment (line 19). If the status is not spaces or 'II', it displays an error message and calls 9999-ABEND (lines 20-23). The paragraph uses DISPLAY statements for debugging (lines 4, 10, 16, 21, 22).",
         "called_by": [],
         "calls": [
-          "CBLTDLI",
           "3200-INSERT-IMS-CALL",
           "9999-ABEND"
         ],
         "citation": [
-          1,
-          23
+          2,
+          24
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -132,14 +85,12 @@
       {
         "paragraph_name": "3100-EXIT",
         "summary": null,
-        "purpose": "This paragraph serves as the exit point for the 3100-INSERT-CHILD-SEG paragraph. It contains only the EXIT statement and ensures a clean exit from the paragraph.",
-        "called_by": [
-          "3100-INSERT-CHILD-SEG"
-        ],
+        "purpose": "This paragraph serves as the exit point for the 3100-INSERT-CHILD-SEG paragraph. It contains a simple EXIT statement to allow the PERFORM THRU structure in 3100-INSERT-CHILD-SEG to function correctly. It does not perform any specific logic or data manipulation.",
+        "called_by": [],
         "calls": [],
         "citation": [
-          25,
-          26
+          27,
+          28
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -150,17 +101,16 @@
       {
         "paragraph_name": "3200-INSERT-IMS-CALL",
         "summary": null,
-        "purpose": "This paragraph inserts a child segment into the IMS database. It calls CBLTDLI with FUNC-ISRT to insert the PENDING-AUTH-DETAILS segment using CHILD-UNQUAL-SSA. If the PCB status is spaces, indicating a successful insertion, it displays a success message. If the PCB status is 'II', it displays a message indicating the segment is already in the database. If the insertion fails (PCB status is not spaces or 'II'), it displays an error message and calls 9999-ABEND to terminate the program. The paragraph uses PAUTBPCB for the PCB and handles potential errors during the child segment insertion.",
+        "purpose": "This paragraph attempts to insert a child segment into the IMS database. It calls CBLTDLI with FUNC-ISRT to insert the PENDING-AUTH-DETAILS segment using the PAUTBPCB and CHILD-UNQUAL-SSA (lines 34-37). It checks the PAUT-PCB-STATUS after the call (line 39). If the status is spaces, it displays a success message (line 40). If the status is 'II', it displays a message indicating the segment already exists (line 43). If the status is neither spaces nor 'II', it displays an error message and calls 9999-ABEND (lines 45-48). The paragraph uses DISPLAY statements for debugging (lines 33, 40, 43, 46, 47).",
         "called_by": [
           "3100-INSERT-CHILD-SEG"
         ],
         "calls": [
-          "CBLTDLI",
           "9999-ABEND"
         ],
         "citation": [
-          28,
-          46
+          31,
+          49
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -171,14 +121,12 @@
       {
         "paragraph_name": "3200-EXIT",
         "summary": null,
-        "purpose": "This paragraph serves as the exit point for the 3200-INSERT-IMS-CALL paragraph. It contains only the EXIT statement and ensures a clean exit from the paragraph.",
-        "called_by": [
-          "3200-INSERT-IMS-CALL"
-        ],
+        "purpose": "This paragraph serves as the exit point for the 3200-INSERT-IMS-CALL paragraph. It contains a simple EXIT statement to allow the PERFORM THRU structure in 3100-INSERT-CHILD-SEG to function correctly. It does not perform any specific logic or data manipulation.",
+        "called_by": [],
         "calls": [],
         "citation": [
-          49,
-          50
+          52,
+          53
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -189,12 +137,12 @@
       {
         "paragraph_name": "4000-FILE-CLOSE",
         "summary": null,
-        "purpose": "This paragraph closes the input files INFILE1 and INFILE2. It displays a message indicating that the files are being closed. It checks the status of each file after closing and displays an error message if the close operation was not successful (WS-INFIL1-STATUS or WS-INFIL2-STATUS is not spaces or '00'). The paragraph handles potential errors during the file closing process.",
+        "purpose": "This paragraph closes two input files, INFILE1 and INFILE2. It displays a message indicating that it is closing the files (line 57). It closes INFILE1 (line 58) and checks the WS-INFIL1-STATUS. If the status is spaces or '00', it continues; otherwise, it displays an error message with the file status (lines 60-64). It then closes INFILE2 (line 65) and performs a similar status check using WS-INFIL2-STATUS (lines 67-71).",
         "called_by": [],
         "calls": [],
         "citation": [
-          52,
-          67
+          56,
+          71
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -205,14 +153,12 @@
       {
         "paragraph_name": "4000-EXIT",
         "summary": null,
-        "purpose": "This paragraph serves as the exit point for the 4000-FILE-CLOSE paragraph. It contains only the EXIT statement and ensures a clean exit from the paragraph.",
-        "called_by": [
-          "4000-FILE-CLOSE"
-        ],
+        "purpose": "This paragraph serves as the exit point for the 4000-FILE-CLOSE paragraph. It contains a simple EXIT statement to allow the PERFORM structure to function correctly. It does not perform any specific logic or data manipulation.",
+        "called_by": [],
         "calls": [],
         "citation": [
-          69,
-          70
+          74,
+          75
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -223,15 +169,15 @@
       {
         "paragraph_name": "9999-ABEND",
         "summary": null,
-        "purpose": "This paragraph handles program termination due to errors. It displays a message indicating that the IMS load is abending. It sets the RETURN-CODE to 16 and then terminates the program using GOBACK.",
+        "purpose": "This paragraph handles abnormal termination of the program. It displays a message indicating that the IMS load is abending (line 81). It sets the RETURN-CODE to 16 (line 83) and then executes a GOBACK statement to terminate the program (line 84).",
         "called_by": [
           "3100-INSERT-CHILD-SEG",
           "3200-INSERT-IMS-CALL"
         ],
         "calls": [],
         "citation": [
-          72,
-          78
+          78,
+          84
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -242,14 +188,12 @@
       {
         "paragraph_name": "9999-EXIT",
         "summary": null,
-        "purpose": "This paragraph serves as the exit point for the 9999-ABEND paragraph. It contains only the EXIT statement and ensures a clean exit from the paragraph.",
-        "called_by": [
-          "9999-ABEND"
-        ],
+        "purpose": "This paragraph serves as the exit point for the 9999-ABEND paragraph. It contains a simple EXIT statement. However, given that 9999-ABEND performs a GOBACK, this paragraph is likely never reached in practice.",
+        "called_by": [],
         "calls": [],
         "citation": [
-          80,
-          81
+          87,
+          88
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -260,35 +204,35 @@
     ],
     "error_handling": [
       {
-        "condition": "PAUT-PCB-STATUS NOT EQUAL TO SPACES AND 'II' (in 3100-INSERT-CHILD-SEG)",
-        "action": "ABEND",
+        "condition": "PAUT-PCB-STATUS NOT EQUAL TO SPACES AND 'II' after root segment retrieval",
+        "action": "DISPLAY error message and PERFORM 9999-ABEND",
         "citation": [
-          19,
-          22
+          20,
+          23
         ]
       },
       {
-        "condition": "PAUT-PCB-STATUS NOT EQUAL TO SPACES AND 'II' (in 3200-INSERT-IMS-CALL)",
-        "action": "ABEND",
+        "condition": "PAUT-PCB-STATUS NOT EQUAL TO SPACES AND 'II' after child segment insertion",
+        "action": "DISPLAY error message and PERFORM 9999-ABEND",
         "citation": [
-          42,
-          45
+          45,
+          48
         ]
       },
       {
-        "condition": "WS-INFIL1-STATUS not spaces or '00'",
-        "action": "DISPLAY error message",
+        "condition": "WS-INFIL1-STATUS not equal to spaces or '00' during file close",
+        "action": "DISPLAY error message with WS-INFIL1-STATUS",
         "citation": [
-          56,
-          59
+          60,
+          63
         ]
       },
       {
-        "condition": "WS-INFIL2-STATUS not spaces or '00'",
-        "action": "DISPLAY error message",
+        "condition": "WS-INFIL2-STATUS not equal to spaces or '00' during file close",
+        "action": "DISPLAY error message with WS-INFIL2-STATUS",
         "citation": [
-          63,
-          66
+          67,
+          70
         ]
       }
     ],
@@ -296,26 +240,22 @@
     "cics_operations": [],
     "open_questions": [
       {
-        "question": "What is the purpose of INFILE1 and INFILE2?",
-        "context": "The code closes these files, but their purpose is not evident from the provided code snippet.",
-        "suggestion": "Examine the file definitions and any read operations performed on these files in other parts of the program."
+        "question": "What is the purpose of the PAUTBPCB, PENDING-AUTH-SUMMARY, ROOT-QUAL-SSA, and CHILD-UNQUAL-SSA variables?",
+        "context": "Their specific structure and content are not defined in the provided code snippet.",
+        "suggestion": "Examine the copybooks that define these variables to understand their structure and purpose."
       },
       {
-        "question": "What is the structure and content of ROOT-QUAL-SSA and CHILD-UNQUAL-SSA?",
-        "context": "These are used in the IMS calls, but their structure is not defined in the provided code.",
-        "suggestion": "Check the copybooks or data definitions for these variables."
-      },
-      {
-        "question": "What is the business context for this IMS load?",
-        "context": "The purpose of loading pending authorization data is unclear.",
-        "suggestion": "Consult business requirements documentation or subject matter experts."
+        "question": "What is the business context of this program?",
+        "context": "The code snippet does not provide sufficient information to determine the business context.",
+        "suggestion": "Consult the program documentation or subject matter experts to understand the business context."
       }
     ],
     "resolved_questions": [],
     "dead_code": [],
+    "dead_code_resolved": [],
     "call_semantics": [],
     "flow_diagram": null,
     "copybooks_not_found": []
   },
-  "saved_at": "2026-03-03T21:43:27.191707"
+  "saved_at": "2026-03-16T13:01:37.630637"
 }

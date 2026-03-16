@@ -28,5 +28,4 @@
               PERFORM 8000-WRITE-AUTH-TO-DB  THRU 8000-EXIT                     
            END-IF                                                               
            .                                                                    
-      *                                                                         
 ```

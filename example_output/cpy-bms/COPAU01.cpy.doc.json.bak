@@ -4,13 +4,13 @@
     "file_name": "COPAU01.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-04T04:45:09.035410",
+    "analyzed_at": "2026-03-16T20:00:38.985286",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook, COPAU01.cpy, defines the data structures COPAU1AI and COPAU1AO, which are used for screen input and output related to authorization processing. The copybook includes fields for transaction name, titles, current date and time, card number, authorization details, merchant information, and error messages.",
-    "business_context": "This copybook is likely used in online CICS applications related to credit card authorization and transaction processing.",
+    "summary": "This copybook defines the data structure COPAU1AI, which is used for screen input and output. It contains fields for transaction name, titles, current date and time, card number, authorization details, POS entry mode, authorization source, MCC code, card expiry date, authorization type, transaction ID, authorization match, authorization forward, merchant name, merchant ID, merchant city, merchant state, merchant zip code, and error message. It also redefines COPAU1AI as COPAU1AO to provide individual character access to the same fields.",
+    "business_context": null,
     "program_type": "COPYBOOK",
     "citations": [
       17,
@@ -32,55 +32,14 @@
     "transforms": []
   },
   "copybooks_used": [],
-  "paragraphs": [
-    {
-      "paragraph_name": "COPAU1AI",
-      "summary": null,
-      "purpose": "This data structure defines the input fields for a CICS screen related to authorization processing. It contains fields for transaction name (TRNNAMEL, TRNNAMEF, TRNNAMEI), titles (TITLE01L, TITLE01F, TITLE01I, TITLE02L, TITLE02F, TITLE02I), current date and time (CURDATEL, CURDATEF, CURDATEI, CURTIMEL, CURTIMEF, CURTIMEI), card number (CARDNUML, CARDNUMF, CARDNUMI), authorization details (AUTHDTL, AUTHDTF, AUTHDTI, AUTHTML, AUTHTMF, AUTHTMI, AUTHRSPL, AUTHRSPF, AUTHRSP, AUTHRSNL, AUTHRSNF, AUTHRSNI, AUTHCDL, AUTHCDF, AUTHCDI, AUTHAMTL, AUTHAMTF, AUTHAMTI), POS entry mode (POSEMDL, POSEMDF, POSEMDI), authorization source (AUTHSRCL, AUTHSRCF, AUTHSRCI), MCC code (MCCCDL, MCCCDF, MCCCDI), card expiry (CRDEXPL, CRDEXPF, CRDEXPI), authorization type (AUTHTYPL, AUTHTYPF, AUTHTYPI), transaction ID (TRNIDL, TRNIDF, TRNIDI), authorization match (AUTHMTCL, AUTHMTCF, AUTHMTCI), authorization fraud (AUTHFRDL, AUTHFRDF, AUTHFRDI), merchant information (MERNAMEL, MERNAMEF, MERNAMEI, MERIDL, MERIDF, MERIDI, MERCITYL, MERCITYF, MERCITYI, MERSTL, MERSTF, MERSTI, MERZIPL, MERZIPF, MERZIPI), and error messages (ERRMSGL, ERRMSGF, ERRMSGI). Each field is defined with its length, format, and input/output attributes for screen display and data entry.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        17,
-        180
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": true,
-      "dead_code_reason": "Record layout 'COPAU1AI' is never used by any program",
-      "metadata": {
-        "body_chunks": 4
-      }
-    },
-    {
-      "paragraph_name": "COPAU1AO",
-      "summary": null,
-      "purpose": "This data structure redefines COPAU1AI and defines the output fields for a CICS screen related to authorization processing. It uses the same storage as COPAU1AI but provides a different view of the data, allowing the program to format the output for display. The fields are named with suffixes 'C', 'P', 'H', 'V', and 'O' to represent control characters, protected attributes, highlight attributes, validation attributes, and output values, respectively. This structure includes output fields for transaction name (TRNNAMEC, TRNNAMEP, TRNNAMEH, TRNNAMEV, TRNNAMEO), titles (TITLE01C, TITLE01P, TITLE01H, TITLE01V, TITLE01O, TITLE02C, TITLE02P, TITLE02H, TITLE02V, TITLE02O), current date and time (CURDATEC, CURDATEP, CURDATEH, CURDATEV, CURDATEO, CURTIMEC, CURTIMEP, CURTIMEH, CURTIMEV, CURTIMEO), card number (CARDNUMC, CARDNUMP, CARDNUMH, CARDNUMV, CARDNUMO), authorization details (AUTHDTC, AUTHDTP, AUTHDTH, AUTHDTV, AUTHDTO, AUTHTMC, AUTHTMP, AUTHTMH, AUTHTMV, AUTHTMO, AUTHRSPC, AUTHRSPP, AUTHRSPH, AUTHRSPV, AUTHRSPO, AUTHRSNC, AUTHRSNP, AUTHRSNH, AUTHRSNV, AUTHRSNO, AUTHCDC, AUTHCDP, AUTHCDH, AUTHCDV, AUTHCDO, AUTHAMTC, AUTHAMTP, AUTHAMTH, AUTHAMTV, AUTHAMTO), POS entry mode (POSEMDC, POSEMDP, POSEMDH, POSEMDV, POSEMDO), authorization source (AUTHSRCC, AUTHSRCP, AUTHSRCH, AUTHSRCV, AUTHSRCO), MCC code (MCCCDC, MCCCDP, MCCCDH, MCCCDV, MCCCDO), card expiry (CRDEXPC, CRDEXPP, CRDEXPH, CRDEXPV, CRDEXPO), authorization type (AUTHTYPC, AUTHTYPP, AUTHTYPH, AUTHTYPV, AUTHTYPO), transaction ID (TRNIDC, TRNIDP, TRNIDH, TRNIDV, TRNIDO), authorization match (AUTHMTCC, AUTHMTCP, AUTHMTCH, AUTHMTCV, AUTHMTCO), authorization fraud (AUTHFRDC, AUTHFRDP, AUTHFRDH, AUTHFRDV, AUTHFRDO), merchant information (MERNAMEC, MERNAMEP, MERNAMEH, MERNAMEV, MERNAMEO, MERIDC, MERIDP, MERIDH, MERIDV, MERIDO, MERCITYC, MERCITYP, MERCITYH, MERCITYV, MERCITYO, MERSTC, MERSTP, MERSTH, MERSTV, MERSTO, MERZIPC, MERZIPP, MERZIPH, MERZIPV, MERZIPO), and error messages (ERRMSGC, ERRMSGP, ERRMSGH, ERRMSGV, ERRMSGO).",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        181,
-        344
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    }
-  ],
+  "paragraphs": [],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
   "open_questions": [],
   "resolved_questions": [],
-  "dead_code": [
-    {
-      "name": "COPAU1AI",
-      "artifact_type": "record_layout",
-      "line": 1,
-      "reason": "Record layout 'COPAU1AI' is never used by any program"
-    }
-  ],
+  "dead_code": [],
+  "dead_code_resolved": [],
   "call_semantics": [],
   "flow_diagram": null,
   "copybooks_not_found": []

@@ -4,13 +4,13 @@
     "file_name": "CCPAURLY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-04T04:44:42.615366",
+    "analyzed_at": "2026-03-16T19:55:08.367958",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the data structure for a pending authorization response related to card transactions. It includes fields for card number, transaction ID, authorization details, and approved amount.",
-    "business_context": "This copybook is used in the context of processing credit card authorizations, likely within a financial transaction system. It defines the structure for communicating authorization responses between systems or modules.",
+    "summary": "This copybook defines the data structure for a pending authorization response related to card transactions. It includes fields for card number, transaction ID, authorization codes, response codes, reason codes, and the approved amount. The copybook is licensed under the Apache License 2.0.",
+    "business_context": "This copybook is likely used in a payment processing system to handle authorization responses from a payment gateway or processor.",
     "program_type": "COPYBOOK",
     "citations": [
       2,
@@ -32,124 +32,22 @@
     "writes_to": [],
     "transforms": []
   },
-  "copybooks_used": [],
-  "paragraphs": [
+  "copybooks_used": [
     {
-      "paragraph_name": "PA-RL-CARD-NUM",
-      "summary": null,
-      "purpose": "This data field defines the structure for storing a card number associated with a pending authorization. It is a 16-character alphanumeric field (PIC X(16)) intended to hold the primary account number (PAN) of the credit card. This field is part of the larger pending authorization response structure defined in the copybook. The data stored in this field would be used for identifying the card used in the transaction and potentially for reconciliation or auditing purposes. No specific validation or transformation is performed directly on this field within the copybook itself, but its value would be subject to validation in the calling program. This field does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        19,
-        19
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "PA-RL-TRANSACTION-ID",
-      "summary": null,
-      "purpose": "This data field defines the structure for storing a transaction identifier associated with a pending authorization. It is a 15-character alphanumeric field (PIC X(15)) intended to hold a unique identifier for the transaction. This field is part of the larger pending authorization response structure defined in the copybook. The data stored in this field would be used for tracking and correlating transactions across different systems. No specific validation or transformation is performed directly on this field within the copybook itself, but its value would be subject to validation in the calling program. This field does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        20,
-        20
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "PA-RL-AUTH-ID-CODE",
-      "summary": null,
-      "purpose": "This data field defines the structure for storing an authorization identifier code. It is a 6-character alphanumeric field (PIC X(06)) intended to hold a code that uniquely identifies the authorization request. This field is part of the larger pending authorization response structure defined in the copybook. The data stored in this field would be used for tracking and auditing authorization requests. No specific validation or transformation is performed directly on this field within the copybook itself, but its value would be subject to validation in the calling program. This field does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        21,
-        21
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "PA-RL-AUTH-RESP-CODE",
-      "summary": null,
-      "purpose": "This data field defines the structure for storing an authorization response code. It is a 2-character alphanumeric field (PIC X(02)) intended to hold a code indicating the outcome of the authorization request (e.g., approved, declined). This field is part of the larger pending authorization response structure defined in the copybook. The data stored in this field would be used for determining the status of the transaction. No specific validation or transformation is performed directly on this field within the copybook itself, but its value would be subject to validation in the calling program. This field does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        22,
-        22
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "PA-RL-AUTH-RESP-REASON",
-      "summary": null,
-      "purpose": "This data field defines the structure for storing the reason for the authorization response. It is a 4-character alphanumeric field (PIC X(04)) intended to hold a code providing more detail about the authorization response (e.g., insufficient funds, invalid card number). This field is part of the larger pending authorization response structure defined in the copybook. The data stored in this field would be used for understanding why an authorization was approved or declined. No specific validation or transformation is performed directly on this field within the copybook itself, but its value would be subject to validation in the calling program. This field does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        23,
-        23
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "PA-RL-APPROVED-AMT",
-      "summary": null,
-      "purpose": "This data field defines the structure for storing the approved amount for the transaction. It is a signed numeric field with 10 digits before the decimal and 2 digits after the decimal (PIC +9(10).99). This field is part of the larger pending authorization response structure defined in the copybook. The data stored in this field would be used for recording the authorized amount of the transaction. No specific validation or transformation is performed directly on this field within the copybook itself, but its value would be subject to validation in the calling program. This field does not call any other paragraphs or programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        24,
-        24
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
+      "copybook_name": "CCPAURLY",
+      "purpose": "Defines the data structure for pending authorization response.",
+      "location": "WORKING_STORAGE",
+      "citation": 1
     }
   ],
+  "paragraphs": [],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
-    {
-      "question": "What specific system or application uses this copybook?",
-      "context": "The copybook provides a data structure, but its exact usage is unclear without knowing the surrounding application context.",
-      "suggestion": "Review the programs that include this copybook to understand its role in the overall system."
-    }
-  ],
+  "open_questions": [],
   "resolved_questions": [],
-  "dead_code": [
-    {
-      "name": "05:PA-RL-CARD-NUM",
-      "artifact_type": "column",
-      "line": 1,
-      "reason": "Artifact '05:PA-RL-CARD-NUM' (column) is never referenced by any other artifact in the dependency graph"
-    }
-  ],
+  "dead_code": [],
+  "dead_code_resolved": [],
   "call_semantics": [],
   "flow_diagram": null,
   "copybooks_not_found": []

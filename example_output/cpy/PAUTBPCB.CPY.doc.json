@@ -4,16 +4,17 @@
     "file_name": "PAUTBPCB.CPY",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-04T04:44:09.462483",
+    "analyzed_at": "2026-03-16T19:52:52.549850",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the structure `PAUTBPCB`, which is likely used to interact with an IMS database PCB (Program Communication Block). It contains fields related to the database name, segment level, PCB status, processing options, segment name, key feedback, number of sensitive segments, and key feedback area. The copybook is intended for use in COBOL programs interacting with IMS.",
-    "business_context": "UNKNOWN",
-    "program_type": "SUBROUTINE",
+    "summary": "This copybook defines the structure PAUTBPCB, which appears to be related to IMS PCB (Program Communication Block) information. It includes fields for database name, segment level, PCB status, processing options, segment name, key feedback length, number of sensitive segments, and key feedback area.",
+    "business_context": null,
+    "program_type": "COPYBOOK",
     "citations": [
       17,
+      18,
       26
     ]
   },
@@ -31,81 +32,22 @@
     "writes_to": [],
     "transforms": []
   },
-  "copybooks_used": [],
-  "paragraphs": [
+  "copybooks_used": [
     {
-      "paragraph_name": "PAUTBPCB",
-      "summary": null,
-      "purpose": "This copybook defines the data structure `PAUTBPCB` which represents a Program Communication Block (PCB) used in IMS (Information Management System) database interactions. The PCB provides a communication interface between a COBOL program and the IMS database. The structure contains fields that describe the database being accessed (`PAUT-DBDNAME`, line 18), the segment level (`PAUT-SEG-LEVEL`, line 19), the status of the PCB (`PAUT-PCB-STATUS`, line 20), and the processing options used (`PAUT-PCB-PROCOPT`, line 21). It also includes information about the segment name (`PAUT-SEG-NAME`, line 23), key feedback (`PAUT-KEYFB-NAME`, line 24 and `PAUT-KEYFB`, line 26), and the number of sensitive segments (`PAUT-NUM-SENSEGS`, line 25). This structure is likely used to pass information to and from IMS during database operations, allowing the COBOL program to access and manipulate data within the IMS database. The `FILLER` field (line 22) is used for alignment purposes and does not contain meaningful data. The `PAUT-KEYFB` field (line 26) is a 255-byte field that contains the key feedback information from the IMS database.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        17,
-        27
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [
-        {
-          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
-          "function": "PAUDBUNL",
-          "line": 150,
-          "call_type": "includes"
-        },
-        {
-          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
-          "function": "PAUDBLOD",
-          "line": 161,
-          "call_type": "includes"
-        },
-        {
-          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
-          "function": "DBUNLDGS",
-          "line": 154,
-          "call_type": "includes"
-        },
-        {
-          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
-          "function": "PAUDBUNL",
-          "line": 1,
-          "call_type": "includes"
-        },
-        {
-          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
-          "function": "PAUDBLOD",
-          "line": 1,
-          "call_type": "includes"
-        },
-        {
-          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
-          "function": "DBUNLDGS",
-          "line": 1,
-          "call_type": "includes"
-        }
-      ],
-      "is_dead_code": true,
-      "dead_code_reason": "Record layout 'PAUTBPCB' is never used by any program",
-      "metadata": null
+      "copybook_name": "PAUTBPCB",
+      "purpose": "Defines the structure for IMS PCB information.",
+      "location": "WORKING_STORAGE",
+      "citation": 17
     }
   ],
+  "paragraphs": [],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
-    {
-      "question": "What is the specific purpose of each field within the PAUTBPCB structure in the context of IMS database interaction?",
-      "context": "The copybook defines the structure, but the exact usage of each field within an IMS environment is unclear without further context or program code.",
-      "suggestion": "Review the COBOL programs that include this copybook to understand how each field is used during IMS database operations."
-    }
-  ],
+  "open_questions": [],
   "resolved_questions": [],
-  "dead_code": [
-    {
-      "name": "PAUTBPCB",
-      "artifact_type": "record_layout",
-      "line": 1,
-      "reason": "Record layout 'PAUTBPCB' is never used by any program"
-    }
-  ],
+  "dead_code": [],
+  "dead_code_resolved": [],
   "call_semantics": [],
   "flow_diagram": null,
   "copybooks_not_found": []

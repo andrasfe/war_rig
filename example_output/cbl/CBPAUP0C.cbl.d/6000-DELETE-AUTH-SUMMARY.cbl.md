@@ -19,6 +19,4 @@
                PERFORM 9999-ABEND
             END-IF
             .
-       6000-EXIT.
-            EXIT.
 ```

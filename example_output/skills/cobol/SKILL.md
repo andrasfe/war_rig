@@ -7,11 +7,11 @@ description: COBOL program documentation
 
 | Program | Description | Documentation |
 |---------|-------------|---------------|
-| CBPAUP0C | **File:** CBPAUP0C.cbl **Type:** COBOL **Status:** In Progress **Iterations:** 1 **Analyzed:** 2026-03-04 04:54:22.737422 | [Full docs](../documentation/cbl/CBPAUP0C.cbl.md) |
-| COPAUA0C | COPAUA0C is a CICS COBOL program that processes authorization requests from a message queue, validates them, and updates relevant IMS databases. It retrieves messages from a request queue,... | [Full docs](../documentation/cbl/COPAUA0C.cbl.md) |
-| COPAUS0C | **File:** COPAUS0C.cbl **Type:** COBOL **Status:** In Progress **Iterations:** 1 **Analyzed:** 2026-03-04 04:50:15.216468 | [Full docs](../documentation/cbl/COPAUS0C.cbl.md) |
-| COPAUS1C | This CICS COBOL program, part of the CardDemo application's Authorization Module, provides a detailed view of an authorization message. It receives input from a BMS map, processes it, and displays... | [Full docs](../documentation/cbl/COPAUS1C.cbl.md) |
-| COPAUS2C | COPAUS2C is a CICS COBOL DB2 program that marks an authorization message as fraudulent. It inserts a record into the CARDDEMO.AUTHFRDS table with fraud information, and if a duplicate record... | [Full docs](../documentation/cbl/COPAUS2C.cbl.md) |
-| DBUNLDGS | **File:** cbl/DBUNLDGS.CBL **Type:** COBOL **Status:** In Progress **Iterations:** 1 **Analyzed:** 2026-03-04 04:47:36.242633 | [Full docs](../documentation/cbl/DBUNLDGS.CBL.md) |
-| PAUDBLOD | **File:** PAUDBLOD.CBL **Type:** COBOL **Status:** In Progress **Iterations:** 1 **Analyzed:** 2026-03-04 04:39:48.005847 | [Full docs](../documentation/cbl/PAUDBLOD.CBL.md) |
-| PAUDBUNL | This COBOL program extracts authorization summary and detail information from an IMS database and writes it to two sequential output files. It reads authorization summary records and then reads... | [Full docs](../documentation/cbl/PAUDBUNL.CBL.md) |
+| CBPAUP0C | This batch COBOL IMS program deletes expired pending authorization messages from the IMS database. It reads pending authorization summary and detail segments, checks if the authorization has... | [Full docs](../documentation/cbl/CBPAUP0C.cbl.md) |
+| COPAUA0C | **File:** COPAUA0C.cbl **Type:** COBOL **Status:** In Progress **Iterations:** 1 **Analyzed:** 2026-03-16 19:45:05.049515 | [Full docs](../documentation/cbl/COPAUA0C.cbl.md) |
+| COPAUS0C | COPAUS0C is a CICS program that displays pending authorization summaries for a given account ID. It retrieves authorization details from an IMS database and presents them on a screen, allowing the... | [Full docs](../documentation/cbl/COPAUS0C.cbl.md) |
+| COPAUS1C | The COPAUS1C program is a CICS transaction that displays authorization details for a given account and authorization key. It allows users to mark authorizations as fraudulent and navigate through... | [Full docs](../documentation/cbl/COPAUS1C.cbl.md) |
+| COPAUS2C | COPAUS2C is a CICS COBOL DB2 program that marks authorization messages as fraudulent. It inserts a record into the CARDDEMO.AUTHFRDS table or updates an existing record if a duplicate is found,... | [Full docs](../documentation/cbl/COPAUS2C.cbl.md) |
+| DBUNLDGS | **File:** cbl/DBUNLDGS.CBL **Type:** COBOL **Status:** In Progress **Iterations:** 1 **Analyzed:** 2026-03-16 20:04:07.904356 | [Full docs](../documentation/cbl/DBUNLDGS.CBL.md) |
+| PAUDBLOD | **File:** cbl/PAUDBLOD.CBL **Type:** COBOL **Status:** In Progress **Iterations:** 1 **Analyzed:** 2026-03-16 19:45:28.488624 | [Full docs](../documentation/cbl/PAUDBLOD.CBL.md) |
+| PAUDBUNL | The PAUDBUNL program unloads pending authorization summary and detail segments from an IMS database to two sequential output files. It reads PAUTSUM0 root segments and PAUTDTL1 child segments from... | [Full docs](../documentation/cbl/PAUDBUNL.CBL.md) |

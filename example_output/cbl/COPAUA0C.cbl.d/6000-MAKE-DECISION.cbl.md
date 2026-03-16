@@ -75,5 +75,4 @@
                   WITH POINTER WS-RESP-LENGTH                                   
            END-STRING                                                           
            .                                                                    
-      *                                                                         
 ```

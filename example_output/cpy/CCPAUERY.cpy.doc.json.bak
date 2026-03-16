@@ -4,17 +4,16 @@
     "file_name": "CCPAUERY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-04T04:44:23.364747",
+    "analyzed_at": "2026-03-16T19:55:04.463442",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the ERROR-LOG-RECORD structure, which is used for logging errors and informational messages within an application. It includes fields for date, time, application name, program name, location, error level, subsystem, error codes, message, and event key.",
-    "business_context": null,
+    "summary": "This copybook defines the structure of an error log record. It includes fields for date, time, application, program, location, error level, subsystem, error codes, message, and event key. This structure is likely used for logging errors and debugging within a larger system.",
+    "business_context": "UNKNOWN",
     "program_type": "COPYBOOK",
     "citations": [
-      2,
-      19,
+      20,
       39
     ]
   },
@@ -32,38 +31,28 @@
     "writes_to": [],
     "transforms": []
   },
-  "copybooks_used": [],
-  "paragraphs": [
+  "copybooks_used": [
     {
-      "paragraph_name": "ERROR-LOG-RECORD",
-      "summary": null,
-      "purpose": "This data structure defines the format for error log records. It contains fields for capturing the date and time of the error (ERR-DATE, ERR-TIME), the application and program where the error occurred (ERR-APPLICATION, ERR-PROGRAM), the location within the program (ERR-LOCATION), the severity level of the error (ERR-LEVEL), and the subsystem where the error originated (ERR-SUBSYSTEM). It also includes fields for two error codes (ERR-CODE-1, ERR-CODE-2), a descriptive error message (ERR-MESSAGE), and an event key for tracking purposes (ERR-EVENT-KEY). The ERR-LEVEL field uses 88-level condition names to define specific error levels such as ERR-LOG, ERR-INFO, ERR-WARNING, and ERR-CRITICAL. Similarly, the ERR-SUBSYSTEM field uses 88-level condition names to define the subsystem where the error occurred, such as ERR-APP, ERR-CICS, ERR-IMS, ERR-DB2, ERR-MQ, and ERR-FILE. This structure serves as a template for creating and storing error information within the system.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        19,
-        41
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": true,
-      "dead_code_reason": "Record layout 'ERROR-LOG-RECORD' is never used by any program",
-      "metadata": null
+      "copybook_name": "CCPAUERY",
+      "purpose": "Defines the structure of an error log record.",
+      "location": "OTHER",
+      "citation": 19
     }
   ],
+  "paragraphs": [],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [],
-  "resolved_questions": [],
-  "dead_code": [
+  "open_questions": [
     {
-      "name": "ERROR-LOG-RECORD",
-      "artifact_type": "record_layout",
-      "line": 1,
-      "reason": "Record layout 'ERROR-LOG-RECORD' is never used by any program"
+      "question": "What is the business context for these error logs?",
+      "context": "The copybook itself does not provide information about the specific application or system where these error logs are used.",
+      "suggestion": "Review the programs that include this copybook to understand the business processes involved."
     }
   ],
+  "resolved_questions": [],
+  "dead_code": [],
+  "dead_code_resolved": [],
   "call_semantics": [],
   "flow_diagram": null,
   "copybooks_not_found": []

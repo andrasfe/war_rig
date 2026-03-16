@@ -7,19 +7,17 @@
       "file_name": "PAUDBUNL.CBL",
       "file_type": "COBOL",
       "analyzed_by": "WAR_RIG",
-      "analyzed_at": "2026-03-04T04:42:44.264504",
+      "analyzed_at": "2026-03-16T20:02:10.965336",
       "iteration_count": 1,
       "final_status": null
     },
     "purpose": {
-      "summary": "This COBOL program contains abend and exit routines. It sets a return code of 16 and terminates execution in the event of an abend, and provides a standard exit point.",
+      "summary": "This COBOL program contains two paragraphs: 9999-ABEND, which handles abnormal termination by displaying a message and setting a return code, and 9999-EXIT, which provides a standard exit point. The program appears to be a utility or subroutine related to IMS unloading, based on the display message in the ABEND paragraph. The purpose is to provide controlled termination points for the program.",
       "business_context": null,
-      "program_type": "SUBROUTINE",
+      "program_type": "UTILITY",
       "citations": [
-        4,
-        6,
-        7,
-        10
+        5,
+        7
       ]
     },
     "inputs": [],
@@ -41,12 +39,12 @@
       {
         "paragraph_name": "9999-ABEND",
         "summary": null,
-        "purpose": "This paragraph is executed when the program needs to terminate abnormally. It displays a message 'IMSUNLOD ABENDING ...' to the console (line 4). It then sets the RETURN-CODE to 16 (line 6), indicating an error condition to the calling program or system. Finally, it terminates the program execution using the GOBACK statement (line 7), returning control to the caller. This paragraph serves as a centralized point for handling abnormal terminations, ensuring a consistent exit status and providing a diagnostic message.",
+        "purpose": "This paragraph handles abnormal termination of the program. Its primary purpose is to provide a controlled exit point when an unrecoverable error occurs. It displays the message 'IMSUNLOD ABENDING ...' to the console, indicating that the program is terminating abnormally [5]. It then sets the RETURN-CODE to 16, signaling an error condition to the calling program or system [7]. Finally, it executes a GOBACK statement to return control to the caller [8]. This paragraph does not consume any specific input data but relies on the program's overall state to determine that an abend is necessary. It does not call any other paragraphs or programs.",
         "called_by": [],
         "calls": [],
         "citation": [
           308,
-          315
+          314
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -57,7 +55,7 @@
       {
         "paragraph_name": "9999-EXIT",
         "summary": null,
-        "purpose": "This paragraph provides a standard exit point for the program. It consists of a single EXIT statement (line 10), which allows the program to cleanly exit from a PERFORM loop or other structured construct. This paragraph ensures that control is returned to the calling paragraph or program in a controlled manner. It does not perform any specific actions other than providing a consistent exit point.",
+        "purpose": "This paragraph provides a standard exit point for the program. Its primary purpose is to provide a single, consistent location for exiting the program under normal circumstances. It simply executes an EXIT statement [12], which returns control to the calling paragraph or program. This paragraph does not consume any input data or produce any output data. It does not perform any error handling or validation. It does not call any other paragraphs or programs. It serves as a placeholder for potential future exit logic.",
         "called_by": [],
         "calls": [],
         "citation": [
@@ -74,22 +72,29 @@
     "error_handling": [
       {
         "condition": "Abnormal program termination",
-        "action": "Displays message and sets return code to 16 before terminating",
+        "action": "Display message 'IMSUNLOD ABENDING ...', set RETURN-CODE to 16, and GOBACK",
         "citation": [
-          4,
-          6,
-          7
+          5,
+          7,
+          8
         ]
       }
     ],
     "sql_operations": [],
     "cics_operations": [],
-    "open_questions": [],
+    "open_questions": [
+      {
+        "question": "What are the specific error conditions that lead to the 9999-ABEND paragraph being executed?",
+        "context": "The code only shows the actions taken during an abend, not the conditions that trigger it.",
+        "suggestion": "Review the calling paragraphs to identify the error conditions that lead to a branch to 9999-ABEND."
+      }
+    ],
     "resolved_questions": [],
     "dead_code": [],
+    "dead_code_resolved": [],
     "call_semantics": [],
     "flow_diagram": null,
     "copybooks_not_found": []
   },
-  "saved_at": "2026-03-03T21:42:44.265994"
+  "saved_at": "2026-03-16T13:02:10.966333"
 }

@@ -4,13 +4,13 @@
     "file_name": "jcl/UNLDGSAM.JCL",
     "file_type": "JCL",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-04T04:45:26.751779",
+    "analyzed_at": "2026-03-16T20:03:05.437029",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This JCL job executes an IMS program (DFSRRC00) to unload a GSAM database. It specifies the program to execute, the parameters for the execution, and the datasets required for the IMS program to run, including the GSAM database files to be unloaded.",
-    "business_context": "Database administration and maintenance, specifically unloading a GSAM database for backup or migration purposes.",
+    "summary": "This JCL job executes the IMS program DFSRRC00 to unload GSAM databases. It specifies the program to execute, the parameters for the execution, and the datasets required for the IMS environment and the GSAM databases to be unloaded.",
+    "business_context": "UNKNOWN",
     "program_type": "BATCH",
     "citations": [
       26,
@@ -23,7 +23,7 @@
     {
       "name": "OEMA.IMS.IMSP.SDFSRESL",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS RESLIB",
+      "description": "IMS RESLIB dataset containing IMS modules.",
       "copybook": null,
       "citation": [
         28,
@@ -33,7 +33,7 @@
     {
       "name": "OEMA.IMS.IMSP.SDFSRESL.V151",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS RESLIB version 151",
+      "description": "IMS RESLIB dataset containing IMS modules (versioned).",
       "copybook": null,
       "citation": [
         29
@@ -42,7 +42,7 @@
     {
       "name": "AWS.M2.CARDDEMO.LOADLIB",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "Load library containing the IMS program.",
+      "description": "Load library containing program modules.",
       "copybook": null,
       "citation": [
         30
@@ -69,7 +69,7 @@
     {
       "name": "AWS.M2.CARDDEMO.PAUTDB.ROOT.GSAM",
       "io_type": "FILE_VSAM",
-      "description": "GSAM database root segment to be unloaded.",
+      "description": "Input GSAM database root segment to be unloaded.",
       "copybook": null,
       "citation": [
         36
@@ -78,7 +78,7 @@
     {
       "name": "AWS.M2.CARDDEMO.PAUTDB.CHILD.GSAM",
       "io_type": "FILE_VSAM",
-      "description": "GSAM database child segment to be unloaded.",
+      "description": "Input GSAM database child segment to be unloaded.",
       "copybook": null,
       "citation": [
         39
@@ -87,7 +87,7 @@
     {
       "name": "OEM.IMS.IMSP.PAUTHDB",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS PAUTHDB file",
+      "description": "IMS PAUTHDB dataset.",
       "copybook": null,
       "citation": [
         42
@@ -96,7 +96,7 @@
     {
       "name": "OEM.IMS.IMSP.PAUTHDBX",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS PAUTHDBX file",
+      "description": "IMS PAUTHDBX dataset.",
       "copybook": null,
       "citation": [
         43
@@ -105,31 +105,51 @@
     {
       "name": "OEMPP.IMS.V15R01MB.PROCLIB(DFSVSMDB)",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "IMS VSAM definition",
+      "description": "IMS VSAM Definition Block PROCLIB member.",
       "copybook": null,
       "citation": [
         47
       ]
     }
   ],
-  "outputs": [],
+  "outputs": [
+    {
+      "name": "SYSPRINT",
+      "io_type": "REPORT",
+      "description": "System print output for job execution messages.",
+      "copybook": null,
+      "citation": [
+        50
+      ]
+    },
+    {
+      "name": "SYSUDUMP",
+      "io_type": "REPORT",
+      "description": "System dump output for debugging purposes.",
+      "copybook": null,
+      "citation": [
+        51
+      ]
+    },
+    {
+      "name": "IMSERR",
+      "io_type": "REPORT",
+      "description": "IMS error output.",
+      "copybook": null,
+      "citation": [
+        52
+      ]
+    }
+  ],
   "called_programs": [
     {
       "program_name": "DFSRRC00",
       "call_type": "STATIC_CALL",
-      "purpose": "Executes the IMS program to unload the GSAM database.",
+      "purpose": "Executes the IMS DL/I program to unload the GSAM database.",
       "parameters": [
         "DLI",
         "DBUNLDGS",
         "DLIGSAMP",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
-        "",
         "N"
       ],
       "citation": 26
@@ -151,12 +171,14 @@
     {
       "paragraph_name": "UNLDGSAM",
       "summary": null,
-      "purpose": "This JCL job defines the steps and resources required to execute an IMS program for unloading a GSAM database. It starts by defining the job name, class, message class, region size, notification settings, and time limit (lines 1-2). The job then proceeds to execute the IMS program DFSRRC00 using the STEP01 execution step (line 26). This step specifies the program to be executed, along with the parameters required for the execution, which include 'DLI,DBUNLDGS,DLIGSAMP,,,,,,,,,,,N'. The job also defines the necessary datasets for the IMS program to run, such as the IMS RESLIB (lines 28-29, 31), the load library (line 30), the PSB and DBD libraries (lines 33-34), and the GSAM database files to be unloaded (lines 36, 39). The job also includes dummy datasets for IMS logging and reporting (lines 48-49) and defines the SYSOUT datasets for printing and dumping (lines 50-52). This JCL does not call any other programs or procedures directly, but it relies on the IMS program DFSRRC00 to perform the actual database unloading operation.",
+      "purpose": "This JCL job defines the overall job structure and attributes for unloading a GSAM database using IMS. It sets job-level parameters such as the job name, class, message class, message level, region size, notification ID, and time limit. The job's primary purpose is to execute the IMS program DFSRRC00 with specific parameters to unload the GSAM database. It does not directly process data but rather orchestrates the execution of the IMS program. The job defines the datasets required for the IMS environment and the GSAM databases to be unloaded. It does not perform any explicit error handling within the JCL itself; error handling is assumed to be managed by the called IMS program. The job executes the STEP01 step, which in turn executes the DFSRRC00 program.",
       "called_by": [],
-      "calls": [],
+      "calls": [
+        "STEP01"
+      ],
       "citation": [
         1,
-        54
+        53
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
@@ -167,70 +189,16 @@
     {
       "paragraph_name": "STEP01",
       "summary": null,
-      "purpose": "This step executes the IMS program DFSRRC00 with specific parameters to unload a GSAM database. The EXEC statement (line 26) calls program DFSRRC00 and passes parameters 'DLI,DBUNLDGS,DLIGSAMP,,,,,,,,,,,N'. The STEPLIB DD statements (lines 28-30) define the libraries containing the executable code for DFSRRC00 and other required IMS modules. The DFSRESLB DD statement (line 31) specifies the IMS RESLIB. The IMS DD statement (lines 33-34) defines the PSB and DBD libraries required by the IMS program. The PASFILOP and PADFILOP DD statements (lines 36-40) define the GSAM database files (root and child segments) that will be unloaded. The DDPAUTP0 and DDPAUTX0 DD statements (lines 42-43) define the IMS PAUTHDB and PAUTHDBX files. The DFSVSAMP DD statement (lines 46-47) defines the VSAM definition. The IMSLOGR and IEFRDER DD statements (lines 48-49) are dummy datasets. The SYSPRINT, SYSUDUMP, and IMSERR DD statements (lines 50-52) define the output datasets for program messages, dumps, and errors, respectively. This step does not directly call any other programs or procedures, but it relies on the DFSRRC00 program to perform the database unload operation.",
-      "called_by": [],
+      "purpose": "This JCL step executes the IMS program DFSRRC00 with the specified parameters to unload a GSAM database. It defines the program to be executed (DFSRRC00) and the parameters passed to it, including 'DLI,DBUNLDGS,DLIGSAMP,,,,,,,,,,,N'. These parameters configure the IMS environment and specify the database unload function. The step defines the STEPLIB DD statements, which specify the libraries containing the IMS modules required for execution. It also defines the DFSRESLB DD statement, which points to the IMS RESLIB dataset. The IMS DD statement specifies the PSB and DBD libraries. The PASFILOP and PADFILOP DD statements define the input GSAM database datasets to be unloaded. The DDPAUTP0 and DDPAUTX0 DD statements define the IMS PAUTHDB and PAUTHDBX datasets. The DFSVSAMP DD statement defines the IMS VSAM Definition Block PROCLIB member. The IMSLOGR and IEFRDER DD statements are dummy datasets. Finally, the SYSPRINT, SYSUDUMP, and IMSERR DD statements define the output datasets for job execution messages, system dumps, and IMS errors, respectively. This step does not perform any explicit error handling within the JCL itself; error handling is assumed to be managed by the called IMS program DFSRRC00.",
+      "called_by": [
+        "UNLDGSAM"
+      ],
       "calls": [],
       "citation": [
         26,
         53
       ],
-      "outgoing_calls": [
-        {
-          "target": "DFSRRC00",
-          "call_type": "executes",
-          "line": 26
-        },
-        {
-          "target": "OEMA.IMS.IMSP.SDFSRESL",
-          "call_type": "references",
-          "line": 28
-        },
-        {
-          "target": "OEMA.IMS.IMSP.SDFSRESL.V151",
-          "call_type": "references",
-          "line": 29
-        },
-        {
-          "target": "AWS.M2.CARDDEMO.LOADLIB",
-          "call_type": "references",
-          "line": 30
-        },
-        {
-          "target": "OEMA.IMS.IMSP.SDFSRESL",
-          "call_type": "references",
-          "line": 31
-        },
-        {
-          "target": "OEM.IMS.IMSP.PSBLIB",
-          "call_type": "references",
-          "line": 33
-        },
-        {
-          "target": "OEM.IMS.IMSP.DBDLIB",
-          "call_type": "references",
-          "line": 34
-        },
-        {
-          "target": "AWS.M2.CARDDEMO.PAUTDB.ROOT.GSAM",
-          "call_type": "references",
-          "line": 36
-        },
-        {
-          "target": "AWS.M2.CARDDEMO.PAUTDB.CHILD.GSAM",
-          "call_type": "references",
-          "line": 39
-        },
-        {
-          "target": "OEM.IMS.IMSP.PAUTHDB",
-          "call_type": "references",
-          "line": 42
-        },
-        {
-          "target": "OEM.IMS.IMSP.PAUTHDBX",
-          "call_type": "references",
-          "line": 43
-        }
-      ],
+      "outgoing_calls": [],
       "incoming_calls": [],
       "is_dead_code": false,
       "dead_code_reason": null,
@@ -240,9 +208,16 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [],
+  "open_questions": [
+    {
+      "question": "What is the business context for unloading this GSAM database?",
+      "context": "The JCL does not provide information about the specific business process that requires this database unload.",
+      "suggestion": "Review related documentation or consult with the application development team."
+    }
+  ],
   "resolved_questions": [],
   "dead_code": [],
+  "dead_code_resolved": [],
   "call_semantics": [],
   "flow_diagram": null,
   "copybooks_not_found": []

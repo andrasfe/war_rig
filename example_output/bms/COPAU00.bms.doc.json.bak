@@ -4,20 +4,43 @@
     "file_name": "COPAU00.bms",
     "file_type": "BMS",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-04T04:43:40.049700",
+    "analyzed_at": "2026-03-16T20:02:31.501912",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This BMS map defines the 'Pending Authorization Screen' (COPAU0A) for the CardDemo application. It is used to display and potentially process pending card authorizations, showing transaction details and customer information.",
-    "business_context": "This screen is likely used by customer service representatives or fraud analysts to review and manage pending credit card authorizations.",
+    "summary": "This BMS map defines the screen layout for the CardDemo application's Pending Authorization screen. It displays customer account information, credit and cash limits/balances, and a list of recent transactions awaiting authorization. The screen allows users to select a transaction for further action.",
+    "business_context": "This screen is used in a card authorization system to view and manage pending authorizations for customer accounts.",
     "program_type": "ONLINE_CICS",
     "citations": [
       2,
-      3
+      83,
+      145
     ]
   },
-  "inputs": [],
+  "inputs": [
+    {
+      "name": "ACCTID",
+      "io_type": "CICS_MAP",
+      "description": "Account ID entered by the user to search for pending authorizations.",
+      "copybook": null,
+      "citation": [
+        84
+      ]
+    },
+    {
+      "name": "SEL0001 - SEL0004",
+      "io_type": "CICS_MAP",
+      "description": "Selection fields for each transaction. User selects a transaction by entering a value in this field.",
+      "copybook": null,
+      "citation": [
+        277,
+        321,
+        365,
+        409
+      ]
+    }
+  ],
   "outputs": [],
   "called_programs": [],
   "calling_context": {
@@ -36,7 +59,7 @@
     {
       "paragraph_name": "COPAU00",
       "summary": null,
-      "purpose": "This paragraph defines the BMS mapset 'COPAU00'. It specifies general characteristics of the mapset, such as the control options (ALARM, FREEKB), extended attributes (EXTATT=YES), language (LANG=COBOL), mode (MODE=INOUT), storage (STORAGE=AUTO), terminal I/O area prefix (TIOAPFX=YES), and the map type (TYPE=&&SYSPARM). The mapset acts as a container for one or more BMS maps. It sets the overall environment for the maps within it. The CTRL parameter enables the alarm and allows the keyboard to be unlocked after data entry. EXTATT enables extended attributes for color and highlighting. The LANG parameter specifies COBOL as the programming language. MODE=INOUT indicates that the map can be used for both input and output. STORAGE=AUTO lets CICS manage storage allocation. TIOAPFX=YES includes a terminal I/O area prefix. TYPE=&&SYSPARM allows the map to be defined as either a map or a partition set based on the system parameter.",
+      "purpose": "This DFHMSD macro defines the BMS map set COPAU00. It specifies various control options for the map set, including terminal control (ALARM, FREEKB), extended attributes (EXTATT=YES), the programming language (LANG=COBOL), input/output mode (MODE=INOUT), storage management (STORAGE=AUTO), the presence of a TIOAPFX (TIOAPFX=YES), and the map type based on the system parameter (TYPE=&&SYSPARM). The CTRL parameter enables the alarm and keyboard freeing features. The EXTATT parameter enables extended attributes such as color and highlighting. The LANG parameter specifies COBOL as the programming language. The MODE parameter specifies that the map can be used for both input and output. The STORAGE parameter specifies that storage for the map should be automatically managed. The TIOAPFX parameter indicates that the terminal input/output area prefix is present. The TYPE parameter determines the type of map generated based on the system parameter.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -45,48 +68,40 @@
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
-      "is_dead_code": true,
-      "dead_code_reason": "Artifact 'COPAU00' (map) is never referenced by any other artifact in the dependency graph",
+      "is_dead_code": false,
+      "dead_code_reason": null,
       "metadata": null
     },
     {
       "paragraph_name": "COPAU0A",
       "summary": null,
-      "purpose": "This paragraph defines the BMS map 'COPAU0A' within the 'COPAU00' mapset. It specifies the map's layout on the screen, including its position (LINE=1, COLUMN=1) and size (SIZE=(24,80)), which corresponds to a standard 24x80 terminal screen. It also defines various fields that make up the screen, such as labels, input fields, and output fields, each with specific attributes like color, highlighting, and position. The map is designed to display information related to pending authorizations, including account ID, customer name, address, transaction details, and credit/cash limits and balances. It includes an input field (ACCTID) for searching by account ID and several output fields for displaying customer and transaction data. The map also provides a selection mechanism for choosing a specific transaction from a list of pending authorizations.",
+      "purpose": "This DFHMDI macro defines the BMS map COPAU0A within the COPAU00 mapset. It specifies the screen's dimensions and position. The COLUMN and LINE parameters set the starting position of the map on the screen to row 1, column 1. The SIZE parameter defines the map's dimensions as 24 rows and 80 columns, effectively defining a standard-sized terminal screen. This macro acts as a container for the individual field definitions (DFHMDF macros) that make up the screen layout. It establishes the overall structure and size of the screen presented to the user.",
       "called_by": [],
       "calls": [],
       "citation": [
         26,
-        468
+        28
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
-      "is_dead_code": true,
-      "dead_code_reason": "Screen/Map 'COPAU0A' is never sent to or received from by any program",
-      "metadata": {
-        "body_chunks": 5
-      }
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
     }
   ],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [],
-  "resolved_questions": [],
-  "dead_code": [
+  "open_questions": [
     {
-      "name": "COPAU00",
-      "artifact_type": "map",
-      "line": 19,
-      "reason": "Artifact 'COPAU00' (map) is never referenced by any other artifact in the dependency graph"
-    },
-    {
-      "name": "COPAU0A",
-      "artifact_type": "screen",
-      "line": 26,
-      "reason": "Screen/Map 'COPAU0A' is never sent to or received from by any program"
+      "question": "What is the purpose of the TYPE=&&SYSPARM parameter in the DFHMSD macro?",
+      "context": "The meaning of &&SYSPARM is unclear without additional context.",
+      "suggestion": "Consult the application's build process or related documentation to determine the value and effect of this parameter."
     }
   ],
+  "resolved_questions": [],
+  "dead_code": [],
+  "dead_code_resolved": [],
   "call_semantics": [],
   "flow_diagram": null,
   "copybooks_not_found": []

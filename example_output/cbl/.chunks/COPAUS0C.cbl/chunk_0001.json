@@ -4,89 +4,71 @@
   "template": {
     "header": {
       "program_id": "COPAUS0C",
-      "file_name": "COPAUS0C.cbl",
+      "file_name": "cbl/COPAUS0C.cbl",
       "file_type": "COBOL",
       "analyzed_by": "WAR_RIG",
-      "analyzed_at": "2026-03-04T04:44:40.062351",
+      "analyzed_at": "2026-03-16T20:02:27.481809",
       "iteration_count": 1,
       "final_status": null
     },
     "purpose": {
-      "summary": "This CICS COBOL program retrieves and displays customer account details and authorization summary information on the COPAU0A screen. It retrieves data from VSAM files (CARDXREF, ACCOUNT, CUSTOMER) and an IMS database (PAUTSUM0 segment) based on the account ID entered by the user.",
-      "business_context": "This program likely supports customer service representatives in viewing customer account and authorization information.",
+      "summary": "This CICS program retrieves and displays account and customer information, along with authorization summaries, on the COPAU0A screen. It reads from CARDXREF, ACCOUNT, and CUSTOMER files, and retrieves authorization summary information from an IMS database. The program handles errors by displaying messages on the screen and allows navigation back to the previous screen.",
+      "business_context": "This program likely supports customer service representatives in viewing customer account details and authorization information.",
       "program_type": "ONLINE_CICS",
       "citations": [
-        86,
-        139,
-        355
+        85,
+        145,
+        146,
+        147
       ]
     },
     "inputs": [
       {
-        "name": "COPAU0AI",
-        "io_type": "CICS_MAP",
-        "description": "Input map for the COPAU0A screen, containing the account ID entered by the user.",
-        "copybook": null,
-        "citation": [
-          7,
-          107
-        ]
-      },
-      {
-        "name": "CARD-XREF-RECORD",
-        "io_type": "FILE_VSAM",
-        "description": "Card cross-reference file, containing the customer ID and card number associated with an account ID.",
-        "copybook": null,
-        "citation": [
-          206
-        ]
-      },
-      {
-        "name": "ACCOUNT-RECORD",
-        "io_type": "FILE_VSAM",
-        "description": "Account file, containing account details such as credit limit and cash credit limit.",
-        "copybook": null,
-        "citation": [
-          256
-        ]
-      },
-      {
-        "name": "CUSTOMER-RECORD",
-        "io_type": "FILE_VSAM",
-        "description": "Customer file, containing customer details such as name, address, and phone number.",
-        "copybook": null,
-        "citation": [
-          306
-        ]
-      },
-      {
-        "name": "PENDING-AUTH-SUMMARY",
-        "io_type": "IMS_SEGMENT",
-        "description": "IMS segment containing authorization summary data for an account.",
-        "copybook": null,
-        "citation": [
-          356
-        ]
-      },
-      {
         "name": "CARDDEMO-COMMAREA",
         "io_type": "CICS_COMMAREA",
-        "description": "Communication area used to pass data to another CICS program.",
+        "description": "Data passed from the calling program, including the account ID.",
+        "copybook": "CARDDEMO",
+        "citation": [
+          70
+        ]
+      },
+      {
+        "name": "WS-CARDXREFNAME-ACCT-PATH",
+        "io_type": "FILE_VSAM",
+        "description": "CARDXREF file accessed by account ID.",
         "copybook": null,
         "citation": [
-          68
+          210
+        ]
+      },
+      {
+        "name": "WS-ACCTFILENAME",
+        "io_type": "FILE_VSAM",
+        "description": "ACCOUNT file accessed by account ID.",
+        "copybook": null,
+        "citation": [
+          261
+        ]
+      },
+      {
+        "name": "WS-CUSTFILENAME",
+        "io_type": "FILE_VSAM",
+        "description": "CUSTOMER file accessed by customer ID.",
+        "copybook": null,
+        "citation": [
+          312
         ]
       }
     ],
     "outputs": [
       {
-        "name": "COPAU0AO",
+        "name": "COPAU0A",
         "io_type": "CICS_MAP",
-        "description": "Output map for the COPAU0A screen, containing the retrieved account and customer details, and authorization summary information.",
-        "copybook": null,
+        "description": "CICS screen displaying account and customer information, and authorization summary.",
+        "copybook": "COPAU0AO",
         "citation": [
-          88,
-          96
+          90,
+          98
         ]
       }
     ],
@@ -94,77 +76,73 @@
       {
         "program_name": "COSGN00C",
         "call_type": "CICS_XCTL",
-        "purpose": "To return to the previous screen. If CDEMO-TO-PROGRAM is LOW-VALUES or SPACES, it defaults to COSGN00C.",
+        "purpose": "Return to the previous screen.",
         "parameters": [
           "CARDDEMO-COMMAREA"
         ],
-        "citation": 67
+        "citation": 69
       }
     ],
     "calling_context": {
       "called_by": [],
       "entry_points": [],
-      "linkage_section": []
+      "linkage_section": [
+        "CARDDEMO-COMMAREA"
+      ]
     },
     "business_rules": [
       {
         "rule_id": "BR001",
-        "description": "If the CARDXREF file read returns NOTFND, an error message is displayed on the screen.",
-        "logic_summary": "The program checks WS-RESP-CD for DFHRESP(NOTFND) after reading the CARDXREF file. If not found, a message is constructed and displayed.",
+        "description": "If the CARDXREF record is not found, display an error message.",
+        "logic_summary": "Checks WS-RESP-CD after reading CARDXREF.",
         "conditions": [
           "WS-RESP-CD = DFHRESP(NOTFND)"
         ],
         "citation": [
-          212,
-          216
+          219,
+          223
         ]
       },
       {
         "rule_id": "BR002",
-        "description": "If the ACCT file read returns NOTFND, an error message is displayed on the screen.",
-        "logic_summary": "The program checks WS-RESP-CD for DFHRESP(NOTFND) after reading the ACCT file. If not found, a message is constructed and displayed.",
+        "description": "If the ACCOUNT record is not found, display an error message.",
+        "logic_summary": "Checks WS-RESP-CD after reading ACCOUNT.",
         "conditions": [
           "WS-RESP-CD = DFHRESP(NOTFND)"
         ],
         "citation": [
-          262,
-          265
+          270,
+          273
         ]
       },
       {
         "rule_id": "BR003",
-        "description": "If the CUST file read returns NOTFND, an error message is displayed on the screen.",
-        "logic_summary": "The program checks WS-RESP-CD for DFHRESP(NOTFND) after reading the CUST file. If not found, a message is constructed and displayed.",
+        "description": "If the CUSTOMER record is not found, display an error message.",
+        "logic_summary": "Checks WS-RESP-CD after reading CUSTOMER.",
         "conditions": [
           "WS-RESP-CD = DFHRESP(NOTFND)"
         ],
         "citation": [
-          312,
-          315
+          321,
+          324
         ]
       },
       {
         "rule_id": "BR004",
-        "description": "If the IMS segment PAUTSUM0 is not found, the FOUND-PAUT-SMRY-SEG flag is set to false.",
-        "logic_summary": "The program checks DIBSTAT after the IMS call. If it equals SEGMENT-NOT-FOUND, the NFOUND-PAUT-SMRY-SEG flag is set to true.",
+        "description": "If the AUTH Summary segment is not found, the FOUND-PAUT-SMRY-SEG flag is set to false.",
+        "logic_summary": "Checks DIBSTAT after IMS call.",
         "conditions": [
           "DIBSTAT = SEGMENT-NOT-FOUND"
         ],
         "citation": [
-          361,
-          364
+          370,
+          374,
+          375
         ]
       }
     ],
     "data_flow": {
       "reads_from": [
-        {
-          "source": "COPAU0AI",
-          "fields_used": [],
-          "citation": [
-            107
-          ]
-        },
         {
           "source": "CARD-XREF-RECORD",
           "fields_used": [
@@ -172,8 +150,8 @@
             "XREF-CARD-NUM"
           ],
           "citation": [
-            214,
-            215
+            221,
+            222
           ]
         },
         {
@@ -183,8 +161,8 @@
             "ACCT-CASH-CREDIT-LIMIT"
           ],
           "citation": [
-            166,
-            168
+            172,
+            174
           ]
         },
         {
@@ -202,16 +180,16 @@
             "CUST-PHONE-NUM-1"
           ],
           "citation": [
-            143,
-            144,
-            146,
-            148,
+            149,
+            150,
             152,
             154,
-            157,
-            159,
-            161,
-            165
+            158,
+            160,
+            163,
+            165,
+            167,
+            171
           ]
         },
         {
@@ -225,12 +203,12 @@
             "PA-DECLINED-AUTH-AMT"
           ],
           "citation": [
-            174,
-            176,
-            178,
             180,
             182,
-            184
+            184,
+            186,
+            188,
+            190
           ]
         }
       ],
@@ -238,12 +216,6 @@
         {
           "destination": "COPAU0AO",
           "fields_written": [
-            "TITLE01O",
-            "TITLE02O",
-            "TRNNAMEO",
-            "PGMNAMEO",
-            "CURDATEO",
-            "CURTIMEO",
             "CUSTIDO",
             "CNAMEO",
             "ADDR001O",
@@ -256,30 +228,22 @@
             "CREDBALO",
             "CASHBALO",
             "APPRAMTO",
-            "DECLAMTO",
-            "ERRMSGO"
+            "DECLAMTO"
           ],
           "citation": [
-            82,
-            118,
-            119,
-            120,
-            121,
-            127,
-            133,
-            143,
             149,
             155,
-            162,
-            165,
-            167,
-            169,
+            161,
+            168,
+            171,
+            173,
             175,
-            177,
-            179,
             181,
             183,
-            185
+            185,
+            187,
+            189,
+            191
           ]
         }
       ],
@@ -287,88 +251,101 @@
         {
           "input_field": "ACCT-CREDIT-LIMIT",
           "output_field": "CREDLIMO",
-          "transformation_description": "Moves ACCT-CREDIT-LIMIT to WS-DISPLAY-AMT12 and then to CREDLIMO for display.",
+          "transformation_description": "Move ACCT-CREDIT-LIMIT to WS-DISPLAY-AMT12 and then to CREDLIMO for display.",
           "citation": [
-            166,
-            167
+            172,
+            173
           ]
         },
         {
           "input_field": "ACCT-CASH-CREDIT-LIMIT",
           "output_field": "CASHLIMO",
-          "transformation_description": "Moves ACCT-CASH-CREDIT-LIMIT to WS-DISPLAY-AMT9 and then to CASHLIMO for display.",
-          "citation": [
-            168,
-            169
-          ]
-        },
-        {
-          "input_field": "PA-APPROVED-AUTH-CNT",
-          "output_field": "APPRCNTO",
-          "transformation_description": "Moves PA-APPROVED-AUTH-CNT to WS-DISPLAY-COUNT and then to APPRCNTO for display.",
+          "transformation_description": "Move ACCT-CASH-CREDIT-LIMIT to WS-DISPLAY-AMT9 and then to CASHLIMO for display.",
           "citation": [
             174,
             175
           ]
         },
         {
-          "input_field": "PA-DECLINED-AUTH-CNT",
-          "output_field": "DECLCNTO",
-          "transformation_description": "Moves PA-DECLINED-AUTH-CNT to WS-DISPLAY-COUNT and then to DECLCNTO for display.",
-          "citation": [
-            176,
-            177
-          ]
-        },
-        {
-          "input_field": "PA-CREDIT-BALANCE",
-          "output_field": "CREDBALO",
-          "transformation_description": "Moves PA-CREDIT-BALANCE to WS-DISPLAY-AMT12 and then to CREDBALO for display.",
-          "citation": [
-            178,
-            179
-          ]
-        },
-        {
-          "input_field": "PA-CASH-BALANCE",
-          "output_field": "CASHBALO",
-          "transformation_description": "Moves PA-CASH-BALANCE to WS-DISPLAY-AMT9 and then to CASHBALO for display.",
+          "input_field": "PA-APPROVED-AUTH-CNT",
+          "output_field": "APPRCNTO",
+          "transformation_description": "Move PA-APPROVED-AUTH-CNT to WS-DISPLAY-COUNT and then to APPRCNTO for display.",
           "citation": [
             180,
             181
           ]
         },
         {
-          "input_field": "PA-APPROVED-AUTH-AMT",
-          "output_field": "APPRAMTO",
-          "transformation_description": "Moves PA-APPROVED-AUTH-AMT to WS-DISPLAY-AMT9 and then to APPRAMTO for display.",
+          "input_field": "PA-DECLINED-AUTH-CNT",
+          "output_field": "DECLCNTO",
+          "transformation_description": "Move PA-DECLINED-AUTH-CNT to WS-DISPLAY-COUNT and then to DECLCNTO for display.",
           "citation": [
             182,
             183
           ]
         },
         {
-          "input_field": "PA-DECLINED-AUTH-AMT",
-          "output_field": "DECLAMTO",
-          "transformation_description": "Moves PA-DECLINED-AUTH-AMT to WS-DISPLAY-AMT9 and then to DECLAMTO for display.",
+          "input_field": "PA-CREDIT-BALANCE",
+          "output_field": "CREDBALO",
+          "transformation_description": "Move PA-CREDIT-BALANCE to WS-DISPLAY-AMT12 and then to CREDBALO for display.",
           "citation": [
             184,
             185
           ]
+        },
+        {
+          "input_field": "PA-CASH-BALANCE",
+          "output_field": "CASHBALO",
+          "transformation_description": "Move PA-CASH-BALANCE to WS-DISPLAY-AMT9 and then to CASHBALO for display.",
+          "citation": [
+            186,
+            187
+          ]
+        },
+        {
+          "input_field": "PA-APPROVED-AUTH-AMT",
+          "output_field": "APPRAMTO",
+          "transformation_description": "Move PA-APPROVED-AUTH-AMT to WS-DISPLAY-AMT9 and then to APPRAMTO for display.",
+          "citation": [
+            188,
+            189
+          ]
+        },
+        {
+          "input_field": "PA-DECLINED-AUTH-AMT",
+          "output_field": "DECLAMTO",
+          "transformation_description": "Move PA-DECLINED-AUTH-AMT to WS-DISPLAY-AMT9 and then to DECLAMTO for display.",
+          "citation": [
+            190,
+            191
+          ]
         }
       ]
     },
-    "copybooks_used": [],
+    "copybooks_used": [
+      {
+        "copybook_name": "COPAU0AI",
+        "purpose": "Defines the input map structure for the COPAU0A screen.",
+        "location": "LINKAGE",
+        "citation": 8
+      },
+      {
+        "copybook_name": "COPAU0AO",
+        "purpose": "Defines the output map structure for the COPAU0A screen.",
+        "location": "LINKAGE",
+        "citation": 85
+      }
+    ],
     "paragraphs": [
       {
         "paragraph_name": "INITIALIZE-AUTH-DATA",
         "summary": null,
-        "purpose": "This paragraph initializes the authorization data fields in the COPAU0AI map. It iterates through five authorization slots (SEL0001A to SEL0005A) and sets the corresponding transaction ID (TRNIDnnI), date (PDATEnnI), time (PTIMEnnI), type (PTYPEnnI), approval (PAPRVnnI), status (PSTATnnI), and amount (PAMT00nI) fields to spaces. The SEL000nA field is initialized to DFHBMPRO. This initialization ensures that the screen displays empty values for authorization details when no data is available. The paragraph uses a PERFORM VARYING loop to iterate through the authorization slots and an EVALUATE statement to set the values for each slot individually. No error handling is performed in this paragraph, and no other paragraphs or programs are called.",
+        "purpose": "This paragraph initializes the authorization data fields on the COPAU0A screen. It iterates through five authorization entries, clearing the transaction ID, date, time, type, approval status, and amount fields for each entry. The paragraph uses an EVALUATE statement to selectively move spaces to the appropriate fields in the COPAU0AI structure based on the loop index WS-IDX. The purpose is to ensure a clean slate for displaying authorization information. It consumes no external input, and writes directly to the COPAU0AI structure. No business logic or error handling is present in this paragraph, and it does not call any other paragraphs or programs.",
         "called_by": [],
         "calls": [],
         "citation": [
-          1,
-          55
+          608,
+          662
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -379,14 +356,12 @@
       {
         "paragraph_name": "RETURN-TO-PREV-SCREEN",
         "summary": null,
-        "purpose": "This paragraph handles the return to the previous screen by transferring control to another CICS program. It first checks if the CDEMO-TO-PROGRAM field is empty (LOW-VALUES or SPACES). If it is, it defaults the target program to 'COSGN00C'. It then moves the current transaction ID (WS-CICS-TRANID) to CDEMO-FROM-TRANID, the program ID (WS-PGM-AUTH-SMRY) to CDEMO-FROM-PROGRAM, and sets CDEMO-PGM-CONTEXT to ZEROS. Finally, it executes a CICS XCTL command to transfer control to the program specified in CDEMO-TO-PROGRAM, passing the CARDDEMO-COMMAREA as the communication area. This allows the user to navigate back to the calling screen while preserving context information. No specific error handling is implemented within this paragraph.",
+        "purpose": "This paragraph handles the return to the previous screen functionality. It checks if CDEMO-TO-PROGRAM is LOW-VALUES or SPACES, and if so, sets it to 'COSGN00C', which is likely the program ID of the default previous screen. It then moves the current transaction ID (WS-CICS-TRANID) to CDEMO-FROM-TRANID and the current program ID (WS-PGM-AUTH-SMRY) to CDEMO-FROM-PROGRAM. It sets CDEMO-PGM-CONTEXT to ZEROS. Finally, it performs a CICS XCTL to the program specified in CDEMO-TO-PROGRAM, passing the CARDDEMO-COMMAREA. This paragraph consumes WS-CICS-TRANID and WS-PGM-AUTH-SMRY, and writes to CDEMO-FROM-TRANID, CDEMO-FROM-PROGRAM, and CDEMO-PGM-CONTEXT. The business logic involves determining the target program for the XCTL. No error handling is explicitly present. It calls no other paragraphs within this program but executes a CICS XCTL.",
         "called_by": [],
-        "calls": [
-          "CDEMO-TO-PROGRAM"
-        ],
+        "calls": [],
         "citation": [
-          57,
-          70
+          665,
+          677
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -397,7 +372,7 @@
       {
         "paragraph_name": "SEND-PAULST-SCREEN",
         "summary": null,
-        "purpose": "This paragraph sends the COPAU0A screen to the terminal. It first checks if IMS-PSB-SCHD is set to true, indicating that an IMS PSB schedule is active. If so, it sets IMS-PSB-NOT-SCHD to true and issues a CICS SYNCPOINT command. Then, it calls the POPULATE-HEADER-INFO paragraph to populate the header information on the screen. It moves the WS-MESSAGE to the ERRMSGO field in the COPAU0AO map. Finally, it sends the COPAU0A map using the CICS SEND command. If SEND-ERASE-YES is true, the screen is erased before sending the map; otherwise, the screen is not erased. The CURSOR option is used to position the cursor on the screen. The paragraph handles IMS PSB scheduling and screen erasure before sending the map.",
+        "purpose": "This paragraph sends the COPAU0A screen to the terminal. It first checks if IMS-PSB-SCHD is set, and if so, sets IMS-PSB-NOT-SCHD to TRUE and performs a CICS SYNCPOINT. Then, it calls POPULATE-HEADER-INFO to populate the header information on the screen. It moves the message in WS-MESSAGE to ERRMSGO in the COPAU0AO map. Finally, it sends the COPAU0A map using a CICS SEND command. If SEND-ERASE-YES is set, it sends the map with the ERASE option; otherwise, it sends the map without erasing the screen. The paragraph consumes IMS-PSB-SCHD, WS-MESSAGE, and SEND-ERASE-YES, and writes to the COPAU0AO map. The business logic involves deciding whether to erase the screen before sending the map. No explicit error handling is present. It calls POPULATE-HEADER-INFO and executes a CICS SEND command.",
         "called_by": [
           "GETCARDXREF-BYACCT",
           "GETACCTDATA-BYACCT",
@@ -408,8 +383,8 @@
           "POPULATE-HEADER-INFO"
         ],
         "citation": [
-          71,
-          99
+          681,
+          709
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -420,12 +395,12 @@
       {
         "paragraph_name": "RECEIVE-PAULST-SCREEN",
         "summary": null,
-        "purpose": "This paragraph receives data from the COPAU0A screen. It executes a CICS RECEIVE command to receive the map COPAU0A from mapset COPAU00 into the COPAU0AI structure. The RESP and RESP2 options are used to capture the CICS response codes in WS-RESP-CD and WS-REAS-CD, respectively. This paragraph retrieves the data entered by the user on the screen, such as the account ID, which is then used in subsequent processing steps. No specific data validation or error handling is performed within this paragraph; the response codes are checked in the calling paragraphs. The received data is stored in the COPAU0AI map for further processing.",
+        "purpose": "This paragraph receives data from the COPAU0A screen. It executes a CICS RECEIVE command to receive the map COPAU0A from mapset COPAU00 into the COPAU0AI structure. It also captures the CICS response codes into WS-RESP-CD and WS-REAS-CD. This paragraph's primary purpose is to obtain user input from the screen. It consumes no explicit input other than the CICS map data and writes to the COPAU0AI structure, WS-RESP-CD, and WS-REAS-CD. There is no business logic or error handling within the paragraph itself, but the response codes are likely checked elsewhere. It does not call any other paragraphs or programs.",
         "called_by": [],
         "calls": [],
         "citation": [
-          101,
-          111
+          712,
+          722
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -436,14 +411,14 @@
       {
         "paragraph_name": "POPULATE-HEADER-INFO",
         "summary": null,
-        "purpose": "This paragraph populates the header information on the COPAU0AO map. It moves the current date to WS-CURDATE-DATA using the FUNCTION CURRENT-DATE. It then moves CCDA-TITLE01 and CCDA-TITLE02 to TITLE01O and TITLE02O, respectively. The transaction ID (WS-CICS-TRANID) is moved to TRNNAMEO, and the program ID (WS-PGM-AUTH-SMRY) is moved to PGMNAMEO. The current date is then formatted into MM-DD-YY format and moved to CURDATEO. Similarly, the current time is formatted into HH-MM-SS format and moved to CURTIMEO. This paragraph ensures that the header of the screen displays the current date, time, transaction ID, and program ID. The data is moved from working storage variables to the corresponding output fields in the COPAU0AO map.",
+        "purpose": "This paragraph populates the header information on the COPAU0A screen. It moves the current date to WS-CURDATE-DATA using the FUNCTION CURRENT-DATE. It then moves CCDA-TITLE01 and CCDA-TITLE02 to TITLE01O and TITLE02O in the COPAU0AO map, respectively. It also moves the transaction ID (WS-CICS-TRANID) to TRNNAMEO and the program name (WS-PGM-AUTH-SMRY) to PGMNAMEO. Finally, it formats the current date and time into the CURDATEO and CURTIMEO fields in the COPAU0AO map. This paragraph consumes CCDA-TITLE01, CCDA-TITLE02, WS-CICS-TRANID, WS-PGM-AUTH-SMRY, and the current date and time, and writes to the COPAU0AO map. There is no business logic or error handling within the paragraph. It does not call any other paragraphs or programs.",
         "called_by": [
           "SEND-PAULST-SCREEN"
         ],
         "calls": [],
         "citation": [
-          113,
-          134
+          726,
+          747
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -454,7 +429,7 @@
       {
         "paragraph_name": "GATHER-ACCOUNT-DETAILS",
         "summary": null,
-        "purpose": "This paragraph orchestrates the retrieval of account details from various sources and populates the COPAU0AO map. It first calls GETCARDXREF-BYACCT to retrieve the customer ID and card number from the CARDXREF file using the account ID. Then, it calls GETACCTDATA-BYACCT to retrieve account data from the ACCT file. Subsequently, it calls GETCUSTDATA-BYCUST to retrieve customer data from the CUST file. After retrieving the data, it moves the customer ID to CUSTIDO and concatenates the customer's first name, middle initial, and last name into CNAMEO. It also concatenates the customer's address lines into ADDR001O and ADDR002O. The customer's phone number is moved to PHONE1O, and the account's credit limit and cash credit limit are moved to CREDLIMO and CASHLIMO, respectively. Finally, it calls GET-AUTH-SUMMARY to retrieve the authorization summary data. If the authorization summary segment is found, it moves the approved and declined authorization counts and amounts, as well as the credit and cash balances, to the corresponding output fields in the COPAU0AO map. If the segment is not found, it moves zeros to these fields. This paragraph integrates data from multiple sources to provide a comprehensive view of the customer's account and authorization information.",
+        "purpose": "This paragraph orchestrates the retrieval and formatting of account and customer details for display on the screen. It calls GETCARDXREF-BYACCT to retrieve the card cross-reference information, GETACCTDATA-BYACCT to retrieve account data, and GETCUSTDATA-BYCUST to retrieve customer data. It then moves the customer ID to CUSTIDO and concatenates the customer's first, middle, and last names into CNAMEO. It also concatenates the customer's address lines into ADDR001O and ADDR002O. It moves the customer's phone number to PHONE1O, the account credit limit to CREDLIMO, and the account cash credit limit to CASHLIMO. Finally, it calls GET-AUTH-SUMMARY to retrieve the authorization summary. If a pending authorization summary is found (FOUND-PAUT-SMRY-SEG), it moves the approved and declined authorization counts and amounts, as well as the credit and cash balances, to the corresponding output fields. Otherwise, it moves zeros to these fields. This paragraph consumes data from the CARDXREF, ACCOUNT, and CUSTOMER files, as well as the pending authorization summary, and writes to the COPAU0AO map. The business logic involves formatting the customer name and address, and handling the case where no authorization summary is found. No explicit error handling is present within this paragraph itself, but the called paragraphs likely handle errors. It calls GETCARDXREF-BYACCT, GETACCTDATA-BYACCT, GETCUSTDATA-BYCUST, and GET-AUTH-SUMMARY.",
         "called_by": [],
         "calls": [
           "GETCARDXREF-BYACCT",
@@ -463,8 +438,8 @@
           "GET-AUTH-SUMMARY"
         ],
         "citation": [
-          136,
-          194
+          750,
+          808
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -475,18 +450,16 @@
       {
         "paragraph_name": "GETCARDXREF-BYACCT",
         "summary": null,
-        "purpose": "This paragraph retrieves the card cross-reference record from the CARDXREF file based on the account ID. It moves the account ID (WS-ACCT-ID) to the key field (WS-CARD-RID-ACCT-ID-X). It then executes a CICS READ command to read the CARDXREF record using the alternate index ACCTID. If the read is successful (DFHRESP(NORMAL)), it moves the customer ID (XREF-CUST-ID) to CDEMO-CUST-ID and the card number (XREF-CARD-NUM) to CDEMO-CARD-NUM. If the record is not found (DFHRESP(NOTFND)), it constructs an error message and calls SEND-PAULST-SCREEN to display the message. If any other error occurs, it sets WS-ERR-FLG to 'Y', constructs an error message, and calls SEND-PAULST-SCREEN to display the error. The paragraph handles different response codes from the CICS READ command and displays appropriate messages on the screen.",
+        "purpose": "This paragraph retrieves the card cross-reference record from the CARDXREF file using the account ID. It moves the account ID (WS-ACCT-ID) to WS-CARD-RID-ACCT-ID-X and then executes a CICS READ command to read the CARDXREF record. If the read is successful (DFHRESP(NORMAL)), it moves the customer ID and card number from the CARDXREF record to CDEMO-CUST-ID and CDEMO-CARD-NUM, respectively. If the record is not found (DFHRESP(NOTFND)), it constructs an error message and calls SEND-PAULST-SCREEN to display the message. If any other error occurs, it sets WS-ERR-FLG to 'Y', constructs an error message, and calls SEND-PAULST-SCREEN. This paragraph consumes WS-ACCT-ID and writes to CDEMO-CUST-ID, CDEMO-CARD-NUM, WS-MESSAGE, and the COPAU0A screen. The business logic involves reading the CARDXREF record and handling the cases where the record is not found or an error occurs. The error handling involves displaying an error message on the screen. It calls SEND-PAULST-SCREEN.",
         "called_by": [
           "GATHER-ACCOUNT-DETAILS"
         ],
         "calls": [
-          "SEND-PAULST-SCREEN",
-          "SEND-PAULST-SCREEN",
-          "WS-CARDXREFNAME-ACCT-PATH"
+          "SEND-PAULST-SCREEN"
         ],
         "citation": [
-          196,
-          246
+          812,
+          862
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -497,18 +470,16 @@
       {
         "paragraph_name": "GETACCTDATA-BYACCT",
         "summary": null,
-        "purpose": "This paragraph retrieves the account record from the ACCT file based on the account ID. It moves the account ID (XREF-ACCT-ID) to the key field (WS-CARD-RID-ACCT-ID-X). It then executes a CICS READ command to read the ACCOUNT record. If the read is successful (DFHRESP(NORMAL)), it continues processing. If the record is not found (DFHRESP(NOTFND)), it constructs an error message and calls SEND-PAULST-SCREEN to display the message. If any other error occurs, it sets WS-ERR-FLG to 'Y', constructs an error message, and calls SEND-PAULST-SCREEN to display the error. The paragraph handles different response codes from the CICS READ command and displays appropriate messages on the screen.",
+        "purpose": "This paragraph retrieves the account record from the ACCOUNT file using the account ID. It moves the account ID (XREF-ACCT-ID) to WS-CARD-RID-ACCT-ID-X and then executes a CICS READ command to read the ACCOUNT record. If the read is successful (DFHRESP(NORMAL)), it continues processing. If the record is not found (DFHRESP(NOTFND)), it constructs an error message and calls SEND-PAULST-SCREEN to display the message. If any other error occurs, it sets WS-ERR-FLG to 'Y', constructs an error message, and calls SEND-PAULST-SCREEN. This paragraph consumes XREF-ACCT-ID and writes to WS-MESSAGE and the COPAU0A screen. The business logic involves reading the ACCOUNT record and handling the cases where the record is not found or an error occurs. The error handling involves displaying an error message on the screen. It calls SEND-PAULST-SCREEN.",
         "called_by": [
           "GATHER-ACCOUNT-DETAILS"
         ],
         "calls": [
-          "SEND-PAULST-SCREEN",
-          "SEND-PAULST-SCREEN",
-          "WS-ACCTFILENAME"
+          "SEND-PAULST-SCREEN"
         ],
         "citation": [
-          248,
-          295
+          865,
+          912
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -519,18 +490,16 @@
       {
         "paragraph_name": "GETCUSTDATA-BYCUST",
         "summary": null,
-        "purpose": "This paragraph retrieves the customer record from the CUST file based on the customer ID. It moves the customer ID (XREF-CUST-ID) to the key field (WS-CARD-RID-CUST-ID-X). It then executes a CICS READ command to read the CUSTOMER record. If the read is successful (DFHRESP(NORMAL)), it continues processing. If the record is not found (DFHRESP(NOTFND)), it constructs an error message and calls SEND-PAULST-SCREEN to display the message. If any other error occurs, it sets WS-ERR-FLG to 'Y', constructs an error message, and calls SEND-PAULST-SCREEN to display the error. The paragraph handles different response codes from the CICS READ command and displays appropriate messages on the screen.",
+        "purpose": "This paragraph retrieves the customer record from the CUSTOMER file using the customer ID. It moves the customer ID (XREF-CUST-ID) to WS-CARD-RID-CUST-ID. It then executes a CICS READ command to read the CUSTOMER record. If the read is successful (DFHRESP(NORMAL)), it continues processing. If the record is not found (DFHRESP(NOTFND)), it constructs an error message and calls SEND-PAULST-SCREEN to display the message. If any other error occurs, it sets WS-ERR-FLG to 'Y', constructs an error message, and calls SEND-PAULST-SCREEN. This paragraph consumes XREF-CUST-ID and writes to WS-MESSAGE and the COPAU0A screen. The business logic involves reading the CUSTOMER record and handling the cases where the record is not found or an error occurs. The error handling involves displaying an error message on the screen. It calls SEND-PAULST-SCREEN.",
         "called_by": [
           "GATHER-ACCOUNT-DETAILS"
         ],
         "calls": [
-          "SEND-PAULST-SCREEN",
-          "SEND-PAULST-SCREEN",
-          "WS-CUSTFILENAME"
+          "SEND-PAULST-SCREEN"
         ],
         "citation": [
-          297,
-          345
+          915,
+          963
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -541,17 +510,16 @@
       {
         "paragraph_name": "GET-AUTH-SUMMARY",
         "summary": null,
-        "purpose": "This paragraph retrieves the authorization summary data from the IMS database. It first calls SCHEDULE-PSB to schedule the required PSB. It then moves the account ID (CDEMO-ACCT-ID) to the PA-ACCT-ID field. It executes a DLI GU (Get Unique) command to retrieve the PAUTSUM0 segment from the IMS database using the PAUT-PCB-NUM PCB. If the segment is found (STATUS-OK), it sets the FOUND-PAUT-SMRY-SEG flag to true. If the segment is not found (SEGMENT-NOT-FOUND), it sets the NFOUND-PAUT-SMRY-SEG flag to true. If any other error occurs, it sets WS-ERR-FLG to 'Y', constructs an error message, and calls SEND-PAULST-SCREEN to display the error. The paragraph handles different return codes from the IMS call and displays appropriate messages on the screen.",
+        "purpose": "This paragraph retrieves the authorization summary from the IMS database. It first calls SCHEDULE-PSB (which is not defined in this code snippet, so its function is unknown). It then moves the account ID (CDEMO-ACCT-ID) to PA-ACCT-ID. It executes a DLI GU (Get Unique) command to retrieve the PAUTSUM0 segment from the IMS database, using the PAUT-PCB-NUM PCB. The retrieved segment is placed into PENDING-AUTH-SUMMARY. It then moves the DIBSTAT return code to IMS-RETURN-CODE and evaluates the return code. If the status is OK, it sets FOUND-PAUT-SMRY-SEG to TRUE. If the segment is not found, it sets NFOUND-PAUT-SMRY-SEG to TRUE. If any other error occurs, it sets WS-ERR-FLG to 'Y', constructs an error message, and calls SEND-PAULST-SCREEN. This paragraph consumes CDEMO-ACCT-ID and writes to PENDING-AUTH-SUMMARY, IMS-RETURN-CODE, WS-MESSAGE and the COPAU0A screen. The business logic involves retrieving the authorization summary from the IMS database and handling different return codes. The error handling involves displaying an error message on the screen. It calls SCHEDULE-PSB and SEND-PAULST-SCREEN.",
         "called_by": [
           "GATHER-ACCOUNT-DETAILS"
         ],
         "calls": [
-          "SCHEDULE-PSB",
           "SEND-PAULST-SCREEN"
         ],
         "citation": [
-          347,
-          378
+          966,
+          997
         ],
         "outgoing_calls": [],
         "incoming_calls": [],
@@ -562,123 +530,119 @@
     ],
     "error_handling": [
       {
-        "condition": "CARDXREF file read NOTFND",
-        "action": "Display error message on screen",
+        "condition": "CARDXREF record not found (DFHRESP(NOTFND))",
+        "action": "Display error message on screen.",
         "citation": [
-          216,
-          229
+          223,
+          236
         ]
       },
       {
-        "condition": "CARDXREF file read error (OTHER than NORMAL or NOTFND)",
-        "action": "Set WS-ERR-FLG to 'Y' and display error message on screen",
+        "condition": "Error reading CARDXREF file (OTHER)",
+        "action": "Set WS-ERR-FLG to 'Y' and display error message on screen.",
         "citation": [
-          230,
-          244
+          237,
+          251
         ]
       },
       {
-        "condition": "ACCT file read NOTFND",
-        "action": "Display error message on screen",
+        "condition": "ACCOUNT record not found (DFHRESP(NOTFND))",
+        "action": "Display error message on screen.",
         "citation": [
-          265,
-          278
+          273,
+          286
         ]
       },
       {
-        "condition": "ACCT file read error (OTHER than NORMAL or NOTFND)",
-        "action": "Set WS-ERR-FLG to 'Y' and display error message on screen",
+        "condition": "Error reading ACCOUNT file (OTHER)",
+        "action": "Set WS-ERR-FLG to 'Y' and display error message on screen.",
         "citation": [
-          279,
-          293
+          287,
+          301
         ]
       },
       {
-        "condition": "CUST file read NOTFND",
-        "action": "Display error message on screen",
+        "condition": "CUSTOMER record not found (DFHRESP(NOTFND))",
+        "action": "Display error message on screen.",
         "citation": [
-          315,
-          328
+          324,
+          337
         ]
       },
       {
-        "condition": "CUST file read error (OTHER than NORMAL or NOTFND)",
-        "action": "Set WS-ERR-FLG to 'Y' and display error message on screen",
+        "condition": "Error reading CUSTOMER file (OTHER)",
+        "action": "Set WS-ERR-FLG to 'Y' and display error message on screen.",
         "citation": [
-          329,
-          343
+          338,
+          352
         ]
       },
       {
-        "condition": "IMS call error (OTHER than STATUS-OK or SEGMENT-NOT-FOUND)",
-        "action": "Set WS-ERR-FLG to 'Y' and display error message on screen",
+        "condition": "Error reading AUTH Summary (OTHER)",
+        "action": "Set WS-ERR-FLG to 'Y' and display error message on screen.",
         "citation": [
-          366,
-          376
+          376,
+          386
         ]
       }
     ],
     "sql_operations": [],
     "cics_operations": [
       {
-        "command": "XCTL",
+        "command": "XCTL PROGRAM",
         "resource": "CDEMO-TO-PROGRAM",
         "purpose": "Transfer control to another CICS program.",
-        "citation": 67
+        "citation": 69
       },
       {
         "command": "SEND MAP",
         "resource": "COPAU0A",
-        "purpose": "Send the COPAU0A map to the terminal.",
-        "citation": 86
+        "purpose": "Display the COPAU0A screen.",
+        "citation": 88
       },
       {
         "command": "RECEIVE MAP",
         "resource": "COPAU0A",
-        "purpose": "Receive data from the COPAU0A map.",
-        "citation": 105
+        "purpose": "Receive data from the COPAU0A screen.",
+        "citation": 108
       },
       {
         "command": "READ",
         "resource": "WS-CARDXREFNAME-ACCT-PATH",
         "purpose": "Read a record from the CARDXREF file.",
-        "citation": 202
+        "citation": 209
       },
       {
         "command": "READ",
         "resource": "WS-ACCTFILENAME",
         "purpose": "Read a record from the ACCOUNT file.",
-        "citation": 252
+        "citation": 260
       },
       {
         "command": "READ",
         "resource": "WS-CUSTFILENAME",
         "purpose": "Read a record from the CUSTOMER file.",
-        "citation": 302
+        "citation": 311
       }
     ],
     "open_questions": [
       {
         "question": "What is the purpose of SCHEDULE-PSB?",
-        "context": "The code calls SCHEDULE-PSB but the source is not provided.",
-        "suggestion": "Need to examine the SCHEDULE-PSB routine to determine its function."
+        "context": "The paragraph SCHEDULE-PSB is called in GET-AUTH-SUMMARY, but the code for this paragraph is not provided.",
+        "suggestion": "Need to examine the complete source code or related documentation to understand the function of SCHEDULE-PSB."
       },
       {
-        "question": "What is the purpose of WS-CARDXREFNAME-ACCT-PATH, WS-ACCTFILENAME, WS-CUSTFILENAME?",
-        "context": "The code uses these variables as DATASET names in CICS READ commands, but their values are not defined in the provided snippet.",
-        "suggestion": "Need to find where these variables are defined to understand which files are being accessed."
-      },
-      {
-        "question": "What is the structure of CARDDEMO-COMMAREA?",
-        "context": "The code passes CARDDEMO-COMMAREA to the called program COSGN00C, but the structure of the COMMAREA is not defined in the provided snippet.",
-        "suggestion": "Need to find the copybook or definition of CARDDEMO-COMMAREA to understand what data is being passed."
+        "question": "What is the structure of the CARDDEMO-COMMAREA?",
+        "context": "The CARDDEMO-COMMAREA is used to pass data between programs, but its structure is not defined in the provided code.",
+        "suggestion": "Examine the copybook definition for CARDDEMO to determine the structure of the commarea."
       }
     ],
     "resolved_questions": [],
     "dead_code": [],
+    "dead_code_resolved": [],
     "call_semantics": [],
     "flow_diagram": null,
     "copybooks_not_found": []
   },
-  "saved_at": "2026-03-03T21:44:40.063600"
+  "saved_at": "2026-03-16T13:02:27.483327"
 }

@@ -42,5 +42,4 @@
                    PERFORM 9500-LOG-ERROR                                       
            END-EVALUATE                                                         
            .                                                                    
-      *                                                                         
 ```

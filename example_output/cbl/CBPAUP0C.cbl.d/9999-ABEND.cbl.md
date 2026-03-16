@@ -6,5 +6,4 @@
 
            MOVE 16 TO RETURN-CODE
            GOBACK.
-      *
 ```

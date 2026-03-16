@@ -1,172 +1,51 @@
-2026-03-03 21:46:43,086 | ERROR | war_rig.errors | 
+2026-03-16 12:49:18,814 | ERROR | war_rig.agents.base | Scribe: Error during invocation: 
+/home/andras/war_rig/war_rig/agents/base.py:480
+
+2026-03-16 12:49:18,819 | ERROR | war_rig.errors | 
 ================================================================================
 STRUCTURED ERROR:
 {
-  "timestamp": "2026-03-03T21:46:43.086284",
-  "error_type": "RateLimitError",
-  "error_message": "Rate limit exceeded",
-  "context": {
-    "provider": "openrouter",
-    "model": "anthropic/claude-sonnet-4-20250514",
-    "error_type": "rate_limit"
-  },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/unittest/mock.py\", line 2240, in _execute_mock_call\n    raise effect\nopenai.RateLimitError: Rate limit exceeded\n",
-  "request": {
-    "model": "anthropic/claude-sonnet-4-20250514",
-    "message_count": 1
-  },
-  "response": {
-    "body": null,
-    "response": "<MagicMock id='140115126740240'>"
-  }
-}
-================================================================================
-/home/andras/war_rig/war_rig/utils/error_logging.py:164
-
-2026-03-03 21:46:43,103 | ERROR | war_rig.providers.openrouter | OpenRouter connection error: Connection error.
-/home/andras/war_rig/war_rig/providers/openrouter.py:401
-
-2026-03-03 21:46:43,103 | ERROR | war_rig.errors | 
-================================================================================
-STRUCTURED ERROR:
-{
-  "timestamp": "2026-03-03T21:46:43.103177",
-  "error_type": "APIConnectionError",
-  "error_message": "Connection error.",
-  "context": {
-    "provider": "openrouter",
-    "model": "anthropic/claude-sonnet-4-20250514",
-    "error_type": "connection"
-  },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/unittest/mock.py\", line 2240, in _execute_mock_call\n    raise effect\nopenai.APIConnectionError: Connection error.\n",
-  "request": {
-    "model": "anthropic/claude-sonnet-4-20250514",
-    "message_count": 1
-  }
-}
-================================================================================
-/home/andras/war_rig/war_rig/utils/error_logging.py:164
-
-2026-03-03 21:46:43,121 | ERROR | war_rig.providers.openrouter | OpenRouter API error: Invalid request
-/home/andras/war_rig/war_rig/providers/openrouter.py:414
-
-2026-03-03 21:46:43,121 | ERROR | war_rig.errors | 
-================================================================================
-STRUCTURED ERROR:
-{
-  "timestamp": "2026-03-03T21:46:43.121302",
-  "error_type": "APIError",
-  "error_message": "Invalid request",
-  "context": {
-    "provider": "openrouter",
-    "model": "anthropic/claude-sonnet-4-20250514",
-    "error_type": "api_error",
-    "status_code": 400
-  },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/unittest/mock.py\", line 2240, in _execute_mock_call\n    raise effect\nopenai.APIError: Invalid request\n",
-  "request": {
-    "model": "anthropic/claude-sonnet-4-20250514",
-    "message_count": 1
-  },
-  "response": {
-    "body": null,
-    "response": "None",
-    "message": "Invalid request"
-  }
-}
-================================================================================
-/home/andras/war_rig/war_rig/utils/error_logging.py:164
-
-2026-03-03 21:46:43,138 | ERROR | war_rig.providers.openrouter | Unexpected error calling OpenRouter: Unexpected failure
-/home/andras/war_rig/war_rig/providers/openrouter.py:445
-
-2026-03-03 21:46:43,138 | ERROR | war_rig.errors | 
-================================================================================
-STRUCTURED ERROR:
-{
-  "timestamp": "2026-03-03T21:46:43.138289",
-  "error_type": "RuntimeError",
-  "error_message": "Unexpected failure",
-  "context": {
-    "provider": "openrouter",
-    "model": "anthropic/claude-sonnet-4-20250514",
-    "error_type": "unexpected"
-  },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/unittest/mock.py\", line 2240, in _execute_mock_call\n    raise effect\nRuntimeError: Unexpected failure\n",
-  "request": {
-    "model": "anthropic/claude-sonnet-4-20250514",
-    "message_count": 1
-  }
-}
-================================================================================
-/home/andras/war_rig/war_rig/utils/error_logging.py:164
-
-2026-03-03 21:46:43,156 | ERROR | war_rig.providers.openrouter | Unexpected error calling OpenRouter: Stream error
-/home/andras/war_rig/war_rig/providers/openrouter.py:445
-
-2026-03-03 21:46:43,157 | ERROR | war_rig.errors | 
-================================================================================
-STRUCTURED ERROR:
-{
-  "timestamp": "2026-03-03T21:46:43.157013",
-  "error_type": "RuntimeError",
-  "error_message": "Stream error",
-  "context": {
-    "provider": "openrouter",
-    "model": "anthropic/claude-sonnet-4-20250514",
-    "error_type": "unexpected"
-  },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 309, in complete\n    async for chunk in iter_with_timeout(stream, chunk_timeout):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 296, in iter_with_timeout\n    chunk = await asyncio.wait_for(\n            ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 489, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/tests/test_providers/test_openrouter.py\", line 442, in error_stream\n    raise RuntimeError(\"Stream error\")\nRuntimeError: Stream error\n",
-  "request": {
-    "model": "anthropic/claude-sonnet-4-20250514",
-    "message_count": 1
-  }
-}
-================================================================================
-/home/andras/war_rig/war_rig/utils/error_logging.py:164
-
-2026-03-03 21:46:45,007 | ERROR | war_rig.summarization.bundle_summarizer | BundleSummarizer: provider.complete() failed for bundle BDL-001
-/home/andras/war_rig/war_rig/summarization/bundle_summarizer.py:211
-Traceback (most recent call last):
-  File "/home/andras/war_rig/war_rig/summarization/bundle_summarizer.py", line 205, in summarize_bundle
-    response = await self._provider.complete(
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/andras/war_rig/tests/test_summarization/test_summarization.py", line 120, in complete
-    raise RuntimeError("Simulated provider failure")
-RuntimeError: Simulated provider failure
-2026-03-03 21:46:45,012 | ERROR | war_rig.summarization.coherence_merger | CoherenceMerger: provider.complete() failed for segment SEG-001
-/home/andras/war_rig/war_rig/summarization/coherence_merger.py:234
-Traceback (most recent call last):
-  File "/home/andras/war_rig/war_rig/summarization/coherence_merger.py", line 228, in _merge_group
-    response = await self._provider.complete(
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/andras/war_rig/tests/test_summarization/test_summarization.py", line 120, in complete
-    raise RuntimeError("Simulated provider failure")
-RuntimeError: Simulated provider failure
-2026-03-03 21:46:45,016 | ERROR | war_rig.summarization.root_summarizer | RootSummarizer: provider.complete() failed for PROG002
-/home/andras/war_rig/war_rig/summarization/root_summarizer.py:194
-Traceback (most recent call last):
-  File "/home/andras/war_rig/war_rig/summarization/root_summarizer.py", line 188, in summarize
-    response = await self._provider.complete(
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/andras/war_rig/tests/test_summarization/test_summarization.py", line 120, in complete
-    raise RuntimeError("Simulated provider failure")
-RuntimeError: Simulated provider failure
-2026-03-03 21:47:11,841 | ERROR | war_rig.agents.base | Challenger: Error during invocation: 
-/home/andras/war_rig/war_rig/agents/base.py:474
-
-2026-03-03 21:47:11,845 | ERROR | war_rig.errors | 
-================================================================================
-STRUCTURED ERROR:
-{
-  "timestamp": "2026-03-03T21:47:11.842387",
+  "timestamp": "2026-03-16T12:49:18.815683",
   "error_type": "TimeoutError",
   "error_message": "",
   "context": {
     "iteration": 1,
-    "file_name": "ims/PSBPAUTL.psb"
+    "file_name": "cbl/PAUDBUNL.CBL"
   },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 500, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py\", line 2678, in create\n    return await self._post(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1797, in post\n    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1532, in request\n    response = await self._client.send(\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1629, in send\n    response = await self._send_handling_auth(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1657, in _send_handling_auth\n    response = await self._send_handling_redirects(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1694, in _send_handling_redirects\n    response = await self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1730, in _send_single_request\n    response = await transport.handle_async_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 103, in handle_async_request\n    return await self._connection.handle_async_request(request)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 136, in handle_async_request\n    raise exc\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 106, in handle_async_request\n    ) = await self._receive_response_headers(**kwargs)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 177, in _receive_response_headers\n    event = await self._receive_event(timeout=timeout)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 217, in _receive_event\n    data = await self._network_stream.read(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 35, in read\n    return await self._stream.receive(max_bytes=max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 244, in receive\n    data = await self._call_sslobject_method(self._ssl_object.read, max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 187, in _call_sslobject_method\n    data = await self.transport_stream.receive()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py\", line 1269, in receive\n    await self._protocol.read_event.wait()\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/locks.py\", line 213, in wait\n    await fut\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/agents/base.py\", line 450, in ainvoke\n    response = await self._provider.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/circuit_breaker.py\", line 490, in complete\n    response = await asyncio.wait_for(\n               ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 502, in wait_for\n    raise exceptions.TimeoutError() from exc\nTimeoutError\n",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 500, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py\", line 2678, in create\n    return await self._post(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1797, in post\n    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1532, in request\n    response = await self._client.send(\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1629, in send\n    response = await self._send_handling_auth(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1657, in _send_handling_auth\n    response = await self._send_handling_redirects(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1694, in _send_handling_redirects\n    response = await self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1730, in _send_single_request\n    response = await transport.handle_async_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 103, in handle_async_request\n    return await self._connection.handle_async_request(request)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 136, in handle_async_request\n    raise exc\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 106, in handle_async_request\n    ) = await self._receive_response_headers(**kwargs)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 177, in _receive_response_headers\n    event = await self._receive_event(timeout=timeout)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 217, in _receive_event\n    data = await self._network_stream.read(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 35, in read\n    return await self._stream.receive(max_bytes=max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 244, in receive\n    data = await self._call_sslobject_method(self._ssl_object.read, max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 187, in _call_sslobject_method\n    data = await self.transport_stream.receive()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py\", line 1269, in receive\n    await self._protocol.read_event.wait()\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/locks.py\", line 213, in wait\n    await fut\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/agents/base.py\", line 455, in ainvoke\n    response = await self._provider.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/circuit_breaker.py\", line 490, in complete\n    response = await asyncio.wait_for(\n               ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 502, in wait_for\n    raise exceptions.TimeoutError() from exc\nTimeoutError\n",
+  "request": {
+    "agent": "Scribe",
+    "model": "google/gemini-2.0-flash-001",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are the Scribe, a documentation specialist for mainframe code analysis.\n\nYour role is to analyze COBOL, PL/I, JCL, and other mainframe source files and produce comprehensive documentation following a structured template.\n\n## Special File Types\n\n### LISTING Files (.lst, .list)\nLISTING files are NOT executable programs. They contain **prose documentation** such as:\n- Compiler output and diagnostics\n- Change history and modification notes\n- System documentation and comments\n- Version control notes\n- Developer notes and explanations\n\nWhen analyzing a LISTING file:\n1. The summary should describe what the file CONTAINS (change history, compiler output, notes), not what code it \"executes\"\n2. Do NOT try to document called_programs, data_flow, sql_operations, cics_operations - these are not applicable\n3. Focus on purpose (what documentation is in the file), and any inputs/outputs mentioned as references\n4. Treat the content as prose to be understood and summarized, not as code to be reverse..."
+      },
+      {
+        "role": "user",
+        "content": "## Source File: cbl/PAUDBUNL.CBL\nFile Type: COBOL\nIteration: 1\n\n## Paragraph Outline (from static analysis)\n\nThe following paragraphs were identified by static analysis.\nYou MUST document ALL listed paragraphs. Do not skip any.\n\n- **PAUDBUNL** (lines 18-18)\n- **MAIN-PARA** (lines 157-170)\n- **1000-INITIALIZE** (lines 173-200)\n- **1000-EXIT** (lines 203-204)\n- **2000-FIND-NEXT-AUTH-SUMMARY** (lines 207-247)\n- **2000-EXIT** (lines 248-249)\n- **3000-FIND-NEXT-AUTH-DTL** (lines 253-284)\n- **3000-EXIT** (lines 285-286)\n- **4000-FILE-CLOSE** (lines 289-304)\n- **4000-EXIT** (lines 305-306)\n\n## Analysis Pattern Insights\n\n**Key Variables**: ROOT-SEG-KEY, CHILD-SEG-REC, WS-END-OF-CHILD-SEG, PAUT-PCB-STATUS, WS-NO-SUMRY-READ, WS-AUTH-SMRY-PROC-CNT, PENDING-AUTH-SUMMARY, OPFIL1-REC, PA-ACCT-ID, __STR_45__\n**Complexity**: {'total_data_ops': 18, 'decision_points': 22, 'has_loops': False, 'has_nested_conditionals': True, 'has_go_to': False, 'error_coverage': 'good'}\n\n### Paragraph Documentation Hints..."
+      }
+    ]
+  }
+}
+================================================================================
+/home/andras/war_rig/war_rig/utils/error_logging.py:164
+
+2026-03-16 12:52:35,800 | ERROR | war_rig.agents.base | Challenger: Error during invocation: 
+/home/andras/war_rig/war_rig/agents/base.py:480
+
+2026-03-16 12:52:35,803 | ERROR | war_rig.errors | 
+================================================================================
+STRUCTURED ERROR:
+{
+  "timestamp": "2026-03-16T12:52:35.801679",
+  "error_type": "TimeoutError",
+  "error_message": "",
+  "context": {
+    "iteration": 1,
+    "file_name": "bms/COPAU00.bms"
+  },
+  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 500, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py\", line 2678, in create\n    return await self._post(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1797, in post\n    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1532, in request\n    response = await self._client.send(\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1629, in send\n    response = await self._send_handling_auth(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1657, in _send_handling_auth\n    response = await self._send_handling_redirects(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1694, in _send_handling_redirects\n    response = await self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1730, in _send_single_request\n    response = await transport.handle_async_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 103, in handle_async_request\n    return await self._connection.handle_async_request(request)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 136, in handle_async_request\n    raise exc\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 106, in handle_async_request\n    ) = await self._receive_response_headers(**kwargs)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 177, in _receive_response_headers\n    event = await self._receive_event(timeout=timeout)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 217, in _receive_event\n    data = await self._network_stream.read(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 35, in read\n    return await self._stream.receive(max_bytes=max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 244, in receive\n    data = await self._call_sslobject_method(self._ssl_object.read, max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 187, in _call_sslobject_method\n    data = await self.transport_stream.receive()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py\", line 1269, in receive\n    await self._protocol.read_event.wait()\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/locks.py\", line 213, in wait\n    await fut\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/agents/base.py\", line 455, in ainvoke\n    response = await self._provider.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/circuit_breaker.py\", line 490, in complete\n    response = await asyncio.wait_for(\n               ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 502, in wait_for\n    raise exceptions.TimeoutError() from exc\nTimeoutError\n",
   "request": {
     "agent": "Challenger",
     "model": "google/gemini-2.0-flash-001",
@@ -177,7 +56,7 @@ STRUCTURED ERROR:
       },
       {
         "role": "user",
-        "content": "## Validating: ims/PSBPAUTL.psb\nFile Type: OTHER\nIteration: 1\nMax Questions: 5\n\n## Scribe's Documentation\n```json\n{\n  \"header\": {\n    \"program_id\": \"PSBPAUTL\",\n    \"file_name\": \"PSBPAUTL.psb\",\n    \"file_type\": \"OTHER\",\n    \"analyzed_by\": \"WAR_RIG\",\n    \"analyzed_at\": \"2026-03-04T04:42:01.536582\",\n    \"iteration_count\": 1,\n    \"final_status\": null\n  },\n  \"purpose\": {\n    \"summary\": \"This PSB (Program Specification Block) defines the interface for accessing the DBPAUTP0 database within an IMS (Information Management System) environment. It specifies the PCB (Program Communication Block) configuration, including the database name, processing options, key length, and sensitive segments (SENSEG) for data access. The PSBGEN statement indicates that this PSB is generated for assembly language.\",\n    \"business_context\": null,\n    \"program_type\": \"UTILITY\",\n    \"citations\": [\n      17,\n      20\n    ]\n  },\n  \"inputs\": [],\n  \"outputs\": [],\n  \"called_programs\": [],\n  \"calling_context\": {\n    \"call..."
+        "content": "## Validating: bms/COPAU00.bms\nFile Type: BMS\nIteration: 1\nMax Questions: 5\n\n## Scribe's Documentation\n```json\n{\n  \"header\": {\n    \"program_id\": \"COPAU00\",\n    \"file_name\": \"COPAU00.bms\",\n    \"file_type\": \"BMS\",\n    \"analyzed_by\": \"WAR_RIG\",\n    \"analyzed_at\": \"2026-03-16T19:47:31.709978\",\n    \"iteration_count\": 1,\n    \"final_status\": null\n  },\n  \"purpose\": {\n    \"summary\": \"This BMS map defines the screen layout for the CardDemo Pending Authorization screen. It displays a list of pending authorizations for a given account ID, along with customer details and credit information. The screen allows the user to select a transaction to view its details.\",\n    \"business_context\": \"This screen is used to view and manage pending card authorizations within the CardDemo application.\",\n    \"program_type\": \"ONLINE_CICS\",\n    \"citations\": [\n      2,\n      83,\n      501\n    ]\n  },\n  \"inputs\": [\n    {\n      \"name\": \"ACCTID\",\n      \"io_type\": \"CICS_MAP\",\n      \"description\": \"Account ID entered by the..."
       }
     ]
   }
@@ -185,188 +64,21 @@ STRUCTURED ERROR:
 ================================================================================
 /home/andras/war_rig/war_rig/utils/error_logging.py:164
 
-2026-03-03 21:47:15,880 | ERROR | war_rig.workers.challenger_pool | Worker challenger-1: Could not load documentation state for ticket war_rig-001
-/home/andras/war_rig/war_rig/workers/challenger_pool.py:991
+2026-03-16 12:52:44,103 | ERROR | war_rig.agents.base | Scribe: Error during invocation: 
+/home/andras/war_rig/war_rig/agents/base.py:480
 
-2026-03-03 21:47:31,163 | ERROR | war_rig.providers.openrouter | OpenRouter API error: Error code: 400 - {'error': {'message': 'claude-sonnet-4-20250514 is not a valid model ID', 'code': 400}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}
-/home/andras/war_rig/war_rig/providers/openrouter.py:414
-
-2026-03-03 21:47:31,165 | ERROR | war_rig.errors | 
+2026-03-16 12:52:44,106 | ERROR | war_rig.errors | 
 ================================================================================
 STRUCTURED ERROR:
 {
-  "timestamp": "2026-03-03T21:47:31.164079",
-  "error_type": "BadRequestError",
-  "error_message": "Error code: 400 - {'error': {'message': 'claude-sonnet-4-20250514 is not a valid model ID', 'code': 400}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}",
-  "context": {
-    "provider": "openrouter",
-    "model": "claude-sonnet-4-20250514",
-    "error_type": "api_error",
-    "status_code": 400
-  },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py\", line 2678, in create\n    return await self._post(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1797, in post\n    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1597, in request\n    raise self._make_status_error_from_response(err.response) from None\nopenai.BadRequestError: Error code: 400 - {'error': {'message': 'claude-sonnet-4-20250514 is not a valid model ID', 'code': 400}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}\n",
-  "request": {
-    "model": "claude-sonnet-4-20250514",
-    "message_count": 2
-  },
-  "response": {
-    "body": {
-      "message": "claude-sonnet-4-20250514 is not a valid model ID",
-      "code": 400
-    },
-    "response": "<Response [400 Bad Request]>",
-    "message": "Error code: 400 - {'error': {'message': 'claude-sonnet-4-20250514 is not a valid model ID', 'code': 400}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}"
-  }
-}
-================================================================================
-/home/andras/war_rig/war_rig/utils/error_logging.py:164
-
-2026-03-03 21:47:31,165 | ERROR | war_rig.agents.base | Scribe: Error during invocation: OpenRouter API error: Error code: 400 - {'error': {'message': 'claude-sonnet-4-20250514 is not a valid model ID', 'code': 400}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}
-/home/andras/war_rig/war_rig/agents/base.py:474
-
-2026-03-03 21:47:31,166 | ERROR | war_rig.errors | 
-================================================================================
-STRUCTURED ERROR:
-{
-  "timestamp": "2026-03-03T21:47:31.165649",
-  "error_type": "OpenRouterProviderError",
-  "error_message": "OpenRouter API error: Error code: 400 - {'error': {'message': 'claude-sonnet-4-20250514 is not a valid model ID', 'code': 400}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}",
-  "context": {
-    "iteration": 1,
-    "file_name": "TESTPROG.cbl"
-  },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py\", line 2678, in create\n    return await self._post(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1797, in post\n    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1597, in request\n    raise self._make_status_error_from_response(err.response) from None\nopenai.BadRequestError: Error code: 400 - {'error': {'message': 'claude-sonnet-4-20250514 is not a valid model ID', 'code': 400}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/agents/base.py\", line 450, in ainvoke\n    response = await self._provider.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/circuit_breaker.py\", line 490, in complete\n    response = await asyncio.wait_for(\n               ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 489, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 421, in complete\n    raise OpenRouterProviderError(\nwar_rig.providers.openrouter.OpenRouterProviderError: OpenRouter API error: Error code: 400 - {'error': {'message': 'claude-sonnet-4-20250514 is not a valid model ID', 'code': 400}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}\n",
-  "request": {
-    "agent": "Scribe",
-    "model": "claude-sonnet-4-20250514",
-    "messages": [
-      {
-        "role": "system",
-        "content": "You are the Scribe, a documentation specialist for mainframe code analysis.\n\nYour role is to analyze COBOL, PL/I, JCL, and other mainframe source files and produce comprehensive documentation following a structured template.\n\n## Special File Types\n\n### LISTING Files (.lst, .list)\nLISTING files are NOT executable programs. They contain **prose documentation** such as:\n- Compiler output and diagnostics\n- Change history and modification notes\n- System documentation and comments\n- Version control notes\n- Developer notes and explanations\n\nWhen analyzing a LISTING file:\n1. The summary should describe what the file CONTAINS (change history, compiler output, notes), not what code it \"executes\"\n2. Do NOT try to document called_programs, data_flow, sql_operations, cics_operations - these are not applicable\n3. Focus on purpose (what documentation is in the file), and any inputs/outputs mentioned as references\n4. Treat the content as prose to be understood and summarized, not as code to be reverse..."
-      },
-      {
-        "role": "user",
-        "content": "## Source File: TESTPROG.cbl\nFile Type: COBOL\nIteration: 1\n\n## Source Code\n```\n    1 |        IDENTIFICATION DIVISION.\n    2 |        PROGRAM-ID. TESTPROG.\n    3 |        PROCEDURE DIVISION.\n    4 |        0000-MAIN.\n    5 |            DISPLAY 'HELLO WORLD'.\n    6 |            STOP RUN.\n    7 | \n```\n\n## Task\nAnalyze this source code and produce complete documentation.\nFill out ALL sections of the template.\nCite line numbers for every factual claim.\n\nRespond with a JSON object containing:\n- \"template\": the DocumentationTemplate\n- \"confidence\": your confidence assessment\n- \"responses\": your responses to Challenger questions (if any)\n- \"open_questions\": questions you cannot resolve"
-      }
-    ]
-  }
-}
-================================================================================
-/home/andras/war_rig/war_rig/utils/error_logging.py:164
-
-2026-03-03 21:47:31,195 | ERROR | war_rig.providers.openrouter | OpenRouter API error: Error code: 400 - {'error': {'message': 'claude-sonnet-4-20250514 is not a valid model ID', 'code': 400}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}
-/home/andras/war_rig/war_rig/providers/openrouter.py:414
-
-2026-03-03 21:47:31,196 | ERROR | war_rig.errors | 
-================================================================================
-STRUCTURED ERROR:
-{
-  "timestamp": "2026-03-03T21:47:31.195768",
-  "error_type": "BadRequestError",
-  "error_message": "Error code: 400 - {'error': {'message': 'claude-sonnet-4-20250514 is not a valid model ID', 'code': 400}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}",
-  "context": {
-    "provider": "openrouter",
-    "model": "claude-sonnet-4-20250514",
-    "error_type": "api_error",
-    "status_code": 400
-  },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py\", line 2678, in create\n    return await self._post(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1797, in post\n    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1597, in request\n    raise self._make_status_error_from_response(err.response) from None\nopenai.BadRequestError: Error code: 400 - {'error': {'message': 'claude-sonnet-4-20250514 is not a valid model ID', 'code': 400}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}\n",
-  "request": {
-    "model": "claude-sonnet-4-20250514",
-    "message_count": 2
-  },
-  "response": {
-    "body": {
-      "message": "claude-sonnet-4-20250514 is not a valid model ID",
-      "code": 400
-    },
-    "response": "<Response [400 Bad Request]>",
-    "message": "Error code: 400 - {'error': {'message': 'claude-sonnet-4-20250514 is not a valid model ID', 'code': 400}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}"
-  }
-}
-================================================================================
-/home/andras/war_rig/war_rig/utils/error_logging.py:164
-
-2026-03-03 21:47:31,196 | ERROR | war_rig.agents.base | Scribe: Error during invocation: OpenRouter API error: Error code: 400 - {'error': {'message': 'claude-sonnet-4-20250514 is not a valid model ID', 'code': 400}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}
-/home/andras/war_rig/war_rig/agents/base.py:474
-
-2026-03-03 21:47:31,197 | ERROR | war_rig.errors | 
-================================================================================
-STRUCTURED ERROR:
-{
-  "timestamp": "2026-03-03T21:47:31.196433",
-  "error_type": "OpenRouterProviderError",
-  "error_message": "OpenRouter API error: Error code: 400 - {'error': {'message': 'claude-sonnet-4-20250514 is not a valid model ID', 'code': 400}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}",
-  "context": {
-    "iteration": 1,
-    "file_name": "TESTPROG.cbl"
-  },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py\", line 2678, in create\n    return await self._post(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1797, in post\n    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1597, in request\n    raise self._make_status_error_from_response(err.response) from None\nopenai.BadRequestError: Error code: 400 - {'error': {'message': 'claude-sonnet-4-20250514 is not a valid model ID', 'code': 400}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/agents/base.py\", line 450, in ainvoke\n    response = await self._provider.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/circuit_breaker.py\", line 490, in complete\n    response = await asyncio.wait_for(\n               ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 489, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 421, in complete\n    raise OpenRouterProviderError(\nwar_rig.providers.openrouter.OpenRouterProviderError: OpenRouter API error: Error code: 400 - {'error': {'message': 'claude-sonnet-4-20250514 is not a valid model ID', 'code': 400}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}\n",
-  "request": {
-    "agent": "Scribe",
-    "model": "claude-sonnet-4-20250514",
-    "messages": [
-      {
-        "role": "system",
-        "content": "You are the Scribe, a documentation specialist for mainframe code analysis.\n\nYour role is to analyze COBOL, PL/I, JCL, and other mainframe source files and produce comprehensive documentation following a structured template.\n\n## Special File Types\n\n### LISTING Files (.lst, .list)\nLISTING files are NOT executable programs. They contain **prose documentation** such as:\n- Compiler output and diagnostics\n- Change history and modification notes\n- System documentation and comments\n- Version control notes\n- Developer notes and explanations\n\nWhen analyzing a LISTING file:\n1. The summary should describe what the file CONTAINS (change history, compiler output, notes), not what code it \"executes\"\n2. Do NOT try to document called_programs, data_flow, sql_operations, cics_operations - these are not applicable\n3. Focus on purpose (what documentation is in the file), and any inputs/outputs mentioned as references\n4. Treat the content as prose to be understood and summarized, not as code to be reverse..."
-      },
-      {
-        "role": "user",
-        "content": "## Source File: TESTPROG.cbl\nFile Type: COBOL\nIteration: 1\n\n## Source Code\n```\n    1 |        IDENTIFICATION DIVISION.\n    2 |        PROGRAM-ID. TESTPROG.\n    3 |        PROCEDURE DIVISION.\n    4 |        0000-MAIN.\n    5 |            DISPLAY 'HELLO WORLD'.\n    6 |            STOP RUN.\n    7 | \n```\n\n## Task\nAnalyze this source code and produce complete documentation.\nFill out ALL sections of the template.\nCite line numbers for every factual claim.\n\n## \u26a0\ufe0f CRITICAL: YOUR PREVIOUS RESPONSE HAD JSON ERRORS \u26a0\ufe0f\n\nYour last response failed to parse. You MUST fix your JSON formatting:\n\nREQUIREMENTS:\n1. Start your response with { and end with } - NO other text\n2. NO markdown code blocks (no ```json)\n3. NO trailing commas: WRONG: [1, 2, 3,]  CORRECT: [1, 2, 3]\n4. Escape special characters in strings: use \\n \\t \\\" \\\\\n5. All property names in double quotes: {\"name\": \"value\"}\n6. NO comments in JSON\n\nBEFORE RESPONDING: Mentally validate your JSON is parseable.\n\nRespond with a JSON object containing:..."
-      }
-    ]
-  }
-}
-================================================================================
-/home/andras/war_rig/war_rig/utils/error_logging.py:164
-
-2026-03-03 21:47:32,904 | ERROR | asyncio | Task exception was never retrieved
-future: <Task finished name='Task-2266' coro=<AsyncClient.aclose() done, defined at /home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py:1978> exception=RuntimeError('Event loop is closed')>
-/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/base_events.py:1785
-Traceback (most recent call last):
-  File "/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py", line 1985, in aclose
-    await self._transport.aclose()
-  File "/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_transports/default.py", line 406, in aclose
-    await self._pool.aclose()
-  File "/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py", line 353, in aclose
-    await self._close_connections(closing_connections)
-  File "/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py", line 345, in _close_connections
-    await connection.aclose()
-  File "/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection.py", line 173, in aclose
-    await self._connection.aclose()
-  File "/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py", line 258, in aclose
-    await self._network_stream.aclose()
-  File "/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_backends/anyio.py", line 53, in aclose
-    await self._stream.aclose()
-  File "/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py", line 241, in aclose
-    await self.transport_stream.aclose()
-  File "/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py", line 1329, in aclose
-    self._transport.close()
-  File "/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/selector_events.py", line 864, in close
-    self._loop.call_soon(self._call_connection_lost, None)
-  File "/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/base_events.py", line 762, in call_soon
-    self._check_closed()
-  File "/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/base_events.py", line 520, in _check_closed
-    raise RuntimeError('Event loop is closed')
-RuntimeError: Event loop is closed
-2026-03-03 21:50:12,188 | ERROR | war_rig.workers.scribe_pool | Worker scribe-1: Prompt ~20455 tokens exceeds limit 15000 and cannot be reduced further
-/home/andras/war_rig/war_rig/workers/scribe_pool.py:1236
-
-2026-03-03 21:53:52,881 | ERROR | war_rig.agents.base | Scribe: Error during invocation: 
-/home/andras/war_rig/war_rig/agents/base.py:474
-
-2026-03-03 21:53:52,884 | ERROR | war_rig.errors | 
-================================================================================
-STRUCTURED ERROR:
-{
-  "timestamp": "2026-03-03T21:53:52.883131",
+  "timestamp": "2026-03-16T12:52:44.105074",
   "error_type": "TimeoutError",
   "error_message": "",
   "context": {
     "iteration": 1,
-    "file_name": "cbl/CBPAUP0C.cbl"
+    "file_name": "cpy/CIPAUSMY.cpy"
   },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 500, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py\", line 2678, in create\n    return await self._post(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1797, in post\n    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1532, in request\n    response = await self._client.send(\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1629, in send\n    response = await self._send_handling_auth(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1657, in _send_handling_auth\n    response = await self._send_handling_redirects(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1694, in _send_handling_redirects\n    response = await self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1730, in _send_single_request\n    response = await transport.handle_async_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 103, in handle_async_request\n    return await self._connection.handle_async_request(request)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 136, in handle_async_request\n    raise exc\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 106, in handle_async_request\n    ) = await self._receive_response_headers(**kwargs)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 177, in _receive_response_headers\n    event = await self._receive_event(timeout=timeout)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 217, in _receive_event\n    data = await self._network_stream.read(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 35, in read\n    return await self._stream.receive(max_bytes=max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 244, in receive\n    data = await self._call_sslobject_method(self._ssl_object.read, max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 187, in _call_sslobject_method\n    data = await self.transport_stream.receive()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py\", line 1269, in receive\n    await self._protocol.read_event.wait()\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/locks.py\", line 213, in wait\n    await fut\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/agents/base.py\", line 450, in ainvoke\n    response = await self._provider.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/circuit_breaker.py\", line 490, in complete\n    response = await asyncio.wait_for(\n               ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 502, in wait_for\n    raise exceptions.TimeoutError() from exc\nTimeoutError\n",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 500, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py\", line 2678, in create\n    return await self._post(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1797, in post\n    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1532, in request\n    response = await self._client.send(\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1629, in send\n    response = await self._send_handling_auth(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1657, in _send_handling_auth\n    response = await self._send_handling_redirects(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1694, in _send_handling_redirects\n    response = await self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1730, in _send_single_request\n    response = await transport.handle_async_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 103, in handle_async_request\n    return await self._connection.handle_async_request(request)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 136, in handle_async_request\n    raise exc\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 106, in handle_async_request\n    ) = await self._receive_response_headers(**kwargs)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 177, in _receive_response_headers\n    event = await self._receive_event(timeout=timeout)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 217, in _receive_event\n    data = await self._network_stream.read(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 35, in read\n    return await self._stream.receive(max_bytes=max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 244, in receive\n    data = await self._call_sslobject_method(self._ssl_object.read, max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 187, in _call_sslobject_method\n    data = await self.transport_stream.receive()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py\", line 1269, in receive\n    await self._protocol.read_event.wait()\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/locks.py\", line 213, in wait\n    await fut\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/agents/base.py\", line 455, in ainvoke\n    response = await self._provider.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/circuit_breaker.py\", line 490, in complete\n    response = await asyncio.wait_for(\n               ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 502, in wait_for\n    raise exceptions.TimeoutError() from exc\nTimeoutError\n",
   "request": {
     "agent": "Scribe",
     "model": "google/gemini-2.0-flash-001",
@@ -377,11 +89,116 @@ STRUCTURED ERROR:
       },
       {
         "role": "user",
-        "content": "## Source File: cbl/CBPAUP0C.cbl\nFile Type: COBOL\nIteration: 1\n\n## Source Code\n```\n    1 |       ******************************************************************\n    2 |       * Program     : CBPAUP0C.CBL\n    3 |       * Application : CardDemo - Authorization Module\n    4 |       * Type        : BATCH COBOL IMS Program\n    5 |       * Function    : Delete Expired Pending Authoriation Messages\n    6 |       ******************************************************************\n    7 |       * Copyright Amazon.com, Inc. or its affiliates.\n    8 |       * All Rights Reserved.\n    9 |       *\n   10 |       * Licensed under the Apache License, Version 2.0 (the \"License\").\n   11 |       * You may not use this file except in compliance with the License.\n   12 |       * You may obtain a copy of the License at\n   13 |       *\n   14 |       *    http://www.apache.org/licenses/LICENSE-2.0\n   15 |       *\n   16 |       * Unless required by applicable law or agreed to in writing,\n   17 |       * soft..."
+        "content": "## Source File: cpy/CIPAUSMY.cpy\nFile Type: COPYBOOK\nIteration: 1\n\n## Source Code\n```\n    1 |       *****************************************************************         \n    2 |       *   IMS SEGMENT - PENDING AUTHORIZATION SUMMARY                           \n    3 |       *****************************************************************         \n    4 |       * Copyright Amazon.com, Inc. or its affiliates.\n    5 |       * All Rights Reserved.\n    6 |       *\n    7 |       * Licensed under the Apache License, Version 2.0 (the \"License\").\n    8 |       * You may not use this file except in compliance with the License.\n    9 |       * You may obtain a copy of the License at\n   10 |       *\n   11 |       *    http://www.apache.org/licenses/LICENSE-2.0\n   12 |       *\n   13 |       * Unless required by applicable law or agreed to in writing,\n   14 |       * software distributed under the License is distributed on an\n   15 |       * \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY..."
       }
     ]
   }
 }
 ================================================================================
 /home/andras/war_rig/war_rig/utils/error_logging.py:164
+
+2026-03-16 12:54:55,307 | ERROR | war_rig.agents.base | Scribe: Error during invocation: 
+/home/andras/war_rig/war_rig/agents/base.py:480
+
+2026-03-16 12:54:55,310 | ERROR | war_rig.errors | 
+================================================================================
+STRUCTURED ERROR:
+{
+  "timestamp": "2026-03-16T12:54:55.309282",
+  "error_type": "TimeoutError",
+  "error_message": "",
+  "context": {
+    "iteration": 1,
+    "file_name": "cpy/CIPAUDTY.cpy"
+  },
+  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 500, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py\", line 2678, in create\n    return await self._post(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1797, in post\n    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1532, in request\n    response = await self._client.send(\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1629, in send\n    response = await self._send_handling_auth(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1657, in _send_handling_auth\n    response = await self._send_handling_redirects(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1694, in _send_handling_redirects\n    response = await self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1730, in _send_single_request\n    response = await transport.handle_async_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 103, in handle_async_request\n    return await self._connection.handle_async_request(request)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 136, in handle_async_request\n    raise exc\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 106, in handle_async_request\n    ) = await self._receive_response_headers(**kwargs)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 177, in _receive_response_headers\n    event = await self._receive_event(timeout=timeout)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 217, in _receive_event\n    data = await self._network_stream.read(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 35, in read\n    return await self._stream.receive(max_bytes=max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 244, in receive\n    data = await self._call_sslobject_method(self._ssl_object.read, max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 187, in _call_sslobject_method\n    data = await self.transport_stream.receive()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py\", line 1269, in receive\n    await self._protocol.read_event.wait()\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/locks.py\", line 213, in wait\n    await fut\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/agents/base.py\", line 455, in ainvoke\n    response = await self._provider.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/circuit_breaker.py\", line 490, in complete\n    response = await asyncio.wait_for(\n               ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 502, in wait_for\n    raise exceptions.TimeoutError() from exc\nTimeoutError\n",
+  "request": {
+    "agent": "Scribe",
+    "model": "google/gemini-2.0-flash-001",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are the Scribe, a documentation specialist for mainframe code analysis.\n\nYour role is to analyze COBOL, PL/I, JCL, and other mainframe source files and produce comprehensive documentation following a structured template.\n\n## Special File Types\n\n### LISTING Files (.lst, .list)\nLISTING files are NOT executable programs. They contain **prose documentation** such as:\n- Compiler output and diagnostics\n- Change history and modification notes\n- System documentation and comments\n- Version control notes\n- Developer notes and explanations\n\nWhen analyzing a LISTING file:\n1. The summary should describe what the file CONTAINS (change history, compiler output, notes), not what code it \"executes\"\n2. Do NOT try to document called_programs, data_flow, sql_operations, cics_operations - these are not applicable\n3. Focus on purpose (what documentation is in the file), and any inputs/outputs mentioned as references\n4. Treat the content as prose to be understood and summarized, not as code to be reverse..."
+      },
+      {
+        "role": "user",
+        "content": "## Source File: cpy/CIPAUDTY.cpy\nFile Type: COPYBOOK\nIteration: 1\n\n## Source Code\n```\n    1 |       *****************************************************************         \n    2 |       *   IMS SEGMENT - PENDING AUTHORIZATION DETAILS                           \n    3 |       *****************************************************************         \n    4 |       * Copyright Amazon.com, Inc. or its affiliates.\n    5 |       * All Rights Reserved.\n    6 |       *\n    7 |       * Licensed under the Apache License, Version 2.0 (the \"License\").\n    8 |       * You may not use this file except in compliance with the License.\n    9 |       * You may obtain a copy of the License at\n   10 |       *\n   11 |       *    http://www.apache.org/licenses/LICENSE-2.0\n   12 |       *\n   13 |       * Unless required by applicable law or agreed to in writing,\n   14 |       * software distributed under the License is distributed on an\n   15 |       * \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY..."
+      }
+    ]
+  }
+}
+================================================================================
+/home/andras/war_rig/war_rig/utils/error_logging.py:164
+
+2026-03-16 12:59:58,344 | ERROR | war_rig.agents.base | Scribe: Error during invocation: 
+/home/andras/war_rig/war_rig/agents/base.py:480
+
+2026-03-16 12:59:58,347 | ERROR | war_rig.errors | 
+================================================================================
+STRUCTURED ERROR:
+{
+  "timestamp": "2026-03-16T12:59:58.346192",
+  "error_type": "TimeoutError",
+  "error_message": "",
+  "context": {
+    "iteration": 1,
+    "file_name": "cpy/CIPAUDTY.cpy"
+  },
+  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 500, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py\", line 2678, in create\n    return await self._post(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1797, in post\n    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1532, in request\n    response = await self._client.send(\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1629, in send\n    response = await self._send_handling_auth(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1657, in _send_handling_auth\n    response = await self._send_handling_redirects(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1694, in _send_handling_redirects\n    response = await self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1730, in _send_single_request\n    response = await transport.handle_async_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 103, in handle_async_request\n    return await self._connection.handle_async_request(request)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 136, in handle_async_request\n    raise exc\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 106, in handle_async_request\n    ) = await self._receive_response_headers(**kwargs)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 177, in _receive_response_headers\n    event = await self._receive_event(timeout=timeout)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 217, in _receive_event\n    data = await self._network_stream.read(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 35, in read\n    return await self._stream.receive(max_bytes=max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 244, in receive\n    data = await self._call_sslobject_method(self._ssl_object.read, max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 187, in _call_sslobject_method\n    data = await self.transport_stream.receive()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py\", line 1269, in receive\n    await self._protocol.read_event.wait()\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/locks.py\", line 213, in wait\n    await fut\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/agents/base.py\", line 455, in ainvoke\n    response = await self._provider.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/circuit_breaker.py\", line 490, in complete\n    response = await asyncio.wait_for(\n               ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 502, in wait_for\n    raise exceptions.TimeoutError() from exc\nTimeoutError\n",
+  "request": {
+    "agent": "Scribe",
+    "model": "google/gemini-2.0-flash-001",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are the Scribe, a documentation specialist for mainframe code analysis.\n\nYour role is to analyze COBOL, PL/I, JCL, and other mainframe source files and produce comprehensive documentation following a structured template.\n\n## Special File Types\n\n### LISTING Files (.lst, .list)\nLISTING files are NOT executable programs. They contain **prose documentation** such as:\n- Compiler output and diagnostics\n- Change history and modification notes\n- System documentation and comments\n- Version control notes\n- Developer notes and explanations\n\nWhen analyzing a LISTING file:\n1. The summary should describe what the file CONTAINS (change history, compiler output, notes), not what code it \"executes\"\n2. Do NOT try to document called_programs, data_flow, sql_operations, cics_operations - these are not applicable\n3. Focus on purpose (what documentation is in the file), and any inputs/outputs mentioned as references\n4. Treat the content as prose to be understood and summarized, not as code to be reverse..."
+      },
+      {
+        "role": "user",
+        "content": "## Source File: cpy/CIPAUDTY.cpy\nFile Type: COPYBOOK\nIteration: 1\n\n## Source Code\n```\n    1 |       *****************************************************************         \n    2 |       *   IMS SEGMENT - PENDING AUTHORIZATION DETAILS                           \n    3 |       *****************************************************************         \n    4 |       * Copyright Amazon.com, Inc. or its affiliates.\n    5 |       * All Rights Reserved.\n    6 |       *\n    7 |       * Licensed under the Apache License, Version 2.0 (the \"License\").\n    8 |       * You may not use this file except in compliance with the License.\n    9 |       * You may obtain a copy of the License at\n   10 |       *\n   11 |       *    http://www.apache.org/licenses/LICENSE-2.0\n   12 |       *\n   13 |       * Unless required by applicable law or agreed to in writing,\n   14 |       * software distributed under the License is distributed on an\n   15 |       * \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY..."
+      }
+    ]
+  }
+}
+================================================================================
+/home/andras/war_rig/war_rig/utils/error_logging.py:164
+
+2026-03-16 13:00:30,744 | ERROR | war_rig.agents.base | Scribe: Error during invocation: 
+/home/andras/war_rig/war_rig/agents/base.py:480
+
+2026-03-16 13:00:30,747 | ERROR | war_rig.errors | 
+================================================================================
+STRUCTURED ERROR:
+{
+  "timestamp": "2026-03-16T13:00:30.746040",
+  "error_type": "TimeoutError",
+  "error_message": "",
+  "context": {
+    "iteration": 1,
+    "file_name": "ims/PADFLDBD.DBD"
+  },
+  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 500, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py\", line 2678, in create\n    return await self._post(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1797, in post\n    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1532, in request\n    response = await self._client.send(\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1629, in send\n    response = await self._send_handling_auth(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1657, in _send_handling_auth\n    response = await self._send_handling_redirects(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1694, in _send_handling_redirects\n    response = await self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1730, in _send_single_request\n    response = await transport.handle_async_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 103, in handle_async_request\n    return await self._connection.handle_async_request(request)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 136, in handle_async_request\n    raise exc\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 106, in handle_async_request\n    ) = await self._receive_response_headers(**kwargs)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 177, in _receive_response_headers\n    event = await self._receive_event(timeout=timeout)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 217, in _receive_event\n    data = await self._network_stream.read(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 35, in read\n    return await self._stream.receive(max_bytes=max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 244, in receive\n    data = await self._call_sslobject_method(self._ssl_object.read, max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 187, in _call_sslobject_method\n    data = await self.transport_stream.receive()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py\", line 1269, in receive\n    await self._protocol.read_event.wait()\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/locks.py\", line 213, in wait\n    await fut\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/agents/base.py\", line 455, in ainvoke\n    response = await self._provider.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/circuit_breaker.py\", line 490, in complete\n    response = await asyncio.wait_for(\n               ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 502, in wait_for\n    raise exceptions.TimeoutError() from exc\nTimeoutError\n",
+  "request": {
+    "agent": "Scribe",
+    "model": "google/gemini-2.0-flash-001",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are the Scribe, a documentation specialist for mainframe code analysis.\n\nYour role is to analyze COBOL, PL/I, JCL, and other mainframe source files and produce comprehensive documentation following a structured template.\n\n## Special File Types\n\n### LISTING Files (.lst, .list)\nLISTING files are NOT executable programs. They contain **prose documentation** such as:\n- Compiler output and diagnostics\n- Change history and modification notes\n- System documentation and comments\n- Version control notes\n- Developer notes and explanations\n\nWhen analyzing a LISTING file:\n1. The summary should describe what the file CONTAINS (change history, compiler output, notes), not what code it \"executes\"\n2. Do NOT try to document called_programs, data_flow, sql_operations, cics_operations - these are not applicable\n3. Focus on purpose (what documentation is in the file), and any inputs/outputs mentioned as references\n4. Treat the content as prose to be understood and summarized, not as code to be reverse..."
+      },
+      {
+        "role": "user",
+        "content": "## Source File: ims/PADFLDBD.DBD\nFile Type: OTHER\nIteration: 1\n\n## Source Code\n```\n    1 | ***********************************************************************\n    2 | * Copyright Amazon.com, Inc. or its affiliates.\n    3 | * All Rights Reserved.\n    4 | *\n    5 | * Licensed under the Apache License, Version 2.0 (the \"License\").\n    6 | * You may not use this file except in compliance with the License.\n    7 | * You may obtain a copy of the License at\n    8 | *\n    9 | *    http://www.apache.org/licenses/LICENSE-2.0\n   10 | *\n   11 | * Unless required by applicable law or agreed to in writing,\n   12 | * software distributed under the License is distributed on an\n   13 | * \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,\n   14 | * either express or implied. See the License for the specific\n   15 | * language governing permissions and limitations under the License\n   16 | ***********************************************************************\n   17 |          TITLE   'ASSE..."
+      }
+    ]
+  }
+}
+================================================================================
+/home/andras/war_rig/war_rig/utils/error_logging.py:164
+
+2026-03-16 13:03:29,005 | ERROR | war_rig.agents.challenger | Failed to parse Challenger response: 1 validation error for ChallengerQuestion
+severity
+  Input should be 'BLOCKING', 'IMPORTANT' or 'MINOR' [type=enum, input_value='WRONG', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/enum
+/home/andras/war_rig/war_rig/agents/challenger.py:534
 

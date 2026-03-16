@@ -29,5 +29,4 @@
                                                                                 
            MOVE PA-RQ-TRANSACTION-AMT  TO WS-TRANSACTION-AMT                    
            .                                                                    
-      *                                                                         
 ```

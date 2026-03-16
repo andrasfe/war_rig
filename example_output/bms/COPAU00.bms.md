@@ -2,27 +2,30 @@
 
 **File**: `bms/COPAU00.bms`
 **Type**: FileType.BMS
-**Analyzed**: 2026-03-04 04:43:40.049700
+**Analyzed**: 2026-03-16 20:02:31.501912
 
 ## Purpose
 
-This BMS map defines the 'Pending Authorization Screen' (COPAU0A) for the CardDemo application. It is used to display and potentially process pending card authorizations, showing transaction details and customer information.
+This BMS map defines the screen layout for the CardDemo application's Pending Authorization screen. It displays customer account information, credit and cash limits/balances, and a list of recent transactions awaiting authorization. The screen allows users to select a transaction for further action.
 
-**Business Context**: This screen is likely used by customer service representatives or fraud analysts to review and manage pending credit card authorizations.
+**Business Context**: This screen is used in a card authorization system to view and manage pending authorizations for customer accounts.
+
+## Inputs
+
+| Name | Type | Description |
+|------|------|-------------|
+| ACCTID | IOType.CICS_MAP | Account ID entered by the user to search for pending authorizations. |
+| SEL0001 - SEL0004 | IOType.CICS_MAP | Selection fields for each transaction. User selects a transaction by entering a value in this field. |
 
 ## Paragraphs/Procedures
 
-### ~~COPAU00~~ (Dead Code)
-*Artifact 'COPAU00' (map) is never referenced by any other artifact in the dependency graph*
+### COPAU00
+This DFHMSD macro defines the BMS map set COPAU00. It specifies various control options for the map set, including terminal control (ALARM, FREEKB), extended attributes (EXTATT=YES), the programming language (LANG=COBOL), input/output mode (MODE=INOUT), storage management (STORAGE=AUTO), the presence of a TIOAPFX (TIOAPFX=YES), and the map type based on the system parameter (TYPE=&&SYSPARM). The CTRL parameter enables the alarm and keyboard freeing features. The EXTATT parameter enables extended attributes such as color and highlighting. The LANG parameter specifies COBOL as the programming language. The MODE parameter specifies that the map can be used for both input and output. The STORAGE parameter specifies that storage for the map should be automatically managed. The TIOAPFX parameter indicates that the terminal input/output area prefix is present. The TYPE parameter determines the type of map generated based on the system parameter.
 
-### ~~COPAU0A~~ (Dead Code)
-*Screen/Map 'COPAU0A' is never sent to or received from by any program*
+### COPAU0A
+This DFHMDI macro defines the BMS map COPAU0A within the COPAU00 mapset. It specifies the screen's dimensions and position. The COLUMN and LINE parameters set the starting position of the map on the screen to row 1, column 1. The SIZE parameter defines the map's dimensions as 24 rows and 80 columns, effectively defining a standard-sized terminal screen. This macro acts as a container for the individual field definitions (DFHMDF macros) that make up the screen layout. It establishes the overall structure and size of the screen presented to the user.
 
-## Dead Code
+## Open Questions
 
-The following artifacts were identified as dead code by static analysis:
-
-| Artifact | Type | Line | Reason |
-|----------|------|------|--------|
-| COPAU00 | map | 19 | Artifact 'COPAU00' (map) is never referenced by any other artifact in the dependency graph |
-| COPAU0A | screen | 26 | Screen/Map 'COPAU0A' is never sent to or received from by any program |
+- ? What is the purpose of the TYPE=&&SYSPARM parameter in the DFHMSD macro?
+  - Context: The meaning of &&SYSPARM is unclear without additional context.

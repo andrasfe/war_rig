@@ -4,13 +4,13 @@
     "file_name": "CIPAUSMY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-04T04:43:46.272301",
+    "analyzed_at": "2026-03-16T20:02:31.295711",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the structure of the IMS segment for Pending Authorization Summary. It contains fields related to account identification, customer identification, authorization status, account status, credit and cash limits, balances, and authorization counts and amounts. The segment is used to store information about pending authorizations for customer accounts. ",
-    "business_context": "This copybook is likely used in a financial system to manage and track pending authorizations for customer accounts, potentially related to credit card transactions or other financial transactions requiring authorization.",
+    "summary": "This copybook defines the IMS segment layout for Pending Authorization Summary data. It includes fields for account identification, customer identification, authorization status, account status (occurring 5 times), credit and cash limits/balances, and counts/amounts for approved and declined authorizations.",
+    "business_context": null,
     "program_type": "COPYBOOK",
     "citations": [
       2,
@@ -33,37 +33,14 @@
     "transforms": []
   },
   "copybooks_used": [],
-  "paragraphs": [
-    {
-      "paragraph_name": "PA-ACCT-ID",
-      "summary": null,
-      "purpose": "This data field defines the Account ID for the Pending Authorization Summary segment. It is a COMP-3 field, meaning it is stored in packed decimal format, which is a space-efficient way to store numeric data. The field is 11 digits long, including the sign. This field is likely used to uniquely identify the account associated with the pending authorization.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        19,
-        19
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    }
-  ],
+  "paragraphs": [],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
   "open_questions": [],
   "resolved_questions": [],
-  "dead_code": [
-    {
-      "name": "05:PA-ACCT-ID",
-      "artifact_type": "column",
-      "line": 1,
-      "reason": "Artifact '05:PA-ACCT-ID' (column) is never referenced by any other artifact in the dependency graph"
-    }
-  ],
+  "dead_code": [],
+  "dead_code_resolved": [],
   "call_semantics": [],
   "flow_diagram": null,
   "copybooks_not_found": []

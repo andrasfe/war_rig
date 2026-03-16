@@ -2,21 +2,8 @@
 
 **File**: `cpy/PADFLPCB.CPY`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-03-04 04:43:52.131489
+**Analyzed**: 2026-03-16 19:47:41.084811
 
 ## Purpose
 
-This copybook defines the data structure for the PCB (Program Communication Block) used in IMS (Information Management System) DL/I (Data Language/I) calls. It contains fields related to database name, segment level, PCB status, processing options, segment name, feedback information, and key feedback area.
-
-## Paragraphs/Procedures
-
-### ~~PADFLPCB~~ (Dead Code)
-*Record layout 'PADFLPCB' is never used by any program*
-
-## Dead Code
-
-The following artifacts were identified as dead code by static analysis:
-
-| Artifact | Type | Line | Reason |
-|----------|------|------|--------|
-| PADFLPCB | record_layout | 1 | Record layout 'PADFLPCB' is never used by any program |
+This copybook defines the structure of PADFLPCB, which appears to be a PCB (Program Communication Block) used in IMS (Information Management System) for database communication. It contains fields related to database name, segment level, status, processing options, segment name, key feedback, number of sensitive segments, and key feedback area.

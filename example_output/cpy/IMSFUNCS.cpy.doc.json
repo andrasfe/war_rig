@@ -4,17 +4,17 @@
     "file_name": "IMSFUNCS.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-04T04:44:16.024875",
+    "analyzed_at": "2026-03-16T19:55:00.279557",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines a set of constants representing IMS function codes and a parameter count. These constants are used when making calls to IMS databases.",
-    "business_context": null,
-    "program_type": "COPYBOOK",
+    "summary": "This copybook defines a set of constants representing IMS function codes and a parameter count used in IMS database calls. It provides symbolic names for common IMS operations like Get Unique (GU), Get Hold Unique (GHU), Get Next (GN), Insert (ISRT), and Delete (DLET).",
+    "business_context": "This copybook is used in programs that interact with an IMS database, providing a standardized way to specify the desired IMS function.",
+    "program_type": "SUBROUTINE",
     "citations": [
       17,
-      27
+      26
     ]
   },
   "inputs": [],
@@ -31,54 +31,22 @@
     "writes_to": [],
     "transforms": []
   },
-  "copybooks_used": [],
-  "paragraphs": [
+  "copybooks_used": [
     {
-      "paragraph_name": "FUNC-CODES",
-      "summary": null,
-      "purpose": "This data structure defines a set of constants that represent different IMS (Information Management System) function codes. These codes are used when making calls to the IMS database to specify the type of operation to be performed. The function codes include 'GU' (Get Unique), 'GHU' (Get Hold Unique), 'GN' (Get Next), 'GHN' (Get Hold Next), 'GNP' (Get Next within Parent), 'GHNP' (Get Hold Next within Parent), 'REPL' (Replace), 'ISRT' (Insert), and 'DLET' (Delete). Each function code is a 4-character alphanumeric field with a predefined value. These values are used in the program logic to determine the specific IMS operation to be executed. The structure itself does not perform any processing but provides a central location for defining and accessing these IMS function codes.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        17,
-        26
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": true,
-      "dead_code_reason": "Record layout 'FUNC-CODES' is never used by any program",
-      "metadata": null
-    },
-    {
-      "paragraph_name": "PARMCOUNT",
-      "summary": null,
-      "purpose": "This data item defines a constant that represents the number of parameters expected by the IMS call. It is defined as a signed 5-digit integer in COMP-5 format, which is a binary representation. The value is initialized to +4, indicating that the IMS call expects four parameters. This constant is likely used to validate the number of parameters passed to the IMS call, ensuring that the call is correctly formatted. This validation helps prevent errors during IMS database interaction. The data item does not perform any processing but provides a central location for defining the expected parameter count for IMS calls.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        27,
-        27
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
+      "copybook_name": "IMSFUNCS",
+      "purpose": "Defines IMS function codes and parameter count.",
+      "location": "WORKING_STORAGE",
+      "citation": 17
     }
   ],
+  "paragraphs": [],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
   "open_questions": [],
   "resolved_questions": [],
-  "dead_code": [
-    {
-      "name": "FUNC-CODES",
-      "artifact_type": "record_layout",
-      "line": 1,
-      "reason": "Record layout 'FUNC-CODES' is never used by any program"
-    }
-  ],
+  "dead_code": [],
+  "dead_code_resolved": [],
   "call_semantics": [],
   "flow_diagram": null,
   "copybooks_not_found": []

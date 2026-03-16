@@ -2,34 +2,19 @@
 
 **File**: `cpy-bms/COPAU00.cpy`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-03-04 04:45:03.054289
+**Analyzed**: 2026-03-16 20:00:31.733138
 
 ## Purpose
 
-This copybook defines data structures used for BMS map definitions, specifically for screen input and output fields related to transaction processing and date display. It includes definitions for field lengths, attributes, and input/output areas.
+This copybook defines the data structure COPAU0AI and its redefinition COPAU0AO, which are likely used for screen input and output in a CICS environment. It contains fields for transaction name, titles, current date and time, account and customer information, addresses, phone number, credit and cash limits/balances, transaction details, and error messages.
 
-**Business Context**: Defines the layout for user interface elements in a CICS environment, facilitating data exchange between the application and the user.
-
-## Paragraphs/Procedures
-
-### ~~COPAU0AI~~ (Dead Code)
-*Record layout 'COPAU0AI' is never used by any program*
-
-### COPAU0AO
-This paragraph redefines the COPAU0AI data structure as COPAU0AO, providing an alternate view of the same memory area. This redefinition allows accessing parts of the original fields using different names and formats. Specifically, it redefines TRNNAMEL, TRNNAMEF, and TRNNAMEI into TRNNAMEC, TRNNAMEP, TRNNAMEH, TRNNAMEV, and TRNNAMEO, and similarly for TITLE01L, TITLE01F, and TITLE01I into TITLE01C, TITLE01P, TITLE01H, TITLE01V, and TITLE01O, and CURDATEL and CURDATEF into CURDATEC. This is likely done to facilitate easier manipulation or display of the data on a BMS screen. No processing or logic is performed within this paragraph; it only provides a redefinition of the data structure. It allows different parts of the program to view the same data in different ways.
-
-### COPAU00
-[Citadel] Paragraph identified by static analysis
-
-## Dead Code
-
-The following artifacts were identified as dead code by static analysis:
-
-| Artifact | Type | Line | Reason |
-|----------|------|------|--------|
-| COPAU0AI | record_layout | 1 | Record layout 'COPAU0AI' is never used by any program |
+**Business Context**: This copybook is likely used in a customer account management system to display and capture customer and transaction information on a CICS screen.
 
 ## Open Questions
 
-- ? What is the exact purpose of each field within the COPAU0AI and COPAU0AO structures?
-  - Context: The copybook only defines the structure, not the specific usage of each field.
+- ? What program(s) use this copybook?
+  - Context: From chunk source:chunk-1 (lines 1-549)
+- ? What is the purpose of the 'C', 'P', 'H', and 'V' suffixes in the redefined COPAU0AO structure?
+  - Context: From chunk source:chunk-1 (lines 1-549)
+- ? What CICS program uses this BMS map?
+  - Context: From chunk source:chunk-2 (lines 550-765)

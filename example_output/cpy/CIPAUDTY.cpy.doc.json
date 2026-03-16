@@ -4,17 +4,18 @@
     "file_name": "CIPAUDTY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-04T04:43:59.741681",
+    "analyzed_at": "2026-03-16T20:00:37.627354",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the data structure for the IMS segment containing pending authorization details. It includes fields for authorization keys, card details, transaction information, merchant details, and fraud-related information.",
-    "business_context": null,
+    "summary": "This copybook defines the data structure for the IMS segment CIPAUDTY, which stores pending authorization details for transactions. It includes fields for authorization keys, card details, transaction amounts, merchant information, and fraud indicators.",
+    "business_context": "This copybook is used in systems that process and manage transaction authorizations, potentially for fraud detection and reporting.",
     "program_type": "COPYBOOK",
     "citations": [
       2,
-      19
+      19,
+      50
     ]
   },
   "inputs": [],
@@ -32,127 +33,14 @@
     "transforms": []
   },
   "copybooks_used": [],
-  "paragraphs": [
-    {
-      "paragraph_name": "CIPAUDTY",
-      "summary": null,
-      "purpose": "This copybook defines the data structure for the IMS segment related to pending authorization details. It is used to store information about transactions awaiting authorization, including authorization keys (PA-AUTHORIZATION-KEY) composed of date (PA-AUTH-DATE-9C) and time (PA-AUTH-TIME-9C), original authorization date and time (PA-AUTH-ORIG-DATE, PA-AUTH-ORIG-TIME), card number (PA-CARD-NUM), authorization type (PA-AUTH-TYPE), card expiry date (PA-CARD-EXPIRY-DATE), message type (PA-MESSAGE-TYPE), message source (PA-MESSAGE-SOURCE), authorization ID code (PA-AUTH-ID-CODE), authorization response code (PA-AUTH-RESP-CODE) with condition PA-AUTH-APPROVED, authorization response reason (PA-AUTH-RESP-REASON), processing code (PA-PROCESSING-CODE), transaction amount (PA-TRANSACTION-AMT), approved amount (PA-APPROVED-AMT), merchant category code (PA-MERCHANT-CATAGORY-CODE), acquirer country code (PA-ACQR-COUNTRY-CODE), POS entry mode (PA-POS-ENTRY-MODE), merchant ID (PA-MERCHANT-ID), merchant name (PA-MERCHANT-NAME), merchant city (PA-MERCHANT-CITY), merchant state (PA-MERCHANT-STATE), merchant zip code (PA-MERCHANT-ZIP), transaction ID (PA-TRANSACTION-ID), match status (PA-MATCH-STATUS) with conditions PA-MATCH-PENDING, PA-MATCH-AUTH-DECLINED, PA-MATCH-PENDING-EXPIRED, PA-MATCHED-WITH-TRAN, authorization fraud (PA-AUTH-FRAUD) with conditions PA-FRAUD-CONFIRMED, PA-FRAUD-REMOVED and fraud report date (PA-FRAUD-RPT-DATE). The copybook provides a structured way to access and manipulate pending authorization data within COBOL programs.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        19,
-        55
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [
-        {
-          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
-          "function": "PAUDBUNL",
-          "line": 143,
-          "call_type": "includes"
-        },
-        {
-          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
-          "function": "COPAUS1C",
-          "line": 146,
-          "call_type": "includes"
-        },
-        {
-          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
-          "function": "COPAUA0C",
-          "line": 197,
-          "call_type": "includes"
-        },
-        {
-          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
-          "function": "PAUDBLOD",
-          "line": 153,
-          "call_type": "includes"
-        },
-        {
-          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
-          "function": "DBUNLDGS",
-          "line": 147,
-          "call_type": "includes"
-        },
-        {
-          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
-          "function": "CBPAUP0C",
-          "line": 121,
-          "call_type": "includes"
-        },
-        {
-          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
-          "function": "COPAUS0C",
-          "line": 165,
-          "call_type": "includes"
-        },
-        {
-          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
-          "function": "COPAUS2C",
-          "line": 78,
-          "call_type": "includes"
-        },
-        {
-          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
-          "function": "PAUDBUNL",
-          "line": 1,
-          "call_type": "includes"
-        },
-        {
-          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
-          "function": "COPAUS1C",
-          "line": 1,
-          "call_type": "includes"
-        },
-        {
-          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
-          "function": "COPAUA0C",
-          "line": 1,
-          "call_type": "includes"
-        },
-        {
-          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
-          "function": "PAUDBLOD",
-          "line": 1,
-          "call_type": "includes"
-        },
-        {
-          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
-          "function": "DBUNLDGS",
-          "line": 1,
-          "call_type": "includes"
-        },
-        {
-          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
-          "function": "CBPAUP0C",
-          "line": 1,
-          "call_type": "includes"
-        },
-        {
-          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
-          "function": "COPAUS0C",
-          "line": 1,
-          "call_type": "includes"
-        },
-        {
-          "file": "/home/andras/war_rig/examples/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
-          "function": "COPAUS2C",
-          "line": 1,
-          "call_type": "includes"
-        }
-      ],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    }
-  ],
+  "paragraphs": [],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
   "open_questions": [],
   "resolved_questions": [],
   "dead_code": [],
+  "dead_code_resolved": [],
   "call_semantics": [],
   "flow_diagram": null,
   "copybooks_not_found": []

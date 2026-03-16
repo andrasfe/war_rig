@@ -20,6 +20,4 @@
             END-IF
 
             .
-       5000-EXIT.
-            EXIT.
 ```

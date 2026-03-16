@@ -4,18 +4,19 @@
     "file_name": "CCPAURQY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-04T04:43:54.711097",
+    "analyzed_at": "2026-03-16T19:49:52.291032",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the data structure for a pending authorization request. It contains fields related to the transaction, card details, merchant information, and authorization details.",
-    "business_context": "This copybook is likely used in systems that process credit card transactions and require authorization before completing the transaction.",
+    "summary": "This copybook defines the data structure for a pending authorization request. It includes fields for transaction details such as card number, amount, merchant information, and date/time of the authorization request.",
+    "business_context": "This copybook is likely used in systems that process credit card transactions and require authorization before completing a purchase.",
     "program_type": "COPYBOOK",
     "citations": [
       2,
       21,
-      36
+      27,
+      31
     ]
   },
   "inputs": [],
@@ -32,44 +33,22 @@
     "writes_to": [],
     "transforms": []
   },
-  "copybooks_used": [],
-  "paragraphs": [
+  "copybooks_used": [
     {
-      "paragraph_name": "PA-RQ-AUTH-DATE",
-      "summary": null,
-      "purpose": "This data field defines the authorization date of the pending transaction. It is a 6-byte alphanumeric field (PIC X(06)) that stores the date when the authorization was requested. The format of the date is not specified within the copybook but would be defined by the calling program. This field is part of the larger pending authorization request structure defined in this copybook. The value of this field is likely used for reporting, auditing, and reconciliation purposes. The field itself does not perform any logic or call any other programs; it simply holds the authorization date value.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        19,
-        19
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
+      "copybook_name": "CCPAURQY",
+      "purpose": "Defines the data structure for a pending authorization request.",
+      "location": "WORKING_STORAGE",
+      "citation": 19
     }
   ],
+  "paragraphs": [],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
-    {
-      "question": "What is the exact format of the date stored in PA-RQ-AUTH-DATE?",
-      "context": "The copybook only defines the field as X(06) without specifying the date format (e.g., YYYYMM, MMDDYY).",
-      "suggestion": "Check the programs that use this copybook to determine the date format."
-    }
-  ],
+  "open_questions": [],
   "resolved_questions": [],
-  "dead_code": [
-    {
-      "name": "05:PA-RQ-AUTH-DATE",
-      "artifact_type": "column",
-      "line": 1,
-      "reason": "Artifact '05:PA-RQ-AUTH-DATE' (column) is never referenced by any other artifact in the dependency graph"
-    }
-  ],
+  "dead_code": [],
+  "dead_code_resolved": [],
   "call_semantics": [],
   "flow_diagram": null,
   "copybooks_not_found": []

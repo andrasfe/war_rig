@@ -27,7 +27,4 @@
               MOVE 'N'               TO P-DEBUG-FLAG
            END-IF
            .
-      *
-       1000-EXIT.
-            EXIT.
 ```

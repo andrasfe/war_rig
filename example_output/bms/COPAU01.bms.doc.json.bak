@@ -4,13 +4,13 @@
     "file_name": "COPAU01.bms",
     "file_type": "BMS",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-04T04:43:47.847360",
+    "analyzed_at": "2026-03-16T20:02:03.461289",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This BMS map defines the screen layout for displaying pending authorization details in the CardDemo application. It includes fields for transaction details, card information, authorization responses, merchant details, and function key options.",
-    "business_context": "This screen is used to view authorization details within a card management or transaction processing system.",
+    "summary": "This BMS map defines the screen layout for displaying pending authorization details in the CardDemo application. It includes fields for card number, authorization details (date, time, response, code), amount, POS entry mode, source, MCC code, card expiration date, authorization type, transaction ID, match status, fraud status, and merchant details (name, ID, city, state, zip). It also provides function key options for navigation and fraud management.",
+    "business_context": "This screen is used to view details of pending card authorization transactions, likely for review and potential fraud detection or resolution.",
     "program_type": "ONLINE_CICS",
     "citations": [
       2,
@@ -37,7 +37,7 @@
     {
       "paragraph_name": "COPAU01",
       "summary": null,
-      "purpose": "This DFHMSD macro defines the map set COPAU01, which represents the entire BMS map. It specifies various attributes for the map set, including control options (ALARM, FREEKB), extended attributes (EXTATT=YES), the programming language (LANG=COBOL), input/output mode (MODE=INOUT), storage allocation (STORAGE=AUTO), terminal I/O area prefix (TIOAPFX=YES), and the map type (TYPE=&&SYSPARM). The CTRL parameter enables the alarm and keyboard freeing functions. EXTATT enables extended attributes. LANG specifies COBOL as the programming language. MODE specifies that the map can be used for both input and output. STORAGE specifies automatic storage allocation. TIOAPFX specifies that a terminal I/O area prefix should be used. TYPE specifies the map type based on the system parameter. This mapset contains the map COPAU1A.",
+      "purpose": "This DFHMSD macro defines the map set COPAU01. It specifies various attributes for the map set, including control options (ALARM, FREEKB), extended attributes (EXTATT=YES), language (LANG=COBOL), mode (MODE=INOUT), storage (STORAGE=AUTO), TIOAPFX (TIOAPFX=YES), and type (TYPE=&&SYSPARM). These attributes control the overall behavior and characteristics of the map set within the CICS environment. The CTRL parameters enable audible alarms and freeing of the keyboard after input. EXTATT enables extended attributes for color and highlighting. LANG specifies COBOL as the programming language. MODE specifies that the map can be used for both input and output. STORAGE specifies automatic storage management. TIOAPFX enables the TIOA prefix. TYPE specifies the map type based on the system parameter.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -46,27 +46,25 @@
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
-      "is_dead_code": true,
-      "dead_code_reason": "Artifact 'COPAU01' (map) is never referenced by any other artifact in the dependency graph",
+      "is_dead_code": false,
+      "dead_code_reason": null,
       "metadata": null
     },
     {
       "paragraph_name": "COPAU1A",
       "summary": null,
-      "purpose": "This DFHMDI macro defines the map COPAU1A, which represents a single screen layout within the COPAU01 mapset. It specifies the screen's column and line position (COLUMN=1, LINE=1) and its size (SIZE=(24,80)), defining a standard 24x80 screen. The map contains various DFHMDF macros that define the individual fields on the screen, including labels, input fields, and output fields. These fields are positioned using the POS parameter, and their lengths are defined using the LENGTH parameter. Attributes such as color (COLOR), intensity (ATTRB), and initial values (INITIAL) are also specified for each field. The map includes fields for displaying transaction details (TRNNAME), current date (CURDATE), program name (PGMNAME), current time (CURTIME), card number (CARDNUM), authorization date (AUTHDT), authorization time (AUTHTM), authorization response (AUTHRSP), response reason (AUTHRSN), authorization code (AUTHCD), amount (AUTHAMT), POS entry mode (POSEMD), authorization source (AUTHSRC), MCC code (MCCCD), card expiration date (CRDEXP), authorization type (AUTHTYP), transaction ID (TRNID), match status (AUTHMTC), fraud status (AUTHFRD), merchant details (MERNAME, MERID, MERCITY, MERST, MERZIP), and an error message area (ERRMSG).",
+      "purpose": "This DFHMDI macro defines the map COPAU1A within the COPAU01 mapset. It specifies the map's position and size on the screen. COLUMN=1 and LINE=1 indicate that the map starts at the top-left corner of the screen. SIZE=(24,80) defines the map as occupying the entire screen (24 lines by 80 columns). This macro essentially creates a container for all the fields defined within this map, determining the overall dimensions of the display. It acts as a parent to the individual DFHMDF field definitions, organizing them within the screen layout. The map provides a full-screen view for displaying authorization details.",
       "called_by": [],
       "calls": [],
       "citation": [
         26,
-        293
+        28
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
-      "is_dead_code": true,
-      "dead_code_reason": "Screen/Map 'COPAU1A' is never sent to or received from by any program",
-      "metadata": {
-        "body_chunks": 3
-      }
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
     }
   ],
   "error_handling": [],
@@ -74,20 +72,8 @@
   "cics_operations": [],
   "open_questions": [],
   "resolved_questions": [],
-  "dead_code": [
-    {
-      "name": "COPAU01",
-      "artifact_type": "map",
-      "line": 19,
-      "reason": "Artifact 'COPAU01' (map) is never referenced by any other artifact in the dependency graph"
-    },
-    {
-      "name": "COPAU1A",
-      "artifact_type": "screen",
-      "line": 26,
-      "reason": "Screen/Map 'COPAU1A' is never sent to or received from by any program"
-    }
-  ],
+  "dead_code": [],
+  "dead_code_resolved": [],
   "call_semantics": [],
   "flow_diagram": null,
   "copybooks_not_found": []
