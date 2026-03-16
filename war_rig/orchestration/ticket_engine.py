@@ -2926,12 +2926,70 @@ class TicketOrchestrator:
             raise RuntimeError(msg)
 
     def _generate_upfront_artifacts(self) -> None:
-        """Initialize optional artifacts produced outside worker cycles.
+        """Generate CALL_GRAPH.md and sequence diagrams from citadel analysis.
 
-        Sequence diagrams are not generated in graphless runtime mode.
-        README.md is generated later by the Imperator during holistic review.
+        These are pre-computed once before worker cycles start and injected
+        into the README generation later. Failures are non-fatal.
         """
         self._state.sequence_diagrams = None
+
+        if not self._input_directory:
+            return
+
+        try:
+            from citadel.sdk import Citadel
+
+            citadel = Citadel()
+            source_dir = self._input_directory
+
+            # Generate sequence diagrams
+            try:
+                diagrams = citadel.get_sequence_diagrams(
+                    str(source_dir), max_diagrams=5
+                )
+                if diagrams:
+                    self._state.sequence_diagrams = diagrams
+                    logger.info(
+                        "Generated %d sequence diagrams from citadel",
+                        len(diagrams),
+                    )
+            except Exception as e:
+                logger.warning("Sequence diagram generation failed: %s", e)
+
+            # Generate CALL_GRAPH.md
+            call_graph_path = self.config.output_directory / "CALL_GRAPH.md"
+            if not call_graph_path.exists():
+                try:
+                    from citadel.graph.exporters import GraphExporter
+
+                    from war_rig.analysis.call_graph import CallGraphAnalyzer
+
+                    # Build dependency graph via citadel
+                    graph_json = (
+                        self.config.output_directory / "dependency_graph.json"
+                    )
+                    if not graph_json.exists():
+                        graph = citadel._analyze_directory_for_graph(
+                            source_dir
+                        )
+                        exporter = GraphExporter()
+                        exporter.export_json(graph, graph_json)
+                        logger.info("Generated dependency_graph.json")
+
+                    analyzer = CallGraphAnalyzer(
+                        doc_directory=self.config.output_directory
+                    )
+                    analysis = analyzer.analyze(
+                        dependency_graph_path=graph_json
+                    )
+                    content = analyzer.generate_markdown_report(analysis)
+                    call_graph_path.write_text(content, encoding="utf-8")
+                    logger.info("Generated CALL_GRAPH.md")
+                except Exception as e:
+                    logger.warning("CALL_GRAPH.md generation failed: %s", e)
+
+        except ImportError:
+            logger.debug("Citadel not available, skipping upfront artifacts")
 
     def _cleanup_all_chunks(self) -> None:
         """Remove all chunk directories after README generation completes.
