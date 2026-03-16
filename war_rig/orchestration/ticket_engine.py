@@ -2875,8 +2875,30 @@ class TicketOrchestrator:
             )
 
             if ast_path.exists():
-                skipped += 1
-                continue
+                # Validate existing AST — regenerate if it has far fewer
+                # paragraphs than the source file should contain
+                try:
+                    existing = json.loads(ast_path.read_text(encoding="utf-8"))
+                    ast_para_count = len(existing.get("paragraphs", []))
+                    # Rough heuristic: COBOL files average ~25 lines per paragraph
+                    source_lines = Path(source_file.path).read_text(encoding="utf-8").count("\n")
+                    expected_min = max(2, source_lines // 50)
+                    if ast_para_count >= expected_min:
+                        skipped += 1
+                        continue
+                    logger.info(
+                        "Regenerating stale AST for %s: %d paragraphs in AST, "
+                        "expected at least %d for %d-line file",
+                        source_file.name,
+                        ast_para_count,
+                        expected_min,
+                        source_lines,
+                    )
+                except Exception:
+                    logger.debug(
+                        "Cannot validate existing AST for %s, regenerating",
+                        source_file.name,
+                    )
 
             try:
                 parse_result = citadel.parse_cobol(source_file.path, copybook_dirs=self._copybook_dirs)
