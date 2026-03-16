@@ -357,7 +357,7 @@ class AgenticReadmeConfig:
     max_tokens: int = 16384
     use_minion: bool = True
     merge_pass_enabled: bool = True
-    max_context_tokens: int = 1_000_000
+    max_context_tokens: int = 15_000
 
 
 # ============================================================================

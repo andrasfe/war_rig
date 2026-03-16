@@ -1563,7 +1563,7 @@ class TicketOrchestrator:
                 kg_system_summary=kg_system_summary,
                 entry_points=entry_points,
                 call_chains=call_chains,
-                max_context_tokens=self.config.agentic_readme_max_context_tokens,
+                max_context_tokens=self.config.imperator_max_prompt_tokens,
             )
         else:
             # Monolithic fallback (or mock mode)

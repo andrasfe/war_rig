@@ -3699,7 +3699,7 @@ This creates a navigable documentation web.
         kg_system_summary: str | None = None,
         entry_points: list[str] | None = None,
         call_chains: list[list[str]] | None = None,
-        max_context_tokens: int = 1_000_000,
+        max_context_tokens: int = 15_000,
     ) -> SystemDesignOutput:
         """Generate README.md using agentic investigation via CodeWhisper.
 
