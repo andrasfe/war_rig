@@ -440,9 +440,11 @@ documentation file paths table. Links MUST include the source extension:
 **BE THOROUGH**: Write detailed, comprehensive sections. A longer document
 with evidence-backed content is better than a sparse one.
 
-**TABLE FORMATTING**: Keep markdown table cells concise (max 1-2 sentences
-per cell). Never dump raw data, tool output, or long lists into table cells.
-If a description exceeds 2 sentences, use a bullet list outside the table.
+**TABLE FORMATTING**: Always use markdown pipe tables (`| col | col |`),
+NEVER fixed-width or ASCII-art tables. Keep cells concise (max 1-2
+sentences per cell). Never dump raw data, tool output, or long lists
+into table cells. If a description exceeds 2 sentences, use a bullet
+list outside the table.
 
 ## Data Already Available
 
