@@ -166,6 +166,159 @@ def _format_node_definition(node_id: str, label: str, category: str) -> str:
         return f'{node_id}["{safe_label}"]'
 
 
+def generate_flow_diagram_from_ast(
+    ast_data: dict,
+    start_paragraph: str | None = None,
+    include_external: bool = True,
+    title: str | None = None,
+) -> str:
+    """Generate a Mermaid flowchart from a pre-parsed ``.ast`` JSON file.
+
+    This is the preferred path for COBOL files — it reads the AST produced
+    by ProLeap/Cobalt rather than re-parsing the source with regex.
+
+    The output is identical in format to ``generate_flow_diagram()`` but
+    derived from typed AST statement nodes (``PERFORM_THRU``, ``CALL``,
+    ``EXEC_CICS``, etc.) instead of regex-extracted callouts.
+
+    Args:
+        ast_data: Parsed content of a ``.ast`` JSON file with keys
+            ``program_id`` and ``paragraphs``.
+        start_paragraph: Optional starting paragraph name for BFS filter.
+        include_external: Whether to show external calls as leaf nodes.
+        title: Optional title comment for the diagram.
+
+    Returns:
+        A Mermaid flowchart string.
+    """
+    paragraphs = ast_data.get("paragraphs", [])
+    if not paragraphs:
+        return "flowchart TD\n    %% No paragraphs found"
+
+    para_names: set[str] = set()
+    canonical: dict[str, str] = {}
+    for p in paragraphs:
+        name = p.get("name", "")
+        if name:
+            para_names.add(name.lower())
+            canonical[name.lower()] = name
+
+    # Statement types that represent internal PERFORM calls
+    _PERFORM_TYPES = {"PERFORM_THRU", "PERFORM", "PERFORM_UNTIL"}
+    # Statement types for external calls
+    _CALL_TYPES = {"CALL"}
+    _EXEC_TYPES = {"EXEC_CICS", "EXEC_DLI", "EXEC_SQL", "EXEC_OTHER"}
+    _IO_TYPES = {"READ_STMT", "WRITE_STMT", "REWRITE"}
+
+    adjacency: dict[str, set[str]] = {}
+    ext_callouts: dict[str, list[tuple[str, str, str | None]]] = {}
+
+    def _collect(para_lower: str, stmts: list) -> None:
+        for stmt in stmts:
+            stype = stmt.get("type", "")
+            attrs = stmt.get("attributes", {})
+            target = attrs.get("target", "")
+
+            if stype in _PERFORM_TYPES and target:
+                t_lower = target.lower()
+                if t_lower in para_names:
+                    adjacency.setdefault(para_lower, set()).add(t_lower)
+            elif stype in _CALL_TYPES and target:
+                ext_callouts.setdefault(para_lower, []).append(
+                    (target, "calls", "program")
+                )
+            elif stype in _EXEC_TYPES:
+                raw = attrs.get("raw_text", stmt.get("text", stype))
+                # Extract a short label from the raw EXEC text
+                label = raw.split()[1] if len(raw.split()) > 1 else stype
+                category = "screen" if stype == "EXEC_CICS" else "data"
+                ext_callouts.setdefault(para_lower, []).append(
+                    (label, stype.lower().replace("_", " "), category)
+                )
+            elif stype in _IO_TYPES and target:
+                ext_callouts.setdefault(para_lower, []).append(
+                    (target, "reads" if "READ" in stype else "writes", "data")
+                )
+
+            # Recurse into children (IF, EVALUATE, PERFORM INLINE, etc.)
+            children = stmt.get("children")
+            if children:
+                _collect(para_lower, children)
+
+    for p in paragraphs:
+        name_lower = p["name"].lower()
+        adjacency.setdefault(name_lower, set())
+        ext_callouts.setdefault(name_lower, [])
+        _collect(name_lower, p.get("statements", []))
+
+    # BFS filter if start_paragraph given
+    if start_paragraph is not None:
+        s_lower = start_paragraph.lower()
+        if s_lower not in para_names:
+            raise ValueError(
+                f"Paragraph '{start_paragraph}' not found. "
+                f"Available: {sorted(canonical.values())}"
+            )
+        included = _bfs_reachable(s_lower, adjacency)
+    else:
+        included = set(para_names)
+
+    if not included:
+        return "flowchart TD\n    %% No paragraphs found"
+
+    # Generate Mermaid (same format as generate_flow_diagram)
+    lines: list[str] = ["flowchart TD"]
+    if title:
+        lines.append(f"    %% Title: {title}")
+
+    defined: set[str] = set()
+    edges: list[str] = []
+    seen_int: set[tuple[str, str]] = set()
+    seen_ext: set[tuple[str, str, str]] = set()
+
+    for pl in sorted(included):
+        pname = canonical.get(pl, pl)
+        nid = _make_node_id(pname)
+
+        if nid not in defined:
+            lines.append(f"    {_format_node_definition(nid, pname, 'internal')}")
+            defined.add(nid)
+
+        for tl in sorted(adjacency.get(pl, set())):
+            if tl not in included:
+                continue
+            ek = (pl, tl)
+            if ek in seen_int:
+                continue
+            seen_int.add(ek)
+            tname = canonical.get(tl, tl)
+            tid = _make_node_id(tname)
+            if tid not in defined:
+                lines.append(
+                    f"    {_format_node_definition(tid, tname, 'internal')}"
+                )
+                defined.add(tid)
+            edges.append(f"    {nid} --> {tid}")
+
+        if include_external:
+            for tgt, rel, ttype in ext_callouts.get(pl, []):
+                cat = _classify_external_node(rel, ttype)
+                ext_id = _make_node_id(tgt) + "__ext"
+                ek_ext = (pl, tgt.lower(), rel.lower())
+                if ek_ext in seen_ext:
+                    continue
+                seen_ext.add(ek_ext)
+                if ext_id not in defined:
+                    lines.append(
+                        f"    {_format_node_definition(ext_id, tgt, cat)}"
+                    )
+                    defined.add(ext_id)
+                edges.append(f"    {nid} -.->|{rel}| {ext_id}")
+
+    lines.extend(edges)
+    return "\n".join(lines)
+
+
 def generate_flow_diagram(
     analysis_result: FileAnalysisResult,
     start_paragraph: str | None = None,

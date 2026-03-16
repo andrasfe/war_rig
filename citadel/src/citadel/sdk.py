@@ -1822,6 +1822,38 @@ class Citadel:
             title=title,
         )
 
+    def get_flow_diagram_from_ast(
+        self,
+        ast_path: str | Path,
+        paragraph: str | None = None,
+        include_external: bool = True,
+    ) -> str:
+        """Generate a Mermaid flow diagram from a pre-parsed ``.ast`` file.
+
+        Preferred over ``get_flow_diagram()`` for COBOL files that have an
+        AST file — avoids re-parsing with regex and produces more accurate
+        results from the typed AST nodes.
+
+        Args:
+            ast_path: Path to the ``.ast`` JSON file.
+            paragraph: Starting paragraph name for BFS filter.
+            include_external: Whether to show external calls as leaf nodes.
+
+        Returns:
+            Mermaid flowchart string.
+        """
+        from citadel.analysis.flow_diagram import generate_flow_diagram_from_ast
+
+        raw = Path(ast_path).read_text(encoding="utf-8")
+        ast_data = json.loads(raw)
+        title = Path(ast_path).stem  # e.g. COPAUA0C.cbl
+        return generate_flow_diagram_from_ast(
+            ast_data,
+            start_paragraph=paragraph,
+            include_external=include_external,
+            title=title,
+        )
+
     def get_file_summary(self, file_path: str | Path) -> dict[str, Any]:
         """
         Get a compact summary of a source file for Tier 1 holistic review.
