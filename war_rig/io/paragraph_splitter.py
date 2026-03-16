@@ -202,6 +202,36 @@ def _resolve_citation(
 # ---------------------------------------------------------------------------
 
 
+def _load_ast_ranges(source_path: Path) -> dict[str, tuple[int, int]]:
+    """Load paragraph line ranges from the ``.ast`` file if it exists.
+
+    Returns a mapping of uppercase paragraph name to (start, end) 1-indexed
+    inclusive line range.  Returns an empty dict when no ``.ast`` file is
+    found or it cannot be parsed.
+    """
+    ast_path = source_path.with_suffix(source_path.suffix + ".ast")
+    if not ast_path.exists():
+        return {}
+
+    try:
+        data = json.loads(ast_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError) as exc:
+        logger.debug("Could not load AST from %s: %s", ast_path, exc)
+        return {}
+
+    ranges: dict[str, tuple[int, int]] = {}
+    for para in data.get("paragraphs", []):
+        name = para.get("name", "")
+        ls = para.get("line_start", 0)
+        le = para.get("line_end", 0)
+        if name and ls and le:
+            ranges[name.upper()] = (ls, le)
+
+    if ranges:
+        logger.debug("Loaded %d AST ranges from %s", len(ranges), ast_path)
+    return ranges
+
+
 def split_paragraphs(
     source_path: Path,
     doc_json_path: Path,
@@ -213,6 +243,10 @@ def split_paragraphs(
     ``citation`` line ranges, then slices the corresponding lines from the
     source ``.cbl`` file and writes each paragraph to its own file under
     *output_dir*.
+
+    When a ``.ast`` file exists alongside the source (e.g.
+    ``PROG.cbl.ast``), its deterministic line ranges take priority over
+    the LLM-generated citations in the ``.doc.json``.
 
     Args:
         source_path: Path to the COBOL source file (e.g. ``input/cbl/PROG.cbl``).
@@ -258,6 +292,9 @@ def split_paragraphs(
         output_dir = doc_json_path.parent / f"{source_path.name}.d"
     output_dir.mkdir(parents=True, exist_ok=True)
 
+    # Prefer deterministic AST line ranges over LLM-generated citations
+    ast_ranges = _load_ast_ranges(source_path)
+
     # Build index of paragraph start lines for fallback when citations
     # are missing.  Only look for names we know about from the doc.json.
     known_names = {
@@ -273,9 +310,17 @@ def split_paragraphs(
         if not name:
             continue
 
-        start, end = _resolve_citation(
-            name, para.get("citation"), source_lines, para_line_index,
-        )
+        # AST ranges are authoritative when available
+        ast_range = ast_ranges.get(name.upper())
+        if ast_range is not None:
+            start, end = ast_range
+            logger.debug(
+                "Paragraph %r: using AST range [%d, %d]", name, start, end,
+            )
+        else:
+            start, end = _resolve_citation(
+                name, para.get("citation"), source_lines, para_line_index,
+            )
         if start is None:
             continue
 

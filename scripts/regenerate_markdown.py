@@ -110,6 +110,37 @@ def _inject_asts(md_content: str, paragraph_asts: dict[str, str]) -> str:
     return "\n".join(result)
 
 
+def _find_source_for_doc(
+    doc_file: Path, file_name: str, input_dir: Path | None,
+) -> Path | None:
+    """Locate the COBOL source file for a given .doc.json.
+
+    Searches input_dir (if provided) for the source file by basename,
+    falling back to looking next to the doc_file itself.
+    """
+    basename = Path(file_name).name
+    cobol_extensions = {".cbl", ".cob", ".cobol"}
+    if Path(basename).suffix.lower() not in cobol_extensions:
+        return None
+
+    if input_dir is not None:
+        # Exact match first
+        candidates = list(input_dir.rglob(basename))
+        if candidates:
+            return candidates[0]
+        # Case-insensitive fallback
+        for candidate in input_dir.rglob("*"):
+            if candidate.name.lower() == basename.lower() and candidate.is_file():
+                return candidate
+
+    # Try next to the doc file (output dir may contain a copy)
+    beside = doc_file.parent / basename
+    if beside.exists():
+        return beside
+
+    return None
+
+
 def regenerate_markdown(
     output_dir: Path,
     input_dir: Path | None = None,
@@ -170,13 +201,29 @@ def regenerate_markdown(
                 with open(md_file, "w") as f:
                     f.write(md_content)
 
+                # Re-split paragraph snippets using AST-aware splitter
+                split_label = ""
+                source_path = _find_source_for_doc(doc_file, file_name, input_dir)
+                if source_path is not None:
+                    try:
+                        from war_rig.io.paragraph_splitter import split_and_link
+
+                        created = split_and_link(source_path, doc_file, md_file)
+                        if created:
+                            split_label = f", {len(created)} snippets"
+                    except Exception as split_err:
+                        if verbose:
+                            print(f"  - Split failed: {split_err}")
+
                 if verbose:
                     print(f"Regenerated: {md_file.name}")
                     print(f"  - Paragraphs: {para_count}{ast_label}")
                     print(f"  - Call semantics: {cs_count}")
+                    if split_label:
+                        print(f"  - Snippets: {split_label.lstrip(', ')}")
                 else:
                     status = f" (+{cs_count} call semantics)" if cs_count > 0 else ""
-                    print(f"Regenerated: {md_file.name}{status}{ast_label}")
+                    print(f"Regenerated: {md_file.name}{status}{ast_label}{split_label}")
 
             count += 1
 
