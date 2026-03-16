@@ -824,34 +824,10 @@ class ScribeWorker:
                 citadel_context,
             )
 
-        # Generate flow diagram for COBOL files — prefer AST when available
+        # Generate flow diagram for COBOL files (uses AST when .ast exists)
         if file_type == FileType.COBOL:
             try:
-                flow = None
-                ast_path = source_path.with_suffix(source_path.suffix + ".ast")
-                if ast_path.exists():
-                    flow = self._citadel.get_flow_diagram_from_ast(
-                        str(ast_path)
-                    )
-                    # Check if AST produced a useful diagram (>= 3 edges)
-                    edge_count = sum(
-                        1
-                        for line in (flow or "").splitlines()
-                        if " --> " in line or " -.->" in line
-                    )
-                    if edge_count < 3:
-                        logger.debug(
-                            "Worker %s: AST diagram for %s has only %d edges, "
-                            "falling back to regex",
-                            self.worker_id,
-                            ticket.file_name,
-                            edge_count,
-                        )
-                        flow = None
-
-                if not flow:
-                    flow = self._citadel.get_flow_diagram(str(source_path))
-
+                flow = self._citadel.get_flow_diagram(str(source_path))
                 if flow:
                     template.flow_diagram = flow
             except Exception as e:

@@ -1791,11 +1791,9 @@ class Citadel:
     ) -> str:
         """Generate a Mermaid flow diagram for a COBOL file.
 
-        Analyzes the file and produces a Mermaid flowchart showing the
-        internal control flow (PERFORM relationships between paragraphs).
-        External calls (CALL, reads, writes, EXEC SQL, EXEC CICS, includes)
-        appear as distinctively shaped leaf nodes but are NOT recursively
-        followed.
+        Prefers the ``.ast`` file (from ProLeap/Cobalt) when it exists
+        alongside the source file.  Falls back to regex-based analysis
+        only when no AST is available.
 
         Args:
             file_path: Path to COBOL source file.
@@ -1809,12 +1807,21 @@ class Citadel:
         Raises:
             ValueError: If the specified paragraph does not exist in the file.
         """
+        fp = Path(file_path)
+        ast_path = fp.with_suffix(fp.suffix + ".ast")
+        if ast_path.exists():
+            return self.get_flow_diagram_from_ast(
+                ast_path,
+                paragraph=paragraph,
+                include_external=include_external,
+            )
+
         result = self.analyze_file(file_path)
 
         if result.error:
             return f"flowchart TD\n    %% Error: {result.error}"
 
-        title = Path(file_path).name
+        title = fp.name
         return generate_flow_diagram(
             result,
             start_paragraph=paragraph,
