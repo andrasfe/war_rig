@@ -3688,6 +3688,66 @@ This creates a navigable documentation web.
 
         return "\n".join(lines)
 
+    @staticmethod
+    def _build_file_summaries(code_dir: Path) -> str:
+        """Pre-compute compact AST summaries for all source files via citadel.
+
+        Returns paragraph names, entry points, and call targets for each
+        file so the README generator doesn't need tool calls for this data.
+
+        Args:
+            code_dir: Path to the source code directory.
+
+        Returns:
+            Formatted markdown with per-file summaries.
+        """
+        try:
+            from citadel.sdk import Citadel
+        except ImportError:
+            logger.debug("Citadel not available, skipping file summaries")
+            return ""
+
+        try:
+            citadel = Citadel()
+        except Exception as e:
+            logger.warning("Failed to initialize Citadel for file summaries: %s", e)
+            return ""
+
+        lines: list[str] = []
+        source_files = sorted(code_dir.rglob("*"))
+        for src in source_files:
+            if not src.is_file():
+                continue
+            ext = src.suffix.lower()
+            if ext not in (".cbl", ".cob", ".cpy", ".jcl", ".pli", ".asm", ".rexx"):
+                continue
+
+            try:
+                summary = citadel.get_file_summary(str(src))
+                if summary.get("error"):
+                    continue
+
+                name = summary.get("file_name", src.name)
+                lang = summary.get("language", "?")
+                para_count = summary.get("paragraph_count", 0)
+                total_lines = summary.get("total_lines", 0)
+                entry_pts = summary.get("entry_points", [])
+                main_calls = summary.get("main_calls", [])
+
+                parts = [f"**{name}** ({lang}, {total_lines} lines, {para_count} paragraphs)"]
+                if entry_pts:
+                    parts.append(f"  Entry: {', '.join(entry_pts[:10])}")
+                if main_calls:
+                    parts.append(f"  Calls: {', '.join(main_calls[:10])}")
+                lines.append("\n".join(parts))
+            except Exception:
+                continue
+
+        if not lines:
+            return ""
+
+        return "\n".join(lines)
+
     async def generate_system_design_agentic(
         self,
         input_data: HolisticReviewInput,
@@ -3741,6 +3801,7 @@ This creates a navigable documentation web.
                     call_graph_mermaid = mermaid
 
             doc_path_table = self._build_doc_path_table(input_data)
+            file_summaries = self._build_file_summaries(code_dir)
 
             structural_context = StructuralContext(
                 call_graph_mermaid=call_graph_mermaid,
@@ -3749,6 +3810,7 @@ This creates a navigable documentation web.
                 shared_copybooks=input_data.shared_copybooks,
                 kg_summary=kg_system_summary or "",
                 doc_path_table=doc_path_table,
+                file_summaries=file_summaries,
             )
 
             # Configure generator

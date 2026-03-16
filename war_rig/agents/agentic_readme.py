@@ -288,6 +288,7 @@ class StructuralContext:
     shared_copybooks: dict[str, list[str]] = field(default_factory=dict)
     kg_summary: str = ""
     doc_path_table: str = ""
+    file_summaries: str = ""
 
     def to_context_string(self) -> str:
         """Format as a compact markdown context block (~1500 tokens).
@@ -330,6 +331,16 @@ class StructuralContext:
         if self.doc_path_table:
             parts.append("### Documentation File Paths")
             parts.append(self.doc_path_table)
+            parts.append("")
+
+        if self.file_summaries:
+            parts.append("### Per-File AST Summaries")
+            parts.append(
+                "Paragraph structure, entry points, and call targets "
+                "for each source file (from static analysis):"
+            )
+            parts.append("")
+            parts.append(self.file_summaries)
             parts.append("")
 
         return "\n".join(parts)
@@ -390,7 +401,22 @@ documentation file paths table. Links MUST include the source extension:
 **BE THOROUGH**: Write detailed, comprehensive sections. A longer document
 with evidence-backed content is better than a sparse one.
 
-## Tool Usage Strategy
+## Data Already Available
+
+The structural context (system message) contains pre-computed data you should
+use FIRST before making any tool calls:
+- **Call Graph Diagram** — Mermaid diagram of program call relationships
+- **Entry Points** — programs with no callers
+- **Shared Copybooks** — which programs share which data structures
+- **Documentation File Paths** — table mapping components to doc links
+- **Per-File AST Summaries** — paragraph names, entry points, and call
+  targets for every source file (from static analysis)
+
+Do NOT call citadel tools (citadel_analyze_file, citadel_get_functions,
+citadel_get_file_summary, etc.) for information already in the structural
+context. Use tools only when you need details beyond what is provided.
+
+## Tool Usage Strategy (use sparingly)
 
 1. **search_skills** → discover relevant documentation by keyword
 2. **load_skill** → read full program/concept documentation
@@ -399,11 +425,11 @@ with evidence-backed content is better than a sparse one.
 5. **kg_get_programs_for_dataset** → find data producers/consumers
 6. **kg_get_jcl_context** → understand batch job context
 7. **kg_get_copybook_users** → find programs sharing data structures
-8. **citadel_analyze_file** → deep-dive into specific source files
+8. **citadel_analyze_file** → deep-dive into source (only if AST summaries insufficient)
 9. **read_file** → examine raw source when needed
 
-Keep making tool calls until you have enough information for a thorough section.
-Only respond when you have gathered sufficient evidence.
+Use the pre-computed structural context first. Only make tool calls when
+you need information not already provided.
 """
 
 
