@@ -34,6 +34,45 @@ logger = logging.getLogger(__name__)
 _FENCE_OPEN = re.compile(r"^```(?:markdown|md|text)?[ \t]*\r?\n", re.IGNORECASE)
 _FENCE_CLOSE = re.compile(r"\n```[ \t]*$")
 
+# Maximum characters per table cell before truncation
+_MAX_TABLE_CELL_CHARS = 300
+
+
+def _sanitize_table_cells(markdown: str) -> str:
+    """Truncate absurdly long markdown table cells.
+
+    LLMs sometimes dump their entire context into a table cell.
+    This catches cells exceeding ``_MAX_TABLE_CELL_CHARS`` and truncates
+    them with an ellipsis.
+
+    Args:
+        markdown: The full markdown document.
+
+    Returns:
+        Markdown with oversized table cells truncated.
+    """
+    lines = markdown.splitlines()
+    result: list[str] = []
+    truncated = 0
+
+    for line in lines:
+        if "|" in line and not line.strip().startswith("|--"):
+            cells = line.split("|")
+            new_cells: list[str] = []
+            for cell in cells:
+                if len(cell) > _MAX_TABLE_CELL_CHARS:
+                    cell = cell[:_MAX_TABLE_CELL_CHARS].rstrip() + "…"
+                    truncated += 1
+                new_cells.append(cell)
+            result.append("|".join(new_cells))
+        else:
+            result.append(line)
+
+    if truncated:
+        logger.warning("Truncated %d oversized table cells in README", truncated)
+
+    return "\n".join(result)
+
 
 def _strip_markdown_fences(text: str) -> str:
     """Strip ```markdown / ```md / ``` wrapper from LLM output.
@@ -401,6 +440,10 @@ documentation file paths table. Links MUST include the source extension:
 **BE THOROUGH**: Write detailed, comprehensive sections. A longer document
 with evidence-backed content is better than a sparse one.
 
+**TABLE FORMATTING**: Keep markdown table cells concise (max 1-2 sentences
+per cell). Never dump raw data, tool output, or long lists into table cells.
+If a description exceeds 2 sentences, use a bullet list outside the table.
+
 ## Data Already Available
 
 The structural context (system message) contains pre-computed data you should
@@ -650,6 +693,9 @@ class AgenticReadmeGenerator:
                 )
             except Exception as e:
                 logger.warning("Merge pass failed, using unmerged output: %s", e)
+
+        # Sanitize oversized table cells (LLM context dumps)
+        final_markdown = _sanitize_table_cells(final_markdown)
 
         # Sanitize any invalid mermaid blocks before output
         from war_rig.validation.mermaid_validator import sanitize_mermaid_blocks
