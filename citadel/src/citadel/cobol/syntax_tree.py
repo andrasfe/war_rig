@@ -76,6 +76,11 @@ class StatementType(Enum):
     CONTINUE_STMT = "CONTINUE"
     ALTER = "ALTER"
 
+    # Copybook references (placeholders left behind by source_reader
+    # when a COPY statement has been resolved — the actual copybook
+    # body is excluded via ``copybook_source``).
+    COPY_STMT = "COPY"
+
     UNKNOWN = "UNKNOWN"
 
 
@@ -175,9 +180,14 @@ _STMT_START_RE = re.compile(
     r"|SET|INITIALIZE|STRING|UNSTRING|INSPECT"
     r"|ACCEPT|DISPLAY|READ|WRITE|REWRITE|OPEN|CLOSE"
     r"|SORT|SEARCH|START|IF|ELSE|EVALUATE|WHEN|PERFORM|CALL"
-    r"|GOBACK|STOP|GO|EXIT|ALTER|CONTINUE"
+    r"|GOBACK|STOP|GO|EXIT|ALTER|CONTINUE|COPY"
     r"|END-IF|END-EVALUATE|END-PERFORM|END-START|END-SEARCH)\b"
     r"(?=\s|\.|$)",
+    re.IGNORECASE,
+)
+
+_COPY_STMT_RE = re.compile(
+    r"^\s*COPY\s+['\"]?(?P<name>[A-Za-z0-9_-]+)['\"]?",
     re.IGNORECASE,
 )
 
@@ -484,7 +494,63 @@ def _split_embedded_performs(
         else:
             result.append(stmt)
 
-    return _split_inline_if_statements(result)
+    return _split_end_marker_tails(_split_inline_if_statements(result))
+
+
+_END_MARKER_TAIL_RE = re.compile(
+    r"^(?P<end>END-(?:IF|EVALUATE|PERFORM|START|SEARCH))\b\s+"
+    r"(?P<tail>\S.*)$",
+    re.IGNORECASE,
+)
+
+
+def _split_end_marker_tails(
+    statements: list[_RawStatement],
+) -> list[_RawStatement]:
+    """Split ``END-IF EXIT`` style statements into two raw statements.
+
+    COBOL allows multiple statements on a single line, so
+    ``END-IF EXIT .`` or ``END-EVALUATE MOVE X TO Y .`` are legal.
+    The raw statement collector groups the whole line into one chunk
+    because it starts with a verb (END-IF is in ``_STMT_START_RE``).
+    The classifier then matches the END marker and returns early,
+    silently dropping whatever follows.
+
+    This pass walks the statement list and splits any statement whose
+    text starts with ``END-<KW>`` followed by a non-empty tail into
+    two statements: the bare END marker, and the tail (which then
+    goes through classification itself).
+    """
+    result: list[_RawStatement] = []
+    for stmt in statements:
+        text = stmt.text.strip()
+        # Strip a trailing standalone period so the regex can see the
+        # true tail, then reattach it to the tail statement.
+        period_tail = ""
+        if text.endswith("."):
+            text = text[:-1].rstrip()
+            period_tail = "."
+        m = _END_MARKER_TAIL_RE.match(text)
+        if not m:
+            # Restore period if we stripped one; we didn't split.
+            result.append(stmt)
+            continue
+
+        end_text = m.group("end").upper()
+        tail_text = m.group("tail").strip() + period_tail
+        result.append(_RawStatement(
+            text=end_text,
+            line_start=stmt.line_start,
+            line_end=stmt.line_end,
+            period_terminated=False,
+        ))
+        result.append(_RawStatement(
+            text=tail_text,
+            line_start=stmt.line_start,
+            line_end=stmt.line_end,
+            period_terminated=stmt.period_terminated,
+        ))
+    return result
 
 
 def _split_inline_if_statements(
@@ -682,14 +748,27 @@ def _classify(
             exec_type, StatementType.EXEC_OTHER
         ), attrs
 
+    # --- COPY placeholders (left behind by source_reader when the
+    # COPY statement has been resolved; the inlined body itself is
+    # filtered out via ``copybook_source`` in cobalt/generator.py).
+    copy_match = _COPY_STMT_RE.match(stripped)
+    if copy_match:
+        attrs["target"] = copy_match.group("name").upper()
+        return StatementType.COPY_STMT, attrs
+
     # --- Data operations (MOVE/COMPUTE with detail) ---
-    m = _MOVE_RE.search(stripped)
+    # Use match() not search(): search() on "READ ... AT END MOVE 'Y' TO X
+    # END-READ" falsely classifies the whole READ as a MOVE because of the
+    # nested MOVE inside the AT END clause. match() anchors at the start of
+    # the stripped statement, so only statements that actually begin with
+    # MOVE/COMPUTE land here.
+    m = _MOVE_RE.match(stripped)
     if m:
         attrs["source"] = m.group(1).strip().rstrip(".")
         attrs["targets"] = m.group(2).strip().rstrip(".")
         return StatementType.MOVE, attrs
 
-    m = _COMPUTE_RE.search(stripped)
+    m = _COMPUTE_RE.match(stripped)
     if m:
         attrs["target"] = m.group("target").upper()
         attrs["expression"] = (

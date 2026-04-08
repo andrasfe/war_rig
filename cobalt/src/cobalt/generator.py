@@ -206,6 +206,7 @@ _TYPE_MAP: dict[str, StatementType] = {
     "EXIT": StatementType.EXIT,
     "CONTINUE": StatementType.CONTINUE_STMT,
     "ALTER": StatementType.ALTER,
+    "COPY": StatementType.COPY_STMT,
     "UNKNOWN": StatementType.UNKNOWN,
 }
 

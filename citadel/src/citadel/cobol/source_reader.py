@@ -40,9 +40,11 @@ DEBUG_INDICATORS = {"D", "d"}
 
 # COPY statement pattern:
 #   COPY copybook-name [REPLACING ==old== BY ==new== ...].
+#   COPY 'copybook-name'.     (quoted form — IBM extension, legal COBOL)
+#   COPY "copybook-name".
 _COPY_RE = re.compile(
     r"^\s*COPY\s+"
-    r"(?P<name>[A-Za-z0-9_-]+)"
+    r"['\"]?(?P<name>[A-Za-z0-9_-]+)['\"]?"
     r"(?:\s*\.\s*$"           # simple: COPY name.
     r"|"
     r"\s+REPLACING\b"         # or: COPY name REPLACING ...
@@ -362,15 +364,56 @@ class SourceReader:
         resolved: list[SourceLine] = []
         copybooks_found: list[str] = []
 
-        for line in lines:
+        i = 0
+        while i < len(lines):
+            line = lines[i]
             if line.is_comment or line.is_blank:
                 resolved.append(line)
+                i += 1
                 continue
 
             match = _COPY_RE.match(line.text)
             if match is None:
-                resolved.append(line)
-                continue
+                # A COPY statement may span two or more lines when the
+                # terminating period is on a subsequent line, e.g.
+                #     COPY 'CSSTRPFY'
+                #         .
+                # Detect this by checking whether the line is the start
+                # of a COPY that lacks a period, and join forward lines
+                # until a period is found.
+                start_text = line.text.lstrip()
+                if start_text[:5].upper() == "COPY " and "." not in line.text:
+                    joined_text = line.text.rstrip()
+                    consumed: list[SourceLine] = [line]
+                    j = i + 1
+                    while j < len(lines) and j - i < 8:
+                        nxt = lines[j]
+                        if nxt.is_comment:
+                            consumed.append(nxt)
+                            j += 1
+                            continue
+                        joined_text += " " + nxt.text.strip()
+                        consumed.append(nxt)
+                        j += 1
+                        if "." in nxt.text:
+                            break
+                    merged_match = _COPY_RE.match(joined_text)
+                    if merged_match is not None:
+                        # Walk through as if ``line`` was the merged
+                        # virtual statement; drop the follow-up lines
+                        # from ``resolved`` and advance ``i`` past them.
+                        match = merged_match
+                        i = j
+                    else:
+                        resolved.append(line)
+                        i += 1
+                        continue
+                else:
+                    resolved.append(line)
+                    i += 1
+                    continue
+            else:
+                i += 1
 
             copybook_name = match.group("name")
             replacing_text = match.group("replacing")
@@ -451,6 +494,30 @@ class SourceReader:
             )
             copybooks_found.extend(nested_cbs)
 
+            # Preserve a placeholder at the COPY site so downstream
+            # consumers (ProcedureDivisionParser, the AST builder) can
+            # see that a COPY statement was here. Without this marker
+            # the generator's ``not ln.copybook_source`` filter strips
+            # the inlined body and we lose every paragraph-internal
+            # COPY — e.g. the ``COPY CSSETATY REPLACING …`` calls
+            # inside COACTUPC's 3300-SETUP-SCREEN-ATTRS paragraph.
+            # The placeholder is marked as a real source line (no
+            # ``copybook_source``) so it survives the filter, and its
+            # text ``COPY <name>.`` is classified by the statement
+            # classifier as ``StatementType.COPY_STMT``.
+            placeholder = SourceLine(
+                line_number=line.line_number,
+                indicator=" ",
+                area_a="    ",
+                area_b=f"COPY {copybook_name}.",
+                text=f"COPY {copybook_name}.",
+                is_comment=False,
+                is_continuation=False,
+                is_blank=False,
+                raw=line.raw,
+                copybook_source=None,
+            )
+            resolved.append(placeholder)
             resolved.extend(cb_resolved)
 
         return resolved, copybooks_found
