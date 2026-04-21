@@ -89,6 +89,26 @@
         }
       }
     },
+    "paragraph_literals": {
+      "description": "Per-paragraph literal values the documented prose references. Populated by scanning War Rig's paragraph descriptions for quoted codes (file-status, SQLCODE, CICS resp, etc.) paired with the field names mentioned nearby. This is the cross-paragraph knowledge Specter can't compute from the AST alone.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["paragraph", "literals"],
+        "additionalProperties": false,
+        "properties": {
+          "paragraph": { "type": "string", "minLength": 1 },
+          "literals": {
+            "type": "array",
+            "items": { "type": "string" }
+          },
+          "associated_fields": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
     "imperator_signoff": { "type": "boolean" },
     "round_metadata": {
       "type": "object",

@@ -213,6 +213,62 @@ def _map_dead_code(item: dict[str, Any]) -> dict[str, Any]:
     return {"location": location, "confidence": "MEDIUM"}
 
 
+_QUOTED_LITERAL_RE = __import__("re").compile(r"'([^']{1,16})'")
+_COBOL_FIELD_RE = __import__("re").compile(r"\b[A-Z][A-Z0-9]*(?:-[A-Z0-9]+){1,}\b")
+
+# Field-name substrings that signal "this is a status / response / code field
+# whose literal domain we want Specter to know about". Matches WS-XFILE-STATUS,
+# WS-STATUS-CODE, DFHRESP, SQLCODE-style names.
+_STATUS_FIELD_SUFFIXES = ("STATUS", "CODE", "RESP", "-RESP", "SQLCODE")
+
+
+def _extract_paragraph_literals(paragraphs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Harvest quoted literals + associated status-field names per paragraph.
+
+    This is the cross-paragraph signal Specter can't recover from the AST:
+    War Rig's prose describes "file status '23' means record not found" and
+    names the field holding that status ("WS-XREFFILE-STATUS"). Surfacing the
+    (field, literal) pair lets Specter seed a test case that forces that
+    specific status into the branch guard.
+
+    Returns a list of `{paragraph, literals, associated_fields}` dicts, one per
+    paragraph that mentioned at least one literal. Fields are kept only when
+    they look like status/response/code fields (see `_STATUS_FIELD_SUFFIXES`).
+    """
+    out: list[dict[str, Any]] = []
+    for para in paragraphs or []:
+        para = _as_dict(para)
+        name = para.get("paragraph_name") or para.get("name") or ""
+        prose = " ".join(
+            str(para.get(k) or "") for k in ("summary", "purpose", "logic", "description")
+        )
+        if not prose:
+            continue
+
+        literals = sorted({
+            m for m in _QUOTED_LITERAL_RE.findall(prose)
+            if m and not m.isspace()
+        })
+        if not literals:
+            continue
+
+        candidate_fields = _COBOL_FIELD_RE.findall(prose)
+        # Keep only status/response/code-style field names.
+        status_fields = sorted({
+            f for f in candidate_fields
+            if any(suf in f.upper() for suf in _STATUS_FIELD_SUFFIXES)
+        })
+
+        entry: dict[str, Any] = {
+            "paragraph": name or "UNKNOWN",
+            "literals": literals,
+        }
+        if status_fields:
+            entry["associated_fields"] = status_fields
+        out.append(entry)
+    return out
+
+
 def _extract_final_template(result: Any) -> dict[str, Any]:
     """Pull the DocumentationTemplate payload out of War Rig's graph state.
 
@@ -260,10 +316,12 @@ def emit_open_questions(
     native_rules = _iter_dicts(template.get("business_rules"))
     native_qs = _iter_dicts(template.get("open_questions"))
     native_dead = _iter_dicts(template.get("dead_code"))
+    native_paragraphs = _iter_dicts(template.get("paragraphs"))
 
     business_rules = [_map_business_rule(br, i) for i, br in enumerate(native_rules)]
     open_questions = [_map_open_question(oq, i) for i, oq in enumerate(native_qs)]
     dead_code_candidates = [_map_dead_code(d) for d in native_dead]
+    paragraph_literals = _extract_paragraph_literals(native_paragraphs)
 
     # Derive branch_priority_hints from open_questions + dead_code.
     # - Questions hinting at DATA_SOURCE with target fields → high-priority
@@ -300,11 +358,15 @@ def emit_open_questions(
         },
     }
 
+    if paragraph_literals:
+        document["paragraph_literals"] = paragraph_literals
+
     _validator("open_questions").validate(document)
     _atomic_write_json(Path(output_path), document)
     logger.info(
-        "doof_wagon: emitted open_questions at %s (rules=%d, questions=%d, dead=%d)",
+        "doof_wagon: emitted open_questions at %s (rules=%d, questions=%d, dead=%d, para_literals=%d)",
         output_path, len(business_rules), len(open_questions), len(dead_code_candidates),
+        len(paragraph_literals),
     )
 
 
