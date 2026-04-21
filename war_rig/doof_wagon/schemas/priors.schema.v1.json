@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://doof-wagon.local/schemas/priors.schema.v1.json",
+  "title": "Doof Wagon Priors (v1)",
+  "description": "Priors document consumed by War Rig or Specter at the start of round N>1. The `consumer` field disambiguates which tool this document is targeted at. Unused sections may be omitted entirely; when present they must match their sub-schema.",
+  "type": "object",
+  "required": ["schema_version", "module", "round", "consumer"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "module": { "type": "string", "minLength": 1 },
+    "round": { "type": "integer", "minimum": 1 },
+    "consumer": { "enum": ["war_rig", "specter"] },
+    "branch_priorities": {
+      "description": "Specter-only: ordering hints for Z3 branch exploration.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "high": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/prioritizedLocation" }
+        },
+        "low": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/prioritizedLocation" }
+        }
+      }
+    },
+    "fields_of_interest": {
+      "description": "Specter-only: fields for which concrete values must be preserved in reported paths.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "reason"],
+        "additionalProperties": false,
+        "properties": {
+          "name": { "type": "string", "minLength": 1 },
+          "reason": { "type": "string" }
+        }
+      }
+    },
+    "challenger_inputs": {
+      "description": "War Rig-only: rendered Challenger prompts derived from Specter findings.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["finding_id", "finding_type", "location", "evidence", "prompt"],
+        "additionalProperties": false,
+        "properties": {
+          "finding_id": { "type": "string", "minLength": 1 },
+          "finding_type": {
+            "enum": [
+              "ALIASED_INTENT",
+              "UNDOCUMENTED_PATH",
+              "UNREACHABLE_RULE",
+              "EXTERNAL_DEPENDENCY_UNRESOLVED"
+            ]
+          },
+          "location": { "type": "string" },
+          "evidence": { "type": "object" },
+          "prompt": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "citadel_resolutions": {
+      "description": "Applies to both consumers. Async Citadel results delivered since last round.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["field", "source_module", "source_location"],
+        "additionalProperties": false,
+        "properties": {
+          "field": { "type": "string", "minLength": 1 },
+          "source_module": { "type": "string" },
+          "source_location": { "type": "string" },
+          "notes": { "type": "string" }
+        }
+      }
+    },
+    "seed_test_cases": {
+      "description": "Specter-only: pre-derived input states that match documented rule preconditions. Specter executes each as a candidate test case before the LLM-guided coverage loop; seeds that hit new branches are retained. Low cost per seed, high value for covering documented paths without LLM budget.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["seed_id", "input_state"],
+        "additionalProperties": false,
+        "properties": {
+          "seed_id": { "type": "string", "minLength": 1 },
+          "input_state": {
+            "type": "object",
+            "description": "Field-name → value map. Values are strings, numbers, or booleans as appropriate for the COBOL field PIC."
+          },
+          "source_rule_id": { "type": "string", "description": "War Rig rule_id that generated this seed." },
+          "target_paragraph": { "type": "string", "description": "Paragraph name the seed intends to reach; Specter may route accordingly." },
+          "rationale": { "type": "string" }
+        }
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "consumer": { "const": "specter" } } },
+      "then": {
+        "not": { "required": ["challenger_inputs"] }
+      }
+    },
+    {
+      "if": { "properties": { "consumer": { "const": "war_rig" } } },
+      "then": {
+        "not": { "anyOf": [
+          { "required": ["branch_priorities"] },
+          { "required": ["fields_of_interest"] },
+          { "required": ["seed_test_cases"] }
+        ]}
+      }
+    }
+  ],
+  "$defs": {
+    "prioritizedLocation": {
+      "type": "object",
+      "required": ["location", "reason"],
+      "additionalProperties": false,
+      "properties": {
+        "location": { "type": "string", "minLength": 1 },
+        "reason": { "type": "string" }
+      }
+    }
+  }
+}

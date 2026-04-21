@@ -19,6 +19,7 @@ Example:
 
 import asyncio
 import logging
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Annotated
 
@@ -31,6 +32,12 @@ from rich.table import Table
 
 from war_rig.beads import TicketState, TicketType, get_beads_client
 from war_rig.config import WarRigConfig, load_config
+from war_rig.doof_wagon.bridge import (
+    create_residue_ticket,
+    emit_open_questions,
+    load_priors,
+    wait_for_signal,
+)
 from war_rig.io.reader import SourceReader
 from war_rig.io.writer import DocumentationWriter
 from war_rig.models.templates import FileType
@@ -132,6 +139,48 @@ def analyze(
             help="Enable verbose logging",
         ),
     ] = False,
+    priors: Annotated[
+        Path | None,
+        typer.Option(
+            "--priors",
+            help="Doof Wagon priors.schema.v1.json input (consumer='war_rig'). Additive; no-op when absent.",
+        ),
+    ] = None,
+    doof_wagon_output: Annotated[
+        Path | None,
+        typer.Option(
+            "--doof-wagon-output",
+            help="Write a schema-conformant open_questions.v1 document to this path. Additive; existing outputs are unchanged.",
+        ),
+    ] = None,
+    await_signal: Annotated[
+        Path | None,
+        typer.Option(
+            "--await-signal",
+            help="After writing output, block until this signal file exists (Doof Wagon handshake).",
+        ),
+    ] = None,
+    signal_timeout_seconds: Annotated[
+        int,
+        typer.Option(
+            "--signal-timeout-seconds",
+            help="Timeout for --await-signal. Default 3600 per SPEC.",
+        ),
+    ] = 3600,
+    round_num: Annotated[
+        int,
+        typer.Option(
+            "--round-num",
+            help="Round number stamped into doof-wagon output. Default 1.",
+        ),
+    ] = 1,
+    module_name: Annotated[
+        str | None,
+        typer.Option(
+            "--module-name",
+            help="Module name stamped into doof-wagon output. Defaults to file stem.",
+        ),
+    ] = None,
 ) -> None:
     """Analyze and document a single source file.
 
@@ -149,6 +198,74 @@ def analyze(
     if output:
         cfg.output_directory = output
 
+    # Doof Wagon: if --priors provided, load and validate. Priors are loaded even
+    # when --doof-wagon-output is absent so mis-routed priors fail fast.
+    dw_priors = None
+    seed_questions: list = []
+    if priors is not None:
+        try:
+            dw_priors = load_priors(priors)
+            console.print(
+                f"[cyan]doof-wagon: loaded priors for round {dw_priors.get('round')}[/cyan]"
+            )
+        except Exception as e:
+            console.print(f"[red]doof-wagon: invalid priors at {priors}: {e}[/red]")
+            raise typer.Exit(2) from e
+
+        # Translate SPEC challenger_inputs into ChallengerQuestion objects so
+        # Scribe answers them alongside any Challenger-generated questions.
+        from war_rig.models.tickets import (
+            ChallengerQuestion,
+            QuestionSeverity,
+            QuestionType,
+        )
+        # Map SPEC finding_type → QuestionType. UNDOCUMENTED_PATH and UNREACHABLE_RULE
+        # are gap-about-existence questions → COMPLETENESS; ALIASED_INTENT is about
+        # differentiation → CHALLENGE; EXTERNAL_DEPENDENCY_UNRESOLVED is about
+        # verifying where a field comes from → VERIFICATION.
+        _qtype_map = {
+            "UNDOCUMENTED_PATH": QuestionType.COMPLETENESS,
+            "UNREACHABLE_RULE": QuestionType.COMPLETENESS,
+            "ALIASED_INTENT": QuestionType.CHALLENGE,
+            "EXTERNAL_DEPENDENCY_UNRESOLVED": QuestionType.VERIFICATION,
+        }
+        for inp in dw_priors.get("challenger_inputs", []):
+            evidence_obj = inp.get("evidence") or {}
+            # ChallengerQuestion.evidence is a LenientIntList (line numbers).
+            # Extract any integer-like values or :N-suffixed locations; stash the
+            # rest of the evidence dict into `context` as prose.
+            line_hints: list[int] = []
+            loc = inp.get("location", "")
+            if ":" in loc:
+                tail = loc.rsplit(":", 1)[1]
+                if tail.isdigit():
+                    line_hints.append(int(tail))
+            src_line = evidence_obj.get("source_line")
+            if isinstance(src_line, int):
+                line_hints.append(src_line)
+            context_bits = [f"location={loc}"]
+            for k in ("condition_text", "condition_category", "branch_key", "constraint", "outcome"):
+                v = evidence_obj.get(k)
+                if v:
+                    context_bits.append(f"{k}={v}")
+            seed_questions.append(
+                ChallengerQuestion(
+                    question_id=inp.get("finding_id") or f"DW-{len(seed_questions) + 1}",
+                    section=None,
+                    question_type=_qtype_map.get(inp.get("finding_type"), QuestionType.CLARIFICATION),
+                    question=inp.get("prompt", ""),
+                    context="; ".join(context_bits) if context_bits else None,
+                    evidence=line_hints,
+                    severity=QuestionSeverity.IMPORTANT,
+                    iteration=1,
+                )
+            )
+        if seed_questions:
+            console.print(
+                f"[cyan]doof-wagon: injecting {len(seed_questions)} challenger input(s) "
+                f"as seed questions[/cyan]"
+            )
+
     console.print(Panel.fit(
         f"[bold blue]War Rig[/bold blue] - Analyzing: {file_path.name}",
         border_style="blue",
@@ -165,6 +282,8 @@ def analyze(
     # Create graph and run
     graph = create_war_rig_graph(cfg)
 
+    dw_started_at = datetime.now(timezone.utc).isoformat()
+
     with Progress(
         SpinnerColumn(),
         TextColumn("[progress.description]{task.description}"),
@@ -179,6 +298,7 @@ def analyze(
                     file_name=file_path.name,
                     source_file_path=str(file_path.resolve()),
                     use_mock=mock,
+                    seed_questions=seed_questions or None,
                 )
             )
         except Exception as e:
@@ -187,6 +307,8 @@ def analyze(
             raise typer.Exit(1)
 
         progress.update(task, description="Writing output...")
+
+    dw_completed_at = datetime.now(timezone.utc).isoformat()
 
     # Write results
     writer = DocumentationWriter(cfg.system)
@@ -247,6 +369,61 @@ def analyze(
             console.print(f"[green]System overview written to: {cfg.output_directory / 'SYSTEM_OVERVIEW.md'}[/green]")
         except Exception as e:
             console.print(f"[yellow]Warning: Could not generate overview: {e}[/yellow]")
+
+    # Doof Wagon IPC: emit schema-conformant output and, if requested, wait for
+    # the orchestrator's signal before exiting. Additive; no-op when the flag is absent.
+    if doof_wagon_output is not None:
+        effective_module = module_name or file_path.stem
+        try:
+            emit_open_questions(
+                doof_wagon_output,
+                module=effective_module,
+                round_num=round_num,
+                war_rig_result=dict(result) if result else None,
+                started_at=dw_started_at,
+                completed_at=dw_completed_at,
+            )
+            console.print(
+                f"[green]doof-wagon: open_questions emitted at {doof_wagon_output}[/green]"
+            )
+        except Exception as e:
+            console.print(f"[red]doof-wagon: failed to emit output: {e}[/red]")
+            raise typer.Exit(3) from e
+
+        if await_signal is not None:
+            console.print(
+                f"[cyan]doof-wagon: awaiting signal at {await_signal} "
+                f"(timeout {signal_timeout_seconds}s)[/cyan]"
+            )
+            received = wait_for_signal(await_signal, signal_timeout_seconds)
+            if not received:
+                console.print("[yellow]doof-wagon: signal timeout[/yellow]")
+                raise typer.Exit(124)
+            console.print("[green]doof-wagon: signal received[/green]")
+
+
+@app.command(name="doof-wagon-create-ticket")
+def doof_wagon_create_ticket(
+    residue_path: Annotated[
+        Path,
+        typer.Argument(
+            help="Path to a JSON file containing a synthesis residue (gap_id, severity, description, ...).",
+            exists=True,
+            file_okay=True,
+            dir_okay=False,
+            readable=True,
+        ),
+    ],
+) -> None:
+    """Create a beads ticket for a Doof Wagon synthesis residue and print the ticket_id.
+
+    Invoked by Doof Wagon's synthesize-module skill for residues marked HUMAN_REVIEW.
+    Prints exactly one line to stdout: the resulting ticket_id. Stderr carries
+    diagnostics; stdout is machine-readable.
+    """
+    ticket_id = create_residue_ticket(residue_path)
+    # Print to stdout so the orchestrator can capture it.
+    typer.echo(ticket_id)
 
 
 @app.command()

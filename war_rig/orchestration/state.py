@@ -237,6 +237,7 @@ def create_initial_state(
     team_id: int = 1,
     max_challenger_cycles: int = 2,
     max_imperator_cycles: int = 1,
+    seed_questions: list[ChallengerQuestion] | None = None,
 ) -> WarRigState:
     """Create initial state for a War Rig run.
 
@@ -273,9 +274,12 @@ def create_initial_state(
         paragraph_asts={},
         current_template=None,
         current_confidence=None,
-        # Dialogue
-        challenger_questions=[],
-        current_round_questions=[],
+        # Dialogue — seed_questions (e.g., Doof Wagon challenger_inputs) are
+        # primed into both the cumulative list (so merge_lists doesn't lose them
+        # across iterations) and the current round (so Scribe answers them on
+        # iteration 1). Downstream nodes don't distinguish by source.
+        challenger_questions=list(seed_questions) if seed_questions else [],
+        current_round_questions=list(seed_questions) if seed_questions else [],
         scribe_responses=[],
         current_round_responses=[],
         challenger_assessment=None,

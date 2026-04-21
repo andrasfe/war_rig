@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://doof-wagon.local/schemas/open_questions.schema.v1.json",
+  "title": "War Rig Open Questions (v1)",
+  "description": "War Rig's round output, supplementing its existing documentation output. Carries business rules, unresolved questions, branch priority hints for Specter, and dead-code candidates.",
+  "type": "object",
+  "required": [
+    "schema_version", "module", "round", "producer",
+    "business_rules", "open_questions", "branch_priority_hints",
+    "dead_code_candidates", "imperator_signoff", "round_metadata"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "module": { "type": "string", "minLength": 1 },
+    "round": { "type": "integer", "minimum": 1 },
+    "producer": { "const": "war_rig" },
+    "business_rules": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["rule_id", "description", "preconditions", "postconditions"],
+        "additionalProperties": false,
+        "properties": {
+          "rule_id": { "type": "string", "minLength": 1 },
+          "description": { "type": "string" },
+          "preconditions": { "type": "string" },
+          "postconditions": { "type": "string" }
+        }
+      }
+    },
+    "open_questions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["question_id", "question", "hint"],
+        "additionalProperties": false,
+        "properties": {
+          "question_id": { "type": "string", "minLength": 1 },
+          "question": { "type": "string" },
+          "hint": { "enum": ["INTENT", "DATA_SOURCE", "BRANCH_COVERAGE"] },
+          "target_fields": {
+            "type": "array",
+            "items": { "type": "string" }
+          }
+        }
+      }
+    },
+    "branch_priority_hints": {
+      "type": "object",
+      "required": ["high", "low"],
+      "additionalProperties": false,
+      "properties": {
+        "high": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["location", "reason"],
+            "additionalProperties": false,
+            "properties": {
+              "location": { "type": "string" },
+              "reason": { "type": "string" }
+            }
+          }
+        },
+        "low": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["location", "reason"],
+            "additionalProperties": false,
+            "properties": {
+              "location": { "type": "string" },
+              "reason": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "dead_code_candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["location", "confidence"],
+        "additionalProperties": false,
+        "properties": {
+          "location": { "type": "string" },
+          "confidence": { "enum": ["HIGH", "MEDIUM", "LOW"] }
+        }
+      }
+    },
+    "imperator_signoff": { "type": "boolean" },
+    "round_metadata": {
+      "type": "object",
+      "required": ["started_at", "completed_at", "war_rig_version"],
+      "additionalProperties": false,
+      "properties": {
+        "started_at": { "type": "string", "format": "date-time" },
+        "completed_at": { "type": "string", "format": "date-time" },
+        "war_rig_version": { "type": "string" }
+      }
+    }
+  }
+}

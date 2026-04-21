@@ -114,6 +114,60 @@ def cli(ctx: click.Context, verbose: bool) -> None:
     setup_logging(verbose)
 
 
+@cli.command("watch")
+@click.option(
+    "--input-dir",
+    required=True,
+    type=click.Path(file_okay=False, dir_okay=True, path_type=Path),
+    help="Directory to watch for citadel_query.schema.v1.json files.",
+)
+@click.option(
+    "--once",
+    is_flag=True,
+    help="Process all pending queries then exit. Used by tests and one-shot dispatch.",
+)
+@click.option(
+    "--timeout-seconds",
+    default=3600,
+    type=int,
+    help="Watch duration when --once is not set. Default 3600.",
+)
+@click.option(
+    "--poll-interval-seconds",
+    default=1.0,
+    type=float,
+    help="Poll interval for pending-query scan. Default 1.0.",
+)
+def watch_command(
+    input_dir: Path,
+    once: bool,
+    timeout_seconds: int,
+    poll_interval_seconds: float,
+) -> None:
+    """Watch a directory for Doof Wagon async queries and resolve them.
+
+    This version uses a stub resolver that returns `status: "PENDING"` for every
+    query. Real resolution is deferred to a later delivery; the stub exists so
+    the orchestrator's async pipeline can be exercised end-to-end.
+    """
+    from citadel.doof_wagon.watcher import Watcher
+
+    input_dir.mkdir(parents=True, exist_ok=True)
+    watcher = Watcher(input_dir=input_dir, poll_interval_seconds=poll_interval_seconds)
+
+    if once:
+        n = watcher.process_once()
+        console.print(f"[green]doof-wagon[citadel]: processed {n} query(ies)[/green]")
+        return
+
+    console.print(
+        f"[cyan]doof-wagon[citadel]: watching {input_dir} for "
+        f"{timeout_seconds}s (poll every {poll_interval_seconds}s)[/cyan]"
+    )
+    n = watcher.watch_until(timeout_seconds)
+    console.print(f"[green]doof-wagon[citadel]: processed {n} query(ies) total[/green]")
+
+
 @cli.command()
 @click.argument("source", type=click.Path(exists=True, path_type=Path))
 @click.option(

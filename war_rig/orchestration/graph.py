@@ -31,6 +31,7 @@ import logging
 from langgraph.graph import END, StateGraph
 
 from war_rig.config import APIConfig, WarRigConfig
+from war_rig.models.tickets import ChallengerQuestion
 from war_rig.orchestration.nodes import WarRigNodes, has_template, should_continue
 from war_rig.orchestration.state import WarRigState, create_initial_state
 
@@ -127,6 +128,7 @@ class WarRigGraph:
         copybook_contents: dict[str, str] | None = None,
         source_file_path: str | None = None,
         use_mock: bool = False,
+        seed_questions: "list[ChallengerQuestion] | None" = None,
     ) -> WarRigState:
         """Asynchronously run the War Rig workflow.
 
@@ -136,11 +138,18 @@ class WarRigGraph:
             copybook_contents: Resolved copybook contents.
             source_file_path: Full path to source file (for call semantics).
             use_mock: Whether to use mock agents (for testing).
+            seed_questions: Externally-authored Challenger questions to inject
+                on iteration 1. Doof Wagon uses this to pass Specter-derived
+                challenger_inputs into War Rig's dialogue machinery. Scribe
+                answers these alongside Challenger-generated questions.
 
         Returns:
             Final state after workflow completion.
         """
-        logger.info(f"Starting War Rig analysis: {file_name}")
+        logger.info(
+            f"Starting War Rig analysis: {file_name}"
+            + (f" (+{len(seed_questions)} seed questions)" if seed_questions else "")
+        )
 
         # Create initial state
         initial_state = create_initial_state(
@@ -151,6 +160,7 @@ class WarRigGraph:
             rig_id=self.config.rig_id,
             max_iterations=self.config.max_iterations,
             use_mock=use_mock,
+            seed_questions=seed_questions,
         )
 
         # Run the graph
@@ -169,6 +179,7 @@ class WarRigGraph:
         copybook_contents: dict[str, str] | None = None,
         source_file_path: str | None = None,
         use_mock: bool = False,
+        seed_questions: "list[ChallengerQuestion] | None" = None,
     ) -> WarRigState:
         """Synchronously run the War Rig workflow.
 
@@ -180,6 +191,7 @@ class WarRigGraph:
             copybook_contents: Resolved copybook contents.
             source_file_path: Full path to source file (for call semantics).
             use_mock: Whether to use mock agents (for testing).
+            seed_questions: Externally-authored Challenger questions (Doof Wagon).
 
         Returns:
             Final state after workflow completion.
@@ -188,7 +200,8 @@ class WarRigGraph:
 
         return asyncio.run(
             self.ainvoke(
-                source_code, file_name, copybook_contents, source_file_path, use_mock
+                source_code, file_name, copybook_contents, source_file_path, use_mock,
+                seed_questions=seed_questions,
             )
         )
 

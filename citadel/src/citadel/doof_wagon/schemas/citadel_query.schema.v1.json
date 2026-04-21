@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://doof-wagon.local/schemas/citadel_query.schema.v1.json",
+  "title": "Citadel Query (v1)",
+  "description": "Async query fired by Doof Wagon to Citadel. Citadel watches an input directory for these files and writes results to callback_path.",
+  "type": "object",
+  "required": [
+    "schema_version", "query_id", "originating_module",
+    "query_type", "target", "callback_path", "created_at"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "query_id": { "type": "string", "minLength": 1 },
+    "originating_module": { "type": "string", "minLength": 1 },
+    "query_type": {
+      "enum": ["FIELD_SOURCE", "PERFORM_TARGET", "COPYBOOK_PROPAGATION"]
+    },
+    "target": { "type": "string", "minLength": 1 },
+    "callback_path": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "format": "date-time" }
+  }
+}

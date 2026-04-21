@@ -42,6 +42,7 @@ dependencies = [
     "llm-providers",
     "aiosqlite>=0.22.1",
     "json-repair>=0.30.0",
+    "jsonschema>=4.20",
 ]
 
 [project.optional-dependencies]
@@ -71,7 +72,12 @@ where = ["."]
 include = ["war_rig*"]
 
 [tool.setuptools.package-data]
-war_rig = ["py.typed", "validation/_mermaid_parse.mjs", "validation/package.json"]
+war_rig = [
+    "py.typed",
+    "validation/_mermaid_parse.mjs",
+    "validation/package.json",
+    "doof_wagon/schemas/*.json",
+]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
