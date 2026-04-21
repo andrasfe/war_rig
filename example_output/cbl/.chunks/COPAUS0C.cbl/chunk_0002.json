@@ -7,17 +7,16 @@
       "file_name": "COPAUS0C.cbl",
       "file_type": "COBOL",
       "analyzed_by": "WAR_RIG",
-      "analyzed_at": "2026-03-16T20:03:29.043901",
+      "analyzed_at": "2026-04-21T13:49:20.606706",
       "iteration_count": 1,
       "final_status": null
     },
     "purpose": {
-      "summary": "This COBOL program schedules a PSB (Program Specification Block) for IMS database interaction. It attempts to schedule the PSB and handles potential errors by setting an error flag, constructing an error message, and displaying it on a screen.",
-      "business_context": "This program is likely part of an IMS-based application that requires scheduling a PSB to access and manipulate data within IMS databases.",
-      "program_type": "SUBROUTINE",
+      "summary": "This COBOL program schedules a PSB (Program Specification Block) for IMS database interaction. It attempts to schedule the PSB and handles potential errors by setting an error flag, constructing an error message, and displaying it on the PAULST screen.",
+      "business_context": "This program is likely part of an IMS-based application, responsible for initiating database access.",
+      "program_type": "ONLINE_CICS",
       "citations": [
         3,
-        7,
         21,
         30
       ]
@@ -28,7 +27,7 @@
       {
         "program_name": "SEND-PAULST-SCREEN",
         "call_type": "STATIC_CALL",
-        "purpose": "Displays an error message on the PAULST screen if the PSB scheduling fails.",
+        "purpose": "Displays an error message on the PAULST screen.",
         "parameters": [],
         "citation": 30
       }
@@ -49,7 +48,7 @@
       {
         "paragraph_name": "SCHEDULE-PSB",
         "summary": null,
-        "purpose": "The SCHEDULE-PSB paragraph is responsible for scheduling a PSB for IMS database interaction. It first attempts to schedule the PSB using the `EXEC DLI SCHD` command, specifying the PSB name. After the initial scheduling attempt, it checks if the PSB has been scheduled more than once. If so, it terminates the current PSB using `EXEC DLI TERM` and then re-schedules the PSB. The DIBSTAT variable, containing the IMS return code, is moved to IMS-RETURN-CODE for analysis. If the scheduling is successful (STATUS-OK), the IMS-PSB-SCHD flag is set to TRUE. Otherwise, an error flag (WS-ERR-FLG) is set, an error message is constructed including the IMS return code, and the SEND-PAULST-SCREEN program is called to display the error message on the screen. The ACCTIDL field of COPAU0AI is also set to -1 before calling SEND-PAULST-SCREEN.",
+        "purpose": "The SCHEDULE-PSB paragraph is responsible for scheduling a Program Specification Block (PSB) within an IMS environment. It first attempts to schedule the PSB using the `EXEC DLI SCHD` command, specifying the PSB name and disabling Dhabend abend processing (lines 3-6). The DIBSTAT value is moved to IMS-RETURN-CODE for checking the status of the scheduling. If the PSB has been scheduled more than once (PSB-SCHEDULED-MORE-THAN-ONCE), it terminates the current PSB and schedules it again (lines 8-17). If the scheduling is successful (STATUS-OK), the IMS-PSB-SCHD flag is set to TRUE (lines 18-19). If the scheduling fails, an error flag (WS-ERR-FLG) is set to 'Y', an error message is constructed including the IMS-RETURN-CODE, and the message is stored in WS-MESSAGE (lines 21-28). Finally, it moves -1 to ACCTIDL of COPAU0AI and calls the SEND-PAULST-SCREEN program to display the error message (lines 29-30).",
         "called_by": [],
         "calls": [
           "SEND-PAULST-SCREEN"
@@ -67,10 +66,9 @@
     ],
     "error_handling": [
       {
-        "condition": "STATUS-OK is false (PSB scheduling fails)",
-        "action": "Sets WS-ERR-FLG to 'Y', constructs an error message in WS-MESSAGE, sets ACCTIDL of COPAU0AI to -1, and calls SEND-PAULST-SCREEN to display the error.",
+        "condition": "PSB Scheduling fails (STATUS-OK is false)",
+        "action": "Sets WS-ERR-FLG to 'Y', constructs an error message in WS-MESSAGE, moves -1 to ACCTIDL of COPAU0AI, and calls SEND-PAULST-SCREEN.",
         "citation": [
-          18,
           21,
           23,
           29,
@@ -82,19 +80,19 @@
     "cics_operations": [],
     "open_questions": [
       {
-        "question": "What is the structure and purpose of the COPAU0AI copybook, specifically the ACCTIDL field?",
-        "context": "The code sets ACCTIDL to -1 when an error occurs, but the purpose of this field and its relationship to the PAULST screen are unclear.",
-        "suggestion": "Examine the COPAU0AI copybook and the SEND-PAULST-SCREEN program to understand the role of ACCTIDL."
+        "question": "What is the structure and purpose of the PAULST screen?",
+        "context": "The program calls SEND-PAULST-SCREEN to display an error, but the details of this screen are not available.",
+        "suggestion": "Examine the definition of SEND-PAULST-SCREEN and related BMS map definitions."
       },
       {
-        "question": "What are the possible values and meanings of DIBSTAT and STATUS-OK?",
-        "context": "The code checks STATUS-OK and moves DIBSTAT to IMS-RETURN-CODE, but the specific values and their implications are not defined in this snippet.",
-        "suggestion": "Consult IMS documentation or related copybooks to determine the possible values and meanings of these variables."
+        "question": "What is the purpose of setting ACCTIDL of COPAU0AI to -1?",
+        "context": "The code moves -1 to ACCTIDL of COPAU0AI when an error occurs, but the significance of this action is unclear without knowing the structure and usage of COPAU0AI.",
+        "suggestion": "Examine the copybook definition of COPAU0AI and its usage in other parts of the application."
       },
       {
-        "question": "What is the purpose of checking PSB-SCHEDULED-MORE-THAN-ONCE and terminating/re-scheduling the PSB?",
-        "context": "The logic around lines 8-17 suggests a scenario where the PSB might be scheduled multiple times, but the reason for this and the potential consequences are unclear.",
-        "suggestion": "Review the program's overall architecture and IMS scheduling practices to understand the context of this logic."
+        "question": "What are the possible values of DIBSTAT and their meanings?",
+        "context": "The program checks DIBSTAT after scheduling the PSB, but the specific error codes and their implications are not documented in this snippet.",
+        "suggestion": "Consult the IMS documentation for DIBSTAT values."
       }
     ],
     "resolved_questions": [],
@@ -104,5 +102,5 @@
     "flow_diagram": null,
     "copybooks_not_found": []
   },
-  "saved_at": "2026-03-16T13:03:29.044551"
+  "saved_at": "2026-04-21T06:49:20.607733"
 }

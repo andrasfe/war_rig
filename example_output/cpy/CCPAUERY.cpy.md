@@ -2,15 +2,10 @@
 
 **File**: `cpy/CCPAUERY.cpy`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-03-16 19:55:04.463442
+**Analyzed**: 2026-04-21 13:43:51.055124
 
 ## Purpose
 
-This copybook defines the structure of an error log record. It includes fields for date, time, application, program, location, error level, subsystem, error codes, message, and event key. This structure is likely used for logging errors and debugging within a larger system.
+This copybook defines the structure of an error log record. It includes fields for date, time, application, program, location, error level, subsystem, error codes, message, and event key. The copybook is used for logging errors and warnings within an application.
 
-**Business Context**: UNKNOWN
-
-## Open Questions
-
-- ? What is the business context for these error logs?
-  - Context: The copybook itself does not provide information about the specific application or system where these error logs are used.
+**Business Context**: This copybook is likely used in applications that require error logging and tracking for debugging and monitoring purposes.

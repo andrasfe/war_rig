@@ -4,19 +4,18 @@
     "file_name": "CCPAURQY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-16T19:49:52.291032",
+    "analyzed_at": "2026-04-21T13:43:36.709506",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the data structure for a pending authorization request. It includes fields for transaction details such as card number, amount, merchant information, and date/time of the authorization request.",
-    "business_context": "This copybook is likely used in systems that process credit card transactions and require authorization before completing a purchase.",
+    "summary": "This copybook defines the data structure for a pending authorization request. It includes fields related to transaction details, card information, merchant details, and date/time stamps.",
+    "business_context": "This copybook is likely used in financial transaction processing systems to represent authorization requests before they are approved or declined.",
     "program_type": "COPYBOOK",
     "citations": [
       2,
-      21,
-      27,
-      31
+      19,
+      37
     ]
   },
   "inputs": [],

@@ -2,36 +2,37 @@
 
 **File**: `cbl/COPAUS2C.cbl`
 **Type**: FileType.COBOL
-**Analyzed**: 2026-03-16 19:47:12.320114
+**Analyzed**: 2026-04-21 13:42:54.531258
 
 ## Purpose
 
-COPAUS2C is a CICS COBOL DB2 program that marks authorization messages as fraudulent. It inserts a record into the CARDDEMO.AUTHFRDS table or updates an existing record if a duplicate is found, indicating that the authorization was fraudulent.
+The COPAUS2C program is a CICS COBOL DB2 program that marks authorization messages as fraudulent in the CARDDEMO.AUTHFRDS table. It receives authorization data via the CICS COMMAREA, inserts a new record into the AUTHFRDS table, and updates the record if it already exists.
 
-**Business Context**: This program is part of the CardDemo application and is used to report or remove fraud associated with card authorizations.
+**Business Context**: This program is part of the CardDemo application and is used to report or remove fraud flags from authorization records.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| DFHCOMMAREA | IOType.CICS_COMMAREA | CICS Commarea containing account ID (WS-ACCT-ID), customer ID (WS-CUST-ID), fraud audit record (WS-FRAUD-AUTH-RECORD), and fraud status record (WS-FRAUD-STATUS-RECORD). |
-| CARDDEMO.AUTHFRDS | IOType.DB2_TABLE | DB2 table containing authorization fraud details. |
+| DFHCOMMAREA | IOType.CICS_COMMAREA | CICS COMMAREA containing account ID, customer ID, and fraud authorization record data. |
+| CARDDEMO.AUTHFRDS | IOType.DB2_TABLE | DB2 table containing authorization and fraud data. |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| CARDDEMO.AUTHFRDS | IOType.DB2_TABLE | The AUTHFRDS table is updated with fraud information. |
-| DFHCOMMAREA | IOType.CICS_COMMAREA | The commarea is updated with a fraud update status and message (WS-FRD-ACT-MSG). |
+| CARDDEMO.AUTHFRDS | IOType.DB2_TABLE | The AUTH_FRAUD column in the CARDDEMO.AUTHFRDS table is updated to indicate a fraudulent transaction, or a new record is inserted. |
+| WS-FRD-ACT-MSG | IOType.CICS_COMMAREA | Message indicating the success or failure of the fraud update. |
 
 ## Business Rules
 
-- **BR001**: If a record with the same card number and timestamp already exists in the AUTHFRDS table, update the existing record instead of inserting a new one.
+- **BR001**: If a record with the same CARD_NUM and AUTH_TS already exists in the AUTHFRDS table, update the AUTH_FRAUD and FRAUD_RPT_DATE columns.
+- **BR002**: If a record with the same CARD_NUM and AUTH_TS does not exist in the AUTHFRDS table, insert a new record with the provided authorization and fraud data.
 
 ## Paragraphs/Procedures
 
 ### COPAUS2C
-This is the program ID paragraph. It simply defines the program name and has no executable logic.
+This paragraph is the program identifier. It does not contain any executable code and serves only to identify the program.
 
 ### MAIN-PARA
 > [Source: MAIN-PARA.cbl.md](COPAUS2C.cbl.d/MAIN-PARA.cbl.md)
@@ -95,7 +96,7 @@ END-STRING
 ├── EXEC_CICS: EXEC CICS RETURN END-EXEC
 └── UNKNOWN
 ```
-This paragraph is the main processing logic of the program. It retrieves the current date and time using CICS services and formats them. It then moves data from the commarea (DFHCOMMAREA) to the DB2 table fields. It inserts a new record into the CARDDEMO.AUTHFRDS table with the fraud information. If the insert fails due to a duplicate record (SQLCODE = -803), it calls the FRAUD-UPDATE paragraph to update the existing record. If any other DB2 error occurs, it sets the WS-FRD-UPDT-FAILED flag to TRUE and constructs an error message in WS-FRD-ACT-MSG. Finally, it returns control to CICS.
+This paragraph is the main processing logic of the COPAUS2C program. It first retrieves the current date and time using CICS ASKTIME and FORMATTIME commands and moves the current date to PA-FRAUD-RPT-DATE. It then extracts the year, month, and day from PA-AUTH-ORIG-DATE and calculates WS-AUTH-TIME by subtracting PA-AUTH-TIME-9C from 999999999. It moves data from the COMMAREA (PA-*) to the corresponding fields in the AUTHFRDS table structure. After preparing the data, it attempts to insert a new record into the CARDDEMO.AUTHFRDS table using an SQL INSERT statement. If the insert is successful (SQLCODE = ZERO), it sets WS-FRD-UPDT-SUCCESS to TRUE and moves 'ADD SUCCESS' to WS-FRD-ACT-MSG. If the insert fails due to a duplicate key (SQLCODE = -803), it performs the FRAUD-UPDATE paragraph to update the existing record. If any other SQL error occurs, it sets WS-FRD-UPDT-FAILED to TRUE, moves the SQLCODE and SQLSTATE to WS-SQLCODE and WS-SQLSTATE, respectively, and constructs an error message in WS-FRD-ACT-MSG. Finally, it returns control to CICS.
 
 ### FRAUD-UPDATE
 > [Source: FRAUD-UPDATE.cbl.md](COPAUS2C.cbl.d/FRAUD-UPDATE.cbl.md)
@@ -116,7 +117,7 @@ PARAGRAPH
 INTO WS-FRD-ACT-MSG
 END-STRING
 ```
-This paragraph updates an existing record in the CARDDEMO.AUTHFRDS table. It sets the AUTH_FRAUD and FRAUD_RPT_DATE fields for the record matching the CARD_NUM and AUTH_TS from the commarea. If the update is successful (SQLCODE = ZERO), it sets WS-FRD-UPDT-SUCCESS to TRUE and moves 'UPDT SUCCESS' to WS-FRD-ACT-MSG. If the update fails, it sets WS-FRD-UPDT-FAILED to TRUE and constructs an error message in WS-FRD-ACT-MSG with the SQLCODE and SQLSTATE.
+This paragraph updates an existing record in the CARDDEMO.AUTHFRDS table. It executes an SQL UPDATE statement to set the AUTH_FRAUD and FRAUD_RPT_DATE columns for the record matching the CARD_NUM and AUTH_TS from the COMMAREA. If the update is successful (SQLCODE = ZERO), it sets WS-FRD-UPDT-SUCCESS to TRUE and moves 'UPDT SUCCESS' to WS-FRD-ACT-MSG. If the update fails, it sets WS-FRD-UPDT-FAILED to TRUE, moves the SQLCODE and SQLSTATE to WS-SQLCODE and WS-SQLSTATE, respectively, and constructs an error message in WS-FRD-ACT-MSG.
 
 ## Control Flow
 

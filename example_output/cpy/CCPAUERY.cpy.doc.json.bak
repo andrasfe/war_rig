@@ -4,16 +4,17 @@
     "file_name": "CCPAUERY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-16T19:55:04.463442",
+    "analyzed_at": "2026-04-21T13:43:51.055124",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the structure of an error log record. It includes fields for date, time, application, program, location, error level, subsystem, error codes, message, and event key. This structure is likely used for logging errors and debugging within a larger system.",
-    "business_context": "UNKNOWN",
-    "program_type": "COPYBOOK",
+    "summary": "This copybook defines the structure of an error log record. It includes fields for date, time, application, program, location, error level, subsystem, error codes, message, and event key. The copybook is used for logging errors and warnings within an application.",
+    "business_context": "This copybook is likely used in applications that require error logging and tracking for debugging and monitoring purposes.",
+    "program_type": "UTILITY",
     "citations": [
-      20,
+      2,
+      19,
       39
     ]
   },
@@ -35,7 +36,7 @@
     {
       "copybook_name": "CCPAUERY",
       "purpose": "Defines the structure of an error log record.",
-      "location": "OTHER",
+      "location": "WORKING_STORAGE",
       "citation": 19
     }
   ],
@@ -43,13 +44,7 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
-    {
-      "question": "What is the business context for these error logs?",
-      "context": "The copybook itself does not provide information about the specific application or system where these error logs are used.",
-      "suggestion": "Review the programs that include this copybook to understand the business processes involved."
-    }
-  ],
+  "open_questions": [],
   "resolved_questions": [],
   "dead_code": [],
   "dead_code_resolved": [],

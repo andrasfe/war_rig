@@ -4,13 +4,13 @@
     "file_name": "CIPAUDTY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-16T20:00:37.627354",
+    "analyzed_at": "2026-04-21T13:43:47.414688",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the data structure for the IMS segment CIPAUDTY, which stores pending authorization details for transactions. It includes fields for authorization keys, card details, transaction amounts, merchant information, and fraud indicators.",
-    "business_context": "This copybook is used in systems that process and manage transaction authorizations, potentially for fraud detection and reporting.",
+    "summary": "This copybook defines the data structure for the IMS segment CIPAUDTY, which stores pending authorization details for transactions. It includes fields for authorization keys, card details, transaction amounts, merchant information, and fraud-related flags.",
+    "business_context": "This copybook is used in the context of authorization processing within a financial transaction system, likely for storing details of transactions awaiting authorization and related fraud information.",
     "program_type": "COPYBOOK",
     "citations": [
       2,
@@ -32,7 +32,14 @@
     "writes_to": [],
     "transforms": []
   },
-  "copybooks_used": [],
+  "copybooks_used": [
+    {
+      "copybook_name": "CIPAUDTY",
+      "purpose": "Defines the structure of the IMS segment for pending authorization details.",
+      "location": "OTHER",
+      "citation": 1
+    }
+  ],
   "paragraphs": [],
   "error_handling": [],
   "sql_operations": [],

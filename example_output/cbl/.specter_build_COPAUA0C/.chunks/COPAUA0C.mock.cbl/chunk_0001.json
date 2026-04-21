@@ -1,0 +1,447 @@
+{
+  "batch_idx": 1,
+  "total_batches": 5,
+  "template": {
+    "header": {
+      "program_id": "COPAUA0C",
+      "file_name": "COPAUA0C.mock.cbl",
+      "file_type": "COBOL",
+      "analyzed_by": "WAR_RIG",
+      "analyzed_at": "2026-04-21T13:47:13.382018",
+      "iteration_count": 1,
+      "final_status": null
+    },
+    "purpose": {
+      "summary": "This COBOL program processes authorization requests. It extracts data from a request message, reads card and account information, and makes authorization decisions. The program also includes error logging capabilities.",
+      "business_context": "This program likely supports credit card transaction processing within a financial institution.",
+      "program_type": "BATCH",
+      "citations": [
+        5,
+        50,
+        77
+      ]
+    },
+    "inputs": [
+      {
+        "name": "W01-GET-BUFFER",
+        "io_type": "PARAMETER",
+        "description": "Input buffer containing the authorization request message.",
+        "copybook": null,
+        "citation": [
+          5
+        ]
+      },
+      {
+        "name": "MOCK-FILE",
+        "io_type": "FILE_SEQUENTIAL",
+        "description": "Mock file used for testing purposes, replaces CICS reads.",
+        "copybook": null,
+        "citation": [
+          109,
+          169
+        ]
+      }
+    ],
+    "outputs": [],
+    "called_programs": [
+      {
+        "program_name": "1200-SCHEDULE-PSB",
+        "call_type": "STATIC_CALL",
+        "purpose": "UNKNOWN",
+        "parameters": [],
+        "citation": 55
+      },
+      {
+        "program_name": "5300-READ-CUST-RECORD",
+        "call_type": "STATIC_CALL",
+        "purpose": "UNKNOWN",
+        "parameters": [],
+        "citation": 67
+      },
+      {
+        "program_name": "5500-READ-AUTH-SUMMRY",
+        "call_type": "STATIC_CALL",
+        "purpose": "UNKNOWN",
+        "parameters": [],
+        "citation": 70
+      },
+      {
+        "program_name": "5600-READ-PROFILE-DATA",
+        "call_type": "STATIC_CALL",
+        "purpose": "UNKNOWN",
+        "parameters": [],
+        "citation": 73
+      },
+      {
+        "program_name": "6000-MAKE-DECISION",
+        "call_type": "STATIC_CALL",
+        "purpose": "UNKNOWN",
+        "parameters": [],
+        "citation": 77
+      },
+      {
+        "program_name": "7100-SEND-RESPONSE",
+        "call_type": "STATIC_CALL",
+        "purpose": "UNKNOWN",
+        "parameters": [],
+        "citation": 80
+      },
+      {
+        "program_name": "8000-WRITE-AUTH-TO-DB",
+        "call_type": "STATIC_CALL",
+        "purpose": "UNKNOWN",
+        "parameters": [],
+        "citation": 84
+      },
+      {
+        "program_name": "9500-LOG-ERROR",
+        "call_type": "STATIC_CALL",
+        "purpose": "Logs errors encountered during processing.",
+        "parameters": [],
+        "citation": 131
+      }
+    ],
+    "calling_context": {
+      "called_by": [],
+      "entry_points": [],
+      "linkage_section": []
+    },
+    "business_rules": [],
+    "data_flow": {
+      "reads_from": [
+        {
+          "source": "W01-GET-BUFFER",
+          "fields_used": [
+            "PA-RQ-AUTH-DATE",
+            "PA-RQ-AUTH-TIME",
+            "PA-RQ-CARD-NUM",
+            "PA-RQ-AUTH-TYPE",
+            "PA-RQ-CARD-EXPIRY-DATE",
+            "PA-RQ-MESSAGE-TYPE",
+            "PA-RQ-MESSAGE-SOURCE",
+            "PA-RQ-PROCESSING-CODE",
+            "WS-TRANSACTION-AMT-AN",
+            "PA-RQ-MERCHANT-CATAGORY-CODE",
+            "PA-RQ-ACQR-COUNTRY-CODE",
+            "PA-RQ-POS-ENTRY-MODE",
+            "PA-RQ-MERCHANT-ID",
+            "PA-RQ-MERCHANT-NAME",
+            "PA-RQ-MERCHANT-CITY",
+            "PA-RQ-MERCHANT-STATE",
+            "PA-RQ-MERCHANT-ZIP",
+            "PA-RQ-TRANSACTION-ID"
+          ],
+          "citation": [
+            5,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16,
+            17,
+            18,
+            19,
+            20,
+            21,
+            22,
+            23,
+            24
+          ]
+        },
+        {
+          "source": "MOCK-FILE",
+          "fields_used": [
+            "MOCK-NUM-STATUS"
+          ],
+          "citation": [
+            109,
+            114,
+            169,
+            174
+          ]
+        }
+      ],
+      "writes_to": [],
+      "transforms": [
+        {
+          "input_field": "WS-TRANSACTION-AMT-AN",
+          "output_field": "PA-RQ-TRANSACTION-AMT",
+          "transformation_description": "Converts alphanumeric transaction amount to numeric.",
+          "citation": [
+            27,
+            28
+          ]
+        }
+      ]
+    },
+    "copybooks_used": [],
+    "paragraphs": [
+      {
+        "paragraph_name": "2100-EXTRACT-REQUEST-MSG",
+        "summary": null,
+        "purpose": "This paragraph extracts data from the input message buffer W01-GET-BUFFER. It uses the UNSTRING statement to parse the comma-delimited message into individual fields such as authorization date, time, card number, authorization type, card expiry date, message type, message source, processing code, transaction amount, merchant category code, acquirer country code, POS entry mode, merchant ID, merchant name, merchant city, merchant state, merchant zip, and transaction ID. It then converts the alphanumeric transaction amount (WS-TRANSACTION-AMT-AN) to a numeric value (PA-RQ-TRANSACTION-AMT) using the NUMVAL function. The extracted data is used in subsequent processing steps. No error handling is explicitly performed in this paragraph. After extracting the data, control passes to the next paragraph in sequence.",
+        "called_by": [],
+        "calls": [],
+        "citation": [
+          639,
+          668
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "2100-EXIT",
+        "summary": null,
+        "purpose": "This paragraph serves as the exit point for the 2100-EXTRACT-REQUEST-MSG paragraph. It contains a DISPLAY statement for tracing purposes, indicating that the program has reached this point. The EXIT statement then returns control to the calling paragraph. No data manipulation or error handling is performed here. This paragraph ensures a clean exit from the 2100-EXTRACT-REQUEST-MSG routine.",
+        "called_by": [],
+        "calls": [],
+        "citation": [
+          670,
+          672
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "3100-READ-REQUEST-MQ",
+        "summary": null,
+        "purpose": "This paragraph is a placeholder for reading a request from a message queue (MQ). Currently, it only contains a DISPLAY statement for tracing and a CONTINUE statement, indicating that no actual MQ read operation is implemented in this mock version. It is likely intended to interface with a message queuing system in a production environment. No data is read or processed in this paragraph. Control simply proceeds to the next paragraph after the CONTINUE statement.",
+        "called_by": [],
+        "calls": [],
+        "citation": [
+          674,
+          676
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "3100-EXIT",
+        "summary": null,
+        "purpose": "This paragraph serves as the exit point for the 3100-READ-REQUEST-MQ paragraph. It contains a DISPLAY statement for tracing purposes. The EXIT statement then returns control to the calling paragraph. No data manipulation or error handling is performed here. This paragraph ensures a clean exit from the 3100-READ-REQUEST-MQ routine.",
+        "called_by": [],
+        "calls": [],
+        "citation": [
+          730,
+          732
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "5000-PROCESS-AUTH",
+        "summary": null,
+        "purpose": "This paragraph is the main processing routine for authorization requests. It begins by setting APPROVE-AUTH to TRUE, indicating an initial approval status. It then performs several subroutines, including 1200-SCHEDULE-PSB, 5100-READ-XREF-RECORD, 5200-READ-ACCT-RECORD, 5300-READ-CUST-RECORD, 5500-READ-AUTH-SUMMRY, 5600-READ-PROFILE-DATA, 6000-MAKE-DECISION, 7100-SEND-RESPONSE and 8000-WRITE-AUTH-TO-DB. The calls to 5200-READ-ACCT-RECORD, 5300-READ-CUST-RECORD, 5500-READ-AUTH-SUMMRY, 5600-READ-PROFILE-DATA, and 8000-WRITE-AUTH-TO-DB are conditionally executed based on the CARD-FOUND-XREF flag. The paragraph sets CARD-FOUND-XREF and FOUND-ACCT-IN-MSTR to TRUE before calling 5100-READ-XREF-RECORD. The overall purpose is to orchestrate the steps required to authorize a transaction.",
+        "called_by": [],
+        "calls": [
+          "1200-SCHEDULE-PSB",
+          "5100-READ-XREF-RECORD",
+          "5200-READ-ACCT-RECORD",
+          "5300-READ-CUST-RECORD",
+          "5500-READ-AUTH-SUMMRY",
+          "5600-READ-PROFILE-DATA",
+          "6000-MAKE-DECISION",
+          "7100-SEND-RESPONSE",
+          "8000-WRITE-AUTH-TO-DB"
+        ],
+        "citation": [
+          734,
+          771
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "5000-EXIT",
+        "summary": null,
+        "purpose": "This paragraph serves as the exit point for the 5000-PROCESS-AUTH paragraph. It contains a DISPLAY statement for tracing purposes. The EXIT statement then returns control to the calling paragraph. No data manipulation or error handling is performed here. This paragraph ensures a clean exit from the 5000-PROCESS-AUTH routine.",
+        "called_by": [],
+        "calls": [],
+        "citation": [
+          773,
+          775
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "5100-READ-XREF-RECORD",
+        "summary": null,
+        "purpose": "This paragraph reads the card cross-reference (XREF) record based on the card number (PA-RQ-CARD-NUM). It moves the card number to WS-CARD-RID-CARD-NUM and then attempts to read the XREF record. The CICS READ command is commented out, and instead, a READ statement from a MOCK-FILE is used for testing. The paragraph evaluates the WS-RESP-CD to determine the outcome of the read operation. If WS-RESP-CD is 0, CARD-FOUND-XREF is set to TRUE. If WS-RESP-CD is 13, CARD-NFOUND-XREF and NFOUND-ACCT-IN-MSTR are set to TRUE, and an error message is logged using 9500-LOG-ERROR. If WS-RESP-CD is any other value, an error message is logged indicating a failure to read the XREF file. The paragraph uses MOCK-NUM-STATUS from the MOCK-FILE to populate WS-RESP-CD.",
+        "called_by": [
+          "5000-PROCESS-AUTH"
+        ],
+        "calls": [
+          "9500-LOG-ERROR"
+        ],
+        "citation": [
+          777,
+          829
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "5100-EXIT",
+        "summary": null,
+        "purpose": "This paragraph serves as the exit point for the 5100-READ-XREF-RECORD paragraph. It contains a DISPLAY statement for tracing purposes. The EXIT statement then returns control to the calling paragraph. No data manipulation or error handling is performed here. This paragraph ensures a clean exit from the 5100-READ-XREF-RECORD routine.",
+        "called_by": [],
+        "calls": [],
+        "citation": [
+          831,
+          833
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "5200-READ-ACCT-RECORD",
+        "summary": null,
+        "purpose": "This paragraph reads the account record based on the account ID (WS-CARD-RID-ACCT-ID). It moves the account ID to WS-CARD-RID-ACCT-ID and then attempts to read the account record. The CICS READ command is commented out, and instead, a READ statement from a MOCK-FILE is used for testing. The paragraph evaluates the WS-RESP-CD to determine the outcome of the read operation. If WS-RESP-CD is 0, FOUND-ACCT-IN-MSTR is set to TRUE. If WS-RESP-CD is 13, NFOUND-ACCT-IN-MSTR is set to TRUE, and an error message is logged using 9500-LOG-ERROR. If WS-RESP-CD is any other value, an error message is logged indicating a failure to read the account file. The paragraph uses MOCK-NUM-STATUS from the MOCK-FILE to populate WS-RESP-CD.",
+        "called_by": [
+          "5000-PROCESS-AUTH"
+        ],
+        "calls": [
+          "9500-LOG-ERROR"
+        ],
+        "citation": [
+          835,
+          887
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "5200-EXIT",
+        "summary": null,
+        "purpose": "This paragraph serves as the exit point for the 5200-READ-ACCT-RECORD paragraph. It contains a DISPLAY statement for tracing purposes. The EXIT statement then returns control to the calling paragraph. No data manipulation or error handling is performed here. This paragraph ensures a clean exit from the 5200-READ-ACCT-RECORD routine.",
+        "called_by": [],
+        "calls": [],
+        "citation": [
+          889,
+          891
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      }
+    ],
+    "error_handling": [
+      {
+        "condition": "WS-RESP-CD = 13 (CARD NOT FOUND IN XREF)",
+        "action": "Sets CARD-NFOUND-XREF and NFOUND-ACCT-IN-MSTR to TRUE, logs a warning message.",
+        "citation": [
+          121,
+          122,
+          124,
+          131
+        ]
+      },
+      {
+        "condition": "WS-RESP-CD not 0 or 13 (FAILED TO READ XREF FILE)",
+        "action": "Logs a critical error message.",
+        "citation": [
+          133,
+          144
+        ]
+      },
+      {
+        "condition": "WS-RESP-CD = 13 (ACCT NOT FOUND IN XREF)",
+        "action": "Sets NFOUND-ACCT-IN-MSTR to TRUE, logs a warning message.",
+        "citation": [
+          181,
+          183,
+          190
+        ]
+      },
+      {
+        "condition": "WS-RESP-CD not 0 or 13 (FAILED TO READ ACCT FILE)",
+        "action": "Logs a critical error message.",
+        "citation": [
+          193,
+          204
+        ]
+      }
+    ],
+    "sql_operations": [],
+    "cics_operations": [],
+    "open_questions": [
+      {
+        "question": "What is the purpose of the 1200-SCHEDULE-PSB paragraph?",
+        "context": "The code calls this paragraph, but its function is unclear from the provided snippet.",
+        "suggestion": "Examine the source code of 1200-SCHEDULE-PSB to determine its purpose."
+      },
+      {
+        "question": "What is the purpose of the 5300-READ-CUST-RECORD paragraph?",
+        "context": "The code calls this paragraph, but its function is unclear from the provided snippet.",
+        "suggestion": "Examine the source code of 5300-READ-CUST-RECORD to determine its purpose."
+      },
+      {
+        "question": "What is the purpose of the 5500-READ-AUTH-SUMMRY paragraph?",
+        "context": "The code calls this paragraph, but its function is unclear from the provided snippet.",
+        "suggestion": "Examine the source code of 5500-READ-AUTH-SUMMRY to determine its purpose."
+      },
+      {
+        "question": "What is the purpose of the 5600-READ-PROFILE-DATA paragraph?",
+        "context": "The code calls this paragraph, but its function is unclear from the provided snippet.",
+        "suggestion": "Examine the source code of 5600-READ-PROFILE-DATA to determine its purpose."
+      },
+      {
+        "question": "What is the purpose of the 6000-MAKE-DECISION paragraph?",
+        "context": "The code calls this paragraph, but its function is unclear from the provided snippet.",
+        "suggestion": "Examine the source code of 6000-MAKE-DECISION to determine its purpose."
+      },
+      {
+        "question": "What is the purpose of the 7100-SEND-RESPONSE paragraph?",
+        "context": "The code calls this paragraph, but its function is unclear from the provided snippet.",
+        "suggestion": "Examine the source code of 7100-SEND-RESPONSE to determine its purpose."
+      },
+      {
+        "question": "What is the purpose of the 8000-WRITE-AUTH-TO-DB paragraph?",
+        "context": "The code calls this paragraph, but its function is unclear from the provided snippet.",
+        "suggestion": "Examine the source code of 8000-WRITE-AUTH-TO-DB to determine its purpose."
+      }
+    ],
+    "resolved_questions": [],
+    "dead_code": [],
+    "dead_code_resolved": [],
+    "call_semantics": [],
+    "flow_diagram": null,
+    "copybooks_not_found": []
+  },
+  "saved_at": "2026-04-21T06:47:13.383180"
+}

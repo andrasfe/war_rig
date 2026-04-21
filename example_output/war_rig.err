@@ -1,18 +1,60 @@
-2026-03-16 12:49:18,814 | ERROR | war_rig.agents.base | Scribe: Error during invocation: 
-/home/andras/war_rig/war_rig/agents/base.py:480
+2026-04-21 06:43:05,078 | ERROR | war_rig.agents.challenger | Failed to parse Challenger response: 1 validation error for ChallengerQuestion
+severity
+  Input should be 'BLOCKING', 'IMPORTANT' or 'MINOR' [type=enum, input_value='CHALLENGE', input_type=str]
+    For further information visit https://errors.pydantic.dev/2.12/v/enum
+/home/andras/war_rig/war_rig/agents/challenger.py:534
 
-2026-03-16 12:49:18,819 | ERROR | war_rig.errors | 
+2026-04-21 06:47:54,094 | ERROR | war_rig.providers.openrouter | OpenRouter API error: JSON error injected into SSE stream
+/home/andras/war_rig/war_rig/providers/openrouter.py:414
+
+2026-04-21 06:47:54,099 | ERROR | war_rig.errors | 
 ================================================================================
 STRUCTURED ERROR:
 {
-  "timestamp": "2026-03-16T12:49:18.815683",
-  "error_type": "TimeoutError",
-  "error_message": "",
+  "timestamp": "2026-04-21T06:47:54.096448",
+  "error_type": "APIError",
+  "error_message": "JSON error injected into SSE stream",
+  "context": {
+    "provider": "openrouter",
+    "model": "google/gemini-2.0-flash-001",
+    "error_type": "api_error",
+    "status_code": null
+  },
+  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 309, in complete\n    async for chunk in iter_with_timeout(stream, chunk_timeout):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 296, in iter_with_timeout\n    chunk = await asyncio.wait_for(\n            ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 489, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_streaming.py\", line 148, in __aiter__\n    async for item in self._iterator:\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_streaming.py\", line 195, in __stream__\n    raise APIError(\nopenai.APIError: JSON error injected into SSE stream\n",
+  "request": {
+    "model": "google/gemini-2.0-flash-001",
+    "message_count": 2
+  },
+  "response": {
+    "body": {
+      "code": 429,
+      "message": "JSON error injected into SSE stream",
+      "metadata": {
+        "error_type": "rate_limit_exceeded"
+      }
+    },
+    "response": "None",
+    "message": "JSON error injected into SSE stream"
+  }
+}
+================================================================================
+/home/andras/war_rig/war_rig/utils/error_logging.py:164
+
+2026-04-21 06:47:54,103 | ERROR | war_rig.agents.base | Scribe: Error during invocation: OpenRouter API error: JSON error injected into SSE stream
+/home/andras/war_rig/war_rig/agents/base.py:480
+
+2026-04-21 06:47:54,106 | ERROR | war_rig.errors | 
+================================================================================
+STRUCTURED ERROR:
+{
+  "timestamp": "2026-04-21T06:47:54.104647",
+  "error_type": "OpenRouterProviderError",
+  "error_message": "OpenRouter API error: JSON error injected into SSE stream",
   "context": {
     "iteration": 1,
-    "file_name": "cbl/PAUDBUNL.CBL"
+    "file_name": "jcl/LOADPADB.JCL"
   },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 500, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py\", line 2678, in create\n    return await self._post(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1797, in post\n    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1532, in request\n    response = await self._client.send(\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1629, in send\n    response = await self._send_handling_auth(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1657, in _send_handling_auth\n    response = await self._send_handling_redirects(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1694, in _send_handling_redirects\n    response = await self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1730, in _send_single_request\n    response = await transport.handle_async_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 103, in handle_async_request\n    return await self._connection.handle_async_request(request)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 136, in handle_async_request\n    raise exc\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 106, in handle_async_request\n    ) = await self._receive_response_headers(**kwargs)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 177, in _receive_response_headers\n    event = await self._receive_event(timeout=timeout)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 217, in _receive_event\n    data = await self._network_stream.read(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 35, in read\n    return await self._stream.receive(max_bytes=max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 244, in receive\n    data = await self._call_sslobject_method(self._ssl_object.read, max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 187, in _call_sslobject_method\n    data = await self.transport_stream.receive()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py\", line 1269, in receive\n    await self._protocol.read_event.wait()\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/locks.py\", line 213, in wait\n    await fut\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/agents/base.py\", line 455, in ainvoke\n    response = await self._provider.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/circuit_breaker.py\", line 490, in complete\n    response = await asyncio.wait_for(\n               ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 502, in wait_for\n    raise exceptions.TimeoutError() from exc\nTimeoutError\n",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 309, in complete\n    async for chunk in iter_with_timeout(stream, chunk_timeout):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 296, in iter_with_timeout\n    chunk = await asyncio.wait_for(\n            ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 489, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_streaming.py\", line 148, in __aiter__\n    async for item in self._iterator:\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_streaming.py\", line 195, in __stream__\n    raise APIError(\nopenai.APIError: JSON error injected into SSE stream\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/agents/base.py\", line 455, in ainvoke\n    response = await self._provider.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/circuit_breaker.py\", line 490, in complete\n    response = await asyncio.wait_for(\n               ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 489, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 421, in complete\n    raise OpenRouterProviderError(\nwar_rig.providers.openrouter.OpenRouterProviderError: OpenRouter API error: JSON error injected into SSE stream\n",
   "request": {
     "agent": "Scribe",
     "model": "google/gemini-2.0-flash-001",
@@ -23,7 +65,7 @@ STRUCTURED ERROR:
       },
       {
         "role": "user",
-        "content": "## Source File: cbl/PAUDBUNL.CBL\nFile Type: COBOL\nIteration: 1\n\n## Paragraph Outline (from static analysis)\n\nThe following paragraphs were identified by static analysis.\nYou MUST document ALL listed paragraphs. Do not skip any.\n\n- **PAUDBUNL** (lines 18-18)\n- **MAIN-PARA** (lines 157-170)\n- **1000-INITIALIZE** (lines 173-200)\n- **1000-EXIT** (lines 203-204)\n- **2000-FIND-NEXT-AUTH-SUMMARY** (lines 207-247)\n- **2000-EXIT** (lines 248-249)\n- **3000-FIND-NEXT-AUTH-DTL** (lines 253-284)\n- **3000-EXIT** (lines 285-286)\n- **4000-FILE-CLOSE** (lines 289-304)\n- **4000-EXIT** (lines 305-306)\n\n## Analysis Pattern Insights\n\n**Key Variables**: ROOT-SEG-KEY, CHILD-SEG-REC, WS-END-OF-CHILD-SEG, PAUT-PCB-STATUS, WS-NO-SUMRY-READ, WS-AUTH-SMRY-PROC-CNT, PENDING-AUTH-SUMMARY, OPFIL1-REC, PA-ACCT-ID, __STR_45__\n**Complexity**: {'total_data_ops': 18, 'decision_points': 22, 'has_loops': False, 'has_nested_conditionals': True, 'has_go_to': False, 'error_coverage': 'good'}\n\n### Paragraph Documentation Hints..."
+        "content": "## Source File: jcl/LOADPADB.JCL\nFile Type: JCL\nIteration: 1\n\n## Source Code\n```\n    1 | //LOADPADB JOB 'M2APP',CLASS=A,MSGCLASS=H,MSGLEVEL=(1,1),\n    2 | //             REGION=0M,NOTIFY=&SYSUID,TIME=1440\n    3 | //******************************************************************\n    4 | //* Copyright Amazon.com, Inc. or its affiliates.\n    5 | //* All Rights Reserved.\n    6 | //*\n    7 | //* Licensed under the Apache License, Version 2.0 (the \"License\").\n    8 | //* You may not use this file except in compliance with the License.\n    9 | //* You may obtain a copy of the License at\n   10 | //*\n   11 | //*    http://www.apache.org/licenses/LICENSE-2.0\n   12 | //*\n   13 | //* Unless required by applicable law or agreed to in writing,\n   14 | //* software distributed under the License is distributed on an\n   15 | //* \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,\n   16 | //* either express or implied. See the License for the specific\n   17 | //* language governing permissio..."
       }
     ]
   }
@@ -31,21 +73,57 @@ STRUCTURED ERROR:
 ================================================================================
 /home/andras/war_rig/war_rig/utils/error_logging.py:164
 
-2026-03-16 12:52:35,800 | ERROR | war_rig.agents.base | Challenger: Error during invocation: 
-/home/andras/war_rig/war_rig/agents/base.py:480
+2026-04-21 06:48:47,835 | ERROR | war_rig.providers.openrouter | OpenRouter rate limit exceeded: Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemini-2.0-flash-001 is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}
+/home/andras/war_rig/war_rig/providers/openrouter.py:387
 
-2026-03-16 12:52:35,803 | ERROR | war_rig.errors | 
+2026-04-21 06:48:47,838 | ERROR | war_rig.errors | 
 ================================================================================
 STRUCTURED ERROR:
 {
-  "timestamp": "2026-03-16T12:52:35.801679",
-  "error_type": "TimeoutError",
-  "error_message": "",
+  "timestamp": "2026-04-21T06:48:47.836431",
+  "error_type": "RateLimitError",
+  "error_message": "Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemini-2.0-flash-001 is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}",
+  "context": {
+    "provider": "openrouter",
+    "model": "google/gemini-2.0-flash-001",
+    "error_type": "rate_limit"
+  },
+  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py\", line 2678, in create\n    return await self._post(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1797, in post\n    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1597, in request\n    raise self._make_status_error_from_response(err.response) from None\nopenai.RateLimitError: Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemini-2.0-flash-001 is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}\n",
+  "request": {
+    "model": "google/gemini-2.0-flash-001",
+    "message_count": 2
+  },
+  "response": {
+    "body": {
+      "message": "Provider returned error",
+      "code": 429,
+      "metadata": {
+        "raw": "google/gemini-2.0-flash-001 is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations",
+        "provider_name": "Google AI Studio",
+        "is_byok": false
+      }
+    },
+    "response": "<Response [429 Too Many Requests]>"
+  }
+}
+================================================================================
+/home/andras/war_rig/war_rig/utils/error_logging.py:164
+
+2026-04-21 06:48:47,841 | ERROR | war_rig.agents.base | Challenger: Error during invocation: Rate limit exceeded. Please retry after a delay.
+/home/andras/war_rig/war_rig/agents/base.py:480
+
+2026-04-21 06:48:47,842 | ERROR | war_rig.errors | 
+================================================================================
+STRUCTURED ERROR:
+{
+  "timestamp": "2026-04-21T06:48:47.842424",
+  "error_type": "OpenRouterProviderError",
+  "error_message": "Rate limit exceeded. Please retry after a delay.",
   "context": {
     "iteration": 1,
-    "file_name": "bms/COPAU00.bms"
+    "file_name": "jcl/UNLDGSAM.JCL"
   },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 500, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py\", line 2678, in create\n    return await self._post(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1797, in post\n    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1532, in request\n    response = await self._client.send(\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1629, in send\n    response = await self._send_handling_auth(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1657, in _send_handling_auth\n    response = await self._send_handling_redirects(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1694, in _send_handling_redirects\n    response = await self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1730, in _send_single_request\n    response = await transport.handle_async_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 103, in handle_async_request\n    return await self._connection.handle_async_request(request)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 136, in handle_async_request\n    raise exc\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 106, in handle_async_request\n    ) = await self._receive_response_headers(**kwargs)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 177, in _receive_response_headers\n    event = await self._receive_event(timeout=timeout)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 217, in _receive_event\n    data = await self._network_stream.read(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 35, in read\n    return await self._stream.receive(max_bytes=max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 244, in receive\n    data = await self._call_sslobject_method(self._ssl_object.read, max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 187, in _call_sslobject_method\n    data = await self.transport_stream.receive()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py\", line 1269, in receive\n    await self._protocol.read_event.wait()\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/locks.py\", line 213, in wait\n    await fut\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/agents/base.py\", line 455, in ainvoke\n    response = await self._provider.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/circuit_breaker.py\", line 490, in complete\n    response = await asyncio.wait_for(\n               ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 502, in wait_for\n    raise exceptions.TimeoutError() from exc\nTimeoutError\n",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py\", line 2678, in create\n    return await self._post(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1797, in post\n    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1597, in request\n    raise self._make_status_error_from_response(err.response) from None\nopenai.RateLimitError: Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemini-2.0-flash-001 is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google AI Studio', 'is_byok': False}}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/agents/base.py\", line 455, in ainvoke\n    response = await self._provider.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/circuit_breaker.py\", line 490, in complete\n    response = await asyncio.wait_for(\n               ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 489, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 394, in complete\n    raise OpenRouterProviderError(\nwar_rig.providers.openrouter.OpenRouterProviderError: Rate limit exceeded. Please retry after a delay.\n",
   "request": {
     "agent": "Challenger",
     "model": "google/gemini-2.0-flash-001",
@@ -56,7 +134,7 @@ STRUCTURED ERROR:
       },
       {
         "role": "user",
-        "content": "## Validating: bms/COPAU00.bms\nFile Type: BMS\nIteration: 1\nMax Questions: 5\n\n## Scribe's Documentation\n```json\n{\n  \"header\": {\n    \"program_id\": \"COPAU00\",\n    \"file_name\": \"COPAU00.bms\",\n    \"file_type\": \"BMS\",\n    \"analyzed_by\": \"WAR_RIG\",\n    \"analyzed_at\": \"2026-03-16T19:47:31.709978\",\n    \"iteration_count\": 1,\n    \"final_status\": null\n  },\n  \"purpose\": {\n    \"summary\": \"This BMS map defines the screen layout for the CardDemo Pending Authorization screen. It displays a list of pending authorizations for a given account ID, along with customer details and credit information. The screen allows the user to select a transaction to view its details.\",\n    \"business_context\": \"This screen is used to view and manage pending card authorizations within the CardDemo application.\",\n    \"program_type\": \"ONLINE_CICS\",\n    \"citations\": [\n      2,\n      83,\n      501\n    ]\n  },\n  \"inputs\": [\n    {\n      \"name\": \"ACCTID\",\n      \"io_type\": \"CICS_MAP\",\n      \"description\": \"Account ID entered by the..."
+        "content": "## Validating: jcl/UNLDGSAM.JCL\nFile Type: JCL\nIteration: 1\nMax Questions: 5\n\n## Scribe's Documentation\n```json\n{\n  \"header\": {\n    \"program_id\": \"UNLDGSAM\",\n    \"file_name\": \"jcl/UNLDGSAM.JCL\",\n    \"file_type\": \"JCL\",\n    \"analyzed_by\": \"WAR_RIG\",\n    \"analyzed_at\": \"2026-04-21T13:48:23.229358\",\n    \"iteration_count\": 1,\n    \"final_status\": null\n  },\n  \"purpose\": {\n    \"summary\": \"This JCL job executes the IMS program DFSRRC00 to unload GSAM databases. It specifies the IMS region, libraries, and input/output datasets required for the unload process.\",\n    \"business_context\": null,\n    \"program_type\": \"BATCH\",\n    \"citations\": [\n      26,\n      27,\n      36,\n      39\n    ]\n  },\n  \"inputs\": [\n    {\n      \"name\": \"AWS.M2.CARDDEMO.PAUTDB.ROOT.GSAM\",\n      \"io_type\": \"FILE_SEQUENTIAL\",\n      \"description\": \"Input GSAM database file to be unloaded. This file contains the root segment data.\",\n      \"copybook\": null,\n      \"citation\": [\n        36,\n        37\n      ]\n    },\n    {\n      \"name\"..."
       }
     ]
   }
@@ -64,430 +142,224 @@ STRUCTURED ERROR:
 ================================================================================
 /home/andras/war_rig/war_rig/utils/error_logging.py:164
 
-2026-03-16 12:52:44,103 | ERROR | war_rig.agents.base | Scribe: Error during invocation: 
-/home/andras/war_rig/war_rig/agents/base.py:480
+2026-04-21 06:49:10,421 | ERROR | war_rig.providers.openrouter | OpenRouter rate limit exceeded: Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemini-2.0-flash-001 is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google', 'is_byok': False}}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}
+/home/andras/war_rig/war_rig/providers/openrouter.py:387
 
-2026-03-16 12:52:44,106 | ERROR | war_rig.errors | 
+2026-04-21 06:49:10,423 | ERROR | war_rig.errors | 
 ================================================================================
 STRUCTURED ERROR:
 {
-  "timestamp": "2026-03-16T12:52:44.105074",
-  "error_type": "TimeoutError",
-  "error_message": "",
-  "context": {
-    "iteration": 1,
-    "file_name": "cpy/CIPAUSMY.cpy"
-  },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 500, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py\", line 2678, in create\n    return await self._post(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1797, in post\n    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1532, in request\n    response = await self._client.send(\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1629, in send\n    response = await self._send_handling_auth(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1657, in _send_handling_auth\n    response = await self._send_handling_redirects(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1694, in _send_handling_redirects\n    response = await self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1730, in _send_single_request\n    response = await transport.handle_async_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 103, in handle_async_request\n    return await self._connection.handle_async_request(request)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 136, in handle_async_request\n    raise exc\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 106, in handle_async_request\n    ) = await self._receive_response_headers(**kwargs)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 177, in _receive_response_headers\n    event = await self._receive_event(timeout=timeout)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 217, in _receive_event\n    data = await self._network_stream.read(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 35, in read\n    return await self._stream.receive(max_bytes=max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 244, in receive\n    data = await self._call_sslobject_method(self._ssl_object.read, max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 187, in _call_sslobject_method\n    data = await self.transport_stream.receive()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py\", line 1269, in receive\n    await self._protocol.read_event.wait()\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/locks.py\", line 213, in wait\n    await fut\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/agents/base.py\", line 455, in ainvoke\n    response = await self._provider.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/circuit_breaker.py\", line 490, in complete\n    response = await asyncio.wait_for(\n               ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 502, in wait_for\n    raise exceptions.TimeoutError() from exc\nTimeoutError\n",
-  "request": {
-    "agent": "Scribe",
-    "model": "google/gemini-2.0-flash-001",
-    "messages": [
-      {
-        "role": "system",
-        "content": "You are the Scribe, a documentation specialist for mainframe code analysis.\n\nYour role is to analyze COBOL, PL/I, JCL, and other mainframe source files and produce comprehensive documentation following a structured template.\n\n## Special File Types\n\n### LISTING Files (.lst, .list)\nLISTING files are NOT executable programs. They contain **prose documentation** such as:\n- Compiler output and diagnostics\n- Change history and modification notes\n- System documentation and comments\n- Version control notes\n- Developer notes and explanations\n\nWhen analyzing a LISTING file:\n1. The summary should describe what the file CONTAINS (change history, compiler output, notes), not what code it \"executes\"\n2. Do NOT try to document called_programs, data_flow, sql_operations, cics_operations - these are not applicable\n3. Focus on purpose (what documentation is in the file), and any inputs/outputs mentioned as references\n4. Treat the content as prose to be understood and summarized, not as code to be reverse..."
-      },
-      {
-        "role": "user",
-        "content": "## Source File: cpy/CIPAUSMY.cpy\nFile Type: COPYBOOK\nIteration: 1\n\n## Source Code\n```\n    1 |       *****************************************************************         \n    2 |       *   IMS SEGMENT - PENDING AUTHORIZATION SUMMARY                           \n    3 |       *****************************************************************         \n    4 |       * Copyright Amazon.com, Inc. or its affiliates.\n    5 |       * All Rights Reserved.\n    6 |       *\n    7 |       * Licensed under the Apache License, Version 2.0 (the \"License\").\n    8 |       * You may not use this file except in compliance with the License.\n    9 |       * You may obtain a copy of the License at\n   10 |       *\n   11 |       *    http://www.apache.org/licenses/LICENSE-2.0\n   12 |       *\n   13 |       * Unless required by applicable law or agreed to in writing,\n   14 |       * software distributed under the License is distributed on an\n   15 |       * \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY..."
-      }
-    ]
-  }
-}
-================================================================================
-/home/andras/war_rig/war_rig/utils/error_logging.py:164
-
-2026-03-16 12:54:55,307 | ERROR | war_rig.agents.base | Scribe: Error during invocation: 
-/home/andras/war_rig/war_rig/agents/base.py:480
-
-2026-03-16 12:54:55,310 | ERROR | war_rig.errors | 
-================================================================================
-STRUCTURED ERROR:
-{
-  "timestamp": "2026-03-16T12:54:55.309282",
-  "error_type": "TimeoutError",
-  "error_message": "",
-  "context": {
-    "iteration": 1,
-    "file_name": "cpy/CIPAUDTY.cpy"
-  },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 500, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py\", line 2678, in create\n    return await self._post(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1797, in post\n    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1532, in request\n    response = await self._client.send(\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1629, in send\n    response = await self._send_handling_auth(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1657, in _send_handling_auth\n    response = await self._send_handling_redirects(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1694, in _send_handling_redirects\n    response = await self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1730, in _send_single_request\n    response = await transport.handle_async_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 103, in handle_async_request\n    return await self._connection.handle_async_request(request)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 136, in handle_async_request\n    raise exc\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 106, in handle_async_request\n    ) = await self._receive_response_headers(**kwargs)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 177, in _receive_response_headers\n    event = await self._receive_event(timeout=timeout)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 217, in _receive_event\n    data = await self._network_stream.read(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 35, in read\n    return await self._stream.receive(max_bytes=max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 244, in receive\n    data = await self._call_sslobject_method(self._ssl_object.read, max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 187, in _call_sslobject_method\n    data = await self.transport_stream.receive()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py\", line 1269, in receive\n    await self._protocol.read_event.wait()\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/locks.py\", line 213, in wait\n    await fut\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/agents/base.py\", line 455, in ainvoke\n    response = await self._provider.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/circuit_breaker.py\", line 490, in complete\n    response = await asyncio.wait_for(\n               ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 502, in wait_for\n    raise exceptions.TimeoutError() from exc\nTimeoutError\n",
-  "request": {
-    "agent": "Scribe",
-    "model": "google/gemini-2.0-flash-001",
-    "messages": [
-      {
-        "role": "system",
-        "content": "You are the Scribe, a documentation specialist for mainframe code analysis.\n\nYour role is to analyze COBOL, PL/I, JCL, and other mainframe source files and produce comprehensive documentation following a structured template.\n\n## Special File Types\n\n### LISTING Files (.lst, .list)\nLISTING files are NOT executable programs. They contain **prose documentation** such as:\n- Compiler output and diagnostics\n- Change history and modification notes\n- System documentation and comments\n- Version control notes\n- Developer notes and explanations\n\nWhen analyzing a LISTING file:\n1. The summary should describe what the file CONTAINS (change history, compiler output, notes), not what code it \"executes\"\n2. Do NOT try to document called_programs, data_flow, sql_operations, cics_operations - these are not applicable\n3. Focus on purpose (what documentation is in the file), and any inputs/outputs mentioned as references\n4. Treat the content as prose to be understood and summarized, not as code to be reverse..."
-      },
-      {
-        "role": "user",
-        "content": "## Source File: cpy/CIPAUDTY.cpy\nFile Type: COPYBOOK\nIteration: 1\n\n## Source Code\n```\n    1 |       *****************************************************************         \n    2 |       *   IMS SEGMENT - PENDING AUTHORIZATION DETAILS                           \n    3 |       *****************************************************************         \n    4 |       * Copyright Amazon.com, Inc. or its affiliates.\n    5 |       * All Rights Reserved.\n    6 |       *\n    7 |       * Licensed under the Apache License, Version 2.0 (the \"License\").\n    8 |       * You may not use this file except in compliance with the License.\n    9 |       * You may obtain a copy of the License at\n   10 |       *\n   11 |       *    http://www.apache.org/licenses/LICENSE-2.0\n   12 |       *\n   13 |       * Unless required by applicable law or agreed to in writing,\n   14 |       * software distributed under the License is distributed on an\n   15 |       * \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY..."
-      }
-    ]
-  }
-}
-================================================================================
-/home/andras/war_rig/war_rig/utils/error_logging.py:164
-
-2026-03-16 12:59:58,344 | ERROR | war_rig.agents.base | Scribe: Error during invocation: 
-/home/andras/war_rig/war_rig/agents/base.py:480
-
-2026-03-16 12:59:58,347 | ERROR | war_rig.errors | 
-================================================================================
-STRUCTURED ERROR:
-{
-  "timestamp": "2026-03-16T12:59:58.346192",
-  "error_type": "TimeoutError",
-  "error_message": "",
-  "context": {
-    "iteration": 1,
-    "file_name": "cpy/CIPAUDTY.cpy"
-  },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 500, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py\", line 2678, in create\n    return await self._post(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1797, in post\n    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1532, in request\n    response = await self._client.send(\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1629, in send\n    response = await self._send_handling_auth(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1657, in _send_handling_auth\n    response = await self._send_handling_redirects(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1694, in _send_handling_redirects\n    response = await self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1730, in _send_single_request\n    response = await transport.handle_async_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 103, in handle_async_request\n    return await self._connection.handle_async_request(request)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 136, in handle_async_request\n    raise exc\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 106, in handle_async_request\n    ) = await self._receive_response_headers(**kwargs)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 177, in _receive_response_headers\n    event = await self._receive_event(timeout=timeout)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 217, in _receive_event\n    data = await self._network_stream.read(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 35, in read\n    return await self._stream.receive(max_bytes=max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 244, in receive\n    data = await self._call_sslobject_method(self._ssl_object.read, max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 187, in _call_sslobject_method\n    data = await self.transport_stream.receive()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py\", line 1269, in receive\n    await self._protocol.read_event.wait()\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/locks.py\", line 213, in wait\n    await fut\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/agents/base.py\", line 455, in ainvoke\n    response = await self._provider.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/circuit_breaker.py\", line 490, in complete\n    response = await asyncio.wait_for(\n               ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 502, in wait_for\n    raise exceptions.TimeoutError() from exc\nTimeoutError\n",
-  "request": {
-    "agent": "Scribe",
-    "model": "google/gemini-2.0-flash-001",
-    "messages": [
-      {
-        "role": "system",
-        "content": "You are the Scribe, a documentation specialist for mainframe code analysis.\n\nYour role is to analyze COBOL, PL/I, JCL, and other mainframe source files and produce comprehensive documentation following a structured template.\n\n## Special File Types\n\n### LISTING Files (.lst, .list)\nLISTING files are NOT executable programs. They contain **prose documentation** such as:\n- Compiler output and diagnostics\n- Change history and modification notes\n- System documentation and comments\n- Version control notes\n- Developer notes and explanations\n\nWhen analyzing a LISTING file:\n1. The summary should describe what the file CONTAINS (change history, compiler output, notes), not what code it \"executes\"\n2. Do NOT try to document called_programs, data_flow, sql_operations, cics_operations - these are not applicable\n3. Focus on purpose (what documentation is in the file), and any inputs/outputs mentioned as references\n4. Treat the content as prose to be understood and summarized, not as code to be reverse..."
-      },
-      {
-        "role": "user",
-        "content": "## Source File: cpy/CIPAUDTY.cpy\nFile Type: COPYBOOK\nIteration: 1\n\n## Source Code\n```\n    1 |       *****************************************************************         \n    2 |       *   IMS SEGMENT - PENDING AUTHORIZATION DETAILS                           \n    3 |       *****************************************************************         \n    4 |       * Copyright Amazon.com, Inc. or its affiliates.\n    5 |       * All Rights Reserved.\n    6 |       *\n    7 |       * Licensed under the Apache License, Version 2.0 (the \"License\").\n    8 |       * You may not use this file except in compliance with the License.\n    9 |       * You may obtain a copy of the License at\n   10 |       *\n   11 |       *    http://www.apache.org/licenses/LICENSE-2.0\n   12 |       *\n   13 |       * Unless required by applicable law or agreed to in writing,\n   14 |       * software distributed under the License is distributed on an\n   15 |       * \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY..."
-      }
-    ]
-  }
-}
-================================================================================
-/home/andras/war_rig/war_rig/utils/error_logging.py:164
-
-2026-03-16 13:00:30,744 | ERROR | war_rig.agents.base | Scribe: Error during invocation: 
-/home/andras/war_rig/war_rig/agents/base.py:480
-
-2026-03-16 13:00:30,747 | ERROR | war_rig.errors | 
-================================================================================
-STRUCTURED ERROR:
-{
-  "timestamp": "2026-03-16T13:00:30.746040",
-  "error_type": "TimeoutError",
-  "error_message": "",
-  "context": {
-    "iteration": 1,
-    "file_name": "ims/PADFLDBD.DBD"
-  },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 500, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py\", line 2678, in create\n    return await self._post(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1797, in post\n    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1532, in request\n    response = await self._client.send(\n               ^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1629, in send\n    response = await self._send_handling_auth(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1657, in _send_handling_auth\n    response = await self._send_handling_redirects(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1694, in _send_handling_redirects\n    response = await self._send_single_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 1730, in _send_single_request\n    response = await transport.handle_async_request(request)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 103, in handle_async_request\n    return await self._connection.handle_async_request(request)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 136, in handle_async_request\n    raise exc\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 106, in handle_async_request\n    ) = await self._receive_response_headers(**kwargs)\n        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 177, in _receive_response_headers\n    event = await self._receive_event(timeout=timeout)\n            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_async/http11.py\", line 217, in _receive_event\n    data = await self._network_stream.read(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 35, in read\n    return await self._stream.receive(max_bytes=max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 244, in receive\n    data = await self._call_sslobject_method(self._ssl_object.read, max_bytes)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/streams/tls.py\", line 187, in _call_sslobject_method\n    data = await self.transport_stream.receive()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/anyio/_backends/_asyncio.py\", line 1269, in receive\n    await self._protocol.read_event.wait()\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/locks.py\", line 213, in wait\n    await fut\nasyncio.exceptions.CancelledError\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/agents/base.py\", line 455, in ainvoke\n    response = await self._provider.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/circuit_breaker.py\", line 490, in complete\n    response = await asyncio.wait_for(\n               ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 502, in wait_for\n    raise exceptions.TimeoutError() from exc\nTimeoutError\n",
-  "request": {
-    "agent": "Scribe",
-    "model": "google/gemini-2.0-flash-001",
-    "messages": [
-      {
-        "role": "system",
-        "content": "You are the Scribe, a documentation specialist for mainframe code analysis.\n\nYour role is to analyze COBOL, PL/I, JCL, and other mainframe source files and produce comprehensive documentation following a structured template.\n\n## Special File Types\n\n### LISTING Files (.lst, .list)\nLISTING files are NOT executable programs. They contain **prose documentation** such as:\n- Compiler output and diagnostics\n- Change history and modification notes\n- System documentation and comments\n- Version control notes\n- Developer notes and explanations\n\nWhen analyzing a LISTING file:\n1. The summary should describe what the file CONTAINS (change history, compiler output, notes), not what code it \"executes\"\n2. Do NOT try to document called_programs, data_flow, sql_operations, cics_operations - these are not applicable\n3. Focus on purpose (what documentation is in the file), and any inputs/outputs mentioned as references\n4. Treat the content as prose to be understood and summarized, not as code to be reverse..."
-      },
-      {
-        "role": "user",
-        "content": "## Source File: ims/PADFLDBD.DBD\nFile Type: OTHER\nIteration: 1\n\n## Source Code\n```\n    1 | ***********************************************************************\n    2 | * Copyright Amazon.com, Inc. or its affiliates.\n    3 | * All Rights Reserved.\n    4 | *\n    5 | * Licensed under the Apache License, Version 2.0 (the \"License\").\n    6 | * You may not use this file except in compliance with the License.\n    7 | * You may obtain a copy of the License at\n    8 | *\n    9 | *    http://www.apache.org/licenses/LICENSE-2.0\n   10 | *\n   11 | * Unless required by applicable law or agreed to in writing,\n   12 | * software distributed under the License is distributed on an\n   13 | * \"AS IS\" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,\n   14 | * either express or implied. See the License for the specific\n   15 | * language governing permissions and limitations under the License\n   16 | ***********************************************************************\n   17 |          TITLE   'ASSE..."
-      }
-    ]
-  }
-}
-================================================================================
-/home/andras/war_rig/war_rig/utils/error_logging.py:164
-
-2026-03-16 13:03:29,005 | ERROR | war_rig.agents.challenger | Failed to parse Challenger response: 1 validation error for ChallengerQuestion
-severity
-  Input should be 'BLOCKING', 'IMPORTANT' or 'MINOR' [type=enum, input_value='WRONG', input_type=str]
-    For further information visit https://errors.pydantic.dev/2.12/v/enum
-/home/andras/war_rig/war_rig/agents/challenger.py:534
-
-2026-03-16 13:38:53,377 | ERROR | war_rig.errors | 
-================================================================================
-STRUCTURED ERROR:
-{
-  "timestamp": "2026-03-16T13:38:53.377555",
+  "timestamp": "2026-04-21T06:49:10.422615",
   "error_type": "RateLimitError",
-  "error_message": "Rate limit exceeded",
+  "error_message": "Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemini-2.0-flash-001 is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google', 'is_byok': False}}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}",
   "context": {
     "provider": "openrouter",
-    "model": "anthropic/claude-sonnet-4-20250514",
+    "model": "google/gemini-2.0-flash-001",
     "error_type": "rate_limit"
   },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/unittest/mock.py\", line 2240, in _execute_mock_call\n    raise effect\nopenai.RateLimitError: Rate limit exceeded\n",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py\", line 2678, in create\n    return await self._post(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1797, in post\n    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1597, in request\n    raise self._make_status_error_from_response(err.response) from None\nopenai.RateLimitError: Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemini-2.0-flash-001 is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google', 'is_byok': False}}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}\n",
   "request": {
-    "model": "anthropic/claude-sonnet-4-20250514",
-    "message_count": 1
+    "model": "google/gemini-2.0-flash-001",
+    "message_count": 2
   },
   "response": {
-    "body": null,
-    "response": "<MagicMock id='124264121159568'>"
+    "body": {
+      "message": "Provider returned error",
+      "code": 429,
+      "metadata": {
+        "raw": "google/gemini-2.0-flash-001 is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations",
+        "provider_name": "Google",
+        "is_byok": false
+      }
+    },
+    "response": "<Response [429 Too Many Requests]>"
   }
 }
 ================================================================================
 /home/andras/war_rig/war_rig/utils/error_logging.py:164
 
-2026-03-16 13:38:53,393 | ERROR | war_rig.providers.openrouter | OpenRouter connection error: Connection error.
-/home/andras/war_rig/war_rig/providers/openrouter.py:401
+2026-04-21 06:49:10,427 | ERROR | war_rig.agents.base | Challenger: Error during invocation: Rate limit exceeded. Please retry after a delay.
+/home/andras/war_rig/war_rig/agents/base.py:480
 
-2026-03-16 13:38:53,393 | ERROR | war_rig.errors | 
+2026-04-21 06:49:10,429 | ERROR | war_rig.errors | 
 ================================================================================
 STRUCTURED ERROR:
 {
-  "timestamp": "2026-03-16T13:38:53.393360",
-  "error_type": "APIConnectionError",
-  "error_message": "Connection error.",
+  "timestamp": "2026-04-21T06:49:10.428498",
+  "error_type": "OpenRouterProviderError",
+  "error_message": "Rate limit exceeded. Please retry after a delay.",
   "context": {
-    "provider": "openrouter",
-    "model": "anthropic/claude-sonnet-4-20250514",
-    "error_type": "connection"
+    "iteration": 1,
+    "file_name": "jcl/UNLDGSAM.JCL"
   },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/unittest/mock.py\", line 2240, in _execute_mock_call\n    raise effect\nopenai.APIConnectionError: Connection error.\n",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py\", line 2678, in create\n    return await self._post(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1797, in post\n    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1597, in request\n    raise self._make_status_error_from_response(err.response) from None\nopenai.RateLimitError: Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemini-2.0-flash-001 is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google', 'is_byok': False}}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/agents/base.py\", line 455, in ainvoke\n    response = await self._provider.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/circuit_breaker.py\", line 490, in complete\n    response = await asyncio.wait_for(\n               ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 489, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 394, in complete\n    raise OpenRouterProviderError(\nwar_rig.providers.openrouter.OpenRouterProviderError: Rate limit exceeded. Please retry after a delay.\n",
   "request": {
-    "model": "anthropic/claude-sonnet-4-20250514",
-    "message_count": 1
+    "agent": "Challenger",
+    "model": "google/gemini-2.0-flash-001",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are the Challenger, a validation specialist for mainframe documentation.\n\nYour role is to review documentation produced by the Scribe and identify issues, gaps, and errors by cross-checking against the source code.\n\n## COBOL Abstract Syntax Tree Input\n\nFor COBOL files, the source code is provided as an Abstract Syntax Tree (AST) instead of raw source.\nThe AST represents each paragraph as a tree of typed statement nodes with control flow nesting.\nWhen validating COBOL documentation:\n- **Verify control flow**: The tree structure directly shows IF/EVALUATE branching and PERFORM loops\n- **Check data operations**: MOVE, COMPUTE, and other data nodes reveal actual transformations\n- **Validate I/O claims**: READ, WRITE, OPEN, CLOSE nodes confirm file operations\n- **Cross-check calls**: PERFORM and CALL nodes show inter-paragraph and inter-program flow\n- **Use line numbers from AST nodes**: Each node carries line_start/line_end from original source\n\n## Core Principles\n\n1. **Be thorough but..."
+      },
+      {
+        "role": "user",
+        "content": "## Validating: jcl/UNLDGSAM.JCL\nFile Type: JCL\nIteration: 1\nMax Questions: 5\n\n## Scribe's Documentation\n```json\n{\n  \"header\": {\n    \"program_id\": \"UNLDGSAM\",\n    \"file_name\": \"jcl/UNLDGSAM.JCL\",\n    \"file_type\": \"JCL\",\n    \"analyzed_by\": \"WAR_RIG\",\n    \"analyzed_at\": \"2026-04-21T13:48:23.229358\",\n    \"iteration_count\": 1,\n    \"final_status\": null\n  },\n  \"purpose\": {\n    \"summary\": \"This JCL job executes the IMS program DFSRRC00 to unload GSAM databases. It specifies the IMS region, libraries, and input/output datasets required for the unload process.\",\n    \"business_context\": null,\n    \"program_type\": \"BATCH\",\n    \"citations\": [\n      26,\n      27,\n      36,\n      39\n    ]\n  },\n  \"inputs\": [\n    {\n      \"name\": \"AWS.M2.CARDDEMO.PAUTDB.ROOT.GSAM\",\n      \"io_type\": \"FILE_SEQUENTIAL\",\n      \"description\": \"Input GSAM database file to be unloaded. This file contains the root segment data.\",\n      \"copybook\": null,\n      \"citation\": [\n        36,\n        37\n      ]\n    },\n    {\n      \"name\"..."
+      }
+    ]
   }
 }
 ================================================================================
 /home/andras/war_rig/war_rig/utils/error_logging.py:164
 
-2026-03-16 13:38:53,410 | ERROR | war_rig.providers.openrouter | OpenRouter API error: Invalid request
+2026-04-21 06:54:17,785 | ERROR | war_rig.providers.openrouter | OpenRouter rate limit exceeded: Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemini-2.0-flash-001 is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google', 'is_byok': False}}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}
+/home/andras/war_rig/war_rig/providers/openrouter.py:523
+
+2026-04-21 06:54:17,787 | ERROR | codewhisper.core.react_loop | LLM call failed in ReAct loop
+/home/andras/war_rig/codewhisper/src/codewhisper/core/react_loop.py:259
+Traceback (most recent call last):
+  File "/home/andras/war_rig/war_rig/providers/openrouter.py", line 478, in _complete_with_tools
+    response = await self._client.chat.completions.create(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py", line 2678, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+  File "/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py", line 1797, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py", line 1597, in request
+    raise self._make_status_error_from_response(err.response) from None
+openai.RateLimitError: Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemini-2.0-flash-001 is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google', 'is_byok': False}}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/andras/war_rig/codewhisper/src/codewhisper/core/react_loop.py", line 252, in run
+    response = await self._llm.complete(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/andras/war_rig/war_rig/providers/circuit_breaker.py", line 490, in complete
+    response = await asyncio.wait_for(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py", line 489, in wait_for
+    return fut.result()
+           ^^^^^^^^^^^^
+  File "/home/andras/war_rig/war_rig/providers/openrouter.py", line 251, in complete
+    return await self._complete_with_tools(api_params, resolved_model, start_time)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/andras/war_rig/war_rig/providers/openrouter.py", line 524, in _complete_with_tools
+    raise OpenRouterProviderError(
+war_rig.providers.openrouter.OpenRouterProviderError: Rate limit exceeded. Please retry after a delay.
+2026-04-21 06:56:23,270 | ERROR | war_rig.providers.openrouter | OpenRouter rate limit exceeded: Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemini-2.0-flash-001 is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google', 'is_byok': False}}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}
+/home/andras/war_rig/war_rig/providers/openrouter.py:523
+
+2026-04-21 06:56:23,271 | ERROR | codewhisper.core.react_loop | LLM call failed in ReAct loop
+/home/andras/war_rig/codewhisper/src/codewhisper/core/react_loop.py:259
+Traceback (most recent call last):
+  File "/home/andras/war_rig/war_rig/providers/openrouter.py", line 478, in _complete_with_tools
+    response = await self._client.chat.completions.create(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py", line 2678, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+  File "/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py", line 1797, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py", line 1597, in request
+    raise self._make_status_error_from_response(err.response) from None
+openai.RateLimitError: Error code: 429 - {'error': {'message': 'Provider returned error', 'code': 429, 'metadata': {'raw': 'google/gemini-2.0-flash-001 is temporarily rate-limited upstream. Please retry shortly, or add your own key to accumulate your rate limits: https://openrouter.ai/settings/integrations', 'provider_name': 'Google', 'is_byok': False}}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/home/andras/war_rig/codewhisper/src/codewhisper/core/react_loop.py", line 252, in run
+    response = await self._llm.complete(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/andras/war_rig/war_rig/providers/circuit_breaker.py", line 490, in complete
+    response = await asyncio.wait_for(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py", line 489, in wait_for
+    return fut.result()
+           ^^^^^^^^^^^^
+  File "/home/andras/war_rig/war_rig/providers/openrouter.py", line 251, in complete
+    return await self._complete_with_tools(api_params, resolved_model, start_time)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/andras/war_rig/war_rig/providers/openrouter.py", line 524, in _complete_with_tools
+    raise OpenRouterProviderError(
+war_rig.providers.openrouter.OpenRouterProviderError: Rate limit exceeded. Please retry after a delay.
+2026-04-21 08:31:55,097 | ERROR | war_rig.providers.openrouter | OpenRouter API error: JSON error injected into SSE stream
 /home/andras/war_rig/war_rig/providers/openrouter.py:414
 
-2026-03-16 13:38:53,410 | ERROR | war_rig.errors | 
+2026-04-21 08:31:55,099 | ERROR | war_rig.errors | 
 ================================================================================
 STRUCTURED ERROR:
 {
-  "timestamp": "2026-03-16T13:38:53.410296",
+  "timestamp": "2026-04-21T08:31:55.098669",
   "error_type": "APIError",
-  "error_message": "Invalid request",
+  "error_message": "JSON error injected into SSE stream",
   "context": {
     "provider": "openrouter",
-    "model": "anthropic/claude-sonnet-4-20250514",
+    "model": "google/gemini-2.0-flash-001",
     "error_type": "api_error",
-    "status_code": 400
+    "status_code": null
   },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/unittest/mock.py\", line 2240, in _execute_mock_call\n    raise effect\nopenai.APIError: Invalid request\n",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 309, in complete\n    async for chunk in iter_with_timeout(stream, chunk_timeout):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 296, in iter_with_timeout\n    chunk = await asyncio.wait_for(\n            ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 489, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_streaming.py\", line 148, in __aiter__\n    async for item in self._iterator:\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_streaming.py\", line 195, in __stream__\n    raise APIError(\nopenai.APIError: JSON error injected into SSE stream\n",
   "request": {
-    "model": "anthropic/claude-sonnet-4-20250514",
-    "message_count": 1
+    "model": "google/gemini-2.0-flash-001",
+    "message_count": 2
   },
   "response": {
-    "body": null,
+    "body": {
+      "code": 429,
+      "message": "JSON error injected into SSE stream",
+      "metadata": {
+        "error_type": "rate_limit_exceeded"
+      }
+    },
     "response": "None",
-    "message": "Invalid request"
+    "message": "JSON error injected into SSE stream"
   }
 }
 ================================================================================
 /home/andras/war_rig/war_rig/utils/error_logging.py:164
 
-2026-03-16 13:38:53,426 | ERROR | war_rig.providers.openrouter | Unexpected error calling OpenRouter: Unexpected failure
-/home/andras/war_rig/war_rig/providers/openrouter.py:445
+2026-04-21 08:31:55,105 | ERROR | war_rig.agents.imperator | System overview generation failed: OpenRouter API error: JSON error injected into SSE stream
+/home/andras/war_rig/war_rig/agents/imperator.py:2591
 
-2026-03-16 13:38:53,426 | ERROR | war_rig.errors | 
+2026-04-21 09:14:32,394 | ERROR | war_rig.providers.openrouter | OpenRouter API error: Error code: 504 - {'error': {'message': 'The operation was aborted', 'code': 504, 'metadata': {'provider_name': 'Google'}}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}
+/home/andras/war_rig/war_rig/providers/openrouter.py:414
+
+2026-04-21 09:14:32,396 | ERROR | war_rig.errors | 
 ================================================================================
 STRUCTURED ERROR:
 {
-  "timestamp": "2026-03-16T13:38:53.426717",
-  "error_type": "RuntimeError",
-  "error_message": "Unexpected failure",
+  "timestamp": "2026-04-21T09:14:32.395432",
+  "error_type": "InternalServerError",
+  "error_message": "Error code: 504 - {'error': {'message': 'The operation was aborted', 'code': 504, 'metadata': {'provider_name': 'Google'}}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}",
   "context": {
     "provider": "openrouter",
-    "model": "anthropic/claude-sonnet-4-20250514",
-    "error_type": "unexpected"
+    "model": "google/gemini-2.0-flash-001",
+    "error_type": "api_error",
+    "status_code": 504
   },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/unittest/mock.py\", line 2240, in _execute_mock_call\n    raise effect\nRuntimeError: Unexpected failure\n",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py\", line 2678, in create\n    return await self._post(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1797, in post\n    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1597, in request\n    raise self._make_status_error_from_response(err.response) from None\nopenai.InternalServerError: Error code: 504 - {'error': {'message': 'The operation was aborted', 'code': 504, 'metadata': {'provider_name': 'Google'}}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}\n",
   "request": {
-    "model": "anthropic/claude-sonnet-4-20250514",
-    "message_count": 1
-  }
-}
-================================================================================
-/home/andras/war_rig/war_rig/utils/error_logging.py:164
-
-2026-03-16 13:38:53,442 | ERROR | war_rig.providers.openrouter | Unexpected error calling OpenRouter: Stream error
-/home/andras/war_rig/war_rig/providers/openrouter.py:445
-
-2026-03-16 13:38:53,443 | ERROR | war_rig.errors | 
-================================================================================
-STRUCTURED ERROR:
-{
-  "timestamp": "2026-03-16T13:38:53.442871",
-  "error_type": "RuntimeError",
-  "error_message": "Stream error",
-  "context": {
-    "provider": "openrouter",
-    "model": "anthropic/claude-sonnet-4-20250514",
-    "error_type": "unexpected"
-  },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 309, in complete\n    async for chunk in iter_with_timeout(stream, chunk_timeout):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 296, in iter_with_timeout\n    chunk = await asyncio.wait_for(\n            ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 489, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/tests/test_providers/test_openrouter.py\", line 442, in error_stream\n    raise RuntimeError(\"Stream error\")\nRuntimeError: Stream error\n",
-  "request": {
-    "model": "anthropic/claude-sonnet-4-20250514",
-    "message_count": 1
-  }
-}
-================================================================================
-/home/andras/war_rig/war_rig/utils/error_logging.py:164
-
-2026-03-16 13:38:55,226 | ERROR | war_rig.summarization.bundle_summarizer | BundleSummarizer: provider.complete() failed for bundle BDL-001
-/home/andras/war_rig/war_rig/summarization/bundle_summarizer.py:211
-Traceback (most recent call last):
-  File "/home/andras/war_rig/war_rig/summarization/bundle_summarizer.py", line 205, in summarize_bundle
-    response = await self._provider.complete(
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/andras/war_rig/tests/test_summarization/test_summarization.py", line 120, in complete
-    raise RuntimeError("Simulated provider failure")
-RuntimeError: Simulated provider failure
-2026-03-16 13:38:55,232 | ERROR | war_rig.summarization.coherence_merger | CoherenceMerger: provider.complete() failed for segment SEG-001
-/home/andras/war_rig/war_rig/summarization/coherence_merger.py:234
-Traceback (most recent call last):
-  File "/home/andras/war_rig/war_rig/summarization/coherence_merger.py", line 228, in _merge_group
-    response = await self._provider.complete(
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/andras/war_rig/tests/test_summarization/test_summarization.py", line 120, in complete
-    raise RuntimeError("Simulated provider failure")
-RuntimeError: Simulated provider failure
-2026-03-16 13:38:55,235 | ERROR | war_rig.summarization.root_summarizer | RootSummarizer: provider.complete() failed for PROG002
-/home/andras/war_rig/war_rig/summarization/root_summarizer.py:194
-Traceback (most recent call last):
-  File "/home/andras/war_rig/war_rig/summarization/root_summarizer.py", line 188, in summarize
-    response = await self._provider.complete(
-               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/home/andras/war_rig/tests/test_summarization/test_summarization.py", line 120, in complete
-    raise RuntimeError("Simulated provider failure")
-RuntimeError: Simulated provider failure
-2026-03-16 13:38:55,967 | ERROR | war_rig.io.paragraph_splitter | No AST file found for /tmp/pytest-of-andras/pytest-21/test_wrong_range_detected0/input/TESTPROG.cbl — cannot split paragraphs without authoritative line ranges
-/home/andras/war_rig/war_rig/io/paragraph_splitter.py:312
-
-2026-03-16 13:38:55,969 | ERROR | war_rig.io.paragraph_splitter | No AST file found for /tmp/pytest-of-andras/pytest-21/test_missing_citation_detected0/input/TESTPROG.cbl — cannot split paragraphs without authoritative line ranges
-/home/andras/war_rig/war_rig/io/paragraph_splitter.py:312
-
-2026-03-16 13:38:55,974 | ERROR | war_rig.io.paragraph_splitter | No AST file found for /tmp/pytest-of-andras/pytest-21/test_correct_and_resplit_updat0/input/TESTPROG.cbl — cannot split paragraphs without authoritative line ranges
-/home/andras/war_rig/war_rig/io/paragraph_splitter.py:312
-
-2026-03-16 13:38:55,977 | ERROR | war_rig.io.paragraph_splitter | No AST file found for /tmp/pytest-of-andras/pytest-21/test_zero_zero_citation_treate0/input/TESTPROG.cbl — cannot split paragraphs without authoritative line ranges
-/home/andras/war_rig/war_rig/io/paragraph_splitter.py:312
-
-2026-03-16 13:39:22,483 | ERROR | war_rig.workers.challenger_pool | Worker challenger-1: Could not load documentation state for ticket war_rig-001
-/home/andras/war_rig/war_rig/workers/challenger_pool.py:972
-
-2026-03-16 13:39:52,840 | ERROR | war_rig.providers.openrouter | Unexpected error calling OpenRouter: Object of type MagicMock is not JSON serializable
-/home/andras/war_rig/war_rig/providers/openrouter.py:445
-
-2026-03-16 13:39:52,842 | ERROR | war_rig.errors | 
-================================================================================
-STRUCTURED ERROR:
-{
-  "timestamp": "2026-03-16T13:39:52.841065",
-  "error_type": "TypeError",
-  "error_message": "Object of type MagicMock is not JSON serializable",
-  "context": {
-    "provider": "openrouter",
-    "model": "claude-sonnet-4-20250514",
-    "error_type": "unexpected"
-  },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py\", line 2678, in create\n    return await self._post(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1797, in post\n    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1518, in request\n    request = self._build_request(options, retries_taken=retries_taken)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 547, in _build_request\n    return self._client.build_request(  # pyright: ignore[reportUnknownMemberType]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 378, in build_request\n    return Request(\n           ^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_models.py\", line 408, in __init__\n    headers, stream = encode_request(\n                      ^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_content.py\", line 216, in encode_request\n    return encode_json(json)\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_content.py\", line 177, in encode_json\n    body = json_dumps(\n           ^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/json/__init__.py\", line 238, in dumps\n    **kw).encode(obj)\n          ^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/json/encoder.py\", line 200, in encode\n    chunks = self.iterencode(o, _one_shot=True)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/json/encoder.py\", line 258, in iterencode\n    return _iterencode(o, 0)\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/json/encoder.py\", line 180, in default\n    raise TypeError(f'Object of type {o.__class__.__name__} '\nTypeError: Object of type MagicMock is not JSON serializable\n",
-  "request": {
-    "model": "claude-sonnet-4-20250514",
+    "model": "google/gemini-2.0-flash-001",
     "message_count": 2
-  }
-}
-================================================================================
-/home/andras/war_rig/war_rig/utils/error_logging.py:164
-
-2026-03-16 13:39:52,842 | ERROR | war_rig.agents.base | Scribe: Error during invocation: Unexpected error: Object of type MagicMock is not JSON serializable
-/home/andras/war_rig/war_rig/agents/base.py:480
-
-2026-03-16 13:39:52,843 | ERROR | war_rig.errors | 
-================================================================================
-STRUCTURED ERROR:
-{
-  "timestamp": "2026-03-16T13:39:52.842900",
-  "error_type": "OpenRouterProviderError",
-  "error_message": "Unexpected error: Object of type MagicMock is not JSON serializable",
-  "context": {
-    "iteration": 1,
-    "file_name": "TESTPROG.cbl"
   },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py\", line 2678, in create\n    return await self._post(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1797, in post\n    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1518, in request\n    request = self._build_request(options, retries_taken=retries_taken)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 547, in _build_request\n    return self._client.build_request(  # pyright: ignore[reportUnknownMemberType]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 378, in build_request\n    return Request(\n           ^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_models.py\", line 408, in __init__\n    headers, stream = encode_request(\n                      ^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_content.py\", line 216, in encode_request\n    return encode_json(json)\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_content.py\", line 177, in encode_json\n    body = json_dumps(\n           ^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/json/__init__.py\", line 238, in dumps\n    **kw).encode(obj)\n          ^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/json/encoder.py\", line 200, in encode\n    chunks = self.iterencode(o, _one_shot=True)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/json/encoder.py\", line 258, in iterencode\n    return _iterencode(o, 0)\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/json/encoder.py\", line 180, in default\n    raise TypeError(f'Object of type {o.__class__.__name__} '\nTypeError: Object of type MagicMock is not JSON serializable\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/agents/base.py\", line 455, in ainvoke\n    response = await self._provider.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/circuit_breaker.py\", line 490, in complete\n    response = await asyncio.wait_for(\n               ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 489, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 451, in complete\n    raise OpenRouterProviderError(\nwar_rig.providers.openrouter.OpenRouterProviderError: Unexpected error: Object of type MagicMock is not JSON serializable\n",
-  "request": {
-    "agent": "Scribe",
-    "model": "claude-sonnet-4-20250514",
-    "messages": [
-      {
-        "role": "system",
-        "content": "You are the Scribe, a documentation specialist for mainframe code analysis.\n\nYour role is to analyze COBOL, PL/I, JCL, and other mainframe source files and produce comprehensive documentation following a structured template.\n\n## Special File Types\n\n### LISTING Files (.lst, .list)\nLISTING files are NOT executable programs. They contain **prose documentation** such as:\n- Compiler output and diagnostics\n- Change history and modification notes\n- System documentation and comments\n- Version control notes\n- Developer notes and explanations\n\nWhen analyzing a LISTING file:\n1. The summary should describe what the file CONTAINS (change history, compiler output, notes), not what code it \"executes\"\n2. Do NOT try to document called_programs, data_flow, sql_operations, cics_operations - these are not applicable\n3. Focus on purpose (what documentation is in the file), and any inputs/outputs mentioned as references\n4. Treat the content as prose to be understood and summarized, not as code to be reverse..."
-      },
-      {
-        "role": "user",
-        "content": "## Source File: TESTPROG.cbl\nFile Type: COBOL\nIteration: 1\n\n## Source Code\n```\n    1 |        IDENTIFICATION DIVISION.\n    2 |        PROGRAM-ID. TESTPROG.\n    3 |        PROCEDURE DIVISION.\n    4 |        0000-MAIN.\n    5 |            DISPLAY 'HELLO WORLD'.\n    6 |            STOP RUN.\n    7 | \n```\n\n## Task\nAnalyze this source code and produce complete documentation.\nFill out ALL sections of the template.\nCite line numbers for every factual claim.\n\nRespond with a JSON object containing:\n- \"template\": the DocumentationTemplate\n- \"confidence\": your confidence assessment\n- \"responses\": your responses to Challenger questions (if any)\n- \"open_questions\": questions you cannot resolve"
+  "response": {
+    "body": {
+      "message": "The operation was aborted",
+      "code": 504,
+      "metadata": {
+        "provider_name": "Google"
       }
-    ]
+    },
+    "response": "<Response [504 Gateway Timeout]>",
+    "message": "Error code: 504 - {'error': {'message': 'The operation was aborted', 'code': 504, 'metadata': {'provider_name': 'Google'}}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}"
   }
 }
 ================================================================================
 /home/andras/war_rig/war_rig/utils/error_logging.py:164
 
-2026-03-16 13:39:52,844 | ERROR | war_rig.providers.openrouter | Unexpected error calling OpenRouter: Object of type MagicMock is not JSON serializable
-/home/andras/war_rig/war_rig/providers/openrouter.py:445
-
-2026-03-16 13:39:52,845 | ERROR | war_rig.errors | 
-================================================================================
-STRUCTURED ERROR:
-{
-  "timestamp": "2026-03-16T13:39:52.845030",
-  "error_type": "TypeError",
-  "error_message": "Object of type MagicMock is not JSON serializable",
-  "context": {
-    "provider": "openrouter",
-    "model": "claude-sonnet-4-20250514",
-    "error_type": "unexpected"
-  },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py\", line 2678, in create\n    return await self._post(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1797, in post\n    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1518, in request\n    request = self._build_request(options, retries_taken=retries_taken)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 547, in _build_request\n    return self._client.build_request(  # pyright: ignore[reportUnknownMemberType]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 378, in build_request\n    return Request(\n           ^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_models.py\", line 408, in __init__\n    headers, stream = encode_request(\n                      ^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_content.py\", line 216, in encode_request\n    return encode_json(json)\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_content.py\", line 177, in encode_json\n    body = json_dumps(\n           ^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/json/__init__.py\", line 238, in dumps\n    **kw).encode(obj)\n          ^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/json/encoder.py\", line 200, in encode\n    chunks = self.iterencode(o, _one_shot=True)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/json/encoder.py\", line 258, in iterencode\n    return _iterencode(o, 0)\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/json/encoder.py\", line 180, in default\n    raise TypeError(f'Object of type {o.__class__.__name__} '\nTypeError: Object of type MagicMock is not JSON serializable\n",
-  "request": {
-    "model": "claude-sonnet-4-20250514",
-    "message_count": 2
-  }
-}
-================================================================================
-/home/andras/war_rig/war_rig/utils/error_logging.py:164
-
-2026-03-16 13:39:52,845 | ERROR | war_rig.agents.base | Scribe: Error during invocation: Unexpected error: Object of type MagicMock is not JSON serializable
-/home/andras/war_rig/war_rig/agents/base.py:480
-
-2026-03-16 13:39:52,846 | ERROR | war_rig.errors | 
-================================================================================
-STRUCTURED ERROR:
-{
-  "timestamp": "2026-03-16T13:39:52.845564",
-  "error_type": "OpenRouterProviderError",
-  "error_message": "Unexpected error: Object of type MagicMock is not JSON serializable",
-  "context": {
-    "iteration": 1,
-    "file_name": "TESTPROG.cbl"
-  },
-  "traceback": "Traceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 280, in complete\n    stream = await self._client.chat.completions.create(\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py\", line 2678, in create\n    return await self._post(\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1797, in post\n    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 1518, in request\n    request = self._build_request(options, retries_taken=retries_taken)\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/openai/_base_client.py\", line 547, in _build_request\n    return self._client.build_request(  # pyright: ignore[reportUnknownMemberType]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_client.py\", line 378, in build_request\n    return Request(\n           ^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_models.py\", line 408, in __init__\n    headers, stream = encode_request(\n                      ^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_content.py\", line 216, in encode_request\n    return encode_json(json)\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/.venv/lib/python3.11/site-packages/httpx/_content.py\", line 177, in encode_json\n    body = json_dumps(\n           ^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/json/__init__.py\", line 238, in dumps\n    **kw).encode(obj)\n          ^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/json/encoder.py\", line 200, in encode\n    chunks = self.iterencode(o, _one_shot=True)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/json/encoder.py\", line 258, in iterencode\n    return _iterencode(o, 0)\n           ^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/json/encoder.py\", line 180, in default\n    raise TypeError(f'Object of type {o.__class__.__name__} '\nTypeError: Object of type MagicMock is not JSON serializable\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/home/andras/war_rig/war_rig/agents/base.py\", line 455, in ainvoke\n    response = await self._provider.complete(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/circuit_breaker.py\", line 490, in complete\n    response = await asyncio.wait_for(\n               ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/andras/.local/share/uv/python/cpython-3.11.13-linux-x86_64-gnu/lib/python3.11/asyncio/tasks.py\", line 489, in wait_for\n    return fut.result()\n           ^^^^^^^^^^^^\n  File \"/home/andras/war_rig/war_rig/providers/openrouter.py\", line 451, in complete\n    raise OpenRouterProviderError(\nwar_rig.providers.openrouter.OpenRouterProviderError: Unexpected error: Object of type MagicMock is not JSON serializable\n",
-  "request": {
-    "agent": "Scribe",
-    "model": "claude-sonnet-4-20250514",
-    "messages": [
-      {
-        "role": "system",
-        "content": "You are the Scribe, a documentation specialist for mainframe code analysis.\n\nYour role is to analyze COBOL, PL/I, JCL, and other mainframe source files and produce comprehensive documentation following a structured template.\n\n## Special File Types\n\n### LISTING Files (.lst, .list)\nLISTING files are NOT executable programs. They contain **prose documentation** such as:\n- Compiler output and diagnostics\n- Change history and modification notes\n- System documentation and comments\n- Version control notes\n- Developer notes and explanations\n\nWhen analyzing a LISTING file:\n1. The summary should describe what the file CONTAINS (change history, compiler output, notes), not what code it \"executes\"\n2. Do NOT try to document called_programs, data_flow, sql_operations, cics_operations - these are not applicable\n3. Focus on purpose (what documentation is in the file), and any inputs/outputs mentioned as references\n4. Treat the content as prose to be understood and summarized, not as code to be reverse..."
-      },
-      {
-        "role": "user",
-        "content": "## Source File: TESTPROG.cbl\nFile Type: COBOL\nIteration: 1\n\n## Source Code\n```\n    1 |        IDENTIFICATION DIVISION.\n    2 |        PROGRAM-ID. TESTPROG.\n    3 |        PROCEDURE DIVISION.\n    4 |        0000-MAIN.\n    5 |            DISPLAY 'HELLO WORLD'.\n    6 |            STOP RUN.\n    7 | \n```\n\n## Task\nAnalyze this source code and produce complete documentation.\nFill out ALL sections of the template.\nCite line numbers for every factual claim.\n\n## \u26a0\ufe0f CRITICAL: YOUR PREVIOUS RESPONSE HAD JSON ERRORS \u26a0\ufe0f\n\nYour last response failed to parse. You MUST fix your JSON formatting:\n\nREQUIREMENTS:\n1. Start your response with { and end with } - NO other text\n2. NO markdown code blocks (no ```json)\n3. NO trailing commas: WRONG: [1, 2, 3,]  CORRECT: [1, 2, 3]\n4. Escape special characters in strings: use \\n \\t \\\" \\\\\n5. All property names in double quotes: {\"name\": \"value\"}\n6. NO comments in JSON\n\nBEFORE RESPONDING: Mentally validate your JSON is parseable.\n\nRespond with a JSON object containing:..."
-      }
-    ]
-  }
-}
-================================================================================
-/home/andras/war_rig/war_rig/utils/error_logging.py:164
-
-2026-03-16 13:39:55,615 | ERROR | war_rig.io.paragraph_splitter | No AST file found for /tmp/pytest-of-andras/pytest-21/test_process_chunk_synthesis0/TESTPROG.cbl — cannot split paragraphs without authoritative line ranges
-/home/andras/war_rig/war_rig/io/paragraph_splitter.py:312
-
-2026-03-16 13:39:55,617 | ERROR | war_rig.io.paragraph_splitter | No AST file found for /tmp/pytest-of-andras/pytest-21/test_process_chunk_synthesis0/TESTPROG.cbl — cannot split paragraphs without authoritative line ranges
-/home/andras/war_rig/war_rig/io/paragraph_splitter.py:312
+2026-04-21 09:14:32,400 | ERROR | war_rig.agents.imperator | System overview generation failed: OpenRouter API error: Error code: 504 - {'error': {'message': 'The operation was aborted', 'code': 504, 'metadata': {'provider_name': 'Google'}}, 'user_id': 'user_2tsNNUkzTfkrpDE1CnNK6y52sig'}
+/home/andras/war_rig/war_rig/agents/imperator.py:2591
 

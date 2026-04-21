@@ -2,8 +2,8 @@
 
 **File**: `ims/PSBPAUTB.psb`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-03-16 20:00:09.009777
+**Analyzed**: 2026-04-21 13:44:51.236981
 
 ## Purpose
 
-This PSB (Program Specification Block) defines the database access characteristics for an IMS (Information Management System) application. It specifies the database (DBPAUTP0), the segments (PAUTSUM0, PAUTDTL1) that the program is sensitive to, and the processing options (PROCOPT=AP). It also indicates the programming language (COBOL) and PSB name.
+This PSB (Program Specification Block) defines the database access characteristics for a COBOL program interacting with an IMS database named DBPAUTP0. It specifies the program's access privileges (PROCOPT=AP), the key length, and the segments it can access (PAUTSUM0, PAUTDTL1). The PSB is generated for COBOL with compatibility enabled.

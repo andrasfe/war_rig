@@ -4,73 +4,33 @@
     "file_name": "COPAUA0C.cbl",
     "file_type": "COBOL",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-16T19:45:05.049515",
+    "analyzed_at": "2026-04-21T13:50:53.550188",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This CICS COBOL program processes authorization requests received from an MQ queue, schedules an IMS PSB, processes the authorization, and then terminates. It retrieves the queue name and trigger data from the CICS terminal, opens the request queue, reads messages from the queue, processes them, and then terminates the connection.",
-    "business_context": "This program is likely part of a larger authorization processing system, handling requests for financial transactions or access to resources.",
+    "summary": "COPAUA0C is a CICS COBOL IMS MQ program that functions as a card authorization decision program. It likely receives authorization requests via MQ, processes them, and makes authorization decisions, potentially interacting with IMS and CICS resources. The program also includes routines for summarizing transaction data and terminating the application.",
+    "business_context": "Card authorization processing within the CardDemo application.",
     "program_type": "ONLINE_CICS",
     "citations": [
-      5,
-      7,
-      9
+      15,
+      17,
+      18
     ]
   },
   "inputs": [
     {
-      "name": "MQTM",
-      "io_type": "CICS_COMMAREA",
-      "description": "MQ Trigger Monitor data containing the queue name and trigger data.",
-      "copybook": null,
-      "citation": [
-        19
-      ]
-    },
-    {
-      "name": "WS-REQUEST-QNAME",
+      "name": "REQUEST-MQ",
       "io_type": "OTHER",
-      "description": "The name of the MQ queue to read requests from.",
+      "description": "Authorization requests received via MQ. The structure of the request is UNKNOWN.",
       "copybook": null,
       "citation": [
-        42
+        400
       ]
     }
   ],
   "outputs": [],
-  "called_programs": [
-    {
-      "program_name": "MQOPEN",
-      "call_type": "STATIC_CALL",
-      "purpose": "Opens the MQ request queue.",
-      "parameters": [
-        "W01-HCONN-REQUEST",
-        "MQM-OD-REQUEST",
-        "WS-OPTIONS",
-        "W01-HOBJ-REQUEST",
-        "WS-COMPCODE",
-        "WS-REASON"
-      ],
-      "citation": 46
-    },
-    {
-      "program_name": "MQGET",
-      "call_type": "STATIC_CALL",
-      "purpose": "Reads a message from the MQ request queue.",
-      "parameters": [
-        "UNKNOWN"
-      ],
-      "citation": 31
-    },
-    {
-      "program_name": "9500-LOG-ERROR",
-      "call_type": "STATIC_CALL",
-      "purpose": "Logs an error message.",
-      "parameters": [],
-      "citation": 66
-    }
-  ],
+  "called_programs": [],
   "calling_context": {
     "called_by": [],
     "entry_points": [],
@@ -78,78 +38,16 @@
   },
   "business_rules": [],
   "data_flow": {
-    "reads_from": [
-      {
-        "source": "MQTM",
-        "fields_used": [
-          "MQTM-QNAME",
-          "MQTM-TRIGGERDATA"
-        ],
-        "citation": [
-          19,
-          23,
-          24
-        ]
-      },
-      {
-        "source": "WS-REQUEST-QNAME",
-        "fields_used": [
-          "WS-REQUEST-QNAME"
-        ],
-        "citation": [
-          42
-        ]
-      }
-    ],
+    "reads_from": [],
     "writes_to": [],
-    "transforms": [
-      {
-        "input_field": "MQTM-QNAME",
-        "output_field": "WS-REQUEST-QNAME",
-        "transformation_description": "Moves the queue name from the trigger monitor data to the working storage variable.",
-        "citation": [
-          23
-        ]
-      },
-      {
-        "input_field": "MQTM-TRIGGERDATA",
-        "output_field": "WS-TRIGGER-DATA",
-        "transformation_description": "Moves the trigger data from the trigger monitor data to the working storage variable.",
-        "citation": [
-          24
-        ]
-      },
-      {
-        "input_field": "MQOT-Q",
-        "output_field": "MQOD-OBJECTTYPE OF MQM-OD-REQUEST",
-        "transformation_description": "Moves the MQ object type to the MQ object descriptor.",
-        "citation": [
-          41
-        ]
-      },
-      {
-        "input_field": "WS-REQUEST-QNAME",
-        "output_field": "MQOD-OBJECTNAME OF MQM-OD-REQUEST",
-        "transformation_description": "Moves the request queue name to the MQ object descriptor.",
-        "citation": [
-          42
-        ]
-      }
-    ]
+    "transforms": []
   },
-  "copybooks_used": [
-    {
-      "copybook_name": "MQTM",
-      "purpose": "Defines the structure of the MQ Trigger Monitor data.",
-      "location": "LINKAGE",
-      "citation": 19
-    }
-  ],
+  "copybooks_used": [],
   "paragraphs": [
     {
       "paragraph_name": "MAIN-PARA",
       "summary": null,
-      "purpose": "This is the main control paragraph of the COPAUA0C program. It orchestrates the overall processing flow by calling other paragraphs in sequence. First, it calls 1000-INITIALIZE to perform initial setup tasks. Then, it calls 2000-MAIN-PROCESS to handle the core authorization processing logic. Finally, it calls 9000-TERMINATE to perform cleanup and termination procedures. After these calls, the program returns control to CICS. This paragraph does not directly handle any business logic or data manipulation, but rather acts as a high-level director of the program's execution.",
+      "purpose": "This is the main control paragraph of the program. It orchestrates the initialization, main processing, and termination steps. It first performs 1000-INITIALIZE to set up the environment and open the necessary resources. Then, it performs 2000-MAIN-PROCESS to read and process authorization requests. Finally, it performs 9000-TERMINATE to close resources and clean up. After these steps, the program returns control to CICS.",
       "called_by": [],
       "calls": [
         "1000-INITIALIZE",
@@ -157,8 +55,8 @@
         "9000-TERMINATE"
       ],
       "citation": [
-        220,
-        227
+        5,
+        12
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
@@ -169,7 +67,7 @@
     {
       "paragraph_name": "1000-INITIALIZE",
       "summary": null,
-      "purpose": "This paragraph performs the initialization tasks required for the COPAUA0C program. It starts by retrieving data from the CICS terminal using EXEC CICS RETRIEVE INTO(MQTM), which populates the MQTM structure with information about the MQ queue. It then moves the queue name and trigger data from MQTM to working storage variables WS-REQUEST-QNAME and WS-TRIGGER-DATA, respectively. Next, it sets the wait interval for MQ operations to 5000. Finally, it calls 1100-OPEN-REQUEST-QUEUE to open the MQ request queue and 3100-READ-REQUEST-MQ to read the first message from the queue. This paragraph sets up the environment for subsequent processing.",
+      "purpose": "This paragraph initializes the program environment. It retrieves the MQ trigger monitor data (MQTM) from CICS, which contains the MQ queue name and trigger data. It moves the queue name and trigger data to working storage. It sets the wait interval for MQGET to 5000. It then performs 1100-OPEN-REQUEST-QUEUE to open the MQ request queue and 3100-READ-REQUEST-MQ to read the first message from the queue. This paragraph prepares the program to begin processing authorization requests.",
       "called_by": [
         "MAIN-PARA"
       ],
@@ -178,8 +76,8 @@
         "3100-READ-REQUEST-MQ"
       ],
       "citation": [
-        230,
-        247
+        15,
+        32
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
@@ -190,15 +88,14 @@
     {
       "paragraph_name": "1000-EXIT",
       "summary": null,
-      "purpose": "This paragraph serves as the exit point for the 1000-INITIALIZE paragraph. It simply contains the EXIT statement, which allows control to return to the calling paragraph (MAIN-PARA). It does not perform any specific actions or data manipulation. It is a standard practice in COBOL to use EXIT paragraphs to define the end of a PERFORM THRU sequence.",
+      "purpose": "This paragraph serves as the exit point for the 1000-INITIALIZE paragraph. It simply contains an EXIT statement, allowing control to return to the calling paragraph (MAIN-PARA).",
       "called_by": [
-        "MAIN-PARA",
         "1000-INITIALIZE"
       ],
       "calls": [],
       "citation": [
-        249,
-        250
+        35,
+        36
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
@@ -209,7 +106,7 @@
     {
       "paragraph_name": "1100-OPEN-REQUEST-QUEUE",
       "summary": null,
-      "purpose": "This paragraph opens the MQ request queue for processing. It first moves the MQ object type (MQOT-Q) to the MQ object descriptor (MQOD-OBJECTTYPE OF MQM-OD-REQUEST) and the request queue name (WS-REQUEST-QNAME) to the MQ object name field in the descriptor (MQOD-OBJECTNAME OF MQM-OD-REQUEST). It then computes the options for opening the queue, setting WS-OPTIONS to MQOO-INPUT-SHARED. Next, it calls the MQOPEN API to open the queue, passing the connection handle, object descriptor, options, object handle, completion code, and reason code. If the completion code (WS-COMPCODE) is MQCC-OK, it sets WS-REQUEST-MQ-OPEN to TRUE. Otherwise, it logs an error message using 9500-LOG-ERROR, setting various error fields including ERR-LOCATION, ERR-CRITICAL, ERR-MQ, ERR-CODE-1, ERR-CODE-2, and ERR-MESSAGE. This paragraph establishes the connection to the MQ queue for subsequent message retrieval.",
+      "purpose": "This paragraph opens the MQ request queue for shared input. It moves the MQ queue type (MQOT-Q) to the MQ object descriptor (MQOD) and the request queue name (WS-REQUEST-QNAME) to the MQOD. It computes the options for MQOPEN, setting it to MQOO-INPUT-SHARED. It then calls the MQOPEN API to open the queue. If the MQOPEN call is successful, it sets the WS-REQUEST-MQ-OPEN flag to TRUE. If the call fails, it moves error information to error variables, sets the error flags, and calls 9500-LOG-ERROR to log the error.",
       "called_by": [
         "1000-INITIALIZE"
       ],
@@ -217,8 +114,8 @@
         "9500-LOG-ERROR"
       ],
       "citation": [
-        255,
-        284
+        39,
+        68
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
@@ -229,15 +126,14 @@
     {
       "paragraph_name": "1100-EXIT",
       "summary": null,
-      "purpose": "This paragraph serves as the exit point for the 1100-OPEN-REQUEST-QUEUE paragraph. It simply contains the EXIT statement, which allows control to return to the calling paragraph (1000-INITIALIZE). It does not perform any specific actions or data manipulation. It is a standard practice in COBOL to use EXIT paragraphs to define the end of a PERFORM THRU sequence.",
+      "purpose": "This paragraph serves as the exit point for the 1100-OPEN-REQUEST-QUEUE paragraph. It simply contains an EXIT statement, allowing control to return to the calling paragraph (1000-INITIALIZE).",
       "called_by": [
-        "1000-INITIALIZE",
         "1100-OPEN-REQUEST-QUEUE"
       ],
       "calls": [],
       "citation": [
-        286,
-        287
+        71,
+        72
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
@@ -248,14 +144,14 @@
     {
       "paragraph_name": "1200-SCHEDULE-PSB",
       "summary": null,
-      "purpose": "This paragraph schedules the IMS PSB (Program Specification Block) required for accessing IMS databases. It executes the DLI SCHD command with the PSB-NAME. The DIBSTAT (DL/I Interface Block Status) is moved to IMS-RETURN-CODE. If the PSB has been scheduled more than once (PSB-SCHEDULED-MORE-THAN-ONCE), it terminates the PSB using EXEC DLI TERM and then reschedules it. If the scheduling is successful (STATUS-OK), IMS-PSB-SCHD is set to TRUE. Otherwise, it logs an error using 9500-LOG-ERROR, setting ERR-LOCATION, ERR-CRITICAL, ERR-IMS, ERR-CODE-1, and ERR-MESSAGE. This paragraph ensures that the necessary IMS resources are available for subsequent data access.",
+      "purpose": "This paragraph schedules the IMS PSB. It executes a DLI SCHD command to schedule the PSB specified by PSB-NAME. If the PSB has been scheduled more than once, it first issues a DLI TERM command to terminate the PSB and then issues another DLI SCHD command. It moves the DIBSTAT value to IMS-RETURN-CODE. If the status is OK, it sets the IMS-PSB-SCHD flag to TRUE. Otherwise, it moves error information to error variables, sets the error flags, and calls 9500-LOG-ERROR to log the error.",
       "called_by": [],
       "calls": [
         "9500-LOG-ERROR"
       ],
       "citation": [
-        292,
-        318
+        75,
+        101
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
@@ -266,14 +162,14 @@
     {
       "paragraph_name": "1200-EXIT",
       "summary": null,
-      "purpose": "This paragraph serves as the exit point for the 1200-SCHEDULE-PSB paragraph. It simply contains the EXIT statement, which allows control to return to the calling paragraph. It does not perform any specific actions or data manipulation. It is a standard practice in COBOL to use EXIT paragraphs to define the end of a PERFORM THRU sequence.",
+      "purpose": "This paragraph serves as the exit point for the 1200-SCHEDULE-PSB paragraph. It simply contains an EXIT statement, allowing control to return to the calling paragraph.",
       "called_by": [
         "1200-SCHEDULE-PSB"
       ],
       "calls": [],
       "citation": [
-        319,
-        321
+        104,
+        106
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
@@ -284,7 +180,7 @@
     {
       "paragraph_name": "2000-MAIN-PROCESS",
       "summary": null,
-      "purpose": "This paragraph is the main processing loop of the COPAUA0C program. It repeatedly processes authorization requests until either no more messages are available (NO-MORE-MSG-AVAILABLE) or a loop-end condition is met (WS-LOOP-END). Inside the loop, it first calls 2100-EXTRACT-REQUEST-MSG to extract the request message. Then, it calls 5000-PROCESS-AUTH to process the authorization request. After processing, it increments the message processed counter (WS-MSG-PROCESSED). It then issues a CICS SYNCPOINT to commit the changes. IMS-PSB-NOT-SCHD is set to TRUE. If the number of messages processed exceeds the limit (WS-MSG-PROCESSED > WS-REQSTS-PROCESS-LIMIT), it sets WS-LOOP-END to TRUE to terminate the loop. Otherwise, it calls 3100-READ-REQUEST-MQ to read the next message from the queue. This paragraph drives the core authorization processing logic by iterating through the messages in the queue.",
+      "purpose": "This paragraph is the main processing loop of the program. It repeatedly performs 2100-EXTRACT-REQUEST-MSG and 5000-PROCESS-AUTH until either there are no more messages available (NO-MORE-MSG-AVAILABLE is TRUE) or the loop is ended (WS-LOOP-END is TRUE). After processing each message, it increments WS-MSG-PROCESSED and issues a CICS SYNCPOINT. It then sets IMS-PSB-NOT-SCHD to TRUE. If the number of messages processed (WS-MSG-PROCESSED) exceeds the request processing limit (WS-REQSTS-PROCESS-LIMIT), it sets WS-LOOP-END to TRUE; otherwise, it performs 3100-READ-REQUEST-MQ to read the next message from the queue.",
       "called_by": [
         "MAIN-PARA"
       ],
@@ -294,8 +190,8 @@
         "3100-READ-REQUEST-MQ"
       ],
       "citation": [
-        323,
-        345
+        109,
+        131
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
@@ -306,14 +202,14 @@
     {
       "paragraph_name": "2000-EXIT",
       "summary": null,
-      "purpose": "This paragraph serves as the exit point for the 2000-MAIN-PROCESS paragraph. It simply contains the EXIT statement, which allows control to return to the calling paragraph (MAIN-PARA). It does not perform any specific actions or data manipulation. It is a standard practice in COBOL to use EXIT paragraphs to define the end of a PERFORM THRU sequence.",
+      "purpose": "This paragraph serves as the exit point for the 2000-MAIN-PROCESS paragraph. It simply contains an EXIT statement, allowing control to return to the calling paragraph (MAIN-PARA).",
       "called_by": [
         "2000-MAIN-PROCESS"
       ],
       "calls": [],
       "citation": [
-        347,
-        348
+        134,
+        135
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
@@ -324,7 +220,7 @@
     {
       "paragraph_name": "2100-EXTRACT-REQUEST-MSG",
       "summary": null,
-      "purpose": "This paragraph extracts the authorization request message from the MQ buffer (W01-GET-BUFFER) by unstringing it based on the comma delimiter. The extracted values are moved into the corresponding fields such as PA-RQ-AUTH-DATE, PA-RQ-AUTH-TIME, PA-RQ-CARD-NUM, etc. It then converts the alphanumeric transaction amount (WS-TRANSACTION-AMT-AN) to a numeric value (PA-RQ-TRANSACTION-AMT) using the NUMVAL function and moves it to WS-TRANSACTION-AMT. The input is the W01-GET-BUFFER, and the outputs are the individual fields populated from the buffer and WS-TRANSACTION-AMT. No error handling is present in this paragraph. It does not call any other paragraphs or programs.",
+      "purpose": "This paragraph extracts the authorization request message from the MQ message buffer (W01-GET-BUFFER). It uses the UNSTRING statement to parse the comma-delimited message into individual fields such as authorization date, time, card number, authorization type, and transaction amount. The alphanumeric transaction amount (WS-TRANSACTION-AMT-AN) is converted to a numeric value (PA-RQ-TRANSACTION-AMT) using the NUMVAL function. The numeric transaction amount is then moved to WS-TRANSACTION-AMT. The extracted fields are used in subsequent processing steps to validate the transaction and update account information. No error handling is performed within this paragraph; errors in the MQ message are assumed to be handled elsewhere. This paragraph does not call any other paragraphs.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -340,7 +236,7 @@
     {
       "paragraph_name": "2100-EXIT",
       "summary": null,
-      "purpose": "This paragraph serves as the exit point for the 2100-EXTRACT-REQUEST-MSG paragraph. It simply contains the EXIT statement, which returns control to the calling paragraph. It does not perform any processing, read or write any data, or call any other paragraphs or programs. It is a standard COBOL construct for exiting a paragraph.",
+      "purpose": "This paragraph simply provides an exit point for the 2100-EXTRACT-REQUEST-MSG paragraph. It contains only the EXIT statement and serves as a standard COBOL paragraph exit. It does not perform any processing or error handling. It is called by the THRU option in PERFORM statements. It does not consume any inputs or produce any outputs.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -356,7 +252,7 @@
     {
       "paragraph_name": "3100-READ-REQUEST-MQ",
       "summary": null,
-      "purpose": "This paragraph reads a message from the MQ queue. It sets the MQGMO options for no sync point, wait, convert, and fail if quiescing. It moves the wait interval to MQGMO-WAITINTERVAL. It initializes the MQMD message ID and correlation ID to MQMI-NONE and MQCI-NONE respectively, and sets the message format to MQFMT-STRING. It then calls the MQGET API to retrieve the message from the queue. If the MQGET call is successful (WS-COMPCODE = MQCC-OK), it saves the correlation ID and reply-to queue name. If the call fails and the reason code is MQRC-NO-MSG-AVAILABLE, it sets the NO-MORE-MSG-AVAILABLE flag to TRUE. Otherwise, it logs an error message. The input is the MQ queue, and the output is the message in W01-GET-BUFFER. It calls the 9500-LOG-ERROR paragraph if an error occurs.",
+      "purpose": "This paragraph reads the authorization request message from the MQ queue. It sets the MQGMO options for message retrieval, including no sync point, wait, convert, and fail if quiescing. It moves the wait interval to MQGMO-WAITINTERVAL. It initializes the MQMD message descriptor with default values. It then calls the MQGET API to retrieve the message from the queue, passing the connection handle, object handle, message descriptor, get message options, buffer length, buffer, data length, completion code, and reason code. If the MQGET call is successful (WS-COMPCODE = MQCC-OK), it saves the correlation ID and reply queue name from the MQMD. If the call fails, it checks if the reason code is MQRC-NO-MSG-AVAILABLE, and if so, sets the NO-MORE-MSG-AVAILABLE flag to TRUE. Otherwise, it logs an error message with location 'M003', sets error flags, moves the completion code and reason code to the error codes, and calls the 9500-LOG-ERROR paragraph. The input is the MQ queue, and the output is the message in W01-GET-BUFFER, or an error log entry.",
       "called_by": [],
       "calls": [
         "9500-LOG-ERROR"
@@ -374,7 +270,7 @@
     {
       "paragraph_name": "3100-EXIT",
       "summary": null,
-      "purpose": "This paragraph serves as the exit point for the 3100-READ-REQUEST-MQ paragraph. It simply contains the EXIT statement, which returns control to the calling paragraph. It does not perform any processing, read or write any data, or call any other paragraphs or programs. It is a standard COBOL construct for exiting a paragraph.",
+      "purpose": "This paragraph provides an exit point for the 3100-READ-REQUEST-MQ paragraph. It contains only the EXIT statement and serves as a standard COBOL paragraph exit. It does not perform any processing or error handling. It is called by the THRU option in PERFORM statements. It does not consume any inputs or produce any outputs.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -390,7 +286,7 @@
     {
       "paragraph_name": "5000-PROCESS-AUTH",
       "summary": null,
-      "purpose": "This paragraph is the main processing logic for authorization. It first sets APPROVE-AUTH to TRUE. Then, it calls 1200-SCHEDULE-PSB. It sets CARD-FOUND-XREF and FOUND-ACCT-IN-MSTR to TRUE. It calls 5100-READ-XREF-RECORD to read the card cross-reference record. If the card is found in the cross-reference file (CARD-FOUND-XREF), it calls 5200-READ-ACCT-RECORD, 5300-READ-CUST-RECORD, 5500-READ-AUTH-SUMMRY, and 5600-READ-PROFILE-DATA. It then calls 6000-MAKE-DECISION to determine the authorization decision and 7100-SEND-RESPONSE to send the response. Finally, if the card is found in the cross-reference file, it calls 8000-WRITE-AUTH-TO-DB to write the authorization to the database. The inputs are the card number and account ID, and the outputs are the authorization decision and the updated database. This paragraph orchestrates the entire authorization process.",
+      "purpose": "This paragraph orchestrates the authorization process. It starts by setting APPROVE-AUTH to TRUE and scheduling a PSB. It then sets flags indicating that the card and account are found in the cross-reference and master files, respectively. It performs paragraphs to read the card cross-reference record, account record, customer record, authorization summary, and profile data, conditionally executing the latter four paragraphs only if the card is found in the cross-reference file. After retrieving the necessary data, it performs paragraphs to make an authorization decision and send a response. Finally, if the card is found in the cross-reference file, it performs a paragraph to write the authorization to the database. The inputs are the card number and related data from the MQ message, and the outputs are the authorization decision and the updated account information in the database. The paragraph calls several other paragraphs to perform specific tasks within the authorization process.",
       "called_by": [],
       "calls": [
         "1200-SCHEDULE-PSB",
@@ -416,7 +312,7 @@
     {
       "paragraph_name": "5000-EXIT",
       "summary": null,
-      "purpose": "This paragraph serves as the exit point for the 5000-PROCESS-AUTH paragraph. It simply contains the EXIT statement, which returns control to the calling paragraph. It does not perform any processing, read or write any data, or call any other paragraphs or programs. It is a standard COBOL construct for exiting a paragraph.",
+      "purpose": "This paragraph provides an exit point for the 5000-PROCESS-AUTH paragraph. It contains only the EXIT statement and serves as a standard COBOL paragraph exit. It does not perform any processing or error handling. It is called by the THRU option in PERFORM statements. It does not consume any inputs or produce any outputs.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -432,7 +328,7 @@
     {
       "paragraph_name": "5100-READ-XREF-RECORD",
       "summary": null,
-      "purpose": "This paragraph reads the card cross-reference record from the WS-CCXREF-FILE using the card number (PA-RQ-CARD-NUM) as the key. It moves the card number to XREF-CARD-NUM and then executes a CICS READ command to retrieve the CARD-XREF-RECORD. It evaluates the CICS response code (WS-RESP-CD). If the response is NORMAL, it sets CARD-FOUND-XREF to TRUE. If the response is NOTFND, it sets CARD-NFOUND-XREF and NFOUND-ACCT-IN-MSTR to TRUE and logs a warning message. If the response is OTHER, it logs a critical error message. The input is the card number, and the output is the CARD-XREF-RECORD. It calls the 9500-LOG-ERROR paragraph if an error occurs.",
+      "purpose": "This paragraph reads the card cross-reference record from the WS-CCXREF-FILE using the card number (PA-RQ-CARD-NUM) as the key. It moves the card number to XREF-CARD-NUM and then executes a CICS READ command to retrieve the CARD-XREF-RECORD. The CICS READ command uses WS-CCXREF-FILE as the dataset name, CARD-XREF-RECORD as the INTO area, and XREF-CARD-NUM as the RIDFLD. The paragraph checks the CICS response code (WS-RESP-CD) to determine the outcome of the read operation. If the response is NORMAL, it sets CARD-FOUND-XREF to TRUE. If the response is NOTFND, it sets CARD-NFOUND-XREF and NFOUND-ACCT-IN-MSTR to TRUE, logs a warning message with location 'A001', and calls the 9500-LOG-ERROR paragraph. If the response is OTHER, it logs a critical error message with location 'C001', sets error flags, moves the response and reason codes to the error codes, and calls the 9500-LOG-ERROR paragraph. The input is the card number, and the output is the card cross-reference record or an error log entry.",
       "called_by": [],
       "calls": [
         "9500-LOG-ERROR"
@@ -450,7 +346,7 @@
     {
       "paragraph_name": "5100-EXIT",
       "summary": null,
-      "purpose": "This paragraph serves as the exit point for the 5100-READ-XREF-RECORD paragraph. It simply contains the EXIT statement, which returns control to the calling paragraph. It does not perform any processing, read or write any data, or call any other paragraphs or programs. It is a standard COBOL construct for exiting a paragraph.",
+      "purpose": "This paragraph provides an exit point for the 5100-READ-XREF-RECORD paragraph. It contains only the EXIT statement and serves as a standard COBOL paragraph exit. It does not perform any processing or error handling. It is called by the THRU option in PERFORM statements. It does not consume any inputs or produce any outputs.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -466,7 +362,7 @@
     {
       "paragraph_name": "5200-READ-ACCT-RECORD",
       "summary": null,
-      "purpose": "This paragraph reads the account record from the WS-ACCTFILENAME using the account ID (XREF-ACCT-ID) obtained from the cross-reference record. It moves the account ID to WS-CARD-RID-ACCT-ID and then executes a CICS READ command to retrieve the ACCOUNT-RECORD. It evaluates the CICS response code (WS-RESP-CD). If the response is NORMAL, it sets FOUND-ACCT-IN-MSTR to TRUE. If the response is NOTFND, it sets NFOUND-ACCT-IN-MSTR to TRUE and logs a warning message. If the response is OTHER, it logs a critical error message. The input is the account ID, and the output is the ACCOUNT-RECORD. It calls the 9500-LOG-ERROR paragraph if an error occurs.",
+      "purpose": "This paragraph reads the account record from the WS-ACCTFILENAME using the account ID (XREF-ACCT-ID) obtained from the card cross-reference record. It moves the account ID to WS-CARD-RID-ACCT-ID and then executes a CICS READ command to retrieve the ACCOUNT-RECORD. The CICS READ command uses WS-ACCTFILENAME as the dataset name, ACCOUNT-RECORD as the INTO area, and WS-CARD-RID-ACCT-ID-X as the RIDFLD. The paragraph checks the CICS response code (WS-RESP-CD) to determine the outcome of the read operation. If the response is NORMAL, it sets FOUND-ACCT-IN-MSTR to TRUE. If the response is NOTFND, it sets NFOUND-ACCT-IN-MSTR to TRUE, logs a warning message with location 'A002', and calls the 9500-LOG-ERROR paragraph. If the response is OTHER, it logs a critical error message with location 'C002', sets error flags, moves the response and reason codes to the error codes, and calls the 9500-LOG-ERROR paragraph. The input is the account ID, and the output is the account record or an error log entry.",
       "called_by": [],
       "calls": [
         "9500-LOG-ERROR"
@@ -484,7 +380,7 @@
     {
       "paragraph_name": "5200-EXIT",
       "summary": null,
-      "purpose": "This paragraph serves as the exit point for the 5200-READ-ACCT-RECORD paragraph. It simply contains the EXIT statement, which returns control to the calling paragraph. It does not perform any processing, read or write any data, or call any other paragraphs or programs. It is a standard COBOL construct for exiting a paragraph.",
+      "purpose": "This paragraph provides an exit point for the 5200-READ-ACCT-RECORD paragraph. It contains only the EXIT statement and serves as a standard COBOL paragraph exit. It does not perform any processing or error handling. It is called by the THRU option in PERFORM statements. It is called by the THRU option in PERFORM statements. It does not consume any inputs or produce any outputs.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -500,7 +396,7 @@
     {
       "paragraph_name": "5300-READ-CUST-RECORD",
       "summary": null,
-      "purpose": "This paragraph reads a customer record from the VSAM file specified by WS-CUSTFILENAME using the customer ID (XREF-CUST-ID) as the key. It moves the XREF-CUST-ID to WS-CARD-RID-CUST-ID before performing the READ. The CICS READ command retrieves the CUSTOMER-RECORD. After the READ, it evaluates the WS-RESP-CD to determine if the record was found. If the record is found (DFHRESP(NORMAL)), it sets FOUND-CUST-IN-MSTR to TRUE. If the record is not found (DFHRESP(NOTFND)), it sets NFOUND-CUST-IN-MSTR to TRUE, logs an error message with location 'A003', and performs 9500-LOG-ERROR. If any other error occurs during the READ, it logs a critical CICS error with location 'C003', including the RESP and RESP2 codes, and performs 9500-LOG-ERROR.",
+      "purpose": "This paragraph reads a customer record from the VSAM file identified by WS-CUSTFILENAME. It uses the XREF-CUST-ID to build the key (WS-CARD-RID-CUST-ID) for the READ command. The paragraph checks the CICS response code (WS-RESP-CD) to determine if the read was successful. If the record is found (NORMAL), it sets FOUND-CUST-IN-MSTR to TRUE. If the record is not found (NOTFND), it sets NFOUND-CUST-IN-MSTR to TRUE, logs an error message to the error log, and sets error flags. If any other error occurs during the read, it logs a critical error message including the CICS response and reason codes to the error log. It calls 9500-LOG-ERROR to log errors.",
       "called_by": [],
       "calls": [
         "9500-LOG-ERROR"
@@ -518,10 +414,8 @@
     {
       "paragraph_name": "5300-EXIT",
       "summary": null,
-      "purpose": "This paragraph is a standard EXIT paragraph. It serves as the exit point for the 5300-READ-CUST-RECORD paragraph, ensuring a clean and controlled return to the calling paragraph. It does not perform any specific logic or data manipulation. The EXIT statement simply returns control to the calling paragraph.",
-      "called_by": [
-        "5300-READ-CUST-RECORD"
-      ],
+      "purpose": "This paragraph serves as the exit point for the 5300-READ-CUST-RECORD paragraph. It contains only the EXIT statement, which returns control to the calling paragraph.",
+      "called_by": [],
       "calls": [],
       "citation": [
         612,
@@ -536,7 +430,7 @@
     {
       "paragraph_name": "5500-READ-AUTH-SUMMRY",
       "summary": null,
-      "purpose": "This paragraph reads the pending authorization summary from an IMS database. It moves the account ID (XREF-ACCT-ID) to PA-ACCT-ID and then executes a DLI GU (Get Unique) command using the PAUTSUM0 segment. The retrieved data is placed into PENDING-AUTH-SUMMARY. The IMS return code (DIBSTAT) is moved to IMS-RETURN-CODE. Based on the IMS return code, it sets flags: FOUND-PAUT-SMRY-SEG to TRUE if the segment is found (STATUS-OK), NFOUND-PAUT-SMRY-SEG to TRUE if the segment is not found (SEGMENT-NOT-FOUND). If any other error occurs, it logs a critical IMS error with location 'I002', including the IMS return code, and performs 9500-LOG-ERROR.",
+      "purpose": "This paragraph reads the pending authorization summary from the IMS database. It uses the XREF-ACCT-ID to build the key (PA-ACCT-ID) for the IMS GET UNIQUE (GU) call. The paragraph checks the IMS return code (DIBSTAT) to determine if the read was successful. If the segment is found (STATUS-OK), it sets FOUND-PAUT-SMRY-SEG to TRUE. If the segment is not found (SEGMENT-NOT-FOUND), it sets NFOUND-PAUT-SMRY-SEG to TRUE. If any other error occurs during the read, it logs a critical error message including the IMS return code to the error log. It calls 9500-LOG-ERROR to log errors.",
       "called_by": [],
       "calls": [
         "9500-LOG-ERROR"
@@ -554,10 +448,8 @@
     {
       "paragraph_name": "5500-EXIT",
       "summary": null,
-      "purpose": "This paragraph is a standard EXIT paragraph. It serves as the exit point for the 5500-READ-AUTH-SUMMRY paragraph, providing a clean return to the calling paragraph. It contains only the EXIT statement and performs no other actions.",
-      "called_by": [
-        "5500-READ-AUTH-SUMMRY"
-      ],
+      "purpose": "This paragraph serves as the exit point for the 5500-READ-AUTH-SUMMRY paragraph. It contains only the EXIT statement, which returns control to the calling paragraph.",
+      "called_by": [],
       "calls": [],
       "citation": [
         643,
@@ -572,7 +464,7 @@
     {
       "paragraph_name": "5600-READ-PROFILE-DATA",
       "summary": null,
-      "purpose": "This paragraph currently contains only a CONTINUE statement, indicating that it does not perform any specific action. It might be a placeholder for future functionality related to reading profile data. As it stands, it effectively does nothing.",
+      "purpose": "This paragraph is a placeholder and currently contains only a CONTINUE statement. It does not perform any data retrieval or processing. It might be intended for future use to read profile data, but is currently not implemented.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -588,10 +480,8 @@
     {
       "paragraph_name": "5600-EXIT",
       "summary": null,
-      "purpose": "This paragraph is a standard EXIT paragraph. It serves as the exit point for the 5600-READ-PROFILE-DATA paragraph. It contains only the EXIT statement and ensures a clean return to the calling paragraph.",
-      "called_by": [
-        "5600-READ-PROFILE-DATA"
-      ],
+      "purpose": "This paragraph serves as the exit point for the 5600-READ-PROFILE-DATA paragraph. It contains only the EXIT statement, which returns control to the calling paragraph.",
+      "called_by": [],
       "calls": [],
       "citation": [
         653,
@@ -606,7 +496,7 @@
     {
       "paragraph_name": "6000-MAKE-DECISION",
       "summary": null,
-      "purpose": "This paragraph determines whether to approve or decline an authorization request based on available credit. It first moves request data (card number, transaction ID, auth time) to response fields. If a pending authorization summary is found (FOUND-PAUT-SMRY-SEG is true), it calculates available credit (WS-AVAILABLE-AMT) using the credit limit and balance from the summary. Otherwise, if an account is found (FOUND-ACCT-IN-MSTR is true), it uses the account's credit limit and current balance. If the transaction amount (WS-TRANSACTION-AMT) exceeds the available credit, it sets DECLINE-AUTH and INSUFFICIENT-FUND flags to TRUE. If DECLINE-AUTH is TRUE, it sets the authorization response code (PA-RL-AUTH-RESP-CODE) to '05' and the approved amount to 0. Otherwise, it sets the response code to '00' and the approved amount to the transaction amount. Finally, it sets a reason code (PA-RL-AUTH-RESP-REASON) based on various flags indicating the reason for decline (e.g., card not found, insufficient funds). The paragraph then formats the response data into W02-PUT-BUFFER using a STRING statement.",
+      "purpose": "This paragraph determines whether to approve or decline the authorization request. It first moves the request data (card number, transaction ID, and authorization time) to the reply fields. It then checks if a pending authorization summary was found. If so, it calculates the available amount by subtracting the credit balance from the credit limit. If the transaction amount exceeds the available amount, the authorization is declined and INSUFFICIENT-FUND is set to TRUE. If no pending authorization summary is found, it checks if the account is found in the customer master file and performs the same calculation. If neither the summary nor the account is found, the authorization is declined. If the authorization is declined, it sets the AUTH-RESP-DECLINED flag and sets the authorization response code to '05' and the approved amount to 0. Otherwise, it sets the AUTH-RESP-APPROVED flag, sets the authorization response code to '00', and sets the approved amount to the transaction amount. Finally, it sets the authorization response reason code based on various conditions such as card not found, insufficient funds, card not active, account closed, or fraud. It then formats the response data into W02-PUT-BUFFER for sending via MQ.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -622,10 +512,8 @@
     {
       "paragraph_name": "6000-EXIT",
       "summary": null,
-      "purpose": "This paragraph is a standard EXIT paragraph. It serves as the exit point for the 6000-MAKE-DECISION paragraph. It ensures a clean return to the calling paragraph and contains only the EXIT statement.",
-      "called_by": [
-        "6000-MAKE-DECISION"
-      ],
+      "purpose": "This paragraph serves as the exit point for the 6000-MAKE-DECISION paragraph. It contains only the EXIT statement, which returns control to the calling paragraph.",
+      "called_by": [],
       "calls": [],
       "citation": [
         734,
@@ -640,9 +528,10 @@
     {
       "paragraph_name": "7100-SEND-RESPONSE",
       "summary": null,
-      "purpose": "This paragraph sends the authorization response message to the reply queue using MQ. It sets the MQ object type and name in MQM-OD-REPLY, message type and correlation ID in MQM-MD-REPLY, and other MQMD fields like persistence and expiry. It sets MQPMO options for no syncpoint and default context. It then calls the MQPUT1 API to send the message in W02-PUT-BUFFER to the reply queue. If the MQPUT1 call fails (WS-COMPCODE not equal to MQCC-OK), it logs a critical MQ error with location 'M004', including the completion code and reason code, and performs 9500-LOG-ERROR.",
+      "purpose": "This paragraph sends the authorization response message to the reply queue using MQ. It sets the MQ object type and object name in the MQ object descriptor (MQM-OD-REPLY). It sets the message type, correlation ID, message ID, reply-to queue, reply-to queue manager, persistence, expiry, and format in the MQ message descriptor (MQM-MD-REPLY). It sets the MQPMO-OPTIONS for no syncpoint and default context. It then calls the MQPUT1 API to send the message. If the MQPUT1 call fails, it logs a critical error message including the completion code and reason code to the error log. It calls 9500-LOG-ERROR to log errors.",
       "called_by": [],
       "calls": [
+        "MQPUT1",
         "9500-LOG-ERROR"
       ],
       "citation": [
@@ -658,10 +547,8 @@
     {
       "paragraph_name": "7100-EXIT",
       "summary": null,
-      "purpose": "This paragraph is a standard EXIT paragraph. It serves as the exit point for the 7100-SEND-RESPONSE paragraph. It ensures a clean return to the calling paragraph and contains only the EXIT statement.",
-      "called_by": [
-        "7100-SEND-RESPONSE"
-      ],
+      "purpose": "This paragraph serves as the exit point for the 7100-SEND-RESPONSE paragraph. It contains only the EXIT statement, which returns control to the calling paragraph.",
+      "called_by": [],
       "calls": [],
       "citation": [
         782,
@@ -676,7 +563,7 @@
     {
       "paragraph_name": "8000-WRITE-AUTH-TO-DB",
       "summary": null,
-      "purpose": "This paragraph orchestrates the update of the pending authorization summary and the insertion of authorization details into the IMS database. It first performs 8400-UPDATE-SUMMARY to update the summary information. Then, it performs 8500-INSERT-AUTH to insert the authorization details. The purpose is to ensure that both the summary and detailed information about the authorization are persisted. It consumes no direct inputs but relies on data prepared by other paragraphs. It produces no direct outputs but triggers the IMS updates in the called paragraphs. No specific business logic is implemented directly in this paragraph, it serves as a control point for the two key persistence operations. No error handling is present in this paragraph. It calls 8400-UPDATE-SUMMARY and 8500-INSERT-AUTH.",
+      "purpose": "This paragraph serves as a high-level routine to update the pending authorization summary and insert the authorization details into the IMS database. It orchestrates the calls to 8400-UPDATE-SUMMARY and 8500-INSERT-AUTH. It does not directly consume any input data, but relies on data prepared by other parts of the program. It does not produce any direct output, but triggers the IMS updates and inserts performed by the called paragraphs. The business logic involves ensuring that both the summary and detail records are updated/inserted for each authorization. There is no explicit error handling within this paragraph itself; error handling is delegated to the called paragraphs. It calls 8400-UPDATE-SUMMARY to update the pending authorization summary and 8500-INSERT-AUTH to insert the authorization details.",
       "called_by": [],
       "calls": [
         "8400-UPDATE-SUMMARY",
@@ -696,10 +583,7 @@
       "paragraph_name": "8000-EXIT",
       "summary": null,
       "purpose": "This paragraph provides a standard exit point for the 8000-WRITE-AUTH-TO-DB paragraph. It ensures a consistent return from the paragraph. It does not consume any inputs or produce any outputs. It does not implement any business logic or error handling. It does not call any other paragraphs or programs. Its sole purpose is to provide a clean exit.",
-      "called_by": [
-        "8400-UPDATE-SUMMARY",
-        "8500-INSERT-AUTH"
-      ],
+      "called_by": [],
       "calls": [],
       "citation": [
         794,
@@ -714,7 +598,7 @@
     {
       "paragraph_name": "8400-UPDATE-SUMMARY",
       "summary": null,
-      "purpose": "This paragraph updates the pending authorization summary in the IMS database. It first checks if a summary segment already exists. If not, it initializes a new segment and populates it with account and customer IDs. It then updates the credit and cash limits. Based on whether the authorization was approved or declined, it increments the corresponding counters and amounts in the summary. Finally, it either inserts or replaces the summary segment in the IMS database. The paragraph consumes account information (ACCT-CREDIT-LIMIT, ACCT-CASH-CREDIT-LIMIT, XREF-ACCT-ID, XREF-CUST-ID) and authorization response information (AUTH-RESP-APPROVED, WS-APPROVED-AMT, PA-TRANSACTION-AMT). It produces an updated PENDING-AUTH-SUMMARY segment in the IMS database. The business logic involves checking if the summary segment exists and updating counters based on the authorization response. Error handling is performed by checking the IMS return code and logging an error if the update fails. It calls 9500-LOG-ERROR if an IMS error occurs.",
+      "purpose": "This paragraph updates the pending authorization summary in the IMS database. It checks if a summary segment already exists for the account. If not, it initializes a new summary segment with account and customer IDs. It then updates the credit and cash limits from the account. Based on whether the authorization was approved or declined, it increments the appropriate counters and amounts in the summary segment. Finally, it either inserts or replaces the summary segment in the IMS database using EXEC DLI commands. If the IMS update fails, it logs an error. The paragraph consumes XREF-ACCT-ID, XREF-CUST-ID, ACCT-CREDIT-LIMIT, ACCT-CASH-CREDIT-LIMIT, AUTH-RESP-APPROVED, WS-APPROVED-AMT, and PA-TRANSACTION-AMT as inputs. It updates the PENDING-AUTH-SUMMARY segment in IMS as output. The business logic involves updating the summary based on the authorization response. Error handling includes checking the IMS return code and logging an error if the update fails. It calls 9500-LOG-ERROR if an error occurs.",
       "called_by": [
         "8000-WRITE-AUTH-TO-DB"
       ],
@@ -752,7 +636,7 @@
     {
       "paragraph_name": "8500-INSERT-AUTH",
       "summary": null,
-      "purpose": "This paragraph inserts authorization details into the IMS database. It first retrieves the current date and time using CICS services and formats them. It then calculates authorization dates and times by subtracting the current date and time from constants. It moves data from the request and response into the PENDING-AUTH-DETAILS segment. It sets flags based on whether the authorization was approved or declined. Finally, it inserts the details segment into the IMS database. The paragraph consumes authorization request and response data (PA-RQ-*, PA-RL-*) and account information (XREF-ACCT-ID). It produces a new PENDING-AUTH-DETAILS segment in the IMS database. The business logic involves calculating authorization dates and times and setting flags based on the authorization response. Error handling is performed by checking the IMS return code and logging an error if the insert fails. It calls 9500-LOG-ERROR if an IMS error occurs.",
+      "purpose": "This paragraph inserts the pending authorization details into the IMS database. It first retrieves the current date and time using CICS ASKTIME and FORMATTIME commands, and calculates adjusted date and time values. It then moves data from the pending authorization request and response fields (PA-RQ-* and PA-RL-*) to the pending authorization details segment. Based on whether the authorization was approved or declined, it sets either PA-MATCH-PENDING or PA-MATCH-AUTH-DECLINED to TRUE. Finally, it inserts the details segment into the IMS database using an EXEC DLI command. If the IMS insert fails, it logs an error. The paragraph consumes PA-RQ-*, PA-RL-*, and XREF-ACCT-ID as inputs. It inserts the PENDING-AUTH-DETAILS segment into IMS as output. The business logic involves preparing the data for the IMS insert. Error handling includes checking the IMS return code and logging an error if the insert fails. It calls 9500-LOG-ERROR if an error occurs.",
       "called_by": [
         "8000-WRITE-AUTH-TO-DB"
       ],
@@ -790,7 +674,7 @@
     {
       "paragraph_name": "9000-TERMINATE",
       "summary": null,
-      "purpose": "This paragraph terminates the IMS PSB and closes the request queue. It first checks if the IMS PSB is scheduled. If so, it terminates the PSB. Then, it performs 9100-CLOSE-REQUEST-QUEUE to close the request queue. The purpose is to ensure that all resources are released before the program ends. It consumes IMS-PSB-SCHD to determine if the PSB is scheduled. It produces no direct outputs but triggers the termination of the PSB and the closing of the request queue. No specific business logic is implemented directly in this paragraph, it serves as a control point for the termination operations. No error handling is present in this paragraph. It calls 9100-CLOSE-REQUEST-QUEUE.",
+      "purpose": "This paragraph performs termination tasks for the program. It first checks if the IMS PSB is scheduled (IMS-PSB-SCHD). If so, it terminates the IMS connection using EXEC DLI TERM. Then, it calls 9100-CLOSE-REQUEST-QUEUE to close the request message queue. The paragraph consumes IMS-PSB-SCHD as input. It does not produce any direct output, but triggers the IMS termination and MQ queue closure. The business logic involves ensuring that the IMS connection is terminated and the MQ queue is closed before the program ends. There is no explicit error handling within this paragraph itself; error handling is delegated to the called paragraph. It calls 9100-CLOSE-REQUEST-QUEUE to close the request message queue.",
       "called_by": [],
       "calls": [
         "9100-CLOSE-REQUEST-QUEUE"
@@ -826,7 +710,7 @@
     {
       "paragraph_name": "9100-CLOSE-REQUEST-QUEUE",
       "summary": null,
-      "purpose": "This paragraph closes the request queue if it is open. It checks if the request queue is open by examining WS-REQUEST-MQ-OPEN. If it is open, it calls MQCLOSE to close the queue. It then checks the completion code from MQCLOSE. If the close was successful, it sets WS-REQUEST-MQ-CLSE to TRUE. Otherwise, it logs an error. The paragraph consumes WS-REQUEST-MQ-OPEN, W01-HCONN-REQUEST, W01-HOBJ-REQUEST, MQCO-NONE, WS-COMPCODE, and WS-REASON. It produces no direct outputs but may log an error if the close fails. The business logic involves checking if the queue is open and handling the completion code from MQCLOSE. Error handling is performed by checking the completion code and logging an error if the close fails. It calls MQCLOSE and 9500-LOG-ERROR.",
+      "purpose": "This paragraph closes the request message queue. It checks if the request MQ is open (WS-REQUEST-MQ-OPEN). If so, it calls the MQCLOSE API to close the queue. It then checks the completion code (WS-COMPCODE). If the closure is successful (MQCC-OK), it sets WS-REQUEST-MQ-CLSE to TRUE. Otherwise, it logs an error. The paragraph consumes WS-REQUEST-MQ-OPEN, W01-HCONN-REQUEST, and W01-HOBJ-REQUEST as inputs. It potentially sets WS-REQUEST-MQ-CLSE to TRUE as output. The business logic involves ensuring that the request MQ is properly closed. Error handling includes checking the MQ completion code and logging an error if the closure fails. It calls 9500-LOG-ERROR if an error occurs.",
       "called_by": [
         "9000-TERMINATE"
       ],
@@ -865,7 +749,7 @@
     {
       "paragraph_name": "9500-LOG-ERROR",
       "summary": null,
-      "purpose": "This paragraph logs error information to the CICS transient data queue 'CSSL'. It first retrieves the current date and time using CICS ASKTIME and FORMATTIME commands, storing them in WS-CUR-DATE-X6 and WS-CUR-TIME-X6 respectively. It then moves the transaction ID (WS-CICS-TRANID) and program ID (WS-PGM-AUTH) into the ERROR-LOG-RECORD. The formatted error record is then written to the 'CSSL' queue. Finally, it checks if the error is critical (ERR-CRITICAL); if so, it performs the 9990-END-ROUTINE to terminate the program.",
+      "purpose": "This paragraph logs errors encountered during the CICS transaction to the CSSL transient data queue. It retrieves the current date and time using CICS ASKTIME and FORMATTIME commands and moves the transaction ID and program authorization ID to the error log record. It then writes the error log record to the CSSL queue using a CICS WRITEQ TD command. If the error is critical, it performs the 9990-END-ROUTINE to terminate the transaction. The paragraph consumes WS-CICS-TRANID, WS-PGM-AUTH, WS-ABS-TIME, ERROR-LOG-RECORD and produces an output to the CSSL queue. The paragraph determines if the error is critical based on ERR-CRITICAL field.",
       "called_by": [],
       "calls": [
         "9990-END-ROUTINE"
@@ -883,10 +767,8 @@
     {
       "paragraph_name": "9500-EXIT",
       "summary": null,
-      "purpose": "This paragraph provides a standard exit point from the 9500-LOG-ERROR paragraph. It consists solely of the EXIT statement, which returns control to the calling paragraph.",
-      "called_by": [
-        "9500-LOG-ERROR"
-      ],
+      "purpose": "This paragraph provides a standard exit point from the 9500-LOG-ERROR paragraph. It simply contains an EXIT statement and returns control to the calling paragraph. It does not consume or produce any data. It is a simple control point for structured programming.",
+      "called_by": [],
       "calls": [],
       "citation": [
         33,
@@ -901,7 +783,7 @@
     {
       "paragraph_name": "9990-END-ROUTINE",
       "summary": null,
-      "purpose": "This paragraph performs the necessary steps to terminate the CICS transaction. It first calls the 9000-TERMINATE paragraph, presumably to perform application-specific cleanup tasks such as closing files or releasing resources. After the termination routine completes, it executes a CICS RETURN command to return control to CICS.",
+      "purpose": "This paragraph performs the necessary steps to terminate the CICS transaction. It first calls the 9000-TERMINATE paragraph to perform any application-specific termination processing, such as closing files or releasing resources. After the 9000-TERMINATE paragraph completes, it issues a CICS RETURN command to return control to CICS. It consumes no input data directly but relies on the 9000-TERMINATE paragraph to handle resource cleanup. It produces no direct output but terminates the CICS transaction. The paragraph unconditionally calls 9000-TERMINATE and then returns to CICS.",
       "called_by": [
         "9500-LOG-ERROR"
       ],
@@ -921,10 +803,8 @@
     {
       "paragraph_name": "9990-EXIT",
       "summary": null,
-      "purpose": "This paragraph provides a standard exit point from the 9990-END-ROUTINE paragraph. It consists solely of the EXIT statement, which returns control to the calling paragraph.",
-      "called_by": [
-        "9990-END-ROUTINE"
-      ],
+      "purpose": "This paragraph provides a standard exit point from the 9990-END-ROUTINE paragraph. It contains an EXIT statement and returns control to the calling paragraph. It does not consume or produce any data. It serves as a control point for structured programming, ensuring a single exit point from the routine.",
+      "called_by": [],
       "calls": [],
       "citation": [
         47,
@@ -939,7 +819,7 @@
     {
       "paragraph_name": "COPAUA0C",
       "summary": null,
-      "purpose": "This is the main paragraph, and in this case, the only paragraph defined in the provided code snippet. It declares the program ID as COPAUA0C. Without further code, its purpose cannot be determined beyond this declaration. It does not consume any specific inputs or produce any outputs based on the snippet. No business logic, error handling, or calls to other paragraphs or programs are present in this snippet. The program's functionality is entirely UNKNOWN without additional code.",
+      "purpose": "This paragraph is the program's entry point, as indicated by the PROGRAM-ID. However, the provided code snippet only declares the program's name and does not contain any executable statements or logic. Therefore, it does not perform any specific actions, read any inputs, produce any outputs, implement any business rules, handle any errors, or call any other paragraphs or programs. It serves as a minimal program definition without any functional implementation.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -953,65 +833,29 @@
       "metadata": null
     }
   ],
-  "error_handling": [
-    {
-      "condition": "WS-COMPCODE NOT = MQCC-OK",
-      "action": "MOVE 'M001' TO ERR-LOCATION, SET ERR-CRITICAL, ERR-MQ TO TRUE, MOVE WS-COMPCODE TO ERR-CODE-1, MOVE WS-REASON TO ERR-CODE-2, MOVE 'REQ MQ OPEN ERROR' TO ERR-MESSAGE, PERFORM 9500-LOG-ERROR",
-      "citation": [
-        54,
-        66
-      ]
-    },
-    {
-      "condition": "STATUS-OK is false",
-      "action": "MOVE 'I001' TO ERR-LOCATION, SET ERR-CRITICAL, ERR-IMS TO TRUE, MOVE IMS-RETURN-CODE TO ERR-CODE-1, MOVE 'IMS SCHD FAILED' TO ERR-MESSAGE, PERFORM 9500-LOG-ERROR",
-      "citation": [
-        91,
-        100
-      ]
-    }
-  ],
+  "error_handling": [],
   "sql_operations": [],
-  "cics_operations": [
-    {
-      "command": "RETRIEVE",
-      "resource": "MQTM",
-      "purpose": "Retrieves data from the CICS terminal.",
-      "citation": 18
-    },
-    {
-      "command": "RETURN",
-      "resource": null,
-      "purpose": "Returns control to CICS.",
-      "citation": 11
-    },
-    {
-      "command": "SYNCPOINT",
-      "resource": null,
-      "purpose": "Commits changes.",
-      "citation": 121
-    }
-  ],
+  "cics_operations": [],
   "open_questions": [
     {
-      "question": "What is the structure of the MQM-OD-REQUEST?",
-      "context": "The code moves data into fields of MQM-OD-REQUEST, but the structure is not defined in the provided code snippet.",
-      "suggestion": "Examine the copybook definitions to determine the structure of MQM-OD-REQUEST."
+      "question": "What is the structure of the MQ message received?",
+      "context": "The program uses MQGET, but the data structure of the message is not defined in the provided code snippet.",
+      "suggestion": "Examine the copybooks or data definitions related to the MQ message format."
     },
     {
-      "question": "What is the purpose of WS-TRIGGER-DATA?",
-      "context": "The code moves MQTM-TRIGGERDATA to WS-TRIGGER-DATA, but its usage is not apparent in the provided code snippet.",
-      "suggestion": "Examine the rest of the program to determine how WS-TRIGGER-DATA is used."
+      "question": "What IMS resources are accessed, and what is the purpose of the IMS interaction?",
+      "context": "The program is identified as an IMS program, but the code snippet does not show any explicit IMS calls.",
+      "suggestion": "Review the complete source code for IMS DL/I calls or PSB references."
     },
     {
-      "question": "What is the purpose of 2100-EXTRACT-REQUEST-MSG and 5000-PROCESS-AUTH?",
-      "context": "These paragraphs are called but not defined in the provided code snippet.",
-      "suggestion": "Examine the source code for these paragraphs to understand their functionality."
+      "question": "What CICS resources are used, and what is the purpose of the CICS interaction?",
+      "context": "The program is identified as a CICS program, but the code snippet does not show any explicit CICS calls.",
+      "suggestion": "Review the complete source code for CICS API calls (EXEC CICS) or MAP references."
     },
     {
-      "question": "What are the conditions for NO-MORE-MSG-AVAILABLE?",
-      "context": "This variable controls the main processing loop, but its definition is not provided.",
-      "suggestion": "Examine the source code to determine how NO-MORE-MSG-AVAILABLE is set."
+      "question": "What are the specific authorization rules implemented by the program?",
+      "context": "The program is described as a card authorization decision program, but the authorization logic is not visible in the provided snippet.",
+      "suggestion": "Analyze the complete source code for conditional statements and data validations related to authorization criteria."
     }
   ],
   "resolved_questions": [],

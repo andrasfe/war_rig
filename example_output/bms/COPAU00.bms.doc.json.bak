@@ -4,13 +4,13 @@
     "file_name": "COPAU00.bms",
     "file_type": "BMS",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-16T20:02:31.501912",
+    "analyzed_at": "2026-04-21T13:47:50.316565",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This BMS map defines the screen layout for the CardDemo application's Pending Authorization screen. It displays customer account information, credit and cash limits/balances, and a list of recent transactions awaiting authorization. The screen allows users to select a transaction for further action.",
-    "business_context": "This screen is used in a card authorization system to view and manage pending authorizations for customer accounts.",
+    "summary": "This BMS map defines the screen layout for the CardDemo Pending Authorization screen. It displays customer account information, credit and cash limits/balances, and a list of recent transactions with their details (ID, date, time, type, approval status, and amount). The screen allows users to search for an account ID and select a transaction for further action.",
+    "business_context": "This screen is used to view and manage pending card authorizations within the CardDemo application.",
     "program_type": "ONLINE_CICS",
     "citations": [
       2,
@@ -22,7 +22,7 @@
     {
       "name": "ACCTID",
       "io_type": "CICS_MAP",
-      "description": "Account ID entered by the user to search for pending authorizations.",
+      "description": "Account ID entered by the user to search for customer information.",
       "copybook": null,
       "citation": [
         84
@@ -31,7 +31,7 @@
     {
       "name": "SEL0001 - SEL0004",
       "io_type": "CICS_MAP",
-      "description": "Selection fields for each transaction. User selects a transaction by entering a value in this field.",
+      "description": "Selection fields for each transaction to allow the user to select a transaction.",
       "copybook": null,
       "citation": [
         277,
@@ -41,7 +41,287 @@
       ]
     }
   ],
-  "outputs": [],
+  "outputs": [
+    {
+      "name": "COPAU0A",
+      "io_type": "CICS_MAP",
+      "description": "The entire screen layout, including labels, data fields, and transaction details, sent to the user's terminal.",
+      "copybook": null,
+      "citation": [
+        26
+      ]
+    },
+    {
+      "name": "TRNNAME",
+      "io_type": "CICS_MAP",
+      "description": "Transaction Name",
+      "copybook": null,
+      "citation": [
+        34
+      ]
+    },
+    {
+      "name": "TITLE01",
+      "io_type": "CICS_MAP",
+      "description": "Title of the screen",
+      "copybook": null,
+      "citation": [
+        38
+      ]
+    },
+    {
+      "name": "CURDATE",
+      "io_type": "CICS_MAP",
+      "description": "Current Date",
+      "copybook": null,
+      "citation": [
+        47
+      ]
+    },
+    {
+      "name": "PGMNAME",
+      "io_type": "CICS_MAP",
+      "description": "Program Name",
+      "copybook": null,
+      "citation": [
+        57
+      ]
+    },
+    {
+      "name": "TITLE02",
+      "io_type": "CICS_MAP",
+      "description": "Secondary Title",
+      "copybook": null,
+      "citation": [
+        61
+      ]
+    },
+    {
+      "name": "CURTIME",
+      "io_type": "CICS_MAP",
+      "description": "Current Time",
+      "copybook": null,
+      "citation": [
+        70
+      ]
+    },
+    {
+      "name": "CNAME",
+      "io_type": "CICS_MAP",
+      "description": "Customer Name",
+      "copybook": null,
+      "citation": [
+        96
+      ]
+    },
+    {
+      "name": "CUSTID",
+      "io_type": "CICS_MAP",
+      "description": "Customer ID",
+      "copybook": null,
+      "citation": [
+        103
+      ]
+    },
+    {
+      "name": "ADDR001",
+      "io_type": "CICS_MAP",
+      "description": "Address Line 1",
+      "copybook": null,
+      "citation": [
+        107
+      ]
+    },
+    {
+      "name": "ACCSTAT",
+      "io_type": "CICS_MAP",
+      "description": "Account Status",
+      "copybook": null,
+      "citation": [
+        114
+      ]
+    },
+    {
+      "name": "ADDR002",
+      "io_type": "CICS_MAP",
+      "description": "Address Line 2",
+      "copybook": null,
+      "citation": [
+        118
+      ]
+    },
+    {
+      "name": "PHONE1",
+      "io_type": "CICS_MAP",
+      "description": "Phone Number",
+      "copybook": null,
+      "citation": [
+        125
+      ]
+    },
+    {
+      "name": "APPRCNT",
+      "io_type": "CICS_MAP",
+      "description": "Approval Count",
+      "copybook": null,
+      "citation": [
+        132
+      ]
+    },
+    {
+      "name": "DECLCNT",
+      "io_type": "CICS_MAP",
+      "description": "Decline Count",
+      "copybook": null,
+      "citation": [
+        139
+      ]
+    },
+    {
+      "name": "CREDLIM",
+      "io_type": "CICS_MAP",
+      "description": "Credit Limit",
+      "copybook": null,
+      "citation": [
+        147
+      ]
+    },
+    {
+      "name": "CASHLIM",
+      "io_type": "CICS_MAP",
+      "description": "Cash Limit",
+      "copybook": null,
+      "citation": [
+        156
+      ]
+    },
+    {
+      "name": "APPRAMT",
+      "io_type": "CICS_MAP",
+      "description": "Approved Amount",
+      "copybook": null,
+      "citation": [
+        165
+      ]
+    },
+    {
+      "name": "CREDBAL",
+      "io_type": "CICS_MAP",
+      "description": "Credit Balance",
+      "copybook": null,
+      "citation": [
+        174
+      ]
+    },
+    {
+      "name": "CASHBAL",
+      "io_type": "CICS_MAP",
+      "description": "Cash Balance",
+      "copybook": null,
+      "citation": [
+        183
+      ]
+    },
+    {
+      "name": "DECLAMT",
+      "io_type": "CICS_MAP",
+      "description": "Declined Amount",
+      "copybook": null,
+      "citation": [
+        192
+      ]
+    },
+    {
+      "name": "TRNID01 - TRNID05",
+      "io_type": "CICS_MAP",
+      "description": "Transaction ID for each of the 5 transactions displayed.",
+      "copybook": null,
+      "citation": [
+        286,
+        330,
+        374,
+        418,
+        453
+      ]
+    },
+    {
+      "name": "PDATE01 - PDATE05",
+      "io_type": "CICS_MAP",
+      "description": "Transaction Date for each of the 5 transactions displayed.",
+      "copybook": null,
+      "citation": [
+        291,
+        335,
+        379,
+        423,
+        458
+      ]
+    },
+    {
+      "name": "PTIME01 - PTIME05",
+      "io_type": "CICS_MAP",
+      "description": "Transaction Time for each of the 5 transactions displayed.",
+      "copybook": null,
+      "citation": [
+        296,
+        340,
+        384,
+        428,
+        463
+      ]
+    },
+    {
+      "name": "PTYPE01 - PTYPE05",
+      "io_type": "CICS_MAP",
+      "description": "Transaction Type for each of the 5 transactions displayed.",
+      "copybook": null,
+      "citation": [
+        301,
+        345,
+        389,
+        433,
+        468
+      ]
+    },
+    {
+      "name": "PAPRV01 - PAPRV05",
+      "io_type": "CICS_MAP",
+      "description": "Transaction Approval Status for each of the 5 transactions displayed.",
+      "copybook": null,
+      "citation": [
+        306,
+        350,
+        394,
+        438,
+        473
+      ]
+    },
+    {
+      "name": "PSTAT01 - PSTAT05",
+      "io_type": "CICS_MAP",
+      "description": "Transaction Status for each of the 5 transactions displayed.",
+      "copybook": null,
+      "citation": [
+        311,
+        355,
+        399,
+        443,
+        478
+      ]
+    },
+    {
+      "name": "PAMT001 - PAMT004",
+      "io_type": "CICS_MAP",
+      "description": "Transaction Amount for each of the 5 transactions displayed.",
+      "copybook": null,
+      "citation": [
+        316,
+        360,
+        404,
+        448
+      ]
+    }
+  ],
   "called_programs": [],
   "calling_context": {
     "called_by": [],
@@ -59,7 +339,7 @@
     {
       "paragraph_name": "COPAU00",
       "summary": null,
-      "purpose": "This DFHMSD macro defines the BMS map set COPAU00. It specifies various control options for the map set, including terminal control (ALARM, FREEKB), extended attributes (EXTATT=YES), the programming language (LANG=COBOL), input/output mode (MODE=INOUT), storage management (STORAGE=AUTO), the presence of a TIOAPFX (TIOAPFX=YES), and the map type based on the system parameter (TYPE=&&SYSPARM). The CTRL parameter enables the alarm and keyboard freeing features. The EXTATT parameter enables extended attributes such as color and highlighting. The LANG parameter specifies COBOL as the programming language. The MODE parameter specifies that the map can be used for both input and output. The STORAGE parameter specifies that storage for the map should be automatically managed. The TIOAPFX parameter indicates that the terminal input/output area prefix is present. The TYPE parameter determines the type of map generated based on the system parameter.",
+      "purpose": "This paragraph defines the BMS mapset COPAU00, which represents the entire screen definition. It specifies the overall characteristics of the screen, such as the control options (ALARM, FREEKB), extended attributes (EXTATT=YES), programming language (LANG=COBOL), input/output mode (MODE=INOUT), storage type (STORAGE=AUTO), terminal I/O area prefix (TIOAPFX=YES), and the map type based on the system parameter (TYPE=&&SYSPARM). The mapset acts as a container for individual map definitions (DFHMDI) and field definitions (DFHMDF), which collectively define the layout and attributes of the screen elements. It essentially sets the stage for the screen's appearance and behavior within the CICS environment, enabling the application to interact with the user through a structured display.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -75,7 +355,7 @@
     {
       "paragraph_name": "COPAU0A",
       "summary": null,
-      "purpose": "This DFHMDI macro defines the BMS map COPAU0A within the COPAU00 mapset. It specifies the screen's dimensions and position. The COLUMN and LINE parameters set the starting position of the map on the screen to row 1, column 1. The SIZE parameter defines the map's dimensions as 24 rows and 80 columns, effectively defining a standard-sized terminal screen. This macro acts as a container for the individual field definitions (DFHMDF macros) that make up the screen layout. It establishes the overall structure and size of the screen presented to the user.",
+      "purpose": "This paragraph defines the BMS map COPAU0A, which is a specific instance of the screen layout within the COPAU00 mapset. It defines the size and position of the screen on the terminal, specifying that the map occupies the entire 24x80 screen (SIZE=(24,80)) and starts at the top-left corner (LINE=1, COLUMN=1). This map definition acts as a container for the individual field definitions (DFHMDF) that make up the screen's content. It provides the overall structure and dimensions within which the various screen elements, such as labels, input fields, and output fields, are arranged and displayed to the user. The map COPAU0A is the primary interface through which the application presents information and receives input from the user.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -92,13 +372,7 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
-    {
-      "question": "What is the purpose of the TYPE=&&SYSPARM parameter in the DFHMSD macro?",
-      "context": "The meaning of &&SYSPARM is unclear without additional context.",
-      "suggestion": "Consult the application's build process or related documentation to determine the value and effect of this parameter."
-    }
-  ],
+  "open_questions": [],
   "resolved_questions": [],
   "dead_code": [],
   "dead_code_resolved": [],

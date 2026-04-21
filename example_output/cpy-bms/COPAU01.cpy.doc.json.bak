@@ -4,13 +4,13 @@
     "file_name": "COPAU01.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-16T20:00:38.985286",
+    "analyzed_at": "2026-04-21T13:45:05.587247",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the data structure COPAU1AI, which is used for screen input and output. It contains fields for transaction name, titles, current date and time, card number, authorization details, POS entry mode, authorization source, MCC code, card expiry date, authorization type, transaction ID, authorization match, authorization forward, merchant name, merchant ID, merchant city, merchant state, merchant zip code, and error message. It also redefines COPAU1AI as COPAU1AO to provide individual character access to the same fields.",
-    "business_context": null,
+    "summary": "This copybook defines the data structure COPAU1AI and its redefinition COPAU1AO, which are likely used for screen input/output in a CICS environment. It contains fields for transaction name, titles, current date and time, card number, authorization details, and merchant information, along with error messages.",
+    "business_context": "UNKNOWN",
     "program_type": "COPYBOOK",
     "citations": [
       17,
@@ -36,7 +36,18 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [],
+  "open_questions": [
+    {
+      "question": "What is the business context for this copybook?",
+      "context": "The code does not provide information about the specific application or business process that uses this copybook.",
+      "suggestion": "Review the programs that include this copybook to understand its purpose."
+    },
+    {
+      "question": "What is the purpose of the 'FILLER' fields?",
+      "context": "The code contains numerous 'FILLER' fields with PICTURE clauses. Their exact purpose (e.g., spacing, alignment) is unclear without knowing the screen layout or data format.",
+      "suggestion": "Examine the BMS map definition or screen layout documentation to understand the role of these FILLER fields."
+    }
+  ],
   "resolved_questions": [],
   "dead_code": [],
   "dead_code_resolved": [],

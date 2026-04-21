@@ -4,12 +4,12 @@
     "file_name": "PASFLDBD.DBD",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-16T20:00:12.798882",
+    "analyzed_at": "2026-04-21T13:44:55.571323",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This file contains the Database Description (DBD) for PASFLDBD, defining its access method as GSAM/BSAM and specifying the associated datasets. It also includes copyright and licensing information.",
+    "summary": "This file contains the Database Description (DBD) for PASFLDBD, defining its access method as GSAM/BSAM and specifying the dataset characteristics. It defines the physical structure of the database, including dataset names and record format.",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
@@ -17,8 +17,28 @@
       27
     ]
   },
-  "inputs": [],
-  "outputs": [],
+  "inputs": [
+    {
+      "name": "PASFILIP",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Input dataset for PASFLDBD",
+      "copybook": null,
+      "citation": [
+        27
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "PASFILOP",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Output dataset for PASFLDBD",
+      "copybook": null,
+      "citation": [
+        27
+      ]
+    }
+  ],
   "called_programs": [],
   "calling_context": {
     "called_by": [],

@@ -1,0 +1,934 @@
+{
+  "file_name": "cbl/.specter_build_COPAUA0C/COPAUA0C.mock.cbl",
+  "source_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/.specter_build_COPAUA0C/COPAUA0C.mock.cbl",
+  "total_batches": 5,
+  "batches": [
+    [
+      {
+        "name": "COPAUA0C",
+        "line_start": 23,
+        "line_end": 23,
+        "line_count": 1,
+        "calls": []
+      },
+      {
+        "name": "MAIN-PARA",
+        "line_start": 456,
+        "line_end": 475,
+        "line_count": 20,
+        "calls": []
+      },
+      {
+        "name": "1000-INITIALIZE",
+        "line_start": 478,
+        "line_end": 503,
+        "line_count": 26,
+        "calls": []
+      },
+      {
+        "name": "1000-EXIT",
+        "line_start": 505,
+        "line_end": 507,
+        "line_count": 3,
+        "calls": []
+      },
+      {
+        "name": "1100-OPEN-REQUEST-QUEUE",
+        "line_start": 511,
+        "line_end": 548,
+        "line_count": 38,
+        "calls": []
+      },
+      {
+        "name": "1100-EXIT",
+        "line_start": 550,
+        "line_end": 552,
+        "line_count": 3,
+        "calls": []
+      },
+      {
+        "name": "1200-SCHEDULE-PSB",
+        "line_start": 556,
+        "line_end": 600,
+        "line_count": 45,
+        "calls": []
+      },
+      {
+        "name": "1200-EXIT",
+        "line_start": 601,
+        "line_end": 604,
+        "line_count": 4,
+        "calls": []
+      },
+      {
+        "name": "2000-MAIN-PROCESS",
+        "line_start": 606,
+        "line_end": 633,
+        "line_count": 28,
+        "calls": []
+      },
+      {
+        "name": "2000-EXIT",
+        "line_start": 635,
+        "line_end": 637,
+        "line_count": 3,
+        "calls": []
+      }
+    ],
+    [
+      {
+        "name": "2100-EXTRACT-REQUEST-MSG",
+        "line_start": 639,
+        "line_end": 668,
+        "line_count": 30,
+        "calls": []
+      },
+      {
+        "name": "2100-EXIT",
+        "line_start": 670,
+        "line_end": 672,
+        "line_count": 3,
+        "calls": []
+      },
+      {
+        "name": "3100-READ-REQUEST-MQ",
+        "line_start": 674,
+        "line_end": 676,
+        "line_count": 3,
+        "calls": []
+      },
+      {
+        "name": "3100-EXIT",
+        "line_start": 730,
+        "line_end": 732,
+        "line_count": 3,
+        "calls": []
+      },
+      {
+        "name": "5000-PROCESS-AUTH",
+        "line_start": 734,
+        "line_end": 771,
+        "line_count": 38,
+        "calls": []
+      },
+      {
+        "name": "5000-EXIT",
+        "line_start": 773,
+        "line_end": 775,
+        "line_count": 3,
+        "calls": []
+      },
+      {
+        "name": "5100-READ-XREF-RECORD",
+        "line_start": 777,
+        "line_end": 829,
+        "line_count": 53,
+        "calls": []
+      },
+      {
+        "name": "5100-EXIT",
+        "line_start": 831,
+        "line_end": 833,
+        "line_count": 3,
+        "calls": []
+      },
+      {
+        "name": "5200-READ-ACCT-RECORD",
+        "line_start": 835,
+        "line_end": 887,
+        "line_count": 53,
+        "calls": []
+      },
+      {
+        "name": "5200-EXIT",
+        "line_start": 889,
+        "line_end": 891,
+        "line_count": 3,
+        "calls": []
+      }
+    ],
+    [
+      {
+        "name": "5300-READ-CUST-RECORD",
+        "line_start": 893,
+        "line_end": 945,
+        "line_count": 53,
+        "calls": []
+      },
+      {
+        "name": "5300-EXIT",
+        "line_start": 947,
+        "line_end": 949,
+        "line_count": 3,
+        "calls": []
+      },
+      {
+        "name": "5500-READ-AUTH-SUMMRY",
+        "line_start": 951,
+        "line_end": 984,
+        "line_count": 34,
+        "calls": []
+      },
+      {
+        "name": "5500-EXIT",
+        "line_start": 986,
+        "line_end": 988,
+        "line_count": 3,
+        "calls": []
+      },
+      {
+        "name": "5600-READ-PROFILE-DATA",
+        "line_start": 990,
+        "line_end": 994,
+        "line_count": 5,
+        "calls": []
+      },
+      {
+        "name": "5600-EXIT",
+        "line_start": 996,
+        "line_end": 998,
+        "line_count": 3,
+        "calls": []
+      },
+      {
+        "name": "6000-MAKE-DECISION",
+        "line_start": 1000,
+        "line_end": 1002,
+        "line_count": 3,
+        "calls": []
+      },
+      {
+        "name": "6000-EXIT",
+        "line_start": 1078,
+        "line_end": 1080,
+        "line_count": 3,
+        "calls": []
+      },
+      {
+        "name": "7100-SEND-RESPONSE",
+        "line_start": 1082,
+        "line_end": 1131,
+        "line_count": 50,
+        "calls": []
+      },
+      {
+        "name": "7100-EXIT",
+        "line_start": 1133,
+        "line_end": 1135,
+        "line_count": 3,
+        "calls": []
+      }
+    ],
+    [
+      {
+        "name": "8000-WRITE-AUTH-TO-DB",
+        "line_start": 1137,
+        "line_end": 1145,
+        "line_count": 9,
+        "calls": []
+      },
+      {
+        "name": "8000-EXIT",
+        "line_start": 1147,
+        "line_end": 1149,
+        "line_count": 3,
+        "calls": []
+      },
+      {
+        "name": "8400-UPDATE-SUMMARY",
+        "line_start": 1151,
+        "line_end": 1216,
+        "line_count": 66,
+        "calls": []
+      },
+      {
+        "name": "8400-EXIT",
+        "line_start": 1218,
+        "line_end": 1220,
+        "line_count": 3,
+        "calls": []
+      },
+      {
+        "name": "8500-INSERT-AUTH",
+        "line_start": 1222,
+        "line_end": 1321,
+        "line_count": 100,
+        "calls": []
+      },
+      {
+        "name": "8500-EXIT",
+        "line_start": 1323,
+        "line_end": 1325,
+        "line_count": 3,
+        "calls": []
+      },
+      {
+        "name": "9000-TERMINATE",
+        "line_start": 1329,
+        "line_end": 1340,
+        "line_count": 12,
+        "calls": []
+      },
+      {
+        "name": "9000-EXIT",
+        "line_start": 1342,
+        "line_end": 1344,
+        "line_count": 3,
+        "calls": []
+      },
+      {
+        "name": "9100-CLOSE-REQUEST-QUEUE",
+        "line_start": 1346,
+        "line_end": 1378,
+        "line_count": 33,
+        "calls": []
+      },
+      {
+        "name": "9100-EXIT",
+        "line_start": 1380,
+        "line_end": 1382,
+        "line_count": 3,
+        "calls": []
+      }
+    ],
+    [
+      {
+        "name": "9500-LOG-ERROR",
+        "line_start": 1384,
+        "line_end": 1432,
+        "line_count": 49,
+        "calls": []
+      },
+      {
+        "name": "9500-EXIT",
+        "line_start": 1433,
+        "line_end": 1435,
+        "line_count": 3,
+        "calls": []
+      },
+      {
+        "name": "9990-END-ROUTINE",
+        "line_start": 1437,
+        "line_end": 1453,
+        "line_count": 17,
+        "calls": []
+      },
+      {
+        "name": "9990-EXIT",
+        "line_start": 1454,
+        "line_end": 1456,
+        "line_count": 3,
+        "calls": []
+      },
+      {
+        "name": "SPECTER-EXIT-PARA",
+        "line_start": 1460,
+        "line_end": 1462,
+        "line_count": 3,
+        "calls": []
+      }
+    ]
+  ],
+  "outline": [
+    {
+      "name": "COPAUA0C",
+      "line_start": 23,
+      "line_end": 23,
+      "line_count": 1,
+      "calls": []
+    },
+    {
+      "name": "MAIN-PARA",
+      "line_start": 456,
+      "line_end": 475,
+      "line_count": 20,
+      "calls": []
+    },
+    {
+      "name": "1000-INITIALIZE",
+      "line_start": 478,
+      "line_end": 503,
+      "line_count": 26,
+      "calls": []
+    },
+    {
+      "name": "1000-EXIT",
+      "line_start": 505,
+      "line_end": 507,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "1100-OPEN-REQUEST-QUEUE",
+      "line_start": 511,
+      "line_end": 548,
+      "line_count": 38,
+      "calls": []
+    },
+    {
+      "name": "1100-EXIT",
+      "line_start": 550,
+      "line_end": 552,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "1200-SCHEDULE-PSB",
+      "line_start": 556,
+      "line_end": 600,
+      "line_count": 45,
+      "calls": []
+    },
+    {
+      "name": "1200-EXIT",
+      "line_start": 601,
+      "line_end": 604,
+      "line_count": 4,
+      "calls": []
+    },
+    {
+      "name": "2000-MAIN-PROCESS",
+      "line_start": 606,
+      "line_end": 633,
+      "line_count": 28,
+      "calls": []
+    },
+    {
+      "name": "2000-EXIT",
+      "line_start": 635,
+      "line_end": 637,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "2100-EXTRACT-REQUEST-MSG",
+      "line_start": 639,
+      "line_end": 668,
+      "line_count": 30,
+      "calls": []
+    },
+    {
+      "name": "2100-EXIT",
+      "line_start": 670,
+      "line_end": 672,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "3100-READ-REQUEST-MQ",
+      "line_start": 674,
+      "line_end": 676,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "3100-EXIT",
+      "line_start": 730,
+      "line_end": 732,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "5000-PROCESS-AUTH",
+      "line_start": 734,
+      "line_end": 771,
+      "line_count": 38,
+      "calls": []
+    },
+    {
+      "name": "5000-EXIT",
+      "line_start": 773,
+      "line_end": 775,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "5100-READ-XREF-RECORD",
+      "line_start": 777,
+      "line_end": 829,
+      "line_count": 53,
+      "calls": []
+    },
+    {
+      "name": "5100-EXIT",
+      "line_start": 831,
+      "line_end": 833,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "5200-READ-ACCT-RECORD",
+      "line_start": 835,
+      "line_end": 887,
+      "line_count": 53,
+      "calls": []
+    },
+    {
+      "name": "5200-EXIT",
+      "line_start": 889,
+      "line_end": 891,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "5300-READ-CUST-RECORD",
+      "line_start": 893,
+      "line_end": 945,
+      "line_count": 53,
+      "calls": []
+    },
+    {
+      "name": "5300-EXIT",
+      "line_start": 947,
+      "line_end": 949,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "5500-READ-AUTH-SUMMRY",
+      "line_start": 951,
+      "line_end": 984,
+      "line_count": 34,
+      "calls": []
+    },
+    {
+      "name": "5500-EXIT",
+      "line_start": 986,
+      "line_end": 988,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "5600-READ-PROFILE-DATA",
+      "line_start": 990,
+      "line_end": 994,
+      "line_count": 5,
+      "calls": []
+    },
+    {
+      "name": "5600-EXIT",
+      "line_start": 996,
+      "line_end": 998,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "6000-MAKE-DECISION",
+      "line_start": 1000,
+      "line_end": 1002,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "6000-EXIT",
+      "line_start": 1078,
+      "line_end": 1080,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "7100-SEND-RESPONSE",
+      "line_start": 1082,
+      "line_end": 1131,
+      "line_count": 50,
+      "calls": []
+    },
+    {
+      "name": "7100-EXIT",
+      "line_start": 1133,
+      "line_end": 1135,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "8000-WRITE-AUTH-TO-DB",
+      "line_start": 1137,
+      "line_end": 1145,
+      "line_count": 9,
+      "calls": []
+    },
+    {
+      "name": "8000-EXIT",
+      "line_start": 1147,
+      "line_end": 1149,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "8400-UPDATE-SUMMARY",
+      "line_start": 1151,
+      "line_end": 1216,
+      "line_count": 66,
+      "calls": []
+    },
+    {
+      "name": "8400-EXIT",
+      "line_start": 1218,
+      "line_end": 1220,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "8500-INSERT-AUTH",
+      "line_start": 1222,
+      "line_end": 1321,
+      "line_count": 100,
+      "calls": []
+    },
+    {
+      "name": "8500-EXIT",
+      "line_start": 1323,
+      "line_end": 1325,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "9000-TERMINATE",
+      "line_start": 1329,
+      "line_end": 1340,
+      "line_count": 12,
+      "calls": []
+    },
+    {
+      "name": "9000-EXIT",
+      "line_start": 1342,
+      "line_end": 1344,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "9100-CLOSE-REQUEST-QUEUE",
+      "line_start": 1346,
+      "line_end": 1378,
+      "line_count": 33,
+      "calls": []
+    },
+    {
+      "name": "9100-EXIT",
+      "line_start": 1380,
+      "line_end": 1382,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "9500-LOG-ERROR",
+      "line_start": 1384,
+      "line_end": 1432,
+      "line_count": 49,
+      "calls": []
+    },
+    {
+      "name": "9500-EXIT",
+      "line_start": 1433,
+      "line_end": 1435,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "9990-END-ROUTINE",
+      "line_start": 1437,
+      "line_end": 1453,
+      "line_count": 17,
+      "calls": []
+    },
+    {
+      "name": "9990-EXIT",
+      "line_start": 1454,
+      "line_end": 1456,
+      "line_count": 3,
+      "calls": []
+    },
+    {
+      "name": "SPECTER-EXIT-PARA",
+      "line_start": 1460,
+      "line_end": 1462,
+      "line_count": 3,
+      "calls": []
+    }
+  ],
+  "stats": {
+    "total_lines": 1462,
+    "paragraph_count": 45,
+    "language": "COBOL",
+    "paragraphs": [
+      {
+        "name": "COPAUA0C",
+        "line_start": 23,
+        "line_end": 23,
+        "line_count": 1
+      },
+      {
+        "name": "MAIN-PARA",
+        "line_start": 456,
+        "line_end": 477,
+        "line_count": 22
+      },
+      {
+        "name": "1000-INITIALIZE",
+        "line_start": 478,
+        "line_end": 504,
+        "line_count": 27
+      },
+      {
+        "name": "1000-EXIT",
+        "line_start": 505,
+        "line_end": 510,
+        "line_count": 6
+      },
+      {
+        "name": "1100-OPEN-REQUEST-QUEUE",
+        "line_start": 511,
+        "line_end": 549,
+        "line_count": 39
+      },
+      {
+        "name": "1100-EXIT",
+        "line_start": 550,
+        "line_end": 555,
+        "line_count": 6
+      },
+      {
+        "name": "1200-SCHEDULE-PSB",
+        "line_start": 556,
+        "line_end": 600,
+        "line_count": 45
+      },
+      {
+        "name": "1200-EXIT",
+        "line_start": 601,
+        "line_end": 605,
+        "line_count": 5
+      },
+      {
+        "name": "2000-MAIN-PROCESS",
+        "line_start": 606,
+        "line_end": 634,
+        "line_count": 29
+      },
+      {
+        "name": "2000-EXIT",
+        "line_start": 635,
+        "line_end": 638,
+        "line_count": 4
+      },
+      {
+        "name": "2100-EXTRACT-REQUEST-MSG",
+        "line_start": 639,
+        "line_end": 669,
+        "line_count": 31
+      },
+      {
+        "name": "2100-EXIT",
+        "line_start": 670,
+        "line_end": 673,
+        "line_count": 4
+      },
+      {
+        "name": "3100-READ-REQUEST-MQ",
+        "line_start": 674,
+        "line_end": 729,
+        "line_count": 56
+      },
+      {
+        "name": "3100-EXIT",
+        "line_start": 730,
+        "line_end": 733,
+        "line_count": 4
+      },
+      {
+        "name": "5000-PROCESS-AUTH",
+        "line_start": 734,
+        "line_end": 772,
+        "line_count": 39
+      },
+      {
+        "name": "5000-EXIT",
+        "line_start": 773,
+        "line_end": 776,
+        "line_count": 4
+      },
+      {
+        "name": "5100-READ-XREF-RECORD",
+        "line_start": 777,
+        "line_end": 830,
+        "line_count": 54
+      },
+      {
+        "name": "5100-EXIT",
+        "line_start": 831,
+        "line_end": 834,
+        "line_count": 4
+      },
+      {
+        "name": "5200-READ-ACCT-RECORD",
+        "line_start": 835,
+        "line_end": 888,
+        "line_count": 54
+      },
+      {
+        "name": "5200-EXIT",
+        "line_start": 889,
+        "line_end": 892,
+        "line_count": 4
+      },
+      {
+        "name": "5300-READ-CUST-RECORD",
+        "line_start": 893,
+        "line_end": 946,
+        "line_count": 54
+      },
+      {
+        "name": "5300-EXIT",
+        "line_start": 947,
+        "line_end": 950,
+        "line_count": 4
+      },
+      {
+        "name": "5500-READ-AUTH-SUMMRY",
+        "line_start": 951,
+        "line_end": 985,
+        "line_count": 35
+      },
+      {
+        "name": "5500-EXIT",
+        "line_start": 986,
+        "line_end": 989,
+        "line_count": 4
+      },
+      {
+        "name": "5600-READ-PROFILE-DATA",
+        "line_start": 990,
+        "line_end": 995,
+        "line_count": 6
+      },
+      {
+        "name": "5600-EXIT",
+        "line_start": 996,
+        "line_end": 999,
+        "line_count": 4
+      },
+      {
+        "name": "6000-MAKE-DECISION",
+        "line_start": 1000,
+        "line_end": 1077,
+        "line_count": 78
+      },
+      {
+        "name": "6000-EXIT",
+        "line_start": 1078,
+        "line_end": 1081,
+        "line_count": 4
+      },
+      {
+        "name": "7100-SEND-RESPONSE",
+        "line_start": 1082,
+        "line_end": 1132,
+        "line_count": 51
+      },
+      {
+        "name": "7100-EXIT",
+        "line_start": 1133,
+        "line_end": 1136,
+        "line_count": 4
+      },
+      {
+        "name": "8000-WRITE-AUTH-TO-DB",
+        "line_start": 1137,
+        "line_end": 1146,
+        "line_count": 10
+      },
+      {
+        "name": "8000-EXIT",
+        "line_start": 1147,
+        "line_end": 1150,
+        "line_count": 4
+      },
+      {
+        "name": "8400-UPDATE-SUMMARY",
+        "line_start": 1151,
+        "line_end": 1217,
+        "line_count": 67
+      },
+      {
+        "name": "8400-EXIT",
+        "line_start": 1218,
+        "line_end": 1221,
+        "line_count": 4
+      },
+      {
+        "name": "8500-INSERT-AUTH",
+        "line_start": 1222,
+        "line_end": 1322,
+        "line_count": 101
+      },
+      {
+        "name": "8500-EXIT",
+        "line_start": 1323,
+        "line_end": 1328,
+        "line_count": 6
+      },
+      {
+        "name": "9000-TERMINATE",
+        "line_start": 1329,
+        "line_end": 1341,
+        "line_count": 13
+      },
+      {
+        "name": "9000-EXIT",
+        "line_start": 1342,
+        "line_end": 1345,
+        "line_count": 4
+      },
+      {
+        "name": "9100-CLOSE-REQUEST-QUEUE",
+        "line_start": 1346,
+        "line_end": 1379,
+        "line_count": 34
+      },
+      {
+        "name": "9100-EXIT",
+        "line_start": 1380,
+        "line_end": 1383,
+        "line_count": 4
+      },
+      {
+        "name": "9500-LOG-ERROR",
+        "line_start": 1384,
+        "line_end": 1432,
+        "line_count": 49
+      },
+      {
+        "name": "9500-EXIT",
+        "line_start": 1433,
+        "line_end": 1436,
+        "line_count": 4
+      },
+      {
+        "name": "9990-END-ROUTINE",
+        "line_start": 1437,
+        "line_end": 1453,
+        "line_count": 17
+      },
+      {
+        "name": "9990-EXIT",
+        "line_start": 1454,
+        "line_end": 1459,
+        "line_count": 6
+      },
+      {
+        "name": "SPECTER-EXIT-PARA",
+        "line_start": 1460,
+        "line_end": 1462,
+        "line_count": 3
+      }
+    ]
+  },
+  "parent_ticket_id": "mem-000009",
+  "cycle_number": 1,
+  "program_id": "COPAUA0C.MOCK",
+  "copybook_contents": {},
+  "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/.specter_build_COPAUA0C/COPAUA0C.mock.cbl",
+  "feedback_context": null,
+  "resume_mode": false,
+  "parallel_dispatch": false
+}

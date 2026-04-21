@@ -1,0 +1,895 @@
+{
+  "header": {
+    "program_id": "COPAUA0C",
+    "file_name": "COPAUA0C.mock.cbl",
+    "file_type": "COBOL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-04-21T13:50:41.652890",
+    "iteration_count": 1,
+    "final_status": null
+  },
+  "purpose": {
+    "summary": "This COBOL program, COPAUA0C, is part of the CardDemo application and serves as a card authorization decision program. It appears to be designed for a CICS environment and interacts with IMS and MQ. The program utilizes a mock file for testing purposes.",
+    "business_context": "Card authorization within the CardDemo application.",
+    "program_type": "ONLINE_CICS",
+    "citations": [
+      2,
+      4,
+      12
+    ]
+  },
+  "inputs": [
+    {
+      "name": "MOCK-FILE",
+      "io_type": "FILE_SEQUENTIAL",
+      "description": "Mock data for testing the card authorization logic.",
+      "copybook": null,
+      "citation": [
+        37,
+        45
+      ]
+    }
+  ],
+  "outputs": [],
+  "called_programs": [],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [],
+    "linkage_section": []
+  },
+  "business_rules": [],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "MOCK-FILE",
+        "fields_used": [
+          "MOCK-FILE-RECORD"
+        ],
+        "citation": [
+          37,
+          45
+        ]
+      }
+    ],
+    "writes_to": [],
+    "transforms": []
+  },
+  "copybooks_used": [],
+  "paragraphs": [
+    {
+      "paragraph_name": "MAIN-PARA",
+      "summary": null,
+      "purpose": "This is the main control paragraph of the program. It opens the MOCK-FILE, then calls 1000-INITIALIZE, 2000-MAIN-PROCESS, and 9000-TERMINATE in sequence to perform the program's core functions. After these calls, it attempts to read a record from MOCK-FILE and moves values to MOCK-ALPHA-STATUS and MOCK-NUM-STATUS based on the read status. The paragraph simulates a CICS RETURN using a DISPLAY statement. It reads the MOCK-FILE to simulate external calls.",
+      "called_by": [],
+      "calls": [
+        "1000-INITIALIZE",
+        "2000-MAIN-PROCESS",
+        "9000-TERMINATE"
+      ],
+      "citation": [
+        4,
+        24
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "1000-INITIALIZE",
+      "summary": null,
+      "purpose": "This paragraph performs initialization tasks. It simulates a CICS RETRIEVE command using a DISPLAY statement and reads a record from MOCK-FILE, moving values to MOCK-ALPHA-STATUS and MOCK-NUM-STATUS based on the read status. It checks WS-RESP-CD and moves WS-REQUEST-QNAME to itself and spaces to WS-TRIGGER-DATA if WS-RESP-CD is 0. It sets WS-WAIT-INTERVAL to 5000. Finally, it calls 1100-OPEN-REQUEST-QUEUE and 3100-READ-REQUEST-MQ to open the request queue and read a request message, respectively. The paragraph uses mock data from MOCK-FILE to simulate CICS and MQSeries interactions.",
+      "called_by": [],
+      "calls": [
+        "1100-OPEN-REQUEST-QUEUE",
+        "3100-READ-REQUEST-MQ"
+      ],
+      "citation": [
+        26,
+        52
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "1000-EXIT",
+      "summary": null,
+      "purpose": "This paragraph serves as the exit point for the 1000-INITIALIZE paragraph. It contains a DISPLAY statement for tracing and an EXIT statement to return control to the calling paragraph.",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [],
+      "citation": [
+        54,
+        57
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "1100-OPEN-REQUEST-QUEUE",
+      "summary": null,
+      "purpose": "This paragraph simulates opening a request queue. It moves 1 to MQOD-OBJECTTYPE and WS-REQUEST-QNAME to MQOD-OBJECTNAME. It computes WS-OPTIONS as 2048. It simulates a MQOPEN call using a DISPLAY statement and reads a record from MOCK-FILE, moving the value of MOCK-NUM-STATUS to RETURN-CODE. If WS-COMPCODE is 0, it sets WS-REQUEST-MQ-OPEN to TRUE; otherwise, it sets error flags and calls 9500-LOG-ERROR to log the error. The paragraph uses mock data from MOCK-FILE to simulate MQSeries interactions and sets error codes based on simulated MQSeries responses.",
+      "called_by": [
+        "1000-INITIALIZE"
+      ],
+      "calls": [
+        "9500-LOG-ERROR"
+      ],
+      "citation": [
+        59,
+        97
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "1100-EXIT",
+      "summary": null,
+      "purpose": "This paragraph serves as the exit point for the 1100-OPEN-REQUEST-QUEUE paragraph. It contains a DISPLAY statement for tracing and an EXIT statement to return control to the calling paragraph.",
+      "called_by": [
+        "1000-INITIALIZE"
+      ],
+      "calls": [],
+      "citation": [
+        99,
+        102
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "1200-SCHEDULE-PSB",
+      "summary": null,
+      "purpose": "This paragraph simulates scheduling a PSB (Program Specification Block) in IMS. It simulates a DLI SCHD call using a DISPLAY statement and reads a record from MOCK-FILE, moving the value of MOCK-ALPHA-STATUS to DIBSTAT and IMS-RETURN-CODE. If PSB-SCHEDULED-MORE-THAN-ONCE is true, it simulates a DLI TERM call and another DLI SCHD call, reading mock data after each. If STATUS-OK is true, it sets IMS-PSB-SCHD to TRUE; otherwise, it sets error flags and calls 9500-LOG-ERROR to log the error. The paragraph uses mock data from MOCK-FILE to simulate IMS interactions and sets error codes based on simulated IMS responses.",
+      "called_by": [],
+      "calls": [
+        "9500-LOG-ERROR"
+      ],
+      "citation": [
+        104,
+        149
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "1200-EXIT",
+      "summary": null,
+      "purpose": "This paragraph serves as the exit point for the 1200-SCHEDULE-PSB paragraph. It contains a DISPLAY statement for tracing and an EXIT statement to return control to the calling paragraph.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        151,
+        154
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "2000-MAIN-PROCESS",
+      "summary": null,
+      "purpose": "This paragraph represents the main processing loop of the program. It performs 2100-EXTRACT-REQUEST-MSG and 5000-PROCESS-AUTH repeatedly until NO-MORE-MSG-AVAILABLE or WS-LOOP-END is true. After each iteration, it increments WS-MSG-PROCESSED. It simulates a CICS SYNCPOINT using a DISPLAY statement. If WS-MSG-PROCESSED exceeds WS-REQSTS-PROCESS-LIMIT, it sets WS-LOOP-END to TRUE; otherwise, it calls 3100-READ-REQUEST-MQ to read another request message. The paragraph controls the overall processing flow, extracting requests, processing authorizations, and managing loop termination based on message availability and processing limits.",
+      "called_by": [],
+      "calls": [
+        "2100-EXTRACT-REQUEST-MSG",
+        "5000-PROCESS-AUTH",
+        "3100-READ-REQUEST-MQ"
+      ],
+      "citation": [
+        157,
+        185
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "2000-EXIT",
+      "summary": null,
+      "purpose": "This paragraph serves as the exit point for the 2000-MAIN-PROCESS paragraph. It contains a DISPLAY statement for tracing and an EXIT statement to return control to the calling paragraph.",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [],
+      "citation": [
+        187,
+        190
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "2100-EXTRACT-REQUEST-MSG",
+      "summary": null,
+      "purpose": "This paragraph extracts data from the input message buffer W01-GET-BUFFER. It uses the UNSTRING statement to parse the comma-delimited message into individual fields such as authorization date, time, card number, authorization type, card expiry date, message type, message source, processing code, transaction amount, merchant category code, acquirer country code, POS entry mode, merchant ID, merchant name, merchant city, merchant state, merchant zip, and transaction ID. It then converts the alphanumeric transaction amount (WS-TRANSACTION-AMT-AN) to a numeric value (PA-RQ-TRANSACTION-AMT) using the NUMVAL function. The extracted data is used in subsequent processing steps. No error handling is explicitly performed in this paragraph. After extracting the data, control passes to the next paragraph in sequence.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        639,
+        668
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "2100-EXIT",
+      "summary": null,
+      "purpose": "This paragraph serves as the exit point for the 2100-EXTRACT-REQUEST-MSG paragraph. It contains a DISPLAY statement for tracing purposes, indicating that the program has reached this point. The EXIT statement then returns control to the calling paragraph. No data manipulation or error handling is performed here. This paragraph ensures a clean exit from the 2100-EXTRACT-REQUEST-MSG routine.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        670,
+        672
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "3100-READ-REQUEST-MQ",
+      "summary": null,
+      "purpose": "This paragraph is a placeholder for reading a request from a message queue (MQ). Currently, it only contains a DISPLAY statement for tracing and a CONTINUE statement, indicating that no actual MQ read operation is implemented in this mock version. It is likely intended to interface with a message queuing system in a production environment. No data is read or processed in this paragraph. Control simply proceeds to the next paragraph after the CONTINUE statement.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        674,
+        676
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "3100-EXIT",
+      "summary": null,
+      "purpose": "This paragraph serves as the exit point for the 3100-READ-REQUEST-MQ paragraph. It contains a DISPLAY statement for tracing purposes. The EXIT statement then returns control to the calling paragraph. No data manipulation or error handling is performed here. This paragraph ensures a clean exit from the 3100-READ-REQUEST-MQ routine.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        730,
+        732
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "5000-PROCESS-AUTH",
+      "summary": null,
+      "purpose": "This paragraph is the main processing routine for authorization requests. It begins by setting APPROVE-AUTH to TRUE, indicating an initial approval status. It then performs several subroutines, including 1200-SCHEDULE-PSB, 5100-READ-XREF-RECORD, 5200-READ-ACCT-RECORD, 5300-READ-CUST-RECORD, 5500-READ-AUTH-SUMMRY, 5600-READ-PROFILE-DATA, 6000-MAKE-DECISION, 7100-SEND-RESPONSE and 8000-WRITE-AUTH-TO-DB. The calls to 5200-READ-ACCT-RECORD, 5300-READ-CUST-RECORD, 5500-READ-AUTH-SUMMRY, 5600-READ-PROFILE-DATA, and 8000-WRITE-AUTH-TO-DB are conditionally executed based on the CARD-FOUND-XREF flag. The paragraph sets CARD-FOUND-XREF and FOUND-ACCT-IN-MSTR to TRUE before calling 5100-READ-XREF-RECORD. The overall purpose is to orchestrate the steps required to authorize a transaction.",
+      "called_by": [],
+      "calls": [
+        "1200-SCHEDULE-PSB",
+        "5100-READ-XREF-RECORD",
+        "5200-READ-ACCT-RECORD",
+        "5300-READ-CUST-RECORD",
+        "5500-READ-AUTH-SUMMRY",
+        "5600-READ-PROFILE-DATA",
+        "6000-MAKE-DECISION",
+        "7100-SEND-RESPONSE",
+        "8000-WRITE-AUTH-TO-DB"
+      ],
+      "citation": [
+        734,
+        771
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "5000-EXIT",
+      "summary": null,
+      "purpose": "This paragraph serves as the exit point for the 5000-PROCESS-AUTH paragraph. It contains a DISPLAY statement for tracing purposes. The EXIT statement then returns control to the calling paragraph. No data manipulation or error handling is performed here. This paragraph ensures a clean exit from the 5000-PROCESS-AUTH routine.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        773,
+        775
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "5100-READ-XREF-RECORD",
+      "summary": null,
+      "purpose": "This paragraph reads the card cross-reference (XREF) record based on the card number (PA-RQ-CARD-NUM). It moves the card number to WS-CARD-RID-CARD-NUM and then attempts to read the XREF record. The CICS READ command is commented out, and instead, a READ statement from a MOCK-FILE is used for testing. The paragraph evaluates the WS-RESP-CD to determine the outcome of the read operation. If WS-RESP-CD is 0, CARD-FOUND-XREF is set to TRUE. If WS-RESP-CD is 13, CARD-NFOUND-XREF and NFOUND-ACCT-IN-MSTR are set to TRUE, and an error message is logged using 9500-LOG-ERROR. If WS-RESP-CD is any other value, an error message is logged indicating a failure to read the XREF file. The paragraph uses MOCK-NUM-STATUS from the MOCK-FILE to populate WS-RESP-CD.",
+      "called_by": [
+        "5000-PROCESS-AUTH"
+      ],
+      "calls": [
+        "9500-LOG-ERROR"
+      ],
+      "citation": [
+        777,
+        829
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "5100-EXIT",
+      "summary": null,
+      "purpose": "This paragraph serves as the exit point for the 5100-READ-XREF-RECORD paragraph. It contains a DISPLAY statement for tracing purposes. The EXIT statement then returns control to the calling paragraph. No data manipulation or error handling is performed here. This paragraph ensures a clean exit from the 5100-READ-XREF-RECORD routine.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        831,
+        833
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "5200-READ-ACCT-RECORD",
+      "summary": null,
+      "purpose": "This paragraph reads the account record based on the account ID (WS-CARD-RID-ACCT-ID). It moves the account ID to WS-CARD-RID-ACCT-ID and then attempts to read the account record. The CICS READ command is commented out, and instead, a READ statement from a MOCK-FILE is used for testing. The paragraph evaluates the WS-RESP-CD to determine the outcome of the read operation. If WS-RESP-CD is 0, FOUND-ACCT-IN-MSTR is set to TRUE. If WS-RESP-CD is 13, NFOUND-ACCT-IN-MSTR is set to TRUE, and an error message is logged using 9500-LOG-ERROR. If WS-RESP-CD is any other value, an error message is logged indicating a failure to read the account file. The paragraph uses MOCK-NUM-STATUS from the MOCK-FILE to populate WS-RESP-CD.",
+      "called_by": [
+        "5000-PROCESS-AUTH"
+      ],
+      "calls": [
+        "9500-LOG-ERROR"
+      ],
+      "citation": [
+        835,
+        887
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "5200-EXIT",
+      "summary": null,
+      "purpose": "This paragraph serves as the exit point for the 5200-READ-ACCT-RECORD paragraph. It contains a DISPLAY statement for tracing purposes. The EXIT statement then returns control to the calling paragraph. No data manipulation or error handling is performed here. This paragraph ensures a clean exit from the 5200-READ-ACCT-RECORD routine.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        889,
+        891
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "5300-READ-CUST-RECORD",
+      "summary": null,
+      "purpose": "This paragraph reads a customer record. It moves WS-CARD-RID-CUST-ID to itself (likely a placeholder). It then attempts to read a customer record from MOCK-FILE, simulating a CICS READ operation. If the read is successful, FOUND-CUST-IN-MSTR is set to TRUE. If the record is not found, NFOUND-CUST-IN-MSTR is set to TRUE, an error message is generated, and 9500-LOG-ERROR is performed. If any other error occurs during the read, an error message is generated with the CICS response codes, and 9500-LOG-ERROR is performed. The paragraph uses MOCK-NUM-STATUS from the MOCK-FILE to simulate the CICS response code.",
+      "called_by": [],
+      "calls": [
+        "9500-LOG-ERROR"
+      ],
+      "citation": [
+        893,
+        945
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "5300-EXIT",
+      "summary": null,
+      "purpose": "This paragraph serves as the exit point for the 5300-READ-CUST-RECORD paragraph. It displays a trace message and then executes the EXIT statement to return control to the calling paragraph. It does not perform any data manipulation or error handling.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        947,
+        949
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "5500-READ-AUTH-SUMMRY",
+      "summary": null,
+      "purpose": "This paragraph reads the authorization summary. It moves WS-CARD-RID-ACCT-ID-X to PA-ACCT-ID. It then attempts to read the authorization summary from MOCK-FILE, simulating an IMS GET UNIQUE (GU) call. The DIBSTAT field is moved to IMS-RETURN-CODE. Based on the value of DIBSTAT (simulated IMS return code), FOUND-PAUT-SMRY-SEG or NFOUND-PAUT-SMRY-SEG is set to TRUE. If an error occurs (DIBSTAT is not STATUS-OK or SEGMENT-NOT-FOUND), an error message is generated, and 9500-LOG-ERROR is performed. The paragraph uses MOCK-ALPHA-STATUS from the MOCK-FILE to simulate the IMS return code.",
+      "called_by": [],
+      "calls": [
+        "9500-LOG-ERROR"
+      ],
+      "citation": [
+        951,
+        984
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "5500-EXIT",
+      "summary": null,
+      "purpose": "This paragraph serves as the exit point for the 5500-READ-AUTH-SUMMRY paragraph. It displays a trace message and then executes the EXIT statement to return control to the calling paragraph. It does not perform any data manipulation or error handling.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        986,
+        988
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "5600-READ-PROFILE-DATA",
+      "summary": null,
+      "purpose": "This paragraph is a placeholder for reading profile data. It displays a trace message and then executes a CONTINUE statement, effectively doing nothing. It's likely a stub for future implementation or a section that was removed but the paragraph structure was kept. No data is read or processed in this paragraph.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        990,
+        994
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "5600-EXIT",
+      "summary": null,
+      "purpose": "This paragraph serves as the exit point for the 5600-READ-PROFILE-DATA paragraph. It displays a trace message and then executes the EXIT statement to return control to the calling paragraph. It does not perform any data manipulation or error handling.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        996,
+        998
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "6000-MAKE-DECISION",
+      "summary": null,
+      "purpose": "This paragraph is a placeholder for making a decision. It displays a trace message and then executes a CONTINUE statement, effectively doing nothing. It's likely a stub for future implementation or a section that was removed but the paragraph structure was kept. No data is read, processed, or decisions made in this paragraph.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1000,
+        1002
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "6000-EXIT",
+      "summary": null,
+      "purpose": "This paragraph serves as the exit point for the 6000-MAKE-DECISION paragraph. It displays a trace message and then executes the EXIT statement to return control to the calling paragraph. It does not perform any data manipulation or error handling.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1078,
+        1080
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "7100-SEND-RESPONSE",
+      "summary": null,
+      "purpose": "This paragraph sends a response message via MQ. It moves constants to MQ message descriptor fields (MQMD) such as MQMD-MSGTYPE, MQMD-REPLYTOQMGR, MQMD-PERSISTENCE, and MQMD-EXPIRY. It computes MQPMO-OPTIONS. It then attempts to call MQPUT1 to send the message, simulating the call with a READ from MOCK-FILE. If the MQPUT1 call fails (WS-COMPCODE is not 0), an error message is generated, and 9500-LOG-ERROR is performed. The paragraph uses MOCK-NUM-STATUS from the MOCK-FILE to simulate the MQ return code, which is then moved to RETURN-CODE.",
+      "called_by": [],
+      "calls": [
+        "9500-LOG-ERROR"
+      ],
+      "citation": [
+        1082,
+        1131
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "7100-EXIT",
+      "summary": null,
+      "purpose": "This paragraph serves as the exit point for the 7100-SEND-RESPONSE paragraph. It displays a trace message and then executes the EXIT statement to return control to the calling paragraph. It does not perform any data manipulation or error handling.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1133,
+        1135
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "8000-WRITE-AUTH-TO-DB",
+      "summary": null,
+      "purpose": "This paragraph serves as a high-level control point for writing authorization data to the database. It orchestrates the update of the authorization summary and the insertion of authorization details. It first calls 8400-UPDATE-SUMMARY to update the pending authorization summary with the current transaction's information. Then, it calls 8500-INSERT-AUTH to insert the authorization details into the database. The paragraph uses PERFORM statements to execute these subroutines. The DISPLAY statements are mock traces, indicating the start of the paragraph and the calls to other paragraphs. No explicit error handling is present within this paragraph; it relies on the called paragraphs to handle errors.",
+      "called_by": [],
+      "calls": [
+        "8400-UPDATE-SUMMARY",
+        "8500-INSERT-AUTH"
+      ],
+      "citation": [
+        1137,
+        1145
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "8000-EXIT",
+      "summary": null,
+      "purpose": "This paragraph provides a standard exit point for the 8000-WRITE-AUTH-TO-DB paragraph. It contains a DISPLAY statement for tracing purposes, indicating the exit from the paragraph. The EXIT statement ensures proper control flow by returning to the calling paragraph. This paragraph does not handle any data manipulation, business logic, or error conditions. It serves solely as a clean exit point.",
+      "called_by": [
+        "8400-UPDATE-SUMMARY",
+        "8500-INSERT-AUTH",
+        "9100-CLOSE-REQUEST-QUEUE"
+      ],
+      "calls": [],
+      "citation": [
+        1147,
+        1149
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "8400-UPDATE-SUMMARY",
+      "summary": null,
+      "purpose": "This paragraph updates the pending authorization summary (PAUTSUM0) in the database. It first checks if a summary segment already exists (NFOUND-PAUT-SMRY-SEG). If not, it initializes the PENDING-AUTH-SUMMARY with zeros and moves the account ID (XREF-ACCT-ID) and customer ID (WS-CARD-RID-CUST-ID) into the summary record. It then moves the credit and cash limits (WS-ACCT-CREDIT-LIMIT, WS-ACCT-CASH-LIMIT) into the summary. Based on whether the authorization was approved (AUTH-RESP-APPROVED), it increments the approved or declined authorization counts and amounts. Finally, it attempts to update or insert the summary segment using mocked DLI calls. If the IMS update fails, it logs an error. The paragraph uses MOCK-FILE to simulate database I/O.",
+      "called_by": [
+        "8000-WRITE-AUTH-TO-DB"
+      ],
+      "calls": [
+        "9500-LOG-ERROR"
+      ],
+      "citation": [
+        1151,
+        1216
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "8400-EXIT",
+      "summary": null,
+      "purpose": "This paragraph provides a standard exit point for the 8400-UPDATE-SUMMARY paragraph. It includes a DISPLAY statement for tracing and an EXIT statement to return control to the calling paragraph. It does not perform any data manipulation, business logic, or error handling. Its sole purpose is to ensure a clean exit from the 8400-UPDATE-SUMMARY paragraph.",
+      "called_by": [
+        "8000-WRITE-AUTH-TO-DB"
+      ],
+      "calls": [],
+      "citation": [
+        1218,
+        1220
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "8500-INSERT-AUTH",
+      "summary": null,
+      "purpose": "This paragraph inserts authorization details into the database. It retrieves the current date and time using mocked CICS calls. It then calculates PA-AUTH-DATE-9C and PA-AUTH-TIME-9C by subtracting the current date and time from constant values. It moves various fields from the request and response structures (PA-RQ-*, PA-RL-*) into the pending authorization details record. Based on whether the authorization was approved (AUTH-RESP-APPROVED), it sets either PA-MATCH-PENDING or PA-MATCH-AUTH-DECLINED to TRUE. It then attempts to insert the authorization details segment using a mocked DLI call. If the IMS insert fails, it logs an error. The paragraph uses MOCK-FILE to simulate CICS and database I/O.",
+      "called_by": [
+        "8000-WRITE-AUTH-TO-DB"
+      ],
+      "calls": [
+        "9500-LOG-ERROR"
+      ],
+      "citation": [
+        1222,
+        1321
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "8500-EXIT",
+      "summary": null,
+      "purpose": "This paragraph provides a standard exit point for the 8500-INSERT-AUTH paragraph. It contains a DISPLAY statement for tracing and an EXIT statement to return control to the calling paragraph. It does not perform any data manipulation, business logic, or error handling. Its sole purpose is to ensure a clean exit from the 8500-INSERT-AUTH paragraph.",
+      "called_by": [
+        "8000-WRITE-AUTH-TO-DB"
+      ],
+      "calls": [],
+      "citation": [
+        1323,
+        1325
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "9000-TERMINATE",
+      "summary": null,
+      "purpose": "This paragraph handles the termination of the program. It first checks if the IMS PSB has been scheduled (IMS-PSB-SCHD). If so, it attempts to terminate the IMS connection using a mocked DLI TERM call. Then, it calls 9100-CLOSE-REQUEST-QUEUE to close the request MQSeries queue. The DISPLAY statements are used for tracing the program's execution flow. The paragraph ensures that resources are released before the program ends.",
+      "called_by": [],
+      "calls": [
+        "9100-CLOSE-REQUEST-QUEUE"
+      ],
+      "citation": [
+        1329,
+        1340
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "9000-EXIT",
+      "summary": null,
+      "purpose": "This paragraph provides a standard exit point for the 9000-TERMINATE paragraph. It includes a DISPLAY statement for tracing and an EXIT statement to return control to the calling paragraph. It does not perform any data manipulation, business logic, or error handling. Its sole purpose is to ensure a clean exit from the 9000-TERMINATE paragraph.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1342,
+        1344
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "9100-CLOSE-REQUEST-QUEUE",
+      "summary": null,
+      "purpose": "This paragraph attempts to close the request MQSeries queue. It first checks if the queue is open (WS-REQUEST-MQ-OPEN). If so, it calls the MQCLOSE program using mocked CALL statement. The parameters passed to MQCLOSE include the connection handle (W01-HCONN-REQUEST), object handle (W01-HOBJ-REQUEST), and variables for the completion code (WS-COMPCODE) and reason code (WS-REASON). If the MQCLOSE call fails (WS-COMPCODE is not 0), it logs an error. The paragraph uses MOCK-FILE to simulate the MQCLOSE call and RETURN-CODE to store the return code. The DISPLAY statements are used for tracing and debugging.",
+      "called_by": [
+        "9000-TERMINATE"
+      ],
+      "calls": [
+        "9500-LOG-ERROR"
+      ],
+      "citation": [
+        1346,
+        1378
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "9100-EXIT",
+      "summary": null,
+      "purpose": "This paragraph provides a standard exit point for the 9100-CLOSE-REQUEST-QUEUE paragraph. It contains a DISPLAY statement for tracing and an EXIT statement to return control to the calling paragraph. It does not perform any data manipulation, business logic, or error handling. Its sole purpose is to ensure a clean exit from the 9100-CLOSE-REQUEST-QUEUE paragraph.",
+      "called_by": [
+        "9000-TERMINATE"
+      ],
+      "calls": [],
+      "citation": [
+        1380,
+        1382
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "9500-LOG-ERROR",
+      "summary": null,
+      "purpose": "This paragraph logs errors encountered during program execution. It reads from MOCK-FILE to simulate CICS interactions. It moves data to ERR-APPLICATION, ERR-PROGRAM, ERR-DATE, and ERR-TIME fields. It then simulates writing to a CICS temporary data queue. If the error is critical (ERR-CRITICAL), it calls 9990-END-ROUTINE to terminate the program. The paragraph's primary purpose is to record error information for debugging and auditing. It consumes data from WS-CICS-TRANID, WS-PGM-AUTH, WS-CUR-DATE-X6, and WS-CUR-TIME-X6. It calls 9990-END-ROUTINE when ERR-CRITICAL is true, initiating program termination.",
+      "called_by": [],
+      "calls": [
+        "9990-END-ROUTINE"
+      ],
+      "citation": [
+        1384,
+        1432
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "9500-EXIT",
+      "summary": null,
+      "purpose": "This paragraph serves as the exit point for the 9500-LOG-ERROR paragraph. Its primary purpose is to provide a clean and controlled exit from the error logging routine. It does not consume any specific inputs or produce any outputs other than the program flow control. It simply executes an EXIT statement to return control to the calling paragraph. It is a standard practice in COBOL to have an explicit exit paragraph for each procedure.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1433,
+        1435
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "9990-END-ROUTINE",
+      "summary": null,
+      "purpose": "This paragraph initiates the program termination process. It calls 9000-TERMINATE to perform termination procedures. It simulates a CICS RETURN. It reads from MOCK-FILE to simulate CICS interactions. The primary purpose is to ensure a controlled shutdown of the program. It calls 9000-TERMINATE to handle file closures and other termination tasks. It consumes no specific inputs other than the program flow. It produces no specific outputs other than initiating the termination sequence.",
+      "called_by": [
+        "9500-LOG-ERROR"
+      ],
+      "calls": [
+        "9000-TERMINATE"
+      ],
+      "citation": [
+        1437,
+        1453
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "9990-EXIT",
+      "summary": null,
+      "purpose": "This paragraph serves as the exit point for the 9990-END-ROUTINE paragraph. Its primary purpose is to provide a clean and controlled exit from the end routine. It does not consume any specific inputs or produce any outputs other than the program flow control. It simply executes an EXIT statement to return control to the calling paragraph. It is a standard practice in COBOL to have an explicit exit paragraph for each procedure.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1454,
+        1456
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "SPECTER-EXIT-PARA",
+      "summary": null,
+      "purpose": "This paragraph closes the MOCK-FILE and terminates the program using STOP RUN. Its primary purpose is to finalize the program execution and release resources. It consumes no specific inputs other than the program flow. It produces the termination of the program as its output. It closes the MOCK-FILE to ensure data integrity and prevent resource leaks.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        1460,
+        1462
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "COPAUA0C",
+      "summary": null,
+      "purpose": "This is the main paragraph and entry point of the COPAUA0C program. Currently, it contains no executable statements or logic. The paragraph serves as a placeholder, indicating the program's start but performing no specific actions. It does not consume any inputs, produce any outputs, implement any business logic, handle any errors, or call any other paragraphs or programs. The program's functionality is currently undefined.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        23,
+        23
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "MOCK-FILE-STATUS NOT = '00'",
+      "action": "UNKNOWN",
+      "citation": [
+        40,
+        74
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [],
+  "open_questions": [
+    {
+      "question": "What is the purpose of the SPECTER PATCH declarations?",
+      "context": "The variables MQGMO-OPTIONS through XREF-ACCT-ID are declared but their usage is unclear from this code snippet.",
+      "suggestion": "Examine the full source code to determine how these variables are used in MQ, IMS, or CICS operations."
+    },
+    {
+      "question": "What is the structure and content of the MOCK-FILE?",
+      "context": "The program reads from MOCK-FILE, but the structure of the data is not defined beyond a single 80-character record.",
+      "suggestion": "Examine related documentation or the full source code to understand the expected format of the mock data."
+    },
+    {
+      "question": "What specific card authorization logic is implemented?",
+      "context": "The program is described as a card authorization decision program, but the actual authorization rules are not present in this snippet.",
+      "suggestion": "Analyze the full source code, particularly sections that process the input data and make authorization decisions."
+    }
+  ],
+  "resolved_questions": [],
+  "dead_code": [],
+  "dead_code_resolved": [],
+  "call_semantics": [],
+  "flow_diagram": "flowchart TD\n    %% Title: COPAUA0C.mock.cbl\n    1000_EXIT[\"1000-EXIT\"]\n    1000_INITIALIZE[\"1000-INITIALIZE\"]\n    1100_OPEN_REQUEST_QUEUE[\"1100-OPEN-REQUEST-QUEUE\"]\n    3100_READ_REQUEST_MQ[\"3100-READ-REQUEST-MQ\"]\n    1100_EXIT[\"1100-EXIT\"]\n    9500_LOG_ERROR[\"9500-LOG-ERROR\"]\n    1200_EXIT[\"1200-EXIT\"]\n    1200_SCHEDULE_PSB[\"1200-SCHEDULE-PSB\"]\n    2000_EXIT[\"2000-EXIT\"]\n    2000_MAIN_PROCESS[\"2000-MAIN-PROCESS\"]\n    2100_EXTRACT_REQUEST_MSG[\"2100-EXTRACT-REQUEST-MSG\"]\n    5000_PROCESS_AUTH[\"5000-PROCESS-AUTH\"]\n    2100_EXIT[\"2100-EXIT\"]\n    3100_EXIT[\"3100-EXIT\"]\n    5000_EXIT[\"5000-EXIT\"]\n    5100_READ_XREF_RECORD[\"5100-READ-XREF-RECORD\"]\n    5200_READ_ACCT_RECORD[\"5200-READ-ACCT-RECORD\"]\n    5300_READ_CUST_RECORD[\"5300-READ-CUST-RECORD\"]\n    5500_READ_AUTH_SUMMRY[\"5500-READ-AUTH-SUMMRY\"]\n    5600_READ_PROFILE_DATA[\"5600-READ-PROFILE-DATA\"]\n    6000_MAKE_DECISION[\"6000-MAKE-DECISION\"]\n    7100_SEND_RESPONSE[\"7100-SEND-RESPONSE\"]\n    8000_WRITE_AUTH_TO_DB[\"8000-WRITE-AUTH-TO-DB\"]\n    5100_EXIT[\"5100-EXIT\"]\n    5200_EXIT[\"5200-EXIT\"]\n    5300_EXIT[\"5300-EXIT\"]\n    5500_EXIT[\"5500-EXIT\"]\n    5600_EXIT[\"5600-EXIT\"]\n    6000_EXIT[\"6000-EXIT\"]\n    7100_EXIT[\"7100-EXIT\"]\n    8000_EXIT[\"8000-EXIT\"]\n    8400_UPDATE_SUMMARY[\"8400-UPDATE-SUMMARY\"]\n    8500_INSERT_AUTH[\"8500-INSERT-AUTH\"]\n    8400_EXIT[\"8400-EXIT\"]\n    8500_EXIT[\"8500-EXIT\"]\n    9000_EXIT[\"9000-EXIT\"]\n    9000_TERMINATE[\"9000-TERMINATE\"]\n    9100_CLOSE_REQUEST_QUEUE[\"9100-CLOSE-REQUEST-QUEUE\"]\n    9100_EXIT[\"9100-EXIT\"]\n    9500_EXIT[\"9500-EXIT\"]\n    9990_END_ROUTINE[\"9990-END-ROUTINE\"]\n    9990_EXIT[\"9990-EXIT\"]\n    MAIN_PARA[\"MAIN-PARA\"]\n    SPECTER_EXIT_PARA[\"SPECTER-EXIT-PARA\"]\n    1000_INITIALIZE --> 1100_OPEN_REQUEST_QUEUE\n    1000_INITIALIZE --> 3100_READ_REQUEST_MQ\n    1100_OPEN_REQUEST_QUEUE --> 9500_LOG_ERROR\n    1200_SCHEDULE_PSB --> 9500_LOG_ERROR\n    2000_MAIN_PROCESS --> 2100_EXTRACT_REQUEST_MSG\n    2000_MAIN_PROCESS --> 3100_READ_REQUEST_MQ\n    2000_MAIN_PROCESS --> 5000_PROCESS_AUTH\n    5000_PROCESS_AUTH --> 1200_SCHEDULE_PSB\n    5000_PROCESS_AUTH --> 5100_READ_XREF_RECORD\n    5000_PROCESS_AUTH --> 5200_READ_ACCT_RECORD\n    5000_PROCESS_AUTH --> 5300_READ_CUST_RECORD\n    5000_PROCESS_AUTH --> 5500_READ_AUTH_SUMMRY\n    5000_PROCESS_AUTH --> 5600_READ_PROFILE_DATA\n    5000_PROCESS_AUTH --> 6000_MAKE_DECISION\n    5000_PROCESS_AUTH --> 7100_SEND_RESPONSE\n    5000_PROCESS_AUTH --> 8000_WRITE_AUTH_TO_DB\n    5100_READ_XREF_RECORD --> 9500_LOG_ERROR\n    5200_READ_ACCT_RECORD --> 9500_LOG_ERROR\n    5300_READ_CUST_RECORD --> 9500_LOG_ERROR\n    5500_READ_AUTH_SUMMRY --> 9500_LOG_ERROR\n    7100_SEND_RESPONSE --> 9500_LOG_ERROR\n    8000_WRITE_AUTH_TO_DB --> 8400_UPDATE_SUMMARY\n    8000_WRITE_AUTH_TO_DB --> 8500_INSERT_AUTH\n    8400_UPDATE_SUMMARY --> 9500_LOG_ERROR\n    8500_INSERT_AUTH --> 9500_LOG_ERROR\n    9000_TERMINATE --> 9100_CLOSE_REQUEST_QUEUE\n    9100_CLOSE_REQUEST_QUEUE --> 9500_LOG_ERROR\n    9500_LOG_ERROR --> 9990_END_ROUTINE\n    9990_END_ROUTINE --> 9000_TERMINATE\n    MAIN_PARA --> 1000_INITIALIZE\n    MAIN_PARA --> 2000_MAIN_PROCESS\n    MAIN_PARA --> 9000_TERMINATE",
+  "copybooks_not_found": []
+}

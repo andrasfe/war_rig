@@ -4,17 +4,17 @@
     "file_name": "IMSFUNCS.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-16T19:55:00.279557",
+    "analyzed_at": "2026-04-21T13:43:50.707121",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines a set of constants representing IMS function codes and a parameter count used in IMS database calls. It provides symbolic names for common IMS operations like Get Unique (GU), Get Hold Unique (GHU), Get Next (GN), Insert (ISRT), and Delete (DLET).",
-    "business_context": "This copybook is used in programs that interact with an IMS database, providing a standardized way to specify the desired IMS function.",
-    "program_type": "SUBROUTINE",
+    "summary": "This copybook defines a set of constants representing IMS function codes and a parameter count. These constants are used when making calls to IMS databases.",
+    "business_context": null,
+    "program_type": "COPYBOOK",
     "citations": [
       17,
-      26
+      27
     ]
   },
   "inputs": [],
@@ -34,7 +34,7 @@
   "copybooks_used": [
     {
       "copybook_name": "IMSFUNCS",
-      "purpose": "Defines IMS function codes and parameter count.",
+      "purpose": "Defines IMS function codes and a parameter count for IMS database calls.",
       "location": "WORKING_STORAGE",
       "citation": 17
     }

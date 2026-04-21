@@ -4,13 +4,13 @@
     "file_name": "COPAUS2C.cbl",
     "file_type": "COBOL",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-16T19:47:12.320114",
+    "analyzed_at": "2026-04-21T13:42:54.531258",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "COPAUS2C is a CICS COBOL DB2 program that marks authorization messages as fraudulent. It inserts a record into the CARDDEMO.AUTHFRDS table or updates an existing record if a duplicate is found, indicating that the authorization was fraudulent.",
-    "business_context": "This program is part of the CardDemo application and is used to report or remove fraud associated with card authorizations.",
+    "summary": "The COPAUS2C program is a CICS COBOL DB2 program that marks authorization messages as fraudulent in the CARDDEMO.AUTHFRDS table. It receives authorization data via the CICS COMMAREA, inserts a new record into the AUTHFRDS table, and updates the record if it already exists.",
+    "business_context": "This program is part of the CardDemo application and is used to report or remove fraud flags from authorization records.",
     "program_type": "ONLINE_CICS",
     "citations": [
       2,
@@ -23,7 +23,7 @@
     {
       "name": "DFHCOMMAREA",
       "io_type": "CICS_COMMAREA",
-      "description": "CICS Commarea containing account ID (WS-ACCT-ID), customer ID (WS-CUST-ID), fraud audit record (WS-FRAUD-AUTH-RECORD), and fraud status record (WS-FRAUD-STATUS-RECORD).",
+      "description": "CICS COMMAREA containing account ID, customer ID, and fraud authorization record data.",
       "copybook": "CIPAUDTY",
       "citation": [
         74,
@@ -33,7 +33,7 @@
     {
       "name": "CARDDEMO.AUTHFRDS",
       "io_type": "DB2_TABLE",
-      "description": "DB2 table containing authorization fraud details.",
+      "description": "DB2 table containing authorization and fraud data.",
       "copybook": "AUTHFRDS",
       "citation": [
         142,
@@ -45,22 +45,24 @@
     {
       "name": "CARDDEMO.AUTHFRDS",
       "io_type": "DB2_TABLE",
-      "description": "The AUTHFRDS table is updated with fraud information.",
+      "description": "The AUTH_FRAUD column in the CARDDEMO.AUTHFRDS table is updated to indicate a fraudulent transaction, or a new record is inserted.",
       "copybook": null,
       "citation": [
-        142,
-        223
+        224,
+        142
       ]
     },
     {
-      "name": "DFHCOMMAREA",
+      "name": "WS-FRD-ACT-MSG",
       "io_type": "CICS_COMMAREA",
-      "description": "The commarea is updated with a fraud update status and message (WS-FRD-ACT-MSG).",
+      "description": "Message indicating the success or failure of the fraud update.",
       "copybook": null,
       "citation": [
         86,
         201,
-        232
+        213,
+        232,
+        241
       ]
     }
   ],
@@ -75,14 +77,26 @@
   "business_rules": [
     {
       "rule_id": "BR001",
-      "description": "If a record with the same card number and timestamp already exists in the AUTHFRDS table, update the existing record instead of inserting a new one.",
-      "logic_summary": "Checks SQLCODE after INSERT. If SQLCODE is -803 (duplicate key), performs FRAUD-UPDATE.",
+      "description": "If a record with the same CARD_NUM and AUTH_TS already exists in the AUTHFRDS table, update the AUTH_FRAUD and FRAUD_RPT_DATE columns.",
+      "logic_summary": "An UPDATE statement is executed if the INSERT fails with SQLCODE -803, indicating a duplicate key.",
       "conditions": [
         "SQLCODE = -803"
       ],
       "citation": [
         203,
-        204
+        223
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "If a record with the same CARD_NUM and AUTH_TS does not exist in the AUTHFRDS table, insert a new record with the provided authorization and fraud data.",
+      "logic_summary": "An INSERT statement is executed to add a new record to the AUTHFRDS table.",
+      "conditions": [
+        "SQLCODE = ZERO"
+      ],
+      "citation": [
+        141,
+        199
       ]
     }
   ],
@@ -119,9 +133,7 @@
           "WS-CUST-ID"
         ],
         "citation": [
-          101,
           103,
-          107,
           113,
           115,
           116,
@@ -182,77 +194,44 @@
         ],
         "citation": [
           143,
-          144,
-          145,
-          146,
-          147,
-          148,
-          149,
-          150,
-          151,
-          152,
-          153,
-          154,
-          155,
-          156,
-          157,
-          158,
-          159,
-          160,
-          161,
-          162,
-          163,
-          164,
-          165,
-          166,
-          167,
-          168
+          224
         ]
       },
       {
-        "destination": "DFHCOMMAREA",
+        "destination": "WS-FRD-ACT-MSG",
         "fields_written": [
-          "WS-FRD-ACT-MSG",
-          "WS-FRD-UPDATE-STATUS"
+          "WS-FRD-ACT-MSG"
         ],
         "citation": [
           201,
-          206,
           213,
           232,
-          234,
           241
         ]
       }
     ],
     "transforms": [
       {
-        "input_field": "PA-AUTH-ORIG-DATE",
-        "output_field": "WS-AUTH-YY, WS-AUTH-MM, WS-AUTH-DD",
-        "transformation_description": "Extracts year, month, and day from PA-AUTH-ORIG-DATE and moves them to WS-AUTH-YY, WS-AUTH-MM, and WS-AUTH-DD respectively.",
-        "citation": [
-          103,
-          104,
-          105
-        ]
-      },
-      {
         "input_field": "PA-AUTH-TIME-9C",
         "output_field": "WS-AUTH-TIME",
-        "transformation_description": "Calculates WS-AUTH-TIME by subtracting PA-AUTH-TIME-9C from 999999999.",
+        "transformation_description": "Calculates the authorization time by subtracting PA-AUTH-TIME-9C from 999999999.",
         "citation": [
           107
         ]
       },
       {
-        "input_field": "WS-AUTH-TIME-AN",
-        "output_field": "WS-AUTH-HH, WS-AUTH-MI, WS-AUTH-SS, WS-AUTH-SSS",
-        "transformation_description": "Extracts hour, minute, second, and milliseconds from WS-AUTH-TIME-AN and moves them to WS-AUTH-HH, WS-AUTH-MI, WS-AUTH-SS, and WS-AUTH-SSS respectively.",
+        "input_field": "PA-AUTH-ORIG-DATE",
+        "output_field": "WS-AUTH-TS",
+        "transformation_description": "Formats the authorization date and time into a timestamp format.",
         "citation": [
+          103,
+          104,
+          105,
           108,
           109,
           110,
-          111
+          111,
+          114
         ]
       }
     ]
@@ -260,7 +239,7 @@
   "copybooks_used": [
     {
       "copybook_name": "DFHBMSCA",
-      "purpose": "BMS screen definitions (commented out)",
+      "purpose": "CICS Basic Mapping Support Control Area (Not actually used in the code)",
       "location": "WORKING_STORAGE",
       "citation": 61
     },
@@ -278,7 +257,7 @@
     },
     {
       "copybook_name": "CIPAUDTY",
-      "purpose": "Defines the structure of the fraud audit record.",
+      "purpose": "Defines the structure of the fraud authorization record in the COMMAREA.",
       "location": "LINKAGE",
       "citation": 78
     }
@@ -287,7 +266,7 @@
     {
       "paragraph_name": "COPAUS2C",
       "summary": null,
-      "purpose": "This is the program ID paragraph. It simply defines the program name and has no executable logic.",
+      "purpose": "This paragraph is the program identifier. It does not contain any executable code and serves only to identify the program.",
       "called_by": [],
       "calls": [],
       "citation": [
@@ -303,7 +282,7 @@
     {
       "paragraph_name": "MAIN-PARA",
       "summary": null,
-      "purpose": "This paragraph is the main processing logic of the program. It retrieves the current date and time using CICS services and formats them. It then moves data from the commarea (DFHCOMMAREA) to the DB2 table fields. It inserts a new record into the CARDDEMO.AUTHFRDS table with the fraud information. If the insert fails due to a duplicate record (SQLCODE = -803), it calls the FRAUD-UPDATE paragraph to update the existing record. If any other DB2 error occurs, it sets the WS-FRD-UPDT-FAILED flag to TRUE and constructs an error message in WS-FRD-ACT-MSG. Finally, it returns control to CICS.",
+      "purpose": "This paragraph is the main processing logic of the COPAUS2C program. It first retrieves the current date and time using CICS ASKTIME and FORMATTIME commands and moves the current date to PA-FRAUD-RPT-DATE. It then extracts the year, month, and day from PA-AUTH-ORIG-DATE and calculates WS-AUTH-TIME by subtracting PA-AUTH-TIME-9C from 999999999. It moves data from the COMMAREA (PA-*) to the corresponding fields in the AUTHFRDS table structure. After preparing the data, it attempts to insert a new record into the CARDDEMO.AUTHFRDS table using an SQL INSERT statement. If the insert is successful (SQLCODE = ZERO), it sets WS-FRD-UPDT-SUCCESS to TRUE and moves 'ADD SUCCESS' to WS-FRD-ACT-MSG. If the insert fails due to a duplicate key (SQLCODE = -803), it performs the FRAUD-UPDATE paragraph to update the existing record. If any other SQL error occurs, it sets WS-FRD-UPDT-FAILED to TRUE, moves the SQLCODE and SQLSTATE to WS-SQLCODE and WS-SQLSTATE, respectively, and constructs an error message in WS-FRD-ACT-MSG. Finally, it returns control to CICS.",
       "called_by": [],
       "calls": [
         "FRAUD-UPDATE"
@@ -321,7 +300,7 @@
     {
       "paragraph_name": "FRAUD-UPDATE",
       "summary": null,
-      "purpose": "This paragraph updates an existing record in the CARDDEMO.AUTHFRDS table. It sets the AUTH_FRAUD and FRAUD_RPT_DATE fields for the record matching the CARD_NUM and AUTH_TS from the commarea. If the update is successful (SQLCODE = ZERO), it sets WS-FRD-UPDT-SUCCESS to TRUE and moves 'UPDT SUCCESS' to WS-FRD-ACT-MSG. If the update fails, it sets WS-FRD-UPDT-FAILED to TRUE and constructs an error message in WS-FRD-ACT-MSG with the SQLCODE and SQLSTATE.",
+      "purpose": "This paragraph updates an existing record in the CARDDEMO.AUTHFRDS table. It executes an SQL UPDATE statement to set the AUTH_FRAUD and FRAUD_RPT_DATE columns for the record matching the CARD_NUM and AUTH_TS from the COMMAREA. If the update is successful (SQLCODE = ZERO), it sets WS-FRD-UPDT-SUCCESS to TRUE and moves 'UPDT SUCCESS' to WS-FRD-ACT-MSG. If the update fails, it sets WS-FRD-UPDT-FAILED to TRUE, moves the SQLCODE and SQLSTATE to WS-SQLCODE and WS-SQLSTATE, respectively, and constructs an error message in WS-FRD-ACT-MSG.",
       "called_by": [
         "MAIN-PARA"
       ],
@@ -339,22 +318,35 @@
   ],
   "error_handling": [
     {
-      "condition": "SQLCODE not equal to ZERO after INSERT",
-      "action": "If SQLCODE is -803, perform FRAUD-UPDATE. Otherwise, set WS-FRD-UPDT-FAILED to TRUE and construct an error message in WS-FRD-ACT-MSG.",
+      "condition": "SQLCODE = -803",
+      "action": "PERFORM FRAUD-UPDATE to update the existing record.",
       "citation": [
-        199,
         203,
-        206,
-        211
+        204
       ]
     },
     {
-      "condition": "SQLCODE not equal to ZERO after UPDATE",
-      "action": "Set WS-FRD-UPDT-FAILED to TRUE and construct an error message in WS-FRD-ACT-MSG.",
+      "condition": "SQLCODE not ZERO and not -803",
+      "action": "Set WS-FRD-UPDT-FAILED to TRUE, move SQLCODE and SQLSTATE to WS-SQLCODE and WS-SQLSTATE, and construct an error message in WS-FRD-ACT-MSG.",
       "citation": [
-        230,
+        206,
+        208,
+        209,
+        211,
+        212,
+        213
+      ]
+    },
+    {
+      "condition": "SQLCODE not ZERO in FRAUD-UPDATE",
+      "action": "Set WS-FRD-UPDT-FAILED to TRUE, move SQLCODE and SQLSTATE to WS-SQLCODE and WS-SQLSTATE, and construct an error message in WS-FRD-ACT-MSG.",
+      "citation": [
         234,
-        239
+        236,
+        237,
+        239,
+        240,
+        241
       ]
     }
   ],
@@ -362,13 +354,13 @@
     {
       "operation": "INSERT",
       "table": "CARDDEMO.AUTHFRDS",
-      "purpose": "Inserts a new record into the AUTHFRDS table with authorization fraud details.",
+      "purpose": "Inserts a new authorization record into the AUTHFRDS table.",
       "citation": 142
     },
     {
       "operation": "UPDATE",
       "table": "CARDDEMO.AUTHFRDS",
-      "purpose": "Updates an existing record in the AUTHFRDS table to mark it as fraudulent.",
+      "purpose": "Updates an existing authorization record in the AUTHFRDS table to mark it as fraudulent.",
       "citation": 223
     }
   ],
@@ -376,13 +368,13 @@
     {
       "command": "ASKTIME",
       "resource": null,
-      "purpose": "Retrieves the current absolute time.",
+      "purpose": "Retrieves the current system time.",
       "citation": 91
     },
     {
       "command": "FORMATTIME",
       "resource": null,
-      "purpose": "Formats the absolute time into a MMDDYY date format.",
+      "purpose": "Formats the system time into a readable date format.",
       "citation": 95
     },
     {

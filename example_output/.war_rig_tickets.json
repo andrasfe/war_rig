@@ -1,7 +1,7 @@
 {
   "version": 1,
-  "saved_at": "2026-03-16T20:54:24.899858",
-  "ticket_count": 117,
+  "saved_at": "2026-04-21T13:56:23.674030",
+  "ticket_count": 122,
   "current_cycle": 1,
   "tickets": [
     {
@@ -14,14 +14,14 @@
       "worker_id": "scribe-1",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
         "file_type": "COBOL",
         "size_bytes": 25226,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.316126",
-      "updated_at": "2026-03-16T19:49:48.176870",
+      "created_at": "2026-04-21T13:40:51.119700",
+      "updated_at": "2026-04-21T13:41:27.890643",
       "decision": null
     },
     {
@@ -34,14 +34,14 @@
       "worker_id": "scribe-2",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
         "file_type": "COBOL",
         "size_bytes": 23000,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.317014",
-      "updated_at": "2026-03-16T19:44:41.851975",
+      "created_at": "2026-04-21T13:40:51.120520",
+      "updated_at": "2026-04-21T13:41:42.653747",
       "decision": null
     },
     {
@@ -51,17 +51,17 @@
       "file_name": "cbl/COPAUA0C.cbl",
       "program_id": "COPAUA0C",
       "cycle_number": 1,
-      "worker_id": "scribe-2",
+      "worker_id": "scribe-1",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
         "file_type": "COBOL",
         "size_bytes": 81437,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.317912",
-      "updated_at": "2026-03-16T19:45:05.055735",
+      "created_at": "2026-04-21T13:40:51.121334",
+      "updated_at": "2026-04-21T13:41:52.469655",
       "decision": null
     },
     {
@@ -74,14 +74,14 @@
       "worker_id": "scribe-2",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
         "file_type": "COBOL",
         "size_bytes": 29438,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.318804",
-      "updated_at": "2026-03-16T19:45:28.494250",
+      "created_at": "2026-04-21T13:40:51.122181",
+      "updated_at": "2026-04-21T13:42:09.175119",
       "decision": null
     },
     {
@@ -91,17 +91,17 @@
       "file_name": "cbl/DBUNLDGS.CBL",
       "program_id": "DBUNLDGS",
       "cycle_number": 1,
-      "worker_id": "scribe-2",
+      "worker_id": "scribe-1",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
         "file_type": "COBOL",
         "size_bytes": 29195,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.319630",
-      "updated_at": "2026-03-16T19:45:50.000245",
+      "created_at": "2026-04-21T13:40:51.123003",
+      "updated_at": "2026-04-21T13:42:25.968093",
       "decision": null
     },
     {
@@ -114,14 +114,14 @@
       "worker_id": "scribe-2",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
         "file_type": "COBOL",
         "size_bytes": 14832,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.320457",
-      "updated_at": "2026-03-16T19:46:17.676730",
+      "created_at": "2026-04-21T13:40:51.123949",
+      "updated_at": "2026-04-21T13:42:30.522452",
       "decision": null
     },
     {
@@ -131,17 +131,17 @@
       "file_name": "cbl/COPAUS0C.cbl",
       "program_id": "COPAUS0C",
       "cycle_number": 1,
-      "worker_id": "scribe-2",
+      "worker_id": "scribe-1",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
         "file_type": "COBOL",
         "size_bytes": 44043,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.322315",
-      "updated_at": "2026-03-16T19:46:49.123339",
+      "created_at": "2026-04-21T13:40:51.125743",
+      "updated_at": "2026-04-21T13:43:17.685334",
       "decision": null
     },
     {
@@ -154,38 +154,58 @@
       "worker_id": "scribe-2",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
         "file_type": "COBOL",
         "size_bytes": 19050,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.323239",
-      "updated_at": "2026-03-16T19:47:13.893196",
+      "created_at": "2026-04-21T13:40:51.126623",
+      "updated_at": "2026-04-21T13:42:56.095966",
       "decision": null
     },
     {
       "ticket_id": "mem-000009",
       "ticket_type": "documentation",
       "state": "completed",
-      "file_name": "bms/COPAU00.bms",
-      "program_id": "COPAU00",
+      "file_name": "cbl/.specter_build_COPAUA0C/COPAUA0C.mock.cbl",
+      "program_id": "COPAUA0C.MOCK",
       "cycle_number": 1,
       "worker_id": "scribe-2",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/.specter_build_COPAUA0C/COPAUA0C.mock.cbl",
+        "file_type": "COBOL",
+        "size_bytes": 91674,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-04-21T13:40:51.127474",
+      "updated_at": "2026-04-21T13:43:19.215248",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000010",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "bms/COPAU00.bms",
+      "program_id": "COPAU00",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/bms/COPAU00.bms",
         "file_type": "BMS",
         "size_bytes": 40988,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.324139",
-      "updated_at": "2026-03-16T19:47:31.775705",
+      "created_at": "2026-04-21T13:40:51.128374",
+      "updated_at": "2026-04-21T13:43:36.802752",
       "decision": null
     },
     {
-      "ticket_id": "mem-000010",
+      "ticket_id": "mem-000011",
       "ticket_type": "documentation",
       "state": "completed",
       "file_name": "bms/COPAU01.bms",
@@ -194,18 +214,18 @@
       "worker_id": "scribe-2",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/bms/COPAU01.bms",
         "file_type": "BMS",
         "size_bytes": 23272,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.325040",
-      "updated_at": "2026-03-16T19:47:37.541342",
+      "created_at": "2026-04-21T13:40:51.129236",
+      "updated_at": "2026-04-21T13:43:24.187087",
       "decision": null
     },
     {
-      "ticket_id": "mem-000011",
+      "ticket_id": "mem-000012",
       "ticket_type": "documentation",
       "state": "completed",
       "file_name": "cpy/PADFLPCB.CPY",
@@ -214,18 +234,18 @@
       "worker_id": "scribe-2",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/PADFLPCB.CPY",
         "file_type": "COPYBOOK",
         "size_bytes": 1334,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.325980",
-      "updated_at": "2026-03-16T19:47:41.087248",
+      "created_at": "2026-04-21T13:40:51.130135",
+      "updated_at": "2026-04-21T13:43:28.456373",
       "decision": null
     },
     {
-      "ticket_id": "mem-000012",
+      "ticket_id": "mem-000013",
       "ticket_type": "documentation",
       "state": "completed",
       "file_name": "cpy/CIPAUSMY.cpy",
@@ -234,38 +254,38 @@
       "worker_id": "scribe-2",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CIPAUSMY.cpy",
         "file_type": "COPYBOOK",
         "size_bytes": 2050,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.326883",
-      "updated_at": "2026-03-16T19:52:49.350158",
+      "created_at": "2026-04-21T13:40:51.131041",
+      "updated_at": "2026-04-21T13:43:32.830362",
       "decision": null
     },
     {
-      "ticket_id": "mem-000013",
+      "ticket_id": "mem-000014",
       "ticket_type": "documentation",
       "state": "completed",
       "file_name": "cpy/CCPAURQY.cpy",
       "program_id": "CCPAURQY",
       "cycle_number": 1,
-      "worker_id": "scribe-1",
+      "worker_id": "scribe-2",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAURQY.cpy",
         "file_type": "COPYBOOK",
         "size_bytes": 2448,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.327919",
-      "updated_at": "2026-03-16T19:49:52.293076",
+      "created_at": "2026-04-21T13:40:51.131947",
+      "updated_at": "2026-04-21T13:43:36.712002",
       "decision": null
     },
     {
-      "ticket_id": "mem-000014",
+      "ticket_id": "mem-000015",
       "ticket_type": "documentation",
       "state": "completed",
       "file_name": "cpy/CIPAUDTY.cpy",
@@ -274,78 +294,78 @@
       "worker_id": "scribe-2",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CIPAUDTY.cpy",
         "file_type": "COPYBOOK",
         "size_bytes": 3887,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.328848",
-      "updated_at": "2026-03-16T20:00:37.630411",
-      "decision": null
-    },
-    {
-      "ticket_id": "mem-000015",
-      "ticket_type": "documentation",
-      "state": "completed",
-      "file_name": "cpy/PAUTBPCB.CPY",
-      "program_id": "PAUTBPCB",
-      "cycle_number": 1,
-      "worker_id": "scribe-2",
-      "parent_ticket_id": null,
-      "metadata": {
-        "batch_id": "batch-20260316-194415",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/PAUTBPCB.CPY",
-        "file_type": "COPYBOOK",
-        "size_bytes": 1334,
-        "has_existing_doc": false
-      },
-      "created_at": "2026-03-16T19:44:15.329785",
-      "updated_at": "2026-03-16T19:52:52.551946",
+      "created_at": "2026-04-21T13:40:51.132870",
+      "updated_at": "2026-04-21T13:43:47.417714",
       "decision": null
     },
     {
       "ticket_id": "mem-000016",
       "ticket_type": "documentation",
       "state": "completed",
-      "file_name": "cpy/PASFLPCB.CPY",
-      "program_id": "PASFLPCB",
+      "file_name": "cpy/PAUTBPCB.CPY",
+      "program_id": "PAUTBPCB",
       "cycle_number": 1,
-      "worker_id": "scribe-2",
+      "worker_id": "scribe-1",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/PASFLPCB.CPY",
+        "batch_id": "batch-20260421-134051",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/PAUTBPCB.CPY",
         "file_type": "COPYBOOK",
         "size_bytes": 1334,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.330718",
-      "updated_at": "2026-03-16T19:54:56.415880",
+      "created_at": "2026-04-21T13:40:51.133806",
+      "updated_at": "2026-04-21T13:43:42.251915",
       "decision": null
     },
     {
       "ticket_id": "mem-000017",
       "ticket_type": "documentation",
       "state": "completed",
+      "file_name": "cpy/PASFLPCB.CPY",
+      "program_id": "PASFLPCB",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260421-134051",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/PASFLPCB.CPY",
+        "file_type": "COPYBOOK",
+        "size_bytes": 1334,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-04-21T13:40:51.134745",
+      "updated_at": "2026-04-21T13:43:47.370981",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000018",
+      "ticket_type": "documentation",
+      "state": "completed",
       "file_name": "cpy/IMSFUNCS.cpy",
       "program_id": "IMSFUNCS",
       "cycle_number": 1,
-      "worker_id": "scribe-2",
+      "worker_id": "scribe-1",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/IMSFUNCS.cpy",
         "file_type": "COPYBOOK",
         "size_bytes": 1545,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.331677",
-      "updated_at": "2026-03-16T19:55:00.282010",
+      "created_at": "2026-04-21T13:40:51.135745",
+      "updated_at": "2026-04-21T13:43:50.708672",
       "decision": null
     },
     {
-      "ticket_id": "mem-000018",
+      "ticket_id": "mem-000019",
       "ticket_type": "documentation",
       "state": "completed",
       "file_name": "cpy/CCPAUERY.cpy",
@@ -354,38 +374,38 @@
       "worker_id": "scribe-2",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAUERY.cpy",
         "file_type": "COPYBOOK",
         "size_bytes": 2779,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.332682",
-      "updated_at": "2026-03-16T19:55:04.466151",
+      "created_at": "2026-04-21T13:40:51.136699",
+      "updated_at": "2026-04-21T13:43:51.057702",
       "decision": null
     },
     {
-      "ticket_id": "mem-000019",
+      "ticket_id": "mem-000020",
       "ticket_type": "documentation",
       "state": "completed",
       "file_name": "cpy/CCPAURLY.cpy",
       "program_id": "CCPAURLY",
       "cycle_number": 1,
-      "worker_id": "scribe-2",
+      "worker_id": "scribe-1",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAURLY.cpy",
         "file_type": "COPYBOOK",
         "size_bytes": 1492,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.333650",
-      "updated_at": "2026-03-16T19:55:08.369950",
+      "created_at": "2026-04-21T13:40:51.137666",
+      "updated_at": "2026-04-21T13:43:56.505921",
       "decision": null
     },
     {
-      "ticket_id": "mem-000020",
+      "ticket_id": "mem-000021",
       "ticket_type": "documentation",
       "state": "completed",
       "file_name": "ddl/XAUTHFRD.ddl",
@@ -394,38 +414,38 @@
       "worker_id": "scribe-2",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ddl/XAUTHFRD.ddl",
         "file_type": "DDL",
         "size_bytes": 110,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.334648",
-      "updated_at": "2026-03-16T19:55:11.256372",
+      "created_at": "2026-04-21T13:40:51.138665",
+      "updated_at": "2026-04-21T13:43:59.505823",
       "decision": null
     },
     {
-      "ticket_id": "mem-000021",
+      "ticket_id": "mem-000022",
       "ticket_type": "documentation",
       "state": "completed",
       "file_name": "ddl/AUTHFRDS.ddl",
       "program_id": "AUTHFRDS",
       "cycle_number": 1,
-      "worker_id": "scribe-2",
+      "worker_id": "scribe-1",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ddl/AUTHFRDS.ddl",
         "file_type": "DDL",
         "size_bytes": 1351,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.335632",
-      "updated_at": "2026-03-16T19:55:17.414762",
+      "created_at": "2026-04-21T13:40:51.139670",
+      "updated_at": "2026-04-21T13:44:01.804792",
       "decision": null
     },
     {
-      "ticket_id": "mem-000022",
+      "ticket_id": "mem-000023",
       "ticket_type": "documentation",
       "state": "completed",
       "file_name": "ims/DBPAUTP0.dbd",
@@ -434,38 +454,38 @@
       "worker_id": "scribe-2",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/DBPAUTP0.dbd",
         "file_type": "IMS",
         "size_bytes": 2168,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.336642",
-      "updated_at": "2026-03-16T19:55:23.971010",
+      "created_at": "2026-04-21T13:40:51.140788",
+      "updated_at": "2026-04-21T13:44:12.251151",
       "decision": null
     },
     {
-      "ticket_id": "mem-000023",
+      "ticket_id": "mem-000024",
       "ticket_type": "documentation",
       "state": "completed",
       "file_name": "ims/DBPAUTX0.dbd",
       "program_id": "DBPAUTX0",
       "cycle_number": 1,
-      "worker_id": "scribe-2",
+      "worker_id": "scribe-1",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/DBPAUTX0.dbd",
         "file_type": "IMS",
         "size_bytes": 1676,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.337653",
-      "updated_at": "2026-03-16T19:55:27.724055",
+      "created_at": "2026-04-21T13:40:51.141947",
+      "updated_at": "2026-04-21T13:44:51.305340",
       "decision": null
     },
     {
-      "ticket_id": "mem-000024",
+      "ticket_id": "mem-000025",
       "ticket_type": "documentation",
       "state": "completed",
       "file_name": "ims/PADFLDBD.DBD",
@@ -474,78 +494,78 @@
       "worker_id": "scribe-2",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PADFLDBD.DBD",
         "file_type": "IMS",
         "size_bytes": 1386,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.338738",
-      "updated_at": "2026-03-16T20:00:34.204963",
-      "decision": null
-    },
-    {
-      "ticket_id": "mem-000025",
-      "ticket_type": "documentation",
-      "state": "completed",
-      "file_name": "ims/PSBPAUTL.psb",
-      "program_id": "PSBPAUTL",
-      "cycle_number": 1,
-      "worker_id": "scribe-1",
-      "parent_ticket_id": null,
-      "metadata": {
-        "batch_id": "batch-20260316-194415",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PSBPAUTL.psb",
-        "file_type": "IMS",
-        "size_bytes": 1143,
-        "has_existing_doc": false
-      },
-      "created_at": "2026-03-16T19:44:15.339815",
-      "updated_at": "2026-03-16T20:00:03.277098",
+      "created_at": "2026-04-21T13:40:51.143007",
+      "updated_at": "2026-04-21T13:44:16.348731",
       "decision": null
     },
     {
       "ticket_id": "mem-000026",
       "ticket_type": "documentation",
       "state": "completed",
-      "file_name": "ims/PSBPAUTB.psb",
-      "program_id": "PSBPAUTB",
+      "file_name": "ims/PSBPAUTL.psb",
+      "program_id": "PSBPAUTL",
       "cycle_number": 1,
-      "worker_id": "scribe-1",
+      "worker_id": "scribe-2",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PSBPAUTB.psb",
+        "batch_id": "batch-20260421-134051",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PSBPAUTL.psb",
         "file_type": "IMS",
-        "size_bytes": 1144,
+        "size_bytes": 1143,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.340879",
-      "updated_at": "2026-03-16T20:00:09.011422",
+      "created_at": "2026-04-21T13:40:51.144079",
+      "updated_at": "2026-04-21T13:44:39.796176",
       "decision": null
     },
     {
       "ticket_id": "mem-000027",
       "ticket_type": "documentation",
       "state": "completed",
+      "file_name": "ims/PSBPAUTB.psb",
+      "program_id": "PSBPAUTB",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260421-134051",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PSBPAUTB.psb",
+        "file_type": "IMS",
+        "size_bytes": 1144,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-04-21T13:40:51.145261",
+      "updated_at": "2026-04-21T13:44:51.238496",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000028",
+      "ticket_type": "documentation",
+      "state": "completed",
       "file_name": "ims/PASFLDBD.DBD",
       "program_id": "PASFLDBD",
       "cycle_number": 1,
-      "worker_id": "scribe-1",
+      "worker_id": "scribe-2",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PASFLDBD.DBD",
         "file_type": "IMS",
         "size_bytes": 1386,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.341953",
-      "updated_at": "2026-03-16T20:00:12.800430",
+      "created_at": "2026-04-21T13:40:51.146492",
+      "updated_at": "2026-04-21T13:44:55.572979",
       "decision": null
     },
     {
-      "ticket_id": "mem-000028",
+      "ticket_id": "mem-000029",
       "ticket_type": "documentation",
       "state": "completed",
       "file_name": "ims/PAUTBUNL.PSB",
@@ -554,38 +574,38 @@
       "worker_id": "scribe-1",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PAUTBUNL.PSB",
         "file_type": "IMS",
         "size_bytes": 997,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.343042",
-      "updated_at": "2026-03-16T20:00:21.606541",
+      "created_at": "2026-04-21T13:40:51.147941",
+      "updated_at": "2026-04-21T13:44:56.760783",
       "decision": null
     },
     {
-      "ticket_id": "mem-000029",
+      "ticket_id": "mem-000030",
       "ticket_type": "documentation",
       "state": "completed",
       "file_name": "ims/DLIGSAMP.PSB",
       "program_id": "DLIGSAMP",
       "cycle_number": 1,
-      "worker_id": "scribe-1",
+      "worker_id": "scribe-2",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/DLIGSAMP.PSB",
         "file_type": "IMS",
         "size_bytes": 1103,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.344206",
-      "updated_at": "2026-03-16T20:00:26.419444",
+      "created_at": "2026-04-21T13:40:51.149246",
+      "updated_at": "2026-04-21T13:45:00.850522",
       "decision": null
     },
     {
-      "ticket_id": "mem-000030",
+      "ticket_id": "mem-000031",
       "ticket_type": "documentation",
       "state": "completed",
       "file_name": "cpy-bms/COPAU00.cpy",
@@ -594,38 +614,38 @@
       "worker_id": "scribe-1",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy-bms/COPAU00.cpy",
         "file_type": "COPYBOOK",
         "size_bytes": 61372,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.345336",
-      "updated_at": "2026-03-16T20:00:35.660931",
+      "created_at": "2026-04-21T13:40:51.150491",
+      "updated_at": "2026-04-21T13:45:07.888399",
       "decision": null
     },
     {
-      "ticket_id": "mem-000031",
+      "ticket_id": "mem-000032",
       "ticket_type": "documentation",
       "state": "completed",
       "file_name": "cpy-bms/COPAU01.cpy",
       "program_id": "COPAU01",
       "cycle_number": 1,
-      "worker_id": "scribe-1",
+      "worker_id": "scribe-2",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy-bms/COPAU01.cpy",
         "file_type": "COPYBOOK",
         "size_bytes": 27352,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.346470",
-      "updated_at": "2026-03-16T20:00:38.993157",
+      "created_at": "2026-04-21T13:40:51.151668",
+      "updated_at": "2026-04-21T13:45:05.598734",
       "decision": null
     },
     {
-      "ticket_id": "mem-000032",
+      "ticket_id": "mem-000033",
       "ticket_type": "documentation",
       "state": "completed",
       "file_name": "jcl/UNLDPADB.JCL",
@@ -634,18 +654,18 @@
       "worker_id": "scribe-2",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDPADB.JCL",
         "file_type": "JCL",
         "size_bytes": 2626,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.347616",
-      "updated_at": "2026-03-16T20:00:49.545633",
+      "created_at": "2026-04-21T13:40:51.152850",
+      "updated_at": "2026-04-21T13:45:17.417545",
       "decision": null
     },
     {
-      "ticket_id": "mem-000033",
+      "ticket_id": "mem-000034",
       "ticket_type": "documentation",
       "state": "completed",
       "file_name": "jcl/LOADPADB.JCL",
@@ -654,58 +674,58 @@
       "worker_id": "scribe-1",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/LOADPADB.JCL",
         "file_type": "JCL",
         "size_bytes": 1974,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.348773",
-      "updated_at": "2026-03-16T20:00:47.205967",
-      "decision": null
-    },
-    {
-      "ticket_id": "mem-000034",
-      "ticket_type": "documentation",
-      "state": "completed",
-      "file_name": "jcl/UNLDGSAM.JCL",
-      "program_id": "UNLDGSAM",
-      "cycle_number": 1,
-      "worker_id": "scribe-1",
-      "parent_ticket_id": null,
-      "metadata": {
-        "batch_id": "batch-20260316-194415",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDGSAM.JCL",
-        "file_type": "JCL",
-        "size_bytes": 1996,
-        "has_existing_doc": false
-      },
-      "created_at": "2026-03-16T19:44:15.349923",
-      "updated_at": "2026-03-16T20:00:55.640086",
+      "created_at": "2026-04-21T13:40:51.154007",
+      "updated_at": "2026-04-21T13:45:20.448560",
       "decision": null
     },
     {
       "ticket_id": "mem-000035",
       "ticket_type": "documentation",
       "state": "completed",
-      "file_name": "jcl/DBPAUTP0.jcl",
-      "program_id": "DBPAUTP0",
+      "file_name": "jcl/UNLDGSAM.JCL",
+      "program_id": "UNLDGSAM",
       "cycle_number": 1,
       "worker_id": "scribe-2",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDGSAM.JCL",
+        "file_type": "JCL",
+        "size_bytes": 1996,
+        "has_existing_doc": false
+      },
+      "created_at": "2026-04-21T13:40:51.155174",
+      "updated_at": "2026-04-21T13:45:34.505539",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000036",
+      "ticket_type": "documentation",
+      "state": "completed",
+      "file_name": "jcl/DBPAUTP0.jcl",
+      "program_id": "DBPAUTP0",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": null,
+      "metadata": {
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/DBPAUTP0.jcl",
         "file_type": "JCL",
         "size_bytes": 3412,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.351099",
-      "updated_at": "2026-03-16T20:01:02.364222",
+      "created_at": "2026-04-21T13:40:51.156371",
+      "updated_at": "2026-04-21T13:45:33.609320",
       "decision": null
     },
     {
-      "ticket_id": "mem-000036",
+      "ticket_id": "mem-000037",
       "ticket_type": "documentation",
       "state": "completed",
       "file_name": "jcl/CBPAUP0J.jcl",
@@ -714,18 +734,36 @@
       "worker_id": "scribe-1",
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/CBPAUP0J.jcl",
         "file_type": "JCL",
         "size_bytes": 1732,
         "has_existing_doc": false
       },
-      "created_at": "2026-03-16T19:44:15.352296",
-      "updated_at": "2026-03-16T20:01:04.101621",
+      "created_at": "2026-04-21T13:40:51.157627",
+      "updated_at": "2026-04-21T13:45:45.550454",
       "decision": null
     },
     {
-      "ticket_id": "mem-000037",
+      "ticket_id": "mem-000038",
+      "ticket_type": "chunk_continuation",
+      "state": "completed",
+      "file_name": "cbl/PAUDBUNL.CBL",
+      "program_id": "PAUDBUNL",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": "mem-000001",
+      "metadata": {
+        "chunk_batch_idx": 1,
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+        "parallel_dispatch": false
+      },
+      "created_at": "2026-04-21T13:41:27.885967",
+      "updated_at": "2026-04-21T13:45:41.650752",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000039",
       "ticket_type": "chunk_continuation",
       "state": "completed",
       "file_name": "cbl/COPAUS1C.cbl",
@@ -738,12 +776,12 @@
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
         "parallel_dispatch": false
       },
-      "created_at": "2026-03-16T19:44:41.848342",
-      "updated_at": "2026-03-16T20:01:22.489032",
+      "created_at": "2026-04-21T13:41:42.649250",
+      "updated_at": "2026-04-21T13:46:12.459916",
       "decision": null
     },
     {
-      "ticket_id": "mem-000038",
+      "ticket_id": "mem-000040",
       "ticket_type": "chunk_continuation",
       "state": "completed",
       "file_name": "cbl/COPAUA0C.cbl",
@@ -756,12 +794,12 @@
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
         "parallel_dispatch": false
       },
-      "created_at": "2026-03-16T19:45:05.051261",
-      "updated_at": "2026-03-16T20:01:33.743437",
+      "created_at": "2026-04-21T13:41:52.464765",
+      "updated_at": "2026-04-21T13:46:16.202100",
       "decision": null
     },
     {
-      "ticket_id": "mem-000039",
+      "ticket_id": "mem-000041",
       "ticket_type": "chunk_continuation",
       "state": "completed",
       "file_name": "cbl/PAUDBLOD.CBL",
@@ -774,12 +812,12 @@
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
         "parallel_dispatch": false
       },
-      "created_at": "2026-03-16T19:45:28.490267",
-      "updated_at": "2026-03-16T20:01:37.636553",
+      "created_at": "2026-04-21T13:42:09.170923",
+      "updated_at": "2026-04-21T13:46:41.042230",
       "decision": null
     },
     {
-      "ticket_id": "mem-000040",
+      "ticket_id": "mem-000042",
       "ticket_type": "chunk_continuation",
       "state": "completed",
       "file_name": "cbl/DBUNLDGS.CBL",
@@ -792,48 +830,30 @@
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
         "parallel_dispatch": false
       },
-      "created_at": "2026-03-16T19:45:49.995328",
-      "updated_at": "2026-03-16T20:01:47.188404",
+      "created_at": "2026-04-21T13:42:25.963799",
+      "updated_at": "2026-04-21T13:46:30.882463",
       "decision": null
     },
     {
-      "ticket_id": "mem-000041",
+      "ticket_id": "mem-000043",
       "ticket_type": "chunk_continuation",
       "state": "completed",
       "file_name": "cbl/CBPAUP0C.cbl",
       "program_id": "CBPAUP0C",
       "cycle_number": 1,
-      "worker_id": "scribe-2",
+      "worker_id": "scribe-1",
       "parent_ticket_id": "mem-000006",
       "metadata": {
         "chunk_batch_idx": 1,
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
         "parallel_dispatch": false
       },
-      "created_at": "2026-03-16T19:46:17.672403",
-      "updated_at": "2026-03-16T20:01:51.885015",
+      "created_at": "2026-04-21T13:42:30.518168",
+      "updated_at": "2026-04-21T13:46:45.508705",
       "decision": null
     },
     {
-      "ticket_id": "mem-000042",
-      "ticket_type": "chunk_continuation",
-      "state": "completed",
-      "file_name": "cbl/COPAUS0C.cbl",
-      "program_id": "COPAUS0C",
-      "cycle_number": 1,
-      "worker_id": "scribe-1",
-      "parent_ticket_id": "mem-000007",
-      "metadata": {
-        "chunk_batch_idx": 1,
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
-        "parallel_dispatch": false
-      },
-      "created_at": "2026-03-16T19:46:49.118872",
-      "updated_at": "2026-03-16T20:02:27.488884",
-      "decision": null
-    },
-    {
-      "ticket_id": "mem-000043",
+      "ticket_id": "mem-000044",
       "ticket_type": "validation",
       "state": "completed",
       "file_name": "cbl/COPAUS2C.cbl",
@@ -847,82 +867,99 @@
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS2C.cbl",
         "file_type": "COBOL"
       },
-      "created_at": "2026-03-16T19:47:14.679485",
-      "updated_at": "2026-03-16T19:47:23.586117",
-      "decision": null
-    },
-    {
-      "ticket_id": "mem-000044",
-      "ticket_type": "validation",
-      "state": "completed",
-      "file_name": "bms/COPAU00.bms",
-      "program_id": "COPAU00",
-      "cycle_number": 1,
-      "worker_id": "challenger-2",
-      "parent_ticket_id": "mem-000009",
-      "metadata": {
-        "parent_documentation_ticket": "mem-000009",
-        "scribe_worker": "scribe-2",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/bms/COPAU00.bms",
-        "file_type": "BMS"
-      },
-      "created_at": "2026-03-16T19:47:31.778500",
-      "updated_at": "2026-03-16T19:52:42.561342",
+      "created_at": "2026-04-21T13:42:56.837491",
+      "updated_at": "2026-04-21T13:43:12.248406",
       "decision": null
     },
     {
       "ticket_id": "mem-000045",
-      "ticket_type": "validation",
+      "ticket_type": "chunk_continuation",
       "state": "completed",
-      "file_name": "bms/COPAU01.bms",
-      "program_id": "COPAU01",
+      "file_name": "cbl/COPAUS0C.cbl",
+      "program_id": "COPAUS0C",
       "cycle_number": 1,
-      "worker_id": "challenger-1",
-      "parent_ticket_id": "mem-000010",
+      "worker_id": "scribe-2",
+      "parent_ticket_id": "mem-000007",
       "metadata": {
-        "parent_documentation_ticket": "mem-000010",
-        "scribe_worker": "scribe-2",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/bms/COPAU01.bms",
-        "file_type": "BMS"
+        "chunk_batch_idx": 1,
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "parallel_dispatch": false
       },
-      "created_at": "2026-03-16T19:47:37.543829",
-      "updated_at": "2026-03-16T19:47:41.478293",
+      "created_at": "2026-04-21T13:43:17.681173",
+      "updated_at": "2026-04-21T13:47:24.801443",
       "decision": null
     },
     {
       "ticket_id": "mem-000046",
+      "ticket_type": "chunk_continuation",
+      "state": "completed",
+      "file_name": "cbl/.specter_build_COPAUA0C/COPAUA0C.mock.cbl",
+      "program_id": "COPAUA0C.MOCK",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": "mem-000009",
+      "metadata": {
+        "chunk_batch_idx": 1,
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/.specter_build_COPAUA0C/COPAUA0C.mock.cbl",
+        "parallel_dispatch": false
+      },
+      "created_at": "2026-04-21T13:43:19.210626",
+      "updated_at": "2026-04-21T13:47:13.388435",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000047",
       "ticket_type": "validation",
       "state": "completed",
-      "file_name": "cpy/PADFLPCB.CPY",
-      "program_id": "PADFLPCB",
+      "file_name": "bms/COPAU01.bms",
+      "program_id": "COPAU01",
       "cycle_number": 1,
       "worker_id": "challenger-1",
       "parent_ticket_id": "mem-000011",
       "metadata": {
         "parent_documentation_ticket": "mem-000011",
         "scribe_worker": "scribe-2",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/PADFLPCB.CPY",
-        "file_type": "COPYBOOK"
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/bms/COPAU01.bms",
+        "file_type": "BMS"
       },
-      "created_at": "2026-03-16T19:47:41.091061",
-      "updated_at": "2026-03-16T19:47:46.092493",
+      "created_at": "2026-04-21T13:43:24.189682",
+      "updated_at": "2026-04-21T13:43:29.325341",
       "decision": null
     },
     {
-      "ticket_id": "mem-000047",
+      "ticket_id": "mem-000048",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy/PADFLPCB.CPY",
+      "program_id": "PADFLPCB",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000012",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000012",
+        "scribe_worker": "scribe-2",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/PADFLPCB.CPY",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-04-21T13:43:28.460027",
+      "updated_at": "2026-04-21T13:43:33.414987",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000049",
       "ticket_type": "clarification",
       "state": "completed",
       "file_name": "bms/COPAU01.bms",
       "program_id": "COPAU01",
       "cycle_number": 1,
-      "worker_id": "scribe-2",
-      "parent_ticket_id": "mem-000045",
+      "worker_id": "scribe-1",
+      "parent_ticket_id": "mem-000047",
       "metadata": {
-        "parent_validation_ticket": "mem-000045",
+        "parent_validation_ticket": "mem-000047",
         "issues_found": [],
         "challenger_questions": [
           {
-            "question_id": "Q-1B150449",
+            "question_id": "Q-B89645C7",
             "section": "paragraphs",
             "question_type": "COMPLETENESS",
             "question": "Paragraph 'COPAU1A' exists in the source code (per static analysis) but is not documented in the template for bms/COPAU01.bms. Please add documentation for this paragraph.",
@@ -930,7 +967,7 @@
             "evidence": []
           },
           {
-            "question_id": "Q-D481F0D7",
+            "question_id": "Q-C6CAAC10",
             "section": "paragraphs",
             "question_type": "COMPLETENESS",
             "question": "Paragraph 'COPAU01' exists in the source code (per static analysis) but is not documented in the template for bms/COPAU01.bms. Please add documentation for this paragraph.",
@@ -942,155 +979,84 @@
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/bms/COPAU01.bms",
         "file_type": "BMS"
       },
-      "created_at": "2026-03-16T19:47:41.476208",
-      "updated_at": "2026-03-16T20:02:03.463306",
+      "created_at": "2026-04-21T13:43:29.323319",
+      "updated_at": "2026-04-21T13:47:27.129823",
       "decision": null
     },
     {
-      "ticket_id": "mem-000048",
-      "ticket_type": "chunk_continuation",
-      "state": "completed",
-      "file_name": "cbl/PAUDBUNL.CBL",
-      "program_id": "PAUDBUNL",
-      "cycle_number": 1,
-      "worker_id": "scribe-2",
-      "parent_ticket_id": "mem-000001",
-      "metadata": {
-        "chunk_batch_idx": 1,
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
-        "parallel_dispatch": false
-      },
-      "created_at": "2026-03-16T19:49:48.172420",
-      "updated_at": "2026-03-16T20:02:10.972497",
-      "decision": null
-    },
-    {
-      "ticket_id": "mem-000049",
+      "ticket_id": "mem-000050",
       "ticket_type": "validation",
       "state": "completed",
-      "file_name": "cpy/CCPAURQY.cpy",
-      "program_id": "CCPAURQY",
+      "file_name": "cpy/CIPAUSMY.cpy",
+      "program_id": "CIPAUSMY",
       "cycle_number": 1,
       "worker_id": "challenger-1",
       "parent_ticket_id": "mem-000013",
       "metadata": {
         "parent_documentation_ticket": "mem-000013",
-        "scribe_worker": "scribe-1",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAURQY.cpy",
+        "scribe_worker": "scribe-2",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CIPAUSMY.cpy",
         "file_type": "COPYBOOK"
       },
-      "created_at": "2026-03-16T19:49:52.295848",
-      "updated_at": "2026-03-16T19:49:58.413104",
-      "decision": null
-    },
-    {
-      "ticket_id": "mem-000050",
-      "ticket_type": "clarification",
-      "state": "completed",
-      "file_name": "bms/COPAU00.bms",
-      "program_id": "COPAU00",
-      "cycle_number": 1,
-      "worker_id": "scribe-2",
-      "parent_ticket_id": "mem-000044",
-      "metadata": {
-        "parent_validation_ticket": "mem-000044",
-        "issues_found": [],
-        "challenger_questions": [
-          {
-            "question_id": "Q-5CCEE63E",
-            "section": "paragraphs",
-            "question_type": "COMPLETENESS",
-            "question": "Paragraph 'COPAU0A' exists in the source code (per static analysis) but is not documented in the template for bms/COPAU00.bms. Please add documentation for this paragraph.",
-            "severity": "BLOCKING",
-            "evidence": []
-          },
-          {
-            "question_id": "Q-926AFE5C",
-            "section": "paragraphs",
-            "question_type": "COMPLETENESS",
-            "question": "Paragraph 'COPAU00' exists in the source code (per static analysis) but is not documented in the template for bms/COPAU00.bms. Please add documentation for this paragraph.",
-            "severity": "BLOCKING",
-            "evidence": []
-          }
-        ],
-        "challenger_worker": "challenger-2",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/bms/COPAU00.bms",
-        "file_type": "BMS"
-      },
-      "created_at": "2026-03-16T19:52:42.556424",
-      "updated_at": "2026-03-16T20:02:31.503863",
+      "created_at": "2026-04-21T13:43:32.834085",
+      "updated_at": "2026-04-21T13:43:38.413923",
       "decision": null
     },
     {
       "ticket_id": "mem-000051",
       "ticket_type": "validation",
       "state": "completed",
-      "file_name": "cpy/CIPAUSMY.cpy",
-      "program_id": "CIPAUSMY",
+      "file_name": "cpy/CCPAURQY.cpy",
+      "program_id": "CCPAURQY",
       "cycle_number": 1,
       "worker_id": "challenger-2",
-      "parent_ticket_id": "mem-000012",
+      "parent_ticket_id": "mem-000014",
       "metadata": {
-        "parent_documentation_ticket": "mem-000012",
+        "parent_documentation_ticket": "mem-000014",
         "scribe_worker": "scribe-2",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CIPAUSMY.cpy",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAURQY.cpy",
         "file_type": "COPYBOOK"
       },
-      "created_at": "2026-03-16T19:52:49.353949",
-      "updated_at": "2026-03-16T19:52:56.104178",
+      "created_at": "2026-04-21T13:43:36.715879",
+      "updated_at": "2026-04-21T13:43:48.046983",
       "decision": null
     },
     {
       "ticket_id": "mem-000052",
       "ticket_type": "validation",
       "state": "completed",
-      "file_name": "cpy/PAUTBPCB.CPY",
-      "program_id": "PAUTBPCB",
+      "file_name": "bms/COPAU00.bms",
+      "program_id": "COPAU00",
       "cycle_number": 1,
       "worker_id": "challenger-1",
-      "parent_ticket_id": "mem-000015",
+      "parent_ticket_id": "mem-000010",
       "metadata": {
-        "parent_documentation_ticket": "mem-000015",
-        "scribe_worker": "scribe-2",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/PAUTBPCB.CPY",
-        "file_type": "COPYBOOK"
+        "parent_documentation_ticket": "mem-000010",
+        "scribe_worker": "scribe-1",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/bms/COPAU00.bms",
+        "file_type": "BMS"
       },
-      "created_at": "2026-03-16T19:52:52.556053",
-      "updated_at": "2026-03-16T19:52:59.226934",
+      "created_at": "2026-04-21T13:43:36.805673",
+      "updated_at": "2026-04-21T13:43:47.559985",
       "decision": null
     },
     {
       "ticket_id": "mem-000053",
-      "ticket_type": "clarification",
+      "ticket_type": "validation",
       "state": "completed",
-      "file_name": "cpy/CIPAUSMY.cpy",
-      "program_id": "CIPAUSMY",
+      "file_name": "cpy/PAUTBPCB.CPY",
+      "program_id": "PAUTBPCB",
       "cycle_number": 1,
-      "worker_id": "scribe-1",
-      "parent_ticket_id": "mem-000051",
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000016",
       "metadata": {
-        "parent_validation_ticket": "mem-000051",
-        "issues_found": [
-          "The documentation lacks specific details about the IMS system or application using the segment.",
-          "Field descriptions are missing, which are crucial for understanding the data layout.",
-          "The claim about PA-ACCOUNT-STATUS occurring 5 times needs verification against the actual copybook definition."
-        ],
-        "challenger_questions": [
-          {
-            "question_id": "Q-56BC5810",
-            "section": null,
-            "question_type": "VERIFICATION",
-            "question": "The summary states 'The PA-ACCOUNT-STATUS field occurs 5 times.' Is this accurate based on the copybook definition? Please provide the line number where this is defined.",
-            "severity": "BLOCKING",
-            "evidence": []
-          }
-        ],
-        "challenger_worker": "challenger-2",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CIPAUSMY.cpy",
+        "parent_documentation_ticket": "mem-000016",
+        "scribe_worker": "scribe-1",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/PAUTBPCB.CPY",
         "file_type": "COPYBOOK"
       },
-      "created_at": "2026-03-16T19:52:56.100570",
-      "updated_at": "2026-03-16T20:02:31.298355",
+      "created_at": "2026-04-21T13:43:42.255978",
+      "updated_at": "2026-04-21T13:43:50.650438",
       "decision": null
     },
     {
@@ -1100,109 +1066,187 @@
       "file_name": "cpy/PASFLPCB.CPY",
       "program_id": "PASFLPCB",
       "cycle_number": 1,
-      "worker_id": "challenger-1",
-      "parent_ticket_id": "mem-000016",
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000017",
       "metadata": {
-        "parent_documentation_ticket": "mem-000016",
-        "scribe_worker": "scribe-2",
+        "parent_documentation_ticket": "mem-000017",
+        "scribe_worker": "scribe-1",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/PASFLPCB.CPY",
         "file_type": "COPYBOOK"
       },
-      "created_at": "2026-03-16T19:54:56.420543",
-      "updated_at": "2026-03-16T19:55:01.733428",
+      "created_at": "2026-04-21T13:43:47.374972",
+      "updated_at": "2026-04-21T13:43:53.207577",
       "decision": null
     },
     {
       "ticket_id": "mem-000055",
       "ticket_type": "validation",
       "state": "completed",
-      "file_name": "cpy/IMSFUNCS.cpy",
-      "program_id": "IMSFUNCS",
+      "file_name": "cpy/CIPAUDTY.cpy",
+      "program_id": "CIPAUDTY",
       "cycle_number": 1,
       "worker_id": "challenger-1",
-      "parent_ticket_id": "mem-000017",
+      "parent_ticket_id": "mem-000015",
       "metadata": {
-        "parent_documentation_ticket": "mem-000017",
+        "parent_documentation_ticket": "mem-000015",
         "scribe_worker": "scribe-2",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/IMSFUNCS.cpy",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CIPAUDTY.cpy",
         "file_type": "COPYBOOK"
       },
-      "created_at": "2026-03-16T19:55:00.286228",
-      "updated_at": "2026-03-16T19:55:07.638082",
+      "created_at": "2026-04-21T13:43:47.422048",
+      "updated_at": "2026-04-21T13:43:56.454637",
       "decision": null
     },
     {
       "ticket_id": "mem-000056",
-      "ticket_type": "validation",
+      "ticket_type": "clarification",
       "state": "completed",
-      "file_name": "cpy/CCPAUERY.cpy",
-      "program_id": "CCPAUERY",
+      "file_name": "bms/COPAU00.bms",
+      "program_id": "COPAU00",
       "cycle_number": 1,
-      "worker_id": "challenger-2",
-      "parent_ticket_id": "mem-000018",
+      "worker_id": "scribe-2",
+      "parent_ticket_id": "mem-000052",
       "metadata": {
-        "parent_documentation_ticket": "mem-000018",
-        "scribe_worker": "scribe-2",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAUERY.cpy",
-        "file_type": "COPYBOOK"
+        "parent_validation_ticket": "mem-000052",
+        "issues_found": [
+          "Several output fields (CREDLIM, CASHLIM, APPRAMT, CREDBAL, CASHBAL) are defined with ATTRB=(ASKIP,FSET,NORM), suggesting they are protected and initialized by the program, contradicting their description as simple outputs."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-A8F4CDCB",
+            "section": "paragraphs",
+            "question_type": "COMPLETENESS",
+            "question": "Paragraph 'COPAU0A' exists in the source code (per static analysis) but is not documented in the template for bms/COPAU00.bms. Please add documentation for this paragraph.",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-A4742F76",
+            "section": "paragraphs",
+            "question_type": "COMPLETENESS",
+            "question": "Paragraph 'COPAU00' exists in the source code (per static analysis) but is not documented in the template for bms/COPAU00.bms. Please add documentation for this paragraph.",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-1",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/bms/COPAU00.bms",
+        "file_type": "BMS"
       },
-      "created_at": "2026-03-16T19:55:04.470429",
-      "updated_at": "2026-03-16T19:55:09.295297",
+      "created_at": "2026-04-21T13:43:47.556422",
+      "updated_at": "2026-04-21T13:47:50.380975",
       "decision": null
     },
     {
       "ticket_id": "mem-000057",
       "ticket_type": "validation",
       "state": "completed",
-      "file_name": "cpy/CCPAURLY.cpy",
-      "program_id": "CCPAURLY",
+      "file_name": "cpy/IMSFUNCS.cpy",
+      "program_id": "IMSFUNCS",
       "cycle_number": 1,
       "worker_id": "challenger-2",
-      "parent_ticket_id": "mem-000019",
+      "parent_ticket_id": "mem-000018",
       "metadata": {
-        "parent_documentation_ticket": "mem-000019",
-        "scribe_worker": "scribe-2",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAURLY.cpy",
+        "parent_documentation_ticket": "mem-000018",
+        "scribe_worker": "scribe-1",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/IMSFUNCS.cpy",
         "file_type": "COPYBOOK"
       },
-      "created_at": "2026-03-16T19:55:08.373904",
-      "updated_at": "2026-03-16T19:55:13.849635",
+      "created_at": "2026-04-21T13:43:50.711227",
+      "updated_at": "2026-04-21T13:44:04.609965",
       "decision": null
     },
     {
       "ticket_id": "mem-000058",
       "ticket_type": "validation",
       "state": "completed",
-      "file_name": "ddl/XAUTHFRD.ddl",
-      "program_id": "XAUTHFRD",
+      "file_name": "cpy/CCPAUERY.cpy",
+      "program_id": "CCPAUERY",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000019",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000019",
+        "scribe_worker": "scribe-2",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAUERY.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-04-21T13:43:51.061687",
+      "updated_at": "2026-04-21T13:44:02.213440",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000059",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cpy/CCPAURLY.cpy",
+      "program_id": "CCPAURLY",
       "cycle_number": 1,
       "worker_id": "challenger-1",
       "parent_ticket_id": "mem-000020",
       "metadata": {
         "parent_documentation_ticket": "mem-000020",
+        "scribe_worker": "scribe-1",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CCPAURLY.cpy",
+        "file_type": "COPYBOOK"
+      },
+      "created_at": "2026-04-21T13:43:56.509459",
+      "updated_at": "2026-04-21T13:44:07.358064",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000060",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "ddl/XAUTHFRD.ddl",
+      "program_id": "XAUTHFRD",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000021",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000021",
         "scribe_worker": "scribe-2",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ddl/XAUTHFRD.ddl",
         "file_type": "OTHER"
       },
-      "created_at": "2026-03-16T19:55:11.260554",
-      "updated_at": "2026-03-16T19:55:14.023773",
+      "created_at": "2026-04-21T13:43:59.509779",
+      "updated_at": "2026-04-21T13:44:06.625862",
       "decision": null
     },
     {
-      "ticket_id": "mem-000059",
+      "ticket_id": "mem-000061",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "ddl/AUTHFRDS.ddl",
+      "program_id": "AUTHFRDS",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000022",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000022",
+        "scribe_worker": "scribe-1",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ddl/AUTHFRDS.ddl",
+        "file_type": "OTHER"
+      },
+      "created_at": "2026-04-21T13:44:01.808804",
+      "updated_at": "2026-04-21T13:44:10.720917",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000062",
       "ticket_type": "clarification",
       "state": "completed",
       "file_name": "ddl/XAUTHFRD.ddl",
       "program_id": "XAUTHFRD",
       "cycle_number": 1,
       "worker_id": "scribe-1",
-      "parent_ticket_id": "mem-000058",
+      "parent_ticket_id": "mem-000060",
       "metadata": {
-        "parent_validation_ticket": "mem-000058",
+        "parent_validation_ticket": "mem-000060",
         "issues_found": [],
         "challenger_questions": [
           {
-            "question_id": "Q-825DD050",
+            "question_id": "Q-82DF9432",
             "section": "paragraphs",
             "question_type": "COMPLETENESS",
             "question": "Paragraph 'XAUTHFRD' exists in the source code (per static analysis) but is not documented in the template for ddl/XAUTHFRD.ddl. Please add documentation for this paragraph.",
@@ -1210,64 +1254,32 @@
             "evidence": []
           }
         ],
-        "challenger_worker": "challenger-1",
+        "challenger_worker": "challenger-2",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ddl/XAUTHFRD.ddl",
         "file_type": "OTHER"
       },
-      "created_at": "2026-03-16T19:55:14.020048",
-      "updated_at": "2026-03-16T20:02:36.976796",
+      "created_at": "2026-04-21T13:44:06.622200",
+      "updated_at": "2026-04-21T13:47:39.026484",
       "decision": null
     },
     {
-      "ticket_id": "mem-000060",
-      "ticket_type": "validation",
-      "state": "completed",
-      "file_name": "ddl/AUTHFRDS.ddl",
-      "program_id": "AUTHFRDS",
-      "cycle_number": 1,
-      "worker_id": "challenger-2",
-      "parent_ticket_id": "mem-000021",
-      "metadata": {
-        "parent_documentation_ticket": "mem-000021",
-        "scribe_worker": "scribe-2",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ddl/AUTHFRDS.ddl",
-        "file_type": "OTHER"
-      },
-      "created_at": "2026-03-16T19:55:17.418985",
-      "updated_at": "2026-03-16T19:55:23.961135",
-      "decision": null
-    },
-    {
-      "ticket_id": "mem-000061",
+      "ticket_id": "mem-000063",
       "ticket_type": "clarification",
       "state": "completed",
       "file_name": "ddl/AUTHFRDS.ddl",
       "program_id": "AUTHFRDS",
       "cycle_number": 1,
-      "worker_id": "scribe-2",
-      "parent_ticket_id": "mem-000060",
+      "worker_id": "scribe-1",
+      "parent_ticket_id": "mem-000061",
       "metadata": {
-        "parent_validation_ticket": "mem-000060",
-        "issues_found": [
-          "Inputs and Outputs are empty, which is incorrect for a DDL file.",
-          "Lack of specific column descriptions for fraud indicators.",
-          "Missing data type and length information for columns.",
-          "No business rules are defined."
-        ],
+        "parent_validation_ticket": "mem-000061",
+        "issues_found": [],
         "challenger_questions": [
           {
-            "question_id": "Q-A73B8386",
+            "question_id": "Q-A78A5229",
             "section": "paragraphs",
             "question_type": "COMPLETENESS",
             "question": "Paragraph 'AUTHFRDS' exists in the source code (per static analysis) but is not documented in the template for ddl/AUTHFRDS.ddl. Please add documentation for this paragraph.",
-            "severity": "BLOCKING",
-            "evidence": []
-          },
-          {
-            "question_id": "Q-7E8D61D0",
-            "section": null,
-            "question_type": "CLARIFICATION",
-            "question": "",
             "severity": "BLOCKING",
             "evidence": []
           }
@@ -1276,198 +1288,160 @@
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ddl/AUTHFRDS.ddl",
         "file_type": "OTHER"
       },
-      "created_at": "2026-03-16T19:55:23.957412",
-      "updated_at": "2026-03-16T20:02:37.384074",
-      "decision": null
-    },
-    {
-      "ticket_id": "mem-000062",
-      "ticket_type": "validation",
-      "state": "completed",
-      "file_name": "ims/DBPAUTP0.dbd",
-      "program_id": "DBPAUTP0",
-      "cycle_number": 1,
-      "worker_id": "challenger-1",
-      "parent_ticket_id": "mem-000022",
-      "metadata": {
-        "parent_documentation_ticket": "mem-000022",
-        "scribe_worker": "scribe-2",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/DBPAUTP0.dbd",
-        "file_type": "OTHER"
-      },
-      "created_at": "2026-03-16T19:55:23.973577",
-      "updated_at": "2026-03-16T19:55:29.466323",
-      "decision": null
-    },
-    {
-      "ticket_id": "mem-000063",
-      "ticket_type": "validation",
-      "state": "completed",
-      "file_name": "ims/DBPAUTX0.dbd",
-      "program_id": "DBPAUTX0",
-      "cycle_number": 1,
-      "worker_id": "challenger-2",
-      "parent_ticket_id": "mem-000023",
-      "metadata": {
-        "parent_documentation_ticket": "mem-000023",
-        "scribe_worker": "scribe-2",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/DBPAUTX0.dbd",
-        "file_type": "OTHER"
-      },
-      "created_at": "2026-03-16T19:55:27.729082",
-      "updated_at": "2026-03-16T19:55:33.553664",
+      "created_at": "2026-04-21T13:44:10.717336",
+      "updated_at": "2026-04-21T13:47:52.615378",
       "decision": null
     },
     {
       "ticket_id": "mem-000064",
       "ticket_type": "validation",
       "state": "completed",
-      "file_name": "ims/PSBPAUTL.psb",
-      "program_id": "PSBPAUTL",
+      "file_name": "ims/DBPAUTP0.dbd",
+      "program_id": "DBPAUTP0",
       "cycle_number": 1,
-      "worker_id": "challenger-1",
-      "parent_ticket_id": "mem-000025",
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000023",
       "metadata": {
-        "parent_documentation_ticket": "mem-000025",
-        "scribe_worker": "scribe-1",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PSBPAUTL.psb",
+        "parent_documentation_ticket": "mem-000023",
+        "scribe_worker": "scribe-2",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/DBPAUTP0.dbd",
         "file_type": "OTHER"
       },
-      "created_at": "2026-03-16T20:00:03.281480",
-      "updated_at": "2026-03-16T20:00:11.109129",
+      "created_at": "2026-04-21T13:44:12.253721",
+      "updated_at": "2026-04-21T13:44:27.286406",
       "decision": null
     },
     {
       "ticket_id": "mem-000065",
       "ticket_type": "validation",
       "state": "completed",
-      "file_name": "ims/PSBPAUTB.psb",
-      "program_id": "PSBPAUTB",
+      "file_name": "ims/PADFLDBD.DBD",
+      "program_id": "PADFLDBD",
       "cycle_number": 1,
-      "worker_id": "challenger-2",
-      "parent_ticket_id": "mem-000026",
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000025",
       "metadata": {
-        "parent_documentation_ticket": "mem-000026",
-        "scribe_worker": "scribe-1",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PSBPAUTB.psb",
+        "parent_documentation_ticket": "mem-000025",
+        "scribe_worker": "scribe-2",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PADFLDBD.DBD",
         "file_type": "OTHER"
       },
-      "created_at": "2026-03-16T20:00:09.015716",
-      "updated_at": "2026-03-16T20:00:12.820000",
+      "created_at": "2026-04-21T13:44:16.353279",
+      "updated_at": "2026-04-21T13:44:26.121313",
       "decision": null
     },
     {
       "ticket_id": "mem-000066",
       "ticket_type": "validation",
       "state": "completed",
-      "file_name": "ims/PASFLDBD.DBD",
-      "program_id": "PASFLDBD",
+      "file_name": "ims/PSBPAUTL.psb",
+      "program_id": "PSBPAUTL",
       "cycle_number": 1,
-      "worker_id": "challenger-2",
-      "parent_ticket_id": "mem-000027",
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000026",
       "metadata": {
-        "parent_documentation_ticket": "mem-000027",
-        "scribe_worker": "scribe-1",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PASFLDBD.DBD",
+        "parent_documentation_ticket": "mem-000026",
+        "scribe_worker": "scribe-2",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PSBPAUTL.psb",
         "file_type": "OTHER"
       },
-      "created_at": "2026-03-16T20:00:12.804737",
-      "updated_at": "2026-03-16T20:00:16.709346",
+      "created_at": "2026-04-21T13:44:39.798906",
+      "updated_at": "2026-04-21T13:44:59.358024",
       "decision": null
     },
     {
       "ticket_id": "mem-000067",
       "ticket_type": "validation",
       "state": "completed",
-      "file_name": "ims/PAUTBUNL.PSB",
-      "program_id": "PAUTBUNL",
+      "file_name": "ims/PSBPAUTB.psb",
+      "program_id": "PSBPAUTB",
       "cycle_number": 1,
       "worker_id": "challenger-2",
-      "parent_ticket_id": "mem-000028",
+      "parent_ticket_id": "mem-000027",
       "metadata": {
-        "parent_documentation_ticket": "mem-000028",
-        "scribe_worker": "scribe-1",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PAUTBUNL.PSB",
+        "parent_documentation_ticket": "mem-000027",
+        "scribe_worker": "scribe-2",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PSBPAUTB.psb",
         "file_type": "OTHER"
       },
-      "created_at": "2026-03-16T20:00:21.610962",
-      "updated_at": "2026-03-16T20:00:24.985282",
+      "created_at": "2026-04-21T13:44:51.242278",
+      "updated_at": "2026-04-21T13:44:56.075289",
       "decision": null
     },
     {
       "ticket_id": "mem-000068",
       "ticket_type": "validation",
       "state": "completed",
-      "file_name": "ims/DLIGSAMP.PSB",
-      "program_id": "DLIGSAMP",
+      "file_name": "ims/DBPAUTX0.dbd",
+      "program_id": "DBPAUTX0",
       "cycle_number": 1,
       "worker_id": "challenger-2",
-      "parent_ticket_id": "mem-000029",
+      "parent_ticket_id": "mem-000024",
       "metadata": {
-        "parent_documentation_ticket": "mem-000029",
+        "parent_documentation_ticket": "mem-000024",
         "scribe_worker": "scribe-1",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/DLIGSAMP.PSB",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/DBPAUTX0.dbd",
         "file_type": "OTHER"
       },
-      "created_at": "2026-03-16T20:00:26.423869",
-      "updated_at": "2026-03-16T20:00:37.990479",
+      "created_at": "2026-04-21T13:44:51.308111",
+      "updated_at": "2026-04-21T13:44:59.617854",
       "decision": null
     },
     {
       "ticket_id": "mem-000069",
       "ticket_type": "validation",
       "state": "completed",
-      "file_name": "ims/PADFLDBD.DBD",
-      "program_id": "PADFLDBD",
+      "file_name": "ims/PASFLDBD.DBD",
+      "program_id": "PASFLDBD",
       "cycle_number": 1,
       "worker_id": "challenger-1",
-      "parent_ticket_id": "mem-000024",
+      "parent_ticket_id": "mem-000028",
       "metadata": {
-        "parent_documentation_ticket": "mem-000024",
+        "parent_documentation_ticket": "mem-000028",
         "scribe_worker": "scribe-2",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PADFLDBD.DBD",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PASFLDBD.DBD",
         "file_type": "OTHER"
       },
-      "created_at": "2026-03-16T20:00:34.209547",
-      "updated_at": "2026-03-16T20:00:38.503617",
+      "created_at": "2026-04-21T13:44:55.577333",
+      "updated_at": "2026-04-21T13:45:05.691334",
       "decision": null
     },
     {
       "ticket_id": "mem-000070",
       "ticket_type": "validation",
       "state": "completed",
-      "file_name": "cpy-bms/COPAU00.cpy",
-      "program_id": "COPAU00",
+      "file_name": "ims/PAUTBUNL.PSB",
+      "program_id": "PAUTBUNL",
       "cycle_number": 1,
       "worker_id": "challenger-2",
-      "parent_ticket_id": "mem-000030",
+      "parent_ticket_id": "mem-000029",
       "metadata": {
-        "parent_documentation_ticket": "mem-000030",
+        "parent_documentation_ticket": "mem-000029",
         "scribe_worker": "scribe-1",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy-bms/COPAU00.cpy",
-        "file_type": "COPYBOOK"
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/PAUTBUNL.PSB",
+        "file_type": "OTHER"
       },
-      "created_at": "2026-03-16T20:00:35.663905",
-      "updated_at": "2026-03-16T20:00:41.657766",
+      "created_at": "2026-04-21T13:44:56.765066",
+      "updated_at": "2026-04-21T13:45:02.877122",
       "decision": null
     },
     {
       "ticket_id": "mem-000071",
       "ticket_type": "validation",
       "state": "completed",
-      "file_name": "cpy/CIPAUDTY.cpy",
-      "program_id": "CIPAUDTY",
+      "file_name": "ims/DLIGSAMP.PSB",
+      "program_id": "DLIGSAMP",
       "cycle_number": 1,
-      "worker_id": "challenger-1",
-      "parent_ticket_id": "mem-000014",
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000030",
       "metadata": {
-        "parent_documentation_ticket": "mem-000014",
+        "parent_documentation_ticket": "mem-000030",
         "scribe_worker": "scribe-2",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CIPAUDTY.cpy",
-        "file_type": "COPYBOOK"
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ims/DLIGSAMP.PSB",
+        "file_type": "OTHER"
       },
-      "created_at": "2026-03-16T20:00:37.634850",
-      "updated_at": "2026-03-16T20:00:42.186985",
+      "created_at": "2026-04-21T13:45:00.854996",
+      "updated_at": "2026-04-21T13:45:09.611737",
       "decision": null
     },
     {
@@ -1477,35 +1451,35 @@
       "file_name": "cpy-bms/COPAU01.cpy",
       "program_id": "COPAU01",
       "cycle_number": 1,
-      "worker_id": "challenger-2",
-      "parent_ticket_id": "mem-000031",
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000032",
       "metadata": {
-        "parent_documentation_ticket": "mem-000031",
-        "scribe_worker": "scribe-1",
+        "parent_documentation_ticket": "mem-000032",
+        "scribe_worker": "scribe-2",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy-bms/COPAU01.cpy",
         "file_type": "COPYBOOK"
       },
-      "created_at": "2026-03-16T20:00:38.996239",
-      "updated_at": "2026-03-16T20:00:48.338267",
+      "created_at": "2026-04-21T13:45:05.601753",
+      "updated_at": "2026-04-21T13:45:13.999462",
       "decision": null
     },
     {
       "ticket_id": "mem-000073",
       "ticket_type": "validation",
       "state": "completed",
-      "file_name": "jcl/LOADPADB.JCL",
-      "program_id": "LOADPADB",
+      "file_name": "cpy-bms/COPAU00.cpy",
+      "program_id": "COPAU00",
       "cycle_number": 1,
-      "worker_id": "challenger-1",
-      "parent_ticket_id": "mem-000033",
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000031",
       "metadata": {
-        "parent_documentation_ticket": "mem-000033",
+        "parent_documentation_ticket": "mem-000031",
         "scribe_worker": "scribe-1",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/LOADPADB.JCL",
-        "file_type": "JCL"
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy-bms/COPAU00.cpy",
+        "file_type": "COPYBOOK"
       },
-      "created_at": "2026-03-16T20:00:47.210549",
-      "updated_at": "2026-03-16T20:00:53.968657",
+      "created_at": "2026-04-21T13:45:07.891759",
+      "updated_at": "2026-04-21T13:45:16.349698",
       "decision": null
     },
     {
@@ -1515,90 +1489,39 @@
       "file_name": "jcl/UNLDPADB.JCL",
       "program_id": "UNLDPADB",
       "cycle_number": 1,
-      "worker_id": "challenger-2",
-      "parent_ticket_id": "mem-000032",
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000033",
       "metadata": {
-        "parent_documentation_ticket": "mem-000032",
+        "parent_documentation_ticket": "mem-000033",
         "scribe_worker": "scribe-2",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDPADB.JCL",
         "file_type": "JCL"
       },
-      "created_at": "2026-03-16T20:00:49.550529",
-      "updated_at": "2026-03-16T20:00:56.835339",
+      "created_at": "2026-04-21T13:45:17.422052",
+      "updated_at": "2026-04-21T13:45:24.775431",
       "decision": null
     },
     {
       "ticket_id": "mem-000075",
-      "ticket_type": "clarification",
+      "ticket_type": "validation",
       "state": "completed",
       "file_name": "jcl/LOADPADB.JCL",
       "program_id": "LOADPADB",
       "cycle_number": 1,
-      "worker_id": "scribe-1",
-      "parent_ticket_id": "mem-000073",
-      "metadata": {
-        "parent_validation_ticket": "mem-000073",
-        "issues_found": [
-          "Missing datasets in STEPLIB.",
-          "Incorrect file type for DFSVSAMP.",
-          "Potential missing output datasets DDPAUTP0 and DDPAUTX0.",
-          "Missing dummy datasets IMSLOGR and IEFRDER."
-        ],
-        "challenger_questions": [
-          {
-            "question_id": "Q-0F8C0474",
-            "section": "paragraphs",
-            "question_type": "COMPLETENESS",
-            "question": "Paragraph 'LOADPADB' exists in the source code (per static analysis) but is not documented in the template for jcl/LOADPADB.JCL. Please add documentation for this paragraph.",
-            "severity": "BLOCKING",
-            "evidence": []
-          },
-          {
-            "question_id": "Q-5F0D8913",
-            "section": null,
-            "question_type": "CLARIFICATION",
-            "question": "",
-            "severity": "BLOCKING",
-            "evidence": []
-          },
-          {
-            "question_id": "Q-1963D0ED",
-            "section": null,
-            "question_type": "CLARIFICATION",
-            "question": "",
-            "severity": "BLOCKING",
-            "evidence": []
-          }
-        ],
-        "challenger_worker": "challenger-1",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/LOADPADB.JCL",
-        "file_type": "JCL"
-      },
-      "created_at": "2026-03-16T20:00:53.964624",
-      "updated_at": "2026-03-16T20:02:50.697340",
-      "decision": null
-    },
-    {
-      "ticket_id": "mem-000076",
-      "ticket_type": "validation",
-      "state": "completed",
-      "file_name": "jcl/UNLDGSAM.JCL",
-      "program_id": "UNLDGSAM",
-      "cycle_number": 1,
-      "worker_id": "challenger-1",
+      "worker_id": "challenger-2",
       "parent_ticket_id": "mem-000034",
       "metadata": {
         "parent_documentation_ticket": "mem-000034",
         "scribe_worker": "scribe-1",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDGSAM.JCL",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/LOADPADB.JCL",
         "file_type": "JCL"
       },
-      "created_at": "2026-03-16T20:00:55.645575",
-      "updated_at": "2026-03-16T20:01:01.562146",
+      "created_at": "2026-04-21T13:45:20.453106",
+      "updated_at": "2026-04-21T13:45:28.942702",
       "decision": null
     },
     {
-      "ticket_id": "mem-000077",
+      "ticket_id": "mem-000076",
       "ticket_type": "clarification",
       "state": "completed",
       "file_name": "jcl/UNLDPADB.JCL",
@@ -1609,11 +1532,13 @@
       "metadata": {
         "parent_validation_ticket": "mem-000074",
         "issues_found": [
-          "Incorrect citation for several input datasets."
+          "The purpose mentions cataloging, but the citation is just for the EXEC statement. The actual DISP parameters should be cited.",
+          "There's a discrepancy regarding DFSVSAMP/FSVSAMP DD statement. The documentation should clarify whether it is DUMMY or points to a PROCLIB member.",
+          "The description of the PARM parameter in the DFSRRC00 call is vague. It should elaborate on 'PAUDBUNL' and 'PAUTBUNL'."
         ],
         "challenger_questions": [
           {
-            "question_id": "Q-46606091",
+            "question_id": "Q-D7E9C25C",
             "section": "paragraphs",
             "question_type": "COMPLETENESS",
             "question": "Paragraph 'UNLDPADB' exists in the source code (per static analysis) but is not documented in the template for jcl/UNLDPADB.JCL. Please add documentation for this paragraph.",
@@ -1621,108 +1546,103 @@
             "evidence": []
           }
         ],
-        "challenger_worker": "challenger-2",
+        "challenger_worker": "challenger-1",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDPADB.JCL",
         "file_type": "JCL"
       },
-      "created_at": "2026-03-16T20:00:56.831182",
-      "updated_at": "2026-03-16T20:02:52.712491",
+      "created_at": "2026-04-21T13:45:24.771337",
+      "updated_at": "2026-04-21T13:48:04.512616",
       "decision": null
     },
     {
-      "ticket_id": "mem-000078",
+      "ticket_id": "mem-000077",
       "ticket_type": "clarification",
       "state": "completed",
-      "file_name": "jcl/UNLDGSAM.JCL",
-      "program_id": "UNLDGSAM",
+      "file_name": "jcl/LOADPADB.JCL",
+      "program_id": "LOADPADB",
       "cycle_number": 1,
       "worker_id": "scribe-1",
-      "parent_ticket_id": "mem-000076",
+      "parent_ticket_id": "mem-000075",
       "metadata": {
-        "parent_validation_ticket": "mem-000076",
+        "parent_validation_ticket": "mem-000075",
         "issues_found": [
-          "Missing STEPLIB datasets in the inputs section.",
-          "Missing DFSVSAMP dataset in the inputs section."
+          "Incorrect citation for called program DFSRRC00.",
+          "Unclear meaning of 'PAUDBLOD' parameter.",
+          "Missing documentation for IMSLOGR and IEFRDER datasets.",
+          "Incorrect citations in the input section.",
+          "Missing documentation for dummy dataset FSVSAMP"
         ],
         "challenger_questions": [
           {
-            "question_id": "Q-BCDC59F1",
+            "question_id": "Q-4D31390A",
             "section": "paragraphs",
             "question_type": "COMPLETENESS",
-            "question": "Paragraph 'UNLDGSAM' exists in the source code (per static analysis) but is not documented in the template for jcl/UNLDGSAM.JCL. Please add documentation for this paragraph.",
-            "severity": "BLOCKING",
-            "evidence": []
-          },
-          {
-            "question_id": "Q-6B5C57C8",
-            "section": "paragraphs",
-            "question_type": "COMPLETENESS",
-            "question": "Paragraph 'STEP01' exists in the source code (per static analysis) but is not documented in the template for jcl/UNLDGSAM.JCL. Please add documentation for this paragraph.",
+            "question": "Paragraph 'LOADPADB' exists in the source code (per static analysis) but is not documented in the template for jcl/LOADPADB.JCL. Please add documentation for this paragraph.",
             "severity": "BLOCKING",
             "evidence": []
           }
         ],
-        "challenger_worker": "challenger-1",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDGSAM.JCL",
+        "challenger_worker": "challenger-2",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/LOADPADB.JCL",
         "file_type": "JCL"
       },
-      "created_at": "2026-03-16T20:01:01.557410",
-      "updated_at": "2026-03-16T20:03:05.439242",
+      "created_at": "2026-04-21T13:45:28.938536",
+      "updated_at": "2026-04-21T13:48:04.495132",
       "decision": null
     },
     {
-      "ticket_id": "mem-000079",
+      "ticket_id": "mem-000078",
       "ticket_type": "validation",
       "state": "completed",
       "file_name": "jcl/DBPAUTP0.jcl",
       "program_id": "DBPAUTP0",
-      "cycle_number": 1,
-      "worker_id": "challenger-2",
-      "parent_ticket_id": "mem-000035",
-      "metadata": {
-        "parent_documentation_ticket": "mem-000035",
-        "scribe_worker": "scribe-2",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/DBPAUTP0.jcl",
-        "file_type": "JCL"
-      },
-      "created_at": "2026-03-16T20:01:02.368948",
-      "updated_at": "2026-03-16T20:01:07.480201",
-      "decision": null
-    },
-    {
-      "ticket_id": "mem-000080",
-      "ticket_type": "validation",
-      "state": "completed",
-      "file_name": "jcl/CBPAUP0J.jcl",
-      "program_id": "CBPAUP0J",
       "cycle_number": 1,
       "worker_id": "challenger-1",
       "parent_ticket_id": "mem-000036",
       "metadata": {
         "parent_documentation_ticket": "mem-000036",
         "scribe_worker": "scribe-1",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/CBPAUP0J.jcl",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/DBPAUTP0.jcl",
         "file_type": "JCL"
       },
-      "created_at": "2026-03-16T20:01:04.106620",
-      "updated_at": "2026-03-16T20:01:12.584851",
+      "created_at": "2026-04-21T13:45:33.613709",
+      "updated_at": "2026-04-21T13:45:40.013139",
       "decision": null
     },
     {
-      "ticket_id": "mem-000081",
+      "ticket_id": "mem-000079",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/UNLDGSAM.JCL",
+      "program_id": "UNLDGSAM",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000035",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000035",
+        "scribe_worker": "scribe-2",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDGSAM.JCL",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-04-21T13:45:34.511339",
+      "updated_at": "2026-04-21T13:45:40.994944",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000080",
       "ticket_type": "clarification",
       "state": "completed",
       "file_name": "jcl/DBPAUTP0.jcl",
       "program_id": "DBPAUTP0",
       "cycle_number": 1,
-      "worker_id": "scribe-2",
-      "parent_ticket_id": "mem-000079",
+      "worker_id": "scribe-1",
+      "parent_ticket_id": "mem-000078",
       "metadata": {
-        "parent_validation_ticket": "mem-000079",
+        "parent_validation_ticket": "mem-000078",
         "issues_found": [],
         "challenger_questions": [
           {
-            "question_id": "Q-8CB5905B",
+            "question_id": "Q-8A83CF72",
             "section": "paragraphs",
             "question_type": "COMPLETENESS",
             "question": "Paragraph 'DBPAUTP0' exists in the source code (per static analysis) but is not documented in the template for jcl/DBPAUTP0.jcl. Please add documentation for this paragraph.",
@@ -1730,46 +1650,107 @@
             "evidence": []
           }
         ],
-        "challenger_worker": "challenger-2",
+        "challenger_worker": "challenger-1",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/DBPAUTP0.jcl",
         "file_type": "JCL"
       },
-      "created_at": "2026-03-16T20:01:07.475113",
-      "updated_at": "2026-03-16T20:03:06.059912",
+      "created_at": "2026-04-21T13:45:40.008972",
+      "updated_at": "2026-04-21T13:48:17.039902",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000081",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "jcl/UNLDGSAM.JCL",
+      "program_id": "UNLDGSAM",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": "mem-000079",
+      "metadata": {
+        "parent_validation_ticket": "mem-000079",
+        "issues_found": [
+          "The 'inputs' section might be incomplete, as the DD names associated with PAUTHDB and PAUTHDBX datasets are not explicitly mentioned.",
+          "The 'data_flow' section is missing the PAUTHDB and PAUTHDBX datasets as inputs."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-AAE29EB6",
+            "section": "paragraphs",
+            "question_type": "COMPLETENESS",
+            "question": "Paragraph 'UNLDGSAM' exists in the source code (per static analysis) but is not documented in the template for jcl/UNLDGSAM.JCL. Please add documentation for this paragraph.",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-2",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDGSAM.JCL",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-04-21T13:45:40.990704",
+      "updated_at": "2026-04-21T13:48:23.231594",
       "decision": null
     },
     {
       "ticket_id": "mem-000082",
+      "ticket_type": "chunk_synthesis",
+      "state": "completed",
+      "file_name": "cbl/PAUDBUNL.CBL",
+      "program_id": "PAUDBUNL",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": "mem-000038",
+      "metadata": {
+        "chunk_batch_idx": -1,
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+        "parallel_dispatch": false
+      },
+      "created_at": "2026-04-21T13:45:41.646116",
+      "updated_at": "2026-04-21T13:48:17.788932",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000083",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "jcl/CBPAUP0J.jcl",
+      "program_id": "CBPAUP0J",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000037",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000037",
+        "scribe_worker": "scribe-1",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/CBPAUP0J.jcl",
+        "file_type": "JCL"
+      },
+      "created_at": "2026-04-21T13:45:45.555320",
+      "updated_at": "2026-04-21T13:45:59.783241",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000084",
       "ticket_type": "clarification",
       "state": "completed",
       "file_name": "jcl/CBPAUP0J.jcl",
       "program_id": "CBPAUP0J",
       "cycle_number": 1,
       "worker_id": "scribe-1",
-      "parent_ticket_id": "mem-000080",
+      "parent_ticket_id": "mem-000083",
       "metadata": {
-        "parent_validation_ticket": "mem-000080",
+        "parent_validation_ticket": "mem-000083",
         "issues_found": [
-          "The exact role of DFSRRC00 vs CBPAUP0C in authorization deletion needs clarification.",
-          "The 'XXXXXXXX.PROD.LOADLIB' DSN requires a specific library name.",
-          "The 'DFSSEL' DD statement is missing from the inputs section.",
-          "The 'IEFRDER' and 'IMSLOGR' DD statements are missing from the outputs section.",
-          "The implications of running as a BMP region could be more detailed."
+          "Incorrect citation for the SYSIN input.",
+          "Ambiguity regarding multiple IMS.SDFSRESL DD statements.",
+          "Unclear association of XXXXXXXX.PROD.LOADLIB with STEPLIB.",
+          "Missing citation of lines 2 and 3 for the purpose."
         ],
         "challenger_questions": [
           {
-            "question_id": "Q-74DDC280",
+            "question_id": "Q-23E7DDEF",
             "section": "paragraphs",
             "question_type": "COMPLETENESS",
             "question": "Paragraph 'CBPAUP0J' exists in the source code (per static analysis) but is not documented in the template for jcl/CBPAUP0J.jcl. Please add documentation for this paragraph.",
-            "severity": "BLOCKING",
-            "evidence": []
-          },
-          {
-            "question_id": "Q-8ABFC2A0",
-            "section": "paragraphs",
-            "question_type": "COMPLETENESS",
-            "question": "Paragraph 'STEP01' exists in the source code (per static analysis) but is not documented in the template for jcl/CBPAUP0J.jcl. Please add documentation for this paragraph.",
             "severity": "BLOCKING",
             "evidence": []
           }
@@ -1778,191 +1759,153 @@
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/CBPAUP0J.jcl",
         "file_type": "JCL"
       },
-      "created_at": "2026-03-16T20:01:12.580553",
-      "updated_at": "2026-03-16T20:03:14.267130",
-      "decision": null
-    },
-    {
-      "ticket_id": "mem-000083",
-      "ticket_type": "chunk_synthesis",
-      "state": "completed",
-      "file_name": "cbl/COPAUS1C.cbl",
-      "program_id": "COPAUS1C",
-      "cycle_number": 1,
-      "worker_id": "scribe-2",
-      "parent_ticket_id": "mem-000037",
-      "metadata": {
-        "chunk_batch_idx": -1,
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
-        "parallel_dispatch": false
-      },
-      "created_at": "2026-03-16T20:01:22.484558",
-      "updated_at": "2026-03-16T20:03:06.836857",
-      "decision": null
-    },
-    {
-      "ticket_id": "mem-000084",
-      "ticket_type": "chunk_continuation",
-      "state": "completed",
-      "file_name": "cbl/COPAUA0C.cbl",
-      "program_id": "COPAUA0C",
-      "cycle_number": 1,
-      "worker_id": "scribe-2",
-      "parent_ticket_id": "mem-000038",
-      "metadata": {
-        "chunk_batch_idx": 2,
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
-        "parallel_dispatch": false
-      },
-      "created_at": "2026-03-16T20:01:33.738805",
-      "updated_at": "2026-03-16T20:03:36.988640",
+      "created_at": "2026-04-21T13:45:59.779164",
+      "updated_at": "2026-04-21T13:48:44.837232",
       "decision": null
     },
     {
       "ticket_id": "mem-000085",
       "ticket_type": "chunk_synthesis",
       "state": "completed",
-      "file_name": "cbl/PAUDBLOD.CBL",
-      "program_id": "PAUDBLOD",
+      "file_name": "cbl/COPAUS1C.cbl",
+      "program_id": "COPAUS1C",
       "cycle_number": 1,
-      "worker_id": "scribe-1",
+      "worker_id": "scribe-2",
       "parent_ticket_id": "mem-000039",
       "metadata": {
         "chunk_batch_idx": -1,
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
         "parallel_dispatch": false
       },
-      "created_at": "2026-03-16T20:01:37.631176",
-      "updated_at": "2026-03-16T20:03:15.059149",
+      "created_at": "2026-04-21T13:46:12.455472",
+      "updated_at": "2026-04-21T13:48:23.980105",
       "decision": null
     },
     {
       "ticket_id": "mem-000086",
-      "ticket_type": "chunk_synthesis",
+      "ticket_type": "chunk_continuation",
       "state": "completed",
-      "file_name": "cbl/DBUNLDGS.CBL",
-      "program_id": "DBUNLDGS",
+      "file_name": "cbl/COPAUA0C.cbl",
+      "program_id": "COPAUA0C",
       "cycle_number": 1,
-      "worker_id": "scribe-1",
+      "worker_id": "scribe-2",
       "parent_ticket_id": "mem-000040",
       "metadata": {
-        "chunk_batch_idx": -1,
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "chunk_batch_idx": 2,
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
         "parallel_dispatch": false
       },
-      "created_at": "2026-03-16T20:01:47.183804",
-      "updated_at": "2026-03-16T20:03:16.608004",
+      "created_at": "2026-04-21T13:46:16.197728",
+      "updated_at": "2026-04-21T13:48:56.413885",
       "decision": null
     },
     {
       "ticket_id": "mem-000087",
       "ticket_type": "chunk_synthesis",
       "state": "completed",
-      "file_name": "cbl/CBPAUP0C.cbl",
-      "program_id": "CBPAUP0C",
+      "file_name": "cbl/DBUNLDGS.CBL",
+      "program_id": "DBUNLDGS",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": "mem-000042",
+      "metadata": {
+        "chunk_batch_idx": -1,
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "parallel_dispatch": false
+      },
+      "created_at": "2026-04-21T13:46:30.878016",
+      "updated_at": "2026-04-21T13:48:45.584321",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000088",
+      "ticket_type": "chunk_synthesis",
+      "state": "completed",
+      "file_name": "cbl/PAUDBLOD.CBL",
+      "program_id": "PAUDBLOD",
       "cycle_number": 1,
       "worker_id": "scribe-1",
       "parent_ticket_id": "mem-000041",
       "metadata": {
         "chunk_batch_idx": -1,
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
         "parallel_dispatch": false
       },
-      "created_at": "2026-03-16T20:01:51.880443",
-      "updated_at": "2026-03-16T20:03:18.149009",
-      "decision": null
-    },
-    {
-      "ticket_id": "mem-000088",
-      "ticket_type": "validation",
-      "state": "completed",
-      "file_name": "bms/COPAU01.bms",
-      "program_id": "COPAU01",
-      "cycle_number": 1,
-      "worker_id": "challenger-2",
-      "parent_ticket_id": "mem-000047",
-      "metadata": {
-        "parent_documentation_ticket": "mem-000047",
-        "scribe_worker": "scribe-2",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/bms/COPAU01.bms",
-        "file_type": "BMS"
-      },
-      "created_at": "2026-03-16T20:02:03.468477",
-      "updated_at": "2026-03-16T20:02:09.441757",
+      "created_at": "2026-04-21T13:46:41.037771",
+      "updated_at": "2026-04-21T13:48:47.070563",
       "decision": null
     },
     {
       "ticket_id": "mem-000089",
       "ticket_type": "chunk_synthesis",
       "state": "completed",
-      "file_name": "cbl/PAUDBUNL.CBL",
-      "program_id": "PAUDBUNL",
+      "file_name": "cbl/CBPAUP0C.cbl",
+      "program_id": "CBPAUP0C",
       "cycle_number": 1,
       "worker_id": "scribe-1",
-      "parent_ticket_id": "mem-000048",
+      "parent_ticket_id": "mem-000043",
       "metadata": {
         "chunk_batch_idx": -1,
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
         "parallel_dispatch": false
       },
-      "created_at": "2026-03-16T20:02:10.966673",
-      "updated_at": "2026-03-16T20:03:19.735722",
+      "created_at": "2026-04-21T13:46:45.504302",
+      "updated_at": "2026-04-21T13:48:53.154748",
       "decision": null
     },
     {
       "ticket_id": "mem-000090",
       "ticket_type": "chunk_continuation",
       "state": "completed",
+      "file_name": "cbl/.specter_build_COPAUA0C/COPAUA0C.mock.cbl",
+      "program_id": "COPAUA0C.MOCK",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": "mem-000046",
+      "metadata": {
+        "chunk_batch_idx": 2,
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/.specter_build_COPAUA0C/COPAUA0C.mock.cbl",
+        "parallel_dispatch": false
+      },
+      "created_at": "2026-04-21T13:47:13.383843",
+      "updated_at": "2026-04-21T13:49:12.181124",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000091",
+      "ticket_type": "chunk_continuation",
+      "state": "completed",
       "file_name": "cbl/COPAUS0C.cbl",
       "program_id": "COPAUS0C",
       "cycle_number": 1,
-      "worker_id": "scribe-1",
-      "parent_ticket_id": "mem-000042",
+      "worker_id": "scribe-2",
+      "parent_ticket_id": "mem-000045",
       "metadata": {
         "chunk_batch_idx": 2,
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
         "parallel_dispatch": false
       },
-      "created_at": "2026-03-16T20:02:27.484251",
-      "updated_at": "2026-03-16T20:03:29.047901",
-      "decision": null
-    },
-    {
-      "ticket_id": "mem-000091",
-      "ticket_type": "validation",
-      "state": "completed",
-      "file_name": "cpy/CIPAUSMY.cpy",
-      "program_id": "CIPAUSMY",
-      "cycle_number": 1,
-      "worker_id": "challenger-2",
-      "parent_ticket_id": "mem-000053",
-      "metadata": {
-        "parent_documentation_ticket": "mem-000053",
-        "scribe_worker": "scribe-1",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cpy/CIPAUSMY.cpy",
-        "file_type": "COPYBOOK"
-      },
-      "created_at": "2026-03-16T20:02:31.302350",
-      "updated_at": "2026-03-16T20:02:43.898638",
+      "created_at": "2026-04-21T13:47:24.796726",
+      "updated_at": "2026-04-21T13:49:20.613067",
       "decision": null
     },
     {
       "ticket_id": "mem-000092",
       "ticket_type": "validation",
       "state": "completed",
-      "file_name": "bms/COPAU00.bms",
-      "program_id": "COPAU00",
+      "file_name": "bms/COPAU01.bms",
+      "program_id": "COPAU01",
       "cycle_number": 1,
       "worker_id": "challenger-1",
-      "parent_ticket_id": "mem-000050",
+      "parent_ticket_id": "mem-000049",
       "metadata": {
-        "parent_documentation_ticket": "mem-000050",
-        "scribe_worker": "scribe-2",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/bms/COPAU00.bms",
+        "parent_documentation_ticket": "mem-000049",
+        "scribe_worker": "scribe-1",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/bms/COPAU01.bms",
         "file_type": "BMS"
       },
-      "created_at": "2026-03-16T20:02:31.507999",
-      "updated_at": "2026-03-16T20:02:40.762453",
+      "created_at": "2026-04-21T13:47:27.160485",
+      "updated_at": "2026-04-21T13:47:36.230416",
       "decision": null
     },
     {
@@ -1972,92 +1915,92 @@
       "file_name": "ddl/XAUTHFRD.ddl",
       "program_id": "XAUTHFRD",
       "cycle_number": 1,
-      "worker_id": "challenger-1",
-      "parent_ticket_id": "mem-000059",
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000062",
       "metadata": {
-        "parent_documentation_ticket": "mem-000059",
+        "parent_documentation_ticket": "mem-000062",
         "scribe_worker": "scribe-1",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ddl/XAUTHFRD.ddl",
         "file_type": "OTHER"
       },
-      "created_at": "2026-03-16T20:02:36.982089",
-      "updated_at": "2026-03-16T20:02:43.121450",
+      "created_at": "2026-04-21T13:47:39.051807",
+      "updated_at": "2026-04-21T13:47:47.255463",
       "decision": null
     },
     {
       "ticket_id": "mem-000094",
       "ticket_type": "validation",
       "state": "completed",
-      "file_name": "ddl/AUTHFRDS.ddl",
-      "program_id": "AUTHFRDS",
+      "file_name": "bms/COPAU00.bms",
+      "program_id": "COPAU00",
       "cycle_number": 1,
-      "worker_id": "challenger-1",
-      "parent_ticket_id": "mem-000061",
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000056",
       "metadata": {
-        "parent_documentation_ticket": "mem-000061",
+        "parent_documentation_ticket": "mem-000056",
         "scribe_worker": "scribe-2",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ddl/AUTHFRDS.ddl",
-        "file_type": "OTHER"
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/bms/COPAU00.bms",
+        "file_type": "BMS"
       },
-      "created_at": "2026-03-16T20:02:37.389596",
-      "updated_at": "2026-03-16T20:02:49.051183",
+      "created_at": "2026-04-21T13:47:50.412607",
+      "updated_at": "2026-04-21T13:47:59.576097",
       "decision": null
     },
     {
       "ticket_id": "mem-000095",
       "ticket_type": "validation",
       "state": "completed",
-      "file_name": "jcl/LOADPADB.JCL",
-      "program_id": "LOADPADB",
+      "file_name": "ddl/AUTHFRDS.ddl",
+      "program_id": "AUTHFRDS",
       "cycle_number": 1,
       "worker_id": "challenger-1",
-      "parent_ticket_id": "mem-000075",
+      "parent_ticket_id": "mem-000063",
       "metadata": {
-        "parent_documentation_ticket": "mem-000075",
+        "parent_documentation_ticket": "mem-000063",
         "scribe_worker": "scribe-1",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/LOADPADB.JCL",
-        "file_type": "JCL"
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/ddl/AUTHFRDS.ddl",
+        "file_type": "OTHER"
       },
-      "created_at": "2026-03-16T20:02:50.702777",
-      "updated_at": "2026-03-16T20:02:57.248798",
+      "created_at": "2026-04-21T13:47:52.620403",
+      "updated_at": "2026-04-21T13:47:58.552882",
       "decision": null
     },
     {
       "ticket_id": "mem-000096",
       "ticket_type": "validation",
       "state": "completed",
-      "file_name": "jcl/UNLDPADB.JCL",
-      "program_id": "UNLDPADB",
+      "file_name": "jcl/LOADPADB.JCL",
+      "program_id": "LOADPADB",
       "cycle_number": 1,
-      "worker_id": "challenger-2",
+      "worker_id": "challenger-1",
       "parent_ticket_id": "mem-000077",
       "metadata": {
         "parent_documentation_ticket": "mem-000077",
-        "scribe_worker": "scribe-2",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDPADB.JCL",
+        "scribe_worker": "scribe-1",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/LOADPADB.JCL",
         "file_type": "JCL"
       },
-      "created_at": "2026-03-16T20:02:52.716286",
-      "updated_at": "2026-03-16T20:03:00.768583",
+      "created_at": "2026-04-21T13:48:04.500284",
+      "updated_at": "2026-04-21T13:48:11.660059",
       "decision": null
     },
     {
       "ticket_id": "mem-000097",
       "ticket_type": "validation",
       "state": "completed",
-      "file_name": "jcl/UNLDGSAM.JCL",
-      "program_id": "UNLDGSAM",
+      "file_name": "jcl/UNLDPADB.JCL",
+      "program_id": "UNLDPADB",
       "cycle_number": 1,
       "worker_id": "challenger-2",
-      "parent_ticket_id": "mem-000078",
+      "parent_ticket_id": "mem-000076",
       "metadata": {
-        "parent_documentation_ticket": "mem-000078",
-        "scribe_worker": "scribe-1",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDGSAM.JCL",
+        "parent_documentation_ticket": "mem-000076",
+        "scribe_worker": "scribe-2",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDPADB.JCL",
         "file_type": "JCL"
       },
-      "created_at": "2026-03-16T20:03:05.469679",
-      "updated_at": "2026-03-16T20:03:20.596047",
+      "created_at": "2026-04-21T13:48:04.515912",
+      "updated_at": "2026-04-21T13:48:13.195438",
       "decision": null
     },
     {
@@ -2067,185 +2010,185 @@
       "file_name": "jcl/DBPAUTP0.jcl",
       "program_id": "DBPAUTP0",
       "cycle_number": 1,
-      "worker_id": "challenger-1",
-      "parent_ticket_id": "mem-000081",
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000080",
       "metadata": {
-        "parent_documentation_ticket": "mem-000081",
-        "scribe_worker": "scribe-2",
+        "parent_documentation_ticket": "mem-000080",
+        "scribe_worker": "scribe-1",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/DBPAUTP0.jcl",
         "file_type": "JCL"
       },
-      "created_at": "2026-03-16T20:03:06.065843",
-      "updated_at": "2026-03-16T20:03:20.523199",
+      "created_at": "2026-04-21T13:48:17.045308",
+      "updated_at": "2026-04-21T13:48:26.200633",
       "decision": null
     },
     {
       "ticket_id": "mem-000099",
       "ticket_type": "validation",
       "state": "completed",
-      "file_name": "cbl/COPAUS1C.cbl",
-      "program_id": "COPAUS1C",
+      "file_name": "cbl/PAUDBUNL.CBL",
+      "program_id": "PAUDBUNL",
       "cycle_number": 1,
       "worker_id": "challenger-1",
-      "parent_ticket_id": "mem-000083",
+      "parent_ticket_id": "mem-000082",
       "metadata": {
-        "parent_documentation_ticket": "mem-000083",
-        "scribe_worker": "scribe-2",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
+        "parent_documentation_ticket": "mem-000082",
+        "scribe_worker": "scribe-1",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
         "file_type": "COBOL"
       },
-      "created_at": "2026-03-16T20:03:07.594076",
-      "updated_at": "2026-03-16T20:03:40.807568",
+      "created_at": "2026-04-21T13:48:18.514052",
+      "updated_at": "2026-04-21T13:48:42.072403",
       "decision": null
     },
     {
       "ticket_id": "mem-000100",
       "ticket_type": "validation",
       "state": "completed",
-      "file_name": "jcl/CBPAUP0J.jcl",
-      "program_id": "CBPAUP0J",
+      "file_name": "jcl/UNLDGSAM.JCL",
+      "program_id": "UNLDGSAM",
       "cycle_number": 1,
-      "worker_id": "challenger-2",
-      "parent_ticket_id": "mem-000082",
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000081",
       "metadata": {
-        "parent_documentation_ticket": "mem-000082",
-        "scribe_worker": "scribe-1",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/CBPAUP0J.jcl",
+        "parent_documentation_ticket": "mem-000081",
+        "scribe_worker": "scribe-2",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/UNLDGSAM.JCL",
         "file_type": "JCL"
       },
-      "created_at": "2026-03-16T20:03:14.272977",
-      "updated_at": "2026-03-16T20:03:27.663745",
+      "created_at": "2026-04-21T13:48:23.236771",
+      "updated_at": "2026-04-21T13:49:38.931920",
       "decision": null
     },
     {
       "ticket_id": "mem-000101",
       "ticket_type": "validation",
       "state": "completed",
-      "file_name": "cbl/PAUDBLOD.CBL",
-      "program_id": "PAUDBLOD",
+      "file_name": "cbl/COPAUS1C.cbl",
+      "program_id": "COPAUS1C",
       "cycle_number": 1,
-      "worker_id": "challenger-2",
+      "worker_id": "challenger-1",
       "parent_ticket_id": "mem-000085",
       "metadata": {
         "parent_documentation_ticket": "mem-000085",
-        "scribe_worker": "scribe-1",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+        "scribe_worker": "scribe-2",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS1C.cbl",
         "file_type": "COBOL"
       },
-      "created_at": "2026-03-16T20:03:15.841355",
-      "updated_at": "2026-03-16T20:03:35.753714",
+      "created_at": "2026-04-21T13:48:24.720147",
+      "updated_at": "2026-04-21T13:48:49.619110",
       "decision": null
     },
     {
       "ticket_id": "mem-000102",
       "ticket_type": "validation",
       "state": "completed",
-      "file_name": "cbl/DBUNLDGS.CBL",
-      "program_id": "DBUNLDGS",
+      "file_name": "jcl/CBPAUP0J.jcl",
+      "program_id": "CBPAUP0J",
       "cycle_number": 1,
-      "worker_id": "challenger-2",
-      "parent_ticket_id": "mem-000086",
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000084",
       "metadata": {
-        "parent_documentation_ticket": "mem-000086",
+        "parent_documentation_ticket": "mem-000084",
         "scribe_worker": "scribe-1",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
-        "file_type": "COBOL"
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/jcl/CBPAUP0J.jcl",
+        "file_type": "JCL"
       },
-      "created_at": "2026-03-16T20:03:17.359543",
-      "updated_at": "2026-03-16T20:03:44.856187",
+      "created_at": "2026-04-21T13:48:44.842469",
+      "updated_at": "2026-04-21T13:48:57.253469",
       "decision": null
     },
     {
       "ticket_id": "mem-000103",
       "ticket_type": "validation",
       "state": "completed",
-      "file_name": "cbl/CBPAUP0C.cbl",
-      "program_id": "CBPAUP0C",
+      "file_name": "cbl/DBUNLDGS.CBL",
+      "program_id": "DBUNLDGS",
       "cycle_number": 1,
       "worker_id": "challenger-1",
       "parent_ticket_id": "mem-000087",
       "metadata": {
         "parent_documentation_ticket": "mem-000087",
         "scribe_worker": "scribe-1",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
         "file_type": "COBOL"
       },
-      "created_at": "2026-03-16T20:03:18.945319",
-      "updated_at": "2026-03-16T20:03:49.174763",
+      "created_at": "2026-04-21T13:48:46.311534",
+      "updated_at": "2026-04-21T13:49:19.544300",
       "decision": null
     },
     {
       "ticket_id": "mem-000104",
       "ticket_type": "validation",
       "state": "completed",
-      "file_name": "cbl/PAUDBUNL.CBL",
-      "program_id": "PAUDBUNL",
+      "file_name": "cbl/PAUDBLOD.CBL",
+      "program_id": "PAUDBLOD",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000088",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000088",
+        "scribe_worker": "scribe-1",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBLOD.CBL",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-04-21T13:48:47.807862",
+      "updated_at": "2026-04-21T13:49:18.473476",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000105",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cbl/CBPAUP0C.cbl",
+      "program_id": "CBPAUP0C",
       "cycle_number": 1,
       "worker_id": "challenger-2",
       "parent_ticket_id": "mem-000089",
       "metadata": {
         "parent_documentation_ticket": "mem-000089",
         "scribe_worker": "scribe-1",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
         "file_type": "COBOL"
       },
-      "created_at": "2026-03-16T20:03:20.502150",
-      "updated_at": "2026-03-16T20:03:52.243585",
-      "decision": null
-    },
-    {
-      "ticket_id": "mem-000105",
-      "ticket_type": "chunk_synthesis",
-      "state": "completed",
-      "file_name": "cbl/COPAUS0C.cbl",
-      "program_id": "COPAUS0C",
-      "cycle_number": 1,
-      "worker_id": "scribe-1",
-      "parent_ticket_id": "mem-000090",
-      "metadata": {
-        "chunk_batch_idx": -1,
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
-        "parallel_dispatch": false
-      },
-      "created_at": "2026-03-16T20:03:29.044784",
-      "updated_at": "2026-03-16T20:03:29.906835",
+      "created_at": "2026-04-21T13:48:53.885804",
+      "updated_at": "2026-04-21T13:49:32.605991",
       "decision": null
     },
     {
       "ticket_id": "mem-000106",
-      "ticket_type": "validation",
+      "ticket_type": "chunk_continuation",
       "state": "completed",
-      "file_name": "cbl/COPAUS0C.cbl",
-      "program_id": "COPAUS0C",
+      "file_name": "cbl/COPAUA0C.cbl",
+      "program_id": "COPAUA0C",
       "cycle_number": 1,
-      "worker_id": "challenger-1",
-      "parent_ticket_id": "mem-000105",
+      "worker_id": "scribe-1",
+      "parent_ticket_id": "mem-000086",
       "metadata": {
-        "parent_documentation_ticket": "mem-000105",
-        "scribe_worker": "scribe-1",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
-        "file_type": "COBOL"
+        "chunk_batch_idx": 3,
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "parallel_dispatch": false
       },
-      "created_at": "2026-03-16T20:03:30.668489",
-      "updated_at": "2026-03-16T20:03:55.596442",
+      "created_at": "2026-04-21T13:48:56.408245",
+      "updated_at": "2026-04-21T13:49:55.444748",
       "decision": null
     },
     {
       "ticket_id": "mem-000107",
       "ticket_type": "chunk_continuation",
       "state": "completed",
-      "file_name": "cbl/COPAUA0C.cbl",
-      "program_id": "COPAUA0C",
+      "file_name": "cbl/.specter_build_COPAUA0C/COPAUA0C.mock.cbl",
+      "program_id": "COPAUA0C.MOCK",
       "cycle_number": 1,
       "worker_id": "scribe-2",
-      "parent_ticket_id": "mem-000084",
+      "parent_ticket_id": "mem-000090",
       "metadata": {
         "chunk_batch_idx": 3,
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/.specter_build_COPAUA0C/COPAUA0C.mock.cbl",
         "parallel_dispatch": false
       },
-      "created_at": "2026-03-16T20:03:36.982965",
-      "updated_at": "2026-03-16T20:04:26.549006",
+      "created_at": "2026-04-21T13:49:12.176485",
+      "updated_at": "2026-04-21T13:49:49.402796",
       "decision": null
     },
     {
@@ -2255,234 +2198,343 @@
       "file_name": "cbl/DBUNLDGS.CBL",
       "program_id": "DBUNLDGS",
       "cycle_number": 1,
-      "worker_id": "scribe-1",
-      "parent_ticket_id": "mem-000102",
+      "worker_id": "scribe-2",
+      "parent_ticket_id": "mem-000103",
       "metadata": {
-        "parent_validation_ticket": "mem-000102",
+        "parent_validation_ticket": "mem-000103",
         "issues_found": [
-          "PASFLPCB input description is potentially incorrect.",
-          "Paragraph 3000-FIND-NEXT-AUTH-DTL documentation contains incorrect counter updates.",
-          "Paragraph 3200-INSERT-CHILD-SEG-GSAM is missing.",
-          "Paragraph 4000-FILE-CLOSE does not actually close the file.",
-          "OPFIL1-REC and CHILD-SEG-REC are not defined as inputs or outputs."
+          "Incorrect target database for 3200-INSERT-CHILD-SEG-GSAM",
+          "Missing condition for 3100-INSERT-PARENT-SEG-GSAM execution",
+          "Incorrect caller information for 3200-INSERT-CHILD-SEG-GSAM",
+          "Potential ambiguity in the data_flow section regarding OPFIL1-REC",
+          "Incomplete error handling description"
         ],
         "challenger_questions": [
           {
-            "question_id": "Q-E3CD3324",
-            "section": null,
+            "question_id": "Q-9BAD8E77",
+            "section": "paragraphs",
+            "question_type": "CLARIFICATION",
+            "question": "",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-AB7A0106",
+            "section": "paragraphs",
             "question_type": "CLARIFICATION",
             "question": "",
             "severity": "BLOCKING",
             "evidence": []
           }
         ],
-        "challenger_worker": "challenger-2",
+        "challenger_worker": "challenger-1",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
         "file_type": "COBOL"
       },
-      "created_at": "2026-03-16T20:03:44.851061",
-      "updated_at": "2026-03-16T20:04:08.680933",
+      "created_at": "2026-04-21T13:49:19.539566",
+      "updated_at": "2026-04-21T13:50:15.819098",
       "decision": null
     },
     {
       "ticket_id": "mem-000109",
-      "ticket_type": "clarification",
+      "ticket_type": "chunk_synthesis",
       "state": "completed",
-      "file_name": "cbl/CBPAUP0C.cbl",
-      "program_id": "CBPAUP0C",
+      "file_name": "cbl/COPAUS0C.cbl",
+      "program_id": "COPAUS0C",
       "cycle_number": 1,
       "worker_id": "scribe-1",
-      "parent_ticket_id": "mem-000103",
+      "parent_ticket_id": "mem-000091",
       "metadata": {
-        "parent_validation_ticket": "mem-000103",
-        "issues_found": [
-          "PAUTSUM0 and PAUTDTL1 modifications are not documented as outputs.",
-          "Potential typo in MAIN-PARA paragraph description: duplicate condition.",
-          "Potential error in Business Rule BR003: PA-DECLINED-AUTH-AMT should be PA-DECLINED-AUTH-CNT.",
-          "Incomplete error handling documentation: missing delete and checkpoint errors."
-        ],
-        "challenger_questions": [
-          {
-            "question_id": "Q-41045031",
-            "section": "outputs",
-            "question_type": "CLARIFICATION",
-            "question": "The program modifies the PAUTSUM0 and PAUTDTL1 segments. Why are these not listed as outputs?",
-            "severity": "BLOCKING",
-            "evidence": []
-          },
-          {
-            "question_id": "Q-CEB8E01E",
-            "section": "Business Rule BR003",
-            "question_type": "CLARIFICATION",
-            "question": "BR003 states '...the declined authorization count and transaction amount in the summary record are decremented'. However, line 165 subtracts PA-TRANSACTION-AMT FROM PA-DECLINED-AUTH-AMT. Should this be PA-DECLINED-AUTH-CNT instead of PA-DECLINED-AUTH-AMT?",
-            "severity": "BLOCKING",
-            "evidence": []
-          }
-        ],
-        "challenger_worker": "challenger-1",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
-        "file_type": "COBOL"
+        "chunk_batch_idx": -1,
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
+        "parallel_dispatch": false
       },
-      "created_at": "2026-03-16T20:03:49.168224",
-      "updated_at": "2026-03-16T20:04:38.052309",
+      "created_at": "2026-04-21T13:49:20.608108",
+      "updated_at": "2026-04-21T13:49:56.244238",
       "decision": null
     },
     {
       "ticket_id": "mem-000110",
-      "ticket_type": "clarification",
+      "ticket_type": "chunk_continuation",
       "state": "completed",
-      "file_name": "cbl/PAUDBUNL.CBL",
-      "program_id": "PAUDBUNL",
+      "file_name": "cbl/.specter_build_COPAUA0C/COPAUA0C.mock.cbl",
+      "program_id": "COPAUA0C.MOCK",
       "cycle_number": 1,
-      "worker_id": "scribe-2",
-      "parent_ticket_id": "mem-000104",
+      "worker_id": "scribe-1",
+      "parent_ticket_id": "mem-000107",
       "metadata": {
-        "parent_validation_ticket": "mem-000104",
-        "issues_found": [
-          "Business rules BR002 and BR003 have incorrect condition descriptions that contradict the code.",
-          "The DISPLAY statement on line 129 in `3000-FIND-NEXT-AUTH-DTL` is not documented in the `error_handling` section.",
-          "The role of ROOT-SEG-KEY as an output is not clearly defined in the `outputs` section."
-        ],
-        "challenger_questions": [
-          {
-            "question_id": "Q-272FACB7",
-            "section": "business_rules",
-            "question_type": "CLARIFICATION",
-            "question": "Business Rule BR002 states 'IF PAUT-PCB-STATUS NOT EQUAL TO SPACES AND 'GB'', but line 91 in `2000-FIND-NEXT-AUTH-SUMMARY` shows `IF PAUT-PCB-STATUS = SPACES`. Please clarify the discrepancy.",
-            "severity": "BLOCKING",
-            "evidence": []
-          },
-          {
-            "question_id": "Q-DCFEF1CE",
-            "section": "business_rules",
-            "question_type": "CLARIFICATION",
-            "question": "Business Rule BR003 states 'IF PAUT-PCB-STATUS NOT EQUAL TO SPACES AND 'GE'', but line 128 in `3000-FIND-NEXT-AUTH-DTL` shows `IF PAUT-PCB-STATUS = SPACES`. Please clarify the discrepancy.",
-            "severity": "BLOCKING",
-            "evidence": []
-          }
-        ],
-        "challenger_worker": "challenger-2",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
-        "file_type": "COBOL"
+        "chunk_batch_idx": 4,
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/.specter_build_COPAUA0C/COPAUA0C.mock.cbl",
+        "parallel_dispatch": false
       },
-      "created_at": "2026-03-16T20:03:52.238626",
-      "updated_at": "2026-03-16T20:04:52.257901",
+      "created_at": "2026-04-21T13:49:49.397953",
+      "updated_at": "2026-04-21T13:50:08.048993",
       "decision": null
     },
     {
       "ticket_id": "mem-000111",
-      "ticket_type": "validation",
-      "state": "completed",
-      "file_name": "cbl/DBUNLDGS.CBL",
-      "program_id": "DBUNLDGS",
-      "cycle_number": 1,
-      "worker_id": "challenger-2",
-      "parent_ticket_id": "mem-000108",
-      "metadata": {
-        "parent_documentation_ticket": "mem-000108",
-        "scribe_worker": "scribe-1",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
-        "file_type": "COBOL"
-      },
-      "created_at": "2026-03-16T20:04:09.439704",
-      "updated_at": "2026-03-16T20:04:09.464292",
-      "decision": null
-    },
-    {
-      "ticket_id": "mem-000112",
       "ticket_type": "chunk_continuation",
       "state": "completed",
       "file_name": "cbl/COPAUA0C.cbl",
       "program_id": "COPAUA0C",
       "cycle_number": 1,
       "worker_id": "scribe-1",
-      "parent_ticket_id": "mem-000107",
+      "parent_ticket_id": "mem-000106",
       "metadata": {
         "chunk_batch_idx": 4,
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
         "parallel_dispatch": false
       },
-      "created_at": "2026-03-16T20:04:26.543694",
-      "updated_at": "2026-03-16T20:04:50.764473",
+      "created_at": "2026-04-21T13:49:55.440516",
+      "updated_at": "2026-04-21T13:50:25.620213",
       "decision": null
     },
     {
-      "ticket_id": "mem-000113",
+      "ticket_id": "mem-000112",
       "ticket_type": "validation",
       "state": "completed",
-      "file_name": "cbl/CBPAUP0C.cbl",
-      "program_id": "CBPAUP0C",
+      "file_name": "cbl/COPAUS0C.cbl",
+      "program_id": "COPAUS0C",
       "cycle_number": 1,
       "worker_id": "challenger-2",
       "parent_ticket_id": "mem-000109",
       "metadata": {
         "parent_documentation_ticket": "mem-000109",
         "scribe_worker": "scribe-1",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/CBPAUP0C.cbl",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUS0C.cbl",
         "file_type": "COBOL"
       },
-      "created_at": "2026-03-16T20:04:38.835180",
-      "updated_at": "2026-03-16T20:04:46.919173",
+      "created_at": "2026-04-21T13:49:56.998844",
+      "updated_at": "2026-04-21T13:50:04.909864",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000113",
+      "ticket_type": "chunk_synthesis",
+      "state": "completed",
+      "file_name": "cbl/.specter_build_COPAUA0C/COPAUA0C.mock.cbl",
+      "program_id": "COPAUA0C.MOCK",
+      "cycle_number": 1,
+      "worker_id": "scribe-2",
+      "parent_ticket_id": "mem-000110",
+      "metadata": {
+        "chunk_batch_idx": -1,
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/.specter_build_COPAUA0C/COPAUA0C.mock.cbl",
+        "parallel_dispatch": false
+      },
+      "created_at": "2026-04-21T13:50:08.044097",
+      "updated_at": "2026-04-21T13:50:21.745565",
       "decision": null
     },
     {
       "ticket_id": "mem-000114",
-      "ticket_type": "chunk_synthesis",
+      "ticket_type": "validation",
       "state": "completed",
-      "file_name": "cbl/COPAUA0C.cbl",
-      "program_id": "COPAUA0C",
+      "file_name": "cbl/DBUNLDGS.CBL",
+      "program_id": "DBUNLDGS",
       "cycle_number": 1,
-      "worker_id": "scribe-1",
-      "parent_ticket_id": "mem-000112",
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000108",
       "metadata": {
-        "chunk_batch_idx": -1,
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
-        "parallel_dispatch": false
+        "parent_documentation_ticket": "mem-000108",
+        "scribe_worker": "scribe-2",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/DBUNLDGS.CBL",
+        "file_type": "COBOL"
       },
-      "created_at": "2026-03-16T20:04:50.758930",
-      "updated_at": "2026-03-16T20:04:56.285940",
+      "created_at": "2026-04-21T13:50:16.579711",
+      "updated_at": "2026-04-21T13:50:16.610972",
       "decision": null
     },
     {
       "ticket_id": "mem-000115",
       "ticket_type": "validation",
       "state": "completed",
-      "file_name": "cbl/PAUDBUNL.CBL",
-      "program_id": "PAUDBUNL",
+      "file_name": "cbl/.specter_build_COPAUA0C/COPAUA0C.mock.cbl",
+      "program_id": "COPAUA0C.MOCK",
       "cycle_number": 1,
       "worker_id": "challenger-1",
-      "parent_ticket_id": "mem-000110",
+      "parent_ticket_id": "mem-000113",
       "metadata": {
-        "parent_documentation_ticket": "mem-000110",
+        "parent_documentation_ticket": "mem-000113",
         "scribe_worker": "scribe-2",
-        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/PAUDBUNL.CBL",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/.specter_build_COPAUA0C/COPAUA0C.mock.cbl",
         "file_type": "COBOL"
       },
-      "created_at": "2026-03-16T20:04:53.085422",
-      "updated_at": "2026-03-16T20:04:53.109457",
+      "created_at": "2026-04-21T13:50:22.505248",
+      "updated_at": "2026-04-21T13:50:33.238688",
       "decision": null
     },
     {
       "ticket_id": "mem-000116",
+      "ticket_type": "chunk_synthesis",
+      "state": "completed",
+      "file_name": "cbl/COPAUA0C.cbl",
+      "program_id": "COPAUA0C",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": "mem-000111",
+      "metadata": {
+        "chunk_batch_idx": -1,
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "parallel_dispatch": false
+      },
+      "created_at": "2026-04-21T13:50:25.614377",
+      "updated_at": "2026-04-21T13:50:30.911319",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000117",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cbl/COPAUA0C.cbl",
+      "program_id": "COPAUA0C",
+      "cycle_number": 1,
+      "worker_id": "challenger-2",
+      "parent_ticket_id": "mem-000116",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000116",
+        "scribe_worker": "scribe-1",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-04-21T13:50:31.664655",
+      "updated_at": "2026-04-21T13:50:43.465041",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000118",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "cbl/.specter_build_COPAUA0C/COPAUA0C.mock.cbl",
+      "program_id": "COPAUA0C.MOCK",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": "mem-000115",
+      "metadata": {
+        "parent_validation_ticket": "mem-000115",
+        "issues_found": [
+          "Inaccurate 'called_by' information for 1000-EXIT, 1100-EXIT, and 8500-EXIT paragraphs.",
+          "Missing explanation for moving WS-REQUEST-QNAME to itself in 1000-INITIALIZE.",
+          "Missing explanation for the significance of the simulated CICS RETURN in MAIN-PARA."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-99740C9D",
+            "section": "paragraphs",
+            "question_type": "CLARIFICATION",
+            "question": "",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-6BEB025C",
+            "section": "paragraphs",
+            "question_type": "CLARIFICATION",
+            "question": "",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-C91B9BBB",
+            "section": "paragraphs",
+            "question_type": "CLARIFICATION",
+            "question": "",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-1",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/.specter_build_COPAUA0C/COPAUA0C.mock.cbl",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-04-21T13:50:33.233317",
+      "updated_at": "2026-04-21T13:50:42.540408",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000119",
+      "ticket_type": "validation",
+      "state": "completed",
+      "file_name": "cbl/.specter_build_COPAUA0C/COPAUA0C.mock.cbl",
+      "program_id": "COPAUA0C.MOCK",
+      "cycle_number": 1,
+      "worker_id": "challenger-1",
+      "parent_ticket_id": "mem-000118",
+      "metadata": {
+        "parent_documentation_ticket": "mem-000118",
+        "scribe_worker": "scribe-1",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/.specter_build_COPAUA0C/COPAUA0C.mock.cbl",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-04-21T13:50:43.293964",
+      "updated_at": "2026-04-21T13:50:53.348224",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000120",
+      "ticket_type": "clarification",
+      "state": "completed",
+      "file_name": "cbl/COPAUA0C.cbl",
+      "program_id": "COPAUA0C",
+      "cycle_number": 1,
+      "worker_id": "scribe-1",
+      "parent_ticket_id": "mem-000117",
+      "metadata": {
+        "parent_validation_ticket": "mem-000117",
+        "issues_found": [
+          "REQUEST-MQ is incorrectly documented as FILE_SEQUENTIAL when it should reflect MQGET usage.",
+          "The documentation claims IMS PSB termination in 9000-TERMINATE without providing a citation.",
+          "The documentation incorrectly refers to CICS TMT when the code uses CICS RETRIEVE INTO(MQTM).",
+          "In paragraph 5200, there's a discrepancy between the field used for MOVE and the RIDFLD in EXEC CICS READ DATASET.",
+          "Missing documentation of VSAM datasets used in CICS READ commands as inputs."
+        ],
+        "challenger_questions": [
+          {
+            "question_id": "Q-9084CBAE",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "The documentation states that REQUEST-MQ is a FILE_SEQUENTIAL input (lines 31, 128). However, the program uses MQGET to read messages from the MQ queue, not sequential file I/O. Is REQUEST-MQ accurately described?",
+            "severity": "BLOCKING",
+            "evidence": []
+          },
+          {
+            "question_id": "Q-B3ED664F",
+            "section": null,
+            "question_type": "CLARIFICATION",
+            "question": "The documentation mentions that 9000-TERMINATE 'terminates the IMS PSB' in the summary (purpose section). Can you provide a citation for the code that performs the IMS PSB termination within the 9000-TERMINATE paragraph?",
+            "severity": "BLOCKING",
+            "evidence": []
+          }
+        ],
+        "challenger_worker": "challenger-2",
+        "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
+        "file_type": "COBOL"
+      },
+      "created_at": "2026-04-21T13:50:43.461791",
+      "updated_at": "2026-04-21T13:50:54.299466",
+      "decision": null
+    },
+    {
+      "ticket_id": "mem-000121",
       "ticket_type": "validation",
       "state": "completed",
       "file_name": "cbl/COPAUA0C.cbl",
       "program_id": "COPAUA0C",
       "cycle_number": 1,
       "worker_id": "challenger-1",
-      "parent_ticket_id": "mem-000114",
+      "parent_ticket_id": "mem-000120",
       "metadata": {
-        "parent_documentation_ticket": "mem-000114",
+        "parent_documentation_ticket": "mem-000120",
         "scribe_worker": "scribe-1",
         "file_path": "/home/andras/aws-mainframe-modernization-carddemo/app/app-authorization-ims-db2-mq/cbl/COPAUA0C.cbl",
         "file_type": "COBOL"
       },
-      "created_at": "2026-03-16T20:04:57.095172",
-      "updated_at": "2026-03-16T20:05:09.044189",
+      "created_at": "2026-04-21T13:50:55.049894",
+      "updated_at": "2026-04-21T13:51:07.273047",
       "decision": null
     },
     {
-      "ticket_id": "OVW-6B7E44CA",
+      "ticket_id": "OVW-36236471",
       "ticket_type": "system_overview",
       "state": "blocked",
       "file_name": "SYSTEM_OVERVIEW.md",
@@ -2491,12 +2543,12 @@
       "worker_id": null,
       "parent_ticket_id": null,
       "metadata": {
-        "batch_id": "batch-20260316-194415",
+        "batch_id": "batch-20260421-134051",
         "system_name": "CardDemo",
-        "created_at": "2026-03-16T20:09:23.912974"
+        "created_at": "2026-04-21T13:56:23.642030"
       },
-      "created_at": "2026-03-16T20:09:23.912982",
-      "updated_at": "2026-03-16T20:54:24.899662",
+      "created_at": "2026-04-21T13:56:23.642036",
+      "updated_at": "2026-04-21T13:56:23.673667",
       "decision": null
     }
   ]

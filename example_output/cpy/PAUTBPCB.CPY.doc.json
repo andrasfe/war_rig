@@ -4,17 +4,16 @@
     "file_name": "PAUTBPCB.CPY",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-16T19:52:52.549850",
+    "analyzed_at": "2026-04-21T13:43:42.249684",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the structure PAUTBPCB, which appears to be related to IMS PCB (Program Communication Block) information. It includes fields for database name, segment level, PCB status, processing options, segment name, key feedback length, number of sensitive segments, and key feedback area.",
-    "business_context": null,
+    "summary": "This copybook defines the data structure for a PCB (Program Communication Block) used in IMS (Information Management System) database interaction. It contains fields related to database name, segment level, processing options, segment name, key feedback, and number of sensitive segments.",
+    "business_context": "This copybook is used in IMS database applications to access and manipulate data within IMS databases. It provides a structured way to interact with IMS segments.",
     "program_type": "COPYBOOK",
     "citations": [
       17,
-      18,
       26
     ]
   },
@@ -35,12 +34,29 @@
   "copybooks_used": [
     {
       "copybook_name": "PAUTBPCB",
-      "purpose": "Defines the structure for IMS PCB information.",
+      "purpose": "Defines the structure of a PCB (Program Communication Block) for IMS database interaction.",
       "location": "WORKING_STORAGE",
       "citation": 17
     }
   ],
-  "paragraphs": [],
+  "paragraphs": [
+    {
+      "paragraph_name": "PAUTBPCB Definition",
+      "summary": null,
+      "purpose": "This section defines the PAUTBPCB data structure, which represents a Program Communication Block (PCB) used in IMS database interactions. The PCB provides information about the database, segment, and processing options. It includes fields such as the database name (PAUT-DBDNAME), segment level (PAUT-SEG-LEVEL), PCB status (PAUT-PCB-STATUS), processing options (PAUT-PCB-PROCOPT), segment name (PAUT-SEG-NAME), key feedback name (PAUT-KEYFB-NAME), number of sensitive segments (PAUT-NUM-SENSEGS), and key feedback (PAUT-KEYFB). This structure is used to access and manipulate data within IMS databases by providing a structured way to interact with IMS segments. The copybook does not perform any error handling or call any other programs; it only defines the data structure.",
+      "called_by": [],
+      "calls": [],
+      "citation": [
+        17,
+        27
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    }
+  ],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],

@@ -7,12 +7,12 @@
       "file_name": "COPAUA0C.cbl",
       "file_type": "COBOL",
       "analyzed_by": "WAR_RIG",
-      "analyzed_at": "2026-03-16T20:04:50.757273",
+      "analyzed_at": "2026-04-21T13:50:25.612830",
       "iteration_count": 1,
       "final_status": null
     },
     "purpose": {
-      "summary": "This COBOL program contains error handling and program termination routines for a CICS environment. It logs errors to a transient data queue and provides a controlled exit from the CICS transaction.",
+      "summary": "This COBOL program contains error handling and termination routines for a CICS environment. It logs errors to a transient data queue and provides a controlled exit from the CICS transaction.",
       "business_context": null,
       "program_type": "ONLINE_CICS",
       "citations": [
@@ -50,23 +50,7 @@
     "business_rules": [],
     "data_flow": {
       "reads_from": [],
-      "writes_to": [
-        {
-          "destination": "CSSL",
-          "fields_written": [
-            "ERR-APPLICATION",
-            "ERR-PROGRAM",
-            "ERR-DATE",
-            "ERR-TIME"
-          ],
-          "citation": [
-            15,
-            16,
-            17,
-            18
-          ]
-        }
-      ],
+      "writes_to": [],
       "transforms": []
     },
     "copybooks_used": [],
@@ -74,7 +58,7 @@
       {
         "paragraph_name": "9500-LOG-ERROR",
         "summary": null,
-        "purpose": "This paragraph logs error information to the CICS transient data queue 'CSSL'. It first retrieves the current date and time using CICS ASKTIME and FORMATTIME commands, storing them in WS-CUR-DATE-X6 and WS-CUR-TIME-X6 respectively. It then moves the transaction ID (WS-CICS-TRANID) and program ID (WS-PGM-AUTH) into the ERROR-LOG-RECORD. The formatted error record is then written to the 'CSSL' queue. Finally, it checks if the error is critical (ERR-CRITICAL); if so, it performs the 9990-END-ROUTINE to terminate the program.",
+        "purpose": "This paragraph logs errors encountered during the CICS transaction to the CSSL transient data queue. It retrieves the current date and time using CICS ASKTIME and FORMATTIME commands and moves the transaction ID and program authorization ID to the error log record. It then writes the error log record to the CSSL queue using a CICS WRITEQ TD command. If the error is critical, it performs the 9990-END-ROUTINE to terminate the transaction. The paragraph consumes WS-CICS-TRANID, WS-PGM-AUTH, WS-ABS-TIME, ERROR-LOG-RECORD and produces an output to the CSSL queue. The paragraph determines if the error is critical based on ERR-CRITICAL field.",
         "called_by": [],
         "calls": [
           "9990-END-ROUTINE"
@@ -92,10 +76,8 @@
       {
         "paragraph_name": "9500-EXIT",
         "summary": null,
-        "purpose": "This paragraph provides a standard exit point from the 9500-LOG-ERROR paragraph. It consists solely of the EXIT statement, which returns control to the calling paragraph.",
-        "called_by": [
-          "9500-LOG-ERROR"
-        ],
+        "purpose": "This paragraph provides a standard exit point from the 9500-LOG-ERROR paragraph. It simply contains an EXIT statement and returns control to the calling paragraph. It does not consume or produce any data. It is a simple control point for structured programming.",
+        "called_by": [],
         "calls": [],
         "citation": [
           33,
@@ -110,7 +92,7 @@
       {
         "paragraph_name": "9990-END-ROUTINE",
         "summary": null,
-        "purpose": "This paragraph performs the necessary steps to terminate the CICS transaction. It first calls the 9000-TERMINATE paragraph, presumably to perform application-specific cleanup tasks such as closing files or releasing resources. After the termination routine completes, it executes a CICS RETURN command to return control to CICS.",
+        "purpose": "This paragraph performs the necessary steps to terminate the CICS transaction. It first calls the 9000-TERMINATE paragraph to perform any application-specific termination processing, such as closing files or releasing resources. After the 9000-TERMINATE paragraph completes, it issues a CICS RETURN command to return control to CICS. It consumes no input data directly but relies on the 9000-TERMINATE paragraph to handle resource cleanup. It produces no direct output but terminates the CICS transaction. The paragraph unconditionally calls 9000-TERMINATE and then returns to CICS.",
         "called_by": [
           "9500-LOG-ERROR"
         ],
@@ -130,10 +112,8 @@
       {
         "paragraph_name": "9990-EXIT",
         "summary": null,
-        "purpose": "This paragraph provides a standard exit point from the 9990-END-ROUTINE paragraph. It consists solely of the EXIT statement, which returns control to the calling paragraph.",
-        "called_by": [
-          "9990-END-ROUTINE"
-        ],
+        "purpose": "This paragraph provides a standard exit point from the 9990-END-ROUTINE paragraph. It contains an EXIT statement and returns control to the calling paragraph. It does not consume or produce any data. It serves as a control point for structured programming, ensuring a single exit point from the routine.",
+        "called_by": [],
         "calls": [],
         "citation": [
           47,
@@ -149,7 +129,7 @@
     "error_handling": [
       {
         "condition": "ERR-CRITICAL",
-        "action": "PERFORM 9990-END-ROUTINE to terminate the program",
+        "action": "PERFORM 9990-END-ROUTINE to terminate the transaction",
         "citation": [
           27,
           28
@@ -173,7 +153,7 @@
       {
         "command": "WRITEQ TD",
         "resource": "CSSL",
-        "purpose": "Writes an error log record to the transient data queue CSSL.",
+        "purpose": "Writes an error log record to the CSSL transient data queue.",
         "citation": 20
       },
       {
@@ -185,14 +165,14 @@
     ],
     "open_questions": [
       {
-        "question": "What is the purpose of the 9000-TERMINATE paragraph?",
-        "context": "The code calls 9000-TERMINATE, but its function is not defined in this snippet.",
-        "suggestion": "Examine the source code of 9000-TERMINATE to determine its function."
+        "question": "What are the specific fields within ERROR-LOG-RECORD?",
+        "context": "The structure of ERROR-LOG-RECORD is not defined in the provided code snippet.",
+        "suggestion": "Examine the copybook or data division where ERROR-LOG-RECORD is defined."
       },
       {
-        "question": "What is the structure and content of ERROR-LOG-RECORD?",
-        "context": "The ERROR-LOG-RECORD is written to the CSSL queue, but its fields are not defined in this snippet.",
-        "suggestion": "Examine the copybook or data division to determine the structure of ERROR-LOG-RECORD."
+        "question": "What is the purpose of the 9000-TERMINATE paragraph?",
+        "context": "The code only shows that it is performed, but not its internal logic.",
+        "suggestion": "Analyze the source code of the 9000-TERMINATE paragraph to understand its functionality."
       }
     ],
     "resolved_questions": [],
@@ -202,5 +182,5 @@
     "flow_diagram": null,
     "copybooks_not_found": []
   },
-  "saved_at": "2026-03-16T13:04:50.758422"
+  "saved_at": "2026-04-21T06:50:25.613928"
 }

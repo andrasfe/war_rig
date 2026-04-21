@@ -1,8 +1,8 @@
 # Call Graph Analysis
 
-*Generated: 2026-03-16 13:51:54*
+*Generated: 2026-04-21 06:40:53*
 
-**Programs Analyzed:** 24
+**Programs Analyzed:** 25
 
 ## Visual Call Graph
 
@@ -11,21 +11,31 @@ flowchart TD
 
     subgraph jobs[" "]
         CBPAUP0J([CBPAUP0J])
+        COPAUA0C([COPAUA0C])
         DBPAUTP0([DBPAUTP0])
         PAUDBUNL([PAUDBUNL])
     end
 
     subgraph procs[" "]
         CBPAUP0C[CBPAUP0C]
-        COPAUA0C[COPAUA0C]
+        CCPAUERY[/CCPAUERY/]
+        CCPAURLY[/CCPAURLY/]
+        CCPAURQY[/CCPAURQY/]
+        CIPAUDTY[/CIPAUDTY/]
+        CIPAUSMY[/CIPAUSMY/]
+        COPAU00[/COPAU00/]
+        COPAU01[/COPAU01/]
+        COPAUA0CMOCK[COPAUA0C.MOCK]
         COPAUS0C[COPAUS0C]
         COPAUS1C[COPAUS1C]
         COPAUS2C[COPAUS2C]
         DBUNLDGS[DBUNLDGS]
+        IMSFUNCS[/IMSFUNCS/]
+        PADFLPCB[/PADFLPCB/]
+        PASFLPCB[/PASFLPCB/]
         PAUDBLOD[PAUDBLOD]
+        PAUTBPCB[/PAUTBPCB/]
     end
-
-    COPYBOOKS[/CCPAUERY<br>CCPAURLY<br>CCPAURQY<br>CIPAUDTY<br>CIPAUSMY<br>COPAU00<br>COPAU01<br>IMSFUNCS<br>PADFLPCB<br>PASFLPCB<br>PAUTBPCB/]
 
     subgraph external[" "]
         CBLTDLI>CBLTDLI]
@@ -40,17 +50,22 @@ flowchart TD
 
     %% Call relationships
     CBPAUP0C --> CBPAUP0C
-    CBPAUP0C --> COPAUA0C
     CBPAUP0C --> DBUNLDGS
     CBPAUP0C -.->|COPY| COPYBOOKS
     CBPAUP0C --> CBLTDLI
     CBPAUP0J --> DFSRRC00
-    COPAUA0C --> COPAUA0C
     COPAUA0C -.->|COPY| COPYBOOKS
-    COPAUA0C --> MQOPEN
-    COPAUA0C --> MQGET
-    COPAUA0C --> MQPUT1
-    COPAUA0C --> MQCLOSE
+    COPAUA0CMOCK --> COPAUA0CMOCK
+    COPAUA0CMOCK --> CBPAUP0C
+    COPAUA0CMOCK --> DBUNLDGS
+    COPAUA0CMOCK --> COPAUS0C
+    COPAUA0CMOCK --> COPAUS1C
+    COPAUA0CMOCK --> PAUDBLOD
+    COPAUA0CMOCK --> COPAUS2C
+    COPAUA0CMOCK --> MQOPEN
+    COPAUA0CMOCK --> MQGET
+    COPAUA0CMOCK --> MQPUT1
+    COPAUA0CMOCK --> MQCLOSE
     COPAUS0C --> COPAUS1C
     COPAUS0C --> COPAUS0C
     COPAUS0C -.->|COPY| COPYBOOKS
@@ -59,13 +74,6 @@ flowchart TD
     COPAUS1C --> COPAUS0C
     COPAUS1C -.->|COPY| COPYBOOKS
     COPAUS1C --> WS_PGM_AUTH_FRAUD
-    COPAUS2C --> CBPAUP0C
-    COPAUS2C --> DBUNLDGS
-    COPAUS2C --> COPAUS0C
-    COPAUS2C --> COPAUS1C
-    COPAUS2C --> COPAUA0C
-    COPAUS2C --> PAUDBLOD
-    COPAUS2C --> COPAUS2C
     COPAUS2C -.->|COPY| COPYBOOKS
     DBPAUTP0 --> DFSRRC00
     DBUNLDGS --> CBPAUP0C
@@ -79,21 +87,20 @@ flowchart TD
 
     %% Styling
     classDef entryPoint fill:#90EE90,stroke:#228B22
-    class CBPAUP0J,DBPAUTP0,LOADPADB,PAUDBUNL,UNLDGSAM,UNLDPADB entryPoint
-    classDef copybook fill:#E8F5E9,stroke:#4CAF50
-    class COPYBOOKS copybook
+    class CBPAUP0J,COPAUA0C,DBPAUTP0,LOADPADB,PAUDBUNL,UNLDGSAM,UNLDPADB entryPoint
     classDef missing fill:#1E3A5F,stroke:#2E5A8F,color:#FFFFFF
     class CBLTDLI,CDEMO_TO_PROGRAM,DFSRRC00,MQCLOSE,MQGET,MQOPEN,MQPUT1,WS_PGM_AUTH_FRAUD missing
 ```
 
 ## Entry Points
 
-- ✓ **CBPAUP0J**: This JCL executes an IMS program (DFSRRC00) to delete expired authorizations usi...
-- ✓ **DBPAUTP0**: This JCL job unloads the DBD DBPAUTP0 to a sequential dataset. It first deletes ...
-- ✓ **LOADPADB**: This JCL job executes an IMS program (DFSRRC00) to load the PAUTDB database. It ...
-- ✓ **PAUDBUNL**: The PAUDBUNL program unloads pending authorization summary and detail segments f...
-- ✓ **UNLDGSAM**: This JCL job executes the IMS program DFSRRC00 to unload GSAM databases. It spec...
-- ✓ **UNLDPADB**: This JCL job unloads the PAUTDB database using the IMS program DFSRRC00. It firs...
+- ✓ **CBPAUP0J**: No summary
+- ✓ **COPAUA0C**: No summary
+- ✓ **DBPAUTP0**: No summary
+- ✓ **LOADPADB**: No summary
+- ✓ **PAUDBUNL**: No summary
+- ✓ **UNLDGSAM**: No summary
+- ✓ **UNLDPADB**: No summary
 
 ## External Dependencies
 
@@ -106,24 +113,24 @@ flowchart TD
 - **CBLTDLI**: Called by PAUDBLOD (EXEC), PAUDBLOD (EXEC), PAUDBLOD (EXEC), DBUNLDGS (EXEC), DBUNLDGS (EXEC), CBPAUP0C (EXEC), CBPAUP0C (EXEC), CBPAUP0C (EXEC), CBPAUP0C (EXEC)
 - **CDEMO-TO-PROGRAM**: Called by COPAUS0C (EXEC), COPAUS0C (EXEC), COPAUS0C (EXEC)
 - **DFSRRC00**: Called by DBPAUTP0 (EXEC), CBPAUP0J (EXEC), CBPAUP0J (EXEC), CBPAUP0J (EXEC), CBPAUP0J (EXEC)
-- **MQCLOSE**: Called by COPAUA0C (EXEC)
-- **MQGET**: Called by COPAUA0C (EXEC)
-- **MQOPEN**: Called by COPAUA0C (EXEC)
-- **MQPUT1**: Called by COPAUA0C (EXEC)
+- **MQCLOSE**: Called by COPAUA0C.MOCK (EXEC)
+- **MQGET**: Called by COPAUA0C.MOCK (EXEC)
+- **MQOPEN**: Called by COPAUA0C.MOCK (EXEC)
+- **MQPUT1**: Called by COPAUA0C.MOCK (EXEC)
 - **WS-PGM-AUTH-FRAUD**: Called by COPAUS1C (EXEC)
 
 ## Statistics
 
 | Metric | Count |
 |--------|-------|
-| Documented Programs | 24 |
-| Entry Points | 6 |
+| Documented Programs | 25 |
+| Entry Points | 7 |
 | Leaf Nodes | 16 |
 | External Dependencies | 8 |
 | System Utilities | 0 |
 | Auto-classified | 0 |
 | Custom Missing | 8 |
-| Total Calls | 327 |
+| Total Calls | 359 |
 
 ### Status Legend
 

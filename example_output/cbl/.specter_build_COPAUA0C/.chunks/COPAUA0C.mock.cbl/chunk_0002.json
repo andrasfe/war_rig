@@ -1,0 +1,316 @@
+{
+  "batch_idx": 2,
+  "total_batches": 5,
+  "template": {
+    "header": {
+      "program_id": "COPAUA0C",
+      "file_name": "COPAUA0C.mock.cbl",
+      "file_type": "COBOL",
+      "analyzed_by": "WAR_RIG",
+      "analyzed_at": "2026-04-21T13:49:12.174920",
+      "iteration_count": 1,
+      "final_status": null
+    },
+    "purpose": {
+      "summary": "This COBOL program processes card authorization requests. It reads customer records, retrieves authorization summaries, makes decisions based on the data, and sends a response via MQ. The program uses mock data for CICS READ and IMS GET calls.",
+      "business_context": "This program is likely part of a larger card authorization system, responsible for validating and processing transaction requests.",
+      "program_type": "BATCH",
+      "citations": [
+        2,
+        62,
+        125
+      ]
+    },
+    "inputs": [
+      {
+        "name": "MOCK-FILE",
+        "io_type": "FILE_SEQUENTIAL",
+        "description": "Mock data used in place of CICS and IMS calls for testing purposes.",
+        "copybook": null,
+        "citation": [
+          17,
+          72,
+          155
+        ]
+      }
+    ],
+    "outputs": [],
+    "called_programs": [
+      {
+        "program_name": "9500-LOG-ERROR",
+        "call_type": "STATIC_CALL",
+        "purpose": "Logs errors encountered during processing.",
+        "parameters": [],
+        "citation": 38
+      },
+      {
+        "program_name": "MQPUT1",
+        "call_type": "DYNAMIC_CALL",
+        "purpose": "Sends a response message via MQ.",
+        "parameters": [
+          "W02-HCONN-REPLY",
+          "MQM-OD-REPLY",
+          "MQM-MD-REPLY",
+          "MQM-PUT-MESSAGE-OPTIONS",
+          "W02-BUFFLEN",
+          "W02-PUT-BUFFER",
+          "WS-COMPCODE",
+          "WS-REASON"
+        ],
+        "citation": 145
+      }
+    ],
+    "calling_context": {
+      "called_by": [],
+      "entry_points": [],
+      "linkage_section": []
+    },
+    "business_rules": [],
+    "data_flow": {
+      "reads_from": [
+        {
+          "source": "MOCK-FILE",
+          "fields_used": [
+            "MOCK-NUM-STATUS",
+            "MOCK-ALPHA-STATUS"
+          ],
+          "citation": [
+            17,
+            72,
+            155
+          ]
+        }
+      ],
+      "writes_to": [],
+      "transforms": []
+    },
+    "copybooks_used": [],
+    "paragraphs": [
+      {
+        "paragraph_name": "5300-READ-CUST-RECORD",
+        "summary": null,
+        "purpose": "This paragraph reads a customer record. It moves WS-CARD-RID-CUST-ID to itself (likely a placeholder). It then attempts to read a customer record from MOCK-FILE, simulating a CICS READ operation. If the read is successful, FOUND-CUST-IN-MSTR is set to TRUE. If the record is not found, NFOUND-CUST-IN-MSTR is set to TRUE, an error message is generated, and 9500-LOG-ERROR is performed. If any other error occurs during the read, an error message is generated with the CICS response codes, and 9500-LOG-ERROR is performed. The paragraph uses MOCK-NUM-STATUS from the MOCK-FILE to simulate the CICS response code.",
+        "called_by": [],
+        "calls": [
+          "9500-LOG-ERROR"
+        ],
+        "citation": [
+          893,
+          945
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "5300-EXIT",
+        "summary": null,
+        "purpose": "This paragraph serves as the exit point for the 5300-READ-CUST-RECORD paragraph. It displays a trace message and then executes the EXIT statement to return control to the calling paragraph. It does not perform any data manipulation or error handling.",
+        "called_by": [],
+        "calls": [],
+        "citation": [
+          947,
+          949
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "5500-READ-AUTH-SUMMRY",
+        "summary": null,
+        "purpose": "This paragraph reads the authorization summary. It moves WS-CARD-RID-ACCT-ID-X to PA-ACCT-ID. It then attempts to read the authorization summary from MOCK-FILE, simulating an IMS GET UNIQUE (GU) call. The DIBSTAT field is moved to IMS-RETURN-CODE. Based on the value of DIBSTAT (simulated IMS return code), FOUND-PAUT-SMRY-SEG or NFOUND-PAUT-SMRY-SEG is set to TRUE. If an error occurs (DIBSTAT is not STATUS-OK or SEGMENT-NOT-FOUND), an error message is generated, and 9500-LOG-ERROR is performed. The paragraph uses MOCK-ALPHA-STATUS from the MOCK-FILE to simulate the IMS return code.",
+        "called_by": [],
+        "calls": [
+          "9500-LOG-ERROR"
+        ],
+        "citation": [
+          951,
+          984
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "5500-EXIT",
+        "summary": null,
+        "purpose": "This paragraph serves as the exit point for the 5500-READ-AUTH-SUMMRY paragraph. It displays a trace message and then executes the EXIT statement to return control to the calling paragraph. It does not perform any data manipulation or error handling.",
+        "called_by": [],
+        "calls": [],
+        "citation": [
+          986,
+          988
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "5600-READ-PROFILE-DATA",
+        "summary": null,
+        "purpose": "This paragraph is a placeholder for reading profile data. It displays a trace message and then executes a CONTINUE statement, effectively doing nothing. It's likely a stub for future implementation or a section that was removed but the paragraph structure was kept. No data is read or processed in this paragraph.",
+        "called_by": [],
+        "calls": [],
+        "citation": [
+          990,
+          994
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "5600-EXIT",
+        "summary": null,
+        "purpose": "This paragraph serves as the exit point for the 5600-READ-PROFILE-DATA paragraph. It displays a trace message and then executes the EXIT statement to return control to the calling paragraph. It does not perform any data manipulation or error handling.",
+        "called_by": [],
+        "calls": [],
+        "citation": [
+          996,
+          998
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "6000-MAKE-DECISION",
+        "summary": null,
+        "purpose": "This paragraph is a placeholder for making a decision. It displays a trace message and then executes a CONTINUE statement, effectively doing nothing. It's likely a stub for future implementation or a section that was removed but the paragraph structure was kept. No data is read, processed, or decisions made in this paragraph.",
+        "called_by": [],
+        "calls": [],
+        "citation": [
+          1000,
+          1002
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "6000-EXIT",
+        "summary": null,
+        "purpose": "This paragraph serves as the exit point for the 6000-MAKE-DECISION paragraph. It displays a trace message and then executes the EXIT statement to return control to the calling paragraph. It does not perform any data manipulation or error handling.",
+        "called_by": [],
+        "calls": [],
+        "citation": [
+          1078,
+          1080
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "7100-SEND-RESPONSE",
+        "summary": null,
+        "purpose": "This paragraph sends a response message via MQ. It moves constants to MQ message descriptor fields (MQMD) such as MQMD-MSGTYPE, MQMD-REPLYTOQMGR, MQMD-PERSISTENCE, and MQMD-EXPIRY. It computes MQPMO-OPTIONS. It then attempts to call MQPUT1 to send the message, simulating the call with a READ from MOCK-FILE. If the MQPUT1 call fails (WS-COMPCODE is not 0), an error message is generated, and 9500-LOG-ERROR is performed. The paragraph uses MOCK-NUM-STATUS from the MOCK-FILE to simulate the MQ return code, which is then moved to RETURN-CODE.",
+        "called_by": [],
+        "calls": [
+          "9500-LOG-ERROR"
+        ],
+        "citation": [
+          1082,
+          1131
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "7100-EXIT",
+        "summary": null,
+        "purpose": "This paragraph serves as the exit point for the 7100-SEND-RESPONSE paragraph. It displays a trace message and then executes the EXIT statement to return control to the calling paragraph. It does not perform any data manipulation or error handling.",
+        "called_by": [],
+        "calls": [],
+        "citation": [
+          1133,
+          1135
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      }
+    ],
+    "error_handling": [
+      {
+        "condition": "WS-RESP-CD = 13",
+        "action": "Set ERR-WARNING, ERR-APP to TRUE, move error message and event key, and perform 9500-LOG-ERROR",
+        "citation": [
+          28,
+          31,
+          38
+        ]
+      },
+      {
+        "condition": "WS-RESP-CD is OTHER than 0 or 13",
+        "action": "Set ERR-CRITICAL, ERR-CICS to TRUE, move error message and event key, and perform 9500-LOG-ERROR",
+        "citation": [
+          40,
+          41,
+          52
+        ]
+      },
+      {
+        "condition": "DIBSTAT is OTHER than STATUS-OK or SEGMENT-NOT-FOUND",
+        "action": "Set ERR-CRITICAL, ERR-IMS to TRUE, move error message and event key, and perform 9500-LOG-ERROR",
+        "citation": [
+          85,
+          86,
+          93
+        ]
+      },
+      {
+        "condition": "WS-COMPCODE NOT = 0",
+        "action": "Set ERR-CRITICAL, ERR-MQ to TRUE, move error message and event key, and perform 9500-LOG-ERROR",
+        "citation": [
+          160,
+          161,
+          172
+        ]
+      }
+    ],
+    "sql_operations": [],
+    "cics_operations": [],
+    "open_questions": [
+      {
+        "question": "What is the purpose of moving WS-CARD-RID-CUST-ID to itself in 5300-READ-CUST-RECORD?",
+        "context": "The code `MOVE WS-CARD-RID-CUST-ID TO WS-CARD-RID-CUST-ID` seems redundant.",
+        "suggestion": "Check for a typo or if it's a placeholder for a more complex operation."
+      },
+      {
+        "question": "What is the structure of the MOCK-FILE?",
+        "context": "The program reads MOCK-FILE into MOCK-RECORD, but the structure of these is not defined in the provided code snippet.",
+        "suggestion": "Examine the complete program or related copybooks to determine the structure of MOCK-FILE and MOCK-RECORD."
+      }
+    ],
+    "resolved_questions": [],
+    "dead_code": [],
+    "dead_code_resolved": [],
+    "call_semantics": [],
+    "flow_diagram": null,
+    "copybooks_not_found": []
+  },
+  "saved_at": "2026-04-21T06:49:12.175977"
+}

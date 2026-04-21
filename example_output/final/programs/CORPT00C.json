@@ -1,0 +1,1233 @@
+{
+  "header": {
+    "program_id": "CORPT00C",
+    "file_name": "CORPT00C.cbl",
+    "file_type": "COBOL",
+    "analyzed_by": "WAR_RIG",
+    "analyzed_at": "2026-04-21T18:22:31.739372",
+    "iteration_count": 1,
+    "final_status": "WITNESSED"
+  },
+  "purpose": {
+    "summary": "This CICS COBOL program, CORPT00C, allows users to print transaction reports by submitting a batch job from an online CICS environment using an extrapartition transient data queue (TDQ). The program receives input from a CICS screen, validates the input, constructs a JCL job, writes the JCL to a TDQ, and then returns to the previous screen.",
+    "business_context": "This program is part of a card demo application and enables users to generate transaction reports without requiring immediate processing, offloading the report generation to a batch process.",
+    "program_type": "ONLINE_CICS",
+    "citations": [
+      5,
+      6,
+      163
+    ]
+  },
+  "inputs": [
+    {
+      "name": "CORPT0AI",
+      "io_type": "CICS_MAP",
+      "description": "Input map containing fields for report type (Monthly, Yearly, Custom) and date ranges.",
+      "copybook": "CORPT00",
+      "citation": [
+        599,
+        601
+      ]
+    },
+    {
+      "name": "DFHCOMMAREA",
+      "io_type": "CICS_COMMAREA",
+      "description": "Communication area passed from the calling program, containing program context and data.",
+      "copybook": null,
+      "citation": [
+        176,
+        201
+      ]
+    }
+  ],
+  "outputs": [
+    {
+      "name": "CORPT0AO",
+      "io_type": "CICS_MAP",
+      "description": "Output map sent to the CICS terminal, displaying the screen with populated data and error messages.",
+      "copybook": "CORPT00",
+      "citation": [
+        564,
+        573
+      ]
+    },
+    {
+      "name": "JOBS",
+      "io_type": "CICS_QUEUE",
+      "description": "Transient data queue (TDQ) to which the generated JCL is written for batch job submission.",
+      "copybook": null,
+      "citation": [
+        518
+      ]
+    }
+  ],
+  "called_programs": [
+    {
+      "program_name": "CSUTLDTC",
+      "call_type": "STATIC_CALL",
+      "purpose": "Validates the input date format and if it is a valid date.",
+      "parameters": [
+        "CSUTLDTC-DATE"
+      ],
+      "citation": 392
+    },
+    {
+      "program_name": "CSUTLDTC",
+      "call_type": "STATIC_CALL",
+      "purpose": "Validates the input date format and if it is a valid date.",
+      "parameters": [
+        "CSUTLDTC-DATE"
+      ],
+      "citation": 412
+    },
+    {
+      "program_name": "COSGN00C",
+      "call_type": "CICS_XCTL",
+      "purpose": "Returns to the sign-on screen when EIBCALEN is 0.",
+      "parameters": [],
+      "citation": 173
+    },
+    {
+      "program_name": "COMEN01C",
+      "call_type": "CICS_XCTL",
+      "purpose": "Returns to the previous menu screen when PF3 is pressed.",
+      "parameters": [],
+      "citation": 188
+    }
+  ],
+  "calling_context": {
+    "called_by": [],
+    "entry_points": [
+      "CR00"
+    ],
+    "linkage_section": [
+      "DFHCOMMAREA"
+    ]
+  },
+  "business_rules": [
+    {
+      "rule_id": "BR001",
+      "description": "If the user selects the 'Monthly' report type, the program sets the start date to the first day of the current month and the end date to the last day of the current month.",
+      "logic_summary": "The program uses FUNCTION CURRENT-DATE to get the current date, extracts the year and month, sets the day to '01' for the start date, and calculates the last day of the month for the end date.",
+      "conditions": [
+        "MONTHLYI OF CORPT0AI NOT = SPACES AND LOW-VALUES"
+      ],
+      "citation": [
+        213,
+        215,
+        231
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "If the user selects the 'Yearly' report type, the program sets the start date to January 1st of the current year and the end date to December 31st of the current year.",
+      "logic_summary": "The program uses FUNCTION CURRENT-DATE to get the current year, sets the month and day to '01' for the start date, and sets the month to '12' and day to '31' for the end date.",
+      "conditions": [
+        "YEARLYI OF CORPT0AI NOT = SPACES AND LOW-VALUES"
+      ],
+      "citation": [
+        239,
+        241,
+        251
+      ]
+    },
+    {
+      "rule_id": "BR003",
+      "description": "If the user selects the 'Custom' report type, the program validates that the start and end dates are not empty. If any of the date fields (month, day, year) are empty, an error message is displayed.",
+      "logic_summary": "The program checks if SDTMMI, SDTDDI, SDTYYYYI, EDTMMI, EDTDDI, and EDTYYYYI are equal to SPACES or LOW-VALUES. If any of these conditions are true, an error message is moved to WS-MESSAGE, the WS-ERR-FLG is set to 'Y', and the corresponding field in the map is highlighted.",
+      "conditions": [
+        "CUSTOMI OF CORPT0AI NOT = SPACES AND LOW-VALUES"
+      ],
+      "citation": [
+        256,
+        259,
+        300
+      ]
+    },
+    {
+      "rule_id": "BR004",
+      "description": "If the user selects the 'Custom' report type, the program validates that the start and end dates are numeric and within valid ranges. If any of the date fields (month, day, year) are non-numeric or outside the valid range, an error message is displayed.",
+      "logic_summary": "The program checks if SDTMMI, SDTDDI, SDTYYYYI, EDTMMI, EDTDDI, and EDTYYYYI are numeric and within valid ranges (e.g., month <= 12, day <= 31). If any of these conditions are false, an error message is moved to WS-MESSAGE, the WS-ERR-FLG is set to 'Y', and the corresponding field in the map is highlighted.",
+      "conditions": [
+        "CUSTOMI OF CORPT0AI NOT = SPACES AND LOW-VALUES"
+      ],
+      "citation": [
+        329,
+        378
+      ]
+    },
+    {
+      "rule_id": "BR005",
+      "description": "If the user selects the 'Custom' report type, the program validates that the start and end dates are valid dates using the CSUTLDTC subroutine.",
+      "logic_summary": "The program calls the CSUTLDTC subroutine to validate the start and end dates. If the subroutine returns a non-zero severity code, an error message is displayed.",
+      "conditions": [
+        "CUSTOMI OF CORPT0AI NOT = SPACES AND LOW-VALUES"
+      ],
+      "citation": [
+        388,
+        426
+      ]
+    },
+    {
+      "rule_id": "BR006",
+      "description": "The program requires confirmation from the user before submitting the job. If the confirmation field is empty, an error message is displayed.",
+      "logic_summary": "The program checks if CONFIRMI OF CORPT0AI is equal to SPACES or LOW-VALUES. If this condition is true, an error message is moved to WS-MESSAGE, the WS-ERR-FLG is set to 'Y', and the CONFIRML field in the map is highlighted.",
+      "conditions": [
+        "CONFIRMI OF CORPT0AI = SPACES OR LOW-VALUES"
+      ],
+      "citation": [
+        464,
+        473
+      ]
+    },
+    {
+      "rule_id": "BR007",
+      "description": "The program validates the confirmation input. If the input is 'Y' or 'y', the job is submitted. If the input is 'N' or 'n', the fields are initialized and the screen is redisplayed. If the input is anything else, an error message is displayed.",
+      "logic_summary": "The program checks if CONFIRMI OF CORPT0AI is equal to 'Y', 'y', 'N', or 'n'. Based on the input, the program either continues with job submission, initializes fields and redisplays the screen, or displays an error message.",
+      "conditions": [
+        "CONFIRMI OF CORPT0AI = 'Y' OR 'y'",
+        "CONFIRMI OF CORPT0AI = 'N' OR 'n'"
+      ],
+      "citation": [
+        477,
+        494
+      ]
+    }
+  ],
+  "data_flow": {
+    "reads_from": [
+      {
+        "source": "CORPT0AI",
+        "fields_used": [
+          "MONTHLYI",
+          "YEARLYI",
+          "CUSTOMI",
+          "SDTMMI",
+          "SDTDDI",
+          "SDTYYYYI",
+          "EDTMMI",
+          "EDTDDI",
+          "EDTYYYYI",
+          "CONFIRMI"
+        ],
+        "citation": [
+          213,
+          239,
+          256,
+          464,
+          478,
+          480
+        ]
+      },
+      {
+        "source": "WS-VARIABLES",
+        "fields_used": [
+          "WS-TRANID",
+          "WS-PGMNAME"
+        ],
+        "citation": [
+          545,
+          546
+        ]
+      },
+      {
+        "source": "JOB-DATA",
+        "fields_used": [
+          "JOB-LINES"
+        ],
+        "citation": [
+          501
+        ]
+      }
+    ],
+    "writes_to": [
+      {
+        "destination": "CORPT0AO",
+        "fields_written": [
+          "TITLE01O",
+          "TITLE02O",
+          "TRNNAMEO",
+          "PGMNAMEO",
+          "CURDATEO",
+          "CURTIMEO",
+          "ERRMSGO"
+        ],
+        "citation": [
+          613,
+          614,
+          615,
+          616,
+          622,
+          628,
+          560
+        ]
+      },
+      {
+        "destination": "WS-MESSAGE",
+        "fields_written": [
+          "WS-MESSAGE"
+        ],
+        "citation": [
+          261,
+          268,
+          275,
+          282,
+          289,
+          296,
+          331,
+          340,
+          349,
+          357,
+          366,
+          374,
+          400,
+          420,
+          438,
+          465,
+          485,
+          531
+        ]
+      },
+      {
+        "destination": "JOBS",
+        "fields_written": [
+          "JCL-RECORD"
+        ],
+        "citation": [
+          519
+        ]
+      }
+    ],
+    "transforms": [
+      {
+        "input_field": "SDTMMI OF CORPT0AI",
+        "output_field": "WS-NUM-99",
+        "transformation_description": "Converts the start date month input field to a numeric value.",
+        "citation": [
+          305
+        ]
+      },
+      {
+        "input_field": "SDTDDI OF CORPT0AI",
+        "output_field": "WS-NUM-99",
+        "transformation_description": "Converts the start date day input field to a numeric value.",
+        "citation": [
+          309
+        ]
+      },
+      {
+        "input_field": "SDTYYYYI OF CORPT0AI",
+        "output_field": "WS-NUM-9999",
+        "transformation_description": "Converts the start date year input field to a numeric value.",
+        "citation": [
+          313
+        ]
+      },
+      {
+        "input_field": "EDTMMI OF CORPT0AI",
+        "output_field": "WS-NUM-99",
+        "transformation_description": "Converts the end date month input field to a numeric value.",
+        "citation": [
+          317
+        ]
+      },
+      {
+        "input_field": "EDTDDI OF CORPT0AI",
+        "output_field": "WS-NUM-99",
+        "transformation_description": "Converts the end date day input field to a numeric value.",
+        "citation": [
+          321
+        ]
+      },
+      {
+        "input_field": "EDTYYYYI OF CORPT0AI",
+        "output_field": "WS-NUM-9999",
+        "transformation_description": "Converts the end date year input field to a numeric value.",
+        "citation": [
+          325
+        ]
+      }
+    ]
+  },
+  "copybooks_used": [
+    {
+      "copybook_name": "COCOM01Y",
+      "purpose": "Defines common data structures.",
+      "location": "WORKING_STORAGE",
+      "citation": 138
+    },
+    {
+      "copybook_name": "CORPT00",
+      "purpose": "Defines the input and output map structures for the CICS screen.",
+      "location": "WORKING_STORAGE",
+      "citation": 140
+    },
+    {
+      "copybook_name": "COTTL01Y",
+      "purpose": "Defines title related constants.",
+      "location": "WORKING_STORAGE",
+      "citation": 142
+    },
+    {
+      "copybook_name": "CSDAT01Y",
+      "purpose": "Defines date related constants.",
+      "location": "WORKING_STORAGE",
+      "citation": 143
+    },
+    {
+      "copybook_name": "CSMSG01Y",
+      "purpose": "Defines message related constants.",
+      "location": "WORKING_STORAGE",
+      "citation": 144
+    },
+    {
+      "copybook_name": "CVTRA05Y",
+      "purpose": "Defines transaction related constants.",
+      "location": "WORKING_STORAGE",
+      "citation": 146
+    },
+    {
+      "copybook_name": "DFHAID",
+      "purpose": "Defines attention identifier constants for CICS.",
+      "location": "WORKING_STORAGE",
+      "citation": 148
+    },
+    {
+      "copybook_name": "DFHBMSCA",
+      "purpose": "Defines BMS control area constants for CICS.",
+      "location": "WORKING_STORAGE",
+      "citation": 149
+    }
+  ],
+  "paragraphs": [
+    {
+      "paragraph_name": "MAIN-PARA",
+      "summary": null,
+      "purpose": "This is the main paragraph that controls the program flow. It first initializes flags and variables, then checks if the communication area (DFHCOMMAREA) is empty. If it is empty, it moves 'COSGN00C' to CDEMO-TO-PROGRAM and performs RETURN-TO-PREV-SCREEN to return to the sign-on screen. If the communication area is not empty, it moves the data from DFHCOMMAREA to CARDDEMO-COMMAREA. If it's the first time the program is entered, it initializes the screen and performs SEND-TRNRPT-SCREEN to display the initial screen. Otherwise, it performs RECEIVE-TRNRPT-SCREEN to receive input from the user, then evaluates the EIBAID to determine the action to take. If DFHENTER is pressed, it performs PROCESS-ENTER-KEY. If DFHPF3 is pressed, it moves 'COMEN01C' to CDEMO-TO-PROGRAM and performs RETURN-TO-PREV-SCREEN to return to the previous menu. If any other key is pressed, it sets an error flag, moves an error message to WS-MESSAGE, and performs SEND-TRNRPT-SCREEN to display the error message. Finally, it returns to CICS with the transaction ID and communication area.",
+      "called_by": [],
+      "calls": [
+        "RETURN-TO-PREV-SCREEN",
+        "SEND-TRNRPT-SCREEN",
+        "RECEIVE-TRNRPT-SCREEN",
+        "PROCESS-ENTER-KEY"
+      ],
+      "citation": [
+        163,
+        202
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "PROCESS-ENTER-KEY",
+      "summary": null,
+      "purpose": "This paragraph processes the user input after the ENTER key is pressed. It evaluates the input to determine which report type to process (Monthly, Yearly, or Custom). For 'Monthly', it calculates the start and end dates based on the current date and performs SUBMIT-JOB-TO-INTRDR to submit the job. For 'Yearly', it sets the start and end dates to the beginning and end of the current year and performs SUBMIT-JOB-TO-INTRDR. For 'Custom', it validates the start and end dates entered by the user, converting them to numeric values and checking for valid ranges. If any date is invalid, it sets an error message and redisplays the screen. If all dates are valid, it calls CSUTLDTC to validate the dates and then performs SUBMIT-JOB-TO-INTRDR. If no report type is selected, it displays an error message. After processing, it initializes the fields and displays a confirmation message.",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [
+        "SUBMIT-JOB-TO-INTRDR",
+        "SEND-TRNRPT-SCREEN",
+        "INITIALIZE-ALL-FIELDS"
+      ],
+      "citation": [
+        208,
+        456
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "SUBMIT-JOB-TO-INTRDR",
+      "summary": null,
+      "purpose": "This paragraph submits the generated JCL to the internal reader. It first checks if the user has confirmed the report submission. If the confirmation field is empty, it prompts the user for confirmation. If the user confirms ('Y' or 'y'), it iterates through the JOB-DATA lines, writing each line to the JOBS TDQ using the CICS WRITEQ TD command. The loop terminates when it encounters '/*EOF', spaces, or low-values in the JCL-RECORD, or if an error occurs. If the user does not confirm ('N' or 'n'), it initializes the fields and redisplays the screen. If the confirmation input is invalid, it displays an error message. The paragraph handles potential errors during the WRITEQ TD operation, setting an error flag and displaying an error message if the write fails.",
+      "called_by": [
+        "PROCESS-ENTER-KEY"
+      ],
+      "calls": [
+        "SEND-TRNRPT-SCREEN",
+        "INITIALIZE-ALL-FIELDS",
+        "WIRTE-JOBSUB-TDQ"
+      ],
+      "citation": [
+        462,
+        510
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "WIRTE-JOBSUB-TDQ",
+      "summary": null,
+      "purpose": "This paragraph writes a single JCL record to the JOBS transient data queue (TDQ). It uses the CICS WRITEQ TD command to write the JCL-RECORD to the queue. It then evaluates the response code (WS-RESP-CD) from the WRITEQ TD command. If the response code is DFHRESP(NORMAL), it continues. Otherwise, it displays the response and reason codes, sets an error flag, moves an error message to WS-MESSAGE, and performs SEND-TRNRPT-SCREEN to display the error message.",
+      "called_by": [
+        "SUBMIT-JOB-TO-INTRDR"
+      ],
+      "calls": [
+        "SEND-TRNRPT-SCREEN"
+      ],
+      "citation": [
+        515,
+        535
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "RETURN-TO-PREV-SCREEN",
+      "summary": null,
+      "purpose": "This paragraph returns control to the previous CICS screen. It checks if CDEMO-TO-PROGRAM is empty or contains spaces. If so, it defaults to 'COSGN00C'. It then moves the current transaction ID and program name to the CDEMO-FROM-TRANID and CDEMO-FROM-PROGRAM fields, respectively. Finally, it executes a CICS XCTL command to transfer control to the program specified in CDEMO-TO-PROGRAM, passing the CARDDEMO-COMMAREA.",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [],
+      "citation": [
+        540,
+        555
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "SEND-TRNRPT-SCREEN",
+      "summary": null,
+      "purpose": "This paragraph sends the CORPT0A screen to the terminal. It first performs POPULATE-HEADER-INFO to populate the header information on the screen. It then moves the message in WS-MESSAGE to the ERRMSGO field in the output map. If the SEND-ERASE-YES flag is set, it executes a CICS SEND MAP command with the ERASE option to clear the screen before sending the map. Otherwise, it executes a CICS SEND MAP command without the ERASE option. Finally, it branches to RETURN-TO-CICS to return control to CICS.",
+      "called_by": [
+        "MAIN-PARA",
+        "PROCESS-ENTER-KEY",
+        "SUBMIT-JOB-TO-INTRDR",
+        "WIRTE-JOBSUB-TDQ",
+        "END-EXEC"
+      ],
+      "calls": [
+        "POPULATE-HEADER-INFO"
+      ],
+      "citation": [
+        556,
+        578
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "RETURN-TO-CICS",
+      "summary": null,
+      "purpose": "This paragraph returns control to CICS. It executes a CICS RETURN command, specifying the transaction ID (WS-TRANID) and the communication area (CARDDEMO-COMMAREA). This command terminates the current task and returns control to CICS.",
+      "called_by": [
+        "SEND-TRNRPT-SCREEN"
+      ],
+      "calls": [],
+      "citation": [
+        585,
+        595
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "RECEIVE-TRNRPT-SCREEN",
+      "summary": null,
+      "purpose": "This paragraph receives data from the CORPT0A screen. It executes a CICS RECEIVE MAP command, receiving the data into the CORPT0AI input map. It also retrieves the response code (WS-RESP-CD) and reason code (WS-REAS-CD) from the RECEIVE command. This paragraph is responsible for capturing the user's input from the screen.",
+      "called_by": [
+        "MAIN-PARA"
+      ],
+      "calls": [],
+      "citation": [
+        596,
+        608
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "POPULATE-HEADER-INFO",
+      "summary": null,
+      "purpose": "This paragraph populates the header information on the CORPT0A screen. It moves the current date and time to the corresponding fields in the output map (CORPT0AO). It also moves the title, transaction ID, and program name to the appropriate fields in the output map. This paragraph ensures that the screen displays the correct header information.",
+      "called_by": [
+        "SEND-TRNRPT-SCREEN"
+      ],
+      "calls": [],
+      "citation": [
+        609,
+        632
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    },
+    {
+      "paragraph_name": "INITIALIZE-ALL-FIELDS",
+      "summary": null,
+      "purpose": "This paragraph initializes the input fields on the CORPT0A screen. It moves -1 to MONTHLYL and initializes MONTHLYI, YEARLYI, CUSTOMI, SDTMMI, SDTDDI, SDTYYYYI, EDTMMI, EDTDDI, EDTYYYYI, CONFIRMI and WS-MESSAGE to spaces. This paragraph prepares the screen for new input by clearing the previous values.",
+      "called_by": [
+        "PROCESS-ENTER-KEY",
+        "SUBMIT-JOB-TO-INTRDR"
+      ],
+      "calls": [],
+      "citation": [
+        633,
+        645
+      ],
+      "outgoing_calls": [],
+      "incoming_calls": [],
+      "is_dead_code": false,
+      "dead_code_reason": null,
+      "metadata": null
+    }
+  ],
+  "error_handling": [
+    {
+      "condition": "SDTMMI OF CORPT0AI = SPACES OR LOW-VALUES",
+      "action": "Move error message to WS-MESSAGE, set WS-ERR-FLG to 'Y', and highlight SDTMML field.",
+      "citation": [
+        259,
+        265
+      ]
+    },
+    {
+      "condition": "SDTDDI OF CORPT0AI = SPACES OR LOW-VALUES",
+      "action": "Move error message to WS-MESSAGE, set WS-ERR-FLG to 'Y', and highlight SDTDDL field.",
+      "citation": [
+        266,
+        272
+      ]
+    },
+    {
+      "condition": "SDTYYYYI OF CORPT0AI = SPACES OR LOW-VALUES",
+      "action": "Move error message to WS-MESSAGE, set WS-ERR-FLG to 'Y', and highlight SDTYYYYL field.",
+      "citation": [
+        273,
+        279
+      ]
+    },
+    {
+      "condition": "EDTMMI OF CORPT0AI = SPACES OR LOW-VALUES",
+      "action": "Move error message to WS-MESSAGE, set WS-ERR-FLG to 'Y', and highlight EDTMML field.",
+      "citation": [
+        280,
+        286
+      ]
+    },
+    {
+      "condition": "EDTDDI OF CORPT0AI = SPACES OR LOW-VALUES",
+      "action": "Move error message to WS-MESSAGE, set WS-ERR-FLG to 'Y', and highlight EDTDDL field.",
+      "citation": [
+        287,
+        293
+      ]
+    },
+    {
+      "condition": "EDTYYYYI OF CORPT0AI = SPACES OR LOW-VALUES",
+      "action": "Move error message to WS-MESSAGE, set WS-ERR-FLG to 'Y', and highlight EDTYYYYL field.",
+      "citation": [
+        294,
+        300
+      ]
+    },
+    {
+      "condition": "SDTMMI OF CORPT0AI IS NOT NUMERIC OR SDTMMI OF CORPT0AI > '12'",
+      "action": "Move error message to WS-MESSAGE, set WS-ERR-FLG to 'Y', and highlight SDTMML field.",
+      "citation": [
+        329,
+        335
+      ]
+    },
+    {
+      "condition": "SDTDDI OF CORPT0AI IS NOT NUMERIC OR SDTDDI OF CORPT0AI > '31'",
+      "action": "Move error message to WS-MESSAGE, set WS-ERR-FLG to 'Y', and highlight SDTDDL field.",
+      "citation": [
+        338,
+        344
+      ]
+    },
+    {
+      "condition": "SDTYYYYI OF CORPT0AI IS NOT NUMERIC",
+      "action": "Move error message to WS-MESSAGE, set WS-ERR-FLG to 'Y', and highlight SDTYYYYL field.",
+      "citation": [
+        347,
+        352
+      ]
+    },
+    {
+      "condition": "EDTMMI OF CORPT0AI IS NOT NUMERIC OR EDTMMI OF CORPT0AI > '12'",
+      "action": "Move error message to WS-MESSAGE, set WS-ERR-FLG to 'Y', and highlight EDTMML field.",
+      "citation": [
+        355,
+        361
+      ]
+    },
+    {
+      "condition": "EDTDDI OF CORPT0AI IS NOT NUMERIC OR EDTDDI OF CORPT0AI > '31'",
+      "action": "Move error message to WS-MESSAGE, set WS-ERR-FLG to 'Y', and highlight EDTDDL field.",
+      "citation": [
+        364,
+        370
+      ]
+    },
+    {
+      "condition": "EDTYYYYI OF CORPT0AI IS NOT NUMERIC",
+      "action": "Move error message to WS-MESSAGE, set WS-ERR-FLG to 'Y', and highlight EDTYYYYL field.",
+      "citation": [
+        373,
+        378
+      ]
+    },
+    {
+      "condition": "CSUTLDTC-RESULT-SEV-CD not = '0000' and CSUTLDTC-RESULT-MSG-NUM not = '2513'",
+      "action": "Move error message to WS-MESSAGE, set WS-ERR-FLG to 'Y', and highlight SDTMML field.",
+      "citation": [
+        396,
+        404
+      ]
+    },
+    {
+      "condition": "CSUTLDTC-RESULT-SEV-CD not = '0000' and CSUTLDTC-RESULT-MSG-NUM not = '2513'",
+      "action": "Move error message to WS-MESSAGE, set WS-ERR-FLG to 'Y', and highlight EDTMML field.",
+      "citation": [
+        416,
+        424
+      ]
+    },
+    {
+      "condition": "CONFIRMI OF CORPT0AI = SPACES OR LOW-VALUES",
+      "action": "Move error message to WS-MESSAGE, set WS-ERR-FLG to 'Y', and highlight CONFIRML field.",
+      "citation": [
+        464,
+        473
+      ]
+    },
+    {
+      "condition": "CONFIRMI OF CORPT0AI is not equal to 'Y', 'y', 'N', or 'n'",
+      "action": "Move error message to WS-MESSAGE, set WS-ERR-FLG to 'Y', and highlight CONFIRML field.",
+      "citation": [
+        484,
+        493
+      ]
+    },
+    {
+      "condition": "WS-RESP-CD not = DFHRESP(NORMAL)",
+      "action": "Move error message to WS-MESSAGE, set WS-ERR-FLG to 'Y', and highlight MONTHLYL field.",
+      "citation": [
+        525,
+        534
+      ]
+    }
+  ],
+  "sql_operations": [],
+  "cics_operations": [
+    {
+      "command": "RETURN",
+      "resource": null,
+      "purpose": "Returns control to CICS.",
+      "citation": 199
+    },
+    {
+      "command": "WRITEQ TD",
+      "resource": "JOBS",
+      "purpose": "Writes a JCL record to the JOBS transient data queue.",
+      "citation": 517
+    },
+    {
+      "command": "SEND MAP",
+      "resource": "CORPT0A",
+      "purpose": "Sends the CORPT0A map to the terminal.",
+      "citation": 563
+    },
+    {
+      "command": "SEND MAP",
+      "resource": "CORPT0A",
+      "purpose": "Sends the CORPT0A map to the terminal.",
+      "citation": 571
+    },
+    {
+      "command": "RETURN",
+      "resource": null,
+      "purpose": "Returns control to CICS.",
+      "citation": 587
+    },
+    {
+      "command": "RECEIVE MAP",
+      "resource": "CORPT0A",
+      "purpose": "Receives data from the CORPT0A map.",
+      "citation": 598
+    },
+    {
+      "command": "XCTL",
+      "resource": "CDEMO-TO-PROGRAM",
+      "purpose": "Transfers control to another CICS program.",
+      "citation": 549
+    }
+  ],
+  "open_questions": [],
+  "resolved_questions": [],
+  "dead_code": [],
+  "dead_code_resolved": [],
+  "call_semantics": [
+    {
+      "caller": "MAIN-PARA",
+      "callee": "RETURN-TO-PREV-SCREEN",
+      "inputs": [
+        "CDEMO-TO-PROGRAM",
+        "WS-TRANID",
+        "WS-PGMNAME"
+      ],
+      "outputs": [
+        "CDEMO-TO-PROGRAM",
+        "CDEMO-FROM-TRANID",
+        "CDEMO-FROM-PROGRAM",
+        "CDEMO-PGM-CONTEXT"
+      ],
+      "purpose": "This call returns control to the previous screen by transferring control to the program specified in CDEMO-TO-PROGRAM."
+    },
+    {
+      "caller": "MAIN-PARA",
+      "callee": "SEND-TRNRPT-SCREEN",
+      "inputs": [
+        "WS-MESSAGE",
+        "SEND-ERASE-YES"
+      ],
+      "outputs": [],
+      "purpose": "This call sends the formatted screen to the user, displaying any error messages."
+    },
+    {
+      "caller": "MAIN-PARA",
+      "callee": "RECEIVE-TRNRPT-SCREEN",
+      "inputs": [],
+      "outputs": [
+        "WS-RESP-CD",
+        "WS-REAS-CD"
+      ],
+      "purpose": "This call receives data entered by the user from the screen."
+    },
+    {
+      "caller": "MAIN-PARA",
+      "callee": "PROCESS-ENTER-KEY",
+      "inputs": [
+        "MONTHLYI OF CORPT0AI",
+        "YEARLYI OF CORPT0AI",
+        "CUSTOMI OF CORPT0AI",
+        "SDTMMI OF CORPT0AI",
+        "SDTDDI OF CORPT0AI",
+        "SDTYYYYI OF CORPT0AI",
+        "EDTMMI OF CORPT0AI",
+        "EDTDDI OF CORPT0AI",
+        "EDTYYYYI OF CORPT0AI",
+        "ERR-FLG-ON"
+      ],
+      "outputs": [
+        "WS-REPORT-NAME",
+        "WS-START-DATE-YYYY",
+        "WS-START-DATE-MM",
+        "WS-START-DATE-DD",
+        "PARM-START-DATE-1",
+        "WS-END-DATE-YYYY",
+        "WS-END-DATE-MM",
+        "WS-END-DATE-DD",
+        "PARM-END-DATE-1",
+        "WS-MESSAGE",
+        "WS-ERR-FLG",
+        "SDTMML OF CORPT0AI",
+        "SDTDDL OF CORPT0AI",
+        "SDTYYYYL OF CORPT0AI",
+        "EDTMML OF CORPT0AI",
+        "EDTDDL OF CORPT0AI",
+        "EDTYYYYL OF CORPT0AI",
+        "SDTMMI OF CORPT0AI",
+        "SDTDDI OF CORPT0AI",
+        "SDTYYYYI OF CORPT0AI",
+        "EDTMMI OF CORPT0AI",
+        "EDTDDI OF CORPT0AI",
+        "EDTYYYYI OF CORPT0AI",
+        "CSUTLDTC-DATE",
+        "CSUTLDTC-DATE-FORMAT",
+        "CSUTLDTC-RESULT",
+        "MONTHLYL OF CORPT0AI"
+      ],
+      "purpose": "This call processes the user's input after pressing the Enter key, validating dates and submitting a job based on the selected report type."
+    },
+    {
+      "caller": "MAIN-PARA",
+      "callee": "RETURN-TO-PREV-SCREEN",
+      "inputs": [
+        "CDEMO-TO-PROGRAM",
+        "WS-TRANID",
+        "WS-PGMNAME"
+      ],
+      "outputs": [
+        "CDEMO-TO-PROGRAM",
+        "CDEMO-FROM-TRANID",
+        "CDEMO-FROM-PROGRAM",
+        "CDEMO-PGM-CONTEXT"
+      ],
+      "purpose": "This call returns control to the previous screen by transferring control to the program specified in CDEMO-TO-PROGRAM."
+    },
+    {
+      "caller": "MAIN-PARA",
+      "callee": "SEND-TRNRPT-SCREEN",
+      "inputs": [
+        "SEND-ERASE-YES",
+        "WS-MESSAGE"
+      ],
+      "outputs": [],
+      "purpose": "This call sends the transaction report screen to the user."
+    },
+    {
+      "caller": "PROCESS-ENTER-KEY",
+      "callee": "SUBMIT-JOB-TO-INTRDR",
+      "inputs": [
+        "PARM-START-DATE-1",
+        "PARM-END-DATE-1",
+        "WS-REPORT-NAME",
+        "ERR-FLG-ON",
+        "CONFIRMI"
+      ],
+      "outputs": [
+        "WS-IDX",
+        "END-LOOP-YES",
+        "JCL-RECORD"
+      ],
+      "purpose": "This call submits a job to the internal reader to generate a report."
+    },
+    {
+      "caller": "PROCESS-ENTER-KEY",
+      "callee": "SUBMIT-JOB-TO-INTRDR",
+      "inputs": [
+        "PARM-START-DATE-1",
+        "PARM-END-DATE-1",
+        "WS-REPORT-NAME",
+        "ERR-FLG-ON",
+        "CONFIRMI"
+      ],
+      "outputs": [
+        "WS-IDX",
+        "END-LOOP-YES",
+        "JCL-RECORD"
+      ],
+      "purpose": "This call submits a job to the internal reader to generate a report."
+    },
+    {
+      "caller": "PROCESS-ENTER-KEY",
+      "callee": "SEND-TRNRPT-SCREEN",
+      "inputs": [
+        "SEND-ERASE-YES",
+        "WS-MESSAGE"
+      ],
+      "outputs": [],
+      "purpose": "This call sends the transaction report screen to the user."
+    },
+    {
+      "caller": "PROCESS-ENTER-KEY",
+      "callee": "SEND-TRNRPT-SCREEN",
+      "inputs": [
+        "SEND-ERASE-YES",
+        "WS-MESSAGE"
+      ],
+      "outputs": [],
+      "purpose": "This call sends the transaction report screen to the user."
+    },
+    {
+      "caller": "PROCESS-ENTER-KEY",
+      "callee": "SEND-TRNRPT-SCREEN",
+      "inputs": [
+        "WS-MESSAGE",
+        "SEND-ERASE-YES",
+        "CORPT0AO"
+      ],
+      "outputs": [],
+      "purpose": "Sends the transaction report screen to the user, displaying any error messages."
+    },
+    {
+      "caller": "PROCESS-ENTER-KEY",
+      "callee": "SEND-TRNRPT-SCREEN",
+      "inputs": [
+        "WS-MESSAGE",
+        "SEND-ERASE-YES",
+        "CORPT0AO"
+      ],
+      "outputs": [],
+      "purpose": "Sends the transaction report screen to the user, displaying any error messages."
+    },
+    {
+      "caller": "PROCESS-ENTER-KEY",
+      "callee": "SEND-TRNRPT-SCREEN",
+      "inputs": [
+        "WS-MESSAGE",
+        "SEND-ERASE-YES",
+        "CORPT0AO"
+      ],
+      "outputs": [],
+      "purpose": "Sends the transaction report screen to the user, displaying any error messages."
+    },
+    {
+      "caller": "PROCESS-ENTER-KEY",
+      "callee": "SEND-TRNRPT-SCREEN",
+      "inputs": [
+        "WS-MESSAGE",
+        "SEND-ERASE-YES",
+        "CORPT0AO"
+      ],
+      "outputs": [],
+      "purpose": "Sends the transaction report screen to the user, displaying any error messages."
+    },
+    {
+      "caller": "PROCESS-ENTER-KEY",
+      "callee": "SEND-TRNRPT-SCREEN",
+      "inputs": [
+        "WS-MESSAGE",
+        "SEND-ERASE-YES",
+        "CORPT0AO"
+      ],
+      "outputs": [],
+      "purpose": "Sends the transaction report screen to the user, displaying any error messages."
+    },
+    {
+      "caller": "PROCESS-ENTER-KEY",
+      "callee": "SEND-TRNRPT-SCREEN",
+      "inputs": [
+        "SEND-ERASE-YES",
+        "WS-MESSAGE"
+      ],
+      "outputs": [],
+      "purpose": "Sends the transaction report screen to the user, displaying an error message if date validation fails."
+    },
+    {
+      "caller": "PROCESS-ENTER-KEY",
+      "callee": "SEND-TRNRPT-SCREEN",
+      "inputs": [
+        "SEND-ERASE-YES",
+        "WS-MESSAGE"
+      ],
+      "outputs": [],
+      "purpose": "Sends the transaction report screen to the user, displaying an error message if date validation fails."
+    },
+    {
+      "caller": "PROCESS-ENTER-KEY",
+      "callee": "SEND-TRNRPT-SCREEN",
+      "inputs": [
+        "SEND-ERASE-YES",
+        "WS-MESSAGE"
+      ],
+      "outputs": [],
+      "purpose": "Sends the transaction report screen to the user, displaying an error message if date validation fails."
+    },
+    {
+      "caller": "PROCESS-ENTER-KEY",
+      "callee": "SEND-TRNRPT-SCREEN",
+      "inputs": [
+        "SEND-ERASE-YES",
+        "WS-MESSAGE"
+      ],
+      "outputs": [],
+      "purpose": "Sends the transaction report screen to the user, displaying an error message if date validation fails."
+    },
+    {
+      "caller": "PROCESS-ENTER-KEY",
+      "callee": "SEND-TRNRPT-SCREEN",
+      "inputs": [
+        "SEND-ERASE-YES",
+        "WS-MESSAGE"
+      ],
+      "outputs": [],
+      "purpose": "Sends the transaction report screen to the user, displaying an error message if date validation fails."
+    },
+    {
+      "caller": "PROCESS-ENTER-KEY",
+      "callee": "SEND-TRNRPT-SCREEN",
+      "inputs": [
+        "WS-MESSAGE",
+        "SEND-ERASE-YES",
+        "SEND-ERASE-NO"
+      ],
+      "outputs": [],
+      "purpose": "Sends the formatted screen to the user, displaying any error messages."
+    },
+    {
+      "caller": "PROCESS-ENTER-KEY",
+      "callee": "SEND-TRNRPT-SCREEN",
+      "inputs": [
+        "WS-MESSAGE",
+        "SEND-ERASE-YES",
+        "SEND-ERASE-NO"
+      ],
+      "outputs": [],
+      "purpose": "Sends the formatted screen to the user, displaying any error messages."
+    },
+    {
+      "caller": "PROCESS-ENTER-KEY",
+      "callee": "SUBMIT-JOB-TO-INTRDR",
+      "inputs": [
+        "CONFIRMI",
+        "WS-REPORT-NAME",
+        "WS-ERR-FLG",
+        "JOB-LINES",
+        "JCL-RECORD",
+        "WS-IDX"
+      ],
+      "outputs": [
+        "WS-ERR-FLG",
+        "END-LOOP-YES"
+      ],
+      "purpose": "Submits a job to the internal reader after confirming with the user."
+    },
+    {
+      "caller": "PROCESS-ENTER-KEY",
+      "callee": "SEND-TRNRPT-SCREEN",
+      "inputs": [
+        "WS-MESSAGE",
+        "SEND-ERASE-YES",
+        "SEND-ERASE-NO"
+      ],
+      "outputs": [],
+      "purpose": "Sends the formatted screen to the user, displaying any error messages."
+    },
+    {
+      "caller": "PROCESS-ENTER-KEY",
+      "callee": "INITIALIZE-ALL-FIELDS",
+      "inputs": [],
+      "outputs": [
+        "MONTHLYI",
+        "YEARLYI",
+        "CUSTOMI",
+        "SDTMMI",
+        "SDTDDI",
+        "SDTYYYYI",
+        "EDTMMI",
+        "EDTDDI",
+        "EDTYYYYI",
+        "CONFIRMI",
+        "WS-MESSAGE"
+      ],
+      "purpose": "Initializes all input fields on the screen and the message field."
+    },
+    {
+      "caller": "PROCESS-ENTER-KEY",
+      "callee": "SEND-TRNRPT-SCREEN",
+      "inputs": [
+        "WS-MESSAGE",
+        "SEND-ERASE-YES",
+        "SEND-ERASE-NO",
+        "CORPT0AO"
+      ],
+      "outputs": [],
+      "purpose": "Sends the transaction report screen to the user."
+    },
+    {
+      "caller": "SUBMIT-JOB-TO-INTRDR",
+      "callee": "SEND-TRNRPT-SCREEN",
+      "inputs": [
+        "WS-MESSAGE",
+        "SEND-ERASE-YES",
+        "SEND-ERASE-NO",
+        "CORPT0AO"
+      ],
+      "outputs": [],
+      "purpose": "Sends the transaction report screen to the user."
+    },
+    {
+      "caller": "SUBMIT-JOB-TO-INTRDR",
+      "callee": "INITIALIZE-ALL-FIELDS",
+      "inputs": [],
+      "outputs": [
+        "MONTHLYI",
+        "YEARLYI",
+        "CUSTOMI",
+        "SDTMMI",
+        "SDTDDI",
+        "SDTYYYYI",
+        "EDTMMI",
+        "EDTDDI",
+        "EDTYYYYI",
+        "CONFIRMI",
+        "WS-MESSAGE",
+        "MONTHLYL"
+      ],
+      "purpose": "Initializes all input fields on the screen."
+    },
+    {
+      "caller": "SUBMIT-JOB-TO-INTRDR",
+      "callee": "SEND-TRNRPT-SCREEN",
+      "inputs": [
+        "WS-MESSAGE",
+        "SEND-ERASE-YES",
+        "SEND-ERASE-NO",
+        "CORPT0AO"
+      ],
+      "outputs": [],
+      "purpose": "Sends the transaction report screen to the user."
+    },
+    {
+      "caller": "SUBMIT-JOB-TO-INTRDR",
+      "callee": "SEND-TRNRPT-SCREEN",
+      "inputs": [
+        "WS-MESSAGE",
+        "SEND-ERASE-YES",
+        "SEND-ERASE-NO",
+        "CORPT0AO"
+      ],
+      "outputs": [],
+      "purpose": "Sends the transaction report screen to the user."
+    },
+    {
+      "caller": "SUBMIT-JOB-TO-INTRDR",
+      "callee": "WIRTE-JOBSUB-TDQ",
+      "inputs": [
+        "JCL-RECORD"
+      ],
+      "outputs": [
+        "WS-RESP-CD",
+        "WS-REAS-CD",
+        "WS-ERR-FLG",
+        "WS-MESSAGE"
+      ],
+      "purpose": "This call writes a JCL record to a temporary data queue for job submission."
+    },
+    {
+      "caller": "WIRTE-JOBSUB-TDQ",
+      "callee": "SEND-TRNRPT-SCREEN",
+      "inputs": [
+        "WS-MESSAGE",
+        "SEND-ERASE-FLG"
+      ],
+      "outputs": [],
+      "purpose": "This call sends an error message to the screen if writing to the temporary data queue fails."
+    },
+    {
+      "caller": "SEND-TRNRPT-SCREEN",
+      "callee": "POPULATE-HEADER-INFO",
+      "inputs": [
+        "WS-TRANID",
+        "WS-PGMNAME"
+      ],
+      "outputs": [],
+      "purpose": "This call populates the header information on the screen with current date, time, program name, and transaction ID."
+    }
+  ],
+  "flow_diagram": null,
+  "copybooks_not_found": []
+}

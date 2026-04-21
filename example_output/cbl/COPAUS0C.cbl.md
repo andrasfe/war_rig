@@ -2,44 +2,59 @@
 
 **File**: `cbl/COPAUS0C.cbl`
 **Type**: FileType.COBOL
-**Analyzed**: 2026-03-16 19:46:49.116863
+**Analyzed**: 2026-04-21 13:43:17.678937
 
 ## Purpose
 
-COPAUS0C is a CICS program that displays pending authorization summaries for a given account ID. It retrieves authorization details from an IMS database and presents them on a screen, allowing the user to select an authorization for further details.
+This CICS COBOL program, COPAUS0C, retrieves and displays pending authorization summaries for a given account ID. It allows users to navigate through multiple pages of authorization details and select an authorization for further details.
 
-**Business Context**: This program is used to view and select pending authorizations for an account, likely as part of a customer service or fraud investigation workflow.
+**Business Context**: This program is likely used by customer service representatives or fraud analysts to review and manage pending authorizations for customer accounts.
 
 ## Inputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| DFHCOMMAREA | IOType.CICS_COMMAREA | Communication area passed between CICS transactions, contains account ID and program context. |
-| COPAU0AI | IOType.CICS_MAP | Input map for the COPAU0A0 screen, contains account ID and selection fields. |
-| PAUTDTL1 | IOType.IMS_SEGMENT | IMS segment containing pending authorization details. |
+| COPAU0AI | IOType.CICS_MAP | CICS Map containing input fields, including the account ID (ACCTIDI) and selection flags for authorizations (SEL0001I - SEL0005I). |
+| CARDDEMO-COMMAREA | IOType.CICS_COMMAREA | CICS Commarea used to pass data between this program and other CARDDEMO programs. Contains account ID (CDEMO-ACCT-ID), program context (CDEMO-PGM-CONTEXT), and authorization keys (CDEMO-CPVS-AUTH-KEYS). |
+| PAUTDTL1 | IOType.IMS_SEGMENT | IMS segment containing pending authorization details, including authorization key (PAUT9CTS), transaction ID (PA-TRANSACTION-ID), date (PA-AUTH-ORIG-DATE), time (PA-AUTH-ORIG-TIME), type (PA-AUTH-TYPE), approval status (PA-AUTH-RESP-CODE), match status (PA-MATCH-STATUS), and approved amount (PA-APPROVED-AMT). |
 
 ## Outputs
 
 | Name | Type | Description |
 |------|------|-------------|
-| COPAU0AO | IOType.CICS_MAP | Output map for the COPAU0A0 screen, displays account information and authorization summaries. |
-| CARDDEMO-COMMAREA | IOType.CICS_COMMAREA | Updated communication area passed to subsequent transactions. |
+| COPAU0AO | IOType.CICS_MAP | CICS Map containing output fields to display authorization summaries, including transaction IDs (TRNID01I - TRNID05I), dates (PDATE01I - PDATE05I), times (PTIME01I - PTIME05I), types (PTYPE01I - PTYPE05I), approval statuses (PAPRV01I - PAPRV05I), match statuses (PSTAT01I - PSTAT05I), amounts (PAMT001I - PAMT005I), and selection indicators (SEL0001A - SEL0005A). |
+| CARDDEMO-COMMAREA | IOType.CICS_COMMAREA | Updated CICS Commarea passed to other programs.  Contains account ID (CDEMO-ACCT-ID), program context (CDEMO-PGM-CONTEXT), and authorization keys (CDEMO-CPVS-AUTH-KEYS). |
 
 ## Called Programs
 
 | Program | Call Type | Purpose |
 |---------|-----------|---------|
-| CDEMO-TO-PROGRAM | CallType.CICS_XCTL | Transfers control to another CICS program to display authorization details. |
+| CDEMO-TO-PROGRAM | CallType.CICS_XCTL | Transfers control to another CARDDEMO program based on user selection (e.g., authorization details screen). |
+| SEND-PAULST-SCREEN | CallType.STATIC_CALL | Sends the COPAU0AO map to the terminal to display the authorization summary screen. |
+| RECEIVE-PAULST-SCREEN | CallType.STATIC_CALL | Receives the COPAU0AI map from the terminal to get the user's input. |
+| RETURN-TO-PREV-SCREEN | CallType.STATIC_CALL | Returns to the previous screen (likely the main menu) when the user presses PF3. |
+| GATHER-DETAILS | CallType.STATIC_CALL | Gathers account details and authorization information to populate the screen. |
+| PROCESS-ENTER-KEY | CallType.STATIC_CALL | Processes the user's input when the ENTER key is pressed, validating the account ID and handling authorization selections. |
+| PROCESS-PF7-KEY | CallType.STATIC_CALL | Processes the user's input when the PF7 key is pressed, navigating to the previous page of authorization details. |
+| PROCESS-PF8-KEY | CallType.STATIC_CALL | Processes the user's input when the PF8 key is pressed, navigating to the next page of authorization details. |
+| GATHER-ACCOUNT-DETAILS | CallType.STATIC_CALL | Retrieves and formats account details for display on the screen. |
+| INITIALIZE-AUTH-DATA | CallType.STATIC_CALL | Initializes the authorization data area before retrieving and displaying authorization details. |
+| PROCESS-PAGE-FORWARD | CallType.STATIC_CALL | Retrieves and populates the authorization details for the current page. |
+| GET-AUTH-SUMMARY | CallType.STATIC_CALL | Retrieves the authorization summary information based on the authorization key. |
+| REPOSITION-AUTHORIZATIONS | CallType.STATIC_CALL | Repositions the IMS database to the correct authorization record based on the authorization key. |
+| GET-AUTHORIZATIONS | CallType.STATIC_CALL | Retrieves the next authorization detail record from the IMS database. |
+| POPULATE-AUTH-LIST | CallType.STATIC_CALL | Populates the authorization list on the screen with the retrieved authorization details. |
 
 ## Business Rules
 
 - **BR001**: Account ID must be numeric and not spaces or LOW-VALUES.
-- **BR002**: If an authorization is selected, the program transfers control to the authorization details program.
+- **BR002**: If an authorization is selected, the selected value must be 'S' or 's' to proceed to the authorization details screen.
+- **BR003**: The program handles PF7 and PF8 keys to navigate through pages of authorization details.
 
 ## Paragraphs/Procedures
 
 ### COPAUS0C
-This is the program ID paragraph. It simply defines the program's name and does not contain any executable code.
+This is the program ID paragraph. It simply defines the program name COPAUS0C. It does not perform any logic or operations. It serves as a marker for the start of the program definition. No inputs are consumed or outputs produced. No business logic or error handling is present. It does not call any other paragraphs or programs.
 
 ### MAIN-PARA
 > [Source: MAIN-PARA.cbl.md](COPAUS0C.cbl.d/MAIN-PARA.cbl.md)
@@ -181,7 +196,7 @@ ACCTIDO OF COPAU0AO
 │                       └── PERFORM: PERFORM SEND-PAULST-SCREEN
 └── EXEC_CICS: EXEC CICS RETURN TRANSID (WS-CICS-TRANID) COMMAREA (CARDDEMO-COMMAREA) END-EXEC
 ```
-This paragraph is the main control flow for the COPAUS0C program. It determines whether the program is being entered for the first time or re-entered via a CICS link. If it's the first entry (EIBCALEN = 0), it initializes the CARDDEMO-COMMAREA, sets the 'CDEMO-TO-PROGRAM' to 'WS-PGM-AUTH-SMRY', and sends the initial screen using 'SEND-PAULST-SCREEN'. If it's a re-entry, it receives the data from the commarea, and then evaluates the EIBAID to determine which action to perform based on the user's input (ENTER, PF3, PF7, PF8, or other). Based on the key pressed, it performs different paragraphs such as PROCESS-ENTER-KEY, RETURN-TO-PREV-SCREEN, PROCESS-PF7-KEY, or PROCESS-PF8-KEY. If the account ID is not numeric, it moves spaces to ACCTIDO of COPAU0AO and LOW-VALUES to WS-ACCT-ID. Finally, it returns control to CICS with the updated commarea.
+This paragraph serves as the main control logic for the CICS transaction. It first initializes flags and working storage. It then checks if the commarea (CARDDEMO-COMMAREA) is empty, indicating a first-time entry. If it's the first time, it initializes the commarea, sets the 'to program' field to WS-PGM-AUTH-SMRY, and sends the initial screen. If not the first time, it receives the screen input and evaluates the EIBAID to determine the action to perform based on the pressed key. Depending on the key pressed (ENTER, PF3, PF7, PF8), it calls different paragraphs to process the input or navigate between screens. If an invalid key is pressed, it sets an error flag and displays an error message. Finally, it returns control to CICS, passing the updated commarea.
 
 ### PROCESS-ENTER-KEY
 > [Source: PROCESS-ENTER-KEY.cbl.md](COPAUS0C.cbl.d/PROCESS-ENTER-KEY.cbl.md)
@@ -326,7 +341,7 @@ TO WS-MESSAGE
 │                           └── MOVE: MOVE -1                TO ACCTIDL OF COPAU0AI
 └── PERFORM: PERFORM GATHER-DETAILS
 ```
-This paragraph processes the input when the user presses the ENTER key. It validates the account ID entered by the user in the ACCTIDI field of the COPAU0AI map. If the account ID is spaces, LOW-VALUES, or non-numeric, it sets an error message in WS-MESSAGE and sets WS-ERR-FLG to 'Y'. If the account ID is valid, it moves the account ID to WS-ACCT-ID and CDEMO-ACCT-ID. It then evaluates the selection fields (SEL0001I to SEL0005I) to determine if an authorization has been selected. If a valid authorization is selected (indicated by 'S' or 's'), it moves WS-PGM-AUTH-DTL to CDEMO-TO-PROGRAM and XCTLs to that program to display the authorization details. If the selection is invalid, it sets an error message. Finally, it calls GATHER-DETAILS to refresh the screen with the selected authorization.
+This paragraph processes the input received when the user presses the ENTER key. It validates the account ID entered by the user, ensuring it is not spaces, LOW-VALUES, or non-numeric. If the account ID is invalid, it sets an error flag and displays an appropriate error message. If the account ID is valid, it moves the account ID to working storage and the commarea. It then evaluates the selection fields (SEL0001I - SEL0005I) to determine if an authorization has been selected. If an authorization is selected, it moves the corresponding authorization key to the commarea and transfers control to the authorization details program (CDEMO-TO-PROGRAM). If the selection is invalid, it displays an error message. Finally, it calls GATHER-DETAILS to refresh the authorization summary information.
 
 ### GATHER-DETAILS
 > [Source: GATHER-DETAILS.cbl.md](COPAUS0C.cbl.d/GATHER-DETAILS.cbl.md)
@@ -359,7 +374,7 @@ PARAGRAPH
     └── IF: IF FOUND-PAUT-SMRY-SEG
         └── PERFORM: PERFORM PROCESS-PAGE-FORWARD
 ```
-This paragraph prepares the data for display on the screen. It moves -1 to ACCTIDL of COPAU0AI and 0 to CDEMO-CPVS-PAGE-NUM. If WS-ACCT-ID is not LOW-VALUES, it performs GATHER-ACCOUNT-DETAILS to retrieve account details and INITIALIZE-AUTH-DATA to initialize authorization data. If the PAUT-SMRY segment is found (FOUND-PAUT-SMRY-SEG is set), it performs PROCESS-PAGE-FORWARD to retrieve and display the authorization summaries.
+This paragraph orchestrates the retrieval and preparation of data for the authorization summary screen. It first moves -1 to ACCTIDL of COPAU0AI and 0 to CDEMO-CPVS-PAGE-NUM. If a valid account ID (WS-ACCT-ID) is present, it calls GATHER-ACCOUNT-DETAILS to retrieve account-specific information. It then calls INITIALIZE-AUTH-DATA to clear the authorization display area. If the PAUT-SMRY segment is found, it calls PROCESS-PAGE-FORWARD to retrieve and format the authorization details for the first page. This paragraph acts as a central point for data retrieval and formatting before displaying the authorization summary screen.
 
 ### PROCESS-PF7-KEY
 > [Source: PROCESS-PF7-KEY.cbl.md](COPAUS0C.cbl.d/PROCESS-PF7-KEY.cbl.md)
@@ -406,7 +421,7 @@ TO WS-AUTH-KEY-SAVE
 WS-MESSAGE
         └── SET: SET SEND-ERASE-NO            TO TRUE
 ```
-This paragraph handles the processing when the PF7 key (previous page) is pressed. If the current page number (CDEMO-CPVS-PAGE-NUM) is greater than 1, it decrements the page number by 1. It then retrieves the authorization key for the previous page from CDEMO-CPVS-PAUKEY-PREV-PG and moves it to WS-AUTH-KEY-SAVE. It performs GET-AUTH-SUMMARY to retrieve the authorization summary for the previous page. It sets SEND-ERASE-NO to TRUE to prevent the screen from being erased. It then performs INITIALIZE-AUTH-DATA and PROCESS-PAGE-FORWARD to display the previous page of authorization summaries. If the user is already on the first page, it displays a message indicating that they are at the top of the page.
+This paragraph handles the logic for navigating to the previous page of authorization details when the PF7 key is pressed. It first checks if the current page number (CDEMO-CPVS-PAGE-NUM) is greater than 1. If it is, it decrements the page number and retrieves the authorization key for the previous page from CDEMO-CPVS-PAUKEY-PREV-PG. It then calls GET-AUTH-SUMMARY to retrieve the authorization summary for the previous page. It sets the SEND-ERASE-NO flag to prevent erasing the screen and calls INITIALIZE-AUTH-DATA to clear the authorization display area. Finally, it calls PROCESS-PAGE-FORWARD to retrieve and format the authorization details for the previous page. If the current page number is not greater than 1, it displays a message indicating that the user is already at the top of the page.
 
 ### PROCESS-PF8-KEY
 > [Source: PROCESS-PF8-KEY.cbl.md](COPAUS0C.cbl.d/PROCESS-PF8-KEY.cbl.md)
@@ -454,7 +469,7 @@ PARAGRAPH
         └── MOVE: MOVE 'You are already at the bottom of the page...'
 TO WS-MESSAGE
 ```
-This paragraph handles the processing when the PF8 key (next page) is pressed. It checks if CDEMO-CPVS-PAUKEY-LAST is SPACES or LOW-VALUES. If it is, it moves LOW-VALUES to WS-AUTH-KEY-SAVE. Otherwise, it moves CDEMO-CPVS-PAUKEY-LAST to WS-AUTH-KEY-SAVE. It then performs GET-AUTH-SUMMARY and REPOSITION-AUTHORIZATIONS. It sets SEND-ERASE-NO to TRUE to prevent the screen from being erased. If NEXT-PAGE-YES is set, it performs INITIALIZE-AUTH-DATA and PROCESS-PAGE-FORWARD to display the next page of authorization summaries. Otherwise, it displays a message indicating that the user is already at the bottom of the page.
+This paragraph handles the logic for navigating to the next page of authorization details when the PF8 key is pressed. It first checks if CDEMO-CPVS-PAUKEY-LAST is spaces or LOW-VALUES. If it is, it moves LOW-VALUES to WS-AUTH-KEY-SAVE. Otherwise, it moves CDEMO-CPVS-PAUKEY-LAST to WS-AUTH-KEY-SAVE and calls GET-AUTH-SUMMARY and REPOSITION-AUTHORIZATIONS. It then sets the SEND-ERASE-NO flag to prevent erasing the screen. If NEXT-PAGE-YES is set, it calls INITIALIZE-AUTH-DATA and PROCESS-PAGE-FORWARD to retrieve and format the authorization details for the next page. Otherwise, it displays a message indicating that the user is already at the bottom of the page.
 
 ### PROCESS-PAGE-FORWARD
 > [Source: PROCESS-PAGE-FORWARD.cbl.md](COPAUS0C.cbl.d/PROCESS-PAGE-FORWARD.cbl.md)
@@ -527,7 +542,7 @@ CDEMO-CPVS-PAUKEY-PREV-PG(CDEMO-CPVS-PAGE-NUM)
             └── ELSE: ELSE
                 └── SET: SET NEXT-PAGE-NO TO TRUE
 ```
-This paragraph retrieves and displays authorization summaries for a page. It initializes WS-IDX to 1 and CDEMO-CPVS-PAUKEY-LAST to LOW-VALUES. It then enters a loop that continues until WS-IDX is greater than 5, AUTHS-EOF is set, or ERR-FLG-ON is set. Inside the loop, if EIBAID is DFHPF7 and WS-IDX is 1, it performs REPOSITION-AUTHORIZATIONS. Otherwise, it performs GET-AUTHORIZATIONS to retrieve the next authorization summary. If AUTHS-NOT-EOF and ERR-FLG-OFF are set, it performs POPULATE-AUTH-LIST to populate the screen with the authorization summary, increments WS-IDX by 1, and moves PA-AUTHORIZATION-KEY to CDEMO-CPVS-PAUKEY-LAST. If WS-IDX is 2, it increments CDEMO-CPVS-PAGE-NUM by 1 and moves PA-AUTHORIZATION-KEY to CDEMO-CPVS-PAUKEY-PREV-PG. After the loop, if AUTHS-NOT-EOF and ERR-FLG-OFF are set, it performs GET-AUTHORIZATIONS to check if there are more authorization summaries. If there are, it sets NEXT-PAGE-YES to TRUE; otherwise, it sets NEXT-PAGE-NO to TRUE. The loop terminates when WS-IDX exceeds 5 (5 authorizations are displayed per page), the end of the authorization list is reached (AUTHS-EOF), or an error occurs (ERR-FLG-ON).
+This paragraph retrieves and populates the authorization details for the current page. It initializes WS-IDX to 1 and CDEMO-CPVS-PAUKEY-LAST to LOW-VALUES. It then enters a loop that continues until WS-IDX is greater than 5, AUTHS-EOF is set, or ERR-FLG-ON is set. Inside the loop, it calls GET-AUTHORIZATIONS to retrieve the next authorization detail record. If AUTHS-NOT-EOF and ERR-FLG-OFF are set, it calls POPULATE-AUTH-LIST to populate the authorization list on the screen and increments WS-IDX. It also moves PA-AUTHORIZATION-KEY to CDEMO-CPVS-PAUKEY-LAST and, if WS-IDX is 2, it increments CDEMO-CPVS-PAGE-NUM and moves PA-AUTHORIZATION-KEY to CDEMO-CPVS-PAUKEY-PREV-PG. After the loop, if AUTHS-NOT-EOF and ERR-FLG-OFF are set, it calls GET-AUTHORIZATIONS again to check if there are more authorizations. If there are, it sets NEXT-PAGE-YES to TRUE; otherwise, it sets NEXT-PAGE-NO to TRUE.
 
 ### GET-AUTHORIZATIONS
 > [Source: GET-AUTHORIZATIONS.cbl.md](COPAUS0C.cbl.d/GET-AUTHORIZATIONS.cbl.md)
@@ -583,7 +598,7 @@ END-STRING
         ├── MOVE: MOVE -1       TO ACCTIDL OF COPAU0AI
         └── PERFORM: PERFORM SEND-PAULST-SCREEN
 ```
-This paragraph retrieves the next pending authorization detail segment (PAUTDTL1) from the IMS database using a GNP (Get Next within Parent) call. It uses the PAUT-PCB-NUM PCB. The retrieved segment is placed into PENDING-AUTH-DETAILS. The DIBSTAT value is moved to IMS-RETURN-CODE. If the DIBSTAT is STATUS-OK, AUTHS-NOT-EOF is set to TRUE. If the DIBSTAT is SEGMENT-NOT-FOUND or END-OF-DB, AUTHS-EOF is set to TRUE. If any other error occurs, WS-ERR-FLG is set to 'Y', an error message is constructed and moved to WS-MESSAGE, and the program performs SEND-PAULST-SCREEN to display the error.
+This paragraph retrieves the next pending authorization detail segment (PAUTDTL1) from the IMS database using a GNP (Get Next within Parent) call. It uses the PAUT-PCB-NUM to specify the PCB (Program Communication Block) for the PAUT database. The retrieved data is placed into the PENDING-AUTH-DETAILS area. The paragraph then checks the DIBSTAT (Data Base Interface Status) code to determine the outcome of the call. If the status is STATUS-OK, it sets AUTHS-NOT-EOF to TRUE. If the status indicates the end of the database or a segment not found, it sets AUTHS-EOF to TRUE. If any other error occurs, it sets WS-ERR-FLG to 'Y', constructs an error message containing the IMS return code, and calls SEND-PAULST-SCREEN to display the error message to the user.
 
 ### REPOSITION-AUTHORIZATIONS
 > [Source: REPOSITION-AUTHORIZATIONS.cbl.md](COPAUS0C.cbl.d/REPOSITION-AUTHORIZATIONS.cbl.md)
@@ -643,7 +658,7 @@ END-STRING
         ├── MOVE: MOVE -1       TO ACCTIDL OF COPAU0AI
         └── PERFORM: PERFORM SEND-PAULST-SCREEN
 ```
-This paragraph repositions the IMS database cursor to a specific authorization key. It moves WS-AUTH-KEY-SAVE to PA-AUTHORIZATION-KEY. It then executes a DLI GNP call to retrieve the PAUTDTL1 segment where PAUT9CTS equals PA-AUTHORIZATION-KEY. The DIBSTAT value is moved to IMS-RETURN-CODE. If the DIBSTAT is STATUS-OK, AUTHS-NOT-EOF is set to TRUE. If the DIBSTAT is SEGMENT-NOT-FOUND or END-OF-DB, AUTHS-EOF is set to TRUE. If any other error occurs, WS-ERR-FLG is set to 'Y', an error message is constructed and moved to WS-MESSAGE, and the program performs SEND-PAULST-SCREEN to display the error.
+This paragraph repositions the IMS database to a specific authorization record based on the authorization key (WS-AUTH-KEY-SAVE). It moves the authorization key to PA-AUTHORIZATION-KEY and then executes a DLI GNP (Get Next within Parent) call with a WHERE clause to retrieve the PAUTDTL1 segment where PAUT9CTS matches PA-AUTHORIZATION-KEY. The retrieved data is placed into the PENDING-AUTH-DETAILS area. The paragraph then checks the DIBSTAT code to determine the outcome of the call. If the status is STATUS-OK, it sets AUTHS-NOT-EOF to TRUE. If the status indicates the end of the database or a segment not found, it sets AUTHS-EOF to TRUE. If any other error occurs, it sets WS-ERR-FLG to 'Y', constructs an error message containing the IMS return code, and calls SEND-PAULST-SCREEN to display the error message to the user.
 
 ### POPULATE-AUTH-LIST
 > [Source: POPULATE-AUTH-LIST.cbl.md](COPAUS0C.cbl.d/POPULATE-AUTH-LIST.cbl.md)
@@ -806,7 +821,7 @@ TO CDEMO-CPVS-AUTH-KEYS(5)
     └── WHEN: WHEN OTHER
         └── CONTINUE: CONTINUE
 ```
-This paragraph populates the output map (COPAU0AO) with authorization details retrieved from the PENDING-AUTH-DETAILS segment. It moves data from various fields in the PAUTDTL1 segment to corresponding fields in the COPAU0AI map, such as transaction ID, date, time, authorization type, approval status, match status, and amount. It transforms the authorization date and time into displayable formats. The approval status is set to 'A' if the response code is '00', otherwise it's set to 'D'. The authorization key is saved in the CDEMO-CPVS-AUTH-KEYS table. The specific output fields that are populated depend on the value of WS-IDX, which represents the index of the authorization being displayed on the screen. The DFHBMUNP attribute is moved to the SEL00xxA field to allow the user to select an authorization.
+This paragraph populates the authorization list on the screen (COPAU0AI) with data from the pending authorization details (PAUTDTL1). It moves the approved amount (PA-APPROVED-AMT) to WS-AUTH-AMT, formats the authorization date and time into WS-AUTH-DATE and WS-AUTH-TIME, and determines the authorization approval status (WS-AUTH-APRV-STAT) based on the response code (PA-AUTH-RESP-CODE). It then uses an EVALUATE statement based on WS-IDX to move the authorization details to the corresponding fields in the COPAU0AI map (TRNID01I-TRNID05I, PDATE01I-PDATE05I, etc.). The DFHBMUNP attribute is moved to the corresponding SEL000xA field to allow the user to select the authorization. This paragraph effectively formats and displays the authorization details on the screen.
 
 ### INITIALIZE-AUTH-DATA
 > [Source: INITIALIZE-AUTH-DATA.cbl.md](COPAUS0C.cbl.d/INITIALIZE-AUTH-DATA.cbl.md)
@@ -919,7 +934,7 @@ PARAGRAPH
         └── WHEN: WHEN OTHER
             └── CONTINUE: CONTINUE
 ```
-This paragraph initializes the authorization data fields on the COPAU0A screen. It iterates through five authorization entries, clearing the transaction ID, date, time, type, approval status, and amount fields for each entry. The paragraph uses an EVALUATE statement to selectively move spaces to the appropriate fields in the COPAU0AI structure based on the loop index WS-IDX. The purpose is to ensure a clean slate for displaying authorization information. It consumes no external input, and writes directly to the COPAU0AI structure. No business logic or error handling is present in this paragraph, and it does not call any other paragraphs or programs.
+This paragraph initializes the authorization data fields on the COPAU0A screen. It iterates through five authorization data sets (SEL0001A to SEL0005A) within the COPAU0AI map. For each set, it moves 'DFHBMPRO' to the selection field (e.g., SEL0001A) and spaces to the transaction ID (TRNID01I), date (PDATE01I), time (PTIME01I), type (PTYPE01I), approval (PAPRV01I), status (PSTAT01I), and amount (PAMT001I) fields. This effectively clears out any previous authorization data displayed on the screen, preparing it for new information. The loop ensures that all five authorization data sets are initialized before proceeding to other parts of the program. The paragraph uses an EVALUATE statement to handle each of the five cases individually. No error handling is explicitly performed within this paragraph.
 
 ### RETURN-TO-PREV-SCREEN
 > [Source: RETURN-TO-PREV-SCREEN.cbl.md](COPAUS0C.cbl.d/RETURN-TO-PREV-SCREEN.cbl.md)
@@ -947,7 +962,7 @@ PARAGRAPH
 ├── MOVE: MOVE ZEROS           TO CDEMO-PGM-CONTEXT
 └── EXEC_CICS: EXEC CICS XCTL PROGRAM(CDEMO-TO-PROGRAM) COMMAREA(CARDDEMO-COMMAREA) END-EXEC
 ```
-This paragraph handles the return to the previous screen functionality. It checks if CDEMO-TO-PROGRAM is LOW-VALUES or SPACES, and if so, sets it to 'COSGN00C', which is likely the program ID of the default previous screen. It then moves the current transaction ID (WS-CICS-TRANID) to CDEMO-FROM-TRANID and the current program ID (WS-PGM-AUTH-SMRY) to CDEMO-FROM-PROGRAM. It sets CDEMO-PGM-CONTEXT to ZEROS. Finally, it performs a CICS XCTL to the program specified in CDEMO-TO-PROGRAM, passing the CARDDEMO-COMMAREA. This paragraph consumes WS-CICS-TRANID and WS-PGM-AUTH-SMRY, and writes to CDEMO-FROM-TRANID, CDEMO-FROM-PROGRAM, and CDEMO-PGM-CONTEXT. The business logic involves determining the target program for the XCTL. No error handling is explicitly present. It calls no other paragraphs within this program but executes a CICS XCTL.
+This paragraph returns control to the previously active CICS screen. It checks if the `CDEMO-TO-PROGRAM` field is empty or contains low-values; if so, it defaults the target program to `COSGN00C`. It then moves the current transaction ID (`WS-CICS-TRANID`) to `CDEMO-FROM-TRANID`, the current program ID (`WS-PGM-AUTH-SMRY`) to `CDEMO-FROM-PROGRAM`, and zeroes to `CDEMO-PGM-CONTEXT`. Finally, it executes a CICS XCTL command to transfer control to the program specified in `CDEMO-TO-PROGRAM`, passing the `CARDDEMO-COMMAREA` as the communication area. This allows data to be passed back to the calling program. The primary purpose is to navigate back to the previous screen in the CICS application flow. No error handling is explicitly performed; any errors during the XCTL command will be handled by CICS.
 
 ### SEND-PAULST-SCREEN
 > [Source: SEND-PAULST-SCREEN.cbl.md](COPAUS0C.cbl.d/SEND-PAULST-SCREEN.cbl.md)
@@ -994,7 +1009,7 @@ PARAGRAPH
     └── ELSE: ELSE
         └── EXEC_CICS: EXEC CICS SEND MAP('COPAU0A') MAPSET('COPAU00') FROM(COPAU0AO) CURSOR END-EXEC
 ```
-This paragraph sends the COPAU0A screen to the terminal. It first checks if IMS-PSB-SCHD is set, and if so, sets IMS-PSB-NOT-SCHD to TRUE and performs a CICS SYNCPOINT. Then, it calls POPULATE-HEADER-INFO to populate the header information on the screen. It moves the message in WS-MESSAGE to ERRMSGO in the COPAU0AO map. Finally, it sends the COPAU0A map using a CICS SEND command. If SEND-ERASE-YES is set, it sends the map with the ERASE option; otherwise, it sends the map without erasing the screen. The paragraph consumes IMS-PSB-SCHD, WS-MESSAGE, and SEND-ERASE-YES, and writes to the COPAU0AO map. The business logic involves deciding whether to erase the screen before sending the map. No explicit error handling is present. It calls POPULATE-HEADER-INFO and executes a CICS SEND command.
+This paragraph sends the COPAU0A screen to the terminal. It first checks if IMS PSB scheduling is active (`IMS-PSB-SCHD`). If it is, it sets `IMS-PSB-NOT-SCHD` to TRUE and issues a CICS SYNCPOINT command. This is likely related to IMS database synchronization. It then calls the `POPULATE-HEADER-INFO` paragraph to populate the header information on the screen. The paragraph moves the content of `WS-MESSAGE` to the `ERRMSGO` field in the output map (`COPAU0AO`). Finally, it sends the map to the terminal using a CICS SEND command. If `SEND-ERASE-YES` is true, the screen is erased before sending the map; otherwise, the map is sent without erasing the screen. The CURSOR option is used to position the cursor on the screen. This paragraph is responsible for displaying information and error messages to the user. Error handling related to the CICS SEND command is not explicitly shown in this paragraph.
 
 ### RECEIVE-PAULST-SCREEN
 > [Source: RECEIVE-PAULST-SCREEN.cbl.md](COPAUS0C.cbl.d/RECEIVE-PAULST-SCREEN.cbl.md)
@@ -1016,7 +1031,7 @@ PARAGRAPH
 ├── EXEC_CICS: EXEC CICS RECEIVE MAP('COPAU0A') MAPSET('COPAU00') INTO(COPAU0AI) RESP(WS-RESP-CD) RESP2(WS-REAS-CD) END-EXEC
 └── UNKNOWN
 ```
-This paragraph receives data from the COPAU0A screen. It executes a CICS RECEIVE command to receive the map COPAU0A from mapset COPAU00 into the COPAU0AI structure. It also captures the CICS response codes into WS-RESP-CD and WS-REAS-CD. This paragraph's primary purpose is to obtain user input from the screen. It consumes no explicit input other than the CICS map data and writes to the COPAU0AI structure, WS-RESP-CD, and WS-REAS-CD. There is no business logic or error handling within the paragraph itself, but the response codes are likely checked elsewhere. It does not call any other paragraphs or programs.
+This paragraph receives data from the COPAU0A screen. It executes a CICS RECEIVE command to receive the map `COPAU0A` from mapset `COPAU00` into the input map `COPAU0AI`. The `RESP` and `RESP2` options are used to capture the CICS response codes in `WS-RESP-CD` and `WS-REAS-CD`, respectively. This paragraph retrieves the data entered by the user on the screen. The received data will be used in subsequent processing steps. Error handling is performed by checking the `WS-RESP-CD` and `WS-REAS-CD` fields after the RECEIVE command. The paragraph's primary purpose is to get input from the user via the CICS screen.
 
 ### POPULATE-HEADER-INFO
 > [Source: POPULATE-HEADER-INFO.cbl.md](COPAUS0C.cbl.d/POPULATE-HEADER-INFO.cbl.md)
@@ -1060,7 +1075,7 @@ PARAGRAPH
 ├── MOVE: MOVE WS-CURTIME-SECOND      TO WS-CURTIME-SS
 └── MOVE: MOVE WS-CURTIME-HH-MM-SS    TO CURTIMEO OF COPAU0AO
 ```
-This paragraph populates the header information on the COPAU0A screen. It moves the current date to WS-CURDATE-DATA using the FUNCTION CURRENT-DATE. It then moves CCDA-TITLE01 and CCDA-TITLE02 to TITLE01O and TITLE02O in the COPAU0AO map, respectively. It also moves the transaction ID (WS-CICS-TRANID) to TRNNAMEO and the program name (WS-PGM-AUTH-SMRY) to PGMNAMEO. Finally, it formats the current date and time into the CURDATEO and CURTIMEO fields in the COPAU0AO map. This paragraph consumes CCDA-TITLE01, CCDA-TITLE02, WS-CICS-TRANID, WS-PGM-AUTH-SMRY, and the current date and time, and writes to the COPAU0AO map. There is no business logic or error handling within the paragraph. It does not call any other paragraphs or programs.
+This paragraph populates the header information on the COPAU0A screen. It moves the current date to `WS-CURDATE-DATA` using the `FUNCTION CURRENT-DATE`. It then moves `CCDA-TITLE01` and `CCDA-TITLE02` to `TITLE01O` and `TITLE02O` in the output map (`COPAU0AO`), respectively. The transaction ID (`WS-CICS-TRANID`) is moved to `TRNNAMEO`, and the program ID (`WS-PGM-AUTH-SMRY`) is moved to `PGMNAMEO`. The current date is then formatted into `MM-DD-YY` format and moved to `CURDATEO`. Similarly, the current time is formatted into `HH-MM-SS` format and moved to `CURTIMEO`. This paragraph ensures that the header section of the screen displays the correct date, time, transaction ID, and program ID. No explicit error handling is performed within this paragraph. The data is moved from working storage variables to the output map fields.
 
 ### GATHER-ACCOUNT-DETAILS
 > [Source: GATHER-ACCOUNT-DETAILS.cbl.md](COPAUS0C.cbl.d/GATHER-ACCOUNT-DETAILS.cbl.md)
@@ -1133,7 +1148,7 @@ CASHBALO
 APPRAMTO
 DECLAMTO
 ```
-This paragraph orchestrates the retrieval and formatting of account and customer details for display on the screen. It calls GETCARDXREF-BYACCT to retrieve the card cross-reference information, GETACCTDATA-BYACCT to retrieve account data, and GETCUSTDATA-BYCUST to retrieve customer data. It then moves the customer ID to CUSTIDO and concatenates the customer's first, middle, and last names into CNAMEO. It also concatenates the customer's address lines into ADDR001O and ADDR002O. It moves the customer's phone number to PHONE1O, the account credit limit to CREDLIMO, and the account cash credit limit to CASHLIMO. Finally, it calls GET-AUTH-SUMMARY to retrieve the authorization summary. If a pending authorization summary is found (FOUND-PAUT-SMRY-SEG), it moves the approved and declined authorization counts and amounts, as well as the credit and cash balances, to the corresponding output fields. Otherwise, it moves zeros to these fields. This paragraph consumes data from the CARDXREF, ACCOUNT, and CUSTOMER files, as well as the pending authorization summary, and writes to the COPAU0AO map. The business logic involves formatting the customer name and address, and handling the case where no authorization summary is found. No explicit error handling is present within this paragraph itself, but the called paragraphs likely handle errors. It calls GETCARDXREF-BYACCT, GETACCTDATA-BYACCT, GETCUSTDATA-BYCUST, and GET-AUTH-SUMMARY.
+This paragraph orchestrates the retrieval and population of account and customer details for display on the screen. It calls `GETCARDXREF-BYACCT` to retrieve the card cross-reference data based on the account ID. It then calls `GETACCTDATA-BYACCT` to retrieve account data and `GETCUSTDATA-BYCUST` to retrieve customer data. After retrieving the data, it moves the customer ID to `CUSTIDO` and concatenates the customer's first name, middle initial, and last name into `CNAMEO`. It also concatenates the customer's address lines into `ADDR001O` and `ADDR002O`. The customer's phone number is moved to `PHONE1O`. The account's credit limit and cash credit limit are moved to `CREDLIMO` and `CASHLIMO`, respectively, after being formatted for display. Finally, it calls `GET-AUTH-SUMMARY` to retrieve the authorization summary. If the authorization summary is found, the approved and declined authorization counts and amounts, as well as credit and cash balances, are moved to the corresponding output fields. If the authorization summary is not found, these fields are set to zero. This paragraph consolidates data from multiple sources and formats it for display on the screen. Error handling is delegated to the called paragraphs.
 
 ### GETCARDXREF-BYACCT
 > [Source: GETCARDXREF-BYACCT.cbl.md](COPAUS0C.cbl.d/GETCARDXREF-BYACCT.cbl.md)
@@ -1175,7 +1190,7 @@ END-STRING
         ├── MOVE: MOVE -1       TO ACCTIDL OF COPAU0AI
         └── PERFORM: PERFORM SEND-PAULST-SCREEN
 ```
-This paragraph retrieves the card cross-reference record from the CARDXREF file using the account ID. It moves the account ID (WS-ACCT-ID) to WS-CARD-RID-ACCT-ID-X and then executes a CICS READ command to read the CARDXREF record. If the read is successful (DFHRESP(NORMAL)), it moves the customer ID and card number from the CARDXREF record to CDEMO-CUST-ID and CDEMO-CARD-NUM, respectively. If the record is not found (DFHRESP(NOTFND)), it constructs an error message and calls SEND-PAULST-SCREEN to display the message. If any other error occurs, it sets WS-ERR-FLG to 'Y', constructs an error message, and calls SEND-PAULST-SCREEN. This paragraph consumes WS-ACCT-ID and writes to CDEMO-CUST-ID, CDEMO-CARD-NUM, WS-MESSAGE, and the COPAU0A screen. The business logic involves reading the CARDXREF record and handling the cases where the record is not found or an error occurs. The error handling involves displaying an error message on the screen. It calls SEND-PAULST-SCREEN.
+This paragraph retrieves the card cross-reference record from the `CARDXREF` file based on the account ID. It moves the account ID (`WS-ACCT-ID`) to the key field (`WS-CARD-RID-ACCT-ID-X`). It then executes a CICS READ command to read the record from the `CARDXREF` file using the alternate index `ACCTID`. If the read is successful (`DFHRESP(NORMAL)`), it moves the customer ID and card number from the cross-reference record to `CDEMO-CUST-ID` and `CDEMO-CARD-NUM`, respectively. If the record is not found (`DFHRESP(NOTFND)`), it constructs an error message and calls `SEND-PAULST-SCREEN` to display the message. If any other error occurs, it sets an error flag (`WS-ERR-FLG`), constructs an error message, and calls `SEND-PAULST-SCREEN` to display the message. This paragraph handles the retrieval of the card cross-reference data and displays an error message if the record is not found or if a system error occurs. The file name is stored in `WS-CARDXREFNAME-ACCT-PATH`.
 
 ### GETACCTDATA-BYACCT
 > [Source: GETACCTDATA-BYACCT.cbl.md](COPAUS0C.cbl.d/GETACCTDATA-BYACCT.cbl.md)
@@ -1216,7 +1231,7 @@ END-STRING
         ├── MOVE: MOVE -1       TO ACCTIDL OF COPAU0AI
         └── PERFORM: PERFORM SEND-PAULST-SCREEN
 ```
-This paragraph retrieves the account record from the ACCOUNT file using the account ID. It moves the account ID (XREF-ACCT-ID) to WS-CARD-RID-ACCT-ID-X and then executes a CICS READ command to read the ACCOUNT record. If the read is successful (DFHRESP(NORMAL)), it continues processing. If the record is not found (DFHRESP(NOTFND)), it constructs an error message and calls SEND-PAULST-SCREEN to display the message. If any other error occurs, it sets WS-ERR-FLG to 'Y', constructs an error message, and calls SEND-PAULST-SCREEN. This paragraph consumes XREF-ACCT-ID and writes to WS-MESSAGE and the COPAU0A screen. The business logic involves reading the ACCOUNT record and handling the cases where the record is not found or an error occurs. The error handling involves displaying an error message on the screen. It calls SEND-PAULST-SCREEN.
+This paragraph retrieves the account record from the `ACCOUNT` file based on the account ID. It moves the account ID (`XREF-ACCT-ID`) to the key field (`WS-CARD-RID-ACCT-ID-X`). It then executes a CICS READ command to read the record from the `ACCOUNT` file. If the read is successful (`DFHRESP(NORMAL)`), it continues processing. If the record is not found (`DFHRESP(NOTFND)`), it constructs an error message and calls `SEND-PAULST-SCREEN` to display the message. If any other error occurs, it sets an error flag (`WS-ERR-FLG`), constructs an error message, and calls `SEND-PAULST-SCREEN` to display the message. This paragraph handles the retrieval of the account data and displays an error message if the record is not found or if a system error occurs. The file name is stored in `WS-ACCTFILENAME`.
 
 ### GETCUSTDATA-BYCUST
 > [Source: GETCUSTDATA-BYCUST.cbl.md](COPAUS0C.cbl.d/GETCUSTDATA-BYCUST.cbl.md)
@@ -1257,7 +1272,7 @@ END-STRING
         ├── MOVE: MOVE -1       TO ACCTIDL OF COPAU0AI
         └── PERFORM: PERFORM SEND-PAULST-SCREEN
 ```
-This paragraph retrieves the customer record from the CUSTOMER file using the customer ID. It moves the customer ID (XREF-CUST-ID) to WS-CARD-RID-CUST-ID. It then executes a CICS READ command to read the CUSTOMER record. If the read is successful (DFHRESP(NORMAL)), it continues processing. If the record is not found (DFHRESP(NOTFND)), it constructs an error message and calls SEND-PAULST-SCREEN to display the message. If any other error occurs, it sets WS-ERR-FLG to 'Y', constructs an error message, and calls SEND-PAULST-SCREEN. This paragraph consumes XREF-CUST-ID and writes to WS-MESSAGE and the COPAU0A screen. The business logic involves reading the CUSTOMER record and handling the cases where the record is not found or an error occurs. The error handling involves displaying an error message on the screen. It calls SEND-PAULST-SCREEN.
+This paragraph retrieves the customer record from the `CUSTOMER` file based on the customer ID. It moves the customer ID (`XREF-CUST-ID`) to the key field (`WS-CARD-RID-CUST-ID`). It then executes a CICS READ command to read the record from the `CUSTOMER` file. If the read is successful (`DFHRESP(NORMAL)`), it continues processing. If the record is not found (`DFHRESP(NOTFND)`), it constructs an error message and calls `SEND-PAULST-SCREEN` to display the message. If any other error occurs, it sets an error flag (`WS-ERR-FLG`), constructs an error message, and calls `SEND-PAULST-SCREEN` to display the message. This paragraph handles the retrieval of the customer data and displays an error message if the record is not found or if a system error occurs. The file name is stored in `WS-CUSTFILENAME`.
 
 ### GET-AUTH-SUMMARY
 > [Source: GET-AUTH-SUMMARY.cbl.md](COPAUS0C.cbl.d/GET-AUTH-SUMMARY.cbl.md)
@@ -1285,7 +1300,7 @@ END-STRING
         ├── MOVE: MOVE -1       TO ACCTIDL OF COPAU0AI
         └── PERFORM: PERFORM SEND-PAULST-SCREEN
 ```
-This paragraph retrieves the authorization summary from the IMS database. It first calls SCHEDULE-PSB (which is not defined in this code snippet, so its function is unknown). It then moves the account ID (CDEMO-ACCT-ID) to PA-ACCT-ID. It executes a DLI GU (Get Unique) command to retrieve the PAUTSUM0 segment from the IMS database, using the PAUT-PCB-NUM PCB. The retrieved segment is placed into PENDING-AUTH-SUMMARY. It then moves the DIBSTAT return code to IMS-RETURN-CODE and evaluates the return code. If the status is OK, it sets FOUND-PAUT-SMRY-SEG to TRUE. If the segment is not found, it sets NFOUND-PAUT-SMRY-SEG to TRUE. If any other error occurs, it sets WS-ERR-FLG to 'Y', constructs an error message, and calls SEND-PAULST-SCREEN. This paragraph consumes CDEMO-ACCT-ID and writes to PENDING-AUTH-SUMMARY, IMS-RETURN-CODE, WS-MESSAGE and the COPAU0A screen. The business logic involves retrieving the authorization summary from the IMS database and handling different return codes. The error handling involves displaying an error message on the screen. It calls SCHEDULE-PSB and SEND-PAULST-SCREEN.
+This paragraph retrieves the authorization summary from the IMS database for the given account. It first calls `SCHEDULE-PSB` to schedule the PSB (Program Specification Block) for IMS access. It then moves the account ID (`CDEMO-ACCT-ID`) to the `PA-ACCT-ID` field. It executes a DLI GU (Get Unique) command to retrieve the `PAUTSUM0` segment from the IMS database, using the `PAUT-PCB-NUM` PCB (Program Communication Block). The retrieved segment is placed into the `PENDING-AUTH-SUMMARY` area. The IMS return code (`DIBSTAT`) is moved to `IMS-RETURN-CODE`. The paragraph then evaluates the IMS return code. If the status is OK (`STATUS-OK`), it sets `FOUND-PAUT-SMRY-SEG` to TRUE. If the segment is not found (`SEGMENT-NOT-FOUND`), it sets `NFOUND-PAUT-SMRY-SEG` to TRUE. If any other error occurs, it sets an error flag (`WS-ERR-FLG`), constructs an error message, and calls `SEND-PAULST-SCREEN` to display the message. This paragraph handles the retrieval of the authorization summary from IMS and displays an error message if an error occurs. The paragraph relies on the `SCHEDULE-PSB` paragraph, which is not defined in the provided code snippet.
 
 ### SCHEDULE-PSB
 > [Source: SCHEDULE-PSB.cbl.md](COPAUS0C.cbl.d/SCHEDULE-PSB.cbl.md)
@@ -1312,7 +1327,7 @@ END-STRING
         ├── MOVE: MOVE -1       TO ACCTIDL OF COPAU0AI
         └── PERFORM: PERFORM SEND-PAULST-SCREEN
 ```
-The SCHEDULE-PSB paragraph is responsible for scheduling a PSB for IMS database interaction. It first attempts to schedule the PSB using the `EXEC DLI SCHD` command, specifying the PSB name. After the initial scheduling attempt, it checks if the PSB has been scheduled more than once. If so, it terminates the current PSB using `EXEC DLI TERM` and then re-schedules the PSB. The DIBSTAT variable, containing the IMS return code, is moved to IMS-RETURN-CODE for analysis. If the scheduling is successful (STATUS-OK), the IMS-PSB-SCHD flag is set to TRUE. Otherwise, an error flag (WS-ERR-FLG) is set, an error message is constructed including the IMS return code, and the SEND-PAULST-SCREEN program is called to display the error message on the screen. The ACCTIDL field of COPAU0AI is also set to -1 before calling SEND-PAULST-SCREEN.
+The SCHEDULE-PSB paragraph is responsible for scheduling a Program Specification Block (PSB) within an IMS environment. It first attempts to schedule the PSB using the `EXEC DLI SCHD` command, specifying the PSB name and disabling Dhabend abend processing (lines 3-6). The DIBSTAT value is moved to IMS-RETURN-CODE for checking the status of the scheduling. If the PSB has been scheduled more than once (PSB-SCHEDULED-MORE-THAN-ONCE), it terminates the current PSB and schedules it again (lines 8-17). If the scheduling is successful (STATUS-OK), the IMS-PSB-SCHD flag is set to TRUE (lines 18-19). If the scheduling fails, an error flag (WS-ERR-FLG) is set to 'Y', an error message is constructed including the IMS-RETURN-CODE, and the message is stored in WS-MESSAGE (lines 21-28). Finally, it moves -1 to ACCTIDL of COPAU0AI and calls the SEND-PAULST-SCREEN program to display the error message (lines 29-30).
 
 ## Control Flow
 
@@ -1388,12 +1403,3 @@ flowchart TD
     SEND_PAULST_SCREEN --> POPULATE_HEADER_INFO
     SEND_PAULST_SCREEN -.->|exec cics| CICS__ext
 ```
-
-## Open Questions
-
-- ? What is the purpose of the GATHER-ACCOUNT-DETAILS paragraph?
-  - Context: The code does not provide enough context to understand what account details are gathered and how they are used.
-- ? What is the purpose of the INITIALIZE-AUTH-DATA paragraph?
-  - Context: The code does not provide enough context to understand what authorization data is initialized and how it is used.
-- ? What is the SEND-PAULST-SCREEN paragraph doing?
-  - Context: The code does not provide enough context to understand how the screen is sent and what data is being sent.

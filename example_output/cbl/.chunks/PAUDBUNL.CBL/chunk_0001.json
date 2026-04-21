@@ -7,14 +7,14 @@
       "file_name": "PAUDBUNL.CBL",
       "file_type": "COBOL",
       "analyzed_by": "WAR_RIG",
-      "analyzed_at": "2026-03-16T20:02:10.965336",
+      "analyzed_at": "2026-04-21T13:45:41.644753",
       "iteration_count": 1,
       "final_status": null
     },
     "purpose": {
-      "summary": "This COBOL program contains two paragraphs: 9999-ABEND, which handles abnormal termination by displaying a message and setting a return code, and 9999-EXIT, which provides a standard exit point. The program appears to be a utility or subroutine related to IMS unloading, based on the display message in the ABEND paragraph. The purpose is to provide controlled termination points for the program.",
+      "summary": "This COBOL program contains two paragraphs: 9999-ABEND, which handles abnormal termination by displaying a message and setting a return code, and 9999-EXIT, which provides a standard exit point. The program's primary function appears to be related to IMS unloading, as suggested by the display message in the ABEND paragraph. The return code of 16 indicates a severe error condition.",
       "business_context": null,
-      "program_type": "UTILITY",
+      "program_type": "BATCH",
       "citations": [
         5,
         7
@@ -39,7 +39,7 @@
       {
         "paragraph_name": "9999-ABEND",
         "summary": null,
-        "purpose": "This paragraph handles abnormal termination of the program. Its primary purpose is to provide a controlled exit point when an unrecoverable error occurs. It displays the message 'IMSUNLOD ABENDING ...' to the console, indicating that the program is terminating abnormally [5]. It then sets the RETURN-CODE to 16, signaling an error condition to the calling program or system [7]. Finally, it executes a GOBACK statement to return control to the caller [8]. This paragraph does not consume any specific input data but relies on the program's overall state to determine that an abend is necessary. It does not call any other paragraphs or programs.",
+        "purpose": "This paragraph handles the abnormal termination of the program. Its primary purpose is to display an error message ('IMSUNLOD ABENDING ...') to the console, indicating that the program has encountered a critical error and is terminating prematurely. The paragraph then sets the RETURN-CODE to 16, which signals a severe error condition to the calling environment. Finally, the paragraph uses the GOBACK statement to terminate the program execution and return control to the operating system. This paragraph does not consume any specific input files or data, nor does it produce any output files other than the display message. It is likely called from other paragraphs within the program when an unrecoverable error is detected.",
         "called_by": [],
         "calls": [],
         "citation": [
@@ -55,7 +55,7 @@
       {
         "paragraph_name": "9999-EXIT",
         "summary": null,
-        "purpose": "This paragraph provides a standard exit point for the program. Its primary purpose is to provide a single, consistent location for exiting the program under normal circumstances. It simply executes an EXIT statement [12], which returns control to the calling paragraph or program. This paragraph does not consume any input data or produce any output data. It does not perform any error handling or validation. It does not call any other paragraphs or programs. It serves as a placeholder for potential future exit logic.",
+        "purpose": "This paragraph serves as a standard exit point for the program. Its primary purpose is to provide a clean and controlled way to terminate the program's execution. It simply contains the EXIT statement, which returns control to the calling paragraph or program. This paragraph does not consume any input data or produce any output data. It is likely called from other paragraphs within the program when normal processing is complete and the program needs to terminate gracefully. The paragraph ensures that the program exits in a predictable manner, allowing for proper resource cleanup and return code setting in other parts of the program.",
         "called_by": [],
         "calls": [],
         "citation": [
@@ -71,12 +71,11 @@
     ],
     "error_handling": [
       {
-        "condition": "Abnormal program termination",
-        "action": "Display message 'IMSUNLOD ABENDING ...', set RETURN-CODE to 16, and GOBACK",
+        "condition": "Program abends",
+        "action": "Displays 'IMSUNLOD ABENDING ...' and sets RETURN-CODE to 16",
         "citation": [
           5,
-          7,
-          8
+          7
         ]
       }
     ],
@@ -84,9 +83,9 @@
     "cics_operations": [],
     "open_questions": [
       {
-        "question": "What are the specific error conditions that lead to the 9999-ABEND paragraph being executed?",
-        "context": "The code only shows the actions taken during an abend, not the conditions that trigger it.",
-        "suggestion": "Review the calling paragraphs to identify the error conditions that lead to a branch to 9999-ABEND."
+        "question": "What is the overall purpose of the IMSUNLOD program?",
+        "context": "The provided code snippet only contains the ABEND and EXIT paragraphs, lacking the main processing logic.",
+        "suggestion": "Review the complete source code to understand the program's functionality."
       }
     ],
     "resolved_questions": [],
@@ -96,5 +95,5 @@
     "flow_diagram": null,
     "copybooks_not_found": []
   },
-  "saved_at": "2026-03-16T13:02:10.966333"
+  "saved_at": "2026-04-21T06:45:41.645766"
 }

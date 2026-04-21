@@ -4,18 +4,18 @@
     "file_name": "cpy-bms/COPAU00.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG_MERGED",
-    "analyzed_at": "2026-03-16T20:00:31.733138",
+    "analyzed_at": "2026-04-21T13:45:02.807675",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the data structure COPAU0AI and its redefinition COPAU0AO, which are likely used for screen input and output in a CICS environment. It contains fields for transaction name, titles, current date and time, account and customer information, addresses, phone number, credit and cash limits/balances, transaction details, and error messages.",
-    "business_context": "This copybook is likely used in a customer account management system to display and capture customer and transaction information on a CICS screen.",
+    "summary": "This copybook defines the data structure COPAU0AI and its redefinition COPAU0AO, which are likely used for screen input and output in a CICS environment. The copybook contains fields for transaction name, titles, current date and time, account and customer information, addresses, phone number, credit and cash limits/balances, amounts, selection indicators, and transaction details, along with an error message field.",
+    "business_context": "This copybook likely supports a customer account management system, providing the data structure for displaying and capturing customer and transaction information on a screen.",
     "program_type": "COPYBOOK",
     "citations": [
-      1,
+      5,
       17,
-      60,
+      29,
       215,
       390,
       391
@@ -35,31 +35,24 @@
     "writes_to": [],
     "transforms": []
   },
-  "copybooks_used": [
-    {
-      "copybook_name": "COPAU00",
-      "purpose": "Defines the BMS map structure for screen display and data input.",
-      "location": "OTHER",
-      "citation": 1
-    }
-  ],
+  "copybooks_used": [],
   "paragraphs": [],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What program(s) use this copybook?",
+      "question": "What specific CICS program(s) use this copybook?",
       "context": "From chunk source:chunk-1 (lines 1-549)",
       "suggestion": ""
     },
     {
-      "question": "What is the purpose of the 'C', 'P', 'H', and 'V' suffixes in the redefined COPAU0AO structure?",
+      "question": "What is the purpose of the 'C', 'P', 'H', and 'V' suffixes in the redefined COPAU0AO?",
       "context": "From chunk source:chunk-1 (lines 1-549)",
       "suggestion": ""
     },
     {
-      "question": "What CICS program uses this BMS map?",
+      "question": "What is the specific CICS application that uses this BMS map?",
       "context": "From chunk source:chunk-2 (lines 550-765)",
       "suggestion": ""
     }

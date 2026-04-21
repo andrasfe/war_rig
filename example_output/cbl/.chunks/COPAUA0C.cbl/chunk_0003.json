@@ -7,26 +7,25 @@
       "file_name": "COPAUA0C.cbl",
       "file_type": "COBOL",
       "analyzed_by": "WAR_RIG",
-      "analyzed_at": "2026-03-16T20:04:26.540647",
+      "analyzed_at": "2026-04-21T13:49:55.438633",
       "iteration_count": 1,
       "final_status": null
     },
     "purpose": {
-      "summary": "This COBOL program updates a pending authorization summary and inserts authorization details into an IMS database. It retrieves the current date and time, formats them, and uses them to calculate authorization dates and times. The program also closes the request queue if it is open.",
+      "summary": "This COBOL program updates a pending authorization summary in an IMS database and inserts authorization details. It retrieves the current date and time, calculates adjusted date and time values, and populates the pending authorization details segment with data from the request and response messages. The program also handles error conditions during IMS updates and inserts, logging errors if necessary.",
       "business_context": "This program is likely part of a larger authorization processing system, handling the persistence of authorization requests and responses.",
       "program_type": "BATCH",
       "citations": [
         6,
         7,
-        75,
-        175
+        854
       ]
     },
     "inputs": [
       {
         "name": "PENDING-AUTH-SUMMARY",
         "io_type": "IMS_SEGMENT",
-        "description": "Contains summary information about pending authorizations for an account.",
+        "description": "Summary of pending authorizations for an account.",
         "copybook": null,
         "citation": [
           44,
@@ -36,7 +35,7 @@
       {
         "name": "PENDING-AUTH-DETAILS",
         "io_type": "IMS_SEGMENT",
-        "description": "Contains detailed information about a specific authorization request.",
+        "description": "Details of a specific pending authorization.",
         "copybook": null,
         "citation": [
           135,
@@ -44,18 +43,39 @@
         ]
       },
       {
-        "name": "XREF-ACCT-ID",
-        "io_type": "OTHER",
-        "description": "Account ID from cross-reference data.",
+        "name": "PA-RQ-*",
+        "io_type": "CICS_COMMAREA",
+        "description": "Pending authorization request fields.",
         "copybook": null,
         "citation": [
-          22
+          95,
+          113
+        ]
+      },
+      {
+        "name": "PA-RL-*",
+        "io_type": "CICS_COMMAREA",
+        "description": "Pending authorization response fields.",
+        "copybook": null,
+        "citation": [
+          115,
+          119
+        ]
+      },
+      {
+        "name": "XREF-ACCT-ID",
+        "io_type": "OTHER",
+        "description": "Cross-reference account ID.",
+        "copybook": null,
+        "citation": [
+          22,
+          129
         ]
       },
       {
         "name": "XREF-CUST-ID",
         "io_type": "OTHER",
-        "description": "Customer ID from cross-reference data.",
+        "description": "Cross-reference customer ID.",
         "copybook": null,
         "citation": [
           23
@@ -64,7 +84,7 @@
       {
         "name": "ACCT-CREDIT-LIMIT",
         "io_type": "OTHER",
-        "description": "Credit limit for the account.",
+        "description": "Account credit limit.",
         "copybook": null,
         "citation": [
           27
@@ -73,214 +93,54 @@
       {
         "name": "ACCT-CASH-CREDIT-LIMIT",
         "io_type": "OTHER",
-        "description": "Cash credit limit for the account.",
+        "description": "Account cash credit limit.",
         "copybook": null,
         "citation": [
           28
         ]
       },
       {
-        "name": "PA-RQ-AUTH-DATE",
+        "name": "AUTH-RESP-APPROVED",
         "io_type": "OTHER",
-        "description": "Authorization date from the request.",
+        "description": "Flag indicating if the authorization response was approved.",
         "copybook": null,
         "citation": [
-          95
+          30,
+          120
         ]
       },
       {
-        "name": "PA-RQ-AUTH-TIME",
+        "name": "WS-APPROVED-AMT",
         "io_type": "OTHER",
-        "description": "Authorization time from the request.",
+        "description": "The approved amount.",
         "copybook": null,
         "citation": [
-          96
+          32,
+          34
         ]
       },
       {
-        "name": "PA-RQ-CARD-NUM",
+        "name": "PA-TRANSACTION-AMT",
         "io_type": "OTHER",
-        "description": "Card number from the request.",
+        "description": "Transaction amount from the pending authorization.",
         "copybook": null,
         "citation": [
-          97
+          38
         ]
       },
       {
-        "name": "PA-RQ-AUTH-TYPE",
+        "name": "WS-REQUEST-MQ-OPEN",
         "io_type": "OTHER",
-        "description": "Authorization type from the request.",
+        "description": "Flag indicating if the request MQ is open.",
         "copybook": null,
         "citation": [
-          98
-        ]
-      },
-      {
-        "name": "PA-RQ-CARD-EXPIRY-DATE",
-        "io_type": "OTHER",
-        "description": "Card expiry date from the request.",
-        "copybook": null,
-        "citation": [
-          99
-        ]
-      },
-      {
-        "name": "PA-RQ-MESSAGE-TYPE",
-        "io_type": "OTHER",
-        "description": "Message type from the request.",
-        "copybook": null,
-        "citation": [
-          100
-        ]
-      },
-      {
-        "name": "PA-RQ-MESSAGE-SOURCE",
-        "io_type": "OTHER",
-        "description": "Message source from the request.",
-        "copybook": null,
-        "citation": [
-          101
-        ]
-      },
-      {
-        "name": "PA-RQ-PROCESSING-CODE",
-        "io_type": "OTHER",
-        "description": "Processing code from the request.",
-        "copybook": null,
-        "citation": [
-          102
-        ]
-      },
-      {
-        "name": "PA-RQ-TRANSACTION-AMT",
-        "io_type": "OTHER",
-        "description": "Transaction amount from the request.",
-        "copybook": null,
-        "citation": [
-          103
-        ]
-      },
-      {
-        "name": "PA-RQ-MERCHANT-CATAGORY-CODE",
-        "io_type": "OTHER",
-        "description": "Merchant category code from the request.",
-        "copybook": null,
-        "citation": [
-          104
-        ]
-      },
-      {
-        "name": "PA-RQ-ACQR-COUNTRY-CODE",
-        "io_type": "OTHER",
-        "description": "Acquirer country code from the request.",
-        "copybook": null,
-        "citation": [
-          106
-        ]
-      },
-      {
-        "name": "PA-RQ-POS-ENTRY-MODE",
-        "io_type": "OTHER",
-        "description": "Point of sale entry mode from the request.",
-        "copybook": null,
-        "citation": [
-          107
-        ]
-      },
-      {
-        "name": "PA-RQ-MERCHANT-ID",
-        "io_type": "OTHER",
-        "description": "Merchant ID from the request.",
-        "copybook": null,
-        "citation": [
-          108
-        ]
-      },
-      {
-        "name": "PA-RQ-MERCHANT-NAME",
-        "io_type": "OTHER",
-        "description": "Merchant name from the request.",
-        "copybook": null,
-        "citation": [
-          109
-        ]
-      },
-      {
-        "name": "PA-RQ-MERCHANT-CITY",
-        "io_type": "OTHER",
-        "description": "Merchant city from the request.",
-        "copybook": null,
-        "citation": [
-          110
-        ]
-      },
-      {
-        "name": "PA-RQ-MERCHANT-STATE",
-        "io_type": "OTHER",
-        "description": "Merchant state from the request.",
-        "copybook": null,
-        "citation": [
-          111
-        ]
-      },
-      {
-        "name": "PA-RQ-MERCHANT-ZIP",
-        "io_type": "OTHER",
-        "description": "Merchant zip code from the request.",
-        "copybook": null,
-        "citation": [
-          112
-        ]
-      },
-      {
-        "name": "PA-RQ-TRANSACTION-ID",
-        "io_type": "OTHER",
-        "description": "Transaction ID from the request.",
-        "copybook": null,
-        "citation": [
-          113
-        ]
-      },
-      {
-        "name": "PA-RL-AUTH-ID-CODE",
-        "io_type": "OTHER",
-        "description": "Authorization ID code from the response.",
-        "copybook": null,
-        "citation": [
-          115
-        ]
-      },
-      {
-        "name": "PA-RL-AUTH-RESP-CODE",
-        "io_type": "OTHER",
-        "description": "Authorization response code from the response.",
-        "copybook": null,
-        "citation": [
-          116
-        ]
-      },
-      {
-        "name": "PA-RL-AUTH-RESP-REASON",
-        "io_type": "OTHER",
-        "description": "Authorization response reason from the response.",
-        "copybook": null,
-        "citation": [
-          117
-        ]
-      },
-      {
-        "name": "PA-RL-APPROVED-AMT",
-        "io_type": "OTHER",
-        "description": "Approved amount from the response.",
-        "copybook": null,
-        "citation": [
-          118
+          175
         ]
       },
       {
         "name": "W01-HCONN-REQUEST",
         "io_type": "PARAMETER",
-        "description": "Handle to the MQ connection.",
+        "description": "MQ Connection Handle for Request Queue",
         "copybook": null,
         "citation": [
           176
@@ -289,37 +149,10 @@
       {
         "name": "W01-HOBJ-REQUEST",
         "io_type": "PARAMETER",
-        "description": "Handle to the MQ object (queue).",
+        "description": "MQ Object Handle for Request Queue",
         "copybook": null,
         "citation": [
           177
-        ]
-      },
-      {
-        "name": "MQCO-NONE",
-        "io_type": "PARAMETER",
-        "description": "MQ close options.",
-        "copybook": null,
-        "citation": [
-          178
-        ]
-      },
-      {
-        "name": "WS-COMPCODE",
-        "io_type": "PARAMETER",
-        "description": "MQ completion code.",
-        "copybook": null,
-        "citation": [
-          179
-        ]
-      },
-      {
-        "name": "WS-REASON",
-        "io_type": "PARAMETER",
-        "description": "MQ reason code.",
-        "copybook": null,
-        "citation": [
-          180
         ]
       }
     ],
@@ -327,7 +160,7 @@
       {
         "name": "PENDING-AUTH-SUMMARY",
         "io_type": "IMS_SEGMENT",
-        "description": "Updated summary information about pending authorizations.",
+        "description": "Updated pending authorization summary segment in IMS.",
         "copybook": null,
         "citation": [
           44,
@@ -337,62 +170,21 @@
       {
         "name": "PENDING-AUTH-DETAILS",
         "io_type": "IMS_SEGMENT",
-        "description": "Details of the authorization request inserted into the IMS database.",
+        "description": "Inserted pending authorization details segment in IMS.",
         "copybook": null,
         "citation": [
           135
         ]
       },
       {
-        "name": "ERR-LOCATION",
-        "io_type": "OTHER",
-        "description": "Error location code.",
+        "name": "ERROR-LOG",
+        "io_type": "FILE_SEQUENTIAL",
+        "description": "Error log file, written to by 9500-LOG-ERROR (not shown)",
         "copybook": null,
         "citation": [
-          57,
-          143,
-          186
-        ]
-      },
-      {
-        "name": "ERR-CODE-1",
-        "io_type": "OTHER",
-        "description": "First error code.",
-        "copybook": null,
-        "citation": [
-          60,
-          146,
-          190
-        ]
-      },
-      {
-        "name": "ERR-MESSAGE",
-        "io_type": "OTHER",
-        "description": "Error message.",
-        "copybook": null,
-        "citation": [
-          61,
-          147,
-          194
-        ]
-      },
-      {
-        "name": "ERR-EVENT-KEY",
-        "io_type": "OTHER",
-        "description": "Key related to the error event.",
-        "copybook": null,
-        "citation": [
-          62,
-          148
-        ]
-      },
-      {
-        "name": "ERR-CODE-2",
-        "io_type": "OTHER",
-        "description": "Second error code.",
-        "copybook": null,
-        "citation": [
-          192
+          63,
+          149,
+          195
         ]
       }
     ],
@@ -400,7 +192,7 @@
       {
         "program_name": "MQCLOSE",
         "call_type": "DYNAMIC_CALL",
-        "purpose": "Closes the request queue.",
+        "purpose": "Closes the request MQ queue.",
         "parameters": [
           "W01-HCONN-REQUEST",
           "W01-HOBJ-REQUEST",
@@ -409,27 +201,6 @@
           "WS-REASON"
         ],
         "citation": 176
-      },
-      {
-        "program_name": "9500-LOG-ERROR",
-        "call_type": "STATIC_CALL",
-        "purpose": "Logs error information.",
-        "parameters": [],
-        "citation": 63
-      },
-      {
-        "program_name": "9500-LOG-ERROR",
-        "call_type": "STATIC_CALL",
-        "purpose": "Logs error information.",
-        "parameters": [],
-        "citation": 149
-      },
-      {
-        "program_name": "9500-LOG-ERROR",
-        "call_type": "STATIC_CALL",
-        "purpose": "Logs error information.",
-        "parameters": [],
-        "citation": 195
       }
     ],
     "calling_context": {
@@ -440,39 +211,35 @@
     "business_rules": [
       {
         "rule_id": "BR001",
-        "description": "If a pending authorization summary segment is not found, initialize it with zeros and populate the account and customer IDs.",
-        "logic_summary": "Checks NFOUND-PAUT-SMRY-SEG. If true, initializes PENDING-AUTH-SUMMARY and moves XREF-ACCT-ID and XREF-CUST-ID to PA-ACCT-ID and PA-CUST-ID, respectively.",
+        "description": "If the authorization response is approved, increment the approved authorization count and amount in the pending authorization summary, and update the credit balance.",
+        "logic_summary": "Adds 1 to PA-APPROVED-AUTH-CNT and WS-APPROVED-AMT to PA-APPROVED-AUTH-AMT, then adds WS-APPROVED-AMT to PA-CREDIT-BALANCE.",
         "conditions": [
-          "IF NFOUND-PAUT-SMRY-SEG"
-        ],
-        "citation": [
-          18,
-          19,
-          22,
-          23
-        ]
-      },
-      {
-        "rule_id": "BR002",
-        "description": "If the authorization response is approved, increment the approved authorization count and amount in the pending authorization summary. Otherwise, increment the declined authorization count and amount.",
-        "logic_summary": "Checks AUTH-RESP-APPROVED. If true, increments PA-APPROVED-AUTH-CNT and adds WS-APPROVED-AMT to PA-APPROVED-AUTH-AMT and PA-CREDIT-BALANCE. Otherwise, increments PA-DECLINED-AUTH-CNT and adds PA-TRANSACTION-AMT to PA-DECLINED-AUTH-AMT.",
-        "conditions": [
-          "IF AUTH-RESP-APPROVED",
-          "ELSE"
+          "IF AUTH-RESP-APPROVED"
         ],
         "citation": [
           30,
           31,
           32,
-          34,
+          34
+        ]
+      },
+      {
+        "rule_id": "BR002",
+        "description": "If the authorization response is declined, increment the declined authorization count and amount in the pending authorization summary.",
+        "logic_summary": "Adds 1 to PA-DECLINED-AUTH-CNT and PA-TRANSACTION-AMT to PA-DECLINED-AUTH-AMT.",
+        "conditions": [
+          "ELSE (AUTH-RESP-APPROVED is false)"
+        ],
+        "citation": [
+          36,
           37,
           38
         ]
       },
       {
         "rule_id": "BR003",
-        "description": "If the authorization response is approved, set PA-MATCH-PENDING to TRUE. Otherwise, set PA-MATCH-AUTH-DECLINED to TRUE.",
-        "logic_summary": "Checks AUTH-RESP-APPROVED. If true, sets PA-MATCH-PENDING to TRUE. Otherwise, sets PA-MATCH-AUTH-DECLINED to TRUE.",
+        "description": "If the authorization response is approved, set PA-MATCH-PENDING to TRUE; otherwise, set PA-MATCH-AUTH-DECLINED to TRUE.",
+        "logic_summary": "Sets either PA-MATCH-PENDING or PA-MATCH-AUTH-DECLINED based on AUTH-RESP-APPROVED.",
         "conditions": [
           "IF AUTH-RESP-APPROVED",
           "ELSE"
@@ -482,16 +249,6 @@
           121,
           122,
           123
-        ]
-      },
-      {
-        "rule_id": "BR004",
-        "description": "Calculate the authorization date and time as the difference between a constant and the current date and time.",
-        "logic_summary": "Calculates PA-AUTH-DATE-9C and PA-AUTH-TIME-9C by subtracting the current date and time from constants.",
-        "conditions": [],
-        "citation": [
-          92,
-          93
         ]
       }
     ],
@@ -508,14 +265,26 @@
             "PA-APPROVED-AUTH-AMT",
             "PA-CREDIT-BALANCE",
             "PA-CASH-BALANCE",
+            "PA-DECLINED-AUTH-CNT",
+            "PA-DECLINED-AUTH-AMT",
             "PA-TRANSACTION-AMT"
           ],
           "citation": [
-            44
+            18,
+            22,
+            23,
+            27,
+            28,
+            31,
+            32,
+            34,
+            35,
+            37,
+            38
           ]
         },
         {
-          "source": "PENDING-AUTH-DETAILS",
+          "source": "PA-RQ-*",
           "fields_used": [
             "PA-RQ-AUTH-DATE",
             "PA-RQ-AUTH-TIME",
@@ -534,14 +303,42 @@
             "PA-RQ-MERCHANT-CITY",
             "PA-RQ-MERCHANT-STATE",
             "PA-RQ-MERCHANT-ZIP",
-            "PA-RQ-TRANSACTION-ID",
+            "PA-RQ-TRANSACTION-ID"
+          ],
+          "citation": [
+            95,
+            96,
+            97,
+            98,
+            99,
+            100,
+            101,
+            102,
+            103,
+            104,
+            106,
+            107,
+            108,
+            109,
+            110,
+            111,
+            112,
+            113
+          ]
+        },
+        {
+          "source": "PA-RL-*",
+          "fields_used": [
             "PA-RL-AUTH-ID-CODE",
             "PA-RL-AUTH-RESP-CODE",
             "PA-RL-AUTH-RESP-REASON",
             "PA-RL-APPROVED-AMT"
           ],
           "citation": [
-            135
+            115,
+            116,
+            117,
+            118
           ]
         }
       ],
@@ -561,13 +358,23 @@
             "PA-DECLINED-AUTH-AMT"
           ],
           "citation": [
-            44,
-            49
+            22,
+            23,
+            27,
+            28,
+            31,
+            32,
+            34,
+            35,
+            37,
+            38
           ]
         },
         {
           "destination": "PENDING-AUTH-DETAILS",
           "fields_written": [
+            "PA-AUTH-DATE-9C",
+            "PA-AUTH-TIME-9C",
             "PA-AUTH-ORIG-DATE",
             "PA-AUTH-ORIG-TIME",
             "PA-CARD-NUM",
@@ -590,12 +397,38 @@
             "PA-AUTH-RESP-CODE",
             "PA-AUTH-RESP-REASON",
             "PA-APPROVED-AMT",
-            "PA-ACCT-ID",
-            "PA-AUTH-DATE-9C",
-            "PA-AUTH-TIME-9C"
+            "PA-MATCH-PENDING",
+            "PA-MATCH-AUTH-DECLINED",
+            "PA-ACCT-ID"
           ],
           "citation": [
-            135
+            92,
+            93,
+            95,
+            96,
+            97,
+            98,
+            99,
+            100,
+            101,
+            102,
+            103,
+            104,
+            106,
+            107,
+            108,
+            109,
+            110,
+            111,
+            112,
+            113,
+            115,
+            116,
+            117,
+            118,
+            121,
+            123,
+            129
           ]
         }
       ],
@@ -603,7 +436,7 @@
         {
           "input_field": "WS-CUR-DATE-X6",
           "output_field": "WS-YYDDD",
-          "transformation_description": "Move the first 5 characters of WS-CUR-DATE-X6 to WS-YYDDD.",
+          "transformation_description": "Moves the first 5 characters of WS-CUR-DATE-X6 to WS-YYDDD.",
           "citation": [
             86
           ]
@@ -611,7 +444,7 @@
         {
           "input_field": "WS-CUR-TIME-X6",
           "output_field": "WS-CUR-TIME-N6",
-          "transformation_description": "Move WS-CUR-TIME-X6 to WS-CUR-TIME-N6.",
+          "transformation_description": "Moves WS-CUR-TIME-X6 to WS-CUR-TIME-N6.",
           "citation": [
             87
           ]
@@ -619,7 +452,7 @@
         {
           "input_field": "WS-CUR-TIME-N6, WS-CUR-TIME-MS",
           "output_field": "WS-TIME-WITH-MS",
-          "transformation_description": "Compute WS-TIME-WITH-MS by multiplying WS-CUR-TIME-N6 by 1000 and adding WS-CUR-TIME-MS.",
+          "transformation_description": "Calculates WS-TIME-WITH-MS by multiplying WS-CUR-TIME-N6 by 1000 and adding WS-CUR-TIME-MS.",
           "citation": [
             89,
             90
@@ -628,7 +461,7 @@
         {
           "input_field": "WS-YYDDD",
           "output_field": "PA-AUTH-DATE-9C",
-          "transformation_description": "Compute PA-AUTH-DATE-9C by subtracting WS-YYDDD from 99999.",
+          "transformation_description": "Calculates PA-AUTH-DATE-9C by subtracting WS-YYDDD from 99999.",
           "citation": [
             92
           ]
@@ -636,19 +469,44 @@
         {
           "input_field": "WS-TIME-WITH-MS",
           "output_field": "PA-AUTH-TIME-9C",
-          "transformation_description": "Compute PA-AUTH-TIME-9C by subtracting WS-TIME-WITH-MS from 999999999.",
+          "transformation_description": "Calculates PA-AUTH-TIME-9C by subtracting WS-TIME-WITH-MS from 999999999.",
           "citation": [
             93
           ]
         }
       ]
     },
-    "copybooks_used": [],
+    "copybooks_used": [
+      {
+        "copybook_name": "UNKNOWN",
+        "purpose": "Defines the structure of PENDING-AUTH-SUMMARY",
+        "location": "WORKING_STORAGE",
+        "citation": 19
+      },
+      {
+        "copybook_name": "UNKNOWN",
+        "purpose": "Defines the structure of PENDING-AUTH-DETAILS",
+        "location": "WORKING_STORAGE",
+        "citation": 135
+      },
+      {
+        "copybook_name": "UNKNOWN",
+        "purpose": "Defines the structure of the IMS PCB",
+        "location": "WORKING_STORAGE",
+        "citation": 42
+      },
+      {
+        "copybook_name": "UNKNOWN",
+        "purpose": "Defines MQ return codes",
+        "location": "WORKING_STORAGE",
+        "citation": 183
+      }
+    ],
     "paragraphs": [
       {
         "paragraph_name": "8000-WRITE-AUTH-TO-DB",
         "summary": null,
-        "purpose": "This paragraph orchestrates the update of the pending authorization summary and the insertion of authorization details into the IMS database. It first performs 8400-UPDATE-SUMMARY to update the summary information. Then, it performs 8500-INSERT-AUTH to insert the authorization details. The purpose is to ensure that both the summary and detailed information about the authorization are persisted. It consumes no direct inputs but relies on data prepared by other paragraphs. It produces no direct outputs but triggers the IMS updates in the called paragraphs. No specific business logic is implemented directly in this paragraph, it serves as a control point for the two key persistence operations. No error handling is present in this paragraph. It calls 8400-UPDATE-SUMMARY and 8500-INSERT-AUTH.",
+        "purpose": "This paragraph serves as a high-level routine to update the pending authorization summary and insert the authorization details into the IMS database. It orchestrates the calls to 8400-UPDATE-SUMMARY and 8500-INSERT-AUTH. It does not directly consume any input data, but relies on data prepared by other parts of the program. It does not produce any direct output, but triggers the IMS updates and inserts performed by the called paragraphs. The business logic involves ensuring that both the summary and detail records are updated/inserted for each authorization. There is no explicit error handling within this paragraph itself; error handling is delegated to the called paragraphs. It calls 8400-UPDATE-SUMMARY to update the pending authorization summary and 8500-INSERT-AUTH to insert the authorization details.",
         "called_by": [],
         "calls": [
           "8400-UPDATE-SUMMARY",
@@ -668,10 +526,7 @@
         "paragraph_name": "8000-EXIT",
         "summary": null,
         "purpose": "This paragraph provides a standard exit point for the 8000-WRITE-AUTH-TO-DB paragraph. It ensures a consistent return from the paragraph. It does not consume any inputs or produce any outputs. It does not implement any business logic or error handling. It does not call any other paragraphs or programs. Its sole purpose is to provide a clean exit.",
-        "called_by": [
-          "8400-UPDATE-SUMMARY",
-          "8500-INSERT-AUTH"
-        ],
+        "called_by": [],
         "calls": [],
         "citation": [
           794,
@@ -686,7 +541,7 @@
       {
         "paragraph_name": "8400-UPDATE-SUMMARY",
         "summary": null,
-        "purpose": "This paragraph updates the pending authorization summary in the IMS database. It first checks if a summary segment already exists. If not, it initializes a new segment and populates it with account and customer IDs. It then updates the credit and cash limits. Based on whether the authorization was approved or declined, it increments the corresponding counters and amounts in the summary. Finally, it either inserts or replaces the summary segment in the IMS database. The paragraph consumes account information (ACCT-CREDIT-LIMIT, ACCT-CASH-CREDIT-LIMIT, XREF-ACCT-ID, XREF-CUST-ID) and authorization response information (AUTH-RESP-APPROVED, WS-APPROVED-AMT, PA-TRANSACTION-AMT). It produces an updated PENDING-AUTH-SUMMARY segment in the IMS database. The business logic involves checking if the summary segment exists and updating counters based on the authorization response. Error handling is performed by checking the IMS return code and logging an error if the update fails. It calls 9500-LOG-ERROR if an IMS error occurs.",
+        "purpose": "This paragraph updates the pending authorization summary in the IMS database. It checks if a summary segment already exists for the account. If not, it initializes a new summary segment with account and customer IDs. It then updates the credit and cash limits from the account. Based on whether the authorization was approved or declined, it increments the appropriate counters and amounts in the summary segment. Finally, it either inserts or replaces the summary segment in the IMS database using EXEC DLI commands. If the IMS update fails, it logs an error. The paragraph consumes XREF-ACCT-ID, XREF-CUST-ID, ACCT-CREDIT-LIMIT, ACCT-CASH-CREDIT-LIMIT, AUTH-RESP-APPROVED, WS-APPROVED-AMT, and PA-TRANSACTION-AMT as inputs. It updates the PENDING-AUTH-SUMMARY segment in IMS as output. The business logic involves updating the summary based on the authorization response. Error handling includes checking the IMS return code and logging an error if the update fails. It calls 9500-LOG-ERROR if an error occurs.",
         "called_by": [
           "8000-WRITE-AUTH-TO-DB"
         ],
@@ -724,7 +579,7 @@
       {
         "paragraph_name": "8500-INSERT-AUTH",
         "summary": null,
-        "purpose": "This paragraph inserts authorization details into the IMS database. It first retrieves the current date and time using CICS services and formats them. It then calculates authorization dates and times by subtracting the current date and time from constants. It moves data from the request and response into the PENDING-AUTH-DETAILS segment. It sets flags based on whether the authorization was approved or declined. Finally, it inserts the details segment into the IMS database. The paragraph consumes authorization request and response data (PA-RQ-*, PA-RL-*) and account information (XREF-ACCT-ID). It produces a new PENDING-AUTH-DETAILS segment in the IMS database. The business logic involves calculating authorization dates and times and setting flags based on the authorization response. Error handling is performed by checking the IMS return code and logging an error if the insert fails. It calls 9500-LOG-ERROR if an IMS error occurs.",
+        "purpose": "This paragraph inserts the pending authorization details into the IMS database. It first retrieves the current date and time using CICS ASKTIME and FORMATTIME commands, and calculates adjusted date and time values. It then moves data from the pending authorization request and response fields (PA-RQ-* and PA-RL-*) to the pending authorization details segment. Based on whether the authorization was approved or declined, it sets either PA-MATCH-PENDING or PA-MATCH-AUTH-DECLINED to TRUE. Finally, it inserts the details segment into the IMS database using an EXEC DLI command. If the IMS insert fails, it logs an error. The paragraph consumes PA-RQ-*, PA-RL-*, and XREF-ACCT-ID as inputs. It inserts the PENDING-AUTH-DETAILS segment into IMS as output. The business logic involves preparing the data for the IMS insert. Error handling includes checking the IMS return code and logging an error if the insert fails. It calls 9500-LOG-ERROR if an error occurs.",
         "called_by": [
           "8000-WRITE-AUTH-TO-DB"
         ],
@@ -762,7 +617,7 @@
       {
         "paragraph_name": "9000-TERMINATE",
         "summary": null,
-        "purpose": "This paragraph terminates the IMS PSB and closes the request queue. It first checks if the IMS PSB is scheduled. If so, it terminates the PSB. Then, it performs 9100-CLOSE-REQUEST-QUEUE to close the request queue. The purpose is to ensure that all resources are released before the program ends. It consumes IMS-PSB-SCHD to determine if the PSB is scheduled. It produces no direct outputs but triggers the termination of the PSB and the closing of the request queue. No specific business logic is implemented directly in this paragraph, it serves as a control point for the termination operations. No error handling is present in this paragraph. It calls 9100-CLOSE-REQUEST-QUEUE.",
+        "purpose": "This paragraph performs termination tasks for the program. It first checks if the IMS PSB is scheduled (IMS-PSB-SCHD). If so, it terminates the IMS connection using EXEC DLI TERM. Then, it calls 9100-CLOSE-REQUEST-QUEUE to close the request message queue. The paragraph consumes IMS-PSB-SCHD as input. It does not produce any direct output, but triggers the IMS termination and MQ queue closure. The business logic involves ensuring that the IMS connection is terminated and the MQ queue is closed before the program ends. There is no explicit error handling within this paragraph itself; error handling is delegated to the called paragraph. It calls 9100-CLOSE-REQUEST-QUEUE to close the request message queue.",
         "called_by": [],
         "calls": [
           "9100-CLOSE-REQUEST-QUEUE"
@@ -798,7 +653,7 @@
       {
         "paragraph_name": "9100-CLOSE-REQUEST-QUEUE",
         "summary": null,
-        "purpose": "This paragraph closes the request queue if it is open. It checks if the request queue is open by examining WS-REQUEST-MQ-OPEN. If it is open, it calls MQCLOSE to close the queue. It then checks the completion code from MQCLOSE. If the close was successful, it sets WS-REQUEST-MQ-CLSE to TRUE. Otherwise, it logs an error. The paragraph consumes WS-REQUEST-MQ-OPEN, W01-HCONN-REQUEST, W01-HOBJ-REQUEST, MQCO-NONE, WS-COMPCODE, and WS-REASON. It produces no direct outputs but may log an error if the close fails. The business logic involves checking if the queue is open and handling the completion code from MQCLOSE. Error handling is performed by checking the completion code and logging an error if the close fails. It calls MQCLOSE and 9500-LOG-ERROR.",
+        "purpose": "This paragraph closes the request message queue. It checks if the request MQ is open (WS-REQUEST-MQ-OPEN). If so, it calls the MQCLOSE API to close the queue. It then checks the completion code (WS-COMPCODE). If the closure is successful (MQCC-OK), it sets WS-REQUEST-MQ-CLSE to TRUE. Otherwise, it logs an error. The paragraph consumes WS-REQUEST-MQ-OPEN, W01-HCONN-REQUEST, and W01-HOBJ-REQUEST as inputs. It potentially sets WS-REQUEST-MQ-CLSE to TRUE as output. The business logic involves ensuring that the request MQ is properly closed. Error handling includes checking the MQ completion code and logging an error if the closure fails. It calls 9500-LOG-ERROR if an error occurs.",
         "called_by": [
           "9000-TERMINATE"
         ],
@@ -838,26 +693,26 @@
     "error_handling": [
       {
         "condition": "IMS UPDATE SUMRY FAILED",
-        "action": "MOVE 'I003' TO ERR-LOCATION, SET ERR-CRITICAL and ERR-IMS to TRUE, MOVE IMS-RETURN-CODE to ERR-CODE-1, MOVE 'IMS UPDATE SUMRY FAILED' to ERR-MESSAGE, MOVE PA-CARD-NUM to ERR-EVENT-KEY, PERFORM 9500-LOG-ERROR",
+        "action": "Move 'I003' to ERR-LOCATION, set ERR-CRITICAL and ERR-IMS to TRUE, move IMS-RETURN-CODE to ERR-CODE-1, move 'IMS UPDATE SUMRY FAILED' to ERR-MESSAGE, move PA-CARD-NUM to ERR-EVENT-KEY, and perform 9500-LOG-ERROR.",
         "citation": [
-          56,
+          52,
           64
         ]
       },
       {
         "condition": "IMS INSERT DETL FAILED",
-        "action": "MOVE 'I004' TO ERR-LOCATION, SET ERR-CRITICAL and ERR-IMS to TRUE, MOVE IMS-RETURN-CODE to ERR-CODE-1, MOVE 'IMS INSERT DETL FAILED' to ERR-MESSAGE, MOVE PA-CARD-NUM to ERR-EVENT-KEY, PERFORM 9500-LOG-ERROR",
+        "action": "Move 'I004' to ERR-LOCATION, set ERR-CRITICAL and ERR-IMS to TRUE, move IMS-RETURN-CODE to ERR-CODE-1, move 'IMS INSERT DETL FAILED' to ERR-MESSAGE, move PA-CARD-NUM to ERR-EVENT-KEY, and perform 9500-LOG-ERROR.",
         "citation": [
-          142,
+          138,
           150
         ]
       },
       {
         "condition": "FAILED TO CLOSE REQUEST MQ",
-        "action": "MOVE 'M005' TO ERR-LOCATION, SET ERR-WARNING and ERR-MQ to TRUE, MOVE WS-COMPCODE to WS-CODE-DISPLAY, MOVE WS-CODE-DISPLAY to ERR-CODE-1, MOVE WS-REASON to WS-CODE-DISPLAY, MOVE WS-CODE-DISPLAY to ERR-CODE-2, MOVE 'FAILED TO CLOSE REQUEST MQ' TO ERR-MESSAGE, PERFORM 9500-LOG-ERROR",
+        "action": "Move 'M005' to ERR-LOCATION, set ERR-WARNING and ERR-MQ to TRUE, move WS-COMPCODE to WS-CODE-DISPLAY, move WS-CODE-DISPLAY to ERR-CODE-1, move WS-REASON to WS-CODE-DISPLAY, move WS-CODE-DISPLAY to ERR-CODE-2, move 'FAILED TO CLOSE REQUEST MQ' to ERR-MESSAGE, and perform 9500-LOG-ERROR.",
         "citation": [
-          185,
-          196
+          183,
+          197
         ]
       }
     ],
@@ -865,18 +720,34 @@
     "cics_operations": [
       {
         "command": "ASKTIME",
-        "resource": null,
+        "resource": "N/A",
         "purpose": "Retrieves the current absolute time.",
         "citation": 75
       },
       {
         "command": "FORMATTIME",
-        "resource": null,
+        "resource": "N/A",
         "purpose": "Formats the absolute time into year, day, time, and milliseconds.",
         "citation": 79
       }
     ],
-    "open_questions": [],
+    "open_questions": [
+      {
+        "question": "What is the structure of the copybooks used?",
+        "context": "The copybooks for PENDING-AUTH-SUMMARY, PENDING-AUTH-DETAILS, the IMS PCB, and MQ return codes are not provided.",
+        "suggestion": "Provide the copybook definitions to fully understand the data structures and IMS PCB layout."
+      },
+      {
+        "question": "What is the purpose of the 9500-LOG-ERROR paragraph?",
+        "context": "The code calls 9500-LOG-ERROR in several places, but the source for that paragraph is not included.",
+        "suggestion": "Provide the source code for 9500-LOG-ERROR to understand how errors are logged."
+      },
+      {
+        "question": "What are the definitions of the various WS-* and PA-* variables?",
+        "context": "Without the copybooks, it is impossible to know the exact data types and sizes of these variables.",
+        "suggestion": "Provide the data definitions for these variables."
+      }
+    ],
     "resolved_questions": [],
     "dead_code": [],
     "dead_code_resolved": [],
@@ -884,5 +755,5 @@
     "flow_diagram": null,
     "copybooks_not_found": []
   },
-  "saved_at": "2026-03-16T13:04:26.542603"
+  "saved_at": "2026-04-21T06:49:55.439748"
 }

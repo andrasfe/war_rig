@@ -2,10 +2,10 @@
 
 **File**: `cpy/CCPAURQY.cpy`
 **Type**: FileType.COPYBOOK
-**Analyzed**: 2026-03-16 19:49:52.291032
+**Analyzed**: 2026-04-21 13:43:36.709506
 
 ## Purpose
 
-This copybook defines the data structure for a pending authorization request. It includes fields for transaction details such as card number, amount, merchant information, and date/time of the authorization request.
+This copybook defines the data structure for a pending authorization request. It includes fields related to transaction details, card information, merchant details, and date/time stamps.
 
-**Business Context**: This copybook is likely used in systems that process credit card transactions and require authorization before completing a purchase.
+**Business Context**: This copybook is likely used in financial transaction processing systems to represent authorization requests before they are approved or declined.

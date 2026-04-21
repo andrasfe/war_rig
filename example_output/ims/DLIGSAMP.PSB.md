@@ -2,8 +2,8 @@
 
 **File**: `ims/DLIGSAMP.PSB`
 **Type**: FileType.OTHER
-**Analyzed**: 2026-03-16 20:00:26.417891
+**Analyzed**: 2026-04-21 13:45:00.848961
 
 ## Purpose
 
-This PSB (Program Specification Block) defines the database access and processing options for an IMS (Information Management System) application. It specifies the PCBs (Program Communication Blocks) that the application will use to interact with databases and GSAM (Generalized Sequential Access Method) datasets.
+This PSB (Program Specification Block) defines the database access and processing options for an IMS (Information Management System) application. It specifies PCBs (Program Communication Blocks) for DB (Database), and GSAM (Generalized Sequential Access Method) database types, along with segment definitions and processing options.

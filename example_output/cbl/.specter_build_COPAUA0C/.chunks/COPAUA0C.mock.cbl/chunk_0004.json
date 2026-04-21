@@ -1,0 +1,173 @@
+{
+  "batch_idx": 4,
+  "total_batches": 5,
+  "template": {
+    "header": {
+      "program_id": "COPAUA0C",
+      "file_name": "COPAUA0C.mock.cbl",
+      "file_type": "COBOL",
+      "analyzed_by": "WAR_RIG",
+      "analyzed_at": "2026-04-21T13:50:08.042605",
+      "iteration_count": 1,
+      "final_status": null
+    },
+    "purpose": {
+      "summary": "This COBOL program contains error handling and program termination routines. It includes logic to log errors, terminate the program, and interact with a MOCK-FILE for testing purposes, simulating CICS calls.",
+      "business_context": null,
+      "program_type": "BATCH",
+      "citations": [
+        2,
+        48,
+        84
+      ]
+    },
+    "inputs": [
+      {
+        "name": "MOCK-FILE",
+        "io_type": "FILE_SEQUENTIAL",
+        "description": "This file is used to mock CICS calls for testing. It is read in multiple paragraphs to simulate CICS behavior.",
+        "copybook": null,
+        "citation": [
+          10,
+          22,
+          40,
+          68
+        ]
+      }
+    ],
+    "outputs": [],
+    "called_programs": [
+      {
+        "program_name": "9000-TERMINATE",
+        "call_type": "STATIC_CALL",
+        "purpose": "To perform program termination procedures.",
+        "parameters": [],
+        "citation": 63
+      }
+    ],
+    "calling_context": {
+      "called_by": [],
+      "entry_points": [],
+      "linkage_section": []
+    },
+    "business_rules": [],
+    "data_flow": {
+      "reads_from": [
+        {
+          "source": "MOCK-FILE",
+          "fields_used": [
+            "MOCK-RECORD"
+          ],
+          "citation": [
+            10,
+            22,
+            40,
+            68
+          ]
+        }
+      ],
+      "writes_to": [],
+      "transforms": []
+    },
+    "copybooks_used": [],
+    "paragraphs": [
+      {
+        "paragraph_name": "9500-LOG-ERROR",
+        "summary": null,
+        "purpose": "This paragraph logs errors encountered during program execution. It reads from MOCK-FILE to simulate CICS interactions. It moves data to ERR-APPLICATION, ERR-PROGRAM, ERR-DATE, and ERR-TIME fields. It then simulates writing to a CICS temporary data queue. If the error is critical (ERR-CRITICAL), it calls 9990-END-ROUTINE to terminate the program. The paragraph's primary purpose is to record error information for debugging and auditing. It consumes data from WS-CICS-TRANID, WS-PGM-AUTH, WS-CUR-DATE-X6, and WS-CUR-TIME-X6. It calls 9990-END-ROUTINE when ERR-CRITICAL is true, initiating program termination.",
+        "called_by": [],
+        "calls": [
+          "9990-END-ROUTINE"
+        ],
+        "citation": [
+          1384,
+          1432
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "9500-EXIT",
+        "summary": null,
+        "purpose": "This paragraph serves as the exit point for the 9500-LOG-ERROR paragraph. Its primary purpose is to provide a clean and controlled exit from the error logging routine. It does not consume any specific inputs or produce any outputs other than the program flow control. It simply executes an EXIT statement to return control to the calling paragraph. It is a standard practice in COBOL to have an explicit exit paragraph for each procedure.",
+        "called_by": [],
+        "calls": [],
+        "citation": [
+          1433,
+          1435
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "9990-END-ROUTINE",
+        "summary": null,
+        "purpose": "This paragraph initiates the program termination process. It calls 9000-TERMINATE to perform termination procedures. It simulates a CICS RETURN. It reads from MOCK-FILE to simulate CICS interactions. The primary purpose is to ensure a controlled shutdown of the program. It calls 9000-TERMINATE to handle file closures and other termination tasks. It consumes no specific inputs other than the program flow. It produces no specific outputs other than initiating the termination sequence.",
+        "called_by": [
+          "9500-LOG-ERROR"
+        ],
+        "calls": [
+          "9000-TERMINATE"
+        ],
+        "citation": [
+          1437,
+          1453
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "9990-EXIT",
+        "summary": null,
+        "purpose": "This paragraph serves as the exit point for the 9990-END-ROUTINE paragraph. Its primary purpose is to provide a clean and controlled exit from the end routine. It does not consume any specific inputs or produce any outputs other than the program flow control. It simply executes an EXIT statement to return control to the calling paragraph. It is a standard practice in COBOL to have an explicit exit paragraph for each procedure.",
+        "called_by": [],
+        "calls": [],
+        "citation": [
+          1454,
+          1456
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "SPECTER-EXIT-PARA",
+        "summary": null,
+        "purpose": "This paragraph closes the MOCK-FILE and terminates the program using STOP RUN. Its primary purpose is to finalize the program execution and release resources. It consumes no specific inputs other than the program flow. It produces the termination of the program as its output. It closes the MOCK-FILE to ensure data integrity and prevent resource leaks.",
+        "called_by": [],
+        "calls": [],
+        "citation": [
+          1460,
+          1462
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      }
+    ],
+    "error_handling": [],
+    "sql_operations": [],
+    "cics_operations": [],
+    "open_questions": [],
+    "resolved_questions": [],
+    "dead_code": [],
+    "dead_code_resolved": [],
+    "call_semantics": [],
+    "flow_diagram": null,
+    "copybooks_not_found": []
+  },
+  "saved_at": "2026-04-21T06:50:08.043645"
+}

@@ -2,18 +2,18 @@
 
 **File**: `bms/COPAU01.bms`
 **Type**: FileType.BMS
-**Analyzed**: 2026-03-16 20:02:03.461289
+**Analyzed**: 2026-04-21 13:47:27.099114
 
 ## Purpose
 
-This BMS map defines the screen layout for displaying pending authorization details in the CardDemo application. It includes fields for card number, authorization details (date, time, response, code), amount, POS entry mode, source, MCC code, card expiration date, authorization type, transaction ID, match status, fraud status, and merchant details (name, ID, city, state, zip). It also provides function key options for navigation and fraud management.
+This BMS map defines the screen layout for displaying pending authorization details in the CardDemo application. It includes fields for card number, authorization date/time, response, amount, merchant details, and other relevant information. The screen also provides options to navigate back, mark/remove fraud, and view the next authorization.
 
-**Business Context**: This screen is used to view details of pending card authorization transactions, likely for review and potential fraud detection or resolution.
+**Business Context**: This screen is used to view and manage pending card authorization details, likely as part of a fraud monitoring or customer service application.
 
 ## Paragraphs/Procedures
 
 ### COPAU01
-This DFHMSD macro defines the map set COPAU01. It specifies various attributes for the map set, including control options (ALARM, FREEKB), extended attributes (EXTATT=YES), language (LANG=COBOL), mode (MODE=INOUT), storage (STORAGE=AUTO), TIOAPFX (TIOAPFX=YES), and type (TYPE=&&SYSPARM). These attributes control the overall behavior and characteristics of the map set within the CICS environment. The CTRL parameters enable audible alarms and freeing of the keyboard after input. EXTATT enables extended attributes for color and highlighting. LANG specifies COBOL as the programming language. MODE specifies that the map can be used for both input and output. STORAGE specifies automatic storage management. TIOAPFX enables the TIOA prefix. TYPE specifies the map type based on the system parameter.
+This DFHMSD macro defines the map set COPAU01, which encapsulates the screen definition. It specifies various attributes for the map set, including control options (ALARM, FREEKB), extended attributes (EXTATT=YES), language (LANG=COBOL), mode (MODE=INOUT), storage (STORAGE=AUTO), terminal I/O area prefix (TIOAPFX=YES), and type (TYPE=&&SYSPARM). The TYPE parameter allows specifying different map types during compilation (e.g., TYPE=MAP, TYPE=DSECT). The CTRL options enable the alarm and release the keyboard after input. EXTATT enables extended attributes like color. LANG specifies COBOL as the programming language. MODE=INOUT indicates the map can be used for both input and output. STORAGE=AUTO lets CICS manage storage. TIOAPFX=YES includes a prefix in the I/O area. This paragraph essentially sets up the overall environment and characteristics for the BMS map.
 
 ### COPAU1A
-This DFHMDI macro defines the map COPAU1A within the COPAU01 mapset. It specifies the map's position and size on the screen. COLUMN=1 and LINE=1 indicate that the map starts at the top-left corner of the screen. SIZE=(24,80) defines the map as occupying the entire screen (24 lines by 80 columns). This macro essentially creates a container for all the fields defined within this map, determining the overall dimensions of the display. It acts as a parent to the individual DFHMDF field definitions, organizing them within the screen layout. The map provides a full-screen view for displaying authorization details.
+This DFHMDI macro defines the map COPAU1A within the COPAU01 mapset. It specifies the screen's dimensions and position. COLUMN=1 and LINE=1 place the map at the top-left corner of the screen. SIZE=(24,80) defines the screen as 24 lines by 80 columns, which is a standard terminal size. This paragraph essentially defines the overall screen layout and size for the application's display. It does not directly process any data or implement business logic but provides the foundation for displaying the various fields defined by the DFHMDF macros.

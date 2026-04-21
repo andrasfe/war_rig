@@ -1,0 +1,217 @@
+{
+  "program_id": "CORPT00C",
+  "questions": [
+    {
+      "question_id": "G-10:T",
+      "section": null,
+      "question_type": "COMPLETENESS",
+      "question": "Specter reached this path at PROCESS-ENTER-KEY:929 with no business rule covering it:\n\nPath constraint: `IF SDTYYYYI OF CORPT0AI IS NOT NUMERIC`\nOutcome: direction=T\n\nIs this intentional silent handling, a missing rule, or dead code?\n\n- If **intentional silent handling**, please document why the path is deliberately unspecified (e.g., \"default pass-through, no business effect\").\n- If a **missing rule**, add a rule_id with the precondition matching this constraint and its intended postcondition.\n- If **dead code**, mark it as a dead_code_candidate with confidence level so Specter stops reporting it.\n\nEvidence: {\"branch_id\": 10, \"branch_key\": \"10:T\", \"condition_category\": \"not_numeric\", \"condition_text\": \"IF SDTYYYYI OF CORPT0AI IS NOT NUMERIC\", \"condition_vars\": [\"SDTYYYYI\", \"CORPT0AI\"], \"direction\": \"T\", \"gating_paragraphs\": []}",
+      "context": "location=PROCESS-ENTER-KEY:929; condition_text=IF SDTYYYYI OF CORPT0AI IS NOT NUMERIC; condition_category=not_numeric; branch_key=10:T",
+      "evidence": [
+        929
+      ],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "G-10:F",
+      "section": null,
+      "question_type": "COMPLETENESS",
+      "question": "Specter reached this path at PROCESS-ENTER-KEY:929 with no business rule covering it:\n\nPath constraint: `IF SDTYYYYI OF CORPT0AI IS NOT NUMERIC`\nOutcome: direction=F\n\nIs this intentional silent handling, a missing rule, or dead code?\n\n- If **intentional silent handling**, please document why the path is deliberately unspecified (e.g., \"default pass-through, no business effect\").\n- If a **missing rule**, add a rule_id with the precondition matching this constraint and its intended postcondition.\n- If **dead code**, mark it as a dead_code_candidate with confidence level so Specter stops reporting it.\n\nEvidence: {\"branch_id\": 10, \"branch_key\": \"10:F\", \"condition_category\": \"not_numeric\", \"condition_text\": \"IF SDTYYYYI OF CORPT0AI IS NOT NUMERIC\", \"condition_vars\": [\"SDTYYYYI\", \"CORPT0AI\"], \"direction\": \"F\", \"gating_paragraphs\": []}",
+      "context": "location=PROCESS-ENTER-KEY:929; condition_text=IF SDTYYYYI OF CORPT0AI IS NOT NUMERIC; condition_category=not_numeric; branch_key=10:F",
+      "evidence": [
+        929
+      ],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "G-11:T",
+      "section": null,
+      "question_type": "COMPLETENESS",
+      "question": "Specter reached this path at PROCESS-ENTER-KEY:942 with no business rule covering it:\n\nPath constraint: `IF EDTMMI OF CORPT0AI IS NOT NUMERIC OR`\nOutcome: direction=T\n\nIs this intentional silent handling, a missing rule, or dead code?\n\n- If **intentional silent handling**, please document why the path is deliberately unspecified (e.g., \"default pass-through, no business effect\").\n- If a **missing rule**, add a rule_id with the precondition matching this constraint and its intended postcondition.\n- If **dead code**, mark it as a dead_code_candidate with confidence level so Specter stops reporting it.\n\nEvidence: {\"branch_id\": 11, \"branch_key\": \"11:T\", \"condition_category\": \"not_numeric\", \"condition_text\": \"IF EDTMMI OF CORPT0AI IS NOT NUMERIC OR\", \"condition_vars\": [\"EDTMMI\", \"CORPT0AI\"], \"direction\": \"T\", \"gating_paragraphs\": []}",
+      "context": "location=PROCESS-ENTER-KEY:942; condition_text=IF EDTMMI OF CORPT0AI IS NOT NUMERIC OR; condition_category=not_numeric; branch_key=11:T",
+      "evidence": [
+        942
+      ],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "G-11:F",
+      "section": null,
+      "question_type": "COMPLETENESS",
+      "question": "Specter reached this path at PROCESS-ENTER-KEY:942 with no business rule covering it:\n\nPath constraint: `IF EDTMMI OF CORPT0AI IS NOT NUMERIC OR`\nOutcome: direction=F\n\nIs this intentional silent handling, a missing rule, or dead code?\n\n- If **intentional silent handling**, please document why the path is deliberately unspecified (e.g., \"default pass-through, no business effect\").\n- If a **missing rule**, add a rule_id with the precondition matching this constraint and its intended postcondition.\n- If **dead code**, mark it as a dead_code_candidate with confidence level so Specter stops reporting it.\n\nEvidence: {\"branch_id\": 11, \"branch_key\": \"11:F\", \"condition_category\": \"not_numeric\", \"condition_text\": \"IF EDTMMI OF CORPT0AI IS NOT NUMERIC OR\", \"condition_vars\": [\"EDTMMI\", \"CORPT0AI\"], \"direction\": \"F\", \"gating_paragraphs\": []}",
+      "context": "location=PROCESS-ENTER-KEY:942; condition_text=IF EDTMMI OF CORPT0AI IS NOT NUMERIC OR; condition_category=not_numeric; branch_key=11:F",
+      "evidence": [
+        942
+      ],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "G-12:T",
+      "section": null,
+      "question_type": "COMPLETENESS",
+      "question": "Specter reached this path at PROCESS-ENTER-KEY:955 with no business rule covering it:\n\nPath constraint: `IF EDTDDI OF CORPT0AI IS NOT NUMERIC OR`\nOutcome: direction=T\n\nIs this intentional silent handling, a missing rule, or dead code?\n\n- If **intentional silent handling**, please document why the path is deliberately unspecified (e.g., \"default pass-through, no business effect\").\n- If a **missing rule**, add a rule_id with the precondition matching this constraint and its intended postcondition.\n- If **dead code**, mark it as a dead_code_candidate with confidence level so Specter stops reporting it.\n\nEvidence: {\"branch_id\": 12, \"branch_key\": \"12:T\", \"condition_category\": \"not_numeric\", \"condition_text\": \"IF EDTDDI OF CORPT0AI IS NOT NUMERIC OR\", \"condition_vars\": [\"EDTDDI\", \"CORPT0AI\"], \"direction\": \"T\", \"gating_paragraphs\": []}",
+      "context": "location=PROCESS-ENTER-KEY:955; condition_text=IF EDTDDI OF CORPT0AI IS NOT NUMERIC OR; condition_category=not_numeric; branch_key=12:T",
+      "evidence": [
+        955
+      ],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "G-12:F",
+      "section": null,
+      "question_type": "COMPLETENESS",
+      "question": "Specter reached this path at PROCESS-ENTER-KEY:955 with no business rule covering it:\n\nPath constraint: `IF EDTDDI OF CORPT0AI IS NOT NUMERIC OR`\nOutcome: direction=F\n\nIs this intentional silent handling, a missing rule, or dead code?\n\n- If **intentional silent handling**, please document why the path is deliberately unspecified (e.g., \"default pass-through, no business effect\").\n- If a **missing rule**, add a rule_id with the precondition matching this constraint and its intended postcondition.\n- If **dead code**, mark it as a dead_code_candidate with confidence level so Specter stops reporting it.\n\nEvidence: {\"branch_id\": 12, \"branch_key\": \"12:F\", \"condition_category\": \"not_numeric\", \"condition_text\": \"IF EDTDDI OF CORPT0AI IS NOT NUMERIC OR\", \"condition_vars\": [\"EDTDDI\", \"CORPT0AI\"], \"direction\": \"F\", \"gating_paragraphs\": []}",
+      "context": "location=PROCESS-ENTER-KEY:955; condition_text=IF EDTDDI OF CORPT0AI IS NOT NUMERIC OR; condition_category=not_numeric; branch_key=12:F",
+      "evidence": [
+        955
+      ],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "G-13:T",
+      "section": null,
+      "question_type": "COMPLETENESS",
+      "question": "Specter reached this path at PROCESS-ENTER-KEY:967 with no business rule covering it:\n\nPath constraint: `IF EDTYYYYI OF CORPT0AI IS NOT NUMERIC`\nOutcome: direction=T\n\nIs this intentional silent handling, a missing rule, or dead code?\n\n- If **intentional silent handling**, please document why the path is deliberately unspecified (e.g., \"default pass-through, no business effect\").\n- If a **missing rule**, add a rule_id with the precondition matching this constraint and its intended postcondition.\n- If **dead code**, mark it as a dead_code_candidate with confidence level so Specter stops reporting it.\n\nEvidence: {\"branch_id\": 13, \"branch_key\": \"13:T\", \"condition_category\": \"not_numeric\", \"condition_text\": \"IF EDTYYYYI OF CORPT0AI IS NOT NUMERIC\", \"condition_vars\": [\"EDTYYYYI\", \"CORPT0AI\"], \"direction\": \"T\", \"gating_paragraphs\": []}",
+      "context": "location=PROCESS-ENTER-KEY:967; condition_text=IF EDTYYYYI OF CORPT0AI IS NOT NUMERIC; condition_category=not_numeric; branch_key=13:T",
+      "evidence": [
+        967
+      ],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "G-13:F",
+      "section": null,
+      "question_type": "COMPLETENESS",
+      "question": "Specter reached this path at PROCESS-ENTER-KEY:967 with no business rule covering it:\n\nPath constraint: `IF EDTYYYYI OF CORPT0AI IS NOT NUMERIC`\nOutcome: direction=F\n\nIs this intentional silent handling, a missing rule, or dead code?\n\n- If **intentional silent handling**, please document why the path is deliberately unspecified (e.g., \"default pass-through, no business effect\").\n- If a **missing rule**, add a rule_id with the precondition matching this constraint and its intended postcondition.\n- If **dead code**, mark it as a dead_code_candidate with confidence level so Specter stops reporting it.\n\nEvidence: {\"branch_id\": 13, \"branch_key\": \"13:F\", \"condition_category\": \"not_numeric\", \"condition_text\": \"IF EDTYYYYI OF CORPT0AI IS NOT NUMERIC\", \"condition_vars\": [\"EDTYYYYI\", \"CORPT0AI\"], \"direction\": \"F\", \"gating_paragraphs\": []}",
+      "context": "location=PROCESS-ENTER-KEY:967; condition_text=IF EDTYYYYI OF CORPT0AI IS NOT NUMERIC; condition_category=not_numeric; branch_key=13:F",
+      "evidence": [
+        967
+      ],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "G-15:T",
+      "section": null,
+      "question_type": "COMPLETENESS",
+      "question": "Specter reached this path at PROCESS-ENTER-KEY:1006 with no business rule covering it:\n\nPath constraint: `IF CSUTLDTC-RESULT-SEV-CD = '0000'`\nOutcome: direction=T\n\nIs this intentional silent handling, a missing rule, or dead code?\n\n- If **intentional silent handling**, please document why the path is deliberately unspecified (e.g., \"default pass-through, no business effect\").\n- If a **missing rule**, add a rule_id with the precondition matching this constraint and its intended postcondition.\n- If **dead code**, mark it as a dead_code_candidate with confidence level so Specter stops reporting it.\n\nEvidence: {\"branch_id\": 15, \"branch_key\": \"15:T\", \"condition_category\": \"string_eq\", \"condition_text\": \"IF CSUTLDTC-RESULT-SEV-CD = \\u00270000\\u0027\", \"condition_vars\": [\"CSUTLDTC-RESULT-SEV-CD\"], \"direction\": \"T\", \"gating_paragraphs\": []}",
+      "context": "location=PROCESS-ENTER-KEY:1006; condition_text=IF CSUTLDTC-RESULT-SEV-CD = '0000'; condition_category=string_eq; branch_key=15:T",
+      "evidence": [
+        1006
+      ],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "G-15:F",
+      "section": null,
+      "question_type": "COMPLETENESS",
+      "question": "Specter reached this path at PROCESS-ENTER-KEY:1006 with no business rule covering it:\n\nPath constraint: `IF CSUTLDTC-RESULT-SEV-CD = '0000'`\nOutcome: direction=F\n\nIs this intentional silent handling, a missing rule, or dead code?\n\n- If **intentional silent handling**, please document why the path is deliberately unspecified (e.g., \"default pass-through, no business effect\").\n- If a **missing rule**, add a rule_id with the precondition matching this constraint and its intended postcondition.\n- If **dead code**, mark it as a dead_code_candidate with confidence level so Specter stops reporting it.\n\nEvidence: {\"branch_id\": 15, \"branch_key\": \"15:F\", \"condition_category\": \"string_eq\", \"condition_text\": \"IF CSUTLDTC-RESULT-SEV-CD = \\u00270000\\u0027\", \"condition_vars\": [\"CSUTLDTC-RESULT-SEV-CD\"], \"direction\": \"F\", \"gating_paragraphs\": []}",
+      "context": "location=PROCESS-ENTER-KEY:1006; condition_text=IF CSUTLDTC-RESULT-SEV-CD = '0000'; condition_category=string_eq; branch_key=15:F",
+      "evidence": [
+        1006
+      ],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "G-16:T",
+      "section": null,
+      "question_type": "COMPLETENESS",
+      "question": "Specter reached this path at PROCESS-ENTER-KEY:1011 with no business rule covering it:\n\nPath constraint: `IF CSUTLDTC-RESULT-MSG-NUM NOT = '2513'`\nOutcome: direction=T\n\nIs this intentional silent handling, a missing rule, or dead code?\n\n- If **intentional silent handling**, please document why the path is deliberately unspecified (e.g., \"default pass-through, no business effect\").\n- If a **missing rule**, add a rule_id with the precondition matching this constraint and its intended postcondition.\n- If **dead code**, mark it as a dead_code_candidate with confidence level so Specter stops reporting it.\n\nEvidence: {\"branch_id\": 16, \"branch_key\": \"16:T\", \"condition_category\": \"string_eq\", \"condition_text\": \"IF CSUTLDTC-RESULT-MSG-NUM NOT = \\u00272513\\u0027\", \"condition_vars\": [\"CSUTLDTC-RESULT-MSG-NUM\"], \"direction\": \"T\", \"gating_paragraphs\": []}",
+      "context": "location=PROCESS-ENTER-KEY:1011; condition_text=IF CSUTLDTC-RESULT-MSG-NUM NOT = '2513'; condition_category=string_eq; branch_key=16:T",
+      "evidence": [
+        1011
+      ],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "G-16:F",
+      "section": null,
+      "question_type": "COMPLETENESS",
+      "question": "Specter reached this path at PROCESS-ENTER-KEY:1011 with no business rule covering it:\n\nPath constraint: `IF CSUTLDTC-RESULT-MSG-NUM NOT = '2513'`\nOutcome: direction=F\n\nIs this intentional silent handling, a missing rule, or dead code?\n\n- If **intentional silent handling**, please document why the path is deliberately unspecified (e.g., \"default pass-through, no business effect\").\n- If a **missing rule**, add a rule_id with the precondition matching this constraint and its intended postcondition.\n- If **dead code**, mark it as a dead_code_candidate with confidence level so Specter stops reporting it.\n\nEvidence: {\"branch_id\": 16, \"branch_key\": \"16:F\", \"condition_category\": \"string_eq\", \"condition_text\": \"IF CSUTLDTC-RESULT-MSG-NUM NOT = \\u00272513\\u0027\", \"condition_vars\": [\"CSUTLDTC-RESULT-MSG-NUM\"], \"direction\": \"F\", \"gating_paragraphs\": []}",
+      "context": "location=PROCESS-ENTER-KEY:1011; condition_text=IF CSUTLDTC-RESULT-MSG-NUM NOT = '2513'; condition_category=string_eq; branch_key=16:F",
+      "evidence": [
+        1011
+      ],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-EEB44325",
+      "section": null,
+      "question_type": "VERIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-2AB9EBD3",
+      "section": null,
+      "question_type": "COMPLETENESS",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-8E10329C",
+      "section": null,
+      "question_type": "COMPLETENESS",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-D86A1067",
+      "section": null,
+      "question_type": "COMPLETENESS",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "IMPORTANT",
+      "iteration": 1,
+      "answered": false
+    },
+    {
+      "question_id": "Q-65DFA852",
+      "section": null,
+      "question_type": "VERIFICATION",
+      "question": "",
+      "context": null,
+      "evidence": [],
+      "severity": "MINOR",
+      "iteration": 1,
+      "answered": false
+    }
+  ],
+  "responses": []
+}

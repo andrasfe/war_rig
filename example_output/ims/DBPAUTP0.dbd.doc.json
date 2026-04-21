@@ -4,16 +4,15 @@
     "file_name": "DBPAUTP0.dbd",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-16T19:55:23.969995",
+    "analyzed_at": "2026-04-21T13:44:12.250067",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This Database Description (DBD) file defines the structure and characteristics of the DBPAUTP0 database for IMS (Information Management System). It specifies the database organization, segment definitions, fields, and indexing, including details for pending authorization summaries and details.",
-    "business_context": "UNKNOWN",
+    "summary": "This DBD (Database Description) defines the structure and characteristics of the DBPAUTP0 database, which stores pending authorization summary and detail information. It specifies the database organization as HIDAM with VSAM access, defines segments for pending authorization summary (PAUTSUM0) and details (PAUTDTL1), and establishes relationships between them.",
+    "business_context": "This database likely supports authorization processing within a financial or transaction processing system.",
     "program_type": "UTILITY",
     "citations": [
-      17,
       18,
       26,
       34
@@ -38,13 +37,7 @@
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [
-    {
-      "question": "What is the business purpose of the PENDING AUTHORIZATION SUMMARY and DETAILS?",
-      "context": "The DBD defines the structure but not the business context.",
-      "suggestion": "Review related application code or system documentation."
-    }
-  ],
+  "open_questions": [],
   "resolved_questions": [],
   "dead_code": [],
   "dead_code_resolved": [],

@@ -4,13 +4,13 @@
     "file_name": "CCPAURLY.cpy",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-16T19:55:08.367958",
+    "analyzed_at": "2026-04-21T13:43:56.504553",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the data structure for a pending authorization response related to card transactions. It includes fields for card number, transaction ID, authorization codes, response codes, reason codes, and the approved amount. The copybook is licensed under the Apache License 2.0.",
-    "business_context": "This copybook is likely used in a payment processing system to handle authorization responses from a payment gateway or processor.",
+    "summary": "This copybook defines the data structure for a pending authorization response related to card transactions. It includes fields for card number, transaction ID, authorization codes, response codes, reason codes, and the approved amount.",
+    "business_context": "This copybook is likely used in systems that handle credit card authorizations, such as payment processing or fraud detection systems.",
     "program_type": "COPYBOOK",
     "citations": [
       2,
@@ -32,14 +32,7 @@
     "writes_to": [],
     "transforms": []
   },
-  "copybooks_used": [
-    {
-      "copybook_name": "CCPAURLY",
-      "purpose": "Defines the data structure for pending authorization response.",
-      "location": "WORKING_STORAGE",
-      "citation": 1
-    }
-  ],
+  "copybooks_used": [],
   "paragraphs": [],
   "error_handling": [],
   "sql_operations": [],

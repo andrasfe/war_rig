@@ -1,0 +1,312 @@
+{
+  "batch_idx": 0,
+  "total_batches": 5,
+  "template": {
+    "header": {
+      "program_id": "COPAUA0C",
+      "file_name": "COPAUA0C.mock.cbl",
+      "file_type": "COBOL",
+      "analyzed_by": "WAR_RIG",
+      "analyzed_at": "2026-04-21T13:43:19.208522",
+      "iteration_count": 1,
+      "final_status": null
+    },
+    "purpose": {
+      "summary": "This COBOL program appears to be a mock implementation for testing purposes, simulating interactions with CICS, IMS, and MQSeries. It initializes resources, processes requests, and terminates, using mock data from a file to simulate external system behavior.",
+      "business_context": null,
+      "program_type": "BATCH",
+      "citations": [
+        2,
+        34,
+        75,
+        111,
+        174
+      ]
+    },
+    "inputs": [
+      {
+        "name": "MOCK-FILE",
+        "io_type": "FILE_SEQUENTIAL",
+        "description": "A sequential file containing mock data used to simulate responses from CICS, IMS, and MQSeries calls.",
+        "copybook": null,
+        "citation": [
+          6,
+          19,
+          35,
+          76,
+          112,
+          130
+        ]
+      }
+    ],
+    "outputs": [],
+    "called_programs": [],
+    "calling_context": {
+      "called_by": [],
+      "entry_points": [],
+      "linkage_section": []
+    },
+    "business_rules": [],
+    "data_flow": {
+      "reads_from": [
+        {
+          "source": "MOCK-FILE",
+          "fields_used": [
+            "MOCK-RECORD",
+            "MOCK-ALPHA-STATUS",
+            "MOCK-NUM-STATUS"
+          ],
+          "citation": [
+            19,
+            35,
+            76,
+            112,
+            130
+          ]
+        }
+      ],
+      "writes_to": [],
+      "transforms": []
+    },
+    "copybooks_used": [],
+    "paragraphs": [
+      {
+        "paragraph_name": "MAIN-PARA",
+        "summary": null,
+        "purpose": "This is the main control paragraph of the program. It opens the MOCK-FILE, then calls 1000-INITIALIZE, 2000-MAIN-PROCESS, and 9000-TERMINATE in sequence to perform the program's core functions. After these calls, it attempts to read a record from MOCK-FILE and moves values to MOCK-ALPHA-STATUS and MOCK-NUM-STATUS based on the read status. The paragraph simulates a CICS RETURN using a DISPLAY statement. It reads the MOCK-FILE to simulate external calls.",
+        "called_by": [],
+        "calls": [
+          "1000-INITIALIZE",
+          "2000-MAIN-PROCESS",
+          "9000-TERMINATE"
+        ],
+        "citation": [
+          4,
+          24
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "1000-INITIALIZE",
+        "summary": null,
+        "purpose": "This paragraph performs initialization tasks. It simulates a CICS RETRIEVE command using a DISPLAY statement and reads a record from MOCK-FILE, moving values to MOCK-ALPHA-STATUS and MOCK-NUM-STATUS based on the read status. It checks WS-RESP-CD and moves WS-REQUEST-QNAME to itself and spaces to WS-TRIGGER-DATA if WS-RESP-CD is 0. It sets WS-WAIT-INTERVAL to 5000. Finally, it calls 1100-OPEN-REQUEST-QUEUE and 3100-READ-REQUEST-MQ to open the request queue and read a request message, respectively. The paragraph uses mock data from MOCK-FILE to simulate CICS and MQSeries interactions.",
+        "called_by": [],
+        "calls": [
+          "1100-OPEN-REQUEST-QUEUE",
+          "3100-READ-REQUEST-MQ"
+        ],
+        "citation": [
+          26,
+          52
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "1000-EXIT",
+        "summary": null,
+        "purpose": "This paragraph serves as the exit point for the 1000-INITIALIZE paragraph. It contains a DISPLAY statement for tracing and an EXIT statement to return control to the calling paragraph.",
+        "called_by": [
+          "MAIN-PARA"
+        ],
+        "calls": [],
+        "citation": [
+          54,
+          57
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "1100-OPEN-REQUEST-QUEUE",
+        "summary": null,
+        "purpose": "This paragraph simulates opening a request queue. It moves 1 to MQOD-OBJECTTYPE and WS-REQUEST-QNAME to MQOD-OBJECTNAME. It computes WS-OPTIONS as 2048. It simulates a MQOPEN call using a DISPLAY statement and reads a record from MOCK-FILE, moving the value of MOCK-NUM-STATUS to RETURN-CODE. If WS-COMPCODE is 0, it sets WS-REQUEST-MQ-OPEN to TRUE; otherwise, it sets error flags and calls 9500-LOG-ERROR to log the error. The paragraph uses mock data from MOCK-FILE to simulate MQSeries interactions and sets error codes based on simulated MQSeries responses.",
+        "called_by": [
+          "1000-INITIALIZE"
+        ],
+        "calls": [
+          "9500-LOG-ERROR"
+        ],
+        "citation": [
+          59,
+          97
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "1100-EXIT",
+        "summary": null,
+        "purpose": "This paragraph serves as the exit point for the 1100-OPEN-REQUEST-QUEUE paragraph. It contains a DISPLAY statement for tracing and an EXIT statement to return control to the calling paragraph.",
+        "called_by": [
+          "1000-INITIALIZE"
+        ],
+        "calls": [],
+        "citation": [
+          99,
+          102
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "1200-SCHEDULE-PSB",
+        "summary": null,
+        "purpose": "This paragraph simulates scheduling a PSB (Program Specification Block) in IMS. It simulates a DLI SCHD call using a DISPLAY statement and reads a record from MOCK-FILE, moving the value of MOCK-ALPHA-STATUS to DIBSTAT and IMS-RETURN-CODE. If PSB-SCHEDULED-MORE-THAN-ONCE is true, it simulates a DLI TERM call and another DLI SCHD call, reading mock data after each. If STATUS-OK is true, it sets IMS-PSB-SCHD to TRUE; otherwise, it sets error flags and calls 9500-LOG-ERROR to log the error. The paragraph uses mock data from MOCK-FILE to simulate IMS interactions and sets error codes based on simulated IMS responses.",
+        "called_by": [],
+        "calls": [
+          "9500-LOG-ERROR"
+        ],
+        "citation": [
+          104,
+          149
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "1200-EXIT",
+        "summary": null,
+        "purpose": "This paragraph serves as the exit point for the 1200-SCHEDULE-PSB paragraph. It contains a DISPLAY statement for tracing and an EXIT statement to return control to the calling paragraph.",
+        "called_by": [],
+        "calls": [],
+        "citation": [
+          151,
+          154
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "2000-MAIN-PROCESS",
+        "summary": null,
+        "purpose": "This paragraph represents the main processing loop of the program. It performs 2100-EXTRACT-REQUEST-MSG and 5000-PROCESS-AUTH repeatedly until NO-MORE-MSG-AVAILABLE or WS-LOOP-END is true. After each iteration, it increments WS-MSG-PROCESSED. It simulates a CICS SYNCPOINT using a DISPLAY statement. If WS-MSG-PROCESSED exceeds WS-REQSTS-PROCESS-LIMIT, it sets WS-LOOP-END to TRUE; otherwise, it calls 3100-READ-REQUEST-MQ to read another request message. The paragraph controls the overall processing flow, extracting requests, processing authorizations, and managing loop termination based on message availability and processing limits.",
+        "called_by": [],
+        "calls": [
+          "2100-EXTRACT-REQUEST-MSG",
+          "5000-PROCESS-AUTH",
+          "3100-READ-REQUEST-MQ"
+        ],
+        "citation": [
+          157,
+          185
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "2000-EXIT",
+        "summary": null,
+        "purpose": "This paragraph serves as the exit point for the 2000-MAIN-PROCESS paragraph. It contains a DISPLAY statement for tracing and an EXIT statement to return control to the calling paragraph.",
+        "called_by": [
+          "MAIN-PARA"
+        ],
+        "calls": [],
+        "citation": [
+          187,
+          190
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      }
+    ],
+    "error_handling": [
+      {
+        "condition": "AT END of MOCK-FILE",
+        "action": "MOVE '00' TO MOCK-ALPHA-STATUS, MOVE 0 TO MOCK-NUM-STATUS",
+        "citation": [
+          20,
+          37,
+          77,
+          113,
+          131
+        ]
+      },
+      {
+        "condition": "WS-COMPCODE not = 0 in 1100-OPEN-REQUEST-QUEUE",
+        "action": "MOVE 'M001' TO ERR-LOCATION, SET ERR-CRITICAL and ERR-MQ to TRUE, MOVE WS-COMPCODE and WS-REASON to error fields, MOVE 'REQ MQ OPEN ERROR' to ERR-MESSAGE, PERFORM 9500-LOG-ERROR",
+        "citation": [
+          82,
+          96
+        ]
+      },
+      {
+        "condition": "STATUS-OK is false in 1200-SCHEDULE-PSB",
+        "action": "MOVE 'I001' TO ERR-LOCATION, SET ERR-CRITICAL and ERR-IMS to TRUE, MOVE IMS-RETURN-CODE to ERR-CODE-1, MOVE 'IMS SCHD FAILED' to ERR-MESSAGE, PERFORM 9500-LOG-ERROR",
+        "citation": [
+          138,
+          148
+        ]
+      }
+    ],
+    "sql_operations": [],
+    "cics_operations": [],
+    "open_questions": [
+      {
+        "question": "What is the purpose of the MOCK-FILE and what data does it contain?",
+        "context": "The program uses MOCK-FILE to simulate external system responses, but the file's structure and content are not defined in the provided code snippet.",
+        "suggestion": "Examine the contents of MOCK-FILE or related documentation to understand the data it provides."
+      },
+      {
+        "question": "What are the definitions of the various WS-* variables used throughout the program?",
+        "context": "The code uses numerous WS-* variables (e.g., WS-REQUEST-QNAME, WS-COMPCODE, WS-REASON) without defining their structure or purpose.",
+        "suggestion": "Review the copybooks or data division sections that define these variables to understand their meaning and usage."
+      },
+      {
+        "question": "What is the purpose of the 3100-READ-REQUEST-MQ paragraph?",
+        "context": "The paragraph is called in 1000-INITIALIZE and 2000-MAIN-PROCESS, but its code is not provided in the snippet.",
+        "suggestion": "Examine the code for 3100-READ-REQUEST-MQ to understand how it reads request messages and what data it extracts."
+      },
+      {
+        "question": "What is the purpose of the 2100-EXTRACT-REQUEST-MSG and 5000-PROCESS-AUTH paragraphs?",
+        "context": "The paragraphs are called in 2000-MAIN-PROCESS, but their code is not provided in the snippet.",
+        "suggestion": "Examine the code for 2100-EXTRACT-REQUEST-MSG and 5000-PROCESS-AUTH to understand their functionality."
+      },
+      {
+        "question": "What is the purpose of the 9000-TERMINATE paragraph?",
+        "context": "The paragraph is called in MAIN-PARA, but its code is not provided in the snippet.",
+        "suggestion": "Examine the code for 9000-TERMINATE to understand its functionality."
+      },
+      {
+        "question": "What is the purpose of the 9500-LOG-ERROR paragraph?",
+        "context": "The paragraph is called in 1100-OPEN-REQUEST-QUEUE and 1200-SCHEDULE-PSB, but its code is not provided in the snippet.",
+        "suggestion": "Examine the code for 9500-LOG-ERROR to understand its functionality."
+      }
+    ],
+    "resolved_questions": [],
+    "dead_code": [],
+    "dead_code_resolved": [],
+    "call_semantics": [],
+    "flow_diagram": null,
+    "copybooks_not_found": []
+  },
+  "saved_at": "2026-04-21T06:43:19.210056"
+}

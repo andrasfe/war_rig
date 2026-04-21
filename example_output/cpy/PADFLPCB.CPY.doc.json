@@ -4,12 +4,12 @@
     "file_name": "PADFLPCB.CPY",
     "file_type": "COPYBOOK",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-16T19:47:41.084811",
+    "analyzed_at": "2026-04-21T13:43:28.454187",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This copybook defines the structure of PADFLPCB, which appears to be a PCB (Program Communication Block) used in IMS (Information Management System) for database communication. It contains fields related to database name, segment level, status, processing options, segment name, key feedback, number of sensitive segments, and key feedback area.",
+    "summary": "This copybook defines the structure of PADFLPCB, which appears to be related to IMS PCB (Program Communication Block). It contains fields for DBD name, segment level, PCB status, processing options, segment name, key feedback name, number of sensitive segments, and key feedback area.",
     "business_context": null,
     "program_type": "COPYBOOK",
     "citations": [
@@ -35,7 +35,7 @@
   "copybooks_used": [
     {
       "copybook_name": "PADFLPCB",
-      "purpose": "Defines the structure of a PCB (Program Communication Block) for IMS database communication.",
+      "purpose": "Defines the structure of the PADFLPCB data area, likely used for IMS database communication.",
       "location": "WORKING_STORAGE",
       "citation": 17
     }

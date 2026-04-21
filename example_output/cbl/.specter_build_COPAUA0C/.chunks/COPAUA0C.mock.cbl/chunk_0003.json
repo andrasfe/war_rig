@@ -1,0 +1,384 @@
+{
+  "batch_idx": 3,
+  "total_batches": 5,
+  "template": {
+    "header": {
+      "program_id": "COPAUA0C",
+      "file_name": "COPAUA0C.mock.cbl",
+      "file_type": "COBOL",
+      "analyzed_by": "WAR_RIG",
+      "analyzed_at": "2026-04-21T13:49:49.396245",
+      "iteration_count": 1,
+      "final_status": null
+    },
+    "purpose": {
+      "summary": "This COBOL program processes authorization requests, updating a summary and inserting authorization details into a database. It also handles MQSeries queue closing and error logging. The program uses mock DISPLAY statements in place of actual database and MQSeries calls.",
+      "business_context": "This program is likely part of a larger authorization processing system, handling the persistence of authorization data.",
+      "program_type": "BATCH",
+      "citations": [
+        7,
+        9,
+        208
+      ]
+    },
+    "inputs": [],
+    "outputs": [],
+    "called_programs": [
+      {
+        "program_name": "MQCLOSE",
+        "call_type": "DYNAMIC_CALL",
+        "purpose": "Closes the request MQSeries queue.",
+        "parameters": [
+          "W01-HCONN-REQUEST",
+          "W01-HOBJ-REQUEST",
+          "0",
+          "WS-COMPCODE",
+          "WS-REASON"
+        ],
+        "citation": 221
+      }
+    ],
+    "calling_context": {
+      "called_by": [],
+      "entry_points": [],
+      "linkage_section": []
+    },
+    "business_rules": [
+      {
+        "rule_id": "BR001",
+        "description": "If an authorization is approved, increment the approved authorization count and amount in the pending authorization summary, and update the credit balance.",
+        "logic_summary": "The program checks AUTH-RESP-APPROVED. If true, it adds 1 to PA-APPROVED-AUTH-CNT and WS-APPROVED-AMT to PA-APPROVED-AUTH-AMT and PA-CREDIT-BALANCE.",
+        "conditions": [
+          "IF AUTH-RESP-APPROVED"
+        ],
+        "citation": [
+          33,
+          34,
+          35,
+          37
+        ]
+      },
+      {
+        "rule_id": "BR002",
+        "description": "If an authorization is declined, increment the declined authorization count and amount in the pending authorization summary.",
+        "logic_summary": "The program checks AUTH-RESP-APPROVED. If false, it adds 1 to PA-DECLINED-AUTH-CNT and PA-TRANSACTION-AMT to PA-DECLINED-AUTH-AMT.",
+        "conditions": [
+          "ELSE"
+        ],
+        "citation": [
+          39,
+          40,
+          41
+        ]
+      },
+      {
+        "rule_id": "BR003",
+        "description": "The program calculates PA-AUTH-DATE-9C and PA-AUTH-TIME-9C by subtracting WS-YYDDD and WS-TIME-WITH-MS from 99999 and 999999999 respectively.",
+        "logic_summary": "The program computes PA-AUTH-DATE-9C and PA-AUTH-TIME-9C using subtraction.",
+        "conditions": [],
+        "citation": [
+          123,
+          124
+        ]
+      }
+    ],
+    "data_flow": {
+      "reads_from": [],
+      "writes_to": [],
+      "transforms": [
+        {
+          "input_field": "WS-ACCT-CREDIT-LIMIT",
+          "output_field": "PA-CREDIT-LIMIT",
+          "transformation_description": "Moves the account credit limit to the pending authorization summary.",
+          "citation": [
+            30
+          ]
+        },
+        {
+          "input_field": "WS-ACCT-CASH-LIMIT",
+          "output_field": "PA-CASH-LIMIT",
+          "transformation_description": "Moves the account cash limit to the pending authorization summary.",
+          "citation": [
+            31
+          ]
+        },
+        {
+          "input_field": "WS-CUR-TIME-N6",
+          "output_field": "WS-TIME-WITH-MS",
+          "transformation_description": "Calculates the time with milliseconds by multiplying WS-CUR-TIME-N6 by 1000 and adding WS-CUR-TIME-MS.",
+          "citation": [
+            120,
+            121
+          ]
+        }
+      ]
+    },
+    "copybooks_used": [],
+    "paragraphs": [
+      {
+        "paragraph_name": "8000-WRITE-AUTH-TO-DB",
+        "summary": null,
+        "purpose": "This paragraph serves as a high-level control point for writing authorization data to the database. It orchestrates the update of the authorization summary and the insertion of authorization details. It first calls 8400-UPDATE-SUMMARY to update the pending authorization summary with the current transaction's information. Then, it calls 8500-INSERT-AUTH to insert the authorization details into the database. The paragraph uses PERFORM statements to execute these subroutines. The DISPLAY statements are mock traces, indicating the start of the paragraph and the calls to other paragraphs. No explicit error handling is present within this paragraph; it relies on the called paragraphs to handle errors.",
+        "called_by": [],
+        "calls": [
+          "8400-UPDATE-SUMMARY",
+          "8500-INSERT-AUTH"
+        ],
+        "citation": [
+          1137,
+          1145
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "8000-EXIT",
+        "summary": null,
+        "purpose": "This paragraph provides a standard exit point for the 8000-WRITE-AUTH-TO-DB paragraph. It contains a DISPLAY statement for tracing purposes, indicating the exit from the paragraph. The EXIT statement ensures proper control flow by returning to the calling paragraph. This paragraph does not handle any data manipulation, business logic, or error conditions. It serves solely as a clean exit point.",
+        "called_by": [
+          "8400-UPDATE-SUMMARY",
+          "8500-INSERT-AUTH",
+          "9100-CLOSE-REQUEST-QUEUE"
+        ],
+        "calls": [],
+        "citation": [
+          1147,
+          1149
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "8400-UPDATE-SUMMARY",
+        "summary": null,
+        "purpose": "This paragraph updates the pending authorization summary (PAUTSUM0) in the database. It first checks if a summary segment already exists (NFOUND-PAUT-SMRY-SEG). If not, it initializes the PENDING-AUTH-SUMMARY with zeros and moves the account ID (XREF-ACCT-ID) and customer ID (WS-CARD-RID-CUST-ID) into the summary record. It then moves the credit and cash limits (WS-ACCT-CREDIT-LIMIT, WS-ACCT-CASH-LIMIT) into the summary. Based on whether the authorization was approved (AUTH-RESP-APPROVED), it increments the approved or declined authorization counts and amounts. Finally, it attempts to update or insert the summary segment using mocked DLI calls. If the IMS update fails, it logs an error. The paragraph uses MOCK-FILE to simulate database I/O.",
+        "called_by": [
+          "8000-WRITE-AUTH-TO-DB"
+        ],
+        "calls": [
+          "9500-LOG-ERROR"
+        ],
+        "citation": [
+          1151,
+          1216
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "8400-EXIT",
+        "summary": null,
+        "purpose": "This paragraph provides a standard exit point for the 8400-UPDATE-SUMMARY paragraph. It includes a DISPLAY statement for tracing and an EXIT statement to return control to the calling paragraph. It does not perform any data manipulation, business logic, or error handling. Its sole purpose is to ensure a clean exit from the 8400-UPDATE-SUMMARY paragraph.",
+        "called_by": [
+          "8000-WRITE-AUTH-TO-DB"
+        ],
+        "calls": [],
+        "citation": [
+          1218,
+          1220
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "8500-INSERT-AUTH",
+        "summary": null,
+        "purpose": "This paragraph inserts authorization details into the database. It retrieves the current date and time using mocked CICS calls. It then calculates PA-AUTH-DATE-9C and PA-AUTH-TIME-9C by subtracting the current date and time from constant values. It moves various fields from the request and response structures (PA-RQ-*, PA-RL-*) into the pending authorization details record. Based on whether the authorization was approved (AUTH-RESP-APPROVED), it sets either PA-MATCH-PENDING or PA-MATCH-AUTH-DECLINED to TRUE. It then attempts to insert the authorization details segment using a mocked DLI call. If the IMS insert fails, it logs an error. The paragraph uses MOCK-FILE to simulate CICS and database I/O.",
+        "called_by": [
+          "8000-WRITE-AUTH-TO-DB"
+        ],
+        "calls": [
+          "9500-LOG-ERROR"
+        ],
+        "citation": [
+          1222,
+          1321
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "8500-EXIT",
+        "summary": null,
+        "purpose": "This paragraph provides a standard exit point for the 8500-INSERT-AUTH paragraph. It contains a DISPLAY statement for tracing and an EXIT statement to return control to the calling paragraph. It does not perform any data manipulation, business logic, or error handling. Its sole purpose is to ensure a clean exit from the 8500-INSERT-AUTH paragraph.",
+        "called_by": [
+          "8000-WRITE-AUTH-TO-DB"
+        ],
+        "calls": [],
+        "citation": [
+          1323,
+          1325
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "9000-TERMINATE",
+        "summary": null,
+        "purpose": "This paragraph handles the termination of the program. It first checks if the IMS PSB has been scheduled (IMS-PSB-SCHD). If so, it attempts to terminate the IMS connection using a mocked DLI TERM call. Then, it calls 9100-CLOSE-REQUEST-QUEUE to close the request MQSeries queue. The DISPLAY statements are used for tracing the program's execution flow. The paragraph ensures that resources are released before the program ends.",
+        "called_by": [],
+        "calls": [
+          "9100-CLOSE-REQUEST-QUEUE"
+        ],
+        "citation": [
+          1329,
+          1340
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "9000-EXIT",
+        "summary": null,
+        "purpose": "This paragraph provides a standard exit point for the 9000-TERMINATE paragraph. It includes a DISPLAY statement for tracing and an EXIT statement to return control to the calling paragraph. It does not perform any data manipulation, business logic, or error handling. Its sole purpose is to ensure a clean exit from the 9000-TERMINATE paragraph.",
+        "called_by": [],
+        "calls": [],
+        "citation": [
+          1342,
+          1344
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "9100-CLOSE-REQUEST-QUEUE",
+        "summary": null,
+        "purpose": "This paragraph attempts to close the request MQSeries queue. It first checks if the queue is open (WS-REQUEST-MQ-OPEN). If so, it calls the MQCLOSE program using mocked CALL statement. The parameters passed to MQCLOSE include the connection handle (W01-HCONN-REQUEST), object handle (W01-HOBJ-REQUEST), and variables for the completion code (WS-COMPCODE) and reason code (WS-REASON). If the MQCLOSE call fails (WS-COMPCODE is not 0), it logs an error. The paragraph uses MOCK-FILE to simulate the MQCLOSE call and RETURN-CODE to store the return code. The DISPLAY statements are used for tracing and debugging.",
+        "called_by": [
+          "9000-TERMINATE"
+        ],
+        "calls": [
+          "9500-LOG-ERROR"
+        ],
+        "citation": [
+          1346,
+          1378
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      },
+      {
+        "paragraph_name": "9100-EXIT",
+        "summary": null,
+        "purpose": "This paragraph provides a standard exit point for the 9100-CLOSE-REQUEST-QUEUE paragraph. It contains a DISPLAY statement for tracing and an EXIT statement to return control to the calling paragraph. It does not perform any data manipulation, business logic, or error handling. Its sole purpose is to ensure a clean exit from the 9100-CLOSE-REQUEST-QUEUE paragraph.",
+        "called_by": [
+          "9000-TERMINATE"
+        ],
+        "calls": [],
+        "citation": [
+          1380,
+          1382
+        ],
+        "outgoing_calls": [],
+        "incoming_calls": [],
+        "is_dead_code": false,
+        "dead_code_reason": null,
+        "metadata": null
+      }
+    ],
+    "error_handling": [
+      {
+        "condition": "IMS UPDATE SUMRY FAILED",
+        "action": "Moves 'I003' to ERR-LOCATION, sets ERR-CRITICAL and ERR-IMS to TRUE, moves IMS-RETURN-CODE to ERR-CODE-1, moves 'IMS UPDATE SUMRY FAILED' to ERR-MESSAGE, moves PA-CARD-NUM to ERR-EVENT-KEY, and performs 9500-LOG-ERROR.",
+        "citation": [
+          71,
+          72,
+          73,
+          74,
+          75,
+          76,
+          77,
+          78,
+          79,
+          81
+        ]
+      },
+      {
+        "condition": "IMS INSERT DETL FAILED",
+        "action": "Moves 'I004' to ERR-LOCATION, sets ERR-CRITICAL and ERR-IMS to TRUE, moves IMS-RETURN-CODE to ERR-CODE-1, moves 'IMS INSERT DETL FAILED' to ERR-MESSAGE, moves PA-CARD-NUM to ERR-EVENT-KEY, and performs 9500-LOG-ERROR.",
+        "citation": [
+          178,
+          179,
+          180,
+          181,
+          182,
+          183,
+          184,
+          185,
+          186,
+          188
+        ]
+      },
+      {
+        "condition": "FAILED TO CLOSE REQUEST MQ",
+        "action": "Moves 'M005' to ERR-LOCATION, sets ERR-WARNING and ERR-MQ to TRUE, moves WS-COMPCODE to WS-CODE-DISPLAY, moves WS-CODE-DISPLAY to ERR-CODE-1, moves WS-REASON to WS-CODE-DISPLAY, moves WS-CODE-DISPLAY to ERR-CODE-2, moves 'FAILED TO CLOSE REQUEST MQ' to ERR-MESSAGE, and performs 9500-LOG-ERROR.",
+        "citation": [
+          234,
+          236,
+          237,
+          238,
+          239,
+          240,
+          241,
+          242,
+          243,
+          244,
+          247
+        ]
+      }
+    ],
+    "sql_operations": [],
+    "cics_operations": [],
+    "open_questions": [
+      {
+        "question": "What is the purpose of the 9500-LOG-ERROR paragraph?",
+        "context": "The code calls 9500-LOG-ERROR in several error handling routines, but the code for that paragraph is not provided.",
+        "suggestion": "Examine the source code for 9500-LOG-ERROR to determine its functionality."
+      },
+      {
+        "question": "What are the structures of the IMS segments PAUTSUM0 and PAUTDTL1?",
+        "context": "The code refers to these segments in DLI calls, but their structure is not defined in the provided code.",
+        "suggestion": "Examine the copybooks or data definitions for these segments to understand their structure."
+      },
+      {
+        "question": "What are the structures of the MQSeries messages used by this program?",
+        "context": "The code calls MQCLOSE, but the structure of the messages being processed is not defined in the provided code.",
+        "suggestion": "Examine the copybooks or data definitions for the MQSeries messages to understand their structure."
+      }
+    ],
+    "resolved_questions": [],
+    "dead_code": [],
+    "dead_code_resolved": [],
+    "call_semantics": [],
+    "flow_diagram": null,
+    "copybooks_not_found": []
+  },
+  "saved_at": "2026-04-21T06:49:49.397335"
+}

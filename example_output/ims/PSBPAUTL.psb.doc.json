@@ -4,12 +4,12 @@
     "file_name": "PSBPAUTL.psb",
     "file_type": "OTHER",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-16T20:00:03.275463",
+    "analyzed_at": "2026-04-21T13:44:39.795024",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "This PSB (Program Specification Block) defines the interface for an IMS (Information Management System) application. It specifies the database (DBPAUTP0) to be accessed, the processing options (PROCOPT=L), the key length (KEYLEN=14), and the segments (PAUTSUM0, PAUTDTL1) that the application is sensitive to. It's generated for ASSEMBLY language.",
+    "summary": "This PSB (Program Specification Block) defines the database access characteristics for an IMS (Information Management System) application. It specifies the database (DBPAUTP0), the processing options (PROCOPT=L), key length, and the segments (PAUTSUM0, PAUTDTL1) that the program is sensitive to. The PSB is generated for ASSEMBLY language.",
     "business_context": null,
     "program_type": "UTILITY",
     "citations": [
@@ -33,28 +33,17 @@
     "transforms": []
   },
   "copybooks_used": [],
-  "paragraphs": [
-    {
-      "paragraph_name": "PSB Definition",
-      "summary": null,
-      "purpose": "This section defines the PSB named PSBPAUTL, which is used to define the interface between an IMS application program and the IMS database. It specifies the database to be accessed (DBPAUTP0), the processing options (PROCOPT=L, indicating read-only access), and the key length (KEYLEN=14) for accessing the database. The PSB also defines the sensitive segments (SENSEG) that the application program is allowed to access. PAUTSUM0 is defined as a root segment (PARENT=0), and PAUTDTL1 is defined as a child segment of PAUTSUM0. The PSBGEN statement specifies that the PSB is generated for ASSEMBLY language.",
-      "called_by": [],
-      "calls": [],
-      "citation": [
-        17,
-        21
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    }
-  ],
+  "paragraphs": [],
   "error_handling": [],
   "sql_operations": [],
   "cics_operations": [],
-  "open_questions": [],
+  "open_questions": [
+    {
+      "question": "What is the purpose of the 'L' PROCOPT?",
+      "context": "The meaning of 'L' for PROCOPT is not immediately clear from the code itself.",
+      "suggestion": "Consult IMS documentation to determine the meaning of PROCOPT='L'."
+    }
+  ],
   "resolved_questions": [],
   "dead_code": [],
   "dead_code_resolved": [],

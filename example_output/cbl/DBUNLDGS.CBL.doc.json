@@ -4,13 +4,13 @@
     "file_name": "cbl/DBUNLDGS.CBL",
     "file_type": "COBOL",
     "analyzed_by": "WAR_RIG",
-    "analyzed_at": "2026-03-16T20:04:07.904356",
+    "analyzed_at": "2026-04-21T13:50:15.048348",
     "iteration_count": 1,
     "final_status": null
   },
   "purpose": {
-    "summary": "The COBOL program DBUNLDGS extracts data from an IMS database related to pending authorizations and writes it to sequential output files. It reads pending authorization summary segments (root) and pending authorization details segments (child) from the IMS database and outputs them to OPFILE1 and OPFILE2 respectively.",
-    "business_context": "This program likely supports auditing or reporting on pending authorization requests within a financial or similar institution.",
+    "summary": "The COBOL program DBUNLDGS extracts data from an IMS database related to pending authorizations and writes it to sequential output files. It reads pending authorization summary segments (root) and their corresponding detail segments (child) from the IMS database, and outputs them to OPFILE1 and OPFILE2 respectively, after some basic validation. The program uses the CBLTDLI interface to interact with the IMS database.",
+    "business_context": "This program likely supports data migration, reporting, or auditing of pending authorization records within a financial or similar institution.",
     "program_type": "BATCH",
     "citations": [
       17,
@@ -22,22 +22,42 @@
     {
       "name": "IMS Database (PAUTSUM0, PAUTDTL1)",
       "io_type": "IMS_SEGMENT",
-      "description": "Pending Authorization Summary (root segment) and Pending Authorization Details (child segment) from an IMS database.",
+      "description": "Pending Authorization Summary (root segment PAUTSUM0) and Detail (child segment PAUTDTL1) segments from an IMS database.",
       "copybook": "CIPAUSMY, CIPAUDTY",
       "citation": [
-        224,
-        243,
-        269,
-        282
+        143,
+        147,
+        224
       ]
     },
     {
-      "name": "SYSIN",
+      "name": "PAUTBPCB",
       "io_type": "PARAMETER",
-      "description": "Input parameters for the program, specifically P-EXPIRY-DAYS, P-CHKP-FREQ, P-CHKP-DIS-FREQ, and P-DEBUG-FLAG, although the ACCEPT statement is commented out.",
-      "copybook": null,
+      "description": "The database PCB (Program Communication Block) for the PAUTSUM0 segment.",
+      "copybook": "PAUTBPCB",
       "citation": [
-        163
+        134,
+        159
+      ]
+    },
+    {
+      "name": "PASFLPCB",
+      "io_type": "PARAMETER",
+      "description": "The database PCB (Program Communication Block) for an unknown segment.",
+      "copybook": "PASFLPCB",
+      "citation": [
+        13410,
+        160
+      ]
+    },
+    {
+      "name": "PADFLPCB",
+      "io_type": "PARAMETER",
+      "description": "The database PCB (Program Communication Block) for an unknown segment.",
+      "copybook": "PADFLPCB",
+      "citation": [
+        13420,
+        161
       ]
     }
   ],
@@ -45,22 +65,19 @@
     {
       "name": "OPFILE1",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "Sequential file containing records extracted from the PENDING-AUTH-SUMMARY (root) segment of the IMS database.",
+      "description": "Sequential file containing the extracted PENDING-AUTH-SUMMARY records.",
       "copybook": null,
       "citation": [
         211,
-        2171000
+        21710
       ]
     },
     {
       "name": "OPFILE2",
       "io_type": "FILE_SEQUENTIAL",
-      "description": "Sequential file containing records extracted from the PENDING-AUTH-DETAILS (child) segment of the IMS database.",
+      "description": "Sequential file containing the extracted PENDING-AUTH-DETAILS records.",
       "copybook": null,
-      "citation": [
-        254,
-        2551000
-      ]
+      "citation": []
     }
   ],
   "called_programs": [
@@ -77,16 +94,15 @@
       "citation": 197
     },
     {
-      "program_name": "CBLTDLI",
+      "program_name": "DLITCBL",
       "call_type": "STATIC_CALL",
-      "purpose": "Interface with IMS database to retrieve segments.",
+      "purpose": "Entry point to the program.",
       "parameters": [
-        "FUNC-GNP",
         "PAUTBPCB",
-        "PENDING-AUTH-DETAILS",
-        "CHILD-UNQUAL-SSA"
+        "PASFLPCB",
+        "PADFLPCB"
       ],
-      "citation": 241
+      "citation": 165
     }
   ],
   "calling_context": {
@@ -103,35 +119,51 @@
   "business_rules": [
     {
       "rule_id": "BR001",
-      "description": "Only extract pending authorization details if the PA-ACCT-ID is numeric.",
-      "logic_summary": "The program checks if PA-ACCT-ID is numeric before extracting child segments.",
+      "description": "Only write the PENDING-AUTH-SUMMARY record to OPFILE1 if PA-ACCT-ID is numeric.",
+      "logic_summary": "Checks if PA-ACCT-ID is numeric before writing to OPFILE1.",
       "conditions": [
         "IF PA-ACCT-ID IS NUMERIC"
       ],
       "citation": [
         216,
-        247
+        241
+      ]
+    },
+    {
+      "rule_id": "BR002",
+      "description": "The program reads the next root segment until the end of the database is reached, indicated by PAUT-PCB-STATUS = 'GB'.",
+      "logic_summary": "The program loops until the PAUT-PCB-STATUS is equal to 'GB', which indicates the end of the database.",
+      "conditions": [
+        "UNTIL WS-END-OF-ROOT-SEG = 'Y'",
+        "IF PAUT-PCB-STATUS = 'GB'"
+      ],
+      "citation": [
+        173,
+        223,
+        249,
+        251
       ]
     }
   ],
   "data_flow": {
     "reads_from": [
       {
-        "source": "IMS Database (PENDING-AUTH-SUMMARY)",
+        "source": "IMS Database (PAUTSUM0)",
         "fields_used": [
           "PA-ACCT-ID"
         ],
         "citation": [
-          214
+          214,
+          216
         ]
       },
       {
-        "source": "IMS Database (PENDING-AUTH-DETAILS)",
+        "source": "PENDING-AUTH-SUMMARY",
         "fields_used": [
-          "All fields in CIPAUDTY copybook"
+          "All fields"
         ],
         "citation": [
-          254
+          211
         ]
       }
     ],
@@ -139,20 +171,11 @@
       {
         "destination": "OPFILE1",
         "fields_written": [
-          "All fields in CIPAUSMY copybook"
+          "PENDING-AUTH-SUMMARY"
         ],
         "citation": [
-          211
-        ]
-      },
-      {
-        "destination": "OPFILE2",
-        "fields_written": [
-          "ROOT-SEG-KEY",
-          "CHILD-SEG-REC"
-        ],
-        "citation": [
-          254
+          211,
+          21710
         ]
       }
     ],
@@ -161,46 +184,46 @@
   "copybooks_used": [
     {
       "copybook_name": "IMSFUNCS",
-      "purpose": "Contains definitions for IMS function codes used in CBLTDLI calls.",
+      "purpose": "Contains IMS function codes.",
       "location": "WORKING_STORAGE",
       "citation": 116
     },
     {
       "copybook_name": "CIPAUSMY",
-      "purpose": "Defines the layout of the PENDING-AUTH-SUMMARY segment (root segment).",
+      "purpose": "Defines the layout of the PENDING-AUTH-SUMMARY segment.",
       "location": "WORKING_STORAGE",
       "citation": 123
     },
     {
       "copybook_name": "CIPAUDTY",
-      "purpose": "Defines the layout of the PENDING-AUTH-DETAILS segment (child segment).",
+      "purpose": "Defines the layout of the PENDING-AUTH-DETAILS segment.",
       "location": "WORKING_STORAGE",
-      "citation": 147
+      "citation": 127
     },
     {
       "copybook_name": "PAUTBPCB",
-      "purpose": "Defines the Program Communication Block (PCB) for the PAUTSUM0 database.",
+      "purpose": "Defines the PCB mask for the PAUTSUM0 segment.",
       "location": "LINKAGE",
       "citation": 134
     },
     {
       "copybook_name": "PASFLPCB",
-      "purpose": "Defines the Program Communication Block (PCB) for an alternate PCB.",
+      "purpose": "Defines the PCB mask for an unknown segment.",
       "location": "LINKAGE",
-      "citation": 1341000
+      "citation": 13410
     },
     {
       "copybook_name": "PADFLPCB",
-      "purpose": "Defines the Program Communication Block (PCB) for an alternate PCB.",
+      "purpose": "Defines the PCB mask for an unknown segment.",
       "location": "LINKAGE",
-      "citation": 1342000
+      "citation": 13420
     }
   ],
   "paragraphs": [
     {
       "paragraph_name": "MAIN-PARA",
       "summary": null,
-      "purpose": "This is the main paragraph of the program, serving as the entry point and orchestrating the overall data extraction process. It first performs 1000-INITIALIZE to set up the program environment, including accepting the current date and displaying initial messages. Then, it enters a loop, controlled by the WS-END-OF-ROOT-SEG flag, that repeatedly calls 2000-FIND-NEXT-AUTH-SUMMARY to retrieve and process pending authorization summary segments from the IMS database. The 2000-FIND-NEXT-AUTH-SUMMARY paragraph retrieves the root segment and then calls 3000-FIND-NEXT-AUTH-DTL to retrieve the child segments. Once all summary segments have been processed (WS-END-OF-ROOT-SEG is set to 'Y'), the program performs 4000-FILE-CLOSE to close the output files. Finally, the program terminates with a GOBACK statement.",
+      "purpose": "This is the main paragraph of the program, serving as the entry point and orchestrating the overall data extraction process. It first performs 1000-INITIALIZE to set up the program environment, including accepting the current date and displaying startup messages. Then, it enters a loop, controlled by the WS-END-OF-ROOT-SEG flag, that repeatedly calls 2000-FIND-NEXT-AUTH-SUMMARY to retrieve and process pending authorization summary segments from the IMS database. The 2000-FIND-NEXT-AUTH-SUMMARY paragraph retrieves the root segment and calls 3000-FIND-NEXT-AUTH-DTL to process child segments. Once all root segments have been processed (WS-END-OF-ROOT-SEG is set to 'Y'), the program performs 4000-FILE-CLOSE to close the output files. Finally, the program terminates using the GOBACK statement.",
       "called_by": [],
       "calls": [
         "1000-INITIALIZE",
@@ -220,7 +243,7 @@
     {
       "paragraph_name": "1000-INITIALIZE",
       "summary": null,
-      "purpose": "This paragraph initializes the program environment. It accepts the current date and day from the system. It then displays a starting message including the current date to the console. The paragraph contains commented-out code to accept parameters from SYSIN, which would include expiry days, checkpoint frequency, checkpoint display frequency, and a debug flag. It also contains commented-out code to open OPFILE1 and OPFILE2, checking their status and abending if an error occurs. The paragraph does not read any files or modify any data other than setting the current date variables. It does not call any other paragraphs or programs.",
+      "purpose": "This paragraph initializes the program environment. It accepts the current date and day from the system. It then displays a series of messages to the console, including the program name and the current date. The paragraph also contains commented-out code to open output files OPFILE1 and OPFILE2, with error handling to abend the program if the open fails. The purpose of this paragraph is to prepare the program for processing by setting up initial values and displaying informational messages, but the file opening functionality is currently disabled.",
       "called_by": [
         "MAIN-PARA"
       ],
@@ -238,18 +261,17 @@
     {
       "paragraph_name": "2000-FIND-NEXT-AUTH-SUMMARY",
       "summary": null,
-      "purpose": "This paragraph retrieves the next pending authorization summary segment (root segment) from the IMS database. It initializes the PAUT-PCB-STATUS and then calls the CBLTDLI routine with the FUNC-GN (Get Next) function code to retrieve the next summary segment. If the call is successful (PAUT-PCB-STATUS is spaces), it increments counters for summary records read and processed, moves the retrieved segment to OPFIL1-REC, and moves the PA-ACCT-ID to ROOT-SEG-KEY. It then checks if PA-ACCT-ID is numeric and, if so, calls 3100-INSERT-PARENT-SEG-GSAM to write the parent segment to GSAM and then calls 3000-FIND-NEXT-AUTH-DTL to retrieve the associated detail segments (child segments). The detail segment retrieval continues until WS-END-OF-CHILD-SEG is set to 'Y'. If the PAUT-PCB-STATUS is 'GB' (end of database), it sets the WS-END-OF-ROOT-SEG flag to 'Y'. If the PAUT-PCB-STATUS indicates an error, it displays an error message and abends the program.",
+      "purpose": "This paragraph retrieves the next pending authorization summary segment (root segment) from the IMS database. It initializes the PAUT-PCB-STATUS, then calls the CBLTDLI routine with the 'GN' (Get Next) function to retrieve the next segment. The program uses ROOT-UNQUAL-SSA as the SSA. If the call is successful (PAUT-PCB-STATUS is spaces), it increments counters for summary records read and processed, moves the retrieved summary data to OPFIL1-REC, and extracts the account ID (PA-ACCT-ID) to be used as the root segment key. It then calls 3100-INSERT-PARENT-SEG-GSAM to write the parent segment to OPFILE1, and then calls 3000-FIND-NEXT-AUTH-DTL to process the child segments associated with the current root segment, looping until all child segments are processed. If the PAUT-PCB-STATUS is 'GB' (end of database), it sets the END-OF-AUTHDB flag to TRUE and sets WS-END-OF-ROOT-SEG to 'Y' to terminate the main processing loop. If any other error occurs during the IMS call, it displays an error message and abends the program.",
       "called_by": [
         "MAIN-PARA"
       ],
       "calls": [
-        "CBLTDLI",
         "3100-INSERT-PARENT-SEG-GSAM",
         "3000-FIND-NEXT-AUTH-DTL"
       ],
       "citation": [
         191,
-        231
+        257
       ],
       "outgoing_calls": [],
       "incoming_calls": [],
@@ -260,36 +282,12 @@
     {
       "paragraph_name": "3000-FIND-NEXT-AUTH-DTL",
       "summary": null,
-      "purpose": "This paragraph retrieves the next pending authorization detail segment (child segment) from the IMS database. It calls the CBLTDLI routine with the FUNC-GNP (Get Next within Parent) function code to retrieve the next detail segment associated with the current summary segment. If the call is successful (PAUT-PCB-STATUS is spaces), it sets the MORE-AUTHS flag to TRUE, increments counters, and moves the retrieved segment to CHILD-SEG-REC. It then calls 3200-INSERT-CHILD-SEG-GSAM to write the child segment to GSAM. If the PAUT-PCB-STATUS is 'GE' (end of parent), it sets the WS-END-OF-CHILD-SEG flag to 'Y'. If the PAUT-PCB-STATUS indicates an error, it displays an error message and abends the program. Finally, it initializes PAUT-PCB-STATUS.",
+      "purpose": "This paragraph's purpose is currently UNKNOWN. It is called by 2000-FIND-NEXT-AUTH-SUMMARY, suggesting it should retrieve and process the detail segments (child segments) associated with the current summary segment. However, the code for this paragraph is not provided in the extract. Therefore, it is impossible to determine what data it consumes, what outputs it produces, what business logic it implements, what error handling it performs, or what other paragraphs/programs it calls. Without the code, its functionality remains unclear.",
       "called_by": [
         "2000-FIND-NEXT-AUTH-SUMMARY"
       ],
-      "calls": [
-        "CBLTDLI",
-        "3200-INSERT-CHILD-SEG-GSAM"
-      ],
-      "citation": [
-        237,
-        268
-      ],
-      "outgoing_calls": [],
-      "incoming_calls": [],
-      "is_dead_code": false,
-      "dead_code_reason": null,
-      "metadata": null
-    },
-    {
-      "paragraph_name": "4000-FILE-CLOSE",
-      "summary": null,
-      "purpose": "This paragraph is responsible for closing the output files. However, the code to close the files is commented out. Therefore, this paragraph currently performs no action. It is called by MAIN-PARA after all the IMS segments have been processed. It does not read any input, modify any data, or call any other paragraphs or programs.",
-      "called_by": [
-        "MAIN-PARA"
-      ],
       "calls": [],
-      "citation": [
-        150,
-        175
-      ],
+      "citation": null,
       "outgoing_calls": [],
       "incoming_calls": [],
       "is_dead_code": false,
@@ -299,15 +297,12 @@
     {
       "paragraph_name": "3100-INSERT-PARENT-SEG-GSAM",
       "summary": null,
-      "purpose": "This paragraph is intended to insert the parent segment into a GSAM dataset. However, the code is incomplete and only contains the paragraph declaration and a partial comment. It is called from 2000-FIND-NEXT-AUTH-SUMMARY after a parent segment has been successfully read from the IMS database and the PA-ACCT-ID is numeric. It is expected to write the OPFIL1-REC to a GSAM dataset, but the actual WRITE statement and file handling are missing.",
+      "purpose": "This paragraph's purpose is to write the parent segment to OPFILE1. It is called by 2000-FIND-NEXT-AUTH-SUMMARY. However, the code for this paragraph is not provided in the extract. Therefore, it is impossible to determine what data it consumes, what outputs it produces, what business logic it implements, what error handling it performs, or what other paragraphs/programs it calls. Without the code, its functionality remains unclear.",
       "called_by": [
         "2000-FIND-NEXT-AUTH-SUMMARY"
       ],
       "calls": [],
-      "citation": [
-        2171000,
-        301
-      ],
+      "citation": null,
       "outgoing_calls": [],
       "incoming_calls": [],
       "is_dead_code": false,
@@ -315,11 +310,11 @@
       "metadata": null
     },
     {
-      "paragraph_name": "3200-INSERT-CHILD-SEG-GSAM",
+      "paragraph_name": "4000-FILE-CLOSE",
       "summary": null,
-      "purpose": "This paragraph is intended to insert the child segment into a GSAM dataset. However, the code is missing. It is called from 3000-FIND-NEXT-AUTH-DTL after a child segment has been successfully read from the IMS database. It is expected to write the OPFIL2-REC to a GSAM dataset, but the actual WRITE statement and file handling are missing.",
+      "purpose": "This paragraph's purpose is to close the output files. However, the code for this paragraph is not provided in the extract. Therefore, it is impossible to determine what data it consumes, what outputs it produces, what business logic it implements, what error handling it performs, or what other paragraphs/programs it calls. Without the code, its functionality remains unclear.",
       "called_by": [
-        "3000-FIND-NEXT-AUTH-DTL"
+        "MAIN-PARA"
       ],
       "calls": [],
       "citation": null,
@@ -338,36 +333,33 @@
         227,
         230
       ]
-    },
-    {
-      "condition": "PAUT-PCB-STATUS NOT EQUAL TO SPACES AND 'GE'",
-      "action": "DISPLAY error message and ABEND",
-      "citation": [
-        290,
-        293
-      ]
     }
   ],
   "sql_operations": [],
   "cics_operations": [],
   "open_questions": [
     {
-      "question": "What are the exact layouts of the GSAM datasets that 3100-INSERT-PARENT-SEG-GSAM and 3200-INSERT-CHILD-SEG-GSAM are supposed to write to?",
-      "context": "The WRITE statements and file definitions for the GSAM datasets are missing.",
-      "suggestion": "Examine related documentation or source code to determine the GSAM file layouts."
-    }
-  ],
-  "resolved_questions": [
+      "question": "What is the purpose of PASFLPCB and PADFLPCB?",
+      "context": "The program includes these PCBs in the linkage section and ENTRY statement, but they are not used in the provided code extract.",
+      "suggestion": "Examine the complete program source or related documentation to determine their purpose."
+    },
     {
-      "original_question": "Why are the OPEN and CLOSE statements for OPFILE1 and OPFILE2 commented out?",
-      "original_context": "The program appears to be designed to write to these files, but the file handling code is disabled.",
-      "answer": "The `SELECT`, `FD`, `OPEN`, and `CLOSE` statements for both `OPFILE1` and `OPFILE2` are commented out. This suggests that the program, in its current state, does not directly manage these files.\n\nINCONCLUSIVE: Without further information, it's impossible to determine the exact reason why these statements are commented out. It could be due to several reasons:\n\n1.  The file handling might be performed by a called subroutine or a different mechanism (e.g., system call).\n2.  The program might be designed to be used in an environment where the files are pre-opened or handled by the operating system.\n3.  The file output functionality might be disabled or under development.\n4.  The program might be using an alternative method for writing to the output files.\n\nTo determine the actual reason, further investigation is needed to understand how the output files are handled, possibly by examining other parts of the code or related documentation.",
-      "confidence": "HIGH",
-      "resolved_by": "CODEWHISPER",
-      "cycle_resolved": 1,
-      "tool_calls_used": 2
+      "question": "What is the purpose and implementation of paragraph 3000-FIND-NEXT-AUTH-DTL?",
+      "context": "This paragraph is called to process child segments, but the code is missing from the extract.",
+      "suggestion": "Examine the complete program source to understand how detail segments are retrieved and processed."
+    },
+    {
+      "question": "What is the purpose and implementation of paragraph 3100-INSERT-PARENT-SEG-GSAM?",
+      "context": "This paragraph is called to write the parent segment to OPFILE1, but the code is missing from the extract.",
+      "suggestion": "Examine the complete program source to understand how parent segments are written to OPFILE1."
+    },
+    {
+      "question": "What is the purpose and implementation of paragraph 4000-FILE-CLOSE?",
+      "context": "This paragraph is called to close the output files, but the code is missing from the extract.",
+      "suggestion": "Examine the complete program source to understand how files are closed."
     }
   ],
+  "resolved_questions": [],
   "dead_code": [],
   "dead_code_resolved": [],
   "call_semantics": [],
